@@ -10,6 +10,7 @@ export default function HomePage() {
             Blade
           </h1>
           <AuthShowcase />
+          <div>Hello, World!</div>
         </div>
       </main>
     </HydrateClient>
