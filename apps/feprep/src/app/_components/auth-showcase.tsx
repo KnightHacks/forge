@@ -1,6 +1,8 @@
 import { auth, signIn, signOut } from "@blade/auth";
 import { Button } from "@blade/ui/button";
 
+import { api } from "~/trpc/server";
+
 export async function AuthShowcase() {
   const session = await auth();
 
@@ -20,10 +22,14 @@ export async function AuthShowcase() {
     );
   }
 
+  const secretMessage = await api.getSecretMessage();
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <p className="text-center text-2xl">
         <span>Logged in as {session.user.name}</span>
+      </p>
+      <p>
+        <span>{secretMessage}</span>
       </p>
 
       <form>
