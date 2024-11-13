@@ -1,4 +1,5 @@
 import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
+import { z } from "zod";
 
 import {
   DIFFICULTIES,
@@ -58,8 +59,20 @@ export const Comment = createTable("comment", (t) => ({
   updatedAt: t
     .timestamp("updated_at", { mode: "date" })
     .$onUpdate(() => new Date()),
-  parent_comment_id: t.text(),
+  parentCommentId: t.text(),
 }));
+
+export const CreateCommentSchema = z.object({
+  problemId: z.number(),
+  userId: z.string(),
+  text: z.string(),
+  parentCommentId: z.string().optional(),
+});
+
+export const UpdateCommentSchema = z.object({
+  commentId: z.string(),
+  text: z.string(),
+});
 
 export const Vote = createTable(
   "vote",
