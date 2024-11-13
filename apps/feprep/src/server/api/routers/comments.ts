@@ -43,7 +43,7 @@ export const commentRouter = createTRPCRouter({
     .input(UpdateCommentSchema)
     .mutation(async ({ ctx, input }) => {
       const commentToDelete = await ctx.db.query.Comment.findFirst({
-        where: (t, { eq }) => eq(t.id, input),
+        where: (t, { eq }) => eq(t.id, input.commentId),
       });
 
       if (!commentToDelete) {
