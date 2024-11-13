@@ -19,6 +19,7 @@
     "@blade/db": "workspace:*",
     "@blade/ui": "workspace:*",
     "@blade/validators": "workspace:*",
+    "@excalidraw/excalidraw": "^0.17.6",
     "@t3-oss/env-nextjs": "^0.11.1",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
