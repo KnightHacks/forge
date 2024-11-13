@@ -11,7 +11,7 @@ import {
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  greeting: publicProcedure.query(() => "Hello, world!"),
+  greeting: publicProcedure.query(() => "Hello from tRPC!"),
   getSecretMessage: protectedProcedure.query(() => "This is a secret message."),
 });
 
