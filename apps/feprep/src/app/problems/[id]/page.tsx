@@ -12,12 +12,7 @@ const ExcalidrawWrapper = dynamic(
   },
 );
 
-export default async function Problem({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const id = (await params).id;
+export default function Problem() {
   return (
     <div className="flex h-screen flex-col">
       <nav className="border p-4">navbar</nav>
