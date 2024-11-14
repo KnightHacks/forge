@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@blade/ui/tabs";
+import IDE from "./_components/monaco-editor";
 
 // Since client components get prerenderd on server as well hence importing
 // the excalidraw stuff dynamically with ssr false
@@ -28,11 +29,15 @@ export default function Problem() {
           <Tabs defaultValue="whiteboard" className="flex flex-col">
             <TabsList className="w-fit">
               <TabsTrigger value="whiteboard">Whiteboard</TabsTrigger>
+              <TabsTrigger value="codeEditor">Code Editor</TabsTrigger>
               <TabsTrigger value="comments">Discussion</TabsTrigger>
               <TabsTrigger value="resources">Resources</TabsTrigger>
             </TabsList>
             <TabsContent value="whiteboard" className="flex-1">
               <ExcalidrawWrapper />
+            </TabsContent>
+            <TabsContent value="codeEditor" className="flex-1">
+              <IDE />
             </TabsContent>
             <TabsContent value="comments">Comments</TabsContent>
             <TabsContent value="resources">Resources</TabsContent>
