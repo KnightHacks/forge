@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 
-import { Button } from "@blade/ui/button";
+// import { Button } from "@blade/ui/button";
 
 export default function IDE() {
-  const handleSubmit = async () => {};
+  // const handleSubmit = async () => {};
 
   const { resolvedTheme } = useTheme();
 
@@ -29,15 +28,15 @@ int main()
 
   return (
     <div className="h-full w-full border-2 border-accent">
-      <form action="#" onSubmit={handleSubmit}>
-        <Editor
-          theme={checkDarkTheme ? "vs-dark" : "vs-light"}
-          height="83vh"
-          defaultLanguage="c"
-          defaultValue={cSourceCode}
-        />
-        {/* <Button>Run</Button> */}
-      </form>
+      {/* <form action="#" onSubmit={handleSubmit}> */}
+      <Editor
+        theme={checkDarkTheme ? "vs-dark" : "vs-light"}
+        height="83vh"
+        defaultLanguage="c"
+        defaultValue={cSourceCode}
+      />
+      {/* <Button>Run</Button> */}
+      {/* </form> */}
     </div>
   );
 }
