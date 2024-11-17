@@ -48,7 +48,7 @@ export const codeRouter = createTRPCRouter({
           {
             headers: {
               "Content-Type": "application/json",
-              "X-RapidAPI-Key": env.RAPIDAPI_KEY as string,
+              "X-RapidAPI-Key": env.RAPIDAPI_KEY,
               "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
             },
           },
