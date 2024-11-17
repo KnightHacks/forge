@@ -17,6 +17,7 @@ export const env = createEnv({
    */
   server: {
     DATABASE_URL: z.string().url(),
+    RAPIDAPI_KEY: z.string(),
   },
 
   /**
