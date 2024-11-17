@@ -4,6 +4,9 @@ import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 
+import { Button } from "@blade/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@blade/ui/tabs";
+
 import { api } from "~/trpc/react";
 
 export default function IDE() {
@@ -43,20 +46,38 @@ int main()
   };
 
   return (
-    <div className="flex h-full w-full flex-col border-2 border-accent">
-      <Editor
-        theme={isDarkTheme ? "vs-dark" : "vs-light"}
-        height="83vh"
-        language="c"
-        value={code}
-        onChange={(value) => setCode(value ?? "")}
-      />
-      <button onClick={handleRunCode} disabled={isLoading} className="mt-2">
-        {isLoading ? "Running..." : "Run"}
-      </button>
-      <div className="mt-4">
-        <h2>Output:</h2>
-        <pre className="bg-gray-100 p-2">{output}</pre>
+    <div className="flex h-full w-full flex-col">
+      {/* Code Editor */}
+      <div className="flex flex-[3] flex-col border-2 border-accent">
+        <Editor
+          theme={isDarkTheme ? "vs-dark" : "vs-light"}
+          height="100%"
+          language="c"
+          value={code}
+          onChange={(value) => setCode(value ?? "")}
+        />
+        {/* Run Button */}
+        <Button
+          onClick={handleRunCode}
+          disabled={isLoading}
+          className="m-2 mt-2 self-end"
+        >
+          {isLoading ? "Running..." : "Run"}
+        </Button>
+      </div>
+
+      {/* Output Section */}
+      <div className="mt-4 flex flex-[2] flex-col border-2 border-accent">
+        <Tabs defaultValue="output" className="flex flex-1 flex-col">
+          <TabsList className="w-fit">
+            <TabsTrigger value="output">Output</TabsTrigger>
+          </TabsList>
+          <TabsContent value="output" className="flex-1">
+            <pre className="h-full overflow-auto bg-background p-2">
+              {output}
+            </pre>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
