@@ -70,14 +70,14 @@ int main()
 
       {/* Output Section */}
       <div className="flex flex-[2] flex-col">
-        <Tabs defaultValue="output" className="flex flex-1 flex-col h-full">
+        <Tabs defaultValue="output" className="flex h-full flex-1 flex-col">
           <TabsList className="w-fit">
             <TabsTrigger value="output">Output</TabsTrigger>
             <TabsTrigger value="testcases">Test Cases</TabsTrigger>
           </TabsList>
           {/* Output Content */}
-          <TabsContent value="output" className="flex-1 flex">
-            <div className="flex-1 border-2 border-accent flex">
+          <TabsContent value="output" className="flex flex-1">
+            <div className="flex flex-1 border-2 border-accent">
               <pre className="flex-1 overflow-auto bg-background p-2">
                 {output}
               </pre>

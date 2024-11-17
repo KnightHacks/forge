@@ -4,8 +4,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-
-import { codeRouter } from './routers/code';
+import { codeRouter } from "./routers/code";
 
 /**
  * This is the primary router for your server.
