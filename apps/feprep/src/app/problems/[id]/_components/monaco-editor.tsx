@@ -48,34 +48,46 @@ int main()
   return (
     <div className="flex h-full w-full flex-col">
       {/* Code Editor */}
-      <div className="flex flex-[3] flex-col border-2 border-accent">
-        <Editor
-          theme={isDarkTheme ? "vs-dark" : "vs-light"}
-          height="100%"
-          language="c"
-          value={code}
-          onChange={(value) => setCode(value ?? "")}
-        />
+      <div className="flex flex-[3] flex-col">
+        <div className="flex-1 border-2 border-accent">
+          <Editor
+            theme={isDarkTheme ? "vs-dark" : "vs-light"}
+            height="100%"
+            language="c"
+            value={code}
+            onChange={(value) => setCode(value ?? "")}
+          />
+        </div>
         {/* Run Button */}
         <Button
           onClick={handleRunCode}
           disabled={isLoading}
-          className="m-2 mt-2 self-end"
+          className="mt-2 self-end"
         >
           {isLoading ? "Running..." : "Run"}
         </Button>
       </div>
 
       {/* Output Section */}
-      <div className="mt-4 flex flex-[2] flex-col border-2 border-accent">
-        <Tabs defaultValue="output" className="flex flex-1 flex-col">
+      <div className="flex flex-[2] flex-col">
+        <Tabs defaultValue="output" className="flex flex-1 flex-col h-full">
           <TabsList className="w-fit">
             <TabsTrigger value="output">Output</TabsTrigger>
+            <TabsTrigger value="testcases">Test Cases</TabsTrigger>
           </TabsList>
-          <TabsContent value="output" className="flex-1">
-            <pre className="h-full overflow-auto bg-background p-2">
-              {output}
-            </pre>
+          {/* Output Content */}
+          <TabsContent value="output" className="flex-1 flex">
+            <div className="flex-1 border-2 border-accent flex">
+              <pre className="flex-1 overflow-auto bg-background p-2">
+                {output}
+              </pre>
+            </div>
+          </TabsContent>
+          {/* Test Cases Content */}
+          <TabsContent value="testcases">
+            {/* <div className="flex-1 border-2 border-accent flex">
+              <p className="flex-1 overflow-auto bg-background p-2">Test Cases</p>
+            </div> */}
           </TabsContent>
         </Tabs>
       </div>
