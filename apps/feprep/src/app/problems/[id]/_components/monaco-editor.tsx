@@ -84,11 +84,7 @@ int main()
             </div>
           </TabsContent>
           {/* Test Cases Content */}
-          <TabsContent value="testcases">
-            {/* <div className="flex-1 border-2 border-accent flex">
-              <p className="flex-1 overflow-auto bg-background p-2">Test Cases</p>
-            </div> */}
-          </TabsContent>
+          <TabsContent value="testcases"></TabsContent>
         </Tabs>
       </div>
     </div>
