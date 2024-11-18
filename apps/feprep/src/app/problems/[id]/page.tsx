@@ -4,8 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@blade/ui/tabs";
 
 import IDE from "./_components/monaco-editor";
 
-import IDE from "./_components/monaco-editor";
-
 // Since client components get prerenderd on server as well hence importing
 // the excalidraw stuff dynamically with ssr false
 
