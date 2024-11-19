@@ -3,7 +3,7 @@ import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 
 import { cn } from "@blade/ui";
-import { ThemeProvider, ThemeToggle } from "@blade/ui/theme";
+import { ThemeProvider } from "@blade/ui/theme";
 import { Toaster } from "@blade/ui/toast";
 
 import { TRPCReactProvider } from "~/trpc/react";
@@ -52,9 +52,6 @@ export default function RootLayout(props: { children: React.ReactNode }) {
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <TRPCReactProvider>{props.children}</TRPCReactProvider>
-          <div className="absolute bottom-4 right-4 z-50">
-            <ThemeToggle />
-          </div>
           <Toaster />
         </ThemeProvider>
       </body>
