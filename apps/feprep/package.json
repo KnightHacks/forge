@@ -36,7 +36,8 @@
     "react-dom": "catalog:react18",
     "react-monaco-editor": "^0.56.2",
     "superjson": "2.2.1",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@blade/eslint-config": "workspace:*",
