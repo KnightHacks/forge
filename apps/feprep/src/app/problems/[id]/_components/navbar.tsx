@@ -9,8 +9,9 @@ import {
 import { Button } from "@blade/ui/button";
 import { Separator } from "@blade/ui/separator";
 
-import { Timer } from "./timer";
-import { ToggleSolution } from "./toggle-solution";
+import { AuthButton } from "./auth-button";
+import { TimerButton } from "./timer-button";
+import { ToggleSolutionButton } from "./toggle-solution-button";
 
 export function Navbar() {
   return (
@@ -51,16 +52,12 @@ export function Navbar() {
           </Button>
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <Timer />
-        <ToggleSolution />
+      <div className="flex items-center gap-1">
+        <TimerButton />
+        <ToggleSolutionButton />
       </div>
       <div className="flex items-center">
-        <Button asChild>
-          <Link href="/sign-in">
-            <span>Sign In</span>
-          </Link>
-        </Button>
+        <AuthButton />
       </div>
     </nav>
   );
