@@ -4,7 +4,6 @@ import ExcalidrawWrapper from "./_components/excalidraw-wrapper";
 import IDE from "./_components/monaco-editor";
 import { Navbar } from "./_components/navbar";
 
-
 export default function Problem() {
   return (
     <div className="flex h-screen flex-col">
