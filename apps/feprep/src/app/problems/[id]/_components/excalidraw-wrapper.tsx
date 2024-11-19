@@ -1,7 +1,17 @@
 "use client";
 
-import { Excalidraw } from "@excalidraw/excalidraw";
+import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
+
+import { Skeleton } from "@blade/ui/skeleton";
+
+const Excalidraw = dynamic(
+  async () => (await import("@excalidraw/excalidraw")).Excalidraw,
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-full w-full" />,
+  },
+);
 
 export default function ExcalidrawWrapper() {
   const { resolvedTheme } = useTheme();

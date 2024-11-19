@@ -1,19 +1,9 @@
-import dynamic from "next/dynamic";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@blade/ui/tabs";
 
+import ExcalidrawWrapper from "./_components/excalidraw-wrapper";
 import IDE from "./_components/monaco-editor";
 import { Navbar } from "./_components/navbar";
 
-// Since client components get prerenderd on server as well hence importing
-// the excalidraw stuff dynamically with ssr false
-
-const ExcalidrawWrapper = dynamic(
-  async () => (await import("./_components/excalidraw-wrapper")).default,
-  {
-    ssr: false,
-  },
-);
 
 export default function Problem() {
   return (
