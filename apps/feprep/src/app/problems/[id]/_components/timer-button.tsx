@@ -12,7 +12,7 @@ import {
 } from "@blade/ui";
 import { Button } from "@blade/ui/button";
 
-export function Timer() {
+export function TimerButton() {
   const [open, setOpen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [secondsElapsed, setSecondsElapsed] = useState(0);

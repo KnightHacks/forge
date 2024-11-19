@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { RocketIcon } from "@blade/ui";
 import { Button } from "@blade/ui/button";
 
-export function ToggleSolution() {
+export function ToggleSolutionButton() {
   const searchParams = useSearchParams();
   const pageNumber = Number(searchParams.get("page"));
   const pathname = usePathname();
