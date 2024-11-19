@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@blade/ui/tabs";
 
 import IDE from "./_components/monaco-editor";
+import { Navbar } from "./_components/navbar";
 
 // Since client components get prerenderd on server as well hence importing
 // the excalidraw stuff dynamically with ssr false
@@ -17,8 +18,8 @@ const ExcalidrawWrapper = dynamic(
 export default function Problem() {
   return (
     <div className="flex h-screen flex-col">
-      <nav className="border p-4">navbar</nav>
-      <main className="flex flex-1 flex-col gap-2 p-2 md:flex-row">
+      <Navbar />
+      <main className="flex flex-1 flex-col gap-2 px-2 md:flex-row">
         <div className="min-h-full flex-1 overflow-hidden rounded-lg border">
           <object
             className="h-full w-full"
