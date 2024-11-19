@@ -75,15 +75,13 @@ int main()
             <TabsTrigger value="testcases">Test Cases</TabsTrigger>
           </TabsList>
           {/* Output Content */}
-          <TabsContent value="output" className="flex flex-1">
-            <div className="flex flex-1 border-2 border-accent">
-              <pre className="flex-1 overflow-auto bg-background p-2">
-                {output}
-              </pre>
-            </div>
+          <TabsContent value="output" className="h-full flex-1 border" asChild>
+            <pre>{output}</pre>
           </TabsContent>
           {/* Test Cases Content */}
-          <TabsContent value="testcases"></TabsContent>
+          <TabsContent value="testcases" className="h-full flex-1 border">
+            test cases
+          </TabsContent>
         </Tabs>
       </div>
     </div>
