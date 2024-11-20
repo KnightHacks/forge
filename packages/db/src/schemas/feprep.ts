@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import {
   DIFFICULTIES,
+  LOWERCASE_DIFFICULTIES,
   POINTS,
   PROBLEM_NUMBERS,
   SECTIONS,
@@ -17,10 +18,14 @@ export const points = pgEnum("points", POINTS);
 export const sections = pgEnum("section", SECTIONS);
 export const topics = pgEnum("topic", TOPICS);
 export const problemNumbers = pgEnum("problem_number", PROBLEM_NUMBERS);
-export const difficulties = pgEnum("vote", DIFFICULTIES);
+export const difficulties = pgEnum("difficulties", DIFFICULTIES);
+export const lowercaseDifficulties = pgEnum(
+  "lowercase_difficulties",
+  LOWERCASE_DIFFICULTIES,
+);
 
 export const Problem = createTable("problem", (t) => ({
-  id: t.serial().primaryKey(),
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t
     .varchar("title", {
       length: 255,
@@ -77,13 +82,21 @@ export const UpdateCommentSchema = z.object({
 export const Vote = createTable(
   "vote",
   (t) => ({
-    id: t.varchar({ length: 255 }).primaryKey(),
+    id: t
+      .varchar("id", { length: 255 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     userId: t
       .uuid()
       .notNull()
       .references(() => User.id, { onDelete: "cascade" }),
-    problemId: t.integer().notNull(),
-    vote: difficulties().notNull(),
+    problemId: t
+      .uuid()
+      .notNull()
+      .references(() => Problem.id, {
+        onDelete: "cascade",
+      }),
+    vote: lowercaseDifficulties().notNull(),
   }),
   (t) => ({
     unique: unique("vote_unique_idx").on(t.userId, t.problemId),

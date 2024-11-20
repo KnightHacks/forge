@@ -1,4 +1,5 @@
 export const DIFFICULTIES = ["Easy", "Medium", "Hard"] as const;
+export const LOWERCASE_DIFFICULTIES = ["easy", "medium", "hard"] as const;
 
 export const SEMESTERS = [
   "Fall 2024",
