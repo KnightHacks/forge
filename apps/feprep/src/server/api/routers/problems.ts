@@ -1,110 +1,61 @@
-import { TOPICS } from "@feprep/consts";
-import { and, count, eq, questions, sql, votes } from "@feprep/db";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import {
-  //   adminProcedure,
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "../trpc";
+import { LOWERCASE_DIFFICULTIES, TOPICS } from "@blade/consts/feprep";
+import { eq, sql } from "@blade/db";
+import { Problem, Vote } from "@blade/db/schema";
 
-export const questionsRouter = createTRPCRouter({
-  randomQuestionId: publicProcedure.query(async ({ ctx }) => {
-    const question = (
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+
+export const problemRouter = createTRPCRouter({
+  getRandomProblemId: publicProcedure.query(async ({ ctx }) => {
+    const problem = (
       await ctx.db
         .select({
-          value: questions.id,
+          value: Problem.id,
         })
-        .from(questions)
+        .from(Problem)
         .orderBy(sql`RANDOM()`)
         .limit(1)
     )[0];
 
-    if (!question) {
-      throw new Error("Failed to get random question");
+    if (!problem) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: `Problem ${problem} not found`,
+      });
     }
 
-    return question.value;
-  }),
-  count: publicProcedure.query(async ({ ctx }) => {
-    const question = (
-      await ctx.db
-        .select({
-          value: count(),
-        })
-        .from(questions)
-    )[0];
-
-    if (!question) {
-      throw new Error("Failed to count questions");
-    }
-
-    return question.value;
+    return problem.value;
   }),
   all: publicProcedure.query(({ ctx }) => {
-    return ctx.db.query.questions.findMany();
-    // return ctx.db.query.Question.findMany();
+    return ctx.db.query.Problem.findMany();
   }),
-  //   delete: adminProcedure.input(z.number()).mutation(({ ctx, input }) => {
-  //     return ctx.db.delete(questions).where(eq(questions.id, input));
-  //   }),
-  //   create: adminProcedure
-  //     .input(CreateQuestionSchema)
-  //     .mutation(({ ctx, input }) => {
-  //       return ctx.db.insert(questions).values(input);
-  //     }),
-  //   update: adminProcedure
-  //     .input(UpdateQuestionSchema)
-  //     .mutation(async ({ ctx, input: { questionId, ...question } }) => {
-  //       const utapi = new UTApi();
-
-  //       // Delete the previous question and solution pdfs
-  //       const previousQuestion = await ctx.db.query.questions.findFirst({
-  //         where: eq(questions.id, questionId),
-  //       });
-
-  //       if (!previousQuestion) {
-  //         throw new TRPCError({
-  //           code: "NOT_FOUND",
-  //           message: "Question not found",
-  //         });
-  //       }
-
-  //       if (question.pdf) {
-  //         await utapi.deleteFiles(previousQuestion.pdf.split("/").pop()!);
-  //       }
-
-  //       return ctx.db
-  //         .update(questions)
-  //         .set(question)
-  //         .where(eq(questions.id, questionId));
-  //     }),
-  byId: publicProcedure.input(z.number()).query(({ ctx, input }) => {
-    return ctx.db.query.questions.findFirst({
-      where: eq(questions.id, input),
+  getById: publicProcedure.input(z.string()).query(({ ctx, input }) => {
+    return ctx.db.query.Problem.findFirst({
+      where: (t, { eq }) => eq(t.id, input),
     });
   }),
-  byTopic: publicProcedure.input(z.enum(TOPICS)).query(({ ctx, input }) => {
-    return ctx.db.query.questions.findMany({
-      where: eq(questions.topic, input),
+  getByTopic: publicProcedure.input(z.enum(TOPICS)).query(({ ctx, input }) => {
+    return ctx.db.query.Problem.findMany({
+      where: (t, { eq }) => eq(t.topic, input),
     });
   }),
   vote: protectedProcedure
     .input(
       z.object({
-        questionId: z.number(),
-        vote: z.enum(["easy", "medium", "hard"]),
+        problemId: z.string(),
+        vote: z.enum(LOWERCASE_DIFFICULTIES),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const voteColumn = `${input.vote}Votes` as const;
-      const existingVote = await ctx.db.query.votes.findFirst({
-        where: and(
-          eq(votes.questionId, input.questionId),
-          eq(votes.userId, ctx.user.id),
-        ),
+      const existingVote = await ctx.db.query.Vote.findFirst({
+        where: (t, { and, eq }) =>
+          and(
+            eq(Vote.problemId, input.problemId),
+            eq(Vote.userId, ctx.session.user.id),
+          ),
       });
 
       if (existingVote?.vote === input.vote) {
@@ -118,31 +69,31 @@ export const questionsRouter = createTRPCRouter({
         if (existingVote) {
           const previousVoteColumn = `${existingVote.vote}Votes` as const;
           await db
-            .update(votes)
+            .update(Vote)
             .set({
               vote: input.vote,
             })
-            .where(eq(votes.id, existingVote.id));
+            .where(eq(Vote.id, existingVote.id));
 
           await db
-            .update(questions)
+            .update(Problem)
             .set({
-              [previousVoteColumn]: sql`${questions[previousVoteColumn]} - 1`,
-              [voteColumn]: sql`${questions[voteColumn]} + 1`,
+              [previousVoteColumn]: sql`${Problem[previousVoteColumn]} - 1`,
+              [voteColumn]: sql`${Problem[voteColumn]} + 1`,
             })
-            .where(eq(questions.id, input.questionId));
+            .where(eq(Problem.id, input.problemId));
         } else {
-          await db.insert(votes).values({
+          await db.insert(Vote).values({
             ...input,
-            userId: ctx.user.id,
+            userId: ctx.session.user.id,
           });
 
           await db
-            .update(questions)
+            .update(Problem)
             .set({
-              [voteColumn]: sql`${questions[voteColumn]} + 1`,
+              [voteColumn]: sql`${Problem[voteColumn]} + 1`,
             })
-            .where(eq(questions.id, input.questionId));
+            .where(eq(Problem.id, input.problemId));
         }
       });
 
