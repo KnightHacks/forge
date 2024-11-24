@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    "./feprep": {
-      "types": "./dist/feprep.d.ts",
-      "default": "./src/feprep.ts"
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./src/*.ts"
     }
   },
   "license": "MIT",
