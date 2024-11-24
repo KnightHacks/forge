@@ -2670,7 +2670,7 @@ export const SCHOOLS = [
   "École nationale supérieure d’électronique, informatique, télécommunications, mathématique et mécanique de Bordeaux (ENSEIRB-MATMECA)",
 ] as const;
 
-export const SHIRT_SIZES = ["SM", "MD", "LG", "XL", "XXL"] as const;
+export const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
 export const SPONSOR_TIERS = ["gold", "silver", "bronze", "other"] as const;
 
