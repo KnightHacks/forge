@@ -3,10 +3,12 @@ import { pgEnum, pgTableCreator } from "drizzle-orm/pg-core";
 import {
   ETHNICITIES,
   GENDERS,
+  HACKATHON_APPLICATION_STATES,
   LEVELS_OF_STUDY,
   MAJORS,
   SCHOOLS,
   SHIRT_SIZES,
+  SPONSOR_TIERS,
 } from "@blade/consts/knight-hacks";
 
 import { User } from "./auth";
@@ -19,8 +21,21 @@ const ethnicityEnum = pgEnum("ethnicity", ETHNICITIES);
 const levelOfStudyEnum = pgEnum("level_of_study", LEVELS_OF_STUDY);
 const majorEnum = pgEnum("major", MAJORS);
 const schoolEnum = pgEnum("school", SCHOOLS);
+const hackathonApplicationStateEnum = pgEnum(
+  "hackathon_application_state",
+  HACKATHON_APPLICATION_STATES,
+);
+export const sponsorTierEnum = pgEnum("sponsor_tier", SPONSOR_TIERS);
 
-export const Profile = createTable("profile", (t) => ({
+export const Hackathon = createTable("hackathon", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.varchar({ length: 255 }).notNull(),
+  theme: t.varchar({ length: 255 }).notNull(),
+  startDate: t.timestamp().notNull(),
+  endDate: t.timestamp().notNull(),
+}));
+
+export const Member = createTable("member", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   userId: t
     .uuid()
@@ -46,4 +61,72 @@ export const Profile = createTable("profile", (t) => ({
   ethnicity: ethnicityEnum().notNull(),
   major: majorEnum().notNull(),
   school: schoolEnum().notNull(),
+}));
+
+export const HackathonApplication = createTable(
+  "hackaton_application",
+  (t) => ({
+    memberId: t
+      .uuid()
+      .notNull()
+      .references(() => Member.id, {
+        onDelete: "cascade",
+      }),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, {
+        onDelete: "cascade",
+      }),
+    state: hackathonApplicationStateEnum().notNull(),
+    // Dynamic json fields (e.g. survey responses)
+    survey: t.jsonb().notNull(),
+  }),
+);
+
+export const Sponsor = createTable("sponsor", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.varchar({ length: 255 }).notNull(),
+  logoUrl: t.varchar({ length: 255 }).notNull(),
+  websiteUrl: t.varchar({ length: 255 }).notNull(),
+}));
+
+export const HackathonSponsor = createTable("hackathon_sponsor", (t) => ({
+  hackathonId: t
+    .uuid()
+    .notNull()
+    .references(() => Hackathon.id, {
+      onDelete: "cascade",
+    }),
+  sponsorId: t
+    .uuid()
+    .notNull()
+    .references(() => Sponsor.id, {
+      onDelete: "cascade",
+    }),
+  tier: sponsorTierEnum().notNull(),
+}));
+
+export const Event = createTable("event", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.varchar({ length: 255 }).notNull(),
+  description: t.text().notNull(),
+  datetime: t.timestamp().notNull(),
+  // Can be null if the event is not associated with a hackathon (e.g. club events)
+  hackathonId: t.uuid().references(() => Hackathon.id, {
+    onDelete: "cascade",
+  }),
+}));
+
+export const DuesPayment = createTable("dues_payment", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  memberId: t
+    .uuid()
+    .notNull()
+    .references(() => Member.id, {
+      onDelete: "cascade",
+    }),
+  amount: t.integer().notNull(),
+  paymentDate: t.timestamp().notNull(),
+  year: t.integer().notNull(),
 }));
