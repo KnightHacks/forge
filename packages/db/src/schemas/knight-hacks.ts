@@ -35,6 +35,10 @@ export const Profile = createTable("profile", (t) => ({
   city: t.varchar({ length: 255 }).notNull(),
   state: t.varchar({ length: 255 }).notNull(),
   zipCode: t.varchar({ length: 255 }).notNull(),
+  githubProfileUrl: t.varchar({ length: 255 }),
+  linkedinProfileUrl: t.varchar({ length: 255 }),
+  resumeUrl: t.varchar({ length: 255 }),
+  websiteUrl: t.varchar({ length: 255 }),
   age: t.integer().notNull(),
   shirtSize: shirtSizeEnum().notNull(),
   gender: genderEnum().notNull(),
@@ -42,7 +46,4 @@ export const Profile = createTable("profile", (t) => ({
   ethnicity: ethnicityEnum().notNull(),
   major: majorEnum().notNull(),
   school: schoolEnum().notNull(),
-  githubProfileUrl: t.varchar({ length: 255 }),
-  linkedinProfileUrl: t.varchar({ length: 255 }),
-  resumeUrl: t.varchar({ length: 255 }),
 }));
