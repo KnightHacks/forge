@@ -6,7 +6,7 @@ import {
   Comment,
   CreateCommentSchema,
   UpdateCommentSchema,
-} from "@blade/db/schema";
+} from "@blade/db/schemas/feprep";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
