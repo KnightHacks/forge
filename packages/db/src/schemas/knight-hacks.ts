@@ -15,17 +15,15 @@ import { User } from "./auth";
 
 const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
-const shirtSizeEnum = pgEnum("shirt_size", SHIRT_SIZES);
-const genderEnum = pgEnum("gender", GENDERS);
-const ethnicityEnum = pgEnum("ethnicity", ETHNICITIES);
-const levelOfStudyEnum = pgEnum("level_of_study", LEVELS_OF_STUDY);
-const majorEnum = pgEnum("major", MAJORS);
-const schoolEnum = pgEnum("school", SCHOOLS);
-const hackathonApplicationStateEnum = pgEnum(
+export const shirtSizeEnum = pgEnum("shirt_size", SHIRT_SIZES);
+export const genderEnum = pgEnum("gender", GENDERS);
+export const ethnicityEnum = pgEnum("ethnicity", ETHNICITIES);
+export const majorEnum = pgEnum("major", MAJORS);
+export const sponsorTierEnum = pgEnum("sponsor_tier", SPONSOR_TIERS);
+export const hackathonApplicationStateEnum = pgEnum(
   "hackathon_application_state",
   HACKATHON_APPLICATION_STATES,
 );
-export const sponsorTierEnum = pgEnum("sponsor_tier", SPONSOR_TIERS);
 
 export const Hackathon = createTable("hackathon", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -57,10 +55,12 @@ export const Member = createTable("member", (t) => ({
   age: t.integer().notNull(),
   shirtSize: shirtSizeEnum().notNull(),
   gender: genderEnum().notNull(),
-  levelOfStudy: levelOfStudyEnum().notNull(),
+  // Enum values exceed 63 bytes, so we need to use varchar instead of a pgEnum
+  levelOfStudy: t.varchar({ length: 255, enum: LEVELS_OF_STUDY }).notNull(),
   ethnicity: ethnicityEnum().notNull(),
   major: majorEnum().notNull(),
-  school: schoolEnum().notNull(),
+  // Some schools have REALLY long names
+  school: t.text({ enum: SCHOOLS }).notNull(),
 }));
 
 export const HackathonApplication = createTable(
@@ -78,7 +78,9 @@ export const HackathonApplication = createTable(
       .references(() => Hackathon.id, {
         onDelete: "cascade",
       }),
-    state: hackathonApplicationStateEnum().notNull(),
+    state: t
+      .varchar({ length: 255, enum: HACKATHON_APPLICATION_STATES })
+      .notNull(),
     // Dynamic json fields (e.g. survey responses)
     survey: t.jsonb().notNull(),
   }),
