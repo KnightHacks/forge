@@ -436,7 +436,7 @@ export const COUNTRIES = [
   "Zimbabwe",
 ] as const;
 
-export const APPLICATION_STATUSES = [
+export const HACKATHON_APPLICATION_STATES = [
   "withdrawn",
   "pending",
   "accepted",
