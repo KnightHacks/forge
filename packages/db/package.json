@@ -12,9 +12,9 @@
       "types": "./dist/client.d.ts",
       "default": "./src/client.ts"
     },
-    "./schema": {
-      "types": "./dist/schemas/index.d.ts",
-      "default": "./src/schemas/index.ts"
+    "./schemas/*": {
+      "types": "./dist/schemas/*.d.ts",
+      "default": "./src/schemas/*.ts"
     }
   },
   "license": "MIT",
