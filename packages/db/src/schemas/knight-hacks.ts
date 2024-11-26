@@ -59,7 +59,7 @@ export const Member = createTable("member", (t) => ({
   levelOfStudy: t.varchar({ length: 255, enum: LEVELS_OF_STUDY }).notNull(),
   ethnicity: ethnicityEnum().notNull(),
   major: majorEnum().notNull(),
-  // Some schools have REALLY long names
+  // Like levelOfStudy, enum values exceed 63 bytes (some schools have REALLY long names)
   school: t.text({ enum: SCHOOLS }).notNull(),
 }));
 
