@@ -7,7 +7,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import Discord from "next-auth/providers/discord";
 
 import { db } from "@blade/db/client";
-import { Account, Session, User } from "@blade/db/schema";
+import { Account, Session, User } from "@blade/db/schemas/auth";
 
 import { env } from "../env";
 
