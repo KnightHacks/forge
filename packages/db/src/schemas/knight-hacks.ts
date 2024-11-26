@@ -1,4 +1,5 @@
 import { pgEnum, pgTableCreator } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
 
 import {
   ETHNICITIES,
@@ -62,6 +63,8 @@ export const Member = createTable("member", (t) => ({
   // Like levelOfStudy, enum values exceed 63 bytes (some schools have REALLY long names)
   school: t.text({ enum: SCHOOLS }).notNull(),
 }));
+
+export const InsertMemberSchema = createInsertSchema(Member);
 
 export const HackathonApplication = createTable(
   "hackaton_application",
