@@ -73,6 +73,37 @@ export function MemberApplicationForm() {
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="addressLine1"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Address Line 1</FormLabel>
+              <FormControl>
+                <Input placeholder="4000 Central Florida Blvd" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="addressLine2"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Address Line 2</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="APT 407"
+                  {...field}
+                  value={field.value ?? ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <Button type="submit">Submit</Button>
       </form>
     </Form>
