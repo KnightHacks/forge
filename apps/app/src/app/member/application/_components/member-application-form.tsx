@@ -16,6 +16,14 @@ import { Input } from "@blade/ui/input";
 export function MemberApplicationForm() {
   const form = useForm({
     schema: InsertMemberSchema,
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phoneNumber: "",
+      addressLine1: "",
+      addressLine2: "",
+    },
   });
 
   return (
