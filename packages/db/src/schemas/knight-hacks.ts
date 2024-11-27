@@ -64,7 +64,15 @@ export const Member = createTable("member", (t) => ({
   school: t.text({ enum: SCHOOLS }).notNull(),
 }));
 
-export const InsertMemberSchema = createInsertSchema(Member);
+export const InsertMemberSchema = createInsertSchema(Member, {
+  email: (schema) => schema.email.email(),
+  phoneNumber: (schema) => schema.phoneNumber.regex(/^\d{3}-\d{3}-\d{4}$/), // 123-456-7890,
+  githubProfileUrl: (schema) => schema.githubProfileUrl.url(),
+  linkedinProfileUrl: (schema) => schema.linkedinProfileUrl.url(),
+  resumeUrl: (schema) => schema.resumeUrl.url(),
+  websiteUrl: (schema) => schema.websiteUrl.url(),
+  age: (schema) => schema.age.min(18, "You must be at least 18 years old"),
+});
 
 export const HackathonApplication = createTable(
   "hackaton_application",
