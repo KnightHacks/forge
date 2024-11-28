@@ -6,7 +6,6 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end
  */
-import type { NextApiRequest, NextApiResponse } from "next";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { Stripe } from "stripe";
 import superjson from "superjson";
@@ -44,13 +43,10 @@ const isomorphicGetSession = async (headers: Headers) => {
 export const createTRPCContext = async (opts: {
   headers: Headers;
   session: Session | null;
-  req: NextApiRequest;
-  res: NextApiResponse;
 }) => {
   const authToken = opts.headers.get("Authorization") ?? null;
   const session = await isomorphicGetSession(opts.headers);
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
-  const { req, res } = opts;
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
   console.log(">>> tRPC Request from", source, "by", session?.user);
 
@@ -58,8 +54,6 @@ export const createTRPCContext = async (opts: {
     session,
     db,
     opts,
-    req,
-    res,
     stripe,
     token: authToken,
   };
