@@ -22,7 +22,9 @@
     "@blade/auth": "workspace:*",
     "@blade/db": "workspace:*",
     "@blade/validators": "workspace:*",
+    "@stripe/stripe-js": "^5.2.0",
     "@trpc/server": "catalog:",
+    "stripe": "^17.4.0",
     "superjson": "2.2.1",
     "zod": "catalog:"
   },
