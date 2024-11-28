@@ -12,6 +12,8 @@ export const LEVELS_OF_STUDY = [
   "Prefer not to answer",
 ] as const;
 
+export const KNIGHTHACKS_MEMBERSHIP_PRICE = 2500;
+
 export const GENDERS = [
   "Man",
   "Woman",

@@ -1,5 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 
+import { KNIGHTHACKS_MEMBERSHIP_PRICE } from "@blade/consts/knight-hacks";
+
 import { env } from "../../env";
 import { protectedProcedure } from "../trpc";
 
@@ -8,7 +10,9 @@ export const paymentRouter = {
     const baseUrl =
       env.NODE_ENV === "development"
         ? "http://localhost:3000"
-        : `https://${env.AUTH_SECRET}`;
+        : "https://app.knighthacks.org";
+
+    const price = KNIGHTHACKS_MEMBERSHIP_PRICE as number;
 
     const session = await ctx.stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -19,7 +23,7 @@ export const paymentRouter = {
             product_data: {
               name: "Club Membership",
             },
-            unit_amount: 1000, // Price in cents
+            unit_amount: price, // Price in cents
           },
           quantity: 1,
         },

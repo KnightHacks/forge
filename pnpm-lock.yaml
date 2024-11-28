@@ -342,6 +342,9 @@ importers:
       '@blade/auth':
         specifier: workspace:*
         version: link:../auth
+      '@blade/consts':
+        specifier: workspace:*
+        version: link:../consts
       '@blade/db':
         specifier: workspace:*
         version: link:../db

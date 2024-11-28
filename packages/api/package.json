@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@blade/auth": "workspace:*",
+    "@blade/consts": "workspace:*",
     "@blade/db": "workspace:*",
     "@blade/validators": "workspace:*",
     "@stripe/stripe-js": "^5.2.0",
