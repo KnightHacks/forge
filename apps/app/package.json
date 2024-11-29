@@ -17,6 +17,7 @@
   "dependencies": {
     "@blade/api": "workspace:*",
     "@blade/auth": "workspace:*",
+    "@blade/consts": "workspace:*",
     "@blade/db": "workspace:*",
     "@blade/ui": "workspace:*",
     "@blade/validators": "workspace:*",
