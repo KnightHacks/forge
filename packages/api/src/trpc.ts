@@ -45,14 +45,12 @@ export const createTRPCContext = async (opts: {
 }) => {
   const authToken = opts.headers.get("Authorization") ?? null;
   const session = await isomorphicGetSession(opts.headers);
-  const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
   console.log(">>> tRPC Request from", source, "by", session?.user);
 
   return {
     session,
     opts,
-    stripe,
     token: authToken,
   };
 };

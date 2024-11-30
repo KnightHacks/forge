@@ -1,4 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import Stripe from "stripe";
 
 import { KNIGHTHACKS_MEMBERSHIP_PRICE } from "@blade/consts/knight-hacks";
 
@@ -7,6 +8,8 @@ import { protectedProcedure } from "../trpc";
 
 export const paymentRouter = {
   createCheckout: protectedProcedure.mutation(async ({ ctx }) => {
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
+
     const baseUrl =
       env.NODE_ENV === "development"
         ? "http://localhost:3000"
@@ -14,7 +17,7 @@ export const paymentRouter = {
 
     const price = KNIGHTHACKS_MEMBERSHIP_PRICE as number;
 
-    const session = await ctx.stripe.checkout.sessions.create({
+    const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
         {
