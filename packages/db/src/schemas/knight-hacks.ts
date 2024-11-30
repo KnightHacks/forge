@@ -35,32 +35,36 @@ export const Hackathon = createTable("hackathon", (t) => ({
   endDate: t.timestamp().notNull(),
 }));
 
-export const Member = createTable("member", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  userId: t
-    .uuid()
-    .notNull()
-    .references(() => User.id, { onDelete: "cascade" }),
-  firstName: t.varchar({ length: 255 }).notNull(),
-  lastName: t.varchar({ length: 255 }).notNull(),
-  age: t.integer().notNull(),
-  email: t.varchar({ length: 255 }).notNull(),
-  phoneNumber: t.varchar({ length: 255 }).notNull(),
-  // Some enum values exceed 63 bytes
-  school: t.text({ enum: SCHOOLS }).notNull(),
-  // Some enum values exceed 63 bytes
-  levelOfStudy: t.varchar({ length: 255, enum: LEVELS_OF_STUDY }).notNull(),
-  gender: genderEnum().notNull(),
-  raceOrEthnicity: raceOrEthnicityEnum().notNull(),
-  shirtSize: shirtSizeEnum().notNull(),
-  githubProfileUrl: t.varchar({ length: 255 }),
-  linkedinProfileUrl: t.varchar({ length: 255 }),
-  websiteUrl: t.varchar({ length: 255 }),
-  resumeUrl: t.varchar({ length: 255 }),
-}), (t) => ({
-  uniqueEmail: unique().on(t.email),
-  uniquePhoneNumber: unique().on(t.phoneNumber)
-}));
+export const Member = createTable(
+  "member",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    userId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "cascade" }),
+    firstName: t.varchar({ length: 255 }).notNull(),
+    lastName: t.varchar({ length: 255 }).notNull(),
+    age: t.integer().notNull(),
+    email: t.varchar({ length: 255 }).notNull(),
+    phoneNumber: t.varchar({ length: 255 }).notNull(),
+    // Some enum values exceed 63 bytes
+    school: t.text({ enum: SCHOOLS }).notNull(),
+    // Some enum values exceed 63 bytes
+    levelOfStudy: t.varchar({ length: 255, enum: LEVELS_OF_STUDY }).notNull(),
+    gender: genderEnum().notNull(),
+    raceOrEthnicity: raceOrEthnicityEnum().notNull(),
+    shirtSize: shirtSizeEnum().notNull(),
+    githubProfileUrl: t.varchar({ length: 255 }),
+    linkedinProfileUrl: t.varchar({ length: 255 }),
+    websiteUrl: t.varchar({ length: 255 }),
+    resumeUrl: t.varchar({ length: 255 }),
+  }),
+  (t) => ({
+    uniqueEmail: unique().on(t.email),
+    uniquePhoneNumber: unique().on(t.phoneNumber),
+  }),
+);
 
 export const InsertMemberSchema = createInsertSchema(Member);
 
