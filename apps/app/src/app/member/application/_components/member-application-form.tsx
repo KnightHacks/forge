@@ -29,8 +29,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@blade/ui/select";
+import { toast } from "@blade/ui/toast";
+
+import { api } from "~/trpc/react";
 
 export function MemberApplicationForm() {
+  const createMember = api.member.createMember.useMutation({
+    onSuccess() {
+      toast.success("Application submitted successfully!");
+    },
+    onError() {
+      toast.error("Oops! Something went wrong. Please try again later.");
+    },
+  });
   const form = useForm({
     schema: InsertMemberSchema.extend({
       // userId will be derived from the user's session on the server
@@ -66,9 +77,7 @@ export function MemberApplicationForm() {
       <form
         className="space-y-4"
         noValidate
-        onSubmit={form.handleSubmit((values) => {
-          console.log(values);
-        })}
+        onSubmit={form.handleSubmit((values) => createMember.mutate(values))}
       >
         <h1 className="text-2xl font-bold">Application Form</h1>
         <FormField
