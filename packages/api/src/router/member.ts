@@ -7,8 +7,11 @@ import { protectedProcedure } from "../trpc";
 
 export const memberRouter = {
   createMember: protectedProcedure
-    .input(InsertMemberSchema)
-    .mutation(async ({ input }) => {
-      await db.insert(Member).values(input);
+    .input(InsertMemberSchema.omit({ userId: true }))
+    .mutation(async ({ input, ctx }) => {
+      await db.insert(Member).values({
+        ...input,
+        userId: ctx.session.user.id,
+      });
     }),
 } satisfies TRPCRouterRecord;
