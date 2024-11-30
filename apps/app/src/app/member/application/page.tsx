@@ -8,7 +8,7 @@ export default async function MemberApplicationPage() {
   const session = await auth();
 
   if (session == null) {
-    redirect("/sign-in");
+    redirect(SIGN_IN_PATH);
   }
 
   return (
