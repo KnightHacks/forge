@@ -14,7 +14,7 @@
     "db:push": "turbo -F @forge/db push",
     "db:studio": "turbo -F @forge/db studio",
     "dev": "turbo watch dev --continue",
-    "dev:app": "turbo watch dev -F @forge/app...",
+    "dev:bastion": "turbo watch dev -F @forge/bastion...",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
     "format:fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
     "lint": "turbo run lint --continue -- --cache --cache-location .cache/.eslintcache",

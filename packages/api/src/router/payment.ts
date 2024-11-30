@@ -13,7 +13,7 @@ export const paymentRouter = {
     const baseUrl =
       env.NODE_ENV === "development"
         ? "http://localhost:3000"
-        : "https://app.knighthacks.org";
+        : "https://bastion.knighthacks.org";
 
     const price = KNIGHTHACKS_MEMBERSHIP_PRICE as number;
 

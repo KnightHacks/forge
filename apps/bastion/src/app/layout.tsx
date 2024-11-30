@@ -7,7 +7,7 @@ import { GeistSans } from "geist/font/sans";
 
 import { TRPCReactProvider } from "~/trpc/react";
 
-import "~/app/globals.css";
+import "~/bastion/globals.css";
 
 import { env } from "~/env";
 
