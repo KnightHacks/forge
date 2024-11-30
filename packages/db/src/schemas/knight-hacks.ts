@@ -9,7 +9,7 @@ import {
   SCHOOLS,
   SHIRT_SIZES,
   SPONSOR_TIERS,
-} from "@blade/consts/knight-hacks";
+} from "@forge/consts/knight-hacks";
 
 import { User } from "./auth";
 

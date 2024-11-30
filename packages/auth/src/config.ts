@@ -4,10 +4,9 @@ import type {
   Session as NextAuthSession,
 } from "next-auth";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import { db } from "@forge/db/client";
+import { Account, Session, User } from "@forge/db/schemas/auth";
 import Discord from "next-auth/providers/discord";
-
-import { db } from "@blade/db/client";
-import { Account, Session, User } from "@blade/db/schemas/auth";
 
 import { env } from "../env";
 

@@ -1,7 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-
-import { db } from "@blade/db/client";
-import { InsertMemberSchema, Member } from "@blade/db/schemas/knight-hacks";
+import { db } from "@forge/db/client";
+import { InsertMemberSchema, Member } from "@forge/db/schemas/knight-hacks";
 
 import { protectedProcedure } from "../trpc";
 

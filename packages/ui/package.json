@@ -1,5 +1,5 @@
 {
-  "name": "@blade/ui",
+  "name": "@forge/ui",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -46,10 +46,10 @@
     "vaul": "^1.1.1"
   },
   "devDependencies": {
-    "@blade/eslint-config": "workspace:*",
-    "@blade/prettier-config": "workspace:*",
-    "@blade/tailwind-config": "workspace:*",
-    "@blade/tsconfig": "workspace:*",
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tailwind-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
     "@types/react": "catalog:react18",
     "eslint": "catalog:",
     "prettier": "catalog:",
@@ -61,5 +61,5 @@
     "react": "catalog:react18",
     "zod": "catalog:"
   },
-  "prettier": "@blade/prettier-config"
+  "prettier": "@forge/prettier-config"
 }

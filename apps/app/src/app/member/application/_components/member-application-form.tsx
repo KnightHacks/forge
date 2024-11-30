@@ -1,16 +1,14 @@
 "use client";
 
-import { z } from "zod";
-
 import {
   GENDERS,
   LEVELS_OF_STUDY,
   RACES_OR_ETHNICITIES,
   SCHOOLS,
   SHIRT_SIZES,
-} from "@blade/consts/knight-hacks";
-import { InsertMemberSchema } from "@blade/db/schemas/knight-hacks";
-import { Button } from "@blade/ui/button";
+} from "@forge/consts/knight-hacks";
+import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
+import { Button } from "@forge/ui/button";
 import {
   Form,
   FormControl,
@@ -19,17 +17,18 @@ import {
   FormLabel,
   FormMessage,
   useForm,
-} from "@blade/ui/form";
-import { Input } from "@blade/ui/input";
-import { ResponsiveComboBox } from "@blade/ui/responsive-combo-box";
+} from "@forge/ui/form";
+import { Input } from "@forge/ui/input";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@blade/ui/select";
-import { toast } from "@blade/ui/toast";
+} from "@forge/ui/select";
+import { toast } from "@forge/ui/toast";
+import { z } from "zod";
 
 import { api } from "~/trpc/react";
 

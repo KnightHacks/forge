@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@blade/auth";
+import { auth } from "@forge/auth";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { MemberApplicationForm } from "./_components/member-application-form";

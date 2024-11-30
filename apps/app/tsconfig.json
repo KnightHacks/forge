@@ -1,5 +1,5 @@
 {
-  "extends": "@blade/tsconfig/base.json",
+  "extends": "@forge/tsconfig/base.json",
   "compilerOptions": {
     "lib": ["ES2022", "dom", "dom.iterable"],
     "jsx": "preserve",

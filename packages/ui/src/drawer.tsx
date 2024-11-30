@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 
-import { cn } from "@blade/ui";
+import { cn } from "@forge/ui";
 
 const Drawer = ({
   shouldScaleBackground = true,

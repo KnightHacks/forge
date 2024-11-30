@@ -1,6 +1,6 @@
-# ⚔️ Contributing to Blade
+# ⚔️ Contributing to Forge
 
-Welcome aboard and thank you for considering contributing to Blade! We appreciate your interest in our project and look forward to working with you. Before you get started, please read the rest of this document to understand how you can effectively contribute to Blade.
+Welcome aboard and thank you for considering contributing to Forge! We appreciate your interest in our project and look forward to working with you. Before you get started, please read the rest of this document to understand how you can effectively contribute to Forge.
 
 ## 📦 Setup
 
@@ -17,7 +17,7 @@ Create a `.env` file in the root of the repository like [`.env.example`](/.env.e
 
 If you're a Knight Hacks dev team member, we will have a document with the environment variables you need to set. If you don't have access to this document, please reach out to a member of the dev team.
 
-If you are not a Knight Hacks dev team member, you can still contribute to Blade! However, you will need to provide your own environment variables for the services we use.
+If you are not a Knight Hacks dev team member, you can still contribute to Forge! However, you will need to provide your own environment variables for the services we use.
 
 ### Database
 
@@ -27,9 +27,9 @@ If you'd like to preview the contents of the database, you can run `pnpm db:stud
 
 ## 🏗️ Development
 
-To run all of blade's applications, run `pnpm dev`. This will concurrently run development servers for all applications in the monorepo.
+To run all of forge's applications, run `pnpm dev`. This will concurrently run development servers for all applications in the monorepo.
 
-To run a specific application, you can run `pnpm dev --filter=<package-name>`. For example, to run the club site, you can run `pnpm dev --filter=@blade/club`.
+To run a specific application, you can run `pnpm dev --filter=<package-name>`. For example, to run the club site, you can run `pnpm dev --filter=@forge/club`.
 
 ### Adding a new UI component from shadcn/ui
 
@@ -57,7 +57,7 @@ In your pull request, it's important you provide a thorough test plan walking th
 
 ## 📝 Commits and Pull Requests
 
-For commit messages, simply keep it concise, descriptive, and **in all lowercase**. If this is your first time contributing to a large project like Blade, you could look through this neat tutorial: [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/).
+For commit messages, simply keep it concise, descriptive, and **in all lowercase**. If this is your first time contributing to a large project like Forge, you could look through this neat tutorial: [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/).
 
 ## 🔎 Before Submitting
 

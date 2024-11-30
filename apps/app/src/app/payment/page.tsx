@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-import { Button } from "@blade/ui/button";
+import { Button } from "@forge/ui/button";
 
 import { api } from "~/trpc/react";
 

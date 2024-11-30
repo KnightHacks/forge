@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { cn } from "@blade/ui";
+import { cn } from "@forge/ui";
 
 type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
 

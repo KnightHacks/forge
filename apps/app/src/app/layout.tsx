@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { cn } from "@forge/ui";
+import { ThemeProvider, ThemeToggle } from "@forge/ui/theme";
+import { Toaster } from "@forge/ui/toast";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
-
-import { cn } from "@blade/ui";
-import { ThemeProvider, ThemeToggle } from "@blade/ui/theme";
-import { Toaster } from "@blade/ui/toast";
 
 import { TRPCReactProvider } from "~/trpc/react";
 

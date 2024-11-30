@@ -1,5 +1,5 @@
 {
-  "name": "@blade/tailwind-config",
+  "name": "@forge/tailwind-config",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -20,12 +20,12 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@blade/eslint-config": "workspace:*",
-    "@blade/prettier-config": "workspace:*",
-    "@blade/tsconfig": "workspace:*",
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@blade/prettier-config"
+  "prettier": "@forge/prettier-config"
 }

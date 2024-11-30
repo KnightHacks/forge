@@ -1,5 +1,5 @@
 {
-  "name": "@blade/club",
+  "name": "@forge/club",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -15,7 +15,7 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@blade/ui": "workspace:*",
+    "@forge/ui": "workspace:*",
     "bun": "^1.1.33",
     "geist": "^1.3.1",
     "next": "^14.2.15",
@@ -23,10 +23,10 @@
     "react-dom": "catalog:react18"
   },
   "devDependencies": {
-    "@blade/eslint-config": "workspace:*",
-    "@blade/prettier-config": "workspace:*",
-    "@blade/tailwind-config": "workspace:*",
-    "@blade/tsconfig": "workspace:*",
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tailwind-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
     "@types/node": "^20.16.11",
     "@types/react": "catalog:react18",
     "@types/react-dom": "catalog:react18",
@@ -36,5 +36,5 @@
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@blade/prettier-config"
+  "prettier": "@forge/prettier-config"
 }

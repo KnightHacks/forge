@@ -1,5 +1,5 @@
 {
-  "name": "@blade/app",
+  "name": "@forge/app",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -15,12 +15,12 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@blade/api": "workspace:*",
-    "@blade/auth": "workspace:*",
-    "@blade/consts": "workspace:*",
-    "@blade/db": "workspace:*",
-    "@blade/ui": "workspace:*",
-    "@blade/validators": "workspace:*",
+    "@forge/api": "workspace:*",
+    "@forge/auth": "workspace:*",
+    "@forge/consts": "workspace:*",
+    "@forge/db": "workspace:*",
+    "@forge/ui": "workspace:*",
+    "@forge/validators": "workspace:*",
     "@stripe/react-stripe-js": "^3.0.0",
     "@stripe/stripe-js": "^5.2.0",
     "@t3-oss/env-nextjs": "^0.11.1",
@@ -37,10 +37,10 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@blade/eslint-config": "workspace:*",
-    "@blade/prettier-config": "workspace:*",
-    "@blade/tailwind-config": "workspace:*",
-    "@blade/tsconfig": "workspace:*",
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tailwind-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
     "@types/node": "^20.16.11",
     "@types/react": "catalog:react18",
     "@types/react-dom": "catalog:react18",
@@ -51,5 +51,5 @@
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@blade/prettier-config"
+  "prettier": "@forge/prettier-config"
 }

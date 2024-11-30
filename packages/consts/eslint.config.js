@@ -1,4 +1,4 @@
-import baseConfig from "@blade/eslint-config/base";
+import baseConfig from "@forge/eslint-config/base";
 
 /** @type {import('typescript-eslint').Config} */
 export default [

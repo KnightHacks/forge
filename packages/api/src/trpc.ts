@@ -6,12 +6,11 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end
  */
+import type { Session } from "@forge/auth";
+import { auth, validateToken } from "@forge/auth";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-
-import type { Session } from "@blade/auth";
-import { auth, validateToken } from "@blade/auth";
 
 /**
  * Isomorphic Session getter for API requests

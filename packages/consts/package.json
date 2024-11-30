@@ -1,5 +1,5 @@
 {
-  "name": "@blade/consts",
+  "name": "@forge/consts",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -19,12 +19,12 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {
-    "@blade/eslint-config": "workspace:*",
-    "@blade/prettier-config": "workspace:*",
-    "@blade/tsconfig": "workspace:*",
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@blade/prettier-config"
+  "prettier": "@forge/prettier-config"
 }

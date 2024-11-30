@@ -1,5 +1,5 @@
 {
-  "name": "@blade/db",
+  "name": "@forge/db",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -30,7 +30,7 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@blade/consts": "workspace:*",
+    "@forge/consts": "workspace:*",
     "@t3-oss/env-nextjs": "^0.11.1",
     "drizzle-orm": "^0.35.1",
     "drizzle-zod": "^0.5.1",
@@ -38,9 +38,9 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@blade/eslint-config": "workspace:*",
-    "@blade/prettier-config": "workspace:*",
-    "@blade/tsconfig": "workspace:*",
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
     "@types/pg": "^8.11.10",
     "dotenv-cli": "^7.4.2",
     "drizzle-kit": "^0.26.2",
@@ -48,5 +48,5 @@
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@blade/prettier-config"
+  "prettier": "@forge/prettier-config"
 }

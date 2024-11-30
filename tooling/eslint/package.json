@@ -1,5 +1,5 @@
 {
-  "name": "@blade/eslint-config",
+  "name": "@forge/eslint-config",
   "private": true,
   "version": "0.3.0",
   "type": "module",
@@ -24,12 +24,12 @@
     "typescript-eslint": "^8.9.0"
   },
   "devDependencies": {
-    "@blade/prettier-config": "workspace:*",
-    "@blade/tsconfig": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
     "@types/eslint__js": "8.42.3",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@blade/prettier-config"
+  "prettier": "@forge/prettier-config"
 }

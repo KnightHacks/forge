@@ -51,7 +51,7 @@ importers:
 
   .:
     devDependencies:
-      '@blade/prettier-config':
+      '@forge/prettier-config':
         specifier: workspace:*
         version: link:tooling/prettier
       '@turbo/gen':
@@ -69,22 +69,22 @@ importers:
 
   apps/app:
     dependencies:
-      '@blade/api':
+      '@forge/api':
         specifier: workspace:*
         version: link:../../packages/api
-      '@blade/auth':
+      '@forge/auth':
         specifier: workspace:*
         version: link:../../packages/auth
-      '@blade/consts':
+      '@forge/consts':
         specifier: workspace:*
         version: link:../../packages/consts
-      '@blade/db':
+      '@forge/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@blade/ui':
+      '@forge/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      '@blade/validators':
+      '@forge/validators':
         specifier: workspace:*
         version: link:../../packages/validators
       '@stripe/react-stripe-js':
@@ -130,16 +130,16 @@ importers:
         specifier: 'catalog:'
         version: 3.23.8
     devDependencies:
-      '@blade/eslint-config':
+      '@forge/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@blade/prettier-config':
+      '@forge/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@blade/tailwind-config':
+      '@forge/tailwind-config':
         specifier: workspace:*
         version: link:../../tooling/tailwind
-      '@blade/tsconfig':
+      '@forge/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@types/node':
@@ -172,7 +172,7 @@ importers:
 
   apps/club:
     dependencies:
-      '@blade/ui':
+      '@forge/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       bun:
@@ -191,16 +191,16 @@ importers:
         specifier: catalog:react18
         version: 18.3.1(react@18.3.1)
     devDependencies:
-      '@blade/eslint-config':
+      '@forge/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@blade/prettier-config':
+      '@forge/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@blade/tailwind-config':
+      '@forge/tailwind-config':
         specifier: workspace:*
         version: link:../../tooling/tailwind
-      '@blade/tsconfig':
+      '@forge/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@types/node':
@@ -230,16 +230,16 @@ importers:
 
   packages/api:
     dependencies:
-      '@blade/auth':
+      '@forge/auth':
         specifier: workspace:*
         version: link:../auth
-      '@blade/consts':
+      '@forge/consts':
         specifier: workspace:*
         version: link:../consts
-      '@blade/db':
+      '@forge/db':
         specifier: workspace:*
         version: link:../db
-      '@blade/validators':
+      '@forge/validators':
         specifier: workspace:*
         version: link:../validators
       '@stripe/stripe-js':
@@ -258,13 +258,13 @@ importers:
         specifier: 'catalog:'
         version: 3.23.8
     devDependencies:
-      '@blade/eslint-config':
+      '@forge/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@blade/prettier-config':
+      '@forge/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@blade/tsconfig':
+      '@forge/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@types/pg':
@@ -288,7 +288,7 @@ importers:
       '@auth/drizzle-adapter':
         specifier: 1.4.2
         version: 1.4.2
-      '@blade/db':
+      '@forge/db':
         specifier: workspace:*
         version: link:../db
       '@t3-oss/env-nextjs':
@@ -310,13 +310,13 @@ importers:
         specifier: 'catalog:'
         version: 3.23.8
     devDependencies:
-      '@blade/eslint-config':
+      '@forge/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@blade/prettier-config':
+      '@forge/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@blade/tsconfig':
+      '@forge/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       eslint:
@@ -331,13 +331,13 @@ importers:
 
   packages/consts:
     devDependencies:
-      '@blade/eslint-config':
+      '@forge/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@blade/prettier-config':
+      '@forge/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@blade/tsconfig':
+      '@forge/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       eslint:
@@ -352,7 +352,7 @@ importers:
 
   packages/db:
     dependencies:
-      '@blade/consts':
+      '@forge/consts':
         specifier: workspace:*
         version: link:../consts
       '@t3-oss/env-nextjs':
@@ -371,13 +371,13 @@ importers:
         specifier: 'catalog:'
         version: 3.23.8
     devDependencies:
-      '@blade/eslint-config':
+      '@forge/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@blade/prettier-config':
+      '@forge/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@blade/tsconfig':
+      '@forge/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@types/pg':
@@ -453,16 +453,16 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@18.3.1)(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
-      '@blade/eslint-config':
+      '@forge/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@blade/prettier-config':
+      '@forge/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@blade/tailwind-config':
+      '@forge/tailwind-config':
         specifier: workspace:*
         version: link:../../tooling/tailwind
-      '@blade/tsconfig':
+      '@forge/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@types/react':
@@ -490,13 +490,13 @@ importers:
         specifier: 'catalog:'
         version: 3.23.8
     devDependencies:
-      '@blade/eslint-config':
+      '@forge/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
-      '@blade/prettier-config':
+      '@forge/prettier-config':
         specifier: workspace:*
         version: link:../../tooling/prettier
-      '@blade/tsconfig':
+      '@forge/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       eslint:
@@ -536,10 +536,10 @@ importers:
         specifier: ^8.9.0
         version: 8.9.0(eslint@9.12.0(jiti@2.3.3))(typescript@5.6.3)
     devDependencies:
-      '@blade/prettier-config':
+      '@forge/prettier-config':
         specifier: workspace:*
         version: link:../prettier
-      '@blade/tsconfig':
+      '@forge/tsconfig':
         specifier: workspace:*
         version: link:../typescript
       '@types/eslint__js':
@@ -569,7 +569,7 @@ importers:
         specifier: ^0.6.8
         version: 0.6.8(@ianvs/prettier-plugin-sort-imports@4.3.1(prettier@3.3.3))(prettier@3.3.3)
     devDependencies:
-      '@blade/tsconfig':
+      '@forge/tsconfig':
         specifier: workspace:*
         version: link:../typescript
       typescript:
@@ -588,13 +588,13 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.14(ts-node@10.9.2(@types/node@22.7.5)(typescript@5.6.3)))
     devDependencies:
-      '@blade/eslint-config':
+      '@forge/eslint-config':
         specifier: workspace:*
         version: link:../eslint
-      '@blade/prettier-config':
+      '@forge/prettier-config':
         specifier: workspace:*
         version: link:../prettier
-      '@blade/tsconfig':
+      '@forge/tsconfig':
         specifier: workspace:*
         version: link:../typescript
       eslint:

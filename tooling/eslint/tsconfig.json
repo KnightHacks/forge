@@ -1,5 +1,5 @@
 {
-  "extends": "@blade/tsconfig/base.json",
+  "extends": "@forge/tsconfig/base.json",
   "include": ["."],
   "exclude": ["node_modules"]
 }

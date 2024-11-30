@@ -2,7 +2,7 @@
   <a href="https://discord.gg/ynr44H6KAY">
       <img width="125" height="125" src="./.github/knight-hacks-logo.svg"/>
   </a>
-  <h1>Blade</h1>
+  <h1>Forge</h1>
 </div>
 
 > [!NOTE]
@@ -11,7 +11,7 @@
 
 ## 👋 Introduction
 
-Welcome to Knight Hacks' monorepo, Blade! It contains the source code for all applications created by our development team!
+Welcome to Knight Hacks' monorepo, Forge! It contains the source code for all applications created by our development team!
 
 ## 🗺 Layout
 

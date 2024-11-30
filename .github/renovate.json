@@ -3,7 +3,7 @@
   "extends": ["config:base"],
   "packageRules": [
     {
-      "matchPackagePatterns": ["^@blade/"],
+      "matchPackagePatterns": ["^@forge/"],
       "enabled": false
     }
   ],

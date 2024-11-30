@@ -1,4 +1,4 @@
-import { cn } from "@blade/ui";
+import { cn } from "@forge/ui";
 
 function Skeleton({
   className,

@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-
-import { Button } from "@blade/ui/button";
+import { Button } from "@forge/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -10,10 +9,10 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@blade/ui/command";
-import { Drawer, DrawerContent, DrawerTrigger } from "@blade/ui/drawer";
-import { Popover, PopoverContent, PopoverTrigger } from "@blade/ui/popover";
-import { useMediaQuery } from "@blade/ui/use-media-query";
+} from "@forge/ui/command";
+import { Drawer, DrawerContent, DrawerTrigger } from "@forge/ui/drawer";
+import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
+import { useMediaQuery } from "@forge/ui/use-media-query";
 
 interface ResponsiveComboBoxProps<T> {
   items: readonly T[];

@@ -1,5 +1,5 @@
 {
-  "name": "@blade/api",
+  "name": "@forge/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,10 +19,10 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@blade/auth": "workspace:*",
-    "@blade/consts": "workspace:*",
-    "@blade/db": "workspace:*",
-    "@blade/validators": "workspace:*",
+    "@forge/auth": "workspace:*",
+    "@forge/consts": "workspace:*",
+    "@forge/db": "workspace:*",
+    "@forge/validators": "workspace:*",
     "@stripe/stripe-js": "^5.2.0",
     "@trpc/server": "catalog:",
     "stripe": "^17.4.0",
@@ -30,13 +30,13 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@blade/eslint-config": "workspace:*",
-    "@blade/prettier-config": "workspace:*",
-    "@blade/tsconfig": "workspace:*",
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
     "@types/pg": "^8.11.10",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@blade/prettier-config"
+  "prettier": "@forge/prettier-config"
 }

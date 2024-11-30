@@ -1,10 +1,9 @@
+import type { AppRouter } from "@forge/api";
 import { cache } from "react";
 import { headers } from "next/headers";
+import { createCaller, createTRPCContext } from "@forge/api";
+import { auth } from "@forge/auth";
 import { createHydrationHelpers } from "@trpc/react-query/rsc";
-
-import type { AppRouter } from "@blade/api";
-import { createCaller, createTRPCContext } from "@blade/api";
-import { auth } from "@blade/auth";
 
 import { createQueryClient } from "./query-client";
 

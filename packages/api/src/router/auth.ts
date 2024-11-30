@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 
-import { invalidateSessionToken } from "@blade/auth";
+import { invalidateSessionToken } from "@forge/auth";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
 

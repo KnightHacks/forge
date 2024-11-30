@@ -1,5 +1,5 @@
-import { auth, signIn, signOut } from "@blade/auth";
-import { Button } from "@blade/ui/button";
+import { auth, signIn, signOut } from "@forge/auth";
+import { Button } from "@forge/ui/button";
 
 export async function AuthShowcase() {
   const session = await auth();
