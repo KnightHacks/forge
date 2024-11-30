@@ -7,14 +7,11 @@
  * The pieces you will need to use are documented accordingly near the end
  */
 import { initTRPC, TRPCError } from "@trpc/server";
-import { Stripe } from "stripe";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import type { Session } from "@blade/auth";
 import { auth, validateToken } from "@blade/auth";
-
-import { env } from "../env";
 
 /**
  * Isomorphic Session getter for API requests
