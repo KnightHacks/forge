@@ -13,7 +13,6 @@ import { ZodError } from "zod";
 
 import type { Session } from "@blade/auth";
 import { auth, validateToken } from "@blade/auth";
-import { db } from "@blade/db/client";
 
 import { env } from "../env";
 
@@ -52,7 +51,6 @@ export const createTRPCContext = async (opts: {
 
   return {
     session,
-    db,
     opts,
     stripe,
     token: authToken,
