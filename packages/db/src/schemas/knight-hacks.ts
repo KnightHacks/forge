@@ -1,4 +1,4 @@
-import { pgEnum, pgTableCreator } from "drizzle-orm/pg-core";
+import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 import {
@@ -57,6 +57,9 @@ export const Member = createTable("member", (t) => ({
   linkedinProfileUrl: t.varchar({ length: 255 }),
   websiteUrl: t.varchar({ length: 255 }),
   resumeUrl: t.varchar({ length: 255 }),
+}), (t) => ({
+  uniqueEmail: unique().on(t.email),
+  uniquePhoneNumber: unique().on(t.phoneNumber)
 }));
 
 export const InsertMemberSchema = createInsertSchema(Member);
