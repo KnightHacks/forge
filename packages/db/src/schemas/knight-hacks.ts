@@ -2,11 +2,10 @@ import { pgEnum, pgTableCreator } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 import {
-  ETHNICITIES,
   GENDERS,
   HACKATHON_APPLICATION_STATES,
   LEVELS_OF_STUDY,
-  MAJORS,
+  RACE_OR_ETHNICITY,
   SCHOOLS,
   SHIRT_SIZES,
   SPONSOR_TIERS,
@@ -18,8 +17,7 @@ const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
 export const shirtSizeEnum = pgEnum("shirt_size", SHIRT_SIZES);
 export const genderEnum = pgEnum("gender", GENDERS);
-export const ethnicityEnum = pgEnum("ethnicity", ETHNICITIES);
-export const majorEnum = pgEnum("major", MAJORS);
+export const raceOrEthnicityEnum = pgEnum("ethnicity", RACE_OR_ETHNICITY);
 export const sponsorTierEnum = pgEnum("sponsor_tier", SPONSOR_TIERS);
 export const hackathonApplicationStateEnum = pgEnum(
   "hackathon_application_state",
@@ -42,26 +40,20 @@ export const Member = createTable("member", (t) => ({
     .references(() => User.id, { onDelete: "cascade" }),
   firstName: t.varchar({ length: 255 }).notNull(),
   lastName: t.varchar({ length: 255 }).notNull(),
+  age: t.integer().notNull(),
   email: t.varchar({ length: 255 }).notNull(),
   phoneNumber: t.varchar({ length: 255 }).notNull(),
-  addressLine1: t.varchar({ length: 255 }).notNull(),
-  addressLine2: t.varchar({ length: 255 }),
-  city: t.varchar({ length: 255 }).notNull(),
-  state: t.varchar({ length: 255 }).notNull(),
-  zipCode: t.varchar({ length: 255 }).notNull(),
+  // Some enum values exceed 63 bytes
+  school: t.text({ enum: SCHOOLS }).notNull(),
+  // Some enum values exceed 63 bytes
+  levelOfStudy: t.varchar({ length: 255, enum: LEVELS_OF_STUDY }).notNull(),
+  gender: genderEnum().notNull(),
+  raceOrEthnicity: raceOrEthnicityEnum().notNull(),
+  shirtSize: shirtSizeEnum().notNull(),
   githubProfileUrl: t.varchar({ length: 255 }),
   linkedinProfileUrl: t.varchar({ length: 255 }),
-  resumeUrl: t.varchar({ length: 255 }),
   websiteUrl: t.varchar({ length: 255 }),
-  age: t.integer().notNull(),
-  shirtSize: shirtSizeEnum().notNull(),
-  gender: genderEnum().notNull(),
-  // Enum values exceed 63 bytes, so we need to use varchar instead of a pgEnum
-  levelOfStudy: t.varchar({ length: 255, enum: LEVELS_OF_STUDY }).notNull(),
-  ethnicity: ethnicityEnum().notNull(),
-  major: majorEnum().notNull(),
-  // Like levelOfStudy, enum values exceed 63 bytes (some schools have REALLY long names)
-  school: t.text({ enum: SCHOOLS }).notNull(),
+  resumeUrl: t.varchar({ length: 255 }),
 }));
 
 export const InsertMemberSchema = createInsertSchema(Member);
