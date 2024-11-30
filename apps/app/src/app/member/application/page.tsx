@@ -12,7 +12,7 @@ export default async function MemberApplicationPage() {
   }
 
   return (
-    <main className="px-4">
+    <main className="px-8">
       <MemberApplicationForm />
     </main>
   );
