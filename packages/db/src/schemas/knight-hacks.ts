@@ -5,7 +5,7 @@ import {
   GENDERS,
   HACKATHON_APPLICATION_STATES,
   LEVELS_OF_STUDY,
-  RACE_OR_ETHNICITY,
+  RACES_OR_ETHNICITIES,
   SCHOOLS,
   SHIRT_SIZES,
   SPONSOR_TIERS,
@@ -17,7 +17,10 @@ const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
 export const shirtSizeEnum = pgEnum("shirt_size", SHIRT_SIZES);
 export const genderEnum = pgEnum("gender", GENDERS);
-export const raceOrEthnicityEnum = pgEnum("ethnicity", RACE_OR_ETHNICITY);
+export const raceOrEthnicityEnum = pgEnum(
+  "race_or_ethnicity",
+  RACES_OR_ETHNICITIES,
+);
 export const sponsorTierEnum = pgEnum("sponsor_tier", SPONSOR_TIERS);
 export const hackathonApplicationStateEnum = pgEnum(
   "hackathon_application_state",
