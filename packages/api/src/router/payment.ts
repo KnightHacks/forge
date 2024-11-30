@@ -7,7 +7,7 @@ import { env } from "../../env";
 import { protectedProcedure } from "../trpc";
 
 export const paymentRouter = {
-  createCheckout: protectedProcedure.mutation(async ({ ctx }) => {
+  createCheckout: protectedProcedure.mutation(async () => {
     const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
 
     const baseUrl =
