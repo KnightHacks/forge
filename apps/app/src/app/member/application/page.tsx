@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@blade/auth";
 
+import { SIGN_IN_PATH } from "~/consts";
 import { MemberApplicationForm } from "./_components/member-application-form";
 
 export default async function MemberApplicationPage() {
@@ -12,7 +13,7 @@ export default async function MemberApplicationPage() {
   }
 
   return (
-    <main className="px-8">
+    <main className="px-8 py-4">
       <MemberApplicationForm />
     </main>
   );
