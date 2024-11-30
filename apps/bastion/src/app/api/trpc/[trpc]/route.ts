@@ -1,6 +1,7 @@
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+
 import { appRouter, createTRPCContext } from "@forge/api";
 import { auth } from "@forge/auth";
-import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 /**
  * Configure basic CORS headers

@@ -1,4 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+
 import { db } from "@forge/db/client";
 import { InsertMemberSchema, Member } from "@forge/db/schemas/knight-hacks";
 

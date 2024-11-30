@@ -1,5 +1,7 @@
 "use client";
 
+import { z } from "zod";
+
 import {
   GENDERS,
   LEVELS_OF_STUDY,
@@ -28,7 +30,6 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 import { toast } from "@forge/ui/toast";
-import { z } from "zod";
 
 import { api } from "~/trpc/react";
 
