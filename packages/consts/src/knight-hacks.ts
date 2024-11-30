@@ -22,7 +22,7 @@ export const GENDERS = [
   "Prefer not to answer",
 ] as const;
 
-export const RACE_OR_ETHNICITY = [
+export const RACES_OR_ETHNICITIES = [
   "White",
   "Black or African American",
   "Hispanic / Latino / Spanish Origin",
