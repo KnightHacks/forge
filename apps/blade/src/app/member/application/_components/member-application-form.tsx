@@ -54,12 +54,18 @@ export function MemberApplicationForm() {
       phoneNumber: z
         .string()
         .regex(/^\d{3}-\d{3}-\d{4}$/, "Invalid phone number"),
+      // Read from date input as string, convert and validate as date, then transform to ISO string
+      dob: z
+        .string()
+        .pipe(z.coerce.date())
+        .transform((date) => date.toISOString()),
     }),
     defaultValues: {
       firstName: "",
       lastName: "",
       email: "",
       phoneNumber: "",
+      dob: "",
     },
   });
 
