@@ -59,6 +59,21 @@ export function MemberApplicationForm() {
         .string()
         .pipe(z.coerce.date())
         .transform((date) => date.toISOString()),
+      githubProfileUrl: z
+        .string()
+        .url({ message: "Invalid URL" })
+        .optional()
+        .or(z.literal("")),
+      linkedinProfileUrl: z
+        .string()
+        .url({ message: "Invalid URL" })
+        .optional()
+        .or(z.literal("")),
+      websiteUrl: z
+        .string()
+        .url({ message: "Invalid URL" })
+        .optional()
+        .or(z.literal("")),
     }),
     defaultValues: {
       firstName: "",
@@ -66,6 +81,9 @@ export function MemberApplicationForm() {
       email: "",
       phoneNumber: "",
       dob: "",
+      githubProfileUrl: "",
+      linkedinProfileUrl: "",
+      websiteUrl: "",
     },
   });
 
@@ -274,6 +292,51 @@ export function MemberApplicationForm() {
                     ))}
                   </SelectContent>
                 </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="githubProfileUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>GitHub Profile</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="https://github.com/knighthacks"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="linkedinProfileUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Linkedin Profile</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="https://www.linkedin.com/company/knight-hacks"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="websiteUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Personal Website</FormLabel>
+              <FormControl>
+                <Input placeholder="https://knighthacks.org" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
