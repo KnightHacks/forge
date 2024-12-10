@@ -48,16 +48,8 @@ export function MemberApplicationForm() {
       userId: z.undefined(),
       firstName: z.string().min(1, "Required"),
       lastName: z.string().min(1, "Required"),
-      age: z
-        .string()
-        .min(1, "Required")
-        .refine((value) => !isNaN(parseInt(value)), "Invalid age")
-        .transform((value) => parseInt(value))
-        .refine(
-          (age) => age >= 18,
-          "Must be at least 18 years old to be a Knight Hacks member",
-        )
-        .refine((age) => age <= 100, "Bruh be fr rn"),
+      // Age will be derived from dob on the server
+      age: z.undefined(),
       email: z.string().email("Invalid email").min(1, "Required"),
       phoneNumber: z
         .string()
@@ -66,7 +58,6 @@ export function MemberApplicationForm() {
     defaultValues: {
       firstName: "",
       lastName: "",
-      age: "",
       email: "",
       phoneNumber: "",
     },
@@ -134,12 +125,12 @@ export function MemberApplicationForm() {
         />
         <FormField
           control={form.control}
-          name="age"
+          name="dob"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Age</FormLabel>
+            <FormItem className="flex flex-col">
+              <FormLabel>Date of birth</FormLabel>
               <FormControl>
-                <Input placeholder="18" {...field} />
+                <Input type="date" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
