@@ -59,6 +59,7 @@ export const Member = createTable(
     linkedinProfileUrl: t.varchar({ length: 255 }),
     websiteUrl: t.varchar({ length: 255 }),
     resumeUrl: t.varchar({ length: 255 }),
+    birthDate: t.date().notNull(),
   }),
   (t) => ({
     uniqueEmail: unique().on(t.email),
