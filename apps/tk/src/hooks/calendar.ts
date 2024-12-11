@@ -432,7 +432,7 @@ export async function execute(client: Client) {
     });
 
     try {
-        cron.schedule("*/1 * * * *", async () => hookLogic(client, webhook));
+        cron.schedule("0 0 * * *", async () => hookLogic(client, webhook));
     } catch (err: unknown) {
         // silences eslint. type safety with our errors basically
         err instanceof Error
