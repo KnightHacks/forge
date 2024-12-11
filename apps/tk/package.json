@@ -1,0 +1,57 @@
+{
+  "name": "@forge/tk",
+  "version": "1.0.0",
+  "description": "The official Knight Hacks Discord Bot",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KnightHacks/tk.git"
+  },
+  "author": "Knight Hacks Dev Team",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KnightHacks/tk/issues"
+  },
+  "homepage": "https://github.com/KnightHacks/tk#readme",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node .",
+    "build": "tsup src/index.ts --format esm --out-dir dist --minify",
+    "format": "prettier --write \"**/*.{json,ts}\"",
+    "lint": "eslint . --ext ts --fix",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@googleapis/calendar": "^9.7.6",
+    "@libsql/client": "^0.7.0",
+    "@napi-rs/canvas": "^0.1.53",
+    "discord.js": "^14.7.1",
+    "dotenv": "^16.0.3",
+    "googleapis": "^140.0.1",
+    "he": "^1.2.0",
+    "jimp": "^0.22.12",
+    "libsql": "*",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^3.3.2",
+    "perf_hooks": "^0.0.1"
+  },
+  "devDependencies": {
+    "@types/he": "^1.2.3",
+    "@types/jimp": "^0.2.1",
+    "@types/node-cron": "^3.0.11",
+    "@types/node-fetch": "^2.6.11",
+    "@typescript-eslint/eslint-plugin": "^5.51.0",
+    "@typescript-eslint/parser": "^5.51.0",
+    "eslint": "^8.33.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-n": "^15.0.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "gapi-client": "^0.0.3",
+    "prettier": "^2.8.4",
+    "tsup": "^6.6.0",
+    "tsx": "^3.12.3",
+    "typescript": "^4.9.5"
+  }
+}
