@@ -4,7 +4,7 @@ import {
     SlashCommandBuilder,
 } from "discord.js";
 import db from "../db/db";
-import { events } from "../db/schema";
+import { userEvents } from "../db/schema";
 
 // CREATE EVENT COMMAND
 // Command to create an event
@@ -49,7 +49,7 @@ export async function execute(interaction: CommandInteraction) {
 
     try {
         // Create the event in the database
-        await db.insert(events).values({
+        await db.insert(userEvents).values({
             name: `${interaction.options.get("event_name")?.value}`,
             password: `${interaction.options.get("password")?.value}`,
             point_value: interaction.options.get("point_value")

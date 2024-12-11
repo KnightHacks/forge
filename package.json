@@ -31,5 +31,10 @@
     "turbo": "^2.1.3",
     "typescript": "catalog:"
   },
-  "prettier": "@forge/prettier-config"
+  "prettier": "@forge/prettier-config",
+  "pnpm": {
+    "overrides": {
+      "@types/node": "^22.10.1"
+    }
+  }
 }

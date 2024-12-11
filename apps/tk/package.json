@@ -10,9 +10,10 @@
   "scripts": {
     "dev": "pnpm with-env tsx watch src/index.ts",
     "start": "pnpm with-env node .",
-    "build": "pnpm with-env tsup src/index.ts --format esm --out-dir dist --minify",
+    "build": "pnpm with-env tsup src/index.ts --format esm --out-dir dist --platform node",
     "format": "prettier --write \"**/*.{json,ts}\"",
     "lint": "eslint . --ext ts --fix",
+    "typecheck": "tsc",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "with-env": "dotenv -e ../../.env --"
@@ -21,7 +22,6 @@
     "@googleapis/calendar": "^9.7.6",
     "@libsql/client": "^0.7.0",
     "@napi-rs/canvas": "^0.1.53",
-    "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
     "googleapis": "^140.0.1",
     "he": "^1.2.0",
@@ -39,6 +39,7 @@
     "@types/node-fetch": "^2.6.11",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
+    "discord.js": "^14.16.3",
     "eslint": "^8.33.0",
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-n": "^15.0.0",

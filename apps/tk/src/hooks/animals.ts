@@ -24,6 +24,7 @@ interface DuckProps {
     url: string;
 }
 
+// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
 export async function execute(client: Client) {
     const webhook = new WebhookClient({
         url: config.ANIMAL_WEBHOOK_URL,
@@ -66,6 +67,10 @@ function catHook(webhook: WebhookClient) {
         cron.schedule("0 17 * * *", async () => {
             const res = await fetch(url);
             const data = (await res.json()) as CatProps[];
+
+            if (!data[0]) {
+                return;
+            }
 
             const catEmbed = await createEmbed(data[0].url, "Daily Cat!");
 
@@ -130,6 +135,11 @@ async function goatHook(webhook: WebhookClient) {
     try {
         cron.schedule("30 18 * * *", async () => {
             const goat = GOATS[Math.floor(Math.random() * GOATS.length)];
+
+            if (!goat) {
+                return;
+            }
+
             const img = JIMP.read(goat.image);
             const width = (await img).getWidth(),
                 height = (await img).getHeight();

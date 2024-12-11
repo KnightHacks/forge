@@ -1,7 +1,7 @@
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import db from "../db/db";
-import { events, eventUsers, users, usersToEvents } from "../db/schema";
 import { and, eq } from "drizzle-orm";
+import db from "../db/db";
+import { eventUsers, userEvents, usersToEvents } from "../db/schema";
 
 // SIGN IN EVENT COMMAND
 // Command to sign into an event
@@ -20,7 +20,7 @@ export const data = new SlashCommandBuilder()
 // Logic for the ping command
 export async function execute(interaction: CommandInteraction) {
     // Retrieve the corresponding event from the database
-    const event = await db.query.events.findFirst({
+    const event = await db.query.userEvents.findFirst({
         where: (table, { eq }) =>
             eq(table.password, `${interaction.options.get("password")?.value}`),
     });
@@ -85,20 +85,27 @@ export async function execute(interaction: CommandInteraction) {
     }
     // Update the event's number of attendees
     await db
-        .update(events)
+        .update(userEvents)
         .set({
             num_attended: event.num_attended + 1,
         })
-        .where(eq(events.id, event.id));
+        .where(eq(userEvents.id, event.id));
 
     // Update users_to_events table
+    if (!result[0]) {
+        return;
+    }
+
     const userId = result[0].id;
+    if (!userId) {
+        return;
+    }
     const eventId = event.id;
 
     try {
         await db.insert(usersToEvents).values({
-            user_id: result[0].id,
-            event_id: event.id,
+            user_id: userId,
+            event_id: eventId
         });
     } catch (err) {
         console.log(err);

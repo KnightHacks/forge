@@ -1,9 +1,9 @@
-import { relations, sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 import {
-    text,
     integer,
-    sqliteTable,
     primaryKey,
+    sqliteTable,
+    text,
     unique,
     uniqueIndex,
 } from "drizzle-orm/sqlite-core";
@@ -192,7 +192,7 @@ export const sponsorsRelations = relations(sponsors, ({ one }) => {
 // EVENTS LOGIC
 
 // Events table
-export const events = sqliteTable("events", {
+export const userEvents = sqliteTable("events", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(),
     password: text("password").notNull(),
@@ -201,7 +201,7 @@ export const events = sqliteTable("events", {
 });
 
 // One event can have many users that have attended
-export const eventsRelations = relations(events, ({ many }) => ({
+export const eventsRelations = relations(userEvents, ({ many }) => ({
     usersToEvents: many(usersToEvents),
 }));
 
@@ -228,7 +228,7 @@ export const usersToEvents = sqliteTable(
             .references(() => eventUsers.id),
         event_id: integer("event_id")
             .notNull()
-            .references(() => events.id),
+            .references(() => userEvents.id),
     },
     (t) => ({
         pk: primaryKey({ columns: [t.user_id, t.event_id] }),
@@ -236,9 +236,9 @@ export const usersToEvents = sqliteTable(
 );
 
 export const usersToEventsRelations = relations(usersToEvents, ({ one }) => ({
-    event: one(events, {
+    event: one(userEvents, {
         fields: [usersToEvents.event_id],
-        references: [events.id],
+        references: [userEvents.id],
     }),
     event_user: one(eventUsers, {
         fields: [usersToEvents.user_id],
