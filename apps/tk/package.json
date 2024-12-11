@@ -1,27 +1,21 @@
 {
   "name": "@forge/tk",
   "version": "1.0.0",
-  "description": "The official Knight Hacks Discord Bot",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/KnightHacks/tk.git"
   },
-  "author": "Knight Hacks Dev Team",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/KnightHacks/tk/issues"
-  },
-  "homepage": "https://github.com/KnightHacks/tk#readme",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "node .",
-    "build": "tsup src/index.ts --format esm --out-dir dist --minify",
+    "dev": "pnpm with-env tsx watch src/index.ts",
+    "start": "pnpm with-env node .",
+    "build": "pnpm with-env tsup src/index.ts --format esm --out-dir dist --minify",
     "format": "prettier --write \"**/*.{json,ts}\"",
     "lint": "eslint . --ext ts --fix",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
     "@googleapis/calendar": "^9.7.6",
@@ -38,6 +32,7 @@
     "perf_hooks": "^0.0.1"
   },
   "devDependencies": {
+    "@forge/tsconfig": "workspace:*",
     "@types/he": "^1.2.3",
     "@types/jimp": "^0.2.1",
     "@types/node-cron": "^3.0.11",

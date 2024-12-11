@@ -8,12 +8,6 @@ const {
     DISCORD_TOKEN,
     DISCORD_CLIENT_ID,
     DISCORD_WEBHOOK_URL,
-    DAILY_WEBHOOK_URL,
-    DAILY_ROLE_ID,
-    GOOGLE_API_KEY,
-    GOOGLE_CALENDAR_ID,
-    CALENDAR_WEBHOOK_URL,
-    CALENDAR_ROLE_ID,
     DATABASE_URL,
     DATABASE_AUTH_TOKEN,
     ANIMAL_WEBHOOK_URL,
@@ -24,17 +18,11 @@ if (
     !DISCORD_TOKEN ||
     !DISCORD_CLIENT_ID ||
     !DISCORD_WEBHOOK_URL ||
-    !DAILY_WEBHOOK_URL ||
-    !DAILY_ROLE_ID ||
-    !GOOGLE_API_KEY ||
-    !GOOGLE_CALENDAR_ID ||
-    !CALENDAR_ROLE_ID ||
-    !CALENDAR_WEBHOOK_URL ||
     !DATABASE_URL ||
     !DATABASE_AUTH_TOKEN ||
     !ANIMAL_WEBHOOK_URL
 ) {
-    throw new Error("Missing environment variables");
+    throw new Error("Missing environment variables for TK");
 }
 
 // Export the config object
@@ -42,12 +30,6 @@ export const config = {
     DISCORD_TOKEN,
     DISCORD_CLIENT_ID,
     DISCORD_WEBHOOK_URL,
-    DAILY_WEBHOOK_URL,
-    DAILY_ROLE_ID,
-    GOOGLE_API_KEY,
-    GOOGLE_CALENDAR_ID,
-    CALENDAR_WEBHOOK_URL,
-    CALENDAR_ROLE_ID,
     DATABASE_URL,
     DATABASE_AUTH_TOKEN,
     ANIMAL_WEBHOOK_URL,
