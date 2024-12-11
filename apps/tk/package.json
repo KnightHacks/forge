@@ -19,6 +19,8 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
+    "@forge/consts": "workspace:*",
+    "@forge/db": "workspace:*",
     "@googleapis/calendar": "^9.7.6",
     "@libsql/client": "^0.7.0",
     "@napi-rs/canvas": "^0.1.53",

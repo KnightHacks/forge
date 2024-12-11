@@ -138,3 +138,36 @@ export const DuesPayment = createTable("dues_payment", (t) => ({
   paymentDate: t.timestamp().notNull(),
   year: t.integer().notNull(),
 }));
+
+export const ClubEvent = createTable("club_event", (t) => ({
+  id: t.serial().primaryKey(),
+  name: t.varchar({ length: 255 }).notNull(),
+  password: t.varchar({ length: 255 }).notNull(),
+  pointValue: t.integer().notNull(),
+  numAttended: t.integer().notNull().default(0),
+}));
+
+export const ClubAttendee = createTable("club_attendee", (t) => ({
+  id: t.serial().primaryKey(),
+  discordId: t.varchar({ length: 255 }).notNull(),
+  username: t.varchar({ length: 255 }).notNull(),
+  points: t.integer().notNull().default(0),
+  numAttended: t.integer().notNull().default(1),
+}));
+
+export const UserToEvent = createTable(
+  "user_to_event",
+  (t) => ({
+    userId: t
+      .integer()
+      .notNull()
+      .references(() => ClubAttendee.id, { onDelete: "cascade" }),
+    eventId: t
+      .integer()
+      .notNull()
+      .references(() => ClubEvent.id, { onDelete: "cascade" }),
+  }),
+  (t) => ({
+    pk: unique().on(t.userId, t.eventId),
+  }),
+);

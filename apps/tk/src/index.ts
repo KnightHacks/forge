@@ -1,6 +1,6 @@
 import { Client } from "discord.js";
-import { commands } from "./commands";
 import { config } from "./config";
+import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
 import { hooks } from "./hooks";
 

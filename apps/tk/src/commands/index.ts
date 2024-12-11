@@ -1,21 +1,19 @@
 import * as beep from "./beep";
-import * as duck from "./duck";
-import * as joke from "./joke";
-import * as cat from "./cat";
-import * as flowchart from "./flowchart";
-import * as create_event from "./create_event";
-import * as sign_in from "./sign_in";
-import * as leaderboard from "./leaderboard";
-import * as flex from "./flex";
-import * as check_points from "./check_points";
-import * as help from "./help";
-import * as dog from "./dog";
-import * as capybara from "./capybara";
-import * as goat from "./goat";
-import * as links from "./links";
 import * as bubblewrap from "./bubblewrap";
-import * as check_in from "./check_in";
-import * as badge from "./badge";
+import * as capybara from "./capybara";
+import * as cat from "./cat";
+import * as check_points from "./check_points";
+import * as create_event from "./create_event";
+import * as dog from "./dog";
+import * as duck from "./duck";
+import * as flex from "./flex";
+import * as flowchart from "./flowchart";
+import * as goat from "./goat";
+import * as help from "./help";
+import * as joke from "./joke";
+import * as leaderboard from "./leaderboard";
+import * as links from "./links";
+import * as sign_in from "./sign_in";
 
 // Export all commands
 export const commands = {
@@ -35,6 +33,4 @@ export const commands = {
     goat,
     links,
     bubblewrap,
-    check_in,
-    badge,
 };

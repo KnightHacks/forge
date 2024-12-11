@@ -227,6 +227,12 @@ importers:
 
   apps/tk:
     dependencies:
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../../packages/consts
+      '@forge/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@googleapis/calendar':
         specifier: ^9.7.6
         version: 9.7.9
