@@ -1,13 +1,14 @@
 {
+  "extends": "@forge/tsconfig/base.json",
   "compilerOptions": {
-    "module": "esnext",
-    "moduleResolution": "node",
-    "target": "es2020",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "strict": true,
-    "outDir": "dist"
+    "lib": ["ES2022", "dom", "dom.iterable"],
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./src/*"]
+    },
+    "plugins": [{ "name": "next" }],
+    "module": "esnext"
   },
-  "include": ["src"],
+  "include": [".", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }

@@ -1,6 +1,8 @@
 import { relations } from "drizzle-orm";
 import { pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
 
+import { Member } from "./knight-hacks";
+
 const createTable = pgTableCreator((name) => `auth_${name}`);
 
 export const User = createTable("user", (t) => ({
@@ -11,8 +13,12 @@ export const User = createTable("user", (t) => ({
   image: t.varchar({ length: 255 }),
 }));
 
-export const UserRelations = relations(User, ({ many }) => ({
+export const UserRelations = relations(User, ({ many, one }) => ({
   accounts: many(Account),
+  member: one(Member, {
+    fields: [User.id],
+    references: [Member.userId],
+  }),
 }));
 
 export const Account = createTable(

@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
@@ -60,12 +61,17 @@ export const Member = createTable(
     websiteUrl: t.varchar({ length: 255 }),
     resumeUrl: t.varchar({ length: 255 }),
     dob: t.date().notNull(),
+    points: t.integer().notNull().default(0),
   }),
   (t) => ({
     uniqueEmail: unique().on(t.email),
     uniquePhoneNumber: unique().on(t.phoneNumber),
   }),
 );
+
+export const MemberRelations = relations(Member, ({ one }) => ({
+  user: one(User, { fields: [Member.userId], references: [User.id] }),
+}));
 
 export const InsertMemberSchema = createInsertSchema(Member);
 
@@ -120,6 +126,7 @@ export const Event = createTable("event", (t) => ({
   name: t.varchar({ length: 255 }).notNull(),
   description: t.text().notNull(),
   datetime: t.timestamp().notNull(),
+  points: t.integer(),
   // Can be null if the event is not associated with a hackathon (e.g. club events)
   hackathonId: t.uuid().references(() => Hackathon.id, {
     onDelete: "cascade",
@@ -138,36 +145,3 @@ export const DuesPayment = createTable("dues_payment", (t) => ({
   paymentDate: t.timestamp().notNull(),
   year: t.integer().notNull(),
 }));
-
-export const ClubEvent = createTable("club_event", (t) => ({
-  id: t.serial().primaryKey(),
-  name: t.varchar({ length: 255 }).notNull(),
-  password: t.varchar({ length: 255 }).notNull(),
-  pointValue: t.integer().notNull(),
-  numAttended: t.integer().notNull().default(0),
-}));
-
-export const ClubAttendee = createTable("club_attendee", (t) => ({
-  id: t.serial().primaryKey(),
-  discordId: t.varchar({ length: 255 }).notNull(),
-  username: t.varchar({ length: 255 }).notNull(),
-  points: t.integer().notNull().default(0),
-  numAttended: t.integer().notNull().default(1),
-}));
-
-export const UserToEvent = createTable(
-  "user_to_event",
-  (t) => ({
-    userId: t
-      .integer()
-      .notNull()
-      .references(() => ClubAttendee.id, { onDelete: "cascade" }),
-    eventId: t
-      .integer()
-      .notNull()
-      .references(() => ClubEvent.id, { onDelete: "cascade" }),
-  }),
-  (t) => ({
-    pk: unique().on(t.userId, t.eventId),
-  }),
-);

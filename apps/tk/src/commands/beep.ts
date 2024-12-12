@@ -5,10 +5,10 @@ import { CommandInteraction, SlashCommandBuilder } from "discord.js";
 
 // Create the command
 export const data = new SlashCommandBuilder()
-    .setName("beep")
-    .setDescription("Replies with Boop!");
+  .setName("beep")
+  .setDescription("Replies with Boop!");
 
 // Logic for the ping command
 export async function execute(interaction: CommandInteraction) {
-    return interaction.reply("Boop!");
+  return interaction.reply("Boop!");
 }

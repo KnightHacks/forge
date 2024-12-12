@@ -4,7 +4,7 @@ import { execute as daily } from "./daily";
 
 // Export all commands
 export const hooks = {
-    //beep,
-    daily,
-    animals,
+  //beep,
+  daily,
+  animals,
 };
