@@ -1,9 +1,7 @@
-import {
-  CommandInteraction,
-  EmbedBuilder,
-  SlashCommandBuilder,
-} from "discord.js";
+import type { CommandInteraction } from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import JIMP from "jimp";
+
 import { GOATS } from "../consts";
 
 // GOAT COMMAND
@@ -38,11 +36,9 @@ export async function execute(interaction: CommandInteraction) {
       .setURL(goat.link)
       .setImage(goat.image)
       .setColor(`#${hexString}`);
-    interaction.reply({ embeds: [embed] });
+    void interaction.reply({ embeds: [embed] });
   } catch (err: unknown) {
-    // silences eslint. type safety with our errors basically
-    err instanceof Error
-      ? console.error(err.message)
-      : console.error("An unknown error occurred: ", err);
+    if (err instanceof Error) console.error(err.message);
+    else console.error("An unknown error occurred: ", err);
   }
 }

@@ -1,4 +1,6 @@
-import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import type { CommandInteraction } from "discord.js";
+import { SlashCommandBuilder } from "discord.js";
+
 import { CHAT_RESPONES } from "../consts";
 
 // CHAT COMMAND

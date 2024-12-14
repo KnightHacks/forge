@@ -7,24 +7,19 @@
   "packageManager": "pnpm@9.12.1",
   "scripts": {
     "dev": "pnpm with-env tsx watch src/index.ts",
-    "start": "pnpm with-env node .",
+    "start": "pnpm with-env node dist/index.js",
     "build": "pnpm with-env tsup src/index.ts --format esm --out-dir dist --platform node",
     "format": "prettier --write \"**/*.{json,ts}\"",
     "lint": "eslint",
-    "typecheck": "tsc",
-    "with-env": "dotenv -e ../../.env --"
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../.env --",
+    "deploy:commands": "pnpm with-env tsx src/deploy-commands.ts"
   },
   "dependencies": {
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
-    "@googleapis/calendar": "^9.7.6",
-    "@napi-rs/canvas": "^0.1.53",
-    "googleapis": "^140.0.1",
-    "he": "^1.2.0",
     "jimp": "^0.22.12",
-    "node-cron": "^3.0.3",
-    "node-fetch": "^3.3.2",
-    "perf_hooks": "^0.0.1"
+    "node-cron": "^3.0.3"
   },
   "devDependencies": {
     "@forge/eslint-config": "workspace:*",
@@ -34,18 +29,14 @@
     "@types/jimp": "^0.2.1",
     "@types/node-cron": "^3.0.11",
     "@types/node-fetch": "^2.6.11",
-    "@typescript-eslint/eslint-plugin": "^5.51.0",
-    "@typescript-eslint/parser": "^5.51.0",
     "discord.js": "^14.16.3",
-    "eslint": "^8.33.0",
-    "eslint-config-prettier": "^8.6.0",
-    "eslint-plugin-n": "^15.0.0",
-    "eslint-plugin-promise": "^6.0.0",
+    "eslint": "catalog:",
     "gapi-client": "^0.0.3",
-    "prettier": "^2.8.4",
+    "prettier": "catalog:",
+    "tailwindcss": "catalog:",
     "tsup": "^6.6.0",
     "tsx": "^3.12.3",
-    "typescript": "^4.9.5"
+    "typescript": "catalog:"
   },
   "prettier": "@forge/prettier-config"
 }

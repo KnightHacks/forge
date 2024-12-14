@@ -1,4 +1,6 @@
-import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import type { CommandInteraction } from "discord.js";
+import { SlashCommandBuilder } from "discord.js";
+
 import { db } from "@forge/db/client";
 
 // CHECK POINTS COMMAND
@@ -15,10 +17,12 @@ export async function execute(interaction: CommandInteraction) {
     // The "name" field in the User table is the user's Discord username
     where: (t, { eq }) => eq(t.name, interaction.user.username),
     // Grab the associated member data for the user
-    with: { member: true },
+    with: {
+      member: true,
+    },
   });
 
-  if (!user) {
+  if (!user?.member) {
     return interaction.reply({
       content: "You have 0 points...",
       ephemeral: true,

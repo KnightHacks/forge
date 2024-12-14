@@ -1,6 +1,7 @@
 import { REST, Routes } from "discord.js";
-import { config } from "./config";
+
 import { commands } from "./commands";
+import { config } from "./config";
 
 // Get all of the commands from /src/commands/index.ts
 const commandsData = Object.values(commands).map((command) => command.data);
@@ -9,9 +10,9 @@ const commandsData = Object.values(commands).map((command) => command.data);
 const rest = new REST({ version: "10" }).setToken(config.DISCORD_TOKEN);
 
 // Type for the deployCommands function
-type DeployCommandsProps = {
+interface DeployCommandsProps {
   guildId: string;
-};
+}
 
 // Deploy the commands to the guild
 export async function deployCommands({ guildId }: DeployCommandsProps) {
@@ -24,7 +25,7 @@ export async function deployCommands({ guildId }: DeployCommandsProps) {
       Routes.applicationGuildCommands(config.DISCORD_CLIENT_ID, guildId),
       {
         body: commandsData,
-      }
+      },
     );
 
     // Log that the commands have been successfully reloaded

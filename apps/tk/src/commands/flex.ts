@@ -1,8 +1,6 @@
-import {
-  CommandInteraction,
-  SlashCommandBuilder,
-  EmbedBuilder,
-} from "discord.js";
+import type { CommandInteraction } from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+
 import { db } from "@forge/db/client";
 
 // SIGN IN EVENT COMMAND
@@ -14,33 +12,36 @@ export const data = new SlashCommandBuilder()
   .setDescription("Check the event leaderboard");
 
 export async function execute(interaction: CommandInteraction) {
-  // // Create the event in the database
-  // const topUsers = await db.query.users.findMany({
-  //     orderBy: (users, { desc }) => [desc(users.points)],
-  //     limit: 10,
-  // });
-  // const curUserPlace = topUsers.findIndex(
-  //     (user) => user.discord_id == interaction.user.id
-  // );
-  // const curUserPoints =
-  //     curUserPlace == -1 ? 0 : topUsers[curUserPlace].points;
-  // let counter = 1;
-  // const embed = new EmbedBuilder()
-  //     .setTitle("**Leaderboard**")
-  //     .setDescription(
-  //         `${topUsers
-  //             .map(
-  //                 (user) =>
-  //                     `${counter++}. ${user.username} - ${user.points} points`
-  //             )
-  //             .join("\n")}\n\n**${
-  //             curUserPlace == -1 ? "Unranked" : curUserPlace + 1
-  //         }. ${interaction.user.username} - ${curUserPoints} points**`
-  //     )
-  //     .setFooter({
-  //         text: "Maybe the real Knight Hacks were the friends we made along the way...",
-  //     })
-  //     .setColor(0x33e0ff);
-  // // Respond with a success status
-  // return interaction.reply({ embeds: [embed] });
+  // Create the event in the database
+  const topMembers = await db.query.Member.findMany({
+    orderBy: (users, { desc }) => [desc(users.points)],
+    with: {
+      user: true,
+    },
+    limit: 10,
+  });
+  const memberPlaces = topMembers.findIndex(
+    (member) => member.user.discordUserId == interaction.user.id,
+  );
+  const memberPoints =
+    memberPlaces == -1 ? 0 : topMembers[memberPlaces]?.points;
+  let counter = 1;
+  const embed = new EmbedBuilder()
+    .setTitle("**Leaderboard**")
+    .setDescription(
+      `${topMembers
+        .map(
+          (member) =>
+            `${counter++}. ${member.user.name} - ${member.points} points`,
+        )
+        .join("\n")}\n\n**${
+        memberPlaces == -1 ? "Unranked" : memberPlaces + 1
+      }. ${interaction.user.username} - ${memberPoints} points**`,
+    )
+    .setFooter({
+      text: "Maybe the real Knight Hacks were the friends we made along the way...",
+    })
+    .setColor(0x33e0ff);
+  // Respond with a success status
+  return interaction.reply({ embeds: [embed] });
 }

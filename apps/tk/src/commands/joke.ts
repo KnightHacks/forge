@@ -1,4 +1,5 @@
-import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import type { CommandInteraction } from "discord.js";
+import { SlashCommandBuilder } from "discord.js";
 import fetch from "node-fetch";
 
 interface JokeProps {
@@ -28,9 +29,10 @@ export async function execute(interaction: CommandInteraction) {
       return interaction.reply(data.setup + "\n" + data.delivery);
     }
   } catch (err: unknown) {
-    // silences eslint. type safety with our errors basically
-    err instanceof Error
-      ? console.error(err.message)
-      : console.error("An unknown error occurred: ", err);
+    if (err instanceof Error) {
+      console.error(err.message);
+    } else {
+      console.error("An unknown error occurred: ", err);
+    }
   }
 }

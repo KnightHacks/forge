@@ -3,6 +3,7 @@ import type {
   NextAuthConfig,
   Session as NextAuthSession,
 } from "next-auth";
+import type { DiscordProfile } from "next-auth/providers/discord";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import Discord from "next-auth/providers/discord";
 
@@ -15,7 +16,11 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string;
+      discordUserId: string;
     } & DefaultSession["user"];
+  }
+  interface User {
+    discordUserId: string;
   }
 }
 
@@ -30,17 +35,28 @@ export const isSecureContext = env.NODE_ENV !== "development";
 export const authConfig = {
   adapter,
   secret: env.AUTH_SECRET,
-  providers: [Discord],
+  providers: [
+    Discord({
+      profile: (profile: DiscordProfile) => {
+        return {
+          discordUserId: profile.id,
+          name: profile.username,
+          email: profile.email,
+          image: profile.avatar,
+        };
+      },
+    }),
+  ],
   callbacks: {
     session: (opts) => {
       if (!("user" in opts))
         throw new Error("unreachable with session strategy");
-
       return {
         ...opts.session,
         user: {
           ...opts.session.user,
           id: opts.user.id,
+          discordUserId: opts.user.discordUserId,
         },
       };
     },

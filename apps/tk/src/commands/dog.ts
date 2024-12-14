@@ -1,10 +1,7 @@
-import {
-  CommandInteraction,
-  EmbedBuilder,
-  SlashCommandBuilder,
-} from "discord.js";
-import fetch from "node-fetch";
+import type { CommandInteraction } from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import JIMP from "jimp";
+import fetch from "node-fetch";
 
 // DOG COMMAND
 // interface for returned data from API
@@ -39,11 +36,12 @@ export async function execute(interaction: CommandInteraction) {
     const embed = new EmbedBuilder()
       .setImage(data.message)
       .setColor(`#${hexString}`);
-    interaction.reply({ embeds: [embed] });
+    void interaction.reply({ embeds: [embed] });
   } catch (err: unknown) {
-    // silences eslint. type safety with our errors basically
-    err instanceof Error
-      ? console.error(err.message)
-      : console.error("An unknown error occurred: ", err);
+    if (err instanceof Error) {
+      console.error(err.message);
+    } else {
+      console.error("An unknown error occurred: ", err);
+    }
   }
 }

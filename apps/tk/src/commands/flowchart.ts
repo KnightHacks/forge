@@ -1,15 +1,12 @@
-import {
-  CommandInteraction,
-  SlashCommandBuilder,
-  EmbedBuilder,
-} from "discord.js";
+import type { CommandInteraction } from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 
 export const data = new SlashCommandBuilder()
   .setName("flowchart")
   .setDescription("Get the UCF flowchart for your major!")
   .addStringOption(
     (
-      option // to have a second parameter in your command
+      option, // to have a second parameter in your command
     ) =>
       option
         .setName("major")
@@ -31,8 +28,8 @@ export const data = new SlashCommandBuilder()
           {
             name: "Data Science",
             value: "Data Science",
-          }
-        )
+          },
+        ),
   );
 
 export async function execute(interaction: CommandInteraction) {
@@ -42,7 +39,10 @@ export async function execute(interaction: CommandInteraction) {
     | "Computer Engineering"
     | "Data Science";
 
-  const major = interaction.options.get("major"); // this still works. idk why it shows an error
+  // TODO: fix this type casting
+  const major: Major | null = interaction.options.get(
+    "major",
+  ) as unknown as Major | null; // this still works. idk why it shows an error
   let flowchartState = "";
 
   if (!major) {
@@ -50,8 +50,7 @@ export async function execute(interaction: CommandInteraction) {
   }
 
   switch (
-    // TODO: Refactor type assertion
-    major as unknown as Major // images hosted on imgur... lol
+    major // images hosted on imgur... lol
   ) {
     case "Computer Science":
       flowchartState = "https://i.imgur.com/yydsAcX.png";
@@ -71,7 +70,7 @@ export async function execute(interaction: CommandInteraction) {
 
   const flowchartEmbed = new EmbedBuilder()
     .setColor(0x33e0ff)
-    .setTitle(major + " Flowchart")
+    .setTitle(`${major} Flowchart`)
     .setImage(flowchartState);
 
   return interaction.reply({ embeds: [flowchartEmbed] }); // returns the embed with the image

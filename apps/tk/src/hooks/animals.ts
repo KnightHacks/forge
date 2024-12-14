@@ -1,10 +1,10 @@
-import { WebhookClient, EmbedBuilder } from "discord.js";
-import fetch from "node-fetch";
-import cron from "node-cron";
-import { config } from "../config";
+/* eslint-disable @typescript-eslint/no-misused-promises -- Cron job callback can't return promises*/
+import { EmbedBuilder, WebhookClient } from "discord.js";
 import JIMP from "jimp";
+import cron from "node-cron";
+
+import { config } from "../config";
 import { GOATS } from "../consts";
-import { Client } from "discord.js";
 
 // various hook props
 interface CatProps {
@@ -25,7 +25,7 @@ interface DuckProps {
   url: string;
 }
 
-export async function execute(client: Client) {
+export function execute() {
   const webhook = new WebhookClient({
     url: config.ANIMAL_WEBHOOK_URL,
   });
@@ -78,10 +78,11 @@ function catHook(webhook: WebhookClient) {
       }
     });
   } catch (err: unknown) {
-    // silences eslint. type safety with our errors basically
-    err instanceof Error
-      ? console.error(err.message)
-      : console.error("An unknown error occurred: ", err);
+    if (err instanceof Error) {
+      console.error(err.message);
+    } else {
+      console.error("An unknown error occurred: ", err);
+    }
   }
 }
 
@@ -100,9 +101,11 @@ function capybaraHook(webhook: WebhookClient) {
       });
     });
   } catch (err) {
-    err instanceof Error
-      ? console.error(err.message)
-      : console.error("An unknown error occurred: ", err);
+    if (err instanceof Error) {
+      console.error(err.message);
+    } else {
+      console.error("An unknown error occurred: ", err);
+    }
   }
 }
 
@@ -121,13 +124,15 @@ function duckHook(webhook: WebhookClient) {
       });
     });
   } catch (err) {
-    err instanceof Error
-      ? console.error(err.message)
-      : console.error("An unknown error occurred: ", err);
+    if (err instanceof Error) {
+      console.error(err.message);
+    } else {
+      console.error("An unknown error occurred: ", err);
+    }
   }
 }
 
-async function goatHook(webhook: WebhookClient) {
+function goatHook(webhook: WebhookClient) {
   try {
     cron.schedule("30 14 * * *", async () => {
       const goat = GOATS[Math.floor(Math.random() * GOATS.length)];
@@ -154,14 +159,16 @@ async function goatHook(webhook: WebhookClient) {
           })
           .setImage(goat.image)
           .setColor(`#${hexString}`);
-        webhook.send({ embeds: [embed] });
+        void webhook.send({ embeds: [embed] });
       } else {
         console.error("Goat is undefined");
       }
     });
   } catch (err: unknown) {
-    err instanceof Error
-      ? console.error(err.message)
-      : console.error("An unknown error occurred: ", err);
+    if (err instanceof Error) {
+      console.error(err.message);
+    } else {
+      console.error("An unknown error occurred: ", err);
+    }
   }
 }

@@ -1,8 +1,5 @@
-import {
-  CommandInteraction,
-  SlashCommandBuilder,
-  EmbedBuilder,
-} from "discord.js";
+import type { CommandInteraction } from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 
 // COUNTDOWN COMMAND
 // Command that reports the time until Knight Hacks VII
@@ -11,7 +8,7 @@ import {
 export const data = new SlashCommandBuilder()
   .setName("countdown")
   .setDescription(
-    "Count down the days until our grand adventure, Knight Hacks VII!"
+    "Count down the days until our grand adventure, Knight Hacks VII!",
   );
 
 export async function execute(interaction: CommandInteraction) {
@@ -32,7 +29,7 @@ export async function execute(interaction: CommandInteraction) {
     .setColor(0x33e0ff)
     .setTitle("Knight Hacks VII Countdown")
     .setDescription(
-      "Count down the days until our grand adventure, Knight Hacks VII! Get excited, scallywags!"
+      "Count down the days until our grand adventure, Knight Hacks VII! Get excited, scallywags!",
     )
     .setURL("https://2024.knighthacks.org")
     .addFields(
@@ -50,7 +47,7 @@ export async function execute(interaction: CommandInteraction) {
         name: "Minutes",
         value: `${minutesDiff} minutes`,
         inline: true,
-      }
+      },
     )
     .setThumbnail("https://i.imgur.com/0hEcuRf.png");
 

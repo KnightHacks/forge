@@ -1,4 +1,5 @@
-import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import type { CommandInteraction } from "discord.js";
+import { SlashCommandBuilder } from "discord.js";
 
 // BEEP COMMAND
 // Test command to check if the bot is online

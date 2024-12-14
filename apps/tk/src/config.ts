@@ -1,3 +1,5 @@
+/* eslint-disable no-restricted-properties */
+/* eslint-disable turbo/no-undeclared-env-vars */
 // Get the environment variables
 const {
   DISCORD_TOKEN,
@@ -6,10 +8,18 @@ const {
   DAILY_WEBHOOK_URL,
   DAILY_ROLE_ID,
   DATABASE_URL,
-  DATABASE_AUTH_TOKEN,
   ANIMAL_WEBHOOK_URL,
 } = process.env;
 
+console.log({
+  DISCORD_TOKEN,
+  DISCORD_CLIENT_ID,
+  DISCORD_WEBHOOK_URL,
+  DAILY_WEBHOOK_URL,
+  DAILY_ROLE_ID,
+  DATABASE_URL,
+  ANIMAL_WEBHOOK_URL,
+});
 // Check if the environment variables are set
 if (
   !DISCORD_TOKEN ||
@@ -17,8 +27,6 @@ if (
   !DISCORD_WEBHOOK_URL ||
   !DAILY_WEBHOOK_URL ||
   !DAILY_ROLE_ID ||
-  !DATABASE_URL ||
-  !DATABASE_AUTH_TOKEN ||
   !ANIMAL_WEBHOOK_URL
 ) {
   throw new Error("Missing environment variables");
@@ -32,6 +40,5 @@ export const config = {
   DAILY_WEBHOOK_URL,
   DAILY_ROLE_ID,
   DATABASE_URL,
-  DATABASE_AUTH_TOKEN,
   ANIMAL_WEBHOOK_URL,
 };

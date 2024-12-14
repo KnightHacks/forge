@@ -1,4 +1,5 @@
-import { CommandInteraction, SlashCommandBuilder } from "discord.js";
+import type { CommandInteraction } from "discord.js";
+import { SlashCommandBuilder } from "discord.js";
 
 // Foundation Exam command
 // Gives info
@@ -7,11 +8,11 @@ import { CommandInteraction, SlashCommandBuilder } from "discord.js";
 export const data = new SlashCommandBuilder()
   .setName("fe")
   .setDescription(
-    "Gives info about the Foundation Exam, links to help you pass, etc."
+    "Gives info about the Foundation Exam, links to help you pass, etc.",
   );
 
 export async function execute(interaction: CommandInteraction) {
   return interaction.reply(
-    "##Foundation Exam\nThe Foundation Exam is an exam offered by the College of Engineering and Computer Science"
+    "##Foundation Exam\nThe Foundation Exam is an exam offered by the College of Engineering and Computer Science",
   );
 }
