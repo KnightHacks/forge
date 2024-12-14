@@ -74,6 +74,9 @@ export function MemberApplicationForm() {
         .url({ message: "Invalid URL" })
         .optional()
         .or(z.literal("")),
+      resumeUpload: z
+        .instanceof(FileList)
+        .optional(),
     }),
     defaultValues: {
       firstName: "",
@@ -337,6 +340,19 @@ export function MemberApplicationForm() {
               <FormLabel>Personal Website</FormLabel>
               <FormControl>
                 <Input placeholder="https://knighthacks.org" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="resumeUpload"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Resume</FormLabel>
+              <FormControl>
+                <Input type="file" placeholder="" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
