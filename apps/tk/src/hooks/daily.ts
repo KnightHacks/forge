@@ -6,7 +6,6 @@ import {
   WebhookClient,
 } from "discord.js";
 import cron from "node-cron";
-import fetch from "node-fetch";
 
 import { config } from "../config";
 import { DAILY_MESSAGES } from "../consts";

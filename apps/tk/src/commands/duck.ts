@@ -1,7 +1,6 @@
 import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import JIMP from "jimp";
-import fetch from "node-fetch";
 
 // DUCK COMMAND
 // Command that posts duck images

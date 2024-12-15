@@ -1,6 +1,5 @@
 import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
-import fetch from "node-fetch";
 
 interface JokeProps {
   type: string;
