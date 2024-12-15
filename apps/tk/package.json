@@ -3,12 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "main": "dist/index.js",
   "packageManager": "pnpm@9.12.1",
   "scripts": {
     "dev": "pnpm with-env tsx watch src/index.ts",
-    "start": "pnpm with-env node dist/index.js",
-    "build": "pnpm with-env tsup src/index.ts --format esm --out-dir dist --platform node",
+    "start": "pnpm with-env tsx src/index.ts",
     "format": "prettier --write \"**/*.{json,ts}\"",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -18,6 +16,7 @@
   "dependencies": {
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
+    "discord.js": "^14.16.3",
     "jimp": "^0.22.12",
     "node-cron": "^3.0.3"
   },
@@ -25,16 +24,10 @@
     "@forge/eslint-config": "workspace:*",
     "@forge/prettier-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
-    "@types/he": "^1.2.3",
-    "@types/jimp": "^0.2.1",
     "@types/node-cron": "^3.0.11",
-    "@types/node-fetch": "^2.6.11",
-    "discord.js": "^14.16.3",
     "eslint": "catalog:",
-    "gapi-client": "^0.0.3",
     "prettier": "catalog:",
     "tailwindcss": "catalog:",
-    "tsup": "^6.6.0",
     "tsx": "^3.12.3",
     "typescript": "catalog:"
   },
