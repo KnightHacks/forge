@@ -11,15 +11,6 @@ const {
   ANIMAL_WEBHOOK_URL,
 } = process.env;
 
-console.log({
-  DISCORD_TOKEN,
-  DISCORD_CLIENT_ID,
-  DISCORD_WEBHOOK_URL,
-  DAILY_WEBHOOK_URL,
-  DAILY_ROLE_ID,
-  DATABASE_URL,
-  ANIMAL_WEBHOOK_URL,
-});
 // Check if the environment variables are set
 if (
   !DISCORD_TOKEN ||
