@@ -33,16 +33,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: CommandInteraction) {
-  type Major =
-    | "Computer Science"
-    | "Information Technology"
-    | "Computer Engineering"
-    | "Data Science";
-
-  // TODO: fix this type casting
-  const major: Major | null = interaction.options.get(
-    "major",
-  ) as unknown as Major | null; // this still works. idk why it shows an error
+  const major = interaction.options.get("major")?.value; // this still works. idk why it shows an error
   let flowchartState = "";
 
   if (!major) {
