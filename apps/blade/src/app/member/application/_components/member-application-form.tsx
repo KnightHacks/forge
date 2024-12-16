@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 
 import {
@@ -34,9 +35,13 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 
 export function MemberApplicationForm() {
+  const router = useRouter();
+
   const createMember = api.member.createMember.useMutation({
     onSuccess() {
       toast.success("Application submitted successfully!");
+      // user gets sent back to homepage upon successful form submission
+      router.push("/");
     },
     onError() {
       toast.error("Oops! Something went wrong. Please try again later.");
@@ -92,7 +97,9 @@ export function MemberApplicationForm() {
       <form
         className="space-y-4"
         noValidate
-        onSubmit={form.handleSubmit((values) => createMember.mutate(values))}
+        onSubmit={form.handleSubmit((values) => {
+          createMember.mutate(values);
+        })}
       >
         <h1 className="text-2xl font-bold">Application Form</h1>
         <FormField
