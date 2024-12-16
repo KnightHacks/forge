@@ -90,7 +90,7 @@ function capybaraHook(webhook: WebhookClient) {
   const url = "https://api.capy.lol/v1/capybara?json=true";
 
   try {
-    cron.schedule("30 13 * * *", async () => {
+    cron.schedule("30 18 * * *", async () => {
       const res = await fetch(url);
       const data = (await res.json()) as CapybaraProps;
 
@@ -113,7 +113,7 @@ function duckHook(webhook: WebhookClient) {
   const url = "https://random-d.uk/api/v2/quack";
 
   try {
-    cron.schedule("0 14 * * *", async () => {
+    cron.schedule("0 19 * * *", async () => {
       const res = await fetch(url);
       const data = (await res.json()) as DuckProps;
 
@@ -134,7 +134,7 @@ function duckHook(webhook: WebhookClient) {
 
 function goatHook(webhook: WebhookClient) {
   try {
-    cron.schedule("30 14 * * *", async () => {
+    cron.schedule("30 19 * * *", async () => {
       const goat = GOATS[Math.floor(Math.random() * GOATS.length)];
       if (goat) {
         const img = JIMP.read(goat.image);
