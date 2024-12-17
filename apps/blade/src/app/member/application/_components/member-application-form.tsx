@@ -77,6 +77,10 @@ export function MemberApplicationForm() {
       resumeUpload: z
         .instanceof(FileList)
         .refine((fileList) => {fileList.length === 0 || 1}, "0 or 1 files required")
+        .refine((fileList) => {
+          const fileType = fileList[0]?.name.split(".").pop();
+          return fileType === "pdf";
+        }, "Only .pdf files are supported")
         .optional(),
     }),
     defaultValues: {
