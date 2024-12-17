@@ -76,6 +76,7 @@ export function MemberApplicationForm() {
         .or(z.literal("")),
       resumeUpload: z
         .instanceof(FileList)
+        .refine((fileList) => {fileList.length === 0 || 1}, "0 or 1 files required")
         .optional(),
     }),
     defaultValues: {
