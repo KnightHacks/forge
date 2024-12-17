@@ -110,6 +110,8 @@ export function MemberApplicationForm() {
     },
   });
 
+  const fileRef = form.register("resumeUpload");
+
   return (
     <Form {...form}>
       <form
@@ -374,7 +376,11 @@ export function MemberApplicationForm() {
             <FormItem>
               <FormLabel>Resume</FormLabel>
               <FormControl>
-                <Input type="file" placeholder="" {...field} />
+                <Input type="file" placeholder="" {...fileRef} 
+                onChange={(event) => {
+                  field.onChange(event?.target?.files[0] ?? undefined);
+                }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
