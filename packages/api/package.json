@@ -26,6 +26,7 @@
     "@forge/validators": "workspace:*",
     "@stripe/stripe-js": "^5.2.0",
     "@trpc/server": "catalog:",
+    "axios": "^1.7.9",
     "stripe": "^17.4.0",
     "superjson": "2.2.1",
     "zod": "catalog:"
