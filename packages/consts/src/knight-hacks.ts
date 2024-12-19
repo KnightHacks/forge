@@ -14,6 +14,8 @@ export const LEVELS_OF_STUDY = [
 
 export const KNIGHTHACKS_MEMBERSHIP_PRICE = 2500;
 
+export const DISCORD_ADMIN_ROLE_ID = "1319413082258411652";
+
 export const GENDERS = [
   "Man",
   "Woman",
