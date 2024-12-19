@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { z } from "zod";
+import { z, ZodIssueCode } from "zod";
 
 import {
   GENDERS,
@@ -97,11 +97,26 @@ export function MemberApplicationForm() {
         .or(z.literal("")),
       resumeUpload: z
         .instanceof(FileList)
-        .refine((fileList) => {fileList.length === 0 || 1}, "0 or 1 files required")
-        .refine((fileList) => {
-          const fileType = fileList[0]?.name.split(".").pop();
-          return fileType === "pdf";
-        }, "Only .pdf files are supported")
+        .superRefine((fileList, ctx) => {
+          // Validate number of files is 0 or 1
+          if (fileList.length !== 0 && fileList.length !== 1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Only 0 or 1 files allowed",
+            });
+          }
+
+          if (fileList.length === 1) {
+            // Validate file extension is PDF
+            const fileExtension = fileList[0]?.name.split(".").pop();
+            if (fileExtension !== "pdf") {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Resume must be a PDF",
+              });
+            }
+          }
+        })
         .optional(),
     }),
     defaultValues: {
