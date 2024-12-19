@@ -20,148 +20,130 @@ export const DAILY_MESSAGES = [
 
 export const GOATS = [
   {
-    name: "GOATiel Small",
-    link: "https://www.linkedin.com/in/danieltysmall/",
-    image:
-      "https://media.licdn.com/dms/image/D4E03AQEkcA2HrPI9_A/profile-displayphoto-shrink_200_200/0/1689810289630?e=1727308800&v=beta&t=gVBJb5RW5PWaeIByhYn98WQ3uP0Pp7fYjaZZio9GvFA",
-  },
-  {
     name: "Caleb GOATvera",
     link: "https://www.linkedin.com/in/calebrossr/",
     image:
-      "https://media.licdn.com/dms/image/D4E03AQFOnA98brWLyg/profile-displayphoto-shrink_200_200/0/1721528436650?e=1727308800&v=beta&t=CNKIYRm32q5HneOWjF9Mrk5osh_2Poc_6CnxV7p4Zhc",
+      "https://media.licdn.com/dms/image/v2/D4E03AQGKEApKpfOdOA/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1723186508173?e=1740009600&v=beta&t=7d2bjnUToR2liMukwnhk7n5-bsBmt0O9oqODMYUoGQc",
   },
   {
     name: "GOATnix Michel",
     link: "https://www.linkedin.com/in/brunix-michel/",
     image:
-      "https://media.licdn.com/dms/image/C4D03AQELV5pjTQCo4Q/profile-displayphoto-shrink_200_200/0/1581982065691?e=1727308800&v=beta&t=PAcG0za3pyMXpXGwP_vy46K5xBuoie3fYWQkndpg-gE",
+      "https://media.licdn.com/dms/image/v2/C4D03AQELV5pjTQCo4Q/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1581982065791?e=1740009600&v=beta&t=Yurpis83JvVNqUytcJxYccrS0Txj-otumbEWZ-pK-1E",
   },
   {
     name: "DylGOAT Vidal",
     link: "https://www.linkedin.com/in/dylanvidal1204/",
     image:
-      "https://media.licdn.com/dms/image/D4E03AQEclt1-B-Rxcg/profile-displayphoto-shrink_200_200/0/1695605816206?e=1727308800&v=beta&t=BXGMts9rVNeaD-JkNs1s2vbh8aSLYfXRwZsEn8VMBXA",
+      "https://media.licdn.com/dms/image/v2/D4E03AQEoBJfzO03QWQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1727187609096?e=1740009600&v=beta&t=sW3J_ZHd1ObUb_XG2R1hSYFYmBkhsNAlL1lEiuT9UoU",
   },
   {
     name: "Leonard GOATman",
     link: "https://www.linkedin.com/in/leonard-gofman-208578236/",
     image:
-      "https://media.licdn.com/dms/image/D4E03AQEsvF3CXuV1pQ/profile-displayphoto-shrink_200_200/0/1718243447693?e=1727308800&v=beta&t=4YpkDNzBrWG3PnJxZ0mD9SWoi0CYABSn88Oisvt9c1g",
+      "https://media.licdn.com/dms/image/v2/D4E03AQEsvF3CXuV1pQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1718238307176?e=1740009600&v=beta&t=IMyuuuyaxa7yQ7zL26kTXNZ9AHqirP6TW6HC8khp5hg",
   },
   {
     name: "Sean GOATman",
     link: "https://www.linkedin.com/in/sean-feldman2319/",
     image:
-      "https://media.licdn.com/dms/image/D5603AQG9RZiV9am7IQ/profile-displayphoto-shrink_200_200/0/1719005447378?e=1727308800&v=beta&t=F4LeEzumpLYMHWT6nrIqJVTJp-QisO5FN5sZIem-mJ4",
+      "https://media.licdn.com/dms/image/v2/D5603AQG9RZiV9am7IQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1719005447405?e=1740009600&v=beta&t=n58mJd3wpAwCQodtwNFFsMllENqs7IQQTB0mXkU_aEY",
   },
   {
     name: "GOATsef Osman",
-    link: "https://www.linkedin.com/in/youosman/",
+    link: "https://i.imgur.com/z2FrjKz.png",
     image:
-      "https://media.licdn.com/dms/image/D4E35AQHRNZKQCfXgEw/profile-framedphoto-shrink_200_200/0/1705283052593?e=1722286800&v=beta&t=Hi8fu9uW9IcOBJXO1HnS6Dosr0-d8Eu2yGnIVrb5Rik",
+      "https://i.imgur.com/z2FrjKz.png",
   },
   {
     name: "GOATit FREAKtasin",
     link: "https://www.linkedin.com/in/pharit/",
     image:
-      "https://media.licdn.com/dms/image/D4E03AQGaxMfzMUpoqw/profile-displayphoto-shrink_200_200/0/1663102351932?e=1727308800&v=beta&t=p4j_9aj1B-LJ6VdpxJXzm_W_SbxSjg0ivhPSq4oGdNg",
+      "https://media.licdn.com/dms/image/v2/D4E03AQGaxMfzMUpoqw/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1663102351932?e=1740009600&v=beta&t=Ds__VkYqmCZtUtD6RfzZh65r0gUIhKtUBdq8fRvJo1w",
   },
   {
     name: "GOATminie Sahadeo",
     link: "https://www.linkedin.com/in/yasminie-sahadeo/",
     image:
-      "https://media.licdn.com/dms/image/C4E03AQHIVtDkn8c51g/profile-displayphoto-shrink_200_200/0/1660788081425?e=1727308800&v=beta&t=RQIPU21S_2Vvu-r1e_tSYGZilIMoYU0e71t2KKMosuQ",
+      "https://media.licdn.com/dms/image/v2/C4E03AQHIVtDkn8c51g/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1660788081425?e=1740009600&v=beta&t=kLuh9bAqGsDxHPkisjoSeGJj2xh32vVW7x06dVkPRXE",
   },
   {
     name: "Tho GOAT",
     link: "https://www.linkedin.com/in/tho-pham311/",
     image:
-      "https://media.licdn.com/dms/image/D4E03AQE8VC5o3J3sUA/profile-displayphoto-shrink_200_200/0/1705522002749?e=1727308800&v=beta&t=OE4ais6e30mT8fApS-D3Sngf6my2KyAHmpOOrecwgaw",
+      "https://media.licdn.com/dms/image/v2/D4E03AQE8VC5o3J3sUA/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1705522002749?e=1740009600&v=beta&t=aP30D0cruCU4aZhEKbyk4Xd3clcCHLevkYE7r8PN_yI",
   },
   {
     name: "GOATstina Nguyen",
     link: "https://www.linkedin.com/in/christinanguyen8711/",
     image:
-      "https://media.licdn.com/dms/image/D4E03AQFPV8kBG4MWIA/profile-displayphoto-shrink_200_200/0/1685848722176?e=1727308800&v=beta&t=bCEC9c6CHjZyRfuwknsf0-ziKcmG-fOZ9rDqECNdBzc",
+      "https://media.licdn.com/dms/image/v2/D4E03AQFPV8kBG4MWIA/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1685848722176?e=1740009600&v=beta&t=M7O8c5dK0A6OPapTPRSjEUSu9Xf5eGiSbbtfssFE3iM",
   },
   {
     name: "GOATmine Rymer",
     link: "https://www.linkedin.com/in/jasmine-rymer-148b87237/",
     image:
-      "https://media.licdn.com/dms/image/D4E03AQEpcyDyBxPAOw/profile-displayphoto-shrink_200_200/0/1705695233775?e=1727308800&v=beta&t=VupdZO857YWI7H-JCRpe3QsvjwZgaHO5JbUYXYhJgOI",
+      "https://media.licdn.com/dms/image/v2/D4E03AQEpcyDyBxPAOw/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1705695233775?e=1740009600&v=beta&t=jqBVOWQ4b4K2_yPQ2ul67sc_MWwj8qmUjlgcWuMsdGo",
   },
   {
     name: "GOATwin Bobda",
     link: "https://www.linkedin.com/in/lewin-bobda-08ba2325a/",
     image:
-      "https://media.licdn.com/dms/image/D5603AQFUU893GuTclA/profile-displayphoto-shrink_200_200/0/1694008134375?e=1727308800&v=beta&t=ZEwjcFHnziOYwlL_uOBjzyOHYF43GsCPrkYk0Q1udyM",
+      "https://media.licdn.com/dms/image/v2/D4E03AQEtWxMr23IRMw/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1725419485246?e=1740009600&v=beta&t=B-Ev21K-TY37u_3tuWcZ7G-fmKRJ0NQsi_4QtQdtFgw",
   },
   {
     name: "Dany GOATma",
     link: "https://www.linkedin.com/in/danypalma/",
     image:
-      "https://media.licdn.com/dms/image/C4E03AQEzy8ztltXZ_Q/profile-displayphoto-shrink_200_200/0/1659093326375?e=1727308800&v=beta&t=09BHb6fZP1KACOJUqHUeCZHQkX8MIJsJcaXnKJY0D9E",
+      "https://media.licdn.com/dms/image/v2/C4E03AQEzy8ztltXZ_Q/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1659093326375?e=1740009600&v=beta&t=61TBJAWe7TUPvNl5RABkc1JxYMyqIM3mrQwm1c9hfg8",
   },
   {
     name: "Mark GOATckert",
     link: "https://www.linkedin.com/in/mark-bruckert/",
     image:
-      "https://media.licdn.com/dms/image/D4E03AQH1Z4GLBnkoFQ/profile-displayphoto-shrink_200_200/0/1666473727437?e=1727308800&v=beta&t=LS3HXrQv1C2kwK3Nb20FIqS1mL1tAary1S2HCLtyonk",
+      "https://media.licdn.com/dms/image/v2/D4E03AQFDG7BDC4EuvQ/profile-displayphoto-shrink_800_800/B4EZN7Mk8THAAc-/0/1732938715213?e=1740009600&v=beta&t=g5RgBp2rbHKuD1LC3VvYUdupDs7o4OZWGhUvmcxrxgQ",
   },
   {
     name: "GOATy Chirolde",
     link: "https://www.linkedin.com/in/cchirolde/",
     image:
-      "https://media.licdn.com/dms/image/C4E03AQHPU8j1FYqbnw/profile-displayphoto-shrink_200_200/0/1662676705377?e=1727308800&v=beta&t=DE5PJZRzhEl8UK3rdn82s1GDWa9y-nuocGgCMNHp3zQ",
-  },
-  {
-    name: "Alex GOATis",
-    link: "https://www.linkedin.com/in/alexharris03/",
-    image:
-      "https://media.licdn.com/dms/image/D4E03AQG0s-NmZEqCbA/profile-displayphoto-shrink_200_200/0/1670364286706?e=1727308800&v=beta&t=57-LVHzAyAdVmSqOFSf_kPLRrE6ubCu4fVxTfRTrmyI",
+      "https://media.licdn.com/dms/image/v2/C4E03AQHPU8j1FYqbnw/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1662676705377?e=1740009600&v=beta&t=5YN68Z9Q_3NxapjIOBjq6mUyC6U81DfHkT73I3HXbt0",
   },
   {
     name: "GOAT Tran",
     link: "https://www.linkedin.com/in/khanh-tran-717866249/",
     image:
-      "https://media.licdn.com/dms/image/D4E03AQG-pRaE9ggRFw/profile-displayphoto-shrink_200_200/0/1720495767501?e=1727308800&v=beta&t=6x8VUZ1njkN0teMUXCONkOzDh_CPqvQR2SbirdUhv18",
+      "https://media.licdn.com/dms/image/v2/D4E03AQFt2kayfrinhw/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1728879587698?e=1740009600&v=beta&t=k1_Zv0wcpJgn2W9wsQ8BVa-3orzAFHwgDb1DFJzQpFc",
   },
   {
     name: "Lucca GOATuncao",
     link: "https://www.linkedin.com/in/luccaassuncao/",
     image:
-      "https://media.licdn.com/dms/image/D4E35AQFrnamTKVhUPQ/profile-framedphoto-shrink_200_200/0/1720706198138?e=1722286800&v=beta&t=7HFKN2j7F2_dEEzZOavcTjbOpaybp_ge6e6qNohuGms",
+      "https://i.imgur.com/KlwLPjI.jpeg",
   },
   {
     name: "Ricky GOATips",
     link: "https://www.linkedin.com/in/rphillipscs/",
     image:
-      "https://media.licdn.com/dms/image/C4E03AQEnfECjcUMWIQ/profile-displayphoto-shrink_200_200/0/1627520886959?e=1727308800&v=beta&t=CasbS5O8zABXTxodqFZFZgK4ROqYgHJWeG90hwKLytU",
+      "https://media.licdn.com/dms/image/v2/D4E03AQEy9KOBseAJvQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1727312339043?e=1740009600&v=beta&t=QC0y9GGo5Ql0qAiMXoxtQPzPHPP7kPX1v51E4DKz4pM",
   },
   {
     name: "GOATno Fregoso Frias",
     link: "https://www.linkedin.com/in/brunofregosofrias/",
     image:
-      "https://media.licdn.com/dms/image/D4E03AQF954TulUw6VQ/profile-displayphoto-shrink_200_200/0/1667198059166?e=1727308800&v=beta&t=pKb20sF7kv40m2V8e2-iuRYY2lCQlKqzqlhSKIIhruQ",
+      "https://media.licdn.com/dms/image/v2/D4E03AQF954TulUw6VQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1667198059166?e=1740009600&v=beta&t=zivyp5nS9k-DPcRerWpaW_DF0NNrZe0QEDXd31HAhpM",
   },
   {
     name: "GOATen Snipes",
     link: "https://www.linkedin.com/in/warren-snipes/",
     image:
-      "https://media.licdn.com/dms/image/D5603AQEdWPkwfQ7qUQ/profile-displayphoto-shrink_200_200/0/1686575949990?e=1727308800&v=beta&t=qgRvNIrnj1Mg5wsK17OQreGIVhb6is93Fy9YOtogPJQ",
-  },
-  {
-    name: "GOATam FREAKaydi",
-    link: "https://www.linkedin.com/in/adamess123/",
-    image:
-      "https://media.licdn.com/dms/image/C4D03AQFLAo1qYEbnsw/profile-displayphoto-shrink_200_200/0/1646399578746?e=1727308800&v=beta&t=aCyV8eYyzOw4x0NTHPzIGfXJMoPcQ6-t_wJWUFTWuvE",
+      "https://media.licdn.com/dms/image/v2/D5603AQEdWPkwfQ7qUQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1686575949991?e=1740009600&v=beta&t=8N20mu6xpBFQZn5Y64V5Imhxp3WZk2ovsRyXOfUCJCI",
   },
   {
     name: "Must GOATmed",
     link: "https://www.linkedin.com/in/mustaeenahmed/",
     image:
-      "https://media.licdn.com/dms/image/D4E03AQEuPTNsWdbMMA/profile-displayphoto-shrink_400_400/0/1696636498138?e=1727308800&v=beta&t=qtheGEkJ3kHdmmOAYfQ4sNyIAK9HsnDW62APPA9QGug",
+      "https://media.licdn.com/dms/image/v2/D4E03AQEuPTNsWdbMMA/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1696636498138?e=1740009600&v=beta&t=3aZR4-aUYaonpEM0tgW2wEOeHaQ3hw1n_9Qpl5JMjxc",
   },
 ];
 
