@@ -108,26 +108,35 @@ export function MemberApplicationForm() {
           }
 
           if (fileList.length === 1) {
-            // Validate file extension is PDF
-            const fileExtension = fileList[0]?.name.split(".").pop();
-            if (fileExtension !== "pdf") {
+            // Validate type of object in FileList is File
+            if (fileList[0] instanceof File) {
+              console.log("silly");
+              // Validate file extension is PDF
+              const fileExtension = fileList[0].name.split(".").pop();
+              if (fileExtension !== "pdf") {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: "Resume must be a PDF",
+                });
+              }
+
+              // Validate file size is <= 5MB
+              if (fileList[0].size > MAX_RESUME_SIZE) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.too_big,
+                  type: "number",
+                  maximum: MAX_RESUME_SIZE,
+                  inclusive: true,
+                  exact: false,
+                  message: "File too large: maximum 5MB",
+                });
+              }
+            } else {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: "Resume must be a PDF",
+                message: "Object in FileList is undefined",
               });
             }
-          }
-
-          // Validate file size is <= 5MB
-          if (fileList[0].size > MAX_RESUME_SIZE) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.too_big,
-              type: "number",
-              maximum: MAX_RESUME_SIZE,
-              inclusive: true,
-              exact: false,
-              message: "File too large: maximum 5MB",
-            });
           }
         })
         .optional(),
