@@ -3,8 +3,8 @@ import { EmbedBuilder, WebhookClient } from "discord.js";
 import JIMP from "jimp";
 import cron from "node-cron";
 
-import { config } from "../config";
 import { GOATS } from "../consts";
+import { env } from "../env";
 
 // various hook props
 interface CatProps {
@@ -27,7 +27,7 @@ interface DuckProps {
 
 export function execute() {
   const webhook = new WebhookClient({
-    url: config.ANIMAL_WEBHOOK_URL,
+    url: env.DISCORD_ANIMAL_WEBHOOK_URL,
   });
 
   catHook(webhook);

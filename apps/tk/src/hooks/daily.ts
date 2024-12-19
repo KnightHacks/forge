@@ -7,8 +7,8 @@ import {
 } from "discord.js";
 import cron from "node-cron";
 
-import { config } from "../config";
 import { DAILY_MESSAGES } from "../consts";
+import { env } from "../env";
 
 // Daily Problem Interface
 interface DailyProblemProps {
@@ -59,7 +59,7 @@ const randInt = (max: number) => {
 export function execute(client: Client) {
   // Create a new Webhook client instance using the DAILY webhook URL
   const webhook = new WebhookClient({
-    url: config.DAILY_WEBHOOK_URL,
+    url: env.DISCORD_LEETCODE_DAILY_WEBHOOK_URL,
   });
 
   try {
@@ -110,7 +110,7 @@ export function execute(client: Client) {
       //ROLE ID has to be hardcoded into the ping!
       const embed = await webhook.send({
         content:
-          `# Good Morning!\nHere's today's daily Leetcode problem! <@&${config.DAILY_ROLE_ID}>\n` +
+          `# Good Morning!\nHere's today's daily Leetcode problem! <@&${env.DISCORD_LEETCODE_ROLE_ID}>\n` +
           DAILY_MESSAGES[randInt(DAILY_MESSAGES.length)],
         embeds: [problemEmbed],
       });

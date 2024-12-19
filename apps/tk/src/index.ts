@@ -1,8 +1,8 @@
 import { Client } from "discord.js";
 
 import { commands } from "./commands";
-import { config } from "./config";
 import { deployCommands } from "./deploy-commands";
+import { env } from "./env";
 import { hooks } from "./hooks";
 
 /*
@@ -40,7 +40,7 @@ client.on("interactionCreate", (interaction) => {
 });
 
 // Login to Discord
-void client.login(config.DISCORD_TOKEN);
+void client.login(env.DISCORD_BOT_TOKEN);
 
 /*
     Webhook Logic

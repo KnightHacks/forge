@@ -1,5 +1,4 @@
 {
   "extends": "@forge/tsconfig/base.json",
-  "include": ["src", "*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src"]
 }

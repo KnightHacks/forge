@@ -232,6 +232,9 @@ importers:
       "@forge/db":
         specifier: workspace:*
         version: link:../../packages/db
+      '@t3-oss/env-core':
+        specifier: ^0.11.1
+        version: 0.11.1(typescript@5.6.3)(zod@3.24.1)
       discord.js:
         specifier: ^14.16.3
         version: 14.16.3(bufferutil@4.0.8)(utf-8-validate@6.0.4)
@@ -241,6 +244,9 @@ importers:
       node-cron:
         specifier: ^3.0.3
         version: 3.0.3
+      zod:
+        specifier: ^3.24.1
+        version: 3.24.1
     devDependencies:
       "@forge/eslint-config":
         specifier: workspace:*
@@ -7480,6 +7486,9 @@ packages:
         integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==,
       }
 
+  zod@3.24.1:
+    resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
+
 snapshots:
   "@alloc/quick-lru@5.2.0": {}
 
@@ -8776,7 +8785,14 @@ snapshots:
     optionalDependencies:
       typescript: 5.6.3
 
-  "@t3-oss/env-nextjs@0.11.1(typescript@5.6.3)(zod@3.23.8)":
+  '@t3-oss/env-core@0.11.1(typescript@5.6.3)(zod@3.24.1)':
+    dependencies:
+      zod: 3.24.1
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@t3-oss/env-nextjs@0.11.1(typescript@5.6.3)(zod@3.23.8)':
+
     dependencies:
       "@t3-oss/env-core": 0.11.1(typescript@5.6.3)(zod@3.23.8)
       zod: 3.23.8
@@ -11911,3 +11927,5 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   zod@3.23.8: {}
+
+  zod@3.24.1: {}

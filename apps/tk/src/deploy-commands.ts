@@ -1,13 +1,13 @@
 import { REST, Routes } from "discord.js";
 
 import { commands } from "./commands";
-import { config } from "./config";
+import { env } from "./env";
 
 // Get all of the commands from /src/commands/index.ts
 const commandsData = Object.values(commands).map((command) => command.data);
 
 // Create a new REST client
-const rest = new REST({ version: "10" }).setToken(config.DISCORD_TOKEN);
+const rest = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
 
 // Type for the deployCommands function
 interface DeployCommandsProps {
@@ -22,7 +22,7 @@ export async function deployCommands({ guildId }: DeployCommandsProps) {
 
     // Load all of the commands
     await rest.put(
-      Routes.applicationGuildCommands(config.DISCORD_CLIENT_ID, guildId),
+      Routes.applicationGuildCommands(env.DISCORD_CLIENT_ID, guildId),
       {
         body: commandsData,
       },

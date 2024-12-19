@@ -8,7 +8,7 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./env": "./env.ts"
+    "./env": "./src/env.ts"
   },
   "license": "MIT",
   "scripts": {

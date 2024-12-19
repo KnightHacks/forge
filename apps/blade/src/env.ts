@@ -3,9 +3,10 @@ import { z } from "zod";
 
 import { env as apiEnv } from "@forge/api/env";
 import { env as authEnv } from "@forge/auth/env";
+import { env as dbEnv } from "@forge/db/env";
 
 export const env = createEnv({
-  extends: [authEnv, apiEnv],
+  extends: [authEnv, apiEnv, dbEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
@@ -15,9 +16,7 @@ export const env = createEnv({
    * Specify your server-side environment variables schema here.
    * This way you can ensure the app isn't built with invalid env vars.
    */
-  server: {
-    DATABASE_URL: z.string().url(),
-  },
+  server: {},
 
   /**
    * Specify your client-side environment variables schema here.

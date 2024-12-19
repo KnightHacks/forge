@@ -8,7 +8,7 @@
     "dev": "pnpm with-env tsx watch src/index.ts",
     "start": "pnpm with-env tsx src/index.ts",
     "build": "echo 'noop: no build operation to perform'",
-    "format": "prettier --write \"**/*.{json,ts}\"",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"
@@ -16,9 +16,11 @@
   "dependencies": {
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
+    "@t3-oss/env-core": "^0.11.1",
     "discord.js": "^14.16.3",
     "jimp": "^0.22.12",
-    "node-cron": "^3.0.3"
+    "node-cron": "^3.0.3",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@forge/eslint-config": "workspace:*",

@@ -10,7 +10,7 @@ import Discord from "next-auth/providers/discord";
 import { db } from "@forge/db/client";
 import { Account, Session, User } from "@forge/db/schemas/auth";
 
-import { env } from "../env";
+import { env } from "./env";
 
 declare module "next-auth" {
   interface Session {
@@ -34,15 +34,17 @@ export const isSecureContext = env.NODE_ENV !== "development";
 
 export const authConfig = {
   adapter,
-  secret: env.AUTH_SECRET,
   providers: [
     Discord({
+      clientId: env.DISCORD_CLIENT_ID,
+      clientSecret: env.DISCORD_CLIENT_SECRET,
       profile: (profile: DiscordProfile) => {
         return {
           discordUserId: profile.id,
           name: profile.username,
           email: profile.email,
           image: profile.avatar,
+          id: profile.id,
         };
       },
     }),
