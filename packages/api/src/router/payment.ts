@@ -4,10 +4,10 @@ import Stripe from "stripe";
 import { KNIGHTHACKS_MEMBERSHIP_PRICE } from "@forge/consts/knight-hacks";
 
 import { env } from "../env";
-import { protectedProcedure } from "../trpc";
+import { adminProcedure } from "../trpc";
 
 export const paymentRouter = {
-  createCheckout: protectedProcedure.mutation(async () => {
+  createCheckout: adminProcedure.mutation(async () => {
     const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
 
     const baseUrl =
