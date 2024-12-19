@@ -15,7 +15,8 @@
     "./schemas/*": {
       "types": "./dist/schemas/*.d.ts",
       "default": "./src/schemas/*.ts"
-    }
+    },
+    "./env": "./src/env.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -35,6 +36,7 @@
     "drizzle-orm": "^0.35.1",
     "drizzle-zod": "^0.5.1",
     "pg": "^8.13.1",
+    "pg-pool": "^3.7.0",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -42,6 +44,7 @@
     "@forge/prettier-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
     "@types/pg": "^8.11.10",
+    "@types/pg-pool": "^2.0.6",
     "dotenv-cli": "^7.4.2",
     "drizzle-kit": "^0.26.2",
     "eslint": "catalog:",
