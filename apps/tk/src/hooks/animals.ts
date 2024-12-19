@@ -64,7 +64,7 @@ function catHook(webhook: WebhookClient) {
   const url = "https://api.thecatapi.com/v1/images/search?limit=1";
 
   try {
-    cron.schedule("0 13 * * *", async () => {
+    cron.schedule("0 18 * * *", async () => {
       const res = await fetch(url);
       const data = (await res.json()) as CatProps[];
 
