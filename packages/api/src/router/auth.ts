@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 
 import { invalidateSessionToken } from "@forge/auth";
 
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 
 export const authRouter = {
   getSession: publicProcedure.query(({ ctx }) => {
@@ -10,6 +10,9 @@ export const authRouter = {
   }),
   getSecretMessage: protectedProcedure.query(() => {
     return "you can see this secret message!";
+  }),
+  getAdminMessage: adminProcedure.query(() => {
+    return "Blade user detected";
   }),
   signOut: protectedProcedure.mutation(async (opts) => {
     if (!opts.ctx.token) {

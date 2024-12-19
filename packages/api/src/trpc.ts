@@ -133,9 +133,6 @@ const isAdmin = async (user: User) => {
       },
     });
 
-    // Log the member information
-    // eslint-disable-next-line
-    console.log("Member Info:", response.data);
     // eslint-disable-next-line
     if (response?.data && DISCORD_ADMIN_ROLE_ID in response.data?.roles) {
       return true;
@@ -184,8 +181,8 @@ export const adminProcedure = t.procedure
     if (!ctx.session?.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
-    const isValid = await isAdmin(ctx.session.user);
-    if (isValid) {
+    const isValidAdmin = await isAdmin(ctx.session.user);
+    if (isValidAdmin) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
 
