@@ -46,9 +46,11 @@
     "dotenv-cli": "^7.4.2",
     "eslint": "catalog:",
     "jiti": "^2.3.3",
+    "node-loader": "^2.1.0",
     "prettier": "catalog:",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "zlib-sync": "^0.1.9"
   },
   "prettier": "@forge/prettier-config"
 }

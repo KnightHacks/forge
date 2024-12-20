@@ -7,7 +7,7 @@
  * The pieces you will need to use are documented accordingly near the end
  */
 import { initTRPC, TRPCError } from "@trpc/server";
-import axios from "axios";
+import { Client, GatewayIntentBits } from "discord.js";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -16,11 +16,6 @@ import { auth, validateToken } from "@forge/auth";
 import { DISCORD_ADMIN_ROLE_ID } from "@forge/consts/knight-hacks";
 
 import { env } from "./env";
-
-interface User {
-  id: string;
-  discordUserId: string;
-}
 
 /**
  * Isomorphic Session getter for API requests
@@ -120,23 +115,25 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
   return result;
 });
 
-const isAdmin = async (user: User) => {
+const isAdmin = async (user: Session["user"]) => {
   try {
-    // Define the URL
-    const url = `https://discord.com/api/v10/guilds/${env.KNIGHTHACKS_GUILD_ID}/members/${user.discordUserId}`;
-
-    // Make the request
-    // eslint-disable-next-line
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`, // Ensure you include the bot token
-      },
+    const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+    client.on("ready", () => {
+      console.log("ready");
     });
 
-    // eslint-disable-next-line
-    if (response?.data?.roles.includes(DISCORD_ADMIN_ROLE_ID)) {
+    await client.login(env.DISCORD_BOT_TOKEN as string);
+
+    const guild = await client.guilds.fetch(env.KNIGHTHACKS_GUILD_ID as string);
+
+    const member = await guild.members.fetch(user.discordUserId);
+
+    const roles = Array.from(member.roles.cache.keys());
+
+    if (roles.includes(DISCORD_ADMIN_ROLE_ID)) {
       return true;
     }
+
     return false;
   } catch (error) {
     console.log("err: ", error);
@@ -175,21 +172,16 @@ export const protectedProcedure = t.procedure
     });
   });
 
-export const adminProcedure = t.procedure
-  .use(timingMiddleware)
-  .use(async ({ ctx, next }) => {
-    if (!ctx.session?.user) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-    const isValidAdmin = await isAdmin(ctx.session.user);
-    if (!isValidAdmin) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
+export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const isValidAdmin = await isAdmin(ctx.session.user);
+  if (!isValidAdmin) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
 
-    return next({
-      ctx: {
-        // infers the `session` as non-nullable
-        session: { ...ctx.session, user: ctx.session.user },
-      },
-    });
+  return next({
+    ctx: {
+      // infers the `session` as non-nullable
+      session: { ...ctx.session, user: ctx.session.user },
+    },
   });
+});
