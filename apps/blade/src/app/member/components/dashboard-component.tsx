@@ -1,49 +1,27 @@
-import { auth, signIn } from "@forge/auth";
-import { eq } from "@forge/db";
-import { db } from "@forge/db/client";
-import { Member } from "@forge/db/schemas/knight-hacks";
-import { Button } from "@forge/ui/button";
+"use client";
 
-export default async function DashboardComponent() {
-  const session = await auth();
+import { useRouter } from "next/navigation";
 
-  if (!session) {
-    return (
-      <form>
-        <Button
-          size="lg"
-          formAction={async () => {
-            "use server";
-            await signIn("discord");
-          }}
-        >
-          Sign in with Discord
-        </Button>
-      </form>
-    );
+import { api } from "~/trpc/react";
+
+export default function DashboardComponent() {
+  const router = useRouter();
+
+  const { data: member, isLoading } = api.member.getMember.useQuery();
+
+  if (isLoading) {
+    return <div>Loading..</div>;
   }
 
-  // grabs the user's first name from the member table
-  const member = await db
-    .select({ firstName: Member.firstName })
-    .from(Member)
-    .where(eq(Member.userId, session.user.id))
-    .limit(1);
-  const memberFirstName = member[0]?.firstName;
-
-  console.log("Welcome: " + memberFirstName);
-  if (memberFirstName == undefined) {
-    return (
-      <div>
-        <h1>You are not a member! Sign up to become one.</h1>
-      </div>
-    );
+  if (!member) {
+    router.push("/");
+    return <div>You are not a member! Sign up to be one!</div>;
   }
 
   return (
     <div>
       <h1>Dashboard</h1>
-      <h1>Welcome {memberFirstName}!</h1>
+      <h1>Welcome {member.firstName}!</h1>
     </div>
   );
 }

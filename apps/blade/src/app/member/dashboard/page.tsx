@@ -7,10 +7,10 @@ export default function Dashboard() {
     <div>
       <DashboardComponent />
       <Image
-        src={"../../../../../blade/public/tk-dashboard-img.svg"}
-        alt="tk-pic"
-        width={500}
-        height={800}
+        src={"/tk-dashboard-img.svg"}
+        alt="A picture of Tech Knight"
+        width={300}
+        height={600}
       />
     </div>
   );
