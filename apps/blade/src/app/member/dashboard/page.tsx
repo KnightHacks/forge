@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import DashboardComponent from "../components/dashboard-component";
+import DashboardComponent from "./_components/dashboard-component";
 
 export default function Dashboard() {
   return (
