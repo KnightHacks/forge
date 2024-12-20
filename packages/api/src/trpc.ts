@@ -122,9 +122,9 @@ const isAdmin = async (user: Session["user"]) => {
       console.log("ready");
     });
 
-    await client.login(env.DISCORD_BOT_TOKEN as string);
+    await client.login(env.DISCORD_BOT_TOKEN);
 
-    const guild = await client.guilds.fetch(env.KNIGHTHACKS_GUILD_ID as string);
+    const guild = await client.guilds.fetch(env.KNIGHTHACKS_GUILD_ID);
 
     const member = await guild.members.fetch(user.discordUserId);
 
