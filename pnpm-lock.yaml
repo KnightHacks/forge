@@ -6,6 +6,15 @@ settings:
 
 catalogs:
   default:
+    '@tanstack/react-query':
+      specifier: ^5.59.15
+      version: 5.59.15
+    '@trpc/client':
+      specifier: ^11.0.0-rc.477
+      version: 11.0.0-rc.477
+    '@trpc/react-query':
+      specifier: ^11.0.0-rc.477
+      version: 11.0.0-rc.477
     '@trpc/server':
       specifier: ^11.0.0-rc.477
       version: 11.0.0-rc.477
@@ -15,6 +24,9 @@ catalogs:
     prettier:
       specifier: ^3.3.3
       version: 3.3.3
+    tailwindcss:
+      specifier: ^3.4.14
+      version: 3.4.14
     typescript:
       specifier: ^5.6.3
       version: 5.6.3
@@ -5064,6 +5076,9 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
+  zlib-sync@0.1.9:
+    resolution: {integrity: sha512-DinB43xCjVwIBDpaIvQqHbmDsnYnSt6HJ/yiB2MZQGTqgPcwBSZqLkimXwK8BvdjQ/MaZysb5uEenImncqvCqQ==}
+
   zod@3.24.1:
     resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
 
@@ -8161,7 +8176,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.10.2
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -9322,6 +9337,24 @@ snapshots:
     transitivePeerDependencies:
       - ts-node
 
+  tapable@2.2.1: {}
+
+  terser-webpack-plugin@5.3.11(webpack@5.97.1):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.25
+      jest-worker: 27.5.1
+      schema-utils: 4.3.0
+      serialize-javascript: 6.0.2
+      terser: 5.37.0
+      webpack: 5.97.1
+
+  terser@5.37.0:
+    dependencies:
+      '@jridgewell/source-map': 0.3.6
+      acorn: 8.14.0
+      commander: 2.20.3
+      source-map-support: 0.5.21
+
   text-table@0.2.0: {}
 
   thenify-all@1.6.0:
@@ -9731,5 +9764,9 @@ snapshots:
   yn@3.1.1: {}
 
   yocto-queue@0.1.0: {}
+
+  zlib-sync@0.1.9:
+    dependencies:
+      nan: 2.22.0
 
   zod@3.24.1: {}
