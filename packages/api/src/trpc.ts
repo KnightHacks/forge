@@ -7,15 +7,47 @@
  * The pieces you will need to use are documented accordingly near the end
  */
 import { initTRPC, TRPCError } from "@trpc/server";
-import { Client, GatewayIntentBits } from "discord.js";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import type { Session } from "@forge/auth";
 import { auth, validateToken } from "@forge/auth";
-import { DISCORD_ADMIN_ROLE_ID } from "@forge/consts/knight-hacks";
+import {
+  DISCORD_ADMIN_ROLE_ID,
+  KNIGHTHACKS_GUILD_ID,
+} from "@forge/consts/knight-hacks";
 
 import { env } from "./env";
+
+interface DiscordMember {
+  avatar: string | null;
+  banner: string | null;
+  communication_disabled_until: string | null;
+  flags: number;
+  joined_at: string;
+  nick: string;
+  pending: boolean;
+  premium_since: string | null;
+  roles: string[];
+  unusual_dm_activity_until: string | null;
+  user: {
+    id: string;
+    username: string;
+    avatar: string | null;
+    discriminator: string;
+    public_flags: number;
+    flags: number;
+    banner: string | null;
+    accent_color: number | null;
+    global_name: string | null;
+    avatar_decoration_data?: string;
+    banner_color: string | null;
+    clan?: string;
+    primary_guild?: string;
+  };
+  mute: boolean;
+  deaf: boolean;
+}
 
 /**
  * Isomorphic Session getter for API requests
@@ -117,20 +149,20 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 
 const isAdmin = async (user: Session["user"]) => {
   try {
-    const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-    client.on("ready", () => {
-      console.log("ready");
+    const url = `https://discord.com/api/v10/guilds/${KNIGHTHACKS_GUILD_ID}/members/${user.discordUserId}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
+      },
     });
 
-    await client.login(env.DISCORD_BOT_TOKEN);
+    const data = (await response.json()) as DiscordMember;
 
-    const guild = await client.guilds.fetch(env.KNIGHTHACKS_GUILD_ID);
+    console.log("Member Info:", data);
 
-    const member = await guild.members.fetch(user.discordUserId);
-
-    const roles = Array.from(member.roles.cache.keys());
-
-    if (roles.includes(DISCORD_ADMIN_ROLE_ID)) {
+    if (data.roles.includes(DISCORD_ADMIN_ROLE_ID)) {
       return true;
     }
 

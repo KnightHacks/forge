@@ -9,6 +9,8 @@ export default async function HomePage() {
   const session = await auth();
   const isMember = async () => {
     const member = await api.member.getMember();
+    const message = await api.auth.getAdminMessage();
+    console.log("Message: ", message);
 
     if (member) {
       return <Link href={"/member/dashboard"}>Dashboard</Link>;

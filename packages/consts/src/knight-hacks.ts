@@ -16,6 +16,8 @@ export const KNIGHTHACKS_MEMBERSHIP_PRICE = 2500;
 
 export const DISCORD_ADMIN_ROLE_ID = "1319413082258411652";
 
+export const KNIGHTHACKS_GUILD_ID = "486628710443778071";
+
 export const GENDERS = [
   "Man",
   "Woman",
