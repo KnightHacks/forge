@@ -9,6 +9,7 @@ export const env = createEnv({
     DISCORD_LEETCODE_ROLE_ID: z.string(),
     DISCORD_ANIMAL_WEBHOOK_URL: z.string(),
     DISCORD_LEETCODE_DAILY_WEBHOOK_URL: z.string(),
+    DISCORD_WEATHER_API_KEY: z.string(),
   },
   runtimeEnvStrict: {
     DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
@@ -18,6 +19,7 @@ export const env = createEnv({
     DISCORD_ANIMAL_WEBHOOK_URL: process.env.DISCORD_DAILY_ANIMAL_WEBHOOK_URL,
     DISCORD_LEETCODE_DAILY_WEBHOOK_URL:
       process.env.DISCORD_LEETCODE_DAILY_WEBHOOK_URL,
+    DISCORD_WEATHER_API_KEY: process.env.DISCORD_WEATHER_API_KEY,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",

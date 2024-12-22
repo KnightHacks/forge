@@ -210,3 +210,21 @@ export const EIGHTBALL_RESPONSES = [
   "Yeah that ain't happening.",
   "Bro that's definitely happening.",
 ];
+
+export const WEATHER_MAP = {
+  "Clear" : ":sunny:",
+  "Clouds" : ":cloud:",
+  "Squall" : ":cloud:",
+  "Tornado" : ":cloud_tornado:",
+  "Ash" : ":volcano:",
+  "Dust" : ":fog:",
+  "Sand" : ":fog:",
+  "Fog" : ":fog:", 
+  "Haze" : ":fog:",
+  "Smoke" : ":fog:",
+  "Mist" : ":fog:",
+  "Snow" : ":cloud_snow:",
+  "Rain" : ":cloud_rain:",
+  "Drizzle" : ":white_sun_rain_cloud:",
+  "Thunderstorm" : ":thunder_cloud_rain:",
+}
