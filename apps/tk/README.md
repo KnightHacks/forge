@@ -5,22 +5,25 @@ The official Knight Hacks Discord Bot
 ## Commands
 
 ```bash
-/countdown - sends a countdown to the next Knight Hacks event!
-/links - sends our most important links!
-/sign_in - signs into a Knight Hacks event
+/beep - responds with "Boop!"
+/bubblewrap - gives you some bubble wrap!
+/capybara - sends a random image of a capybara!
+/cat - sends a random image of a cat!
 /check_points - check your Knight Hacks points
-/leaderboard - shows the Knight Hacks points leaderboard
+/countdown - sends a countdown to the next Knight Hacks event!
+/dog - sends a random image of a dog!
+/duck - sends random duck image!
+/eightball - gives a response to an asked question!
+/fact - gives a random fact!
 /flex - publicly flexes your Knight Hacks points
 /flowchart - sends a flowchart based on a given major!
-/joke - sends a random programming joke!
-/duck - sends random duck image!
-/dog - sends a random image of a dog!
-/cat - sends a random image of a cat!
-/capybara - sends a random image of a capybara!
-/beep - responds with "Boop!"
+/fox - sends a random image of a fox!
 /goat - responds with a random image of a goat!
-/bubblewrap - gives you some bubble wrap!
 /help - sends a list of available commands
+/joke - sends a random programming joke!
+/leaderboard - shows the Knight Hacks points leaderboard
+/links - sends our most important links!
+/sign_in - signs into a Knight Hacks event
 ```
 
 ### Adding a Command
@@ -34,9 +37,9 @@ After adding a new command, please update `commands/index.ts` accordingly. View 
 ## Hooks
 
 ```bash
-- calendar - sends a daily message to the reminders channel informing users of events today, tomorrow, and in a week
-- daily - sends a daily message containing the Leetcode daily challenge and starts a thread
 - animals - sends daily images of several animals throughout the day
+- calendar (CURRENTLY NOT IN USE) - sends a daily message to the reminders channel informing users of events today, tomorrow, and in a week
+- daily - sends a daily message containing the Leetcode daily challenge and starts a thread
 ```
 
 ### Adding a Hook
