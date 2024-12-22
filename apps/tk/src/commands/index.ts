@@ -5,8 +5,8 @@ import * as cat from "./cat";
 import * as chat from "./chat";
 import * as check_points from "./check_points";
 import * as dog from "./dog";
-import * as eightball from "./eightball";
 import * as duck from "./duck";
+import * as eightball from "./eightball";
 import * as fact from "./fact";
 import * as flex from "./flex";
 import * as flowchart from "./flowchart";
@@ -36,6 +36,6 @@ export const commands = {
   help,
   joke,
   leaderboard,
-  links,  
-}; 
+  links,
+};
 // please keep this in alphabetical order for ease of reference

@@ -209,4 +209,4 @@ export const EIGHTBALL_RESPONSES = [
   "The stars in the milky way are blinking in a decidedly good fashion!",
   "Yeah that ain't happening.",
   "Bro that's definitely happening.",
-]
+];
