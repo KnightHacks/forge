@@ -17,18 +17,19 @@ import * as chat from "./chat";
 // Export all commands
 export const commands = {
   beep,
-  duck,
-  joke,
-  chat,
-  cat,
-  dog,
-  flowchart,
-  leaderboard,
-  flex,
-  check_points,
-  help,
-  capybara,
-  goat,
-  links,
   bubblewrap,
-};
+  capybara,
+  cat,
+  chat,
+  check_points,
+  dog,
+  duck,
+  flex,
+  flowchart,
+  goat,
+  help,
+  joke,
+  leaderboard,
+  links,  
+}; 
+// please keep this in alphabetical order for ease of reference
