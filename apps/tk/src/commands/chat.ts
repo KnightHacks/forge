@@ -17,7 +17,7 @@ export async function execute(interaction: CommandInteraction) {
   const randomIndex = Math.floor(Math.random() * CHAT_RESPONSES.length);
 
   if (!CHAT_RESPONSES[randomIndex]) {
-    throw new Error("No chat response found");
+    throw new Error("No chat response found.");
   }
 
   return interaction.reply(CHAT_RESPONSES[randomIndex]);

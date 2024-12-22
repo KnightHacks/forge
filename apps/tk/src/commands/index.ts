@@ -5,6 +5,7 @@ import * as cat from "./cat";
 import * as chat from "./chat";
 import * as check_points from "./check_points";
 import * as dog from "./dog";
+import * as eightball from "./eightball";
 import * as duck from "./duck";
 import * as fact from "./fact";
 import * as flex from "./flex";
@@ -26,6 +27,7 @@ export const commands = {
   check_points,
   dog,
   duck,
+  eightball,
   fact,
   flex,
   flowchart,
