@@ -158,7 +158,7 @@ export const LINKS = [
   "[*For more links...*](https://linktr.ee/knighthacks)",
 ];
 
-export const CHAT_RESPONES = [
+export const CHAT_RESPONSES = [
   "Hey there! Ready to tackle some code?",
   "Let's make magic happen today!",
   "Need a hand? T.K is here to help!",

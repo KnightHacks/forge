@@ -107,7 +107,7 @@ export function execute(client: Client) {
           },
         );
 
-      //ROLE ID has to be hardcoded into the ping!
+      // ROLE ID has to be hardcoded into the ping!
       const embed = await webhook.send({
         content:
           `# Good Morning!\nHere's today's daily Leetcode problem! <@&${env.DISCORD_LEETCODE_ROLE_ID}>\n` +

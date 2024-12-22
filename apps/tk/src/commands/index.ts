@@ -12,12 +12,14 @@ import * as help from "./help";
 import * as joke from "./joke";
 import * as leaderboard from "./leaderboard";
 import * as links from "./links";
+import * as chat from "./chat";
 
 // Export all commands
 export const commands = {
   beep,
   duck,
   joke,
+  chat,
   cat,
   dog,
   flowchart,
