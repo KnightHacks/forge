@@ -52,7 +52,8 @@ export const GOATS = [
   {
     name: "GOATsef Osman",
     link: "https://i.imgur.com/z2FrjKz.png",
-    image: "https://i.imgur.com/z2FrjKz.png",
+    image:
+      "https://i.imgur.com/z2FrjKz.png",
   },
   {
     name: "GOATit FREAKtasin",
@@ -117,7 +118,8 @@ export const GOATS = [
   {
     name: "Lucca GOATuncao",
     link: "https://www.linkedin.com/in/luccaassuncao/",
-    image: "https://i.imgur.com/KlwLPjI.jpeg",
+    image:
+      "https://i.imgur.com/KlwLPjI.jpeg",
   },
   {
     name: "Ricky GOATips",
