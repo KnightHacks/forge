@@ -110,7 +110,6 @@ export function MemberApplicationForm() {
           if (fileList.length === 1) {
             // Validate type of object in FileList is File
             if (fileList[0] instanceof File) {
-              console.log("silly");
               // Validate file extension is PDF
               const fileExtension = fileList[0].name.split(".").pop();
               if (fileExtension !== "pdf") {
