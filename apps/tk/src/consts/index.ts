@@ -212,25 +212,38 @@ export const EIGHTBALL_RESPONSES = [
 ];
 
 export type WeatherMapKeys = Record<
-  "Clear" | "Clouds" | "Squall" | "Tornado" | "Ash" | "Dust" | "Sand" |
-  "Fog" | "Haze" | "Smoke" | "Mist" | "Snow" | "Rain" | "Drizzle" | "Thunderstorm",
+  | "Clear"
+  | "Clouds"
+  | "Squall"
+  | "Tornado"
+  | "Ash"
+  | "Dust"
+  | "Sand"
+  | "Fog"
+  | "Haze"
+  | "Smoke"
+  | "Mist"
+  | "Snow"
+  | "Rain"
+  | "Drizzle"
+  | "Thunderstorm",
   string
 >; // for easy key access in WEATHER_MAP
 
 export const WEATHER_MAP: WeatherMapKeys = {
-  Clear : ":sunny:",
-  Clouds : ":cloud:",
-  Squall : ":cloud:",
-  Tornado : ":cloud_tornado:",
-  Ash : ":volcano:",
-  Dust : ":fog:",
-  Sand : ":fog:",
-  Fog : ":fog:", 
-  Haze : ":fog:",
-  Smoke : ":fog:",
-  Mist : ":fog:",
-  Snow : ":cloud_snow:",
-  Rain : ":cloud_rain:",
-  Drizzle : ":white_sun_rain_cloud:",
-  Thunderstorm : ":thunder_cloud_rain:",
-}
+  Clear: ":sunny:",
+  Clouds: ":cloud:",
+  Squall: ":cloud:",
+  Tornado: ":cloud_tornado:",
+  Ash: ":volcano:",
+  Dust: ":fog:",
+  Sand: ":fog:",
+  Fog: ":fog:",
+  Haze: ":fog:",
+  Smoke: ":fog:",
+  Mist: ":fog:",
+  Snow: ":cloud_snow:",
+  Rain: ":cloud_rain:",
+  Drizzle: ":white_sun_rain_cloud:",
+  Thunderstorm: ":thunder_cloud_rain:",
+};
