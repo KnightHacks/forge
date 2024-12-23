@@ -16,6 +16,7 @@ import * as help from "./help";
 import * as joke from "./joke";
 import * as leaderboard from "./leaderboard";
 import * as links from "./links";
+import * as weather from "./weather";
 
 // Export all commands
 export const commands = {
@@ -37,5 +38,6 @@ export const commands = {
   joke,
   leaderboard,
   links,
+  weather,
 };
 // please keep this in alphabetical order for ease of reference

@@ -2,13 +2,14 @@ import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
 
 import { WEATHER_MAP } from "../consts";
+import type { WeatherMapKeys } from "../consts";
 import { env } from "../env";
 
 interface WeatherProps {
     weather: {
         main: string;
         description: string;
-    },
+    }[],
     main: {
         temp: number;
         feels_like: number;
@@ -49,10 +50,32 @@ export async function execute(interaction: CommandInteraction) {
             throw new Error("Weather data could not be fetched!");
         }
 
-        const embed = {
-            title: `Weather for ${data.name}, ${data.sys.country}`,
+        const key: keyof WeatherMapKeys = data.weather[0] 
+            ? data.weather[0].main as keyof WeatherMapKeys : "Clouds";
 
+        const weatherData = [
+            `**Conditions**: ${data.weather[0]?.description}`,
+            `**Temperature**: ${data.main.temp}°F`,
+            `**Feels Like**: ${data.main.feels_like}°F`,
+            `**Today's Minimum**: ${data.main.temp_min}°F`,
+            `**Today's Maximum**: ${data.main.temp_max}°F`,
+            `**Humidity**: ${data.main.humidity}%`
+        ]; // data stored like this for formatting purpose
+
+        const embed = {
+            // because "Orlando, US" is super weird
+            title: `${WEATHER_MAP[key]} Weather for ${data.name}${data.sys.country == "US" ? "" : ", " + data.sys.country} ${WEATHER_MAP[key]}`,
+            description: `**Weather Report:**`,
+            color: 0x33e0ff,
+            fields: [
+                {
+                    name: "",
+                    value: weatherData.join("\n"),
+                }
+            ]
         }
+
+        return interaction.reply({ embeds: [embed] });
     } catch (err: unknown) {
         if (err instanceof Error) {
             console.log(err.message);
