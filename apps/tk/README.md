@@ -24,7 +24,6 @@ The official Knight Hacks Discord Bot
 /leaderboard - shows the Knight Hacks points leaderboard
 /links - sends our most important links!
 /sign_in - signs into a Knight Hacks event
-/weather - sends the weather for a specified city!
 ```
 
 ### Adding a Command
