@@ -1,8 +1,8 @@
 import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
 
-import { WEATHER_MAP } from "../consts";
 import type { WeatherMapKeys } from "../consts";
+import { WEATHER_MAP } from "../consts";
 import { env } from "../env";
 
 interface WeatherProps {
