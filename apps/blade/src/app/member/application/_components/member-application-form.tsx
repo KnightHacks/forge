@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { z } from "zod";
+import { z, ZodIssueCode } from "zod";
 
 import {
   GENDERS,
@@ -31,10 +31,12 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 import { toast } from "@forge/ui/toast";
+import { Client } from "minio";
 
 import { api } from "~/trpc/react";
 
 export function MemberApplicationForm() {
+  const MAX_RESUME_SIZE = 5 * 1000000; // 5MB
   const router = useRouter();
 
   const createMember = api.member.createMember.useMutation({
@@ -79,6 +81,49 @@ export function MemberApplicationForm() {
         .url({ message: "Invalid URL" })
         .optional()
         .or(z.literal("")),
+      resumeUpload: z
+        .instanceof(FileList)
+        .superRefine((fileList, ctx) => {
+          // Validate number of files is 0 or 1
+          if (fileList.length !== 0 && fileList.length !== 1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Only 0 or 1 files allowed",
+            });
+          }
+
+          if (fileList.length === 1) {
+            // Validate type of object in FileList is File
+            if (fileList[0] instanceof File) {
+              // Validate file extension is PDF
+              const fileExtension = fileList[0].name.split(".").pop();
+              if (fileExtension !== "pdf") {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: "Resume must be a PDF",
+                });
+              }
+
+              // Validate file size is <= 5MB
+              if (fileList[0].size > MAX_RESUME_SIZE) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.too_big,
+                  type: "number",
+                  maximum: MAX_RESUME_SIZE,
+                  inclusive: true,
+                  exact: false,
+                  message: "File too large: maximum 5MB",
+                });
+              }
+            } else {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Object in FileList is undefined",
+              });
+            }
+          }
+        })
+        .optional(),
     }),
     defaultValues: {
       firstName: "",
@@ -92,12 +137,26 @@ export function MemberApplicationForm() {
     },
   });
 
+  const fileRef = form.register("resumeUpload");
+
+  const uploadResume = (file: File) => {
+    console.log(`uploading ${file.name}`);
+    // instantiate minio client
+    const s3Client = new Client({
+      endPoint: "",
+      accessKey: "",
+      secretKey: "",
+    });
+    return file.name;
+  };
+
   return (
     <Form {...form}>
       <form
         className="space-y-4"
         noValidate
         onSubmit={form.handleSubmit((values) => {
+          const resumeUrl = uploadResume(values.resumeUpload[0]);
           createMember.mutate(values);
         })}
       >
@@ -344,6 +403,23 @@ export function MemberApplicationForm() {
               <FormLabel>Personal Website</FormLabel>
               <FormControl>
                 <Input placeholder="https://knighthacks.org" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="resumeUpload"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Resume</FormLabel>
+              <FormControl>
+                <Input type="file" placeholder="" {...fileRef} 
+                onChange={(event) => {
+                  field.onChange(event?.target?.files[0] ?? undefined);
+                }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
