@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 import { toast } from "@forge/ui/toast";
+import { Client } from "minio";
 
 import { api } from "~/trpc/react";
 
@@ -154,12 +155,24 @@ export function MemberApplicationForm() {
 
   const fileRef = form.register("resumeUpload");
 
+  const uploadResume = (file: File) => {
+    console.log(`uploading ${file.name}`);
+    // instantiate minio client
+    const s3Client = new Client({
+      endPoint: "",
+      accessKey: "",
+      secretKey: "",
+    });
+    return file.name;
+  };
+
   return (
     <Form {...form}>
       <form
         className="space-y-4"
         noValidate
         onSubmit={form.handleSubmit((values) => {
+          const resumeUrl = uploadResume(values.resumeUpload[0]);
           createMember.mutate(values);
         })}
       >
