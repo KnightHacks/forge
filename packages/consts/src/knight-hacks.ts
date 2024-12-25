@@ -12,6 +12,19 @@ export const LEVELS_OF_STUDY = [
   "Prefer not to answer",
 ] as const;
 
+export const EVENT_TAGS = [
+  "GBM",
+  "Social",
+  "Kickstart",
+  "Project Launch",
+  "Hello World",
+  "Sponsorship",
+  "Tech Exploration",
+  "Class Support",
+  "OPS",
+  "Hackathon",
+] as const;
+
 export const KNIGHTHACKS_MEMBERSHIP_PRICE = 2500;
 
 export const DISCORD_ADMIN_ROLE_ID = "1319413082258411652";

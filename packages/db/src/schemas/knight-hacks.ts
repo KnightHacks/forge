@@ -3,6 +3,7 @@ import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 import {
+  EVENT_TAGS,
   GENDERS,
   HACKATHON_APPLICATION_STATES,
   LEVELS_OF_STUDY,
@@ -17,6 +18,7 @@ import { User } from "./auth";
 const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
 export const shirtSizeEnum = pgEnum("shirt_size", SHIRT_SIZES);
+export const eventTagEnum = pgEnum("event_tag", EVENT_TAGS);
 export const genderEnum = pgEnum("gender", GENDERS);
 export const raceOrEthnicityEnum = pgEnum(
   "race_or_ethnicity",
@@ -124,8 +126,10 @@ export const HackathonSponsor = createTable("hackathon_sponsor", (t) => ({
 export const Event = createTable("event", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   name: t.varchar({ length: 255 }).notNull(),
+  tag: eventTagEnum().notNull(),
   description: t.text().notNull(),
   datetime: t.timestamp().notNull(),
+  location: t.varchar({ length: 255 }).notNull(),
   points: t.integer(),
   // Can be null if the event is not associated with a hackathon (e.g. club events)
   hackathonId: t.uuid().references(() => Hackathon.id, {
