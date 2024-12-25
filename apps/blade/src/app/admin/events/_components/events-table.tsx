@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@forge/ui/table";
+import { CreateEventButton } from "./create-event";
 
 interface Event {
   name: string;
@@ -298,9 +299,7 @@ export function EventsTable() {
             className="pl-8"
           />
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> Create Event
-        </Button>
+        <CreateEventButton />
       </div>
       <Table>
         <TableHeader>
