@@ -2,9 +2,8 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 
-import { isDiscordAdmin } from "~/app/utils";
 import { SIGN_IN_PATH } from "~/consts";
-import { HydrateClient } from "~/trpc/server";
+import { api, HydrateClient } from "~/trpc/server";
 import { EventsTable } from "./_components/events-table";
 
 export default async function Events() {
@@ -15,7 +14,7 @@ export default async function Events() {
   }
 
   // Check if the user has access to Blade
-  const isAdmin = await isDiscordAdmin(session.user);
+  const isAdmin = await api.auth.getAdminStatus();
   if (!isAdmin) {
     redirect("/");
   }
