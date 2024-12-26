@@ -19,7 +19,7 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 
 // eslint-disable-next-line prefer-const
-let extraCaution = false;
+let extraCaution = true;
 interface DeleteEventButtonProps {
   event: {
     id: string;
