@@ -14,214 +14,17 @@ import {
   TableHeader,
   TableRow,
 } from "@forge/ui/table";
+
+import { api } from "~/trpc/react";
 import { CreateEventButton } from "./create-event";
 
 interface Event {
   name: string;
   tag: string;
-  date: string;
+  datetime: Date;
   location: string;
-  attended: number;
+  numAttended: number;
 }
-
-const events: Event[] = [
-  {
-    name: "Fall Kickoff",
-    tag: "GBM",
-    date: "2024-08-21",
-    location: "ENG Atrium",
-    attended: 100,
-  },
-  {
-    name: "Hackathon 101",
-    tag: "GBM",
-    date: "2024-09-21",
-    location: "ENG Atrium",
-    attended: 120,
-  },
-  {
-    name: "Goodbye Bash",
-    tag: "GBM",
-    date: "2024-01-21",
-    location: "ENG Atrium",
-    attended: 130,
-  },
-  {
-    name: "Geico",
-    tag: "Sponosrship",
-    date: "2024-08-21",
-    location: "HEC 101",
-    attended: 75,
-  },
-  {
-    name: "Chase",
-    tag: "Sponsorship",
-    date: "2024-08-28",
-    location: "HEC 101",
-    attended: 75,
-  },
-  {
-    name: "Linux",
-    tag: "Hello World",
-    date: "2024-09-23",
-    location: "HEC 101",
-    attended: 75,
-  },
-  {
-    name: "Obsidian",
-    tag: "Hello World",
-    date: "2024-10-15",
-    location: "HEC 101",
-    attended: 75,
-  },
-  {
-    name: "Python",
-    tag: "Tech Exploration",
-    date: "2024-08-28",
-    location: "HEC 101",
-    attended: 75,
-  },
-  {
-    name: "Welcome Social",
-    tag: "Social",
-    date: "2024-08-10",
-    location: "ENG Atrium",
-    attended: 110,
-  },
-  {
-    name: "Java Basics",
-    tag: "Tech Exploration",
-    date: "2024-09-05",
-    location: "HEC 101",
-    attended: 80,
-  },
-  {
-    name: "React Workshop",
-    tag: "Tech Exploration",
-    date: "2024-08-20",
-    location: "HEC 101",
-    attended: 95,
-  },
-  {
-    name: "Midterm Stress Buster",
-    tag: "Social",
-    date: "2024-10-07",
-    location: "ENG Atrium",
-    attended: 100,
-  },
-  {
-    name: "Google Cloud Basics",
-    tag: "Tech Exploration",
-    date: "2024-08-15",
-    location: "HEC 101",
-    attended: 90,
-  },
-  {
-    name: "Intro to Docker",
-    tag: "Hello World",
-    date: "2024-11-02",
-    location: "HEC 101",
-    attended: 75,
-  },
-  {
-    name: "Halloween Bash",
-    tag: "Social",
-    date: "2024-10-30",
-    location: "ENG Atrium",
-    attended: 120,
-  },
-  {
-    name: "End-of-Semester Social",
-    tag: "Social",
-    date: "2024-12-15",
-    location: "ENG Atrium",
-    attended: 105,
-  },
-  {
-    name: "Microsoft Azure Workshop",
-    tag: "Sponsorship",
-    date: "2024-09-17",
-    location: "HEC 101",
-    attended: 80,
-  },
-  {
-    name: "Data Structures Support",
-    tag: "Class Support",
-    date: "2024-11-12",
-    location: "HEC 101",
-    attended: 65,
-  },
-  {
-    name: "Cybersecurity Basics",
-    tag: "Tech Exploration",
-    date: "2024-08-24",
-    location: "HEC 101",
-    attended: 85,
-  },
-  {
-    name: "LinkedIn Workshop",
-    tag: "Sponsorship",
-    date: "2024-10-20",
-    location: "HEC 101",
-    attended: 95,
-  },
-  {
-    name: "AI in Gaming",
-    tag: "Tech Exploration",
-    date: "2024-09-10",
-    location: "HEC 101",
-    attended: 100,
-  },
-  {
-    name: "Study Night",
-    tag: "Class Support",
-    date: "2024-12-05",
-    location: "ENG Atrium",
-    attended: 70,
-  },
-  {
-    name: "Networking Tips",
-    tag: "Social",
-    date: "2024-11-22",
-    location: "HEC 101",
-    attended: 85,
-  },
-  {
-    name: "GCP Certification Info",
-    tag: "Sponsorship",
-    date: "2024-08-18",
-    location: "HEC 101",
-    attended: 90,
-  },
-  {
-    name: "Intro to Kubernetes",
-    tag: "Hello World",
-    date: "2024-11-05",
-    location: "HEC 101",
-    attended: 75,
-  },
-  {
-    name: "Unity Basics",
-    tag: "Tech Exploration",
-    date: "2024-09-27",
-    location: "HEC 101",
-    attended: 85,
-  },
-  {
-    name: "Advanced Git Techniques",
-    tag: "Hello World",
-    date: "2024-08-30",
-    location: "HEC 101",
-    attended: 75,
-  },
-  {
-    name: "Finals Chill Night",
-    tag: "Social",
-    date: "2024-12-21",
-    location: "ENG Atrium",
-    attended: 110,
-  },
-];
 
 type SortField = keyof Event;
 type SortOrder = "asc" | "desc" | null;
@@ -230,10 +33,15 @@ export function EventsTable() {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const { data: events } = api.event.getEvents.useQuery();
+  console.log(events);
 
-  const filteredEvents = events.filter((event) =>
-    Object.values(event).some((value: string | number) =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredEvents = (events ?? []).filter((event) =>
+    Object.values(event).some(
+      (value) =>
+        value !== null &&
+        (typeof value === "string" || typeof value === "number") &&
+        value.toString().toLowerCase().includes(searchTerm.toLowerCase()),
     ),
   );
 
@@ -288,6 +96,8 @@ export function EventsTable() {
   };
 
   return (
+    // Display a loader while the events are being fetched
+
     <div>
       <div className="flex items-center justify-between gap-10 border-b pb-4">
         <div className="relative w-full">
@@ -311,13 +121,13 @@ export function EventsTable() {
               <SortButton field="tag" label="Tag" />
             </TableHead>
             <TableHead>
-              <SortButton field="date" label="Date" />
+              <SortButton field="datetime" label="Date" />
             </TableHead>
             <TableHead>
               <SortButton field="location" label="Location" />
             </TableHead>
             <TableHead className="text-right">
-              <SortButton field="attended" label="Attended" />
+              <SortButton field="numAttended" label="Attended" />
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -326,9 +136,9 @@ export function EventsTable() {
             <TableRow key={event.name}>
               <TableCell className="font-medium">{event.name}</TableCell>
               <TableCell>{event.tag}</TableCell>
-              <TableCell>{event.date}</TableCell>
+              <TableCell>{event.datetime.toDateString()}</TableCell>
               <TableCell>{event.location}</TableCell>
-              <TableCell className="text-right">{event.attended}</TableCell>
+              <TableCell className="text-right">{event.numAttended}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -336,7 +146,10 @@ export function EventsTable() {
           <TableRow>
             <TableCell colSpan={4}>Total Attendance</TableCell>
             <TableCell className="text-right">
-              {sortedEvents.reduce((sum, event) => sum + event.attended, 0)}
+              {sortedEvents.reduce(
+                (sum, event) => sum + (event as Event).numAttended,
+                0,
+              )}
             </TableCell>
           </TableRow>
         </TableFooter>

@@ -25,6 +25,21 @@ export const EVENT_TAGS = [
   "Hackathon",
 ] as const;
 
+type EventTag = (typeof EVENT_TAGS)[number];
+
+export const EVENT_POINTS: Record<EventTag, number> = {
+  GBM: 35,
+  Social: 35,
+  Kickstart: 25,
+  "Project Launch": 25,
+  "Hello World": 25,
+  Sponsorship: 40,
+  "Tech Exploration": 25,
+  "Class Support": 25,
+  OPS: 20,
+  Hackathon: 1,
+} as const;
+
 export const KNIGHTHACKS_MEMBERSHIP_PRICE = 2500;
 
 export const DISCORD_ADMIN_ROLE_ID = "1319413082258411652";

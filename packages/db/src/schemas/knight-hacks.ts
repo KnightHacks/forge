@@ -131,11 +131,14 @@ export const Event = createTable("event", (t) => ({
   datetime: t.timestamp().notNull(),
   location: t.varchar({ length: 255 }).notNull(),
   points: t.integer(),
+  numAttended: t.integer().notNull().default(0),
   // Can be null if the event is not associated with a hackathon (e.g. club events)
   hackathonId: t.uuid().references(() => Hackathon.id, {
     onDelete: "cascade",
   }),
 }));
+
+export const InsertEventSchema = createInsertSchema(Event);
 
 export const DuesPayment = createTable("dues_payment", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
