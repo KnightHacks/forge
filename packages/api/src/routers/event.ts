@@ -1,4 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { APIExternalGuildScheduledEvent, Routes } from "discord-api-types/v10";
 
 import { EVENT_POINTS, KNIGHTHACKS_GUILD_ID } from "@forge/consts/knight-hacks";
@@ -46,11 +47,18 @@ export const eventRouter = {
         console.log(JSON.stringify(response, null, 2));
       } catch (error) {
         console.error(JSON.stringify(error, null, 2));
+        throw new TRPCError({
+          message: "Failed to create event in Discord",
+          code: "BAD_REQUEST",
+        });
       }
 
       // Step 2: Insert the event into the database with the discord id.
       if (!eventId) {
-        throw new Error("Failed to create event in Discord");
+        throw new TRPCError({
+          message: "Failed to create event in Discord",
+          code: "BAD_REQUEST",
+        });
       }
 
       await db.insert(Event).values({
@@ -63,7 +71,10 @@ export const eventRouter = {
     .input(InsertEventSchema)
     .mutation(async ({ input }) => {
       if (!input.id) {
-        throw new Error("Event ID is required to update an event");
+        throw new TRPCError({
+          message: "Event ID is required to update an Event.",
+          code: "BAD_REQUEST",
+        });
       }
 
       // Step 1: Update the event in Discord
@@ -88,6 +99,10 @@ export const eventRouter = {
         );
       } catch (error) {
         console.error(JSON.stringify(error, null, 2));
+        throw new TRPCError({
+          message: "Failed to update event in Discord",
+          code: "BAD_REQUEST",
+        });
       }
 
       // Step 2: Update the event in the database
@@ -97,7 +112,10 @@ export const eventRouter = {
     .input(InsertEventSchema.pick({ id: true }))
     .mutation(async ({ input }) => {
       if (!input.id) {
-        throw new Error("Event ID is required to delete an event");
+        throw new TRPCError({
+          message: "Event ID is required to delete an Event.",
+          code: "BAD_REQUEST",
+        });
       }
       await db.delete(Event).where(eq(Event.id, input.id));
     }),

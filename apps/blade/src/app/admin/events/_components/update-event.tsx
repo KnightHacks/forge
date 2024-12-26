@@ -112,8 +112,8 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       setIsOpen(false);
       form.reset();
     },
-    onError() {
-      toast.error("Oops! Something went wrong. Please try again later.");
+    onError(opts) {
+      toast.error(opts.message);
     },
     async onSettled() {
       await utils.event.invalidate();
