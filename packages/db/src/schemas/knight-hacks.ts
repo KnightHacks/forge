@@ -138,6 +138,9 @@ export const Event = createTable("event", (t) => ({
   }),
 }));
 
+export type InsertEvent = typeof Event.$inferInsert;
+export type SelectEvent = typeof Event.$inferSelect;
+
 export const InsertEventSchema = createInsertSchema(Event);
 
 export const DuesPayment = createTable("dues_payment", (t) => ({
