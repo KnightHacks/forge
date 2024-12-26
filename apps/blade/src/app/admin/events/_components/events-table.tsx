@@ -144,7 +144,7 @@ export function EventsTable() {
                   ? new Date(
                       event.start_datetime as string,
                     ).toLocaleDateString()
-                  : (event.start_datetime as Date).toLocaleDateString()}
+                  : event.start_datetime.toLocaleDateString()}
               </TableCell>
 
               <TableCell>{event.location}</TableCell>
