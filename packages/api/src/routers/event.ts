@@ -3,7 +3,12 @@ import type { APIExternalGuildScheduledEvent } from "discord-api-types/v10";
 import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 
-import { EVENT_POINTS, KNIGHTHACKS_GUILD_ID } from "@forge/consts/knight-hacks";
+import {
+  DISCORD_EVENT_PRIVACY_LEVEL,
+  DISCORD_EVENT_TYPE,
+  EVENT_POINTS,
+  KNIGHTHACKS_GUILD_ID,
+} from "@forge/consts/knight-hacks";
 import { desc, eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Event, InsertEventSchema } from "@forge/db/schemas/knight-hacks";
@@ -27,21 +32,19 @@ export const eventRouter = {
         const startIsoTimestamp = startDatetime.toISOString();
         const endDatetime = new Date(input.end_datetime);
         const endIsoTimestamp = endDatetime.toISOString();
+        const formattedName =
+          "[" + input.tag.toUpperCase().replace(" ", "-") + "] " + input.name;
 
         const response = (await discord.post(
           Routes.guildScheduledEvents(KNIGHTHACKS_GUILD_ID),
           {
             body: {
               description: input.description,
-              name:
-                "[" +
-                input.tag.toUpperCase().replace(" ", "-") +
-                "] " +
-                input.name,
-              privacy_level: 2,
+              name: formattedName,
+              privacy_level: DISCORD_EVENT_PRIVACY_LEVEL,
               scheduled_start_time: startIsoTimestamp,
               scheduled_end_time: endIsoTimestamp,
-              entity_type: 3,
+              entity_type: DISCORD_EVENT_TYPE,
               entity_metadata: {
                 location: input.location,
               },
@@ -84,22 +87,20 @@ export const eventRouter = {
 
       // Step 1: Update the event in Discord
       try {
+        const formattedName =
+          "[" + input.tag.toUpperCase().replace(" ", "-") + "] " + input.name;
         await discord.patch(
           Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, input.discordId),
           {
             body: {
               description: input.description,
-              name:
-                "[" +
-                input.tag.toUpperCase().replace(" ", "-") +
-                "] " +
-                input.name,
-              privacy_level: 2,
+              name: formattedName,
+              privacy_level: DISCORD_EVENT_PRIVACY_LEVEL,
               scheduled_start_time: new Date(
                 input.start_datetime,
               ).toISOString(),
               scheduled_end_time: new Date(input.end_datetime).toISOString(),
-              entity_type: 3,
+              entity_type: DISCORD_EVENT_TYPE,
               entity_metadata: {
                 location: input.location,
               },
