@@ -79,7 +79,10 @@ export function CreateEventButton() {
   });
 
   // Initialize form with Zod schema
-  const FormSchema = InsertEventSchema.omit({ datetime: true }).extend({
+  const FormSchema = InsertEventSchema.omit({
+    datetime: true,
+    discordId: true,
+  }).extend({
     date: z.string(),
     hour: z.string(),
     minute: z.string(),

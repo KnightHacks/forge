@@ -1,5 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import { Routes } from "discord-api-types/v10";
+import { APIExternalGuildScheduledEvent, Routes } from "discord-api-types/v10";
 
 import { EVENT_POINTS, KNIGHTHACKS_GUILD_ID } from "@forge/consts/knight-hacks";
 import { desc, eq } from "@forge/db";
@@ -16,36 +16,50 @@ export const eventRouter = {
     });
   }),
   createEvent: adminProcedure
-    .input(InsertEventSchema.omit({ id: true }))
+    .input(InsertEventSchema.omit({ id: true, discordId: true }))
     .mutation(async ({ input }) => {
-      // Step 1: Insert the event into the database
-      await db.insert(Event).values({
-        ...input,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-        points: EVENT_POINTS[input.tag],
-      });
-
-      // Step 2: Make the event in Discord
+      // Step 1: Make the event in Discord
+      let eventId;
       try {
-        const datetime = new Date(input.datetime);
-        const isoTimestamp = datetime.toISOString();
+        const startDatetime = new Date(input.datetime);
+        const startIsoTimestamp = startDatetime.toISOString();
+        const endDatetime = new Date(
+          startDatetime.getTime() + 3 * 60 * 60 * 1000,
+        );
+        const endIsoTimestamp = endDatetime.toISOString();
 
-        const response = await discord.post(
+        const response = (await discord.post(
           Routes.guildScheduledEvents(KNIGHTHACKS_GUILD_ID),
           {
             body: {
               description: input.description,
               name: input.name,
               privacy_level: 2,
-              scheduled_start_time: isoTimestamp,
+              scheduled_start_time: startIsoTimestamp,
+              scheduled_end_time: endIsoTimestamp,
               entity_type: 3,
+              entity_metadata: {
+                location: input.location,
+              },
             },
           },
-        );
-        console.log("SUCCESSFULLY CREATED EVENT IN DISCORD", response);
+        )) as APIExternalGuildScheduledEvent;
+        eventId = response.id;
+        console.log(JSON.stringify(response, null, 2));
       } catch (error) {
-        console.error(error);
+        console.error(JSON.stringify(error, null, 2));
       }
+
+      // Step 2: Insert the event into the database with the discord id.
+      if (!eventId) {
+        throw new Error("Failed to create event in Discord");
+      }
+
+      await db.insert(Event).values({
+        ...input,
+        points: EVENT_POINTS[input.tag] || 0,
+        discordId: eventId,
+      });
     }),
   updateEvent: adminProcedure
     .input(InsertEventSchema)
