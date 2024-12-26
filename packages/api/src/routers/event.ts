@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import type { APIExternalGuildScheduledEvent } from "discord-api-types/v10";
 import { TRPCError } from "@trpc/server";
-import type { APIExternalGuildScheduledEvent} from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 
 import { EVENT_POINTS, KNIGHTHACKS_GUILD_ID } from "@forge/consts/knight-hacks";
