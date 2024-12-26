@@ -42,9 +42,13 @@ export const EVENT_POINTS: Record<EventTag, number> = {
 
 export const KNIGHTHACKS_MEMBERSHIP_PRICE = 2500;
 
-export const DISCORD_ADMIN_ROLE_ID = "1321955700540309645";
+export const DISCORD_ADMIN_ROLE_ID = "1319413082258411652";
 
-export const KNIGHTHACKS_GUILD_ID = "1151877367434850364";
+export const KNIGHTHACKS_GUILD_ID = "486628710443778071";
+
+export const DISCORD_EVENT_TYPE = 3;
+
+export const DISCORD_EVENT_PRIVACY_LEVEL = 2;
 
 export const GENDERS = [
   "Man",
