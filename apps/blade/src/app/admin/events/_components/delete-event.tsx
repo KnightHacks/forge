@@ -18,10 +18,8 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
-/**
- * If your event prop has more fields, adjust accordingly.
- * We only need 'id' and possibly 'name' to show in the dialog.
- */
+// eslint-disable-next-line prefer-const
+let extraCaution = false;
 interface DeleteEventButtonProps {
   event: {
     id: string;
@@ -99,7 +97,11 @@ export function DeleteEventButton({ event }: DeleteEventButtonProps) {
           </Button>
           <Button
             variant="destructive"
-            disabled={confirmationText !== "I am absolutely sure" || isLoading}
+            disabled={
+              extraCaution
+                ? confirmationText !== "I am absolutely sure" || isLoading
+                : isLoading
+            }
             onClick={handleDelete}
           >
             {isLoading ? <Loader2 className="animate-spin" /> : "Delete Event"}

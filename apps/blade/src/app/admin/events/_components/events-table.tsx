@@ -141,8 +141,8 @@ export function EventsTable() {
 
               <TableCell>
                 {typeof event.datetime === "string"
-                  ? new Date(event.datetime).toDateString()
-                  : event.datetime.toDateString()}
+                  ? new Date(event.datetime).toLocaleDateString()
+                  : event.datetime.toLocaleDateString()}
               </TableCell>
 
               <TableCell>{event.location}</TableCell>
