@@ -17,7 +17,7 @@ export default async function Events() {
   // Check if the user has access to Blade
   const isAdmin = await isDiscordAdmin(session.user);
   if (!isAdmin) {
-    redirect("/dashboard");
+    redirect("/");
   }
 
   return (
