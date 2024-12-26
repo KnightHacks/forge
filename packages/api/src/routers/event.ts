@@ -12,7 +12,7 @@ import { discord } from "../utils";
 export const eventRouter = {
   getEvents: adminProcedure.query(async () => {
     return db.query.Event.findMany({
-      orderBy: [desc(Event.datetime)],
+      orderBy: [desc(Event.start_datetime)],
     });
   }),
   createEvent: adminProcedure
@@ -21,11 +21,9 @@ export const eventRouter = {
       // Step 1: Make the event in Discord
       let eventId;
       try {
-        const startDatetime = new Date(input.datetime);
+        const startDatetime = new Date(input.start_datetime);
         const startIsoTimestamp = startDatetime.toISOString();
-        const endDatetime = new Date(
-          startDatetime.getTime() + 3 * 60 * 60 * 1000,
-        );
+        const endDatetime = new Date(input.end_datetime);
         const endIsoTimestamp = endDatetime.toISOString();
 
         const response = (await discord.post(
@@ -67,6 +65,32 @@ export const eventRouter = {
       if (!input.id) {
         throw new Error("Event ID is required to update an event");
       }
+
+      // Step 1: Update the event in Discord
+      try {
+        await discord.patch(
+          Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, input.discordId),
+          {
+            body: {
+              description: input.description,
+              name: input.name,
+              privacy_level: 2,
+              scheduled_start_time: new Date(
+                input.start_datetime,
+              ).toISOString(),
+              scheduled_end_time: new Date(input.end_datetime).toISOString(),
+              entity_type: 3,
+              entity_metadata: {
+                location: input.location,
+              },
+            },
+          },
+        );
+      } catch (error) {
+        console.error(JSON.stringify(error, null, 2));
+      }
+
+      // Step 2: Update the event in the database
       await db.update(Event).set(input).where(eq(Event.id, input.id));
     }),
   deleteEvent: adminProcedure

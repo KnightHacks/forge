@@ -116,7 +116,7 @@ export function EventsTable() {
               <SortButton field="tag" label="Tag" />
             </TableHead>
             <TableHead>
-              <SortButton field="datetime" label="Date" />
+              <SortButton field="start_datetime" label="Date" />
             </TableHead>
             <TableHead>
               <SortButton field="location" label="Location" />
@@ -140,9 +140,11 @@ export function EventsTable() {
               <TableCell>{event.tag}</TableCell>
 
               <TableCell>
-                {typeof event.datetime === "string"
-                  ? new Date(event.datetime).toLocaleDateString()
-                  : event.datetime.toLocaleDateString()}
+                {typeof event.start_datetime === "string"
+                  ? new Date(
+                      event.start_datetime as string,
+                    ).toLocaleDateString()
+                  : (event.start_datetime as Date).toLocaleDateString()}
               </TableCell>
 
               <TableCell>{event.location}</TableCell>
