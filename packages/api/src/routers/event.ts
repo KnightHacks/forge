@@ -109,7 +109,7 @@ export const eventRouter = {
       await db.update(Event).set(input).where(eq(Event.id, input.id));
     }),
   deleteEvent: adminProcedure
-    .input(InsertEventSchema.pick({ id: true }))
+    .input(InsertEventSchema.pick({ id: true, discordId: true }))
     .mutation(async ({ input }) => {
       if (!input.id) {
         throw new TRPCError({
@@ -117,6 +117,21 @@ export const eventRouter = {
           code: "BAD_REQUEST",
         });
       }
+
+      // Step 1: Delete the event in Discord
+      try {
+        await discord.delete(
+          Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, input.discordId),
+        );
+      } catch (error) {
+        console.error(JSON.stringify(error, null, 2));
+        throw new TRPCError({
+          message: "Failed to delete event in Discord",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      // Step 2: Delete the event in the database
       await db.delete(Event).where(eq(Event.id, input.id));
     }),
 } satisfies TRPCRouterRecord;

@@ -151,6 +151,13 @@ export function CreateEventButton() {
                 parseInt(values.endMinute, 10) || 0,
               );
 
+              // Ensure the end date is after the start date
+              if (finalEndDate <= finalStartDate) {
+                toast.error("End date must be after the start date.");
+                setIsLoading(false);
+                return;
+              }
+
               // Pass the final date/time to TRPC
               createEvent.mutate({
                 name: values.name,
@@ -264,10 +271,20 @@ export function CreateEventButton() {
                                 field.value ? new Date(field.value) : undefined
                               }
                               onSelect={(selectedDate) => {
-                                // Convert the chosen date to an ISO string
-                                if (selectedDate) {
-                                  field.onChange(selectedDate.toISOString());
+                                // Make sure the selected date is not null
+                                if (!selectedDate) {
+                                  toast.error("Please select a date.");
+                                  return;
                                 }
+
+                                // Make sure the selected date is in the future
+                                if (selectedDate < new Date()) {
+                                  toast.error("Please select a future date.");
+                                  return;
+                                }
+
+                                // Convert the chosen date to an ISO string
+                                field.onChange(selectedDate.toISOString());
                               }}
                               initialFocus
                             />

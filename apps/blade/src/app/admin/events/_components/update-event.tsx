@@ -191,6 +191,13 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
     }
     finalEndDate.setHours(endHour24, parseInt(values.endMinute, 10) || 0);
 
+    // Ensure the end date is after the start date
+    if (finalEndDate <= finalStartDate) {
+      toast.error("End date must be after the start date.");
+      setIsLoading(false);
+      return;
+    }
+
     // Make update call
     updateEvent.mutate({
       id: event.id,
@@ -317,10 +324,20 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                                 field.value ? new Date(field.value) : undefined
                               }
                               onSelect={(selectedDate) => {
-                                // Convert the chosen date to an ISO string
-                                if (selectedDate) {
-                                  field.onChange(selectedDate.toISOString());
+                                // Make sure the selected date is not null
+                                if (!selectedDate) {
+                                  toast.error("Please select a date.");
+                                  return;
                                 }
+
+                                // Make sure the selected date is in the future
+                                if (selectedDate < new Date()) {
+                                  toast.error("Please select a future date.");
+                                  return;
+                                }
+
+                                // Convert the chosen date to an ISO string
+                                field.onChange(selectedDate.toISOString());
                               }}
                               initialFocus
                             />

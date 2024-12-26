@@ -23,6 +23,7 @@ let extraCaution = false;
 interface DeleteEventButtonProps {
   event: {
     id: string;
+    discordId: string;
     name: string;
   };
 }
@@ -53,7 +54,7 @@ export function DeleteEventButton({ event }: DeleteEventButtonProps) {
 
   const handleDelete = () => {
     setIsLoading(true);
-    deleteEvent.mutate({ id: event.id });
+    deleteEvent.mutate({ id: event.id, discordId: event.discordId });
   };
 
   return (
