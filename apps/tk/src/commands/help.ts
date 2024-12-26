@@ -96,7 +96,7 @@ export async function execute(interaction: CommandInteraction) {
       {
         name: "/weather",
         value: "Shows the current weather for a specified city!",
-      }
+      },
     ],
   };
 

@@ -8,7 +8,7 @@ export const appRouter = createTRPCRouter({
   auth: authRouter,
   duesPayment: duesPaymentRouter,
   member: memberRouter,
-  event: eventRouter
+  event: eventRouter,
 });
 
 // export type definition of API

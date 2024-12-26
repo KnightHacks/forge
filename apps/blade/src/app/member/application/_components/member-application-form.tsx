@@ -69,8 +69,8 @@ export function MemberApplicationForm() {
         .string()
         .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")
         .regex(
-          /^https:\/\/github\.com\/.+/, 
-          "Invalid URL: Enter a valid GitHub link"
+          /^https:\/\/github\.com\/.+/,
+          "Invalid URL: Enter a valid GitHub link",
         )
         .url({ message: "Invalid URL" })
         .optional()
@@ -79,8 +79,8 @@ export function MemberApplicationForm() {
         .string()
         .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")
         .regex(
-          /^https:\/\/w?w?w?\.?linkedin\.com\/.+/, 
-          "Invalid URL: Enter a valid LinkedIn link"
+          /^https:\/\/w?w?w?\.?linkedin\.com\/.+/,
+          "Invalid URL: Enter a valid LinkedIn link",
         )
         .url({ message: "Invalid URL" })
         .optional()
@@ -88,8 +88,8 @@ export function MemberApplicationForm() {
       websiteUrl: z
         .string()
         .regex(
-          /^https?:\/\/.+/, 
-          "Invalid URL: Please try again with https:// or http://"
+          /^https?:\/\/.+/,
+          "Invalid URL: Please try again with https:// or http://",
         )
         .url({ message: "Invalid URL" })
         .optional()
