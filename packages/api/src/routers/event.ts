@@ -32,7 +32,11 @@ export const eventRouter = {
           {
             body: {
               description: input.description,
-              name: "[" + input.tag.toUpperCase() + "] " + input.name,
+              name:
+                "[" +
+                input.tag.toUpperCase().replace(" ", "-") +
+                "] " +
+                input.name,
               privacy_level: 2,
               scheduled_start_time: startIsoTimestamp,
               scheduled_end_time: endIsoTimestamp,
@@ -84,7 +88,11 @@ export const eventRouter = {
           {
             body: {
               description: input.description,
-              name: "[" + input.tag.toUpperCase() + "] " + input.name,
+              name:
+                "[" +
+                input.tag.toUpperCase().replace(" ", "-") +
+                "] " +
+                input.name,
               privacy_level: 2,
               scheduled_start_time: new Date(
                 input.start_datetime,
