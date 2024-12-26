@@ -70,8 +70,8 @@ export function DeleteEventButton({ event }: DeleteEventButtonProps) {
         <DialogHeader>
           <DialogTitle>Are you sure?</DialogTitle>
           <DialogDescription>
-            You are about to delete <strong>{event.name}</strong>. This action
-            cannot be undone. Please proceed with caution.
+            You are about to delete the <strong>{event.name}</strong> event.
+            This action cannot be undone. Please proceed with caution.
           </DialogDescription>
         </DialogHeader>
 
