@@ -6,7 +6,8 @@ import { CalendarIcon, Loader2, Pencil } from "lucide-react";
 import { z } from "zod";
 
 import { EVENT_TAGS } from "@forge/consts/knight-hacks";
-import { InsertEvent, InsertEventSchema } from "@forge/db/schemas/knight-hacks";
+import type { InsertEvent} from "@forge/db/schemas/knight-hacks";
+import { InsertEventSchema } from "@forge/db/schemas/knight-hacks";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Calendar } from "@forge/ui/calendar";

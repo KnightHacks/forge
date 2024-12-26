@@ -19,6 +19,7 @@ import {
 
 import { api } from "~/trpc/react";
 import { CreateEventButton } from "./create-event";
+import { DeleteEventButton } from "./delete-event";
 import { UpdateEventButton } from "./update-event";
 
 type Event = InsertEvent;
@@ -156,8 +157,11 @@ export function EventsTable() {
               <TableCell className="text-right">{event.numAttended}</TableCell>
 
               <TableCell className="text-right">
-                {/* Pass the full event object (including id) to UpdateEventButton */}
                 <UpdateEventButton event={event} />
+              </TableCell>
+
+              <TableCell className="text-right">
+                <DeleteEventButton event={event} />
               </TableCell>
             </TableRow>
           ))}
@@ -169,7 +173,7 @@ export function EventsTable() {
             <TableCell className="text-right">
               {sortedEvents.reduce((sum, event) => sum + event.numAttended, 0)}
             </TableCell>
-            <TableCell colSpan={2}/>
+            <TableCell colSpan={2} />
           </TableRow>
         </TableFooter>
       </Table>
