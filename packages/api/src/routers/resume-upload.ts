@@ -21,8 +21,16 @@ export const resumeUploadRouter = {
 
         const bucketName = "member-resumes";
         const objectName = `${ctx.session.user.id}/${fileName}`;
+        const fileStream = fileContent.stream;
 
-        // todo add upload logic
+        // Ensure bucket exists
+        const bucketExists = await s3Client.bucketExists(bucketName);
+        if (!bucketExists) {
+          await s3Client.makeBucket(bucketName, "us-east-1");
+        }
+
+        await s3Client.putObject(bucketName, objectName, fileStream);
+        const resumeUrl = `${env.MINIO_PUBLIC_URL}/${bucketName}/${objectName}`;
     })
 };
 
