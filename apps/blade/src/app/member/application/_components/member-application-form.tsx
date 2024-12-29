@@ -51,16 +51,14 @@ export function MemberApplicationForm() {
     },
   });
 
-  const uploadResume = async (file: File): Promise<string> => {
-    if (!file) throw new Error("No file provided");
-
-    const resumeUrl = await api.resume.uploadResume.useMutation().mutateAsync({
-      fileName: file.name,
-      fileContent: file,
-    });
-
-    return resumeUrl;
-  }
+  const uploadResume = api.resume.uploadResume.useMutation({
+    onSuccess() {
+      toast.success("Resume sent to bucket!");
+    },
+    onError() {
+      toast.error("There was a problem storing your resume, please try again!");
+    }
+  });
   
   const form = useForm({
     schema: InsertMemberSchema.extend({
@@ -172,9 +170,22 @@ export function MemberApplicationForm() {
       <form
         className="space-y-4"
         noValidate
-        onSubmit={form.handleSubmit((values) => {
-          const resumeUrl = uploadResume(values.resumeUpload[0]);
-          createMember.mutate(values);
+        onSubmit={form.handleSubmit(async (values) => {
+            try {
+              let resumeUrl = "";
+              if (values.resumeUpload?.length) {
+                const file = values.resumeUpload[0];
+                resumeUrl = await uploadResume.mutateAsync(file);
+              }
+
+              createMember.mutate({
+                ...values,
+                resumeUrl, // Include uploaded resume URL
+              });
+            } catch (error) {
+              console.error("Error uploading resume or creating member:", error);
+              toast.error("Something went wrong while processing your application.");
+            }
         })}
       >
         <h1 className="text-2xl font-bold">Application Form</h1>
