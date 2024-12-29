@@ -9,6 +9,9 @@ export const env = createEnv({
     GOOGLE_PRIVATE_KEY_B64: z.string(),
     NODE_ENV: z.enum(["development", "production"]).optional(),
     STRIPE_SECRET_WEBHOOK_KEY: z.string(),
+    MINIO_ENDPOINT: z.string(),
+    MINIO_ACCESS_KEY: z.string(),
+    MINIO_SECRET_KEY: z.string(),
   },
   experimental__runtimeEnv: {},
   skipValidation:
