@@ -50,6 +50,18 @@ export function MemberApplicationForm() {
       toast.error("Oops! Something went wrong. Please try again later.");
     },
   });
+
+  const uploadResume = async (file: File): Promise<string> => {
+    if (!file) throw new Error("No file provided");
+
+    const resumeUrl = await api.resume.uploadResume.useMutation().mutateAsync({
+      fileName: file.name,
+      fileContent: file,
+    });
+
+    return resumeUrl;
+  }
+  
   const form = useForm({
     schema: InsertMemberSchema.extend({
       // userId will be derived from the user's session on the server
@@ -154,17 +166,6 @@ export function MemberApplicationForm() {
   });
 
   const fileRef = form.register("resumeUpload");
-
-  const uploadResume = (file: File) => {
-    console.log(`uploading ${file.name}`);
-    // instantiate minio client
-    const s3Client = new Client({
-      endPoint: "",
-      accessKey: "",
-      secretKey: "",
-    });
-    return file.name;
-  };
 
   return (
     <Form {...form}>
