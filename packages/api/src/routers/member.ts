@@ -1,8 +1,13 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 
-import { eq } from "@forge/db";
+import { and, eq } from "@forge/db";
 import { db } from "@forge/db/client";
-import { InsertMemberSchema, Member } from "@forge/db/schemas/knight-hacks";
+import {
+  Hackathon,
+  HackathonApplication,
+  InsertMemberSchema,
+  Member,
+} from "@forge/db/schemas/knight-hacks";
 
 import { protectedProcedure } from "../trpc";
 
@@ -24,5 +29,24 @@ export const memberRouter = {
       .where(eq(Member.userId, ctx.session.user.id));
 
     return member[member.length - 1];
+  }),
+
+  getHackathons: protectedProcedure.query(async ({ ctx }) => {
+    const hackathonsToMember = await db
+      .select()
+      .from(Hackathon)
+      .innerJoin(
+        HackathonApplication,
+        eq(HackathonApplication.hackathonId, Hackathon.id),
+      )
+      .innerJoin(Member, eq(Member.id, HackathonApplication.memberId))
+      .where(
+        and(
+          eq(Member.userId, ctx.session.user.id),
+          eq(HackathonApplication.state, "checkedin"),
+        ),
+      );
+    const hackathonObjects = hackathonsToMember.map((item) => item.hackathon);
+    return hackathonObjects;
   }),
 } satisfies TRPCRouterRecord;
