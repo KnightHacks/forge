@@ -23,7 +23,11 @@ export const resumeUploadRouter = {
           await s3Client.makeBucket(bucketName, "us-east-1");
         }
 
-        await s3Client.putObject(bucketName, objectName, file);
+        // Convert file to buffer
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        await s3Client.putObject(bucketName, objectName, buffer);
         const resumeUrl = `https://${env.MINIO_ENDPOINT}/${bucketName}/${objectName}`;
     })
 };
