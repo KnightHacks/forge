@@ -11,11 +11,20 @@ const s3Client = new Client({
 
 export const resumeUploadRouter = {
     uploadResume: protectedProcedure.input(
-        z.instanceof(File)
+        z.object({
+            fileName: z.string(),
+            fileContent: z.string(), // Base-64 encoded
+        })
     )
     .mutation(async ({ input, ctx }) => {
+        const { fileName, fileContent } = input; 
+        
+        // Decode Base64 to Buffer
+        const base64Data = fileContent.split(',')[1]; // Remove metadata prefix
+        const fileBuffer = Buffer.from(base64Data, 'base64');
+
         const bucketName = "member-resumes";
-        const objectName = `${ctx.session.user.id}/${input.name}`;
+        const objectName = `${ctx.session.user.id}/${fileName}`;
 
         // Ensure bucket exists
         const bucketExists = await s3Client.bucketExists(bucketName);
@@ -23,12 +32,10 @@ export const resumeUploadRouter = {
           await s3Client.makeBucket(bucketName, "us-east-1");
         }
 
-        // Convert file to buffer
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-
-        await s3Client.putObject(bucketName, objectName, buffer);
-        const resumeUrl = `https://${env.MINIO_ENDPOINT}/${bucketName}/${objectName}`;
+        await s3Client.putObject(bucketName, objectName, fileBuffer);
+        
+        // For adding user's resume url to members table
+        return `https://${env.MINIO_ENDPOINT}/${bucketName}/${objectName}`;
     })
 };
 
