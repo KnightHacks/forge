@@ -165,6 +165,15 @@ export function MemberApplicationForm() {
 
   const fileRef = form.register("resumeUpload");
 
+  // Convert a resume to base64 for client-server transmission
+  const fileToBase64 = (file: File) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   return (
     <Form {...form}>
       <form
@@ -175,7 +184,12 @@ export function MemberApplicationForm() {
               let resumeUrl = "";
               if (values.resumeUpload?.length) {
                 const file = values.resumeUpload[0];
-                resumeUrl = await uploadResume.mutateAsync(file);
+                const base64File = await fileToBase64(file);
+                resumeUrl = await uploadResume.mutateAsync({
+                  fileName: file?.name,
+                  fileContent: base64File,
+                });
+                console.log(resumeUrl);
               }
 
               createMember.mutate({
