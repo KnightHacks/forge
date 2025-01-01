@@ -130,9 +130,6 @@ importers:
       googleapis:
         specifier: ^144.0.0
         version: 144.0.0
-      minio:
-        specifier: ^8.0.3
-        version: 8.0.3
       lucide-react:
         specifier: ^0.469.0
         version: 0.469.0(react@18.3.1)
