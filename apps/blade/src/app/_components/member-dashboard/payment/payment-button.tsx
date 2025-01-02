@@ -8,7 +8,7 @@ import { api } from "~/trpc/react";
 
 export default function PaymentButton() {
   const { mutateAsync: createCheckoutUrl } =
-    api.payment.createCheckout.useMutation();
+    api.duesPayment.createCheckout.useMutation();
   const router = useRouter();
 
   const handleCheckout = async () => {
@@ -18,8 +18,8 @@ export default function PaymentButton() {
     }
   };
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <Button onClick={handleCheckout}>Become a Member</Button>
+    <div className="relative top-3">
+      <Button onClick={handleCheckout}>Pay Dues</Button>
     </div>
   );
 }

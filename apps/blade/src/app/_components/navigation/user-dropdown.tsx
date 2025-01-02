@@ -11,20 +11,23 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
+  //DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
+  //DropdownMenuSub,
+  //DropdownMenuSubContent,
+  //DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@forge/ui/dropdown-menu";
 
 import { api } from "~/trpc/react";
 
 export function UserDropdown() {
+  const utils = api.useUtils();
   const router = useRouter();
   const { data } = api.user.getUserAvatar.useQuery();
+
+  void utils.member.getMember.prefetch();
 
   return (
     <DropdownMenu>
@@ -41,21 +44,10 @@ export function UserDropdown() {
         <DropdownMenuLabel>{data ? data.name : "My Account"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <span>Profiles</span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem onSelect={() => router.push("/settings")}>
-                  <span>Member</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem disabled>
-                  <span>Hacker</span>
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
+          <DropdownMenuItem onSelect={() => router.push("/settings")}>
+            <span>Member Profile</span>
+            <DropdownMenuShortcut>⌘P</DropdownMenuShortcut>
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => router.push("/settings")}>
             <span>Settings</span>
             <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>

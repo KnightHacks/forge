@@ -146,21 +146,6 @@ export type SelectEvent = typeof Event.$inferSelect;
 
 export const InsertEventSchema = createInsertSchema(Event);
 
-export const DuesPayment = createTable("dues_payment", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  memberId: t
-    .uuid()
-    .notNull()
-    .references(() => Member.id, {
-      onDelete: "cascade",
-    }),
-  amount: t.integer().notNull(),
-  paymentDate: t.timestamp().notNull(),
-  year: t.integer().notNull(),
-}));
-
-export const DuesPaymentSchema = createInsertSchema(DuesPayment);
-
 export const EventAttendee = createTable("event_attendee", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   memberId: t
@@ -176,3 +161,18 @@ export const EventAttendee = createTable("event_attendee", (t) => ({
       onDelete: "cascade",
     }),
 }));
+
+export const DuesPayment = createTable("dues_payment", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  memberId: t
+    .uuid()
+    .notNull()
+    .references(() => Member.id, {
+      onDelete: "cascade",
+    }),
+  amount: t.integer().notNull(),
+  paymentDate: t.timestamp().notNull(),
+  year: t.integer().notNull(),
+}));
+
+export const DuesPaymentSchema = createInsertSchema(DuesPayment);

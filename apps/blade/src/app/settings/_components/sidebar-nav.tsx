@@ -32,9 +32,8 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
           scroll={true}
           className={cn(
             buttonVariants({ variant: "ghost" }),
-            pathname === item.href &&
-              item.title !== "Hacker Profile (coming soon)"
-              ? "bg-muted !text-primary hover:bg-muted"
+            pathname === item.href
+              ? "bg-purple-50 !text-primary hover:bg-purple-50 dark:bg-purple-900/20 dark:hover:bg-purple-900/20"
               : "hover:bg-transparent hover:underline",
             "justify-start",
           )}

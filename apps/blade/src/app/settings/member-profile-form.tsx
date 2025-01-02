@@ -30,19 +30,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
+import { Separator } from "@forge/ui/separator";
 import { toast } from "@forge/ui/toast";
 
+import type { api as serverCaller } from "~/trpc/server";
 import { api } from "~/trpc/react";
 
-export function MemberApplicationForm() {
-  const router = useRouter();
+export function MemberProfileForm({
+  data,
+}: {
+  data: Awaited<ReturnType<(typeof serverCaller.member)["getMember"]>>;
+}) {
+  const utils = api.useUtils();
 
-  const createMember = api.member.createMember.useMutation({
-    onSuccess() {
-      toast.success("Application submitted successfully!");
-      // user gets sent back to homepage upon successful form submission
-      router.push("/");
-      router.refresh();
+  const { data: member, isError } = api.member.getMember.useQuery(undefined, {
+    initialData: data,
+  });
+
+  const updateMember = api.member.updateMember.useMutation({
+    async onSuccess() {
+      toast.success("Profile updated!");
+      await utils.member.getMember.invalidate();
     },
     onError() {
       toast.error("Oops! Something went wrong. Please try again later.");
@@ -97,16 +105,33 @@ export function MemberApplicationForm() {
         .or(z.literal("")),
     }),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phoneNumber: "",
-      dob: "",
-      githubProfileUrl: "",
-      linkedinProfileUrl: "",
-      websiteUrl: "",
+      firstName: member?.firstName,
+      lastName: member?.lastName,
+      email: member?.email,
+      phoneNumber: member?.phoneNumber,
+      dob: member?.dob,
+      githubProfileUrl: member?.githubProfileUrl ?? "",
+      linkedinProfileUrl: member?.linkedinProfileUrl ?? "",
+      websiteUrl: member?.websiteUrl ?? "",
+      gender: member?.gender,
+      levelOfStudy: member?.levelOfStudy,
+      raceOrEthnicity: member?.raceOrEthnicity,
+      shirtSize: member?.shirtSize,
+      school: member?.school,
     },
   });
+
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center">
+        Something went wrong. Please refresh and try again.
+      </div>
+    );
+  }
+
+  if (!member) {
+    return <NoMember />;
+  }
 
   return (
     <Form {...form}>
@@ -114,10 +139,9 @@ export function MemberApplicationForm() {
         className="space-y-4"
         noValidate
         onSubmit={form.handleSubmit((values) => {
-          createMember.mutate(values);
+          updateMember.mutate(values);
         })}
       >
-        <h1 className="text-2xl font-bold">Application Form</h1>
         <FormField
           control={form.control}
           name="firstName"
@@ -183,6 +207,14 @@ export function MemberApplicationForm() {
             </FormItem>
           )}
         />
+
+        <div className="!mt-10">
+          <h3 className="text-lg font-medium">Demographic Information</h3>
+          <p className="text-sm text-muted-foreground">
+            This is some additional information about you.
+          </p>
+        </div>
+        <Separator />
         <FormField
           control={form.control}
           name="gender"
@@ -243,6 +275,42 @@ export function MemberApplicationForm() {
         />
         <FormField
           control={form.control}
+          name="shirtSize"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Shirt Size</FormLabel>
+              <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your shirt size" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {SHIRT_SIZES.map((size) => (
+                      <SelectItem key={size} value={size}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="!mt-10">
+          <h3 className="text-lg font-medium">Academic Information</h3>
+          <p className="text-sm text-muted-foreground">
+            This is where you go to school and what you're studying.
+          </p>
+        </div>
+        <Separator />
+        <FormField
+          control={form.control}
           name="levelOfStudy"
           render={({ field }) => (
             <FormItem>
@@ -283,7 +351,7 @@ export function MemberApplicationForm() {
                   getItemValue={(school) => school}
                   getItemLabel={(school) => school}
                   onItemSelect={(school) => field.onChange(school)}
-                  buttonPlaceholder="Select your school"
+                  buttonPlaceholder={member.school}
                   inputPlaceholder="Search for your school"
                 />
               </FormControl>
@@ -291,35 +359,13 @@ export function MemberApplicationForm() {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="shirtSize"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Shirt Size</FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your shirt size" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {SHIRT_SIZES.map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="!mt-10">
+          <h3 className="text-lg font-medium">URLs</h3>
+          <p className="text-sm text-muted-foreground">
+            Feel free to include what makes you, you.
+          </p>
+        </div>
+        <Separator />
         <FormField
           control={form.control}
           name="githubProfileUrl"
@@ -366,8 +412,20 @@ export function MemberApplicationForm() {
           )}
         />
 
-        <Button type="submit">Submit</Button>
+        <Button type="submit">Update profile</Button>
       </form>
     </Form>
+  );
+}
+
+export function NoMember() {
+  const router = useRouter();
+  return (
+    <div className="flex flex-col items-center justify-center gap-y-6 font-bold">
+      Please sign up to be a member first.
+      <Button onClick={() => router.push("/member/application")}>
+        Sign up
+      </Button>
+    </div>
   );
 }

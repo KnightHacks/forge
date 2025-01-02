@@ -1,12 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
-import { api } from "~/trpc/server";
+import MemberDashboard from "./member-dashboard/member-dashboard";
 
-export async function UserInterface() {
-  const hackathons = await api.payment.validatePaidDues();
-
-  console.log(hackathons);
-
+export function UserInterface() {
   return (
     <div className="flex justify-center">
       <Tabs defaultValue="Member" className="w-[400px]">
@@ -22,13 +18,13 @@ export async function UserInterface() {
             className="data-[state=active]:bg-primary data-[state=active]:text-white"
             disabled
           >
-            Hacker (Coming soon)
+            Hacker (soon)
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="Member">
-          Make changes to your account here.
+        <TabsContent className="absolute left-0 w-full" value="Member">
+          <MemberDashboard />
         </TabsContent>
-        <TabsContent value="Hacker">Change your password here.</TabsContent>
+        <TabsContent value="Hacker"></TabsContent>
       </Tabs>
     </div>
   );

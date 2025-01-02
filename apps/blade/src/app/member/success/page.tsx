@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { ArrowRightIcon, CheckCircledIcon } from "@forge/ui";
+import { ArrowRightIcon, CheckCircledIcon, cn } from "@forge/ui";
 import { Alert, AlertDescription, AlertTitle } from "@forge/ui/alert";
-import { Button } from "@forge/ui/button";
+import { buttonVariants } from "@forge/ui/button";
 import {
   Card,
   CardContent,
@@ -26,7 +27,7 @@ export default function MembershipSuccess() {
   const checkoutSessionId = searchParams.get("session_id") ?? "";
 
   const { data, isPending, isError } =
-    api.payment.orderSuccess.useQuery(checkoutSessionId);
+    api.duesPayment.orderSuccess.useQuery(checkoutSessionId);
 
   if (isError) {
     toast.error("Something went wrong, please contact support.");
@@ -103,13 +104,16 @@ export default function MembershipSuccess() {
         </Card>
 
         <div className="flex flex-col justify-center gap-4 sm:flex-row">
-          <Button
-            onClick={() => router.push(SIGN_IN_PATH)}
-            className="flex items-center gap-2"
+          <Link
+            href={SIGN_IN_PATH}
+            className={cn(
+              buttonVariants({ variant: "primary" }),
+              "flex items-center gap-2",
+            )}
           >
             Go to Dashboard
             <ArrowRightIcon className="h-4 w-4" />
-          </Button>
+          </Link>
         </div>
       </div>
     </div>

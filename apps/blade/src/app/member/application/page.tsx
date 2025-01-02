@@ -16,7 +16,7 @@ export default async function MemberApplicationPage() {
   const isMember = await api.member.getMember();
 
   if (isMember) {
-    return redirect("/member/dashboard");
+    return redirect(SIGN_IN_PATH);
   }
 
   return (

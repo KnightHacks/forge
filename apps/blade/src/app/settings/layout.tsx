@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ArrowLeftIcon, cn } from "@forge/ui";
@@ -8,18 +7,9 @@ import { Separator } from "@forge/ui/separator";
 import { SIGN_IN_PATH } from "~/consts";
 import { SidebarNav } from "./_components/sidebar-nav";
 
-export const metadata: Metadata = {
-  title: "Forms",
-  description: "Advanced form example using react-hook-form and Zod.",
-};
-
 const sidebarNavItems = [
   {
     title: "Member Profile",
-    href: "/settings",
-  },
-  {
-    title: "Hacker Profile (coming soon)",
     href: "/settings",
   },
 ];
