@@ -28,7 +28,7 @@ export const resumeUploadRouter = {
         const fileBuffer = Buffer.from(base64Data, "base64");
 
         const bucketName = "member-resumes";
-        const objectName = `${ctx.session.user.id}/${fileName}`;
+        const filePath = `${ctx.session.user.id}/${fileName}`;
 
         // Ensure bucket exists
         const bucketExists = await s3Client.bucketExists(bucketName);
@@ -36,10 +36,10 @@ export const resumeUploadRouter = {
           await s3Client.makeBucket(bucketName, "us-east-1");
         }
 
-        await s3Client.putObject(bucketName, objectName, fileBuffer);
+        await s3Client.putObject(bucketName, filePath, fileBuffer);
 
-        // For adding user's resume url to members table
-        return `https://${env.MINIO_ENDPOINT}/${bucketName}/${objectName}`;
+        // Path to the resume within the bucket
+        return filePath;
       } else {
         throw new TRPCError({
           code: "BAD_REQUEST",
