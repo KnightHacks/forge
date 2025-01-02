@@ -168,7 +168,14 @@ export function MemberApplicationForm() {
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
+      reader.onload = () => {
+        // Check type before resolving as string
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to convert file to Base64: Unexpected result type'));
+        }
+      }
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
