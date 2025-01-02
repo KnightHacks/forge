@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { z, ZodIssueCode } from "zod";
+import { z } from "zod";
 
 import {
   GENDERS,
@@ -31,7 +31,6 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 import { toast } from "@forge/ui/toast";
-import { Client } from "minio";
 
 import { api } from "~/trpc/react";
 
@@ -166,7 +165,7 @@ export function MemberApplicationForm() {
   const fileRef = form.register("resumeUpload");
 
   // Convert a resume to base64 for client-server transmission
-  const fileToBase64 = (file: File) =>
+  const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
@@ -182,14 +181,13 @@ export function MemberApplicationForm() {
         onSubmit={form.handleSubmit(async (values) => {
             try {
               let resumeUrl = "";
-              if (values.resumeUpload?.length) {
+              if (values.resumeUpload?.length && values.resumeUpload[0]) {
                 const file = values.resumeUpload[0];
                 const base64File = await fileToBase64(file);
                 resumeUrl = await uploadResume.mutateAsync({
-                  fileName: file?.name,
+                  fileName: file.name,
                   fileContent: base64File,
                 });
-                console.log(resumeUrl);
               }
 
               createMember.mutate({
@@ -459,7 +457,7 @@ export function MemberApplicationForm() {
               <FormControl>
                 <Input type="file" placeholder="" {...fileRef} 
                 onChange={(event) => {
-                  field.onChange(event?.target?.files[0] ?? undefined);
+                  field.onChange(event.target.files?.[0] ?? undefined);
                 }}
                 />
               </FormControl>
