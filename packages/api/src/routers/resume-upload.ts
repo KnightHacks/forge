@@ -7,6 +7,7 @@ import { protectedProcedure } from "../trpc";
 
 const s3Client = new Client({
   endPoint: env.MINIO_ENDPOINT,
+  useSSL: true,
   accessKey: env.MINIO_ACCESS_KEY,
   secretKey: env.MINIO_SECRET_KEY,
 });
