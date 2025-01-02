@@ -56,9 +56,9 @@ export function MemberApplicationForm() {
     },
     onError() {
       toast.error("There was a problem storing your resume, please try again!");
-    }
+    },
   });
-  
+
   const form = useForm({
     schema: InsertMemberSchema.extend({
       // userId will be derived from the user's session on the server
@@ -170,12 +170,16 @@ export function MemberApplicationForm() {
       const reader = new FileReader();
       reader.onload = () => {
         // Check type before resolving as string
-        if (typeof reader.result === 'string') {
+        if (typeof reader.result === "string") {
           resolve(reader.result);
         } else {
-          reject(new Error('Failed to convert file to Base64: Unexpected result type'));
+          reject(
+            new Error(
+              "Failed to convert file to Base64: Unexpected result type",
+            ),
+          );
         }
-      }
+      };
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
@@ -186,25 +190,27 @@ export function MemberApplicationForm() {
         className="space-y-4"
         noValidate
         onSubmit={form.handleSubmit(async (values) => {
-            try {
-              let resumeUrl = "";
-              if (values.resumeUpload?.length && values.resumeUpload[0]) {
-                const file = values.resumeUpload[0];
-                const base64File = await fileToBase64(file);
-                resumeUrl = await uploadResume.mutateAsync({
-                  fileName: file.name,
-                  fileContent: base64File,
-                });
-              }
-
-              createMember.mutate({
-                ...values,
-                resumeUrl, // Include uploaded resume URL
+          try {
+            let resumeUrl = "";
+            if (values.resumeUpload?.length && values.resumeUpload[0]) {
+              const file = values.resumeUpload[0];
+              const base64File = await fileToBase64(file);
+              resumeUrl = await uploadResume.mutateAsync({
+                fileName: file.name,
+                fileContent: base64File,
               });
-            } catch (error) {
-              console.error("Error uploading resume or creating member:", error);
-              toast.error("Something went wrong while processing your application.");
             }
+
+            createMember.mutate({
+              ...values,
+              resumeUrl, // Include uploaded resume URL
+            });
+          } catch (error) {
+            console.error("Error uploading resume or creating member:", error);
+            toast.error(
+              "Something went wrong while processing your application.",
+            );
+          }
         })}
       >
         <h1 className="text-2xl font-bold">Application Form</h1>
@@ -462,10 +468,13 @@ export function MemberApplicationForm() {
             <FormItem>
               <FormLabel>Resume</FormLabel>
               <FormControl>
-                <Input type="file" placeholder="" {...fileRef} 
-                onChange={(event) => {
-                  field.onChange(event.target.files?.[0] ?? undefined);
-                }}
+                <Input
+                  type="file"
+                  placeholder=""
+                  {...fileRef}
+                  onChange={(event) => {
+                    field.onChange(event.target.files?.[0] ?? undefined);
+                  }}
                 />
               </FormControl>
               <FormMessage />

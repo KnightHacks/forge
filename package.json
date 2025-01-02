@@ -36,8 +36,5 @@
     "overrides": {
       "@types/node": "^22.10.1"
     }
-  },
-  "dependencies": {
-    "@tanstack/react-table": "^8.20.6"
   }
 }
