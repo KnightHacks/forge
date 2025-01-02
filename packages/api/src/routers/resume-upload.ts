@@ -2,6 +2,7 @@ import { Client } from "minio";
 import { protectedProcedure } from "../trpc";
 import { z } from "zod";
 import { env } from "../env";
+import { TRPCError } from "@trpc/server";
 
 const s3Client = new Client({
     endPoint: env.MINIO_ENDPOINT,
@@ -21,21 +22,28 @@ export const resumeUploadRouter = {
         
         // Decode Base64 to Buffer
         const base64Data = fileContent.split(',')[1]; // Remove metadata prefix
-        const fileBuffer = Buffer.from(base64Data, 'base64');
+        if (base64Data) {
+            const fileBuffer = Buffer.from(base64Data, 'base64');
 
-        const bucketName = "member-resumes";
-        const objectName = `${ctx.session.user.id}/${fileName}`;
-
-        // Ensure bucket exists
-        const bucketExists = await s3Client.bucketExists(bucketName);
-        if (!bucketExists) {
-          await s3Client.makeBucket(bucketName, "us-east-1");
+            const bucketName = "member-resumes";
+            const objectName = `${ctx.session.user.id}/${fileName}`;
+    
+            // Ensure bucket exists
+            const bucketExists = await s3Client.bucketExists(bucketName);
+            if (!bucketExists) {
+              await s3Client.makeBucket(bucketName, "us-east-1");
+            }
+    
+            await s3Client.putObject(bucketName, objectName, fileBuffer);
+            
+            // For adding user's resume url to members table
+            return `https://${env.MINIO_ENDPOINT}/${bucketName}/${objectName}`;
+        } else {
+            throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: "Base64 data is missing or invalid",
+            })
         }
-
-        await s3Client.putObject(bucketName, objectName, fileBuffer);
-        
-        // For adding user's resume url to members table
-        return `https://${env.MINIO_ENDPOINT}/${bucketName}/${objectName}`;
     })
 };
 
