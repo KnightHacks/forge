@@ -277,7 +277,7 @@ async function cronLogic(webhook: WebhookClient) {
 
   // Closing message
   await webhook.send({
-    content: `We hope to see you all there! If you are interested in opting in to daily event reminders, please assign yourself the <@&${DISCORD_REMINDER_ROLE_ID}> role in <id:customize>!`,
+    content: `We hope to see you all there! Let us know you're attending an event by clicking its title and pressing "Interested"!\nIf you are interested in opting in to daily event reminders, please assign yourself the <@&${DISCORD_REMINDER_ROLE_ID}> role in <id:customize>!`,
   });
 }
 
