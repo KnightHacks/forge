@@ -1,5 +1,5 @@
-import { TRPCError } from "@trpc/server";
 import type { ItemBucketMetadata } from "minio";
+import { TRPCError } from "@trpc/server";
 import { Client } from "minio";
 import { z } from "zod";
 
@@ -41,15 +41,20 @@ export const resumeUploadRouter = {
 
         // Overwrite any existing resume associated with the user
         const existingResumes = [];
-        const objectStream = s3Client.listObjects(bucketName, userDirectory, true);
+        const objectStream = s3Client.listObjects(
+          bucketName,
+          userDirectory,
+          true,
+        );
         for await (const obj of objectStream as AsyncIterable<ItemBucketMetadata>) {
-            existingResumes.push(obj.name);
+          existingResumes.push(obj.name);
         }
 
         if (existingResumes.length > 0) {
           await Promise.all(
-            existingResumes.map(async (objectName: string) => 
-              {await s3Client.removeObject(bucketName, objectName)})
+            existingResumes.map(async (objectName: string) => {
+              await s3Client.removeObject(bucketName, objectName);
+            }),
           );
         }
 
