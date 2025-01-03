@@ -24,6 +24,8 @@ export const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
 
 export const DISCORD_PROD_GUILD_ID = "486628710443778071";
 
+export const EVENT_BANNER_IMAGE = "https://i.imgur.com/Jr1cyxT.png";
+
 export const GOATS = [
   {
     name: "Caleb GOATvera",

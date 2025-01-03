@@ -1,12 +1,17 @@
+import type { InferSelectModel } from "drizzle-orm";
 import { EmbedBuilder, WebhookClient } from "discord.js";
-import { asc, InferSelectModel } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import { and, gte, lt } from "drizzle-orm/expressions";
 import cron from "node-cron";
 
 import { db } from "@forge/db/client";
 import { Event as DBEvent } from "@forge/db/schemas/knight-hacks";
 
-import { DISCORD_PROD_GUILD_ID, DISCORD_REMINDER_ROLE_ID } from "../consts";
+import {
+  DISCORD_PROD_GUILD_ID,
+  DISCORD_REMINDER_ROLE_ID,
+  EVENT_BANNER_IMAGE,
+} from "../consts";
 import { env } from "../env";
 
 // Function to retrieve the appropriate events for the day
@@ -266,7 +271,7 @@ async function cronLogic(webhook: WebhookClient) {
             inline: true,
           },
         ])
-        .setThumbnail("https://i.imgur.com/Jr1cyxT.png");
+        .setThumbnail(EVENT_BANNER_IMAGE);
 
       // Send the message (embed)
       await webhook.send({
