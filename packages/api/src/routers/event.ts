@@ -131,11 +131,6 @@ export const eventRouter = {
         });
       }
 
-      console.log("GOOGLE CALENDAR EVENT ID", googleEventId);
-      console.log("DISCORD EVENT ID", discordEventId);
-      console.log("DISCORD GUILD", KNIGHTHACKS_GUILD_ID);
-      console.log("GOOGLE CALENDAR", GOOGLE_CALENDAR_ID);
-
       try {
         await db.insert(Event).values({
           ...input,
