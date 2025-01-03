@@ -18,6 +18,10 @@ export const DAILY_MESSAGES = [
   "I'm 𝓯𝓻𝓮𝓪𝓴𝔂 T.K! 🛡️👅",
 ];
 
+export const DISCORD_LEETCODE_ROLE_ID = "1264645162060091483";
+
+export const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
+
 export const GOATS = [
   {
     name: "Caleb GOATvera",
