@@ -6,7 +6,7 @@ import cron from "node-cron";
 import { db } from "@forge/db/client";
 import { Event as DBEvent } from "@forge/db/schemas/knight-hacks";
 
-import { DISCORD_REMINDER_ROLE_ID } from "../consts";
+import { DISCORD_PROD_GUILD_ID, DISCORD_REMINDER_ROLE_ID } from "../consts";
 import { env } from "../env";
 
 // Function to retrieve the appropriate events for the day
@@ -14,7 +14,7 @@ async function getEvents() {
   // If today is Sunday, return the events for the entire week
   if (new Date().getDay() === 0) {
     // Assemble date objects
-    const today = new Date("01-05-2025");
+    const today = new Date();
     const nextWeek = new Date(today);
     nextWeek.setDate(today.getDate() + 7);
 
@@ -60,7 +60,7 @@ async function getEvents() {
   // Otherwise (not Sunday): return three prefix groups (Today, Tomorrow, Next Week)
 
   // 1) Today's boundaries
-  const today = new Date("01-05-2025");
+  const today = new Date();
 
   const todayStart = new Date(today);
   todayStart.setHours(0, 0, 0, 0);
@@ -217,12 +217,21 @@ async function cronLogic(webhook: WebhookClient) {
     for (const event of group.events) {
       const formattedTag =
         "[" + event.tag.toUpperCase().replace(" ", "-") + "]";
+
+      // Construct the event URL
+      const discordEventURL =
+        "https://discord.com/events/" +
+        DISCORD_PROD_GUILD_ID +
+        "/" +
+        event.discordId;
+
       const eventEmbed = new EmbedBuilder()
         .setColor(0xcca4f4)
         .setTitle(event.name)
         .setAuthor({
           name: `${formattedTag}`,
         })
+        .setURL(discordEventURL)
         .setDescription(event.description)
         .addFields([
           {
@@ -290,7 +299,7 @@ export function execute() {
     });
 
     // PUBLIC-REMINDERS for Testing: 12:00PM
-    cron.schedule("0 16 * * *", () => {
+    cron.schedule("0 16 * * * *", () => {
       // Avoid returning a Promise from the cron callback
       void cronLogic(pubWebhook);
     });

@@ -22,6 +22,8 @@ export const DISCORD_LEETCODE_ROLE_ID = "1264645162060091483";
 
 export const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
 
+export const DISCORD_PROD_GUILD_ID = "486628710443778071";
+
 export const GOATS = [
   {
     name: "Caleb GOATvera",
