@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import type { ItemBucketMetadata } from "minio";
 import { Client } from "minio";
 import { z } from "zod";
 
@@ -29,12 +30,27 @@ export const resumeUploadRouter = {
         const fileBuffer = Buffer.from(base64Data, "base64");
 
         const bucketName = "member-resumes";
-        const filePath = `${ctx.session.user.id}/${fileName}`;
+        const userDirectory = `${ctx.session.user.id}/`;
+        const filePath = `${userDirectory}${fileName}`;
 
         // Ensure bucket exists
         const bucketExists = await s3Client.bucketExists(bucketName);
         if (!bucketExists) {
           await s3Client.makeBucket(bucketName, "us-east-1");
+        }
+
+        // Overwrite any existing resume associated with the user
+        const existingResumes = [];
+        const objectStream = s3Client.listObjects(bucketName, userDirectory, true);
+        for await (const obj of objectStream as AsyncIterable<ItemBucketMetadata>) {
+            existingResumes.push(obj.name);
+        }
+
+        if (existingResumes.length > 0) {
+          await Promise.all(
+            existingResumes.map(async (objectName: string) => 
+              {await s3Client.removeObject(bucketName, objectName)})
+          );
         }
 
         await s3Client.putObject(bucketName, filePath, fileBuffer);
