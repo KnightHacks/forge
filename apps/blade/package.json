@@ -15,6 +15,8 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.717.0",
+    "@aws-sdk/s3-request-presigner": "^3.717.0",
     "@forge/api": "workspace:*",
     "@forge/auth": "workspace:*",
     "@forge/consts": "workspace:*",
@@ -32,6 +34,7 @@
     "google-auth-library": "^9.15.0",
     "googleapis": "^144.0.0",
     "lucide-react": "^0.469.0",
+    "minio": "^8.0.3",
     "next": "^14.2.15",
     "react": "catalog:react18",
     "react-dom": "catalog:react18",

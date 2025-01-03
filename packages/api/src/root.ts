@@ -2,6 +2,7 @@ import { authRouter } from "./routers/auth";
 import { duesPaymentRouter } from "./routers/dues-payment";
 import { eventRouter } from "./routers/event";
 import { memberRouter } from "./routers/member";
+import { resumeUploadRouter } from "./routers/resume-upload";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
@@ -9,6 +10,7 @@ export const appRouter = createTRPCRouter({
   duesPayment: duesPaymentRouter,
   member: memberRouter,
   event: eventRouter,
+  resume: resumeUploadRouter,
 });
 
 // export type definition of API

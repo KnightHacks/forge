@@ -35,6 +35,7 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 
 export function MemberApplicationForm() {
+  const MAX_RESUME_SIZE = 5 * 1000000; // 5MB
   const router = useRouter();
 
   const createMember = api.member.createMember.useMutation({
@@ -47,6 +48,16 @@ export function MemberApplicationForm() {
       toast.error("Oops! Something went wrong. Please try again later.");
     },
   });
+
+  const uploadResume = api.resume.uploadResume.useMutation({
+    onSuccess() {
+      toast.success("Resume sent to bucket!");
+    },
+    onError() {
+      toast.error("There was a problem storing your resume, please try again!");
+    },
+  });
+
   const form = useForm({
     schema: InsertMemberSchema.extend({
       // userId will be derived from the user's session on the server
@@ -94,6 +105,49 @@ export function MemberApplicationForm() {
         .url({ message: "Invalid URL" })
         .optional()
         .or(z.literal("")),
+      resumeUpload: z
+        .instanceof(FileList)
+        .superRefine((fileList, ctx) => {
+          // Validate number of files is 0 or 1
+          if (fileList.length !== 0 && fileList.length !== 1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Only 0 or 1 files allowed",
+            });
+          }
+
+          if (fileList.length === 1) {
+            // Validate type of object in FileList is File
+            if (fileList[0] instanceof File) {
+              // Validate file extension is PDF
+              const fileExtension = fileList[0].name.split(".").pop();
+              if (fileExtension !== "pdf") {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: "Resume must be a PDF",
+                });
+              }
+
+              // Validate file size is <= 5MB
+              if (fileList[0].size > MAX_RESUME_SIZE) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.too_big,
+                  type: "number",
+                  maximum: MAX_RESUME_SIZE,
+                  inclusive: true,
+                  exact: false,
+                  message: "File too large: maximum 5MB",
+                });
+              }
+            } else {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Object in FileList is undefined",
+              });
+            }
+          }
+        })
+        .optional(),
     }),
     defaultValues: {
       firstName: "",
@@ -107,13 +161,55 @@ export function MemberApplicationForm() {
     },
   });
 
+  const fileRef = form.register("resumeUpload");
+
+  // Convert a resume to base64 for client-server transmission
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        // Check type before resolving as string
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+        } else {
+          reject(
+            new Error(
+              "Failed to convert file to Base64: Unexpected result type",
+            ),
+          );
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   return (
     <Form {...form}>
       <form
         className="space-y-4"
         noValidate
-        onSubmit={form.handleSubmit((values) => {
-          createMember.mutate(values);
+        onSubmit={form.handleSubmit(async (values) => {
+          try {
+            let resumeUrl = "";
+            if (values.resumeUpload?.length && values.resumeUpload[0]) {
+              const file = values.resumeUpload[0];
+              const base64File = await fileToBase64(file);
+              resumeUrl = await uploadResume.mutateAsync({
+                fileName: file.name,
+                fileContent: base64File,
+              });
+            }
+
+            createMember.mutate({
+              ...values,
+              resumeUrl, // Include uploaded resume URL
+            });
+          } catch (error) {
+            console.error("Error uploading resume or creating member:", error);
+            toast.error(
+              "Something went wrong while processing your application.",
+            );
+          }
         })}
       >
         <h1 className="text-2xl font-bold">Application Form</h1>
@@ -359,6 +455,26 @@ export function MemberApplicationForm() {
               <FormLabel>Personal Website</FormLabel>
               <FormControl>
                 <Input placeholder="https://knighthacks.org" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="resumeUpload"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Resume</FormLabel>
+              <FormControl>
+                <Input
+                  type="file"
+                  placeholder=""
+                  {...fileRef}
+                  onChange={(event) => {
+                    field.onChange(event.target.files?.[0] ?? undefined);
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
