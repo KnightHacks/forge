@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { z } from "zod";
 
 import {
@@ -35,6 +34,7 @@ import { toast } from "@forge/ui/toast";
 
 import type { api as serverCaller } from "~/trpc/server";
 import { api } from "~/trpc/react";
+import { MemberAppCard } from "../_components/option-cards";
 
 export function MemberProfileForm({
   data,
@@ -130,7 +130,11 @@ export function MemberProfileForm({
   }
 
   if (!member) {
-    return <NoMember />;
+    return (
+      <div className="flex items-center justify-center">
+        <MemberAppCard />
+      </div>
+    );
   }
 
   return (
@@ -415,17 +419,5 @@ export function MemberProfileForm({
         <Button type="submit">Update profile</Button>
       </form>
     </Form>
-  );
-}
-
-export function NoMember() {
-  const router = useRouter();
-  return (
-    <div className="flex flex-col items-center justify-center gap-y-6 font-bold">
-      Please sign up to be a member first.
-      <Button onClick={() => router.push("/member/application")}>
-        Sign up
-      </Button>
-    </div>
   );
 }

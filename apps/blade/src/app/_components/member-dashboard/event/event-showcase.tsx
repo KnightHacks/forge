@@ -20,6 +20,7 @@ import {
 } from "@forge/ui/dialog";
 
 import type { api } from "~/trpc/server";
+import { DASHBOARD_ICON_SIZE } from "~/consts";
 import { formatDateTime } from "~/lib/utils";
 
 type EventTag =
@@ -72,7 +73,10 @@ export function EventShowcase({
           <CardTitle className="text-sm font-medium">
             Recent Event Attended
           </CardTitle>
-          <CalendarDays color="hsl(263.4 70% 50.4%)" size={15} />
+          <CalendarDays
+            color="hsl(263.4 70% 50.4%)"
+            size={DASHBOARD_ICON_SIZE}
+          />
         </CardHeader>
         <CardHeader>
           <CardTitle>No events found</CardTitle>
@@ -88,7 +92,7 @@ export function EventShowcase({
         <CardTitle className="text-sm font-medium">
           Recent Event Attended
         </CardTitle>
-        <CalendarDays color="hsl(263.4 70% 50.4%)" size={15} />
+        <CalendarDays color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
       </CardHeader>
       <CardHeader>
         <div className="flex items-start justify-between">

@@ -11,12 +11,8 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  //DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
-  //DropdownMenuSub,
-  //DropdownMenuSubContent,
-  //DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@forge/ui/dropdown-menu";
 
@@ -48,6 +44,7 @@ export function UserDropdown() {
             <span>Member Profile</span>
             <DropdownMenuShortcut>⌘P</DropdownMenuShortcut>
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => router.push("/settings")}>
             <span>Settings</span>
             <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>

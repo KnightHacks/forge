@@ -4,7 +4,8 @@ import { auth } from "@forge/auth";
 import { Separator } from "@forge/ui/separator";
 
 import { api, HydrateClient } from "~/trpc/server";
-import { MemberProfileForm, NoMember } from "./member-profile-form";
+import { MemberAppCard } from "../_components/option-cards";
+import { MemberProfileForm } from "./member-profile-form";
 
 export default async function SettingsProfilePage() {
   const session = await auth();
@@ -25,7 +26,13 @@ export default async function SettingsProfilePage() {
           </p>
         </div>
         <Separator />
-        {memberData ? <MemberProfileForm data={memberData} /> : <NoMember />}
+        {memberData ? (
+          <MemberProfileForm data={memberData} />
+        ) : (
+          <div className="flex items-center justify-center">
+            <MemberAppCard />
+          </div>
+        )}
       </div>
     </HydrateClient>
   );

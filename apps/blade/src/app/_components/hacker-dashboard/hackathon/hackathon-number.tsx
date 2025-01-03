@@ -1,12 +1,8 @@
 import { Trophy } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  //CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@forge/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
+
+import { DASHBOARD_ICON_SIZE } from "~/consts";
 
 export function HackathonNumber({ size }: { size: number }) {
   return (
@@ -15,7 +11,7 @@ export function HackathonNumber({ size }: { size: number }) {
         <CardTitle className="text-sm font-medium">
           Hackathons Attended
         </CardTitle>
-        <Trophy color="hsl(263.4 70% 50.4%)" size={15} />
+        <Trophy color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{size}</div>

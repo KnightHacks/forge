@@ -1,12 +1,10 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 
-import { and, eq } from "@forge/db";
+import { and, eq, isNull } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Event,
   EventAttendee,
-  Hackathon,
-  HackathonApplication,
   InsertMemberSchema,
   Member,
 } from "@forge/db/schemas/knight-hacks";
@@ -42,10 +40,13 @@ export const memberRouter = {
       .from(Member)
       .where(eq(Member.userId, ctx.session.user.id));
 
+    if (member.length === 0) return null; // Can't return undefined in trpc
+
     return member[member.length - 1];
   }),
 
-  getHackathons: protectedProcedure.query(async ({ ctx }) => {
+  // Not deleting this, but we may need to save it for hackathons router
+  /*getHackathons: protectedProcedure.query(async ({ ctx }) => {
     const hackathonsToMember = await db
       .select()
       .from(Hackathon)
@@ -62,7 +63,7 @@ export const memberRouter = {
       );
     const hackathonObjects = hackathonsToMember.map((item) => item.hackathon);
     return hackathonObjects;
-  }),
+  }), */
 
   getEvents: protectedProcedure.query(async ({ ctx }) => {
     const eventsToMember = await db
@@ -70,7 +71,9 @@ export const memberRouter = {
       .from(Event)
       .innerJoin(EventAttendee, eq(EventAttendee.eventId, Event.id))
       .innerJoin(Member, eq(Member.id, EventAttendee.memberId))
-      .where(eq(Member.userId, ctx.session.user.id));
+      .where(
+        and(eq(Member.userId, ctx.session.user.id), isNull(Event.hackathonId)),
+      );
 
     const eventObjects = eventsToMember.map((item) => item.event);
     return eventObjects;

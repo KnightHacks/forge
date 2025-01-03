@@ -6,14 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRightIcon, CheckCircledIcon, cn } from "@forge/ui";
 import { Alert, AlertDescription, AlertTitle } from "@forge/ui/alert";
 import { buttonVariants } from "@forge/ui/button";
-import {
-  Card,
-  CardContent,
-  //CardDescription,
-  //CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@forge/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Skeleton } from "@forge/ui/skeleton";
 import { toast } from "@forge/ui/toast";
 

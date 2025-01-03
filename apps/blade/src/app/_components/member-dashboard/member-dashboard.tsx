@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { buttonVariants } from "@forge/ui/button";
-
+import type { api as serverCall } from "~/trpc/server";
 import { api } from "~/trpc/server";
+import { MemberAppCard } from "../option-cards";
 import { EventNumber } from "./event/event-number";
 import { EventShowcase } from "./event/event-showcase";
-import { HackathonNumber } from "./hackathon/hackathon-number";
-import { HackathonShowcase } from "./hackathon/hackathon-showcase";
 import { Payment } from "./payment/payment-dues";
 import { Points } from "./points";
 
@@ -16,34 +13,25 @@ export const metadata: Metadata = {
   description: "The official Knight Hacks Member Dashboard",
 };
 
-export default async function MemberDashboard() {
-  const member = await api.member.getMember();
-
+export default async function MemberDashboard({
+  member,
+}: {
+  member: Awaited<ReturnType<(typeof serverCall.member)["getMember"]>>;
+}) {
   if (!member) {
     return (
-      <div className="mt-10 flex flex-col items-center justify-center gap-y-6 font-bold">
-        Please sign up to be a member first.
-        <Link
-          className={buttonVariants({ variant: "primary" })}
-          href="/member/application"
-        >
-          Sign up
-        </Link>
+      <div className="mt-10 flex items-center justify-center">
+        <MemberAppCard />
       </div>
     );
   }
 
-  const [hackathons, events, dues] = await Promise.allSettled([
-    api.member.getHackathons(),
+  const [events, dues] = await Promise.allSettled([
     api.member.getEvents(),
     api.duesPayment.validatePaidDues(),
   ]);
 
-  if (
-    hackathons.status === "rejected" ||
-    events.status === "rejected" ||
-    dues.status === "rejected"
-  ) {
+  if (events.status === "rejected" || dues.status === "rejected") {
     return (
       <div className="mt-10 flex flex-col items-center justify-center gap-y-6 font-bold">
         Something went wrong. Please try again later.
@@ -59,14 +47,12 @@ export default async function MemberDashboard() {
             Welcome, {member.firstName}
           </h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <HackathonNumber size={hackathons.value.length} />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <EventNumber size={events.value.length} />
           <Points size={member.points} />
           <Payment status={dues.value.duesPaid} />
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <HackathonShowcase hackathons={hackathons.value} />
+        <div className="grid gap-4 md:grid-cols-1">
           <EventShowcase events={events.value} />
         </div>
       </div>

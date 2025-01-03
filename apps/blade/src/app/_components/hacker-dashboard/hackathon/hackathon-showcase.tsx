@@ -1,4 +1,4 @@
-import { CalendarDays, Tag, Trophy } from "lucide-react";
+/* import { CalendarDays, Tag, Trophy } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import {
@@ -19,6 +19,7 @@ import {
 } from "@forge/ui/dialog";
 
 import type { api } from "~/trpc/server";
+import { DASHBOARD_ICON_SIZE } from "~/consts";
 import { formatDateRange } from "~/lib/utils";
 
 export function HackathonShowcase({
@@ -39,7 +40,7 @@ export function HackathonShowcase({
           <CardTitle className="text-sm font-medium">
             Recent Hackathon Attended
           </CardTitle>
-          <Trophy color="hsl(263.4 70% 50.4%)" size={15} />
+          <Trophy color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
         </CardHeader>
         <CardHeader>
           <CardTitle>No hackathons found</CardTitle>
@@ -55,7 +56,7 @@ export function HackathonShowcase({
         <CardTitle className="text-sm font-medium">
           Recent Hackathon Attended
         </CardTitle>
-        <Trophy color="hsl(263.4 70% 50.4%)" size={15} />
+        <Trophy color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
       </CardHeader>
       <CardHeader>
         <CardTitle>{mostRecent.name}</CardTitle>
@@ -112,3 +113,5 @@ export function HackathonShowcase({
     </Card>
   );
 }
+
+*/
