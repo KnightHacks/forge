@@ -42,6 +42,9 @@ export const EVENT_POINTS: Record<EventTag, number> = {
   Hackathon: 1,
 } as const;
 
+export const KNIGHTHACKS_S3_BUCKET_REGION = "us-east-1";
+export const KNIGHTHACKS_MAX_RESUME_SIZE = 5 * 1000000; // 5MB
+
 export const KNIGHTHACKS_MEMBERSHIP_PRICE = 2500;
 
 export const PROD_DISCORD_ADMIN_ROLE_ID = "1319413082258411652";

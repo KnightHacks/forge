@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import {
   GENDERS,
+  KNIGHTHACKS_MAX_RESUME_SIZE,
   LEVELS_OF_STUDY,
   RACES_OR_ETHNICITIES,
   SCHOOLS,
@@ -35,7 +36,6 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 
 export function MemberApplicationForm() {
-  const MAX_RESUME_SIZE = 5 * 1000000; // 5MB
   const router = useRouter();
 
   const createMember = api.member.createMember.useMutation({
@@ -52,7 +52,7 @@ export function MemberApplicationForm() {
 
   const uploadResume = api.resume.uploadResume.useMutation({
     onSuccess() {
-      toast.success("Resume sent to bucket!");
+      toast.success("Resume successfully uploaded!");
     },
     onError() {
       toast.error("There was a problem storing your resume, please try again!");
@@ -130,11 +130,11 @@ export function MemberApplicationForm() {
               }
 
               // Validate file size is <= 5MB
-              if (fileList[0].size > MAX_RESUME_SIZE) {
+              if (fileList[0].size > KNIGHTHACKS_MAX_RESUME_SIZE) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_big,
                   type: "number",
-                  maximum: MAX_RESUME_SIZE,
+                  maximum: KNIGHTHACKS_MAX_RESUME_SIZE,
                   inclusive: true,
                   exact: false,
                   message: "File too large: maximum 5MB",
