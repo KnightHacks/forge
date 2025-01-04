@@ -74,6 +74,7 @@ export default function DeleteMemberButton({ memberId }: { memberId: string }) {
             placeholder='Type "I am absolutely sure"'
             value={confirmationText}
             onChange={(e) => setConfirmationText(e.target.value)}
+            onPaste={(e) => e.preventDefault()} // Disable pasting in the input
           />
         </div>
 

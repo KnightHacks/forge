@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import {
@@ -37,6 +38,7 @@ import type { api as serverCaller } from "~/trpc/server";
 import { api } from "~/trpc/react";
 import { MemberAppCard } from "../_components/option-cards";
 import DeleteMemberButton from "./_components/delete-member-button";
+import { useState } from "react";
 
 export function MemberProfileForm({
   data,
@@ -44,6 +46,7 @@ export function MemberProfileForm({
   data: Awaited<ReturnType<(typeof serverCaller.member)["getMember"]>>;
 }) {
   const utils = api.useUtils();
+  const [loading, setLoading] = useState(false);
 
   const { data: member, isError } = api.member.getMember.useQuery(undefined, {
     initialData: data,
@@ -56,6 +59,9 @@ export function MemberProfileForm({
     },
     onError() {
       toast.error("Oops! Something went wrong. Please try again later.");
+    },
+    onSettled() {
+      setLoading(false);
     },
   });
 
@@ -224,6 +230,7 @@ export function MemberProfileForm({
           noValidate
           onSubmit={form.handleSubmit(async (values) => {
             try {
+              setLoading(true);
               let resumeUrl = "";
               if (values.resumeUpload?.length && values.resumeUpload[0]) {
                 const file = values.resumeUpload[0];
@@ -554,7 +561,9 @@ export function MemberProfileForm({
             )}
           />
 
-          <Button type="submit">Update profile</Button>
+          <Button type="submit">
+            {loading ? <Loader2 className="animate-spin" /> : "Update profile"}
+          </Button>
         </form>
       </Form>
       <div className="!mt-12">

@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import {
@@ -37,6 +39,7 @@ import { api } from "~/trpc/react";
 
 export function MemberApplicationForm() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const createMember = api.member.createMember.useMutation({
     onSuccess() {
@@ -47,6 +50,9 @@ export function MemberApplicationForm() {
     },
     onError() {
       toast.error("Oops! Something went wrong. Please try again later.");
+    },
+    onSettled() {
+      setLoading(false);
     },
   });
 
@@ -189,9 +195,10 @@ export function MemberApplicationForm() {
   return (
     <Form {...form}>
       <form
-        className="mx-auto flex h-full w-full flex-col space-y-3 overflow-y-auto rounded-md border p-4 md:w-1/2"
+        className="mx-auto my-4 flex h-full w-full flex-col space-y-3 overflow-y-auto rounded-md border p-4 md:my-8 md:w-1/2"
         noValidate
         onSubmit={form.handleSubmit(async (values) => {
+          setLoading(true);
           try {
             let resumeUrl = "";
             if (values.resumeUpload?.length && values.resumeUpload[0]) {
@@ -498,7 +505,9 @@ export function MemberApplicationForm() {
           )}
         />
 
-        <Button type="submit">Submit</Button>
+        <Button type="submit">
+          {loading ? <Loader2 className="animate-spin" /> : "Submit"}
+        </Button>
       </form>
     </Form>
   );
