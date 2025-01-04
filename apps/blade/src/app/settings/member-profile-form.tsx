@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import {
+  KNIGHTHACKS_MAX_RESUME_SIZE,
   GENDERS,
   LEVELS_OF_STUDY,
   RACES_OR_ETHNICITIES,
@@ -70,6 +71,49 @@ export function MemberProfileForm({
         // validates phone number with/without dashes
         .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$/, "Invalid phone number"),
       // Read from date input as string, convert and validate as date, then transform to ISO string
+      resumeUpload: z
+        .instanceof(FileList)
+        .superRefine((fileList, ctx) => {
+          // Validate number of files is 0 or 1
+          if (fileList.length !== 0 && fileList.length !== 1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Only 0 or 1 files allowed",
+            });
+          }
+
+          if (fileList.length === 1) {
+            // Validate type of object in FileList is File
+            if (fileList[0] instanceof File) {
+              // Validate file extension is PDF
+              const fileExtension = fileList[0].name.split(".").pop();
+              if (fileExtension !== "pdf") {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: "Resume must be a PDF",
+                });
+              }
+
+              // Validate file size is <= 5MB
+              if (fileList[0].size > KNIGHTHACKS_MAX_RESUME_SIZE) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.too_big,
+                  type: "number",
+                  maximum: KNIGHTHACKS_MAX_RESUME_SIZE,
+                  inclusive: true,
+                  exact: false,
+                  message: "File too large: maximum 5MB",
+                });
+              }
+            } else {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Object in FileList is undefined",
+              });
+            }
+          }
+        })
+        .optional(),
       dob: z
         .string()
         .pipe(z.coerce.date())
@@ -213,6 +257,21 @@ export function MemberProfileForm({
                 <Input type="date" {...field} />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="resumeUpload"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Resume</FormLabel>
+              <FormControl>
+                <Input 
+                  type="file"
+                  placeholder=""
+                />
+              </FormControl>
             </FormItem>
           )}
         />
