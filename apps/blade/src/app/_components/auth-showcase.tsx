@@ -13,7 +13,7 @@ export async function Auth() {
       <div className="absolute left-0 top-0 flex items-center justify-between px-3 py-3 sm:px-10 sm:py-5">
         <div className="flex items-center justify-center gap-x-2 text-lg font-extrabold sm:text-[2rem]">
           <Image
-            src={"/gold-kh-logo.svg"}
+            src={"/white-kh-logo.svg"}
             alt="The logo of Knight Hacks"
             width={0}
             height={0}
