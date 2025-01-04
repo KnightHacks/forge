@@ -39,6 +39,10 @@ export function UserDropdown({ memberExists }: { memberExists: boolean }) {
         <DropdownMenuLabel>{data ? data.name : "My Account"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          <DropdownMenuItem onSelect={() => router.push("/dashboard")}>
+            <span>Dashboard</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           {memberExists && (
             <DropdownMenuItem onSelect={() => router.push("/settings")}>
               <span>Settings</span>
