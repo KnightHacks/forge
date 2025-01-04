@@ -36,6 +36,7 @@ import { toast } from "@forge/ui/toast";
 import type { api as serverCaller } from "~/trpc/server";
 import { api } from "~/trpc/react";
 import { MemberAppCard } from "../_components/option-cards";
+import DeleteMemberButton from "./_components/delete-member-button";
 
 export function MemberProfileForm({
   data,
@@ -216,336 +217,353 @@ export function MemberProfileForm({
   }
 
   return (
-    <Form {...form}>
-      <form
-        className="space-y-4"
-        noValidate
-        onSubmit={form.handleSubmit(async (values) => {
-          try {
-            let resumeUrl = "";
-            if (values.resumeUpload?.length && values.resumeUpload[0]) {
-              const file = values.resumeUpload[0];
-              const base64File = await fileToBase64(file);
-              resumeUrl = await uploadResume.mutateAsync({
-                fileName: file.name,
-                fileContent: base64File,
+    <>
+      <Form {...form}>
+        <form
+          className="space-y-4"
+          noValidate
+          onSubmit={form.handleSubmit(async (values) => {
+            try {
+              let resumeUrl = "";
+              if (values.resumeUpload?.length && values.resumeUpload[0]) {
+                const file = values.resumeUpload[0];
+                const base64File = await fileToBase64(file);
+                resumeUrl = await uploadResume.mutateAsync({
+                  fileName: file.name,
+                  fileContent: base64File,
+                });
+              }
+
+              updateMember.mutate({
+                ...values,
+                resumeUrl, // Include uploaded resume URL
               });
+            } catch (error) {
+              console.error(
+                "Error uploading resume or updating member:",
+                error,
+              );
+              toast.error(
+                "Something went wrong while processing your changes.",
+              );
             }
+          })}
+        >
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="John" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="johndoe@gmail.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="phoneNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <FormControl>
+                  <Input type="tel" placeholder="123-456-7890" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="dob"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Date Of Birth</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="resumeUpload"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Resume</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    placeholder=""
+                    {...fileRef}
+                    onChange={(event) => {
+                      field.onChange(event.target.files?.[0] ?? undefined);
+                    }}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-            updateMember.mutate({
-              ...values,
-              resumeUrl, // Include uploaded resume URL
-            });
-          } catch (error) {
-            console.error("Error uploading resume or updating member:", error);
-            toast.error("Something went wrong while processing your changes.");
-          }
-        })}
-      >
-        <FormField
-          control={form.control}
-          name="firstName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>First Name</FormLabel>
-              <FormControl>
-                <Input placeholder="John" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="lastName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Last Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Doe" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="johndoe@gmail.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="phoneNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone Number</FormLabel>
-              <FormControl>
-                <Input type="tel" placeholder="123-456-7890" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="dob"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Date Of Birth</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="resumeUpload"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Resume</FormLabel>
-              <FormControl>
-                <Input
-                  type="file"
-                  placeholder=""
-                  {...fileRef}
-                  onChange={(event) => {
-                    field.onChange(event.target.files?.[0] ?? undefined);
-                  }}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+          <div className="!mt-10">
+            <h3 className="text-lg font-medium">Demographic Information</h3>
+            <p className="text-sm text-muted-foreground">
+              This is some additional information about you.
+            </p>
+          </div>
+          <Separator />
+          <FormField
+            control={form.control}
+            name="gender"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Gender</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your gender" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {GENDERS.map((gender) => (
+                        <SelectItem key={gender} value={gender}>
+                          {gender}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="raceOrEthnicity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Race or Ethnicity</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your race or ethnicity" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {RACES_OR_ETHNICITIES.map((raceOrEthnicity) => (
+                        <SelectItem
+                          key={raceOrEthnicity}
+                          value={raceOrEthnicity}
+                        >
+                          {raceOrEthnicity}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="shirtSize"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Shirt Size</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your shirt size" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {SHIRT_SIZES.map((size) => (
+                        <SelectItem key={size} value={size}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="!mt-10">
+            <h3 className="text-lg font-medium">Academic Information</h3>
+            <p className="text-sm text-muted-foreground">
+              This is where you go to school and what you're studying.
+            </p>
+          </div>
+          <Separator />
+          <FormField
+            control={form.control}
+            name="levelOfStudy"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Level of Study</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your level of study" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {LEVELS_OF_STUDY.map((levelOfStudy) => (
+                        <SelectItem key={levelOfStudy} value={levelOfStudy}>
+                          {levelOfStudy}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="school"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>School</FormLabel>
+                <FormControl>
+                  <ResponsiveComboBox
+                    items={SCHOOLS}
+                    renderItem={(school) => <div>{school}</div>}
+                    getItemValue={(school) => school}
+                    getItemLabel={(school) => school}
+                    onItemSelect={(school) => field.onChange(school)}
+                    buttonPlaceholder={member.school}
+                    inputPlaceholder="Search for your school"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="gradDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Graduation Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="!mt-10">
+            <h3 className="text-lg font-medium">URLs</h3>
+            <p className="text-sm text-muted-foreground">
+              Feel free to include what makes you, you.
+            </p>
+          </div>
+          <Separator />
+          <FormField
+            control={form.control}
+            name="githubProfileUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>GitHub Profile</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://github.com/knighthacks"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="linkedinProfileUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Linkedin Profile</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://www.linkedin.com/company/knight-hacks"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="websiteUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Personal Website</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://knighthacks.org" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <div className="!mt-10">
-          <h3 className="text-lg font-medium">Demographic Information</h3>
-          <p className="text-sm text-muted-foreground">
-            This is some additional information about you.
-          </p>
-        </div>
-        <Separator />
-        <FormField
-          control={form.control}
-          name="gender"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Gender</FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your gender" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {GENDERS.map((gender) => (
-                      <SelectItem key={gender} value={gender}>
-                        {gender}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="raceOrEthnicity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Race or Ethnicity</FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your race or ethnicity" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {RACES_OR_ETHNICITIES.map((raceOrEthnicity) => (
-                      <SelectItem key={raceOrEthnicity} value={raceOrEthnicity}>
-                        {raceOrEthnicity}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="shirtSize"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Shirt Size</FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your shirt size" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {SHIRT_SIZES.map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="!mt-10">
-          <h3 className="text-lg font-medium">Academic Information</h3>
-          <p className="text-sm text-muted-foreground">
-            This is where you go to school and what you're studying.
-          </p>
-        </div>
-        <Separator />
-        <FormField
-          control={form.control}
-          name="levelOfStudy"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Level of Study</FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your level of study" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {LEVELS_OF_STUDY.map((levelOfStudy) => (
-                      <SelectItem key={levelOfStudy} value={levelOfStudy}>
-                        {levelOfStudy}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="school"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>School</FormLabel>
-              <FormControl>
-                <ResponsiveComboBox
-                  items={SCHOOLS}
-                  renderItem={(school) => <div>{school}</div>}
-                  getItemValue={(school) => school}
-                  getItemLabel={(school) => school}
-                  onItemSelect={(school) => field.onChange(school)}
-                  buttonPlaceholder={member.school}
-                  inputPlaceholder="Search for your school"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="gradDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Graduation Date</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="!mt-10">
-          <h3 className="text-lg font-medium">URLs</h3>
-          <p className="text-sm text-muted-foreground">
-            Feel free to include what makes you, you.
-          </p>
-        </div>
-        <Separator />
-        <FormField
-          control={form.control}
-          name="githubProfileUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>GitHub Profile</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="https://github.com/knighthacks"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="linkedinProfileUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Linkedin Profile</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="https://www.linkedin.com/company/knight-hacks"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="websiteUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Personal Website</FormLabel>
-              <FormControl>
-                <Input placeholder="https://knighthacks.org" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button type="submit">Update profile</Button>
-      </form>
-    </Form>
+          <Button type="submit">Update profile</Button>
+        </form>
+      </Form>
+      <div className="!mt-12">
+        <h3 className="text-lg font-medium text-red-700">Danger Zone</h3>
+        <p className="mb-4 text-sm text-red-700/75">
+          Avoid this if you're not sure what you're doing.
+        </p>
+        <DeleteMemberButton memberId={member.id} />
+      </div>
+    </>
   );
 }
