@@ -57,6 +57,16 @@ export function MemberProfileForm({
       toast.error("Oops! Something went wrong. Please try again later.");
     },
   });
+
+  const uploadResume = api.resume.uploadResume.useMutation({
+    onSuccess() {
+      toast.success("Resume successfully uploaded!");
+    },
+    onError() {
+      toast.error("There was a problem storing your resume, please try again!");
+    },
+  });
+
   const form = useForm({
     schema: InsertMemberSchema.extend({
       // userId will be derived from the user's session on the server
@@ -170,6 +180,28 @@ export function MemberProfileForm({
     },
   });
 
+  const fileRef = form.register("resumeUpload");
+
+  // Convert a resume to base64 for client-server transmission
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        // Check type before resolving as string
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+        } else {
+          reject(
+            new Error(
+              "Failed to convert file to Base64: Unexpected result type",
+            ),
+          );
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   if (isError) {
     return (
       <div className="flex items-center justify-center">
@@ -191,8 +223,28 @@ export function MemberProfileForm({
       <form
         className="space-y-4"
         noValidate
-        onSubmit={form.handleSubmit((values) => {
-          updateMember.mutate(values);
+        onSubmit={form.handleSubmit(async (values) => {
+          try {
+            let resumeUrl = "";
+            if (values.resumeUpload?.length && values.resumeUpload[0]) {
+              const file = values.resumeUpload[0];
+              const base64File = await fileToBase64(file);
+              resumeUrl = await uploadResume.mutateAsync({
+                fileName: file.name,
+                fileContent: base64File,
+              });
+            }
+
+            updateMember.mutate(
+              ...values,
+              resumeUrl, // Include uploaded resume URL
+            );
+          } catch (error) {
+            console.error("Error uploading resume or updating member:", error);
+            toast.error(
+              "Something went wrong while processing your changes.",
+            );
+          }
         })}
       >
         <FormField
@@ -270,6 +322,10 @@ export function MemberProfileForm({
                 <Input 
                   type="file"
                   placeholder=""
+                  {...fileRef}
+                  onChange={(event) => {
+                    field.onChange(event.target.files?.[0] ?? undefined);
+                  }}
                 />
               </FormControl>
             </FormItem>
