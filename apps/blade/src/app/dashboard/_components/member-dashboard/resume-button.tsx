@@ -7,8 +7,12 @@ import { api } from "~/trpc/server";
 export async function ResumeButton() {
   const resume = await api.resume.getResume();
 
-  if (!resume) {
-    return <Button disabled>Resume</Button>;
+  if (!resume.url) {
+    return (
+      <Button className="w-full" disabled>
+        Resume
+      </Button>
+    );
   }
 
   return (
