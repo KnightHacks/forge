@@ -79,7 +79,7 @@ export const resumeRouter = {
       // Make sure the file actually exists
       await s3Client.statObject(bucketName, filename);
     } catch {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Resume not found" });
+      return { url: null };
     }
 
     try {
