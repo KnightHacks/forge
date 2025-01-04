@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import type { api as serverCall } from "~/trpc/server";
 import { api } from "~/trpc/server";
-import { MemberAppCard } from "../option-cards";
+import { MemberAppCard } from "../../../_components/option-cards";
 import { EventNumber } from "./event/event-number";
 import { EventShowcase } from "./event/event-showcase";
 import { MemberInfo } from "./info";
@@ -48,13 +48,24 @@ export default async function MemberDashboard({
             Welcome, {member.firstName}
           </h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Dekstop View */}
+        <div className="hidden space-y-4 md:grid">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Payment status={dues.value.duesPaid} />
+            <Points size={member.points} />
+            <EventNumber size={events.value.length} />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <MemberInfo />
+            <EventShowcase events={events.value} />
+          </div>
+        </div>
+        {/* Mobile View */}
+        <div className="space-y-4 md:hidden">
           <Payment status={dues.value.duesPaid} />
+          <MemberInfo />
           <Points size={member.points} />
           <EventNumber size={events.value.length} />
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <MemberInfo />
           <EventShowcase events={events.value} />
         </div>
       </div>

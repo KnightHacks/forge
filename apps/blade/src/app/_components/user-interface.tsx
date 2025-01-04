@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { api } from "~/trpc/server";
-import MemberDashboard from "./member-dashboard/member-dashboard";
+import MemberDashboard from "../dashboard/_components/member-dashboard/member-dashboard";
 
 export async function UserInterface() {
   const member = await api.member.getMember();
