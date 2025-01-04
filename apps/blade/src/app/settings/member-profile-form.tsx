@@ -74,6 +74,10 @@ export function MemberProfileForm({
         .string()
         .pipe(z.coerce.date())
         .transform((date) => date.toISOString()),
+      gradDate: z
+        .string()
+        .pipe(z.coerce.date())
+        .transform((date) => date.toISOString()),
       githubProfileUrl: z
         .string()
         .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")
@@ -110,6 +114,7 @@ export function MemberProfileForm({
       email: member?.email,
       phoneNumber: member?.phoneNumber,
       dob: member?.dob,
+      gradDate: member?.gradDate,
       githubProfileUrl: member?.githubProfileUrl ?? "",
       linkedinProfileUrl: member?.linkedinProfileUrl ?? "",
       websiteUrl: member?.websiteUrl ?? "",
@@ -358,6 +363,19 @@ export function MemberProfileForm({
                   buttonPlaceholder={member.school}
                   inputPlaceholder="Search for your school"
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="gradDate"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Graduation Date</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
