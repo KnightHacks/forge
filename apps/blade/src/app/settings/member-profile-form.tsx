@@ -235,10 +235,10 @@ export function MemberProfileForm({
               });
             }
 
-            updateMember.mutate(
+            updateMember.mutate({
               ...values,
               resumeUrl, // Include uploaded resume URL
-            );
+            });
           } catch (error) {
             console.error("Error uploading resume or updating member:", error);
             toast.error(
