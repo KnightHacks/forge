@@ -5,9 +5,9 @@ import { api } from "~/trpc/server";
 import { MemberAppCard } from "../option-cards";
 import { EventNumber } from "./event/event-number";
 import { EventShowcase } from "./event/event-showcase";
+import { MemberInfo } from "./info";
 import { Payment } from "./payment/payment-dues";
 import { Points } from "./points";
-import { MemberInfo } from "./info";
 
 export const metadata: Metadata = {
   title: "Member Dashboard",

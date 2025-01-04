@@ -3,8 +3,8 @@
 import { z } from "zod";
 
 import {
-  KNIGHTHACKS_MAX_RESUME_SIZE,
   GENDERS,
+  KNIGHTHACKS_MAX_RESUME_SIZE,
   LEVELS_OF_STUDY,
   RACES_OR_ETHNICITIES,
   SCHOOLS,
@@ -241,9 +241,7 @@ export function MemberProfileForm({
             });
           } catch (error) {
             console.error("Error uploading resume or updating member:", error);
-            toast.error(
-              "Something went wrong while processing your changes.",
-            );
+            toast.error("Something went wrong while processing your changes.");
           }
         })}
       >
@@ -319,7 +317,7 @@ export function MemberProfileForm({
             <FormItem>
               <FormLabel>Resume</FormLabel>
               <FormControl>
-                <Input 
+                <Input
                   type="file"
                   placeholder=""
                   {...fileRef}
