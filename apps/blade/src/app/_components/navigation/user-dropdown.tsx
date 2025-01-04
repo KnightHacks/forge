@@ -44,12 +44,14 @@ export function UserDropdown({ memberExists }: { memberExists: boolean }) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {memberExists && (
-            <DropdownMenuItem onSelect={() => router.push("/settings")}>
-              <span>Settings</span>
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuItem onSelect={() => router.push("/settings")}>
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
           )}
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
         {/* Made signing out client-side due to dropdown item keyboard accessibility issues */}
         <DropdownMenuItem onSelect={() => signOut()}>
           <Button type="submit">Sign out</Button>
