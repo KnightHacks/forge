@@ -1,9 +1,9 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import { auth, signIn } from "@forge/auth";
 import { Button } from "@forge/ui/button";
 import { Separator } from "@forge/ui/separator";
-import Link from "next/link";
 
 export async function Auth() {
   const session = await auth();
