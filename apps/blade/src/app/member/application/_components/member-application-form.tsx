@@ -192,7 +192,7 @@ export function MemberApplicationForm() {
   return (
     <Form {...form}>
       <form
-        className="space-y-4"
+        className="mx-auto flex h-full w-full flex-col space-y-3 overflow-y-auto rounded-md border p-4 md:w-1/2"
         noValidate
         onSubmit={form.handleSubmit(async (values) => {
           try {
