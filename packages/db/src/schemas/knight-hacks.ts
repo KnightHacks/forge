@@ -63,6 +63,7 @@ export const Member = createTable(
     websiteUrl: t.varchar({ length: 255 }),
     resumeUrl: t.varchar({ length: 255 }),
     dob: t.date().notNull(),
+    gradDate: t.date().notNull(),
     points: t.integer().notNull().default(0),
   }),
   (t) => ({

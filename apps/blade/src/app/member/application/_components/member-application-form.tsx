@@ -77,6 +77,10 @@ export function MemberApplicationForm() {
         .string()
         .pipe(z.coerce.date())
         .transform((date) => date.toISOString()),
+      gradDate: z
+        .string()
+        .pipe(z.coerce.date())
+        .transform((date) => date.toISOString()),
       githubProfileUrl: z
         .string()
         .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")
@@ -156,6 +160,7 @@ export function MemberApplicationForm() {
       email: "",
       phoneNumber: "",
       dob: "",
+      gradDate: "",
       githubProfileUrl: "",
       linkedinProfileUrl: "",
       websiteUrl: "",
@@ -382,6 +387,19 @@ export function MemberApplicationForm() {
                   buttonPlaceholder="Select your school"
                   inputPlaceholder="Search for your school"
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="gradDate"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Graduation Date</FormLabel>
+              <FormControl>
+                <Input type="month" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
