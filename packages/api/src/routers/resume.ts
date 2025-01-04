@@ -15,7 +15,7 @@ const s3Client = new Client({
   secretKey: env.MINIO_SECRET_KEY,
 });
 
-export const resumeUploadRouter = {
+export const resumeRouter = {
   uploadResume: protectedProcedure
     .input(
       z.object({
@@ -71,4 +71,32 @@ export const resumeUploadRouter = {
         });
       }
     }),
+  getResume: protectedProcedure.query(async ({ ctx }) => {
+    const bucketName = "member-resumes";
+    const filename = `${ctx.session.user.id}/Resume.pdf`;
+
+    try {
+      // Make sure the file actually exists
+      await s3Client.statObject(bucketName, filename);
+    } catch {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Resume not found" });
+    }
+
+    try {
+      const expiresIn = 60 * 60; // 1 hour
+      const presignedUrl = await s3Client.presignedUrl(
+        "GET",
+        bucketName,
+        filename,
+        expiresIn,
+      );
+
+      return { url: presignedUrl };
+    } catch {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Could not generate presigned URL",
+      });
+    }
+  }),
 };

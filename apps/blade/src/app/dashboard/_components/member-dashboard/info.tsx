@@ -4,6 +4,7 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
 import { DASHBOARD_ICON_SIZE } from "~/consts";
+import { ResumeButton } from "./resume-button";
 
 export function MemberInfo() {
   return (
@@ -14,7 +15,7 @@ export function MemberInfo() {
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-          <Button>Resume</Button>
+          <ResumeButton />
           <Button>QR</Button>
         </div>
       </CardContent>
