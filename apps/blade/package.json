@@ -27,6 +27,7 @@
     "@stripe/stripe-js": "^5.2.0",
     "@t3-oss/env-nextjs": "^0.11.1",
     "@tanstack/react-query": "catalog:",
+    "@tanstack/react-table": "^8.20.6",
     "@trpc/client": "catalog:",
     "@trpc/react-query": "catalog:",
     "@trpc/server": "catalog:",
