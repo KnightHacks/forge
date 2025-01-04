@@ -7,6 +7,7 @@ import { EventNumber } from "./event/event-number";
 import { EventShowcase } from "./event/event-showcase";
 import { Payment } from "./payment/payment-dues";
 import { Points } from "./points";
+import { MemberInfo } from "./info";
 
 export const metadata: Metadata = {
   title: "Member Dashboard",
@@ -48,11 +49,12 @@ export default async function MemberDashboard({
           </h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <EventNumber size={events.value.length} />
-          <Points size={member.points} />
           <Payment status={dues.value.duesPaid} />
+          <Points size={member.points} />
+          <EventNumber size={events.value.length} />
         </div>
-        <div className="grid gap-4 md:grid-cols-1">
+        <div className="grid gap-4 md:grid-cols-2">
+          <MemberInfo />
           <EventShowcase events={events.value} />
         </div>
       </div>
