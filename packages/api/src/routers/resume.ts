@@ -4,6 +4,7 @@ import { Client } from "minio";
 import { z } from "zod";
 
 import { KNIGHTHACKS_S3_BUCKET_REGION } from "@forge/consts/knight-hacks";
+import { db } from "@forge/db/client";
 
 import { env } from "../env";
 import { protectedProcedure } from "../trpc";
@@ -73,7 +74,19 @@ export const resumeRouter = {
     }),
   getResume: protectedProcedure.query(async ({ ctx }) => {
     const bucketName = "member-resumes";
-    const filename = `${ctx.session.user.id}/Resume.pdf`;
+    const member = await db.query.Member.findFirst({
+      where: (t, { eq }) => eq(t.userId, ctx.session.user.id),
+    });
+
+    if (!member) {
+      return { url: null };
+    }
+
+    const filename = member.resumeUrl;
+
+    if (!filename) {
+      return { url: null };
+    }
 
     try {
       // Make sure the file actually exists
@@ -91,6 +104,7 @@ export const resumeRouter = {
         expiresIn,
       );
 
+      // Return the URL to the client
       return { url: presignedUrl };
     } catch {
       throw new TRPCError({
