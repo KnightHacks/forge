@@ -45,6 +45,11 @@ export const EVENT_POINTS: Record<EventTag, number> = {
 export const KNIGHTHACKS_S3_BUCKET_REGION = "us-east-1";
 export const KNIGHTHACKS_MAX_RESUME_SIZE = 5 * 1000000; // 5MB
 
+export const MINIO_ENDPOINT = "minio-g0soogg4gs8gwcggw4ococok.knighthacks.org";
+export const BUCKET_NAME = "knight-hacks-qr";
+export const QR_CONTENT_TYPE = "image/png";
+export const QR_PATHNAME = "/knight-hacks-qr/**";
+
 export const KNIGHTHACKS_MEMBERSHIP_PRICE = 2500;
 
 export const PROD_DISCORD_ADMIN_ROLE_ID = "1319413082258411652";
