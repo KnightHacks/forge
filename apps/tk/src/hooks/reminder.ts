@@ -259,7 +259,7 @@ async function cronLogic(webhook: WebhookClient) {
           {
             name: "Start",
             value: new Date(event.start_datetime)
-              .setHours(event.start_datetime.getHours() - 5)
+              .setHours(new Date(event.start_datetime).getHours() - 5)
               .toLocaleString("en-US", {
                 timeStyle: "short",
               }),
@@ -268,7 +268,7 @@ async function cronLogic(webhook: WebhookClient) {
           {
             name: "End",
             value: new Date(event.end_datetime)
-              .setHours(event.end_datetime.getHours() - 5)
+              .setHours(new Date(event.end_datetime).getHours() - 5)
               .toLocaleString("en-US", {
                 timeStyle: "short",
               }),
