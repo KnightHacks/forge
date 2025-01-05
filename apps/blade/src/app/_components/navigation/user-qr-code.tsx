@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { QrCode } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
@@ -10,7 +11,27 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 
+import { api } from "~/trpc/server";
+
 export function QRCodePopup() {
+  const getQR = async () => {
+    const userQR = await api.qr.getQRCode();
+
+    if (userQR.qrCodeUrl) {
+      return (
+        <div className="flex h-[40vw] w-[40vw] items-center justify-center">
+          <Image
+            src={userQR.qrCodeUrl}
+            alt="QR Code"
+            width={400}
+            height={400}
+          />
+        </div>
+      );
+    }
+
+    return <p>No QR Code found</p>;
+  };
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -24,13 +45,7 @@ export function QRCodePopup() {
           <DialogTitle>Your QR Code</DialogTitle>
         </DialogHeader>
         <div className="flex items-center justify-center p-6">
-          <div className="rounded-lg bg-white p-4">
-            {/* This is where you'd implement your actual QR code */}
-            {/* For demonstration, showing a placeholder */}
-            <div className="flex h-[40vw] w-[40vw] items-center justify-center bg-gray-200">
-              <span className="text-sm text-gray-500">QR Code Here</span>
-            </div>
-          </div>
+          <div className="rounded-lg bg-white p-4">{getQR()}</div>
         </div>
       </DialogContent>
       <DialogDescription></DialogDescription>

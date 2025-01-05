@@ -1,8 +1,8 @@
 import { Info } from "lucide-react";
 
-import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
+import { QRCodePopup } from "~/app/_components/navigation/user-qr-code";
 import { DASHBOARD_ICON_SIZE } from "~/consts";
 import { ResumeButton } from "./resume-button";
 
@@ -16,7 +16,7 @@ export function MemberInfo() {
       <CardContent>
         <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
           <ResumeButton />
-          <Button>QR</Button>
+          <QRCodePopup />
         </div>
       </CardContent>
     </Card>

@@ -27,6 +27,7 @@
     "@forge/validators": "workspace:*",
     "@stripe/stripe-js": "^5.2.0",
     "@trpc/server": "catalog:",
+    "@types/qrcode": "^1.5.5",
     "discord-api-types": "^0.37.113",
     "stripe": "^17.4.0",
     "superjson": "2.2.1",
