@@ -81,6 +81,7 @@ export default function UpdateMemberButton({
     defaultValues: {
       firstName: member.firstName || "",
       lastName: member.lastName || "",
+      discordUser: member.discordUser || "",
       dob: member.dob || "",
       email: member.email || "",
       phoneNumber: member.phoneNumber || "",
@@ -117,6 +118,7 @@ export default function UpdateMemberButton({
                 id: member.id,
                 firstName: values.firstName,
                 lastName: values.lastName,
+                discordUser: values.discordUser,
                 email: values.email,
                 points,
                 dob: values.dob,
@@ -170,6 +172,24 @@ export default function UpdateMemberButton({
                       </FormLabel>
                       <FormControl>
                         <Input placeholder="Doe" {...field} />
+                      </FormControl>
+                      <FormMessage className="my-auto whitespace-nowrap" />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="discordUser"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex flex-row gap-4">
+                      <FormLabel className="my-auto whitespace-nowrap">
+                        Discord User
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="JohnDoe" {...field} />
                       </FormControl>
                       <FormMessage className="my-auto whitespace-nowrap" />
                     </div>

@@ -69,10 +69,19 @@ export const memberRouter = {
         console.error("Error with generating QR code: ", error);
       }
 
+      const today = new Date();
+      const birthDate = new Date(input.dob);
+      const hasBirthdayPassed =
+        birthDate.getMonth() <= today.getMonth() &&
+        birthDate.getDate() <= today.getDate();
+      const newAge = hasBirthdayPassed
+        ? today.getFullYear() - birthDate.getFullYear()
+        : today.getFullYear() - birthDate.getFullYear() - 1;
+
       await db.insert(Member).values({
         ...input,
         userId: ctx.session.user.id,
-        age: new Date().getFullYear() - new Date(input.dob).getFullYear(),
+        age: newAge,
       });
     }),
 

@@ -73,6 +73,7 @@ export function MemberApplicationForm() {
       firstName: z.string().min(1, "Required"),
       lastName: z.string().min(1, "Required"),
       // Age will be derived from dob on the server
+      discordUser: z.string().min(1, "Required"),
       age: z.undefined(),
       email: z.string().email("Invalid email").min(1, "Required"),
       phoneNumber: z
@@ -250,6 +251,19 @@ export function MemberApplicationForm() {
                 <Input placeholder="Doe" {...field} />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="discordUser"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Discord Username</FormLabel>
+              <FormControl>
+                <Input placeholder="JohnDoe" {...field} />
+              </FormControl>
             </FormItem>
           )}
         />

@@ -48,6 +48,7 @@ export const Member = createTable(
       .references(() => User.id, { onDelete: "cascade" }),
     firstName: t.varchar({ length: 255 }).notNull(),
     lastName: t.varchar({ length: 255 }).notNull(),
+    discordUser: t.varchar({ length: 255 }).notNull(),
     age: t.integer().notNull(),
     email: t.varchar({ length: 255 }).notNull(),
     phoneNumber: t.varchar({ length: 255 }).notNull(),
@@ -63,6 +64,7 @@ export const Member = createTable(
     dob: t.date().notNull(),
     gradDate: t.date().notNull(),
     points: t.integer().notNull().default(0),
+    timeCreated: t.date().defaultNow().notNull(),
   }),
   (t) => ({
     uniqueEmail: unique().on(t.email),
