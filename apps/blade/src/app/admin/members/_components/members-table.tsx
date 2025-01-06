@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, ArrowUp, ArrowDown, ArrowUpDown, Clock } from "lucide-react";
+import { Button } from "@forge/ui/button";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Input } from "@forge/ui/input";
@@ -25,13 +26,14 @@ import UpdateMemberButton from "./update-member";
 type Member = InsertMember;
 type SortField = keyof Member;
 type SortOrder = "asc" | "desc" | null;
+type TimeOrder = "asc" | "desc" | null;
 
 export default function MemberTable() {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  // const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>(null);
-  // const [shownMembers, setShownMembers] = useState<Member[]>([]);
+  const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>(null);
+  const [shownMembers, setShownMembers] = useState<Member[]>([]);
 
   const { data: members } = api.member.getMembers.useQuery();
   const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
@@ -56,20 +58,26 @@ export default function MemberTable() {
     return 0;
   });
 
+  const toggleTimeSort = () => {
+    setTimeSortOrder((prev) => 
+      prev === "asc" ? "desc" : prev === "desc" ? null : "asc"
+    )
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between gap-2 border-b pb-4">
-        {/* <div>
+        <div>
           <Button
            className="flex flex-row gap-1"
-          //  onClick={toggleTimeSort}
+           onClick={toggleTimeSort}
           >
             <Clock />
             {!timeSortOrder && <ArrowUpDown />}
             {timeSortOrder === "asc" && <ArrowUp />}
             {timeSortOrder === "desc" && <ArrowDown />}
           </Button>
-        </div> */}
+        </div>
         <div className="relative w-full">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
