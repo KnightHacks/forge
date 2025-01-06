@@ -22,11 +22,22 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { adminProcedure, protectedProcedure } from "../trpc";
+import { api } from "@trpc/server";
 
 export const memberRouter = {
   createMember: protectedProcedure
     .input(InsertMemberSchema.omit({ userId: true, age: true }))
     .mutation(async ({ input, ctx }) => {
+
+      try {
+        const QRMember = await api.member.getMember();
+        if (!QRMember) {
+          await api.qr.generateQRCodeAndUpload();
+        }
+      } catch (error) {
+        console.error("Error in createMember: ", error);
+      }
+      
       await db.insert(Member).values({
         ...input,
         userId: ctx.session.user.id,
