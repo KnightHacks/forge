@@ -254,7 +254,6 @@ export function MemberApplicationForm() {
           )}
         />
 
-        
         <FormField
           control={form.control}
           name="email"

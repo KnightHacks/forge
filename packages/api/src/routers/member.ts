@@ -1,8 +1,13 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
+import QRCode from "qrcode";
 import { z } from "zod";
 
-import { DUES_PAYMENT } from "@forge/consts/knight-hacks";
+import {
+  BUCKET_NAME,
+  DUES_PAYMENT,
+  KNIGHTHACKS_S3_BUCKET_REGION,
+} from "@forge/consts/knight-hacks";
 import {
   and,
   count,
@@ -21,23 +26,49 @@ import {
   Member,
 } from "@forge/db/schemas/knight-hacks";
 
+import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure } from "../trpc";
-import { api } from "@trpc/server";
 
 export const memberRouter = {
   createMember: protectedProcedure
     .input(InsertMemberSchema.omit({ userId: true, age: true }))
     .mutation(async ({ input, ctx }) => {
-
       try {
-        const QRMember = await api.member.getMember();
-        if (!QRMember) {
-          await api.qr.generateQRCodeAndUpload();
+        const userId = ctx.session.user.id;
+
+        const existingMember = await db
+          .select()
+          .from(Member)
+          .where(eq(Member.userId, userId));
+
+        if (existingMember.length === 0) {
+          const objectName = `qr-code-${userId}.png`;
+          const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+
+          if (!bucketExists) {
+            await minioClient.makeBucket(
+              BUCKET_NAME,
+              KNIGHTHACKS_S3_BUCKET_REGION,
+            );
+          }
+
+          const qrData = `user:${userId}`;
+          const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
+
+          await minioClient.putObject(
+            BUCKET_NAME,
+            objectName,
+            qrBuffer,
+            qrBuffer.length,
+            {
+              "Content-Type": "image/png",
+            },
+          );
         }
       } catch (error) {
-        console.error("Error in createMember: ", error);
+        console.error("Error with generating QR code: ", error);
       }
-      
+
       await db.insert(Member).values({
         ...input,
         userId: ctx.session.user.id,

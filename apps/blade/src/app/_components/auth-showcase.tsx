@@ -21,10 +21,6 @@ export async function Auth() {
 
   if (session) {
     member = await api.member.getMember();
-
-    if (!member) {
-      await api.qr.generateQRCodeAndUpload();
-    }
   }
 
   return (
