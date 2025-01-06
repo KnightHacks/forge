@@ -35,7 +35,6 @@ const ScannerPopUp = () => {
         return;
       }
       toast.success(opts.message);
-      form.reset();
     },
     onError(opts) {
       toast.error(opts.message);
