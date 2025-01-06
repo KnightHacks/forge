@@ -1,8 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 
-import {
-  BUCKET_NAME,
-} from "@forge/consts/knight-hacks";
+import { BUCKET_NAME } from "@forge/consts/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
 import { protectedProcedure } from "../trpc";
