@@ -88,13 +88,7 @@ export default function DeleteMemberButton({
           />
         </div>
 
-<<<<<<< HEAD
         <DialogFooter className="flex flex-row justify-between">
-=======
-        <DialogFooter
-          className="flex flex-row justify-between"
-        >
->>>>>>> 930faba (add responsiveness to delete dialogs in admin dash)
           <Button
             variant="outline"
             onClick={() => {
