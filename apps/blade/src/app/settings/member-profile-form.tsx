@@ -182,6 +182,7 @@ export function MemberProfileForm({
       raceOrEthnicity: member?.raceOrEthnicity,
       shirtSize: member?.shirtSize,
       school: member?.school,
+      discordUser: member?.discordUser,
     },
   });
 
