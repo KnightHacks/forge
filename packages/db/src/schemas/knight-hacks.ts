@@ -164,6 +164,8 @@ export const EventAttendee = createTable("event_attendee", (t) => ({
     }),
 }));
 
+export const InsertEventAttendeeSchema = createInsertSchema(EventAttendee);
+
 export const DuesPayment = createTable("dues_payment", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   memberId: t

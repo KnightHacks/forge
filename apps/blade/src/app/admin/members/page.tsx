@@ -6,6 +6,7 @@ import { auth } from "@forge/auth";
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import MemberTable from "./_components/members-table";
+import ScannerPopUp from "./_components/scanner";
 
 export const metadata: Metadata = {
   title: "Blade | Members",
@@ -36,6 +37,9 @@ export default async function Members() {
         </div>
         <div className="rounded-xl pb-8">
           <MemberTable />
+        </div>
+        <div className="flex justify-center">
+          <ScannerPopUp />
         </div>
       </main>
     </HydrateClient>

@@ -1,5 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 import { DUES_PAYMENT } from "@forge/consts/knight-hacks";
 import { and, eq, exists, isNull } from "@forge/db";
@@ -160,4 +161,48 @@ export const memberRouter = {
   getMembers: protectedProcedure.query(async () => {
     return db.query.Member.findMany();
   }),
+
+  eventCheckIn: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        eventId: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const member = await db.query.Member.findFirst({
+        where: (t, { eq }) => eq(t.userId, input.userId),
+      });
+
+      if (!member) {
+        return;
+      }
+
+      const duplicates = await db
+        .select()
+        .from(EventAttendee)
+        .where(
+          and(
+            eq(EventAttendee.memberId, member.id),
+            eq(EventAttendee.eventId, input.eventId),
+          ),
+        );
+
+      if (duplicates.length > 0) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `${member.firstName} ${member.lastName} is already checked in for the event`,
+        });
+      }
+
+      const eventAttendee = {
+        memberId: member.id,
+        eventId: input.eventId,
+      };
+      await db.insert(EventAttendee).values(eventAttendee);
+
+      return {
+        message: `${member.firstName} ${member.lastName} has been checked in for the event`,
+      };
+    }),
 } satisfies TRPCRouterRecord;
