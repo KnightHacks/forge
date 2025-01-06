@@ -56,7 +56,7 @@ export const Member = createTable(
     // Some enum values exceed 63 bytes
     school: t.text({ enum: SCHOOLS }).notNull(),
     // Some enum values exceed 63 bytes
-    levelOfStudy: t.varchar({ length: 255, enum: LEVELS_OF_STUDY }).notNull(),
+    levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
     gender: genderEnum().notNull(),
     raceOrEthnicity: raceOrEthnicityEnum().notNull(),
     shirtSize: shirtSizeEnum().notNull(),
