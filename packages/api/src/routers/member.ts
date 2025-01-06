@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { DUES_PAYMENT } from "@forge/consts/knight-hacks";
-import { and, eq, exists, isNull } from "@forge/db";
+import { and, eq, exists, isNull, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   DuesPayment,
@@ -162,11 +162,12 @@ export const memberRouter = {
     return db.query.Member.findMany();
   }),
 
-  eventCheckIn: protectedProcedure
+  eventCheckIn: adminProcedure
     .input(
       z.object({
         userId: z.string(),
         eventId: z.string(),
+        eventPoints: z.number(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -200,6 +201,14 @@ export const memberRouter = {
         eventId: input.eventId,
       };
       await db.insert(EventAttendee).values(eventAttendee);
+
+      // Increment the points for the member
+      await db
+        .update(Member)
+        .set({
+          points: sql`${Member.points} + ${input.eventPoints}`, // Ensure input.eventPoints is parsed as a number
+        })
+        .where(eq(Member.id, member.id));
 
       return {
         message: `${member.firstName} ${member.lastName} has been checked in for the event`,

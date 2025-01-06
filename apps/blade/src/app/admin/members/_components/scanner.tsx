@@ -44,10 +44,12 @@ const ScannerPopUp = () => {
     schema: z.object({
       userId: z.string(),
       eventId: z.string(),
+      eventPoints: z.number(),
     }),
     defaultValues: {
       eventId: "",
       userId: "",
+      eventPoints: 0,
     },
   });
 
@@ -70,7 +72,7 @@ const ScannerPopUp = () => {
         <div className="mt-4">
           <QrReader
             constraints={{ facingMode: "user" }}
-            onResult={async (result, error) => {
+            onResult={async (result) => {
               if (result) {
                 const userId = result.getText().substring(5);
                 form.setValue("userId", userId);
@@ -81,8 +83,6 @@ const ScannerPopUp = () => {
                 } else {
                   toast.error("Please select an event first!");
                 }
-              } else if (error) {
-                console.error(error);
               }
             }}
           />
@@ -90,7 +90,6 @@ const ScannerPopUp = () => {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit((data) => {
-              console.log("Data: ", data);
               checkIn.mutate(data);
             })}
             className="space-y-4"
@@ -106,6 +105,17 @@ const ScannerPopUp = () => {
                       {...field}
                       className="w-full rounded border p-2"
                       defaultValue=""
+                      onChange={(e) => {
+                        const selectedEventId = e.target.value;
+                        field.onChange(e);
+                        const selectedEvent = events?.find(
+                          (event) => event.id === selectedEventId,
+                        );
+                        form.setValue(
+                          "eventPoints",
+                          selectedEvent?.points ?? 0,
+                        );
+                      }}
                     >
                       <option value="" disabled>
                         Select an event
