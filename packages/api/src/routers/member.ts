@@ -3,7 +3,15 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { DUES_PAYMENT } from "@forge/consts/knight-hacks";
-import { and, eq, exists, isNull, sql } from "@forge/db";
+import {
+  and,
+  count,
+  eq,
+  exists,
+  getTableColumns,
+  isNull,
+  sql,
+} from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   DuesPayment,
@@ -145,17 +153,20 @@ export const memberRouter = {
   }),
 
   getEvents: protectedProcedure.query(async ({ ctx }) => {
-    const eventsToMember = await db
-      .select()
+    const events = await db
+      .select({
+        ...getTableColumns(Event),
+        numAttended: count(Member.id),
+      })
       .from(Event)
-      .innerJoin(EventAttendee, eq(EventAttendee.eventId, Event.id))
-      .innerJoin(Member, eq(Member.id, EventAttendee.memberId))
+      .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
+      .leftJoin(Member, eq(EventAttendee.memberId, Member.id))
       .where(
         and(eq(Member.userId, ctx.session.user.id), isNull(Event.hackathonId)),
-      );
+      )
+      .groupBy(Event.id);
 
-    const eventObjects = eventsToMember.map((item) => item.event);
-    return eventObjects;
+    return events;
   }),
 
   getMembers: protectedProcedure.query(async () => {
