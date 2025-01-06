@@ -88,9 +88,7 @@ export default function DeleteMemberButton({
           />
         </div>
 
-        <DialogFooter
-          className="flex flex-row justify-between"
-        >
+        <DialogFooter className="flex flex-row justify-between">
           <Button
             variant="outline"
             onClick={() => {
