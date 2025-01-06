@@ -144,6 +144,9 @@ export const Event = createTable("event", (t) => ({
 
 export type InsertEvent = typeof Event.$inferInsert;
 export type SelectEvent = typeof Event.$inferSelect;
+export type ReturnEvent = InsertEvent & {
+  numAttended: number;
+};
 
 export const InsertEventSchema = createInsertSchema(Event);
 

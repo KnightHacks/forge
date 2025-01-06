@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 
-import type { InsertEvent } from "@forge/db/schemas/knight-hacks";
+import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import {
@@ -22,7 +22,7 @@ import { CreateEventButton } from "./create-event";
 import { DeleteEventButton } from "./delete-event";
 import { UpdateEventButton } from "./update-event";
 
-type Event = InsertEvent;
+type Event = ReturnEvent;
 type SortField = keyof Event;
 type SortOrder = "asc" | "desc" | null;
 

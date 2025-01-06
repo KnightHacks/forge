@@ -14,9 +14,13 @@ import {
   PROD_GOOGLE_CALENDAR_ID,
   PROD_KNIGHTHACKS_GUILD_ID,
 } from "@forge/consts/knight-hacks";
-import { desc, eq } from "@forge/db";
+import { count, desc, eq, getTableColumns } from "@forge/db";
 import { db } from "@forge/db/client";
-import { Event, InsertEventSchema } from "@forge/db/schemas/knight-hacks";
+import {
+  Event,
+  EventAttendee,
+  InsertEventSchema,
+} from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
 import { adminProcedure } from "../trpc";
@@ -33,9 +37,17 @@ const KNIGHTHACKS_GUILD_ID =
 
 export const eventRouter = {
   getEvents: adminProcedure.query(async () => {
-    return db.query.Event.findMany({
-      orderBy: [desc(Event.start_datetime)],
-    });
+    const events = await db
+      .select({
+        ...getTableColumns(Event),
+        numAttended: count(EventAttendee.id),
+      })
+      .from(Event)
+      .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
+      .groupBy(Event.id)
+      .orderBy(desc(Event.start_datetime));
+    console.log("Events: ", events);
+    return events;
   }),
   createEvent: adminProcedure
     .input(
