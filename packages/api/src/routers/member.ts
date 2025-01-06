@@ -1,12 +1,11 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import QRCode from "qrcode";
 import { z } from "zod";
 
 import {
   BUCKET_NAME,
   DUES_PAYMENT,
-  KNIGHTHACKS_S3_BUCKET_REGION,
+  KNIGHTHACKS_S3_BUCKET_REGION
 } from "@forge/consts/knight-hacks";
 import {
   and,
@@ -25,6 +24,7 @@ import {
   InsertMemberSchema,
   Member,
 } from "@forge/db/schemas/knight-hacks";
+
 
 import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure } from "../trpc";
