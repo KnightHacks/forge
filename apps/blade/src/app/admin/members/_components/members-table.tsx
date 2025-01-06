@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ArrowUp, ArrowDown, Clock } from "lucide-react";
-import { Button } from "@forge/ui/button";
+import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
+import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import {
@@ -34,14 +34,14 @@ function parseDate(datePart: string, timePart: string): Date {
     .split(/[:.]/)
     .map(Number);
 
-    date.setUTCHours(
-      hours ?? 0,
-      minutes ?? 0,
-      seconds ?? 0,
-      Math.floor((microseconds ?? 0) / 1000)
-    );
+  date.setUTCHours(
+    hours ?? 0,
+    minutes ?? 0,
+    seconds ?? 0,
+    Math.floor((microseconds ?? 0) / 1000),
+  );
 
-    return date;
+  return date;
 }
 
 export default function MemberTable() {
@@ -66,11 +66,11 @@ export default function MemberTable() {
   );
 
   const sortedMembers = [...filteredMembers].sort((a, b) => {
-      const dateA = parseDate(a.dateCreated, a.timeCreated);
-      const dateB = parseDate(b.dateCreated, b.timeCreated);
+    const dateA = parseDate(a.dateCreated, a.timeCreated);
+    const dateB = parseDate(b.dateCreated, b.timeCreated);
 
-      if (dateA < dateB) return timeSortOrder === "asc" ? -1 : 1;
-      if (dateA > dateB) return timeSortOrder === "asc" ? 1 : -1;
+    if (dateA < dateB) return timeSortOrder === "asc" ? -1 : 1;
+    if (dateA > dateB) return timeSortOrder === "asc" ? 1 : -1;
 
     if (!sortField || sortOrder === null) return 0;
     if (a[sortField] == null || b[sortField] == null) return 0;
@@ -80,19 +80,14 @@ export default function MemberTable() {
   });
 
   const toggleTimeSort = () => {
-    setTimeSortOrder((prev) => (
-      prev === "asc" ? "desc" : "asc"
-    ))
-  }
+    setTimeSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
 
   return (
     <div>
       <div className="flex items-center justify-between gap-2 border-b pb-4">
         <div>
-          <Button
-           className="flex flex-row gap-1"
-           onClick={toggleTimeSort}
-          >
+          <Button className="flex flex-row gap-1" onClick={toggleTimeSort}>
             <Clock />
             {timeSortOrder === "asc" && <ArrowUp />}
             {timeSortOrder === "desc" && <ArrowDown />}

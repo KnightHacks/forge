@@ -9,11 +9,7 @@ export async function ResumeButton() {
 
   if (resume.url == null) {
     return (
-      <Button 
-        size="sm"
-        className="w-full" 
-        disabled
-      >
+      <Button size="sm" className="w-full" disabled>
         Resume
       </Button>
     );
@@ -21,10 +17,7 @@ export async function ResumeButton() {
 
   return (
     <Link href={resume.url} className="w-full">
-      <Button 
-        size="sm"
-        className="w-full"
-      >
+      <Button size="sm" className="w-full">
         Resume
       </Button>
     </Link>

@@ -31,8 +31,7 @@ import { adminProcedure, protectedProcedure } from "../trpc";
 
 export const memberRouter = {
   createMember: protectedProcedure
-    .input(InsertMemberSchema.omit(
-      { userId: true, age: true }))
+    .input(InsertMemberSchema.omit({ userId: true, age: true }))
     .mutation(async ({ input, ctx }) => {
       try {
         const userId = ctx.session.user.id;
