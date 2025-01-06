@@ -58,12 +58,6 @@ export function EventShowcase({
     return colors[tag];
   };
 
-  events.sort(
-    (a, b) =>
-      new Date(a.start_datetime).getTime() -
-      new Date(b.start_datetime).getTime(),
-  );
-
   const mostRecent = events[0];
 
   if (!mostRecent) {

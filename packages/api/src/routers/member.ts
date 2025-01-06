@@ -11,6 +11,7 @@ import {
 import {
   and,
   count,
+  desc,
   eq,
   exists,
   getTableColumns,
@@ -215,6 +216,7 @@ export const memberRouter = {
       .where(
         and(eq(Member.userId, ctx.session.user.id), isNull(Event.hackathonId)),
       )
+      .orderBy(desc(Event.start_datetime))
       .groupBy(Event.id);
 
     return events;
