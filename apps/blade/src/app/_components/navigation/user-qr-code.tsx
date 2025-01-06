@@ -21,6 +21,7 @@ export function QRCodePopup() {
       return (
         <div className="flex h-[40vw] w-[40vw] items-center justify-center">
           <Image
+            unoptimized
             src={userQR.qrCodeUrl}
             alt="QR Code"
             width={400}
