@@ -71,7 +71,7 @@ const ScannerPopUp = () => {
         </DialogHeader>
         <div className="mt-4">
           <QrReader
-            constraints={{ facingMode: "user" }}
+            constraints={{ facingMode: "environment" }}
             onResult={async (result) => {
               if (result) {
                 const userId = result.getText().substring(5);
