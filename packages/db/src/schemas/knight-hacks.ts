@@ -20,8 +20,6 @@ const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 export const shirtSizeEnum = pgEnum("shirt_size", SHIRT_SIZES);
 export const eventTagEnum = pgEnum("event_tag", EVENT_TAGS);
 export const genderEnum = pgEnum("gender", GENDERS);
-export const levelOfStudyEnum = pgEnum("level_of_study", LEVELS_OF_STUDY);
-export const schoolEnum = pgEnum("school", SCHOOLS);
 export const raceOrEthnicityEnum = pgEnum(
   "race_or_ethnicity",
   RACES_OR_ETHNICITIES,
