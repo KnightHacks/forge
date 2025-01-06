@@ -15,6 +15,7 @@ import { UserDropdown } from "./navigation/user-dropdown";
 
 export async function Auth() {
   const session = await auth();
+  const isAdmin = await api.auth.getAdminStatus();
 
   let member;
 
@@ -37,7 +38,7 @@ export async function Auth() {
             <NavigationMenu className="h-[35px] w-[35px]">
               <NavigationMenuList>
                 <NavigationMenuItem className="flex items-center justify-center">
-                  <UserDropdown memberExists={!!member} />
+                  <UserDropdown memberExists={!!member} isAdmin={isAdmin} />
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
