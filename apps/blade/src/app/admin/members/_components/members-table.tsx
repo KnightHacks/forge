@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, Clock, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Input } from "@forge/ui/input";
@@ -21,15 +21,19 @@ import ClearDuesButton from "./clear-dues";
 import DeleteMemberButton from "./delete-member";
 import DuesToggleButton from "./dues-toggle";
 import UpdateMemberButton from "./update-member";
+import { Button } from "@forge/ui/button";
 
 type Member = InsertMember;
 type SortField = keyof Member;
 type SortOrder = "asc" | "desc" | null;
+type TimeOrder = "asc" | "desc" | null;
 
 export default function MemberTable() {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>(null);
+  const [shownMembers, setShownMembers] = useState<Member[]>([]);
 
   const { data: members } = api.member.getMembers.useQuery();
   const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
@@ -54,9 +58,26 @@ export default function MemberTable() {
     return 0;
   });
 
+  const toggleTimeSort = () => {
+    setTimeSortOrder((prev) => (
+      prev === "asc" ? "desc" : prev === "desc" ? null : "asc"
+    ));
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between gap-2 border-b pb-4">
+        <div>
+          <Button
+           className="flex flex-row gap-1"
+           onClick={toggleTimeSort}
+          >
+            <Clock />
+            {!timeSortOrder && <ArrowUpDown />}
+            {timeSortOrder === "asc" && <ArrowUp />}
+            {timeSortOrder === "desc" && <ArrowDown />}
+          </Button>
+        </div>
         <div className="relative w-full">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
