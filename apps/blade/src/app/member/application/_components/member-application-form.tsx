@@ -407,7 +407,7 @@ export function MemberApplicationForm() {
             <FormItem className="flex flex-col">
               <FormLabel>Graduation Date</FormLabel>
               <FormControl>
-                <Input type="month" {...field} />
+                <Input type="date" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
