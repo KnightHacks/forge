@@ -7,13 +7,25 @@ export default function ClubLogo() {
   const { theme } = useTheme();
   console.log(theme);
 
-  const imageUrl =
-    theme === "dark" ? "/white-kh-logo.svg" : "/black-kh-logo.svg";
+  let imageURL;
+  if (theme == "dark") {
+    imageURL = "/white-kh-logo.svg";
+  } else if (theme == "light") {
+    imageURL = "/black-kh-logo.svg";
+  } else {
+    // Get system theme
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+      .matches
+      ? "dark"
+      : "light";
+    imageURL =
+      systemTheme === "dark" ? "/white-kh-logo.svg" : "/black-kh-logo.svg";
+  }
 
   return (
     <>
       <Image
-        src={imageUrl}
+        src={imageURL}
         alt="The logo of Knight Hacks"
         width={0}
         height={0}
