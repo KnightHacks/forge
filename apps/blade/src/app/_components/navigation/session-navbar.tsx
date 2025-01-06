@@ -13,6 +13,7 @@ import { UserDropdown } from "./user-dropdown";
 
 export async function SessionNavbar() {
   const member = await api.member.getMember();
+  const isAdmin = await api.auth.getAdminStatus();
 
   return (
     <div className="flex items-center justify-between px-3 py-3 sm:px-10 sm:py-5">
@@ -25,7 +26,7 @@ export async function SessionNavbar() {
       <NavigationMenu className="h-[35px] w-[35px]">
         <NavigationMenuList>
           <NavigationMenuItem className="flex items-center justify-center">
-            <UserDropdown memberExists={!!member} />
+            <UserDropdown memberExists={!!member} isAdmin={isAdmin} />
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>

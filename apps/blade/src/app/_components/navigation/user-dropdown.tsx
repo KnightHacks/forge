@@ -17,7 +17,13 @@ import {
 
 import { api } from "~/trpc/react";
 
-export function UserDropdown({ memberExists }: { memberExists: boolean }) {
+export function UserDropdown({
+  memberExists,
+  isAdmin,
+}: {
+  memberExists: boolean;
+  isAdmin: boolean;
+}) {
   const utils = api.useUtils();
   const router = useRouter();
   const { data } = api.user.getUserAvatar.useQuery();
@@ -39,6 +45,30 @@ export function UserDropdown({ memberExists }: { memberExists: boolean }) {
         <DropdownMenuLabel>{data ? data.name : "My Account"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          {isAdmin && (
+            <>
+              <DropdownMenuItem onSelect={() => router.push("/admin")}>
+                <span>Admin</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          {isAdmin && (
+            <>
+              <DropdownMenuItem onSelect={() => router.push("/admin/members")}>
+                <span>Members</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          {isAdmin && (
+            <>
+              <DropdownMenuItem onSelect={() => router.push("/admin/events")}>
+                <span>Events</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           <DropdownMenuItem onSelect={() => router.push("/dashboard")}>
             <span>Dashboard</span>
           </DropdownMenuItem>
