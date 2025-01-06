@@ -32,8 +32,6 @@ export default async function MemberDashboard({
     api.duesPayment.validatePaidDues(),
   ]);
 
-  console.log("events: ", events);
-
   if (events.status === "rejected" || dues.status === "rejected") {
     return (
       <div className="mt-10 flex flex-col items-center justify-center gap-y-6 font-bold">
