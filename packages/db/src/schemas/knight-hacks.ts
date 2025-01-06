@@ -64,7 +64,8 @@ export const Member = createTable(
     dob: t.date().notNull(),
     gradDate: t.date().notNull(),
     points: t.integer().notNull().default(0),
-    timeCreated: t.date().defaultNow().notNull(),
+    dateCreated: t.date().notNull().defaultNow(),
+    timeCreated: t.time().notNull().defaultNow(),
   }),
   (t) => ({
     uniqueEmail: unique().on(t.email),

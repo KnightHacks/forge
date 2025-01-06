@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ArrowUp, ArrowDown, ArrowUpDown, Clock } from "lucide-react";
+import { Search, ArrowUp, ArrowDown, Clock } from "lucide-react";
 import { Button } from "@forge/ui/button";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
@@ -26,14 +26,29 @@ import UpdateMemberButton from "./update-member";
 type Member = InsertMember;
 type SortField = keyof Member;
 type SortOrder = "asc" | "desc" | null;
-type TimeOrder = "asc" | "desc" | null;
+type TimeOrder = "asc" | "desc";
+
+function parseDate(datePart: string, timePart: string): Date {
+  const date = new Date(datePart);
+  const [hours, minutes, seconds, microseconds] = timePart
+    .split(/[:.]/)
+    .map(Number);
+
+    date.setUTCHours(
+      hours ?? 0,
+      minutes ?? 0,
+      seconds ?? 0,
+      Math.floor((microseconds ?? 0) / 1000)
+    );
+
+    return date;
+}
 
 export default function MemberTable() {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>(null);
-  const [shownMembers, setShownMembers] = useState<Member[]>([]);
+  const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
 
   const { data: members } = api.member.getMembers.useQuery();
   const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
@@ -51,6 +66,12 @@ export default function MemberTable() {
   );
 
   const sortedMembers = [...filteredMembers].sort((a, b) => {
+      const dateA = parseDate(a.dateCreated, a.timeCreated);
+      const dateB = parseDate(b.dateCreated, b.timeCreated);
+
+      if (dateA < dateB) return timeSortOrder === "asc" ? -1 : 1;
+      if (dateA > dateB) return timeSortOrder === "asc" ? 1 : -1;
+
     if (!sortField || sortOrder === null) return 0;
     if (a[sortField] == null || b[sortField] == null) return 0;
     if (a[sortField] < b[sortField]) return sortOrder === "asc" ? -1 : 1;
@@ -59,9 +80,9 @@ export default function MemberTable() {
   });
 
   const toggleTimeSort = () => {
-    setTimeSortOrder((prev) => 
-      prev === "asc" ? "desc" : prev === "desc" ? null : "asc"
-    )
+    setTimeSortOrder((prev) => (
+      prev === "asc" ? "desc" : "asc"
+    ))
   }
 
   return (
@@ -73,7 +94,6 @@ export default function MemberTable() {
            onClick={toggleTimeSort}
           >
             <Clock />
-            {!timeSortOrder && <ArrowUpDown />}
             {timeSortOrder === "asc" && <ArrowUp />}
             {timeSortOrder === "desc" && <ArrowDown />}
           </Button>
@@ -115,7 +135,14 @@ export default function MemberTable() {
               />
             </TableHead>
             <TableHead className="text-center">
-              <Label>Discord</Label>
+              <SortButton
+                field="discordUser"
+                label="Discord"
+                sortField={sortField}
+                sortOrder={sortOrder}
+                setSortField={setSortField}
+                setSortOrder={setSortOrder}
+              />
             </TableHead>
             <TableHead>
               <SortButton
