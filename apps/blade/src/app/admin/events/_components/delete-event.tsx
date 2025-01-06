@@ -94,7 +94,9 @@ export function DeleteEventButton({ event }: DeleteEventButtonProps) {
           />
         </div>
 
-        <DialogFooter>
+        <DialogFooter
+          className="flex flex-row justify-between"
+        >
           <Button
             variant="outline"
             onClick={() => {

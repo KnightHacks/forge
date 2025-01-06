@@ -97,7 +97,9 @@ export default function FinalDuesDialogButton({
             />
           </div>
         </DialogDescription>
-        <DialogFooter>
+        <DialogFooter
+          className="flex flex-row justify-between"
+        >
           <Button
             variant="outline"
             onClick={() => {

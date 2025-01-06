@@ -98,7 +98,10 @@ export default function UpdateMemberButton({
   });
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={setIsOpen}
+    >
       <DialogTrigger asChild>
         <Button variant="outline">
           <Pencil className="h-4 w-4" />
