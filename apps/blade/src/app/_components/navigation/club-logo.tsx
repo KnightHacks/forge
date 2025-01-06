@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useTheme } from "next-themes";
 
 export default function ClubLogo() {
@@ -22,7 +23,7 @@ export default function ClubLogo() {
   }
 
   return (
-    <>
+    <Link href={"/"} className="flex items-center gap-2">
       <Image
         src={imageURL}
         alt="The logo of Knight Hacks"
@@ -31,6 +32,6 @@ export default function ClubLogo() {
         style={{ width: "35px", height: "35px" }}
       />
       <div>Blade</div>
-    </>
+    </Link>
   );
 }
