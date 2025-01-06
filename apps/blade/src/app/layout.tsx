@@ -25,6 +25,7 @@ export const metadata: Metadata = {
     description: "The centralized platform for all things Knight Hacks",
     url: "https://blade.knighthacks.org",
     siteName: "Blade",
+    images: [{ url: "https://blade.knighthacks.org/banner.png" }],
   },
 };
 

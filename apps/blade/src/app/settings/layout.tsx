@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ArrowLeftIcon, cn } from "@forge/ui";
@@ -10,6 +11,11 @@ import { SidebarNav } from "./_components/sidebar-nav";
 interface SettingsLayoutProps {
   children: React.ReactNode;
 }
+
+export const metadata: Metadata = {
+  title: "Blade | Settings",
+  description: "Manage your Knight Hacks account settings.",
+};
 
 export default function SettingsLayout({ children }: SettingsLayoutProps) {
   return (

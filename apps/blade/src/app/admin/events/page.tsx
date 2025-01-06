@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
@@ -5,6 +6,11 @@ import { auth } from "@forge/auth";
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import { EventsTable } from "./_components/events-table";
+
+export const metadata: Metadata = {
+  title: "Blade | Events",
+  description: "Manage Knight Hacks events.",
+};
 
 export default async function Events() {
   // Check if the user is authenticated
