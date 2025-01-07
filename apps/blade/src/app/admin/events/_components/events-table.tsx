@@ -67,7 +67,7 @@ export function EventsTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>
+            <TableHead className="text-center">
               <SortButton
                 field="name"
                 label="Name"
@@ -77,7 +77,7 @@ export function EventsTable() {
                 setSortOrder={setSortOrder}
               />
             </TableHead>
-            <TableHead>
+            <TableHead className="text-center">
               <SortButton
                 field="tag"
                 label="Tag"
@@ -87,7 +87,7 @@ export function EventsTable() {
                 setSortOrder={setSortOrder}
               />
             </TableHead>
-            <TableHead>
+            <TableHead className="text-center">
               <SortButton
                 field="start_datetime"
                 label="Date"
@@ -129,10 +129,18 @@ export function EventsTable() {
         <TableBody>
           {sortedEvents.map((event) => (
             <TableRow key={event.id}>
-              <TableCell className="font-medium">{event.name}</TableCell>
-              <TableCell>{event.tag}</TableCell>
+              <TableCell 
+                className="font-medium text-center"
+              >
+                {event.name}
+              </TableCell>
+              <TableCell
+                className="text-center"
+              >
+                {event.tag}
+              </TableCell>
 
-              <TableCell>
+              <TableCell className="text-center">
                 {typeof event.start_datetime === "string"
                   ? new Date(
                       event.start_datetime as string,

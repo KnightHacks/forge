@@ -596,7 +596,15 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
               />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="flex flex-row justify-between">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsOpen(false);
+                }}
+                >
+                  Cancel
+              </Button>
               <Button type="submit">
                 {isLoading ? (
                   <Loader2 className="animate-spin" />
