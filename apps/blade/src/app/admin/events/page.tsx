@@ -6,6 +6,7 @@ import { auth } from "@forge/auth";
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import { EventsTable } from "./_components/events-table";
+import ScannerPopUp from "../members/_components/scanner";
 
 export const metadata: Metadata = {
   title: "Blade | Events",
@@ -29,9 +30,14 @@ export default async function Events() {
     <HydrateClient>
       <main className="container h-screen">
         <div className="flex flex-col items-center justify-center gap-4">
-          <h1 className="py-12 text-center text-3xl font-extrabold tracking-tight sm:text-5xl">
-            Events Dashboard
-          </h1>
+          <div className="py-12">
+            <h1 className="text-center pb-4 text-3xl font-extrabold tracking-tight sm:text-5xl">
+              Events Dashboard
+            </h1>
+            <div className="flex justify-center mb-2">
+              <ScannerPopUp />
+            </div>
+          </div>
         </div>
         <div className="rounded-xl pb-8">
           <EventsTable />

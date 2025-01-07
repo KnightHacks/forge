@@ -31,7 +31,7 @@ const ScannerPopUp = () => {
   const checkIn = api.member.eventCheckIn.useMutation({
     onSuccess(opts) {
       if (!opts) {
-        toast.success("User Checked in Successfully!");
+        toast.success("Member Checked in Successfully!");
         return;
       }
       toast.success(opts.message);
@@ -62,12 +62,12 @@ const ScannerPopUp = () => {
     <Dialog open={open}>
       <DialogTrigger asChild>
         <Button onClick={() => setOpen(true)} size="lg" className="gap-2">
-          <span>Check In User</span>
+          <span>Check In Member</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="h-auto w-full [&>button:last-child]:hidden">
         <DialogHeader>
-          <DialogTitle>Check In User</DialogTitle>
+          <DialogTitle>Check In Member</DialogTitle>
         </DialogHeader>
         <div className="mt-4">
           <QrReader
