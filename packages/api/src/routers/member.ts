@@ -147,7 +147,7 @@ export const memberRouter = {
         .where(eq(Member.userId, ctx.session.user.id));
     }),
 
-  deleteMember: adminProcedure
+  deleteMember: protectedProcedure
     .input(InsertMemberSchema.pick({ id: true }))
     .mutation(async ({ input }) => {
       if (!input.id) {

@@ -141,7 +141,7 @@ export function MemberProfileForm({
         .string()
         .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")
         .regex(
-          /^https:\/\/github\.com\/.+/,
+          /^https:\/\/w?w?w?\.?github\.com\/.+/,
           "Invalid URL: Enter a valid GitHub link",
         )
         .url({ message: "Invalid URL" })
