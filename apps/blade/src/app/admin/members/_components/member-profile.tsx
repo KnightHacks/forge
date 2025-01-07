@@ -98,7 +98,7 @@ export default function MemberProfileButton({ member }: { member: InsertMember }
                                 >
                                     Phone Number:
                                 </b> {member.phoneNumber !== "" ?
-                                        member.phoneNumber : "Phone number not provided"}
+                                        member.phoneNumber : "Phone number not provided."}
                             </p>
                         </div>
                     </div>
