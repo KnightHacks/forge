@@ -27,11 +27,9 @@ import {
 } from "@forge/ui/form";
 import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
-import SecondUpdateFormButton from "./second-update";
 
 import { api } from "~/trpc/react";
-
-
+import SecondUpdateFormButton from "./second-update";
 
 export default function UpdateMemberButton({
   member,
@@ -251,16 +249,16 @@ export default function UpdateMemberButton({
                 >
                   Cancel
                 </Button>
-                  <SecondUpdateFormButton 
-                    member={member} 
-                    isLoad={isLoading} 
-                    setFirstOpen={setIsOpen}
-                  />
+                <SecondUpdateFormButton
+                  member={member}
+                  isLoad={isLoading}
+                  setFirstOpen={setIsOpen}
+                />
               </DialogFooter>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
-  </>
+    </>
   );
 }

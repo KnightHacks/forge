@@ -81,7 +81,7 @@ export const memberRouter = {
       const hasBirthdayPassed =
         birthDate.getMonth() < today.getMonth() ||
         (birthDate.getMonth() === today.getMonth() &&
-        birthDate.getDate() <= today.getDate());
+          birthDate.getDate() <= today.getDate());
       const newAge = hasBirthdayPassed
         ? today.getFullYear() - birthDate.getFullYear()
         : today.getFullYear() - birthDate.getFullYear() - 1;
@@ -129,9 +129,9 @@ export const memberRouter = {
       const today = new Date();
       const birthDate = new Date(dob);
       const hasBirthdayPassed =
-      birthDate.getMonth() < today.getMonth() ||
-      (birthDate.getMonth() === today.getMonth() &&
-      birthDate.getDate() <= today.getDate());
+        birthDate.getMonth() < today.getMonth() ||
+        (birthDate.getMonth() === today.getMonth() &&
+          birthDate.getDate() <= today.getDate());
       const newAge = hasBirthdayPassed
         ? today.getFullYear() - birthDate.getFullYear()
         : today.getFullYear() - birthDate.getFullYear() - 1;

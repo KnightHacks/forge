@@ -129,16 +129,10 @@ export function EventsTable() {
         <TableBody>
           {sortedEvents.map((event) => (
             <TableRow key={event.id}>
-              <TableCell 
-                className="font-medium text-center"
-              >
+              <TableCell className="text-center font-medium">
                 {event.name}
               </TableCell>
-              <TableCell
-                className="text-center"
-              >
-                {event.tag}
-              </TableCell>
+              <TableCell className="text-center">{event.tag}</TableCell>
 
               <TableCell className="text-center">
                 {typeof event.start_datetime === "string"

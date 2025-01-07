@@ -602,8 +602,8 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                 onClick={() => {
                   setIsOpen(false);
                 }}
-                >
-                  Cancel
+              >
+                Cancel
               </Button>
               <Button type="submit">
                 {isLoading ? (

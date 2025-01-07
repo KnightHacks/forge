@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
 
-import type { Member, InsertMember } from "@forge/db/schemas/knight-hacks";
+import type { InsertMember, Member } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
@@ -21,8 +21,8 @@ import SortButton from "../../_components/SortButton";
 import ClearDuesButton from "./clear-dues";
 import DeleteMemberButton from "./delete-member";
 import DuesToggleButton from "./dues-toggle";
-import UpdateMemberButton from "./update-member";
 import MemberProfileButton from "./member-profile";
+import UpdateMemberButton from "./update-member";
 
 type Member = InsertMember;
 type SortField = keyof Member;

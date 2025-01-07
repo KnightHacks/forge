@@ -1,21 +1,36 @@
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { z } from "zod";
 
+import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import {
-    GENDERS,
-    LEVELS_OF_STUDY,
-    RACES_OR_ETHNICITIES,
-    SCHOOLS,
-    SHIRT_SIZES,
+  GENDERS,
+  LEVELS_OF_STUDY,
+  RACES_OR_ETHNICITIES,
+  SCHOOLS,
+  SHIRT_SIZES,
 } from "@forge/consts/knight-hacks";
+import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
+import { Button } from "@forge/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@forge/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useForm,
+} from "@forge/ui/form";
+import { Input } from "@forge/ui/input";
 import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import {
   Select,
@@ -23,102 +38,90 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@forge/ui/select"
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-    useForm,
-} from "@forge/ui/form";
-import { Button } from "@forge/ui/button";
+} from "@forge/ui/select";
 import { toast } from "@forge/ui/toast";
-import { Input } from "@forge/ui/input";
-import { Loader2 } from "lucide-react";
-import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
 
-import { z } from "zod";
 import { api } from "~/trpc/react";
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 
-export default function SecondUpdateFormButton({ member, isLoad, setFirstOpen }: 
-    { member: InsertMember, isLoad: boolean, setFirstOpen: (value: boolean) => void }) {
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [isOpen, setIsOpen] = useState<boolean>(false);
-  
-    const utils = api.useUtils();
+export default function SecondUpdateFormButton({
+  member,
+  isLoad,
+  setFirstOpen,
+}: {
+  member: InsertMember;
+  isLoad: boolean;
+  setFirstOpen: (value: boolean) => void;
+}) {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
-    const UpdateMemberSchema = InsertMemberSchema.omit({
-        userId: true,
-        age: true,
-        resumeUrl: true,
-        discordUser: true,
-      }).extend({
-        firstName: z.string().min(1, "Required"),
-        lastName: z.string().min(1, "Required"),
-        email: z.string().email("Invalid email").min(1, "Required"),
-        points: z.string().transform((points) => Number(points)),
-        phoneNumber: z
-          .string()
-          .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number"),
-      });
-  
-    const secondForm = useForm({
-      schema: UpdateMemberSchema,
-      defaultValues: {
-        firstName: member.firstName || "",
-        lastName: member.lastName || "",
-        email: member.email || "",
-        points: (member.points ?? 0).toString(),
-        phoneNumber: member.phoneNumber || "",
-        dob: member.dob || "",
-        gender: member.gender,
-        school: member.school,
-        gradDate: member.gradDate,
-        levelOfStudy: member.levelOfStudy,
-        raceOrEthnicity: member.raceOrEthnicity,
-        shirtSize: member.shirtSize,
-        githubProfileUrl: member.githubProfileUrl ?? "",
-        linkedinProfileUrl: member.linkedinProfileUrl ?? "",
-        websiteUrl: member.websiteUrl ?? "",
-      },
-    });
-  
-    const updateMember = api.member.updateMember.useMutation({
-      onSuccess() {
-        toast.success("Member updated successfully!");
-        setIsOpen(false);
-        setFirstOpen(false);
-      },
-      onError(opts) {
-        toast.error(opts.message);
-      },
-      async onSettled() {
-        await utils.member.invalidate();
-        setIsLoading(false);
-      },
-    });
-  
-    return (
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+  const utils = api.useUtils();
+
+  const UpdateMemberSchema = InsertMemberSchema.omit({
+    userId: true,
+    age: true,
+    resumeUrl: true,
+    discordUser: true,
+  }).extend({
+    firstName: z.string().min(1, "Required"),
+    lastName: z.string().min(1, "Required"),
+    email: z.string().email("Invalid email").min(1, "Required"),
+    points: z.string().transform((points) => Number(points)),
+    phoneNumber: z
+      .string()
+      .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number"),
+  });
+
+  const secondForm = useForm({
+    schema: UpdateMemberSchema,
+    defaultValues: {
+      firstName: member.firstName || "",
+      lastName: member.lastName || "",
+      email: member.email || "",
+      points: (member.points ?? 0).toString(),
+      phoneNumber: member.phoneNumber || "",
+      dob: member.dob || "",
+      gender: member.gender,
+      school: member.school,
+      gradDate: member.gradDate,
+      levelOfStudy: member.levelOfStudy,
+      raceOrEthnicity: member.raceOrEthnicity,
+      shirtSize: member.shirtSize,
+      githubProfileUrl: member.githubProfileUrl ?? "",
+      linkedinProfileUrl: member.linkedinProfileUrl ?? "",
+      websiteUrl: member.websiteUrl ?? "",
+    },
+  });
+
+  const updateMember = api.member.updateMember.useMutation({
+    onSuccess() {
+      toast.success("Member updated successfully!");
+      setIsOpen(false);
+      setFirstOpen(false);
+    },
+    onError(opts) {
+      toast.error(opts.message);
+    },
+    async onSettled() {
+      await utils.member.invalidate();
+      setIsLoading(false);
+    },
+  });
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button type="submit">
-            {isLoad ? (
-                <Loader2 className="animate-spin" />
-            ) : (
-                "Next"
-            )}
+          {isLoad ? <Loader2 className="animate-spin" /> : "Next"}
         </Button>
       </DialogTrigger>
-  
+
       <DialogContent>
         <Form {...secondForm}>
           <form
             onSubmit={secondForm.handleSubmit((values) => {
               setIsLoading(true);
-  
+
               updateMember.mutate({
                 id: member.id,
                 firstName: member.firstName,
@@ -145,7 +148,7 @@ export default function SecondUpdateFormButton({ member, isLoad, setFirstOpen }:
                 Update member details. Confirm your changes when you're done.
               </DialogDescription>
             </DialogHeader>
-  
+
             <div className="m-4 flex flex-col gap-6">
               <FormField
                 control={secondForm.control}
@@ -179,9 +182,9 @@ export default function SecondUpdateFormButton({ member, isLoad, setFirstOpen }:
                     </div>
                   </FormItem>
                 )}
-                />
-  
-                <FormField
+              />
+
+              <FormField
                 control={secondForm.control}
                 name="school"
                 render={({ field }) => (
@@ -205,9 +208,9 @@ export default function SecondUpdateFormButton({ member, isLoad, setFirstOpen }:
                     </div>
                   </FormItem>
                 )}
-                />
-  
-                <FormField
+              />
+
+              <FormField
                 control={secondForm.control}
                 name="gradDate"
                 render={({ field }) => (
@@ -223,9 +226,9 @@ export default function SecondUpdateFormButton({ member, isLoad, setFirstOpen }:
                     </div>
                   </FormItem>
                 )}
-                />
-  
-                <FormField
+              />
+
+              <FormField
                 control={secondForm.control}
                 name="levelOfStudy"
                 render={({ field }) => (
@@ -257,9 +260,9 @@ export default function SecondUpdateFormButton({ member, isLoad, setFirstOpen }:
                     </div>
                   </FormItem>
                 )}
-                />
-  
-                <FormField
+              />
+
+              <FormField
                 control={secondForm.control}
                 name="raceOrEthnicity"
                 render={({ field }) => (
@@ -295,9 +298,9 @@ export default function SecondUpdateFormButton({ member, isLoad, setFirstOpen }:
                     </div>
                   </FormItem>
                 )}
-                />
-  
-                <FormField
+              />
+
+              <FormField
                 control={secondForm.control}
                 name="shirtSize"
                 render={({ field }) => (
@@ -329,30 +332,29 @@ export default function SecondUpdateFormButton({ member, isLoad, setFirstOpen }:
                     </div>
                   </FormItem>
                 )}
-                />
+              />
             </div>
             <DialogFooter className="flex flex-row justify-between">
-                <Button
-                    variant="outline"
-                    onClick={() => {
-                        setIsOpen(false);
-                        setFirstOpen(false);
-                    }}
-                >
-                    Cancel
-                </Button>
-                <Button type="submit">
-                  {isLoading ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    "Update Member"
-                  )}
-                </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsOpen(false);
+                  setFirstOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">
+                {isLoading ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  "Update Member"
+                )}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
-    );
-  }
-  
+  );
+}
