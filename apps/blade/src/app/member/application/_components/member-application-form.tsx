@@ -67,13 +67,12 @@ export function MemberApplicationForm() {
   });
 
   const form = useForm({
-    schema: InsertMemberSchema.extend({
+    schema: InsertMemberSchema.omit({ discordUser: true }).extend({
       // userId will be derived from the user's session on the server
       userId: z.undefined(),
       firstName: z.string().min(1, "Required"),
       lastName: z.string().min(1, "Required"),
       // Age will be derived from dob on the server
-      discordUser: z.string().min(1, "Required"),
       age: z.undefined(),
       email: z.string().email("Invalid email").min(1, "Required"),
       phoneNumber: z
@@ -251,19 +250,6 @@ export function MemberApplicationForm() {
                 <Input placeholder="Dragonson" {...field} />
               </FormControl>
               <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="discordUser"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Discord Username</FormLabel>
-              <FormControl>
-                <Input placeholder="T.K" {...field} />
-              </FormControl>
             </FormItem>
           )}
         />

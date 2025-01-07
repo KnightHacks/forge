@@ -32,7 +32,13 @@ import { adminProcedure, protectedProcedure } from "../trpc";
 
 export const memberRouter = {
   createMember: protectedProcedure
-    .input(InsertMemberSchema.omit({ userId: true, age: true }))
+    .input(
+      InsertMemberSchema.omit({
+        userId: true,
+        age: true,
+        discordUser: true,
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
       try {
         const userId = ctx.session.user.id;
@@ -81,13 +87,20 @@ export const memberRouter = {
 
       await db.insert(Member).values({
         ...input,
+        discordUser: ctx.session.user.name ?? "",
         userId: ctx.session.user.id,
         age: newAge,
       });
     }),
 
   updateMember: adminProcedure
-    .input(InsertMemberSchema.omit({ userId: true, age: true }))
+    .input(
+      InsertMemberSchema.omit({
+        userId: true,
+        age: true,
+        discordUser: true,
+      }),
+    )
     .mutation(async ({ input }) => {
       if (!input.id) {
         throw new TRPCError({
@@ -151,7 +164,6 @@ export const memberRouter = {
       .where(eq(Member.userId, ctx.session.user.id));
 
     if (member.length === 0) return null; // Can't return undefined in trpc
-
     return member[member.length - 1];
   }),
 

@@ -84,7 +84,7 @@ export function MemberProfileForm({
       phoneNumber: z
         .string()
         // validates phone number with/without dashes
-        .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$/, "Invalid phone number"),
+        .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number"),
       // Read from date input as string, convert and validate as date, then transform to ISO string
       resumeUpload: z
         .instanceof(FileList)
