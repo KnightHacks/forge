@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
 
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
+import type { Member, InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
@@ -22,6 +22,7 @@ import ClearDuesButton from "./clear-dues";
 import DeleteMemberButton from "./delete-member";
 import DuesToggleButton from "./dues-toggle";
 import UpdateMemberButton from "./update-member";
+import MemberProfileButton from "./member-profile";
 
 type Member = InsertMember;
 type SortField = keyof Member;
@@ -156,6 +157,9 @@ export default function MemberTable() {
               <Label>Dues Toggle</Label>
             </TableHead>
             <TableHead className="text-center">
+              <Label>Member Profile</Label>
+            </TableHead>
+            <TableHead className="text-center">
               <Label>Update</Label>
             </TableHead>
             <TableHead className="text-center">
@@ -184,6 +188,9 @@ export default function MemberTable() {
                   member={member}
                   status={duesMap.has(member.id)}
                 />
+              </TableCell>
+              <TableCell className="text-center">
+                <MemberProfileButton member={member} />
               </TableCell>
               <TableCell className="text-center">
                 <UpdateMemberButton member={member} />
