@@ -45,7 +45,7 @@ export default function MemberProfileButton({
         </Button>
       </DialogTrigger>
 
-      <DialogContent>
+      <DialogContent className="overflow-y-scroll max-h-screen max-w-screen">
         <DialogHeader className="flex flex-col">
           <DialogTitle className="text-center text-3xl">
             {member.firstName} {member.lastName}
