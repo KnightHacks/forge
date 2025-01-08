@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Loader2 } from "lucide-react";
+import { Loader2, Pencil } from "lucide-react";
 import { z } from "zod";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
-import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
-import { Button } from "@forge/ui/button";
 import {
   GENDERS,
   LEVELS_OF_STUDY,
@@ -14,6 +12,8 @@ import {
   SCHOOLS,
   SHIRT_SIZES,
 } from "@forge/consts/knight-hacks";
+import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
+import { Button } from "@forge/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,8 @@ import {
   FormMessage,
   useForm,
 } from "@forge/ui/form";
+import { Input } from "@forge/ui/input";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import {
   Select,
   SelectContent,
@@ -39,8 +41,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
-import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
-import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
@@ -114,7 +114,7 @@ export default function UpdateMemberButton({
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="overflow-y-auto max-h-screen">
+        <DialogContent className="max-h-screen overflow-y-auto">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit((values) => {
@@ -145,12 +145,11 @@ export default function UpdateMemberButton({
               <DialogHeader className="pb-4">
                 <DialogTitle>Update Member</DialogTitle>
                 <DialogDescription className="whitespace-break-spaces">
-                  Update member details.
-                  Confirm your changes when you're done.
+                  Update member details. Confirm your changes when you're done.
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="mt-6 mb-6 flex flex-col gap-6">
+              <div className="mb-6 mt-6 flex flex-col gap-6">
                 <FormField
                   control={form.control}
                   name="firstName"
@@ -258,189 +257,189 @@ export default function UpdateMemberButton({
                     </FormItem>
                   )}
                 />
-                              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex flex-row gap-4">
-                      <FormLabel className="my-auto whitespace-nowrap">
-                        Gender
-                      </FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select gender" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {GENDERS.map((gender) => (
-                              <SelectItem key={gender} value={gender}>
-                                {gender}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage className="my-auto whitespace-nowrap" />
-                    </div>
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex flex-row gap-4">
+                        <FormLabel className="my-auto whitespace-nowrap">
+                          Gender
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select gender" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {GENDERS.map((gender) => (
+                                <SelectItem key={gender} value={gender}>
+                                  {gender}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage className="my-auto whitespace-nowrap" />
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="school"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex flex-row gap-4">
-                      <FormLabel className="my-auto whitespace-nowrap">
-                        School
-                      </FormLabel>
-                      <FormControl>
-                        <ResponsiveComboBox
-                          items={SCHOOLS}
-                          renderItem={(school) => <div>{school}</div>}
-                          getItemValue={(school) => school}
-                          getItemLabel={(school) => school}
-                          onItemSelect={(school) => field.onChange(school)}
-                          buttonPlaceholder={member.school}
-                          inputPlaceholder="Search for school"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="school"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex flex-row gap-4">
+                        <FormLabel className="my-auto whitespace-nowrap">
+                          School
+                        </FormLabel>
+                        <FormControl>
+                          <ResponsiveComboBox
+                            items={SCHOOLS}
+                            renderItem={(school) => <div>{school}</div>}
+                            getItemValue={(school) => school}
+                            getItemLabel={(school) => school}
+                            onItemSelect={(school) => field.onChange(school)}
+                            buttonPlaceholder={member.school}
+                            inputPlaceholder="Search for school"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="gradDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex flex-row gap-4">
-                      <FormLabel className="my-auto whitespace-nowrap">
-                        Grad Date
-                      </FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage className="my-auto whitespace-nowrap" />
-                    </div>
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="gradDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex flex-row gap-4">
+                        <FormLabel className="my-auto whitespace-nowrap">
+                          Grad Date
+                        </FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage className="my-auto whitespace-nowrap" />
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="levelOfStudy"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex flex-row gap-4">
-                      <FormLabel className="my-auto whitespace-nowrap">
-                        Level Of Study
-                      </FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="max-w-[300px] overflow-hidden truncate">
-                              <SelectValue placeholder="Select level of study" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {LEVELS_OF_STUDY.map((level) => (
-                              <SelectItem key={level} value={level}>
-                                {level}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage className="my-auto whitespace-nowrap" />
-                    </div>
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="levelOfStudy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex flex-row gap-4">
+                        <FormLabel className="my-auto whitespace-nowrap">
+                          Level Of Study
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="max-w-[300px] overflow-hidden truncate">
+                                <SelectValue placeholder="Select level of study" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {LEVELS_OF_STUDY.map((level) => (
+                                <SelectItem key={level} value={level}>
+                                  {level}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage className="my-auto whitespace-nowrap" />
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="raceOrEthnicity"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex flex-row gap-4">
-                      <FormLabel className="my-auto whitespace-nowrap">
-                        Race/Ethnicity
-                      </FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="max-w-[300px] overflow-hidden truncate">
-                              <SelectValue placeholder="Select race/ethnicity" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {RACES_OR_ETHNICITIES.map((value) => (
-                              <SelectItem
-                                key={value}
-                                value={value}
-                                className="max-w-[300px] overflow-hidden truncate"
-                              >
-                                {value}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage className="my-auto whitespace-nowrap" />
-                    </div>
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="raceOrEthnicity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex flex-row gap-4">
+                        <FormLabel className="my-auto whitespace-nowrap">
+                          Race/Ethnicity
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="max-w-[300px] overflow-hidden truncate">
+                                <SelectValue placeholder="Select race/ethnicity" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {RACES_OR_ETHNICITIES.map((value) => (
+                                <SelectItem
+                                  key={value}
+                                  value={value}
+                                  className="max-w-[300px] overflow-hidden truncate"
+                                >
+                                  {value}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage className="my-auto whitespace-nowrap" />
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="shirtSize"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex flex-row gap-4">
-                      <FormLabel className="my-auto whitespace-nowrap">
-                        Shirt Size
-                      </FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select shirt size" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {SHIRT_SIZES.map((shirt_size) => (
-                              <SelectItem key={shirt_size} value={shirt_size}>
-                                {shirt_size}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage className="whitespace-nowrap" />
-                    </div>
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="shirtSize"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex flex-row gap-4">
+                        <FormLabel className="my-auto whitespace-nowrap">
+                          Shirt Size
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select shirt size" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {SHIRT_SIZES.map((shirt_size) => (
+                                <SelectItem key={shirt_size} value={shirt_size}>
+                                  {shirt_size}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage className="whitespace-nowrap" />
+                      </div>
+                    </FormItem>
+                  )}
+                />
               </div>
               <DialogFooter className="flex flex-row justify-between">
                 <Button
@@ -453,12 +452,12 @@ export default function UpdateMemberButton({
                   Cancel
                 </Button>
                 <Button type="submit">
-                {isLoading ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  "Update Member"
-                )}
-              </Button>
+                  {isLoading ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    "Update Member"
+                  )}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
