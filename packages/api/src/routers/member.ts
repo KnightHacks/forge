@@ -169,14 +169,6 @@ export const memberRouter = {
     return member[member.length - 1];
   }),
 
-  updateMemberDiscord: protectedProcedure.query(async ({ ctx }) => {
-    await db
-      .update(Member)
-      .set({
-        discordUser: ctx.session.user.name ?? "",
-      })
-      .where(eq(Member.userId, ctx.session.user.id));
-  }),
 
   getDuesPayingMembers: protectedProcedure.query(async () => {
     const duesPayingMembers = await db
