@@ -169,7 +169,6 @@ export const memberRouter = {
     return member[member.length - 1];
   }),
 
-
   getDuesPayingMembers: protectedProcedure.query(async () => {
     const duesPayingMembers = await db
       .select()
