@@ -92,7 +92,7 @@ export function MemberApplicationForm() {
         .string()
         .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")
         .regex(
-          /^https:\/\/w?w?w?\.?github\.com\/.+/,
+          /^https:\/\/(www\.)?github\.com\/.+/,
           "Invalid URL: Enter a valid GitHub link",
         )
         .url({ message: "Invalid URL" })
@@ -102,8 +102,12 @@ export function MemberApplicationForm() {
         .string()
         .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")
         .regex(
-          /^https:\/\/w?w?w?\.?linkedin\.com\/.+/,
+          /^https:\/\/(www\.)?linkedin\.com\/.+/,
           "Invalid URL: Enter a valid LinkedIn link",
+        )
+        .regex(
+          /^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?$/,
+          "Invalid URL: Do not use a mobile URL/excessively long URL",
         )
         .url({ message: "Invalid URL" })
         .optional()
@@ -215,7 +219,20 @@ export function MemberApplicationForm() {
             }
 
             createMember.mutate({
-              ...values,
+              firstName: values.firstName,
+              lastName: values.lastName,
+              email: values.email,
+              dob: values.dob,
+              phoneNumber: values.phoneNumber,
+              school: values.school,
+              levelOfStudy: values.levelOfStudy,
+              gender: values.gender ?? "Prefer not to answer",
+              gradDate: values.gradDate,
+              raceOrEthnicity: values.raceOrEthnicity ?? "Prefer not to answer",
+              shirtSize: values.shirtSize,
+              githubProfileUrl: values.githubProfileUrl,
+              linkedinProfileUrl: values.linkedinProfileUrl,
+              websiteUrl: values.websiteUrl,
               resumeUrl, // Include uploaded resume URL
             });
           } catch (error) {
@@ -272,7 +289,7 @@ export function MemberApplicationForm() {
           name="phoneNumber"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone Number</FormLabel>
+              <FormLabel>Phone Number<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
               <FormControl>
                 <Input type="tel" placeholder="123-456-7890" {...field} />
               </FormControl>
@@ -298,7 +315,7 @@ export function MemberApplicationForm() {
           name="gender"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Gender</FormLabel>
+              <FormLabel>Gender<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
               <FormControl>
                 <Select
                   onValueChange={field.onChange}
@@ -327,7 +344,7 @@ export function MemberApplicationForm() {
           name="raceOrEthnicity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Race or Ethnicity</FormLabel>
+              <FormLabel>Race or Ethnicity<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
               <FormControl>
                 <Select
                   onValueChange={field.onChange}
@@ -448,7 +465,7 @@ export function MemberApplicationForm() {
           name="githubProfileUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>GitHub Profile</FormLabel>
+              <FormLabel>GitHub Profile<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
               <FormControl>
                 <Input
                   placeholder="https://github.com/knighthacks"
@@ -464,7 +481,7 @@ export function MemberApplicationForm() {
           name="linkedinProfileUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Linkedin Profile</FormLabel>
+              <FormLabel>Linkedin Profile<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
               <FormControl>
                 <Input
                   placeholder="https://www.linkedin.com/company/knight-hacks"
@@ -480,7 +497,7 @@ export function MemberApplicationForm() {
           name="websiteUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Personal Website</FormLabel>
+              <FormLabel>Personal Website<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
               <FormControl>
                 <Input placeholder="https://knighthacks.org" {...field} />
               </FormControl>
@@ -493,7 +510,7 @@ export function MemberApplicationForm() {
           name="resumeUpload"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Resume</FormLabel>
+              <FormLabel>Resume<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
               <FormControl>
                 <Input
                   type="file"

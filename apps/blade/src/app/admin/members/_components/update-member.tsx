@@ -6,9 +6,7 @@ import { z } from "zod";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import {
-  GENDERS,
   LEVELS_OF_STUDY,
-  RACES_OR_ETHNICITIES,
   SCHOOLS,
   SHIRT_SIZES,
 } from "@forge/consts/knight-hacks";
@@ -257,39 +255,6 @@ export default function UpdateMemberButton({
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex flex-row gap-4">
-                        <FormLabel className="my-auto whitespace-nowrap">
-                          Gender
-                        </FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select gender" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {GENDERS.map((gender) => (
-                                <SelectItem key={gender} value={gender}>
-                                  {gender}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage className="my-auto whitespace-nowrap" />
-                      </div>
-                    </FormItem>
-                  )}
-                />
 
                 <FormField
                   control={form.control}
@@ -358,44 +323,6 @@ export default function UpdateMemberButton({
                               {LEVELS_OF_STUDY.map((level) => (
                                 <SelectItem key={level} value={level}>
                                   {level}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage className="my-auto whitespace-nowrap" />
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="raceOrEthnicity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex flex-row gap-4">
-                        <FormLabel className="my-auto whitespace-nowrap">
-                          Race/Ethnicity
-                        </FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="max-w-[300px] overflow-hidden truncate">
-                                <SelectValue placeholder="Select race/ethnicity" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {RACES_OR_ETHNICITIES.map((value) => (
-                                <SelectItem
-                                  key={value}
-                                  value={value}
-                                  className="max-w-[300px] overflow-hidden truncate"
-                                >
-                                  {value}
                                 </SelectItem>
                               ))}
                             </SelectContent>

@@ -28,6 +28,7 @@ type Member = InsertMember;
 type SortField = keyof Member;
 type SortOrder = "asc" | "desc" | null;
 type TimeOrder = "asc" | "desc";
+type ActiveOrder = "time" | "field";
 
 function parseDate(datePart: string, timePart: string): Date {
   const date = new Date(datePart);
@@ -50,6 +51,7 @@ export default function MemberTable() {
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
+  const [activeSort, setActiveSort] = useState<ActiveOrder>("field");
 
   const { data: members } = api.member.getMembers.useQuery();
   const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
@@ -70,19 +72,27 @@ export default function MemberTable() {
     const dateA = parseDate(a.dateCreated, a.timeCreated);
     const dateB = parseDate(b.dateCreated, b.timeCreated);
 
-    if (dateA < dateB) return timeSortOrder === "asc" ? -1 : 1;
-    if (dateA > dateB) return timeSortOrder === "asc" ? 1 : -1;
+    if (activeSort == "time") {
+      if (dateA < dateB) return timeSortOrder === "asc" ? -1 : 1;
+      if (dateA > dateB) return timeSortOrder === "asc" ? 1 : -1;
+    } else {
+      if (!sortField || sortOrder === null) return 0;
+      if (a[sortField] == null || b[sortField] == null) return 0;
+      if (a[sortField] < b[sortField]) return sortOrder === "asc" ? -1 : 1;
+      if (a[sortField] > b[sortField]) return sortOrder === "asc" ? 1 : -1;
+    }
 
-    if (!sortField || sortOrder === null) return 0;
-    if (a[sortField] == null || b[sortField] == null) return 0;
-    if (a[sortField] < b[sortField]) return sortOrder === "asc" ? -1 : 1;
-    if (a[sortField] > b[sortField]) return sortOrder === "asc" ? 1 : -1;
     return 0;
   });
 
   const toggleTimeSort = () => {
     setTimeSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    setActiveSort("time");
   };
+
+  const toggleFieldSort = () => {
+    setActiveSort("field");
+  }
 
   return (
     <div>
@@ -118,6 +128,7 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
+                setActiveSort={toggleFieldSort}
               />
             </TableHead>
             <TableHead className="text-center">
@@ -128,6 +139,7 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
+                setActiveSort={toggleFieldSort}
               />
             </TableHead>
             <TableHead className="text-center">
@@ -138,6 +150,7 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
+                setActiveSort={toggleFieldSort}
               />
             </TableHead>
             <TableHead>
@@ -148,6 +161,7 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
+                setActiveSort={toggleFieldSort}
               />
             </TableHead>
             <TableHead className="text-center">
