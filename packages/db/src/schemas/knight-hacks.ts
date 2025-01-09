@@ -55,7 +55,9 @@ export const Member = createTable(
     school: t.text({ enum: SCHOOLS }).notNull(),
     levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
     gender: genderEnum().default("Prefer not to answer").notNull(),
-    raceOrEthnicity: raceOrEthnicityEnum().default("Prefer not to answer").notNull(),
+    raceOrEthnicity: raceOrEthnicityEnum()
+      .default("Prefer not to answer")
+      .notNull(),
     shirtSize: shirtSizeEnum().notNull(),
     githubProfileUrl: t.varchar({ length: 255 }),
     linkedinProfileUrl: t.varchar({ length: 255 }),

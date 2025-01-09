@@ -92,7 +92,7 @@ export default function MemberTable() {
 
   const toggleFieldSort = () => {
     setActiveSort("field");
-  }
+  };
 
   return (
     <div>

@@ -289,7 +289,13 @@ export function MemberApplicationForm() {
           name="phoneNumber"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone Number<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
+              <FormLabel>
+                Phone Number
+                <span className="text-gray-400">
+                  {" "}
+                  &mdash; <i>Optional</i>
+                </span>
+              </FormLabel>
               <FormControl>
                 <Input type="tel" placeholder="123-456-7890" {...field} />
               </FormControl>
@@ -315,7 +321,13 @@ export function MemberApplicationForm() {
           name="gender"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Gender<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
+              <FormLabel>
+                Gender
+                <span className="text-gray-400">
+                  {" "}
+                  &mdash; <i>Optional</i>
+                </span>
+              </FormLabel>
               <FormControl>
                 <Select
                   onValueChange={field.onChange}
@@ -344,7 +356,13 @@ export function MemberApplicationForm() {
           name="raceOrEthnicity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Race or Ethnicity<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
+              <FormLabel>
+                Race or Ethnicity
+                <span className="text-gray-400">
+                  {" "}
+                  &mdash; <i>Optional</i>
+                </span>
+              </FormLabel>
               <FormControl>
                 <Select
                   onValueChange={field.onChange}
@@ -465,7 +483,13 @@ export function MemberApplicationForm() {
           name="githubProfileUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>GitHub Profile<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
+              <FormLabel>
+                GitHub Profile
+                <span className="text-gray-400">
+                  {" "}
+                  &mdash; <i>Optional</i>
+                </span>
+              </FormLabel>
               <FormControl>
                 <Input
                   placeholder="https://github.com/knighthacks"
@@ -481,7 +505,13 @@ export function MemberApplicationForm() {
           name="linkedinProfileUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Linkedin Profile<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
+              <FormLabel>
+                Linkedin Profile
+                <span className="text-gray-400">
+                  {" "}
+                  &mdash; <i>Optional</i>
+                </span>
+              </FormLabel>
               <FormControl>
                 <Input
                   placeholder="https://www.linkedin.com/company/knight-hacks"
@@ -497,7 +527,13 @@ export function MemberApplicationForm() {
           name="websiteUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Personal Website<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
+              <FormLabel>
+                Personal Website
+                <span className="text-gray-400">
+                  {" "}
+                  &mdash; <i>Optional</i>
+                </span>
+              </FormLabel>
               <FormControl>
                 <Input placeholder="https://knighthacks.org" {...field} />
               </FormControl>
@@ -510,7 +546,13 @@ export function MemberApplicationForm() {
           name="resumeUpload"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Resume<span className="text-gray-400"> &mdash; <i>Optional</i></span></FormLabel>
+              <FormLabel>
+                Resume
+                <span className="text-gray-400">
+                  {" "}
+                  &mdash; <i>Optional</i>
+                </span>
+              </FormLabel>
               <FormControl>
                 <Input
                   type="file"

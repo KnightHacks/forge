@@ -13,7 +13,7 @@ interface SortButtonProps<SortFieldType> {
   sortOrder: SortOrder;
   setSortField: (field: SortFieldType | null) => void;
   setSortOrder: (order: SortOrder) => void;
-  setActiveSort: (sort: string) => void;
+  setActiveSort?: (sort: string) => void | null;
 }
 
 export default function SortButton<SortFieldType>({
@@ -48,10 +48,16 @@ export default function SortButton<SortFieldType>({
   }
 
   return (
-    <Button variant="ghost" onClick={() => {
-      toggleSort()
-      setActiveSort("field");
-    }} className="h-8 px-2 lg:px-3">
+    <Button
+      variant="ghost"
+      onClick={() => {
+        toggleSort();
+        if (setActiveSort) {
+          setActiveSort("field");
+        }
+      }}
+      className="h-8 px-2 lg:px-3"
+    >
       {label}
       <Icon className="ml-2 h-4 w-4" />
     </Button>
