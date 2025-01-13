@@ -32,10 +32,15 @@ export const discord = new REST({ version: "10" }).setToken(
 export const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
 
 export const isDiscordAdmin = async (user: Session["user"]) => {
-  const guildMember = (await discord.get(
-    Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
-  )) as APIGuildMember;
-  return guildMember.roles.includes(DISCORD_ADMIN_ROLE_ID);
+  try {
+    const guildMember = (await discord.get(
+      Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
+    )) as APIGuildMember;
+    return guildMember.roles.includes(DISCORD_ADMIN_ROLE_ID);
+  } catch (err) {
+    console.error("Error: ", err);
+    return false;
+  }
 };
 
 const GOOGLE_PRIVATE_KEY = Buffer.from(env.GOOGLE_PRIVATE_KEY_B64, "base64")
