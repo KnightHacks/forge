@@ -42,7 +42,7 @@ export const authConfig = {
         return {
           discordUserId: profile.id,
           name: profile.username,
-          email: profile.email ?? "",
+          email: profile.email,
           image: profile.avatar,
           id: profile.id,
         };
