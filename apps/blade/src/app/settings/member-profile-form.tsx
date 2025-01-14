@@ -170,7 +170,7 @@ export function MemberProfileForm({
     defaultValues: {
       firstName: member?.firstName,
       lastName: member?.lastName,
-      email: member?.email,
+      email: member?.email ?? "",
       phoneNumber: member?.phoneNumber ?? "",
       dob: member?.dob,
       gradDate: member?.gradDate,

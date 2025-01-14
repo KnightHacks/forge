@@ -87,7 +87,7 @@ export default function UpdateMemberButton({
     defaultValues: {
       firstName: member.firstName || "",
       lastName: member.lastName || "",
-      email: member.email ?? "",
+      email: member.email || "",
       points: (member.points ?? 0).toString(),
       phoneNumber: member.phoneNumber ?? "",
       dob: member.dob || "",
