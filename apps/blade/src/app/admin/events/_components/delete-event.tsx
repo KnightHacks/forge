@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 
+import type { EVENT_TAGS } from "@forge/consts/knight-hacks";
 import { USE_CAUTION } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
@@ -25,6 +26,7 @@ interface DeleteEventButtonProps {
     discordId: string;
     googleId: string;
     name: string;
+    tag: (typeof EVENT_TAGS)[number];
   };
 }
 
@@ -58,6 +60,8 @@ export function DeleteEventButton({ event }: DeleteEventButtonProps) {
       id: event.id,
       discordId: event.discordId,
       googleId: event.googleId,
+      name: event.name,
+      tag: event.tag,
     });
   };
 

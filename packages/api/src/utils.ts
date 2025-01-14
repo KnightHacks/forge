@@ -8,9 +8,11 @@ import type { Session } from "@forge/auth";
 import {
   DEV_DISCORD_ADMIN_ROLE_ID,
   DEV_KNIGHTHACKS_GUILD_ID,
+  DEV_KNIGHTHACKS_LOG_CHANNEL,
   GOOGLE_PERSONIFY_EMAIL,
   PROD_DISCORD_ADMIN_ROLE_ID,
   PROD_KNIGHTHACKS_GUILD_ID,
+  PROD_KNIGHTHACKS_LOG_CHANNEL,
 } from "@forge/consts/knight-hacks";
 
 import { env } from "./env";
@@ -59,3 +61,40 @@ export const calendar = google.calendar({
   version: "v3",
   auth: auth,
 });
+
+const KNIGHTHACKS_LOG_CHANNEL =
+  env.NODE_ENV === "production"
+    ? (PROD_KNIGHTHACKS_LOG_CHANNEL as string)
+    : (DEV_KNIGHTHACKS_LOG_CHANNEL as string);
+
+export async function log({
+  title,
+  message,
+  color,
+  userId,
+}: {
+  title: string;
+  message: string;
+  color: "tk_blue" | "blade_purple" | "uhoh_red" | "success_green";
+  userId: string;
+}) {
+  await discord.post(Routes.channelMessages(KNIGHTHACKS_LOG_CHANNEL), {
+    body: {
+      embeds: [
+        {
+          title: title,
+          description: message + `\n\nUser: <@${userId}>`.toString(),
+          color: {
+            tk_blue: 0x1a73e8,
+            blade_purple: 0xcca4f4,
+            uhoh_red: 0xff0000,
+            success_green: 0x00ff00,
+          }[color],
+          footer: {
+            text: new Date().toLocaleString(),
+          },
+        },
+      ],
+    },
+  });
+}

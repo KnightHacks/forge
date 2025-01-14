@@ -10,7 +10,7 @@ import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
 import { protectedProcedure } from "../trpc";
-import { stripe } from "../utils";
+import { log, stripe } from "../utils";
 
 export const duesPaymentRouter = {
   createCheckout: protectedProcedure.mutation(async ({ ctx }) => {
@@ -76,9 +76,16 @@ export const duesPaymentRouter = {
 
   orderSuccess: protectedProcedure
     .input(z.string())
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
       const session = await stripe.checkout.sessions.retrieve(input);
+
+      await log({
+        message: `A member has successfully paid their dues.`,
+        title: "Dues Paid",
+        color: "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
 
       return {
         id: session.id,

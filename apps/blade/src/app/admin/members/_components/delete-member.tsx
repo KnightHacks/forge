@@ -50,6 +50,8 @@ export default function DeleteMemberButton({
     setIsLoading(true);
     deleteMember.mutate({
       id: member.id,
+      firstName: member.firstName,
+      lastName: member.lastName,
     });
   };
 

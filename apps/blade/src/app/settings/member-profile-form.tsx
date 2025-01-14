@@ -574,7 +574,11 @@ export function MemberProfileForm({
         <p className="mb-4 text-sm text-red-700/75">
           Avoid this if you're not sure what you're doing.
         </p>
-        <DeleteMemberButton memberId={member.id} />
+        <DeleteMemberButton
+          memberId={member.id}
+          firstName={member.firstName}
+          lastName={member.lastName}
+        />
       </div>
     </>
   );

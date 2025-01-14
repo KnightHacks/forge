@@ -20,7 +20,15 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
-export default function DeleteMemberButton({ memberId }: { memberId: string }) {
+export default function DeleteMemberButton({
+  memberId,
+  firstName,
+  lastName,
+}: {
+  memberId: string;
+  firstName: string;
+  lastName: string;
+}) {
   const router = useRouter();
   const [confirmationText, setConfirmationText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +37,7 @@ export default function DeleteMemberButton({ memberId }: { memberId: string }) {
   // Our TRPC mutation for deleting the event
   const deleteMember = api.member.deleteMember.useMutation({
     onSuccess() {
-      toast.success("Member form successfully!");
+      toast.success("Member successfully deleted.");
       setIsOpen(false);
       router.push("/");
     },
@@ -45,6 +53,8 @@ export default function DeleteMemberButton({ memberId }: { memberId: string }) {
     setIsLoading(true);
     deleteMember.mutate({
       id: memberId,
+      firstName: firstName,
+      lastName: lastName,
     });
   };
   return (

@@ -13,7 +13,6 @@ export default function ClubLogo() {
   } else if (theme == "light") {
     imageURL = "/black-kh-logo.svg";
   } else {
-    // Get system theme
     const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
       .matches
       ? "dark"
