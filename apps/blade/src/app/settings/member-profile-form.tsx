@@ -171,7 +171,7 @@ export function MemberProfileForm({
       firstName: member?.firstName,
       lastName: member?.lastName,
       email: member?.email,
-      phoneNumber: member?.phoneNumber,
+      phoneNumber: member?.phoneNumber ?? "",
       dob: member?.dob,
       gradDate: member?.gradDate,
       githubProfileUrl: member?.githubProfileUrl ?? "",
