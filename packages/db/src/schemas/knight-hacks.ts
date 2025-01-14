@@ -50,7 +50,7 @@ export const Member = createTable(
     lastName: t.varchar({ length: 255 }).notNull(),
     discordUser: t.varchar({ length: 255 }).notNull(),
     age: t.integer().notNull(),
-    email: t.varchar({ length: 255 }).notNull(),
+    email: t.varchar({ length: 255 }),
     phoneNumber: t.varchar({ length: 255 }),
     school: t.text({ enum: SCHOOLS }).notNull(),
     levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
