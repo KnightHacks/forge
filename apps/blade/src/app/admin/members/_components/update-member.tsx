@@ -79,9 +79,7 @@ export default function UpdateMemberButton({
     points: z.string().transform((points) => Number(points)),
     phoneNumber: z
       .string()
-      .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number")
-      .transform((val) => (val === "" ? null : val))
-      .nullable(),
+      .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number"),
   });
 
   const form = useForm({
