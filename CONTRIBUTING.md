@@ -21,7 +21,11 @@ If you are not a Knight Hacks dev team member, you can still contribute to Forge
 
 ### Database
 
-To create a postgres database locally with docker, you can run the `./start-database.sh` script. You will then need to push the schema to the database by running `pnpm db:push`.
+Install Docker Desktop if you don't already have it. 
+
+To create a Postgres database locally with docker, you can run `docker compose up`. You will then need to push the schema to the database by running `pnpm db:push`.
+
+To stop the Postgres container, run `docker compose stop`. To completely reset your database, run `docker compose down --volumes`.
 
 If you'd like to preview the contents of the database, you can run `pnpm db:studio`. This will run Drizzle Studio on [`local.drizzle.studio`](http://local.drizzle.studio), a GUI for interacting with your database.
 
