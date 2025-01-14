@@ -9,7 +9,7 @@ export const User = createTable("user", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   discordUserId: t.varchar({ length: 255 }).notNull(),
   name: t.varchar({ length: 255 }),
-  email: t.varchar({ length: 255 }),
+  email: t.varchar({ length: 255 }).notNull(),
   emailVerified: t.timestamp({ mode: "date", withTimezone: true }),
   image: t.varchar({ length: 255 }),
 }));
