@@ -51,7 +51,7 @@ export const Member = createTable(
     discordUser: t.varchar({ length: 255 }).notNull(),
     age: t.integer().notNull(),
     email: t.varchar({ length: 255 }).notNull(),
-    phoneNumber: t.varchar({ length: 255 }),
+    phoneNumber: t.varchar({ length: 255 }).notNull(),
     school: t.text({ enum: SCHOOLS }).notNull(),
     levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
     gender: genderEnum().default("Prefer not to answer").notNull(),

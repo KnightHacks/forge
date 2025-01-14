@@ -78,10 +78,8 @@ export function MemberApplicationForm() {
       phoneNumber: z
         .string()
         // validates phone number with/without dashes
-        .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number")
-        // Read from date input as string, convert and validate as date, then transform to ISO string
-        .transform((val) => (val === "" ? null : val))
-        .nullable(),
+        .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number"),
+      // Read from date input as string, convert and validate as date, then transform to ISO string
       dob: z
         .string()
         .pipe(z.coerce.date())
