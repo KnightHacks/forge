@@ -29,7 +29,7 @@ import {
 
 import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure } from "../trpc";
-import { log } from "../utils";
+import { log, calculateAge } from "../utils";
 
 export const memberRouter = {
   createMember: protectedProcedure
@@ -77,15 +77,7 @@ export const memberRouter = {
         console.error("Error with generating QR code: ", error);
       }
 
-      const today = new Date();
-      const birthDate = new Date(input.dob);
-      const hasBirthdayPassed =
-        birthDate.getMonth() < today.getMonth() ||
-        (birthDate.getMonth() === today.getMonth() &&
-          birthDate.getDate() <= today.getDate());
-      const newAge = hasBirthdayPassed
-        ? today.getFullYear() - birthDate.getFullYear()
-        : today.getFullYear() - birthDate.getFullYear() - 1;
+      const newAge = calculateAge(input.dob);
 
       await db.insert(Member).values({
         ...input,
@@ -134,16 +126,7 @@ export const memberRouter = {
 
       const resume = input.resumeUrl ? input.resumeUrl : member.resumeUrl;
 
-      // Check if the age has been updated
-      const today = new Date();
-      const birthDate = new Date(dob);
-      const hasBirthdayPassed =
-        birthDate.getMonth() < today.getMonth() ||
-        (birthDate.getMonth() === today.getMonth() &&
-          birthDate.getDate() <= today.getDate());
-      const newAge = hasBirthdayPassed
-        ? today.getFullYear() - birthDate.getFullYear()
-        : today.getFullYear() - birthDate.getFullYear() - 1;
+      const newAge = calculateAge(dob);
 
       await db
         .update(Member)

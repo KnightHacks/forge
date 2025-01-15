@@ -56,6 +56,21 @@ export const isDiscordMember = async (user: Session["user"]) => {
   }
 };
 
+export const calculateAge = (dob: string) => {
+  const today = new Date();
+  const birthDate = new Date(dob);
+
+  const hasBirthdayPassed =
+  birthDate.getMonth() < today.getMonth() ||
+  (birthDate.getMonth() === today.getMonth() &&
+    birthDate.getDate() <= today.getDate());
+  const newAge = hasBirthdayPassed
+    ? today.getFullYear() - birthDate.getFullYear()
+    : today.getFullYear() - birthDate.getFullYear() - 1;
+
+  return newAge;
+};
+
 const GOOGLE_PRIVATE_KEY = Buffer.from(env.GOOGLE_PRIVATE_KEY_B64, "base64")
   .toString("utf-8")
   .replace(/\\n/g, "\n");
