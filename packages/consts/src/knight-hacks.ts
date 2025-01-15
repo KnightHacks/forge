@@ -79,6 +79,8 @@ export const DEV_GOOGLE_CALENDAR_ID =
 
 export const GOOGLE_PERSONIFY_EMAIL = "dylan@knighthacks.org";
 
+export const PERMANENT_DISCORD_INVITE = "https://discord.com/invite/Kv5g9vf";
+
 export const USE_CAUTION = true;
 
 export const GENDERS = [

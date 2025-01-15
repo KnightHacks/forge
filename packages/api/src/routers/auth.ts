@@ -3,7 +3,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { invalidateSessionToken } from "@forge/auth";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
-import { isDiscordAdmin } from "../utils";
+import { isDiscordAdmin, isDiscordMember } from "../utils";
 
 export const authRouter = {
   getSession: publicProcedure.query(({ ctx }) => {
@@ -18,6 +18,12 @@ export const authRouter = {
     }
 
     return isDiscordAdmin(ctx.session.user);
+  }),
+  getDiscordMemberStatus: publicProcedure.query(({ ctx }): Promise<boolean> => {
+    if (!ctx.session) {
+      return Promise.resolve(false);
+    }
+    return isDiscordMember(ctx.session.user);
   }),
   signOut: protectedProcedure.mutation(async (opts) => {
     if (!opts.ctx.token) {

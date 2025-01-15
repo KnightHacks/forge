@@ -45,6 +45,18 @@ export const isDiscordAdmin = async (user: Session["user"]) => {
   }
 };
 
+export const isDiscordMember = async (user: Session["user"]) => {
+  try {
+    await discord.get(
+      Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
+    );
+    return true;
+  } catch (err) {
+    console.error("Error: ", err);
+    return false;
+  }
+};
+
 const GOOGLE_PRIVATE_KEY = Buffer.from(env.GOOGLE_PRIVATE_KEY_B64, "base64")
   .toString("utf-8")
   .replace(/\\n/g, "\n");

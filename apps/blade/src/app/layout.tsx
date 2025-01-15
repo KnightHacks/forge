@@ -7,6 +7,8 @@ import { ThemeProvider, ThemeToggle } from "@forge/ui/theme";
 import { Toaster } from "@forge/ui/toast";
 
 import { TRPCReactProvider } from "~/trpc/react";
+import { api } from "~/trpc/server";
+import { TacoTuesday } from "./_components/discord-modal";
 
 import "./globals.css";
 
@@ -36,7 +38,10 @@ export const viewport: Viewport = {
   ],
 };
 
+const isMember = await api.auth.getDiscordMemberStatus();
+
 export default function RootLayout(props: { children: React.ReactNode }) {
+  console.log("Is Member: ", isMember);
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -51,6 +56,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
           <div className="fixed bottom-4 right-4">
             <ThemeToggle />
           </div>
+          <TacoTuesday initialState={!isMember} />
           <Toaster />
         </ThemeProvider>
       </body>
