@@ -32,6 +32,7 @@ import { adminProcedure, protectedProcedure } from "../trpc";
 import { log } from "../utils";
 
 export const memberRouter = {
+  // -------------------- MEMBER DASHBOARD ENDPOINTS --------------------
   createMember: protectedProcedure
     .input(
       InsertMemberSchema.omit({
@@ -228,7 +229,30 @@ export const memberRouter = {
     return member[member.length - 1];
   }),
 
-  getDuesPayingMembers: protectedProcedure.query(async () => {
+  getEvents: protectedProcedure.query(async ({ ctx }) => {
+    const events = await db
+      .select({
+        ...getTableColumns(Event),
+        numAttended: count(Member.id),
+      })
+      .from(Event)
+      .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
+      .leftJoin(Member, eq(EventAttendee.memberId, Member.id))
+      .where(
+        and(eq(Member.userId, ctx.session.user.id), isNull(Event.hackathonId)),
+      )
+      .orderBy(desc(Event.start_datetime))
+      .groupBy(Event.id);
+
+    return events;
+  }),
+
+  // -------------------- ADMIN DASHBOARD ENDPOINTS --------------------
+  getMembers: adminProcedure.query(async () => {
+    return await db.query.Member.findMany();
+  }),
+
+  getDuesPayingMembers: adminProcedure.query(async () => {
     const duesPayingMembers = await db
       .select()
       .from(Member)
@@ -305,28 +329,6 @@ export const memberRouter = {
       color: "uhoh_red",
       userId: ctx.session.user.discordUserId,
     });
-  }),
-
-  getEvents: protectedProcedure.query(async ({ ctx }) => {
-    const events = await db
-      .select({
-        ...getTableColumns(Event),
-        numAttended: count(Member.id),
-      })
-      .from(Event)
-      .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
-      .leftJoin(Member, eq(EventAttendee.memberId, Member.id))
-      .where(
-        and(eq(Member.userId, ctx.session.user.id), isNull(Event.hackathonId)),
-      )
-      .orderBy(desc(Event.start_datetime))
-      .groupBy(Event.id);
-
-    return events;
-  }),
-
-  getMembers: protectedProcedure.query(async () => {
-    return db.query.Member.findMany();
   }),
 
   eventCheckIn: adminProcedure

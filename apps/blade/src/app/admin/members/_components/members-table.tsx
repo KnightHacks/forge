@@ -55,6 +55,7 @@ export default function MemberTable() {
 
   const { data: members } = api.member.getMembers.useQuery();
   const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
+
   const duesMap = new Map();
 
   for (const status of duesPayingStatus ?? []) {
