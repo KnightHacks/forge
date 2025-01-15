@@ -41,7 +41,6 @@ export const viewport: Viewport = {
 const isMember = await api.auth.getDiscordMemberStatus();
 
 export default function RootLayout(props: { children: React.ReactNode }) {
-  console.log("Is Member: ", isMember);
   return (
     <html lang="en" suppressHydrationWarning>
       <body

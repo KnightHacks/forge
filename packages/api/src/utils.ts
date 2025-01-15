@@ -51,8 +51,7 @@ export const isDiscordMember = async (user: Session["user"]) => {
       Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
     );
     return true;
-  } catch (err) {
-    console.error("Error: ", err);
+  } catch {
     return false;
   }
 };

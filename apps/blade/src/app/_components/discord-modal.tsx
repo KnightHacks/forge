@@ -15,7 +15,6 @@ import {
 
 export function TacoTuesday({ initialState }: { initialState: boolean }) {
   const [open, setOpen] = useState<boolean>(initialState);
-  console.log("inv: ", PERMANENT_DISCORD_INVITE);
   return (
     <Dialog open={open}>
       <DialogContent className="sm:max-w-[425px] [&>button:last-child]:hidden">
