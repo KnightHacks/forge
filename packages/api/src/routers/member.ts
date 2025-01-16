@@ -230,20 +230,30 @@ export const memberRouter = {
   }),
 
   getEvents: protectedProcedure.query(async ({ ctx }) => {
+    // Get each event and numAttended
+    const eventsSubQuery = db
+      .select({
+        id: Event.id,
+        numAttended: count(EventAttendee.id).as("numAttended"),
+      })
+      .from(Event)
+      .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
+      .groupBy(Event.id)
+      .as("eventsSubQuery");
+
     const events = await db
       .select({
         ...getTableColumns(Event),
-        numAttended: count(Member.id),
+        numAttended: eventsSubQuery.numAttended,
       })
       .from(Event)
       .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
       .leftJoin(Member, eq(EventAttendee.memberId, Member.id))
+      .leftJoin(eventsSubQuery, eq(eventsSubQuery.id, Event.id)) // Add numAttended to each corresponding event
       .where(
         and(eq(Member.userId, ctx.session.user.id), isNull(Event.hackathonId)),
       )
-      .orderBy(desc(Event.start_datetime))
-      .groupBy(Event.id);
-
+      .orderBy(desc(Event.start_datetime));
     return events;
   }),
 
