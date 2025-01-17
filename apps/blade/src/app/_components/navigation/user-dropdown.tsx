@@ -1,6 +1,8 @@
 "use client";
 
+import React from "react";
 import { useRouter } from "next/navigation";
+import { LayoutDashboard } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@forge/ui/avatar";
@@ -15,7 +17,12 @@ import {
   DropdownMenuTrigger,
 } from "@forge/ui/dropdown-menu";
 
+import type { roleItems } from "./resuseable-user-dropdown";
+import { DASHBOARD_ICON_SIZE, USER_DROPDOWN_ICON_COLOR } from "~/consts";
 import { api } from "~/trpc/react";
+import { adminItems, memberItems } from "./resuseable-user-dropdown";
+
+// If you need to conditionally render some dropdown items, please refer to ./resuseable-user-dropdown
 
 export function UserDropdown({
   memberExists,
@@ -45,42 +52,19 @@ export function UserDropdown({
         <DropdownMenuLabel>{data ? data.name : "My Account"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {isAdmin && (
-            <>
-              <DropdownMenuItem onSelect={() => router.push("/admin")}>
-                <span>Admin</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
-          {isAdmin && (
-            <>
-              <DropdownMenuItem onSelect={() => router.push("/admin/members")}>
-                <span>Members</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
-          {isAdmin && (
-            <>
-              <DropdownMenuItem onSelect={() => router.push("/admin/events")}>
-                <span>Events</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
-          <DropdownMenuItem onSelect={() => router.push("/dashboard")}>
+          {isAdmin && <DropdownMenuRoleItems items={adminItems} />}
+          <DropdownMenuItem
+            className="gap-x-1.5"
+            onSelect={() => router.push("/dashboard")}
+          >
+            <LayoutDashboard
+              color={USER_DROPDOWN_ICON_COLOR}
+              size={DASHBOARD_ICON_SIZE}
+            />
             <span>Dashboard</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          {memberExists && (
-            <>
-              <DropdownMenuItem onSelect={() => router.push("/settings")}>
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
+          {memberExists && <DropdownMenuRoleItems items={memberItems} />}
         </DropdownMenuGroup>
         {/* Made signing out client-side due to dropdown item keyboard accessibility issues */}
         <DropdownMenuItem onSelect={() => signOut()}>
@@ -88,5 +72,24 @@ export function UserDropdown({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function DropdownMenuRoleItems({ items }: { items: roleItems[] }) {
+  const router = useRouter();
+  return (
+    <>
+      {items.map((elem, index) => (
+        <DropdownMenuItem
+          key={index}
+          className="gap-x-1.5"
+          onSelect={() => router.push(elem.route)}
+        >
+          {elem.component}
+          <span>{elem.name}</span>
+        </DropdownMenuItem>
+      ))}
+      <DropdownMenuSeparator />
+    </>
   );
 }
