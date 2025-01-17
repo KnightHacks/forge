@@ -17,12 +17,12 @@ import {
   DropdownMenuTrigger,
 } from "@forge/ui/dropdown-menu";
 
-import type { roleItems } from "./resuseable-user-dropdown";
+import type { roleItems } from "./reuseable-user-dropdown";
 import { DASHBOARD_ICON_SIZE, USER_DROPDOWN_ICON_COLOR } from "~/consts";
 import { api } from "~/trpc/react";
-import { adminItems, memberItems } from "./resuseable-user-dropdown";
+import { adminItems, memberItems } from "./reuseable-user-dropdown";
 
-// If you need to conditionally render some dropdown items, please refer to ./resuseable-user-dropdown
+// If you need to conditionally render some dropdown items, please refer to ./reuseable-user-dropdown
 
 export function UserDropdown({
   memberExists,
