@@ -11,7 +11,12 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-geist-sans)", ...fontFamily.sans],
+        sans: [
+          "Poppins",
+          "Montserrat",
+          "var(--font-geist-sans)",
+          ...fontFamily.sans,
+        ],
         mono: ["var(--font-geist-mono)", ...fontFamily.mono],
       },
     },
