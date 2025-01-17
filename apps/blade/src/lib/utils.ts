@@ -1,5 +1,8 @@
 export const formatDateTime = (date: Date) => {
-  return date.toLocaleString("en-US", {
+  // Create a new Date object 5 hours behind the original
+  const adjustedDate = new Date(date.getTime() - 5 * 60 * 60 * 1000);
+
+  return adjustedDate.toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
