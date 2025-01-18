@@ -1,6 +1,6 @@
 import { CalendarDays, Settings, ShieldCheck, User } from "lucide-react";
 
-import { DASHBOARD_ICON_SIZE, USER_DROPDOWN_ICON_COLOR } from "~/consts";
+import { USER_DROPDOWN_ICON_COLOR, USER_DROPDOWN_ICON_SIZE } from "~/consts";
 
 /*
  * name = the text to be displayed
@@ -21,7 +21,7 @@ export const adminItems: roleItems[] = [
     component: (
       <ShieldCheck
         color={USER_DROPDOWN_ICON_COLOR}
-        size={DASHBOARD_ICON_SIZE}
+        size={USER_DROPDOWN_ICON_SIZE}
       />
     ),
     route: "/admin",
@@ -29,7 +29,7 @@ export const adminItems: roleItems[] = [
   {
     name: "Members",
     component: (
-      <User color={USER_DROPDOWN_ICON_COLOR} size={DASHBOARD_ICON_SIZE} />
+      <User color={USER_DROPDOWN_ICON_COLOR} size={USER_DROPDOWN_ICON_SIZE} />
     ),
     route: "/admin/members",
   },
@@ -38,7 +38,7 @@ export const adminItems: roleItems[] = [
     component: (
       <CalendarDays
         color={USER_DROPDOWN_ICON_COLOR}
-        size={DASHBOARD_ICON_SIZE}
+        size={USER_DROPDOWN_ICON_SIZE}
       />
     ),
     route: "/admin/events",
@@ -49,7 +49,10 @@ export const memberItems: roleItems[] = [
   {
     name: "Settings",
     component: (
-      <Settings color={USER_DROPDOWN_ICON_COLOR} size={DASHBOARD_ICON_SIZE} />
+      <Settings
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
     ),
     route: "/settings",
   },

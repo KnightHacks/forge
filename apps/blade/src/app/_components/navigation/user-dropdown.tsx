@@ -18,7 +18,7 @@ import {
 } from "@forge/ui/dropdown-menu";
 
 import type { roleItems } from "./reuseable-user-dropdown";
-import { DASHBOARD_ICON_SIZE, USER_DROPDOWN_ICON_COLOR } from "~/consts";
+import { USER_DROPDOWN_ICON_COLOR, USER_DROPDOWN_ICON_SIZE } from "~/consts";
 import { api } from "~/trpc/react";
 import { adminItems, memberItems } from "./reuseable-user-dropdown";
 
@@ -59,7 +59,7 @@ export function UserDropdown({
           >
             <LayoutDashboard
               color={USER_DROPDOWN_ICON_COLOR}
-              size={DASHBOARD_ICON_SIZE}
+              size={USER_DROPDOWN_ICON_SIZE}
             />
             <span>Dashboard</span>
           </DropdownMenuItem>
