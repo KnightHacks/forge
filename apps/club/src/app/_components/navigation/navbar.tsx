@@ -1,13 +1,9 @@
 "use client";
 
-import { useState } from "react";
-
-import DesktopNavbar from "./nav/desktop";
-import MobileNavbar from "./nav/mobile-navbar";
+import DesktopNavbar from "./mobile/desktop";
+import MobileNavbar from "./mobile/mobile-navbar";
 
 const Navbar = () => {
-  const [mobileNavbar, setMobileNavbar] = useState(false);
-
   return (
     <>
       <header className="w-full">
@@ -16,10 +12,7 @@ const Navbar = () => {
         </div>
 
         <div className="block md:hidden">
-          <MobileNavbar
-            toggleMobileNavbar={setMobileNavbar}
-            mobileNavbar={mobileNavbar}
-          />
+          <MobileNavbar />
         </div>
       </header>
     </>

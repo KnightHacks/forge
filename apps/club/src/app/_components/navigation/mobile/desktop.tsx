@@ -8,7 +8,7 @@ export default function DesktopNavbar() {
   const pathName = usePathname();
   return (
     <div className="flex justify-center">
-      <div className="mt-5 flex w-5/6 items-center justify-between rounded-full border border-violet-600 bg-[#4E16B2] bg-opacity-90 px-2 py-2 backdrop-blur-lg md:w-3/5">
+      <div className="mt-5 flex w-5/6 items-center justify-between rounded-full border border-violet-600 bg-[#4E16B2]/40 px-2 py-2 backdrop-blur-lg md:w-3/5">
         <a href={"/"}>
           <Image
             src={"/kh-logo.svg"}
