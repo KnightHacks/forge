@@ -7,13 +7,8 @@ const Navbar = () => {
   return (
     <>
       <header className="w-full">
-        <div className="hidden md:block">
-          <DesktopNavbar />
-        </div>
-
-        <div className="block md:hidden">
-          <MobileNavbar />
-        </div>
+        <DesktopNavbar />
+        <MobileNavbar />
       </header>
     </>
   );
