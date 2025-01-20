@@ -1,5 +1,5 @@
 import About from "./_components/landing/about";
-import Hero from "./_components/landing/Hero";
+import Hero from "./_components/landing/hero";
 
 export default function HomePage() {
   return (
