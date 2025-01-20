@@ -28,7 +28,7 @@ export default function About() {
       {
         opacity: 1,
         y: 0,
-        duration: 2,
+        duration: 1,
         ease: "power2.out",
       },
     );
@@ -39,7 +39,7 @@ export default function About() {
       {
         opacity: 1,
         y: 0,
-        duration: 2,
+        duration: 1,
         ease: "power2.out",
       },
       "+=0",
