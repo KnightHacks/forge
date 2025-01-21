@@ -5,6 +5,6 @@
     "jsx": "preserve",
     "rootDir": "."
   },
-  "include": ["src"],
+  "include": ["src", "../../apps/club/src/app/_components/landing/impact-assets/animata"],
   "exclude": ["node_modules"]
 }
