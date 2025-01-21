@@ -31,7 +31,14 @@ export default {
         ],
         mono: ["var(--font-geist-mono)", ...fontFamily.mono],
       },
+      animation: {
+        "infinite-scroll": "infinite-scroll 265s linear infinite",
+      },
       keyframes: {
+        "infinite-scroll": {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(-180%)" },
+        },
         "reveal-up": {
           "0%": { opacity: "0", transform: "translateY(80%)" },
           "100%": { opacity: "1", transform: "translateY(0)" },

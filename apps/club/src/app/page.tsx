@@ -1,6 +1,7 @@
 import About from "./_components/landing/about";
 import Hero from "./_components/landing/hero";
 import Impact from "./_components/landing/Impact";
+import Sponsors from "./_components/landing/sponsors";
 
 export default function HomePage() {
   return (
@@ -9,6 +10,7 @@ export default function HomePage() {
         <Hero />
         <About />
         <Impact />
+        <Sponsors />
       </div>
     </div>
   );

@@ -93,7 +93,7 @@ export default function Expandable({
   return (
     <div
       className={cn(
-        "flex h-auto w-full flex-col items-center gap-2 md:h-96 md:flex-row",
+        "flex h-auto w-full flex-col items-center gap-2 md:h-full md:flex-row",
         className,
       )}
     >

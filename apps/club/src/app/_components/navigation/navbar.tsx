@@ -6,7 +6,7 @@ import MobileNavbar from "./mobile/mobile-navbar";
 const Navbar = () => {
   return (
     <>
-      <header className="w-full">
+      <header className="z-10 w-full">
         <DesktopNavbar />
         <MobileNavbar />
       </header>
