@@ -21,7 +21,6 @@ export default function About() {
       },
     });
 
-    // Animate the header first
     tl.fromTo(
       headerRef.current,
       { opacity: 0, y: -50 },

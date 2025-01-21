@@ -13,6 +13,9 @@ export default {
       transitionTimingFunction: {
         "minor-spring": "cubic-bezier(0.18,0.89,0.82,1.04)",
       },
+      colors: {
+        background: "hsl(var(--background))",
+      },
       boxShadow: {
         impact: `
           0px 0px 1879.49px #D8B5FE,
