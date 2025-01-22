@@ -6,7 +6,7 @@ import Sponsors from "./_components/landing/sponsors";
 
 export default function HomePage() {
   return (
-    <div>
+    <div className="bg-[#0F172A]">
       <Hero />
       <About />
       <Impact />
