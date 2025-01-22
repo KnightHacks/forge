@@ -7,13 +7,11 @@ import Sponsors from "./_components/landing/sponsors";
 export default function HomePage() {
   return (
     <div>
-      <div className="font-bold">
-        <Hero />
-        <About />
-        <Impact />
-        <Sponsors />
-        <Discover />
-      </div>
+      <Hero />
+      <About />
+      <Impact />
+      <Sponsors />
+      <Discover />
     </div>
   );
 }

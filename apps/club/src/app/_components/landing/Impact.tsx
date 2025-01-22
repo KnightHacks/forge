@@ -5,7 +5,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-import Expandable from "./impact-assets/animata/expandable";
+import Expandable from "./impact-assets/expandable";
 
 export default function Impact() {
   gsap.registerPlugin(useGSAP, ScrollTrigger);
@@ -41,10 +41,10 @@ export default function Impact() {
       <div className="my-2 flex h-screen max-h-screen flex-col items-center justify-center">
         <p
           ref={headerRef}
-          className="font-pragati mb-2 text-center text-[30px] font-bold leading-[102px] tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[60px]"
+          className="font-pragati mb-2 text-center text-[20px] font-bold leading-[102px] tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[45px]"
         >
           How we make an{" "}
-          <span className="font-poppins text-center text-[40px] font-semibold leading-[120px] tracking-[0.05em] text-white md:h-[110px] md:w-[733px] md:text-[80px]">
+          <span className="font-poppins text-center text-[30px] font-semibold leading-[120px] tracking-[0.05em] text-white md:h-[110px] md:w-[733px] md:text-[60px]">
             IMPACT
           </span>
         </p>

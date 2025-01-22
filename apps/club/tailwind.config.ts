@@ -35,7 +35,7 @@ export default {
         mono: ["var(--font-geist-mono)", ...fontFamily.mono],
       },
       animation: {
-        "infinite-scroll": "infinite-scroll 265s linear infinite",
+        "infinite-scroll": "infinite-scroll 160s linear infinite",
       },
       keyframes: {
         "infinite-scroll": {

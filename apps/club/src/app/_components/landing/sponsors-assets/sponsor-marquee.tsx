@@ -66,7 +66,7 @@ const SponsorsMarquee = () => {
                 src={`/logos/${logo.name}.svg`}
                 height={0}
                 width={0}
-                alt={""}
+                alt={"s"}
                 className="xs:w-20 xs:h-20 h-20 w-20 scale-90 rounded-md object-contain sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-32 lg:w-32 xl:h-40 xl:w-40"
               />
             </li>

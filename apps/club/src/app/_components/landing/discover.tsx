@@ -10,13 +10,13 @@ export default function Discover() {
         <div className="flex items-baseline gap-3">
           <Counter
             targetValue={127}
-            className="font-pragati text-[48px] font-extrabold leading-none tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[80px]"
+            className="font-pragati text-[35px] font-extrabold leading-none tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[60px]"
           />
-          <span className="font-pragati text-[24px] font-bold tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[40px]">
+          <span className="font-pragati text-[24px] font-bold tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[36px]">
             active members
           </span>
         </div>
-        <p className="font-pragati text-center text-[28px] font-bold tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[48px]">
+        <p className="font-pragati text-center text-[25px] font-bold tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[44px]">
           Become one today
         </p>
       </div>
@@ -27,7 +27,10 @@ export default function Discover() {
         height={0}
         className="h-auto w-auto"
       />
-      <DiscoverButton text="Get Started on Blade!" className="w-[400px]" />
+      <DiscoverButton
+        text="Take me to Blade!"
+        className="w-[200px] md:w-[400px]"
+      />
     </div>
   );
 }
