@@ -65,7 +65,7 @@ export function execute(client: Client) {
   try {
     // Create a cron job that will run at 11:00 AM every day
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    cron.schedule("0 17 * * *", async () => {
+    cron.schedule("0 12 * * *", async () => {
       // Fetch the problem data and format the data
       const problem = await fetchData(url);
       const date = problem.date.split("-");

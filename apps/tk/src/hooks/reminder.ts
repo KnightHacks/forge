@@ -20,6 +20,7 @@ async function getEvents() {
   if (new Date().getDay() === 0) {
     // Assemble date objects
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const nextWeek = new Date(today);
     nextWeek.setDate(today.getDate() + 7);
 
@@ -129,7 +130,9 @@ async function getEvents() {
 
   // Filter out "Operations Meeting" from nextWeek
   const nextWeekFiltered = nextWeekEvents.filter(
-    (event) => !event.name.includes("Operations Meeting"),
+    (event) =>
+      !event.tag.includes("Operations Meeting") &&
+      !event.name.includes("Lab Hours"),
   );
 
   // Build the final array of prefix groups
@@ -260,7 +263,7 @@ async function cronLogic(webhook: WebhookClient) {
             name: "Start",
             value: new Date(
               new Date(event.start_datetime).setHours(
-                new Date(event.start_datetime).getHours() - 5,
+                new Date(event.start_datetime).getHours(),
               ),
             ).toLocaleString("en-US", {
               hour: "numeric",
@@ -273,7 +276,7 @@ async function cronLogic(webhook: WebhookClient) {
             name: "End",
             value: new Date(
               new Date(event.end_datetime).setHours(
-                new Date(event.end_datetime).getHours() - 5,
+                new Date(event.end_datetime).getHours(),
               ),
             ).toLocaleString("en-US", {
               hour: "numeric",
@@ -310,13 +313,13 @@ export function execute() {
 
   try {
     // PRE-REMINDERS for Testing: 8:00AM
-    cron.schedule("0 12 * * *", () => {
+    cron.schedule("0 8 * * *", () => {
       // Avoid returning a Promise from the cron callback
       void cronLogic(preWebhook);
     });
 
     // PUBLIC-REMINDERS for Testing: 12:00PM
-    cron.schedule("0 16 * * *", () => {
+    cron.schedule("0 11 * * *", () => {
       // Avoid returning a Promise from the cron callback
       void cronLogic(pubWebhook);
     });

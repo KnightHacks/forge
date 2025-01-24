@@ -134,7 +134,7 @@ function duckHook(webhook: WebhookClient) {
 
 function goatHook(webhook: WebhookClient) {
   try {
-    cron.schedule("30 19 * * *", async () => {
+    cron.schedule("30 14 * * *", async () => {
       const goat = GOATS[Math.floor(Math.random() * GOATS.length)];
       if (goat) {
         const img = JIMP.read(goat.image);
