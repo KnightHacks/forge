@@ -61,7 +61,8 @@
     "DISCORD_CLIENT_SECRET",
     "DISCORD_DAILY_ANIMAL_WEBHOOK_URL",
     "DISCORD_LEETCODE_DAILY_WEBHOOK_URL",
-    "DISCORD_WEATHER_API_KEY"
+    "DISCORD_WEATHER_API_KEY",
+    "BLADE_URL"
   ],
   "globalPassThroughEnv": ["NODE_ENV", "CI", "npm_lifecycle_event"]
 }

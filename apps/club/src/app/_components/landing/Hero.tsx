@@ -3,6 +3,7 @@
 import React from "react";
 
 import HeroSVG from "./hero-assets/hero-icon";
+import TypingText from "./hero-assets/typing-text";
 
 const Hero = () => {
   return (
@@ -10,13 +11,15 @@ const Hero = () => {
       <div className="mx-auto max-w-6xl">
         <div className="grid min-h-[calc(100vh-6rem)] items-center gap-8 lg:grid-cols-2">
           <div className="order-2 text-center lg:order-1 lg:text-left">
-            <h1 className="font-pragati mb-6 text-4xl font-bold leading-tight tracking-tight text-white [text-shadow:0px_0px_40px_#6B21A8,0px_0px_20px_#6B21A8,0px_0px_10px_#6B21A8] md:text-5xl lg:text-6xl">
+            <h1 className="font-pragati mb-6 text-2xl font-bold leading-tight tracking-tight text-white [text-shadow:0px_0px_40px_#6B21A8,0px_0px_20px_#6B21A8,0px_0px_10px_#6B21A8] md:text-5xl lg:text-6xl">
               Bridging the gap between the classroom and the tech industry
             </h1>
-            <p className="mb-8 text-lg text-gray-300 md:text-xl">
-              Empowering students with real-world skills and industry
-              connections
-            </p>
+            <TypingText
+              text="Empowering students with real-world skills and industry
+              connections"
+              className="mb-8 text-xl text-gray-300 md:text-xl"
+              repeat={false}
+            />
           </div>
           <div className="order-1 lg:order-2">
             <div className="relative">

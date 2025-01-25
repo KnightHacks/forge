@@ -54,6 +54,10 @@ export default {
           "0%": { filter: "blur(0.3rem)" },
           "100%": { filter: "blur(0)" },
         },
+        "rotate-full": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
       },
     },
   },

@@ -23,7 +23,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
-import { adminProcedure } from "../trpc";
+import { adminProcedure, publicProcedure } from "../trpc";
 import { calendar, discord, log } from "../utils";
 
 const GOOGLE_CALENDAR_ID =
@@ -36,7 +36,7 @@ const KNIGHTHACKS_GUILD_ID =
     : (DEV_KNIGHTHACKS_GUILD_ID as string);
 
 export const eventRouter = {
-  getEvents: adminProcedure.query(async () => {
+  getEvents: publicProcedure.query(async () => {
     const events = await db
       .select({
         ...getTableColumns(Event),
