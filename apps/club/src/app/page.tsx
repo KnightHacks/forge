@@ -10,11 +10,9 @@ import { api } from "./trpc/server";
 
 export default async function HomePage() {
   const events = await api.event.getEvents.query();
-  console.log("Events: ", events);
+  const memberCount = await api.member.getMemberCount.query();
 
   const eventMap = new Map<number, ReturnEvent[]>();
-
-  console.log("Event Map: ", eventMap);
 
   events.forEach((event) => {
     const day = event.start_datetime.getDate();
@@ -24,8 +22,6 @@ export default async function HomePage() {
     eventMap.get(day)?.push(event);
   });
 
-  console.log("Event Map: ", eventMap);
-
   return (
     <div className="bg-[#0F172A]">
       <Hero />
@@ -33,7 +29,7 @@ export default async function HomePage() {
       <Impact />
       <Sponsors />
       <CalendarPage events={eventMap} />
-      <Discover />
+      <Discover memberCount={memberCount} />
     </div>
   );
 }

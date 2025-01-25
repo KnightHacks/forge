@@ -28,7 +28,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import { adminProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { log } from "../utils";
 
 export const memberRouter = {
@@ -260,6 +260,11 @@ export const memberRouter = {
   // -------------------- ADMIN DASHBOARD ENDPOINTS --------------------
   getMembers: adminProcedure.query(async () => {
     return await db.query.Member.findMany();
+  }),
+
+  getMemberCount: publicProcedure.query(async () => {
+    const members = await db.query.Member.findMany();
+    return members.length || 0;
   }),
 
   getDuesPayingMembers: adminProcedure.query(async () => {

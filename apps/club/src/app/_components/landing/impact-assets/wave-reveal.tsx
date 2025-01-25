@@ -74,8 +74,6 @@ const Word = ({
     return word;
   }
 
-  console.log("word: ", word);
-
   return (
     <>
       {word.split("").map((letter, letterIndex) => {
