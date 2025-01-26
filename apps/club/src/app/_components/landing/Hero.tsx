@@ -5,7 +5,7 @@ import React from "react";
 import HeroSVG from "./hero-assets/hero-icon";
 import TypingText from "./hero-assets/typing-text";
 
-const Hero = () => {
+const Hero = ({ bladeUrl }: { bladeUrl: string }) => {
   return (
     <section className="relative min-h-screen bg-gradient-to-br from-purple-900 to-[#0F172A] px-4 py-12">
       <div className="mx-auto max-w-6xl">
@@ -15,11 +15,21 @@ const Hero = () => {
               Bridging the gap between the classroom and the tech industry
             </h1>
             <TypingText
-              text="Empowering students with real-world skills and industry
-              connections"
+              text="Empowering students with real-world skills and industry connections"
               className="mb-8 text-xl text-gray-300 md:text-xl"
               repeat={false}
             />
+            <button
+              onClick={() =>
+                window.open(bladeUrl, "_blank", "noopener,noreferrer")
+              }
+              className="group relative inline-flex items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-purple-600 to-purple-950 px-6 py-3 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95"
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 transition-opacity duration-300 group-hover:opacity-20"></span>
+              <span className="relative z-10 flex items-center gap-2 font-semibold">
+                Get Started
+              </span>
+            </button>
           </div>
           <div className="order-1 lg:order-2">
             <div className="relative">

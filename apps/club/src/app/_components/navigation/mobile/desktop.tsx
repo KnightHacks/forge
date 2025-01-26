@@ -22,7 +22,7 @@ export default function DesktopNavbar() {
         <div className="mx-10 flex items-center justify-center space-x-5">
           <div className="flex items-center p-2 text-center font-sans text-lg font-bold text-white hover:text-gray-300">
             <NavLink
-              linkName="teams"
+              linkName=""
               isActive={pathName.endsWith("/")}
               className="flex"
             >

@@ -1,5 +1,6 @@
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 
+import { env } from "~/env";
 import About from "./_components/landing/about";
 import CalendarPage from "./_components/landing/calendar";
 import Discover from "./_components/landing/discover";
@@ -27,7 +28,7 @@ export default async function HomePage() {
 
   return (
     <div className="bg-[#0F172A]">
-      <Hero />
+      <Hero bladeUrl={env.BLADE_URL} />
       <About />
       <Impact />
       <Sponsors />

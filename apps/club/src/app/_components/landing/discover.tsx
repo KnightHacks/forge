@@ -35,7 +35,7 @@ export default function Discover({ memberCount }: { memberCount: number }) {
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: container,
-        start: "top 60%",
+        start: "top 50%",
         end: "bottom 20%",
         toggleActions: "play none none reverse",
       },
