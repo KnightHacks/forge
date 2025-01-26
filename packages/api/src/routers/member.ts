@@ -362,6 +362,17 @@ export const memberRouter = {
         return;
       }
 
+      const duesPayingMember = await db.query.DuesPayment.findFirst({
+        where: (t, { eq }) => eq(t.memberId, member.id),
+      })
+
+      if (event?.dues_paying && !duesPayingMember) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: `${member.firstName} ${member.lastName} cannot check into a dues paying event!`,
+        });
+      }
+
       const duplicates = await db
         .select()
         .from(EventAttendee)

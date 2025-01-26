@@ -258,62 +258,6 @@ export function CreateEventButton() {
                   </FormItem>
                 )}
               />
-              {/* <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">Date</FormLabel>
-                      <FormControl>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "col-span-3 justify-start text-left font-normal",
-                                !field.value && "text-muted-foreground",
-                              )}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {field.value
-                                ? format(new Date(field.value), "PPP")
-                                : "Pick a date"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              // If field.value is an empty string, we pass undefined to Calendar
-                              selected={
-                                field.value ? new Date(field.value) : undefined
-                              }
-                              onSelect={(selectedDate) => {
-                                // Make sure the selected date is not null
-                                if (!selectedDate) {
-                                  toast.error("Please select a date.");
-                                  return;
-                                }
-
-                                // Make sure the selected date is in the future
-                                if (selectedDate < new Date()) {
-                                  toast.error("Please select a future date.");
-                                  return;
-                                }
-
-                                // Convert the chosen date to an ISO string
-                                field.onChange(selectedDate.toISOString());
-                              }}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
 
               {/* Start Time (Hour, Minute, AM/PM) */}
               <div className="grid grid-cols-4 items-center gap-4">
