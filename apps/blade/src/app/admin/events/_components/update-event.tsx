@@ -29,6 +29,7 @@ import {
   FormMessage,
   useForm,
 } from "@forge/ui/form";
+import { Checkbox } from "@forge/ui/checkbox";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
@@ -131,6 +132,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       location: "",
       tag: EVENT_TAGS[0],
       date: "",
+      dues_paying: false,
       startHour: "",
       startMinute: "",
       startAmPm: "PM",
@@ -158,6 +160,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       description: event.description,
       location: event.location,
       tag: event.tag,
+      dues_paying: event.dues_paying,
       date,
       startHour,
       startMinute,
@@ -205,6 +208,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       discordId: event.discordId,
       googleId: event.googleId,
       name: values.name,
+      dues_paying: values.dues_paying,
       description: values.description,
       location: values.location,
       tag: values.tag,
@@ -258,7 +262,6 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                 )}
               />
 
-              {/* Tag (enum from EVENT_TAGS) */}
               <FormField
                 control={form.control}
                 name="tag"
@@ -591,6 +594,27 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                       </FormControl>
                     </div>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Dues Paying */}
+              <FormField
+                control={form.control}
+                name="dues_paying"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">
+                        Dues Paying?
+                      </FormLabel>
+                      <FormControl className="col-span-3">
+                        <Checkbox 
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </div>
                   </FormItem>
                 )}
               />

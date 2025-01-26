@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
+import { FaGithub, FaLinkedin, FaGlobe } from "react-icons/fa";
 
 import { api } from "~/trpc/react";
 
@@ -81,7 +82,7 @@ export default function MemberProfileButton({
               </p>
               <p>
                 <b className="text-gray-400">Phone Number:</b>{" "}
-                {member.phoneNumber !== ""
+                {member.phoneNumber
                   ? member.phoneNumber
                   : "Phone number not provided."}
               </p>
@@ -116,26 +117,32 @@ export default function MemberProfileButton({
               </p>
             </div>
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 text-center">
             <h1 className="text-xl font-bold">Social Information</h1>
-            <div>
+            <div className="flex flex-row gap-4 justify-center pt-2">
               <p>
-                <b className="text-gray-400">GitHub URL:</b>{" "}
                 {member.githubProfileUrl
-                  ? member.githubProfileUrl
-                  : "GitHub not provided."}
+                  ? <a href={member.githubProfileUrl} target="_blank">
+                      <FaGithub size={24} />
+                    </a>
+                  : <FaGithub size={24} color="gray" />
+                  }
               </p>
               <p>
-                <b className="text-gray-400">LinkedIn URL:</b>{" "}
                 {member.linkedinProfileUrl
-                  ? member.linkedinProfileUrl
-                  : "LinkedIn not provided."}
+                  ? <a href={member.linkedinProfileUrl} target="_blank">
+                      <FaLinkedin size={24}/>
+                    </a>
+                  : <FaLinkedin size={24} color="gray" />
+                  }
               </p>
               <p>
-                <b className="text-gray-400">Personal Website:</b>{" "}
                 {member.websiteUrl
-                  ? member.websiteUrl
-                  : "Personal website not provided."}
+                  ? <a href={member.websiteUrl} target="_blank">
+                    <FaGlobe size={24} />
+                    </a>
+                  : <FaGlobe size={24} color="gray" />
+                  }
               </p>
             </div>
           </div>
