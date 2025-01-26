@@ -70,7 +70,7 @@ export default function CalendarEventsPage({
   };
 
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-purple-900 to-[#0F172A] px-4 py-12">
+    <section className="relative min-h-screen bg-gradient-to-br from-purple-800 to-[#0F172A] px-4 py-12">
       <div className="mx-auto max-w-6xl">
         <h1 className="font-pragati text-center text-[20px] font-bold leading-[102px] tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[45px]">
           Stay up to date!
@@ -89,7 +89,7 @@ export default function CalendarEventsPage({
                 compact
                 renderCell={renderCell}
                 onSelect={handleSelect}
-                className="w-full text-white"
+                className="z-10 w-full text-white"
               />
             </div>
           </div>
@@ -109,8 +109,8 @@ export default function CalendarEventsPage({
           )}
         </div>
       </div>
-      <TerminalSVG className="absolute -bottom-20 right-40 hidden h-auto w-full max-w-[400px] transform text-purple-400 opacity-50 md:block" />
-      <NeonTkSVG className="absolute -left-20 -top-40 hidden h-auto w-full max-w-[400px] transform text-purple-400 opacity-50 md:block" />
+      <TerminalSVG className="absolute -bottom-20 right-32 z-0 hidden h-auto w-full max-w-[400px] transform text-purple-400 opacity-50 md:block" />
+      <NeonTkSVG className="absolute -top-40 left-24 z-0 hidden h-auto w-full max-w-[400px] transform opacity-70 md:block" />
     </section>
   );
 }

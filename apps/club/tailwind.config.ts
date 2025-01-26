@@ -10,6 +10,15 @@ export default {
   presets: [baseConfig],
   theme: {
     extend: {
+      backgroundImage: {
+        "custom-radial": `radial-gradient(121.83% 96.39% at 50.3% 9.28%, 
+          rgba(216, 179, 254, 0.7) 0%, 
+          rgba(216, 179, 254, 0.7) 0.01%, 
+          rgba(216, 179, 254, 0.7) 5.55%, 
+          rgba(216, 179, 254, 0.7) 14.99%, 
+          rgba(133, 87, 180, 0.598491) 42.5%, 
+          rgba(46, 22, 71, 0.7) 86.9%)`,
+      },
       filter: {
         "blur-20": "blur(20px)",
         "blur-25": "blur(25px)",

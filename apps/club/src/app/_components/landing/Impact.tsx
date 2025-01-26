@@ -60,7 +60,7 @@ export default function Impact() {
   return (
     <div
       ref={containerRef}
-      className="my-2 flex h-screen min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#1a0b2e] via-[#120624] to-[#0F172A]"
+      className="flex h-screen min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#1a0b2e] via-[#120624] to-[#0F172A]"
     >
       <div ref={headerRef} className="mb-3 flex items-center justify-center">
         <p className="font-pragati mr-3 text-xl font-bold tracking-wide text-white/80 md:text-3xl">
@@ -68,7 +68,7 @@ export default function Impact() {
         </p>
         <h1
           ref={impactTextRef}
-          className="animate-pulse bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-4xl font-black text-transparent md:text-6xl"
+          className="animate-pulse bg-gradient-to-r from-purple-700 to-pink-900 bg-clip-text text-4xl font-black text-transparent md:text-6xl"
         >
           IMPACT
         </h1>

@@ -7,6 +7,7 @@ import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 
+import GroupSVG from "./assets/group";
 import Counter from "./discover-assets/counter";
 import DiscoverButton from "./discover-assets/discover-button";
 
@@ -16,6 +17,7 @@ export default function Discover({ memberCount }: { memberCount: number }) {
   const textRef = useRef<HTMLParagraphElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
+  const groupRef = useRef<SVGSVGElement>(null);
 
   gsap.registerPlugin(ScrollTrigger);
 
@@ -39,8 +41,8 @@ export default function Discover({ memberCount }: { memberCount: number }) {
 
     tl.fromTo(
       container,
-      { backgroundColor: "rgba(126, 34, 206, 0)" },
-      { backgroundColor: "rgba(126, 34, 206, 1)", duration: 1 },
+      { backgroundColor: "rgba(15, 23, 42, 0)" }, // Changed color to match #0F172A
+      { backgroundColor: "rgba(15, 23, 42, 1)", duration: 1 },
     )
       .fromTo(
         counter,
@@ -75,7 +77,7 @@ export default function Discover({ memberCount }: { memberCount: number }) {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-screen flex-col items-center justify-center overflow-hidden bg-purple-800 px-4"
+      className="bg-custom-radial relative flex h-screen flex-col items-center justify-center overflow-hidden px-4"
     >
       <div className="z-10 flex flex-col items-center space-y-6 text-center">
         <div className="flex flex-col items-center space-y-4">
@@ -98,7 +100,7 @@ export default function Discover({ memberCount }: { memberCount: number }) {
         <div ref={buttonRef}>
           <DiscoverButton
             text="Join the Community!"
-            className="w-[250px] transform transition-all duration-300 hover:scale-105 hover:shadow-xl md:w-[450px]"
+            className="w-[300px] transform transition-all duration-300 hover:scale-105 hover:shadow-xl md:w-[450px]"
             onClick={() =>
               window.open(
                 PERMANENT_DISCORD_INVITE as string,
@@ -120,7 +122,10 @@ export default function Discover({ memberCount }: { memberCount: number }) {
         />
       </div>
 
-      <div className="absolute inset-0 z-0 bg-gradient-to-tr from-purple-900/20 via-purple-700/10 to-purple-500/30" />
+      <GroupSVG
+        ref={groupRef}
+        className="absolute top-10 hidden h-auto w-auto md:block"
+      />
     </div>
   );
 }
