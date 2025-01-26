@@ -42,36 +42,19 @@ export default function Impact() {
         duration: 0.8,
         ease: "power2.out",
       },
-    )
-      .fromTo(
-        impactTextRef.current,
-        {
-          opacity: 0,
-          scale: 0.5,
-        },
-        {
-          opacity: 1,
-          scale: 1,
-          duration: 0.5,
-          ease: "back.out(1.7)",
-        },
-      )
-      .fromTo(
-        expandableRef.current,
-        {
-          opacity: 0,
-          y: 50,
-          rotateX: -15,
-        },
-        {
-          opacity: 1,
-          y: 0,
-          rotateX: 0,
-          duration: 0.8,
-          ease: "back.out(1.7)",
-        },
-        "-=0.4",
-      );
+    ).fromTo(
+      impactTextRef.current,
+      {
+        opacity: 0,
+        scale: 0.5,
+      },
+      {
+        opacity: 1,
+        scale: 1,
+        duration: 0.5,
+        ease: "back.out(1.7)",
+      },
+    );
   });
 
   return (
@@ -92,7 +75,7 @@ export default function Impact() {
       </div>
       <div
         ref={expandableRef}
-        className="flex h-[600px] w-2/3 items-center justify-center"
+        className="flex h-[600px] w-full items-center justify-center md:w-2/3"
       >
         <Expandable autoPlay={inView} />
       </div>

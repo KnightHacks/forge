@@ -40,10 +40,10 @@ const List = ({ item, className, index, activeItem, ...props }: ImageProps) => {
         })}
       />
       {index === activeItem && (
-        <div className="absolute bottom-2 left-2 rounded-lg bg-purple-900/60 text-xs text-white sm:bottom-4 sm:left-4 md:text-lg">
+        <div className="absolute bottom-2 left-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 py-1 text-xs sm:bottom-4 sm:left-4 md:h-auto md:text-lg">
           <WaveReveal
             duration="1000ms"
-            className="font-pragati mb-2 items-end justify-end text-[30px] font-bold leading-[102px] text-purple-400 md:items-start md:justify-start md:text-center md:text-[60px]"
+            className="font-pragati bg-clip-text text-[20px] font-bold leading-tight md:mb-2 md:items-start md:justify-start md:text-center md:text-[60px]"
             text={item.title}
             direction="up"
           />
