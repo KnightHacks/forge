@@ -59,7 +59,7 @@ const items = [
     title: "Hackathons",
   },
   {
-    image: "/workshop.jpg",
+    image: "/jeff.png",
     title: "Workshops",
   },
   {
