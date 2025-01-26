@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import Image from "next/image";
+import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
@@ -21,12 +22,13 @@ export default function Discover({ memberCount }: { memberCount: number }) {
 
   gsap.registerPlugin(ScrollTrigger);
 
-  useEffect(() => {
+  useGSAP(() => {
     const container = containerRef.current;
     const counter = counterRef.current;
     const text = textRef.current;
     const button = buttonRef.current;
     const logo = logoRef.current;
+    const group = groupRef.current;
 
     if (!container || !counter || !text || !button || !logo) return;
 
@@ -45,21 +47,21 @@ export default function Discover({ memberCount }: { memberCount: number }) {
       { backgroundColor: "rgba(15, 23, 42, 1)", duration: 1 },
     )
       .fromTo(
-        counter,
+        group,
         { opacity: 0, y: 50 },
-        { opacity: 1, y: 0, duration: 0.8 },
+        { opacity: 100, y: 0, duration: 1 },
         0.2,
       )
       .fromTo(
-        text,
+        counter,
         { opacity: 0, y: 50 },
         { opacity: 1, y: 0, duration: 0.8 },
         0.4,
       )
       .fromTo(
-        button,
-        { opacity: 0, scale: 0.8 },
-        { opacity: 1, scale: 1, duration: 0.6 },
+        text,
+        { opacity: 0, y: 50 },
+        { opacity: 1, y: 0, duration: 0.8 },
         0.6,
       )
       .fromTo(
@@ -67,11 +69,13 @@ export default function Discover({ memberCount }: { memberCount: number }) {
         { opacity: 0, rotation: -10, scale: 0.8 },
         { opacity: 0.6, rotation: 0, scale: 1, duration: 0.7 },
         0.8,
+      )
+      .fromTo(
+        button,
+        { opacity: 0, x: -150 },
+        { opacity: 1, x: 0, duration: 2.0, ease: "bounce.out" },
+        1.3,
       );
-
-    return () => {
-      ScrollTrigger.getAll().forEach((t) => t.kill());
-    };
   }, []);
 
   return (

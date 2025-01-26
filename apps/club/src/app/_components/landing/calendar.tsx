@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useRef } from "react";
+import { useGSAP } from "@gsap/react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { Dot } from "lucide-react";
 import { Calendar, List } from "rsuite";
 
@@ -17,8 +20,32 @@ export default function CalendarEventsPage({
 }: {
   events: Map<string, ReturnEvent[]>;
 }) {
+  gsap.registerPlugin(ScrollTrigger);
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top 80%",
+        end: "bottom 20%",
+        toggleActions: "play none none reverse",
+      },
+    });
+
+    tl.fromTo(
+      headerRef.current,
+      { opacity: 0, x: -50 },
+      { opacity: 100, x: 0, duration: 1 },
+    ).fromTo(
+      calendarRef.current,
+      { opacity: 0, y: 100 },
+      { opacity: 100, y: 0, duration: 2, ease: "elastic.out" },
+    );
+  });
 
   function getTodoList(date: Date | null) {
     if (!date) return [];
@@ -70,9 +97,15 @@ export default function CalendarEventsPage({
   };
 
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-purple-800 to-[#0F172A] px-4 py-12">
+    <section
+      ref={containerRef}
+      className="relative min-h-screen bg-gradient-to-br from-purple-800 to-[#0F172A] px-4 py-12"
+    >
       <div className="mx-auto max-w-6xl">
-        <h1 className="font-pragati text-center text-[20px] font-bold leading-[102px] tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[45px]">
+        <h1
+          ref={headerRef}
+          className="font-pragati text-center text-[20px] font-bold leading-[102px] tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[45px]"
+        >
           Stay up to date!
         </h1>
         <div
