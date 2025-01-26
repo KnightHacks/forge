@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Link as IconLink, Trophy, Users } from "lucide-react";
+import { Home, Link as IconLink, Trophy, Users } from "lucide-react";
 
 import NavLink from "../navlink";
 
@@ -20,6 +20,16 @@ export default function DesktopNavbar() {
           />
         </a>
         <div className="mx-10 flex items-center justify-center space-x-5">
+          <div className="flex items-center p-2 text-center font-sans text-lg font-bold text-white hover:text-gray-300">
+            <NavLink
+              linkName="teams"
+              isActive={pathName.endsWith("/")}
+              className="flex"
+            >
+              <Home className="pr-2" />
+              Home
+            </NavLink>
+          </div>
           <div className="flex items-center p-2 text-center font-sans text-lg font-bold text-white hover:text-gray-300">
             <NavLink
               linkName="teams"
