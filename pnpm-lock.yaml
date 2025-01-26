@@ -208,6 +208,9 @@ importers:
       '@forge/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../../packages/consts
       '@forge/db':
         specifier: workspace:*
         version: link:../../packages/db

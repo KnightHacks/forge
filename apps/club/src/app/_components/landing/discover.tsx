@@ -1,36 +1,126 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import Image from "next/image";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+
+import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 
 import Counter from "./discover-assets/counter";
 import DiscoverButton from "./discover-assets/discover-button";
 
 export default function Discover({ memberCount }: { memberCount: number }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const counterRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLParagraphElement>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLDivElement>(null);
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const counter = counterRef.current;
+    const text = textRef.current;
+    const button = buttonRef.current;
+    const logo = logoRef.current;
+
+    if (!container || !counter || !text || !button || !logo) return;
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: container,
+        start: "top 60%",
+        end: "bottom 20%",
+        toggleActions: "play none none reverse",
+      },
+    });
+
+    tl.fromTo(
+      container,
+      { backgroundColor: "rgba(126, 34, 206, 0)" },
+      { backgroundColor: "rgba(126, 34, 206, 1)", duration: 1 },
+    )
+      .fromTo(
+        counter,
+        { opacity: 0, y: 50 },
+        { opacity: 1, y: 0, duration: 0.8 },
+        0.2,
+      )
+      .fromTo(
+        text,
+        { opacity: 0, y: 50 },
+        { opacity: 1, y: 0, duration: 0.8 },
+        0.4,
+      )
+      .fromTo(
+        button,
+        { opacity: 0, scale: 0.8 },
+        { opacity: 1, scale: 1, duration: 0.6 },
+        0.6,
+      )
+      .fromTo(
+        logo,
+        { opacity: 0, rotation: -10, scale: 0.8 },
+        { opacity: 0.6, rotation: 0, scale: 1, duration: 0.7 },
+        0.8,
+      );
+
+    return () => {
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
+  }, []);
+
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-8">
-      <div className="flex flex-col items-center space-y-2">
-        <div className="flex items-baseline gap-3">
-          <Counter
-            targetValue={memberCount}
-            className="font-pragati text-[35px] font-extrabold leading-none tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[60px]"
-          />
-          <span className="font-pragati text-[24px] font-bold tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[36px]">
-            active members
-          </span>
+    <div
+      ref={containerRef}
+      className="relative flex h-screen flex-col items-center justify-center overflow-hidden bg-purple-800 px-4"
+    >
+      <div className="z-10 flex flex-col items-center space-y-6 text-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div ref={counterRef} className="flex items-baseline gap-3">
+            <Counter
+              targetValue={memberCount}
+              className="font-pragati animate-shine bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-300 bg-clip-text text-[40px] font-extrabold leading-none tracking-wide text-transparent md:text-[70px]"
+            />
+            <span className="font-pragati text-[28px] font-bold tracking-wide text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] md:text-[44px]">
+              Active Members
+            </span>
+          </div>
+          <p
+            ref={textRef}
+            className="font-pragati max-w-2xl text-[28px] font-bold tracking-wide text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] md:text-[48px]"
+          >
+            Your Journey Begins Here
+          </p>
         </div>
-        <p className="font-pragati text-center text-[25px] font-bold tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[44px]">
-          Become one today
-        </p>
+        <div ref={buttonRef}>
+          <DiscoverButton
+            text="Join the Community!"
+            className="w-[250px] transform transition-all duration-300 hover:scale-105 hover:shadow-xl md:w-[450px]"
+            onClick={() =>
+              window.open(
+                PERMANENT_DISCORD_INVITE as string,
+                "_blank",
+                "noopener,noreferrer",
+              )
+            }
+          />
+        </div>
       </div>
-      <Image
-        src="/tk.svg"
-        alt="tk"
-        width={0}
-        height={0}
-        className="h-auto w-auto"
-      />
-      <DiscoverButton
-        text="Take me to Blade!"
-        className="w-[200px] md:w-[400px]"
-      />
+
+      <div ref={logoRef} className="absolute bottom-0 right-0 opacity-60">
+        <Image
+          src="/tk.svg"
+          alt="Community Logo"
+          width={300}
+          height={300}
+          className="h-auto w-auto select-none"
+        />
+      </div>
+
+      <div className="absolute inset-0 z-0 bg-gradient-to-tr from-purple-900/20 via-purple-700/10 to-purple-500/30" />
     </div>
   );
 }
