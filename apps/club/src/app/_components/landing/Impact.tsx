@@ -60,7 +60,7 @@ export default function Impact() {
   return (
     <div
       ref={containerRef}
-      className="flex h-screen min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#1a0b2e] via-[#120624] to-[#0F172A]"
+      className="flex h-screen min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#1a0b2e] via-[#120624] to-[#0F172A]"
     >
       <div ref={headerRef} className="mb-3 flex items-center justify-center">
         <p className="font-pragati mr-3 text-xl font-bold tracking-wide text-white/80 md:text-3xl">

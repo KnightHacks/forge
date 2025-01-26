@@ -7,7 +7,7 @@ import TypingText from "./hero-assets/typing-text";
 
 const Hero = ({ bladeUrl }: { bladeUrl: string }) => {
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-purple-900 to-[#0F172A] px-4 py-12">
+    <section className="relative min-h-screen bg-gradient-to-b from-purple-900 to-[#0F172A] px-4 py-12">
       <div className="mx-auto max-w-6xl">
         <div className="grid min-h-[calc(100vh-6rem)] items-center gap-8 lg:grid-cols-2">
           <div className="order-2 text-center lg:order-1 lg:text-left">

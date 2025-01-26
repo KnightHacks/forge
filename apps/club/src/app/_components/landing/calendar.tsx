@@ -99,7 +99,7 @@ export default function CalendarEventsPage({
   return (
     <section
       ref={containerRef}
-      className="relative min-h-screen bg-gradient-to-br from-purple-800 to-[#0F172A] px-4 py-12"
+      className="relative min-h-screen bg-gradient-to-b from-purple-800 to-[#0F172A] px-4 py-12"
     >
       <div className="mx-auto max-w-6xl">
         <h1

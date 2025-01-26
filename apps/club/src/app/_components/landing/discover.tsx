@@ -8,7 +8,6 @@ import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 
-import GroupSVG from "./assets/group";
 import Counter from "./discover-assets/counter";
 import DiscoverButton from "./discover-assets/discover-button";
 
@@ -81,7 +80,7 @@ export default function Discover({ memberCount }: { memberCount: number }) {
   return (
     <div
       ref={containerRef}
-      className="bg-custom-radial relative flex h-screen flex-col items-center justify-center overflow-hidden px-4"
+      className="relative flex h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#0F172A] via-purple-900 to-purple-950 px-4"
     >
       <div className="z-10 flex flex-col items-center space-y-6 text-center">
         <div className="flex flex-col items-center space-y-4">
@@ -125,11 +124,6 @@ export default function Discover({ memberCount }: { memberCount: number }) {
           className="h-auto w-auto select-none"
         />
       </div>
-
-      <GroupSVG
-        ref={groupRef}
-        className="absolute top-10 hidden h-auto w-auto md:block"
-      />
     </div>
   );
 }
