@@ -13,14 +13,17 @@ import "rsuite/Calendar/styles/index.css";
 export default function CalendarEventsPage({
   events,
 }: {
-  events: Map<number, ReturnEvent[]>;
+  events: Map<string, ReturnEvent[]>;
 }) {
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
 
   function getTodoList(date: Date | null) {
     if (!date) return [];
-    return events.get(date.getDate()) ?? [];
+    const day = date.getDate();
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    return events.get(`${day}-${month}-${year}`) ?? [];
   }
 
   function renderCell(date: Date) {

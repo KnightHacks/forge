@@ -12,14 +12,17 @@ export default async function HomePage() {
   const events = await api.event.getEvents.query();
   const memberCount = await api.member.getMemberCount.query();
 
-  const eventMap = new Map<number, ReturnEvent[]>();
+  const eventMap = new Map<string, ReturnEvent[]>();
 
   events.forEach((event) => {
     const day = event.start_datetime.getDate();
-    if (!eventMap.has(day)) {
-      eventMap.set(day, []);
+    const month = event.start_datetime.getMonth();
+    const year = event.start_datetime.getFullYear();
+    const dateString = `${day}-${month}-${year}`;
+    if (!eventMap.has(dateString)) {
+      eventMap.set(dateString, []);
     }
-    eventMap.get(day)?.push(event);
+    eventMap.get(dateString)?.push(event);
   });
 
   return (
