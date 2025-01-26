@@ -7,6 +7,8 @@ import { Calendar, List } from "rsuite";
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 
 import { formatDateRange } from "~/lib/utils";
+import NeonTkSVG from "./assets/neon-tk";
+import TerminalSVG from "./assets/terminal";
 
 import "rsuite/Calendar/styles/index.css";
 
@@ -107,6 +109,8 @@ export default function CalendarEventsPage({
           )}
         </div>
       </div>
+      <TerminalSVG className="absolute -bottom-20 right-40 hidden h-auto w-full max-w-[400px] transform text-purple-400 opacity-50 md:block" />
+      <NeonTkSVG className="absolute -left-20 -top-40 hidden h-auto w-full max-w-[400px] transform text-purple-400 opacity-50 md:block" />
     </section>
   );
 }

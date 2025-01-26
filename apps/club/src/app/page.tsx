@@ -3,8 +3,8 @@ import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import About from "./_components/landing/about";
 import CalendarPage from "./_components/landing/calendar";
 import Discover from "./_components/landing/discover";
-import Hero from "./_components/landing/Hero";
-import Impact from "./_components/landing/Impact";
+import Hero from "./_components/landing/hero";
+import Impact from "./_components/landing/impact";
 import Sponsors from "./_components/landing/sponsors";
 import { api } from "./trpc/server";
 
