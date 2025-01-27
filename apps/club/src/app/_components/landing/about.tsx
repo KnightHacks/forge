@@ -79,7 +79,7 @@ export default function About() {
   return (
     <div
       ref={containerRef}
-      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-[#0F172A] to-[#1a0b2e]"
+      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-[#0F172A] via-[#1a0b2e] to-[#1a0b2e]"
     >
       <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 opacity-50 blur-3xl"></div>
 
