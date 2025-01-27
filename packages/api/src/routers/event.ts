@@ -286,8 +286,8 @@ export const eventRouter = {
         {} as Record<
           string,
           {
-            before: string | number | Date | null;
-            after: string | number | Date | null | undefined;
+            before: string | number | Date | boolean | null;
+            after: string | number | Date | null | boolean | undefined;
           }
         >,
       );
