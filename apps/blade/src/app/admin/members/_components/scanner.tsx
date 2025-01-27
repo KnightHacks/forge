@@ -25,6 +25,10 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
+interface CodeScanningProps {
+  processingScan?: boolean;
+}
+
 const ScannerPopUp = () => {
   const { data: events } = api.event.getEvents.useQuery();
   const [open, setOpen] = useState(false);
@@ -33,11 +37,13 @@ const ScannerPopUp = () => {
       if (!opts) {
         toast.success("Member Checked in Successfully!");
         return;
-      }
+      } 
       toast.success(opts.message);
     },
     onError(opts) {
-      toast.error(opts.message);
+      toast.error(opts.message, {
+        icon: "⚠️"
+      });
     },
   });
   const form = useForm({
@@ -71,18 +77,26 @@ const ScannerPopUp = () => {
         </DialogHeader>
         <div className="mt-4">
           <QrReader
+            scanDelay={300}
             constraints={{ facingMode: "environment" }}
-            onResult={async (result) => {
-              if (result) {
-                const userId = result.getText().substring(5);
-                form.setValue("userId", userId);
+            onResult={async (result, _, codeReader) => {
+              const scanProps = codeReader as CodeScanningProps;
+              if (!scanProps.processingScan && !!result) {
+                  scanProps.processingScan = true;
 
-                const eventId = form.getValues("eventId");
-                if (eventId) {
-                  await form.handleSubmit((data) => checkIn.mutate(data))();
-                } else {
-                  toast.error("Please select an event first!");
-                }
+                  try {
+                    const userId = result.getText().substring(5);
+                    form.setValue("userId", userId);
+    
+                    const eventId = form.getValues("eventId");
+                    if (eventId) {
+                      await form.handleSubmit((data) => checkIn.mutate(data))();
+                    } else {
+                      toast.error("Please select an event first!");
+                    } 
+                  } finally {
+                    setTimeout(() => scanProps.processingScan = false, 10000);
+                  }
               }
             }}
           />
