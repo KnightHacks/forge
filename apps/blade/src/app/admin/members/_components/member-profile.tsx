@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { User } from "lucide-react";
+import { FaGithub, FaGlobe, FaLinkedin } from "react-icons/fa";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
@@ -12,8 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
-import { FaGithub, FaLinkedin, FaGlobe } from "react-icons/fa";
-import Link from "next/link";
 
 import { api } from "~/trpc/react";
 
@@ -120,30 +120,33 @@ export default function MemberProfileButton({
           </div>
           <div className="flex flex-col gap-1 text-center">
             <h1 className="text-xl font-bold">Social Information</h1>
-            <div className="flex flex-row gap-4 justify-center pt-2">
+            <div className="flex flex-row justify-center gap-4 pt-2">
               <div>
-                {member.githubProfileUrl
-                  ? <Link href={member.githubProfileUrl} target="_blank">
-                      <FaGithub size={24} />
-                    </Link>
-                  : <FaGithub size={24} color="gray" />
-                  }
+                {member.githubProfileUrl ? (
+                  <Link href={member.githubProfileUrl} target="_blank">
+                    <FaGithub size={24} />
+                  </Link>
+                ) : (
+                  <FaGithub size={24} color="gray" />
+                )}
               </div>
               <div>
-                {member.linkedinProfileUrl
-                  ? <Link href={member.linkedinProfileUrl} target="_blank">
-                      <FaLinkedin size={24}/>
-                    </Link>
-                  : <FaLinkedin size={24} color="gray" />
-                  }
+                {member.linkedinProfileUrl ? (
+                  <Link href={member.linkedinProfileUrl} target="_blank">
+                    <FaLinkedin size={24} />
+                  </Link>
+                ) : (
+                  <FaLinkedin size={24} color="gray" />
+                )}
               </div>
               <div>
-                {member.websiteUrl
-                  ? <Link href={member.websiteUrl} target="_blank">
+                {member.websiteUrl ? (
+                  <Link href={member.websiteUrl} target="_blank">
                     <FaGlobe size={24} />
-                    </Link>
-                  : <FaGlobe size={24} color="gray" />
-                  }
+                  </Link>
+                ) : (
+                  <FaGlobe size={24} color="gray" />
+                )}
               </div>
             </div>
           </div>

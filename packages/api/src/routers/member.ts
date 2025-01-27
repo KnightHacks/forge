@@ -364,7 +364,7 @@ export const memberRouter = {
 
       const duesPayingMember = await db.query.DuesPayment.findFirst({
         where: (t, { eq }) => eq(t.memberId, member.id),
-      })
+      });
 
       if (event?.dues_paying && !duesPayingMember) {
         throw new TRPCError({

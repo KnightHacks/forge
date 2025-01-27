@@ -7,6 +7,7 @@ import { z } from "zod";
 import { EVENT_TAGS } from "@forge/consts/knight-hacks";
 import { InsertEventSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
+import { Checkbox } from "@forge/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +28,6 @@ import {
 } from "@forge/ui/form";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
-import { Checkbox } from "@forge/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -248,10 +248,7 @@ export function CreateEventButton() {
                     <div className="grid grid-cols-4 items-center gap-4">
                       <FormLabel className="text-right">Date</FormLabel>
                       <FormControl className="col-span-3">
-                        <Input 
-                          type="date" 
-                          {...field} 
-                        />
+                        <Input type="date" {...field} />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -509,11 +506,9 @@ export function CreateEventButton() {
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">
-                        Dues Paying?
-                      </FormLabel>
+                      <FormLabel className="text-right">Dues Paying?</FormLabel>
                       <FormControl>
-                        <Checkbox 
+                        <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
@@ -522,7 +517,6 @@ export function CreateEventButton() {
                   </FormItem>
                 )}
               />
-
             </div>
 
             <DialogFooter>
