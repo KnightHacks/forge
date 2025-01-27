@@ -187,8 +187,8 @@ function Type({
     const startTyping = () => {
       setIndex((prevDir) => {
         if (
-          direction === TypingDirection.Backward &&
-          prevDir === TypingDirection.Forward
+          (direction as number) === (TypingDirection.Backward as number) &&
+          prevDir === (TypingDirection.Forward as number)
         ) {
           clearInterval(interval);
         } else if (
