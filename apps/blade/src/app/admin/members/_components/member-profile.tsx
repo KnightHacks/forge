@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 import { FaGithub, FaLinkedin, FaGlobe } from "react-icons/fa";
+import Link from "next/link";
 
 import { api } from "~/trpc/react";
 
@@ -120,30 +121,30 @@ export default function MemberProfileButton({
           <div className="flex flex-col gap-1 text-center">
             <h1 className="text-xl font-bold">Social Information</h1>
             <div className="flex flex-row gap-4 justify-center pt-2">
-              <p>
+              <div>
                 {member.githubProfileUrl
-                  ? <a href={member.githubProfileUrl} target="_blank">
+                  ? <Link href={member.githubProfileUrl} target="_blank">
                       <FaGithub size={24} />
-                    </a>
+                    </Link>
                   : <FaGithub size={24} color="gray" />
                   }
-              </p>
-              <p>
+              </div>
+              <div>
                 {member.linkedinProfileUrl
-                  ? <a href={member.linkedinProfileUrl} target="_blank">
+                  ? <Link href={member.linkedinProfileUrl} target="_blank">
                       <FaLinkedin size={24}/>
-                    </a>
+                    </Link>
                   : <FaLinkedin size={24} color="gray" />
                   }
-              </p>
-              <p>
+              </div>
+              <div>
                 {member.websiteUrl
-                  ? <a href={member.websiteUrl} target="_blank">
+                  ? <Link href={member.websiteUrl} target="_blank">
                     <FaGlobe size={24} />
-                    </a>
+                    </Link>
                   : <FaGlobe size={24} color="gray" />
                   }
-              </p>
+              </div>
             </div>
           </div>
         </div>

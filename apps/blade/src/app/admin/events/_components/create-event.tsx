@@ -247,11 +247,11 @@ export function CreateEventButton() {
                   <FormItem className="flex flex-col">
                     <div className="grid grid-cols-4 items-center gap-4">
                       <FormLabel className="text-right">Date</FormLabel>
-                      <FormControl>
+                      <FormControl className="col-span-3">
                         <Input 
                           type="date" 
-                          placeholder="Pick a date"
-                          {...field} />
+                          {...field} 
+                        />
                       </FormControl>
                     </div>
                     <FormMessage />

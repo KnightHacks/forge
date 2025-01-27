@@ -1,16 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { CalendarIcon, Loader2, Pencil } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Pencil } from "lucide-react";
 import { z } from "zod";
 
 import type { InsertEvent } from "@forge/db/schemas/knight-hacks";
 import { EVENT_TAGS } from "@forge/consts/knight-hacks";
 import { InsertEventSchema } from "@forge/db/schemas/knight-hacks";
-import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
-import { Calendar } from "@forge/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +29,6 @@ import {
 import { Checkbox } from "@forge/ui/checkbox";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 import {
   Select,
   SelectContent,
@@ -83,6 +79,9 @@ function parseDateTime(isoString: string) {
     };
   }
 
+  dateObj.setDate(dateObj.getDate() + 1);
+  const formattedDate = dateObj.toISOString().split("T")[0];
+
   let hour24 = dateObj.getHours();
   const mins = dateObj.getMinutes();
   const amPm = hour24 >= 12 ? "PM" : ("AM" as "AM" | "PM");
@@ -95,7 +94,7 @@ function parseDateTime(isoString: string) {
   }
 
   return {
-    date: dateObj.toISOString(),
+    date: formattedDate,
     hour: hour24.toString().padStart(2, "0"),
     minute: mins.toString().padStart(2, "0"),
     amPm,
@@ -112,7 +111,6 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
     onSuccess() {
       toast.success("Event updated successfully!");
       setIsOpen(false);
-      form.reset();
     },
     onError(opts) {
       toast.error(opts.message);
@@ -123,53 +121,36 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
     },
   });
 
+  const {
+    date,
+    hour: startHour,
+    minute: startMinute,
+    amPm: startAmPm,
+  } = parseDateTime(event.start_datetime.toString());
+  const {
+    hour: endHour,
+    minute: endMinute,
+    amPm: endAmPm,
+  } = parseDateTime(event.end_datetime.toString());
+
   // Initialize form
   const form = useForm({
     schema: UpdateFormSchema,
     defaultValues: {
-      name: "",
-      description: "",
-      location: "",
-      tag: EVENT_TAGS[0],
-      date: "",
-      dues_paying: false,
-      startHour: "",
-      startMinute: "",
-      startAmPm: "PM",
-      endHour: "",
-      endMinute: "",
-      endAmPm: "PM",
+      name: event.name || "",
+      description: event.description || "",
+      location: event.location || "",
+      tag: event.tag,
+      date: date,
+      dues_paying: event.dues_paying,
+      startHour: startHour,
+      startMinute: startMinute,
+      startAmPm: startAmPm,
+      endHour: endHour,
+      endMinute: endMinute,
+      endAmPm: endAmPm,
     },
   });
-
-  // On mount or whenever `event` changes, prefill form
-  useEffect(() => {
-    const {
-      date,
-      hour: startHour,
-      minute: startMinute,
-      amPm: startAmPm,
-    } = parseDateTime(event.start_datetime.toString());
-    const {
-      hour: endHour,
-      minute: endMinute,
-      amPm: endAmPm,
-    } = parseDateTime(event.end_datetime.toString());
-    form.reset({
-      name: event.name,
-      description: event.description,
-      location: event.location,
-      tag: event.tag,
-      dues_paying: event.dues_paying,
-      date,
-      startHour,
-      startMinute,
-      startAmPm,
-      endHour,
-      endMinute,
-      endAmPm,
-    });
-  }, [event, form]);
 
   const onSubmit = form.handleSubmit((values) => {
     setIsLoading(true);
@@ -302,52 +283,14 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                 control={form.control}
                 name="date"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <div className="grid grid-cols-4 items-center gap-4">
                       <FormLabel className="text-right">Date</FormLabel>
-                      <FormControl>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "col-span-3 justify-start text-left font-normal",
-                                !field.value && "text-muted-foreground",
-                              )}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {field.value
-                                ? format(new Date(field.value), "PPP")
-                                : "Pick a date"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              // If field.value is an empty string, we pass undefined to Calendar
-                              selected={
-                                field.value ? new Date(field.value) : undefined
-                              }
-                              onSelect={(selectedDate) => {
-                                // Make sure the selected date is not null
-                                if (!selectedDate) {
-                                  toast.error("Please select a date.");
-                                  return;
-                                }
-
-                                // Make sure the selected date is in the future
-                                if (selectedDate < new Date()) {
-                                  toast.error("Please select a future date.");
-                                  return;
-                                }
-
-                                // Convert the chosen date to an ISO string
-                                field.onChange(selectedDate.toISOString());
-                              }}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
+                      <FormControl className="col-span-3">
+                        <Input
+                          type="date"
+                          {...field}
+                        />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -623,7 +566,8 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
             <DialogFooter className="flex flex-row justify-between">
               <Button
                 variant="outline"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
                   setIsOpen(false);
                 }}
               >

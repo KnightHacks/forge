@@ -48,7 +48,7 @@ export default async function MemberDashboard({
             Welcome, {member.firstName}
           </h2>
         </div>
-        {/* Dekstop View */}
+        {/* Desktop View */}
         <div className="hidden space-y-4 md:grid">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Payment status={dues.value.duesPaid} />
