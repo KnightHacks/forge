@@ -36,7 +36,7 @@ export default function Discover({ memberCount }: { memberCount: number }) {
         trigger: container,
         start: "top 50%",
         end: "bottom 20%",
-        toggleActions: "play none none reverse",
+        once: true,
       },
     });
 

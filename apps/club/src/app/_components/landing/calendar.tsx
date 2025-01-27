@@ -31,7 +31,7 @@ export default function CalendarEventsPage({
         trigger: containerRef.current,
         start: "top 60%",
         end: "bottom 20%",
-        toggleActions: "play none none reverse",
+        once: true,
       },
     });
 

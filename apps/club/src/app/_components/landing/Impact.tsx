@@ -23,7 +23,7 @@ export default function Impact() {
         trigger: containerRef.current,
         start: "top 80%",
         end: "bottom 20%",
-        toggleActions: "play none none reverse",
+        once: true,
         onEnter: () => setInView(true),
       },
     });
