@@ -37,12 +37,12 @@ const ScannerPopUp = () => {
       if (!opts) {
         toast.success("Member Checked in Successfully!");
         return;
-      } 
+      }
       toast.success(opts.message);
     },
     onError(opts) {
       toast.error(opts.message, {
-        icon: "⚠️"
+        icon: "⚠️",
       });
     },
   });
@@ -82,21 +82,21 @@ const ScannerPopUp = () => {
             onResult={async (result, _, codeReader) => {
               const scanProps = codeReader as CodeScanningProps;
               if (!scanProps.processingScan && !!result) {
-                  scanProps.processingScan = true;
+                scanProps.processingScan = true;
 
-                  try {
-                    const userId = result.getText().substring(5);
-                    form.setValue("userId", userId);
-    
-                    const eventId = form.getValues("eventId");
-                    if (eventId) {
-                      await form.handleSubmit((data) => checkIn.mutate(data))();
-                    } else {
-                      toast.error("Please select an event first!");
-                    } 
-                  } finally {
-                    setTimeout(() => scanProps.processingScan = false, 10000);
+                try {
+                  const userId = result.getText().substring(5);
+                  form.setValue("userId", userId);
+
+                  const eventId = form.getValues("eventId");
+                  if (eventId) {
+                    await form.handleSubmit((data) => checkIn.mutate(data))();
+                  } else {
+                    toast.error("Please select an event first!");
                   }
+                } finally {
+                  setTimeout(() => (scanProps.processingScan = false), 10000);
+                }
               }
             }}
           />
