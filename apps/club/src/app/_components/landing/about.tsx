@@ -96,15 +96,15 @@ export default function About() {
             ref={textRef}
             className="px-4 text-lg font-medium leading-relaxed tracking-wide text-white/80 md:px-12 md:text-2xl"
           >
-            The FitnessGram™ Pacer Test is a multistage aerobic capacity test
-            that progressively gets more difficult as it continues. The 20 meter
-            pacer test will begin in 30 seconds. Line up at the start. The
-            running speed starts slowly, but gets faster each minute after you
-            hear this signal. [beep] A single lap should be completed each time
-            you hear this sound. [ding] Remember to run in a straight line, and
-            run as long as possible. The second time you fail to complete a lap
-            before the sound, your test is over. The test will begin on the word
-            start. On your mark, get ready, start.
+            Knight Hacks is the largest Software Development and only Hackathon
+            organization at the University of Central Florida. Our mission is to
+            serve the technologist community of Florida by running various
+            workshops to sharpen technical skills, socials to help foster a
+            passionate community, and projects/mentorship programs to help
+            refine professional skills. Every October, we run our annual
+            Hackathon, welcoming hundreds of passionate students from all
+            throughout the nation to UCF for a weekend full of programming!
+            Passion is contagious, and Knight Hacks is a super spreader.
           </p>
         </div>
       </div>

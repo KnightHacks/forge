@@ -10,7 +10,6 @@ import { Calendar, List } from "rsuite";
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 
 import { formatDateRange } from "~/lib/utils";
-import NeonTkSVG from "./assets/neon-tk";
 import TerminalSVG from "./assets/terminal";
 
 import "rsuite/Calendar/styles/index.css";
@@ -122,7 +121,11 @@ export default function CalendarEventsPage({
                 compact
                 renderCell={renderCell}
                 onSelect={handleSelect}
-                className="z-10 w-full text-white"
+                className="w-full text-white"
+                monthDropdownProps={{
+                  itemClassName:
+                    "bg-[#1E293B]/80 text-white hover:bg-[#334155] cursor-pointer p-2 rounded-md transition-colors",
+                }}
               />
             </div>
           </div>
@@ -142,8 +145,7 @@ export default function CalendarEventsPage({
           )}
         </div>
       </div>
-      <TerminalSVG className="absolute -bottom-20 right-32 z-0 hidden h-auto w-full max-w-[400px] transform text-purple-400 opacity-50 md:block" />
-      <NeonTkSVG className="absolute -top-40 left-24 z-0 hidden h-auto w-full max-w-[400px] transform opacity-70 md:block" />
+      <TerminalSVG className="absolute -top-80 right-24 z-0 hidden h-auto w-full max-w-[400px] transform opacity-70 md:block" />
     </section>
   );
 }
