@@ -3,8 +3,20 @@ import { api, HydrateClient } from "~/trpc/server";
 export default function Data() {
     return (
         <HydrateClient>
-            <div>
-            </div>
+            <main className="container">
+                <div className="grid grid-cols-2 mt-10">
+                    <div className="flex flex-col">
+                        <h1 className="text-3xl font-extrabold tracking-tight">
+                            Member Demographics
+                        </h1>
+                    </div>
+                    <div className="flex flex-col">
+                        <h1 className="text-3xl font-extrabold tracking-tight">
+                            Event Demographics
+                        </h1>
+                    </div>
+                </div>
+            </main>
         </HydrateClient>
     );
 }
