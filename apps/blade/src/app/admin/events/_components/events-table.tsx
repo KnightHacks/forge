@@ -21,6 +21,7 @@ import SortButton from "../../_components/SortButton";
 import { CreateEventButton } from "./create-event";
 import { DeleteEventButton } from "./delete-event";
 import { UpdateEventButton } from "./update-event";
+import { ViewAttendanceButton } from "./view-attendance-button";
 
 type Event = ReturnEvent;
 type SortField = keyof Event;
@@ -144,7 +145,12 @@ export function EventsTable() {
 
               <TableCell>{event.location}</TableCell>
 
-              <TableCell className="text-right">{event.numAttended}</TableCell>
+              <TableCell className="text-right">
+                <ViewAttendanceButton
+                  event={event}
+                  numAttended={event.numAttended}
+                />
+              </TableCell>
 
               <TableCell className="text-right">
                 <UpdateEventButton event={event} />

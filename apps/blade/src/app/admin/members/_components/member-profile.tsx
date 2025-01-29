@@ -47,7 +47,10 @@ export default function MemberProfileButton({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-h-screen overflow-y-scroll break-all">
+      <DialogContent
+        aria-describedby={undefined}
+        className="max-h-screen overflow-y-scroll break-all"
+      >
         <DialogHeader className="flex flex-col">
           <DialogTitle className="text-center text-3xl">
             {member.firstName} {member.lastName}

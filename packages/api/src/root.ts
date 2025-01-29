@@ -7,7 +7,15 @@ import { resumeRouter } from "./routers/resume";
 import { userRouter } from "./routers/user";
 import { createTRPCRouter } from "./trpc";
 
-export const appRouter = createTRPCRouter({
+export const appRouter = createTRPCRouter<{
+  auth: typeof authRouter;
+  duesPayment: typeof duesPaymentRouter;
+  member: typeof memberRouter;
+  event: typeof eventRouter;
+  user: typeof userRouter;
+  resume: typeof resumeRouter;
+  qr: typeof qrRouter;
+}>({
   auth: authRouter,
   duesPayment: duesPaymentRouter,
   member: memberRouter,

@@ -3,6 +3,7 @@ import type { APIExternalGuildScheduledEvent } from "discord-api-types/v10";
 import type { calendar_v3 } from "googleapis";
 import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
+import { z } from "zod";
 
 import {
   CALENDAR_TIME_ZONE,
@@ -20,6 +21,7 @@ import {
   Event,
   EventAttendee,
   InsertEventSchema,
+  Member,
 } from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
@@ -47,6 +49,18 @@ export const eventRouter = {
       .groupBy(Event.id)
       .orderBy(desc(Event.start_datetime));
     return events;
+  }),
+  getAttendees: adminProcedure.input(z.string()).query(async ({ input }) => {
+    const attendees = await db
+      .select({
+        ...getTableColumns(Member),
+      })
+      .from(Event)
+      .innerJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
+      .innerJoin(Member, eq(EventAttendee.memberId, Member.id))
+      .where(eq(Event.id, input))
+      .orderBy(Member.firstName);
+    return attendees;
   }),
   createEvent: adminProcedure
     .input(
