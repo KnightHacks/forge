@@ -1,5 +1,6 @@
 import { api, HydrateClient } from "~/trpc/server";
 import MembersDuesRadialChart from "./_components/MembersDuesRadialChart";
+import GenderPieChart from "./_components/GenderPieChart";
 
 export default function Data() {
     return (
@@ -11,6 +12,7 @@ export default function Data() {
                             Member Demographics
                         </h1>
                         <MembersDuesRadialChart />
+                        <GenderPieChart />
                     </div>
                     <div className="flex flex-col">
                         <h1 className="text-3xl font-extrabold tracking-tight">
