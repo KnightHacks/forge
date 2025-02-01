@@ -1,5 +1,6 @@
 import { Button } from "@forge/ui/button";
 import Link from "next/link";
+import { SPONSOR_VIDEO_LINK } from "@forge/consts/knight-hacks";
 
 export default function Sponsor() {
     return (
@@ -8,7 +9,8 @@ export default function Sponsor() {
                 Want to sponsor <span className="text-[hsl(var(--primary-lighter))]">Knight Hacks?</span>
             </h1>
             <p className="text-sm sm:text-base text-center p-2 tracking-tighter">
-                Every year, <b className="text-[hsl(var(--primary-lighter))]">
+                Every year, 
+                <b className="text-[hsl(var(--primary-lighter))]">
                     Knight Hacks
                 </b> hosts a 36-hour event at the
                 University of Central Florida, where students come together
@@ -36,7 +38,7 @@ export default function Sponsor() {
                 <iframe
                     width="560"
                     height="315"
-                    src="https://www.youtube.com/embed/9LPTM5MrSc0?si=hBQKQ0tOL-9k_ahl"
+                    src={SPONSOR_VIDEO_LINK}
                     className="w-full h-[200px] sm:w-[560px] sm:h-[315px]"
                 ></iframe>
             </div>
