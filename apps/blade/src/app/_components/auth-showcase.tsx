@@ -44,7 +44,7 @@ export async function Auth() {
         <h1 className="w-full sm:text-[3rem] break-words text-center text-3xl font-extrabold leading-tight tracking-tight">
           Everything Knight Hacks, in one platform.
         </h1>
-        <p className="mb-2 text-lg">
+        <p className="mb-2 text-md sm:text-lg text-center">
           Manage your Knight Hacks membership, hackathon information, and more with <b>Blade</b>.
         </p>
         {!session ? (
