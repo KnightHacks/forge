@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { User } from "lucide-react";
 import { FaGithub, FaGlobe, FaLinkedin } from "react-icons/fa";
+import { MEMBER_PROFILE_ICON_SIZE } from "@forge/consts/knight-hacks";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
@@ -127,28 +128,28 @@ export default function MemberProfileButton({
               <div>
                 {member.githubProfileUrl ? (
                   <Link href={member.githubProfileUrl} target="_blank">
-                    <FaGithub size={24} />
+                    <FaGithub size={MEMBER_PROFILE_ICON_SIZE} />
                   </Link>
                 ) : (
-                  <FaGithub size={24} color="gray" />
+                  <FaGithub size={MEMBER_PROFILE_ICON_SIZE} color="gray" />
                 )}
               </div>
               <div>
                 {member.linkedinProfileUrl ? (
                   <Link href={member.linkedinProfileUrl} target="_blank">
-                    <FaLinkedin size={24} />
+                    <FaLinkedin size={MEMBER_PROFILE_ICON_SIZE} />
                   </Link>
                 ) : (
-                  <FaLinkedin size={24} color="gray" />
+                  <FaLinkedin size={MEMBER_PROFILE_ICON_SIZE} color="gray" />
                 )}
               </div>
               <div>
                 {member.websiteUrl ? (
                   <Link href={member.websiteUrl} target="_blank">
-                    <FaGlobe size={24} />
+                    <FaGlobe size={MEMBER_PROFILE_ICON_SIZE} />
                   </Link>
                 ) : (
-                  <FaGlobe size={24} color="gray" />
+                  <FaGlobe size={MEMBER_PROFILE_ICON_SIZE} color="gray" />
                 )}
               </div>
             </div>

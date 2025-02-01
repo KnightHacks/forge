@@ -12,7 +12,8 @@ export default function Sponsor() {
                     Knight Hacks
                 </b> hosts a 36-hour event at the
                 University of Central Florida, where students come together
-                to create and learn. We aim to create a 
+                to create and learn, by developing a project over the
+                course of a weekend. We aim to create a 
                 <b className="text-[hsl(var(--primary-lighter))]"> {" "}
                 diverse, welcoming, and inclusive community</b> for 
                 anyone interested in technology.
@@ -24,21 +25,7 @@ export default function Sponsor() {
                 </b> brilliant students with a passion for building, and
                 gain brand recognition. See below to learn more about us!
             </p>
-            <div className="flex flex-col justify-center mx-auto mt-10">
-                <p className="text-sm sm:text-base text-center p-2 tracking-tighter">
-                    <i>View a comprehensive overview of why you should sponsor us:</i>
-                </p>
-                <div className="flex flex-col justify-center mx-auto">
-                        <Link href={"/sponsorship-packet.pdf"}>
-                            <Button>
-                                <h1 className="font-bold text-2xl">
-                                    Sponsorship Package
-                                </h1>
-                            </Button>
-                        </Link>
-                </div>
-            </div>
-            <div className="flex flex-col justify-center mx-auto mt-10">
+            <div className="flex flex-col justify-center mx-auto mt-6">
                 <p className="text-sm sm:text-base text-center p-2 tracking-tighter">
                     <i>View how <b className="text-[hsl(var(--primary-lighter))]">
                         Knight Hacks
@@ -50,8 +37,25 @@ export default function Sponsor() {
                     width="560"
                     height="315"
                     src="https://www.youtube.com/embed/9LPTM5MrSc0?si=hBQKQ0tOL-9k_ahl"
-                    className="w-full h-full sm:w-[560px] sm:h-[315px]"
+                    className="w-full h-[200px] sm:w-[560px] sm:h-[315px]"
                 ></iframe>
+            </div>
+            <div className="flex flex-col justify-center mx-auto mt-10">
+                <p className="text-sm sm:text-base text-center p-2 tracking-tighter">
+                    <i>Want to make dreams? View how you can help make {" "}
+                        <b className="text-[hsl(var(--primary-lighter))]">Knight Hacks</b>
+                        {" "} possible:
+                    </i>
+                </p>
+                <div className="flex flex-col justify-center mx-auto">
+                        <Link href={"/sponsorship-packet.pdf"}>
+                            <Button>
+                                <h1 className="font-bold text-2xl">
+                                    Sponsorship Package
+                                </h1>
+                            </Button>
+                        </Link>
+                </div>
             </div>
         </main>
     );
