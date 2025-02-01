@@ -41,9 +41,12 @@ export async function Auth() {
           )}
         </div>
         <Separator className="absolute top-16 sm:top-20" />
-        <h1 className="mb-2 w-full break-words text-center text-3xl font-extrabold leading-tight tracking-tight sm:text-[3rem] md:w-[600px]">
-          Everything Knight Hacks. All-in-one platform.
+        <h1 className="w-full sm:text-[3rem] break-words text-center text-3xl font-extrabold leading-tight tracking-tight">
+          Everything Knight Hacks, in one platform.
         </h1>
+        <p className="mb-2 text-lg">
+          Manage your Knight Hacks membership, hackathon information, and more with <b>Blade</b>.
+        </p>
         {!session ? (
           <form>
             <Button
