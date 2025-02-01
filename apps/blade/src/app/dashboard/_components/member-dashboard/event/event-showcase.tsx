@@ -136,7 +136,7 @@ export function EventShowcase({
               <DialogTitle>Past Events Attended</DialogTitle>
             </DialogHeader>
             <div className="max-h-96 space-y-4 overflow-y-auto">
-              {events.slice(1).map((event) => (
+              {events.map((event) => (
                 <Card key={event.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
