@@ -77,7 +77,6 @@ const ScannerPopUp = () => {
         </DialogHeader>
         <div className="mt-4">
           <QrReader
-            scanDelay={300}
             constraints={{ facingMode: "environment" }}
             onResult={async (result, _, codeReader) => {
               const scanProps = codeReader as CodeScanningProps;
@@ -95,7 +94,7 @@ const ScannerPopUp = () => {
                     toast.error("Please select an event first!");
                   }
                 } finally {
-                  setTimeout(() => (scanProps.processingScan = false), 10000);
+                  setTimeout(() => (scanProps.processingScan = false), 3000);
                 }
               }
             }}
