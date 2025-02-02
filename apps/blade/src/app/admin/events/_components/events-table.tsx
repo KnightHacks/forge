@@ -52,17 +52,24 @@ export function EventsTable() {
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-2 border-b pb-4">
-        <div className="relative w-full">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search events..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
+      <div className="flex items-center justify-between gap-2 border-b pb-2">
+        <div className="flex flex-col w-full">
+          <div className="flex items-center gap-2 pb-2">
+            <div className="relative w-full">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search events..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <CreateEventButton />
+          </div>
+          <div className="whitespace-nowrap text-sm text-center font-bold">
+            Returned {sortedEvents.length} events
+          </div>
         </div>
-        <CreateEventButton />
       </div>
 
       <Table>
