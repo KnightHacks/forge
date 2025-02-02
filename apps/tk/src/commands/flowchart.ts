@@ -1,5 +1,11 @@
 import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { 
+  CS_FLOWCHART_URL,
+  IT_FLOWCHART_URL,
+  CPE_FLOWCHART_URL,
+  DS_FLOWCHART_URL
+ } from "../consts";
 
 export const data = new SlashCommandBuilder()
   .setName("flowchart")
@@ -44,16 +50,16 @@ export async function execute(interaction: CommandInteraction) {
     major // images hosted on imgur... lol
   ) {
     case "Computer Science":
-      flowchartState = "https://blade.knighthacks.org/flowcharts/bs-cs.png";
+      flowchartState = CS_FLOWCHART_URL;
       break;
     case "Information Technology":
-      flowchartState = "https://blade.knighthacks.org/flowcharts/bs-it.png";
+      flowchartState = IT_FLOWCHART_URL;
       break;
     case "Computer Engineering":
-      flowchartState = "https://blade.knighthacks.org/flowcharts/bs-cpe.png";
+      flowchartState = CPE_FLOWCHART_URL;
       break;
     case "Data Science":
-      flowchartState = "https://blade.knighthacks.org/flowcharts/bs-ds.png";
+      flowchartState = DS_FLOWCHART_URL;
       break;
     default:
       flowchartState = ""; // TODO
