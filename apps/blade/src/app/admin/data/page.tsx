@@ -1,8 +1,29 @@
-import { api, HydrateClient } from "~/trpc/server";
-import MembersDuesRadialChart from "./_components/MembersDuesRadialChart";
-import GenderPieChart from "./_components/GenderPieChart";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-export default function Data() {
+import { auth } from "@forge/auth";
+
+import { SIGN_IN_PATH } from "~/consts";
+import { api, HydrateClient } from "~/trpc/server";
+import MemberDemographics from "./_components/MemberDemographics";
+
+export const metadata: Metadata = {
+    title: "Blade | Data",
+    description: "View member and event demographics."
+};
+
+export default async function Data() {
+    // authentication
+    const session = await auth();
+    if (!session) {
+      redirect(SIGN_IN_PATH);
+    }
+
+    const isAdmin = await api.auth.getAdminStatus();
+    if (!isAdmin) {
+      redirect("/");
+    }
+
     return (
         <HydrateClient>
             <main className="container">
@@ -11,8 +32,7 @@ export default function Data() {
                         <h1 className="text-3xl font-extrabold tracking-tight">
                             Member Demographics
                         </h1>
-                        <MembersDuesRadialChart />
-                        <GenderPieChart />
+                        <MemberDemographics />
                     </div>
                     <div className="flex flex-col">
                         <h1 className="text-3xl font-extrabold tracking-tight">
