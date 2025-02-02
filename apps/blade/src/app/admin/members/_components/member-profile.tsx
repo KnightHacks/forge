@@ -118,7 +118,11 @@ export default function MemberProfileButton({
               </p>
               <p>
                 <b className="text-gray-400">Race Or Ethnicity:</b>{" "}
-                {member.raceOrEthnicity}
+                {member.raceOrEthnicity === 
+                  "Native Hawaiian or Other Pacific Islander" ? "Native Hawaiian/Pacific Islander" :
+                  member.raceOrEthnicity === "Hispanic / Latino / Spanish Origin" ? "Hispanic/Latino" :
+                  member.raceOrEthnicity === "Native American or Alaskan Native" ? "Native American/Alaskan Native" :
+                  member.raceOrEthnicity}
               </p>
             </div>
           </div>
