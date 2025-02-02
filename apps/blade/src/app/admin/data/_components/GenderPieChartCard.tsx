@@ -24,6 +24,8 @@ type ChartConfig = Record<string, {
     color?: string;
   }>;;
 
+const PIE_COLORS = ["#f72585", "#b5179e", "#7209b7", "#3a0ca3", "#4361ee", "#4895ef", "#4cc9f0", "#560bad", "#480ca8"];
+
 export default function GenderPieChartCard({ members } : { members:Member[] }) {
   // get amount of each gender
   const genderCounts: Record<string, number> = {};
@@ -39,16 +41,11 @@ export default function GenderPieChartCard({ members } : { members:Member[] }) {
   const baseConfig: ChartConfig = {
     members: { label: "Members" },
   };
-  const genderMap: Record<string, { label: string; color: string }> = {
-    "Prefer not to disclose": { label: "Prefer not to answer", color: "#f72585" },
-    "Prefer to self-describe": { label: "Prefer to self-describe", color: "#b5179e" },
-    "Non-binary": { label: "Non-binary", color: "#7209b7" },
-    "Woman": { label: "Woman", color: "#3a0ca3" },
-    "Man": { label: "Man", color: "#4361ee" },
-  };
+  let colorIdx = 0;
   members.forEach(({ gender }) => {
-    if (gender && !baseConfig[gender] && genderMap[gender]) {
-      baseConfig[gender] = genderMap[gender];
+    if (gender && !baseConfig[gender]) {
+      baseConfig[gender] = { label: gender, color: PIE_COLORS[colorIdx % PIE_COLORS.length]};
+      colorIdx++;
     }
   });
 
