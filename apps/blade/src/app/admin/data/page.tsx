@@ -27,14 +27,14 @@ export default async function Data() {
     return (
         <HydrateClient>
             <main className="container">
-                <div className="grid grid-cols-2 mt-10">
-                    <div className="flex flex-col gap-8">
+                <div className="grid lg:grid-cols-2 md:grid-rows-2 mt-10">
+                    <div className="border-2 border-yellow-400 gap-8">
                         <h1 className="text-3xl font-extrabold tracking-tight">
                             Member Demographics
                         </h1>
                         <MemberDemographics />
                     </div>
-                    <div className="flex flex-col">
+                    <div className="border-2 border-yellow-400">
                         <h1 className="text-3xl font-extrabold tracking-tight">
                             Event Demographics
                         </h1>
