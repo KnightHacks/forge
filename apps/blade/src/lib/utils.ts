@@ -24,3 +24,33 @@ export const formatDateRange = (startDate: Date, endDate: Date) => {
   });
   return `${start} - ${end}`;
 };
+
+export type EventTag =
+| "GBM"
+| "Social"
+| "Kickstart"
+| "Project Launch"
+| "Hello World"
+| "Sponsorship"
+| "Tech Exploration"
+| "Class Support"
+| "Workshop"
+| "OPS"
+| "Hackathon";
+
+export const getTagColor = (tag: EventTag) => {
+  const colors: Record<EventTag, string> = {
+    GBM: "bg-blue-100 text-blue-800",
+    Social: "bg-pink-100 text-pink-800",
+    Kickstart: "bg-green-100 text-green-800",
+    "Project Launch": "bg-purple-100 text-purple-800",
+    "Hello World": "bg-yellow-100 text-yellow-800",
+    Sponsorship: "bg-orange-100 text-orange-800",
+    "Tech Exploration": "bg-cyan-100 text-cyan-800",
+    "Class Support": "bg-indigo-100 text-indigo-800",
+    Workshop: "bg-teal-100 text-teal-800",
+    OPS: "bg-purple-100 text-purple-800",
+    Hackathon: "bg-violet-100 text-violet-800",
+  };
+  return colors[tag];
+};
