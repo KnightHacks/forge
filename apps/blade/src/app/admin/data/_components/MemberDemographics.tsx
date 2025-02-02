@@ -11,15 +11,12 @@ export default function MemberDemographics() {
 
     return (
         <div className="my-8">
-            {members && duesPayingStatus ? 
+            {members && duesPayingStatus && 
             <div className="grid grid-cols-2 gap-4">
                 <DuesPercentCard numMembers={members.length} numDuesPaying={duesPayingStatus.length} /> 
-                {/* <div className="flex flex-row sm:flex-col gap-4"> */}
-                    <GenderPieChartCard members={members} />
-                    <RaceOrEthnicityPieChartCard members={members} />
-                {/* </div> */}
-            </div>
-            : <p>error</p>}
+                <GenderPieChartCard members={members} />
+                <RaceOrEthnicityPieChartCard members={members} />
+            </div>}
         </div>
     );
 }
