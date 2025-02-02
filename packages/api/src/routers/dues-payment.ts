@@ -81,7 +81,7 @@ export const duesPaymentRouter = {
       const session = await stripe.checkout.sessions.retrieve(input);
 
       await log({
-        message: `A member has successfully paid their dues.`,
+        message: `A member has successfully paid their dues. ${session.amount_total}`,
         title: "Dues Paid",
         color: "success_green",
         userId: ctx.session.user.discordUserId,

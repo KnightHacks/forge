@@ -13,7 +13,7 @@ export default function Sponsor() {
         </span>
       </h1>
       <p className="p-2 text-center text-sm tracking-tighter sm:text-base">
-        Every year,
+        Every year,{" "}
         <b className="text-[hsl(var(--primary-lighter))]">Knight Hacks</b> hosts
         a 36-hour event at the University of Central Florida, where students
         come together to create and learn, by developing a project over the
@@ -54,7 +54,7 @@ export default function Sponsor() {
           </i>
         </p>
         <div className="mx-auto flex flex-col justify-center">
-          <Link href={"/sponsorship-packet.pdf"}>
+          <Link href={"/prospectus.pdf"}>
             <Button>
               <h1 className="text-2xl font-bold">Sponsorship Package</h1>
             </Button>
