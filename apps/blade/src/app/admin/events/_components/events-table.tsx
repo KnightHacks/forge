@@ -22,6 +22,7 @@ import { CreateEventButton } from "./create-event";
 import { DeleteEventButton } from "./delete-event";
 import { UpdateEventButton } from "./update-event";
 import { ViewAttendanceButton } from "./view-attendance-button";
+import { EventDetailsButton } from "./event-details";
 
 type Event = ReturnEvent;
 type SortField = keyof Event;
@@ -132,10 +133,13 @@ export function EventsTable() {
                 setSortOrder={setSortOrder}
               />
             </TableHead>
-            <TableHead className="text-right">
+            <TableHead className="text-center">
+              <Label>Event Details</Label>
+            </TableHead>
+            <TableHead className="text-center">
               <Label>Update</Label>
             </TableHead>
-            <TableHead className="text-right">
+            <TableHead className="text-center">
               <Label>Delete</Label>
             </TableHead>
           </TableRow>
@@ -162,11 +166,17 @@ export function EventsTable() {
                 />
               </TableCell>
 
-              <TableCell className="text-right">
+              <TableCell className="text-center">
+                <EventDetailsButton
+                  event={event}
+                />
+              </TableCell>
+
+              <TableCell className="text-center">
                 <UpdateEventButton event={event} />
               </TableCell>
 
-              <TableCell className="text-right">
+              <TableCell className="text-center">
                 <DeleteEventButton event={event} />
               </TableCell>
             </TableRow>
@@ -179,7 +189,7 @@ export function EventsTable() {
             <TableCell className="text-right">
               {sortedEvents.reduce((sum, event) => sum + event.numAttended, 0)}
             </TableCell>
-            <TableCell colSpan={2} />
+            <TableCell colSpan={3} />
           </TableRow>
         </TableFooter>
       </Table>
