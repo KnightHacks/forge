@@ -56,7 +56,9 @@ export default async function MemberDashboard({
             <EventNumber size={events.value.length} />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <MemberInfo />
+            <div>
+              <MemberInfo />
+            </div>
             <EventShowcase events={events.value} />
           </div>
         </div>
