@@ -35,15 +35,11 @@ export async function execute(interaction: CommandInteraction) {
       },
       {
         name: "/chat",
-        value: "Chat with the T.K!",
+        value: "Chat with T.K!",
       },
       {
         name: "/check_points",
         value: "Checks your Knight Hacks points!",
-      },
-      {
-        name: "/countdown",
-        value: "Shows the countdown until Knight Hacks VII",
       },
       {
         name: "/dog",
