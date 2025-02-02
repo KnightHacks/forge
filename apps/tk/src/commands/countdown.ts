@@ -8,7 +8,7 @@ import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 export const data = new SlashCommandBuilder()
   .setName("countdown")
   .setDescription(
-    "Count down the days until our grand adventure, Knight Hacks VII!",
+    "Count down the days until Knight Hacks VIII!",
   );
 
 export async function execute(interaction: CommandInteraction) {
@@ -16,7 +16,7 @@ export async function execute(interaction: CommandInteraction) {
   const today = new Date();
   // Add 4 hours to the date to account for the time difference (THE VPS IS FOUR HOURS BEHIND)
   today.setHours(today.getHours());
-  const KH = new Date("October 4, 2024 17:00:00");
+  const KH = new Date("October 4, 2025 17:00:00");
 
   // Calculate the differences in time
   const secondsDiff = (KH.getTime() - today.getTime()) / 1000;
@@ -27,11 +27,11 @@ export async function execute(interaction: CommandInteraction) {
   // Create an embed message for aesthetics
   const countdownEmbed = new EmbedBuilder()
     .setColor(0x33e0ff)
-    .setTitle("Knight Hacks VII Countdown")
+    .setTitle("Knight Hacks VIII Countdown")
     .setDescription(
-      "Count down the days until our grand adventure, Knight Hacks VII! Get excited, scallywags!",
+      "Count down until Knight Hacks VIII!",
     )
-    .setURL("https://2024.knighthacks.org")
+    .setURL("https://blade.knighthacks.org")
     .addFields(
       {
         name: "Days",
