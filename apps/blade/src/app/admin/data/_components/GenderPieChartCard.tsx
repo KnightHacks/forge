@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "@forge/ui/card";
 
-// import type { ChartConfig } from "@forge/ui/chart";
 import {
   ChartContainer,
   ChartTooltip,
@@ -50,7 +49,6 @@ export default function GenderPieChartCard({ members } : { members:Member[] }) {
   members.forEach(({ gender }) => {
     if (gender && !baseConfig[gender] && genderMap[gender]) {
       baseConfig[gender] = genderMap[gender];
-      console.log("CONFIG ENTRY\n" + JSON.stringify(baseConfig[gender]));
     }
   });
 

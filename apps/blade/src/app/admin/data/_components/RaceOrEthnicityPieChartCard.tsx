@@ -54,7 +54,6 @@ export default function RaceOrEthnicityPieChartCard({ members } : { members:Memb
   members.forEach(({ raceOrEthnicity }) => {
     if (raceOrEthnicity && !baseConfig[raceOrEthnicity] && raceOrEthnicityMap[raceOrEthnicity]) {
       baseConfig[raceOrEthnicity] = raceOrEthnicityMap[raceOrEthnicity];
-      console.log("CONFIG ENTRY\n" + JSON.stringify(baseConfig[raceOrEthnicity]));
     }
   });
 
