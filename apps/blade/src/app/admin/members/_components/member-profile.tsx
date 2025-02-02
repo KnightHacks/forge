@@ -101,7 +101,15 @@ export default function MemberProfileButton({
               </p>
               <p>
                 <b className="text-gray-400">Level Of Study:</b>{" "}
-                {member.levelOfStudy}
+                {member.levelOfStudy === 
+                "Undergraduate University (2 year - community college or similar)" ?
+                  "Undergraduate University (2 year)" : 
+                  member.levelOfStudy === 
+                  "Graduate University (Masters, Professional, Doctoral, etc)" ?
+                  "Graduate University (Masters/PhD)" : 
+                  member.levelOfStudy === "Other Vocational / Trade Program or Apprenticeship" ?
+                  "Vocational/Trade School" : member.levelOfStudy
+                }
               </p>
               <p>
                 <b className="text-gray-400">Graduation Date:</b>{" "}
