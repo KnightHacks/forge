@@ -1,5 +1,6 @@
 import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { TK_FOX_URL } from "../consts";
 import JIMP from "jimp";
 
 // FOX COMMAND
@@ -12,7 +13,7 @@ export const data = new SlashCommandBuilder()
   .setName("fox")
   .setDescription("What does the fox say?");
 
-const url = "https://randomfox.ca/floof/";
+const url = TK_FOX_URL;
 export async function execute(interaction: CommandInteraction) {
   try {
     const res = await fetch(url);

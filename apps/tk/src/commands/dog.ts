@@ -1,5 +1,6 @@
 import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { TK_DOG_URL } from "../consts";
 import JIMP from "jimp";
 
 // DOG COMMAND
@@ -12,7 +13,7 @@ export const data = new SlashCommandBuilder()
   .setName("dog")
   .setDescription("Bark!");
 
-const url = "https://dog.ceo/api/breeds/image/random";
+const url = TK_DOG_URL;
 export async function execute(interaction: CommandInteraction) {
   try {
     const res = await fetch(url);

@@ -1,5 +1,6 @@
 import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
+import { BUBBLE_WRAP_TEXT } from "../consts";
 
 export const data = new SlashCommandBuilder()
   .setName("bubblewrap")
@@ -10,6 +11,6 @@ export async function execute(interaction: CommandInteraction) {
 
   await interaction.reply(
     "Here you go!\n" +
-      "||pop||||pop||||pop||||pop||||pop||||pop||\n".repeat(NUM_ROWS),
+      BUBBLE_WRAP_TEXT.repeat(NUM_ROWS),
   );
 }

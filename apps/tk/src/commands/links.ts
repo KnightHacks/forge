@@ -1,5 +1,6 @@
 import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
+import { TK_KNIGHTHACKS_LINKTREE_URL } from "../consts";
 
 import { LINKS } from "../consts";
 
@@ -13,7 +14,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: CommandInteraction) {
   const embed = {
     title: "Links",
-    url: "https://linktr.ee/knighthacks",
+    url: TK_KNIGHTHACKS_LINKTREE_URL,
     description: "Click any of these links to get started with KnightHacks!",
     color: 0x33e0ff,
     fields: [

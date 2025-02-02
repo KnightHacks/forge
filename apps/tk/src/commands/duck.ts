@@ -1,5 +1,6 @@
 import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { TK_DUCK_URL } from "../consts";
 import JIMP from "jimp";
 
 // DUCK COMMAND
@@ -14,7 +15,7 @@ export const data = new SlashCommandBuilder()
   .setName("duck")
   .setDescription("Quack!");
 
-const url = "https://random-d.uk/api/v2/quack";
+const url = TK_DUCK_URL;
 export async function execute(interaction: CommandInteraction) {
   try {
     const res = await fetch(url);
