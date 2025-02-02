@@ -37,6 +37,7 @@ export default function MemberProfileButton({
   }, [utils.member, member]);
 
   const memberSince = new Date(member.dateCreated ?? new Date());
+  memberSince.setDate(memberSince.getDate() + 1);
   const memberGradDate = new Date(member.gradDate);
   const dateOfBirth = new Date(member.dob);
 
@@ -58,7 +59,7 @@ export default function MemberProfileButton({
           </DialogTitle>
           <p className="m-0 p-0 text-center text-sm">
             Member since {memberSince.getMonth() + 1}/
-            {memberSince.getDate() + 1}/{memberSince.getFullYear()}
+            {memberSince.getDate()}/{memberSince.getFullYear()}
           </p>
         </DialogHeader>
 
