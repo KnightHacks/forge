@@ -6,7 +6,7 @@ export default function DuesPercentCard({numMembers, numDuesPaying} : {numMember
     const percentDuesPaying = numDuesPaying / numMembers * 100;
 
     return (
-        <Card>
+        <Card className="col-span-2">
             <CardHeader>
                 <CardTitle><text className="text-xl">Dues Payment</text></CardTitle>
             </CardHeader>
