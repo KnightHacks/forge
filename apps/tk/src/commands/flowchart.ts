@@ -44,16 +44,16 @@ export async function execute(interaction: CommandInteraction) {
     major // images hosted on imgur... lol
   ) {
     case "Computer Science":
-      flowchartState = "https://i.imgur.com/yydsAcX.png";
+      flowchartState = "https://blade.knighthacks.org/flowcharts/bs-cs.png";
       break;
     case "Information Technology":
-      flowchartState = "https://i.imgur.com/o87vu16.png";
+      flowchartState = "https://blade.knighthacks.org/flowcharts/bs-it.png";
       break;
     case "Computer Engineering":
-      flowchartState = "https://i.imgur.com/OxCyt2j.png";
+      flowchartState = "https://blade.knighthacks.org/flowcharts/bs-cpe.png";
       break;
     case "Data Science":
-      flowchartState = "https://i.imgur.com/pohVTQA.png";
+      flowchartState = "https://blade.knighthacks.org/flowcharts/bs-ds.png";
       break;
     default:
       flowchartState = ""; // TODO
