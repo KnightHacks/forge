@@ -73,7 +73,8 @@ export function EventsTable() {
             <CreateEventButton />
           </div>
           <div className="whitespace-nowrap text-sm text-center font-bold">
-            Returned {sortedEvents.length} events
+            Returned {sortedEvents.length} {" "}
+            {sortedEvents.length === 1 ? "event" : "events"}
           </div>
         </div>
       </div>
