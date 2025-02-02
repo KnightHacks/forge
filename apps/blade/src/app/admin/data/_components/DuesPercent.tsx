@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
-export default function DuesPercentCard({numMembers, numDuesPaying} : {numMembers: number, numDuesPaying: number}) {
+export default function DuesPercent({numMembers, numDuesPaying} : {numMembers: number, numDuesPaying: number}) {
     const percentDuesPaying = numDuesPaying / numMembers * 100;
 
     return (

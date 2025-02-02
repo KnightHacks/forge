@@ -27,7 +27,7 @@ type ChartConfig = Record<string, {
 
 const PIE_COLORS = ["#f72585", "#b5179e", "#7209b7", "#3a0ca3", "#4361ee", "#4895ef", "#4cc9f0", "#560bad", "#480ca8"];
 
-export default function RaceOrEthnicityPieChartCard({ members } : { members:Member[] }) {
+export default function RaceOrEthnicityPie({ members } : { members:Member[] }) {
   // get amount of each raceOrEthnicity
   const raceOrEthnicityCounts: Record<string, number> = {};
   members.forEach(({ raceOrEthnicity }) => {
