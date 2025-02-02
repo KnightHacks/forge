@@ -12,12 +12,12 @@ export default function MemberDemographics() {
     return (
         <div className="my-8">
             {members && duesPayingStatus ? 
-            <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 <DuesPercentCard numMembers={members.length} numDuesPaying={duesPayingStatus.length} /> 
-                <div className="flex flex-row sm:flex-col gap-4">
+                {/* <div className="flex flex-row sm:flex-col gap-4"> */}
                     <GenderPieChartCard members={members} />
                     <RaceOrEthnicityPieChartCard members={members} />
-                </div>
+                {/* </div> */}
             </div>
             : <p>error</p>}
         </div>
