@@ -50,6 +50,12 @@ export function EventsTable() {
     return 0;
   });
 
+  const getFormattedDate = (start_datetime: string | Date) => {
+    const date = new Date(start_datetime);
+    date.setDate(date.getDate() + 1);
+    return date.toLocaleDateString();
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between gap-2 border-b pb-2">
@@ -143,11 +149,7 @@ export function EventsTable() {
               <TableCell className="text-center">{event.tag}</TableCell>
 
               <TableCell className="text-center">
-                {typeof event.start_datetime === "string"
-                  ? new Date(
-                      event.start_datetime as string,
-                    ).toLocaleDateString()
-                  : event.start_datetime.toLocaleDateString()}
+                {getFormattedDate(event.start_datetime)}
               </TableCell>
 
               <TableCell>{event.location}</TableCell>
