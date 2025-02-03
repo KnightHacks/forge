@@ -202,7 +202,7 @@ export function EventsTable() {
               colSpan={8}
             >
               Previous Events
-          </TableCell>
+            </TableCell>
           </TableRow>
           {previousEvents.map((event) => (
             <TableRow key={event.id}>
