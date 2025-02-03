@@ -16,14 +16,14 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
+import { getFormattedDate } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import SortButton from "../../_components/SortButton";
 import { CreateEventButton } from "./create-event";
 import { DeleteEventButton } from "./delete-event";
+import { EventDetailsButton } from "./event-details";
 import { UpdateEventButton } from "./update-event";
 import { ViewAttendanceButton } from "./view-attendance-button";
-import { EventDetailsButton } from "./event-details";
-import { getFormattedDate } from "~/lib/utils";
 
 type Event = ReturnEvent;
 type SortField = keyof Event;
@@ -55,14 +55,18 @@ export function EventsTable() {
   const upcomingDate = new Date();
   upcomingDate.setHours(0);
   upcomingDate.setDate(upcomingDate.getDate() - 1);
-  const upcomingEvents = [...sortedEvents].filter((event) => event.start_datetime >= upcomingDate);
+  const upcomingEvents = [...sortedEvents].filter(
+    (event) => event.start_datetime >= upcomingDate,
+  );
 
-  const previousEvents = [...sortedEvents].filter((event) => event.start_datetime < upcomingDate);
+  const previousEvents = [...sortedEvents].filter(
+    (event) => event.start_datetime < upcomingDate,
+  );
 
   return (
     <div>
       <div className="flex items-center justify-between gap-2 border-b pb-2">
-        <div className="flex flex-col w-full">
+        <div className="flex w-full flex-col">
           <div className="flex items-center gap-2 pb-2">
             <div className="relative w-full">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -75,8 +79,8 @@ export function EventsTable() {
             </div>
             <CreateEventButton />
           </div>
-          <div className="whitespace-nowrap text-sm text-center font-bold">
-            Returned {sortedEvents.length} {" "}
+          <div className="whitespace-nowrap text-center text-sm font-bold">
+            Returned {sortedEvents.length}{" "}
             {sortedEvents.length === 1 ? "event" : "events"}
           </div>
         </div>
@@ -147,14 +151,12 @@ export function EventsTable() {
           </TableRow>
         </TableHeader>
 
-        <TableRow>
-          <TableCell 
-            className="text- sm:text-center font-bold bg-muted/50"
+        <TableCell
+            className="text- bg-muted/50 font-bold sm:text-center"
             colSpan={8}
           >
             Upcoming Events
           </TableCell>
-        </TableRow>
 
         <TableBody>
           {upcomingEvents.map((event) => (
@@ -178,9 +180,7 @@ export function EventsTable() {
               </TableCell>
 
               <TableCell className="text-center">
-                <EventDetailsButton
-                  event={event}
-                />
+                <EventDetailsButton event={event} />
               </TableCell>
 
               <TableCell className="text-center">
@@ -194,14 +194,12 @@ export function EventsTable() {
           ))}
         </TableBody>
 
-        <TableRow>
-          <TableCell 
-            className="text-left sm:text-center font-bold bg-muted/50"
+        <TableCell
+            className="bg-muted/50 text-left font-bold sm:text-center"
             colSpan={8}
           >
             Previous Events
-          </TableCell>
-        </TableRow>
+        </TableCell>
 
         <TableBody>
           {previousEvents.map((event) => (
@@ -225,9 +223,7 @@ export function EventsTable() {
               </TableCell>
 
               <TableCell className="text-center">
-                <EventDetailsButton
-                  event={event}
-                />
+                <EventDetailsButton event={event} />
               </TableCell>
 
               <TableCell className="text-center">

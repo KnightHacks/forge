@@ -7,9 +7,7 @@ import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 // Create the command
 export const data = new SlashCommandBuilder()
   .setName("countdown")
-  .setDescription(
-    "Count down the days until Knight Hacks VIII!",
-  );
+  .setDescription("Count down the days until Knight Hacks VIII!");
 
 export async function execute(interaction: CommandInteraction) {
   // Grab today's date and the date of Knight Hacks
@@ -28,9 +26,7 @@ export async function execute(interaction: CommandInteraction) {
   const countdownEmbed = new EmbedBuilder()
     .setColor(0x33e0ff)
     .setTitle("Knight Hacks VIII Countdown")
-    .setDescription(
-      "Count down until Knight Hacks VIII!",
-    )
+    .setDescription("Count down until Knight Hacks VIII!")
     .setURL("https://blade.knighthacks.org")
     .addFields(
       {

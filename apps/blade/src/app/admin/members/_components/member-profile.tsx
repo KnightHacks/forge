@@ -58,8 +58,8 @@ export default function MemberProfileButton({
             {member.firstName} {member.lastName}
           </DialogTitle>
           <p className="m-0 p-0 text-center text-sm">
-            Member since {memberSince.getMonth() + 1}/
-            {memberSince.getDate()}/{memberSince.getFullYear()}
+            Member since {memberSince.getMonth() + 1}/{memberSince.getDate()}/
+            {memberSince.getFullYear()}
           </p>
         </DialogHeader>
 
@@ -102,15 +102,16 @@ export default function MemberProfileButton({
               </p>
               <p>
                 <b className="text-gray-400">Level Of Study:</b>{" "}
-                {member.levelOfStudy === 
-                "Undergraduate University (2 year - community college or similar)" ?
-                  "Undergraduate University (2 year)" : 
-                  member.levelOfStudy === 
-                  "Graduate University (Masters, Professional, Doctoral, etc)" ?
-                  "Graduate University (Masters/PhD)" : 
-                  member.levelOfStudy === "Other Vocational / Trade Program or Apprenticeship" ?
-                  "Vocational/Trade School" : member.levelOfStudy
-                }
+                {member.levelOfStudy ===
+                "Undergraduate University (2 year - community college or similar)"
+                  ? "Undergraduate University (2 year)"
+                  : member.levelOfStudy ===
+                      "Graduate University (Masters, Professional, Doctoral, etc)"
+                    ? "Graduate University (Masters/PhD)"
+                    : member.levelOfStudy ===
+                        "Other Vocational / Trade Program or Apprenticeship"
+                      ? "Vocational/Trade School"
+                      : member.levelOfStudy}
               </p>
               <p>
                 <b className="text-gray-400">Graduation Date:</b>{" "}
@@ -127,11 +128,16 @@ export default function MemberProfileButton({
               </p>
               <p>
                 <b className="text-gray-400">Race Or Ethnicity:</b>{" "}
-                {member.raceOrEthnicity === 
-                  "Native Hawaiian or Other Pacific Islander" ? "Native Hawaiian/Pacific Islander" :
-                  member.raceOrEthnicity === "Hispanic / Latino / Spanish Origin" ? "Hispanic/Latino" :
-                  member.raceOrEthnicity === "Native American or Alaskan Native" ? "Native American/Alaskan Native" :
-                  member.raceOrEthnicity}
+                {member.raceOrEthnicity ===
+                "Native Hawaiian or Other Pacific Islander"
+                  ? "Native Hawaiian/Pacific Islander"
+                  : member.raceOrEthnicity ===
+                      "Hispanic / Latino / Spanish Origin"
+                    ? "Hispanic/Latino"
+                    : member.raceOrEthnicity ===
+                        "Native American or Alaskan Native"
+                      ? "Native American/Alaskan Native"
+                      : member.raceOrEthnicity}
               </p>
             </div>
           </div>

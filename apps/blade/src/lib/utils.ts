@@ -17,7 +17,7 @@ export const getFormattedDate = (start_datetime: string | Date) => {
   const date = new Date(start_datetime);
   date.setDate(date.getDate() + 1);
   return date.toLocaleDateString();
-}
+};
 
 export const formatDateRange = (startDate: Date, endDate: Date) => {
   const start = new Date(startDate).toLocaleDateString("en-US", {
@@ -33,17 +33,17 @@ export const formatDateRange = (startDate: Date, endDate: Date) => {
 };
 
 export type EventTag =
-| "GBM"
-| "Social"
-| "Kickstart"
-| "Project Launch"
-| "Hello World"
-| "Sponsorship"
-| "Tech Exploration"
-| "Class Support"
-| "Workshop"
-| "OPS"
-| "Hackathon";
+  | "GBM"
+  | "Social"
+  | "Kickstart"
+  | "Project Launch"
+  | "Hello World"
+  | "Sponsorship"
+  | "Tech Exploration"
+  | "Class Support"
+  | "Workshop"
+  | "OPS"
+  | "Hackathon";
 
 export const getTagColor = (tag: EventTag) => {
   const colors: Record<EventTag, string> = {

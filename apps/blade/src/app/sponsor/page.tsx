@@ -1,18 +1,18 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { SPONSOR_VIDEO_LINK } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 
 export const metadata: Metadata = {
   title: "Sponsor Knight Hacks!",
-  description: "Help us make dreams!"
-} // doesn't follow the metadata convention to prevent confusion from sponsors
+  description: "Help us make dreams!",
+}; // doesn't follow the metadata convention to prevent confusion from sponsors
 
 export default function Sponsor() {
   return (
-    <main className="mx-auto pl-8 pr-8 mb-40 flex w-full flex-col justify-center md:w-[800px]">
-      <h1 className="mb-2 pt-10 sm:pt-20 text-center text-3xl font-bold tracking-tighter sm:mb-10 sm:text-5xl">
+    <main className="mx-auto mb-40 flex w-full flex-col justify-center pl-8 pr-8 md:w-[800px]">
+      <h1 className="mb-2 pt-10 text-center text-3xl font-bold tracking-tighter sm:mb-10 sm:pt-20 sm:text-5xl">
         Want to sponsor{" "}
         <span className="text-[hsl(var(--primary-lighter))]">
           Knight Hacks?
