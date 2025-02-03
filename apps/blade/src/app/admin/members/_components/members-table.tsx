@@ -119,8 +119,8 @@ export default function MemberTable() {
             <ClearDuesButton />
           </div>
         </div>
-        <div className="whitespace-nowrap text-sm text-center font-bold">
-          Returned {sortedMembers.length} {" "}
+        <div className="whitespace-nowrap text-center text-sm font-bold">
+          Returned {sortedMembers.length}{" "}
           {sortedMembers.length === 1 ? "member" : "members"}
         </div>
       </div>

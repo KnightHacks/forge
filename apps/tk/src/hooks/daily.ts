@@ -7,11 +7,11 @@ import {
 } from "discord.js";
 import cron from "node-cron";
 
-import { 
-  DAILY_MESSAGES, 
+import {
+  DAILY_MESSAGES,
   DISCORD_LEETCODE_ROLE_ID,
   TK_LEETCODE_API_URL,
-  TK_LEETCODE_ICON_URL
+  TK_LEETCODE_ICON_URL,
 } from "../consts";
 import { env } from "../env";
 
@@ -83,8 +83,7 @@ export function execute(client: Client) {
         .setURL(problem.questionLink)
         .setAuthor({
           name: `Leetcode Daily for ${dateString}`,
-          iconURL:
-            TK_LEETCODE_ICON_URL,
+          iconURL: TK_LEETCODE_ICON_URL,
         })
         .addFields(
           {

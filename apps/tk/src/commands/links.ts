@@ -1,8 +1,7 @@
 import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
-import { TK_KNIGHTHACKS_LINKTREE_URL } from "../consts";
 
-import { LINKS } from "../consts";
+import { LINKS, TK_KNIGHTHACKS_LINKTREE_URL } from "../consts";
 
 /* command that returns an embed with our important links
 + linktree link */

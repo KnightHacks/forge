@@ -1,7 +1,8 @@
 import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
-import { TK_CAT_URL } from "../consts";
 import JIMP from "jimp";
+
+import { TK_CAT_URL } from "../consts";
 
 // CAT COMMAND
 // interface for returned data from the API

@@ -1,5 +1,6 @@
 import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
+
 import { TK_JOKE_URL } from "../consts";
 
 interface JokeProps {
