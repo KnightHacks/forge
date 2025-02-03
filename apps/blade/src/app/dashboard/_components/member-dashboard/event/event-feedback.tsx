@@ -98,6 +98,7 @@ export function EventFeedbackForm({
                                                 className="w-1/2 mx-auto"
                                             />
                                         </FormControl>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
@@ -117,6 +118,7 @@ export function EventFeedbackForm({
                                                 className="w-1/2 mx-auto"
                                             />
                                         </FormControl>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
@@ -136,6 +138,7 @@ export function EventFeedbackForm({
                                                 className="w-1/2 mx-auto"
                                             />
                                         </FormControl>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
@@ -145,23 +148,26 @@ export function EventFeedbackForm({
                                 render={({ field }) => (
                                     <FormItem className="text-center">
                                         <FormLabel>Where did you hear about us?</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                        >
                                         <FormControl>
-                                            <SelectTrigger className="w-1/2 mx-auto">
-                                                <SelectValue placeholder="Select a place..." />
-                                            </SelectTrigger>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                            >
+                                            <FormControl>
+                                                <SelectTrigger className="w-1/2 mx-auto">
+                                                    <SelectValue placeholder="Select a place..." />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {EVENT_FEEDBACK_HEARD.map((place) => (
+                                                    <SelectItem key={place} value={place}>
+                                                        {place}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                            </Select>
                                         </FormControl>
-                                        <SelectContent>
-                                            {EVENT_FEEDBACK_HEARD.map((place) => (
-                                                <SelectItem key={place} value={place}>
-                                                    {place}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                        </Select>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
@@ -180,6 +186,7 @@ export function EventFeedbackForm({
 
                                             />
                                         </FormControl>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
@@ -189,23 +196,26 @@ export function EventFeedbackForm({
                                 render={({ field }) => (
                                     <FormItem className="text-center">
                                         <FormLabel>Would you like to see similar events to this one?</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger className="w-1/2 mx-auto">
-                                                    <SelectValue placeholder="Select an option..." />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {EVENT_FEEDBACK_SIMILAR_EVENT.map((option) => (
-                                                    <SelectItem key={option} value={option}>
-                                                        {option}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <FormControl>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger className="w-1/2 mx-auto">
+                                                        <SelectValue placeholder="Select an option..." />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {EVENT_FEEDBACK_SIMILAR_EVENT.map((option) => (
+                                                        <SelectItem key={option} value={option}>
+                                                            {option}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormControl>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
