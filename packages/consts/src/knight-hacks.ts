@@ -63,7 +63,7 @@ export const DEV_KNIGHTHACKS_LOG_CHANNEL = "1284582557689843785";
 
 export const MEMBER_PROFILE_ICON_SIZE = 24;
 
-export const SPONSOR_VIDEO_LINK = 
+export const SPONSOR_VIDEO_LINK =
   "https://www.youtube.com/embed/OU1q02v1Vrw?si=dyHSQCmxzcau7-mF";
 
 export const DISCORD_EVENT_TYPE = 3;
