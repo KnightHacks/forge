@@ -151,14 +151,15 @@ export function EventsTable() {
           </TableRow>
         </TableHeader>
 
-        <TableCell
-            className="text- bg-muted/50 font-bold sm:text-center"
-            colSpan={8}
-          >
-            Upcoming Events
-          </TableCell>
-
         <TableBody>
+          <TableRow>
+            <TableCell
+              className="text- bg-muted/50 font-bold sm:text-center"
+              colSpan={8}
+            >
+              Upcoming Events
+            </TableCell>
+          </TableRow>
           {upcomingEvents.map((event) => (
             <TableRow key={event.id}>
               <TableCell className="text-center font-medium">
@@ -194,14 +195,15 @@ export function EventsTable() {
           ))}
         </TableBody>
 
-        <TableCell
-            className="bg-muted/50 text-left font-bold sm:text-center"
-            colSpan={8}
-          >
-            Previous Events
-        </TableCell>
-
         <TableBody>
+          <TableRow>
+            <TableCell
+              className="bg-muted/50 text-left font-bold sm:text-center"
+              colSpan={8}
+            >
+              Previous Events
+          </TableCell>
+          </TableRow>
           {previousEvents.map((event) => (
             <TableRow key={event.id}>
               <TableCell className="text-center font-medium">
