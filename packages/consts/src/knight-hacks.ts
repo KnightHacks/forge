@@ -26,6 +26,22 @@ export const EVENT_TAGS = [
   "Hackathon",
 ] as const;
 
+export const EVENT_FEEDBACK_HEARD = [
+  "Discord",
+  "Instagram",
+  "KnightConnect",
+  "Word of Mouth",
+  "Reddit",
+  "LinkedIn",
+  "From Class Presentation",
+  "From Another Club",
+] as const;
+
+export const EVENT_FEEDBACK_SIMILAR_EVENT = [
+  "Yes",
+  "No"
+] as const;
+
 type EventTag = (typeof EVENT_TAGS)[number];
 
 export const EVENT_POINTS: Record<EventTag, number> = {

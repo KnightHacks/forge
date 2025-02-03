@@ -20,13 +20,16 @@ import {
 } from "@forge/ui/dialog";
 
 import type { api } from "~/trpc/server";
+import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { DASHBOARD_ICON_SIZE } from "~/consts";
 import { formatDateTime, getTagColor } from "~/lib/utils";
+import { EventFeedbackForm } from "./event-feedback";
 
 export function EventShowcase({
-  events,
+  events, member
 }: {
   events: Awaited<ReturnType<(typeof api.member)["getEvents"]>>;
+  member: InsertMember;
 }) {
   const mostRecent = events[0];
 
@@ -66,9 +69,17 @@ export function EventShowcase({
               {mostRecent.description}
             </CardDescription>
           </div>
-          <Badge className={`${getTagColor(mostRecent.tag)}`}>
-            {mostRecent.tag}
-          </Badge>
+          <div className="flex flex-row gap-2">
+            <div>
+                <EventFeedbackForm 
+                  event={mostRecent} 
+                  member={member}
+                />
+            </div>
+            <Badge className={`${getTagColor(mostRecent.tag)} my-auto`}>
+                {mostRecent.tag}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -88,12 +99,14 @@ export function EventShowcase({
             <Users className="h-5 w-5 text-gray-500" />
             <span>{mostRecent.numAttended} Attendees</span>
           </div>
-          {mostRecent.points && (
+          <div>
+            {mostRecent.points && (
             <div className="flex items-center gap-2">
               <Star className="h-5 w-5 text-yellow-500" />
               <span>{mostRecent.points} Points</span>
             </div>
-          )}
+            )}
+          </div>
         </div>
       </CardContent>
       <CardFooter>
@@ -116,9 +129,17 @@ export function EventShowcase({
                           {event.description}
                         </CardDescription>
                       </div>
-                      <Badge className={`${getTagColor(event.tag)}`}>
-                        {event.tag}
-                      </Badge>
+                      <div className="flex flex-row gap-2">
+                        <div>
+                            <EventFeedbackForm 
+                              event={event} 
+                              member={member}
+                            />
+                        </div>
+                        <Badge className={`${getTagColor(event.tag)} my-auto`}>
+                            {event.tag}
+                        </Badge>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
