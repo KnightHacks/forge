@@ -1,12 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SPONSOR_VIDEO_LINK } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 
+export const metadata: Metadata = {
+  title: "Sponsor Knight Hacks!",
+  description: "Help us make dreams!",
+}; // doesn't follow the metadata convention to prevent confusion from sponsors
+
 export default function Sponsor() {
   return (
-    <main className="mx-auto mb-40 flex w-full flex-col justify-center md:w-[800px]">
-      <h1 className="mb-2 pt-20 text-center text-4xl font-bold tracking-tighter sm:mb-10 sm:text-5xl">
+    <main className="mx-auto mb-40 flex w-full flex-col justify-center pl-8 pr-8 md:w-[800px]">
+      <h1 className="mb-2 pt-10 text-center text-3xl font-bold tracking-tighter sm:mb-10 sm:pt-20 sm:text-5xl">
         Want to sponsor{" "}
         <span className="text-[hsl(var(--primary-lighter))]">
           Knight Hacks?
@@ -30,7 +36,7 @@ export default function Sponsor() {
         brilliant students with a passion for building, and gain brand
         recognition. See below to learn more about us!
       </p>
-      <div className="mx-auto mt-6 flex flex-col justify-center">
+      <div className="mx-auto mt-2 flex flex-col justify-center">
         <p className="p-2 text-center text-sm tracking-tighter sm:text-base">
           <i>
             View how{" "}
@@ -45,7 +51,7 @@ export default function Sponsor() {
           className="h-[200px] w-full sm:h-[315px] sm:w-[560px]"
         ></iframe>
       </div>
-      <div className="mx-auto mt-10 flex flex-col justify-center">
+      <div className="mx-auto mt-5 flex flex-col justify-center">
         <p className="p-2 text-center text-sm tracking-tighter sm:text-base">
           <i>
             Want to make dreams? View how you can help make{" "}
