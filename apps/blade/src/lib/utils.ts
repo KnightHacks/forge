@@ -1,6 +1,7 @@
 export const formatDateTime = (date: Date) => {
   // Create a new Date object 5 hours behind the original
   const adjustedDate = new Date(date.getTime());
+  adjustedDate.setDate(adjustedDate.getDate() + 1);
 
   return adjustedDate.toLocaleString("en-US", {
     month: "short",
@@ -11,6 +12,12 @@ export const formatDateTime = (date: Date) => {
     hour12: true,
   });
 };
+
+export const getFormattedDate = (start_datetime: string | Date) => {
+  const date = new Date(start_datetime);
+  date.setDate(date.getDate() + 1);
+  return date.toLocaleDateString();
+}
 
 export const formatDateRange = (startDate: Date, endDate: Date) => {
   const start = new Date(startDate).toLocaleDateString("en-US", {

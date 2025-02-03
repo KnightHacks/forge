@@ -23,6 +23,7 @@ import { DeleteEventButton } from "./delete-event";
 import { UpdateEventButton } from "./update-event";
 import { ViewAttendanceButton } from "./view-attendance-button";
 import { EventDetailsButton } from "./event-details";
+import { getFormattedDate } from "~/lib/utils";
 
 type Event = ReturnEvent;
 type SortField = keyof Event;
@@ -57,12 +58,6 @@ export function EventsTable() {
   const upcomingEvents = [...sortedEvents].filter((event) => event.start_datetime >= upcomingDate);
 
   const previousEvents = [...sortedEvents].filter((event) => event.start_datetime < upcomingDate);
-
-  const getFormattedDate = (start_datetime: string | Date) => {
-    const date = new Date(start_datetime);
-    date.setDate(date.getDate() + 1);
-    return date.toLocaleDateString();
-  }
 
   return (
     <div>
