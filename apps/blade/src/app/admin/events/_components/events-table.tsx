@@ -51,6 +51,13 @@ export function EventsTable() {
     return 0;
   });
 
+  const upcomingDate = new Date();
+  upcomingDate.setHours(0);
+  upcomingDate.setDate(upcomingDate.getDate() - 1);
+  const upcomingEvents = [...sortedEvents].filter((event) => event.start_datetime >= upcomingDate);
+
+  const previousEvents = [...sortedEvents].filter((event) => event.start_datetime < upcomingDate);
+
   const getFormattedDate = (start_datetime: string | Date) => {
     const date = new Date(start_datetime);
     date.setDate(date.getDate() + 1);
@@ -145,8 +152,64 @@ export function EventsTable() {
           </TableRow>
         </TableHeader>
 
+        <TableRow>
+          <TableCell 
+            className="text- sm:text-center font-bold bg-muted/50"
+            colSpan={8}
+          >
+            Upcoming Events
+          </TableCell>
+        </TableRow>
+
         <TableBody>
-          {sortedEvents.map((event) => (
+          {upcomingEvents.map((event) => (
+            <TableRow key={event.id}>
+              <TableCell className="text-center font-medium">
+                {event.name}
+              </TableCell>
+              <TableCell className="text-center">{event.tag}</TableCell>
+
+              <TableCell className="text-center">
+                {getFormattedDate(event.start_datetime)}
+              </TableCell>
+
+              <TableCell>{event.location}</TableCell>
+
+              <TableCell className="text-right">
+                <ViewAttendanceButton
+                  event={event}
+                  numAttended={event.numAttended}
+                />
+              </TableCell>
+
+              <TableCell className="text-center">
+                <EventDetailsButton
+                  event={event}
+                />
+              </TableCell>
+
+              <TableCell className="text-center">
+                <UpdateEventButton event={event} />
+              </TableCell>
+
+              <TableCell className="text-center">
+                <DeleteEventButton event={event} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+
+        <TableRow>
+          <TableCell 
+            className="text-left sm:text-center font-bold bg-muted/50"
+            colSpan={8}
+          >
+            Previous Events
+          </TableCell>
+        </TableRow>
+
+        <TableBody>
+          {previousEvents.map((event) => (
             <TableRow key={event.id}>
               <TableCell className="text-center font-medium">
                 {event.name}
