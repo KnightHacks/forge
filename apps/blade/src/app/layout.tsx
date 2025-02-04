@@ -1,57 +1,39 @@
-import type { Metadata, Viewport } from "next";
-import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
-
-import { cn } from "@forge/ui";
-import { ThemeProvider, ThemeToggle } from "@forge/ui/theme";
-import { Toaster } from "@forge/ui/toast";
-
-import { TRPCReactProvider } from "~/trpc/react";
-
 import "./globals.css";
-
-import { env } from "~/env";
+import { ThemeProvider, ThemeToggle } from "@forge/ui/theme";
+import type { Metadata, Viewport } from "next";
+import { TRPCReactProvider } from "~/trpc/react";
+import { GeistSans } from "geist/font/sans"; 
+import { GeistMono } from "geist/font/mono";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    env.NODE_ENV === "production"
-      ? "https://blade.knighthacks.org"
-      : "http://localhost:3000",
-  ),
-  title: "Blade",
-  description: "The centralized platform for all things Knight Hacks",
+  title: "Sam",
+  description: "Sam's Awesome Dev Application",
   openGraph: {
-    title: "Blade",
-    description: "The centralized platform for all things Knight Hacks",
-    url: "https://blade.knighthacks.org",
-    siteName: "Blade",
-    images: [{ url: "https://blade.knighthacks.org/banner.png" }],
+    title: "Sam Dev App",
+    description: "Sam's Awesome Dev Application",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
+    { media: "(prefers-color-scheme: light)", color: "#C1CEFE" },
+    { media: "(prefers-color-scheme: dark)", color: "#624CAB" },
   ],
 };
 
 export default function RootLayout(props: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={cn(
-          "min-h-screen bg-background font-sans text-foreground antialiased",
-          GeistSans.variable,
-          GeistMono.variable,
-        )}
-      >
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <TRPCReactProvider>{props.children}</TRPCReactProvider>
-          <div className="fixed bottom-4 right-4">
-            <ThemeToggle />
-          </div>
-          <Toaster />
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+      <body suppressHydrationWarning className="theme-container">
+        <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
+          <TRPCReactProvider>
+            <div>
+              {props.children}
+            </div>
+            <div className="fixed bottom-4 right-4">
+              <ThemeToggle />
+            </div>
+          </TRPCReactProvider>
         </ThemeProvider>
       </body>
     </html>
