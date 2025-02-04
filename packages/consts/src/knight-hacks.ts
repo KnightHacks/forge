@@ -79,7 +79,6 @@ export const DEV_KNIGHTHACKS_LOG_CHANNEL = "1284582557689843785";
 
 export const MEMBER_PROFILE_ICON_SIZE = 24;
 
-<<<<<<< HEAD
 export const EVENT_FEEDBACK_SLIDER_MINIMUM = 1;
 
 export const EVENT_FEEDBACK_SLIDER_MAXIMUM = 10;
@@ -92,10 +91,6 @@ export const EVENT_FEEDBACK_TEXT_ROWS = 4;
 
 export const SPONSOR_VIDEO_LINK =
   "https://www.youtube.com/embed/OU1q02v1Vrw?si=dyHSQCmxzcau7-mF";
-=======
-export const SPONSOR_VIDEO_LINK =
-  "https://www.youtube.com/embed/9LPTM5MrSc0?si=hBQKQ0tOL-9k_ahl";
->>>>>>> 8ea2863ed62ed4ad0f5b370c80d1f9eae6753e76
 
 export const DISCORD_EVENT_TYPE = 3;
 
