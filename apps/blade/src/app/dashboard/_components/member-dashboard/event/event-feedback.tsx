@@ -15,7 +15,12 @@ import {
 } from "@forge/ui/dialog";
 import {
     EVENT_FEEDBACK_HEARD,
-    EVENT_FEEDBACK_SIMILAR_EVENT
+    EVENT_FEEDBACK_SIMILAR_EVENT,
+    EVENT_FEEDBACK_SLIDER_MINIMUM,
+    EVENT_FEEDBACK_SLIDER_MAXIMUM,
+    EVENT_FEEDBACK_SLIDER_STEP,
+    EVENT_FEEDBACK_SLIDER_VALUE,
+    EVENT_FEEDBACK_TEXT_ROWS,
 } from "@forge/consts/knight-hacks"
 
 import {
@@ -53,9 +58,9 @@ export function EventFeedbackForm({
         schema: InsertEventFeedbackSchema.extend({
             memberId: z.string().nonempty(),
             eventId: z.string().nonempty(),
-            overallEventRating: z.number().min(1).max(10),
-            funRating: z.number().min(1).max(10),
-            learnedRating: z.number().min(1).max(10),
+            overallEventRating: z.number().min(EVENT_FEEDBACK_SLIDER_MINIMUM).max(EVENT_FEEDBACK_SLIDER_MAXIMUM),
+            funRating: z.number().min(EVENT_FEEDBACK_SLIDER_MINIMUM).max(EVENT_FEEDBACK_SLIDER_MAXIMUM),
+            learnedRating: z.number().min(EVENT_FEEDBACK_SLIDER_MINIMUM).max(EVENT_FEEDBACK_SLIDER_MAXIMUM),
             heardAboutUs: z.enum(EVENT_FEEDBACK_HEARD),
             additionalFeedback: z.string(),
             similarEvent: z.enum(EVENT_FEEDBACK_SIMILAR_EVENT)
@@ -90,11 +95,11 @@ export function EventFeedbackForm({
                                         <FormLabel>How would you rate this event overall?</FormLabel>
                                         <FormControl>
                                             <Slider
-                                                min={1}
-                                                max={10}
-                                                step={1}
+                                                min={EVENT_FEEDBACK_SLIDER_MINIMUM}
+                                                max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
+                                                step={EVENT_FEEDBACK_SLIDER_STEP}
                                                 onValueChange={field.onChange}
-                                                value={[field.value]}
+                                                value={[EVENT_FEEDBACK_SLIDER_VALUE]}
                                                 className="w-1/2 mx-auto"
                                             />
                                         </FormControl>
@@ -110,11 +115,11 @@ export function EventFeedbackForm({
                                         <FormLabel>How much fun did you have?</FormLabel>
                                         <FormControl>
                                             <Slider
-                                                min={1}
-                                                max={10}
-                                                step={1}
+                                                min={EVENT_FEEDBACK_SLIDER_MINIMUM}
+                                                max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
+                                                step={EVENT_FEEDBACK_SLIDER_STEP}
                                                 onValueChange={field.onChange}
-                                                value={[field.value]}
+                                                value={[EVENT_FEEDBACK_SLIDER_VALUE]}
                                                 className="w-1/2 mx-auto"
                                             />
                                         </FormControl>
@@ -130,11 +135,11 @@ export function EventFeedbackForm({
                                         <FormLabel>How much did you learn?</FormLabel>
                                         <FormControl>
                                             <Slider
-                                                min={1}
-                                                max={10}
-                                                step={1}
+                                                min={EVENT_FEEDBACK_SLIDER_MINIMUM}
+                                                max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
+                                                step={EVENT_FEEDBACK_SLIDER_STEP}
                                                 onValueChange={field.onChange}
-                                                value={[field.value]}
+                                                value={[EVENT_FEEDBACK_SLIDER_VALUE]}
                                                 className="w-1/2 mx-auto"
                                             />
                                         </FormControl>
@@ -181,7 +186,7 @@ export function EventFeedbackForm({
                                             <Textarea
                                                 id="additionalFeedback"
                                                 placeholder="Enter additional feedback..."
-                                                rows={4}
+                                                rows={EVENT_FEEDBACK_TEXT_ROWS}
                                                 {...field}
 
                                             />
