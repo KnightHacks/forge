@@ -54,6 +54,18 @@ export function EventFeedbackForm({
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
+    const createFeedback = api.eventFeedback.createEventFeedback.useMutation({
+        onSuccess() {
+            toast.success("Feedback submitted successfully!");
+        },
+        onError() {
+            toast.error("Oops! Something went wrong. Please try again later.");
+        },
+        onSettled() {
+            setIsLoading(false);
+        }
+    });
+
     const form = useForm({
         schema: InsertEventFeedbackSchema.extend({
             memberId: z.string().nonempty(),
@@ -85,8 +97,24 @@ export function EventFeedbackForm({
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form>
+                    <form
+                        onSubmit={form.handleSubmit((values) => {
+                                setIsLoading(true);
+                                createFeedback.mutate({
+                                    memberId: values.memberId,
+                                    eventId: values.eventId,
+                                    overallEventRating: values.overallEventRating,
+                                    funRating: values.funRating,
+                                    learnedRating: values.learnedRating,
+                                    heardAboutUs: values.heardAboutUs,
+                                    additionalFeedback: values.additionalFeedback,
+                                    similarEvent: values.similarEvent,
+                                });
+                            })}
+                            noValidate
+                        >
                         <div className="flex flex-col gap-5 mt-5">
+                            {/*  Slider for general rating of event */}
                             <FormField
                                 control={form.control}
                                 name="overallEventRating"
@@ -107,6 +135,7 @@ export function EventFeedbackForm({
                                     </FormItem>
                                 )}
                             />
+                            {/*  Slider for fun rating of the event */}
                             <FormField
                                 control={form.control}
                                 name="funRating"
@@ -127,6 +156,7 @@ export function EventFeedbackForm({
                                     </FormItem>
                                 )}
                             />
+                            {/* Slider for rating of how much you learned */}
                             <FormField
                                 control={form.control}
                                 name="learnedRating"
@@ -147,6 +177,7 @@ export function EventFeedbackForm({
                                     </FormItem>
                                 )}
                             />
+                            {/* Dropdown for where you heard about us */}
                             <FormField
                                 control={form.control}
                                 name="heardAboutUs"
@@ -176,6 +207,7 @@ export function EventFeedbackForm({
                                     </FormItem>
                                 )}
                             />
+                            { /* Text field for additional feedback */}
                             <FormField
                                 control={form.control}
                                 name="additionalFeedback"
@@ -195,6 +227,7 @@ export function EventFeedbackForm({
                                     </FormItem>
                                 )}
                             />
+                            {/* Toggle button for similar event */}
                             <FormField
                                 control={form.control}
                                 name="similarEvent"
