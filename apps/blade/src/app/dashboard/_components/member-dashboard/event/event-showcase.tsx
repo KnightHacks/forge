@@ -97,7 +97,9 @@ export function EventShowcase({
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-gray-500" />
-            <span>{mostRecent.numAttended} Attendees</span>
+            <span>{mostRecent.numAttended} {" "}
+              {mostRecent.numAttended === 1 ? "Attendee" : "Attendees"}
+            </span>
           </div>
           <div>
             {mostRecent.points && (
@@ -159,7 +161,9 @@ export function EventShowcase({
                       </div>
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-gray-500" />
-                        <span>{event.numAttended} Attendees</span>
+                        <span>{event.numAttended} {" "}
+                          {event.numAttended === 1 ? "Attendee" : "Attendees"}
+                        </span>
                       </div>
                       {event.points ? (
                         <div className="flex items-center gap-2">

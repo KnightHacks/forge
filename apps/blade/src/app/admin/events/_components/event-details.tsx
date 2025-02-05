@@ -54,7 +54,9 @@ export function EventDetailsButton({ event }: { event: ReturnEvent }) {
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-gray-500" />
-            <span>{event.numAttended} Attendees</span>
+            <span>{event.numAttended} {" "}
+              {event.numAttended === 1 ? "Attendee" : "Attendees"}
+            </span>
           </div>
           {event.points ? (
             <div className="flex items-center gap-2">

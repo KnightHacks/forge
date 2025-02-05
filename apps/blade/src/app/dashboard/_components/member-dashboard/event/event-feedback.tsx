@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, MessageCircle } from "lucide-react";
 
 import type { SelectEvent, InsertMember } from "@forge/db/schemas/knight-hacks"
@@ -19,7 +19,6 @@ import {
     EVENT_FEEDBACK_SLIDER_MINIMUM,
     EVENT_FEEDBACK_SLIDER_MAXIMUM,
     EVENT_FEEDBACK_SLIDER_STEP,
-    EVENT_FEEDBACK_SLIDER_VALUE,
     EVENT_FEEDBACK_TEXT_ROWS,
 } from "@forge/consts/knight-hacks"
 
@@ -43,6 +42,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@forge/ui/select";
+import {
+    RadioGroup,
+    RadioGroupItem
+} from "@forge/ui/radio-group";
 import { InsertEventFeedbackSchema } from "@forge/db/schemas/knight-hacks";
 import { z } from "zod";
 
@@ -53,13 +56,33 @@ export function EventFeedbackForm({
 }: { event: SelectEvent, member: InsertMember }) {
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isFeedbackGiven, setIsFeedbackGiven] = useState<boolean>(false);
+    const { data: hasGivenFeedback } = 
+    api.eventFeedback.hasGivenFeedback.useQuery({
+        eventId: event.id,
+        memberId: member.id ?? "",
+    });
+
+    useEffect(() => {
+        setIsFeedbackGiven(hasGivenFeedback ?? false);
+    }, [hasGivenFeedback]);
+
+    const utils = api.useUtils();
 
     const createFeedback = api.eventFeedback.createEventFeedback.useMutation({
-        onSuccess() {
+        async onSuccess() {
             toast.success("Feedback submitted successfully!");
+            setIsOpen(false);
+            await utils.eventFeedback.invalidate();
         },
-        onError() {
-            toast.error("Oops! Something went wrong. Please try again later.");
+        onError(error) {
+            if (error.data?.code === "FORBIDDEN") {
+                toast.error("You cannot give feedback more than once for this event!");
+            } else if (error.data?.code === "NOT_FOUND") {
+                toast.error("Cannot find event/member!");
+            } else {
+                toast.error("Oops! Something went wrong. Please try again later.");
+            }
         },
         onSettled() {
             setIsLoading(false);
@@ -81,13 +104,17 @@ export function EventFeedbackForm({
             memberId: member.id,
             eventId: event.id,
             additionalFeedback: "",
+            similarEvent: "Not Answered"
         },
     });
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline">
+                <Button 
+                    variant="outline"
+                    disabled={isFeedbackGiven}    
+                >
                     <MessageCircle className="h-5 w-5" />
                 </Button>
             </DialogTrigger>
@@ -126,8 +153,8 @@ export function EventFeedbackForm({
                                                 min={EVENT_FEEDBACK_SLIDER_MINIMUM}
                                                 max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
                                                 step={EVENT_FEEDBACK_SLIDER_STEP}
-                                                onValueChange={field.onChange}
-                                                value={[EVENT_FEEDBACK_SLIDER_VALUE]}
+                                                onValueChange={(value) => field.onChange(value[0])}
+                                                // value={[EVENT_FEEDBACK_SLIDER_VALUE]}
                                                 className="w-1/2 mx-auto"
                                             />
                                         </FormControl>
@@ -147,8 +174,8 @@ export function EventFeedbackForm({
                                                 min={EVENT_FEEDBACK_SLIDER_MINIMUM}
                                                 max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
                                                 step={EVENT_FEEDBACK_SLIDER_STEP}
-                                                onValueChange={field.onChange}
-                                                value={[EVENT_FEEDBACK_SLIDER_VALUE]}
+                                                onValueChange={(value) => field.onChange(value[0])}
+                                                // value={[EVENT_FEEDBACK_SLIDER_VALUE]}
                                                 className="w-1/2 mx-auto"
                                             />
                                         </FormControl>
@@ -168,8 +195,8 @@ export function EventFeedbackForm({
                                                 min={EVENT_FEEDBACK_SLIDER_MINIMUM}
                                                 max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
                                                 step={EVENT_FEEDBACK_SLIDER_STEP}
-                                                onValueChange={field.onChange}
-                                                value={[EVENT_FEEDBACK_SLIDER_VALUE]}
+                                                onValueChange={(value) => field.onChange(value[0])}
+                                                // value={[EVENT_FEEDBACK_SLIDER_VALUE]}
                                                 className="w-1/2 mx-auto"
                                             />
                                         </FormControl>
@@ -207,13 +234,52 @@ export function EventFeedbackForm({
                                     </FormItem>
                                 )}
                             />
+                            {/* Toggle button for similar event */}
+                            <FormField
+                                control={form.control}
+                                name="similarEvent"
+                                render={({ field }) => (
+                                    <FormItem className="text-center">
+                                        <FormLabel>Would you like to see similar events to this one?
+                                            <span className="text-gray-400">
+                                                {" "}
+                                                &mdash; <i>Optional</i>
+                                            </span>
+                                        </FormLabel>
+                                        <FormControl>
+                                            <RadioGroup 
+                                                onValueChange={field.onChange} 
+                                                value={field.value}
+                                                className="flex flex-col items-center"
+                                            >
+                                                {EVENT_FEEDBACK_SIMILAR_EVENT
+                                                    .filter((option) => option !== "Not Answered")
+                                                    .map((option) => (
+                                                        <div key={option} className="flex items-center space-x-2">
+                                                            <RadioGroupItem value={option} id={option} className="h-4 w-4" />
+                                                            <label htmlFor={option} className="text-sm font-medium leading-none cursor-pointer">
+                                                                {option}
+                                                            </label>
+                                                        </div>
+                                                ))}
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             { /* Text field for additional feedback */}
                             <FormField
                                 control={form.control}
                                 name="additionalFeedback"
                                 render={({ field }) => (
-                                    <FormItem className="text-center">
-                                        <FormLabel>Do you have any additional feedback about this event?</FormLabel>
+                                    <FormItem className="text-center pl-8 pr-8 sm:p-0">
+                                        <FormLabel>Do you have any additional feedback about this event?
+                                        <span className="text-gray-400">
+                                            {" "}
+                                            &mdash; <i>Optional</i>
+                                        </span>
+                                        </FormLabel>
                                         <FormControl>
                                             <Textarea
                                                 id="additionalFeedback"
@@ -222,36 +288,6 @@ export function EventFeedbackForm({
                                                 {...field}
 
                                             />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            {/* Toggle button for similar event */}
-                            <FormField
-                                control={form.control}
-                                name="similarEvent"
-                                render={({ field }) => (
-                                    <FormItem className="text-center">
-                                        <FormLabel>Would you like to see similar events to this one?</FormLabel>
-                                        <FormControl>
-                                            <Select
-                                                onValueChange={field.onChange}
-                                                defaultValue={field.value}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger className="w-1/2 mx-auto">
-                                                        <SelectValue placeholder="Select an option..." />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {EVENT_FEEDBACK_SIMILAR_EVENT.map((option) => (
-                                                        <SelectItem key={option} value={option}>
-                                                            {option}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

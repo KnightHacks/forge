@@ -210,7 +210,7 @@ export const EventFeedback = createTable("event_feedback", (t) => ({
   learnedRating: t.integer().notNull(),
   heardAboutUs: t.text({ enum: EVENT_FEEDBACK_HEARD }).notNull(),
   additionalFeedback: t.text(),
-  similarEvent: t.text({ enum: EVENT_FEEDBACK_SIMILAR_EVENT }),
+  similarEvent: t.text({ enum: EVENT_FEEDBACK_SIMILAR_EVENT }).default("Not Answered").notNull(),
   createdAt: t.timestamp().notNull().defaultNow(),
 }));
 

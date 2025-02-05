@@ -1,14 +1,18 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 import {
     and,
-  } from "@forge/db";
+    sql,
+    eq
+} from "@forge/db";
 
 import { db } from "@forge/db/client";
 import { log } from "../utils";
 import { protectedProcedure } from "../trpc";
-import { EventFeedback, InsertEventFeedbackSchema } from "@forge/db/schemas/knight-hacks";
+import { EVENT_FEEDBACK_POINTS_INCREMENT } from "@forge/consts/knight-hacks";
+import { EventFeedback, InsertEventFeedbackSchema, Member } from "@forge/db/schemas/knight-hacks";
 
 export const eventFeedbackRouter = {
     createEventFeedback: protectedProcedure
@@ -53,6 +57,13 @@ export const eventFeedbackRouter = {
 
             await db.insert(EventFeedback).values({...input});
 
+            await db
+                .update(Member)
+                .set({
+                    points: sql`${Member.points} + ${EVENT_FEEDBACK_POINTS_INCREMENT}`,
+                })
+                .where(eq(Member.id, input.memberId));
+
             await log({
                 title: "Feedback Given",
                 message: `${existingMember.firstName} ${existingMember.lastName} gave feedback for ${existingEvent.name}!`,
@@ -60,4 +71,20 @@ export const eventFeedbackRouter = {
                 userId: ctx.session.user.discordUserId,
             });
         }),
+    
+    hasGivenFeedback: protectedProcedure
+        .input(z.object({
+            eventId: z.string(),
+            memberId: z.string(),
+        }))
+        .query(async ({ input }) => {
+            const givenFeedback = await db
+                .query.EventFeedback.findFirst({
+                    where: (t, { eq }) => and(eq(t.memberId, input.memberId), 
+                        eq(t.eventId, input.eventId))
+                });
+
+            return !!givenFeedback;
+        }),
+
 } satisfies TRPCRouterRecord;

@@ -31,6 +31,7 @@ export const EVENT_FEEDBACK_HEARD = [
   "Instagram",
   "KnightConnect",
   "Word of Mouth",
+  "CECS Emailing List",
   "Reddit",
   "LinkedIn",
   "From Class Presentation",
@@ -39,7 +40,8 @@ export const EVENT_FEEDBACK_HEARD = [
 
 export const EVENT_FEEDBACK_SIMILAR_EVENT = [
   "Yes",
-  "No"
+  "No",
+  "Not Answered",
 ] as const;
 
 type EventTag = (typeof EVENT_TAGS)[number];
@@ -88,6 +90,8 @@ export const EVENT_FEEDBACK_SLIDER_STEP = 1;
 export const EVENT_FEEDBACK_SLIDER_VALUE = 5;
 
 export const EVENT_FEEDBACK_TEXT_ROWS = 4;
+
+export const EVENT_FEEDBACK_POINTS_INCREMENT = 10;
 
 export const SPONSOR_VIDEO_LINK =
   "https://www.youtube.com/embed/OU1q02v1Vrw?si=dyHSQCmxzcau7-mF";
