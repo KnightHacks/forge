@@ -39,9 +39,7 @@ export default function AgeBarChart({ members } : { members : InsertMember[] }) 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-            <text className="text-xl">Age Distribution</text>
-        </CardTitle>
+        <CardTitle className="text-xl">Age Distribution</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>

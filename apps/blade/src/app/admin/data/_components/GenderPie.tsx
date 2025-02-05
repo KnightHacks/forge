@@ -52,9 +52,7 @@ export default function GenderPie({ members } : { members:Member[] }) {
     return (
         <Card>
           <CardHeader>
-            <CardTitle>
-              <text className="text-xl">Gender Distribution</text>
-            </CardTitle>
+            <CardTitle className="text-xl">Gender Distribution</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer config={baseConfig} className="aspect-square max-h-[300px]">

@@ -8,18 +8,18 @@ export default function DuesPercent({numMembers, numDuesPaying} : {numMembers: n
     return (
         <Card className="col-span-2">
             <CardHeader>
-                <CardTitle><text className="text-xl">Dues Payment</text></CardTitle>
+                <CardTitle className="text-xl">Dues Payment</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="flex flex-row gap-4">
-                    <text>
+                    <p>
                         <span className="text-xl text-green-600 font-bold">{percentDuesPaying}% </span>
                         <span className="text-muted-foreground">paid dues.</span>
-                    </text>
-                    <text>
+                    </p>
+                    <p>
                         <span className="text-xl text-red-600 font-bold">{100-percentDuesPaying}% </span>
                         <span className="text-muted-foreground">haven't paid dues.</span>
-                    </text>
+                    </p>
                 </div>
             </CardContent>
         </Card>
