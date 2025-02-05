@@ -57,6 +57,10 @@ export function EventFeedbackForm({
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isFeedbackGiven, setIsFeedbackGiven] = useState<boolean>(false);
+    const [eventOverallValue, setEventOverallValue] = useState(5);
+    const [funValue, setFunValue] = useState(5);
+    const [learnedValue, setLearnedValue] = useState(5);
+
     const { data: hasGivenFeedback } = 
     api.eventFeedback.hasGivenFeedback.useQuery({
         eventId: event.id,
@@ -104,7 +108,6 @@ export function EventFeedbackForm({
             memberId: member.id,
             eventId: event.id,
             additionalFeedback: "",
-            similarEvent: "Not Answered"
         },
     });
 
@@ -149,14 +152,21 @@ export function EventFeedbackForm({
                                     <FormItem className="text-center">
                                         <FormLabel>How would you rate this event overall?</FormLabel>
                                         <FormControl>
-                                            <Slider
-                                                min={EVENT_FEEDBACK_SLIDER_MINIMUM}
-                                                max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
-                                                step={EVENT_FEEDBACK_SLIDER_STEP}
-                                                onValueChange={(value) => field.onChange(value[0])}
-                                                // value={[EVENT_FEEDBACK_SLIDER_VALUE]}
-                                                className="w-1/2 mx-auto"
-                                            />
+                                            <div className="flex flex-row gap-2 justify-center">
+                                                <p className="font-bold">1</p>
+                                                <Slider
+                                                    min={EVENT_FEEDBACK_SLIDER_MINIMUM}
+                                                    max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
+                                                    step={EVENT_FEEDBACK_SLIDER_STEP}
+                                                    onValueChange={(value) => {
+                                                        field.onChange(value[0]);
+                                                        setEventOverallValue(value[0] ?? 5);
+                                                    }}
+                                                    value={[eventOverallValue]}
+                                                    className="w-1/2"
+                                                />
+                                                <p className="font-bold">10</p>
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -170,14 +180,21 @@ export function EventFeedbackForm({
                                     <FormItem className="text-center">
                                         <FormLabel>How much fun did you have?</FormLabel>
                                         <FormControl>
-                                            <Slider
-                                                min={EVENT_FEEDBACK_SLIDER_MINIMUM}
-                                                max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
-                                                step={EVENT_FEEDBACK_SLIDER_STEP}
-                                                onValueChange={(value) => field.onChange(value[0])}
-                                                // value={[EVENT_FEEDBACK_SLIDER_VALUE]}
-                                                className="w-1/2 mx-auto"
-                                            />
+                                            <div className="flex flex-row gap-2 justify-center">
+                                                <p className="font-bold">1</p>
+                                                <Slider
+                                                    min={EVENT_FEEDBACK_SLIDER_MINIMUM}
+                                                    max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
+                                                    step={EVENT_FEEDBACK_SLIDER_STEP}
+                                                    onValueChange={(value) => {
+                                                        field.onChange(value[0]);
+                                                        setFunValue(value[0] ?? 5);
+                                                    }}
+                                                    value={[funValue]}
+                                                    className="w-1/2"
+                                                />
+                                                <p className="font-bold">10</p>
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -191,14 +208,21 @@ export function EventFeedbackForm({
                                     <FormItem className="text-center">
                                         <FormLabel>How much did you learn?</FormLabel>
                                         <FormControl>
-                                            <Slider
-                                                min={EVENT_FEEDBACK_SLIDER_MINIMUM}
-                                                max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
-                                                step={EVENT_FEEDBACK_SLIDER_STEP}
-                                                onValueChange={(value) => field.onChange(value[0])}
-                                                // value={[EVENT_FEEDBACK_SLIDER_VALUE]}
-                                                className="w-1/2 mx-auto"
-                                            />
+                                            <div className="flex flex-row gap-2 justify-center">
+                                                <p className="font-bold">1</p>
+                                                <Slider
+                                                    min={EVENT_FEEDBACK_SLIDER_MINIMUM}
+                                                    max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
+                                                    step={EVENT_FEEDBACK_SLIDER_STEP}
+                                                    onValueChange={(value) => {
+                                                        field.onChange(value[0]);
+                                                        setLearnedValue(value[0] ?? 5);
+                                                    }}
+                                                    value={[learnedValue]}
+                                                    className="w-1/2"
+                                                />
+                                                <p className="font-bold">10</p>
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -240,12 +264,7 @@ export function EventFeedbackForm({
                                 name="similarEvent"
                                 render={({ field }) => (
                                     <FormItem className="text-center">
-                                        <FormLabel>Would you like to see similar events to this one?
-                                            <span className="text-gray-400">
-                                                {" "}
-                                                &mdash; <i>Optional</i>
-                                            </span>
-                                        </FormLabel>
+                                        <FormLabel>Would you like to see similar events to this one?</FormLabel>
                                         <FormControl>
                                             <RadioGroup 
                                                 onValueChange={field.onChange} 
@@ -253,7 +272,6 @@ export function EventFeedbackForm({
                                                 className="flex flex-col items-center"
                                             >
                                                 {EVENT_FEEDBACK_SIMILAR_EVENT
-                                                    .filter((option) => option !== "Not Answered")
                                                     .map((option) => (
                                                         <div key={option} className="flex items-center space-x-2">
                                                             <RadioGroupItem value={option} id={option} className="h-4 w-4" />

@@ -41,7 +41,6 @@ export const EVENT_FEEDBACK_HEARD = [
 export const EVENT_FEEDBACK_SIMILAR_EVENT = [
   "Yes",
   "No",
-  "Not Answered",
 ] as const;
 
 type EventTag = (typeof EVENT_TAGS)[number];
