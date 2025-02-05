@@ -53,9 +53,7 @@ export default function RaceOrEthnicityPie({ members } : { members:Member[] }) {
     return (
         <Card>
           <CardHeader>
-            <CardTitle>
-              <text className="text-xl">Race / Ethnicity Distribution</text>
-            </CardTitle>
+            <CardTitle className="text-xl">Race / Ethnicity Distribution</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer config={baseConfig} className="aspect-square max-h-[300px]">
