@@ -1,5 +1,6 @@
 import { CalendarDays, MapPin, Star, Users } from "lucide-react";
 
+import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import {
@@ -20,13 +21,13 @@ import {
 } from "@forge/ui/dialog";
 
 import type { api } from "~/trpc/server";
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { DASHBOARD_ICON_SIZE } from "~/consts";
 import { formatDateTime, getTagColor } from "~/lib/utils";
 import { EventFeedbackForm } from "./event-feedback";
 
 export function EventShowcase({
-  events, member
+  events,
+  member,
 }: {
   events: Awaited<ReturnType<(typeof api.member)["getEvents"]>>;
   member: InsertMember;
@@ -71,13 +72,10 @@ export function EventShowcase({
           </div>
           <div className="flex flex-row gap-2">
             <div>
-                <EventFeedbackForm 
-                  event={mostRecent} 
-                  member={member}
-                />
+              <EventFeedbackForm event={mostRecent} member={member} />
             </div>
             <Badge className={`${getTagColor(mostRecent.tag)} my-auto`}>
-                {mostRecent.tag}
+              {mostRecent.tag}
             </Badge>
           </div>
         </div>
@@ -97,16 +95,17 @@ export function EventShowcase({
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-gray-500" />
-            <span>{mostRecent.numAttended} {" "}
+            <span>
+              {mostRecent.numAttended}{" "}
               {mostRecent.numAttended === 1 ? "Attendee" : "Attendees"}
             </span>
           </div>
           <div>
             {mostRecent.points && (
-            <div className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500" />
-              <span>{mostRecent.points} Points</span>
-            </div>
+              <div className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-yellow-500" />
+                <span>{mostRecent.points} Points</span>
+              </div>
             )}
           </div>
         </div>
@@ -133,13 +132,10 @@ export function EventShowcase({
                       </div>
                       <div className="flex flex-row gap-2">
                         <div>
-                            <EventFeedbackForm 
-                              event={event} 
-                              member={member}
-                            />
+                          <EventFeedbackForm event={event} member={member} />
                         </div>
                         <Badge className={`${getTagColor(event.tag)} my-auto`}>
-                            {event.tag}
+                          {event.tag}
                         </Badge>
                       </div>
                     </div>
@@ -161,7 +157,8 @@ export function EventShowcase({
                       </div>
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-gray-500" />
-                        <span>{event.numAttended} {" "}
+                        <span>
+                          {event.numAttended}{" "}
                           {event.numAttended === 1 ? "Attendee" : "Attendees"}
                         </span>
                       </div>

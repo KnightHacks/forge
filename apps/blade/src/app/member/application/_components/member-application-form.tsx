@@ -244,7 +244,7 @@ export function MemberApplicationForm() {
         })}
       >
         <h1 className="text-2xl font-bold">Application Form</h1>
-        <p className="text-gray-400 text-sm">
+        <p className="text-sm text-gray-400">
           <i>Fill out this form to become a member of Knight Hacks!</i>
         </p>
         <FormField

@@ -30,7 +30,9 @@ type SortField = keyof Event;
 type SortOrder = "asc" | "desc" | null;
 
 export function EventsTable() {
-  const [sortField, setSortField] = useState<SortField | null>("start_datetime");
+  const [sortField, setSortField] = useState<SortField | null>(
+    "start_datetime",
+  );
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [searchTerm, setSearchTerm] = useState("");
 

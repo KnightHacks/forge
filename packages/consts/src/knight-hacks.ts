@@ -38,10 +38,7 @@ export const EVENT_FEEDBACK_HEARD = [
   "From Another Club",
 ] as const;
 
-export const EVENT_FEEDBACK_SIMILAR_EVENT = [
-  "Yes",
-  "No",
-] as const;
+export const EVENT_FEEDBACK_SIMILAR_EVENT = ["Yes", "No"] as const;
 
 type EventTag = (typeof EVENT_TAGS)[number];
 

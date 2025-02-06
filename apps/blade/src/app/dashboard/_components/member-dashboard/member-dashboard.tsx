@@ -59,10 +59,7 @@ export default async function MemberDashboard({
             <div>
               <MemberInfo />
             </div>
-            <EventShowcase 
-              events={events.value} 
-              member={member}
-            />
+            <EventShowcase events={events.value} member={member} />
           </div>
         </div>
         {/* Mobile View */}
@@ -71,10 +68,7 @@ export default async function MemberDashboard({
           <MemberInfo />
           <Points size={member.points} />
           <EventNumber size={events.value.length} />
-          <EventShowcase 
-            events={events.value} 
-            member={member}
-          />
+          <EventShowcase events={events.value} member={member} />
         </div>
       </div>
     </div>
