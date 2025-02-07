@@ -18,6 +18,18 @@ export const SHORT_LEVELS_OF_STUDY = [
   "Vocational/Trade School",
 ] as const;
 
+export const OFFICERS = [
+  {
+    name: "Dylan Vidal",
+    position: "President",
+    image: "/officers/dylan.png",
+    linkedin: "https://www.linkedin.com/in/dylanvidal1204/",
+    major: "Computer Science",
+  },
+] as const;
+
+export type Officer = (typeof OFFICERS)[number];
+
 export const EVENT_TAGS = [
   "GBM",
   "Social",
