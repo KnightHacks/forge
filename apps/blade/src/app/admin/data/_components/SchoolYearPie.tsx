@@ -30,7 +30,7 @@ export default function SchoolYearPie({ members } : { members:Member[] }) {
   // get amount of each levelOfStudy
   const levelOfStudyCounts: Record<string, number> = {};
   members.forEach(({ levelOfStudy }) => {
-    if (levelOfStudy) levelOfStudyCounts[levelOfStudy] = (levelOfStudyCounts[levelOfStudy] ?? 0) + 1;
+    levelOfStudyCounts[levelOfStudy] = (levelOfStudyCounts[levelOfStudy] ?? 0) + 1;
   });
   const levelOfStudyData = Object.entries(levelOfStudyCounts).map(([levelOfStudy, count]) => ({
     name: levelOfStudy,
@@ -43,7 +43,7 @@ export default function SchoolYearPie({ members } : { members:Member[] }) {
   };
   let colorIdx = 0;
   members.forEach(({ levelOfStudy }) => {
-    if (levelOfStudy && !baseConfig[levelOfStudy]) {
+    if (!baseConfig[levelOfStudy]) {
       baseConfig[levelOfStudy] = { label: levelOfStudy, color: PIE_COLORS[colorIdx % PIE_COLORS.length]};
       colorIdx++;
     }
