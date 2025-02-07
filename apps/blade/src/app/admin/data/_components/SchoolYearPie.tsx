@@ -1,6 +1,6 @@
 "use client";
 
-import { Cell, Pie, PieChart } from "recharts";
+import { Cell, LabelList, Pie, PieChart } from "recharts";
 
 import {
   Card,
@@ -52,7 +52,7 @@ export default function SchoolYearPie({ members } : { members:Member[] }) {
     return (
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl">School Year Distribution</CardTitle>
+            <CardTitle className="text-xl">School Year</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer config={baseConfig} className="aspect-square max-h-[300px]">

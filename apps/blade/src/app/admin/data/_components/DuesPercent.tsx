@@ -8,7 +8,7 @@ export default function DuesPercent({numMembers, numDuesPaying} : {numMembers: n
     return (
         <Card className="col-span-2">
             <CardHeader>
-                <CardTitle className="text-xl">Dues Payment</CardTitle>
+                <CardTitle className="text-xl">Dues</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="flex flex-row gap-4">
