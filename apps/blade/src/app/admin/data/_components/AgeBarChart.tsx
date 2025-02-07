@@ -1,6 +1,6 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 
 import {
@@ -46,9 +46,9 @@ export default function AgeBarChart({ members } : { members : InsertMember[] }) 
       <CardHeader>
         <CardTitle className="text-xl">Age</CardTitle>
       </CardHeader>
-      <CardContent className="pb-0">
-        <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={ageData}>
+      <CardContent className="flex-1">
+        <ChartContainer className="h-full w-full" config={chartConfig}>
+          <BarChart accessibilityLayer data={ageData} margin={{ top: 30, right: 0, left: 0, bottom: 0 }}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="age"
@@ -60,7 +60,14 @@ export default function AgeBarChart({ members } : { members : InsertMember[] }) 
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
-            <Bar dataKey="members" fill="var(--color-members)" radius={8} />
+            <Bar dataKey="members" fill="var(--color-members)" radius={8}>
+              <LabelList
+                position="top"
+                offset={12}
+                className="fill-foreground"
+                fontSize={12}
+              />
+            </Bar>
           </BarChart>
         </ChartContainer>
       </CardContent>
