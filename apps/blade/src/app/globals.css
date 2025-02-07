@@ -6,20 +6,22 @@
   :root {
     --background: 0 0% 100%;
     --background-light: #C1CEFE;
-    --background-dark: #624CAB;
+    --background-dark: #3E5283;
     --foreground: 224 71.4% 4.1%;
     --foreground-light: #758ECD; /* Light theme text color */
     --foreground-dark: #8EA6E3; /* Dark theme text color */
-    --card-light: #C1CEFE;
-    --card-dark: #624CAB;
-    --card-foreground: 224 71.4% 4.1%;
-    --card-foreground-light: #C1CEFE;
+    --card: 227, 97%, 88%;
+    --card-light: 223, 36%, 38%;
+    --card-dark: 227, 97%, 88%;
+    
+    --card-foreground-light: #624CAB;
     --card-foreground-dark: #624CAB;
-    --primary: 262.1 83.3% 57.8%;
+    --primary: 223, 47%, 63%;
     --primary-lighter: 262.1 83.3% 55%;
     --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --accent: 220 14.3% 95.9%;
+    --secondary: 230, 100%, 72%;
+    --secondary-foreground: 230, 100%, 62%;
+    --accent: 229, 100%, 80%;
     --accent-foreground: 220.9 39.3% 11%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 20% 98%;
@@ -52,4 +54,11 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+}
+
+@font-face {
+  font-family: 'Good Matcha';
+  font-style: normal;
+  font-weight: normal;
+  src: local('Good Matcha'), url('/Good Matcha.otf') format('woff');
 }
