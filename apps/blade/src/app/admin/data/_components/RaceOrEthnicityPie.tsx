@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "@forge/ui/card";
 
-// import type { ChartConfig } from "@forge/ui/chart";
 import {
   ChartContainer,
   ChartTooltip,
