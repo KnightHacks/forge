@@ -5,6 +5,7 @@ import RaceOrEthnicityPie from "./RaceOrEthnicityPie";
 import DuesPercent from "./DuesPercent";
 import GenderPie from "./GenderPie";
 import AgeBarChart from "./AgeBarChart";
+import SchoolYearPie from "./SchoolYearPie";
 
 export default function MemberDemographics() {
     const { data: members } = api.member.getMembers.useQuery();
@@ -18,6 +19,7 @@ export default function MemberDemographics() {
                 <GenderPie members={members} />
                 <RaceOrEthnicityPie members={members} />
                 <AgeBarChart members={members} />
+                <SchoolYearPie members={members} />
             </div>}
         </div>
     );
