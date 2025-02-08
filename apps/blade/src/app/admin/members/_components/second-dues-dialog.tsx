@@ -32,7 +32,7 @@ export default function SecondClearDuesDialogButton({
         <Button variant="destructive">Continue</Button>
       </DialogTrigger>
 
-      <DialogContent>
+      <DialogContent className="max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Are you really sure?</DialogTitle>
         </DialogHeader>

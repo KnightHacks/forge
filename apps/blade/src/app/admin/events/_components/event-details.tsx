@@ -28,7 +28,7 @@ export function EventDetailsButton({ event }: { event: ReturnEvent }) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent aria-describedby={undefined} className="max-h-[80vh] overflow-y-auto">
         <DialogHeader className="flex items-start justify-between">
           <div>
             <div className="flex flex-row justify-center gap-4 pb-2 sm:justify-normal">

@@ -117,7 +117,7 @@ export function CreateEventButton() {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px]">
+      <DialogContent className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] max-h-[70vh] overflow-y-auto">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit((values) => {
@@ -519,7 +519,7 @@ export function CreateEventButton() {
               />
             </div>
 
-            <DialogFooter className="flex h-full">
+            <DialogFooter>
               {isLoading ? (
                 <Loader2 className="animate-spin" />
               ) : (

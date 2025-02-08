@@ -207,7 +207,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px]">
+      <DialogContent className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] max-h-[70vh] overflow-y-auto">
         <Form {...form}>
           <form onSubmit={onSubmit}>
             <DialogHeader>
