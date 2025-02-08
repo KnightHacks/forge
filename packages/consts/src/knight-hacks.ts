@@ -15,7 +15,7 @@ export const LEVELS_OF_STUDY = [
 export const SHORT_LEVELS_OF_STUDY = [
   "Undergraduate University (2 year)",
   "Graduate University (Masters/PhD)",
-  "Vocational/Trade School"
+  "Vocational/Trade School",
 ] as const;
 
 export const EVENT_TAGS = [
@@ -156,8 +156,8 @@ export const RACES_OR_ETHNICITIES = [
 export const SHORT_RACES_AND_ETHNICITIES = [
   "Native Hawaiian/Pacific Islander",
   "Hispanic/Latino",
-  "Native American/Alaskan Native"
-] as const
+  "Native American/Alaskan Native",
+] as const;
 
 // https://unstats.un.org/unsd/methodology/m49/overview/
 export const COUNTRIES = [

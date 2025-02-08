@@ -207,7 +207,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] max-h-[70vh] overflow-y-auto">
+      <DialogContent className="max-h-[70vh] overflow-y-auto sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px]">
         <Form {...form}>
           <form onSubmit={onSubmit}>
             <DialogHeader>
@@ -572,9 +572,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                 {isLoading ? (
                   <Loader2 className="animate-spin" />
                 ) : (
-                  <Button type="submit">
-                    Update Event
-                  </Button>
+                  <Button type="submit">Update Event</Button>
                 )}
               </div>
             </DialogFooter>

@@ -6,9 +6,9 @@ import { User } from "lucide-react";
 import { FaGithub, FaGlobe, FaLinkedin } from "react-icons/fa";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
-import { 
-  MEMBER_PROFILE_ICON_SIZE, 
-  LEVELS_OF_STUDY, 
+import {
+  LEVELS_OF_STUDY,
+  MEMBER_PROFILE_ICON_SIZE,
   RACES_OR_ETHNICITIES,
   SHORT_LEVELS_OF_STUDY,
   SHORT_RACES_AND_ETHNICITIES,

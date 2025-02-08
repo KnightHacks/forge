@@ -567,9 +567,7 @@ export function MemberProfileForm({
           {loading ? (
             <Loader2 className="animate-spin" />
           ) : (
-            <Button type="submit">
-              Update Profile
-            </Button>
+            <Button type="submit">Update Profile</Button>
           )}
         </form>
       </Form>

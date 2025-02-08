@@ -117,7 +117,7 @@ export function CreateEventButton() {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px] max-h-[70vh] overflow-y-auto">
+      <DialogContent className="max-h-[70vh] overflow-y-auto sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px]">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit((values) => {
@@ -523,9 +523,7 @@ export function CreateEventButton() {
               {isLoading ? (
                 <Loader2 className="animate-spin" />
               ) : (
-                <Button type="submit">
-                  Create Event
-                </Button>
+                <Button type="submit">Create Event</Button>
               )}
             </DialogFooter>
           </form>

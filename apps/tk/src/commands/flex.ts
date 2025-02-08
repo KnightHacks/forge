@@ -26,7 +26,7 @@ export async function execute(interaction: CommandInteraction) {
   const currentMember = await db.query.User.findFirst({
     where: (t, { eq }) => eq(t.name, interaction.user.username),
     with: {
-      member: true
+      member: true,
     },
   });
 

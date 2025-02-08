@@ -344,9 +344,7 @@ export function EventFeedbackForm({
                 {isLoading ? (
                   <Loader2 className="animate-spin" />
                 ) : (
-                  <Button type="submit">
-                    Submit
-                  </Button>
+                  <Button type="submit">Submit</Button>
                 )}
               </div>
             </DialogFooter>

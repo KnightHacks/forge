@@ -382,9 +382,7 @@ export default function UpdateMemberButton({
                   {isLoading ? (
                     <Loader2 className="animate-spin" />
                   ) : (
-                    <Button type="submit">
-                      Update Member
-                    </Button>
+                    <Button type="submit">Update Member</Button>
                   )}
                 </div>
               </DialogFooter>

@@ -19,7 +19,7 @@ export function QRCodePopup() {
 
     if (userQR.qrCodeUrl) {
       return (
-        <div className="flex h-[40vw] w-[40vw] items-center justify-center max-h-[80vh] overflow-y-auto">
+        <div className="flex h-[40vw] max-h-[80vh] w-[40vw] items-center justify-center overflow-y-auto">
           <Image
             unoptimized
             src={userQR.qrCodeUrl}

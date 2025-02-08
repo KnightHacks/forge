@@ -252,7 +252,9 @@ export function MemberApplicationForm() {
           name="firstName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>First Name <span className="text-destructive">*</span></FormLabel>
+              <FormLabel>
+                First Name <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <Input placeholder="Lenny" {...field} />
               </FormControl>
@@ -265,7 +267,9 @@ export function MemberApplicationForm() {
           name="lastName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Last Name <span className="text-destructive">*</span></FormLabel>
+              <FormLabel>
+                Last Name <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <Input placeholder="Dragonson" {...field} />
               </FormControl>
@@ -279,7 +283,9 @@ export function MemberApplicationForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
+              <FormLabel>
+                Email <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <Input placeholder="tk@knighthacks.org" {...field} />
               </FormControl>
@@ -311,7 +317,9 @@ export function MemberApplicationForm() {
           name="dob"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Date Of Birth <span className="text-destructive">*</span></FormLabel>
+              <FormLabel>
+                Date Of Birth <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -394,7 +402,9 @@ export function MemberApplicationForm() {
           name="levelOfStudy"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Level of Study <span className="text-destructive">*</span></FormLabel>
+              <FormLabel>
+                Level of Study <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <Select
                   onValueChange={field.onChange}
@@ -423,7 +433,9 @@ export function MemberApplicationForm() {
           name="school"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>School <span className="text-destructive">*</span></FormLabel>
+              <FormLabel>
+                School <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <ResponsiveComboBox
                   items={SCHOOLS}
@@ -444,7 +456,9 @@ export function MemberApplicationForm() {
           name="gradDate"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Graduation Date <span className="text-destructive">*</span></FormLabel>
+              <FormLabel>
+                Graduation Date <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -457,7 +471,9 @@ export function MemberApplicationForm() {
           name="shirtSize"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Shirt Size <span className="text-destructive">*</span></FormLabel>
+              <FormLabel>
+                Shirt Size <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <Select
                   onValueChange={field.onChange}
@@ -572,13 +588,11 @@ export function MemberApplicationForm() {
           )}
         />
 
-          {loading ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <Button type="submit">
-              Submit
-            </Button>
-          )}
+        {loading ? (
+          <Loader2 className="animate-spin" />
+        ) : (
+          <Button type="submit">Submit</Button>
+        )}
       </form>
     </Form>
   );

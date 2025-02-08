@@ -71,7 +71,7 @@ const ScannerPopUp = () => {
           <span>Check In Member</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="h-auto w-full [&>button:last-child]:hidden max-h-[80vh] overflow-y-auto">
+      <DialogContent className="h-auto max-h-[80vh] w-full overflow-y-auto [&>button:last-child]:hidden">
         <DialogHeader>
           <DialogTitle>Check In Member</DialogTitle>
         </DialogHeader>
