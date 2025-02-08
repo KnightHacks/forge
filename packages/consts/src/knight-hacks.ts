@@ -120,6 +120,19 @@ export const PERMANENT_DISCORD_INVITE = "https://discord.com/invite/Kv5g9vf";
 
 export const USE_CAUTION = true;
 
+export type EventTagsColor =
+  | "GBM"
+  | "Social"
+  | "Kickstart"
+  | "Project Launch"
+  | "Hello World"
+  | "Sponsorship"
+  | "Tech Exploration"
+  | "Class Support"
+  | "Workshop"
+  | "OPS"
+  | "Hackathon";
+
 export const GENDERS = [
   "Man",
   "Woman",

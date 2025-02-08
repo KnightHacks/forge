@@ -568,13 +568,15 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
               >
                 Cancel
               </Button>
-              <Button type="submit">
+              <div className="flex items-center justify-center">
                 {isLoading ? (
                   <Loader2 className="animate-spin" />
                 ) : (
-                  "Update Event"
+                  <Button type="submit">
+                    Update Event
+                  </Button>
                 )}
-              </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>

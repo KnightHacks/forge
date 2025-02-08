@@ -1,3 +1,5 @@
+import type { EventTagsColor } from "@forge/consts/knight-hacks";
+
 export const formatDateTime = (date: Date) => {
   // Create a new Date object 5 hours behind the original
   const adjustedDate = new Date(date.getTime());
@@ -32,21 +34,8 @@ export const formatDateRange = (startDate: Date, endDate: Date) => {
   return `${start} - ${end}`;
 };
 
-export type EventTag =
-  | "GBM"
-  | "Social"
-  | "Kickstart"
-  | "Project Launch"
-  | "Hello World"
-  | "Sponsorship"
-  | "Tech Exploration"
-  | "Class Support"
-  | "Workshop"
-  | "OPS"
-  | "Hackathon";
-
-export const getTagColor = (tag: EventTag) => {
-  const colors: Record<EventTag, string> = {
+export const getTagColor = (tag: EventTagsColor) => {
+  const colors: Record<EventTagsColor, string> = {
     GBM: "bg-blue-100 text-blue-800",
     Social: "bg-pink-100 text-pink-800",
     Kickstart: "bg-green-100 text-green-800",

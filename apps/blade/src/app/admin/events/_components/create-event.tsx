@@ -519,14 +519,14 @@ export function CreateEventButton() {
               />
             </div>
 
-            <DialogFooter>
-              <Button type="submit">
-                {isLoading ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  "Create Event"
-                )}
-              </Button>
+            <DialogFooter className="flex h-full">
+              {isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <Button type="submit">
+                  Create Event
+                </Button>
+              )}
             </DialogFooter>
           </form>
         </Form>

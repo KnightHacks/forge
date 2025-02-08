@@ -340,9 +340,15 @@ export function EventFeedbackForm({
               >
                 Cancel
               </Button>
-              <Button type="submit">
-                {isLoading ? <Loader2 className="animate-spin" /> : "Submit"}
-              </Button>
+              <div className="flex items-center justify-center">
+                {isLoading ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Button type="submit">
+                    Submit
+                  </Button>
+                )}
+              </div>
             </DialogFooter>
           </form>
         </Form>
