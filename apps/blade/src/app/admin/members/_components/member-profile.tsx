@@ -109,11 +109,11 @@ export default function MemberProfileButton({
               <p>
                 <b className="text-gray-400">Level Of Study:</b>{" "}
                 {member.levelOfStudy === LEVELS_OF_STUDY[2] // Undergraduate University (2 year - community college or similar)
-                  ? SHORT_LEVELS_OF_STUDY[0]
+                  ? SHORT_LEVELS_OF_STUDY[0] // Undergraduate University (2 year)
                   : member.levelOfStudy === LEVELS_OF_STUDY[4] // Graduate University (Masters, Professional, Doctoral, etc)
-                    ? SHORT_LEVELS_OF_STUDY[1]
+                    ? SHORT_LEVELS_OF_STUDY[1] // Graduate University (Masters/PhD)
                     : member.levelOfStudy === LEVELS_OF_STUDY[6] // Other Vocational / Trade Program or Apprenticeship
-                      ? SHORT_LEVELS_OF_STUDY[2]
+                      ? SHORT_LEVELS_OF_STUDY[2] // Vocational/Trade School
                       : member.levelOfStudy}
               </p>
               <p>
@@ -132,11 +132,11 @@ export default function MemberProfileButton({
               <p>
                 <b className="text-gray-400">Race Or Ethnicity:</b>{" "}
                 {member.raceOrEthnicity === RACES_OR_ETHNICITIES[4] // Native Hawaiian or Other Pacific Islander
-                  ? SHORT_RACES_AND_ETHNICITIES[0]
+                  ? SHORT_RACES_AND_ETHNICITIES[0] // Native Hawaiian/Pacific Islander
                   : member.raceOrEthnicity === RACES_OR_ETHNICITIES[2] // Hispanic / Latino / Spanish Origin
-                    ? SHORT_RACES_AND_ETHNICITIES[1]
+                    ? SHORT_RACES_AND_ETHNICITIES[1] // Hispanic/Latino
                     : member.raceOrEthnicity === RACES_OR_ETHNICITIES[5] // Native American or Alaskan Native
-                      ? SHORT_RACES_AND_ETHNICITIES[2]
+                      ? SHORT_RACES_AND_ETHNICITIES[2] // Native American/Alaskan Native
                       : member.raceOrEthnicity}
               </p>
             </div>
