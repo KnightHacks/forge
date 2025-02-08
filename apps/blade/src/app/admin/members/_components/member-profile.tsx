@@ -6,7 +6,13 @@ import { User } from "lucide-react";
 import { FaGithub, FaGlobe, FaLinkedin } from "react-icons/fa";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
-import { MEMBER_PROFILE_ICON_SIZE } from "@forge/consts/knight-hacks";
+import { 
+  MEMBER_PROFILE_ICON_SIZE, 
+  LEVELS_OF_STUDY, 
+  RACES_OR_ETHNICITIES,
+  SHORT_LEVELS_OF_STUDY,
+  SHORT_RACES_AND_ETHNICITIES,
+} from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -102,15 +108,12 @@ export default function MemberProfileButton({
               </p>
               <p>
                 <b className="text-gray-400">Level Of Study:</b>{" "}
-                {member.levelOfStudy ===
-                "Undergraduate University (2 year - community college or similar)"
-                  ? "Undergraduate University (2 year)"
-                  : member.levelOfStudy ===
-                      "Graduate University (Masters, Professional, Doctoral, etc)"
-                    ? "Graduate University (Masters/PhD)"
-                    : member.levelOfStudy ===
-                        "Other Vocational / Trade Program or Apprenticeship"
-                      ? "Vocational/Trade School"
+                {member.levelOfStudy === LEVELS_OF_STUDY[2] // Undergraduate University (2 year - community college or similar)
+                  ? SHORT_LEVELS_OF_STUDY[0]
+                  : member.levelOfStudy === LEVELS_OF_STUDY[4] // Graduate University (Masters, Professional, Doctoral, etc)
+                    ? SHORT_LEVELS_OF_STUDY[1]
+                    : member.levelOfStudy === LEVELS_OF_STUDY[6] // Other Vocational / Trade Program or Apprenticeship
+                      ? SHORT_LEVELS_OF_STUDY[2]
                       : member.levelOfStudy}
               </p>
               <p>
@@ -128,15 +131,12 @@ export default function MemberProfileButton({
               </p>
               <p>
                 <b className="text-gray-400">Race Or Ethnicity:</b>{" "}
-                {member.raceOrEthnicity ===
-                "Native Hawaiian or Other Pacific Islander"
-                  ? "Native Hawaiian/Pacific Islander"
-                  : member.raceOrEthnicity ===
-                      "Hispanic / Latino / Spanish Origin"
-                    ? "Hispanic/Latino"
-                    : member.raceOrEthnicity ===
-                        "Native American or Alaskan Native"
-                      ? "Native American/Alaskan Native"
+                {member.raceOrEthnicity === RACES_OR_ETHNICITIES[4] // Native Hawaiian or Other Pacific Islander
+                  ? SHORT_RACES_AND_ETHNICITIES[0]
+                  : member.raceOrEthnicity === RACES_OR_ETHNICITIES[2] // Hispanic / Latino / Spanish Origin
+                    ? SHORT_RACES_AND_ETHNICITIES[1]
+                    : member.raceOrEthnicity === RACES_OR_ETHNICITIES[5] // Native American or Alaskan Native
+                      ? SHORT_RACES_AND_ETHNICITIES[2]
                       : member.raceOrEthnicity}
               </p>
             </div>

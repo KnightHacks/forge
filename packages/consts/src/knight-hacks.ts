@@ -12,6 +12,12 @@ export const LEVELS_OF_STUDY = [
   "Prefer not to answer",
 ] as const;
 
+export const SHORT_LEVELS_OF_STUDY = [
+  "Undergraduate University (2 year)",
+  "Graduate University (Masters/PhD)",
+  "Vocational/Trade School"
+] as const;
+
 export const EVENT_TAGS = [
   "GBM",
   "Social",
@@ -133,6 +139,12 @@ export const RACES_OR_ETHNICITIES = [
   "Prefer not to answer",
   "Other",
 ] as const;
+
+export const SHORT_RACES_AND_ETHNICITIES = [
+  "Native Hawaiian/Pacific Islander",
+  "Hispanic/Latino",
+  "Native American/Alaskan Native"
+] as const
 
 // https://unstats.un.org/unsd/methodology/m49/overview/
 export const COUNTRIES = [
