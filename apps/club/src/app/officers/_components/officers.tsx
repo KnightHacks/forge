@@ -11,6 +11,7 @@ export default function Officers() {
           name={officer.name}
           linkedin={officer.linkedin}
           position={officer.position}
+          major={officer.major}
         />
       ))}
     </div>
