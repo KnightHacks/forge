@@ -19,7 +19,7 @@ export function QRCodePopup() {
 
     if (userQR.qrCodeUrl) {
       return (
-        <div className="flex h-[40vw] w-[40vw] items-center justify-center">
+        <div className="flex h-[40vw] max-h-[80vh] w-[40vw] items-center justify-center overflow-y-auto">
           <Image
             unoptimized
             src={userQR.qrCodeUrl}
@@ -41,7 +41,7 @@ export function QRCodePopup() {
           <span>Show QR Code</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="!max-h-[96vw] !max-w-[96vw]">
+      <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Your QR Code</DialogTitle>
         </DialogHeader>

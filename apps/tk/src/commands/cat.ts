@@ -2,6 +2,8 @@ import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import JIMP from "jimp";
 
+import { TK_CAT_URL } from "../consts";
+
 // CAT COMMAND
 // interface for returned data from the API
 interface CatProps {
@@ -12,7 +14,7 @@ export const data = new SlashCommandBuilder()
   .setName("cat")
   .setDescription("Meow!");
 
-const url = "https://api.thecatapi.com/v1/images/search?limit=1";
+const url = TK_CAT_URL;
 export async function execute(interaction: CommandInteraction) {
   try {
     const res = await fetch(url);

@@ -2,6 +2,8 @@ import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import JIMP from "jimp";
 
+import { TK_DOG_URL } from "../consts";
+
 // DOG COMMAND
 // interface for returned data from API
 interface DogProps {
@@ -12,7 +14,7 @@ export const data = new SlashCommandBuilder()
   .setName("dog")
   .setDescription("Bark!");
 
-const url = "https://dog.ceo/api/breeds/image/random";
+const url = TK_DOG_URL;
 export async function execute(interaction: CommandInteraction) {
   try {
     const res = await fetch(url);

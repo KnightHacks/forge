@@ -97,27 +97,34 @@ export default function MemberTable() {
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-2 border-b pb-4">
-        <div>
-          <Button className="flex flex-row gap-1" onClick={toggleTimeSort}>
-            <Clock />
-            {timeSortOrder === "asc" && <ArrowUp />}
-            {timeSortOrder === "desc" && <ArrowDown />}
-          </Button>
+      <div className="border-b pb-2">
+        <div className="flex items-center gap-2 pb-2">
+          <div>
+            <Button className="flex flex-row gap-1" onClick={toggleTimeSort}>
+              <Clock />
+              {timeSortOrder === "asc" && <ArrowUp />}
+              {timeSortOrder === "desc" && <ArrowDown />}
+            </Button>
+          </div>
+          <div className="relative w-full">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search members..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+          <div>
+            <ClearDuesButton />
+          </div>
         </div>
-        <div className="relative w-full">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search members..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
-        </div>
-        <div>
-          <ClearDuesButton />
+        <div className="whitespace-nowrap text-center text-sm font-bold">
+          Returned {sortedMembers.length}{" "}
+          {sortedMembers.length === 1 ? "member" : "members"}
         </div>
       </div>
+
       <Table>
         <TableHeader>
           <TableRow>

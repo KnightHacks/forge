@@ -13,7 +13,7 @@ export function EventNumber({ size }: { size: number }) {
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{size}</div>
-        <p className="text-xs text-muted-foreground">All academic year</p>
+        <p className="text-xs text-muted-foreground">All academic years</p>
       </CardContent>
     </Card>
   );

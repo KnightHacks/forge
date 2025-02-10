@@ -3,7 +3,7 @@ import { EmbedBuilder, WebhookClient } from "discord.js";
 import JIMP from "jimp";
 import cron from "node-cron";
 
-import { GOATS } from "../consts";
+import { GOATS, TK_CAPYBARA_URL, TK_CAT_URL, TK_DUCK_URL } from "../consts";
 import { env } from "../env";
 
 // various hook props
@@ -61,10 +61,10 @@ async function createEmbed(imageUrl: string, title: string) {
 }
 
 function catHook(webhook: WebhookClient) {
-  const url = "https://api.thecatapi.com/v1/images/search?limit=1";
+  const url = TK_CAT_URL;
 
   try {
-    cron.schedule("0 18 * * *", async () => {
+    cron.schedule("0 13 * * *", async () => {
       const res = await fetch(url);
       const data = (await res.json()) as CatProps[];
 
@@ -87,10 +87,10 @@ function catHook(webhook: WebhookClient) {
 }
 
 function capybaraHook(webhook: WebhookClient) {
-  const url = "https://api.capy.lol/v1/capybara?json=true";
+  const url = TK_CAPYBARA_URL;
 
   try {
-    cron.schedule("30 18 * * *", async () => {
+    cron.schedule("30 13 * * *", async () => {
       const res = await fetch(url);
       const data = (await res.json()) as CapybaraProps;
 
@@ -110,10 +110,10 @@ function capybaraHook(webhook: WebhookClient) {
 }
 
 function duckHook(webhook: WebhookClient) {
-  const url = "https://random-d.uk/api/v2/quack";
+  const url = TK_DUCK_URL;
 
   try {
-    cron.schedule("0 19 * * *", async () => {
+    cron.schedule("0 14 * * *", async () => {
       const res = await fetch(url);
       const data = (await res.json()) as DuckProps;
 

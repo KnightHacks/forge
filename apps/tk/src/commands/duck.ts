@@ -2,6 +2,8 @@ import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import JIMP from "jimp";
 
+import { TK_DUCK_URL } from "../consts";
+
 // DUCK COMMAND
 // Command that posts duck images
 interface DuckProps {
@@ -14,7 +16,7 @@ export const data = new SlashCommandBuilder()
   .setName("duck")
   .setDescription("Quack!");
 
-const url = "https://random-d.uk/api/v2/quack";
+const url = TK_DUCK_URL;
 export async function execute(interaction: CommandInteraction) {
   try {
     const res = await fetch(url);

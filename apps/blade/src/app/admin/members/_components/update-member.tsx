@@ -378,13 +378,13 @@ export default function UpdateMemberButton({
                 >
                   Cancel
                 </Button>
-                <Button type="submit">
+                <div className="flex items-center justify-center">
                   {isLoading ? (
                     <Loader2 className="animate-spin" />
                   ) : (
-                    "Update Member"
+                    <Button type="submit">Update Member</Button>
                   )}
-                </Button>
+                </div>
               </DialogFooter>
             </form>
           </Form>

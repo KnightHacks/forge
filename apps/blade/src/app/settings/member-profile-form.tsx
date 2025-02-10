@@ -564,9 +564,11 @@ export function MemberProfileForm({
             )}
           />
 
-          <Button type="submit">
-            {loading ? <Loader2 className="animate-spin" /> : "Update profile"}
-          </Button>
+          {loading ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <Button type="submit">Update Profile</Button>
+          )}
         </form>
       </Form>
       <div className="!mt-12">

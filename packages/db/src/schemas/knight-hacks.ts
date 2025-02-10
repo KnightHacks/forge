@@ -3,6 +3,8 @@ import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 import {
+  EVENT_FEEDBACK_HEARD,
+  EVENT_FEEDBACK_SIMILAR_EVENT,
   EVENT_TAGS,
   GENDERS,
   HACKATHON_APPLICATION_STATES,
@@ -85,7 +87,7 @@ export const MemberRelations = relations(Member, ({ one }) => ({
 export const InsertMemberSchema = createInsertSchema(Member);
 
 export const HackathonApplication = createTable(
-  "hackaton_application",
+  "hackathon_application",
   (t) => ({
     memberId: t
       .uuid()
@@ -188,3 +190,28 @@ export const DuesPayment = createTable("dues_payment", (t) => ({
 }));
 
 export const DuesPaymentSchema = createInsertSchema(DuesPayment);
+
+export const EventFeedback = createTable("event_feedback", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  memberId: t
+    .uuid()
+    .notNull()
+    .references(() => Member.id, {
+      onDelete: "cascade",
+    }),
+  eventId: t
+    .uuid()
+    .notNull()
+    .references(() => Event.id, {
+      onDelete: "cascade",
+    }),
+  overallEventRating: t.integer().notNull(),
+  funRating: t.integer().notNull(),
+  learnedRating: t.integer().notNull(),
+  heardAboutUs: t.text({ enum: EVENT_FEEDBACK_HEARD }).notNull(),
+  additionalFeedback: t.text(),
+  similarEvent: t.text({ enum: EVENT_FEEDBACK_SIMILAR_EVENT }).notNull(),
+  createdAt: t.timestamp().notNull().defaultNow(),
+}));
+
+export const InsertEventFeedbackSchema = createInsertSchema(EventFeedback);

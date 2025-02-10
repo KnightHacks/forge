@@ -297,7 +297,7 @@ async function cronLogic(webhook: WebhookClient) {
 
   // Closing message
   await webhook.send({
-    content: `We hope to see you all there! Let us know you're attending an event by clicking its title and pressing "Interested"!\nIf you are interested in opting in to daily event reminders, please assign yourself the Event Reminders role in <id:customize>!`,
+    content: `We hope to see you all there! Let us know you're attending an event by clicking its title and pressing "Interested"!\nIf you are interested in opting in to daily event reminders, please assign yourself the Event Reminders role in <id:customize>!\nAlso, please make sure to sign up to [Blade](https://blade.knighthacks.org) for membership management and check-in to events!`,
   });
 }
 
