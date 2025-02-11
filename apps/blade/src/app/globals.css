@@ -10,13 +10,21 @@
     --foreground: 224 71.4% 4.1%;
     --foreground-light: #758ECD; /* Light theme text color */
     --foreground-dark: #8EA6E3; /* Dark theme text color */
+    --header: hsl();
+    --header-light: #cd7575;
+    --header-dark: 223, 47%, 63%;
     --card: 227, 97%, 88%;
-    --card-light: 223, 36%, 38%;
+    --card-light: 223, 47%, 63%;
     --card-dark: 227, 97%, 88%;
-    
-    --card-foreground-light: #624CAB;
-    --card-foreground-dark: #624CAB;
+    --card-foreground: 0, 100%, 18%;
+    --card-foreground-light: 225, 64%, 85%;
+    --card-foreground-dark: 223, 47%, 63%;
+
     --primary: 223, 47%, 63%;
+    --primary-light: 225, 60%, 75%;
+    --primary-dark: 223, 47%, 63%;
+
+
     --primary-lighter: 262.1 83.3% 55%;
     --primary-foreground: 210 20% 98%;
     --secondary: 230, 100%, 72%;
@@ -33,11 +41,19 @@
   [data-theme="light"] {
     --background: var(--background-light);
     --foreground: var(--foreground-light);
+    --card: var(--card-light);
+    --header: var(--header-light);
+    --primary: var(--primary-light);
+    --card-foreground: var(--card-foreground-light);
   }
 
   [data-theme="dark"] {
     --background: var(--background-dark);
     --foreground: var(--foreground-dark);
+    --card: var(--card-dark);
+    --header: var(--header-dark);
+    --primary: var(--primary-dark);
+    --card-foreground: var(--card-foreground-dark);
   }
 
   .theme-container {
