@@ -29,6 +29,15 @@ import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 
 const PIE_COLORS = ["#f72585", "#b5179e", "#7209b7", "#3a0ca3", "#4361ee", "#4895ef", "#4cc9f0", "#560bad", "#480ca8"];
 
+const shortenLevelOfStudy = (levelOfStudy: string): string => {
+  const replacements: Record<string, string> = {
+    "Undergraduate University (2 year - community college or similar)": "Undergraduate University (2 year)",
+    "Graduate University (Masters, Professional, Doctoral, etc)": "Graduate University (Masters/PhD)",
+    "Other Vocational / Trade Program or Apprenticeship": "Vocational/Trade School",
+  };
+  return replacements[levelOfStudy] ?? levelOfStudy;
+};
+
 export default function SchoolYearPie({ members } : { members: InsertMember[] }) {
   const id = "pie-interactive";
 
@@ -38,7 +47,7 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
     levelOfStudyCounts[levelOfStudy] = (levelOfStudyCounts[levelOfStudy] ?? 0) + 1;
   });
   const levelOfStudyData = Object.entries(levelOfStudyCounts).map(([levelOfStudy, count]) => ({
-    name: levelOfStudy,
+    name: shortenLevelOfStudy(levelOfStudy),
     amount: count,
   }));
 
@@ -53,13 +62,17 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
   const months = useMemo(() => levelOfStudyData.map((item) => item.name), [levelOfStudyData]);
 
     // set up chart config
-    const baseConfig: ChartConfig = {
+      const baseConfig: ChartConfig = {
         members: { label: "Members" },
       };
       let colorIdx = 0;
       members.forEach(({ levelOfStudy }) => {
-        if (!baseConfig[levelOfStudy]) {
-          baseConfig[levelOfStudy] = { label: levelOfStudy, color: PIE_COLORS[colorIdx % PIE_COLORS.length]};
+        const shortenedString = shortenLevelOfStudy(levelOfStudy);
+        if (!baseConfig[shortenedString]) {
+          baseConfig[shortenedString] = { 
+            label: shortenedString,
+            color: PIE_COLORS[colorIdx % PIE_COLORS.length]
+          };
           colorIdx++;
         }
       });
