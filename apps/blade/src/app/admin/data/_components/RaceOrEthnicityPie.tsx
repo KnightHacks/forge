@@ -26,6 +26,15 @@ type ChartConfig = Record<string, {
 
 const PIE_COLORS = ["#f72585", "#b5179e", "#7209b7", "#3a0ca3", "#4361ee", "#4895ef", "#4cc9f0", "#560bad", "#480ca8"];
 
+const shortenRaceOrEthnicity = (raceOrEthnicity: string): string => {
+  const replacements: Record<string, string> = {
+    "Native Hawaiian or Other Pacific Islander": "Native Hawaiian/Pacific Islander",
+    "Hispanic / Latino / Spanish Origin": "Hispanic/Latino",
+    "Native American or Alaskan Native": "Native American/Alaskan Native",
+  };
+  return replacements[raceOrEthnicity] ?? raceOrEthnicity;
+};
+
 export default function RaceOrEthnicityPie({ members } : { members:Member[] }) {
   // get amount of each raceOrEthnicity
   const raceOrEthnicityCounts: Record<string, number> = {};
@@ -33,7 +42,7 @@ export default function RaceOrEthnicityPie({ members } : { members:Member[] }) {
     if (raceOrEthnicity) raceOrEthnicityCounts[raceOrEthnicity] = (raceOrEthnicityCounts[raceOrEthnicity] ?? 0) + 1;
   });
   const raceOrEthnicityData = Object.entries(raceOrEthnicityCounts).map(([raceOrEthnicity, count]) => ({
-    name: raceOrEthnicity,
+    name: shortenRaceOrEthnicity(raceOrEthnicity),
     amount: count,
   }));
 
@@ -43,9 +52,15 @@ export default function RaceOrEthnicityPie({ members } : { members:Member[] }) {
   };
   let colorIdx = 0;
   members.forEach(({ raceOrEthnicity }) => {
-    if (raceOrEthnicity && !baseConfig[raceOrEthnicity]) {
-      baseConfig[raceOrEthnicity] = { label: raceOrEthnicity, color: PIE_COLORS[colorIdx % PIE_COLORS.length]};
-      colorIdx++;
+    if (raceOrEthnicity) {
+      const shortenedString = shortenRaceOrEthnicity(raceOrEthnicity);
+      if (!baseConfig[shortenedString]) {
+        baseConfig[shortenedString] = { 
+          label: shortenedString,
+          color: PIE_COLORS[colorIdx % PIE_COLORS.length]
+        };
+        colorIdx++;
+      }
     }
   });
 
