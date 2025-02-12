@@ -123,7 +123,7 @@ export function EventFeedbackForm({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" disabled={isFeedbackGiven}>
-          Give Feedback
+          Feedback
         </Button>
       </DialogTrigger>
       <DialogContent
