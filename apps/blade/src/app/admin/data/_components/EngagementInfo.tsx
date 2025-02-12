@@ -30,7 +30,7 @@ export default function EngagementInfo({members, events, numDuesPaying} : {membe
                 <div className="flex flex-col gap-2 lg:flex-row md:flex-row lg:gap-6 md:gap-6">
                     <p>
                         Average Events Attended: 
-                        <span className="font-bold"> {events.length > 0 ? (attendances / events.length).toFixed(2) : 0}</span>
+                        <span className="font-bold"> {events.length > 0 ? (attendances / members.length).toFixed(2) : 0}</span>
                     </p>
                     <p>
                         Average Points: <span className="font-bold">{avgPoints}</span>

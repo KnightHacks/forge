@@ -10,7 +10,7 @@ import SchoolYearPie from "./SchoolYearPie";
 export default function MemberDemographics() {
     const { data: members } = api.member.getMembers.useQuery();
     const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
-    const { data: events } = api.member.getEvents.useQuery();
+    const { data: events } = api.event.getEvents.useQuery();
 
     return (
         <div className="my-8">
