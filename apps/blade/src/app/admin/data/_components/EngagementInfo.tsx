@@ -1,5 +1,6 @@
 "use client";
 
+import { Star } from "lucide-react";
 import type { InsertMember, ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
@@ -15,7 +16,7 @@ export default function EngagementInfo({members, events, numDuesPaying} : {membe
             <CardHeader>
                 <CardTitle className="text-xl">Club Engagement</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col gap-2">
                 <div className="flex flex-row gap-4">
                     <p>
                         <span className="text-xl text-green-600 font-bold">{percentDuesPaying}% </span>
@@ -27,8 +28,14 @@ export default function EngagementInfo({members, events, numDuesPaying} : {membe
                     </p>
                 </div>
                 <div className="flex flex-row gap-4">
-                    <p>Average Events Attended: {events.length > 0 ? attendances / events.length : 0}</p>
-                    <p>Average Points: {avgPoints}</p>
+                    <p>
+                        Average Events Attended: 
+                        <span className="font-bold">{events.length > 0 ? attendances / events.length : 0}</span>
+                    </p>
+                    <p>
+                        Average Points: <span className="font-bold">{avgPoints}</span>
+                        <Star className="inline-block h-5 w-5 ms-1 text-yellow-500 relative bottom-0.5" /> 
+                    </p>
                 </div>
             </CardContent>
         </Card>
