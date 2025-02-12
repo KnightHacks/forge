@@ -5,6 +5,8 @@ import { HydrateClient } from "~/trpc/server";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@forge/ui/card";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
+import { Sound } from "~/app/_components/sound";
+import Confetti from "../_components/confetti";
 
 const resume = "/sam_resume.pdf";
 const github = "https://github.com/samborg-dev";
@@ -25,44 +27,52 @@ export default function SamPage() {
                                     Sam Borges
                                 </CardTitle>
                                 <CardDescription>
-                                    <Badge>
-                                        <Image src="/cat.gif" alt=":3" width={50} height={50} unoptimized />
-                                    </Badge>
+                                    <Sound audioUrl="./meow.mp3">
+                                        <Badge>
+                                            <Image src="/cat.gif" alt=":3" width={50} height={50} unoptimized />
+                                        </Badge>
+                                    </Sound>
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="flex flex-row justify-center p-5 ">
                                     <div className="transform transition hover:scale-110 mx-5">
-                                    <Link href={resume} target="_blank">
-                                        <Button>
-                                            Resume
-                                        </Button>
-                                    </Link>
+                                        <Link href={resume} target="_blank">
+                                            <Button>
+                                                Resume
+                                            </Button>
+                                        </Link>
                                     </div>
                                     <div className="transform transition hover:scale-110 mx-5">
-                                    <Link href={portfolio} target="_blank">
-                                        <Button>
-                                            Portfolio
-                                        </Button>
-                                    </Link>
+                                        <Link href={portfolio} target="_blank">
+                                            <Button>
+                                                Portfolio
+                                            </Button>
+                                        </Link>
                                     </div>
                                     <div className="transform transition hover:scale-110 mx-5">
-                                    <Link href={github} target="_blank">
-                                        <Button>
-                                            Github
-                                        </Button>
-                                    </Link>
+                                        <Link href={github} target="_blank">
+                                            <Button>
+                                                Github
+                                            </Button>
+                                        </Link>
                                     </div>
                                     <div className="transform transition hover:scale-110 mx-5">
-                                    <Link href={linkedin} target="_blank">
-                                        <Button>
-                                            Linkedin
-                                        </Button>
-                                    </Link>
+                                        <Link href={linkedin} target="_blank">
+                                            <Button>
+                                                Linkedin
+                                            </Button>
+                                        </Link>
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter>Card Footer</CardFooter>
+                            <CardFooter>
+                                <Sound audioUrl="./confetti.mp3">
+                                    <Confetti>
+                                        <div className="hover:font-bold">Click me!!</div>
+                                    </Confetti>
+                                </Sound>
+                            </CardFooter>
                         </Card>
                     </div>
                 </div>
