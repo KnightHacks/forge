@@ -46,7 +46,7 @@ export default async function Admin() {
             <Link href="/admin/events">
               <Button>Events</Button>
             </Link>
-            <Link href="/admin/data">
+            <Link href="/admin/demographics">
               <Button>Demographics</Button>
             </Link>
           </div>
