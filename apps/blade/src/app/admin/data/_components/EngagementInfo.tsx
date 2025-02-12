@@ -12,12 +12,12 @@ export default function EngagementInfo({members, events, numDuesPaying} : {membe
         : 0;
 
     return (
-        <Card className="col-span-2">
+        <Card className="lg:col-span-2 md:col-span-2">
             <CardHeader>
                 <CardTitle className="text-xl">Club Engagement</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-                <div className="flex flex-row gap-4">
+                <div className="flex flex-col gap-2 lg:flex-row md:flex-row lg:gap-4 md:gap-4">
                     <p>
                         <span className="text-xl text-green-600 font-bold">{percentDuesPaying}% </span>
                         <span className="text-muted-foreground">paid dues.</span>
@@ -27,10 +27,10 @@ export default function EngagementInfo({members, events, numDuesPaying} : {membe
                         <span className="text-muted-foreground">haven't paid dues.</span>
                     </p>
                 </div>
-                <div className="flex flex-row gap-4">
+                <div className="flex flex-col gap-2 lg:flex-row md:flex-row lg:gap-4 md:gap-4">
                     <p>
                         Average Events Attended: 
-                        <span className="font-bold">{events.length > 0 ? attendances / events.length : 0}</span>
+                        <span className="font-bold"> {events.length > 0 ? attendances / events.length : 0}</span>
                     </p>
                     <p>
                         Average Points: <span className="font-bold">{avgPoints}</span>

@@ -15,7 +15,7 @@ export default function MemberDemographics() {
     return (
         <div className="my-8">
             {members && duesPayingStatus && 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 md:grid-cols-2 gap-4">
                 <EngagementInfo members={members} events={events ?? []} numDuesPaying={duesPayingStatus.length} /> 
                 <GenderPie members={members} />
                 <RaceOrEthnicityPie members={members} />
