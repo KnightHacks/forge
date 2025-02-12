@@ -1,12 +1,19 @@
 import "../globals.css";
 import Image from "next/image";
 import Link from "next/link";
+import Confetti from "../_components/confetti";
 import { HydrateClient } from "~/trpc/server";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@forge/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@forge/ui/tooltip";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Sound } from "~/app/_components/sound";
-import Confetti from "../_components/confetti";
+import { PartyPopper } from 'lucide-react';
+import { Flower } from 'lucide-react';
+import { FileUser } from 'lucide-react';
+import { CircleUser } from 'lucide-react';
+import { Github } from 'lucide-react';
+import { Linkedin } from 'lucide-react';
 
 const resume = "/sam_resume.pdf";
 const github = "https://github.com/samborg-dev";
@@ -21,7 +28,7 @@ export default function SamPage() {
                     <div className="text-5xl font-extrabold" style={{ fontFamily: 'Good Matcha' }}>Sam's Awesome Dev Application</div>
 
                     <div className="pt-10">
-                        <Card className="max-w-xl mx-auto ">
+                        <Card className="max-w-xl mx-auto top">
                             <CardHeader>
                                 <CardTitle className="text-2xl font-bold pb-5">
                                     Sam Borges
@@ -35,45 +42,77 @@ export default function SamPage() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex flex-row justify-center p-5 ">
-                                    <div className="transform transition hover:scale-110 mx-5">
-                                        <Link href={resume} target="_blank">
-                                            <Button>
-                                                Resume
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                    <div className="transform transition hover:scale-110 mx-5">
-                                        <Link href={portfolio} target="_blank">
-                                            <Button>
-                                                Portfolio
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                    <div className="transform transition hover:scale-110 mx-5">
-                                        <Link href={github} target="_blank">
-                                            <Button>
-                                                Github
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                    <div className="transform transition hover:scale-110 mx-5">
-                                        <Link href={linkedin} target="_blank">
-                                            <Button>
-                                                Linkedin
-                                            </Button>
-                                        </Link>
-                                    </div>
+                                <div className="flex flex-row justify-center p-5">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="transform transition hover:scale-110 mx-7">
+                                                    <Link href={resume} target="_blank">
+                                                        <Button>
+                                                            <FileUser />
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Resume</TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="transform transition hover:scale-110 mx-7">
+                                                    <Link href={portfolio} target="_blank">
+                                                        <Button>
+                                                            <CircleUser />
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Portfolio</TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="transform transition hover:scale-110 mx-7">
+                                                    <Link href={github} target="_blank">
+                                                        <Button>
+                                                            <Github />
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Github</TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="transform transition hover:scale-110 mx-7">
+                                                    <Link href={linkedin} target="_blank">
+                                                        <Button>
+                                                            <Linkedin />
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Linkedin</TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <Sound audioUrl="./confetti.mp3">
-                                    <Confetti>
-                                        <div className="hover:font-bold">Click me!!</div>
-                                    </Confetti>
-                                </Sound>
+                                <Confetti>
+                                    <Sound audioUrl="./confetti.mp3">
+                                        <div className="transform transition scale-125 hover:scale-150">
+                                            <PartyPopper />
+                                        </div>
+                                    </Sound>
+                                </Confetti>
                             </CardFooter>
                         </Card>
+
+                        <div className="left-flower">
+                            <Flower size={700} />
+                        </div>
+                        <div className="right-flower">
+                            <Flower size={700} />
+                        </div>
+
                     </div>
                 </div>
             </div>

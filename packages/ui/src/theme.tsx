@@ -16,6 +16,7 @@ function ThemeToggle() {
   const { setTheme } = useTheme();
 
   return (
+    <div className="top">
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon">
@@ -36,6 +37,7 @@ function ThemeToggle() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    </div>
   );
 }
 

@@ -30,8 +30,10 @@ export default function RootLayout(props: { children: React.ReactNode }) {
             <div>
               {props.children}
             </div>
-            <div className="fixed bottom-4 right-4">
-              <ThemeToggle />
+            <div className="top">
+              <div className="fixed bottom-10 justify-center items-center flex w-full">
+                <ThemeToggle />
+              </div>
             </div>
           </TRPCReactProvider>
         </ThemeProvider>

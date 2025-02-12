@@ -8,8 +8,8 @@
     --background-light: #C1CEFE;
     --background-dark: #3E5283;
     --foreground: 224 71.4% 4.1%;
-    --foreground-light: #758ECD; /* Light theme text color */
-    --foreground-dark: #8EA6E3; /* Dark theme text color */
+    --foreground-light: #758ECD; 
+    --foreground-dark: #8EA6E3; 
     --header: hsl();
     --header-light: #cd7575;
     --header-dark: 223, 47%, 63%;
@@ -17,8 +17,8 @@
     --card-light: 223, 47%, 63%;
     --card-dark: 227, 97%, 88%;
     --card-foreground: 0, 100%, 18%;
-    --card-foreground-light: 225, 64%, 85%;
-    --card-foreground-dark: 223, 47%, 63%;
+    --card-foreground-light: hsl(225, 64%, 85%);
+    --card-foreground-dark: hsl(223, 47%, 63%);
 
     --primary: 223, 47%, 63%;
     --primary-light: 225, 60%, 75%;
@@ -26,7 +26,7 @@
 
 
     --primary-lighter: 262.1 83.3% 55%;
-    --primary-foreground: 210 20% 98%;
+    --primary-foreground: 0, 0%, 96%;
     --secondary: 230, 100%, 72%;
     --secondary-foreground: 230, 100%, 62%;
     --accent: 229, 100%, 80%;
@@ -58,7 +58,7 @@
 
   .theme-container {
     background-color: var(--background);
-    color: var(--foreground); /* Apply text color */
+    color: var(--foreground); 
   }
 
   .dark {
@@ -77,4 +77,45 @@
   font-style: normal;
   font-weight: normal;
   src: local('Good Matcha'), url('/Good Matcha.otf') format('woff');
+}
+
+.top {
+  z-index: 2000; 
+  position: relative; 
+}
+
+.left-flower {
+  position: fixed;
+  bottom: -20vh; 
+  left: -10vw; 
+  animation: rotateRight 5s linear infinite;
+  transform-origin: center; 
+  z-index: 500;
+}
+
+.right-flower {
+  position: fixed;
+  bottom: -20vh; 
+  right: -10vw; 
+  animation: rotateLeft 5s linear infinite;
+  transform-origin: center; 
+  z-index: 500;
+}
+
+@keyframes rotateRight {
+  0% {
+      transform: rotate(0deg);
+  }
+  100% {
+      transform: rotate(360deg);
+  }
+}
+
+@keyframes rotateLeft {
+  0% {
+      transform: rotate(360deg);
+  }
+  100% {
+      transform: rotate(0deg);
+  }
 }
