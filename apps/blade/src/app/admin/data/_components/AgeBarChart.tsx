@@ -35,7 +35,7 @@ export default function AgeBarChart({ members } : { members : InsertMember[] }) 
           totalAge += age;
         }
     });
-    const avgAge = totalAge / members.length;
+    const avgAge = (totalAge / members.length).toFixed(2);
     const ageData = Object.entries(ageCounts).map(([age, count]) => ({
         age: age,
         members: count

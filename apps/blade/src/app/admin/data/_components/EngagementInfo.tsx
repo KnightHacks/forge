@@ -5,10 +5,10 @@ import type { InsertMember, ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
 export default function EngagementInfo({members, events, numDuesPaying} : {members: InsertMember[], events: ReturnEvent[], numDuesPaying: number}) {
-    const percentDuesPaying = numDuesPaying / members.length * 100;
+    const percentDuesPaying = (numDuesPaying / members.length * 100);
     const attendances = events.reduce((sum, event) => sum + event.numAttended, 0);
     const avgPoints = members.length > 0 ? 
-        members.reduce((sum, member) => sum + (member.points ? member.points : 0), 0) / members.length
+        (members.reduce((sum, member) => sum + (member.points ? member.points : 0), 0) / members.length).toFixed(2)
         : 0;
 
     return (
@@ -17,20 +17,20 @@ export default function EngagementInfo({members, events, numDuesPaying} : {membe
                 <CardTitle className="text-xl">Club Engagement</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-                <div className="flex flex-col gap-2 lg:flex-row md:flex-row lg:gap-4 md:gap-4">
+                <div className="flex flex-col gap-2 lg:flex-row md:flex-row lg:gap-6 md:gap-6">
                     <p>
-                        <span className="text-xl text-green-600 font-bold">{percentDuesPaying}% </span>
+                        <span className="text-xl text-green-600 font-bold">{percentDuesPaying.toFixed(2)}% </span>
                         <span className="text-muted-foreground">paid dues.</span>
                     </p>
                     <p>
-                        <span className="text-xl text-red-600 font-bold">{100-percentDuesPaying}% </span>
+                        <span className="text-xl text-red-600 font-bold">{(100-percentDuesPaying).toFixed(2)}% </span>
                         <span className="text-muted-foreground">haven't paid dues.</span>
                     </p>
                 </div>
-                <div className="flex flex-col gap-2 lg:flex-row md:flex-row lg:gap-4 md:gap-4">
+                <div className="flex flex-col gap-2 lg:flex-row md:flex-row lg:gap-6 md:gap-6">
                     <p>
                         Average Events Attended: 
-                        <span className="font-bold"> {events.length > 0 ? attendances / events.length : 0}</span>
+                        <span className="font-bold"> {events.length > 0 ? (attendances / events.length).toFixed(2) : 0}</span>
                     </p>
                     <p>
                         Average Points: <span className="font-bold">{avgPoints}</span>
