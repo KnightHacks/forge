@@ -39,20 +39,22 @@ export default function OfficerCard({
               alt={name}
               width={450}
               height={475}
-              className="z-20 w-6/12 object-cover sm:w-[475px] md:w-[475px]"
+              className="z-20 w-[475px] object-cover p-2 md:w-[475px]"
             />
-            <div className="flex items-center justify-center space-x-2">
+            <div className="mx-5 flex items-center space-x-4 md:justify-center">
               <a href={linkedin}>
                 <LinkedInSVG className="h-8 w-8" />
               </a>
               <h1 className="font-poppins text-center text-xl font-semibold leading-[57px] tracking-wider text-white">
                 {position}
               </h1>
+              <div className="absolute -right-5 md:-bottom-36 md:-right-28">
+                <MajorSVG major={major} className="h-48 w-48 md:h-64 md:w-64" />
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <MajorSVG major={major} />
     </>
   );
 }

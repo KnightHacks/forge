@@ -1,6 +1,12 @@
 import * as React from "react";
 
-const SvgIcon = ({ major, ...props }: { major: string }) => (
+const MajorSVG = ({
+  major,
+
+  ...props
+}: {
+  major: string;
+}) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="570"
@@ -51,17 +57,13 @@ const SvgIcon = ({ major, ...props }: { major: string }) => (
         x="300"
         y="150"
         fill="#fff"
-        fontSize="36"
-        fontFamily="Arial, sans-serif"
+        fontSize="42"
+        fontFamily="Poppins, sans-serif"
         textAnchor="middle"
         dominantBaseline="middle"
       >
         {major.split(" ").map((line, index) => (
-          <tspan
-            key={index}
-            x="300" // keep each line centered
-            dy={index === 0 ? "0" : "1.2em"} // move subsequent lines down
-          >
+          <tspan key={index} x="320" dy={index === 0 ? "0" : "1.2em"}>
             {line}
           </tspan>
         ))}
@@ -237,4 +239,4 @@ const SvgIcon = ({ major, ...props }: { major: string }) => (
   </svg>
 );
 
-export default SvgIcon;
+export default MajorSVG;
