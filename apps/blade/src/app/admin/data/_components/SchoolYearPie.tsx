@@ -59,7 +59,7 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
     () => levelOfStudyData.findIndex((item) => item.name === activeLevel),
     [activeLevel, levelOfStudyData]
   );
-  const months = useMemo(() => levelOfStudyData.map((item) => item.name), [levelOfStudyData]);
+  const studyLevels = useMemo(() => levelOfStudyData.map((item) => item.name), [levelOfStudyData]);
 
     // set up chart config
       const baseConfig: ChartConfig = {
@@ -92,7 +92,7 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
             <SelectValue placeholder="Select month" />
           </SelectTrigger>
           <SelectContent align="end" className="rounded-xl">
-            {months.map((key) => {
+            {studyLevels.map((key) => {
               const config = baseConfig[key];
 
               if (!config) {
