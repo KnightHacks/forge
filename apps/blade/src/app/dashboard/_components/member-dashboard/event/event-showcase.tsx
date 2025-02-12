@@ -70,14 +70,9 @@ export function EventShowcase({
               {mostRecent.description}
             </CardDescription>
           </div>
-          <div className="flex flex-row gap-2">
-            <div>
-              <EventFeedbackForm event={mostRecent} member={member} />
-            </div>
-            <Badge className={`${getTagColor(mostRecent.tag)} my-auto`}>
+          <Badge className={`${getTagColor(mostRecent.tag)} my-auto`}>
               {mostRecent.tag}
-            </Badge>
-          </div>
+          </Badge>
         </div>
       </CardHeader>
       <CardContent>
@@ -100,13 +95,16 @@ export function EventShowcase({
               {mostRecent.numAttended === 1 ? "Attendee" : "Attendees"}
             </span>
           </div>
-          <div>
+          <div className="flex flex-row justify-between">
             {mostRecent.points && (
               <div className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-yellow-500" />
                 <span>{mostRecent.points} Points</span>
               </div>
             )}
+            <div>
+              <EventFeedbackForm event={mostRecent} member={member} />
+            </div>
           </div>
         </div>
       </CardContent>
@@ -115,7 +113,7 @@ export function EventShowcase({
           <DialogTrigger asChild>
             <Button variant="outline">View All</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-h-[80vh] overflow-y-auto max-w-2xl">
             <DialogHeader>
               <DialogTitle>Past Events Attended</DialogTitle>
             </DialogHeader>
@@ -130,14 +128,9 @@ export function EventShowcase({
                           {event.description}
                         </CardDescription>
                       </div>
-                      <div className="flex flex-row gap-2">
-                        <div>
-                          <EventFeedbackForm event={event} member={member} />
-                        </div>
-                        <Badge className={`${getTagColor(event.tag)} my-auto`}>
+                      <Badge className={`${getTagColor(event.tag)} my-auto`}>
                           {event.tag}
-                        </Badge>
-                      </div>
+                      </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -162,17 +155,23 @@ export function EventShowcase({
                           {event.numAttended === 1 ? "Attendee" : "Attendees"}
                         </span>
                       </div>
-                      {event.points ? (
-                        <div className="flex items-center gap-2">
-                          <Star className="h-4 w-4 text-yellow-500" />
-                          <span>{event.points} Points</span>
+                      <div className="flex flex-row justify-between">
+                        {event.points ? (
+                          <div className="flex items-center gap-2">
+                            <Star className="h-4 w-4 text-yellow-500" />
+                            <span>{event.points} Points</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Star className="h-4 w-4 text-yellow-500" />
+                            <span>0 Points</span>
+                          </div>
+                        )}
+                        <div>
+                          <EventFeedbackForm event={event} member={member} />
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Star className="h-4 w-4 text-yellow-500" />
-                          <span>0 Points</span>
-                        </div>
-                      )}
+                      </div>
+
                     </div>
                   </CardContent>
                 </Card>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, MessageCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import type { InsertMember, SelectEvent } from "@forge/db/schemas/knight-hacks";
@@ -122,11 +122,11 @@ export function EventFeedbackForm({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" disabled={isFeedbackGiven}>
-          <MessageCircle className="h-5 w-5" />
+        <Button variant="outline" size="sm" disabled={isFeedbackGiven}>
+          Give Feedback
         </Button>
       </DialogTrigger>
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent aria-describedby={undefined} className="max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Your Feedback For {event.name}</DialogTitle>
         </DialogHeader>
