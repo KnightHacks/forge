@@ -73,7 +73,7 @@ export default function AgeBarChart({ members } : { members : InsertMember[] }) 
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-center gap-2 font-medium text-l text-center">
-        Average age: {avgAge}
+        <p>Average age: <span className="font-bold">{avgAge}</span></p>
       </CardFooter>
     </Card>
   );

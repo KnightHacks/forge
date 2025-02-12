@@ -29,62 +29,47 @@ import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 
 const PIE_COLORS = ["#f72585", "#b5179e", "#7209b7", "#3a0ca3", "#4361ee", "#4895ef", "#4cc9f0", "#560bad", "#480ca8"];
 
-const shortenRaceOrEthnicity = (raceOrEthnicity: string): string => {
-  const replacements: Record<string, string> = {
-    "Native Hawaiian or Other Pacific Islander": "Native Hawaiian/Pacific Islander",
-    "Hispanic / Latino / Spanish Origin": "Hispanic/Latino",
-    "Native American or Alaskan Native": "Native American/Alaskan Native",
-  };
-  return replacements[raceOrEthnicity] ?? raceOrEthnicity;
-};
-
 export default function SchoolYearPie({ members } : { members: InsertMember[] }) {
   const id = "pie-interactive";
 
-  // get amount of each raceOrEthnicity
-  const raceOrEthnicityCounts: Record<string, number> = {};
-  members.forEach(({ raceOrEthnicity }) => {
-    if (raceOrEthnicity) raceOrEthnicityCounts[raceOrEthnicity] = (raceOrEthnicityCounts[raceOrEthnicity] ?? 0) + 1;
+  // get amount of each gender
+  const genderCounts: Record<string, number> = {};
+  members.forEach(({ gender }) => {
+    if (gender) genderCounts[gender] = (genderCounts[gender] ?? 0) + 1;
   });
-  const raceOrEthnicityData = Object.entries(raceOrEthnicityCounts).map(([raceOrEthnicity, count]) => ({
-    name: shortenRaceOrEthnicity(raceOrEthnicity),
+  const genderData = Object.entries(genderCounts).map(([gender, count]) => ({
+    name: gender,
     amount: count,
   }));
 
   const [activeLevel, setActiveLevel] = useState(
-    raceOrEthnicityData[0] ? raceOrEthnicityData[0].name: null
+    genderData[0] ? genderData[0].name: null
   );
 
   const activeIndex = useMemo(
-    () => raceOrEthnicityData.findIndex((item) => item.name === activeLevel),
-    [activeLevel, raceOrEthnicityData]
+    () => genderData.findIndex((item) => item.name === activeLevel),
+    [activeLevel, genderData]
   );
-  const raceNames = useMemo(() => raceOrEthnicityData.map((item) => item.name), [raceOrEthnicityData]);
+  const genders = useMemo(() => genderData.map((item) => item.name), [genderData]);
 
-    // set up chart config
-      const baseConfig: ChartConfig = {
-        members: { label: "Members" },
-      };
-      let colorIdx = 0;
-      members.forEach(({ raceOrEthnicity }) => {
-        if (raceOrEthnicity) {
-          const shortenedString = shortenRaceOrEthnicity(raceOrEthnicity);
-          if (!baseConfig[shortenedString]) {
-            baseConfig[shortenedString] = { 
-              label: shortenedString,
-              color: PIE_COLORS[colorIdx % PIE_COLORS.length]
-            };
-            colorIdx++;
-          }
-        }
-      });
+  // set up chart config
+  const baseConfig: ChartConfig = {
+    members: { label: "Members" },
+  };
+  let colorIdx = 0;
+  members.forEach(({ gender }) => {
+    if (gender && !baseConfig[gender]) {
+      baseConfig[gender] = { label: gender, color: PIE_COLORS[colorIdx % PIE_COLORS.length]};
+      colorIdx++;
+    }
+  });
 
   return (
     <Card data-chart={id} className="flex flex-col">
       <ChartStyle id={id} config={baseConfig} />
       <CardHeader className="flex-col items-start gap-4 space-y-0 pb-0">
         <div className="grid gap-1">
-          <CardTitle className="text-xl">Race / Ethnicity</CardTitle>
+          <CardTitle className="text-xl">Gender</CardTitle>
         </div>
         <Select value={activeLevel ? activeLevel : undefined} onValueChange={setActiveLevel}>
           <SelectTrigger
@@ -94,7 +79,7 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
             <SelectValue placeholder="Select month" />
           </SelectTrigger>
           <SelectContent align="end" className="rounded-xl">
-            {raceNames.map((key) => {
+            {genders.map((key) => {
               const config = baseConfig[key];
 
               if (!config) {
@@ -122,7 +107,7 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="flex flex-1 justify-center pb-0">
+      <CardContent className="flex flex-1 justify-center mt-4 pb-0">
         <ChartContainer
           id={id}
           config={baseConfig}
@@ -134,7 +119,7 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
               content={<ChartTooltipContent hideLabel />}
             />
             <Pie
-              data={raceOrEthnicityData}
+              data={genderData}
               dataKey="amount"
               nameKey="name"
               innerRadius={60}
@@ -169,7 +154,7 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
                           y={viewBox.cy}
                           className="fill-foreground text-3xl font-bold"
                         >
-                          {raceOrEthnicityData[activeIndex]?.amount.toLocaleString()}
+                          {genderData[activeIndex]?.amount.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
@@ -183,7 +168,7 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
                   }
                 }}
               />
-                {raceOrEthnicityData.map((_, index) => (
+                {genderData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                 ))}
             </Pie>

@@ -120,7 +120,7 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="flex flex-1 justify-center pb-0">
+      <CardContent className="flex flex-1 justify-center mt-4 pb-0">
         <ChartContainer
           id={id}
           config={baseConfig}

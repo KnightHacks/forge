@@ -38,6 +38,7 @@ export default async function Data() {
                         <h1 className="text-3xl font-extrabold tracking-tight">
                             Event Demographics
                         </h1>
+                        <p className="m-10 text-center text-xl">to be added!</p>
                     </div>
                 </div>
             </main>
