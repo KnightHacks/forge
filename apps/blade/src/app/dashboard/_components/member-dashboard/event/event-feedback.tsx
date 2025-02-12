@@ -126,7 +126,10 @@ export function EventFeedbackForm({
           Give Feedback
         </Button>
       </DialogTrigger>
-      <DialogContent aria-describedby={undefined} className="max-h-[80vh] overflow-y-auto">
+      <DialogContent
+        aria-describedby={undefined}
+        className="max-h-[80vh] overflow-y-auto"
+      >
         <DialogHeader>
           <DialogTitle>Your Feedback For {event.name}</DialogTitle>
         </DialogHeader>

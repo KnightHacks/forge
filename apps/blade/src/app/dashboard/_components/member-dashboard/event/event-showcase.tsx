@@ -71,7 +71,7 @@ export function EventShowcase({
             </CardDescription>
           </div>
           <Badge className={`${getTagColor(mostRecent.tag)} my-auto`}>
-              {mostRecent.tag}
+            {mostRecent.tag}
           </Badge>
         </div>
       </CardHeader>
@@ -113,7 +113,7 @@ export function EventShowcase({
           <DialogTrigger asChild>
             <Button variant="outline">View All</Button>
           </DialogTrigger>
-          <DialogContent className="max-h-[80vh] overflow-y-auto max-w-2xl">
+          <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Past Events Attended</DialogTitle>
             </DialogHeader>
@@ -129,7 +129,7 @@ export function EventShowcase({
                         </CardDescription>
                       </div>
                       <Badge className={`${getTagColor(event.tag)} my-auto`}>
-                          {event.tag}
+                        {event.tag}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -171,7 +171,6 @@ export function EventShowcase({
                           <EventFeedbackForm event={event} member={member} />
                         </div>
                       </div>
-
                     </div>
                   </CardContent>
                 </Card>
