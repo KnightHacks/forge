@@ -6,10 +6,10 @@ interface GitHubLinkProps {
   color?: string;
 }
 
-export default function GitHubLink({ username, size = 32, color = "text-blue-600" }: GitHubLinkProps) {
+export default function GitHubLink({ username, size = 32, color = "text-gray-400" }: GitHubLinkProps) {
   return (
     <Link
-      href={`https://www.github.com/${username}`}
+      href={`https://github.com/${username}`}
       target="_blank"
       aria-label={`Open ${username}'s GitHub profile in a new tab`}
       rel="noopener noreferrer"
