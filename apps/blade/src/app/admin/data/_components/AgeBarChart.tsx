@@ -30,7 +30,8 @@ export default function AgeBarChart({ members } : { members : InsertMember[] }) 
     const ageCounts: Record<number, number> = {};
     let totalAge = 0;
     members.forEach(({ age }) => {
-        if (age) {
+        // some people entered wrong birthday info and are negative ages
+        if (age && age >= 13) {
           ageCounts[age] = (ageCounts[age] ?? 0) + 1;
           totalAge += age;
         }
@@ -64,7 +65,7 @@ export default function AgeBarChart({ members } : { members : InsertMember[] }) 
               <LabelList
                 position="top"
                 offset={12}
-                className="fill-foreground"
+                className="fill-foreground invisible lg:visible md:visible"
                 fontSize={12}
               />
             </Bar>
