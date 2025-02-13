@@ -1,16 +1,12 @@
 "use client";
 
-import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
+import { useMemo, useState } from "react";
+import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@forge/ui/card";
-import type {
-  ChartConfig} from "@forge/ui/chart";
+import type { InsertMember } from "@forge/db/schemas/knight-hacks";
+import type { ChartConfig } from "@forge/ui/chart";
+import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
   ChartStyle,
@@ -24,12 +20,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
-import { useMemo, useState } from "react";
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 
-const PIE_COLORS = ["#f72585", "#b5179e", "#7209b7", "#3a0ca3", "#4361ee", "#4895ef", "#4cc9f0", "#560bad", "#480ca8"];
+const PIE_COLORS = [
+  "#f72585",
+  "#b5179e",
+  "#7209b7",
+  "#3a0ca3",
+  "#4361ee",
+  "#4895ef",
+  "#4cc9f0",
+  "#560bad",
+  "#480ca8",
+];
 
-export default function SchoolYearPie({ members } : { members: InsertMember[] }) {
+export default function SchoolYearPie({
+  members,
+}: {
+  members: InsertMember[];
+}) {
   const id = "pie-interactive";
 
   // get amount of each gender
@@ -43,14 +51,17 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
   }));
 
   const [activeLevel, setActiveLevel] = useState(
-    genderData[0] ? genderData[0].name: null
+    genderData[0] ? genderData[0].name : null,
   );
 
   const activeIndex = useMemo(
     () => genderData.findIndex((item) => item.name === activeLevel),
-    [activeLevel, genderData]
+    [activeLevel, genderData],
   );
-  const genders = useMemo(() => genderData.map((item) => item.name), [genderData]);
+  const genders = useMemo(
+    () => genderData.map((item) => item.name),
+    [genderData],
+  );
 
   // set up chart config
   const baseConfig: ChartConfig = {
@@ -59,7 +70,10 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
   let colorIdx = 0;
   members.forEach(({ gender }) => {
     if (gender && !baseConfig[gender]) {
-      baseConfig[gender] = { label: gender, color: PIE_COLORS[colorIdx % PIE_COLORS.length]};
+      baseConfig[gender] = {
+        label: gender,
+        color: PIE_COLORS[colorIdx % PIE_COLORS.length],
+      };
       colorIdx++;
     }
   });
@@ -71,7 +85,10 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
         <div className="grid gap-1">
           <CardTitle className="text-xl">Gender</CardTitle>
         </div>
-        <Select value={activeLevel ? activeLevel : undefined} onValueChange={setActiveLevel}>
+        <Select
+          value={activeLevel ? activeLevel : undefined}
+          onValueChange={setActiveLevel}
+        >
           <SelectTrigger
             className="ml-auto h-7 rounded-lg pl-2.5"
             aria-label="Select a value"
@@ -96,7 +113,7 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
                     <span
                       className="flex h-3 w-3 shrink-0 rounded-sm"
                       style={{
-                        backgroundColor: config.color
+                        backgroundColor: config.color,
                       }}
                     />
                     {config.label}
@@ -107,7 +124,7 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="flex flex-1 justify-center mt-4 pb-0">
+      <CardContent className="mt-4 flex flex-1 justify-center pb-0">
         <ChartContainer
           id={id}
           config={baseConfig}
@@ -131,7 +148,7 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
               }: PieSectorDataItem) => (
                 <g>
                   <Sector {...props} outerRadius={outerRadius + 10} />
-                  <Sector 
+                  <Sector
                     {...props}
                     outerRadius={outerRadius + 25}
                     innerRadius={outerRadius + 12}
@@ -164,17 +181,20 @@ export default function SchoolYearPie({ members } : { members: InsertMember[] })
                           Members
                         </tspan>
                       </text>
-                    )
+                    );
                   }
                 }}
               />
-                {genderData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                ))}
+              {genderData.map((_, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={PIE_COLORS[index % PIE_COLORS.length]}
+                />
+              ))}
             </Pie>
           </PieChart>
         </ChartContainer>
       </CardContent>
     </Card>
-  )
+  );
 }
