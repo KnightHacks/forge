@@ -17,8 +17,8 @@
     --card-light: 223, 47%, 63%;
     --card-dark: 227, 97%, 88%;
     --card-foreground: 0, 100%, 18%;
-    --card-foreground-light: hsl(225, 64%, 85%);
-    --card-foreground-dark: hsl(223, 47%, 63%);
+    --card-foreground-light: 225, 64%, 85%;
+    --card-foreground-dark: 223, 47%, 63%;
 
     --primary: 223, 47%, 63%;
     --primary-light: 225, 60%, 75%;
@@ -80,7 +80,12 @@
 }
 
 .top {
-  z-index: 2000; 
+  z-index: 2; 
+  position: relative; 
+}
+
+.supertop {
+  z-index: 3; 
   position: relative; 
 }
 
@@ -90,7 +95,7 @@
   left: -10vw; 
   animation: rotateRight 5s linear infinite;
   transform-origin: center; 
-  z-index: 500;
+  z-index: 1;
 }
 
 .right-flower {
@@ -99,7 +104,7 @@
   right: -10vw; 
   animation: rotateLeft 5s linear infinite;
   transform-origin: center; 
-  z-index: 500;
+  z-index: 1;
 }
 
 @keyframes rotateRight {
