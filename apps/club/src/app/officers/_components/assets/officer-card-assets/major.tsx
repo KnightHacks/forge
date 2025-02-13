@@ -1,12 +1,6 @@
 import * as React from "react";
 
-const MajorSVG = ({
-  major,
-
-  ...props
-}: {
-  major: string;
-}) => (
+const MajorSVG = ({ major, ...props }: { major: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="570"
@@ -51,24 +45,24 @@ const MajorSVG = ({
         d="M137.49 352.893c-4.863 0-8.801 3.593-8.801 7.998s3.948 8.007 8.801 8.007 8.79-3.592 8.79-8.007-3.948-7.998-8.79-7.998m0 21.829c-8.386 0-15.192-6.202-15.192-13.821 0-7.62 6.806-13.822 15.192-13.822s15.191 6.202 15.191 13.822-6.827 13.821-15.191 13.821"
       ></path>
     </g>
-    {/* Replace the hardcoded text drawn as a path with a dynamic text element */}
-    <g filter="url(#filter6_dddddd_394_5185)">
-      <text
-        x="300"
-        y="150"
-        fill="#fff"
-        fontSize="42"
-        fontFamily="Poppins, sans-serif"
-        textAnchor="middle"
-        dominantBaseline="middle"
-      >
-        {major.split(" ").map((line, index) => (
-          <tspan key={index} x="320" dy={index === 0 ? "0" : "1.2em"}>
-            {line}
-          </tspan>
-        ))}
-      </text>
-    </g>
+
+    <text
+      x="300"
+      y="150"
+      fill="#fff"
+      fontSize="42"
+      fontFamily="Poppins, sans-serif"
+      fontWeight="bold"
+      textAnchor="middle"
+      dominantBaseline="middle"
+    >
+      {major.split(" ").map((line, index) => (
+        <tspan key={index} x="320" dy={index === 0 ? "0" : "1.2em"}>
+          {line}
+        </tspan>
+      ))}
+    </text>
+
     <defs>
       <filter
         id="filter0_dddddd_394_5185"
