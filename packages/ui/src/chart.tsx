@@ -197,6 +197,7 @@ const ChartTooltipContent = React.forwardRef<
                 )}
               >
                 {formatter && item.value !== undefined && item.name ? (
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                   formatter(item.value, item.name, item, index, item.payload)
                 ) : (
                   <>
