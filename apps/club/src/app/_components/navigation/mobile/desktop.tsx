@@ -32,11 +32,21 @@ export default function DesktopNavbar() {
           </div>
           <div className="flex items-center p-2 text-center font-sans text-lg font-bold text-white hover:text-gray-300">
             <NavLink
-              linkName="teams"
-              isActive={pathName.endsWith("teams")}
+              linkName="officers"
+              isActive={pathName.endsWith("officers")}
               className="flex"
             >
               <Users className="pr-2" />
+              Officers
+            </NavLink>
+          </div>
+          <div className="flex items-center p-2 text-center font-sans text-lg font-bold text-white hover:text-gray-300">
+            <NavLink
+              linkName="teams"
+              isActive={pathName.endsWith("teams")}
+              className="flex border-transparent"
+            >
+              <Trophy className="pr-2" />
               Teams
             </NavLink>
           </div>
@@ -44,20 +54,10 @@ export default function DesktopNavbar() {
             <NavLink
               linkName="hackathons"
               isActive={pathName.endsWith("hackathons")}
-              className="flex border-transparent"
-            >
-              <Trophy className="pr-2" />
-              Hackathons
-            </NavLink>
-          </div>
-          <div className="flex items-center p-2 text-center font-sans text-lg font-bold text-white hover:text-gray-300">
-            <NavLink
-              linkName="links"
-              isActive={pathName.endsWith("links")}
               className="flex"
             >
               <IconLink className="pr-2" />
-              Links
+              Hackathons
             </NavLink>
           </div>
         </div>
