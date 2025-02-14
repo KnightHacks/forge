@@ -20,7 +20,7 @@ export default function OfficerCard({
   position,
 }: OfficerCardProps) {
   return (
-    <div className="flex w-full max-w-[400px] flex-col items-center space-y-4 sm:max-w-[600px]">
+    <div className="flex w-full max-w-[400px] flex-col items-center space-y-4 sm:max-w-[600px] md:mb-8">
       <div className="relative h-[300px] w-[250px] sm:h-[500px] sm:w-[400px]">
         <Image
           src={"/container.svg"}
