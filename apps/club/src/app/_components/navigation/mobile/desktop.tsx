@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Home, Link as IconLink, Trophy, Users } from "lucide-react";
+import { Gem, Home, Trophy, Users } from "lucide-react";
 
 import NavLink from "../navlink";
 
@@ -36,7 +36,7 @@ export default function DesktopNavbar() {
               isActive={pathName.endsWith("officers")}
               className="flex"
             >
-              <Users className="pr-2" />
+              <Gem className="pr-2" />
               Officers
             </NavLink>
           </div>
@@ -46,7 +46,7 @@ export default function DesktopNavbar() {
               isActive={pathName.endsWith("teams")}
               className="flex border-transparent"
             >
-              <Trophy className="pr-2" />
+              <Users className="pr-2" />
               Teams
             </NavLink>
           </div>
@@ -56,7 +56,7 @@ export default function DesktopNavbar() {
               isActive={pathName.endsWith("hackathons")}
               className="flex"
             >
-              <IconLink className="pr-2" />
+              <Trophy className="pr-2" />
               Hackathons
             </NavLink>
           </div>

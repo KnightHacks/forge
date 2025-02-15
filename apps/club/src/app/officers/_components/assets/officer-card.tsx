@@ -42,7 +42,7 @@ export default function OfficerCard({
               style={{ objectFit: "contain" }}
             />
           </div>
-          <div className="mx-5 flex items-center space-x-2 sm:flex-row sm:justify-center sm:space-x-4 sm:space-y-0">
+          <div className="mx-5 flex items-center space-x-2 pt-3 sm:flex-row sm:justify-center sm:space-x-4 sm:space-y-0">
             <a href={linkedin}>
               <LinkedInSVG className="h-8 w-8" />
             </a>
@@ -50,14 +50,14 @@ export default function OfficerCard({
               {position}
             </h1>
             {major.endsWith("Engineering") ? (
-              <div className="absolute -right-5 top-[95%] md:-bottom-28 md:-right-24">
+              <div className="absolute -right-5 top-[95%] md:-bottom-24 md:-right-24">
                 <RoundMajorSVG
                   major={major}
                   className="h-24 w-24 md:h-48 md:w-48"
                 />
               </div>
             ) : (
-              <div className="absolute -right-14 top-[80%] md:-bottom-36 md:-right-28">
+              <div className="absolute -right-14 top-[80%] md:-bottom-24 md:-right-28">
                 <MajorSVG
                   major={major}
                   className="h-36 w-36 md:h-48 md:w-48 lg:h-64 lg:w-64"

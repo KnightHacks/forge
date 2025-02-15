@@ -1,4 +1,4 @@
-import { Home, Link, Menu, Phone, Trophy, Users } from "lucide-react";
+import { Gem, Home, Link, Menu, Phone, Trophy, Users } from "lucide-react";
 
 import {
   Sheet,
@@ -30,6 +30,16 @@ export function NavSheet() {
               >
                 <Home className="pr-2" />
                 Home
+              </NavLink>
+            </li>
+            <li className="flex w-full justify-center border-b pb-2 hover:text-gray-300">
+              <NavLink
+                linkName="officers"
+                isActive={false}
+                className="flex border-b-0 hover:border-b-0 focus:border-b-0"
+              >
+                <Gem className="pr-2" />
+                Officers
               </NavLink>
             </li>
             <li className="flex w-full justify-center border-b pb-2 hover:text-gray-300">
