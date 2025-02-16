@@ -46,7 +46,12 @@ export default function Officers() {
   return (
     <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 py-14 md:grid-cols-2">
       {OFFICERS.map((officer, index) => (
-        <div key={index} ref={(el) => (officersRef.current[index] = el)}>
+        <div
+          key={index}
+          ref={(el) => {
+            officersRef.current[index] = el;
+          }}
+        >
           <OfficerCard
             image={officer.image}
             name={officer.name}

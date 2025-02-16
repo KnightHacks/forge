@@ -1,13 +1,16 @@
 import * as React from "react";
 
-const MajorSVG = ({ major, ...props }: { major: string }) => (
+const MajorSVG: React.FC<{ major: string; className: string }> = ({
+  major,
+  className,
+}) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="570"
     height="375"
     fill="none"
     viewBox="0 0 570 375"
-    {...props}
+    className={className}
   >
     <g filter="url(#filter0_dddddd_394_5185)">
       <path

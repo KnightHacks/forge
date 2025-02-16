@@ -1,13 +1,16 @@
 import * as React from "react";
 
-const RoundMajorSVG = ({ major, ...props }: { major: string }) => (
+const RoundMajorSVG: React.FC<{ major: string; className: string }> = ({
+  major,
+  className,
+}) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="381"
     height="333"
     fill="none"
     viewBox="0 0 381 333"
-    {...props}
+    className={className}
   >
     <g filter="url(#filter0_dddddd_0_1)">
       <path
