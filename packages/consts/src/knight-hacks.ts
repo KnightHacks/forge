@@ -27,7 +27,7 @@ export const OFFICERS = [
     major: "Computer Science",
   },
   {
-    name: "Leonard Goffman",
+    name: "Leonard Gofman",
     position: "Vice President",
     image: "/officers/leo.png",
     linkedin: "https://www.linkedin.com/in/leonard-gofman-208578236/",

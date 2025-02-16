@@ -50,7 +50,7 @@ export default function OfficerCard({
               {position}
             </h1>
             {major.endsWith("Engineering") ? (
-              <div className="absolute -right-5 top-[95%] md:-bottom-24 md:-right-24">
+              <div className="absolute -right-5 top-[95%] md:-right-20 md:top-[88%]">
                 <RoundMajorSVG
                   major={major}
                   className="h-24 w-24 md:h-48 md:w-48"
