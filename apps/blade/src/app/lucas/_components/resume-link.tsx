@@ -8,7 +8,7 @@ interface ResumeLinkProps {
 export default function ResumeLink({ size = 32, color = "text-red-600" }: ResumeLinkProps) {
   return (
     <Link
-      href="/Lucas_McClean_Resume.pdf"
+      href="/lucas-resume.pdf"
       target="_blank"
       aria-label="Download my resume"
     >
