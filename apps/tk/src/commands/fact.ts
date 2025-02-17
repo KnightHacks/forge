@@ -1,6 +1,8 @@
 import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
 
+import { TK_FACTS_URL } from "../consts";
+
 // FACT COMMAND
 // GET FACTS
 
@@ -12,7 +14,7 @@ export const data = new SlashCommandBuilder()
   .setName("fact")
   .setDescription("Replies with a fact!");
 
-const url = "https://uselessfacts.jsph.pl/api/v2/facts/random?language=en";
+const url = TK_FACTS_URL;
 export async function execute(interaction: CommandInteraction) {
   try {
     const res = await fetch(url);

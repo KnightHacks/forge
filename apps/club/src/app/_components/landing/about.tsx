@@ -111,11 +111,11 @@ export default function About() {
 
       <SwordSVG
         ref={swordRef}
-        className="absolute -bottom-20 -right-6 hidden h-auto w-full max-w-[400px] transform text-purple-400 opacity-50 md:block"
+        className="absolute -bottom-20 -right-1 hidden h-auto w-full max-w-[400px] transform text-purple-400 opacity-50 md:block"
       />
       <NeonTkSVG
         ref={neonRef}
-        className="absolute -left-20 -top-20 hidden h-auto w-full max-w-[400px] transform text-purple-400 opacity-50 md:block"
+        className="absolute left-10 top-16 hidden h-[200px] w-full max-w-[400px] transform text-purple-400 opacity-50 md:block"
       />
     </div>
   );

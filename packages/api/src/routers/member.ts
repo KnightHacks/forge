@@ -417,7 +417,7 @@ export const memberRouter = {
       });
 
       return {
-        message: `${member.firstName} ${member.lastName} has been checked in for the event`,
+        message: `${member.firstName} ${member.lastName} has been checked in to this event!`,
       };
     }),
 } satisfies TRPCRouterRecord;

@@ -16,10 +16,12 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
+import { getFormattedDate } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import SortButton from "../../_components/SortButton";
 import { CreateEventButton } from "./create-event";
 import { DeleteEventButton } from "./delete-event";
+import { EventDetailsButton } from "./event-details";
 import { UpdateEventButton } from "./update-event";
 import { ViewAttendanceButton } from "./view-attendance-button";
 
@@ -28,8 +30,10 @@ type SortField = keyof Event;
 type SortOrder = "asc" | "desc" | null;
 
 export function EventsTable() {
-  const [sortField, setSortField] = useState<SortField | null>(null);
-  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
+  const [sortField, setSortField] = useState<SortField | null>(
+    "start_datetime",
+  );
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: events } = api.event.getEvents.useQuery();
@@ -50,19 +54,38 @@ export function EventsTable() {
     return 0;
   });
 
+  const upcomingDate = new Date();
+  upcomingDate.setHours(0);
+  upcomingDate.setDate(upcomingDate.getDate() - 1);
+  const upcomingEvents = [...sortedEvents].filter(
+    (event) => event.start_datetime >= upcomingDate,
+  );
+
+  const previousEvents = [...sortedEvents].filter(
+    (event) => event.start_datetime < upcomingDate,
+  );
+
   return (
     <div>
-      <div className="flex items-center justify-between gap-2 border-b pb-4">
-        <div className="relative w-full">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search events..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
+      <div className="flex items-center justify-between gap-2 border-b pb-2">
+        <div className="flex w-full flex-col">
+          <div className="flex items-center gap-2 pb-2">
+            <div className="relative w-full">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search events..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <CreateEventButton />
+          </div>
+          <div className="whitespace-nowrap text-center text-sm font-bold">
+            Returned {sortedEvents.length}{" "}
+            {sortedEvents.length === 1 ? "event" : "events"}
+          </div>
         </div>
-        <CreateEventButton />
       </div>
 
       <Table>
@@ -118,17 +141,28 @@ export function EventsTable() {
                 setSortOrder={setSortOrder}
               />
             </TableHead>
-            <TableHead className="text-right">
+            <TableHead className="text-center">
+              <Label>Event Details</Label>
+            </TableHead>
+            <TableHead className="text-center">
               <Label>Update</Label>
             </TableHead>
-            <TableHead className="text-right">
+            <TableHead className="text-center">
               <Label>Delete</Label>
             </TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
-          {sortedEvents.map((event) => (
+          <TableRow>
+            <TableCell
+              className="text- bg-muted/50 font-bold sm:text-center"
+              colSpan={8}
+            >
+              Upcoming Events
+            </TableCell>
+          </TableRow>
+          {upcomingEvents.map((event) => (
             <TableRow key={event.id}>
               <TableCell className="text-center font-medium">
                 {event.name}
@@ -136,11 +170,7 @@ export function EventsTable() {
               <TableCell className="text-center">{event.tag}</TableCell>
 
               <TableCell className="text-center">
-                {typeof event.start_datetime === "string"
-                  ? new Date(
-                      event.start_datetime as string,
-                    ).toLocaleDateString()
-                  : event.start_datetime.toLocaleDateString()}
+                {getFormattedDate(event.start_datetime)}
               </TableCell>
 
               <TableCell>{event.location}</TableCell>
@@ -152,11 +182,59 @@ export function EventsTable() {
                 />
               </TableCell>
 
-              <TableCell className="text-right">
+              <TableCell className="text-center">
+                <EventDetailsButton event={event} />
+              </TableCell>
+
+              <TableCell className="text-center">
                 <UpdateEventButton event={event} />
               </TableCell>
 
+              <TableCell className="text-center">
+                <DeleteEventButton event={event} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+
+        <TableBody>
+          <TableRow>
+            <TableCell
+              className="bg-muted/50 text-left font-bold sm:text-center"
+              colSpan={8}
+            >
+              Previous Events
+            </TableCell>
+          </TableRow>
+          {previousEvents.map((event) => (
+            <TableRow key={event.id}>
+              <TableCell className="text-center font-medium">
+                {event.name}
+              </TableCell>
+              <TableCell className="text-center">{event.tag}</TableCell>
+
+              <TableCell className="text-center">
+                {getFormattedDate(event.start_datetime)}
+              </TableCell>
+
+              <TableCell>{event.location}</TableCell>
+
               <TableCell className="text-right">
+                <ViewAttendanceButton
+                  event={event}
+                  numAttended={event.numAttended}
+                />
+              </TableCell>
+
+              <TableCell className="text-center">
+                <EventDetailsButton event={event} />
+              </TableCell>
+
+              <TableCell className="text-center">
+                <UpdateEventButton event={event} />
+              </TableCell>
+
+              <TableCell className="text-center">
                 <DeleteEventButton event={event} />
               </TableCell>
             </TableRow>
@@ -169,7 +247,7 @@ export function EventsTable() {
             <TableCell className="text-right">
               {sortedEvents.reduce((sum, event) => sum + event.numAttended, 0)}
             </TableCell>
-            <TableCell colSpan={2} />
+            <TableCell colSpan={3} />
           </TableRow>
         </TableFooter>
       </Table>

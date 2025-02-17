@@ -7,7 +7,12 @@ import {
 } from "discord.js";
 import cron from "node-cron";
 
-import { DAILY_MESSAGES, DISCORD_LEETCODE_ROLE_ID } from "../consts";
+import {
+  DAILY_MESSAGES,
+  DISCORD_LEETCODE_ROLE_ID,
+  TK_LEETCODE_API_URL,
+  TK_LEETCODE_ICON_URL,
+} from "../consts";
 import { env } from "../env";
 
 // Daily Problem Interface
@@ -31,7 +36,7 @@ interface Topic {
 }
 
 // Leetcode API Endpoint and Channel ID
-const url = "https://alfa-leetcode-api.onrender.com/daily";
+const url = TK_LEETCODE_API_URL;
 // const channelId = "1263954540089180231";
 
 // Function to fetch the Daily Problem
@@ -78,8 +83,7 @@ export function execute(client: Client) {
         .setURL(problem.questionLink)
         .setAuthor({
           name: `Leetcode Daily for ${dateString}`,
-          iconURL:
-            "https://assets.leetcode.com/static_assets/public/images/LeetCode_logo_rvs.png",
+          iconURL: TK_LEETCODE_ICON_URL,
         })
         .addFields(
           {

@@ -26,6 +26,44 @@ export const DISCORD_PROD_GUILD_ID = "486628710443778071";
 
 export const EVENT_BANNER_IMAGE = "https://i.imgur.com/Jr1cyxT.png";
 
+export const BUBBLE_WRAP_TEXT = "||pop||||pop||||pop||||pop||||pop||||pop||\n";
+
+export const TK_CAPYBARA_URL = "https://api.capy.lol/v1/capybara?json=true";
+
+export const TK_CAT_URL = "https://api.thecatapi.com/v1/images/search?limit=1";
+
+export const TK_DOG_URL = "https://dog.ceo/api/breeds/image/random";
+
+export const TK_DUCK_URL = "https://random-d.uk/api/v2/quack";
+
+export const TK_FACTS_URL =
+  "https://uselessfacts.jsph.pl/api/v2/facts/random?language=en";
+
+export const CS_FLOWCHART_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-cs.png";
+
+export const IT_FLOWCHART_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-it.png";
+
+export const CPE_FLOWCHART_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-cpe.png";
+
+export const DS_FLOWCHART_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-ds.png";
+
+export const TK_FOX_URL = "https://randomfox.ca/floof/";
+
+export const TK_JOKE_URL =
+  "https://v2.jokeapi.dev/joke/Programming?blacklistFlags=nsfw,religious,political,racist,sexist,explicit";
+
+export const TK_KNIGHTHACKS_LINKTREE_URL = "https://linktr.ee/knighthacks";
+
+export const TK_LEETCODE_API_URL =
+  "https://alfa-leetcode-api.onrender.com/daily";
+
+export const TK_LEETCODE_ICON_URL =
+  "https://assets.leetcode.com/static_assets/public/images/LeetCode_logo_rvs.png";
+
 export const GOATS = [
   {
     name: "Caleb GOATvera",

@@ -23,8 +23,14 @@ export async function execute(interaction: CommandInteraction) {
   const memberPlaces = topMembers.findIndex(
     (member) => member.user.discordUserId == interaction.user.id,
   );
-  const memberPoints =
-    memberPlaces == -1 ? 0 : topMembers[memberPlaces]?.points;
+  const currentMember = await db.query.User.findFirst({
+    where: (t, { eq }) => eq(t.name, interaction.user.username),
+    with: {
+      member: true,
+    },
+  });
+
+  const memberPoints = currentMember?.member ? currentMember.member.points : 0;
   let counter = 1;
   const embed = new EmbedBuilder()
     .setTitle("**Leaderboard**")

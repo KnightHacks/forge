@@ -1,5 +1,6 @@
 import { CalendarDays, MapPin, Star, Users } from "lucide-react";
 
+import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import {
@@ -21,43 +22,16 @@ import {
 
 import type { api } from "~/trpc/server";
 import { DASHBOARD_ICON_SIZE } from "~/consts";
-import { formatDateTime } from "~/lib/utils";
-
-type EventTag =
-  | "GBM"
-  | "Social"
-  | "Kickstart"
-  | "Project Launch"
-  | "Hello World"
-  | "Sponsorship"
-  | "Tech Exploration"
-  | "Class Support"
-  | "Workshop"
-  | "OPS"
-  | "Hackathon";
+import { formatDateTime, getTagColor } from "~/lib/utils";
+import { EventFeedbackForm } from "./event-feedback";
 
 export function EventShowcase({
   events,
+  member,
 }: {
   events: Awaited<ReturnType<(typeof api.member)["getEvents"]>>;
+  member: InsertMember;
 }) {
-  const getTagColor = (tag: EventTag) => {
-    const colors: Record<EventTag, string> = {
-      GBM: "bg-blue-100 text-blue-800",
-      Social: "bg-pink-100 text-pink-800",
-      Kickstart: "bg-green-100 text-green-800",
-      "Project Launch": "bg-purple-100 text-purple-800",
-      "Hello World": "bg-yellow-100 text-yellow-800",
-      Sponsorship: "bg-orange-100 text-orange-800",
-      "Tech Exploration": "bg-cyan-100 text-cyan-800",
-      "Class Support": "bg-indigo-100 text-indigo-800",
-      Workshop: "bg-teal-100 text-teal-800",
-      OPS: "bg-purple-100 text-purple-800",
-      Hackathon: "bg-violet-100 text-violet-800",
-    };
-    return colors[tag];
-  };
-
   const mostRecent = events[0];
 
   if (!mostRecent) {
@@ -96,7 +70,7 @@ export function EventShowcase({
               {mostRecent.description}
             </CardDescription>
           </div>
-          <Badge className={`${getTagColor(mostRecent.tag)}`}>
+          <Badge className={`${getTagColor(mostRecent.tag)} my-auto`}>
             {mostRecent.tag}
           </Badge>
         </div>
@@ -116,14 +90,22 @@ export function EventShowcase({
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-gray-500" />
-            <span>{mostRecent.numAttended} Attendees</span>
+            <span>
+              {mostRecent.numAttended}{" "}
+              {mostRecent.numAttended === 1 ? "Attendee" : "Attendees"}
+            </span>
           </div>
-          {mostRecent.points && (
-            <div className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500" />
-              <span>{mostRecent.points} Points</span>
+          <div className="flex flex-row justify-between">
+            {mostRecent.points && (
+              <div className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-yellow-500" />
+                <span>{mostRecent.points} Points</span>
+              </div>
+            )}
+            <div>
+              <EventFeedbackForm event={mostRecent} member={member} />
             </div>
-          )}
+          </div>
         </div>
       </CardContent>
       <CardFooter>
@@ -131,12 +113,12 @@ export function EventShowcase({
           <DialogTrigger asChild>
             <Button variant="outline">View All</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Past Events Attended</DialogTitle>
             </DialogHeader>
             <div className="max-h-96 space-y-4 overflow-y-auto">
-              {events.slice(1).map((event) => (
+              {events.map((event) => (
                 <Card key={event.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -146,7 +128,7 @@ export function EventShowcase({
                           {event.description}
                         </CardDescription>
                       </div>
-                      <Badge className={`${getTagColor(event.tag)}`}>
+                      <Badge className={`${getTagColor(event.tag)} my-auto`}>
                         {event.tag}
                       </Badge>
                     </div>
@@ -168,19 +150,27 @@ export function EventShowcase({
                       </div>
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-gray-500" />
-                        <span>{event.numAttended} Attendees</span>
+                        <span>
+                          {event.numAttended}{" "}
+                          {event.numAttended === 1 ? "Attendee" : "Attendees"}
+                        </span>
                       </div>
-                      {event.points ? (
-                        <div className="flex items-center gap-2">
-                          <Star className="h-4 w-4 text-yellow-500" />
-                          <span>{event.points} Points</span>
+                      <div className="flex flex-row justify-between">
+                        {event.points ? (
+                          <div className="flex items-center gap-2">
+                            <Star className="h-4 w-4 text-yellow-500" />
+                            <span>{event.points} Points</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Star className="h-4 w-4 text-yellow-500" />
+                            <span>0 Points</span>
+                          </div>
+                        )}
+                        <div>
+                          <EventFeedbackForm event={event} member={member} />
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Star className="h-4 w-4 text-yellow-500" />
-                          <span>0 Points</span>
-                        </div>
-                      )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

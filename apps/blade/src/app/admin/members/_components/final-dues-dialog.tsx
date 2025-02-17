@@ -65,7 +65,7 @@ export default function FinalDuesDialogButton({
         </Button>
       </DialogTrigger>
 
-      <DialogContent>
+      <DialogContent className="max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Please be sure.</DialogTitle>
         </DialogHeader>

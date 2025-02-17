@@ -24,7 +24,7 @@ export default function ClearDuesButton() {
         <Button variant="destructive">Clear ALL Dues</Button>
       </DialogTrigger>
 
-      <DialogContent>
+      <DialogContent className="max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Are you sure?</DialogTitle>
         </DialogHeader>

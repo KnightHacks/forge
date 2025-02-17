@@ -12,6 +12,59 @@ export const LEVELS_OF_STUDY = [
   "Prefer not to answer",
 ] as const;
 
+export const SHORT_LEVELS_OF_STUDY = [
+  "Undergraduate University (2 year)",
+  "Graduate University (Masters/PhD)",
+  "Vocational/Trade School",
+] as const;
+
+export const OFFICERS = [
+  {
+    name: "Dylan Vidal",
+    position: "President",
+    image: "/officers/dylan.png",
+    linkedin: "https://www.linkedin.com/in/dylanvidal1204/",
+    major: "Computer Science",
+  },
+  {
+    name: "Leonard Gofman",
+    position: "Vice President",
+    image: "/officers/leo.png",
+    linkedin: "https://www.linkedin.com/in/leonard-gofman-208578236/",
+    major: "Computer Science",
+  },
+  {
+    name: "Adrian Osorio",
+    position: "Treasurer",
+    image: "/officers/adrian.png",
+    linkedin: "https://www.linkedin.com/in/adrianosoriob/",
+    major: "Computer Engineering",
+  },
+  {
+    name: "Lewin Bobda",
+    position: "Dev Lead",
+    image: "/officers/bobda.png",
+    linkedin: "https://www.linkedin.com/in/lewin-bobda-08ba2325a/",
+    major: "Computer Science",
+  },
+  {
+    name: "Daniel Efres",
+    position: "Secretary",
+    image: "/officers/daniel.png",
+    linkedin: "https://www.linkedin.com/in/daniel-efres/",
+    major: "Computer Science",
+  },
+  {
+    name: "Richard Phillips",
+    position: "Hack Lead",
+    image: "/officers/ricky.png",
+    linkedin: "https://www.linkedin.com/in/rphillipscs/",
+    major: "Computer Science",
+  },
+] as const;
+
+export type Officer = (typeof OFFICERS)[number];
+
 export const EVENT_TAGS = [
   "GBM",
   "Social",
@@ -25,6 +78,20 @@ export const EVENT_TAGS = [
   "OPS",
   "Hackathon",
 ] as const;
+
+export const EVENT_FEEDBACK_HEARD = [
+  "Discord",
+  "Instagram",
+  "KnightConnect",
+  "Word of Mouth",
+  "CECS Emailing List",
+  "Reddit",
+  "LinkedIn",
+  "From Class Presentation",
+  "From Another Club",
+] as const;
+
+export const EVENT_FEEDBACK_SIMILAR_EVENT = ["Yes", "No"] as const;
 
 type EventTag = (typeof EVENT_TAGS)[number];
 
@@ -63,6 +130,18 @@ export const DEV_KNIGHTHACKS_LOG_CHANNEL = "1284582557689843785";
 
 export const MEMBER_PROFILE_ICON_SIZE = 24;
 
+export const EVENT_FEEDBACK_SLIDER_MINIMUM = 1;
+
+export const EVENT_FEEDBACK_SLIDER_MAXIMUM = 10;
+
+export const EVENT_FEEDBACK_SLIDER_STEP = 1;
+
+export const EVENT_FEEDBACK_SLIDER_VALUE = 5;
+
+export const EVENT_FEEDBACK_TEXT_ROWS = 4;
+
+export const EVENT_FEEDBACK_POINTS_INCREMENT = 10;
+
 export const SPONSOR_VIDEO_LINK =
   "https://www.youtube.com/embed/OU1q02v1Vrw?si=dyHSQCmxzcau7-mF";
 
@@ -88,6 +167,19 @@ export const PERMANENT_DISCORD_INVITE = "https://discord.com/invite/Kv5g9vf";
 
 export const USE_CAUTION = true;
 
+export type EventTagsColor =
+  | "GBM"
+  | "Social"
+  | "Kickstart"
+  | "Project Launch"
+  | "Hello World"
+  | "Sponsorship"
+  | "Tech Exploration"
+  | "Class Support"
+  | "Workshop"
+  | "OPS"
+  | "Hackathon";
+
 export const GENDERS = [
   "Man",
   "Woman",
@@ -106,6 +198,12 @@ export const RACES_OR_ETHNICITIES = [
   "Middle Eastern",
   "Prefer not to answer",
   "Other",
+] as const;
+
+export const SHORT_RACES_AND_ETHNICITIES = [
+  "Native Hawaiian/Pacific Islander",
+  "Hispanic/Latino",
+  "Native American/Alaskan Native",
 ] as const;
 
 // https://unstats.un.org/unsd/methodology/m49/overview/

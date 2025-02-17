@@ -39,7 +39,7 @@ export function TacoTuesday({ initialState }: { initialState: boolean }) {
                   </div>
                   <p className="text-lg md:text-center">
                     Join the Knight Hacks Discord to stay up to date on
-                    everything Knight Hacks
+                    everything Knight Hacks!
                   </p>
                 </div>
               </div>

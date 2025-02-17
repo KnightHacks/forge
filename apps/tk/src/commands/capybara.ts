@@ -2,6 +2,8 @@ import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import JIMP from "jimp";
 
+import { TK_CAPYBARA_URL } from "../consts";
+
 // CAPYBARA COMMAND
 //  interface for returned data from API
 interface CapybaraProps {
@@ -17,7 +19,7 @@ export const data = new SlashCommandBuilder()
   .setName("capybara")
   .setDescription("Capybara noises!");
 
-const url = "https://api.capy.lol/v1/capybara?json=true";
+const url = TK_CAPYBARA_URL;
 export async function execute(interaction: CommandInteraction) {
   try {
     const res = await fetch(url);

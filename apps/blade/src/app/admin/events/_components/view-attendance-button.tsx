@@ -81,17 +81,23 @@ function Attendees({ eventId }: { eventId: string }) {
   return (
     <div className="overflow-y-auto p-4">
       <div className="space-y-4">
-        {attendees.map((attendee) => (
-          <div
-            key={attendee.id}
-            className="flex items-center justify-between border-b pb-2"
-          >
-            <span className="text-lg">
-              {attendee.firstName} {attendee.lastName}
-            </span>
-            <MemberProfileButton member={attendee} />
-          </div>
-        ))}
+        {attendees.length > 0 ? (
+          attendees.map((attendee) => (
+            <div
+              key={attendee.id}
+              className="flex items-center justify-between border-b pb-2"
+            >
+              <span className="text-lg">
+                {attendee.firstName} {attendee.lastName}
+              </span>
+              <MemberProfileButton member={attendee} />
+            </div>
+          ))
+        ) : (
+          <h1 className="text-center text-2xl font-bold">
+            No one has attended this event!
+          </h1>
+        )}
       </div>
     </div>
   );

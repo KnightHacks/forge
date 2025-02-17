@@ -1,6 +1,8 @@
 import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
 
+import { TK_JOKE_URL } from "../consts";
+
 interface JokeProps {
   type: string;
   joke: string;
@@ -13,8 +15,7 @@ export const data = new SlashCommandBuilder()
   .setDescription("Tells a joke!");
 // metadata for the joke command
 
-const url =
-  "https://v2.jokeapi.dev/joke/Programming?blacklistFlags=nsfw,religious,political,racist,sexist,explicit"; // keep it clean
+const url = TK_JOKE_URL;
 export async function execute(interaction: CommandInteraction) {
   try {
     const res = await fetch(url);
