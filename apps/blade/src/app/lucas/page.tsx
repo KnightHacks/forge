@@ -12,11 +12,11 @@ export const metadata: Metadata = {
 
 export default async function Lucas() {
   return (
-    <main className="container min-h-svh flex justify-evenly items-center">
-      <div className="flex flex-col justify-evenly min-h-svh py-[20svh]">
+    <main className="container min-h-svh flex flex-col md:flex-row justify-evenly items-center gap-y-16 py-16 md:py-0">
+      <div className="flex flex-col justify-evenly gap-y-16 md:min-h-svh lg:py-[20svh] md:py-[30svh] py-[10svh]">
         <div>
-          <h1 className="text-8xl font-semibold">Lucas McClean</h1>
-          <h2 className="font-mono text-6xl">Dev Team Application</h2>
+          <h1 className="lg:text-7xl md:text-6xl text-5xl text-center font-semibold">Lucas McClean</h1>
+          <h2 className="font-mono lg:text-5xl md:text-4xl text-3xl text-center">Dev Team Application</h2>
         </div>
         <div className="flex justify-evenly">
           <LinkedInLink username="lucasmcclean" />
@@ -25,7 +25,7 @@ export default async function Lucas() {
         </div>
       </div>
       <Image
-        className="max-w-[30vw] rounded-xl border-2 border-foreground"
+        className="max-w-[60vw] md:max-w-[30vw] rounded-xl border-2 border-foreground"
         src="/lucas-portrait.jpg"
         width="1066"
         height="1600"
