@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
-import { RACES_OR_ETHNICITIES, SHORT_RACES_AND_ETHNICITIES } from "@forge/consts/knight-hacks";
+import { RACES_OR_ETHNICITIES, SHORT_RACES_AND_ETHNICITIES, ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
@@ -21,18 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
-
-const PIE_COLORS = [
-  "#f72585",
-  "#b5179e",
-  "#7209b7",
-  "#3a0ca3",
-  "#4361ee",
-  "#4895ef",
-  "#4cc9f0",
-  "#560bad",
-  "#480ca8",
-];
 
 const shortenRaceOrEthnicity = (raceOrEthnicity: string): string => {
   const replacements: Record<string, string> = {
@@ -91,7 +79,7 @@ export default function SchoolYearPie({
       if (!baseConfig[shortenedString]) {
         baseConfig[shortenedString] = {
           label: shortenedString,
-          color: PIE_COLORS[colorIdx % PIE_COLORS.length],
+          color: (ADMIN_PIE_CHART_COLORS as readonly string[])[colorIdx % (ADMIN_PIE_CHART_COLORS as readonly string[]).length],
         };
         colorIdx++;
       }
@@ -210,7 +198,7 @@ export default function SchoolYearPie({
               {raceOrEthnicityData.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={PIE_COLORS[index % PIE_COLORS.length]}
+                  fill={(ADMIN_PIE_CHART_COLORS as readonly string[])[index % (ADMIN_PIE_CHART_COLORS as readonly string[]).length]}
                 />
               ))}
             </Pie>
