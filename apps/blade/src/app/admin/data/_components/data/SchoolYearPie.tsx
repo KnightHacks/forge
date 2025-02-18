@@ -81,9 +81,7 @@ export default function SchoolYearPie({
     if (!baseConfig[shortenedString]) {
       baseConfig[shortenedString] = {
         label: shortenedString,
-        color: (ADMIN_PIE_CHART_COLORS as readonly string[])[
-          colorIdx % (ADMIN_PIE_CHART_COLORS as readonly string[]).length
-        ],
+        color: ADMIN_PIE_CHART_COLORS[colorIdx % ADMIN_PIE_CHART_COLORS.length],
       };
       colorIdx++;
     }
@@ -202,9 +200,8 @@ export default function SchoolYearPie({
                 <Cell
                   key={`cell-${index}`}
                   fill={
-                    (ADMIN_PIE_CHART_COLORS as readonly string[])[
-                      index %
-                        (ADMIN_PIE_CHART_COLORS as readonly string[]).length
+                    ADMIN_PIE_CHART_COLORS[
+                      index % ADMIN_PIE_CHART_COLORS.length
                     ]
                   }
                 />
