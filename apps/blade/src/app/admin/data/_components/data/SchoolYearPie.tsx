@@ -5,8 +5,12 @@ import { useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
-import { LEVELS_OF_STUDY, SHORT_LEVELS_OF_STUDY, ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
+import {
+  ADMIN_PIE_CHART_COLORS,
+  LEVELS_OF_STUDY,
+  SHORT_LEVELS_OF_STUDY,
+} from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
@@ -24,12 +28,12 @@ import {
 
 const shortenLevelOfStudy = (levelOfStudy: string): string => {
   const replacements: Record<string, string> = {
-    [LEVELS_OF_STUDY[2]]: // Undergraduate University (2 year - community college or similar)
-      SHORT_LEVELS_OF_STUDY[0], // Undergraduate University (2 year)
-    [LEVELS_OF_STUDY[4]]: // Graduate University (Masters, Professional, Doctoral, etc)
-      SHORT_LEVELS_OF_STUDY[1], // Graduate University (Masters/PhD)
-    [LEVELS_OF_STUDY[6]]: // Other Vocational / Trade Program or Apprenticeship
-      SHORT_LEVELS_OF_STUDY[2], // Vocational/Trade School
+    // Undergraduate University (2 year - community college or similar)
+    [LEVELS_OF_STUDY[2]]: SHORT_LEVELS_OF_STUDY[0], // Undergraduate University (2 year)
+    // Graduate University (Masters, Professional, Doctoral, etc)
+    [LEVELS_OF_STUDY[4]]: SHORT_LEVELS_OF_STUDY[1], // Graduate University (Masters/PhD)
+    // Other Vocational / Trade Program or Apprenticeship
+    [LEVELS_OF_STUDY[6]]: SHORT_LEVELS_OF_STUDY[2], // Vocational/Trade School
   };
   return replacements[levelOfStudy] ?? levelOfStudy;
 };
@@ -77,7 +81,9 @@ export default function SchoolYearPie({
     if (!baseConfig[shortenedString]) {
       baseConfig[shortenedString] = {
         label: shortenedString,
-        color: (ADMIN_PIE_CHART_COLORS as readonly string[])[colorIdx % (ADMIN_PIE_CHART_COLORS as readonly string[]).length],
+        color: (ADMIN_PIE_CHART_COLORS as readonly string[])[
+          colorIdx % (ADMIN_PIE_CHART_COLORS as readonly string[]).length
+        ],
       };
       colorIdx++;
     }
@@ -195,7 +201,12 @@ export default function SchoolYearPie({
               {levelOfStudyData.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={(ADMIN_PIE_CHART_COLORS as readonly string[])[index % (ADMIN_PIE_CHART_COLORS as readonly string[]).length]}
+                  fill={
+                    (ADMIN_PIE_CHART_COLORS as readonly string[])[
+                      index %
+                        (ADMIN_PIE_CHART_COLORS as readonly string[]).length
+                    ]
+                  }
                 />
               ))}
             </Pie>

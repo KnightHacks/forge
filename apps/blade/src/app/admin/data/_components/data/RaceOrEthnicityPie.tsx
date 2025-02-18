@@ -5,8 +5,12 @@ import { useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
-import { RACES_OR_ETHNICITIES, SHORT_RACES_AND_ETHNICITIES, ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
+import {
+  ADMIN_PIE_CHART_COLORS,
+  RACES_OR_ETHNICITIES,
+  SHORT_RACES_AND_ETHNICITIES,
+} from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
@@ -24,12 +28,12 @@ import {
 
 const shortenRaceOrEthnicity = (raceOrEthnicity: string): string => {
   const replacements: Record<string, string> = {
-    [RACES_OR_ETHNICITIES[4]]: // Native Hawaiian or Other Pacific Islander
-      SHORT_RACES_AND_ETHNICITIES[0], // Native Hawaiian/Pacific Islander
-    [RACES_OR_ETHNICITIES[2]]: // Hispanic / Latino / Spanish Origin
-      SHORT_RACES_AND_ETHNICITIES[1], // Hispanic/Latino
-    [RACES_OR_ETHNICITIES[5]]: // Native American or Alaskan Native
-      SHORT_RACES_AND_ETHNICITIES[2] // Native American/Alaskan Native
+    // Native Hawaiian or Other Pacific Islander
+    [RACES_OR_ETHNICITIES[4]]: SHORT_RACES_AND_ETHNICITIES[0], // Native Hawaiian/Pacific Islander
+    // Hispanic / Latino / Spanish Origin
+    [RACES_OR_ETHNICITIES[2]]: SHORT_RACES_AND_ETHNICITIES[1], // Hispanic/Latino
+    // Native American or Alaskan Native
+    [RACES_OR_ETHNICITIES[5]]: SHORT_RACES_AND_ETHNICITIES[2], // Native American/Alaskan Native
   };
   return replacements[raceOrEthnicity] ?? raceOrEthnicity;
 };
@@ -79,7 +83,9 @@ export default function SchoolYearPie({
       if (!baseConfig[shortenedString]) {
         baseConfig[shortenedString] = {
           label: shortenedString,
-          color: (ADMIN_PIE_CHART_COLORS as readonly string[])[colorIdx % (ADMIN_PIE_CHART_COLORS as readonly string[]).length],
+          color: (ADMIN_PIE_CHART_COLORS as readonly string[])[
+            colorIdx % (ADMIN_PIE_CHART_COLORS as readonly string[]).length
+          ],
         };
         colorIdx++;
       }
@@ -198,7 +204,12 @@ export default function SchoolYearPie({
               {raceOrEthnicityData.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={(ADMIN_PIE_CHART_COLORS as readonly string[])[index % (ADMIN_PIE_CHART_COLORS as readonly string[]).length]}
+                  fill={
+                    (ADMIN_PIE_CHART_COLORS as readonly string[])[
+                      index %
+                        (ADMIN_PIE_CHART_COLORS as readonly string[]).length
+                    ]
+                  }
                 />
               ))}
             </Pie>

@@ -5,8 +5,8 @@ import { useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
-import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
+import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
@@ -61,7 +61,9 @@ export default function SchoolYearPie({
     if (gender && !baseConfig[gender]) {
       baseConfig[gender] = {
         label: gender,
-        color: (ADMIN_PIE_CHART_COLORS as readonly string[])[colorIdx % (ADMIN_PIE_CHART_COLORS as readonly string[]).length],
+        color: (ADMIN_PIE_CHART_COLORS as readonly string[])[
+          colorIdx % (ADMIN_PIE_CHART_COLORS as readonly string[]).length
+        ],
       };
       colorIdx++;
     }
@@ -177,7 +179,12 @@ export default function SchoolYearPie({
               {genderData.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={(ADMIN_PIE_CHART_COLORS as readonly string[])[index % (ADMIN_PIE_CHART_COLORS as readonly string[]).length]}
+                  fill={
+                    (ADMIN_PIE_CHART_COLORS as readonly string[])[
+                      index %
+                        (ADMIN_PIE_CHART_COLORS as readonly string[]).length
+                    ]
+                  }
                 />
               ))}
             </Pie>
