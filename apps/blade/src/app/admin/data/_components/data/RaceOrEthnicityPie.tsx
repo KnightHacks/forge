@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
+import { RACES_OR_ETHNICITIES, SHORT_RACES_AND_ETHNICITIES } from "@forge/consts/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
@@ -35,10 +36,12 @@ const PIE_COLORS = [
 
 const shortenRaceOrEthnicity = (raceOrEthnicity: string): string => {
   const replacements: Record<string, string> = {
-    "Native Hawaiian or Other Pacific Islander":
-      "Native Hawaiian/Pacific Islander",
-    "Hispanic / Latino / Spanish Origin": "Hispanic/Latino",
-    "Native American or Alaskan Native": "Native American/Alaskan Native",
+    [RACES_OR_ETHNICITIES[4]]: // Native Hawaiian or Other Pacific Islander
+      SHORT_RACES_AND_ETHNICITIES[0], // Native Hawaiian/Pacific Islander
+    [RACES_OR_ETHNICITIES[2]]: // Hispanic / Latino / Spanish Origin
+      SHORT_RACES_AND_ETHNICITIES[1], // Hispanic/Latino
+    [RACES_OR_ETHNICITIES[5]]: // Native American or Alaskan Native
+      SHORT_RACES_AND_ETHNICITIES[2] // Native American/Alaskan Native
   };
   return replacements[raceOrEthnicity] ?? raceOrEthnicity;
 };
