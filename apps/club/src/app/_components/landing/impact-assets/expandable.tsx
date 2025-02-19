@@ -43,7 +43,7 @@ const List = ({ item, className, index, activeItem, ...props }: ImageProps) => {
         <div className="absolute bottom-2 left-2 rounded-lg bg-gradient-to-r from-purple-900 to-[#0F172A] py-1 text-xs sm:bottom-4 sm:left-4 md:h-auto md:text-lg">
           <WaveReveal
             duration="1000ms"
-            className="font-pragati bg-clip-text text-[20px] font-bold leading-tight md:mb-2 md:items-start md:justify-start md:text-center md:text-[60px] text-white"
+            className="font-pragati bg-clip-text text-[20px] font-bold leading-tight text-white md:mb-2 md:items-start md:justify-start md:text-center md:text-[60px]"
             text={item.title}
             direction="up"
           />
