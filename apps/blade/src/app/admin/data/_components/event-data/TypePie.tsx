@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 
-export default function TypePieChart({
+export default function TypePie({
   events,
 }: {
   events: ReturnEvent[];
