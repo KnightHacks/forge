@@ -6,6 +6,7 @@ import { auth } from "@forge/auth";
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import MemberDemographics from "./_components/MemberDemographics";
+import EventDemographics from "./_components/EventDemographics";
 
 export const metadata: Metadata = {
   title: "Blade | Data",
@@ -38,7 +39,7 @@ export default async function Data() {
             <h1 className="text-3xl font-extrabold tracking-tight">
               Event Demographics
             </h1>
-            <p className="m-10 text-center text-xl">to be added!</p>
+            <EventDemographics />
           </div>
         </div>
       </main>
