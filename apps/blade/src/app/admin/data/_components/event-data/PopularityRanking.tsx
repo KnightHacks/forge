@@ -4,14 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 export default function PopularityRanking({ events } : { events: ReturnEvent[]; }) {
     const topEvents = events.reduce<ReturnEvent[]>((heap, event) => {
         heap.push(event);
-        heap.sort((a, b) => a.numAttended - b.numAttended); // Sort ascending to keep the smallest at index 0
+        heap.sort((a, b) => a.numAttended - b.numAttended);
 
-        // Keep only top 10 elements (remove the smallest one if heap exceeds size 10)
         if (heap.length > 10) heap.shift();
-        
+    
         return heap;
     }, []);
     topEvents.sort((a, b) => b.numAttended - a.numAttended);
+
+    const rankingStyles = [
+        "text-lg font-bold text-yellow-500", // gold
+        "text-lg font-semibold text-gray-400", // silver
+        "text-lg font-medium text-orange-500", // bronze
+    ];
 
     return (
         <Card className="md:col-span-2 lg:col-span-2">
@@ -19,10 +24,10 @@ export default function PopularityRanking({ events } : { events: ReturnEvent[]; 
                 <CardTitle className="text-xl">Most Popular Events</CardTitle>
             </CardHeader>
             <CardContent>
-                <ol>
+                <ol className="flex flex-col gap-2">
                     {topEvents.map((event, index) => (
-                        <li key={event.id}>
-                            <span className="font-bold">{index+1}.</span><span> {event.name} - {event.numAttended} attendees</span>
+                        <li key={event.id} className={(rankingStyles[index] ?? "text-gray-400") + " flex justify-between"}>
+                            <span>{index+1}. {event.name}</span><span>{event.numAttended} attendees</span>
                         </li>
                     ))}
                 </ol>
