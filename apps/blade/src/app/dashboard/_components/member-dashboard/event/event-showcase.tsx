@@ -64,14 +64,16 @@ export function EventShowcase({
         <CalendarDays color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
       </CardHeader>
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="pr-5">
+        <div className="flex flex-col items-start justify-between sm:flex-row">
+          <div className="order-2 pr-5 sm:order-1">
             <CardTitle>{mostRecent.name}</CardTitle>
             <CardDescription className="mt-1">
               <ReactMarkdown>{mostRecent.description}</ReactMarkdown>
             </CardDescription>
           </div>
-          <Badge className={`${getTagColor(mostRecent.tag)} my-auto`}>
+          <Badge
+            className={`${getTagColor(mostRecent.tag)} order-1 my-auto mb-2 sm:order-2 sm:mb-auto`}
+          >
             {mostRecent.tag}
           </Badge>
         </div>
@@ -124,14 +126,16 @@ export function EventShowcase({
               {events.map((event) => (
                 <Card key={event.id}>
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="pr-5">
+                    <div className="flex flex-col items-start justify-between sm:flex-row">
+                      <div className="order-2 pr-5 sm:order-1">
                         <CardTitle>{event.name}</CardTitle>
                         <CardDescription className="mt-1">
                           <ReactMarkdown>{event.description}</ReactMarkdown>
                         </CardDescription>
                       </div>
-                      <Badge className={`${getTagColor(event.tag)} my-auto`}>
+                      <Badge
+                        className={`${getTagColor(event.tag)} order-1 my-auto mb-2 sm:order-2 sm:mb-auto`}
+                      >
                         {event.tag}
                       </Badge>
                     </div>
