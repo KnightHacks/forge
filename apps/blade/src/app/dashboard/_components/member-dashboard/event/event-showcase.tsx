@@ -72,7 +72,7 @@ export function EventShowcase({
             </CardDescription>
           </div>
           <Badge
-            className={`${getTagColor(mostRecent.tag)} order-1 my-auto mb-2 sm:order-2 sm:mb-auto`}
+            className={`${getTagColor(mostRecent.tag)} order-1 my-auto mb-3 sm:order-2 sm:mb-auto`}
           >
             {mostRecent.tag}
           </Badge>
@@ -134,7 +134,7 @@ export function EventShowcase({
                         </CardDescription>
                       </div>
                       <Badge
-                        className={`${getTagColor(event.tag)} order-1 my-auto mb-2 sm:order-2 sm:mb-auto`}
+                        className={`${getTagColor(event.tag)} order-1 my-auto mb-3 sm:order-2 sm:mb-auto`}
                       >
                         {event.tag}
                       </Badge>
