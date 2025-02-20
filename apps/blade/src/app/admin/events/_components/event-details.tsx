@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CalendarDays, MapPin, Star, Users } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import { Badge } from "@forge/ui/badge";
@@ -40,7 +41,9 @@ export function EventDetailsButton({ event }: { event: ReturnEvent }) {
                 {event.tag}
               </Badge>
             </div>
-            <DialogDescription>{event.description}</DialogDescription>
+            <DialogDescription>
+              <ReactMarkdown>{event.description}</ReactMarkdown>
+            </DialogDescription>
           </div>
         </DialogHeader>
         <div className="space-y-2">

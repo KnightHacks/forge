@@ -3,6 +3,7 @@ import { CalendarDays, MapPin, Star, Users } from "lucide-react";
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
+import ReactMarkdown from "react-markdown";
 import {
   Card,
   CardContent,
@@ -64,10 +65,10 @@ export function EventShowcase({
       </CardHeader>
       <CardHeader>
         <div className="flex items-start justify-between">
-          <div>
+          <div className="pr-5">
             <CardTitle>{mostRecent.name}</CardTitle>
             <CardDescription className="mt-1">
-              {mostRecent.description}
+              <ReactMarkdown>{mostRecent.description}</ReactMarkdown>
             </CardDescription>
           </div>
           <Badge className={`${getTagColor(mostRecent.tag)} my-auto`}>
@@ -102,17 +103,19 @@ export function EventShowcase({
                 <span>{mostRecent.points} Points</span>
               </div>
             )}
-            <div>
-              <EventFeedbackForm event={mostRecent} member={member} />
-            </div>
           </div>
         </div>
       </CardContent>
       <CardFooter>
         <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline">View All</Button>
-          </DialogTrigger>
+          <div className="flex flex-row justify-between w-full">
+            <DialogTrigger asChild>
+              <Button variant="outline">View All</Button>
+            </DialogTrigger>
+            <div>
+              <EventFeedbackForm event={mostRecent} member={member} size="md" />
+            </div>
+          </div>
           <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Past Events Attended</DialogTitle>
@@ -122,10 +125,10 @@ export function EventShowcase({
                 <Card key={event.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div>
+                      <div className="pr-5">
                         <CardTitle>{event.name}</CardTitle>
                         <CardDescription className="mt-1">
-                          {event.description}
+                          <ReactMarkdown>{event.description}</ReactMarkdown>
                         </CardDescription>
                       </div>
                       <Badge className={`${getTagColor(event.tag)} my-auto`}>
@@ -168,7 +171,7 @@ export function EventShowcase({
                           </div>
                         )}
                         <div>
-                          <EventFeedbackForm event={event} member={member} />
+                          <EventFeedbackForm event={event} member={member} size="sm" />
                         </div>
                       </div>
                     </div>
