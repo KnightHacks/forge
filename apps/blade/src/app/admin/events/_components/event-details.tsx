@@ -35,7 +35,7 @@ export function EventDetailsButton({ event }: { event: ReturnEvent }) {
       >
         <DialogHeader className="flex items-start justify-between">
           <div>
-            <div className="flex flex-row justify-normal gap-4 pb-2">
+            <div className="flex flex-row justify-normal text-left gap-4 pb-2">
               <DialogTitle>{event.name}</DialogTitle>
               <Badge className={`${getTagColor(event.tag)} whitespace-nowrap`}>
                 {event.tag}
