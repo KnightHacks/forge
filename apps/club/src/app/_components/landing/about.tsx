@@ -21,7 +21,7 @@ export default function About() {
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: containerRef.current,
-        start: "top 60%",
+        start: "top 80%",
         end: "bottom 20%",
         once: true,
       },
@@ -86,7 +86,7 @@ export default function About() {
       <div className="relative z-10 mx-auto w-full max-w-4xl text-center">
         <h1
           ref={headerRef}
-          className="font-pragati mb-6 text-2xl font-bold leading-tight tracking-tight text-white [text-shadow:0px_0px_40px_#6B21A8,0px_0px_20px_#6B21A8,0px_0px_10px_#6B21A8] md:text-5xl lg:text-6xl"
+          className="mb-4 bg-gradient-to-r from-white via-purple-300 to-purple-900 bg-clip-text text-4xl font-black text-transparent md:text-6xl"
         >
           ABOUT US
         </h1>
@@ -94,7 +94,7 @@ export default function About() {
         <div className="relative">
           <p
             ref={textRef}
-            className="px-4 text-lg font-medium leading-relaxed tracking-wide text-white/80 md:px-12 md:text-2xl"
+            className="font-poppins px-4 text-lg font-semibold leading-relaxed tracking-wide text-white/80 md:px-12 md:text-2xl"
           >
             Knight Hacks is the largest Software Development and only Hackathon
             organization at the University of Central Florida. Our mission is to
