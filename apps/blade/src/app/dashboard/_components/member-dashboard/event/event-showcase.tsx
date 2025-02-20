@@ -1,9 +1,9 @@
 import { CalendarDays, MapPin, Star, Users } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
-import ReactMarkdown from "react-markdown";
 import {
   Card,
   CardContent,
@@ -108,7 +108,7 @@ export function EventShowcase({
       </CardContent>
       <CardFooter>
         <Dialog>
-          <div className="flex flex-row justify-between w-full">
+          <div className="flex w-full flex-row justify-between">
             <DialogTrigger asChild>
               <Button variant="outline">View All</Button>
             </DialogTrigger>
@@ -171,7 +171,11 @@ export function EventShowcase({
                           </div>
                         )}
                         <div>
-                          <EventFeedbackForm event={event} member={member} size="sm" />
+                          <EventFeedbackForm
+                            event={event}
+                            member={member}
+                            size="sm"
+                          />
                         </div>
                       </div>
                     </div>
