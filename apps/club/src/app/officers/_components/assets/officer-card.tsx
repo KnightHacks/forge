@@ -46,7 +46,7 @@ export default function OfficerCard({
             <a href={linkedin}>
               <LinkedInSVG className="h-8 w-8" />
             </a>
-            <h1 className="font-poppins text-center text-lg font-semibold tracking-wider text-white sm:text-xl">
+            <h1 className="font-poppins z-10 text-center text-lg font-semibold tracking-wider text-white sm:text-xl">
               {position}
             </h1>
             {major.endsWith("Engineering") ? (
