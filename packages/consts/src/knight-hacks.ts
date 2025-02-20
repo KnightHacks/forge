@@ -5347,3 +5347,15 @@ export const SCHOOLS = [
 export const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL"] as const;
 
 export const SPONSOR_TIERS = ["gold", "silver", "bronze", "other"] as const;
+
+export const ADMIN_PIE_CHART_COLORS: readonly string[] = [
+  "#f72585",
+  "#b5179e",
+  "#7209b7",
+  "#3a0ca3",
+  "#4361ee",
+  "#4895ef",
+  "#4cc9f0",
+  "#560bad",
+  "#480ca8",
+] as const;
