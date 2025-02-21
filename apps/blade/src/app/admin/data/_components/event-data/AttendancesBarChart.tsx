@@ -53,7 +53,7 @@ export default function AttendancesBarChart({ events } : { events: ReturnEvent[]
   return (
     <Card className="md:col-span-2 lg:col-span-2">
       <CardHeader>
-        <CardTitle className="text-xl">Attendances by Event Type</CardTitle>
+        <CardTitle className="text-xl">Average Attendances by Event Type</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={baseConfig}>
