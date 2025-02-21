@@ -62,7 +62,7 @@ export default function AttendancesBarChart({ events } : { events: ReturnEvent[]
             data={avgAttendedData}
             layout="vertical"
             margin={{
-              left: 0,
+              left: 25,
             }}
           >
             <YAxis
