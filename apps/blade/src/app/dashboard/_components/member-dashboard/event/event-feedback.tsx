@@ -49,9 +49,11 @@ import { api } from "~/trpc/react";
 export function EventFeedbackForm({
   event,
   member,
+  size,
 }: {
   event: SelectEvent;
   member: InsertMember;
+  size: "md" | "sm" | "lg" | "icon" | null | undefined;
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -122,7 +124,7 @@ export function EventFeedbackForm({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={isFeedbackGiven}>
+        <Button variant="outline" size={size} disabled={isFeedbackGiven}>
           Feedback
         </Button>
       </DialogTrigger>
