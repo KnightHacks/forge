@@ -1,0 +1,26 @@
+.leaf-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    z-index: -1;
+  }
+  
+  
+  .leaf {
+    position: fixed;
+    width: 50px; 
+    height: auto;
+    animation: fallAndDrift 5s linear infinite;
+  }
+  
+
+  @keyframes fallAndDrift {
+    0% {
+      transform: translate(-100%, -100%) rotate(0deg); 
+      opacity: 1;
+    }
+    100% {
+      transform: translate(100vw, 100vh) rotate(360deg);
+      opacity: 0;
+    }
+  }
