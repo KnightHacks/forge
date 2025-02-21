@@ -35,12 +35,13 @@ export default function AttendancesBarChart({ events } : { events: ReturnEvent[]
 
   const tagData: Record<string, { totalAttendees: number, totalEvents: number }> = {};
   events.forEach(({ tag, numAttended }) => {
-    if (numAttended == 0) console.log("it's 0!!!");
-    tagData[tag] = {
-      // data to calculate avg attendees per event
-      totalAttendees: (tagData[tag]?.totalAttendees ?? 0) + numAttended,
-      totalEvents: (tagData[tag]?.totalEvents ?? 0) + 1,
-    };
+    if (numAttended !== 0) {
+      tagData[tag] = {
+        // data to calculate avg attendees per event
+        totalAttendees: (tagData[tag]?.totalAttendees ?? 0) + numAttended,
+        totalEvents: (tagData[tag]?.totalEvents ?? 0) + 1,
+      };
+    }
   });
 
   const avgAttendedData = Object.entries(tagData).map(([tag, {totalAttendees, totalEvents}]) => ({
@@ -76,7 +77,7 @@ export default function AttendancesBarChart({ events } : { events: ReturnEvent[]
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
-            <Bar dataKey="avgAttendees" layout="vertical" radius={5} />
+            <Bar dataKey="avgAttendees" name="Average attendees: " layout="vertical" radius={5} />
           </BarChart>
         </ChartContainer>
       </CardContent>
