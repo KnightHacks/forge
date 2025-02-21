@@ -1,4 +1,5 @@
 import { CalendarDays, MapPin, Star, Users } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Badge } from "@forge/ui/badge";
@@ -63,14 +64,16 @@ export function EventShowcase({
         <CalendarDays color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
       </CardHeader>
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="flex flex-col items-start justify-between sm:flex-row">
+          <div className="order-2 pr-5 sm:order-1">
             <CardTitle>{mostRecent.name}</CardTitle>
             <CardDescription className="mt-1">
-              {mostRecent.description}
+              <ReactMarkdown>{mostRecent.description}</ReactMarkdown>
             </CardDescription>
           </div>
-          <Badge className={`${getTagColor(mostRecent.tag)} my-auto`}>
+          <Badge
+            className={`${getTagColor(mostRecent.tag)} order-1 my-auto mb-3 sm:order-2 sm:mb-auto`}
+          >
             {mostRecent.tag}
           </Badge>
         </div>
@@ -102,17 +105,19 @@ export function EventShowcase({
                 <span>{mostRecent.points} Points</span>
               </div>
             )}
-            <div>
-              <EventFeedbackForm event={mostRecent} member={member} />
-            </div>
           </div>
         </div>
       </CardContent>
       <CardFooter>
         <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline">View All</Button>
-          </DialogTrigger>
+          <div className="flex w-full flex-row justify-between">
+            <DialogTrigger asChild>
+              <Button variant="outline">View All</Button>
+            </DialogTrigger>
+            <div>
+              <EventFeedbackForm event={mostRecent} member={member} size="md" />
+            </div>
+          </div>
           <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Past Events Attended</DialogTitle>
@@ -121,14 +126,16 @@ export function EventShowcase({
               {events.map((event) => (
                 <Card key={event.id}>
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
+                    <div className="flex flex-col items-start justify-between sm:flex-row">
+                      <div className="order-2 pr-5 sm:order-1">
                         <CardTitle>{event.name}</CardTitle>
                         <CardDescription className="mt-1">
-                          {event.description}
+                          <ReactMarkdown>{event.description}</ReactMarkdown>
                         </CardDescription>
                       </div>
-                      <Badge className={`${getTagColor(event.tag)} my-auto`}>
+                      <Badge
+                        className={`${getTagColor(event.tag)} order-1 my-auto mb-3 sm:order-2 sm:mb-auto`}
+                      >
                         {event.tag}
                       </Badge>
                     </div>
@@ -168,7 +175,11 @@ export function EventShowcase({
                           </div>
                         )}
                         <div>
-                          <EventFeedbackForm event={event} member={member} />
+                          <EventFeedbackForm
+                            event={event}
+                            member={member}
+                            size="sm"
+                          />
                         </div>
                       </div>
                     </div>

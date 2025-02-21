@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CalendarDays, MapPin, Star, Users } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import { Badge } from "@forge/ui/badge";
@@ -34,13 +35,15 @@ export function EventDetailsButton({ event }: { event: ReturnEvent }) {
       >
         <DialogHeader className="flex items-start justify-between">
           <div>
-            <div className="flex flex-row justify-center gap-4 pb-2 sm:justify-normal">
+            <div className="flex flex-row justify-normal gap-4 pb-2 text-left">
               <DialogTitle>{event.name}</DialogTitle>
               <Badge className={`${getTagColor(event.tag)} whitespace-nowrap`}>
                 {event.tag}
               </Badge>
             </div>
-            <DialogDescription>{event.description}</DialogDescription>
+            <DialogDescription className="text-left">
+              <ReactMarkdown>{event.description}</ReactMarkdown>
+            </DialogDescription>
           </div>
         </DialogHeader>
         <div className="space-y-2">
