@@ -23,7 +23,7 @@ import {
 
 import type { api } from "~/trpc/server";
 import { DASHBOARD_ICON_SIZE } from "~/consts";
-import { formatDateTime, getTagColor } from "~/lib/utils";
+import { formatDateTime, getTagColor } from "@forge/ui/lib/utils";
 import { EventFeedbackForm } from "./event-feedback";
 
 export function EventShowcase({

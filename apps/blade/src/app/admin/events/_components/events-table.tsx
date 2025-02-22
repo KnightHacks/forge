@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
-import { getFormattedDate } from "~/lib/utils";
+import { getFormattedDate } from "@forge/ui/lib/utils";
 import { api } from "~/trpc/react";
 import SortButton from "../../_components/SortButton";
 import { CreateEventButton } from "./create-event";

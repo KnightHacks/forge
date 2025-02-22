@@ -10,6 +10,6 @@
     "plugins": [{ "name": "next" }],
     "module": "esnext"
   },
-  "include": [".", ".next/types/**/*.ts"],
+  "include": [".", ".next/types/**/*.ts", "../../packages/ui/src/lib", "../../packages/ui/src/hover-card.tsx"],
   "exclude": ["node_modules"]
 }

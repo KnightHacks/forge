@@ -31,7 +31,7 @@ const MultiLeaf: React.FC = () => {
   useEffect(() => {
     randomizeLeafPositions();
 
-    const interval = setInterval(randomizeLeafPositions, 5000);
+    const interval = setInterval(randomizeLeafPositions, 10000);
     return () => clearInterval(interval);
   }, []);
 

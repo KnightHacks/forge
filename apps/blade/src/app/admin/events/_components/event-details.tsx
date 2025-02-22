@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 
-import { formatDateTime, getTagColor } from "~/lib/utils";
+import { formatDateTime, getTagColor } from "@forge/ui/lib/utils";
 
 export function EventDetailsButton({ event }: { event: ReturnEvent }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
