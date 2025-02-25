@@ -1,4 +1,10 @@
-import { CalendarDays, Settings, ShieldCheck, User } from "lucide-react";
+import {
+  CalendarDays,
+  ChartPie,
+  Settings,
+  ShieldCheck,
+  User,
+} from "lucide-react";
 
 import { USER_DROPDOWN_ICON_COLOR, USER_DROPDOWN_ICON_SIZE } from "~/consts";
 
@@ -42,6 +48,16 @@ export const adminItems: roleItems[] = [
       />
     ),
     route: "/admin/events",
+  },
+  {
+    name: "Data",
+    component: (
+      <ChartPie
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/data",
   },
 ];
 

@@ -32,7 +32,7 @@ export default function Impact() {
       headerRef.current,
       {
         opacity: 0,
-        y: -50,
+        y: 50,
         scale: 0.8,
       },
       {
@@ -68,7 +68,7 @@ export default function Impact() {
         </p>
         <h1
           ref={impactTextRef}
-          className="animate-pulse bg-gradient-to-r from-purple-700 to-pink-900 bg-clip-text text-4xl font-black text-transparent md:text-6xl"
+          className="animate-pulse bg-gradient-to-r from-white via-purple-300 to-purple-800 bg-clip-text text-4xl font-black text-transparent md:text-6xl"
         >
           IMPACT
         </h1>
