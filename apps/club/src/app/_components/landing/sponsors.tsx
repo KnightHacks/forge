@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
@@ -52,26 +51,6 @@ export default function Sponsors() {
   const sponsorContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useGSAP(() => {
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: "top 80%",
-        end: "bottom 20%",
-        toggleActions: "play none none reverse",
-      },
-    });
-
-    tl.fromTo(
-      headerRef.current,
-      { opacity: 0, y: -50 },
-      { opacity: 100, y: 0, duration: 1 },
-    ).fromTo(
-      sponsorContainerRef.current,
-      { opacity: 0, y: 50 },
-      { opacity: 100, y: 0, duration: 1 },
-    );
-  });
   return (
     <div
       ref={containerRef}
@@ -79,7 +58,7 @@ export default function Sponsors() {
     >
       <p
         ref={headerRef}
-        className="font-pragati mb-2 text-center text-[25px] font-bold leading-[102px] tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[50px]"
+        className="font-pragati mb-2 animate-pulse text-center text-[25px] font-bold leading-[102px] tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[50px]"
       >
         {" "}
         Trusted by top companies{" "}
