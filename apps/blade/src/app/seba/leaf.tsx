@@ -8,11 +8,12 @@ interface LeafProps {
 const Leaf: React.FC<LeafProps> = ({ style }) => {
   return (
     <div className="leaf-container">
-      <img
-        alt="❀"
-        className="leaf"
-        style={style}
-      />
+      <div
+      className="leaf"
+      style={style}
+      >
+      ❀
+      </div>
     </div>
   );
 };
