@@ -2,7 +2,6 @@ import { CalendarDays, MapPin, Star, Users } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
-import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import {
   Card,
@@ -23,7 +22,6 @@ import {
 
 import type { api } from "~/trpc/server";
 import { DASHBOARD_ICON_SIZE } from "~/consts";
-import { formatDateTime, getTagColor } from "@forge/ui/lib/utils";
 import { EventFeedbackForm } from "./event-feedback";
 
 export function EventShowcase({
@@ -71,22 +69,10 @@ export function EventShowcase({
               <ReactMarkdown>{mostRecent.description}</ReactMarkdown>
             </CardDescription>
           </div>
-          <Badge
-            className={`${getTagColor(mostRecent.tag)} order-1 my-auto mb-3 sm:order-2 sm:mb-auto`}
-          >
-            {mostRecent.tag}
-          </Badge>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-gray-500" />
-            <div className="flex flex-col">
-              <span>Start: {formatDateTime(mostRecent.start_datetime)}</span>
-              <span>End: {formatDateTime(mostRecent.end_datetime)}</span>
-            </div>
-          </div>
           <div className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-gray-500" />
             <span>{mostRecent.location}</span>
@@ -133,24 +119,9 @@ export function EventShowcase({
                           <ReactMarkdown>{event.description}</ReactMarkdown>
                         </CardDescription>
                       </div>
-                      <Badge
-                        className={`${getTagColor(event.tag)} order-1 my-auto mb-3 sm:order-2 sm:mb-auto`}
-                      >
-                        {event.tag}
-                      </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4 text-gray-500" />
-                        <div className="flex flex-col">
-                          <span>
-                            Start: {formatDateTime(event.start_datetime)}
-                          </span>
-                          <span>End: {formatDateTime(event.end_datetime)}</span>
-                        </div>
-                      </div>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-gray-500" />
                         <span>{event.location}</span>
@@ -182,7 +153,6 @@ export function EventShowcase({
                           />
                         </div>
                       </div>
-                    </div>
                   </CardContent>
                 </Card>
               ))}

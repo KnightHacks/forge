@@ -5,7 +5,6 @@ import { CalendarDays, MapPin, Star, Users } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
-import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -16,7 +15,7 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 
-import { formatDateTime, getTagColor } from "@forge/ui/lib/utils";
+
 
 export function EventDetailsButton({ event }: { event: ReturnEvent }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -37,9 +36,6 @@ export function EventDetailsButton({ event }: { event: ReturnEvent }) {
           <div>
             <div className="flex flex-row justify-normal gap-4 pb-2 text-left">
               <DialogTitle>{event.name}</DialogTitle>
-              <Badge className={`${getTagColor(event.tag)} whitespace-nowrap`}>
-                {event.tag}
-              </Badge>
             </div>
             <DialogDescription className="text-left">
               <ReactMarkdown>{event.description}</ReactMarkdown>
@@ -50,8 +46,6 @@ export function EventDetailsButton({ event }: { event: ReturnEvent }) {
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-gray-500" />
             <div className="flex flex-col">
-              <span>Start: {formatDateTime(event.start_datetime)}</span>
-              <span>End: {formatDateTime(event.end_datetime)}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">

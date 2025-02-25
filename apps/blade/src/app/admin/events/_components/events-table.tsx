@@ -16,7 +16,6 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
-import { getFormattedDate } from "@forge/ui/lib/utils";
 import { api } from "~/trpc/react";
 import SortButton from "../../_components/SortButton";
 import { CreateEventButton } from "./create-event";
@@ -170,7 +169,6 @@ export function EventsTable() {
               <TableCell className="text-center">{event.tag}</TableCell>
 
               <TableCell className="text-center">
-                {getFormattedDate(event.start_datetime)}
               </TableCell>
 
               <TableCell>{event.location}</TableCell>
@@ -213,9 +211,6 @@ export function EventsTable() {
               </TableCell>
               <TableCell className="text-center">{event.tag}</TableCell>
 
-              <TableCell className="text-center">
-                {getFormattedDate(event.start_datetime)}
-              </TableCell>
 
               <TableCell>{event.location}</TableCell>
 

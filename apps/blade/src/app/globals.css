@@ -60,3 +60,24 @@
     --chart-5: 340 75% 55%;
   }
 }
+
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-section {
+  animation: fadeSlideUp 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+/* Update your existing transition classes */
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
