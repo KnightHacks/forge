@@ -1,10 +1,17 @@
-"use client";
+import Carousel from "./Carousel";
+import Navbar from "./Navbar";
+
 export default function page() {
   // const playJakingit = () => {
   //   const audio = new Audio("/audio/im-jaking-it-made-with-Voicemod.mp3");
   //   audio.loop = true;
   //   void audio.play();
   // };
+  const slides = [
+    "/images/image1.webp",
+    "/images/image2.jpg",
+    "/images/image3.webp",
+  ];
   return (
     <div
       id="content-container"
@@ -12,26 +19,11 @@ export default function page() {
     >
       <div id="content" className="w-[1900px]">
         <div id="navbar-container" className="mt-4">
-          <div
-            id="navbar"
-            className="flex h-28 items-center justify-evenly rounded-sm bg-gray-800 text-lg"
-          >
-            <a href="/">Home</a>
-            <p>|</p>
-            <a href="/">About</a>
-            <p>|</p>
-            <a href="/">Contact</a>
-            <p>|</p>
-            <a href="/">Github</a>
-            <p>|</p>
-            <a href="/">LinkedIn</a>
-            <p>|</p>
-            <a href="/">Resume</a>
-            <p>|</p>
-            <a href="/">Website</a>
-          </div>
+          <Navbar />
         </div>
-        <div id="main-content-container">
+        <div id="carousel-container"></div>
+        <Carousel slides={slides} />
+        <div id="main-content-container" className="flex h-96 bg-black">
           <div id="left-ad-container"></div>
           <div id="essay-container"></div>
           <div id="right-ad-container"></div>
