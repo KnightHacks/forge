@@ -12,6 +12,17 @@ export const LEVELS_OF_STUDY = [
   "Prefer not to answer",
 ] as const;
 
+export const ALLERGIES = [
+  "Milk",
+  "Eggs",
+  "Fish",
+  "Crustacean Shellfish",
+  "Tree Nuts",
+  "Peanuts",
+  "Wheat",
+  "Soybeans",
+] as const;
+
 export const SHORT_LEVELS_OF_STUDY = [
   "Undergraduate University (2 year)",
   "Graduate University (Masters/PhD)",
