@@ -4,6 +4,9 @@ import React from "react";
 import Image from "next/image";
 
 const MainContent = () => {
+  const cashapp = () => {
+    window.open("https://cash.app/$erica5710", "_blank");
+  };
   return (
     <div id="main-content-container" className="mt-6 flex h-[1000px] w-auto">
       <div id="left-ad-container" className="w-1/12"></div>
@@ -38,7 +41,11 @@ const MainContent = () => {
         id="right-ad-container"
         className="flex w-2/12 flex-col items-center justify-center"
       >
-        <div id="first-ad" className="relative mb-9 h-72 w-11/12">
+        <div
+          id="first-ad"
+          className="relative mb-9 h-72 w-11/12"
+          onClick={cashapp}
+        >
           <Image
             src="/images/image1.webp"
             alt="something thats cool"
@@ -46,7 +53,11 @@ const MainContent = () => {
             objectFit="fill"
           />
         </div>
-        <div id="second-ad" className="relative mb-9 h-72 w-11/12">
+        <div
+          id="second-ad"
+          className="relative mb-9 h-72 w-11/12"
+          onClick={cashapp}
+        >
           <Image
             src="/images/image3.webp"
             alt="something thats cool"
@@ -54,7 +65,7 @@ const MainContent = () => {
             objectFit="fill"
           />
         </div>
-        <div id="first-ad " className="relative h-72 w-11/12">
+        <div id="third-ad " className="relative h-72 w-11/12" onClick={cashapp}>
           <Image
             src="/images/image2.jpg"
             alt="something thats cool"
