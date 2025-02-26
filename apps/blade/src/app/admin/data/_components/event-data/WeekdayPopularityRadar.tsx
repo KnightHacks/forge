@@ -19,13 +19,10 @@ import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 
 export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
-  const colorUsing = ADMIN_PIE_CHART_COLORS.length > 0 ? 
-    ADMIN_PIE_CHART_COLORS[ADMIN_PIE_CHART_COLORS.length - 1]
-    : "#ffffff";
   const chartConfig = {
     attendees: {
         label: "Average attendees",
-        color: colorUsing,
+        color: ADMIN_PIE_CHART_COLORS[1],
     }
   } satisfies ChartConfig;
 
