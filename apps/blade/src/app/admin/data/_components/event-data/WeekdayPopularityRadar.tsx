@@ -1,45 +1,27 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@forge/ui/card";
+import type {
+  ChartConfig} from "@forge/ui/chart";
 import {
-  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@forge/ui/chart";
 import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
-import { ReturnEvent } from "@forge/db/schemas/knight-hacks";
-const chartData = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 237 },
-  { month: "April", desktop: 273 },
-  { month: "May", desktop: 209 },
-  { month: "June", desktop: 214 },
-];
-
-// const chartConfig = {
-//   desktop: {
-//     label: "Desktop",
-//     color: "hsl(var(--chart-1))",
-//   },
-// } satisfies ChartConfig;
+import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 
 export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
-  // todo does below work 
   const colorUsing = ADMIN_PIE_CHART_COLORS.length > 0 ? 
     ADMIN_PIE_CHART_COLORS[ADMIN_PIE_CHART_COLORS.length - 1]
-    : "hsl(var(--chart-1))";
+    : "#ffffff";
   const chartConfig = {
     attendees: {
         label: "Average attendees",
@@ -47,11 +29,64 @@ export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
     }
   } satisfies ChartConfig;
 
-  const weekDayData: Record<string, { totalAttendees: number, totalEvents: number }> = {};
-  events.forEach(({ start_datetime, numAttended }) => {
-    console.log(typeof start_datetime);
-    const randomVar = numAttended;
+  const weekdayData: Record<string, { totalAttendees: number, totalEvents: number }> = {};
+  events.forEach(({ start_datetime, numAttended}) => {
+    if (numAttended > 0) {
+      switch (start_datetime.getDay()) {
+        case 1: {
+          weekdayData.Monday = { 
+            totalAttendees: (weekdayData.Monday?.totalAttendees ?? 0) + numAttended, 
+            totalEvents: (weekdayData.Monday?.totalEvents ?? 0) + 1,
+          }
+          break;
+        };
+        case 2: {
+          weekdayData.Tuesday = { 
+            totalAttendees: (weekdayData.Tuesday?.totalAttendees ?? 0) + numAttended,
+            totalEvents: (weekdayData.Tuesday?.totalEvents ?? 0) + 1,
+          };
+          break;
+        }
+        case 3: {
+          weekdayData.Wednesday = {
+            totalAttendees: (weekdayData.Wednesday?.totalAttendees ?? 0) + numAttended,
+            totalEvents: (weekdayData.Wednesday?.totalEvents ?? 0) + 1,
+          };
+          break;
+        }
+        case 4: {
+          weekdayData.Thursday = {
+            totalAttendees: (weekdayData.Thursday?.totalAttendees ?? 0) + numAttended,
+            totalEvents: (weekdayData.Thursday?.totalEvents ?? 0) + 1,
+          };
+          break;
+        }
+        case 5: {
+          weekdayData.Friday = {
+            totalAttendees: (weekdayData.Friday?.totalAttendees ?? 0) + numAttended,
+            totalEvents: (weekdayData.Friday?.totalEvents ?? 0) + 1,
+          };
+          break;
+        }
+        default: {
+          if (start_datetime.getDay() == 0 || start_datetime.getDay() == 6) {
+            weekdayData.Weekend = {
+              totalAttendees: (weekdayData.Weekend?.totalAttendees ?? 0) + numAttended,
+              totalEvents: (weekdayData.Weekend?.totalEvents ?? 0) + 1,
+            };
+          }
+          break;
+        }
+      }
+    }
   });
+
+  const weekdayAvgData = Object.entries(weekdayData).map(([weekday, {totalAttendees, totalEvents}]) => ({
+    weekday: weekday,
+    avgAttendees: (totalAttendees / totalEvents).toFixed(0),
+    fill: ADMIN_PIE_CHART_COLORS[1],
+  }));
+
   return (
     <Card>
       <CardHeader className="items-center">
@@ -62,12 +97,12 @@ export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
           config={chartConfig}
           className="mx-auto aspect-square max-h-[250px]"
         >
-          <RadarChart data={chartData}>
+          <RadarChart data={weekdayAvgData}>
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <PolarAngleAxis dataKey="month" />
+            <PolarAngleAxis dataKey="weekday" />
             <PolarGrid />
             <Radar
-              dataKey="desktop"
+              dataKey="avgAttendees"
               fill={ADMIN_PIE_CHART_COLORS[1]}
               fillOpacity={0.6}
               dot={{
@@ -78,14 +113,6 @@ export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
           </RadarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="flex items-center gap-2 leading-none text-muted-foreground">
-          January - June 2024
-        </div>
-      </CardFooter>
     </Card>
   )
 }
