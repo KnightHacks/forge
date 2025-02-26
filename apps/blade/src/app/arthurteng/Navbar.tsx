@@ -11,23 +11,23 @@ const Navbar = () => {
   };
   return (
     <nav className="flex h-28 items-center justify-evenly rounded-sm bg-gray-800 text-lg">
-      <Link href="/" onClick={playJakingit}>
+      <Link href="/arthurteng" onClick={playJakingit}>
         Home
       </Link>
       <span>|</span>
-      <Link href="/about">About</Link>
+      <Link href="/arthurteng">About</Link>
       <span>|</span>
-      <Link href="/contact">Contact</Link>
+      <Link href="/arthurteng">Contact</Link>
       <span>|</span>
-      <Link href="/github">Github</Link>
+      <Link href="/arthurteng">Github</Link>
       <span>|</span>
-      <Link href="/linkedin">LinkedIn</Link>
+      <Link href="/arthurteng">LinkedIn</Link>
       <span>|</span>
-      <Link href="/resume">Resume</Link>
+      <Link href="/arthurteng">Resume</Link>
       <span>|</span>
-      <Link href="/website">Website</Link>
+      <Link href="/arthurteng">Website</Link>
       <span>|</span>
-      <Link href="/mercari">Mercari</Link>
+      <Link href="/arthurteng">Mercari</Link>
     </nav>
   );
 };

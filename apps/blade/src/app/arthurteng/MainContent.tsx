@@ -7,13 +7,33 @@ const MainContent = () => {
   const cashapp = () => {
     window.open("https://cash.app/$erica5710", "_blank");
   };
+  const resume = () => {
+    window.open("/images/Arthur_s_Resume.pdf", "_blank");
+  };
+  const linkedin = () => {
+    window.open(
+      "https://www.linkedin.com/in/at8/?trk=opento_sprofile_topcard",
+      "_blank",
+    );
+  };
+  const personalWebsite = () => {
+    window.open("https://my-very-cool-personal-website.vercel.app/", "_blank");
+  };
+  const github = () => {
+    window.open("https://github.com/Arthur1asdf", "_blank");
+  };
+
   return (
     <div id="main-content-container" className="mt-6 flex h-[1000px] w-auto">
       <div
         id="left-ad-container"
         className="flex w-2/12 flex-col items-center justify-center"
       >
-        <div id="resume" className="relative mb-9 h-72 w-11/12">
+        <div
+          id="resume"
+          className="relative mb-9 h-72 w-11/12 cursor-pointer"
+          onClick={resume}
+        >
           <Image
             src="/images/jakeresume.png"
             alt="something thats cool"
@@ -21,7 +41,11 @@ const MainContent = () => {
             objectFit="fill"
           />
         </div>
-        <div id="linkedin" className="relative mb-9 h-72 w-11/12">
+        <div
+          id="linkedin"
+          className="relative mb-9 h-72 w-11/12 cursor-pointer"
+          onClick={linkedin}
+        >
           <Image
             src="/images/businessman.webp"
             alt="something thats cool"
@@ -29,7 +53,12 @@ const MainContent = () => {
             objectFit="fill"
           />
         </div>
-        <div id="personal-website" className="relative h-72 w-11/12">
+        <div
+          id="personal-website"
+          className="relative h-72 w-11/12 cursor-pointer"
+          onClick={personalWebsite}
+        >
+          {/* needed to put unoptimized for gifs when using images */}
           <Image
             src="/images/yap.gif"
             alt="something thats cool"
@@ -39,10 +68,14 @@ const MainContent = () => {
           />
         </div>
       </div>
-      <div id="essay-container" className="h-full w-8/12 bg-red-600">
+      <div
+        id="essay-container"
+        className="h-full w-8/12 overflow-hidden bg-gray-900"
+      >
         <div
           id="image-container"
           className="relative float-left ml-3 mr-3 mt-4 h-72 w-56"
+          onClick={github}
         >
           <Image
             src="/images/furry.webp"
@@ -62,8 +95,14 @@ const MainContent = () => {
           the 1960s with the release of Letraset sheets containing Lorem Ipsum
           passages, and more recently with desktop publishing software like
           Aldus PageMaker including versions of Lorem Ipsum. Why do we use it?
-          It is a long established fact that a reader will be distracted by the
-          readable content of a page when looking at its layout.
+          No one knows I like kissing boyz and the fact that a reader will be
+          distracted by the readable content of a page when looking at its
+          layout. The point of using Lorem Ipsum is that it has a more-or-less
+          normal distribution of letters, as opposed to using 'Content here,
+          content here', making it look like readable English. Many desktop
+          publishing packages and web page editors now use Lorem Ipsum as their
+          default model text, and a search for 'lorem ipsum' will uncover many
+          web sites still in their infancy.
         </p>
       </div>
       <div
@@ -72,7 +111,7 @@ const MainContent = () => {
       >
         <div
           id="first-ad"
-          className="relative mb-9 h-72 w-11/12"
+          className="relative mb-9 h-72 w-11/12 cursor-pointer"
           onClick={cashapp}
         >
           <Image
@@ -84,7 +123,7 @@ const MainContent = () => {
         </div>
         <div
           id="second-ad"
-          className="relative mb-9 h-72 w-11/12"
+          className="relative mb-9 h-72 w-11/12 cursor-pointer"
           onClick={cashapp}
         >
           <Image
@@ -94,7 +133,11 @@ const MainContent = () => {
             objectFit="fill"
           />
         </div>
-        <div id="third-ad " className="relative h-72 w-11/12" onClick={cashapp}>
+        <div
+          id="third-ad"
+          className="relative h-72 w-11/12 cursor-pointer"
+          onClick={cashapp}
+        >
           <Image
             src="/images/image2.jpg"
             alt="something thats cool"
