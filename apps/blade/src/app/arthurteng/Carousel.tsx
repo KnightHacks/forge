@@ -45,7 +45,7 @@ const Carousel: React.FC<CarouselProps> = ({
   }, [autoPlay, autoPlayInterval, slides.length]);
 
   return (
-    <div className="relative mt-7 h-[300px] w-full overflow-hidden">
+    <div className="relative mt-6 h-[300px] w-full overflow-hidden">
       {/* Slides container */}
       <div
         className="flex transition-transform duration-500"
