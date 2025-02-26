@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
 
@@ -11,7 +13,7 @@ const MainContent = () => {
           className="relative float-left ml-3 mr-3 mt-4 h-72 w-56"
         >
           <Image
-            src="/images/image1.webp"
+            src="/images/furry.webp"
             alt="something thats cool"
             layout="fill"
             objectFit="fill"
@@ -32,7 +34,35 @@ const MainContent = () => {
           readable content of a page when looking at its layout.
         </p>
       </div>
-      <div id="right-ad-container" className="w-2/12"></div>
+      <div
+        id="right-ad-container"
+        className="flex w-2/12 flex-col items-center justify-center"
+      >
+        <div id="first-ad" className="relative mb-9 h-72 w-11/12">
+          <Image
+            src="/images/image1.webp"
+            alt="something thats cool"
+            layout="fill"
+            objectFit="fill"
+          />
+        </div>
+        <div id="second-ad" className="relative mb-9 h-72 w-11/12">
+          <Image
+            src="/images/image3.webp"
+            alt="something thats cool"
+            layout="fill"
+            objectFit="fill"
+          />
+        </div>
+        <div id="first-ad " className="relative h-72 w-11/12">
+          <Image
+            src="/images/image2.jpg"
+            alt="something thats cool"
+            layout="fill"
+            objectFit="fill"
+          />
+        </div>
+      </div>
     </div>
   );
 };
