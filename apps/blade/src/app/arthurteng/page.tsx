@@ -3,11 +3,6 @@ import MainContent from "./MainContent";
 import Navbar from "./Navbar";
 
 export default function page() {
-  // const playJakingit = () => {
-  //   const audio = new Audio("/audio/im-jaking-it-made-with-Voicemod.mp3");
-  //   audio.loop = true;
-  //   void audio.play();
-  // };
   const slides = [
     "/images/image5.gif",
     "/images/exploding-cat-cat-blowing-up.gif",
