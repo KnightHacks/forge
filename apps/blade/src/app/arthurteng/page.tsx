@@ -9,9 +9,9 @@ export default function page() {
   //   void audio.play();
   // };
   const slides = [
-    "/images/image1.webp",
-    "/images/image2.jpg",
-    "/images/image3.webp",
+    "/images/image5.gif",
+    "/images/exploding-cat-cat-blowing-up.gif",
+    "/images/image4.gif",
   ];
   return (
     <div

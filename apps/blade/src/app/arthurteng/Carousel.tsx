@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 
 interface CarouselProps {
   slides: string[]; // Array of image URLs or paths
@@ -38,7 +37,6 @@ const Carousel: React.FC<CarouselProps> = ({
   useEffect(() => {
     if (!autoPlay) return;
     const interval = setInterval(() => {
-      // Update slide based on previous index
       setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
     }, autoPlayInterval);
     return () => clearInterval(interval);
@@ -52,14 +50,15 @@ const Carousel: React.FC<CarouselProps> = ({
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
         {slides.map((slide, index) => (
-          <div key={index} className="relative h-[300px] min-w-full">
-            <Image
-              src={slide}
-              alt={`Slide ${index}`}
-              layout="fill"
-              objectFit="cover"
-            />
-          </div>
+          <div
+            key={index}
+            className="relative h-[300px] min-w-full"
+            style={{
+              backgroundImage: `url(${slide})`,
+              backgroundRepeat: "repeat", // Repeats the image
+              backgroundSize: "contain", // Adjust as needed: "cover", "contain", or "auto"
+            }}
+          />
         ))}
       </div>
 
@@ -68,13 +67,13 @@ const Carousel: React.FC<CarouselProps> = ({
         onClick={previousSlide}
         className="absolute left-4 top-1/2 -translate-y-1/2 rounded bg-gray-800 p-2 text-white"
       >
-        Prev
+        {"<"}
       </button>
       <button
         onClick={nextSlide}
         className="absolute right-4 top-1/2 -translate-y-1/2 rounded bg-gray-800 p-2 text-white"
       >
-        Next
+        {">"}
       </button>
     </div>
   );
