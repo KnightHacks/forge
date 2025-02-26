@@ -1,14 +1,19 @@
 "use client";
 
+import { useState } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
+import { Checkbox } from "@forge/ui/checkbox";
 import { Input } from "@forge/ui/input";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
+import { Badge } from "@forge/ui/badge";
 import {
   SCHOOLS,
   LEVELS_OF_STUDY,
   SHIRT_SIZES,
   GENDERS,
   RACES_OR_ETHNICITIES,
+  ALLERGIES,
 } from "@forge/consts/knight-hacks";
 import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import {
@@ -31,6 +36,16 @@ import {
 
 
 export default function HackerFormPage() {
+
+  const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
+
+  const toggleAllergy = (allergy: string) => {
+    setSelectedAllergies((prev) =>
+      prev.includes(allergy) ? prev.filter((a) => a !== allergy) : [...prev, allergy]
+    );
+  };
+
+
   const form = useForm({
     defaultValues: {
       firstName: "",
@@ -370,11 +385,46 @@ export default function HackerFormPage() {
                     <span className="text-gray-400"> &mdash; <i>Optional</i></span>
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Enter any food allergies or dietary restrictions"
-                      {...field}
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full min-h-[3rem] h-auto flex items-center justify-start space-x-2 px-3">
+                          <span className="text-gray-400 text-sm">Select Allergies:</span>
+                          <div className="flex flex-wrap gap-1">
+                            {selectedAllergies.length > 0 ? (
+                              selectedAllergies.map((allergy) => (
+                                <Badge key={allergy} variant="secondary" className="text-xs px-2 py-1">
+                                  {allergy}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-gray-400 text-sm">None selected</span>
+                            )}
+                          </div>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        align="start"
+                        className="w-full max-w-none min-w-[var(--radix-popover-trigger-width)] p-1"
+                      >
+                        <div className="flex flex-col w-full">
+                          {ALLERGIES.map((allergy) => (
+                            <div
+                              key={allergy}
+                              onClick={() => toggleAllergy(allergy)}
+                              className="flex items-center space-x-2 text-sm w-full px-1 py-1 rounded-md cursor-pointer transition-colors hover:bg-gray-200 dark:hover:bg-gray-900 hover:text-black dark:hover:text-white"
+                            >
+                              <Checkbox
+                                checked={selectedAllergies.includes(allergy)}
+                                onCheckedChange={() => toggleAllergy(allergy)}
+                                className="w-5 h-5 flex items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+                                onClick={() => toggleAllergy(allergy)}
+                              />
+                              <span>{allergy}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
