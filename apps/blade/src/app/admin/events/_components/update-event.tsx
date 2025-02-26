@@ -79,6 +79,7 @@ function parseDateTime(isoString: string) {
     };
   }
 
+  dateObj.setDate(dateObj.getDate() + 1);
   dateObj.setDate(dateObj.getDate());
   const formattedDate = dateObj.toISOString().split("T")[0];
 
