@@ -9,8 +9,37 @@ const MainContent = () => {
   };
   return (
     <div id="main-content-container" className="mt-6 flex h-[1000px] w-auto">
-      <div id="left-ad-container" className="w-1/12"></div>
-      <div id="essay-container" className="h-full w-9/12 bg-red-600">
+      <div
+        id="left-ad-container"
+        className="flex w-2/12 flex-col items-center justify-center"
+      >
+        <div id="resume" className="relative mb-9 h-72 w-11/12">
+          <Image
+            src="/images/jakeresume.png"
+            alt="something thats cool"
+            layout="fill"
+            objectFit="fill"
+          />
+        </div>
+        <div id="linkedin" className="relative mb-9 h-72 w-11/12">
+          <Image
+            src="/images/businessman.webp"
+            alt="something thats cool"
+            layout="fill"
+            objectFit="fill"
+          />
+        </div>
+        <div id="personal-website" className="relative h-72 w-11/12">
+          <Image
+            src="/images/yap.gif"
+            alt="something thats cool"
+            layout="fill"
+            objectFit="fill"
+            unoptimized
+          />
+        </div>
+      </div>
+      <div id="essay-container" className="h-full w-8/12 bg-red-600">
         <div
           id="image-container"
           className="relative float-left ml-3 mr-3 mt-4 h-72 w-56"

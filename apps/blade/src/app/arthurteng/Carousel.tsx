@@ -3,9 +3,9 @@
 import React, { useEffect, useState } from "react";
 
 interface CarouselProps {
-  slides: string[]; // Array of image URLs or paths
+  slides: string[];
   autoPlay?: boolean;
-  autoPlayInterval?: number; // in milliseconds
+  autoPlayInterval?: number;
 }
 
 const Carousel: React.FC<CarouselProps> = ({
@@ -33,7 +33,6 @@ const Carousel: React.FC<CarouselProps> = ({
     }
   };
 
-  // Auto-play: advance slide every autoPlayInterval milliseconds if autoPlay is true
   useEffect(() => {
     if (!autoPlay) return;
     const interval = setInterval(() => {
@@ -55,8 +54,8 @@ const Carousel: React.FC<CarouselProps> = ({
             className="relative h-[300px] min-w-full"
             style={{
               backgroundImage: `url(${slide})`,
-              backgroundRepeat: "repeat", // Repeats the image
-              backgroundSize: "contain", // Adjust as needed: "cover", "contain", or "auto"
+              backgroundRepeat: "repeat",
+              backgroundSize: "contain",
             }}
           />
         ))}
