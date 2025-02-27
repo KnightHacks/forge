@@ -5370,3 +5370,5 @@ export const ADMIN_PIE_CHART_COLORS: readonly string[] = [
   "#560bad",
   "#480ca8",
 ] as const;
+
+export const WEEKDAY_ORDER: string[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Weekend"] as const;

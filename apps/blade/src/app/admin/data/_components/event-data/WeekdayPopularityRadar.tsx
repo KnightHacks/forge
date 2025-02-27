@@ -15,7 +15,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@forge/ui/chart";
-import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
+import { ADMIN_PIE_CHART_COLORS, WEEKDAY_ORDER } from "@forge/consts/knight-hacks";
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 
 export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
@@ -78,11 +78,13 @@ export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
     }
   });
 
-  const weekdayAvgData = Object.entries(weekdayData).map(([weekday, {totalAttendees, totalEvents}]) => ({
+  const weekdayAvgData = Object.entries(weekdayData)
+  .map(([weekday, {totalAttendees, totalEvents}]) => ({
     weekday: weekday,
     avgAttendees: (totalAttendees / totalEvents).toFixed(0),
     fill: ADMIN_PIE_CHART_COLORS[1],
-  }));
+  }))
+  .sort((a, b) => WEEKDAY_ORDER.indexOf(a.weekday) - WEEKDAY_ORDER.indexOf(b.weekday));
 
   return (
     <Card>
