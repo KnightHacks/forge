@@ -94,12 +94,16 @@ export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
           config={chartConfig}
           className="mx-auto aspect-square max-h-[250px]"
         >
-          <RadarChart data={weekdayAvgData}>
+          <RadarChart data={weekdayAvgData} margin={{
+            left: 25,
+            right: 38,
+          }}>
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <PolarAngleAxis dataKey="weekday" />
             <PolarGrid />
             <Radar
               dataKey="avgAttendees"
+              name="Average Attendees:"
               fill={ADMIN_PIE_CHART_COLORS[1]}
               fillOpacity={0.6}
               dot={{
