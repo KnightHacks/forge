@@ -18,6 +18,15 @@ export const SHORT_LEVELS_OF_STUDY = [
   "Vocational/Trade School",
 ] as const;
 
+export const MAV_IMG = {
+  image: "/maverick/ss_pfp_mav.png",
+  image2: "/maverick/ss_pfp_mav2.png",
+  image3: "/maverick/ss_pfp_mav3.png",
+  image4: "/maverick/ss_pfp_mav4.png"
+} as const;
+
+export const FART_SOUND = "/maverick/dry-fart.mp3";
+
 export const OFFICERS = [
   {
     name: "Dylan Vidal",
