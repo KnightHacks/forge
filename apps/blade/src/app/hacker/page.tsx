@@ -68,7 +68,7 @@ export default function HackerFormPage() {
 
   return (
     <div className="flex justify-center items-center min-h-screen py-12 px-4">
-      <Card className="w-full max-w-xl p-6 shadow-lg">
+      <Card className="w-full max-w-3xl p-6 shadow-lg">
         <h1 className="text-xl font-bold mb-4 text-center">Hacker Registration</h1>
 
         <Form {...form}>
