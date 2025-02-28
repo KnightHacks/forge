@@ -81,7 +81,7 @@ export default function HackerFormPage() {
                 <FormItem>
                   <FormLabel>First Name</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="Enter your first name" {...field} />
+                    <Input type="text" placeholder="Lenny" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -95,7 +95,7 @@ export default function HackerFormPage() {
                 <FormItem>
                   <FormLabel>Last Name</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="Enter your last name" {...field} />
+                    <Input type="text" placeholder="Dragonson" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -109,7 +109,7 @@ export default function HackerFormPage() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="Enter your email" {...field} />
+                    <Input type="email" placeholder="tk@knighthacks.org" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -129,7 +129,7 @@ export default function HackerFormPage() {
                   <FormControl>
                     <Input
                       type="tel"
-                      placeholder="Enter your phone number"
+                      placeholder="123-456-789"
                       {...field}
                     />
                   </FormControl>
@@ -300,7 +300,7 @@ export default function HackerFormPage() {
                   <FormControl>
                     <Input
                       type="url"
-                      placeholder="https://github.com/yourusername"
+                      placeholder="https://github.com/knighthacks"
                       {...field}
                     />
                   </FormControl>
@@ -321,7 +321,7 @@ export default function HackerFormPage() {
                   <FormControl>
                     <Input
                       type="url"
-                      placeholder="https://www.linkedin.com/in/yourname"
+                      placeholder="https://www.linkedin.com/company/knight-hacks"
                       {...field}
                     />
                   </FormControl>
@@ -342,7 +342,7 @@ export default function HackerFormPage() {
                   <FormControl>
                     <Input
                       type="url"
-                      placeholder="https://yourwebsite.com"
+                      placeholder="https://knighthacks.org"
                       {...field}
                     />
                   </FormControl>
