@@ -10,14 +10,24 @@ function Application() {
         		<img src="pmo.png" className="Peeling-My-Orange" alt="pmo" />
     		</header>
 
-    		<div>
-        		<p>
-        		    Links to my:
-        		</p>
+			<div className="LinkedIn Button">
+				<a href="https://www.linkedin.com/in/josh-sawyer-b765ab255">
+					<img src="logoedin.png" className="imagedIn" alt="linkedin" />
+				</a>
+				<a href="https://www.linkedin.com/in/josh-sawyer-b765ab255">
+					<button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+						LinkedIn
+					</button>
+				</a>
+			</div>
 
-        		<Link href="https://www.linkedin.com/in/josh-sawyer-b765ab255">
-        		    LinkedIn
-        		</Link>
+    		<div className="Text">
+
+				<a href="https://www.linkedin.com/in/josh-sawyer-b765ab255">
+					<button className='button'>
+						LinkedIn
+					</button>
+				</a>
 				<br/>
 
         		<Link href="https://github.com/buhgowsh">
