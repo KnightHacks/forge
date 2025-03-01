@@ -2,7 +2,7 @@
   <a href="https://discord.gg/ynr44H6KAY">
       <img width="125" height="125" src="./.github/knight-hacks-logo.svg"/>
   </a>
-  <h1>Forge</h1>
+  <h1>Dev Team Application</h1>
 </div>
 
 ## 👋 Introduction
