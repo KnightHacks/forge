@@ -1,6 +1,7 @@
 "use client";
 
 import { GitHubLogoIcon, LinkedInLogoIcon, ReaderIcon, InstagramLogoIcon} from "@forge/ui";
+import Image from "next/image";
 
 export default function Page()
 {
@@ -55,7 +56,7 @@ export default function Page()
             target="_blank" 
             rel="noopener noreferrer"
           > 
-            <img src="/devpost.svg" alt="Custom Icon" className="h-6 w-6" />
+            <Image src="/devpost.svg" alt="Custom Icon" width={24} height={24} />
           </a> 
 
           <a
