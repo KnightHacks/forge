@@ -1,6 +1,6 @@
 "use client";
 
-import { GitHubLogoIcon, LinkedInLogoIcon, ReaderIcon,} from "@forge/ui";
+import { GitHubLogoIcon, LinkedInLogoIcon, ReaderIcon, InstagramLogoIcon} from "@forge/ui";
 
 export default function Page()
 {
@@ -60,6 +60,15 @@ export default function Page()
           > 
             <img src="/devpost.svg" alt="Custom Icon" className="h-6 w-6" />
           </a> 
+
+          <a
+            href="https://www.instagram.com/fffernanddoo/"
+            className="p-3 bg-gray-800 rounded-lg hover:bg-blue-500 transition-transform transform hover:scale-110"
+            target="_blank" 
+            rel="noopener noreferrer"
+          > 
+            <InstagramLogoIcon className="h-6 w-6 text-white"/>
+          </a>
           
         </div>
         
