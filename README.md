@@ -12,6 +12,6 @@ Hello! My name is Josh Sawyer (buhgowsh in the discord, aka jawsh) I'm a sophomo
 ## 🗺 Layout
 
 - Same layout as forge
-- [`apps`](/apps/blade/src/app/JoshSawyer) My application
+- [`JoshSawyer`](/apps/blade/src/app/JoshSawyer) My application
 
 This repository is licensed under the [MIT License](./LICENSE).
