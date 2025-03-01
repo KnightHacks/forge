@@ -5,6 +5,7 @@
     background: rgb(2,0,36);
     background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(57,140,157,1) 0%, rgba(71,76,218,1) 88%);
 }
+/* https://cssgradient.io/ is where i got the code for the gradient, even though this time it didn't work as well */
 
 .MyCats {
     display: block;

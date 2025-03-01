@@ -2,22 +2,33 @@ import Link from 'next/link';
 import './page.css';
 
 function Application() {
-    return (
+    return ( 
+		//Page wraps around a div tag instead of an html tag, looks weird
         <div className="Application">
 
+			{/* The brainrot section of my application, with header text and a picture */}
     		<header className="Introduction">
         		<p id="vro">
+					{/* The "range" portion is supposed to combine 'hello' and 'orange' together as 'hellorange' but it looks like there's an extra space */}
 					𝓗𝓮𝓵𝓵𝓸<sub id="peeled">𝓻𝓪𝓷𝓰𝓮</sub> 𝓿𝓻𝓸...🍊🪒
         		</p>
 
         		<img src="pmo.png" className="pmo" alt="Peeling-My-Orange" />
+
     		</header>
 
+
+			{/* This picture is the one that rotates */}
 			<img src="whimsical.png" className="needdat" alt="Cat-in-a-propeller-hat-licking-a-lolipop" />
 
-			{/*I had Claude generate stuff for a contact me panel, then only ended up using the buttons*/}
+
+			{/*
+				I had Claude generate stuff for a contact me panel, then only ended up using the buttons
+				I don't like the way the code is formatted since it looks hard to read but I'm not sure what to do about it
+			*/}
 			<div className="profile-links">
 
+				{/* LinkedIn Button */}
 				<a href="https://www.linkedin.com/in/josh-sawyer-b765ab255" className="profile-link linkedin" target="_blank" rel="noopener noreferrer">
 				<div className="icon">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="20" height="20">
@@ -27,6 +38,7 @@ function Application() {
 				<span className="link-text">LinkedIn</span>
 				</a>
 
+				{/* GitHub Button */}
 				<a href="https://github.com/buhgowsh" className="profile-link github" target="_blank" rel="noopener noreferrer">
 				<div className="icon">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="20" height="20">
@@ -36,6 +48,7 @@ function Application() {
 				<span className="link-text">GitHub</span>
 				</a>
 
+				{/* Resume Button */}
 				<a href="https://drive.google.com/file/d/1WYrZD0DD3eDpI2cIJDFu9Ms56QfYshLm/view?usp=drive_link" className="profile-link resume" target="_blank" rel="noopener noreferrer">
 				<div className="icon">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="20" height="20">
@@ -45,8 +58,11 @@ function Application() {
 				</div>
 				<span className="link-text">Resume</span>
 				</a>
-			</div>
 
+			</div>
+			
+
+			{/* This portion is all the text aside from the header and the text on the buttons */}
 			<div className='AboutMe'>
 				<header id="Section">
 					Who am I? 👋
@@ -57,6 +73,7 @@ function Application() {
 					and gain experience with projects that actually affect people! Outside of that, I'm usually just joshing around or working on class assignments.
 				</p>
 
+				{/* Another section that also links to a different page. I wanted this to be kind of an easter egg */}
 				<header className="prettyPlease" id="Section">
 					<Link href="/JoshSawyer/reasons">
         			    <i>Why I want to join! :D</i>
@@ -79,12 +96,13 @@ function Application() {
 
 				<p id="yapping">
 					I worked with a small group of three people to make a simple contact manager for the POOSD Small Project,
-					the presentation of our work can be found <a className="presentationLink" id="presentation" href="https://drive.google.com/file/d/1F7KvkwQGtMxDy-lU084TjlIYsAum7fKG/view?usp=drive_link">here</a>.
+					the presentation of our work can be found <a className="presentationLink" href="https://drive.google.com/file/d/1F7KvkwQGtMxDy-lU084TjlIYsAum7fKG/view?usp=drive_link">here</a>.
 					(We deleted the server that was hosting the website so it isn't accessible anymore, but the files are on my GitHub in The-Coral-Collection repo)
 					I was in charge of the Database and worked on almost half of the APIs (DeleteContact, SignUp, and VerifyUsername were the APIs I worked on).
 					We used MySQL as our Database and PHP for the APIs.
 					I never ended up touching the Front-End, but I am for the Large Project so I can bring my experience from both worlds to help where I'm needed. 
 				</p>
+
 			</div>
 		</div>
     );

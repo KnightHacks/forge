@@ -3,23 +3,22 @@
 @tailwind utilities; */
 
 /*
-    I imagine that there's a much more efficient way to do CSS now (bootstrap and tailwind); unfortunately,
-        I don't know it and don't have the time to figure it out
+    I imagine that there's a much more efficient way to do CSS now (bootstrap and tailwind);
+        unfortunately, I don't know it and don't have the time to figure it out
+
+    This file is organized by chronological order of each class and id first appearing
 */
 
-/*The dot is for classNames and divs, the hashtag is for ids*/
+/* The dot is for classNames and divs, the hashtag is for ids */
 
 
-/*
-    Stuff I did (I still used resources like w3schools to make this)
-*/
 .Application {
     text-align: center;
     word-wrap: break-word;
     background: rgb(2,0,36);
     background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(226,140,20,1) 0%, rgba(57,140,157,1) 81%);
 }
-/*https://cssgradient.io/*/
+/* https://cssgradient.io/ is where i got the code for the gradient*/
 
 #vro {
     font-size: 150px;
@@ -38,45 +37,19 @@
     height: 600px;
 }
 
-.AboutMe {
-    font-size: larger;
+.needdat {
+    margin-top: 30px;
+    margin-left: auto;
+    margin-right: auto;
+    animation: infinite-spinning 1s infinite;
+    border-radius: 50%;
 }
+/* https://www.w3schools.com/howto/howto_css_rounded_images.asp is where i got the code for formating the whimsical cat to be an oval */
 
-#Section {
-    margin-top: 20px;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: xx-large;
-}
-
-.presentationLink:hover {
-    text-decoration: underline;
-}
-
-#presentation {
-    color: blueviolet;
-}
-
-#yapping {
-    margin-left: 20%;
-    margin-right: 20%;
-}
-
-.AboutMe {
-    margin-top: 20px;
-}
-
-.prettyPlease {
-    text-decoration: none;
-    margin-left: 42%;
-    margin-right: 42%;
-}
-
-.prettyPlease:hover {
-    text-decoration: underline;
-}
 
 /*
-    Stuff I found
+    profile-links stuff and keyframes were all found online
+    profile-links stuff was AI generated
 */
 .profile-links {
     color: black;
@@ -89,57 +62,84 @@
 }
   
 .profile-link {
-  display: flex;
-  align-items: center;
-  padding: 12px 15px;
-  background-color: #0077B5;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-  font-weight: bold;
-  transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: #0077B5;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.3s;
 }
   
 .profile-link.linkedin {
-  background-color: #0077B5;
+    background-color: #0077B5;
 }
   
 .profile-link.github {
-  background-color: #333;
+    background-color: #333;
 }
   
 .profile-link.resume {
-  background-color: #4285F4;
+    background-color: #4285F4;
 }
   
 .profile-link:hover {
-  opacity: 0.9;
+    opacity: 0.9;
 }
   
 .profile-link .icon {
-  margin-right: 10px;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    margin-right: 10px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-/*https://codepen.io/limxz/pen/GLZdJN*/
+/* https://codepen.io/limxz/pen/GLZdJN is another place i got the code for the animation */
 @keyframes infinite-spinning {
     0%{
-      transform: rotateY(0deg);
+        transform: rotateY(0deg);
     }
     100% {
-      transform: rotateY(360deg);
+        transform: rotateY(360deg);
     }
-  }
-  
-  .needdat {
-    margin-top: 30px;
-    margin-left: auto;
-    margin-right: auto;
-    animation: infinite-spinning 1s infinite;
-    border-radius: 50%;
-  }
-  /*https://www.w3schools.com/howto/howto_css_rounded_images.asp*/
+}
+
+
+.AboutMe {
+    font-size: larger;
+    margin-top: 20px;
+}
+
+#Section {
+    margin-top: 20px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: xx-large;
+}
+
+#yapping {
+    margin-left: 20%;
+    margin-right: 20%;
+}
+
+.prettyPlease {
+    text-decoration: none;
+    margin-left: 42%;
+    margin-right: 42%;
+}
+
+.prettyPlease:hover {
+    text-decoration: underline;
+}
+
+.presentationLink {
+    color: blueviolet;
+}
+
+.presentationLink:hover {
+    text-decoration: underline;
+}
+
