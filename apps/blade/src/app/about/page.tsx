@@ -1,4 +1,6 @@
 "use client";
+import Image from "next/image";
+
 
 export default function Page()
 {
@@ -7,9 +9,9 @@ export default function Page()
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-6"
       style={{ backgroundImage: "url('/clouds.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}>
 
-        <img src="/catSpin.gif" alt="Left GIF" className="absolute left-10 top-1/2 transform -translate-y-1/2 w-24 h-auto" />
+        <Image src="/catSpin.gif" alt="Left GIF" className="absolute left-10 top-1/2 transform -translate-y-1/2 w-24 h-auto" width={96} height={96}/>
 
-       <img src="/catSpin.gif" alt="Right GIF" className="absolute right-10 top-1/2 transform -translate-y-1/2 w-24 h-auto" />
+       <Image src="/catSpin.gif" alt="Right GIF" className="absolute right-10 top-1/2 transform -translate-y-1/2 w-24 h-auto" width={96} height={96} />
 
         <div className="bg-gray-800 bg-opacity-90 p-6 rounded-lg shadow-lg min-w-[24rem] max-w-2xl w-full text-center border-blue-500 mt-8">
         <h3 className="text-2xl font-bold text-blue-400">About Me</h3>
@@ -24,13 +26,13 @@ export default function Page()
 
           <div className="flex justify-center gap-4 mt-4">
             <a href="https://gkids.com/films/look-back/" target="_blank">
-              <img src="/lookback.png" alt="Anime 1" className="w-24 h-36 rounded-lg object-cover"/>
+              <Image src="/lookback.png" alt="anime 1" className="rounded-lg object-cover" width={96} height={144}/>
             </a>
             <a href="https://www.crunchyroll.com/series/GYVNXMVP6/cowboy-bebop" target="_blank">
-              <img src="/CowboyBebop.png" alt="Anime 2" className="w-24 h-36 rounded-lg object-cover" />
+              <Image src="/CowboyBebop.png" alt="anime 2" className=" rounded-lg object-cover" width={96} height={144} />
             </a>
             <a href="https://www.crunchyroll.com/series/GY3VKX1MR/hunter-x-hunter" target="_blank">
-               <img src="/hunter.png" alt="Anime 3" className="w-24 h-36 rounded-lg object-cover" />
+               <Image src="/hunter.png" alt="anime 3" className=" rounded-lg object-cover" width={96} height={144} />
             </a>
            
           </div>
