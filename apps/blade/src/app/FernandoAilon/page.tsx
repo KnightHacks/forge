@@ -16,9 +16,6 @@ export default function Page()
         <h1 className="text-2xl text-blue-500 font-bold">I'm</h1>
         <h1 className="text-2xl font-bold text-blue-500">Fernando Ailon</h1>
         </div>
-        
-          {/* <h1 className="text-2xl font-bold" style={{color: "White"}}>Fernando Ailon</h1>
-          <p className="text-gray-400">FernaDevs SICK MINI PORTFOLIO</p> */}
           <div className="mt-4 flex justify-center gap-4">
           <a
             href="./about"
