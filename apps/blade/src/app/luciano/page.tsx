@@ -17,6 +17,7 @@ export default function Page() {
           {[
             { name: "GitHub", url: "https://github.com/luciano093", icon: "/github.svg", bgLight: "bg-gray-200", bgDark: "bg-gray-800" },
             { name: "LinkedIn", url: "https://www.linkedin.com/in/luciano-paredes-701300191", icon: "/linkedIn.svg" },
+            { name: "Resume", url: "https://docs.google.com/document/d/1nV0t8hb_i7J-0bFtAZKs0wBgVgPiJXbP/edit?usp=sharing&ouid=112302935885971708835&rtpof=true&sd=true", icon: "/resume.png" },
           ].map((social) => (
             <a 
               key={social.name} 
