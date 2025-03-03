@@ -45,7 +45,11 @@ export function EventShowcase({
           <History color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
         </CardHeader>
         <CardHeader>
-          <CardTitle>No events found</CardTitle>
+          <CardTitle>
+            <div className="text-sm text-gray-600">
+              Please check into our events!
+            </div>
+          </CardTitle>
           <CardDescription></CardDescription>
         </CardHeader>
       </Card>
