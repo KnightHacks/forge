@@ -5,6 +5,7 @@ import PopularityRanking from "./event-data/PopularityRanking"
 import TypePie from "./event-data/TypePie";
 import AttendancesBarChart from "./event-data/AttendancesBarChart";
 import { WeekdayPopularityRadar } from "./event-data/WeekdayPopularityRadar";
+import TimePopularityBars from "./event-data/TimePopularityBars";
 
 export default function EventDemographics() {
     const { data: events } = api.event.getEvents.useQuery();
@@ -16,7 +17,7 @@ export default function EventDemographics() {
                 <PopularityRanking events={events} />
                 <AttendancesBarChart events={events} />
                 <WeekdayPopularityRadar events={events} />
-                <p>time popularity ranking</p>
+                <TimePopularityBars events={events} />
                 <TypePie events={events} />
             </div>}
         </div>
