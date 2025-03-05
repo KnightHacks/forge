@@ -12,7 +12,7 @@ export function Hero() {
       <div className="absolute inset-0 block h-full w-full bg-white bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] dark:hidden"></div>
       <section className="h-full w-full bg-background py-20 md:py-32 lg:py-36">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-1 items-center gap-6">
+          <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-2">
             {/* Left column: Text content */}
             <div className="relative z-50 flex flex-col space-y-4">
               <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
@@ -41,7 +41,7 @@ export function Hero() {
                 </form>
                 <Link href={"/sponsor"}>
                   <div className="relative z-10 flex max-w-max cursor-pointer items-center overflow-hidden rounded-md p-[1.5px]">
-                    <div className="animate-rotate absolute inset-0 h-full rounded-md bg-[conic-gradient(#0ea5e9_20deg,transparent_120deg)]"></div>
+                    <div className="moving-border absolute inset-0 h-full rounded-md bg-[conic-gradient(#0ea5e9_20deg,transparent_120deg)]"></div>
                     <div className="relative z-20 flex">
                       <Button
                         variant="secondary"
@@ -59,20 +59,10 @@ export function Hero() {
             {/* Right column: Image */}
             <div className="relative h-[25rem] w-full overflow-hidden rounded-lg sm:h-[32rem]">
               <Image
-                className="hidden dark:block"
-                src="/member-dashboard-preview.png"
+                src="/tech-knight.png"
                 alt="Hero image"
                 fill
-                style={{ objectFit: "cover", objectPosition: "left" }}
-                priority
-                sizes="100%"
-              />
-              <Image
-                className="block dark:hidden"
-                src="/light-member-dashboard-preview.png"
-                alt="Hero image"
-                fill
-                style={{ objectFit: "cover", objectPosition: "left" }}
+                style={{ objectFit: "contain" }}
                 priority
                 sizes="100%"
               />
