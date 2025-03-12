@@ -31,35 +31,35 @@ export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
     if (numAttended > 0) {
       switch (start_datetime.getDay()) {
         case 1: {
-          weekdayData.Monday = { 
+          weekdayData.Mon = { 
             totalAttendees: (weekdayData.Monday?.totalAttendees ?? 0) + numAttended, 
             totalEvents: (weekdayData.Monday?.totalEvents ?? 0) + 1,
           }
           break;
         };
         case 2: {
-          weekdayData.Tuesday = { 
+          weekdayData.Tues = { 
             totalAttendees: (weekdayData.Tuesday?.totalAttendees ?? 0) + numAttended,
             totalEvents: (weekdayData.Tuesday?.totalEvents ?? 0) + 1,
           };
           break;
         }
         case 3: {
-          weekdayData.Wednesday = {
+          weekdayData.Wed = {
             totalAttendees: (weekdayData.Wednesday?.totalAttendees ?? 0) + numAttended,
             totalEvents: (weekdayData.Wednesday?.totalEvents ?? 0) + 1,
           };
           break;
         }
         case 4: {
-          weekdayData.Thursday = {
+          weekdayData.Thurs = {
             totalAttendees: (weekdayData.Thursday?.totalAttendees ?? 0) + numAttended,
             totalEvents: (weekdayData.Thursday?.totalEvents ?? 0) + 1,
           };
           break;
         }
         case 5: {
-          weekdayData.Friday = {
+          weekdayData.Fri = {
             totalAttendees: (weekdayData.Friday?.totalAttendees ?? 0) + numAttended,
             totalEvents: (weekdayData.Friday?.totalEvents ?? 0) + 1,
           };
@@ -67,7 +67,7 @@ export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
         }
         default: {
           if (start_datetime.getDay() == 0 || start_datetime.getDay() == 6) {
-            weekdayData.Weekend = {
+            weekdayData["Sat/Sun"] = {
               totalAttendees: (weekdayData.Weekend?.totalAttendees ?? 0) + numAttended,
               totalEvents: (weekdayData.Weekend?.totalEvents ?? 0) + 1,
             };
@@ -99,8 +99,7 @@ export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
           className="mx-auto aspect-square max-h-[250px]"
         >
           <RadarChart data={weekdayAvgData} margin={{
-            left: 25,
-            right: 38,
+            left: 38,
           }}>
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <PolarAngleAxis dataKey="weekday" />
