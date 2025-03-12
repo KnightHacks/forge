@@ -1,6 +1,6 @@
 "use client";
 
-import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
+import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart } from "recharts";
 
 import {
   Card,
@@ -86,6 +86,8 @@ export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
   }))
   .sort((a, b) => WEEKDAY_ORDER.indexOf(a.weekday) - WEEKDAY_ORDER.indexOf(b.weekday));
 
+  const maxAvgAttendees = Math.max(...weekdayAvgData.map(d => Number(d.avgAttendees)));
+
   return (
     <Card>
       <CardHeader className="items-center">
@@ -102,6 +104,7 @@ export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
           }}>
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <PolarAngleAxis dataKey="weekday" />
+            <PolarRadiusAxis tick={false} axisLine={false} domain={[0, maxAvgAttendees]} />
             <PolarGrid />
             <Radar
               dataKey="avgAttendees"
