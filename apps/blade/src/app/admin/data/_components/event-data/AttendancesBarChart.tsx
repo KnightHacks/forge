@@ -37,7 +37,7 @@ export default function AttendancesBarChart({ events } : { events: ReturnEvent[]
   events.forEach(({ tag, numAttended }) => {
     if (numAttended !== 0) {
       tagData[tag] = {
-        // data to calculate avg attendees per event
+        // data to calculate avg attendees per event type
         totalAttendees: (tagData[tag]?.totalAttendees ?? 0) + numAttended,
         totalEvents: (tagData[tag]?.totalEvents ?? 0) + 1,
       };
@@ -49,6 +49,8 @@ export default function AttendancesBarChart({ events } : { events: ReturnEvent[]
     avgAttendees: (totalAttendees / totalEvents).toFixed(0),
     fill: baseConfig[tag]?.color ?? "#ffffff",
   }));
+
+  const maxAvgAttendees = Math.max(...avgAttendedData.map((d) => Number(d.avgAttendees)));
 
   return (
     <Card className="md:col-span-2 lg:col-span-2">
@@ -72,7 +74,7 @@ export default function AttendancesBarChart({ events } : { events: ReturnEvent[]
               tickMargin={10}
               axisLine={false}
             />
-            <XAxis dataKey="avgAttendees" type="number" hide />
+            <XAxis dataKey="avgAttendees" type="number" hide domain={[0, maxAvgAttendees]} />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
