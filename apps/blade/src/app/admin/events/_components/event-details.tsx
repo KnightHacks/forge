@@ -48,10 +48,20 @@ export function EventDetailsButton({ event }: { event: ReturnEvent }) {
         </DialogHeader>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-gray-500" />
-            <div className="flex flex-col">
-              <span>Start: {formatDateTime(event.start_datetime)}</span>
-              <span>End: {formatDateTime(event.end_datetime)}</span>
+            <div className="flex w-full max-w-md gap-x-10 gap-y-2 pl-1">
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-medium text-gray-600">Start</span>
+                <span className="mt-1 font-medium">
+                  {formatDateTime(event.start_datetime)}
+                </span>
+              </div>
+
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-medium text-gray-600">End</span>
+                <span className="mt-1 font-medium">
+                  {formatDateTime(event.end_datetime)}
+                </span>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">

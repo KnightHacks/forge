@@ -122,8 +122,17 @@ export function CreateEventButton() {
           <form
             onSubmit={form.handleSubmit((values) => {
               setIsLoading(true);
+              // Extract year, month, and day explicitly to construct a local Date object
+              const [year, month, day] = values.date.split("-").map(Number);
+
+              if (!year || !month || !day) {
+                toast.error("Invalid date format.");
+                setIsLoading(false);
+                return;
+              }
+
               // Convert start date + hour/minute/amPm to a valid Date object
-              const finalStartDate = new Date(values.date);
+              const finalStartDate = new Date(year, month - 1, day); // Months are 0-based in JS
               let hour24 = parseInt(values.startHour, 10) || 0;
               if (values.startAmPm === "PM" && hour24 < 12) {
                 hour24 += 12;
@@ -137,7 +146,7 @@ export function CreateEventButton() {
               );
 
               // Convert end date + hour/minute/amPm to a valid Date object
-              const finalEndDate = new Date(values.date);
+              const finalEndDate = new Date(year, month - 1, day); // Construct date in local time
               let endHour24 = parseInt(values.endHour, 10) || 0;
               if (values.endAmPm === "PM" && endHour24 < 12) {
                 endHour24 += 12;

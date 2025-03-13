@@ -14,7 +14,7 @@ export function MemberInfo() {
         <Info color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4">
           <ResumeButton />
           <QRCodePopup />
         </div>

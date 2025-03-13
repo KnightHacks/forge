@@ -1,7 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { EmbedBuilder, WebhookClient } from "discord.js";
 import { asc } from "drizzle-orm";
-import { and, gte, lt } from "drizzle-orm/expressions";
 import cron from "node-cron";
 
 import { db } from "@forge/db/client";
@@ -25,16 +24,28 @@ async function getEvents() {
     nextWeek.setDate(today.getDate() + 7);
 
     // Retrieve events and sort them by start time
-    const events = await db
+    const fetchedEvents = await db
       .select()
       .from(DBEvent)
-      .where(
-        and(
-          gte(DBEvent.start_datetime, today),
-          lt(DBEvent.start_datetime, nextWeek),
-        ),
-      )
       .orderBy(asc(DBEvent.start_datetime));
+
+    const eventsMap = fetchedEvents.map((event) => {
+      const updatedStart = new Date(event.start_datetime);
+      updatedStart.setDate(updatedStart.getDate() + 1);
+
+      const updatedEnd = new Date(event.end_datetime);
+      updatedEnd.setDate(updatedEnd.getDate() + 1);
+
+      return {
+        ...event,
+        start_datetime: updatedStart,
+        end_datetime: updatedEnd,
+      };
+    });
+
+    const events = eventsMap.filter(
+      (event) => event.end_datetime < nextWeek && event.start_datetime > today,
+    );
 
     // 1) Add a weekday-based prefix to each event
     const eventsWithPrefix = events.map((event) => {
@@ -95,38 +106,46 @@ async function getEvents() {
   nextWeekEnd.setHours(23, 59, 59, 999);
 
   // Query each batch
-  const todayEvents = await db
+  const fetchEvents = await db
     .select()
     .from(DBEvent)
-    .where(
-      and(
-        gte(DBEvent.start_datetime, todayStart),
-        lt(DBEvent.start_datetime, todayEnd),
-      ),
-    )
     .orderBy(asc(DBEvent.start_datetime));
 
-  const tomorrowEvents = await db
-    .select()
-    .from(DBEvent)
-    .where(
-      and(
-        gte(DBEvent.start_datetime, tomorrowStart),
-        lt(DBEvent.start_datetime, tomorrowEnd),
-      ),
-    )
-    .orderBy(asc(DBEvent.start_datetime));
+  // Bandaid fix by adding one to every date
+  const allEvents = fetchEvents.map((event) => {
+    const updatedStart = new Date(event.start_datetime);
+    updatedStart.setDate(updatedStart.getDate() + 1);
 
-  const nextWeekEvents = await db
-    .select()
-    .from(DBEvent)
-    .where(
-      and(
-        gte(DBEvent.start_datetime, nextWeekStart),
-        lt(DBEvent.start_datetime, nextWeekEnd),
-      ),
-    )
-    .orderBy(asc(DBEvent.start_datetime));
+    const updatedEnd = new Date(event.end_datetime);
+    updatedEnd.setDate(updatedEnd.getDate() + 1);
+
+    return {
+      ...event,
+      start_datetime: updatedStart,
+      end_datetime: updatedEnd,
+    };
+  });
+
+  const todayEvents = allEvents.filter(
+    (event) =>
+      event.end_datetime < todayEnd && event.start_datetime >= todayStart,
+  );
+
+  console.log("Today Events: ", todayEvents);
+
+  const tomorrowEvents = allEvents.filter(
+    (event) =>
+      event.end_datetime < tomorrowEnd && event.start_datetime >= tomorrowStart,
+  );
+
+  console.log("Tommmorow Events: ", tomorrowEvents);
+
+  const nextWeekEvents = allEvents.filter(
+    (event) =>
+      event.end_datetime < nextWeekEnd && event.start_datetime >= nextWeekStart,
+  );
+
+  console.log("Next Week Events: ", nextWeekEvents);
 
   // Filter out "Operations Meeting" from nextWeek
   const nextWeekFiltered = nextWeekEvents.filter(

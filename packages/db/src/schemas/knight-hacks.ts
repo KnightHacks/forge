@@ -77,6 +77,49 @@ export const Member = createTable(
   }),
 );
 
+export const Hacker = createTable(
+  "hacker",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    userId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "cascade" }),
+    firstName: t.varchar({ length: 255 }).notNull(),
+    lastName: t.varchar({ length: 255 }).notNull(),
+    discordUser: t.varchar({ length: 255 }).notNull(),
+    age: t.integer().notNull(),
+    email: t.varchar({ length: 255 }).notNull(),
+    phoneNumber: t.varchar({ length: 255 }),
+    school: t.text({ enum: SCHOOLS }).notNull(),
+    levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
+    raceOrEthnicity: raceOrEthnicityEnum()
+      .default("Prefer not to answer")
+      .notNull(),
+    shirtSize: shirtSizeEnum().notNull(),
+    githubProfileUrl: t.varchar({ length: 255 }),
+    linkedinProfileUrl: t.varchar({ length: 255 }),
+    websiteUrl: t.varchar({ length: 255 }),
+    resumeUrl: t.varchar({ length: 255 }),
+    dob: t.date().notNull(),
+    status: t.text("status", {
+      enum: HACKATHON_APPLICATION_STATES,
+    }),
+    survey1: t.text("survey_1").notNull(),
+    survey2: t.text("survey_2").notNull(),
+    isFirstTime: t.boolean("is_first_time").default(false),
+    agreesToReceiveEmailsFromMLH: t
+      .boolean("agrees_to_receive_emails_from_mlh")
+      .default(false),
+    dateCreated: t.date().notNull().defaultNow(),
+    timeCreated: t.time().notNull().defaultNow(),
+  }),
+  (t) => ({
+    uniqueEmail: unique().on(t.email),
+    uniquePhoneNumber: unique().on(t.phoneNumber),
+  }),
+);
+
 export type InsertMember = typeof Member.$inferInsert;
 export type SelectMember = typeof Member.$inferSelect;
 
@@ -85,29 +128,6 @@ export const MemberRelations = relations(Member, ({ one }) => ({
 }));
 
 export const InsertMemberSchema = createInsertSchema(Member);
-
-export const HackathonApplication = createTable(
-  "hackathon_application",
-  (t) => ({
-    memberId: t
-      .uuid()
-      .notNull()
-      .references(() => Member.id, {
-        onDelete: "cascade",
-      }),
-    hackathonId: t
-      .uuid()
-      .notNull()
-      .references(() => Hackathon.id, {
-        onDelete: "cascade",
-      }),
-    state: t
-      .varchar({ length: 255, enum: HACKATHON_APPLICATION_STATES })
-      .notNull(),
-    // Dynamic json fields (e.g. survey responses)
-    survey: t.jsonb().notNull(),
-  }),
-);
 
 export const Sponsor = createTable("sponsor", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -167,6 +187,22 @@ export const EventAttendee = createTable("event_attendee", (t) => ({
       onDelete: "cascade",
     }),
   eventId: t
+    .uuid()
+    .notNull()
+    .references(() => Event.id, {
+      onDelete: "cascade",
+    }),
+}));
+
+export const HackerAttendee = createTable("hacker_attendee", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  hackerId: t
+    .uuid()
+    .notNull()
+    .references(() => Member.id, {
+      onDelete: "cascade",
+    }),
+  hackathonId: t
     .uuid()
     .notNull()
     .references(() => Event.id, {

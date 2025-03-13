@@ -56,7 +56,6 @@ export function EventsTable() {
 
   const upcomingDate = new Date();
   upcomingDate.setHours(0);
-  upcomingDate.setDate(upcomingDate.getDate() - 1);
   const upcomingEvents = [...sortedEvents].filter(
     (event) => event.start_datetime >= upcomingDate,
   );
