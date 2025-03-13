@@ -36,13 +36,13 @@ export default function PopularityRanking({ events } : { events: ReturnEvent[]; 
                     { displayFullList ?
                         topEvents.map((event, index) => (
                             <li key={event.id} className={(rankingStyles[index] ?? "text-gray-400") + " flex justify-between"}>
-                                <span>{index+1}. {event.name}</span><span>{event.numAttended} attendees</span>
+                                <span>{index+1}. {event.name} &#91;{event.tag}&#93;</span><span>{event.numAttended} attendees</span>
                             </li>
                         ))
                         :
                         topThree.map((event, index) => (
                             <li key={event.id} className={(rankingStyles[index] ?? "text-gray-400") + " flex justify-between"}>
-                                <span>{index+1}. {event.name}</span><span>{event.numAttended} attendees</span>
+                                <span>{index+1}. {event.name} &#91;{event.tag}&#93;</span><span>{event.numAttended} attendees</span>
                             </li>
                         ))
                     }
