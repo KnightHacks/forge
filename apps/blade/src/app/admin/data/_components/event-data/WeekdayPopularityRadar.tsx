@@ -28,7 +28,7 @@ export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
 
   const weekdayData: Record<string, { totalAttendees: number, totalEvents: number }> = {};
   events.forEach(({ start_datetime, numAttended}) => {
-    if (numAttended > 0) {
+    if (numAttended >= 5) {
       switch (start_datetime.getDay()) {
         case 1: {
           weekdayData.Mon = { 

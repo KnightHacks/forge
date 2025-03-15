@@ -35,7 +35,7 @@ export default function AttendancesBarChart({ events } : { events: ReturnEvent[]
 
   const tagData: Record<string, { totalAttendees: number, totalEvents: number }> = {};
   events.forEach(({ tag, numAttended }) => {
-    if (numAttended !== 0) {
+    if (numAttended >= 5) {
       tagData[tag] = {
         // data to calculate avg attendees per event type
         totalAttendees: (tagData[tag]?.totalAttendees ?? 0) + numAttended,
