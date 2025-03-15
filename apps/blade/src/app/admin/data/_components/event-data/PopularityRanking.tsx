@@ -27,7 +27,7 @@ export default function PopularityRanking({ events } : { events: ReturnEvent[]; 
                     {
                         (displayFullList ? topEvents : topEvents.slice(0, 3)).map((event, index) =>
                             <li key={event.id} className={(rankingStyles[index] ?? "text-gray-400") + " flex justify-between"}>
-                                <span>{index+1}. {event.name} &#91;{event.tag}&#93;</span><span>{event.numAttended} attendees</span>
+                                <span>{index+1}. {event.name} &#91;{event.tag.toUpperCase()}&#93;</span><span>{event.numAttended} attendees</span>
                             </li>
                         )
                     }
