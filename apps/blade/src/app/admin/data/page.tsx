@@ -5,6 +5,7 @@ import { auth } from "@forge/auth";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import MemberDemographics from "./_components/MemberDemographics";
 import EventDemographics from "./_components/EventDemographics";
 
@@ -27,21 +28,26 @@ export default async function Data() {
 
   return (
     <HydrateClient>
-      <main className="container">
-        <div className="mt-10 grid gap-8 md:grid-rows-2 lg:grid-cols-2">
-          <div className="flex flex-col">
-            <h1 className="text-3xl font-extrabold tracking-tight">
-              Member Demographics
-            </h1>
-            <MemberDemographics />
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-3xl font-extrabold tracking-tight">
-              Event Demographics
-            </h1>
-            <EventDemographics />
-          </div>
-        </div>
+      <main className="container mt-6 hborder-2 hborder-yellow-500">
+        <Tabs defaultValue="members" className="hborder-2 hborder-red-400">
+          <TabsList>
+            <TabsTrigger value="members">Member data</TabsTrigger>
+            <TabsTrigger value="events">Event data</TabsTrigger>
+          </TabsList>
+          <TabsContent value="members">
+            <div className="flex flex-col">
+              <MemberDemographics />
+            </div>
+          </TabsContent>
+          <TabsContent value="events">
+            <div className="flex flex-col">
+              <h1 className="text-3xl font-extrabold tracking-tight">
+                Event Demographics
+              </h1>
+              <EventDemographics />
+            </div>
+          </TabsContent>
+        </Tabs>   
       </main>
     </HydrateClient>
   );
