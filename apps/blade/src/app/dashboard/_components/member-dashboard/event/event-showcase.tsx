@@ -1,4 +1,4 @@
-import { CalendarDays, MapPin, Star, Users } from "lucide-react";
+import { History, MapPin, Star, Users } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
@@ -42,13 +42,14 @@ export function EventShowcase({
           <CardTitle className="text-sm font-medium">
             Recent Event Attended
           </CardTitle>
-          <CalendarDays
-            color="hsl(263.4 70% 50.4%)"
-            size={DASHBOARD_ICON_SIZE}
-          />
+          <History color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
         </CardHeader>
         <CardHeader>
-          <CardTitle>No events found</CardTitle>
+          <CardTitle>
+            <div className="text-sm text-gray-600">
+              Please check into our events!
+            </div>
+          </CardTitle>
           <CardDescription></CardDescription>
         </CardHeader>
       </Card>
@@ -61,7 +62,7 @@ export function EventShowcase({
         <CardTitle className="text-sm font-medium">
           Recent Event Attended
         </CardTitle>
-        <CalendarDays color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
+        <History color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
       </CardHeader>
       <CardHeader>
         <div className="flex flex-col items-start justify-between sm:flex-row">
@@ -81,10 +82,20 @@ export function EventShowcase({
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-gray-500" />
-            <div className="flex flex-col">
-              <span>Start: {formatDateTime(mostRecent.start_datetime)}</span>
-              <span>End: {formatDateTime(mostRecent.end_datetime)}</span>
+            <div className="flex w-full max-w-md gap-x-10 gap-y-2 pl-1">
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-medium text-gray-600">Start</span>
+                <span className="mt-1 font-medium">
+                  {formatDateTime(mostRecent.start_datetime)}
+                </span>
+              </div>
+
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-medium text-gray-600">End</span>
+                <span className="mt-1 font-medium">
+                  {formatDateTime(mostRecent.end_datetime)}
+                </span>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -143,12 +154,24 @@ export function EventShowcase({
                   <CardContent>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4 text-gray-500" />
-                        <div className="flex flex-col">
-                          <span>
-                            Start: {formatDateTime(event.start_datetime)}
-                          </span>
-                          <span>End: {formatDateTime(event.end_datetime)}</span>
+                        <div className="flex w-full max-w-md gap-x-10 gap-y-2 pl-1">
+                          <div className="flex flex-col items-start">
+                            <span className="text-sm font-medium text-gray-600">
+                              Start
+                            </span>
+                            <span className="mt-1 font-medium">
+                              {formatDateTime(mostRecent.start_datetime)}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-col items-start">
+                            <span className="text-sm font-medium text-gray-600">
+                              End
+                            </span>
+                            <span className="mt-1 font-medium">
+                              {formatDateTime(mostRecent.end_datetime)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
