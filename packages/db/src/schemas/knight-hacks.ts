@@ -199,13 +199,13 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   hackerId: t
     .uuid()
     .notNull()
-    .references(() => Member.id, {
+    .references(() => Hacker.id, {
       onDelete: "cascade",
     }),
   hackathonId: t
     .uuid()
     .notNull()
-    .references(() => Event.id, {
+    .references(() => Hackathon.id, {
       onDelete: "cascade",
     }),
 }));
