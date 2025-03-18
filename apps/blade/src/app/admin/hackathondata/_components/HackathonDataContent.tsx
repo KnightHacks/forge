@@ -3,34 +3,34 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@forge/ui/select";
 import { useState } from "react";
 
-const TEMP_HACKATHONS = ["silly", "weird", "unconventional", "bizarre"];
+const TEMP_HACKATHONS = ["silly", "weird", "unconventional", "bizarre", "knight hacks VIII the fourth jr."];
 
 export default function HackathonDataContent() {
     const [activeHackathon, setActiveHackathon] = useState(TEMP_HACKATHONS[0]);
 
     return (
-        <div className="mt-10 flex">
-            <h1 className="text-3xl font-extrabold tracking-tight">
-                {activeHackathon} Data
-            </h1>
+        <div className="mt-10 flex flex-col gap-4 md:flex-row-reverse lg:flex-row-reverse justify-between">
             <Select value={activeHackathon ? activeHackathon : undefined}
             onValueChange={setActiveHackathon}>
-                <SelectTrigger className="ml-auto h-7 rounded-lg pl-2.5" aria-label="Select a value">
+                <SelectTrigger className="md:w-1/2 lg:w-1/2" aria-label="Select a value">
                     <SelectValue placeholder="Select hackathon" />
                 </SelectTrigger>
-                <SelectContent align="end" className="rounded-xl">
+                <SelectContent>
                     {
-                        TEMP_HACKATHONS.map((key) => <SelectItem key={key} value={key} className="rounded-lg h[&_span]:flex">
-                            <div className="flex items-center gap-2 text-xs">
-                                <span
-                                className="flex h-3 w-3 shrink-0 rounded-sm"
-                                />
+                        TEMP_HACKATHONS.map((key) => <SelectItem key={key} value={key}>
+                            <div>
                                 {key}
+                                <span
+                                className="me-2"
+                                />
                             </div>
                         </SelectItem>)
                     }
                 </SelectContent>
             </Select>
+            <h1 className="text-3xl font-extrabold tracking-tight">
+                {activeHackathon}
+            </h1>
         </div>
     )
 }
