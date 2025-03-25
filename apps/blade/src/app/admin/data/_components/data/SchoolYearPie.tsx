@@ -4,7 +4,6 @@ import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
 import {
   ADMIN_PIE_CHART_COLORS,
@@ -26,6 +25,10 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 
+interface Person {
+  levelOfStudy?: typeof LEVELS_OF_STUDY[number];
+}
+
 const shortenLevelOfStudy = (levelOfStudy: string): string => {
   const replacements: Record<string, string> = {
     // Undergraduate University (2 year - community college or similar)
@@ -39,17 +42,19 @@ const shortenLevelOfStudy = (levelOfStudy: string): string => {
 };
 
 export default function SchoolYearPie({
-  members,
+  people,
 }: {
-  members: InsertMember[];
+  people: Person[];
 }) {
   const id = "pie-interactive";
 
   // set up school year data
   const levelOfStudyCounts: Record<string, number> = {};
-  members.forEach(({ levelOfStudy }) => {
-    levelOfStudyCounts[levelOfStudy] =
-      (levelOfStudyCounts[levelOfStudy] ?? 0) + 1;
+  people.forEach(({ levelOfStudy }) => {
+    if (levelOfStudy) {
+      levelOfStudyCounts[levelOfStudy] =
+        (levelOfStudyCounts[levelOfStudy] ?? 0) + 1;
+    }
   });
   const levelOfStudyData = Object.entries(levelOfStudyCounts).map(
     ([levelOfStudy, count]) => ({
@@ -73,12 +78,12 @@ export default function SchoolYearPie({
 
   // set up chart config
   const baseConfig: ChartConfig = {
-    members: { label: "Members" },
+    people: { label: "people" },
   };
   let colorIdx = 0;
-  members.forEach(({ levelOfStudy }) => {
-    const shortenedString = shortenLevelOfStudy(levelOfStudy);
-    if (!baseConfig[shortenedString]) {
+  people.forEach(({ levelOfStudy }) => {
+    const shortenedString = levelOfStudy ? shortenLevelOfStudy(levelOfStudy) : undefined;
+    if (shortenedString && !baseConfig[shortenedString]) {
       baseConfig[shortenedString] = {
         label: shortenedString,
         color: ADMIN_PIE_CHART_COLORS[colorIdx % ADMIN_PIE_CHART_COLORS.length],
@@ -189,7 +194,7 @@ export default function SchoolYearPie({
                           y={(viewBox.cy ?? 0) + 24}
                           className="fill-muted-foreground"
                         >
-                          Members
+                          people
                         </tspan>
                       </text>
                     );

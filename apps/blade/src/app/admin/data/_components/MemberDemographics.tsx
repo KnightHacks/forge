@@ -24,7 +24,7 @@ export default function MemberDemographics() {
           <GenderPie members={members} />
           <RaceOrEthnicityPie people={members} />
           <AgeBarChart people={members} />
-          <SchoolYearPie members={members} />
+          <SchoolYearPie people={members} />
         </div>
       )}
     </div>

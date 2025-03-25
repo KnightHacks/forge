@@ -1,6 +1,7 @@
 import { api } from "~/trpc/react";
 import AgeBarChart from "../../_components/data/AgeBarChart";
 import RaceOrEthnicityPie from "../../_components/data/RaceOrEthnicityPie";
+import SchoolYearPie from "../../_components/data/SchoolYearPie";
 
 export default function HackerCharts({ hackathonId } : { hackathonId : string }) {
     const { data: hackers } = api.hacker.getHackers.useQuery(hackathonId);
@@ -14,6 +15,7 @@ export default function HackerCharts({ hackathonId } : { hackathonId : string })
                     <div>
                         <AgeBarChart people={hackers} />
                         <RaceOrEthnicityPie people={hackers} />
+                        <SchoolYearPie people={hackers} />
                     </div>
                 )
             )}
