@@ -40,6 +40,9 @@ export const Hackathon = createTable("hackathon", (t) => ({
   endDate: t.timestamp().notNull(),
 }));
 
+export type InsertHackathon = typeof Hackathon.$inferInsert;
+export type SelectHackathon = typeof Hackathon.$inferSelect;
+
 export const Member = createTable(
   "member",
   (t) => ({
