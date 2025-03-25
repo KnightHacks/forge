@@ -2,7 +2,6 @@
 
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
 
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
 import {
   Card,
@@ -18,26 +17,30 @@ import {
 } from "@forge/ui/chart";
 
 const chartConfig = {
-  members: {
-    label: "Members",
+  people: {
+    label: "people",
     color: "#4361ee",
   },
 } satisfies ChartConfig;
 
-export default function AgeBarChart({ members }: { members: InsertMember[] }) {
+interface Person {
+  age?: number;
+}
+
+export default function AgeBarChart({ people }: { people: Person[] }) {
   const ageCounts: Record<number, number> = {};
   let totalAge = 0;
-  members.forEach(({ age }) => {
+  people.forEach(({ age }) => {
     // some people entered wrong birthday info and are negative ages
     if (age && age >= 13) {
       ageCounts[age] = (ageCounts[age] ?? 0) + 1;
       totalAge += age;
     }
   });
-  const avgAge = (totalAge / members.length).toFixed(2);
+  const avgAge = (totalAge / people.length).toFixed(2);
   const ageData = Object.entries(ageCounts).map(([age, count]) => ({
     age: age,
-    members: count,
+    people: count,
   }));
 
   return (
@@ -63,7 +66,7 @@ export default function AgeBarChart({ members }: { members: InsertMember[] }) {
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
-            <Bar dataKey="members" fill="var(--color-members)" radius={8}>
+            <Bar dataKey="people" fill="var(--color-people)" radius={8}>
               <LabelList
                 position="top"
                 offset={12}
