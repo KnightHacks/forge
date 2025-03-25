@@ -22,7 +22,7 @@ export default function MemberDemographics() {
             numDuesPaying={duesPayingStatus.length}
           />
           <GenderPie members={members} />
-          <RaceOrEthnicityPie members={members} />
+          <RaceOrEthnicityPie people={members} />
           <AgeBarChart people={members} />
           <SchoolYearPie members={members} />
         </div>

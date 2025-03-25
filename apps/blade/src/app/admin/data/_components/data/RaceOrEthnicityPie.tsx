@@ -4,7 +4,6 @@ import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
 import {
   ADMIN_PIE_CHART_COLORS,
@@ -26,6 +25,10 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 
+interface Person {
+  raceOrEthnicity?: typeof RACES_OR_ETHNICITIES[number];
+}
+
 const shortenRaceOrEthnicity = (raceOrEthnicity: string): string => {
   const replacements: Record<string, string> = {
     // Native Hawaiian or Other Pacific Islander
@@ -39,15 +42,15 @@ const shortenRaceOrEthnicity = (raceOrEthnicity: string): string => {
 };
 
 export default function SchoolYearPie({
-  members,
+  people,
 }: {
-  members: InsertMember[];
+  people: Person[];
 }) {
   const id = "pie-interactive";
 
   // get amount of each raceOrEthnicity
   const raceOrEthnicityCounts: Record<string, number> = {};
-  members.forEach(({ raceOrEthnicity }) => {
+  people.forEach(({ raceOrEthnicity }) => {
     if (raceOrEthnicity)
       raceOrEthnicityCounts[raceOrEthnicity] =
         (raceOrEthnicityCounts[raceOrEthnicity] ?? 0) + 1;
@@ -74,10 +77,10 @@ export default function SchoolYearPie({
 
   // set up chart config
   const baseConfig: ChartConfig = {
-    members: { label: "Members" },
+    people: { label: "people" },
   };
   let colorIdx = 0;
-  members.forEach(({ raceOrEthnicity }) => {
+  people.forEach(({ raceOrEthnicity }) => {
     if (raceOrEthnicity) {
       const shortenedString = shortenRaceOrEthnicity(raceOrEthnicity);
       if (!baseConfig[shortenedString]) {
@@ -193,7 +196,7 @@ export default function SchoolYearPie({
                           y={(viewBox.cy ?? 0) + 24}
                           className="fill-muted-foreground"
                         >
-                          Members
+                          people
                         </tspan>
                       </text>
                     );
