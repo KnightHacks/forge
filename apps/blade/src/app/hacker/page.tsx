@@ -14,7 +14,7 @@ import {
   SCHOOLS,
   SHIRT_SIZES,
 } from "@forge/consts/knight-hacks";
-import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
+import { InsertHackerSchema } from "@forge/db/schemas/knight-hacks";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -56,6 +56,21 @@ export default function HackerFormPage() {
     },
   });
 
+  const createHacker = api.hacker.createHacker.useMutation({
+    onSuccess() {
+      toast.success("Application submitted successfully!");
+      // user gets sent back to homepage upon successful form submission
+      router.push("/dashboard");
+      router.refresh();
+    },
+    onError() {
+      toast.error("Oops! Something went wrong. Please try again later.");
+    },
+    onSettled() {
+      setLoading(false);
+    },
+  });
+
   const toggleAllergy = (allergy: string) => {
     setSelectedAllergies((prev) =>
       prev.includes(allergy)
@@ -66,7 +81,7 @@ export default function HackerFormPage() {
 
   // Setup React Hook Form
   const form = useForm({
-    schema: InsertMemberSchema.omit({ discordUser: true }).extend({
+    schema: InsertHackerSchema.omit({ discordUser: true }).extend({
       userId: z.undefined(),
       firstName: z.string().min(1, "Required"),
       lastName: z.string().min(1, "Required"),
@@ -221,7 +236,7 @@ export default function HackerFormPage() {
               phoneNumber: values.phoneNumber,
               school: values.school,
               levelOfStudy: values.levelOfStudy,
-              gender: values.gender ?? "Prefer not to answer",
+              // gender: values.gender ?? "Prefer not to answer",
               gradDate: values.gradDate,
               raceOrEthnicity: values.raceOrEthnicity ?? "Prefer not to answer",
               shirtSize: values.shirtSize,
@@ -581,7 +596,7 @@ export default function HackerFormPage() {
             </FormItem>
           )}
         />
-        {/* <FormField
+        <FormField
           control={form.control}
           name="foodAllergies"
           render={({ field }) => (
@@ -649,7 +664,7 @@ export default function HackerFormPage() {
               <FormMessage />
             </FormItem>
           )}
-        /> */}
+        />
 
         {loading ? (
           <Loader2 className="animate-spin" />
