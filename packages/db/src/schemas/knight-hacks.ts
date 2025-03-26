@@ -134,6 +134,7 @@ export const MemberRelations = relations(Member, ({ one }) => ({
 }));
 
 export const InsertMemberSchema = createInsertSchema(Member);
+export const InsertHackerSchema = createInsertSchema(Hacker);
 
 export const Sponsor = createTable("sponsor", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
