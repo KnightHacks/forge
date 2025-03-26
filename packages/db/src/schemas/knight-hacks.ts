@@ -123,6 +123,9 @@ export const Hacker = createTable(
   }),
 );
 
+export type InsertHacker = typeof Hacker.$inferInsert;
+export type SelectHacker = typeof Hacker.$inferSelect;
+
 export type InsertMember = typeof Member.$inferInsert;
 export type SelectMember = typeof Member.$inferSelect;
 
