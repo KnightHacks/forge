@@ -30,14 +30,16 @@ interface Person {
 export default function AgeBarChart({ people }: { people: Person[] }) {
   const ageCounts: Record<number, number> = {};
   let totalAge = 0;
+  let totalValidAges = 0;
   people.forEach(({ age }) => {
     // some people entered wrong birthday info and are negative ages
     if (age && age >= 13) {
       ageCounts[age] = (ageCounts[age] ?? 0) + 1;
       totalAge += age;
+      totalValidAges++;
     }
   });
-  const avgAge = (totalAge / people.length).toFixed(2);
+  const avgAge = totalValidAges > 0 ? (totalAge / totalValidAges).toFixed(2) : 0;
   const ageData = Object.entries(ageCounts).map(([age, count]) => ({
     age: age,
     people: count,
