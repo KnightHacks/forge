@@ -25,10 +25,6 @@ export default function HackathonDataContent() {
     }
   }, [hackathons, activeHackathon]);
 
-  console.log(
-    `active hackathon: ${activeHackathon ? activeHackathon.name : "it's null :("}`,
-  );
-
   return (
     <div>
       <div className="mt-10 flex flex-col justify-between gap-4 md:flex-row-reverse lg:flex-row-reverse">
