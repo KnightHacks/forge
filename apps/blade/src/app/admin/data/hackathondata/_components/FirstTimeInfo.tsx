@@ -6,7 +6,7 @@ export default function ({ hackers } : { hackers: InsertHacker[] }) {
     const firstTimePercent = hackers.length > 0 ? ((firstTimeCount / hackers.length) * 100) : 0;
 
     return (
-        <Card>
+        <Card className="md:col-span-2 lg:col-span-2">
             <CardHeader>
                 <CardTitle className="text-xl">First Time Hackers</CardTitle>
             </CardHeader>

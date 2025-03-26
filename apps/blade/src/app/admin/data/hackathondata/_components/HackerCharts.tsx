@@ -10,7 +10,7 @@ export default function HackerCharts({ hackathonId } : { hackathonId : string })
     return (
         <div className="mt-8">
             {hackers === null ? (
-                <p>This hackathon has no hackers!</p>
+                <h1 className="mt-20 text-xl text-center">This hackathon has no hackers!</h1>
             ) : (
                 hackers && (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">

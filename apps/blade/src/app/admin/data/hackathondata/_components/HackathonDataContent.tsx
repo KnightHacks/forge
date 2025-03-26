@@ -43,7 +43,7 @@ export default function HackathonDataContent() {
                     </SelectContent>
                 </Select>
                 <h1 className="text-3xl font-extrabold tracking-tight">
-                    {activeHackathon?.name ?? "Select a hackathon"}
+                    {activeHackathon?.name ?? ""}
                 </h1>
             </div>
             {activeHackathon?.id && <HackerCharts hackathonId={activeHackathon.id} />}
