@@ -26,7 +26,7 @@ import {
 } from "@forge/ui/select";
 
 interface Person {
-  raceOrEthnicity?: typeof RACES_OR_ETHNICITIES[number];
+  raceOrEthnicity?: (typeof RACES_OR_ETHNICITIES)[number];
 }
 
 const shortenRaceOrEthnicity = (raceOrEthnicity: string): string => {
@@ -41,11 +41,7 @@ const shortenRaceOrEthnicity = (raceOrEthnicity: string): string => {
   return replacements[raceOrEthnicity] ?? raceOrEthnicity;
 };
 
-export default function SchoolYearPie({
-  people,
-}: {
-  people: Person[];
-}) {
+export default function SchoolYearPie({ people }: { people: Person[] }) {
   const id = "pie-interactive";
 
   // get amount of each raceOrEthnicity

@@ -26,7 +26,7 @@ import {
 } from "@forge/ui/select";
 
 interface Person {
-  levelOfStudy?: typeof LEVELS_OF_STUDY[number];
+  levelOfStudy?: (typeof LEVELS_OF_STUDY)[number];
 }
 
 const shortenLevelOfStudy = (levelOfStudy: string): string => {
@@ -41,11 +41,7 @@ const shortenLevelOfStudy = (levelOfStudy: string): string => {
   return replacements[levelOfStudy] ?? levelOfStudy;
 };
 
-export default function SchoolYearPie({
-  people,
-}: {
-  people: Person[];
-}) {
+export default function SchoolYearPie({ people }: { people: Person[] }) {
   const id = "pie-interactive";
 
   // set up school year data
@@ -82,7 +78,9 @@ export default function SchoolYearPie({
   };
   let colorIdx = 0;
   people.forEach(({ levelOfStudy }) => {
-    const shortenedString = levelOfStudy ? shortenLevelOfStudy(levelOfStudy) : undefined;
+    const shortenedString = levelOfStudy
+      ? shortenLevelOfStudy(levelOfStudy)
+      : undefined;
     if (shortenedString && !baseConfig[shortenedString]) {
       baseConfig[shortenedString] = {
         label: shortenedString,

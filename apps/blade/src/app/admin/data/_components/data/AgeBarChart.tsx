@@ -39,7 +39,8 @@ export default function AgeBarChart({ people }: { people: Person[] }) {
       totalValidAges++;
     }
   });
-  const avgAge = totalValidAges > 0 ? (totalAge / totalValidAges).toFixed(2) : 0;
+  const avgAge =
+    totalValidAges > 0 ? (totalAge / totalValidAges).toFixed(2) : 0;
   const ageData = Object.entries(ageCounts).map(([age, count]) => ({
     age: age,
     people: count,

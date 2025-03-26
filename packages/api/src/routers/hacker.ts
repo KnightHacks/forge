@@ -17,7 +17,7 @@ export const hackerRouter = {
     if (hacker.length === 0) return null; // Can't return undefined in trpc
     return hacker[hacker.length - 1];
   }),
-  
+
   getHackers: adminProcedure.input(z.string()).query(async ({ input }) => {
     const hackers = await db
       .select()
@@ -27,10 +27,13 @@ export const hackerRouter = {
           db
             .select()
             .from(HackerAttendee)
-            .where(and(
-              eq(HackerAttendee.hackathonId, input), eq(HackerAttendee.hackerId, Hacker.id)
-            ))
-        )
+            .where(
+              and(
+                eq(HackerAttendee.hackathonId, input),
+                eq(HackerAttendee.hackerId, Hacker.id),
+              ),
+            ),
+        ),
       );
 
     if (hackers.length === 0) return null; // Can't return undefined in trpc
