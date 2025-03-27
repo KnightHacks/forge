@@ -35,17 +35,10 @@ export default async function Data() {
             <TabsTrigger value="events">Event data</TabsTrigger>
           </TabsList>
           <TabsContent value="members">
-            <div className="flex flex-col">
               <MemberDemographics />
-            </div>
           </TabsContent>
           <TabsContent value="events">
-            <div className="flex flex-col">
-              <h1 className="text-3xl font-extrabold tracking-tight">
-                Event Demographics
-              </h1>
               <EventDemographics />
-            </div>
           </TabsContent>
         </Tabs>   
       </main>
