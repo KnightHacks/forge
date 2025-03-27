@@ -730,6 +730,7 @@ export default function HackerFormPage() {
                 <Checkbox
                   checked={!!field.value}
                   onCheckedChange={field.onChange}
+                  className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
                 />
               </FormControl>
               <div className="flex items-center space-y-1 leading-none">
@@ -749,6 +750,7 @@ export default function HackerFormPage() {
                 <Checkbox
                   checked={!!field.value}
                   onCheckedChange={field.onChange}
+                  className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
                 />
               </FormControl>
               <div className="flex items-center space-y-1 leading-none">
