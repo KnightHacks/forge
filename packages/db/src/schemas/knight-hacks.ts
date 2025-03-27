@@ -90,6 +90,7 @@ export const Hacker = createTable(
       .references(() => User.id, { onDelete: "cascade" }),
     firstName: t.varchar({ length: 255 }).notNull(),
     lastName: t.varchar({ length: 255 }).notNull(),
+    gender: genderEnum().default("Prefer not to answer").notNull(),
     discordUser: t.varchar({ length: 255 }).notNull(),
     age: t.integer().notNull(),
     email: t.varchar({ length: 255 }).notNull(),
