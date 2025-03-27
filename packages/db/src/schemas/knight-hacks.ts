@@ -106,6 +106,7 @@ export const Hacker = createTable(
     websiteUrl: t.varchar({ length: 255 }),
     resumeUrl: t.varchar({ length: 255 }),
     dob: t.date().notNull(),
+    gradDate: t.date().notNull(),
     status: t.text("status", {
       enum: HACKATHON_APPLICATION_STATES,
     }),
