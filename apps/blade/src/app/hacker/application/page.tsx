@@ -192,6 +192,7 @@ export default function HackerFormPage() {
       websiteUrl: "",
       resumeUrl: "",
       dob: "",
+      gradDate: "",
       status: undefined,
       survey1: "",
       survey2: "",
