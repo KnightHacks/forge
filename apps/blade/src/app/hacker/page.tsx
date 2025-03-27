@@ -698,7 +698,6 @@ export default function HackerFormPage() {
                           <div
                             key={allergy}
                             onClick={() => {
-                              console.log("here");
                               toggleAllergy(allergy);
                               field.onChange(selectedAllergies.join(","));
                             }}
