@@ -755,7 +755,8 @@ export default function HackerFormPage() {
               </FormControl>
               <div className="flex items-center space-y-1 leading-none">
                 <FormLabel>
-                  Would you like to receive emails from MLH?
+                  I authorize MLH to send me occasional emails about relevant
+                  events, career opportunities, and community announcements
                 </FormLabel>
               </div>
             </FormItem>
