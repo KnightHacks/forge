@@ -99,6 +99,8 @@ export default function HackerFormPage() {
         .string()
         .pipe(z.coerce.date())
         .transform((date) => date.toISOString()),
+      survey1: z.string().min(1, "Required"),
+      survey2: z.string().min(1, "Required"),
       githubProfileUrl: z
         .string()
         .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")
@@ -529,7 +531,10 @@ export default function HackerFormPage() {
           name="survey1"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Why do you want to attend Knighthacks</FormLabel>
+              <FormLabel>
+                Why do you want to attend Knighthacks?{" "}
+                <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Why do you want to attend KnightHacks?"
@@ -546,7 +551,10 @@ export default function HackerFormPage() {
           name="survey2"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>What do you hope to achieve at knighthacks?</FormLabel>
+              <FormLabel>
+                What do you hope to achieve at Knighthacks?{" "}
+                <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="What are your goals at this hackathon?"
