@@ -3,7 +3,11 @@ import { z } from "zod";
 
 import { and, eq, exists } from "@forge/db";
 import { db } from "@forge/db/client";
-import { Hacker, HackerAttendee, InsertHackerSchema } from "@forge/db/schemas/knight-hacks";
+import {
+  Hacker,
+  HackerAttendee,
+  InsertHackerSchema,
+} from "@forge/db/schemas/knight-hacks";
 
 import { adminProcedure, protectedProcedure } from "../trpc";
 
