@@ -84,7 +84,7 @@ export function WeekdayPopularityRadar({ events } : { events: ReturnEvent[] }) {
     avgAttendees: (totalAttendees / totalEvents).toFixed(0),
     fill: ADMIN_PIE_CHART_COLORS[1],
   }))
-  .sort((a, b) => WEEKDAY_ORDER.indexOf(a.weekday) - WEEKDAY_ORDER.indexOf(b.weekday));
+  .sort((a, b) => (WEEKDAY_ORDER as string[]).indexOf(a.weekday) - (WEEKDAY_ORDER as string[]).indexOf(b.weekday));
 
   const maxAvgAttendees = Math.max(...weekdayAvgData.map(d => Number(d.avgAttendees)));
 
