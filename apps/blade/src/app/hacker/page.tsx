@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -37,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
+import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
@@ -81,7 +82,7 @@ export default function HackerFormPage() {
 
   // Setup React Hook Form
   const form = useForm({
-    schema: InsertHackerSchema.omit({ discordUser: true }).extend({
+    schema: InsertHackerSchema.extend({
       userId: z.undefined(),
       firstName: z.string().min(1, "Required"),
       lastName: z.string().min(1, "Required"),
@@ -178,13 +179,24 @@ export default function HackerFormPage() {
     defaultValues: {
       firstName: "",
       lastName: "",
+      discordUser: "",
       email: "",
       phoneNumber: "",
-      dob: "",
-      gradDate: "",
+      school: undefined,
+      levelOfStudy: undefined,
+      raceOrEthnicity: "Prefer not to answer",
+      shirtSize: undefined,
       githubProfileUrl: "",
       linkedinProfileUrl: "",
       websiteUrl: "",
+      resumeUrl: "",
+      dob: "",
+      status: undefined,
+      survey1: "",
+      survey2: "",
+      isFirstTime: false,
+      foodAllergies: "",
+      agreesToReceiveEmailsFromMLH: false,
     },
   });
 
@@ -236,14 +248,19 @@ export default function HackerFormPage() {
               phoneNumber: values.phoneNumber,
               school: values.school,
               levelOfStudy: values.levelOfStudy,
-              // gender: values.gender ?? "Prefer not to answer",
+              gender: values.gender ?? "Prefer not to answer",
               gradDate: values.gradDate,
               raceOrEthnicity: values.raceOrEthnicity ?? "Prefer not to answer",
               shirtSize: values.shirtSize,
               githubProfileUrl: values.githubProfileUrl,
               linkedinProfileUrl: values.linkedinProfileUrl,
               websiteUrl: values.websiteUrl,
-              resumeUrl, // Include uploaded resume URL
+              isFirstTime: values.isFirstTime,
+              agreesToReceiveEmailsFromMLH: values.agreesToReceiveEmailsFromMLH,
+              survey1: values.survey1,
+              survey2: values.survey2,
+              foodAllergies: values.foodAllergies,
+              resumeUrl,
             });
           } catch (error) {
             console.error("Error uploading resume or creating hacker:", error);
@@ -286,7 +303,6 @@ export default function HackerFormPage() {
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="email"
@@ -508,6 +524,40 @@ export default function HackerFormPage() {
         />
         <FormField
           control={form.control}
+          name="survey1"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Why do you want to attend Knighthacks</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Why do you want to attend KnightHacks?"
+                  {...field}
+                  value={field.value}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="survey2"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>What do you hope to achieve at knighthacks?</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="What are your goals at this hackathon?"
+                  {...field}
+                  value={field.value}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="githubProfileUrl"
           render={({ field }) => (
             <FormItem>
@@ -599,69 +649,113 @@ export default function HackerFormPage() {
         <FormField
           control={form.control}
           name="foodAllergies"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Food Allergies
-                <span className="text-gray-400">
-                  {" "}
-                  &mdash; <i>Optional</i>
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="flex h-auto min-h-[3rem] w-full items-center justify-start space-x-2 px-3"
-                    >
-                      <span className="text-sm text-gray-400">
-                        Select Allergies:
-                      </span>
-                      <div className="flex flex-wrap gap-1">
-                        {selectedAllergies.length > 0 ? (
-                          selectedAllergies.map((allergy) => (
-                            <Badge
-                              key={allergy}
-                              variant="secondary"
-                              className="px-2 py-1 text-xs"
-                            >
-                              {allergy}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-gray-400">
-                            None selected
-                          </span>
-                        )}
-                      </div>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align="start"
-                    className="w-full min-w-[var(--radix-popover-trigger-width)] max-w-none p-1"
-                  >
-                    <div className="flex w-full flex-col">
-                      {ALLERGIES.map((allergy) => (
-                        <div
-                          key={allergy}
-                          onClick={() => toggleAllergy(allergy)}
-                          className="flex w-full cursor-pointer items-center space-x-2 rounded-md px-1 py-1 text-sm transition-colors hover:bg-gray-200 hover:text-black dark:hover:bg-gray-900 dark:hover:text-white"
-                        >
-                          <Checkbox
-                            checked={selectedAllergies.includes(allergy)}
-                            onCheckedChange={() => toggleAllergy(allergy)}
-                            className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
-                            onClick={() => toggleAllergy(allergy)}
-                          />
-                          <span>{allergy}</span>
+          render={({ field }) => {
+            return (
+              <FormItem>
+                <FormLabel>
+                  Food Allergies
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
+                <FormControl>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="flex h-auto min-h-[3rem] w-full items-center justify-start space-x-2 px-3"
+                      >
+                        <span className="text-sm text-gray-400">
+                          Select Allergies:
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedAllergies.length > 0 ? (
+                            selectedAllergies.map((allergy) => (
+                              <Badge
+                                key={allergy}
+                                variant="secondary"
+                                className="px-2 py-1 text-xs"
+                              >
+                                {allergy}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-sm text-gray-400">
+                              None selected
+                            </span>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="start"
+                      className="w-full min-w-[var(--radix-popover-trigger-width)] max-w-none p-1"
+                    >
+                      <div className="flex w-full flex-col">
+                        {ALLERGIES.map((allergy) => (
+                          <div
+                            key={allergy}
+                            onClick={() => {
+                              console.log("here");
+                              toggleAllergy(allergy);
+                              field.onChange(selectedAllergies.join(","));
+                            }}
+                            className="flex w-full cursor-pointer items-center space-x-2 rounded-md px-1 py-1 text-sm transition-colors hover:bg-gray-200 hover:text-black dark:hover:bg-gray-900 dark:hover:text-white"
+                          >
+                            <Checkbox
+                              checked={selectedAllergies.includes(allergy)}
+                              onCheckedChange={() => toggleAllergy(allergy)}
+                              className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+                              onClick={() => toggleAllergy(allergy)}
+                            />
+                            <span>{allergy}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+        <FormField
+          control={form.control}
+          name="isFirstTime"
+          render={({ field }) => (
+            <FormItem className="flex flex-row space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={!!field.value}
+                  onCheckedChange={field.onChange}
+                />
               </FormControl>
-              <FormMessage />
+              <div className="flex items-center space-y-1 leading-none">
+                <FormLabel>
+                  This is my first time participating in a hackathon
+                </FormLabel>
+              </div>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="agreesToReceiveEmailsFromMLH"
+          render={({ field }) => (
+            <FormItem className="flex flex-row space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="flex items-center space-y-1 leading-none">
+                <FormLabel>
+                  Would you like to receive emails from MLH?
+                </FormLabel>
+              </div>
             </FormItem>
           )}
         />

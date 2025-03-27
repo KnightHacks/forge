@@ -111,6 +111,7 @@ export const Hacker = createTable(
     survey1: t.text("survey_1").notNull(),
     survey2: t.text("survey_2").notNull(),
     isFirstTime: t.boolean("is_first_time").default(false),
+    foodAllergies: t.text("food_allergies"),
     agreesToReceiveEmailsFromMLH: t
       .boolean("agrees_to_receive_emails_from_mlh")
       .default(false),
