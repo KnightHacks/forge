@@ -10,9 +10,9 @@ export default function PopularityRanking({ events } : { events: ReturnEvent[]; 
         .slice(0, 10);
 
     const rankingStyles = [
-        "text-lg font-bold text-yellow-500", // gold
-        "text-lg font-semibold text-gray-400", // silver
-        "text-lg font-medium text-orange-500", // bronze
+        "text-sm md:text-lg lg:text-lg font-bold text-yellow-500", // gold
+        "text-sm md:text-lg lg:text-lg font-semibold text-gray-400", // silver
+        "text-sm md:text-lg lg:text-lg font-medium text-orange-500", // bronze
     ];
 
     const handleClick = () => setDisplayFullList((prev) => !prev);
@@ -26,8 +26,8 @@ export default function PopularityRanking({ events } : { events: ReturnEvent[]; 
                 <ol className="flex flex-col gap-2 mb-4">
                     {
                         (displayFullList ? topEvents : topEvents.slice(0, 3)).map((event, index) =>
-                            <li key={event.id} className={(rankingStyles[index] ?? "text-gray-400") + " flex justify-between"}>
-                                <span>{index+1}. {event.name} &#91;{event.tag.toUpperCase()}&#93;</span><span>{event.numAttended} attendees</span>
+                            <li key={event.id} className={(rankingStyles[index] ?? "text-sm md:text-base lg:text-base text-gray-400") + " flex justify-between"}>
+                                <span className="me-4">{index+1}. {event.name} &#91;{event.tag.toUpperCase()}&#93;</span><span>{event.numAttended} attended</span>
                             </li>
                         )
                     }
