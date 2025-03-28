@@ -1,6 +1,6 @@
 "use client";
 
-import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
 
 import {
   Card,
@@ -22,14 +22,12 @@ export default function AttendancesBarChart({ events } : { events: ReturnEvent[]
   const baseConfig: ChartConfig = {
     events: { label: "events" },
   };
-  let colorIdx = 0;
   events.forEach(({ tag }) => {
     if (!baseConfig[tag]) {
       baseConfig[tag] = {
         label: tag,
-        color: ADMIN_PIE_CHART_COLORS[colorIdx % ADMIN_PIE_CHART_COLORS.length],
+        color: ADMIN_PIE_CHART_COLORS[6],
       };
-      colorIdx++;
     }
   });
 
@@ -50,8 +48,6 @@ export default function AttendancesBarChart({ events } : { events: ReturnEvent[]
     fill: baseConfig[tag]?.color ?? "#ffffff",
   }));
 
-  const maxAvgAttendees = Math.max(...avgAttendedData.map((d) => Number(d.avgAttendees)));
-
   return (
     <Card className="md:col-span-2 lg:col-span-2">
       <CardHeader>
@@ -63,23 +59,25 @@ export default function AttendancesBarChart({ events } : { events: ReturnEvent[]
             accessibilityLayer
             data={avgAttendedData}
             layout="vertical"
-            margin={{
-              left: 25,
-            }}
           >
+            <CartesianGrid horizontal={false} />
             <YAxis
               dataKey="tag"
               type="category"
               tickLine={false}
               tickMargin={10}
               axisLine={false}
+              hide
             />
-            <XAxis dataKey="avgAttendees" type="number" hide domain={[0, maxAvgAttendees]} />
+            <XAxis dataKey="avgAttendees" type="number" hide />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={<ChartTooltipContent indicator="line" />}
             />
-            <Bar dataKey="avgAttendees" name="Average attendees: " layout="vertical" radius={5} />
+            <Bar dataKey="avgAttendees" name="Average attendees: " layout="vertical" radius={4} barSize={100}>
+              <LabelList dataKey="tag" position="insideLeft" offset={8} fontSize={12} className="fill-[--color-label]" />
+              <LabelList dataKey="avgAttendees" position="right" offset={8} fontSize={12} className="fill-foreground" />
+            </Bar>
           </BarChart>
         </ChartContainer>
       </CardContent>
