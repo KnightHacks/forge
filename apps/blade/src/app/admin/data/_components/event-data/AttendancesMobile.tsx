@@ -24,7 +24,7 @@ export default function AttendancesMobile({ events, className } : { events: Retu
                 <CardTitle className="text-xl">Average Attendances by Event Type</CardTitle>
             </CardHeader>
             <CardContent>
-                {avgAttendedData.map((data) => <li className="list-none flex justify-between border-b-2 border-dotted">
+                {avgAttendedData.map((data) => <li key={data.tag} className="list-none flex justify-between border-b-2 border-dotted">
                     <span className="text-fuchsia-700 font-semibold">{data.tag}:</span>
                     <span>{data.avgAttendees}</span>
                 </li>)}
