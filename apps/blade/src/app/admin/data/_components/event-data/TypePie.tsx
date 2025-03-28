@@ -22,11 +22,7 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 
-export default function TypePie({
-  events,
-}: {
-  events: ReturnEvent[];
-}) {
+export default function TypePie({ events }: { events: ReturnEvent[] }) {
   const id = "pie-interactive";
 
   // get amount of each tag
@@ -35,7 +31,10 @@ export default function TypePie({
     tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
   });
 
-  const totalEvents = Object.values(tagCounts).reduce((sum, count) => sum + count, 0);
+  const totalEvents = Object.values(tagCounts).reduce(
+    (sum, count) => sum + count,
+    0,
+  );
   const tagData = Object.entries(tagCounts).map(([tag, count]) => ({
     name: tag,
     amount: count,
@@ -50,10 +49,7 @@ export default function TypePie({
     () => tagData.findIndex((item) => item.name === activeLevel),
     [activeLevel, tagData],
   );
-  const tags = useMemo(
-    () => tagData.map((item) => item.name),
-    [tagData],
-  );
+  const tags = useMemo(() => tagData.map((item) => item.name), [tagData]);
 
   // set up chart config
   const baseConfig: ChartConfig = {

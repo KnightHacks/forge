@@ -1,24 +1,31 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
-
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@forge/ui/card";
-import type {
-  ChartConfig} from "@forge/ui/chart";
+  Bar,
+  BarChart,
+  CartesianGrid,
+  LabelList,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
+import type { ChartConfig } from "@forge/ui/chart";
+import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
+import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@forge/ui/chart";
-import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
-import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 
-export default function AttendancesBarChart({ events, className } : { events: ReturnEvent[], className?: string }) {
+export default function AttendancesBarChart({
+  events,
+  className,
+}: {
+  events: ReturnEvent[];
+  className?: string;
+}) {
   const baseConfig: ChartConfig = {
     events: { label: "events" },
   };
@@ -31,7 +38,10 @@ export default function AttendancesBarChart({ events, className } : { events: Re
     }
   });
 
-  const tagData: Record<string, { totalAttendees: number, totalEvents: number }> = {};
+  const tagData: Record<
+    string,
+    { totalAttendees: number; totalEvents: number }
+  > = {};
   events.forEach(({ tag, numAttended }) => {
     if (numAttended >= 5) {
       tagData[tag] = {
@@ -42,24 +52,24 @@ export default function AttendancesBarChart({ events, className } : { events: Re
     }
   });
 
-  const avgAttendedData = Object.entries(tagData).map(([tag, {totalAttendees, totalEvents}]) => ({
-    tag: tag,
-    avgAttendees: (totalAttendees / totalEvents).toFixed(0),
-    fill: baseConfig[tag]?.color ?? "#ffffff",
-  }));
+  const avgAttendedData = Object.entries(tagData).map(
+    ([tag, { totalAttendees, totalEvents }]) => ({
+      tag: tag,
+      avgAttendees: (totalAttendees / totalEvents).toFixed(0),
+      fill: baseConfig[tag]?.color ?? "#ffffff",
+    }),
+  );
 
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="text-xl">Average Attendances by Event Type</CardTitle>
+        <CardTitle className="text-xl">
+          Average Attendances by Event Type
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={baseConfig}>
-          <BarChart
-            accessibilityLayer
-            data={avgAttendedData}
-            layout="vertical"
-          >
+          <BarChart accessibilityLayer data={avgAttendedData} layout="vertical">
             <CartesianGrid horizontal={false} />
             <YAxis
               dataKey="tag"
@@ -74,13 +84,31 @@ export default function AttendancesBarChart({ events, className } : { events: Re
               cursor={false}
               content={<ChartTooltipContent indicator="line" />}
             />
-            <Bar dataKey="avgAttendees" name="Average attendees: " layout="vertical" radius={4} barSize={100}>
-              <LabelList dataKey="tag" position="insideLeft" offset={8} fontSize={12} className="fill-[--color-label]" />
-              <LabelList dataKey="avgAttendees" position="right" offset={8} fontSize={12} className="fill-foreground" />
+            <Bar
+              dataKey="avgAttendees"
+              name="Average attendees: "
+              layout="vertical"
+              radius={4}
+              barSize={100}
+            >
+              <LabelList
+                dataKey="tag"
+                position="insideLeft"
+                offset={8}
+                fontSize={12}
+                className="fill-[--color-label]"
+              />
+              <LabelList
+                dataKey="avgAttendees"
+                position="right"
+                offset={8}
+                fontSize={12}
+                className="fill-foreground"
+              />
             </Bar>
           </BarChart>
         </ChartContainer>
       </CardContent>
     </Card>
-  )
+  );
 }
