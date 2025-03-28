@@ -4,6 +4,7 @@ import { api } from "~/trpc/react";
 import PopularityRanking from "./event-data/PopularityRanking"
 import TypePie from "./event-data/TypePie";
 import AttendancesBarChart from "./event-data/AttendancesBarChart";
+import AttendancesMobile from "./event-data/AttendancesMobile";
 import { WeekdayPopularityRadar } from "./event-data/WeekdayPopularityRadar";
 
 export default function EventDemographics() {
@@ -14,7 +15,12 @@ export default function EventDemographics() {
             {events && 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
                 <PopularityRanking events={events} />
-                <AttendancesBarChart events={events} />
+
+                {/* visible on large/medium screens */}
+                <AttendancesBarChart className="hidden lg:block md:block" events={events} />
+                {/* visible on mobile (small) screens only */}
+                <AttendancesMobile className="lg:hidden md:hidden" events={events} />
+
                 <TypePie events={events} />
                 <WeekdayPopularityRadar events={events} />
             </div>}

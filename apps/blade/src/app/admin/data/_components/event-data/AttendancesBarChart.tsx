@@ -18,7 +18,7 @@ import {
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 
-export default function AttendancesBarChart({ events } : { events: ReturnEvent[] }) {
+export default function AttendancesBarChart({ events, className } : { events: ReturnEvent[], className?: string }) {
   const baseConfig: ChartConfig = {
     events: { label: "events" },
   };
@@ -49,7 +49,7 @@ export default function AttendancesBarChart({ events } : { events: ReturnEvent[]
   }));
 
   return (
-    <Card className="md:col-span-2 lg:col-span-2">
+    <Card className={`${className} md:col-span-2 lg:col-span-2`}>
       <CardHeader>
         <CardTitle className="text-xl">Average Attendances by Event Type</CardTitle>
       </CardHeader>
