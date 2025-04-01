@@ -5371,6 +5371,8 @@ export const ADMIN_PIE_CHART_COLORS: readonly string[] = [
   "#480ca8",
 ] as const;
 
+export const DEFAULT_COLOR = "#ffffff";
+
 export const WEEKDAY_ORDER: string[] = [
   "Mon",
   "Tues",
@@ -5379,3 +5381,9 @@ export const WEEKDAY_ORDER: string[] = [
   "Fri",
   "Sat/Sun",
 ] as const;
+
+export const RANKING_STYLES: string[] = [
+  "md:text-lg lg:text-lg font-bold text-yellow-500",
+  "md:text-lg lg:text-lg font-semibold text-gray-400",
+  "md:text-lg lg:text-lg font-medium text-orange-500",
+];

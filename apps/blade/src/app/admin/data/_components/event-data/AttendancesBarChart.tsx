@@ -56,7 +56,7 @@ export default function AttendancesBarChart({
     ([tag, { totalAttendees, totalEvents }]) => ({
       tag: tag,
       avgAttendees: (totalAttendees / totalEvents).toFixed(0),
-      fill: baseConfig[tag]?.color ?? "#ffffff",
+      fill: baseConfig[tag]?.color ?? ADMIN_PIE_CHART_COLORS[6],
     }),
   );
 

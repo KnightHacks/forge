@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
+import { RANKING_STYLES } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
@@ -15,12 +16,6 @@ export default function PopularityRanking({
     .sort((a, b) => b.numAttended - a.numAttended)
     .slice(0, 10);
 
-  const rankingStyles = [
-    "text-sm md:text-lg lg:text-lg font-bold text-yellow-500", // gold
-    "text-sm md:text-lg lg:text-lg font-semibold text-gray-400", // silver
-    "text-sm md:text-lg lg:text-lg font-medium text-orange-500", // bronze
-  ];
-
   const handleClick = () => setDisplayFullList((prev) => !prev);
 
   return (
@@ -31,14 +26,10 @@ export default function PopularityRanking({
       <CardContent>
         <ol className="mb-4 flex flex-col gap-2">
           {(displayFullList ? topEvents : topEvents.slice(0, 3)).map(
-            (event, index) => (
+            (event, index: number) => (
               <li
                 key={event.id}
-                className={
-                  (rankingStyles[index] ??
-                    "text-sm text-gray-400 md:text-base lg:text-base") +
-                  " flex justify-between"
-                }
+                className={`flex justify-between text-sm ${RANKING_STYLES[index] ?? "text-gray-400 md:text-base lg:text-base"}`}
               >
                 <span className="me-4">
                   {index + 1}. {event.name} &#91;{event.tag.toUpperCase()}&#93;
