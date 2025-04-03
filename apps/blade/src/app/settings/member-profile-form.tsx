@@ -512,7 +512,7 @@ export function MemberProfileForm({
             )}
           />
           <div className="!mt-10">
-            <h3 className="text-lg font-medium">URLs</h3>
+            <h3 className="text-lg font-medium">Additional Links</h3>
             <p className="text-sm text-muted-foreground">
               Feel free to include what makes you, you.
             </p>

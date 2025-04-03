@@ -12,7 +12,6 @@ import ClubLogo from "./club-logo";
 import { UserDropdown } from "./user-dropdown";
 
 export async function SessionNavbar() {
-  const member = await api.member.getMember();
   const isAdmin = await api.auth.getAdminStatus();
 
   return (
@@ -26,7 +25,7 @@ export async function SessionNavbar() {
       <NavigationMenu className="h-[35px] w-[35px]">
         <NavigationMenuList>
           <NavigationMenuItem className="flex items-center justify-center">
-            <UserDropdown memberExists={!!member} isAdmin={isAdmin} />
+            <UserDropdown isAdmin={isAdmin} />
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
