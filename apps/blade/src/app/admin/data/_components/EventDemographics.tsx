@@ -17,12 +17,9 @@ export default function EventDemographics() {
           <PopularityRanking events={events} />
 
           {/* visible on large/medium screens */}
-          <AttendancesBarChart
-            className="hidden md:block lg:block"
-            events={events}
-          />
+          <AttendancesBarChart className="hidden lg:block" events={events} />
           {/* visible on mobile (small) screens only */}
-          <AttendancesMobile className="md:hidden lg:hidden" events={events} />
+          <AttendancesMobile className="lg:hidden" events={events} />
 
           <TypePie events={events} />
           <WeekdayPopularityRadar events={events} />

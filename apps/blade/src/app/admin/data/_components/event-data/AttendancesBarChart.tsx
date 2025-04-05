@@ -60,6 +60,10 @@ export default function AttendancesBarChart({
     }),
   );
 
+  const maxAttendees = Math.max(
+    ...avgAttendedData.map((d) => Number(d.avgAttendees)),
+  );
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -69,7 +73,12 @@ export default function AttendancesBarChart({
       </CardHeader>
       <CardContent>
         <ChartContainer config={baseConfig}>
-          <BarChart accessibilityLayer data={avgAttendedData} layout="vertical">
+          <BarChart
+            accessibilityLayer
+            data={avgAttendedData}
+            layout="vertical"
+            margin={{ right: 25 }}
+          >
             <CartesianGrid horizontal={false} />
             <YAxis
               dataKey="tag"
@@ -79,7 +88,12 @@ export default function AttendancesBarChart({
               axisLine={false}
               hide
             />
-            <XAxis dataKey="avgAttendees" type="number" hide />
+            <XAxis
+              dataKey="avgAttendees"
+              type="number"
+              domain={[0, maxAttendees]}
+              hide
+            />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent indicator="line" />}
