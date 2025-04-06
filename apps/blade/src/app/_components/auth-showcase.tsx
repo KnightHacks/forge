@@ -16,12 +16,6 @@ export async function Auth() {
   const session = await auth();
   const isAdmin = await api.auth.getAdminStatus();
 
-  let member;
-
-  if (session) {
-    member = await api.member.getMember();
-  }
-
   return (
     <div className="absolute inset-0 flex items-center justify-center">
       <div className="h-full w-full">
@@ -33,7 +27,7 @@ export async function Auth() {
             <NavigationMenu className="h-[35px] w-[35px]">
               <NavigationMenuList>
                 <NavigationMenuItem className="flex items-center justify-center">
-                  <UserDropdown memberExists={!!member} isAdmin={isAdmin} />
+                  <UserDropdown isAdmin={isAdmin} />
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
