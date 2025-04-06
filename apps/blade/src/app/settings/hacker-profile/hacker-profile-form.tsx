@@ -41,6 +41,7 @@ import { toast } from "@forge/ui/toast";
 
 import type { api as serverCaller } from "~/trpc/server";
 import { api } from "~/trpc/react";
+import DeleteHackerButton from "../_components/delete-hacker-button";
 import { HackerAppCard } from "../../_components/option-cards";
 
 export function HackerProfileForm({
@@ -260,557 +261,577 @@ export function HackerProfileForm({
   }
 
   return (
-    <Form {...form}>
-      <form
-        className="space-y-4"
-        noValidate
-        onSubmit={form.handleSubmit(async (values) => {
-          setLoading(true);
-          try {
-            let resumeUrl = "";
-            if (values.resumeUpload?.length && values.resumeUpload[0]) {
-              const file = values.resumeUpload[0];
-              const base64File = await fileToBase64(file);
-              resumeUrl = await uploadResume.mutateAsync({
-                fileName: file.name,
-                fileContent: base64File,
-              });
-            }
+    <>
+      <Form {...form}>
+        <form
+          className="space-y-4"
+          noValidate
+          onSubmit={form.handleSubmit(async (values) => {
+            setLoading(true);
+            try {
+              let resumeUrl = "";
+              if (values.resumeUpload?.length && values.resumeUpload[0]) {
+                const file = values.resumeUpload[0];
+                const base64File = await fileToBase64(file);
+                resumeUrl = await uploadResume.mutateAsync({
+                  fileName: file.name,
+                  fileContent: base64File,
+                });
+              }
 
-            updateHacker.mutate({
-              ...values,
-              id: hacker.id,
-              resumeUrl, // Include uploaded resume URL
-            });
-          } catch (error) {
-            console.error("Error uploading resume or updating hacker:", error);
-            toast.error("Something went wrong while processing your changes.");
-          }
-        })}
-      >
-        <FormField
-          control={form.control}
-          name="firstName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                First Name <span className="text-destructive">*</span>
-              </FormLabel>
-              <FormControl>
-                <Input type="text" placeholder="Lenny" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="lastName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Last Name <span className="text-destructive">*</span>
-              </FormLabel>
-              <FormControl>
-                <Input type="text" placeholder="Dragonson" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Email <span className="text-destructive">*</span>
-              </FormLabel>
-              <FormControl>
-                <Input placeholder="tk@knighthacks.org" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="phoneNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Phone Number
-                <span className="text-gray-400">
-                  {" "}
-                  &mdash; <i>Optional</i>
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Input type="tel" placeholder="123-456-7890" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="dob"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>
-                Date of Birth <span className="text-destructive">*</span>
-              </FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="!mt-10">
-          <h3 className="text-lg font-medium">Demographic Information</h3>
-          <p className="text-sm text-muted-foreground">
-            This is some additional information about you.
-          </p>
-        </div>
-        <FormField
-          control={form.control}
-          name="gender"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Gender
-                <span className="text-gray-400">
-                  {" "}
-                  &mdash; <i>Optional</i>
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your gender" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {GENDERS.map((gender) => (
-                      <SelectItem key={gender} value={gender}>
-                        {gender}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="raceOrEthnicity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Race or Ethnicity
-                <span className="text-gray-400">
-                  {" "}
-                  &mdash; <i>Optional</i>
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your race or ethnicity" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {RACES_OR_ETHNICITIES.map((race) => (
-                      <SelectItem key={race} value={race}>
-                        {race}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="shirtSize"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Shirt Size <span className="text-destructive">*</span>
-              </FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your shirt size" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {SHIRT_SIZES.map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="!mt-10">
-          <h3 className="text-lg font-medium">Academic Information</h3>
-          <p className="text-sm text-muted-foreground">
-            This is where you go to school and what you're studying.
-          </p>
-        </div>
-        <FormField
-          control={form.control}
-          name="levelOfStudy"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Level of Study <span className="text-destructive">*</span>
-              </FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your level of study" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {LEVELS_OF_STUDY.map((level) => (
-                      <SelectItem key={level} value={level}>
-                        {level}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="school"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                School <span className="text-destructive">*</span>
-              </FormLabel>
-              <FormControl>
-                <ResponsiveComboBox
-                  items={SCHOOLS}
-                  renderItem={(school) => <div>{school}</div>}
-                  getItemValue={(school) => school}
-                  getItemLabel={(school) => school}
-                  onItemSelect={(school) => field.onChange(school)}
-                  buttonPlaceholder={hacker.school}
-                  inputPlaceholder="Search for your school"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="gradDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>
-                Graduation Date <span className="text-destructive">*</span>
-              </FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="!mt-10">
-          <h3 className="text-lg font-medium">Hackathon Survey</h3>
-          <p className="text-sm text-muted-foreground">
-            Feel free to include what makes you, you.
-          </p>
-        </div>
-        <FormField
-          control={form.control}
-          name="survey1"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Why do you want to attend Knighthacks?{" "}
-                <span className="text-destructive">*</span>
-              </FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Why do you want to attend KnightHacks?"
-                  {...field}
-                  value={field.value}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="survey2"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                What do you hope to achieve at Knighthacks?{" "}
-                <span className="text-destructive">*</span>
-              </FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="What are your goals at this hackathon?"
-                  {...field}
-                  value={field.value}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="!mt-10">
-          <h3 className="text-lg font-medium">Additional Links</h3>
-          <p className="text-sm text-muted-foreground">
-            Feel free to include what makes you, you.
-          </p>
-        </div>
-        <FormField
-          control={form.control}
-          name="githubProfileUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                GitHub Profile
-                <span className="text-gray-400">
-                  {" "}
-                  &mdash; <i>Optional</i>
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="https://github.com/knighthacks"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="linkedinProfileUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                LinkedIn Profile
-                <span className="text-gray-400">
-                  {" "}
-                  &mdash; <i>Optional</i>
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="https://www.linkedin.com/company/knight-hacks"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="websiteUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Personal Website
-                <span className="text-gray-400">
-                  {" "}
-                  &mdash; <i>Optional</i>
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Input placeholder="https://knighthacks.org" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="resumeUpload"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Resume
-                <span className="text-gray-400">
-                  {" "}
-                  &mdash; <i>Optional</i>
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Input
-                  type="file"
-                  {...fileRef}
-                  onChange={(event) => {
-                    field.onChange(
-                      event.target.files?.[0] ? event.target.files : undefined,
-                    );
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="foodAllergies"
-          render={({ field }) => {
-            return (
+              updateHacker.mutate({
+                ...values,
+                id: hacker.id,
+                resumeUrl, // Include uploaded resume URL
+              });
+            } catch (error) {
+              console.error(
+                "Error uploading resume or updating hacker:",
+                error,
+              );
+              toast.error(
+                "Something went wrong while processing your changes.",
+              );
+            }
+          })}
+        >
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  Food Allergies
+                  First Name <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input type="text" placeholder="Lenny" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Last Name <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input type="text" placeholder="Dragonson" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Email <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="tk@knighthacks.org" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="phoneNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Phone Number
                   <span className="text-gray-400">
                     {" "}
                     &mdash; <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="flex h-auto min-h-[3rem] w-full items-center justify-start space-x-2 px-3"
-                      >
-                        <span className="text-sm text-gray-400">
-                          Select Allergies:
-                        </span>
-                        <div className="flex flex-wrap gap-1">
-                          {selectedAllergies.length > 0 ? (
-                            selectedAllergies.map((allergy) => (
-                              <Badge
-                                key={allergy}
-                                variant="secondary"
-                                className="px-2 py-1 text-xs"
-                              >
-                                {allergy}
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className="text-sm text-gray-400">
-                              None selected
-                            </span>
-                          )}
-                        </div>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      align="start"
-                      className="w-full min-w-[var(--radix-popover-trigger-width)] max-w-none p-1"
-                    >
-                      <div className="flex w-full flex-col">
-                        {ALLERGIES.map((allergy) => (
-                          <div
-                            key={allergy}
-                            onClick={() => {
-                              toggleAllergy(allergy);
-                              field.onChange(allergiesRef.current.join(","));
-                            }}
-                            className="flex w-full cursor-pointer items-center space-x-2 rounded-md px-1 py-1 text-sm transition-colors hover:bg-gray-200 hover:text-black dark:hover:bg-gray-900 dark:hover:text-white"
-                          >
-                            <Checkbox
-                              checked={selectedAllergies.includes(allergy)}
-                              className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
-                            />
-                            <span>{allergy}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  <Input type="tel" placeholder="123-456-7890" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
-            );
-          }}
-        />
-        <FormField
-          control={form.control}
-          name="isFirstTime"
-          render={({ field }) => (
-            <FormItem className="flex flex-row space-x-3 space-y-0">
-              <FormControl>
-                <Checkbox
-                  checked={!!field.value}
-                  onCheckedChange={field.onChange}
-                  className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
-                />
-              </FormControl>
-              <div className="flex items-center space-y-1 leading-none">
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="dob"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
                 <FormLabel>
-                  This is my first time participating in a hackathon
+                  Date of Birth <span className="text-destructive">*</span>
                 </FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="agreesToReceiveEmailsFromMLH"
-          render={({ field }) => (
-            <FormItem className="flex flex-row space-x-3 space-y-0">
-              <FormControl>
-                <Checkbox
-                  checked={!!field.value}
-                  onCheckedChange={field.onChange}
-                  className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
-                />
-              </FormControl>
-              <div className="flex items-center space-y-1 leading-none">
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="!mt-10">
+            <h3 className="text-lg font-medium">Demographic Information</h3>
+            <p className="text-sm text-muted-foreground">
+              This is some additional information about you.
+            </p>
+          </div>
+          <FormField
+            control={form.control}
+            name="gender"
+            render={({ field }) => (
+              <FormItem>
                 <FormLabel>
-                  I authorize MLH to send me occasional emails about relevant
-                  events, career opportunities, and community announcements
+                  Gender
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
                 </FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your gender" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {GENDERS.map((gender) => (
+                        <SelectItem key={gender} value={gender}>
+                          {gender}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="raceOrEthnicity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Race or Ethnicity
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your race or ethnicity" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {RACES_OR_ETHNICITIES.map((race) => (
+                        <SelectItem key={race} value={race}>
+                          {race}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="shirtSize"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Shirt Size <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your shirt size" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {SHIRT_SIZES.map((size) => (
+                        <SelectItem key={size} value={size}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="!mt-10">
+            <h3 className="text-lg font-medium">Academic Information</h3>
+            <p className="text-sm text-muted-foreground">
+              This is where you go to school and what you're studying.
+            </p>
+          </div>
+          <FormField
+            control={form.control}
+            name="levelOfStudy"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Level of Study <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your level of study" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {LEVELS_OF_STUDY.map((level) => (
+                        <SelectItem key={level} value={level}>
+                          {level}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="school"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  School <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <ResponsiveComboBox
+                    items={SCHOOLS}
+                    renderItem={(school) => <div>{school}</div>}
+                    getItemValue={(school) => school}
+                    getItemLabel={(school) => school}
+                    onItemSelect={(school) => field.onChange(school)}
+                    buttonPlaceholder={hacker.school}
+                    inputPlaceholder="Search for your school"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="gradDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>
+                  Graduation Date <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="!mt-10">
+            <h3 className="text-lg font-medium">Hackathon Survey</h3>
+            <p className="text-sm text-muted-foreground">
+              Feel free to include what makes you, you.
+            </p>
+          </div>
+          <FormField
+            control={form.control}
+            name="survey1"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Why do you want to attend Knighthacks?{" "}
+                  <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Why do you want to attend KnightHacks?"
+                    {...field}
+                    value={field.value}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="survey2"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  What do you hope to achieve at Knighthacks?{" "}
+                  <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="What are your goals at this hackathon?"
+                    {...field}
+                    value={field.value}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="!mt-10">
+            <h3 className="text-lg font-medium">Additional Links</h3>
+            <p className="text-sm text-muted-foreground">
+              Feel free to include what makes you, you.
+            </p>
+          </div>
+          <FormField
+            control={form.control}
+            name="githubProfileUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  GitHub Profile
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://github.com/knighthacks"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="linkedinProfileUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  LinkedIn Profile
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://www.linkedin.com/company/knight-hacks"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="websiteUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Personal Website
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="https://knighthacks.org" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="resumeUpload"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Resume
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    {...fileRef}
+                    onChange={(event) => {
+                      field.onChange(
+                        event.target.files?.[0]
+                          ? event.target.files
+                          : undefined,
+                      );
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="foodAllergies"
+            render={({ field }) => {
+              return (
+                <FormItem>
+                  <FormLabel>
+                    Food Allergies
+                    <span className="text-gray-400">
+                      {" "}
+                      &mdash; <i>Optional</i>
+                    </span>
+                  </FormLabel>
+                  <FormControl>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="flex h-auto min-h-[3rem] w-full items-center justify-start space-x-2 px-3"
+                        >
+                          <span className="text-sm text-gray-400">
+                            Select Allergies:
+                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {selectedAllergies.length > 0 ? (
+                              selectedAllergies.map((allergy) => (
+                                <Badge
+                                  key={allergy}
+                                  variant="secondary"
+                                  className="px-2 py-1 text-xs"
+                                >
+                                  {allergy}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-sm text-gray-400">
+                                None selected
+                              </span>
+                            )}
+                          </div>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        align="start"
+                        className="w-full min-w-[var(--radix-popover-trigger-width)] max-w-none p-1"
+                      >
+                        <div className="flex w-full flex-col">
+                          {ALLERGIES.map((allergy) => (
+                            <div
+                              key={allergy}
+                              onClick={() => {
+                                toggleAllergy(allergy);
+                                field.onChange(allergiesRef.current.join(","));
+                              }}
+                              className="flex w-full cursor-pointer items-center space-x-2 rounded-md px-1 py-1 text-sm transition-colors hover:bg-gray-200 hover:text-black dark:hover:bg-gray-900 dark:hover:text-white"
+                            >
+                              <Checkbox
+                                checked={selectedAllergies.includes(allergy)}
+                                className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+                              />
+                              <span>{allergy}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
+          <FormField
+            control={form.control}
+            name="isFirstTime"
+            render={({ field }) => (
+              <FormItem className="flex flex-row space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={!!field.value}
+                    onCheckedChange={field.onChange}
+                    className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+                  />
+                </FormControl>
+                <div className="flex items-center space-y-1 leading-none">
+                  <FormLabel>
+                    This is my first time participating in a hackathon
+                  </FormLabel>
+                </div>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="agreesToReceiveEmailsFromMLH"
+            render={({ field }) => (
+              <FormItem className="flex flex-row space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={!!field.value}
+                    onCheckedChange={field.onChange}
+                    className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+                  />
+                </FormControl>
+                <div className="flex items-center space-y-1 leading-none">
+                  <FormLabel>
+                    I authorize MLH to send me occasional emails about relevant
+                    events, career opportunities, and community announcements
+                  </FormLabel>
+                </div>
+              </FormItem>
+            )}
+          />
 
-        {loading ? (
-          <Loader2 className="animate-spin" />
-        ) : (
-          <Button type="submit">Update Profile</Button>
-        )}
-      </form>
-    </Form>
+          {loading ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <Button type="submit">Update Profile</Button>
+          )}
+        </form>
+      </Form>
+      <div className="!mt-12">
+        <h3 className="text-lg font-medium text-red-700">Danger Zone</h3>
+        <p className="mb-4 text-sm text-red-700/75">
+          Avoid this if you're not sure what you're doing.
+        </p>
+        <DeleteHackerButton
+          hackerId={hacker.id}
+          firstName={hacker.firstName}
+          lastName={hacker.lastName}
+        />
+      </div>
+    </>
   );
 }

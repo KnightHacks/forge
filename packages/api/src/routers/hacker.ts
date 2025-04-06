@@ -45,7 +45,9 @@ export const hackerRouter = {
     if (hackers.length === 0) return null; // Can't return undefined in trpc
     return hackers;
   }),
-  createHacker: protectedProcedure
+
+  // Temporarily admin-only until we roll out hacker applications
+  createHacker: adminProcedure
     .input(
       InsertHackerSchema.omit({
         userId: true,
@@ -172,6 +174,27 @@ export const hackerRouter = {
         message: `Blade profile for ${hacker.firstName} ${hacker.lastName} has been updated.
             \n**Changes:**\n${changesString}`,
         color: "tk_blue",
+        userId: ctx.session.user.discordUserId,
+      });
+    }),
+  deleteHacker: protectedProcedure
+    .input(
+      InsertHackerSchema.pick({ id: true, firstName: true, lastName: true }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!input.id) {
+        throw new TRPCError({
+          message: "Hacker ID is required to delete a member!",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      await db.delete(Hacker).where(eq(Hacker.id, input.id));
+
+      await log({
+        title: "Hacker Deleted",
+        message: `Profile for ${input.firstName} ${input.lastName} has been deleted.`,
+        color: "uhoh_red",
         userId: ctx.session.user.discordUserId,
       });
     }),

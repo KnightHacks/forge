@@ -34,11 +34,7 @@ export default async function SettingsProfilePage() {
           Nothing to see yet
         </h2>
         <p className="mb-1 text-sm text-gray-400">
-          You haven&apos;t submitted a{" "}
-          <Link href="/hacker/application" className="text-primary">
-            hacker profile
-          </Link>
-          .
+          Hacker Applications are not available yet. Please check back later.
         </p>
         <p className="text-sm text-gray-400">
           Looking for your member profile instead? Check the{" "}
