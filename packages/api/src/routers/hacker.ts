@@ -177,7 +177,7 @@ export const hackerRouter = {
         userId: ctx.session.user.discordUserId,
       });
     }),
-  deleteHacker: protectedProcedure
+  deleteHacker: adminProcedure
     .input(
       InsertHackerSchema.pick({ id: true, firstName: true, lastName: true }),
     )
