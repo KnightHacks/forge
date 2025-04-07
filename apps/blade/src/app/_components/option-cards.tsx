@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Code, Shield } from "lucide-react";
+import { Code, Swords } from "lucide-react";
 
 import { cn } from "@forge/ui";
 import { Button, buttonVariants } from "@forge/ui/button";
@@ -14,10 +14,10 @@ import {
 
 export function MemberAppCard() {
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col hover:border-primary">
       <CardHeader className="text-center">
         <div className="mx-auto mb-4 rounded-full bg-primary/10 p-3">
-          <Shield className="h-8 w-8 text-primary" />
+          <Swords className="h-8 w-8 text-primary" />
         </div>
         <CardTitle className="text-2xl">Become a Member</CardTitle>
         <CardDescription>
@@ -54,12 +54,12 @@ export function MemberAppCard() {
 
 export function HackerAppCard() {
   return (
-    <Card className="flex flex-col border-primary">
+    <Card className="flex flex-col px-4 hover:border-primary">
       <CardHeader className="text-center">
         <div className="mx-auto mb-4 rounded-full bg-primary/10 p-3">
           <Code className="h-8 w-8 text-primary" />
         </div>
-        <CardTitle className="text-2xl">Join the Hackathon</CardTitle>
+        <CardTitle className="text-2xl">Join the Hackathon!</CardTitle>
         <CardDescription>
           Build, innovate, and compete in 36 hours
         </CardDescription>
@@ -68,21 +68,21 @@ export function HackerAppCard() {
         <ul className="space-y-2">
           <li className="flex items-center">
             <span className="mr-2">•</span>
-            Prizes available (TBD)
+            Prizes available
           </li>
           <li className="flex items-center">
             <span className="mr-2">•</span>
-            Free developer tools and APIs (TBD)
+            Free developer tools and APIs
           </li>
           <li className="flex items-center">
             <span className="mr-2">•</span>
-            Networking opportunities (TBD)
+            Networking opportunities
           </li>
         </ul>
       </CardContent>
       <CardFooter>
         <Button disabled className="w-full" variant="secondary">
-          Unavailable
+          Coming soon...
         </Button>
       </CardFooter>
     </Card>

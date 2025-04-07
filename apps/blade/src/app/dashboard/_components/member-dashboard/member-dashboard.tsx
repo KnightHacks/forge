@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import type { api as serverCall } from "~/trpc/server";
 import { api } from "~/trpc/server";
-import { MemberAppCard } from "../../../_components/option-cards";
 import { EventNumber } from "./event/event-number";
 import { EventShowcase } from "./event/event-showcase";
 import { MemberInfo } from "./info";
@@ -20,11 +20,7 @@ export default async function MemberDashboard({
   member: Awaited<ReturnType<(typeof serverCall.member)["getMember"]>>;
 }) {
   if (!member) {
-    return (
-      <div className="mt-10 flex items-center justify-center">
-        <MemberAppCard />
-      </div>
-    );
+    redirect("/member/application");
   }
 
   const [events, dues] = await Promise.allSettled([

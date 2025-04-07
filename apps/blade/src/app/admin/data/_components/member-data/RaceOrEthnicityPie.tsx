@@ -4,12 +4,11 @@ import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
 import {
   ADMIN_PIE_CHART_COLORS,
-  LEVELS_OF_STUDY,
-  SHORT_LEVELS_OF_STUDY,
+  RACES_OR_ETHNICITIES,
+  SHORT_RACES_AND_ETHNICITIES,
 } from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
@@ -26,64 +25,68 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 
-const shortenLevelOfStudy = (levelOfStudy: string): string => {
+interface Person {
+  raceOrEthnicity?: (typeof RACES_OR_ETHNICITIES)[number];
+}
+
+const shortenRaceOrEthnicity = (raceOrEthnicity: string): string => {
   const replacements: Record<string, string> = {
-    // Undergraduate University (2 year - community college or similar)
-    [LEVELS_OF_STUDY[2]]: SHORT_LEVELS_OF_STUDY[0], // Undergraduate University (2 year)
-    // Graduate University (Masters, Professional, Doctoral, etc)
-    [LEVELS_OF_STUDY[4]]: SHORT_LEVELS_OF_STUDY[1], // Graduate University (Masters/PhD)
-    // Other Vocational / Trade Program or Apprenticeship
-    [LEVELS_OF_STUDY[6]]: SHORT_LEVELS_OF_STUDY[2], // Vocational/Trade School
+    // Native Hawaiian or Other Pacific Islander
+    [RACES_OR_ETHNICITIES[4]]: SHORT_RACES_AND_ETHNICITIES[0], // Native Hawaiian/Pacific Islander
+    // Hispanic / Latino / Spanish Origin
+    [RACES_OR_ETHNICITIES[2]]: SHORT_RACES_AND_ETHNICITIES[1], // Hispanic/Latino
+    // Native American or Alaskan Native
+    [RACES_OR_ETHNICITIES[5]]: SHORT_RACES_AND_ETHNICITIES[2], // Native American/Alaskan Native
   };
-  return replacements[levelOfStudy] ?? levelOfStudy;
+  return replacements[raceOrEthnicity] ?? raceOrEthnicity;
 };
 
-export default function SchoolYearPie({
-  members,
-}: {
-  members: InsertMember[];
-}) {
+export default function SchoolYearPie({ people }: { people: Person[] }) {
   const id = "pie-interactive";
 
-  // set up school year data
-  const levelOfStudyCounts: Record<string, number> = {};
-  members.forEach(({ levelOfStudy }) => {
-    levelOfStudyCounts[levelOfStudy] =
-      (levelOfStudyCounts[levelOfStudy] ?? 0) + 1;
+  // get amount of each raceOrEthnicity
+  const raceOrEthnicityCounts: Record<string, number> = {};
+  people.forEach(({ raceOrEthnicity }) => {
+    if (raceOrEthnicity)
+      raceOrEthnicityCounts[raceOrEthnicity] =
+        (raceOrEthnicityCounts[raceOrEthnicity] ?? 0) + 1;
   });
-  const levelOfStudyData = Object.entries(levelOfStudyCounts).map(
-    ([levelOfStudy, count]) => ({
-      name: shortenLevelOfStudy(levelOfStudy),
+  const raceOrEthnicityData = Object.entries(raceOrEthnicityCounts).map(
+    ([raceOrEthnicity, count]) => ({
+      name: shortenRaceOrEthnicity(raceOrEthnicity),
       amount: count,
     }),
   );
 
   const [activeLevel, setActiveLevel] = useState(
-    levelOfStudyData[0] ? levelOfStudyData[0].name : null,
+    raceOrEthnicityData[0] ? raceOrEthnicityData[0].name : null,
   );
 
   const activeIndex = useMemo(
-    () => levelOfStudyData.findIndex((item) => item.name === activeLevel),
-    [activeLevel, levelOfStudyData],
+    () => raceOrEthnicityData.findIndex((item) => item.name === activeLevel),
+    [activeLevel, raceOrEthnicityData],
   );
-  const studyLevels = useMemo(
-    () => levelOfStudyData.map((item) => item.name),
-    [levelOfStudyData],
+  const raceNames = useMemo(
+    () => raceOrEthnicityData.map((item) => item.name),
+    [raceOrEthnicityData],
   );
 
   // set up chart config
   const baseConfig: ChartConfig = {
-    members: { label: "Members" },
+    people: { label: "people" },
   };
   let colorIdx = 0;
-  members.forEach(({ levelOfStudy }) => {
-    const shortenedString = shortenLevelOfStudy(levelOfStudy);
-    if (!baseConfig[shortenedString]) {
-      baseConfig[shortenedString] = {
-        label: shortenedString,
-        color: ADMIN_PIE_CHART_COLORS[colorIdx % ADMIN_PIE_CHART_COLORS.length],
-      };
-      colorIdx++;
+  people.forEach(({ raceOrEthnicity }) => {
+    if (raceOrEthnicity) {
+      const shortenedString = shortenRaceOrEthnicity(raceOrEthnicity);
+      if (!baseConfig[shortenedString]) {
+        baseConfig[shortenedString] = {
+          label: shortenedString,
+          color:
+            ADMIN_PIE_CHART_COLORS[colorIdx % ADMIN_PIE_CHART_COLORS.length],
+        };
+        colorIdx++;
+      }
     }
   });
 
@@ -92,7 +95,7 @@ export default function SchoolYearPie({
       <ChartStyle id={id} config={baseConfig} />
       <CardHeader className="flex-col items-start gap-4 space-y-0 pb-0">
         <div className="grid gap-1">
-          <CardTitle className="text-xl">School Year</CardTitle>
+          <CardTitle className="text-xl">Race / Ethnicity</CardTitle>
         </div>
         <Select
           value={activeLevel ? activeLevel : undefined}
@@ -105,7 +108,7 @@ export default function SchoolYearPie({
             <SelectValue placeholder="Select month" />
           </SelectTrigger>
           <SelectContent align="end" className="rounded-xl">
-            {studyLevels.map((key) => {
+            {raceNames.map((key) => {
               const config = baseConfig[key];
 
               if (!config) {
@@ -145,7 +148,7 @@ export default function SchoolYearPie({
               content={<ChartTooltipContent hideLabel />}
             />
             <Pie
-              data={levelOfStudyData}
+              data={raceOrEthnicityData}
               dataKey="amount"
               nameKey="name"
               innerRadius={60}
@@ -180,7 +183,7 @@ export default function SchoolYearPie({
                           y={viewBox.cy}
                           className="fill-foreground text-3xl font-bold"
                         >
-                          {levelOfStudyData[
+                          {raceOrEthnicityData[
                             activeIndex
                           ]?.amount.toLocaleString()}
                         </tspan>
@@ -189,14 +192,14 @@ export default function SchoolYearPie({
                           y={(viewBox.cy ?? 0) + 24}
                           className="fill-muted-foreground"
                         >
-                          Members
+                          people
                         </tspan>
                       </text>
                     );
                   }
                 }}
               />
-              {levelOfStudyData.map((_, index) => (
+              {raceOrEthnicityData.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={

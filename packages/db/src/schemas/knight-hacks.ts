@@ -40,6 +40,9 @@ export const Hackathon = createTable("hackathon", (t) => ({
   endDate: t.timestamp().notNull(),
 }));
 
+export type InsertHackathon = typeof Hackathon.$inferInsert;
+export type SelectHackathon = typeof Hackathon.$inferSelect;
+
 export const Member = createTable(
   "member",
   (t) => ({
@@ -87,6 +90,7 @@ export const Hacker = createTable(
       .references(() => User.id, { onDelete: "cascade" }),
     firstName: t.varchar({ length: 255 }).notNull(),
     lastName: t.varchar({ length: 255 }).notNull(),
+    gender: genderEnum().default("Prefer not to answer").notNull(),
     discordUser: t.varchar({ length: 255 }).notNull(),
     age: t.integer().notNull(),
     email: t.varchar({ length: 255 }).notNull(),
@@ -102,12 +106,14 @@ export const Hacker = createTable(
     websiteUrl: t.varchar({ length: 255 }),
     resumeUrl: t.varchar({ length: 255 }),
     dob: t.date().notNull(),
+    gradDate: t.date().notNull(),
     status: t.text("status", {
       enum: HACKATHON_APPLICATION_STATES,
     }),
     survey1: t.text("survey_1").notNull(),
     survey2: t.text("survey_2").notNull(),
     isFirstTime: t.boolean("is_first_time").default(false),
+    foodAllergies: t.text("food_allergies"),
     agreesToReceiveEmailsFromMLH: t
       .boolean("agrees_to_receive_emails_from_mlh")
       .default(false),
@@ -120,6 +126,9 @@ export const Hacker = createTable(
   }),
 );
 
+export type InsertHacker = typeof Hacker.$inferInsert;
+export type SelectHacker = typeof Hacker.$inferSelect;
+
 export type InsertMember = typeof Member.$inferInsert;
 export type SelectMember = typeof Member.$inferSelect;
 
@@ -128,6 +137,7 @@ export const MemberRelations = relations(Member, ({ one }) => ({
 }));
 
 export const InsertMemberSchema = createInsertSchema(Member);
+export const InsertHackerSchema = createInsertSchema(Hacker);
 
 export const Sponsor = createTable("sponsor", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -199,13 +209,13 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   hackerId: t
     .uuid()
     .notNull()
-    .references(() => Member.id, {
+    .references(() => Hacker.id, {
       onDelete: "cascade",
     }),
   hackathonId: t
     .uuid()
     .notNull()
-    .references(() => Event.id, {
+    .references(() => Hackathon.id, {
       onDelete: "cascade",
     }),
 }));

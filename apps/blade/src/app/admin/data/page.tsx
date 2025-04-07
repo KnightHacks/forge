@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
+import EventDemographics from "./_components/EventDemographics";
 import MemberDemographics from "./_components/MemberDemographics";
 
 export const metadata: Metadata = {
@@ -26,21 +28,19 @@ export default async function Data() {
 
   return (
     <HydrateClient>
-      <main className="container">
-        <div className="mt-10 grid gap-8 md:grid-rows-2 lg:grid-cols-2">
-          <div className="flex flex-col">
-            <h1 className="text-3xl font-extrabold tracking-tight">
-              Member Demographics
-            </h1>
+      <main className="hborder-2 hborder-yellow-500 container mt-6">
+        <Tabs defaultValue="members" className="hborder-2 hborder-red-400">
+          <TabsList>
+            <TabsTrigger value="members">Member data</TabsTrigger>
+            <TabsTrigger value="events">Event data</TabsTrigger>
+          </TabsList>
+          <TabsContent value="members">
             <MemberDemographics />
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-3xl font-extrabold tracking-tight">
-              Event Demographics
-            </h1>
-            <p className="m-10 text-center text-xl">to be added!</p>
-          </div>
-        </div>
+          </TabsContent>
+          <TabsContent value="events">
+            <EventDemographics />
+          </TabsContent>
+        </Tabs>
       </main>
     </HydrateClient>
   );

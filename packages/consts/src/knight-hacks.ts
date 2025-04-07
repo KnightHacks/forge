@@ -12,6 +12,17 @@ export const LEVELS_OF_STUDY = [
   "Prefer not to answer",
 ] as const;
 
+export const ALLERGIES = [
+  "Milk",
+  "Eggs",
+  "Fish",
+  "Crustacean Shellfish",
+  "Tree Nuts",
+  "Peanuts",
+  "Wheat",
+  "Soybeans",
+] as const;
+
 export const SHORT_LEVELS_OF_STUDY = [
   "Undergraduate University (2 year)",
   "Graduate University (Masters/PhD)",
@@ -5359,3 +5370,20 @@ export const ADMIN_PIE_CHART_COLORS: readonly string[] = [
   "#560bad",
   "#480ca8",
 ] as const;
+
+export const DEFAULT_COLOR = "#ffffff";
+
+export const WEEKDAY_ORDER: string[] = [
+  "Mon",
+  "Tues",
+  "Wed",
+  "Thurs",
+  "Fri",
+  "Sat/Sun",
+] as const;
+
+export const RANKING_STYLES: string[] = [
+  "md:text-lg lg:text-lg font-bold text-yellow-500",
+  "md:text-lg lg:text-lg font-semibold text-gray-400",
+  "md:text-lg lg:text-lg font-medium text-orange-500",
+];
