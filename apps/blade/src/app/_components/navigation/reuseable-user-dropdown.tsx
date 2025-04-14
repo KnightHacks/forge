@@ -61,7 +61,7 @@ export const adminItems: roleItems[] = [
   },
 ];
 
-export const memberItems: roleItems[] = [
+export const userItems: roleItems[] = [
   {
     name: "Settings",
     component: (

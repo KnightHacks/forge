@@ -1,5 +1,30 @@
 import { redirect } from "next/navigation";
 
+import { SIGN_IN_PATH } from "~/consts";
+
+// Uncomment if you're a dev and need to use the hacker application
+/*
+import { auth } from "@forge/auth";
+import { api } from "~/trpc/server";
+import { HackerFormPage } from "./_components/hacker-application-form";
+*/
 export default function HackerApplicationPage() {
-  redirect("/");
+  redirect(SIGN_IN_PATH);
+  /*const session = await auth();
+
+  if (session == null) {
+    redirect(SIGN_IN_PATH);
+  }
+
+  const isHacker = await api.hacker.getHacker();
+
+  if (isHacker) {
+    return redirect(SIGN_IN_PATH);
+  }
+
+  return (
+    <main className="px-8 py-4">
+      <HackerFormPage />
+    </main>
+  ); */
 }

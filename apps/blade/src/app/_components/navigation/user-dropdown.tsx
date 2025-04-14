@@ -20,17 +20,11 @@ import {
 import type { roleItems } from "./reuseable-user-dropdown";
 import { USER_DROPDOWN_ICON_COLOR, USER_DROPDOWN_ICON_SIZE } from "~/consts";
 import { api } from "~/trpc/react";
-import { adminItems, memberItems } from "./reuseable-user-dropdown";
+import { adminItems, userItems } from "./reuseable-user-dropdown";
 
 // If you need to conditionally render some dropdown items, please refer to ./reuseable-user-dropdown
 
-export function UserDropdown({
-  memberExists,
-  isAdmin,
-}: {
-  memberExists: boolean;
-  isAdmin: boolean;
-}) {
+export function UserDropdown({ isAdmin }: { isAdmin: boolean }) {
   const utils = api.useUtils();
   const router = useRouter();
   const { data } = api.user.getUserAvatar.useQuery();
@@ -64,7 +58,7 @@ export function UserDropdown({
             <span>Dashboard</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          {memberExists && <DropdownMenuRoleItems items={memberItems} />}
+          <DropdownMenuRoleItems items={userItems} />
         </DropdownMenuGroup>
         {/* Made signing out client-side due to dropdown item keyboard accessibility issues */}
         <DropdownMenuItem onSelect={() => signOut()}>
