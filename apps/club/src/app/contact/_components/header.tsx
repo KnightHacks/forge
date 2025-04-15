@@ -11,7 +11,7 @@ import React from "react";
 function Header() {
   return (
     //style later contact us will flicker and make contact us larger
-    <div className="font-narrow flex flex-col items-center justify-center bg-black">
+    <div className="flex flex-col items-center justify-center bg-black">
       <div>Contact Us</div>
       <div>To get in touch with KnightHacks, please fill out the following</div>
       <div> form and a member of our team will get back to you soon:</div>
