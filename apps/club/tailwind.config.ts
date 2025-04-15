@@ -52,6 +52,8 @@ export default {
           ...fontFamily.sans,
         ],
         mono: ["var(--font-geist-mono)", ...fontFamily.mono],
+        narrow: ["Pragati Narrow", ...fontFamily.sans],
+
       },
       animation: {
         "infinite-scroll": "infinite-scroll 160s linear infinite",

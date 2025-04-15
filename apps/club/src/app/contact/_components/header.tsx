@@ -10,8 +10,11 @@ import React from "react";
 
 function Header() {
   return (
-    <div>
-      <h1>Hello</h1>
+    // add font later until someone greenlights adding font to font folder/tailwind config
+    <div className="font-narrow flex flex-col items-center justify-center">
+      <div>Contact Us</div>
+      <div>To get in touch with KnightHacks, please fill out the following</div>
+      <div> form and a member of our team will get back to you soon:</div>
     </div>
   );
 }
