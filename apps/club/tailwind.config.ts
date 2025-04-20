@@ -31,6 +31,7 @@ export default {
       },
       colors: {
         background: "hsl(var(--background))",
+        950: "10182B",
       },
       boxShadow: {
         impact: `
