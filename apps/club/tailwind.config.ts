@@ -81,6 +81,9 @@ export default {
           "100%": { transform: "rotate(360deg)" },
         },
       },
+      screens: {
+        seOnly: { max: '375px' },
+      }
     },
   },
 } satisfies Config;

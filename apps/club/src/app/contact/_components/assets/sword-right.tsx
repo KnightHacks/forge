@@ -4,8 +4,7 @@ import * as React from "react";
 const SwordRight = (props: SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width={1410}
-    height={1558}
+    viewBox="0 0 1410 1558"
     fill="none"
     {...props}
   >

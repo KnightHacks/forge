@@ -11,10 +11,15 @@ import React from "react";
 function Header() {
   return (
     //style later contact us will flicker and make contact us larger
-    <div className="flex flex-col items-center justify-center bg-black px-5">
-      <div>Contact Us</div>
-      <div>To get in touch with KnightHacks, please fill out the following</div>
-      <div> form and a member of our team will get back to you soon:</div>
+    <div className="flex w-full flex-col items-center justify-center bg-black px-5">
+      <div className="mb-4 text-lg font-bold">Contact Us</div>
+      <div className="text-xs">
+        To get in touch with KnightHacks, please fill out the following
+      </div>
+      <div className="text-xs">
+        {" "}
+        form and a member of our team will get back to you soon:
+      </div>
     </div>
   );
 }
