@@ -6,10 +6,11 @@ const AbstractRight = (props: SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     width={456}
     height={385}
+    viewBox="0 0 456 385"
     fill="none"
     {...props}
   >
-    <g filter="url(#a)">
+    <g filter="url(#abstract-right-a)">
       <path
         stroke="#C084FC"
         strokeWidth={5}
@@ -20,7 +21,7 @@ const AbstractRight = (props: SVGProps<SVGSVGElement>) => (
     </g>
     <defs>
       <filter
-        id="a"
+        id="abstract-right-a"
         width={455.091}
         height={383.671}
         x={0.5}

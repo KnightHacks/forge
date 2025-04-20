@@ -4,12 +4,11 @@ import * as React from "react";
 const AbstractLeft = (props: SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width={456}
-    height={385}
+    viewBox="0 0 456 385"
     fill="none"
     {...props}
   >
-    <g filter="url(#a)">
+    <g filter="url(#abstract-left-a)">
       <path
         stroke="#C084FC"
         strokeWidth={5}
@@ -20,7 +19,7 @@ const AbstractLeft = (props: SVGProps<SVGSVGElement>) => (
     </g>
     <defs>
       <filter
-        id="a"
+        id="abstract-left-a"
         width={455.091}
         height={383.671}
         x={0.5}
