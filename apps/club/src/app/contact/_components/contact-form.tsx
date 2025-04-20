@@ -26,7 +26,7 @@ function ContactForm() {
           <input
             type="text"
             name="name"
-            className="bg-cream w-full rounded-sm border p-1 pl-3 font-sans text-xs saturate-200"
+            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200"
           />
         </div>
         <div id="Email">
@@ -36,7 +36,7 @@ function ContactForm() {
           <input
             type="text"
             name="name"
-            className="bg-cream w-full rounded-sm border p-1 pl-3 font-sans text-xs saturate-200"
+            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200"
           />
         </div>
         <div id="Subject">
@@ -46,7 +46,7 @@ function ContactForm() {
           <input
             type="text"
             name="name"
-            className="bg-cream w-full rounded-sm border p-1 pl-3 font-sans text-xs saturate-200"
+            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200"
           />
         </div>
         <div id="Message">
@@ -57,34 +57,50 @@ function ContactForm() {
             name="message"
             id=""
             rows={6}
-            className="bg-cream w-full rounded-sm border p-1 pl-3 font-sans text-xs saturate-200"
+            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200"
           ></textarea>
         </div>
         <div id="contactOption">
           <label className="font-bold tracking-wider">
             Which team would you like to contact?
           </label>
-          <div className="grid grid-cols-2">
+          <div className="mt-2 grid grid-cols-2 gap-y-3">
             <label className="flex items-center space-x-2">
-              <input type="checkbox" />
-              <span>Mentorship</span>
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded-md border-gray-300 bg-black accent-blue-600 saturate-200"
+              />
+              <span className="text-xs">Mentorship</span>
             </label>
             <label className="flex items-center space-x-2">
-              <input type="checkbox" />
-              <span>Outreach</span>
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded-md border-gray-300 bg-black accent-blue-600 saturate-200"
+              />
+              <span className="text-xs">Outreach</span>
             </label>
             <label className="flex items-center space-x-2">
-              <input type="checkbox" />
-              <span>Development</span>
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded-md border-gray-300 bg-black accent-blue-600 saturate-200"
+              />
+              <span className="text-xs">Development</span>
             </label>
             <label className="flex items-center space-x-2">
-              <input type="checkbox" />
-              <span>Design</span>
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded-md border-gray-300 bg-black accent-blue-600 saturate-200"
+              />
+              <span className="text-xs">Design</span>
             </label>
           </div>
         </div>
 
-        <button className="ml-6">Contact Us</button>
+        <div className="flex w-full justify-center">
+          <button className="mt-5 rounded-sm border-2 border-purple-800 bg-purple-400 px-3 text-white">
+            Contact Us
+          </button>
+        </div>
       </form>
     </div>
   );
