@@ -1,14 +1,14 @@
 "use client";
 
-// import React, { useState } from "react";
+import React, { useState } from "react";
 
 function ContactForm() {
-  // const [formData, setFormData] = useState({
-  //   name: "",
-  //   email: "",
-  //   subject: "",
-  //   message: "",
-  // });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  });
   return (
     <div
       id="contactform"
@@ -31,9 +31,29 @@ function ContactForm() {
           <label className="mb-2 block">Message Body</label>
           <input type="text" name="name" className="border" />
         </div>
-        <div id="contactOption">Which team would you like to contact?</div>
+        <div id="contactOption">
+          <label>Which team would you like to contact?</label>
+          <div className="grid grid-cols-2">
+            <label className="flex items-center space-x-2">
+              <input type="checkbox" />
+              <span>Mentorship</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input type="checkbox" />
+              <span>Outreach</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input type="checkbox" />
+              <span>Development</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input type="checkbox" />
+              <span>Design</span>
+            </label>
+          </div>
+        </div>
 
-        <button>Contact Us</button>
+        <button className="ml-6">Contact Us</button>
       </form>
     </div>
   );

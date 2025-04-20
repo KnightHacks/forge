@@ -7,7 +7,7 @@ export default function page() {
   return (
     <div
       id="contactPage"
-      className="font-narrow flex h-screen flex-row items-center justify-center bg-orange-400 text-white"
+      className="font-narrow bg-950 flex h-screen flex-row items-center justify-center text-white"
     >
       <div
         id="leftSide"
