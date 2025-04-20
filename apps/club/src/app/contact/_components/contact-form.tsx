@@ -8,33 +8,60 @@ function ContactForm() {
     email: "",
     subject: "",
     message: "",
+    contactOption: {
+      mentorship: false,
+      outreach: false,
+      development: false,
+      design: false,
+    },
   });
   return (
-    <div id="contactform" className="mt-2 w-auto bg-white p-5 text-black">
+    <div
+      id="contactform"
+      className="mt-2 w-auto rounded-sm bg-white p-5 text-black"
+    >
       <form action="" className="space-y-4">
         <div id="Name">
-          <label className="mb-2 block font-bold">Name</label>
-          <input type="text" name="name" className="w-full border" />
+          <label className="mb-2 block font-bold tracking-wider">Name</label>
+          <input
+            type="text"
+            name="name"
+            className="bg-cream w-full rounded-sm border p-1 pl-3 font-sans text-xs saturate-200"
+          />
         </div>
         <div id="Email">
-          <label className="mb-2 block font-bold">Email</label>
-          <input type="text" name="name" className="w-full border" />
+          <label className="mb-2 block font-bold tracking-wider">
+            Email Address
+          </label>
+          <input
+            type="text"
+            name="name"
+            className="bg-cream w-full rounded-sm border p-1 pl-3 font-sans text-xs saturate-200"
+          />
         </div>
         <div id="Subject">
-          <label className="mb-2 block font-bold">Message Subject</label>
-          <input type="text" name="name" className="w-full border" />
+          <label className="mb-2 block font-bold tracking-wider">
+            Message Subject
+          </label>
+          <input
+            type="text"
+            name="name"
+            className="bg-cream w-full rounded-sm border p-1 pl-3 font-sans text-xs saturate-200"
+          />
         </div>
         <div id="Message">
-          <label className="mb-2 block font-bold">Message Body</label>
+          <label className="mb-2 block font-bold tracking-wider">
+            Message Body
+          </label>
           <textarea
             name="message"
             id=""
-            rows={3}
-            className="w-full border"
+            rows={6}
+            className="bg-cream w-full rounded-sm border p-1 pl-3 font-sans text-xs saturate-200"
           ></textarea>
         </div>
         <div id="contactOption">
-          <label className="font-bold">
+          <label className="font-bold tracking-wider">
             Which team would you like to contact?
           </label>
           <div className="grid grid-cols-2">
