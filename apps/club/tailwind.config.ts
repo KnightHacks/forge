@@ -32,6 +32,7 @@ export default {
       colors: {
         background: "hsl(var(--background))",
         950: "10182B",
+        cream: '#F4F4ED',
       },
       boxShadow: {
         impact: `
