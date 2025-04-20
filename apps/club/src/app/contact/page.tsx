@@ -2,8 +2,9 @@ import React from "react";
 
 import ContactForm from "./_components/contact-form";
 import Header from "./_components/header";
-import LeftSide from "./_components/left-side";
-import RightSide from "./_components/right-side";
+
+// import LeftSide from "./_components/left-side";
+// import RightSide from "./_components/right-side";
 
 export default function page() {
   return (
@@ -17,7 +18,7 @@ export default function page() {
       </div> */}
 
       {/* Main content */}
-      <div className="seOnly:mt-28 z-10 mb-3 h-5/6 w-5/6">
+      <div className="seOnly:mt-28 z-10 mb-3 mt-10 h-5/6 w-5/6">
         <Header />
         <ContactForm />
       </div>
