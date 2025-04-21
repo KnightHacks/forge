@@ -7,7 +7,7 @@ import SwordLeft from "./assets/sword-left";
 function LeftSide() {
   return (
     <div className="flex flex-col">
-      <SwordLeft className="w-[500px]" />
+      <SwordLeft className="seOnly:mt-0 mt-20 w-full -translate-x-9 translate-y-[10px] scale-[3]" />
 
       {/* <AbstractLeft className="w-[220px] -translate-x-[70px] -translate-y-[400px]" />
 
