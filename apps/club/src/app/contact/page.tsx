@@ -9,7 +9,7 @@ export default function page() {
   return (
     <div
       id="contactPage"
-      className="font-narrow bg-950 overflow-aut flex min-h-screen flex-row items-center justify-center text-white"
+      className="font-narrow bg-950 flex min-h-screen flex-row justify-center text-white"
     >
       {/* left background panel for the swords and etc  */}
       <div className="fixed left-0 z-0 h-screen w-1/2 border-blue-500 sm:max-w-64">
@@ -17,7 +17,7 @@ export default function page() {
       </div>
 
       {/* Main content */}
-      <div className="seOnly:mt-28 z-10 mb-3 mt-10 h-5/6 w-5/6">
+      <div className="z-10 mb-3 mt-[120px] h-5/6 w-[86%] sm:mt-[150px] md:w-5/6 lg:mt-[200px]">
         <Header />
         <ContactForm />
       </div>
