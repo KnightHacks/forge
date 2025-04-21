@@ -8,6 +8,7 @@ export default {
   // those classes are included correctly.
   content: [...baseConfig.content, "../../packages/ui/src/*.{ts,tsx}"],
   presets: [baseConfig],
+
   theme: {
     extend: {
       backgroundImage: {
@@ -55,6 +56,7 @@ export default {
         ],
         mono: ["var(--font-geist-mono)", ...fontFamily.mono],
         narrow: ["Pragati Narrow", ...fontFamily.sans],
+        prompt: ["Prompt", ...fontFamily.sans],
 
       },
       animation: {
