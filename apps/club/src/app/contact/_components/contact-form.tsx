@@ -137,10 +137,10 @@ function ContactForm() {
           </div>
         </div>
 
-        <div className="flex w-full justify-center">
+        <div className="flex w-full justify-center lg:ml-20 lg:justify-start">
           <button
             type="submit"
-            className="font-prompt mt-5 rounded-sm border-2 border-purple-800 bg-purple-400 px-3 font-bold text-white lg:px-5 lg:py-1 lg:text-xl lg:tracking-wider"
+            className="font-prompt mt-5 rounded-lg border-2 border-purple-800 bg-purple-400 px-3 font-bold text-white shadow-[2px_2px_2px_1px_rgba(0,0,0,0.25)] lg:border-[3px] lg:px-5 lg:py-1 lg:text-xl lg:tracking-widest"
           >
             Contact Us
           </button>

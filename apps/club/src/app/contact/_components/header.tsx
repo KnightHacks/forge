@@ -10,13 +10,13 @@ function Header() {
         Contact Us
       </div>
       {/* IPhone SE and iPhone12 pro because width messing up formatting */}
-      <div className="seOnly:block mb-1 hidden text-xs">
+      <div className="seOnly:block mb-1 hidden text-xs font-bold">
         To get in touch with KnightHacks,
       </div>
-      <div className="seOnly:block mb-1 hidden text-xs">
+      <div className="seOnly:block mb-1 hidden text-xs font-bold">
         please fill out the following form and
       </div>
-      <div className="seOnly:block mb-3 hidden text-xs">
+      <div className="seOnly:block mb-3 hidden text-xs font-bold">
         a member of our team will get back to you soon:
       </div>
       {/* Anythilng larger than width 390px */}
