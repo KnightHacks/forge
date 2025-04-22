@@ -1,54 +1,30 @@
-# React + TypeScript + Vite
+A webring for the Computer Science students and alumni at the University of Central Florida in Orlando, Florida.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Joining the webring
 
-Currently, two official plugins are available:
+1. add the webring widget to your website (template below). Generally, you should add it to the footer. *WIP*
+2. fork this repo and add your information to the *BOTTOM* of `WEBRING_MEMBERS` in `packages/consts/src/webring-members.ts` following this format
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```ts
+        {
+            "name": "Your Name",
+            "year": "Graduation Year",
+            "website": "Website/Linkedin/Github",
+            "image": "Image of yourself, placed in /public/name.jpg",
+            "role": "Any role / position you held at KH. member counts!",
+        },
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+3. submit a pull request and we will review it.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+# Widget Template 
+*MAJOR WIP*
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+# Icon Sources
+*wip*
+
+# Q&A
+*wip*
+
+# Credits & Inspiration
+*wip*

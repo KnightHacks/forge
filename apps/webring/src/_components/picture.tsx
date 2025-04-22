@@ -31,11 +31,18 @@ export default function Picture({
       <div className="absolute bottom-0 right-0 h-0.5 w-0.5 translate-x-1/2 translate-y-1/2 rounded-full bg-white" />
 
       {member.image && (
+        <a
+          href={member.website}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute inset-0 flex items-center justify-center"
+        >
         <img
           src={member?.image}
           alt={member.name}
           className="h-full w-full object-cover"
         />
+        </a>
       )}
     </div>
   );
