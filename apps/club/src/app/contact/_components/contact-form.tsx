@@ -57,7 +57,7 @@ function ContactForm() {
             name="name"
             required
             value={formData.name}
-            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:h-14 lg:p-2 lg:text-base 2xl:h-[70px] 2xl:p-4 2xl:text-lg"
+            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:h-14 lg:p-2 lg:text-base 2xl:h-16 2xl:p-4 2xl:text-xl"
             onChange={handleChange}
           />
         </div>
@@ -71,7 +71,7 @@ function ContactForm() {
             name="email"
             required
             value={formData.email}
-            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:h-14 lg:p-2 lg:text-base 2xl:h-16 2xl:text-xl"
+            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:h-14 lg:p-2 lg:text-base 2xl:h-16 2xl:p-4 2xl:text-xl"
             onChange={handleChange}
           />
         </div>
@@ -85,7 +85,7 @@ function ContactForm() {
             name="subject"
             required
             value={formData.subject}
-            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:h-14 lg:p-2 lg:text-base 2xl:text-lg"
+            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:h-14 lg:p-2 lg:text-base 2xl:h-16 2xl:p-4 2xl:text-xl"
             onChange={handleChange}
           />
         </div>
@@ -99,7 +99,7 @@ function ContactForm() {
             rows={9}
             required
             value={formData.message}
-            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:p-3 lg:text-base"
+            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:p-3 lg:text-base 2xl:p-4 2xl:text-xl"
             onChange={handleChange}
           ></textarea>
         </div>
@@ -111,7 +111,7 @@ function ContactForm() {
 
           <div
             id="checkBoxContainer"
-            className="mt-2 grid grid-cols-2 gap-y-3 sm:w-7/12 lg:mt-6 lg:gap-y-4"
+            className="mt-2 grid grid-cols-2 gap-y-3 sm:w-7/12 lg:mt-6 lg:gap-y-4 2xl:w-1/2"
           >
             {["mentorship", "outreach", "development", "design"].map(
               (option) => (
@@ -128,7 +128,7 @@ function ContactForm() {
                     }
                     onChange={handleCheckboxChange}
                   />
-                  <span className="text-xs capitalize tracking-wider lg:text-lg">
+                  <span className="text-xs capitalize tracking-wider lg:text-lg 2xl:text-xl">
                     {option}
                   </span>
                 </label>
@@ -140,7 +140,7 @@ function ContactForm() {
         <div className="flex w-full justify-center lg:ml-20 lg:justify-start">
           <button
             type="submit"
-            className="font-prompt mt-5 rounded-lg border-2 border-purple-800 bg-purple-400 px-3 font-bold text-white shadow-[2px_2px_2px_1px_rgba(0,0,0,0.25)] lg:border-[3px] lg:px-5 lg:py-1 lg:text-xl lg:tracking-widest"
+            className="font-prompt mt-5 rounded-lg border-2 border-purple-800 bg-purple-400 px-3 font-bold text-white shadow-[2px_2px_2px_1px_rgba(0,0,0,0.25)] lg:border-[3px] lg:px-5 lg:py-1 lg:text-xl lg:tracking-widest 2xl:ml-12"
           >
             Contact Us
           </button>
