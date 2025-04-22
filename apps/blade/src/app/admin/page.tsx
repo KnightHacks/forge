@@ -39,7 +39,7 @@ export default async function Admin() {
           <h1 className="mb-2 w-full break-words text-center text-3xl font-extrabold leading-tight tracking-tight sm:text-[3rem]">
             Let&apos;s get cooking.
           </h1>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Link href="/admin/members">
               <Button>Members</Button>
             </Link>
