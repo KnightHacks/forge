@@ -33,7 +33,7 @@ export default function page() {
         <div className="z-0 hidden w-full 2xl:block">
           <Header />
         </div>
-        <div className="mt-40- z-10 mb-6 hidden h-5/6 w-5/6 2xl:block">
+        <div className="z-10 mb-6 hidden h-5/6 w-[78%] 2xl:block">
           <ContactForm />
         </div>
       </div>
