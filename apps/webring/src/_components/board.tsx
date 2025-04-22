@@ -3,11 +3,16 @@ import { WEBRING_MEMBERS } from "@forge/consts/webring-members";
 import Picture from "./picture";
 
 type BoardProps = {
+  hoveredMember: string | null;
   onMemberHover: (name: string) => void;
   onMemberLeave: () => void;
 };
 
-export default function Board({ onMemberHover, onMemberLeave }: BoardProps) {
+export default function Board({
+  hoveredMember,
+  onMemberHover,
+  onMemberLeave,
+}: BoardProps) {
   const sites = [...WEBRING_MEMBERS.sites].sort((a, b) =>
     a.name.localeCompare(b.name),
   );
@@ -30,6 +35,7 @@ export default function Board({ onMemberHover, onMemberLeave }: BoardProps) {
               member={member}
               onHover={() => onMemberHover(member.name)}
               onLeave={onMemberLeave}
+              dimmed={hoveredMember !== null && hoveredMember !== member.name}
             />
           ))}
         </div>

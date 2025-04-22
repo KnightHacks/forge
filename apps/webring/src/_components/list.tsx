@@ -4,9 +4,15 @@ import Member from "./member";
 
 type ListProps = {
   hoveredMember: string | null;
+  onMemberHover: (name: string) => void;
+  onMemberLeave: () => void;
 };
 
-export default function List({ hoveredMember }: ListProps) {
+export default function List({
+  hoveredMember,
+  onMemberHover,
+  onMemberLeave,
+}: ListProps) {
   const sites = [...WEBRING_MEMBERS.sites].sort((a, b) =>
     a.name.localeCompare(b.name),
   );
@@ -25,6 +31,9 @@ export default function List({ hoveredMember }: ListProps) {
             key={member.name}
             member={member}
             isHighlighted={hoveredMember === member.name}
+            onHover={() => onMemberHover(member.name)}
+            onLeave={onMemberLeave}
+            dimmed={hoveredMember !== null && hoveredMember !== member.name}
           />
         ))}
       </div>

@@ -6,14 +6,22 @@ type MemberProps = {
     role: string;
     image: string;
   };
+  dimmed?: boolean;
   onHover?: () => void;
   onLeave?: () => void;
 };
 
-export default function Picture({ member, onHover, onLeave }: MemberProps) {
+export default function Picture({
+  member,
+  dimmed = false,
+  onHover,
+  onLeave,
+}: MemberProps) {
   return (
     <div
-      className="imagehvr relative flex aspect-[83/96] items-center justify-center border border-[#757575] text-4xl text-white"
+      className={`imagehvr relative flex aspect-[83/96] items-center justify-center border border-[#757575] text-4xl text-white transition-opacity duration-300 ${
+        dimmed ? "opacity-50" : "opacity-100"
+      }`}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
     >

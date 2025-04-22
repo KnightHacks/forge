@@ -6,6 +6,7 @@ type MemberProps = {
     role: string;
   };
   isHighlighted?: boolean;
+  dimmed?: boolean;
   onHover?: () => void;
   onLeave?: () => void;
 };
@@ -13,6 +14,7 @@ type MemberProps = {
 export default function Member({
   member,
   isHighlighted = false,
+  dimmed = false,
   onHover = () => {},
   onLeave = () => {},
 }: MemberProps) {
@@ -22,6 +24,8 @@ export default function Member({
         isHighlighted
           ? "border-purple-500 bg-purple-500 bg-opacity-20"
           : "border-[#757575]"
+      } ${
+        dimmed ? "opacity-50" : "opacity-100"
       } hover:border-purple-500 hover:bg-purple-500 hover:bg-opacity-20`}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
@@ -35,11 +39,7 @@ export default function Member({
           rel="noopener noreferrer"
           className="flex w-2/12 justify-end"
         >
-          <span
-            className="flicker-text"
-          >
-            {member.year}
-          </span>
+          <span className="flicker-text">{member.year}</span>
         </a>
       </div>
     </div>

@@ -11,9 +11,14 @@ function App() {
     <div className="flex min-h-screen flex-col bg-black">
       <Nav />
       <div className="flex flex-grow flex-row">
-        <List hoveredMember={hoveredMember} />
+        <List
+          hoveredMember={hoveredMember}
+          onMemberHover={(name) => setHoveredMember(name)}
+          onMemberLeave={() => setHoveredMember(null)}
+        />
         <div className="relative w-2/3">
           <Board
+            hoveredMember={hoveredMember}
             onMemberHover={(name) => setHoveredMember(name)}
             onMemberLeave={() => setHoveredMember(null)}
           />
