@@ -4,6 +4,7 @@ export const WEBRING_MEMBERS = {
             "name": "Daniel Palma",
             "year": "2026",
             "website": "https://dpalma.dev",
+            "image": "https://cdn.discordapp.com/attachments/1159603713057493055/1364103101702737960/IMG_9284.jpg?ex=68087383&is=68072203&hm=dec546f317b8df70eac8f769dca4d295e53b85d392c59d3bac9fb405a0e16756&",
             "role": "Head of Finance",
         },
         {
