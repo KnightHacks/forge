@@ -12,8 +12,7 @@ export function AuthHome() {
         Welcome to Blade!
       </h1>
       <p className="text-md mb-5 text-center tracking-tighter sm:text-lg">
-        Manage your Knight Hacks membership, hackathon information, and more
-        with <b>Blade</b>.
+        Manage your Knight Hacks membership, hackathon information, and more!
       </p>
       <Link className="w-full sm:w-auto" href={"/dashboard"}>
         <Button size="lg" className="w-full sm:w-auto">
