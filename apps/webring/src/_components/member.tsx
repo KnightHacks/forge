@@ -20,9 +20,9 @@ export default function Member({
     <div
       className={`w-full border-b py-1 text-sm text-white transition-all duration-300 ${
         isHighlighted
-          ? "border-red-500 bg-red-500 bg-opacity-20"
+          ? "border-purple-500 bg-purple-500 bg-opacity-20"
           : "border-[#757575]"
-      }`}
+      } hover:border-purple-500 hover:bg-purple-500 hover:bg-opacity-20`}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
     >
@@ -36,7 +36,7 @@ export default function Member({
           className="flex w-2/12 justify-end"
         >
           <span
-            className={`${isHighlighted ? "text-red-500" : "flicker-text"}`}
+            className="flicker-text"
           >
             {member.year}
           </span>

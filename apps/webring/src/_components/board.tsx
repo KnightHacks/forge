@@ -1,32 +1,39 @@
 import { WEBRING_MEMBERS } from "@forge/consts/webring-members";
+
 import Picture from "./picture";
 
-export default function Board() {
+type BoardProps = {
+  onMemberHover: (name: string) => void;
+  onMemberLeave: () => void;
+};
+
+export default function Board({ onMemberHover, onMemberLeave }: BoardProps) {
   const sites = [...WEBRING_MEMBERS.sites].sort((a, b) =>
     a.name.localeCompare(b.name),
   );
 
   return (
-    <div className="sticky -top-33 flex h-screen w-full flex-col p-4">
+    <div className="-top-33 sticky flex h-screen w-full flex-col p-4">
       <div className="mb-4 flex w-full flex-row items-end justify-between">
-        <h1 className="flex items-end h-28 text-7xl font-bold text-white">
+        <h1 className="flex h-28 items-end text-7xl font-bold text-white">
           The Collective
         </h1>
         <h1 className="text-7xl font-bold text-[#757575]">{sites.length}</h1>
       </div>
 
       {/* Container with fixed height and scrolling */}
-      <div className="mb-4 w-full flex-grow overflow-y-auto h-[900vh]">
+      <div className="mb-4 h-[900vh] w-full flex-grow overflow-y-auto">
         <div className="grid grid-cols-8 gap-2">
           {sites.map((member) => (
             <Picture
               key={member.name}
               member={member}
+              onHover={() => onMemberHover(member.name)}
+              onLeave={onMemberLeave}
             />
           ))}
         </div>
       </div>
-
 
       <div className="diagonal-stripes flex items-center justify-center bg-black text-sm text-white">
         <a

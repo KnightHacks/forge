@@ -199,23 +199,5 @@ export const WEBRING_MEMBERS = {
             "website": "https://leoschneider.dev",
             "role": "Infrastructure Engineer",
         },
-        {
-            "name": "Zoey Bennett",
-            "year": "2024",
-            "website": "https://zoeybennett.dev",
-            "role": "Recruiter",
-        },
-        {
-            "name": "Henry Dubois",
-            "year": "2026",
-            "website": "https://henrydubois.dev",
-            "role": "Software Tester",
-        },
-        {
-            "name": "Alina Petrov",
-            "year": "2025",
-            "website": "https://alinapetrov.dev",
-            "role": "Technical Recruiter",
-        },
     ]
 } as const;
