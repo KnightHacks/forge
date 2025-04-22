@@ -23,8 +23,8 @@ export default function Member({
       className={`w-full border-b py-1 text-sm text-white transition-all duration-300 ${
         isHighlighted
           ? "animate-[flicker-normal_0.8s_ease-in_forwards] border-purple-500 bg-purple-600 bg-opacity-20 no-underline"
-          : "border-[#757575] no-underline"
-      } ${dimmed ? "opacity-50" : "flicker-text opacity-100"}`}
+          : "border-[#757575]"
+      } ${dimmed ? "opacity-50" : "opacity-100"}`}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
     >
