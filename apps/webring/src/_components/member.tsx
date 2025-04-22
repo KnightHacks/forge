@@ -22,11 +22,9 @@ export default function Member({
     <div
       className={`w-full border-b py-1 text-sm text-white transition-all duration-300 ${
         isHighlighted
-          ? "border-purple-500 bg-purple-600 bg-opacity-20 animate-[flicker_0.8s_ease-in_forwards]"
-          : "border-[#757575]"
-      } ${
-        dimmed ? "opacity-50" : "flicker-text opacity-100"
-      } hover:border-purple-500 hover:bg-purple-500 hover:bg-opacity-20`}
+          ? "animate-[flicker-normal_0.8s_ease-in_forwards] border-purple-500 bg-purple-600 bg-opacity-20 no-underline"
+          : "border-[#757575] no-underline"
+      } ${dimmed ? "opacity-50" : "flicker-text opacity-100"}`}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
     >
