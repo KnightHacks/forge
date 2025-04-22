@@ -37,11 +37,11 @@ export default function Picture({
           rel="noopener noreferrer"
           className="absolute inset-0 flex items-center justify-center"
         >
-        <img
-          src={member?.image}
-          alt={member.name}
-          className="h-full w-full object-cover"
-        />
+          <img
+            src={member?.image}
+            alt={member.name}
+            className="h-full w-full object-cover"
+          />
         </a>
       )}
     </div>
