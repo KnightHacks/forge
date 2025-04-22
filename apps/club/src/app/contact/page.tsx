@@ -16,15 +16,26 @@ export default function page() {
         <LeftSide />
       </div>
 
+      {/* right background panel for the swords and etc  */}
+      <div className="fixed right-0 z-0 h-screen w-1/2 border-purple-500 sm:max-w-64">
+        <RightSide />
+      </div>
+
       {/* Main content */}
-      <div className="z-10 mb-3 mt-[120px] h-5/6 w-[86%] sm:mt-[150px] md:w-5/6 lg:mt-[200px]">
+      {/* Main content under 2xl */}
+      <div className="z-10 mb-3 mt-[120px] h-5/6 w-[86%] sm:mt-[150px] md:w-5/6 lg:mt-[200px] 2xl:hidden">
         <Header />
         <ContactForm />
       </div>
 
-      {/* right background panel for the swords and etc  */}
-      <div className="fixed right-0 z-0 h-screen w-1/2 border-purple-500 sm:max-w-64">
-        <RightSide />
+      {/* Main content over 2xl */}
+      <div className="hidden min-h-screen w-screen flex-col items-center 2xl:flex">
+        <div className="z-0 hidden w-full 2xl:block">
+          <Header />
+        </div>
+        <div className="mt-40- z-10 mb-6 hidden h-5/6 w-5/6 2xl:block">
+          <ContactForm />
+        </div>
       </div>
     </div>
   );

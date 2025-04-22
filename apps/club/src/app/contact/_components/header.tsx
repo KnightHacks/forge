@@ -5,8 +5,8 @@ import React from "react";
 function Header() {
   return (
     //style later contact us will flicker and make contact us larger
-    <div className="flex w-full flex-col items-center justify-center tracking-wider">
-      <div className="mb-4 text-2xl font-bold lg:mb-6 lg:text-4xl">
+    <div className="flex w-full flex-col items-center justify-center tracking-wider 2xl:fixed 2xl:h-screen">
+      <div className="mb-4 text-2xl font-bold lg:mb-8 lg:text-4xl 2xl:mb-12 2xl:text-6xl">
         Contact Us
       </div>
       {/* IPhone SE and iPhone12 pro because width messing up formatting */}
@@ -20,10 +20,10 @@ function Header() {
         a member of our team will get back to you soon:
       </div>
       {/* Anythilng larger than width 390px */}
-      <div className="seOnly:hidden mb-1 text-sm font-bold tracking-wider lg:text-2xl">
+      <div className="seOnly:hidden mb-1 text-sm font-bold tracking-wider lg:text-2xl 2xl:mb-3 2xl:text-4xl">
         To get in touch with KnightHacks, please fill out the following
       </div>
-      <div className="seOnly:hidden mb-6 text-sm font-bold tracking-wider lg:text-2xl">
+      <div className="seOnly:hidden mb-6 text-sm font-bold tracking-wider lg:text-2xl 2xl:mb-16 2xl:text-4xl">
         form and a member of our team will get back to you soon:
       </div>
     </div>

@@ -42,14 +42,14 @@ function ContactForm() {
   return (
     <div
       id="contactform"
-      className="mt-2 w-auto rounded-md bg-white p-5 text-black md:px-0 lg:rounded-xl lg:p-8"
+      className="mt-2 w-auto rounded-md bg-white p-5 text-black md:px-0 lg:rounded-xl lg:p-8 2xl:mt-[100vh]"
     >
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 sm:ml-5 lg:ml-4 lg:space-y-6"
+        className="space-y-4 sm:ml-5 lg:ml-4 lg:space-y-6 2xl:ml-10 2xl:mt-10"
       >
-        <div id="Name">
-          <label className="block font-bold tracking-wider lg:mb-5 lg:text-2xl">
+        <div id="Name" className="">
+          <label className="block font-bold tracking-wider lg:mb-5 lg:text-2xl 2xl:text-3xl">
             Name
           </label>
           <input
@@ -57,13 +57,13 @@ function ContactForm() {
             name="name"
             required
             value={formData.name}
-            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:h-14 lg:p-2 lg:text-base"
+            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:h-14 lg:p-2 lg:text-base 2xl:h-[70px] 2xl:p-4 2xl:text-lg"
             onChange={handleChange}
           />
         </div>
 
         <div id="Email">
-          <label className="mb-2 block font-bold tracking-wider lg:mb-5 lg:text-2xl">
+          <label className="mb-2 block font-bold tracking-wider lg:mb-5 lg:text-2xl 2xl:text-3xl">
             Email Address
           </label>
           <input
@@ -71,13 +71,13 @@ function ContactForm() {
             name="email"
             required
             value={formData.email}
-            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:h-14 lg:p-2 lg:text-base"
+            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:h-14 lg:p-2 lg:text-base 2xl:h-16 2xl:text-xl"
             onChange={handleChange}
           />
         </div>
 
         <div id="Subject">
-          <label className="mb-2 block font-bold tracking-wider lg:mb-5 lg:text-2xl">
+          <label className="mb-2 block font-bold tracking-wider lg:mb-5 lg:text-2xl 2xl:text-3xl">
             Message Subject
           </label>
           <input
@@ -85,13 +85,13 @@ function ContactForm() {
             name="subject"
             required
             value={formData.subject}
-            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:h-14 lg:p-2 lg:text-base"
+            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:h-14 lg:p-2 lg:text-base 2xl:text-lg"
             onChange={handleChange}
           />
         </div>
 
         <div id="Message">
-          <label className="mb-2 block font-bold tracking-wider lg:mb-5 lg:text-2xl">
+          <label className="mb-2 block font-bold tracking-wider lg:mb-5 lg:text-2xl 2xl:text-3xl">
             Message Body
           </label>
           <textarea
@@ -99,13 +99,13 @@ function ContactForm() {
             rows={9}
             required
             value={formData.message}
-            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:p-3 lg:text-sm"
+            className="bg-cream w-full rounded-sm border p-2 pl-3 font-sans text-xs saturate-200 sm:w-9/12 lg:mb-4 lg:p-3 lg:text-base"
             onChange={handleChange}
           ></textarea>
         </div>
 
         <div id="contactOptions">
-          <label className="font-bold tracking-wider lg:text-2xl">
+          <label className="font-bold tracking-wider lg:text-2xl 2xl:text-3xl">
             Which team would you like to contact?
           </label>
 
