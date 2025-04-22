@@ -7,4 +7,9 @@ export default [
   },
   ...baseConfig,
   ...restrictEnvAccess,
+  {
+    rules: {
+      "@typescript-eslint/prefer-nullish-coalescing": "off",
+    },
+  },
 ];
