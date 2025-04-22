@@ -1,1 +1,42 @@
 @import "tailwindcss";
+
+.border_i {
+    border: 3px solid #4f39f6;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1;   text-decoration: underline;}
+  10% { opacity: 0;   text-decoration: underline;}
+  20% { opacity: 1;   text-decoration: underline;}
+  30% { opacity: 0;   text-decoration: underline;}
+  40%, 60% { opacity: 1;   text-decoration: underline;}
+  70% { opacity: 0;   text-decoration: underline;}
+  80%, 90% { opacity: 1;   text-decoration: underline;}
+}
+.flicker-text:hover {
+  animation: flicker 0.6s ease-in-out forwards;
+}
+
+.diagonal-stripes {
+  width: 100%;
+  height: calc(2/12 * 100%); /* Adjust height as needed */
+  background-color: black; /* Base background color */
+  background-image: repeating-linear-gradient(
+    135deg, /* 135 degrees creates diagonal lines from bottom-left to top-right */
+    transparent,
+    transparent 5px,
+    rgba(255, 255, 255, 0.1) 4px,
+    rgba(255, 255, 255, 0.1) 8px
+  );
+  background-size: 200% 100%;
+  animation: moveStripes 150s linear infinite reverse;
+}
+
+@keyframes moveStripes {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}

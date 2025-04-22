@@ -348,6 +348,9 @@ importers:
 
   apps/webring:
     dependencies:
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../../packages/consts
       '@tailwindcss/vite':
         specifier: ^4.1.4
         version: 4.1.4(vite@6.3.2(@types/node@22.10.2)(jiti@2.4.2)(lightningcss@1.29.2)(yaml@2.6.1))
