@@ -17,6 +17,19 @@
   animation: flicker 0.6s ease-in-out forwards;
 }
 
+@keyframes flicker-normal {
+  0%, 100% { opacity: 1;}
+  10% { opacity: 0;}
+  20% { opacity: 1;}
+  30% { opacity: 0;}
+  40%, 60% { opacity: 1;}
+  70% { opacity: 0;}
+  80%, 90% { opacity: 1;}
+}
+.flicker-n:hover {
+  animation: flicker-normal 0.6s ease-in-out forwards;
+}
+
 .diagonal-stripes {
   width: 100%;
   height: calc(8/12 * 100%); /* Adjust height as needed */
