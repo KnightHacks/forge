@@ -1,27 +1,47 @@
 type MemberProps = {
-    member: {
-        name: string;
-        year: string;
-        website: string;
-        role: string;
-    };
+  member: {
+    name: string;
+    year: string;
+    website: string;
+    role: string;
+  };
+  isHighlighted?: boolean;
+  onHover?: () => void;
+  onLeave?: () => void;
 };
 
-export default function Member( { member }: MemberProps) {
+export default function Member({
+  member,
+  isHighlighted = false,
+  onHover = () => {},
+  onLeave = () => {},
+}: MemberProps) {
   return (
-    <div className="w-full text-white text-sm border-b py-1 border-[#757575]">
-        <div className="flex flex-row items-start justify-between w-full">
-            <h1 className="w-3/12 break-words">{member.name}</h1>
-            <h1 className="w-7/12 ">{member.role}</h1>
-            <a
-            href={member.website}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-2/12 justify-end flex"
-            >
-                <span className="flicker-text">{member.year}</span>
-            </a>
-        </div>
+    <div
+      className={`w-full border-b py-1 text-sm text-white transition-all duration-300 ${
+        isHighlighted
+          ? "border-red-500 bg-red-500 bg-opacity-20"
+          : "border-[#757575]"
+      }`}
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+    >
+      <div className="flex w-full flex-row items-start justify-between">
+        <h1 className="w-3/12 break-words">{member.name}</h1>
+        <h1 className="w-7/12">{member.role}</h1>
+        <a
+          href={member.website}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex w-2/12 justify-end"
+        >
+          <span
+            className={`${isHighlighted ? "text-red-500" : "flicker-text"}`}
+          >
+            {member.year}
+          </span>
+        </a>
+      </div>
     </div>
   );
 }

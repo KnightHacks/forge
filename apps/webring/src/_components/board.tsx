@@ -2,28 +2,42 @@ import { WEBRING_MEMBERS } from "@forge/consts/webring-members";
 import Picture from "./picture";
 
 export default function Board() {
-
-  const sites  = [...WEBRING_MEMBERS.sites].sort((a,b) => a.name.localeCompare(b.name));
+  const sites = [...WEBRING_MEMBERS.sites].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
 
   return (
-    <div className="sticky w-full p-4 h-screen">
-      <div className="w-full h-2/12 flex flex-row justify-between items-end">
-        <h1 className="text-white text-7xl font-bold items-end flex">The Collective</h1>
-        <h1 className="text-[#757575] text-7xl font-bold">{sites.length}</h1>
+    <div className="sticky -top-33 flex h-screen w-full flex-col p-4">
+      <div className="mb-4 flex w-full flex-row items-end justify-between">
+        <h1 className="flex items-end h-28 text-7xl font-bold text-white">
+          The Collective
+        </h1>
+        <h1 className="text-7xl font-bold text-[#757575]">{sites.length}</h1>
       </div>
-      <div className="w-full h-10/12 grid grid-cols-8 gap-2 sticky ">
-        {sites.map((member) => (
-          <Picture key={member.name} member={member} />  
-        ))}
+
+      {/* Container with fixed height and scrolling */}
+      <div className="mb-4 w-full flex-grow overflow-y-auto h-[900vh]">
+        <div className="grid grid-cols-8 gap-2">
+          {sites.map((member) => (
+            <Picture
+              key={member.name}
+              member={member}
+            />
+          ))}
+        </div>
       </div>
-      <div className="h-3/12 bg-black text-sm text-white flex items-center justify-center diagonal-stripes my-4">
-        <a 
-        href='https://github.com/knighthacks/forge'
-        target="_blank"
-        rel="noopener noreferrer"
-        className="justify-end flex"
+
+
+      <div className="diagonal-stripes flex items-center justify-center bg-black text-sm text-white">
+        <a
+          href="https://github.com/knighthacks/forge"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex justify-end"
         >
-          <span className="bg-black flicker-text">Join The Collective -&gt;</span>
+          <span className="flicker-text bg-black">
+            Join The Collective -&gt;
+          </span>
         </a>
       </div>
     </div>

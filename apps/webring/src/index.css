@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+/* Original diagonal stripes */
+.diagonal-stripes {
+  background-image: linear-gradient(45deg, transparent 40%, #757575 40%, #757575 60%, transparent 60%);
+  background-size: 10px 10px;
+  position: relative;
+}
+
+/* Highlighted version with red stripes */
+.diagonal-stripes-highlight {
+  background-image: linear-gradient(45deg, transparent 40%, rgba(239, 68, 68, 0.5) 40%, rgba(239, 68, 68, 0.5) 60%, transparent 60%);
+  background-size: 10px 10px;
+  position: relative;
+  animation: stripe-animation 2s linear infinite;
+}
+
+@keyframes stripe-animation {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 20px 20px;
+  }
+}
+
 .border_i {
     border: 3px solid #4f39f6;
 }
@@ -19,7 +43,7 @@
 
 .diagonal-stripes {
   width: 100%;
-  height: calc(2/12 * 100%); /* Adjust height as needed */
+  height: calc(8/12 * 100%); /* Adjust height as needed */
   background-color: black; /* Base background color */
   background-image: repeating-linear-gradient(
     135deg, /* 135 degrees creates diagonal lines from bottom-left to top-right */
