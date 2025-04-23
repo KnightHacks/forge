@@ -114,7 +114,7 @@ export const hackerRouter = {
         });
       }
 
-      const resume = input.resumeUrl ? input.resumeUrl : hacker.resumeUrl;
+      const resume = input.resumeUrl ?? hacker.resumeUrl;
 
       // Check if the age has been updated
       const today = new Date();
