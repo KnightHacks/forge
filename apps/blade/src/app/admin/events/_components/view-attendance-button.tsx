@@ -51,6 +51,7 @@ function Attendees({ eventId }: { eventId: string }) {
     }
 
     invalidateAttendees().catch((error) => {
+      // eslint-disable-next-line no-console
       console.error(
         "Error invalidating members in gathering attendees: ",
         error,
