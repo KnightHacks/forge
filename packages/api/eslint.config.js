@@ -9,7 +9,7 @@ export default [
   ...restrictEnvAccess,
   {
     rules: {
-      "@typescript-eslint/prefer-nullish-coalescing": "off",
+      "no-console": "off",
     },
   },
 ];
