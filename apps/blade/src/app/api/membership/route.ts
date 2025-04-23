@@ -10,8 +10,6 @@ import { env } from "~/env";
 async function membershipRecord(sessionId: string) {
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
 
-  
-
   // TODO: Make this function safe to run multiple times,
   // even concurrently, with the same session ID
 
