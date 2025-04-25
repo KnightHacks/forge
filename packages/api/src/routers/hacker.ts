@@ -2,9 +2,10 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { and, eq, exists } from "@forge/db";
+import { and, count, desc, eq, exists, getTableColumns } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
+  Hackathon,
   Hacker,
   HackerAttendee,
   InsertHackerSchema,
@@ -198,4 +199,111 @@ export const hackerRouter = {
         userId: ctx.session.user.discordUserId,
       });
     }),
+
+  confirmHacker: protectedProcedure
+    .input(InsertHackerSchema.pick({ id: true }))
+    .mutation(async ({ input }) => {
+      if (!input.id) {
+        throw new TRPCError({
+          message: "Hacker ID is required to update a member!",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      const { id } = input;
+
+      const hacker = await db.query.Hacker.findFirst({
+        where: (t, { eq }) => eq(t.id, id),
+      });
+
+      if (!hacker) {
+        throw new TRPCError({
+          message: "Hacker not found!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      if (hacker.status === "confirmed") {
+        throw new TRPCError({
+          message: "Hacker has already been confirmed!",
+          code: "UNAUTHORIZED",
+        });
+      } else if (hacker.status !== "accepted") {
+        throw new TRPCError({
+          message: "Hacker has not been accepted!",
+          code: "UNAUTHORIZED",
+        });
+      }
+
+      await db
+        .update(Hacker)
+        .set({
+          status: "confirmed",
+        })
+        .where(eq(Hacker.id, id));
+    }),
+
+  withdrawHacker: protectedProcedure
+    .input(InsertHackerSchema.pick({ id: true }))
+    .mutation(async ({ input }) => {
+      if (!input.id) {
+        throw new TRPCError({
+          message: "Hacker ID is required to update a member!",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      const { id } = input;
+
+      const hacker = await db.query.Hacker.findFirst({
+        where: (t, { eq }) => eq(t.id, id),
+      });
+
+      if (!hacker) {
+        throw new TRPCError({
+          message: "Hacker not found!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      if (hacker.status !== "confirmed") {
+        throw new TRPCError({
+          message: "Hacker is not confirmed!",
+          code: "UNAUTHORIZED",
+        });
+      }
+
+      await db
+        .update(Hacker)
+        .set({
+          status: "withdrawn",
+        })
+        .where(eq(Hacker.id, id));
+    }),
+
+  getHackathons: protectedProcedure.query(async ({ ctx }) => {
+    // Get each hackathon and numAttended
+    const hackathonsSubQuery = db
+      .select({
+        id: Hackathon.id,
+        numAttended: count(HackerAttendee.id).as("numAttended"),
+      })
+      .from(Hackathon)
+      .leftJoin(HackerAttendee, eq(Hackathon.id, HackerAttendee.hackathonId))
+      .groupBy(Hackathon.id)
+      .as("hackathonsSubQuery");
+
+    const hackathons = await db
+      .select({
+        ...getTableColumns(Hackathon),
+        numAttended: hackathonsSubQuery.numAttended,
+      })
+      .from(Hackathon)
+      .leftJoin(HackerAttendee, eq(Hackathon.id, HackerAttendee.hackathonId))
+      .leftJoin(Hacker, eq(HackerAttendee.hackerId, Hacker.id))
+      .leftJoin(hackathonsSubQuery, eq(hackathonsSubQuery.id, Hackathon.id)) // Add numAttended to each corresponding event
+      .where(eq(Hacker.userId, ctx.session.user.id))
+      .orderBy(desc(Hackathon.startDate));
+    return hackathons;
+  }),
 } satisfies TRPCRouterRecord;
