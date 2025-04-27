@@ -6,10 +6,20 @@ import MemberDashboard from "../dashboard/_components/member-dashboard/member-da
 import { HackerAppCard, MemberAppCard } from "./option-cards";
 
 export async function UserInterface() {
-  const member = await api.member.getMember();
-  const hacker = await api.hacker.getHacker();
+  const [member, hacker] = await Promise.allSettled([
+    api.member.getMember(),
+    api.hacker.getHacker(),
+  ]);
 
-  if (!member && !hacker) {
+  if (member.status === "rejected" || hacker.status === "rejected") {
+    return (
+      <div className="mt-10 flex flex-col items-center justify-center gap-y-6 font-bold">
+        Something went wrong. Please try again later.
+      </div>
+    );
+  }
+
+  if (!member.value && !hacker.value) {
     return (
       <div className="flex flex-wrap justify-center gap-5">
         <MemberAppCard />
@@ -21,7 +31,7 @@ export async function UserInterface() {
   return (
     <div className="flex justify-center">
       <Tabs
-        defaultValue={member ? "Member" : hacker ? "Hacker" : ""}
+        defaultValue={member.value ? "Member" : hacker.value ? "Hacker" : ""}
         className="w-[400px]"
       >
         <TabsList className="grid w-full grid-cols-2">
@@ -39,10 +49,10 @@ export async function UserInterface() {
           </TabsTrigger>
         </TabsList>
         <TabsContent className="absolute left-0 w-full" value="Member">
-          <MemberDashboard member={member} />
+          <MemberDashboard member={member.value} />
         </TabsContent>
-        <TabsContent value="Hacker">
-          <HackerDashboard hacker={hacker} />
+        <TabsContent value="Hacker" className="absolute left-0 mt-32 w-full">
+          <HackerDashboard hacker={hacker.value} />
         </TabsContent>
       </Tabs>
     </div>
