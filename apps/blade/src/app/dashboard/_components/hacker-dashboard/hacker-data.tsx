@@ -35,6 +35,7 @@ export function HackerData({
   const [loading, setLoading] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const { data: hacker, isError } = api.hacker.getHacker.useQuery(undefined, {
     initialData: data,
@@ -78,7 +79,7 @@ export function HackerData({
     async onSuccess() {
       setHackerStatus("Confirmed");
       setHackerStatusColor(getStatusColor("confirmed"));
-      toast.success("Hacker confirmed successfully!");
+      setIsConfirmOpen(true);
       await utils.hacker.getHacker.invalidate();
     },
     onError() {
@@ -93,7 +94,7 @@ export function HackerData({
     async onSuccess() {
       setHackerStatus("Withdrawn");
       setHackerStatusColor(getStatusColor("withdrawn"));
-      toast.success("Hacker withdrawn successfully.");
+      toast.success("You have withdrawn from the hackathon!");
       await utils.hacker.getHacker.invalidate();
     },
     onError() {
@@ -119,7 +120,7 @@ export function HackerData({
 
   return (
     <div className="flex h-full w-full flex-wrap gap-x-8 gap-y-4 p-5 sm:gap-y-0 sm:p-7">
-      <div className="relative my-auto h-[7rem] w-32 overflow-hidden rounded-lg">
+      <div className="animate-fade-in relative my-auto h-[7rem] w-32 overflow-hidden rounded-lg">
         <Image
           src="/tk-dashboard-img.svg"
           alt="Image of TK"
@@ -131,19 +132,24 @@ export function HackerData({
       </div>
       <div className="flex flex-col justify-center gap-y-6">
         <div>
-          <div className="text-lg font-bold">Status</div>
+          <div className="animate-fade-in text-lg font-bold">Status</div>
           <div className="flex gap-x-2">
-            <div className={`text-xl font-bold ${hackerStatusColor} `}>
+            <div
+              className={`text-xl font-bold ${hackerStatusColor} animate-fade-in`}
+            >
               {hackerStatus}
             </div>
             {hackerStatus === "Confirmed" && (
-              <CircleCheckBig className="mt-[2px]" color="#00C9A7" />
+              <CircleCheckBig
+                className="animate-fade-in mt-[2px]"
+                color="#00C9A7"
+              />
             )}
           </div>
         </div>
         <div>
-          <div className="text-lg font-bold">Class</div>
-          <div className="text-xl font-bold text-black dark:text-white">
+          <div className="animate-fade-in text-lg font-bold">Class</div>
+          <div className="animate-fade-in text-xl font-bold text-black dark:text-white">
             TBD
           </div>
         </div>
@@ -154,7 +160,7 @@ export function HackerData({
         {hackerStatus === "Accepted" && (
           <Button
             size="lg"
-            className="gap-2 !rounded-none"
+            className="animate-fade-in gap-2 !rounded-none"
             onClick={handleConfirm}
           >
             {loading ? (
@@ -164,13 +170,43 @@ export function HackerData({
             )}
           </Button>
         )}
+        {/* Confirm Dialog */}
+        <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                Congratulations!
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col items-center gap-y-5 py-6">
+              <Image
+                src="/tk-dashboard-img.svg"
+                alt="Image of TK"
+                sizes="100px"
+                style={{
+                  width: "50%",
+                  height: "auto",
+                }}
+                width={100}
+                height={100}
+              />
+              <DialogDescription className="text-md text-center">
+                You have confirmed your attendance for the hackathon! We are
+                excited to see you there!
+              </DialogDescription>
+            </div>
+            <DialogFooter className="sm:justify-center">
+              <Button onClick={() => setIsConfirmOpen(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         {/* Withdraw Button */}
         {hackerStatus === "Confirmed" && (
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <Button
                 size="lg"
-                className="gap-2 !rounded-none !bg-destructive hover:!bg-destructive/80"
+                className="animate-fade-in gap-2 !rounded-none !bg-destructive hover:!bg-destructive/80"
               >
                 <span className="text-lg font-bold text-white">WITHDRAW</span>
               </Button>

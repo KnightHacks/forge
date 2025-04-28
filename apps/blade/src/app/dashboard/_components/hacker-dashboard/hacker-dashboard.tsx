@@ -19,7 +19,7 @@ export default function HackerDashboard({
   }
 
   return (
-    <div className="h-76 relative mx-auto flex w-[90%] max-w-[70rem] bg-[#E5E7EB] pb-5 pt-6 dark:bg-[#0A0F1D] sm:py-0 sm:pb-0 lg:h-56">
+    <div className="animate-mobile-initial-expand relative mx-auto flex h-0 w-[90%] max-w-[70rem] bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:py-0 sm:pb-0 lg:max-h-56">
       {/* Main content */}
       <HackerData data={hacker} />
 

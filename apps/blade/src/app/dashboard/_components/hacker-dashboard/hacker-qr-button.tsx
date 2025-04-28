@@ -62,7 +62,7 @@ export function HackerQRCodePopup() {
       <DialogTrigger asChild>
         <Button
           size="lg"
-          className="gap-2 !rounded-none border border-[#1F2937] !bg-white !shadow-none hover:!bg-[#E5E7EB] dark:!bg-[#0A0F1D] dark:hover:!bg-[#1F2937]"
+          className="animate-fade-in gap-2 !rounded-none border border-[#1F2937] !bg-white !shadow-none hover:!bg-[#E5E7EB] dark:!bg-[#0A0F1D] dark:hover:!bg-[#1F2937]"
         >
           <QrCode className="h-5 w-5 dark:hidden" color="#000000" />
           <QrCode className="hidden h-5 w-5 dark:block" color="#FFFFFF" />
