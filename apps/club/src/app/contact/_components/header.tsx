@@ -6,7 +6,7 @@ function Header() {
   return (
     //style later contact us will flicker and make contact us larger
     <div className="flex w-full flex-col items-center justify-center tracking-wider 2xl:fixed 2xl:h-screen">
-      <div className="mb-4 text-2xl font-bold lg:mb-8 lg:text-4xl 2xl:mb-12 2xl:text-6xl">
+      <div className="flickerStart glow pulsating flicker mb-4 text-2xl font-bold lg:mb-8 lg:text-4xl 2xl:mb-12 2xl:text-6xl">
         Contact Us
       </div>
       {/* IPhone SE and iPhone12 pro because width messing up formatting */}
