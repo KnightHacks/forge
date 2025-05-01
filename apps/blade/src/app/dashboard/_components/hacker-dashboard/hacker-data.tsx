@@ -119,7 +119,7 @@ export function HackerData({
   }
 
   return (
-    <div className="flex h-full w-full flex-wrap gap-x-8 gap-y-4 p-5 sm:gap-y-0 sm:p-7">
+    <div className="flex h-full w-full flex-wrap gap-x-8 gap-y-2 p-5 sm:gap-y-0 sm:p-7">
       <div className="animate-fade-in relative my-auto h-[7rem] w-32 overflow-hidden rounded-lg">
         <Image
           src="/tk-dashboard-img.svg"
@@ -154,7 +154,7 @@ export function HackerData({
           </div>
         </div>
       </div>
-      <div className="mt-12 flex w-full items-center justify-center gap-x-1 sm:mt-5 lg:mt-0">
+      <div className="mt-6 flex w-full items-center justify-center gap-x-1 sm:ml-7 md:mt-5 lg:mt-0">
         <HackerQRCodePopup />
         {/* Confirm Button */}
         {hackerStatus === "Accepted" && (
@@ -191,8 +191,8 @@ export function HackerData({
                 height={100}
               />
               <DialogDescription className="text-md text-center">
-                You have confirmed your attendance for the hackathon! We are
-                excited to see you there!
+                You've successfully confirmed for the hackathon. We're excited
+                to see you there!
               </DialogDescription>
             </div>
             <DialogFooter className="sm:justify-center">
