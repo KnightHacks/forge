@@ -35,7 +35,7 @@ export function PastHackathonButton({
           <DialogHeader>
             <DialogTitle>Past Hackathons Attended</DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-center text-center text-lg font-bold text-gray-500 dark:text-gray-400">
+          <div className="mt-5 flex items-center justify-center text-center text-lg font-bold text-gray-500 dark:text-gray-400">
             <div>No hackathons found!</div>
           </div>
           <DialogDescription></DialogDescription>
