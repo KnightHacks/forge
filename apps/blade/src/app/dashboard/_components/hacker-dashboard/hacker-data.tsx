@@ -50,6 +50,7 @@ export function HackerData({
         id: hacker?.id,
       });
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error confirming hacker:", error);
     }
   };
@@ -61,6 +62,7 @@ export function HackerData({
         id: hacker?.id,
       });
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error withdrawing hacker:", error);
     }
   };
