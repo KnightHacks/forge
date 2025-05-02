@@ -28,8 +28,8 @@ export default async function Data() {
 
   return (
     <HydrateClient>
-      <main className="hborder-2 hborder-yellow-500 container mt-6">
-        <Tabs defaultValue="members" className="hborder-2 hborder-red-400">
+      <main className="container mt-6">
+        <Tabs defaultValue="members">
           <TabsList>
             <TabsTrigger value="members">Member data</TabsTrigger>
             <TabsTrigger value="events">Event data</TabsTrigger>
