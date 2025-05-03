@@ -44,27 +44,17 @@ export function HackerData({
   const utils = api.useUtils();
 
   const handleConfirm = () => {
-    try {
-      setLoading(true);
-      confirmHacker.mutate({
-        id: hacker?.id,
-      });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error confirming hacker:", error);
-    }
+    setLoading(true);
+    confirmHacker.mutate({
+      id: hacker?.id,
+    });
   };
 
   const handleWithdraw = () => {
-    try {
-      setLoading(true);
-      withdrawHacker.mutate({
-        id: hacker?.id,
-      });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error withdrawing hacker:", error);
-    }
+    setLoading(true);
+    withdrawHacker.mutate({
+      id: hacker?.id,
+    });
   };
 
   function getStatusName(status: StatusKey) {
