@@ -23,7 +23,7 @@ function Header() {
       <div className="seOnly:hidden mb-1 text-sm font-bold tracking-wider lg:text-2xl 2xl:mb-3 2xl:text-4xl">
         To get in touch with KnightHacks, please fill out the following
       </div>
-      <div className="seOnly:hidden mb-6 text-sm font-bold tracking-wider lg:text-2xl 2xl:mb-16 2xl:text-4xl">
+      <div className="seOnly:hidden mb-6 text-sm font-bold tracking-wider lg:mb-20 lg:text-2xl 2xl:mb-16 2xl:text-4xl">
         form and a member of our team will get back to you soon:
       </div>
     </div>
