@@ -12,14 +12,10 @@ export default function page() {
       className="font-narrow bg-950 flex min-h-screen flex-row justify-center text-white"
     >
       {/* left background panel for the swords and etc  */}
-      <div className="fixed left-0 z-0 h-screen w-1/2 border-blue-500 sm:max-w-64">
-        <LeftSide />
-      </div>
+      <LeftSide />
 
       {/* right background panel for the swords and etc  */}
-      <div className="fixed right-0 z-0 h-screen w-1/2 border-purple-500 sm:max-w-64">
-        <RightSide />
-      </div>
+      <RightSide />
 
       {/* Main content */}
       {/* Main content under 2xl */}
