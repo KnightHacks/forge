@@ -285,6 +285,7 @@ export function HackerProfileForm({
                 resumeUrl, // Include uploaded resume URL
               });
             } catch (error) {
+              // eslint-disable-next-line no-console
               console.error(
                 "Error uploading resume or updating hacker:",
                 error,

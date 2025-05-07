@@ -38,6 +38,7 @@ export default function MemberProfileButton({
     }
 
     invalidateMembers().catch((error) => {
+      // eslint-disable-next-line no-console
       console.error("Error invalidating members in member profile: ", error);
     });
   }, [utils.member, member]);

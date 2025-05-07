@@ -68,7 +68,11 @@ export default function Sponsors() {
         className="flex flex-wrap justify-center gap-5"
       >
         {companies.map((sponsor) => (
-          <SponsorCard sponsor={sponsor.name} imgUrl={sponsor.logo} />
+          <SponsorCard
+            key={sponsor.name}
+            sponsor={sponsor.name}
+            imgUrl={sponsor.logo}
+          />
         ))}
       </div>
     </div>

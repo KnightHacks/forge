@@ -14,11 +14,26 @@ import TerminalSVG from "./assets/terminal";
 
 import "rsuite/Calendar/styles/index.css";
 
+import type { RouterOutputs } from "@forge/api";
+
 export default function CalendarEventsPage({
   events,
 }: {
-  events: Map<string, ReturnEvent[]>;
+  events: RouterOutputs["event"]["getEvents"];
 }) {
+  const eventMap = new Map<string, ReturnEvent[]>();
+
+  events.forEach((event) => {
+    const day = event.start_datetime.getDate();
+    const month = event.start_datetime.getMonth();
+    const year = event.start_datetime.getFullYear();
+    const dateString = `${day}-${month}-${year}`;
+    if (!eventMap.has(dateString)) {
+      eventMap.set(dateString, []);
+    }
+    eventMap.get(dateString)?.push(event);
+  });
+
   gsap.registerPlugin(ScrollTrigger);
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -51,7 +66,7 @@ export default function CalendarEventsPage({
     const day = date.getDate();
     const month = date.getMonth();
     const year = date.getFullYear();
-    return events.get(`${day}-${month}-${year}`) ?? [];
+    return eventMap.get(`${day}-${month}-${year}`) ?? [];
   }
 
   function renderCell(date: Date) {

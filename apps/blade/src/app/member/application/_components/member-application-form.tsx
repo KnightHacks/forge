@@ -236,6 +236,7 @@ export function MemberApplicationForm() {
               resumeUrl, // Include uploaded resume URL
             });
           } catch (error) {
+            // eslint-disable-next-line no-console
             console.error("Error uploading resume or creating member:", error);
             toast.error(
               "Something went wrong while processing your application.",

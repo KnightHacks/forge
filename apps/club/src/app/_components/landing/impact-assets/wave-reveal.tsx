@@ -211,7 +211,6 @@ export default function WaveReveal({
     blur,
     className: letterClassName,
   });
-  console.log("Text: ", text);
 
   return (
     <div

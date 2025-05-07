@@ -266,6 +266,7 @@ export function HackerFormPage() {
               resumeUrl,
             });
           } catch (error) {
+            // eslint-disable-next-line no-console
             console.error("Error uploading resume or creating hacker:", error);
             toast.error(
               "Something went wrong while processing your application.",

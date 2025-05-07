@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type { NextRequest } from "next/server";
 import Stripe from "stripe";
 
@@ -8,8 +9,6 @@ import { env } from "~/env";
 
 async function membershipRecord(sessionId: string) {
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
-
-  console.log("Fulfilling Checkout Session");
 
   // TODO: Make this function safe to run multiple times,
   // even concurrently, with the same session ID

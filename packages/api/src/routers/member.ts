@@ -132,8 +132,7 @@ export const memberRouter = {
           code: "NOT_FOUND",
         });
       }
-
-      const resume = input.resumeUrl ? input.resumeUrl : member.resumeUrl;
+      const resume = input.resumeUrl ?? member.resumeUrl;
 
       // Check if the age has been updated
       const today = new Date();
