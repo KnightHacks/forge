@@ -7,17 +7,12 @@ import { redirect } from "next/navigation";
 
 import { SIGN_IN_PATH } from "~/consts";
 
-// import { api } from "~/trpc/server";
-// import { HackerFormPage } from "./_components/hacker-application-form";
+// Uncomment if you're a dev and need to use the hacker application
+
+// import { auth } from "@forge/auth";
 // import { api } from "~/trpc/server";
 // import { HackerFormPage } from "./_components/hacker-application-form";
 
-// export default async function HackerApplicationPage() {
-export default function HackerApplicationPage() {
-  redirect(SIGN_IN_PATH);
-  // const session = await auth();
-
-  // if (session == null) {
 // export default async function HackerApplicationPage() {
 export default function HackerApplicationPage() {
   redirect(SIGN_IN_PATH);
