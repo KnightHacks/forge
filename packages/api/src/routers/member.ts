@@ -30,6 +30,7 @@ import {
 import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { log } from "../utils";
+import { Session } from "@forge/db/schemas/auth";
 
 export const memberRouter = {
   // -------------------- MEMBER DASHBOARD ENDPOINTS --------------------
@@ -216,6 +217,10 @@ export const memberRouter = {
         color: "uhoh_red",
         userId: ctx.session.user.discordUserId,
       });
+
+      if (ctx.session.user.id) {
+        await db.delete(Session).where(eq(Session.userId, ctx.session.user.id));
+      }
     }),
 
   getMember: protectedProcedure.query(async ({ ctx }) => {
