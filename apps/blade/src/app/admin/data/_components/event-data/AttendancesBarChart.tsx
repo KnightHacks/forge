@@ -11,6 +11,8 @@ import {
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
+import type {
+  Semester} from "@forge/consts/knight-hacks";
 import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
@@ -22,10 +24,14 @@ import {
 export default function AttendancesBarChart({
   events,
   className,
+  semester,
 }: {
   events: ReturnEvent[];
   className?: string;
+  semester: Semester | null;
 }) {
+  if (semester) console.log(`AttendancesBarChart semester: ${JSON.stringify(semester)}`);
+  
   const baseConfig: ChartConfig = {
     events: { label: "events" },
   };

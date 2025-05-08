@@ -10,6 +10,8 @@ import {
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
+import type {
+  Semester} from "@forge/consts/knight-hacks";
 import {
   ADMIN_PIE_CHART_COLORS,
   WEEKDAY_ORDER,
@@ -21,7 +23,8 @@ import {
   ChartTooltipContent,
 } from "@forge/ui/chart";
 
-export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
+export function WeekdayPopularityRadar({ events, semester }: { events: ReturnEvent[]; semester: Semester | null }) {
+  if (semester) console.log(`WeekdayPopularityRadar semester: ${JSON.stringify(semester)}`);
   const chartConfig = {
     attendees: {
       label: "Average attendees",
