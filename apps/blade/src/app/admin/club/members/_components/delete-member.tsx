@@ -17,6 +17,7 @@ import {
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
+import { signOut } from "next-auth/react";
 
 import { api } from "~/trpc/react";
 
@@ -53,6 +54,7 @@ export default function DeleteMemberButton({
       firstName: member.firstName,
       lastName: member.lastName,
     });
+    await signOut();
   };
 
   return (
