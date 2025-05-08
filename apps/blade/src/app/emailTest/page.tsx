@@ -1,5 +1,15 @@
-import Email from "../_components/email";
+import { api } from "~/trpc/server";
 
 export default function EmailPage() {
-  return <Email />;
+  api.email.sendEmail({
+    from: "donotreply@knighthacks.org",
+    to: "lwbobda@gmail.com",
+    subject: "test",
+    body: "test",
+  });
+  return (
+    <>
+      <button>click</button>
+    </>
+  );
 }
