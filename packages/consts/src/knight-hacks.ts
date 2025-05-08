@@ -5403,3 +5403,14 @@ export const SEMESTER_START_DATES = {
     month: 7, day: 15, // middle of August
   },
 } as const;
+
+export const ALL_DATES_RANGE_UNIX = {
+  start: -8640000000000000,
+  end: 8640000000000000,
+} as const;
+
+export interface Semester {
+  name: string,
+  startDate: Date,
+  endDate: Date,
+};

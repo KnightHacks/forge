@@ -1,15 +1,21 @@
 import { useState } from "react";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
+import type {
+  Semester} from "@forge/consts/knight-hacks";
 import { RANKING_STYLES } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
 export default function PopularityRanking({
   events,
+  semester
 }: {
   events: ReturnEvent[];
+  semester: Semester | null;
 }) {
+  if (semester) console.log(`PopularityRanking semester: ${JSON.stringify(semester)}`);
+  
   const [displayFullList, setDisplayFullList] = useState<boolean>(false);
 
   const topEvents = events

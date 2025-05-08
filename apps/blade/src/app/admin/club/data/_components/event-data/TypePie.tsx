@@ -6,6 +6,8 @@ import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
+import type {
+  Semester} from "@forge/consts/knight-hacks";
 import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
@@ -22,7 +24,9 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 
-export default function TypePie({ events }: { events: ReturnEvent[] }) {
+export default function TypePie({ events, semester }: { events: ReturnEvent[]; semester: Semester | null }) {
+  if (semester) console.log(`TypePie semester: ${JSON.stringify(semester)}`);
+
   const id = "pie-interactive";
 
   // get amount of each tag
