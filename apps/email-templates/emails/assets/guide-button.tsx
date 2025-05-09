@@ -7,7 +7,6 @@ const GuideButton = (props: SVGProps<SVGSVGElement>) => (
     height="98"
     fill="none"
     viewBox="0 0 237 98"
-    {...props}
   >
     <rect
       width="233"

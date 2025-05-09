@@ -12,13 +12,16 @@ import {
 import ConfirmBox from "./assets/confirm-box";
 import ConfirmButton from "./assets/confirm-button";
 import CongratsBox from "./assets/congrats-box";
+import Contact from "./assets/contact";
 import DiscordBox from "./assets/discord-box";
 import DiscordButton from "./assets/discord-button";
 import GraphicsBox from "./assets/graphics-box";
 import GraphicsButton from "./assets/graphics-button";
+import GuideButton from "./assets/guide-button";
 import Hero from "./assets/hero";
 import NextSteps from "./assets/next-steps-divider";
 import ResourcesDivider from "./assets/resources-divider";
+import WebsiteButton from "./assets/website-button";
 
 interface AcceptanceEmailProps {
   name: string;
@@ -118,6 +121,21 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
 
             <Section className="my-5 flex w-full justify-center">
               <ResourcesDivider />
+            </Section>
+
+            <Section className="my-5">
+              <div className="mb-3 flex justify-center space-x-4">
+                <a href="" className="mr-3">
+                  <WebsiteButton />
+                </a>
+                <a href={`${process.env.BLADE_URL}/guide`}>
+                  <GuideButton />
+                </a>
+              </div>
+
+              <div className="flex justify-center">
+                <Contact />
+              </div>
             </Section>
           </Container>
         </Body>
