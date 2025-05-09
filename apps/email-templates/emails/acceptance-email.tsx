@@ -12,8 +12,13 @@ import {
 import ConfirmBox from "./assets/confirm-box";
 import ConfirmButton from "./assets/confirm-button";
 import CongratsBox from "./assets/congrats-box";
+import DiscordBox from "./assets/discord-box";
+import DiscordButton from "./assets/discord-button";
+import GraphicsBox from "./assets/graphics-box";
+import GraphicsButton from "./assets/graphics-button";
 import Hero from "./assets/hero";
 import NextSteps from "./assets/next-steps-divider";
+import ResourcesDivider from "./assets/resources-divider";
 
 interface AcceptanceEmailProps {
   name: string;
@@ -60,12 +65,13 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
               <NextSteps />
             </Section>
 
-            <Section className="flex w-full flex-col items-center justify-center space-y-6">
+            <Section className="mb-10 flex w-full flex-col items-center justify-center space-y-6">
               <Text className="font-manga text-center text-[40px] font-normal leading-[46px] tracking-[0.01em] text-black">
-                1. CONFIRM YOUR <span className="text-[#B25243]">SPOT!</span>
+                1. CONFIRM YOUR{" "}
+                <span className="font-bold text-[#C04B3D]">SPOT!</span>
               </Text>
               <Text className="font-manga text-center text-[20px] font-normal leading-[23px] tracking-[0.01em] text-black">
-                (Spots are filling up quickly—confirm ASAP!)
+                (Spots are filling up quickly confirm ASAP!)
               </Text>
 
               <div className="flex flex-col items-center space-y-4">
@@ -74,6 +80,44 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                   <ConfirmButton className="w-full max-w-xs" />
                 </a>
               </div>
+            </Section>
+
+            <Section>
+              <Text className="font-manga text-center text-[40px] font-normal leading-[46px] tracking-[0.01em] text-black">
+                2. JOIN OUR{" "}
+                <span className="font-bold text-[#4075B7]">DISCORD!</span>
+              </Text>
+              <Text className="font-manga text-center text-[20px] font-normal leading-[23px] tracking-[0.01em] text-black">
+                (Required by October 23rd)
+              </Text>
+
+              <div className="flex flex-col items-center space-y-4">
+                <DiscordBox className="my-4" />
+                <a href={`${process.env.BLADE_URL}/dashboard`}>
+                  <DiscordButton className="w-full max-w-xs" />
+                </a>
+              </div>
+            </Section>
+
+            <Section>
+              <Text className="font-manga text-center text-[40px] font-normal leading-[46px] tracking-[0.01em] text-black">
+                3. SPREAD THE
+                <br />
+                <span className="text-5xl font-bold text-[#C04B3D]">
+                  EXCITEMENT!
+                </span>
+              </Text>
+
+              <div className="flex flex-col items-center space-y-4">
+                <GraphicsBox className="my-4" />
+                <a href={`${process.env.BLADE_URL}/dashboard`}>
+                  <GraphicsButton className="w-full max-w-xs" />
+                </a>
+              </div>
+            </Section>
+
+            <Section className="my-5 flex w-full justify-center">
+              <ResourcesDivider />
             </Section>
           </Container>
         </Body>
