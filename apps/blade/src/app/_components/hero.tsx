@@ -29,6 +29,7 @@ export function Hero() {
                 <form className="p-[1.5px]">
                   <Button
                     size="lg"
+                    className="w-full"
                     formAction={async () => {
                       "use server";
                       await signIn("discord", {
@@ -40,12 +41,12 @@ export function Hero() {
                   </Button>
                 </form>
                 <Link href={"/sponsor"}>
-                  <div className="relative z-10 flex max-w-max cursor-pointer items-center overflow-hidden rounded-md p-[1.5px]">
+                  <div className="relative z-10 flex cursor-pointer items-center overflow-hidden rounded-md p-[1.5px] sm:w-full">
                     <div className="moving-border absolute inset-0 h-full rounded-md bg-[conic-gradient(#0ea5e9_20deg,transparent_120deg)]"></div>
-                    <div className="relative z-20 flex">
+                    <div className="relative z-20 flex w-full">
                       <Button
                         variant="secondary"
-                        className="hover:bg-[#E6E7E9] dark:hover:bg-[#2C3644]"
+                        className="w-full hover:bg-[#E6E7E9] dark:hover:bg-[#2C3644]"
                         size="lg"
                       >
                         Sponsor us!

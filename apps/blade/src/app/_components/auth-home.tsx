@@ -15,10 +15,10 @@ export function AuthHome() {
         Manage your Knight Hacks membership, hackathon information, and more
         with <b>Blade</b>.
       </p>
-      <Link href={"/dashboard"}>
-        <Button size="lg">
+      <Link className="w-full sm:w-auto" href={"/dashboard"}>
+        <Button size="lg" className="w-full sm:w-auto">
           <LayoutDashboard color={"#fff"} size={USER_DROPDOWN_ICON_SIZE} />{" "}
-          <span className="ml-1">Open Dashboard</span>
+          <span className="ml-1">Dashboard</span>
         </Button>
       </Link>
     </div>
