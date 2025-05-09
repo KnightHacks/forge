@@ -6,11 +6,11 @@ import SwordLeft from "./assets/sword-left";
 
 function LeftSide() {
   return (
-    <div className="fixed left-0 z-0 h-full w-1/2 bg-slate-500">
-      <div className="flex h-full flex-col space-y-3 sm:mr-40 sm:space-y-24 md:space-y-20">
-        <SwordLeft className="mt-40 bg-slate-200" />
-        {/* <AbstractLeft className="mt-64 bg-slate-300" /> */}
-        <Shield className="bg-slate-600" />
+    <div className="fixed left-0 z-0 h-full w-1/2 overflow-hidden">
+      <div className="bg-contact-gradient flex h-full flex-col space-y-11">
+        <SwordLeft className="mt-[100px] w-[80%] -translate-x-[2%] transform" />
+        <AbstractLeft className="relative w-[80%] -translate-x-[47%] transform" />
+        <Shield className="w-[80%]" />
       </div>
     </div>
   );
