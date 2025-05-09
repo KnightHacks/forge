@@ -85,7 +85,7 @@ export default {
         },
       },
       screens: {
-        seOnly: { max: '390px' },
+        seOnly: { max: '391px' },
 
       }
     },
