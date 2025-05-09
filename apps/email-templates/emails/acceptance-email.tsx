@@ -3,16 +3,17 @@ import {
   Container,
   Head,
   Html,
-  Img,
   Preview,
   Section,
   Tailwind,
   Text,
 } from "@react-email/components";
 
+import ConfirmBox from "./assets/confirm-box";
+import ConfirmButton from "./assets/confirm-button";
 import CongratsBox from "./assets/congrats-box";
 import Hero from "./assets/hero";
-import KhLogo from "./assets/kh-logo";
+import NextSteps from "./assets/next-steps-divider";
 
 interface AcceptanceEmailProps {
   name: string;
@@ -39,10 +40,6 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
           <Preview>{previewText}</Preview>
 
           <Container className="mx-auto flex flex-col items-center space-y-6 py-8">
-            <Section className="text-center">
-              <KhLogo />
-            </Section>
-
             <Section className="relative mt-[-110px] w-full max-w-[600px]">
               <div className="w-full">
                 <CongratsBox className="h-auto w-full" />
@@ -57,6 +54,26 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
 
             <Section className="text-center">
               <Hero className="mt-5" />
+            </Section>
+
+            <Section className="my-5 flex w-full justify-center">
+              <NextSteps />
+            </Section>
+
+            <Section className="flex w-full flex-col items-center justify-center space-y-6">
+              <Text className="font-manga text-center text-[40px] font-normal leading-[46px] tracking-[0.01em] text-black">
+                1. CONFIRM YOUR <span className="text-[#B25243]">SPOT!</span>
+              </Text>
+              <Text className="font-manga text-center text-[20px] font-normal leading-[23px] tracking-[0.01em] text-black">
+                (Spots are filling up quickly—confirm ASAP!)
+              </Text>
+
+              <div className="flex flex-col items-center space-y-4">
+                <ConfirmBox className="my-4" />
+                <a href={`${process.env.BLADE_URL}/dashboard`}>
+                  <ConfirmButton className="w-full max-w-xs" />
+                </a>
+              </div>
             </Section>
           </Container>
         </Body>
