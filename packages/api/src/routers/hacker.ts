@@ -13,6 +13,7 @@ import {
 
 import { adminProcedure, protectedProcedure } from "../trpc";
 import { log } from "../utils";
+import { Session } from "@forge/db/schemas/auth";
 
 export const hackerRouter = {
   getHacker: protectedProcedure.query(async ({ ctx }) => {
@@ -85,7 +86,15 @@ export const hackerRouter = {
         age: newAge,
         phoneNumber: input.phoneNumber === "" ? null : input.phoneNumber,
       });
+
+      await log({
+        title: "Hacker Created",
+        message: `${input.firstName} ${input.lastName} has signed up for Blade`,
+        color: "tk_blue",
+        userId: ctx.session.user.discordUserId,
+      });
     }),
+
   updateHacker: protectedProcedure
     .input(
       InsertHackerSchema.omit({
@@ -198,6 +207,10 @@ export const hackerRouter = {
         color: "uhoh_red",
         userId: ctx.session.user.discordUserId,
       });
+
+      if (ctx.session.user.id) {
+        await db.delete(Session).where(eq(Session.userId, ctx.session.user.id));
+      }
     }),
 
   confirmHacker: protectedProcedure
