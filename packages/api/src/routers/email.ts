@@ -1,3 +1,4 @@
+import type { HTTPError } from "@discordjs/rest";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
@@ -26,10 +27,9 @@ export const emailRouter = {
             isDefault: false,
           },
         });
-      } catch (err: any) {
-        if (err.code !== 409) {
+      } catch (err: unknown) {
+        if ((err as HTTPError).code !== 409) {
           console.error("Error creating sendAs alias:", err);
-          throw new Error(`Could not add alias: ${err.message || err}`);
         }
       }
 
