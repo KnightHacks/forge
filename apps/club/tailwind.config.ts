@@ -88,7 +88,7 @@ export default {
         seOnly: { max: '391px' },
         seWidth: { max: '376px' },
         'iPadMini': {
-          raw: '(min-width: 768px) and (max-width: 820px) and (min-height: 1024px)',
+          raw: '(min-width: 768px) and (max-width: 819px) and (min-height: 1024px)',
         },
         'iPadPro': {
           raw: '(min-width: 1024px) and (max-width: 1366px) and (min-height: 1366px)',

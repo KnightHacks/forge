@@ -46,10 +46,10 @@ function ContactForm() {
     >
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 bg-white pr-0 sm:ml-5 md:ml-0 md:flex md:w-[80%] md:flex-col md:items-center md:rounded-lg md:p-5 lg:ml-4 lg:block lg:w-auto lg:space-y-6 2xl:ml-10 2xl:mt-10"
+        className="space-y-4 bg-white pb-[15%] pr-0 sm:ml-5 md:ml-0 md:flex md:w-[80%] md:flex-col md:items-center md:rounded-lg md:p-5 md:pb-[13%] md:pt-8 lg:ml-4 lg:block lg:w-auto lg:space-y-6 2xl:ml-10 2xl:mt-10"
       >
         <div id="Name" className="md:w-5/6 lg:w-auto">
-          <label className="block font-bold tracking-wider lg:mb-5 lg:text-2xl 2xl:text-3xl">
+          <label className="mb-2 block font-bold tracking-wider lg:mb-5 lg:text-2xl 2xl:text-3xl">
             Name
           </label>
           <input
