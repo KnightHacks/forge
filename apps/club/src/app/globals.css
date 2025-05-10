@@ -61,46 +61,6 @@ input[type="checkbox"].custom-checkbox:checked::after {
     left: 8px;
   }
 }
-/* @keyframes flickerStart {
-  0%,
-  19%,
-  21%,
-  23%,
-  25%,
-  54%,
-  56%,
-  79% {
-    opacity: 0.6;
-    color: #a855f7;
-  }
-  20%,
-  24%,
-  55% {
-    opacity: 0.3;
-  }
-  78% {
-    opacity: 0.6;
-  }
-  80% {
-    opacity: 0.7;
-  }
-  85% {
-    opacity: 0.79;
-  }
-  90% {
-    opacity: 0.89;
-  }
-  95% {
-    opacity: 0.99;
-  }
-  100% {
-    opacity: 1;
-    color: #c084fc;
-  }
-}
-.flickerStart {
-  animation: flickerStart 10s;
-} */
 
 @keyframes flicker {
   0%,

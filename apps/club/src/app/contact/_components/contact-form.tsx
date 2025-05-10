@@ -42,11 +42,11 @@ function ContactForm() {
   return (
     <div
       id="contactform"
-      className="mt-2 w-auto rounded-md bg-white p-5 text-black md:flex md:justify-center md:px-0 lg:block lg:rounded-xl lg:p-8 2xl:mt-[100vh]"
+      className="mt-2 w-auto rounded-md bg-white p-5 text-black md:flex md:justify-center md:bg-transparent md:px-0 lg:block lg:rounded-xl lg:bg-white lg:p-8 2xl:mt-[100vh]"
     >
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 pr-0 sm:ml-5 md:ml-0 md:flex md:w-5/6 md:flex-col md:items-center lg:ml-4 lg:block lg:w-auto lg:space-y-6 2xl:ml-10 2xl:mt-10"
+        className="space-y-4 bg-white pr-0 sm:ml-5 md:ml-0 md:flex md:w-[80%] md:flex-col md:items-center md:rounded-lg md:p-5 lg:ml-4 lg:block lg:w-auto lg:space-y-6 2xl:ml-10 2xl:mt-10"
       >
         <div id="Name" className="md:w-5/6 lg:w-auto">
           <label className="block font-bold tracking-wider lg:mb-5 lg:text-2xl 2xl:text-3xl">
