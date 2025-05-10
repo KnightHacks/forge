@@ -19,7 +19,7 @@ export default function page() {
 
       {/* Main content */}
       {/* Main content under 2xl */}
-      <div className="z-10 mb-3 mt-[120px] h-5/6 w-[86%] sm:mt-[150px] md:w-5/6 lg:mt-[200px] 2xl:hidden">
+      <div className="z-10 mb-3 mt-[120px] h-5/6 w-[86%] sm:mt-[150px] md:w-[80%] lg:mt-[200px] 2xl:hidden">
         <Header />
         <ContactForm />
       </div>
