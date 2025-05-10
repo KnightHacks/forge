@@ -124,8 +124,8 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
             </Section>
 
             <Section className="my-5">
-              <div className="mb-3 flex justify-center space-x-4">
-                <a href="" className="mr-3">
+              <div className="my-8 flex justify-center space-x-4">
+                <a href="" className="mr-10">
                   <WebsiteButton />
                 </a>
                 <a href={`${process.env.BLADE_URL}/guide`}>
