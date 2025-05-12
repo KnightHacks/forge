@@ -33,7 +33,7 @@ export default {
       colors: {
         background: "hsl(var(--background))",
         950: "10182B",
-        cream: '#F4F4ED',
+        cream: "#F4F4ED",
       },
       boxShadow: {
         impact: `
@@ -57,7 +57,6 @@ export default {
         mono: ["var(--font-geist-mono)", ...fontFamily.mono],
         narrow: ["Pragati Narrow", ...fontFamily.sans],
         prompt: ["Prompt", ...fontFamily.sans],
-
       },
       animation: {
         "infinite-scroll": "infinite-scroll 160s linear infinite",
@@ -85,24 +84,21 @@ export default {
         },
       },
       screens: {
-        seOnly: { max: '391px' },
-        seWidth: { max: '376px' },
-        'iPadMini': {
-          raw: '(min-width: 768px) and (max-width: 819px) and (min-height: 1024px)',
+        seOnly: { max: "391px" },
+        seWidth: { max: "376px" },
+        iPadMini: {
+          raw: "(min-width: 768px) and (max-width: 819px) and (min-height: 1024px)",
         },
-        'iPadPro': {
-          raw: '(min-width: 1024px) and (max-width: 1366px) and (min-height: 1366px)',
+        iPadPro: {
+          raw: "(min-width: 1024px) and (max-width: 1366px) and (min-height: 1366px)",
         },
-        'tall': {
-          raw: '(min-height: 800px) and (max-width: 765px)',
+        tall: {
+          raw: "(min-height: 800px) and (max-width: 765px)",
         },
-        'taller': {
-          raw: '(min-height: 1200px) and (max-width: 1023px)',
+        taller: {
+          raw: "(min-height: 1200px) and (max-width: 1023px)",
         },
-        
-
-
-      }
+      },
     },
   },
 } satisfies Config;
