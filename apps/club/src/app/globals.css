@@ -33,7 +33,7 @@ input[type="checkbox"].custom-checkbox {
   border: 1px solid #000000;
   border-radius: 0.25rem;
   cursor: pointer;
-  saturation: 200%;
+  filter: saturate(200%);
 }
 
 input[type="checkbox"].custom-checkbox:checked {
