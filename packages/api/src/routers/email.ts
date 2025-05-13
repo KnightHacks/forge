@@ -38,7 +38,7 @@ export const emailRouter = {
           `From: ${alias}`,
           `To: ${input.to}`,
           "MIME-Version: 1.0",
-          "Content-Type: text/plain; charset=utf-8",
+          "Content-Type: text/html; charset=utf-8",
           `Subject: ${input.subject}`,
           "",
           input.body,
