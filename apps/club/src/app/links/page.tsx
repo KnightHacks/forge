@@ -13,6 +13,12 @@ import TKNeonSignSVG from './_components/assets/tk-neon-sign';
 import Button from './_components/button';
 import LinksHeader from './_components/links-header';
 
+const buttons = [
+  {text: "Join the Discord!", icon: ChatBubbleSVG, href: "https://discord.knighthacks.org"},
+  {text: "KnightHacks Calendar", icon: BlankCalendarSVG, href: "https://calendar.google.com/calendar/embed?src=c_0b9df2b0062a5d711fc16060ff3286ef404b174bfafc4cbdd4e3009e91536e94%40group.calendar.google.com&ctz=America%2FNew_York"},
+  {text: "Discover more Hackathons!", icon: LaptopChargingSVG, href: "https://instagram.com/knighthacks"},
+];
+
 export default function links() {
   return (
     <div className="h-auto w-screen overflow-hidden bg-[#0F172A] min-h-screen">
@@ -39,9 +45,9 @@ export default function links() {
       {/* Buttons */}
       <main className="relative z-10 px-8 py-14 mt-10 flex justify-center items-center flex-col">
         <div className="flex flex-col gap-y-12 md:gap-y-20 w-[max-content] items-stretch justify-center [&_*]:h-16 [&_*]:md:h-24 [&_*]:justify-center">
-          <Button href="https://discord.knighthacks.org" target="_blank" rel="noopener noreferrer" icon={ChatBubbleSVG}>Join the Discord!</Button>
-          <Button href="https://calendar.google.com/calendar/embed?src=c_0b9df2b0062a5d711fc16060ff3286ef404b174bfafc4cbdd4e3009e91536e94%40group.calendar.google.com&ctz=America%2FNew_York" target="_blank" rel="noopener noreferrer" icon={BlankCalendarSVG}>KnightHacks Calendar</Button>
-          <Button href="https://instagram.com/knighthacks" target="_blank" rel="noopener noreferrer" icon={LaptopChargingSVG}>Discover more Hackathons!</Button>
+          {buttons.map(({text, icon, href}) => (
+            <Button key={href} href={href} target="_blank" rel="noopener noreferrer" icon={icon}>{text}</Button>
+          ))}
         </div>
       </main>
 
