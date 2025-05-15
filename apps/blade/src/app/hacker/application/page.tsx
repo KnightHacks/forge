@@ -16,17 +16,21 @@ import { SIGN_IN_PATH } from "~/consts";
 
   // if (session == null) {
   //   redirect(SIGN_IN_PATH);
-  // }
+  const session = await auth();
 
-  // const isHacker = await api.hacker.getHacker();
+  if (session == null) {
+    redirect(SIGN_IN_PATH);
+  }
 
-  // if (isHacker) {
-  //   return redirect(SIGN_IN_PATH);
-  // }
+  const isHacker = await api.hacker.getHacker();
 
-  // return (
-  //   <main className="px-8 py-4">
-  //     <HackerFormPage />
-  //   </main>
-  // );
+  if (isHacker) {
+    return redirect(SIGN_IN_PATH);
+  }
+
+  return (
+    <main className="px-8 py-4">
+      <HackerFormPage />
+    </main>
+  );
 }

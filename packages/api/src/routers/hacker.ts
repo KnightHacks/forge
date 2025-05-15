@@ -14,7 +14,6 @@ import {
 
 import { adminProcedure, protectedProcedure } from "../trpc";
 import { log } from "../utils";
-import { Session } from "@forge/db/schemas/auth";
 
 export const hackerRouter = {
   getHacker: protectedProcedure.query(async ({ ctx }) => {
