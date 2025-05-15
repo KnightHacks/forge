@@ -41,7 +41,7 @@ const shortenRaceOrEthnicity = (raceOrEthnicity: string): string => {
   return replacements[raceOrEthnicity] ?? raceOrEthnicity;
 };
 
-export default function SchoolYearPie({ people }: { people: Person[] }) {
+export default function RaceOrEthnicityPie({ people }: { people: Person[] }) {
   const id = "pie-interactive";
 
   // get amount of each raceOrEthnicity

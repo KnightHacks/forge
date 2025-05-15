@@ -19,6 +19,7 @@ import {
   sql,
 } from "@forge/db";
 import { db } from "@forge/db/client";
+import { Session } from "@forge/db/schemas/auth";
 import {
   DuesPayment,
   Event,
@@ -30,7 +31,6 @@ import {
 import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { log } from "../utils";
-import { Session } from "@forge/db/schemas/auth";
 
 export const memberRouter = {
   // -------------------- MEMBER DASHBOARD ENDPOINTS --------------------

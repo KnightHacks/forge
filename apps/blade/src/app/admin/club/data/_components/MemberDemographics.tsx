@@ -1,11 +1,11 @@
 "use client";
 
 import { api } from "~/trpc/react";
-import AgeBarChart from "./member-data/AgeBarChart";
+import AgeBarChart from "../../../_components/AgeBarChart";
+import RaceOrEthnicityPie from "../../../_components/RaceOrEthnicityPie";
+import SchoolYearPie from "../../../_components/SchoolYearPie";
 import EngagementInfo from "./member-data/EngagementInfo";
 import GenderPie from "./member-data/GenderPie";
-import RaceOrEthnicityPie from "./member-data/RaceOrEthnicityPie";
-import SchoolYearPie from "./member-data/SchoolYearPie";
 
 export default function MemberDemographics() {
   const { data: members } = api.member.getMembers.useQuery();
