@@ -10,8 +10,8 @@ import { SIGN_IN_PATH } from "~/consts";
 // import { HackerFormPage } from "./_components/hacker-application-form";
 
 // export default async function HackerApplicationPage() {
-export default function HackerApplicationPage() {
-  redirect(SIGN_IN_PATH);
+  export default function HackerApplicationPage() {
+    redirect(SIGN_IN_PATH);
   // const session = await auth();
 
   // if (session == null) {
