@@ -12,8 +12,8 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 
-import MemberProfileButton from "~/app/admin/members/_components/member-profile";
 import { api } from "~/trpc/react";
+import MemberProfileButton from "../../members/_components/member-profile";
 
 export function ViewAttendanceButton({
   event,

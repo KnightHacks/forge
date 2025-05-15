@@ -16,8 +16,8 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
+import SortButton from "~/app/admin/_components/SortButton";
 import { api } from "~/trpc/react";
-import SortButton from "../../_components/SortButton";
 import ClearDuesButton from "./clear-dues";
 import DeleteMemberButton from "./delete-member";
 import DuesToggleButton from "./dues-toggle";

@@ -32,12 +32,15 @@ export const adminItems: roleItems[] = [
     ),
     route: "/admin",
   },
+];
+
+export const adminClubItems: roleItems[] = [
   {
     name: "Members",
     component: (
       <User color={USER_DROPDOWN_ICON_COLOR} size={USER_DROPDOWN_ICON_SIZE} />
     ),
-    route: "/admin/members",
+    route: "/admin/club/members",
   },
   {
     name: "Events",
@@ -47,7 +50,7 @@ export const adminItems: roleItems[] = [
         size={USER_DROPDOWN_ICON_SIZE}
       />
     ),
-    route: "/admin/events",
+    route: "/admin/club/events",
   },
   {
     name: "Data",
@@ -57,7 +60,20 @@ export const adminItems: roleItems[] = [
         size={USER_DROPDOWN_ICON_SIZE}
       />
     ),
-    route: "/admin/data",
+    route: "/admin/club/data",
+  },
+];
+
+export const adminHackathonItems: roleItems[] = [
+  {
+    name: "Data",
+    component: (
+      <ChartPie
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/hackathon/data",
   },
 ];
 

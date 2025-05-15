@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { and, count, desc, eq, exists, getTableColumns } from "@forge/db";
 import { db } from "@forge/db/client";
+import { Session } from "@forge/db/schemas/auth";
 import {
   Hackathon,
   Hacker,
@@ -13,7 +14,6 @@ import {
 
 import { adminProcedure, protectedProcedure } from "../trpc";
 import { log } from "../utils";
-import { Session } from "@forge/db/schemas/auth";
 
 export const hackerRouter = {
   getHacker: protectedProcedure.query(async ({ ctx }) => {

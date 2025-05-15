@@ -1,7 +1,7 @@
+import AgeBarChart from "~/app/admin/_components/AgeBarChart";
+import RaceOrEthnicityPie from "~/app/admin/_components/RaceOrEthnicityPie";
+import SchoolYearPie from "~/app/admin/_components/SchoolYearPie";
 import { api } from "~/trpc/react";
-import AgeBarChart from "../../_components/member-data/AgeBarChart";
-import RaceOrEthnicityPie from "../../_components/member-data/RaceOrEthnicityPie";
-import SchoolYearPie from "../../_components/member-data/SchoolYearPie";
 import FirstTimeInfo from "./FirstTimeInfo";
 
 export default function HackerCharts({ hackathonId }: { hackathonId: string }) {

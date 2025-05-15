@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 import { Button } from "@forge/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
@@ -39,19 +40,33 @@ export default async function Admin() {
           <h1 className="mb-2 w-full break-words text-center text-3xl font-extrabold leading-tight tracking-tight sm:text-[3rem]">
             Let&apos;s get cooking.
           </h1>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/admin/members">
-              <Button>Members</Button>
-            </Link>
-            <Link href="/admin/events">
-              <Button>Events</Button>
-            </Link>
-            <Link href="/admin/data">
-              <Button>Club Data</Button>
-            </Link>
-            <Link href="/admin/data/hackathondata">
-              <Button>Hackathon Data</Button>
-            </Link>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-center">Club</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap items-center justify-center gap-4">
+                <Link href="/admin/club/members">
+                  <Button>Members</Button>
+                </Link>
+                <Link href="/admin/club/events">
+                  <Button>Events</Button>
+                </Link>
+                <Link href="/admin/club/data">
+                  <Button>Data</Button>
+                </Link>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-center">Hackathon</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap items-center justify-center gap-4">
+                <Link href="/admin/hackathon/data">
+                  <Button>Data</Button>
+                </Link>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
