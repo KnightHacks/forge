@@ -23,7 +23,7 @@ export const emailRouter = {
           userId: "me",
           requestBody: {
             sendAsEmail: alias,
-            displayName: "KnightHacks",
+            displayName: "Knight Hacks",
             treatAsAlias: true,
             isDefault: false,
           },
