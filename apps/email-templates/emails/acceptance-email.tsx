@@ -71,6 +71,7 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
               >
                 <tr>
                   <td
+                    // @ts-ignore
                     background="https://i.imgur.com/EtRmspk.png"
                     width="700"
                     height="200"

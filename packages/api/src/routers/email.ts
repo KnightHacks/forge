@@ -1,5 +1,5 @@
-import type { HTTPError } from "@discordjs/rest";
 import type { TRPCRouterRecord } from "@trpc/server";
+import type { GaxiosError } from "googleapis-common";
 import { z } from "zod";
 
 import { publicProcedure } from "../trpc";
@@ -29,7 +29,7 @@ export const emailRouter = {
           },
         });
       } catch (err: unknown) {
-        if ((err as HTTPError).code !== 409) {
+        if ((err as GaxiosError).code !== "409") {
           console.error("Error creating sendAs alias:", err);
         }
       }
