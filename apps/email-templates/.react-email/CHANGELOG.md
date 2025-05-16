@@ -1,0 +1,302 @@
+# react-email
+
+## 4.0.11
+
+### Patch Changes
+
+- 1a17219: fix improper `require` in `email export`
+- 45ab698: update next to 15.3.1
+
+## 4.0.10
+
+### Patch Changes
+
+- 5ef9fe8: fix support for `import ... = require(...)` syntax
+- 4c7f597: fix `email dev` not working with `traversal` error
+
+## 4.0.9
+
+### Patch Changes
+
+- 643d841: Add .json import support for hot reloading
+- f21a983: fix Node 18 support
+- cd02449: Ensure dependencies outside emails directory are completely resolved
+- 73a31ed: Fix dependent of dependents not causing hot reloads
+- bdffd8c: fix backwards compatibility with `render` versions
+- e7fa043: Fix access to files outside `static` directory
+- 9aa033c: Use range of versions for dependencies
+- ab70556: Fix non-email files being rendered during hot reloading
+- 9c9aa5d: Add error message for when an email template does not have a default export
+
+## 4.0.8
+
+### Patch Changes
+
+- ea579b5: Log out errors that happen when `export`'s esbuild fails
+
+## 4.0.7
+
+### Patch Changes
+
+- 403e415: Fix `deno` not working as an option for `email build`
+
+## 4.0.6
+
+### Patch Changes
+
+- 809130e: `next@15.2.4`
+
+## 4.0.5
+
+### Patch Changes
+
+- e1dc351: Add support for path aliases when linter runs tailwind config
+
+## 4.0.4
+
+### Patch Changes
+
+- 1a7f9e6: Update dependencies: `next@15.2.3`
+- 9832b5e: Fixed support for importing modules when linter loads Tailwind config
+
+## 4.0.3
+
+### Patch Changes
+
+- 962f768: update esbuild to 0.25.0
+- 2225fe6: Fix detection of files with various export patterns
+
+## 4.0.2
+
+### Patch Changes
+
+- ddf9652: Fix crashing when the link or image does not exist
+
+## 4.0.1
+
+### Patch Changes
+
+- 8fd7409: Fix static files regression
+- 8448a0b: Improved classes, better borders on table, improved scollbar colors
+
+## 4.0.0
+
+### Major Changes
+
+- 56ab5ab: Add toolbar with image/link validation, compatibility checking and a spam scoring system
+
+## 3.0.7
+
+### Patch Changes
+
+- c61760e: use the `punycode` package for the static modules
+- 382c305: Fixes active state for root email templats on file tree
+- 519f0c6: Respect user's NODE_ENV when previewing templates
+- e149816: Upgrade socket.io to 4.8.1
+
+## 3.0.7-canary.1
+
+### Patch Changes
+
+- 57db6f7: Upgrade socket.io to 4.8.1
+
+## 3.0.7-canary.0
+
+### Patch Changes
+
+- 98b434c: Fixes active state for root email templats on file tree
+- 1c5c986: Respect user's NODE_ENV when previewing templates
+
+## 3.0.6
+
+### Patch Changes
+
+- c6fcd94: Fix preview server crashing without React 19
+
+## 3.0.5
+
+### Patch Changes
+
+- 7337d04: Fix emails being re-rendered each time there is navigation in the preview server
+
+## 3.0.4
+
+### Patch Changes
+
+- 8f395d2: Update to React 19
+
+## 3.0.3
+
+### Patch Changes
+
+- 1e82151: fix null byte characters being rendered in the preview server
+- b34aa90: Move react and react-dom to just dependencies for better DX
+- 6781316: Improve error messages for all CLI commands
+
+## 3.0.3-canary.2
+
+### Patch Changes
+
+- 6781316: Improve error messages for all CLI commands
+
+## 3.0.3-canary.1
+
+### Patch Changes
+
+- 6facd7c: fix null byte characters being rendered in the preview server
+
+## 3.0.3-canary.0
+
+### Patch Changes
+
+- f7833da: Move react and react-dom to just dependencies for better DX
+
+## 3.0.2
+
+### Patch Changes
+
+- dc72ca4: bump chokidar to v4
+- 2a8675a: Add util/types as a module
+- 4b174a4: Fix missing Request and Response globals
+- 7eb68af: Fix NODE_ENV for emails as "PRODUCTION" instead of "DEVELOPMENT"
+- 76183e0: Update socket.io and socket.io-client
+- f295614: Add AbortSignal, Event and EventTarget
+- bb79540: Add missing timers/promises Node module for `email dev`
+
+## 3.0.2-canary.4
+
+### Patch Changes
+
+- 76183e0: Update socket.io and socket.io-client
+
+## 3.0.2-canary.3
+
+### Patch Changes
+
+- ac01c91: bump chokidar to v4
+
+## 3.0.2-canary.2
+
+### Patch Changes
+
+- 59e27bc: Add missing timers/promises Node module for `email dev`
+
+## 3.0.2-canary.1
+
+### Patch Changes
+
+- 8ceb667: Add util/types as a module
+- da82d77: Add AbortSignal, Event and EventTarget
+
+## 3.0.2-canary.0
+
+### Patch Changes
+
+- 76bbf7b: Fix missing Request and Response globals
+- 1af53fb: Fix NODE_ENV for emails as "PRODUCTION" instead of "DEVELOPMENT"
+
+## 3.0.1
+
+### Patch Changes
+
+- a40904e: Fix hot reloading
+
+## 3.0.0
+
+### Major Changes
+
+- 1a47335: Use a built version of preview app when running `email dev`
+
+### Patch Changes
+
+- 19cab7b: Fixes decorators causing dependency tree babel parsing to fail
+- 14b7d1d: update socket.io/socket.io-client to 4.7.5
+- b68e166: Fix sharp warning when running `email dev`
+- 3caaf53: Updated peer dependencies to allow for React 19 release candidated and React 19 itself
+- 9a5fd78: fix email template preview failing with emails having spaces
+- d118a39: Fixes tooltip color being black for specific theming configurations
+- 481e339: Fixes root directories being hidden when they are alone at their depth
+- f9483ec: Deprecated `renderAsync` and made `render` itself always async
+
+  ## Why
+
+  Three reasons:
+
+  1. Better support of NextJS's latest versions
+  2. Being ready for future React API deprecations
+  3. Support for Suspense which allows for using async inside components
+
+  See https://github.com/resend/react-email/discussions/1144 for more info.
+
+  ## How to upgrade
+
+  If you are using the old `render`, you will need to now treat the Promise
+  that comes out of it, as it is now async. If you are using `renderAsync`,
+  you can replace it with `render` and things should work the same.
+
+## 3.0.0-canary.1
+
+### Patch Changes
+
+- b87cbbf: Fix sharp warning when running `email dev`
+
+## 3.0.0-canary.0
+
+### Major Changes
+
+- f552226: Use a built version of preview app when running `email dev`
+
+### Patch Changes
+
+- 2799bb4: fix email template preview failing with emails having spaces
+- 3f67038: Deprecated `renderAsync` and made `render` itself always async
+
+  ## Why
+
+  Three reasons:
+
+  1. Better support of NextJS's latest versions
+  2. Being ready for future React API deprecations
+  3. Support for Suspense which allows for using async inside components
+
+  See https://github.com/resend/react-email/discussions/1144 for more info.
+
+  ## How to upgrade
+
+  If you are using the old `render`, you will need to now treat the Promise
+  that comes out of it, as it is now async. If you are using `renderAsync`,
+  you can replace it with `render` and things should work the same.
+
+## 2.1.7-canary.2
+
+### Patch Changes
+
+- 349e5d5: Fixes decorators causing dependency tree babel parsing to fail
+- 983626d: Fixes root directories being hidden when they are alone at their depth
+
+## 2.1.7-canary.1
+
+### Patch Changes
+
+- 6f5204e: Fixes tooltip color being black for specific theming configurations
+
+## 2.1.7-canary.0
+
+### Patch Changes
+
+- 27234ec: update socket.io/socket.io-client to 4.7.5
+- a1c016b: Updated peer dependencies to allow for React 19 release candidated and React 19 itself
+
+## 2.1.6
+
+### Patch changes
+
+- Fixes live refresh not working with files outside `emails` directory
+- Fixes export failing when templates have different suffixes
+
+## 2.1.6-canary.0
+
+### Patch changes
+
+- Fixes live refresh not working with files outside `emails` directory
+- Fixes export failing when templates have different suffixes
