@@ -17,6 +17,7 @@ export const emailRouter = {
     )
     .mutation(async ({ input }) => {
       const alias = input.from;
+
       try {
         await gmail.users.settings.sendAs.create({
           userId: "me",

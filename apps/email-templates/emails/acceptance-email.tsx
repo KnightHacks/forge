@@ -25,18 +25,43 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
           theme: {
             extend: {
               fontFamily: {
-                manga: ["'Manga Temple'", "cursive"],
+                manga: ["'Manga Temple'"],
               },
             },
           },
         }}
       >
-        <Body className="m-0 bg-white p-0 font-sans">
+        <Body className="m-0 bg-[#ECECEC] p-0 font-sans">
           <Preview>{previewText}</Preview>
 
           <Container className="mx-auto max-w-[600px] p-0">
-            {/* HERO SECTION */}
-            <Section className="mx-auto w-full p-0">
+            <Section className="my-1 p-0">
+              <table
+                role="presentation"
+                width="100%"
+                cellPadding={0}
+                cellSpacing={0}
+                border={0}
+              >
+                <tr>
+                  <td align="center">
+                    <Img
+                      src="https://i.imgur.com/UvC8nCh.png"
+                      width={700}
+                      height="auto"
+                      alt="Divider"
+                      style={{
+                        maxWidth: "50%",
+                        height: "auto",
+                        margin: "0 auto",
+                      }}
+                    />
+                  </td>
+                </tr>
+              </table>
+            </Section>
+
+            <Section className="z-10 mx-auto w-full p-0">
               <table
                 role="presentation"
                 width="100%"
@@ -46,8 +71,8 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
               >
                 <tr>
                   <td
-                    background="https://i.imgur.com/Vy2KhuE.png"
-                    width="600"
+                    background="https://i.imgur.com/EtRmspk.png"
+                    width="700"
                     height="200"
                     align="left"
                     valign="middle"
@@ -57,12 +82,12 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                     }}
                   >
                     <Text
-                      className="font-manga ml-10 text-[28px] font-bold leading-tight"
+                      className="font-manga ml-10 text-[28px] font-bold leading-tight text-[#070708]"
                       style={{ margin: 0, padding: "20px" }}
                     >
-                      &nbsp;&nbsp;&nbsp;Congrats,&nbsp;
+                      &nbsp;&nbsp;&nbsp; Congrats,&nbsp;
                       <span className="text-[32px] font-bold text-[#C04B3D]">
-                        {name}
+                        {name}!
                       </span>
                     </Text>
                   </td>
@@ -73,7 +98,7 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
             {/* BANNER IMAGE */}
             <Section className="p-0 text-center">
               <Img
-                src="https://i.imgur.com/eaxb3th.png"
+                src="https://i.imgur.com/6fDiTiv.png"
                 width={600}
                 alt="KnightHacks Banner"
                 className="mt-[-50px] h-auto w-full"
@@ -207,7 +232,7 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                 </tr>
                 <tr>
                   <td align="center" style={{ padding: "10px 0" }}>
-                    <a href={`${process.env.BLADE_URL}/dashboard`}>
+                    <a href={"https://discord.com/invite/Kv5g9vf"}>
                       <Img
                         src="https://i.imgur.com/CuX6BqL.png"
                         width={280}
@@ -350,6 +375,32 @@ export const AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                       height="auto"
                       alt="Footer Image"
                       style={{ maxWidth: "100%", height: "auto" }}
+                    />
+                  </td>
+                </tr>
+              </table>
+            </Section>
+
+            <Section className="my-1 p-0">
+              <table
+                role="presentation"
+                width="100%"
+                cellPadding={0}
+                cellSpacing={0}
+                border={0}
+              >
+                <tr>
+                  <td align="center">
+                    <Img
+                      src="https://i.imgur.com/UvC8nCh.png"
+                      width={700}
+                      height="auto"
+                      alt="Divider"
+                      style={{
+                        maxWidth: "50%",
+                        height: "auto",
+                        margin: "0 auto",
+                      }}
                     />
                   </td>
                 </tr>
