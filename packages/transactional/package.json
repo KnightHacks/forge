@@ -12,6 +12,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "email dev",
     "format": "prettier --check . --ignore-path ../../.gitignore",
+    "format:fix": "prettier --write . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
