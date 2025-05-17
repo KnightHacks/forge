@@ -1,0 +1,15 @@
+{
+  "extends": "@forge/tsconfig/internal-package.json",
+  "include": [
+    ".", "src/emailsailssrc/emailsc/emailsc/emails"
+  ],
+  "exclude": [
+    "dist",
+    "build",
+    "node_modules"
+  ],
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-jsx"
+  }
+}

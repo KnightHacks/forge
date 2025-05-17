@@ -93,6 +93,9 @@ importers:
       '@forge/emails':
         specifier: workspace:^
         version: link:../email-templates
+      '@forge/transactional':
+        specifier: workspace:^
+        version: link:../../packages/transactional
       '@forge/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -617,6 +620,46 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.4.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.7.2
+
+  packages/transactional:
+    dependencies:
+      '@react-email/components':
+        specifier: 0.0.38
+        version: 0.0.38(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react:
+        specifier: ^19.0.0
+        version: 19.1.0
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.1.0(react@19.1.0)
+    devDependencies:
+      '@forge/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@forge/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
+      '@forge/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@types/react':
+        specifier: ^19.0.10
+        version: 19.1.2
+      '@types/react-dom':
+        specifier: ^19.0.4
+        version: 19.1.2(@types/react@19.1.2)
+      eslint:
+        specifier: 'catalog:'
+        version: 9.17.0(jiti@2.4.2)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.4.2
+      react-email:
+        specifier: 4.0.11
+        version: 4.0.11(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       typescript:
         specifier: 'catalog:'
         version: 5.7.2

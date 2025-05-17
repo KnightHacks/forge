@@ -1,0 +1,35 @@
+{
+  "name": "@forge/transactional",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "email dev",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "devDependencies": {
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "react-email": "4.0.11",
+    "typescript": "catalog:"
+  },
+  "prettier": "@forge/prettier-config",
+  "dependencies": {
+    "@react-email/components": "0.0.38",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
