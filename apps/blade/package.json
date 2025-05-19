@@ -21,7 +21,6 @@
     "@forge/auth": "workspace:*",
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
-    "@forge/emails": "workspace:^",
     "@forge/transactional": "workspace:^",
     "@forge/ui": "workspace:*",
     "@forge/validators": "workspace:*",
