@@ -133,10 +133,7 @@ export function MemberProfileForm({
         .string()
         .pipe(z.coerce.date())
         .transform((date) => date.toISOString()),
-      gradDate: z
-        .string()
-        .pipe(z.coerce.date())
-        .transform((date) => date.toISOString()),
+      gradDate: z.string(),
       githubProfileUrl: z
         .string()
         .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")

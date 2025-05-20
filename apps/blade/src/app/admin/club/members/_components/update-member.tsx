@@ -89,7 +89,7 @@ export default function UpdateMemberButton({
       lastName: member.lastName || "",
       email: member.email || "",
       points: (member.points ?? 0).toString(),
-      phoneNumber: member.phoneNumber ?? "",
+      phoneNumber: member.phoneNumber || "",
       dob: member.dob || "",
       gender: member.gender,
       school: member.school,
@@ -375,6 +375,7 @@ export default function UpdateMemberButton({
                     e.preventDefault();
                     setIsOpen(false);
                   }}
+                  disabled={isLoading}
                 >
                   Cancel
                 </Button>

@@ -21,7 +21,7 @@ export function MemberAppCard() {
         </div>
         <CardTitle className="text-2xl">Become a Member</CardTitle>
         <CardDescription>
-          Join our community of passionate individuals
+          Join our community of passionate individuals!
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
@@ -61,7 +61,7 @@ export function HackerAppCard() {
         </div>
         <CardTitle className="text-2xl">Join the Hackathon!</CardTitle>
         <CardDescription>
-          Build, innovate, and compete in 36 hours
+          Build, innovate, and compete in 36 hours!
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">

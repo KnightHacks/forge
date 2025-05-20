@@ -121,7 +121,7 @@ export const memberRouter = {
         });
       }
 
-      const { id, dob, ...updateData } = input;
+      const { id, dob, phoneNumber, ...updateData } = input;
 
       const member = await db.query.Member.findFirst({
         where: (t, { eq }) => eq(t.id, id),
@@ -133,6 +133,8 @@ export const memberRouter = {
           code: "NOT_FOUND",
         });
       }
+
+      const normalizedPhone = phoneNumber === "" ? null : phoneNumber;
       const resume = input.resumeUrl ?? member.resumeUrl;
 
       // Check if the age has been updated
@@ -153,7 +155,7 @@ export const memberRouter = {
           resumeUrl: resume,
           dob: dob,
           age: newAge,
-          phoneNumber: input.phoneNumber == "" ? null : input.phoneNumber,
+          phoneNumber: normalizedPhone,
         })
         .where(eq(Member.userId, ctx.session.user.id));
 
@@ -179,6 +181,13 @@ export const memberRouter = {
           }
         >,
       );
+
+      if ((member.phoneNumber ?? "") !== (normalizedPhone ?? "")) {
+        changes.phoneNumber = {
+          before: member.phoneNumber,
+          after: normalizedPhone,
+        };
+      }
 
       // Convert the changes object to a string for the log
       const changesString = Object.entries(changes)

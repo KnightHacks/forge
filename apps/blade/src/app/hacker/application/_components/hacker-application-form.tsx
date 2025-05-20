@@ -533,7 +533,7 @@ export function HackerFormPage() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Why do you want to attend Knighthacks?{" "}
+                Why do you want to attend Knight Hacks?{" "}
                 <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
@@ -553,7 +553,7 @@ export function HackerFormPage() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                What do you hope to achieve at Knighthacks?{" "}
+                What do you hope to achieve at Knight Hacks?{" "}
                 <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>

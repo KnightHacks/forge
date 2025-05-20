@@ -107,10 +107,7 @@ export function HackerProfileForm({
         .string()
         .pipe(z.coerce.date())
         .transform((date) => date.toISOString()),
-      gradDate: z
-        .string()
-        .pipe(z.coerce.date())
-        .transform((date) => date.toISOString()),
+      gradDate: z.string(),
       survey1: z.string().min(1, "Required"),
       survey2: z.string().min(1, "Required"),
       githubProfileUrl: z
@@ -560,7 +557,7 @@ export function HackerProfileForm({
           <div className="!mt-10">
             <h3 className="text-lg font-medium">Hackathon Survey</h3>
             <p className="text-sm text-muted-foreground">
-              Feel free to include what makes you, you.
+              Tell us a bit more about yourself!
             </p>
           </div>
           <FormField

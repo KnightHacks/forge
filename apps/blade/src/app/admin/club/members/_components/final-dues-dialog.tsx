@@ -106,6 +106,7 @@ export default function FinalDuesDialogButton({
               setFirstOpen(false);
               setSecondOpen(false);
             }}
+            disabled={isLoading}
           >
             Cancel
           </Button>

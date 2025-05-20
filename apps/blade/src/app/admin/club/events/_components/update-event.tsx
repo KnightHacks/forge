@@ -154,6 +154,8 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
   });
 
   const onSubmit = form.handleSubmit((values) => {
+    setIsLoading(true);
+
     // Extract year, month, and day explicitly to construct a local Date object
     const [year, month, day] = values.date.split("-").map(Number);
 
@@ -574,6 +576,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                   e.preventDefault();
                   setIsOpen(false);
                 }}
+                disabled={isLoading}
               >
                 Cancel
               </Button>
