@@ -20,7 +20,7 @@ import { SIGN_IN_PATH } from "~/consts";
   // if (session == null) {
 // export default async function HackerApplicationPage() {
 export default function HackerApplicationPage() {
-    redirect(SIGN_IN_PATH);
+  redirect(SIGN_IN_PATH);
   // const session = await auth();
 
   // if (session == null) {
