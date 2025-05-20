@@ -97,6 +97,7 @@ export default function DeleteMemberButton({
               setIsOpen(false);
               setConfirm("");
             }}
+            disabled={isLoading}
           >
             Cancel
           </Button>

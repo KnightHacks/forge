@@ -62,6 +62,9 @@ export default async function Admin() {
                 <CardTitle className="text-center">Hackathon</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-wrap items-center justify-center gap-4">
+                <Link href="/admin/hackathon/hackers">
+                  <Button>Hackers</Button>
+                </Link>
                 <Link href="/admin/hackathon/data">
                   <Button>Data</Button>
                 </Link>

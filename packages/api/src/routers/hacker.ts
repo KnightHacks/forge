@@ -48,6 +48,10 @@ export const hackerRouter = {
     return hackers;
   }),
 
+  getAllHackers: adminProcedure.query(async () => {
+    return await db.query.Hacker.findMany();
+  }),
+
   // Temporarily admin-only until we roll out hacker applications
   createHacker: adminProcedure
     .input(
@@ -89,7 +93,7 @@ export const hackerRouter = {
 
       await log({
         title: "Hacker Created",
-        message: `${input.firstName} ${input.lastName} has signed up for Blade`,
+        message: `${input.firstName} ${input.lastName} has signed up for the hackathon!`,
         color: "tk_blue",
         userId: ctx.session.user.discordUserId,
       });
@@ -111,7 +115,7 @@ export const hackerRouter = {
         });
       }
 
-      const { id, dob, ...updateData } = input;
+      const { id, dob, phoneNumber, ...updateData } = input;
 
       const hacker = await db.query.Hacker.findFirst({
         where: (t, { eq }) => eq(t.id, id),
@@ -124,6 +128,7 @@ export const hackerRouter = {
         });
       }
 
+      const normalizedPhone = phoneNumber === "" ? null : phoneNumber;
       const resume = input.resumeUrl ?? hacker.resumeUrl;
 
       // Check if the age has been updated
@@ -144,7 +149,7 @@ export const hackerRouter = {
           resumeUrl: resume,
           dob: dob,
           age: newAge,
-          phoneNumber: input.phoneNumber == "" ? null : input.phoneNumber,
+          phoneNumber: normalizedPhone,
         })
         .where(eq(Hacker.userId, ctx.session.user.id));
 
@@ -170,6 +175,13 @@ export const hackerRouter = {
           }
         >,
       );
+
+      if ((hacker.phoneNumber ?? "") !== (normalizedPhone ?? "")) {
+        changes.phoneNumber = {
+          before: hacker.phoneNumber,
+          after: normalizedPhone,
+        };
+      }
 
       // Convert the changes object to a string for the log
       const changesString = Object.entries(changes)

@@ -105,6 +105,7 @@ export function DeleteEventButton({ event }: DeleteEventButtonProps) {
               setIsOpen(false);
               setConfirmationText("");
             }}
+            disabled={isLoading}
           >
             Cancel
           </Button>

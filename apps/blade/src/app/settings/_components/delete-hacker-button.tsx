@@ -98,6 +98,7 @@ export default function DeleteHackerButton({
               setIsOpen(false);
               setConfirmationText("");
             }}
+            disabled={isLoading}
           >
             Cancel
           </Button>

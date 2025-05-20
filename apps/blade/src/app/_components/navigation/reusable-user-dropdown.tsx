@@ -3,6 +3,7 @@ import {
   ChartPie,
   Settings,
   ShieldCheck,
+  Swords,
   User,
 } from "lucide-react";
 
@@ -65,6 +66,16 @@ export const adminClubItems: roleItems[] = [
 ];
 
 export const adminHackathonItems: roleItems[] = [
+  {
+    name: "Hackers",
+    component: (
+      <Swords
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/hackathon/hackers",
+  },
   {
     name: "Data",
     component: (
