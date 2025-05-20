@@ -35,7 +35,9 @@ function ContactForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // const jsonFormData = JSON.stringify(formData);
+    const jsonFormData = JSON.stringify(formData);
+    // eslint-disable-next-line no-console
+    console.log("The Form:", jsonFormData);
   };
 
   return (
