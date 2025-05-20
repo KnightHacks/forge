@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
 
-import type { InsertHacker, Hacker } from "@forge/db/schemas/knight-hacks";
+import type { Hacker, InsertHacker } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
@@ -16,13 +16,13 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
-import { api } from "~/trpc/react";
 import SortButton from "~/app/admin/_components/SortButton";
-import UpdateHackerButton from "./update-hacker";
+import { HACKER_STATUS_MAP } from "~/consts";
+import { api } from "~/trpc/react";
 import DeleteHackerButton from "./delete-hacker";
 import HackerProfileButton from "./hacker-profile";
 import HackerSurveyResponsesButton from "./hacker-survey-responses";
-import { HACKER_STATUS_MAP } from "~/consts";
+import UpdateHackerButton from "./update-hacker";
 
 function parseDate(datePart: string, timePart: string): Date {
   const date = new Date(datePart);
@@ -47,22 +47,22 @@ type TimeOrder = "asc" | "desc";
 type ActiveOrder = "time" | "field";
 
 export default function HackerTable() {
-    const [sortField, setSortField] = useState<SortField | null>(null);
-    const [sortOrder, setSortOrder] = useState<SortOrder>(null);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
-    const [activeSort, setActiveSort] = useState<ActiveOrder>("field");
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
+  const [activeSort, setActiveSort] = useState<ActiveOrder>("field");
 
-    const { data: hackers } = api.hacker.getAllHackers.useQuery();
+  const { data: hackers } = api.hacker.getAllHackers.useQuery();
 
-    const filteredHackers = (hackers ?? []).filter((hacker) =>
-      Object.values(hacker).some((value) => {
-        if (value === null) return false;
-        return value.toString().toLowerCase().includes(searchTerm.toLowerCase());
-      }),
-    );
+  const filteredHackers = (hackers ?? []).filter((hacker) =>
+    Object.values(hacker).some((value) => {
+      if (value === null) return false;
+      return value.toString().toLowerCase().includes(searchTerm.toLowerCase());
+    }),
+  );
 
-    const sortedHackers = [...filteredHackers].sort((a, b) => {
+  const sortedHackers = [...filteredHackers].sort((a, b) => {
     const dateA = parseDate(a.dateCreated, a.timeCreated);
     const dateB = parseDate(b.dateCreated, b.timeCreated);
 
@@ -78,7 +78,7 @@ export default function HackerTable() {
 
     return 0;
   });
- 
+
   const toggleTimeSort = () => {
     setTimeSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     setActiveSort("time");
@@ -87,7 +87,7 @@ export default function HackerTable() {
   const toggleFieldSort = () => {
     setActiveSort("field");
   };
-    
+
   return (
     <div>
       <div className="flex flex-col border-b pb-2">
@@ -192,7 +192,9 @@ export default function HackerTable() {
                 {hacker.discordUser}
               </TableCell>
               <TableCell className="font-medium">{hacker.email}</TableCell>
-              <TableCell className={`text-center font-bold ${HACKER_STATUS_MAP[hacker.status].color}`}>
+              <TableCell
+                className={`text-center font-bold ${HACKER_STATUS_MAP[hacker.status].color}`}
+              >
                 {HACKER_STATUS_MAP[hacker.status].name}
               </TableCell>
               <TableCell className="text-center">
