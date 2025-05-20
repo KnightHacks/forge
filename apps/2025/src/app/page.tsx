@@ -1,4 +1,3 @@
-import Img from "next/image";
 export default async function Home() {
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-[url('/background.svg')] bg-cover">
