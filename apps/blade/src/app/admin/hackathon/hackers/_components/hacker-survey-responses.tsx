@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@forge/ui/button";
 
-import { InsertHacker } from "@forge/db/schemas/knight-hacks";
+import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
 import {
   Dialog,
   DialogContent,

@@ -262,7 +262,9 @@ export function MemberProfileForm({
             name="firstName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>First Name</FormLabel>
+                <FormLabel>
+                  First Name <span className="text-destructive">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input placeholder="Lenny" {...field} />
                 </FormControl>
@@ -275,7 +277,9 @@ export function MemberProfileForm({
             name="lastName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Last Name</FormLabel>
+                <FormLabel>
+                  Last Name <span className="text-destructive">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input placeholder="Dragonson" {...field} />
                 </FormControl>
@@ -288,7 +292,9 @@ export function MemberProfileForm({
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>
+                  Email <span className="text-destructive">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input placeholder="tk@knighthacks.org" {...field} />
                 </FormControl>
@@ -301,7 +307,13 @@ export function MemberProfileForm({
             name="phoneNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone Number</FormLabel>
+                <FormLabel>
+                  Phone Number
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
                 <FormControl>
                   <Input type="tel" placeholder="123-456-7890" {...field} />
                 </FormControl>
@@ -314,7 +326,9 @@ export function MemberProfileForm({
             name="dob"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Date Of Birth</FormLabel>
+                <FormLabel>
+                  Date Of Birth <span className="text-destructive">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input type="date" {...field} />
                 </FormControl>
@@ -327,7 +341,13 @@ export function MemberProfileForm({
             name="resumeUpload"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Resume</FormLabel>
+                <FormLabel>
+                  Resume
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     type="file"
@@ -354,7 +374,13 @@ export function MemberProfileForm({
             name="gender"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Gender</FormLabel>
+                <FormLabel>
+                  Gender
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
                 <FormControl>
                   <Select
                     onValueChange={field.onChange}
@@ -383,7 +409,13 @@ export function MemberProfileForm({
             name="raceOrEthnicity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Race or Ethnicity</FormLabel>
+                <FormLabel>
+                  Race or Ethnicity
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
                 <FormControl>
                   <Select
                     onValueChange={field.onChange}
@@ -415,7 +447,9 @@ export function MemberProfileForm({
             name="shirtSize"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Shirt Size</FormLabel>
+                <FormLabel>
+                  Shirt Size <span className="text-destructive">*</span>
+                </FormLabel>
                 <FormControl>
                   <Select
                     onValueChange={field.onChange}
@@ -451,7 +485,9 @@ export function MemberProfileForm({
             name="levelOfStudy"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Level of Study</FormLabel>
+                <FormLabel>
+                  Level of Study <span className="text-destructive">*</span>
+                </FormLabel>
                 <FormControl>
                   <Select
                     onValueChange={field.onChange}
@@ -480,7 +516,9 @@ export function MemberProfileForm({
             name="school"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>School</FormLabel>
+                <FormLabel>
+                  School <span className="text-destructive">*</span>
+                </FormLabel>
                 <FormControl>
                   <ResponsiveComboBox
                     items={SCHOOLS}
@@ -501,7 +539,9 @@ export function MemberProfileForm({
             name="gradDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Graduation Date</FormLabel>
+                <FormLabel>
+                  Graduation Date <span className="text-destructive">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input type="date" {...field} />
                 </FormControl>
@@ -521,7 +561,13 @@ export function MemberProfileForm({
             name="githubProfileUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>GitHub Profile</FormLabel>
+                <FormLabel>
+                  GitHub Profile
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="https://github.com/knighthacks"
@@ -537,7 +583,13 @@ export function MemberProfileForm({
             name="linkedinProfileUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Linkedin Profile</FormLabel>
+                <FormLabel>
+                  Linkedin Profile
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="https://www.linkedin.com/company/knight-hacks"
@@ -553,7 +605,13 @@ export function MemberProfileForm({
             name="websiteUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Personal Website</FormLabel>
+                <FormLabel>
+                  Personal Website
+                  <span className="text-gray-400">
+                    {" "}
+                    &mdash; <i>Optional</i>
+                  </span>
+                </FormLabel>
                 <FormControl>
                   <Input placeholder="https://knighthacks.org" {...field} />
                 </FormControl>
