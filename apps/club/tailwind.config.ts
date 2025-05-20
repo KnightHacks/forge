@@ -8,6 +8,7 @@ export default {
   // those classes are included correctly.
   content: [...baseConfig.content, "../../packages/ui/src/*.{ts,tsx}"],
   presets: [baseConfig],
+
   theme: {
     extend: {
       backgroundImage: {
@@ -31,6 +32,8 @@ export default {
       },
       colors: {
         background: "hsl(var(--background))",
+        950: "#10182B",
+        cream: "#F4F4ED",
       },
       boxShadow: {
         impact: `
@@ -52,6 +55,8 @@ export default {
           ...fontFamily.sans,
         ],
         mono: ["var(--font-geist-mono)", ...fontFamily.mono],
+        narrow: ["Pragati Narrow", ...fontFamily.sans],
+        prompt: ["Prompt", ...fontFamily.sans],
       },
       animation: {
         "infinite-scroll": "infinite-scroll 160s linear infinite",
@@ -76,6 +81,22 @@ export default {
         "rotate-full": {
           "0%": { transform: "rotate(0deg)" },
           "100%": { transform: "rotate(360deg)" },
+        },
+      },
+      screens: {
+        seOnly: { max: "391px" },
+        seWidth: { max: "376px" },
+        iPadMini: {
+          raw: "(min-width: 768px) and (max-width: 819px) and (min-height: 1024px)",
+        },
+        iPadPro: {
+          raw: "(min-width: 1024px) and (max-width: 1366px) and (min-height: 1366px)",
+        },
+        tall: {
+          raw: "(min-height: 800px) and (max-width: 765px)",
+        },
+        taller: {
+          raw: "(min-height: 1200px) and (max-width: 1023px)",
         },
       },
     },
