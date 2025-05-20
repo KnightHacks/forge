@@ -69,10 +69,7 @@ export const adminHackathonItems: roleItems[] = [
   {
     name: "Hackers",
     component: (
-      <Swords
-        color={USER_DROPDOWN_ICON_COLOR}
-        size={USER_DROPDOWN_ICON_SIZE}
-      />
+      <Swords color={USER_DROPDOWN_ICON_COLOR} size={USER_DROPDOWN_ICON_SIZE} />
     ),
     route: "/admin/hackathon/hackers",
   },
