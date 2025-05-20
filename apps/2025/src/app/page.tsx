@@ -1,7 +1,9 @@
+import Img from "next/image";
 export default async function Home() {
   return (
-    <div className="flex flex-col items-center justify-center bg-[url(/background.svg)]">
-      hello
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-[url('/background.svg')] bg-cover">
+      {/* your other content here */}
+      <h1 className="text-4xl text-white">It's, time!</h1>
     </div>
   );
 }
