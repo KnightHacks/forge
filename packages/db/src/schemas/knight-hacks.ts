@@ -107,12 +107,9 @@ export const Hacker = createTable(
     resumeUrl: t.varchar({ length: 255 }),
     dob: t.date().notNull(),
     gradDate: t.date().notNull(),
-    status: t
-      .text("status", {
-        enum: HACKATHON_APPLICATION_STATES,
-      })
-      .notNull()
-      .default("pending"),
+    status: t.text("status", {
+      enum: HACKATHON_APPLICATION_STATES,
+    }).notNull().default("pending"),
     survey1: t.text("survey_1").notNull(),
     survey2: t.text("survey_2").notNull(),
     isFirstTime: t.boolean("is_first_time").default(false),
