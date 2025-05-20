@@ -79,7 +79,6 @@ export default function HackerTable() {
 
     return 0;
   });
-
   const toggleTimeSort = () => {
     setTimeSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     setActiveSort("time");
@@ -88,7 +87,6 @@ export default function HackerTable() {
   const toggleFieldSort = () => {
     setActiveSort("field");
   };
-
   return (
     <div>
       <div className="flex flex-col border-b pb-2">
