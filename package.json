@@ -25,7 +25,10 @@
     "ui-add": "turbo run ui-add"
   },
   "devDependencies": {
+    "@forge/eslint-config": "workspace:*",
     "@forge/prettier-config": "workspace:*",
+    "@forge/tailwind-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
     "@turbo/gen": "^2.1.3",
     "prettier": "catalog:",
     "turbo": "^2.1.3",

@@ -1,0 +1,51 @@
+{
+  "name": "2025",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "check": "next lint && tsc --noEmit",
+    "dev": "pnpm with-env next dev",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
+    "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
+    "lint": "eslint",
+    "preview": "next build && next start",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../.env --"
+
+  },
+  "dependencies": {
+    "@t3-oss/env-nextjs": "^0.11.1",
+    "@tanstack/react-query": "^5.69.0",
+    "@trpc/client": "^11.0.0",
+    "@trpc/react-query": "^11.0.0",
+    "@trpc/server": "^11.0.0",
+    "next": "^14.2.26",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
+    "superjson": "2.2.1",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@tailwindcss/postcss": "^4.0.15",
+    "@types/node": "^20.16.11",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "eslint": "^9.22.0",
+    "eslint-config-next": "^14.2.26",
+    "postcss": "^8.4.47",
+    "prettier": "^3.5.3",
+    "prettier-plugin-tailwindcss": "^0.6.8",
+    "tailwindcss": "^4.1.4",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "^8.26.1"
+  },
+  "ct3aMetadata": {
+    "initVersion": "7.39.3"
+  },
+  "packageManager": "pnpm@9.14.2"
+}
