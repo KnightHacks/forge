@@ -9,8 +9,7 @@
     "dev": "pnpm with-env next dev",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
+    "lint": "eslint",
     "preview": "next build && next start",
     "start": "next start",
     "typecheck": "tsc --noEmit"
@@ -26,7 +25,7 @@
     "react-dom": "^19.0.0",
     "server-only": "^0.0.1",
     "superjson": "2.2.1",
-    "zod": "^3.24.1"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
