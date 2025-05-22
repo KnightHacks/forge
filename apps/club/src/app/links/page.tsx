@@ -27,7 +27,7 @@ const buttons = [
   {
     text: "Discover more Hackathons!",
     icon: LaptopChargingSVG,
-    href: "https://instagram.com/knighthacks",
+    href: "https://mlh.io/seasons/2025/events",
   },
 ];
 
