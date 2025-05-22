@@ -12,7 +12,9 @@
     "lint": "eslint",
     "preview": "next build && next start",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../.env --"
+
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.11.1",
