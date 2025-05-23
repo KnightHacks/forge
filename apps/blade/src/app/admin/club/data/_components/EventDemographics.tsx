@@ -21,9 +21,10 @@ import { WeekdayPopularityRadar } from "./event-data/WeekdayPopularityRadar";
 
 export default function EventDemographics() {
   const { data: events } = api.event.getEvents.useQuery();
-  const [activeSemester, setActiveSemester] = useState<Semester | null>(null);
+    const semestersArr: Semester[] = [{name: "All", startDate: new Date(ALL_DATES_RANGE_UNIX.start), endDate: new Date(ALL_DATES_RANGE_UNIX.end)}]; // for select options
 
-  const semestersArr: Semester[] = [{name: "All", startDate: new Date(ALL_DATES_RANGE_UNIX.start), endDate: new Date(ALL_DATES_RANGE_UNIX.end)}]; // for select options
+  const defaultSemester = semestersArr[0] ?? null;
+  const [activeSemester, setActiveSemester] = useState<Semester | null>(defaultSemester);
 
   const semestersSet = new Set<string>();
   events?.forEach(({start_datetime}) => {
