@@ -74,7 +74,7 @@ export default function AttendancesBarChart({
       </CardHeader>
       <CardContent>
         {
-          maxAttendees > 0 ?
+          avgAttendedData.length > 0 ?
           <ChartContainer config={baseConfig}>
             <BarChart
               accessibilityLayer
