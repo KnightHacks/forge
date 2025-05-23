@@ -13,6 +13,7 @@ export default function PopularityRanking({
   const [displayFullList, setDisplayFullList] = useState<boolean>(false);
 
   const topEvents = events
+    .filter(event => event.numAttended > 0)
     .sort((a, b) => b.numAttended - a.numAttended)
     .slice(0, 10);
 
