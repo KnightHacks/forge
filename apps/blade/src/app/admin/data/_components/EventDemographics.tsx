@@ -69,8 +69,8 @@ export default function EventDemographics() {
   return (
     <div className="my-6">
       {events && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
-          <Select 
+        <div className="grid gap-4">
+          <Select
             value={activeSemester?.name ?? undefined}
             onValueChange={(semester) => {
               const selectedSemester =
@@ -94,7 +94,7 @@ export default function EventDemographics() {
           </Select>
           {
             filteredEvents && filteredEvents.length > 0 ? 
-            <>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
               <PopularityRanking events={filteredEvents} />
 
               {/* visible on large/medium screens */}
@@ -104,9 +104,9 @@ export default function EventDemographics() {
 
               <TypePie events={filteredEvents} />
               <WeekdayPopularityRadar events={filteredEvents} />
-            </>
+            </div>
             :
-            <p>nothing</p>
+            <p className="mt-20 text-center text-slate-300">No events found for the selected semester!</p>
           }
         </div>
       )}
