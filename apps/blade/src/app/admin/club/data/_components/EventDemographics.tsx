@@ -60,6 +60,12 @@ export default function EventDemographics() {
     }
   });
 
+  const filteredEvents = events?.filter(event => {
+    if (activeSemester)
+      return event.start_datetime > activeSemester.startDate && event.start_datetime < activeSemester.endDate;
+    return true;
+  });
+
   return (
     <div className="my-6">
       {events && (
@@ -86,15 +92,22 @@ export default function EventDemographics() {
               ))}
             </SelectContent>
           </Select>
-          <PopularityRanking events={events} semester={activeSemester} />
+          {
+            filteredEvents && filteredEvents.length > 0 ? 
+            <>
+              <PopularityRanking events={filteredEvents} />
 
-          {/* visible on large/medium screens */}
-          <AttendancesBarChart className="hidden lg:block" events={events} semester={activeSemester} />
-          {/* visible on mobile (small) screens only */}
-          <AttendancesMobile className="lg:hidden" events={events} semester={activeSemester} />
+              {/* visible on large/medium screens */}
+              <AttendancesBarChart className="hidden lg:block" events={filteredEvents} />
+              {/* visible on mobile (small) screens only */}
+              <AttendancesMobile className="lg:hidden" events={filteredEvents} />
 
-          <TypePie events={events} semester={activeSemester} />
-          <WeekdayPopularityRadar events={events} semester={activeSemester} />
+              <TypePie events={filteredEvents} />
+              <WeekdayPopularityRadar events={filteredEvents} />
+            </>
+            :
+            <p>nothing</p>
+          }
         </div>
       )}
     </div>
