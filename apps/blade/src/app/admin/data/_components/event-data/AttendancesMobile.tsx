@@ -38,7 +38,8 @@ export default function AttendancesMobile({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {avgAttendedData.map((data) => (
+      {avgAttendedData.length > 0 ? 
+        avgAttendedData.map((data) => (
           <li
             key={data.tag}
             className="flex list-none justify-between border-b-2 border-dotted"
@@ -46,7 +47,10 @@ export default function AttendancesMobile({
             <span className="font-semibold text-fuchsia-700">{data.tag}:</span>
             <span>{data.avgAttendees}</span>
           </li>
-        ))}
+        ))
+        :
+        <p className="mt-20 text-center text-slate-300">No attendance data found</p>
+      }
       </CardContent>
     </Card>
   );
