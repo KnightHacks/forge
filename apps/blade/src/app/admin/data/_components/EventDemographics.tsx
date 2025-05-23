@@ -64,7 +64,7 @@ export default function EventDemographics() {
     if (activeSemester)
       return event.start_datetime > activeSemester.startDate && event.start_datetime < activeSemester.endDate;
     return true;
-  });
+  }).sort((a, b) => a.tag > b.tag ? 1 : a.tag < b.tag ? -1 : 0); // ensure same order of tags
 
   return (
     <div className="my-6">
