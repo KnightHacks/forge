@@ -1,27 +1,18 @@
 import { useState } from "react";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
-import type {
-  Semester} from "@forge/consts/knight-hacks";
 import { RANKING_STYLES } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
 export default function PopularityRanking({
   events,
-  semester
 }: {
   events: ReturnEvent[];
-  semester: Semester | null;
 }) {
   const [displayFullList, setDisplayFullList] = useState<boolean>(false);
 
   const topEvents = events
-    .filter(event => {
-      if (semester)
-        return event.start_datetime > semester.startDate && event.start_datetime < semester.endDate;
-      return true; // consider all events if semester is null
-    })
     .sort((a, b) => b.numAttended - a.numAttended)
     .slice(0, 10);
 

@@ -1,18 +1,13 @@
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
-import type {
-  Semester} from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
 export default function AttendancesMobile({
   events,
   className,
-  semester
 }: {
   events: ReturnEvent[];
   className?: string;
-  semester: Semester | null;
 }) {
-  if (semester) console.log(`AttendancesMobile semester: ${JSON.stringify(semester)}`);
   
   const tagData: Record<
     string,
