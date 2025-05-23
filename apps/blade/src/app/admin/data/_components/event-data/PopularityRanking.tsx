@@ -49,9 +49,12 @@ export default function PopularityRanking({
           )}
         </ol>
         <div className="flex justify-center">
+        {
+          topEvents.length > 3 && // no need for show more toggle if there are 3 or less events
           <Button variant="secondary" onClick={handleClick}>
             {displayFullList ? "Show less" : "Show more"}
           </Button>
+        }
         </div>
       </CardContent>
     </Card>
