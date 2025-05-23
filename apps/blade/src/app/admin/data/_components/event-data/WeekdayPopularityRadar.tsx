@@ -111,8 +111,7 @@ export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
         <CardTitle className="text-xl">Average Attendance by Weekday</CardTitle>
       </CardHeader>
       <CardContent className="pb-0">
-        {
-          weekdayAvgData.length > 0 ?
+        {weekdayAvgData.length > 0 ? (
           <ChartContainer
             config={chartConfig}
             className="mx-auto aspect-square max-h-[250px]"
@@ -143,9 +142,11 @@ export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
               />
             </RadarChart>
           </ChartContainer>
-          :
-          <p className="mt-16 mb-20 text-center text-slate-300">No attendance data found</p>
-        }
+        ) : (
+          <p className="mb-20 mt-16 text-center text-slate-300">
+            No attendance data found
+          </p>
+        )}
       </CardContent>
     </Card>
   );

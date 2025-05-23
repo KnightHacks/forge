@@ -8,7 +8,6 @@ export default function AttendancesMobile({
   events: ReturnEvent[];
   className?: string;
 }) {
-  
   const tagData: Record<
     string,
     { totalAttendees: number; totalEvents: number }
@@ -38,19 +37,23 @@ export default function AttendancesMobile({
         </CardTitle>
       </CardHeader>
       <CardContent>
-      {avgAttendedData.length > 0 ? 
-        avgAttendedData.map((data) => (
-          <li
-            key={data.tag}
-            className="flex list-none justify-between border-b-2 border-dotted"
-          >
-            <span className="font-semibold text-fuchsia-700">{data.tag}:</span>
-            <span>{data.avgAttendees}</span>
-          </li>
-        ))
-        :
-        <p className="mt-16 mb-20 text-center text-slate-300">No attendance data found</p>
-      }
+        {avgAttendedData.length > 0 ? (
+          avgAttendedData.map((data) => (
+            <li
+              key={data.tag}
+              className="flex list-none justify-between border-b-2 border-dotted"
+            >
+              <span className="font-semibold text-fuchsia-700">
+                {data.tag}:
+              </span>
+              <span>{data.avgAttendees}</span>
+            </li>
+          ))
+        ) : (
+          <p className="mb-20 mt-16 text-center text-slate-300">
+            No attendance data found
+          </p>
+        )}
       </CardContent>
     </Card>
   );

@@ -13,7 +13,7 @@ export default function PopularityRanking({
   const [displayFullList, setDisplayFullList] = useState<boolean>(false);
 
   const topEvents = events
-    .filter(event => event.numAttended > 0)
+    .filter((event) => event.numAttended > 0)
     .sort((a, b) => b.numAttended - a.numAttended)
     .slice(0, 10);
 
@@ -25,8 +25,7 @@ export default function PopularityRanking({
         <CardTitle className="text-xl">Most Popular Events</CardTitle>
       </CardHeader>
       <CardContent>
-        {
-          topEvents.length > 0 ?
+        {topEvents.length > 0 ? (
           <ol className="mb-4 flex flex-col gap-2">
             {(displayFullList ? topEvents : topEvents.slice(0, 3)).map(
               (event, index: number) => (
@@ -35,23 +34,25 @@ export default function PopularityRanking({
                   className={`flex justify-between text-sm ${RANKING_STYLES[index] ?? "text-gray-400 md:text-base lg:text-base"}`}
                 >
                   <span className="me-4">
-                    {index + 1}. {event.name} &#91;{event.tag.toUpperCase()}&#93;
+                    {index + 1}. {event.name} &#91;{event.tag.toUpperCase()}
+                    &#93;
                   </span>
                   <span>{event.numAttended} attended</span>
                 </li>
               ),
             )}
           </ol>
-          :
-          <p className="mt-10 mb-14 text-center text-slate-300">No attendance data found</p>
-        }
+        ) : (
+          <p className="mb-14 mt-10 text-center text-slate-300">
+            No attendance data found
+          </p>
+        )}
         <div className="flex justify-center">
-        {
-          topEvents.length > 3 && // no need for show more toggle if there are 3 or less events
-          <Button variant="secondary" onClick={handleClick}>
-            {displayFullList ? "Show less" : "Show more"}
-          </Button>
-        }
+          {topEvents.length > 3 && ( // no need for show more toggle if there are 3 or less events
+            <Button variant="secondary" onClick={handleClick}>
+              {displayFullList ? "Show less" : "Show more"}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

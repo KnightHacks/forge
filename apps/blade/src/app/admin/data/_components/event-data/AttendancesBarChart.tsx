@@ -26,7 +26,6 @@ export default function AttendancesBarChart({
   events: ReturnEvent[];
   className?: string;
 }) {
-  
   const baseConfig: ChartConfig = {
     events: { label: "events" },
   };
@@ -73,8 +72,7 @@ export default function AttendancesBarChart({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {
-          avgAttendedData.length > 0 ?
+        {avgAttendedData.length > 0 ? (
           <ChartContainer config={baseConfig}>
             <BarChart
               accessibilityLayer
@@ -125,9 +123,11 @@ export default function AttendancesBarChart({
               </Bar>
             </BarChart>
           </ChartContainer>
-          :
-          <p className="mt-16 mb-20 text-center text-slate-300">No attendance data found</p>
-        }
+        ) : (
+          <p className="mb-20 mt-16 text-center text-slate-300">
+            No attendance data found
+          </p>
+        )}
       </CardContent>
     </Card>
   );
