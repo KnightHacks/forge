@@ -111,36 +111,41 @@ export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
         <CardTitle className="text-xl">Average Attendance by Weekday</CardTitle>
       </CardHeader>
       <CardContent className="pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
-        >
-          <RadarChart
-            data={weekdayAvgData}
-            margin={{
-              left: 60,
-            }}
+        {
+          weekdayAvgData.length > 0 ?
+          <ChartContainer
+            config={chartConfig}
+            className="mx-auto aspect-square max-h-[250px]"
           >
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <PolarAngleAxis dataKey="weekday" />
-            <PolarRadiusAxis
-              tick={false}
-              axisLine={false}
-              domain={[0, maxAvgAttendees]}
-            />
-            <PolarGrid />
-            <Radar
-              dataKey="avgAttendees"
-              name="Average Attendees:"
-              fill={ADMIN_PIE_CHART_COLORS[1]}
-              fillOpacity={0.6}
-              dot={{
-                r: 4,
-                fillOpacity: 1,
+            <RadarChart
+              data={weekdayAvgData}
+              margin={{
+                left: 60,
               }}
-            />
-          </RadarChart>
-        </ChartContainer>
+            >
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              <PolarAngleAxis dataKey="weekday" />
+              <PolarRadiusAxis
+                tick={false}
+                axisLine={false}
+                domain={[0, maxAvgAttendees]}
+              />
+              <PolarGrid />
+              <Radar
+                dataKey="avgAttendees"
+                name="Average Attendees:"
+                fill={ADMIN_PIE_CHART_COLORS[1]}
+                fillOpacity={0.6}
+                dot={{
+                  r: 4,
+                  fillOpacity: 1,
+                }}
+              />
+            </RadarChart>
+          </ChartContainer>
+          :
+          <p className="mt-16 mb-20 text-center text-slate-300">No attendance data found</p>
+        }
       </CardContent>
     </Card>
   );
