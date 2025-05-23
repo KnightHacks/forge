@@ -5394,13 +5394,16 @@ export const RANKING_STYLES: string[] = [
 
 export const SEMESTER_START_DATES = {
   spring: {
-    month: 0, day: 1, // first day of January
+    month: 0,
+    day: 1, // first day of January
   },
   summer: {
-    month: 4, day: 1, // first day of May
+    month: 4,
+    day: 1, // first day of May
   },
   fall: {
-    month: 7, day: 15, // middle of August
+    month: 7,
+    day: 15, // middle of August
   },
 } as const;
 
@@ -5410,7 +5413,7 @@ export const ALL_DATES_RANGE_UNIX = {
 } as const;
 
 export interface Semester {
-  name: string,
-  startDate: Date,
-  endDate: Date,
-};
+  name: string;
+  startDate: Date;
+  endDate: Date;
+}
