@@ -14,11 +14,14 @@ export default function PopularityRanking({
   events: ReturnEvent[];
   semester: Semester | null;
 }) {
-  if (semester) console.log(`PopularityRanking semester: ${JSON.stringify(semester)}`);
-  
   const [displayFullList, setDisplayFullList] = useState<boolean>(false);
 
   const topEvents = events
+    .filter(event => {
+      if (semester)
+        return event.start_datetime > semester.startDate && event.start_datetime < semester.endDate;
+      return true; // consider all events if semester is null
+    })
     .sort((a, b) => b.numAttended - a.numAttended)
     .slice(0, 10);
 
