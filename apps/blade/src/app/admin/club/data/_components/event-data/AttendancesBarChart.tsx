@@ -126,7 +126,7 @@ export default function AttendancesBarChart({
             </BarChart>
           </ChartContainer>
           :
-          <p className="mt-20 text-center text-slate-300">No attendance data found</p>
+          <p className="mt-16 mb-20 text-center text-slate-300">No attendance data found</p>
         }
       </CardContent>
     </Card>

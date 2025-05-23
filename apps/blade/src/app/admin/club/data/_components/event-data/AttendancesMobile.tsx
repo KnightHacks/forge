@@ -49,7 +49,7 @@ export default function AttendancesMobile({
           </li>
         ))
         :
-        <p className="mt-20 text-center text-slate-300">No attendance data found</p>
+        <p className="mt-16 mb-20 text-center text-slate-300">No attendance data found</p>
       }
       </CardContent>
     </Card>

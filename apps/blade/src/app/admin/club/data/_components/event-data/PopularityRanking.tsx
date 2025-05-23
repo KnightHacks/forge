@@ -43,7 +43,7 @@ export default function PopularityRanking({
             )}
           </ol>
           :
-          <p className="mt-16 mb-20 text-center text-slate-300">No attendance data found</p>
+          <p className="mt-10 mb-14 text-center text-slate-300">No attendance data found</p>
         }
         <div className="flex justify-center">
         {
