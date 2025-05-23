@@ -1,7 +1,7 @@
 "use client";
 
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
@@ -50,6 +50,12 @@ export default function TypePie({ events }: { events: ReturnEvent[] }) {
     [activeLevel, tagData],
   );
   const tags = useMemo(() => tagData.map((item) => item.name), [tagData]);
+
+  useEffect(() => {
+    if (!tagData.some((item) => item.name === activeLevel)) {
+      setActiveLevel(tagData[0]?.name ?? null);
+    }
+  }, [tagData, activeLevel]);
 
   // set up chart config
   const baseConfig: ChartConfig = {
