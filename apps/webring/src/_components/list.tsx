@@ -18,7 +18,7 @@ export default function List({
   );
 
   return (
-    <div className="flex h-full w-1/3 flex-col items-center justify-center p-4 text-white">
+    <div className="flex h-full flex-col items-center justify-center p-4 text-white md:w-screen lg:w-1/3">
       <h1 className="h-24"></h1>
       <div className="h-3/12 flex w-full flex-row items-end justify-between border-b border-[#757575] text-2xl font-semibold text-[#757575]">
         <h1 className="w-3/12">A-Z</h1>
