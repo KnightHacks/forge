@@ -84,7 +84,7 @@ export default function Comic(props: SVGProps<SVGSVGElement>) {
         <rect
           x="3380.82"
           y="1073"
-          width="2118.62"
+          width="2128.62"
           height="1449.83"
           transform="rotate(89.7527 3401.82 1072)"
           fill="url(#pattern2_381_7569)"
