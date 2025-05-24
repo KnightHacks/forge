@@ -1,6 +1,6 @@
 import "~/styles/globals.css";
 import type { Metadata } from "next";
-import Navbar from "./_components/Navbar";
+import Navbar from "./_components/navbar/Navbar";
 
 export const metadata: Metadata = {
   title: "Knight Hacks 2025",
