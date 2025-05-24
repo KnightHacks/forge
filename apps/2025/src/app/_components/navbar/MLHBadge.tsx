@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface MLHBadgeProps {
   showFloating: boolean;
@@ -19,9 +20,11 @@ function MLHBadge({ showFloating }: MLHBadgeProps) {
         target="_blank"
         rel="noopener noreferrer"
       >
-        <img
+        <Image
           src="https://s3.amazonaws.com/logged-assets/trust-badge/2026/mlh-trust-badge-2026-white.svg"
           alt="Major League Hacking 2026 Hackathon Season"
+          width={100}
+          height={100}
           className="w-full"
         />
       </a>

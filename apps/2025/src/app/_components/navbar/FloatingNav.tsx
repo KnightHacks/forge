@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from "next/image";
 
 interface NavLink {
   href: string;
@@ -20,6 +21,13 @@ function FloatingNav({ navLinks, show }: FloatingNavProps) {
       <div className="backdrop-blur-md bg-black/10 shadow-lg h-20 flex items-center px-12 lg:px-32 justify-between">
         <div className="flex items-center">
           <div className="h-12 w-12 bg-[#ffce80]/50 rounded-2xl shadow-md flex items-center justify-center">
+            <Image
+              src="https://s3.amazonaws.com/logged-assets/trust-badge/2026/mlh-trust-badge-2026-white.svg"
+              alt="Major League Hacking 2026 Hackathon Season"
+              width={100}
+              height={100}
+              className="w-full"
+            />
           </div>
         </div>
         <div className="flex gap-8 items-center">
