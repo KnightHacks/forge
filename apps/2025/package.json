@@ -1,17 +1,17 @@
 {
-  "name": "2025",
+  "name": "@forge/2025",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
+    "build": "pnpm with-env next build",
     "check": "next lint && tsc --noEmit",
-    "dev": "pnpm with-env next dev",
+    "dev": "pnpm with-env next dev --port 3002",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "lint": "eslint",
     "preview": "next build && next start",
-    "start": "next start",
+    "start": "pnpm with-env next start --port 3002",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"
 
