@@ -20,14 +20,14 @@ export default function Footer() {
             <Image src={footerSVG} alt="Knight Hacks" width={2267} height={803} />
         </div>
         <div className={`${bn.className} flex flex-col w-full justify-center bg-black text-white py-15`}>
-            <div className="text-center mb-3 text-xl sm:text-2xl md:text-3xl lg:text-4xl">
-                <Link href={mlhcoc}>MLH code of conduct </Link>
+            <div className="flex justify-center text-center mb-3 px-2 text-xl sm:text-2xl md:text-3xl lg:text-4xl">
+                <Link href={mlhcoc} className="flex transform transition px-3 hover:scale-105 hover:underline">MLH code of conduct </Link>
                  | 
-                <Link href={sponsor}> sponsor us </Link>
+                <Link href={sponsor} className="flex transform transition px-3 hover:scale-105 hover:underline"> sponsor us </Link>
                  | 
-                <Link href={contact}> contact us </Link>
+                <Link href={contact} className="flex transform transition px-3 hover:scale-105 hover:underline"> contact us </Link>
                  | 
-                <Link href={hackersGuide}> hackers guide</Link>
+                <Link href={hackersGuide} className="flex transform transition px-3 hover:scale-105 hover:underline"> hackers guide</Link>
             </div>
             <span className="text-center text-base sm:text-lg md:text-xl lg:text-2xl">
                 Copyright © 2019 - 2025 knighthacks. All Rights Reserved.
