@@ -7,8 +7,9 @@ import NeonTkSVG from "./assets/neon-tk";
 import SwordSVG from "./assets/sword";
 import HeroSVG from "./hero-assets/hero-icon";
 import TypingText from "./hero-assets/typing-text";
+import CoolButton from "./assets/coolbutton";
 
-const Hero = ({ bladeUrl }: { bladeUrl: string }) => {
+const Hero = ({bladeUrl  }: { bladeUrl: string }) => {
   return (
     <section className="relative min-h-screen overflow-hidden px-4 py-12">
       <SwordSVG className="animate-float absolute bottom-[-151px] left-[-40px] hidden w-[300px] text-purple-400 opacity-50 md:block" />
