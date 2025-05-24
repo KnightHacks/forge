@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import MainNav from './MainNav';
-import FloatingNav from './FloatingNav';
-import MLHBadge from './MLHBadge';
+import { useState, useEffect } from "react";
+import MainNav from "./MainNav";
+import FloatingNav from "./FloatingNav";
+import MLHBadge from "./MLHBadge";
 
 const NAV_LINKS = [
-  { href: '#about', label: 'About' },
-  { href: '#tracks', label: 'Tracks' },
-  { href: '#sponsors', label: 'Sponsors' },
-  { href: '#faqs', label: `FAQ's` },
+  { href: "#about", label: "About" },
+  { href: "#tracks", label: "Tracks" },
+  { href: "#sponsors", label: "Sponsors" },
+  { href: "#faqs", label: `FAQ's` },
 ];
 
 const Navbar = () => {
@@ -19,8 +19,8 @@ const Navbar = () => {
   useEffect(() => {
     setMounted(true);
     const handleScroll = () => setShowFloating(window.scrollY > 100);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   if (!mounted) return null;

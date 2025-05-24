@@ -1,5 +1,5 @@
-import React from 'react';
-import NavContent from './NavContent';
+import React from "react";
+import NavContent from "./NavContent";
 
 interface NavLink {
   href: string;
@@ -13,12 +13,16 @@ interface MainNavProps {
 
 function MainNav({ navLinks, showFloating }: MainNavProps) {
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 md:backdrop-blur-md transition-all duration-300 ease-in-out ${
-      showFloating ? 'md:opacity-0 md:-translate-y-full' : 'opacity-100 translate-y-0'
-    }`}>
+    <nav
+      className={`fixed top-0 left-0 z-50 w-full transition-all duration-300 ease-in-out md:backdrop-blur-md ${
+        showFloating
+          ? "md:-translate-y-full md:opacity-0"
+          : "translate-y-0 opacity-100"
+      }`}
+    >
       <NavContent navLinks={navLinks} />
     </nav>
   );
 }
 
-export default MainNav; 
+export default MainNav;

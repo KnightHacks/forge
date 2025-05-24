@@ -1,5 +1,5 @@
-import React from 'react';
-import Image from 'next/image';
+import React from "react";
+import Image from "next/image";
 
 interface MLHBadgeProps {
   showFloating: boolean;
@@ -8,10 +8,12 @@ interface MLHBadgeProps {
 function MLHBadge({ showFloating }: MLHBadgeProps) {
   return (
     <div
-      className={`fixed right-4 top-0 z-[10000] transition-all duration-300 ease-in-out ${
-        showFloating ? 'opacity-0 -translate-y-full' : 'opacity-100 translate-y-0'
+      className={`fixed top-0 right-4 z-[10000] transition-all duration-300 ease-in-out ${
+        showFloating
+          ? "-translate-y-full opacity-0"
+          : "translate-y-0 opacity-100"
       }`}
-      style={{ maxWidth: '100px', minWidth: '60px', width: '10vw' }}
+      style={{ maxWidth: "100px", minWidth: "60px", width: "10vw" }}
     >
       <a
         id="mlh-trust-badge"
@@ -32,4 +34,4 @@ function MLHBadge({ showFloating }: MLHBadgeProps) {
   );
 }
 
-export default MLHBadge; 
+export default MLHBadge;
