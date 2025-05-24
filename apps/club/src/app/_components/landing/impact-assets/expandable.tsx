@@ -22,6 +22,7 @@ const List = ({ item, className, index, activeItem, ...props }: ImageProps) => {
   const isActive = index === activeItem;
 
   return (
+    
     <div
       className={cn(
         "relative h-40 cursor-pointer overflow-hidden rounded-md transition-all duration-300 ease-in-out md:h-full",
