@@ -5387,3 +5387,29 @@ export const RANKING_STYLES: string[] = [
   "md:text-lg lg:text-lg font-semibold text-gray-400",
   "md:text-lg lg:text-lg font-medium text-orange-500",
 ];
+
+export const SEMESTER_START_DATES = {
+  spring: {
+    month: 0,
+    day: 1, // first day of January
+  },
+  summer: {
+    month: 4,
+    day: 1, // first day of May
+  },
+  fall: {
+    month: 7,
+    day: 15, // middle of August
+  },
+} as const;
+
+export const ALL_DATES_RANGE_UNIX = {
+  start: -8640000000000000,
+  end: 8640000000000000,
+} as const;
+
+export interface Semester {
+  name: string;
+  startDate: Date;
+  endDate: Date;
+};

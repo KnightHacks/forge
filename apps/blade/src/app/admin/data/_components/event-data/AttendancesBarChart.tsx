@@ -60,6 +60,10 @@ export default function AttendancesBarChart({
     }),
   );
 
+  const maxAttendees = Math.max(
+    ...avgAttendedData.map((d) => Number(d.avgAttendees)),
+  );
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -68,46 +72,62 @@ export default function AttendancesBarChart({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={baseConfig}>
-          <BarChart accessibilityLayer data={avgAttendedData} layout="vertical">
-            <CartesianGrid horizontal={false} />
-            <YAxis
-              dataKey="tag"
-              type="category"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              hide
-            />
-            <XAxis dataKey="avgAttendees" type="number" hide />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent indicator="line" />}
-            />
-            <Bar
-              dataKey="avgAttendees"
-              name="Average attendees: "
+        {avgAttendedData.length > 0 ? (
+          <ChartContainer config={baseConfig}>
+            <BarChart
+              accessibilityLayer
+              data={avgAttendedData}
               layout="vertical"
-              radius={4}
-              barSize={100}
+              margin={{ right: 25 }}
             >
-              <LabelList
+              <CartesianGrid horizontal={false} />
+              <YAxis
                 dataKey="tag"
-                position="insideLeft"
-                offset={8}
-                fontSize={12}
-                className="fill-[--color-label]"
+                type="category"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                hide
               />
-              <LabelList
+              <XAxis
                 dataKey="avgAttendees"
-                position="right"
-                offset={8}
-                fontSize={12}
-                className="fill-foreground"
+                type="number"
+                domain={[0, maxAttendees]}
+                hide
               />
-            </Bar>
-          </BarChart>
-        </ChartContainer>
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent indicator="line" />}
+              />
+              <Bar
+                dataKey="avgAttendees"
+                name="Average attendees: "
+                layout="vertical"
+                radius={4}
+                barSize={100}
+              >
+                <LabelList
+                  dataKey="tag"
+                  position="insideLeft"
+                  offset={8}
+                  fontSize={12}
+                  className="fill-[--color-label]"
+                />
+                <LabelList
+                  dataKey="avgAttendees"
+                  position="right"
+                  offset={8}
+                  fontSize={12}
+                  className="fill-foreground"
+                />
+              </Bar>
+            </BarChart>
+          </ChartContainer>
+        ) : (
+          <p className="mb-20 mt-16 text-center text-slate-300">
+            No attendance data found
+          </p>
+        )}
       </CardContent>
     </Card>
   );
