@@ -3,11 +3,11 @@ import TracksTitleSVG from "./tracks-title-svg";
 
 export default function Tracks() {
   return (
-    <div className="flex flex-col items-center space-y-6 overflow-x-hidden my-[7%]">
-        <div className="ml-[6%] md:ml-[36%] self-start md:self-auto mb-0 md:w-[115%] w-[60%]">
-          <TracksTitleSVG className="h-auto w-[99%] md:w-[50%]"/>
-        </div>
-        <Comic className="h-auto w-[99%] md:w-[90%]" />
+    <div className="my-[7%] flex flex-col items-center space-y-6 overflow-x-hidden">
+      <div className="mb-0 ml-[6%] w-[60%] self-start md:ml-[36%] md:w-[115%] md:self-auto">
+        <TracksTitleSVG className="h-auto w-[99%] md:w-[50%]" />
+      </div>
+      <Comic className="h-auto w-[99%] md:w-[90%]" />
     </div>
   );
 }
