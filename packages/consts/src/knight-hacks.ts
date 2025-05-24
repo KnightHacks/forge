@@ -5412,4 +5412,4 @@ export interface Semester {
   name: string;
   startDate: Date;
   endDate: Date;
-}
+};
