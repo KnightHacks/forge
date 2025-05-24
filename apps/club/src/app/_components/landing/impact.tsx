@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import NeonTkSVG from "./assets/neon-tk";
+import SwordSVG from "./assets/sword";
 
 import NeonTkSVG from "./assets/neon-tk";
 import SwordSVG from "./assets/sword";
