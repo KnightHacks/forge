@@ -1,14 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 
+import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 
 import { api } from "~/trpc/react";
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 
-export default function PaymentButton({ member }: { member: InsertMember}) {
+export default function PaymentButton({ member }: { member: InsertMember }) {
   const { mutateAsync: createCheckoutUrl } =
     api.duesPayment.createCheckout.useMutation();
   const router = useRouter();
@@ -19,10 +19,10 @@ export default function PaymentButton({ member }: { member: InsertMember}) {
     const month = new Date().getMonth();
 
     if (
-      (member.school !== "University of Central Florida" && 
-      member.school !== "Valencia College") ||
+      (member.school !== "University of Central Florida" &&
+        member.school !== "Valencia College") ||
       (month > 3 && month < 7) // disable during summer months
-      ) {
+    ) {
       setDisableButton(true);
     }
   }, [member.school]);
@@ -35,7 +35,9 @@ export default function PaymentButton({ member }: { member: InsertMember}) {
   };
   return (
     <div className="relative top-3">
-      <Button onClick={handleCheckout} disabled={disableButton}>Pay Dues</Button>
+      <Button onClick={handleCheckout} disabled={disableButton}>
+        Pay Dues
+      </Button>
     </div>
   );
 }

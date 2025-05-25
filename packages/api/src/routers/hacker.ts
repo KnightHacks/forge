@@ -201,9 +201,7 @@ export const hackerRouter = {
     }),
 
   updateHackerStatus: adminProcedure
-    .input(
-      InsertHackerSchema.pick({ id: true, status: true }),
-    )
+    .input(InsertHackerSchema.pick({ id: true, status: true }))
     .mutation(async ({ input }) => {
       if (!input.id) {
         throw new TRPCError({
@@ -212,7 +210,10 @@ export const hackerRouter = {
         });
       }
 
-      await db.update(Hacker).set({ status: input.status }).where(eq(Hacker.id, input.id));
+      await db
+        .update(Hacker)
+        .set({ status: input.status })
+        .where(eq(Hacker.id, input.id));
     }),
   deleteHacker: adminProcedure
     .input(

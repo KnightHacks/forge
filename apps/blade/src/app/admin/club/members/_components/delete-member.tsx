@@ -101,8 +101,9 @@ export default function DeleteMemberButton({
           >
             Cancel
           </Button>
-          {isLoading ? 
-            <Loader2 className="animate-spin" /> : 
+          {isLoading ? (
+            <Loader2 className="animate-spin" />
+          ) : (
             <Button
               variant="destructive"
               disabled={
@@ -114,7 +115,7 @@ export default function DeleteMemberButton({
             >
               Delete Member
             </Button>
-          }
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

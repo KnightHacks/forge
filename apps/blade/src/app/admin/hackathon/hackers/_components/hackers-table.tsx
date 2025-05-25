@@ -21,9 +21,9 @@ import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
 import DeleteHackerButton from "./delete-hacker";
 import HackerProfileButton from "./hacker-profile";
+import HackerStatusToggle from "./hacker-status-toggle";
 import HackerSurveyResponsesButton from "./hacker-survey-responses";
 import UpdateHackerButton from "./update-hacker";
-import HackerStatusToggle from "./hacker-status-toggle";
 
 function parseDate(datePart: string, timePart: string): Date {
   const date = new Date(datePart);
@@ -197,7 +197,7 @@ export default function HackerTable() {
               </TableCell>
               <TableCell className="font-medium">{hacker.email}</TableCell>
               <TableCell
-                className={`text-center font-bold break-keep ${HACKER_STATUS_MAP[hacker.status].color}`}
+                className={`break-keep text-center font-bold ${HACKER_STATUS_MAP[hacker.status].color}`}
               >
                 {HACKER_STATUS_MAP[hacker.status].name}
               </TableCell>

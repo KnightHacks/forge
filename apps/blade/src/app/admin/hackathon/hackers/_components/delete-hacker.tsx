@@ -102,8 +102,9 @@ export default function DeleteHackerButton({
             Cancel
           </Button>
 
-          {isLoading ? 
-            <Loader2 className="animate-spin" /> : 
+          {isLoading ? (
+            <Loader2 className="animate-spin" />
+          ) : (
             <Button
               variant="destructive"
               disabled={
@@ -112,8 +113,10 @@ export default function DeleteHackerButton({
                   : isLoading
               }
               onClick={handleDelete}
-            >Delete Hacker</Button>
-          }
+            >
+              Delete Hacker
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

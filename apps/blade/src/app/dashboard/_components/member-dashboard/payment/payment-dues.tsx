@@ -1,12 +1,18 @@
 import { CreditCard } from "lucide-react";
 
+import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
 import { DASHBOARD_ICON_SIZE } from "~/consts";
 import PaymentButton from "./payment-button";
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 
-export function Payment({ status, member }: { status: boolean, member: InsertMember }) {
+export function Payment({
+  status,
+  member,
+}: {
+  status: boolean;
+  member: InsertMember;
+}) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
