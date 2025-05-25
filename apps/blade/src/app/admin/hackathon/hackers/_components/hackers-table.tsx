@@ -24,6 +24,7 @@ import HackerProfileButton from "./hacker-profile";
 import HackerStatusToggle from "./hacker-status-toggle";
 import HackerSurveyResponsesButton from "./hacker-survey-responses";
 import UpdateHackerButton from "./update-hacker";
+import HackerStatusToggle from "./hacker-status-toggle";
 
 function parseDate(datePart: string, timePart: string): Date {
   const date = new Date(datePart);

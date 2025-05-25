@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 
 import { api } from "~/trpc/react";
+import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 
 export default function PaymentButton({ member }: { member: InsertMember }) {
   const { mutateAsync: createCheckoutUrl } =
