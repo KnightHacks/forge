@@ -142,6 +142,7 @@ export default function CalendarEventsPage({
                   itemClassName:
                     "bg-[#1E293B]/50 text-white hover:bg-[#334155] cursor-pointer p-2 rounded-md transition-colors",
                 }}
+                showWeekDays
               />
             </div>
           </div>
