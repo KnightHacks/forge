@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+
 import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 
 import CoolButton2 from "./assets/coolbutton2";
