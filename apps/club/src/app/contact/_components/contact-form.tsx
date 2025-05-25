@@ -35,8 +35,7 @@ function ContactForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const jsonFormData = JSON.stringify(formData);
-    console.log("The Form:", jsonFormData);
+    // const jsonFormData = JSON.stringify(formData);
   };
 
   return (

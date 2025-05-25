@@ -4,8 +4,8 @@ import { env } from "~/env";
 
 export default function Hero() {
   return (
-    <div className="flex flex-col items-center space-y-6">
-      <HeroSVG className="h-auto w-1/2 md:w-1/4" />
+    <div className="flex min-h-screen flex-col items-center justify-center space-y-6">
+      <HeroSVG className="h-auto w-1/2 md:w-1/3" />
       <a
         href={`${env.BLADE_URL}/hacker/application`}
         target="_blank"

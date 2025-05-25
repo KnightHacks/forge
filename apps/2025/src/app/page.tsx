@@ -3,7 +3,7 @@ import Tracks from "./_components/tracks/tracks";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-[url('/background.svg')] bg-cover">
+    <div className="flex flex-col items-center bg-[url('/background.svg')] bg-cover pt-20">
       <Hero />
       <Tracks />
     </div>
