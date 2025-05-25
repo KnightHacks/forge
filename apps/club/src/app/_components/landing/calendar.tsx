@@ -8,6 +8,7 @@ import { Calendar, List } from "rsuite";
 
 import type { RouterOutputs } from "@forge/api";
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
+import type { RouterOutputs } from "@forge/api";
 
 import { formatDateRange } from "~/lib/utils";
 import NeonTkSVG from "./assets/neon-tk";
@@ -15,7 +16,6 @@ import SwordSVG from "./assets/sword";
 import TerminalSVG from "./assets/terminal";
 import SwordSVG from "./assets/sword";
 import NeonTkSVG from "./assets/neon-tk";
-
 
 import "rsuite/Calendar/styles/index.css";
 
