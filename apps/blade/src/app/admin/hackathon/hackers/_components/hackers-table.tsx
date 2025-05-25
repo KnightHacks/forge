@@ -23,6 +23,7 @@ import DeleteHackerButton from "./delete-hacker";
 import HackerProfileButton from "./hacker-profile";
 import HackerSurveyResponsesButton from "./hacker-survey-responses";
 import UpdateHackerButton from "./update-hacker";
+import HackerStatusToggle from "./hacker-status-toggle";
 
 function parseDate(datePart: string, timePart: string): Date {
   const date = new Date(datePart);
@@ -166,6 +167,9 @@ export default function HackerTable() {
               <Label>Status</Label>
             </TableHead>
             <TableHead className="text-center">
+              <Label>Status Toggle</Label>
+            </TableHead>
+            <TableHead className="text-center">
               <Label>Hacker Profile</Label>
             </TableHead>
             <TableHead className="text-center">
@@ -193,9 +197,12 @@ export default function HackerTable() {
               </TableCell>
               <TableCell className="font-medium">{hacker.email}</TableCell>
               <TableCell
-                className={`text-center font-bold ${HACKER_STATUS_MAP[hacker.status].color}`}
+                className={`text-center font-bold break-keep ${HACKER_STATUS_MAP[hacker.status].color}`}
               >
                 {HACKER_STATUS_MAP[hacker.status].name}
+              </TableCell>
+              <TableCell>
+                <HackerStatusToggle hacker={hacker} />
               </TableCell>
               <TableCell className="text-center">
                 <HackerProfileButton hacker={hacker} />

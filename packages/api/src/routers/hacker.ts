@@ -199,6 +199,21 @@ export const hackerRouter = {
         userId: ctx.session.user.discordUserId,
       });
     }),
+
+  updateHackerStatus: adminProcedure
+    .input(
+      InsertHackerSchema.pick({ id: true, status: true }),
+    )
+    .mutation(async ({ input }) => {
+      if (!input.id) {
+        throw new TRPCError({
+          message: "Hacker ID is required to update a member's status!",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      await db.update(Hacker).set({ status: input.status }).where(eq(Hacker.id, input.id));
+    }),
   deleteHacker: adminProcedure
     .input(
       InsertHackerSchema.pick({ id: true, firstName: true, lastName: true }),

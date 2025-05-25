@@ -40,7 +40,7 @@ export default function HackathonDataContent() {
             className="md:w-1/2 lg:w-1/2"
             aria-label="Select a value"
           >
-            <SelectValue placeholder="Select hackathon" />
+            <SelectValue placeholder="Select a hackathon..." />
           </SelectTrigger>
           <SelectContent>
             {hackathons?.map((hackathon) => (

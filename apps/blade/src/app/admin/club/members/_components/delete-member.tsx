@@ -90,7 +90,7 @@ export default function DeleteMemberButton({
           />
         </div>
 
-        <DialogFooter className="flex flex-row justify-between">
+        <DialogFooter className="flex flex-row items-center justify-between">
           <Button
             variant="outline"
             onClick={() => {
@@ -101,17 +101,20 @@ export default function DeleteMemberButton({
           >
             Cancel
           </Button>
-          <Button
-            variant="destructive"
-            disabled={
-              (USE_CAUTION as boolean)
-                ? confirm !== "I am absolutely sure" || isLoading
-                : isLoading
-            }
-            onClick={handleDelete}
-          >
-            {isLoading ? <Loader2 className="animate-spin" /> : "Delete Member"}
-          </Button>
+          {isLoading ? 
+            <Loader2 className="animate-spin" /> : 
+            <Button
+              variant="destructive"
+              disabled={
+                (USE_CAUTION as boolean)
+                  ? confirm !== "I am absolutely sure" || isLoading
+                  : isLoading
+              }
+              onClick={handleDelete}
+            >
+              Delete Member
+            </Button>
+          }
         </DialogFooter>
       </DialogContent>
     </Dialog>

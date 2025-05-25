@@ -47,7 +47,7 @@ export default async function MemberDashboard({
         {/* Desktop View */}
         <div className="hidden space-y-4 md:grid">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Payment status={dues.value.duesPaid} />
+            <Payment status={dues.value.duesPaid} member={member} />
             <Points size={member.points} />
             <EventNumber size={events.value.length} />
           </div>
@@ -58,7 +58,7 @@ export default async function MemberDashboard({
         </div>
         {/* Mobile View */}
         <div className="space-y-4 md:hidden">
-          <Payment status={dues.value.duesPaid} />
+          <Payment status={dues.value.duesPaid} member={member} />
           <MemberInfo />
           <Points size={member.points} />
           <EventNumber size={events.value.length} />

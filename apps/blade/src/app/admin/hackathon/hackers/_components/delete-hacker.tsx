@@ -90,7 +90,7 @@ export default function DeleteHackerButton({
           />
         </div>
 
-        <DialogFooter className="flex flex-row justify-between">
+        <DialogFooter className="flex flex-row items-center justify-between">
           <Button
             variant="outline"
             onClick={() => {
@@ -101,17 +101,19 @@ export default function DeleteHackerButton({
           >
             Cancel
           </Button>
-          <Button
-            variant="destructive"
-            disabled={
-              (USE_CAUTION as boolean)
-                ? confirm !== "I am absolutely sure" || isLoading
-                : isLoading
-            }
-            onClick={handleDelete}
-          >
-            {isLoading ? <Loader2 className="animate-spin" /> : "Delete Hacker"}
-          </Button>
+
+          {isLoading ? 
+            <Loader2 className="animate-spin" /> : 
+            <Button
+              variant="destructive"
+              disabled={
+                (USE_CAUTION as boolean)
+                  ? confirm !== "I am absolutely sure" || isLoading
+                  : isLoading
+              }
+              onClick={handleDelete}
+            >Delete Hacker</Button>
+          }
         </DialogFooter>
       </DialogContent>
     </Dialog>
