@@ -1,0 +1,13 @@
+import AboutSVG from "./about-svg";
+import GraphicSVG from "./graphic-svg";
+
+export default function Hero() {
+  return (
+    <div className="flex w-full justify-center px-4">
+      <div className="relative w-[99%] md:w-[60%]">
+        <AboutSVG className="my-[10%] h-auto w-full" />
+        <GraphicSVG />
+      </div>
+    </div>
+  );
+}
