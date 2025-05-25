@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
 import { DASHBOARD_ICON_SIZE } from "~/consts";
 import PaymentButton from "./payment-button";
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 
 export function Payment({
   status,
