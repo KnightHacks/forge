@@ -18,8 +18,8 @@ export default function Footer() {
   return (
     <div className="flex flex-col items-center mx-auto">
         <div className="relative w-full">
-            <Image src={shadow} alt="Shadow" width={100} height={100} className="w-full opacity-100 -mt-100 sm:-mt-200 md:-mt-200 lg:-mt-350" />
-            <Image src={footerSVG} alt="Knight Hacks" width={2267} height={803} className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/3 mb-20" />
+            <Image src={shadow} alt="Shadow" width={0} height={0} sizes="100vw" objectFit="cover" className="absolute w-full opacity-75 bottom-0 left-1/2 -translate-x-1/2 mb-10" />
+            <Image src={footerSVG} alt="Knight Hacks" width={2267} height={803} objectFit="cover" className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/3 mb-20" />
         </div>
         <div className={`${bn.className} flex flex-col w-full justify-center bg-black text-white py-15 -mt-10`}>
             <div className="flex justify-center text-center mb-3 px-2 text-lg sm:text-xl md:text-3xl lg:text-4xl">
