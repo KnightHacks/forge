@@ -73,11 +73,14 @@ export function HackerFormPage() {
   });
 
   const toggleAllergy = (allergy: string) => {
-    setSelectedAllergies((prev) =>
-      prev.includes(allergy)
+    setSelectedAllergies((prev) => {
+      const next = prev.includes(allergy)
         ? prev.filter((a) => a !== allergy)
-        : [...prev, allergy],
-    );
+        : [...prev, allergy];
+
+      form.setValue("foodAllergies", next.join(","));
+      return next;
+    });
   };
 
   // Setup React Hook Form
@@ -660,11 +663,11 @@ export function HackerFormPage() {
         <FormField
           control={form.control}
           name="foodAllergies"
-          render={({ field }) => {
+          render={() => {
             return (
               <FormItem>
                 <FormLabel>
-                  Food Allergies
+                  Food Allergies/Restrictions
                   <span className="text-gray-400">
                     {" "}
                     &mdash; <i>Optional</i>
@@ -709,7 +712,6 @@ export function HackerFormPage() {
                             key={allergy}
                             onClick={() => {
                               toggleAllergy(allergy);
-                              field.onChange(selectedAllergies.join(","));
                             }}
                             className="flex w-full cursor-pointer items-center space-x-2 rounded-md px-1 py-1 text-sm transition-colors hover:bg-gray-200 hover:text-black dark:hover:bg-gray-900 dark:hover:text-white"
                           >

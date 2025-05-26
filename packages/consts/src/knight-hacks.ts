@@ -21,6 +21,10 @@ export const ALLERGIES = [
   "Peanuts",
   "Wheat",
   "Soybeans",
+  "Halal",
+  "Kosher",
+  "Vegetarian",
+  "Vegan",
 ] as const;
 
 export const SHORT_LEVELS_OF_STUDY = [

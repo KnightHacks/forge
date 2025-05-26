@@ -705,7 +705,7 @@ export function HackerProfileForm({
               return (
                 <FormItem>
                   <FormLabel>
-                    Food Allergies
+                    Food Allergies/Restrictions
                     <span className="text-gray-400">
                       {" "}
                       &mdash; <i>Optional</i>

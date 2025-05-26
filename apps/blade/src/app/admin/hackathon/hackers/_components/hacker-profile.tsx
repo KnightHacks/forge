@@ -24,6 +24,9 @@ import {
 } from "@forge/ui/dialog";
 
 import { api } from "~/trpc/react";
+import { toast } from "@forge/ui/toast";
+
+import FoodRestrictionsButton from "./food-restrictions";
 
 export default function HackerProfileButton({
   hacker,
@@ -38,9 +41,8 @@ export default function HackerProfileButton({
       await utils.hacker.invalidate();
     }
 
-    invalidateHackers().catch((error) => {
-      // eslint-disable-next-line no-console
-      console.error("Error invalidating hackers in hacker profile: ", error);
+    invalidateHackers().catch(() => {
+      toast.error("Error invalidating hackers in hacker profile!")
     });
   }, [utils.hacker, hacker]);
 
@@ -74,9 +76,7 @@ export default function HackerProfileButton({
           hacker.foodAllergies ? (
             <div className="inline-flex flex-row justify-center gap-2">
               {hacker.foodAllergies && (
-                <Badge className="order-1 my-auto bg-red-800 text-center text-white">
-                  FOOD RESTRICTIONS
-                </Badge>
+                <FoodRestrictionsButton hacker={hacker} />
               )}
               {hacker.agreesToReceiveEmailsFromMLH && (
                 <Badge className="order-2 my-auto bg-blue-800 text-center text-white">

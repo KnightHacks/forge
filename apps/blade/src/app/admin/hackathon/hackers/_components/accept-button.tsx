@@ -3,27 +3,16 @@ import { Check, Loader2 } from "lucide-react";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@forge/ui/dialog";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
 export default function AcceptButton({ hacker }: { hacker: InsertHacker }) {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const utils = api.useUtils();
   const updateStatus = api.hacker.updateHackerStatus.useMutation({
     onSuccess() {
-      setIsOpen(false);
       toast.success(
         `Accepted ${hacker.firstName} ${hacker.lastName} successfully!`,
       );
@@ -66,10 +55,13 @@ export default function AcceptButton({ hacker }: { hacker: InsertHacker }) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
+    <>
+      {isLoading ? (
+        <Loader2 className="animate-spin" />
+      ) : (
         <Button
           className="bg-lime-600 p-2 hover:bg-lime-700"
+          onClick={handleUpdateStatus}
           disabled={
             hacker.status === "accepted" ||
             hacker.status === "confirmed" ||
@@ -80,35 +72,8 @@ export default function AcceptButton({ hacker }: { hacker: InsertHacker }) {
         >
           <Check className="h-6 w-6" />
         </Button>
-      </DialogTrigger>
+      )}
+    </>
 
-      <DialogContent className="max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">Confirm Acceptance</DialogTitle>
-        </DialogHeader>
-
-        <DialogDescription className="text-md">
-          Please confirm the <b className="text-lime-500">ACCEPTANCE</b> of{" "}
-          {hacker.firstName} {hacker.lastName}.
-        </DialogDescription>
-
-        <DialogFooter className="flex flex-row items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setIsOpen(false);
-            }}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          {isLoading ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <Button onClick={handleUpdateStatus}>Confirm</Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }

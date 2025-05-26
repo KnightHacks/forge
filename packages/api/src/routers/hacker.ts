@@ -202,7 +202,7 @@ export const hackerRouter = {
 
   updateHackerStatus: adminProcedure
     .input(InsertHackerSchema.pick({ id: true, status: true }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       if (!input.id) {
         throw new TRPCError({
           message: "Hacker ID is required to update a member's status!",
@@ -210,10 +210,28 @@ export const hackerRouter = {
         });
       }
 
+      const hacker = await db.query.Hacker.findFirst({
+        where: (t, { eq }) => eq(t.id, input.id ?? ""),
+      });
+
+      if (!hacker) {
+        throw new TRPCError({
+          message: "Hacker not found!",
+          code: "NOT_FOUND",
+        });
+      }
+
       await db
         .update(Hacker)
         .set({ status: input.status })
         .where(eq(Hacker.id, input.id));
+
+      await log({
+        title: "Hacker Status Updated",
+        message: `Hacker status for ${hacker.firstName} ${hacker.lastName} has changed to ${input.status}!`,
+        color: "tk_blue",
+        userId: ctx.session.user.discordUserId,
+      });
     }),
   deleteHacker: adminProcedure
     .input(

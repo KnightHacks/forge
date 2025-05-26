@@ -14,6 +14,7 @@ import {
 } from "@forge/ui/dialog";
 
 import { api } from "~/trpc/react";
+import { toast } from "@forge/ui/toast";
 
 export default function HackerSurveyResponsesButton({
   hacker,
@@ -29,9 +30,8 @@ export default function HackerSurveyResponsesButton({
       await utils.hacker.invalidate();
     }
 
-    invalidateHackers().catch((error) => {
-      // eslint-disable-next-line no-console
-      console.error("Error invalidating hackers in survey responses: ", error);
+    invalidateHackers().catch(() => {
+      toast.error("Error invalidating hackers in survey responses!");
     });
   }, [utils.hacker, hacker]);
 
