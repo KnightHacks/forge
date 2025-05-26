@@ -15,7 +15,6 @@ import {
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import { toast } from "@forge/ui/toast";
 
 export default function HackerSurveyResponsesButton({
   hacker,
