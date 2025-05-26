@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import {
+  ALLOWED_PROFILE_PICTURE_EXTENSIONS,
+  ALLOWED_PROFILE_PICTURE_TYPES,
   GENDERS,
+  KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
   KNIGHTHACKS_MAX_RESUME_SIZE,
   LEVELS_OF_STUDY,
   RACES_OR_ETHNICITIES,
@@ -14,6 +18,7 @@ import {
 } from "@forge/consts/knight-hacks";
 import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
+import { Checkbox } from "@forge/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -33,6 +38,7 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 import { Separator } from "@forge/ui/separator";
+import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import type { api as serverCaller } from "~/trpc/server";
@@ -74,57 +80,88 @@ export function MemberProfileForm({
     },
   });
 
+  const uploadProfilePicture = api.member.uploadProfilePicture.useMutation({
+    onError() {
+      toast.error("There was a problem uploading your profile picture!");
+    },
+    async onSettled() {
+      await utils.member.getMember.invalidate();
+    },
+  });
+
   const form = useForm({
-    schema: InsertMemberSchema.omit({ age: true, userId: true }).extend({
+    schema: InsertMemberSchema.omit({
+      age: true,
+      userId: true,
+    }).extend({
       firstName: z.string().min(1, "Required"),
       lastName: z.string().min(1, "Required"),
-      // Age will be derived from dob on the server
       age: z.undefined(),
       email: z.string().email("Invalid email").min(1, "Required"),
       phoneNumber: z
         .string()
-        // validates phone number with/without dashes
-        .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number"),
-      // Read from date input as string, convert and validate as date, then transform to ISO string
+        .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number")
+        .optional()
+        .or(z.literal("")),
       resumeUpload: z
         .instanceof(FileList)
         .superRefine((fileList, ctx) => {
-          // Validate number of files is 0 or 1
-          if (fileList.length !== 0 && fileList.length !== 1) {
+          if (fileList.length > 1) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: "Only 0 or 1 files allowed",
             });
           }
-
           if (fileList.length === 1) {
-            // Validate type of object in FileList is File
-            if (fileList[0] instanceof File) {
-              // Validate file extension is PDF
-              const fileExtension = fileList[0].name.split(".").pop();
-              if (fileExtension !== "pdf") {
+            const file = fileList[0];
+            if (file instanceof File) {
+              const ext = file.name.split(".").pop()?.toLowerCase();
+              if (ext !== "pdf") {
                 ctx.addIssue({
                   code: z.ZodIssueCode.custom,
                   message: "Resume must be a PDF",
                 });
               }
-
-              // Validate file size is <= 5MB
-              if (fileList[0].size > KNIGHTHACKS_MAX_RESUME_SIZE) {
+              if (file.size > KNIGHTHACKS_MAX_RESUME_SIZE) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_big,
                   type: "number",
                   maximum: KNIGHTHACKS_MAX_RESUME_SIZE,
                   inclusive: true,
-                  exact: false,
                   message: "File too large: maximum 5MB",
                 });
               }
-            } else {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Object in FileList is undefined",
-              });
+            }
+          }
+        })
+        .optional(),
+      profilePictureUpload: z
+        .instanceof(FileList)
+        .superRefine((fileList, ctx) => {
+          if (fileList.length > 1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Only one profile picture allowed",
+            });
+          }
+          if (fileList.length === 1) {
+            const file = fileList[0];
+            if (file instanceof File) {
+              if (!ALLOWED_PROFILE_PICTURE_TYPES.includes(file.type)) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: `Invalid file type. Allowed: ${ALLOWED_PROFILE_PICTURE_EXTENSIONS.join(", ")}`,
+                });
+              }
+              if (file.size > KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.too_big,
+                  type: "number",
+                  maximum: KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
+                  inclusive: true,
+                  message: `File too large: maximum ${KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE / (1024 * 1024)}MB`,
+                });
+              }
             }
           }
         })
@@ -136,33 +173,33 @@ export function MemberProfileForm({
       gradDate: z.string(),
       githubProfileUrl: z
         .string()
-        .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")
-        .regex(
-          /^https:\/\/w?w?w?\.?github\.com\/.+/,
-          "Invalid URL: Enter a valid GitHub link",
-        )
+        .regex(/^https:\/\/.+/, "Invalid URL")
+        .regex(/^https:\/\/(www\.)?github\.com\/.+/, "Invalid URL")
         .url({ message: "Invalid URL" })
         .optional()
         .or(z.literal("")),
       linkedinProfileUrl: z
         .string()
-        .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")
-        .regex(
-          /^https:\/\/w?w?w?\.?linkedin\.com\/.+/,
-          "Invalid URL: Enter a valid LinkedIn link",
-        )
+        .regex(/^https:\/\/.+/, "Invalid URL")
+        .regex(/^https:\/\/(www\.)?linkedin\.com\/.+/, "Invalid URL")
         .url({ message: "Invalid URL" })
         .optional()
         .or(z.literal("")),
       websiteUrl: z
         .string()
-        .regex(
-          /^https?:\/\/.+/,
-          "Invalid URL: Please try again with https:// or http://",
-        )
+        .regex(/^https?:\/\/.+/, "Invalid URL")
         .url({ message: "Invalid URL" })
         .optional()
         .or(z.literal("")),
+      guildProfileVisible: z.boolean().optional(),
+      tagline: z
+        .string()
+        .max(80, "Tagline must be 80 characters or less")
+        .optional(),
+      about: z
+        .string()
+        .max(500, "About section must be 500 characters or less")
+        .optional(),
     }),
     defaultValues: {
       firstName: member?.firstName,
@@ -180,25 +217,23 @@ export function MemberProfileForm({
       shirtSize: member?.shirtSize,
       school: member?.school,
       discordUser: member?.discordUser,
+      guildProfileVisible: member?.guildProfileVisible ?? true,
+      tagline: member?.tagline ?? "",
+      about: member?.about ?? "",
     },
   });
 
-  const fileRef = form.register("resumeUpload");
+  const resumeRef = form.register("resumeUpload");
+  const pictureRef = form.register("profilePictureUpload");
 
-  // Convert a resume to base64 for client-server transmission
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
-        // Check type before resolving as string
         if (typeof reader.result === "string") {
           resolve(reader.result);
         } else {
-          reject(
-            new Error(
-              "Failed to convert file to Base64: Unexpected result type",
-            ),
-          );
+          reject(new Error("Failed to convert file to Base64"));
         }
       };
       reader.onerror = reject;
@@ -230,7 +265,7 @@ export function MemberProfileForm({
           onSubmit={form.handleSubmit(async (values) => {
             try {
               setLoading(true);
-              let resumeUrl = "";
+              let resumeUrl = member.resumeUrl ?? "";
               if (values.resumeUpload?.length && values.resumeUpload[0]) {
                 const file = values.resumeUpload[0];
                 const base64File = await fileToBase64(file);
@@ -240,23 +275,36 @@ export function MemberProfileForm({
                 });
               }
 
+              let profilePictureUrl = member.profilePictureUrl ?? "";
+              if (
+                values.profilePictureUpload?.length &&
+                values.profilePictureUpload[0]
+              ) {
+                const file = values.profilePictureUpload[0];
+                const base64File = await fileToBase64(file);
+                const result = await uploadProfilePicture.mutateAsync({
+                  fileName: file.name,
+                  fileContent: base64File,
+                });
+                profilePictureUrl = result.profilePictureUrl;
+              }
+
               updateMember.mutate({
                 ...values,
-                id: member.id,
-                resumeUrl, // Include uploaded resume URL
+                resumeUrl,
+                profilePictureUrl,
+                phoneNumber:
+                  values.phoneNumber === "" ? null : values.phoneNumber,
               });
             } catch (error) {
-              // eslint-disable-next-line no-console
-              console.error(
-                "Error uploading resume or updating member:",
-                error,
-              );
+              console.error("Error uploading files or updating member:", error);
               toast.error(
                 "Something went wrong while processing your changes.",
               );
             }
           })}
         >
+          <h2 className="text-xl font-bold">Personal Information</h2>
           <FormField
             control={form.control}
             name="firstName"
@@ -473,6 +521,7 @@ export function MemberProfileForm({
               </FormItem>
             )}
           />
+
           <div className="!mt-10">
             <h3 className="text-lg font-medium">Academic Information</h3>
             <p className="text-sm text-muted-foreground">
@@ -549,13 +598,96 @@ export function MemberProfileForm({
               </FormItem>
             )}
           />
+
           <div className="!mt-10">
-            <h3 className="text-lg font-medium">Additional Links</h3>
+            <h3 className="text-lg font-medium">Guild Profile Customization</h3>
             <p className="text-sm text-muted-foreground">
-              Feel free to include what makes you, you.
+              Personalize how you appear on the Knight Hacks{" "}
+              <Link
+                className="underline hover:text-foreground"
+                href={"https://guild.knighthacks.org"}
+              >
+                Guild
+              </Link>{" "}
+              collective.
             </p>
           </div>
           <Separator />
+          <FormField
+            control={form.control}
+            name="guildProfileVisible"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <FormLabel className="text-base">Profile Visibility</FormLabel>
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="profilePictureUpload"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Profile Picture</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    accept={ALLOWED_PROFILE_PICTURE_TYPES.join(",")}
+                    {...pictureRef}
+                    onChange={(event) => {
+                      field.onChange(
+                        event.target.files?.[0]
+                          ? event.target.files
+                          : undefined,
+                      );
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="tagline"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tagline / Short Bio</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., Aspiring Innovator | Knight Hacks Organizer"
+                    {...field}
+                    maxLength={80}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="about"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>About Me</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Share more about your interests, projects, skills..."
+                    {...field}
+                    maxLength={500}
+                    rows={5}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="githubProfileUrl"
@@ -616,6 +748,29 @@ export function MemberProfileForm({
                   <Input placeholder="https://knighthacks.org" {...field} />
                 </FormControl>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="resumeUpload"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Resume</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    placeholder=""
+                    {...resumeRef}
+                    onChange={(event) => {
+                      field.onChange(
+                        event.target.files?.[0]
+                          ? event.target.files
+                          : undefined,
+                      );
+                    }}
+                  />
+                </FormControl>
               </FormItem>
             )}
           />
