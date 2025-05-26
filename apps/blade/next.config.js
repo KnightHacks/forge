@@ -26,7 +26,6 @@ const config = {
       {
         protocol: "https",
         hostname: "minio-g0soogg4gs8gwcggw4ococok.knighthacks.org",
-        pathname: "/knight-hacks-qr/**",
       },
     ],
   },
