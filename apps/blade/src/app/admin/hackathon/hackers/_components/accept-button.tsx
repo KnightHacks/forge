@@ -74,6 +74,5 @@ export default function AcceptButton({ hacker }: { hacker: InsertHacker }) {
         </Button>
       )}
     </>
-
   );
 }

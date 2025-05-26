@@ -22,10 +22,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
-
-import { api } from "~/trpc/react";
 import { toast } from "@forge/ui/toast";
 
+import { api } from "~/trpc/react";
 import FoodRestrictionsButton from "./food-restrictions";
 
 export default function HackerProfileButton({
@@ -42,7 +41,7 @@ export default function HackerProfileButton({
     }
 
     invalidateHackers().catch(() => {
-      toast.error("Error invalidating hackers in hacker profile!")
+      toast.error("Error invalidating hackers in hacker profile!");
     });
   }, [utils.hacker, hacker]);
 

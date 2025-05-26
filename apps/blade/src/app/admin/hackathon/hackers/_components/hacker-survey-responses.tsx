@@ -12,9 +12,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
+import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import { toast } from "@forge/ui/toast";
 
 export default function HackerSurveyResponsesButton({
   hacker,
