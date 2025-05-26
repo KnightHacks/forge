@@ -63,7 +63,7 @@ export const Member = createTable(
     raceOrEthnicity: raceOrEthnicityEnum()
       .default("Prefer not to answer")
       .notNull(),
-    guildProfileVisible: t.boolean().notNull().default(true),
+    guildProfileVisible: t.boolean().notNull().default(false),
     tagline: t.varchar("tagline", { length: 80 }),
     about: t.varchar("about", { length: 500 }),
     profilePictureUrl: t.varchar("profile_picture_url", { length: 255 }),

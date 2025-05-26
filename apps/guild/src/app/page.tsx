@@ -1,103 +1,103 @@
 import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
-export default function Home() {
+import { Button } from "@forge/ui/button";
+import { Input } from "@forge/ui/input";
+
+import { api } from "~/trpc/server";
+
+const PAGE_SIZE = 50;
+
+export default async function GuildPage({
+  searchParams,
+}: {
+  searchParams: { q?: string; page?: string };
+}) {
+  const query = searchParams.q?.trim() ?? undefined;
+  const page = Number(searchParams.page ?? 0);
+
+  if (Number.isNaN(page) || page < 0) notFound();
+
+  const { members, total } = await api.member.getGuildMembers({
+    page: page,
+    pageSize: PAGE_SIZE,
+    query: query,
+    tags: [],
+  });
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const buildHref = (newPage: number) => {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (newPage > 0) params.set("page", newPage.toString());
+    return `/?${params.toString()}`;
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="container mx-auto max-w-4xl p-6">
+      <h1 className="mb-6 text-3xl font-bold">Guild Members</h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+      <form action="/" className="mb-8 flex gap-2">
+        <Input
+          name="q"
+          placeholder="Search names or taglines…"
+          className="w-full"
+          defaultValue={query}
+        />
+        <Button type="submit">Search</Button>
+      </form>
+
+      <div className="divide-y rounded-lg border">
+        {members.map((m) => (
+          <div key={m.id} className="flex items-center gap-4 p-4">
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              src={m.profilePictureUrl || "/placeholder-avatar.png"}
+              alt={`${m.firstName}'s avatar`}
+              width={80}
+              height={80}
+              className="h-20 w-20 rounded-full object-cover"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <div>
+              <h2 className="text-xl font-semibold">
+                {m.firstName} {m.lastName}
+              </h2>
+              {m.tagline && (
+                <p className="text-sm text-muted-foreground">{m.tagline}</p>
+              )}
+              <p className="mt-1 text-sm">
+                Grad:&nbsp;
+                {new Date(m.gradDate).toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "short",
+                })}
+              </p>
+            </div>
+          </div>
+        ))}
+        {members.length === 0 && (
+          <p className="p-6 text-center text-muted-foreground">
+            No members found.
+          </p>
+        )}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-between">
+          <Button asChild variant="outline" disabled={page === 0}>
+            <Link href={buildHref(page - 1)}>Previous</Link>
+          </Button>
+
+          <span className="text-sm">
+            Page {page + 1} of {totalPages}
+          </span>
+
+          <Button asChild variant="outline" disabled={page + 1 >= totalPages}>
+            <Link href={buildHref(page + 1)}>Next</Link>
+          </Button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
     </div>
   );
 }

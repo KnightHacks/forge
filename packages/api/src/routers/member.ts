@@ -1,4 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import type { BucketItem } from "minio";
 import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
@@ -170,8 +171,6 @@ export const memberRouter = {
       }
       if (input.resumeUrl !== undefined) {
         dataToSet.resumeUrl = input.resumeUrl;
-      } else if (input.resumeUrl === null) {
-        dataToSet.resumeUrl = null;
       }
 
       await db
@@ -343,7 +342,7 @@ export const memberRouter = {
           GUILD_PROFILE_PICTURES_BUCKET_NAME,
           userDirectory,
           true,
-        );
+        ) as AsyncIterable<BucketItem>;
         for await (const obj of stream) {
           if (obj.name) {
             existingObjects.push(obj.name);
@@ -398,6 +397,76 @@ export const memberRouter = {
       return { profilePictureUrl: publicUrl };
     }),
 
+  getGuildMembers: publicProcedure
+    .input(
+      z.object({
+        page: z.number().int().min(0).default(0),
+        pageSize: z.number().int().min(1).max(100).default(25),
+        query: z.string().trim().min(1).max(80).optional(),
+        tags: z.array(z.enum(["alumni"])).optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { page, pageSize, query, tags } = input;
+
+      const filters: ReturnType<typeof sql.raw>[] = [
+        sql`${Member.guildProfileVisible} = TRUE`,
+      ];
+
+      if (tags?.includes("alumni")) {
+        filters.push(sql`${Member.gradDate} < CURRENT_DATE`);
+      }
+
+      if (query) {
+        const pattern = `%${query}%`;
+        filters.push(
+          sql`(${Member.firstName} ILIKE ${pattern}
+                OR ${Member.lastName}  ILIKE ${pattern}
+                OR ${Member.tagline}   ILIKE ${pattern})`,
+        );
+      }
+
+      const whereExpr = filters.length === 1 ? filters[0] : and(...filters);
+
+      let members;
+      if (!query && page === 0) {
+        members = await db
+          .select({
+            id: Member.id,
+            firstName: Member.firstName,
+            lastName: Member.lastName,
+            tagline: Member.tagline,
+            profilePictureUrl: Member.profilePictureUrl,
+            gradDate: Member.gradDate,
+          })
+          .from(Member)
+          .where(whereExpr)
+          .orderBy(sql`RANDOM()`)
+          .limit(pageSize);
+      } else {
+        members = await db
+          .select({
+            id: Member.id,
+            firstName: Member.firstName,
+            lastName: Member.lastName,
+            tagline: Member.tagline,
+            profilePictureUrl: Member.profilePictureUrl,
+            gradDate: Member.gradDate,
+          })
+          .from(Member)
+          .where(whereExpr)
+          .orderBy(Member.firstName, Member.lastName, Member.id)
+          .limit(pageSize)
+          .offset(page * pageSize);
+      }
+
+      const total =
+        (await db.select({ count: count() }).from(Member).where(whereExpr))[0]
+          ?.count ?? 0;
+
+      return { members, total };
+    }),
+
   getEvents: protectedProcedure.query(async ({ ctx }) => {
     const eventsSubQuery = db
       .select({
@@ -431,6 +500,7 @@ export const memberRouter = {
     async () =>
       (await db.select({ count: count() }).from(Member))[0]?.count ?? 0,
   ),
+
   getDuesPayingMembers: adminProcedure.query(
     async () =>
       await db
