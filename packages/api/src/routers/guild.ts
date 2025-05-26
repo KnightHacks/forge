@@ -1,6 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import type { BucketItem } from "minio";
 import { TRPCError } from "@trpc/server";
+import { Client } from "minio";
 import { z } from "zod";
 
 import { KNIGHTHACKS_S3_BUCKET_REGION } from "@forge/consts/knight-hacks";
@@ -13,6 +14,13 @@ import { minioClient } from "../minio/minio-client";
 import { protectedProcedure, publicProcedure } from "../trpc";
 
 const GUILD_PROFILE_PICTURES_BUCKET_NAME = "guild-profile-pictures";
+
+const s3Client = new Client({
+  endPoint: env.MINIO_ENDPOINT,
+  useSSL: true,
+  accessKey: env.MINIO_ACCESS_KEY,
+  secretKey: env.MINIO_SECRET_KEY,
+});
 
 export const guildRouter = {
   uploadProfilePicture: protectedProcedure
@@ -186,7 +194,14 @@ export const guildRouter = {
 
       const members =
         !query && page === 0
-          ? await baseQuery.orderBy(sql`RANDOM()`).limit(pageSize)
+          ? await baseQuery
+              .orderBy(
+                sql`(CASE WHEN ${Member.tagline}           IS NULL THEN 1 ELSE 0 END)`,
+                sql`(CASE WHEN ${Member.profilePictureUrl} IS NULL THEN 1 ELSE 0 END)`,
+                sql`(CASE WHEN ${Member.about}             IS NULL THEN 1 ELSE 0 END)`,
+                sql`RANDOM()`,
+              )
+              .limit(pageSize)
           : await baseQuery
               .orderBy(Member.firstName, Member.lastName, Member.id)
               .limit(pageSize)
@@ -197,5 +212,50 @@ export const guildRouter = {
           ?.count ?? 0;
 
       return { members, total };
+    }),
+
+  getGuildResume: publicProcedure
+    .input(z.object({ memberId: z.string().uuid() }))
+    .mutation(async ({ input }) => {
+      const member = await db.query.Member.findFirst({
+        where: (t, { eq }) => eq(t.id, input.memberId),
+        columns: {
+          resumeUrl: true,
+          firstName: true,
+          lastName: true,
+        },
+      });
+
+      if (!member?.resumeUrl) return { url: null };
+
+      const bucketName = "member-resumes";
+
+      const ext =
+        member.resumeUrl.lastIndexOf(".") > -1
+          ? member.resumeUrl.slice(member.resumeUrl.lastIndexOf("."))
+          : ".pdf";
+      const safeName = `${member.firstName}_${member.lastName}`
+        .replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9_-]/g, "");
+      const downloadName = `${safeName}_Guild_Resume${ext}`;
+
+      try {
+        const url = await s3Client.presignedUrl(
+          "GET",
+          bucketName,
+          member.resumeUrl,
+          60 * 60,
+          {
+            "response-content-disposition": `attachment; filename="${downloadName}"`,
+          },
+        );
+        console.log("Resumé URL generated:", url);
+        return { url };
+      } catch {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Could not generate résumé URL",
+        });
+      }
     }),
 } satisfies TRPCRouterRecord;

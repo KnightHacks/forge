@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 
+import { TRPCReactProvider } from "~/trpc/react";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://club.knighthacks.org"),
-  title: "Knight Hacks",
-  description: "UCF's largest hackathon and software engineering organization",
+  metadataBase: new URL("https://guild.knighthacks.org"),
+  title: "The Guild | Knight Hacks",
+  description:
+    "View the Guild Collective of Knight Hacks, a community of technologists at the University of Central Florida.",
   openGraph: {
     title: "Knight Hacks",
     description:
-      "UCF's largest hackathon and software engineering organization",
-    url: "https://club.knighthacks.org",
+      "View the Guild Collective of Knight Hacks, a community of technologists at the University of Central Florida.",
+    url: "https://guild.knighthacks.org",
     siteName: "Knight Hacks",
   },
 };
@@ -22,7 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`antialiased`}>{children}</body>
+      <body className={`antialiased`}>
+        <TRPCReactProvider>{children}</TRPCReactProvider>
+      </body>
     </html>
   );
 }
