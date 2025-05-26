@@ -1,61 +1,31 @@
-import * as React from "react";
-import type { SVGProps } from "react";
+import Link from 'next/link';
+import { Bebas_Neue } from "next/font/google"; 
+import { env } from "~/env";
+import React from "react";
 
-const RegisterButton = (props: SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="1389"
-    height="318"
-    fill="none"
-    viewBox="0 0 1389 318"
-    {...props}
-  >
-    <g filter="url(#filter0_d_0_1)">
-      <rect
-        width="1379.92"
-        height="309.011"
-        x="4.668"
-        y="0.989"
-        fill="#D63434"
-        rx="38"
-      ></rect>
-    </g>
-    <path
-      fill="#fff"
-      d="M240.076 98h26.08q13.6 0 19.84 6.4 6.24 6.24 6.24 19.36v6.88q0 17.44-11.52 22.08v.32q6.4 1.92 8.96 7.84 2.72 5.92 2.72 15.84v19.68q0 4.8.32 7.84.32 2.88 1.6 5.76h-17.92q-.96-2.72-1.28-5.12t-.32-8.64v-20.48q0-7.68-2.56-10.72-2.4-3.04-8.48-3.04h-6.08v48h-17.6zm24 48q5.28 0 7.84-2.72 2.72-2.72 2.72-9.12v-8.64q0-6.08-2.24-8.8-2.08-2.72-6.72-2.72h-8v32zm45.331-48h48v16h-30.4v29.6h24.16v16h-24.16V194h30.4v16h-48zm87.885 113.6q-12.8 0-19.52-7.2-6.72-7.36-6.72-20.96v-58.88q0-13.6 6.72-20.8 6.72-7.36 19.52-7.36t19.52 7.36q6.72 7.2 6.72 20.8v9.6h-16.64v-10.72q0-11.04-9.12-11.04t-9.12 11.04v61.28q0 10.88 9.12 10.88t9.12-10.88V162.8h-8.8v-16h25.44v36.64q0 13.6-6.72 20.96-6.72 7.2-19.52 7.2M439.632 98h17.6v112h-17.6zm58.461 113.6q-12.8 0-19.36-7.2-6.56-7.36-6.56-20.96v-6.4h16.64v7.68q0 10.88 9.12 10.88 4.48 0 6.72-2.56 2.4-2.72 2.4-8.64 0-7.04-3.2-12.32-3.2-5.44-11.84-12.96-10.88-9.6-15.2-17.28-4.32-7.84-4.32-17.6 0-13.28 6.72-20.48 6.72-7.36 19.52-7.36 12.64 0 19.04 7.36 6.56 7.2 6.56 20.8v4.64h-16.64v-5.76q0-5.76-2.24-8.32-2.24-2.72-6.56-2.72-8.8 0-8.8 10.72 0 6.08 3.2 11.36 3.36 5.28 12 12.8 11.04 9.6 15.2 17.44t4.16 18.4q0 13.76-6.88 21.12-6.72 7.36-19.68 7.36m55.211-97.6h-18.4V98h54.4v16h-18.4v96h-17.6zm49.322-16h48v16h-30.4v29.6h24.16v16h-24.16V194h30.4v16h-48zm62.925 0h26.08q13.6 0 19.84 6.4 6.24 6.24 6.24 19.36v6.88q0 17.44-11.52 22.08v.32q6.4 1.92 8.96 7.84 2.72 5.92 2.72 15.84v19.68q0 4.8.32 7.84.32 2.88 1.6 5.76h-17.92q-.96-2.72-1.28-5.12t-.32-8.64v-20.48q0-7.68-2.56-10.72-2.4-3.04-8.48-3.04h-6.08v48h-17.6zm24 48q5.28 0 7.84-2.72 2.72-2.72 2.72-9.12v-8.64q0-6.08-2.24-8.8-2.08-2.72-6.72-2.72h-8v32zm89.516-32h-18.4V98h54.4v16h-18.4v96h-17.6zm74.136 97.6q-12.96 0-19.84-7.36t-6.88-20.8v-58.88q0-13.44 6.88-20.8t19.84-7.36 19.84 7.36 6.88 20.8v58.88q0 13.44-6.88 20.8t-19.84 7.36m0-16q9.12 0 9.12-11.04v-61.12q0-11.04-9.12-11.04t-9.12 11.04v61.12q0 11.04 9.12 11.04M927.051 98h17.6v45.6h18.88V98h17.6v112h-17.6v-50.4h-18.88V210h-17.6zm85.589 0h23.84l18.24 112h-17.6l-3.2-22.24v.32h-20l-3.2 21.92h-16.322zm19.2 74.88-7.84-55.36h-.32l-7.68 55.36zm60.7 38.72c-8.42 0-14.88-2.4-19.36-7.2-4.37-4.8-6.56-11.573-6.56-20.32v-60.16c0-8.747 2.19-15.52 6.56-20.32 4.48-4.8 10.94-7.2 19.36-7.2q12.645 0 19.2 7.2 6.72 7.2 6.72 20.32v11.84h-16.64V122.8c0-6.933-2.93-10.4-8.8-10.4-5.86 0-8.8 3.467-8.8 10.4v62.56c0 6.827 2.94 10.24 8.8 10.24 5.87 0 8.8-3.413 8.8-10.24v-17.12h16.64v15.84q0 13.12-6.72 20.32-6.555 7.2-19.2 7.2M1133.79 98h17.6v47.2l22.4-47.2h17.6l-20.96 41.12 21.28 70.88h-18.4l-14.88-49.92-7.04 14.24V210h-17.6z"
-    ></path>
-    <defs>
-      <filter
-        id="filter0_d_0_1"
-        width="1387.92"
-        height="317.011"
-        x="0.668"
-        y="0.989"
-        colorInterpolationFilters="sRGB"
-        filterUnits="userSpaceOnUse"
+const bn = Bebas_Neue({
+  subsets: ["latin"],
+  weight: ["400"],
+  display: "swap",
+});
+
+interface RegisterButtonProps {
+  className?: string;
+}
+
+export default function RegisterButton({ className }: RegisterButtonProps) {
+  return (
+    <div className="flex w-full justify-center mt-10">
+      <Link 
+        href={`${env.BLADE_URL}/hacker/application`} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className={`${bn.className} ${className} block`}
       >
-        <feFlood floodOpacity="0" result="BackgroundImageFix"></feFlood>
-        <feColorMatrix
-          in="SourceAlpha"
-          result="hardAlpha"
-          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-        ></feColorMatrix>
-        <feOffset dy="4"></feOffset>
-        <feGaussianBlur stdDeviation="2"></feGaussianBlur>
-        <feComposite in2="hardAlpha" operator="out"></feComposite>
-        <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"></feColorMatrix>
-        <feBlend
-          in2="BackgroundImageFix"
-          result="effect1_dropShadow_0_1"
-        ></feBlend>
-        <feBlend
-          in="SourceGraphic"
-          in2="effect1_dropShadow_0_1"
-          result="shape"
-        ></feBlend>
-      </filter>
-    </defs>
-  </svg>
-);
-
-export default RegisterButton;
+        <div className="bg-[#D63434] text-white text-6xl rounded-2xl py-10 px-20 hover:bg-[#b82b2b] transition-colors transition-transform hover:scale-105">
+          Register to hack
+        </div>
+      </Link>
+    </div>
+  );
+}
