@@ -80,7 +80,7 @@ export function MemberProfileForm({
     },
   });
 
-  const uploadProfilePicture = api.member.uploadProfilePicture.useMutation({
+  const uploadProfilePicture = api.guild.uploadProfilePicture.useMutation({
     onError() {
       toast.error("There was a problem uploading your profile picture!");
     },

@@ -142,6 +142,9 @@ export const ALLOWED_PROFILE_PICTURE_EXTENSIONS = [
   "webp",
 ];
 
+export const GUILD_TAG_OPTIONS = ["alumni", "current"] as const;
+export type GuildTag = (typeof GUILD_TAG_OPTIONS)[number];
+
 export const MINIO_ENDPOINT = "minio-g0soogg4gs8gwcggw4ococok.knighthacks.org";
 export const BUCKET_NAME = "knight-hacks-qr";
 export const QR_CONTENT_TYPE = "image/png";
