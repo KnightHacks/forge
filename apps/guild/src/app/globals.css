@@ -1,15 +1,13 @@
-@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Pragati+Narrow:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --radius: 0.5rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,7 +18,97 @@
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
+  background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+input[type="checkbox"].custom-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  position: relative;
+
+  background-color: #f4f4ed;
+  border: 1px solid #000000;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  filter: saturate(200%);
+}
+
+input[type="checkbox"].custom-checkbox:checked {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+input[type="checkbox"].custom-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+@media (min-width: 1024px) {
+  input[type="checkbox"].custom-checkbox:checked::after {
+    width: 6px;
+    height: 12px;
+    border-width: 0 3px 3px 0;
+    top: 3px;
+    left: 8px;
+  }
+}
+
+@keyframes flicker {
+  0%,
+  19%,
+  21%,
+  23%,
+  25%,
+  30%,
+  32%,
+  54%,
+  55%,
+  58%,
+  100% {
+    opacity: 1;
+  }
+  20%,
+  24%,
+  31%,
+  54.9%,
+  57% {
+    opacity: 0.6;
+  }
+}
+.flicker {
+  animation: flicker 10s infinite;
+}
+.glow {
+  color: #c084fc;
+  text-shadow:
+    0 0 2px #c084fc,
+    0 0 4px #c084fc,
+    0 0 7px #9333ea,
+    0 0 17px #9333ea,
+    0 0 25px #9333ea,
+    0 0 38px #9333ea,
+    0 0 46px #9333ea,
+    0 0 68px #9333ea;
+}
+
+/* abstract shape area 60% */
+.bg-contact-gradient {
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 23, 42, 0) 0%,
+    rgba(15, 23, 42, 0.52) 30%,
+    rgba(107, 33, 168, 0.3) 47%,
+    rgba(61, 28, 105, 0.75) 60%,
+    rgba(15, 23, 42, 1) 72%,
+    rgba(15, 23, 42, 0) 100%
+  );
 }
