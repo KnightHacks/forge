@@ -446,7 +446,7 @@ importers:
         specifier: 'catalog:'
         version: 5.7.2
 
-  apps/webring:
+  apps/guild:
     dependencies:
       '@forge/consts':
         specifier: workspace:*

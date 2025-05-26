@@ -1,16 +1,19 @@
 {
-  "name": "@forge/webring",
+  "name": "@forge/guild",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "clean": "git clean -xdf .cache .next .turbo node_modules",
-    "build": "tsc -b && vite build",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "build": "pnpm with-env next build",
+    "check": "next lint && tsc --noEmit",
+    "dev": "pnpm with-env next dev --port 3003",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
+    "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "lint": "eslint",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "preview": "next build && next start",
+    "start": "pnpm with-env next start --port 3002",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
     "@forge/consts": "workspace:*",
