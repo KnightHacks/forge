@@ -1,6 +1,3 @@
-/* ---------------------------------------------------------------
- * Guild – floating “filter dock”
- * --------------------------------------------------------------*/
 "use client";
 
 import { useState, useTransition } from "react";
@@ -19,7 +16,7 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 
-const PAGE_SIZE_OPTIONS = [20, 50, 100] as const;
+const PAGE_SIZE_OPTIONS = [20, 40, 60, 80, 100] as const;
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 const DEFAULT_PAGE_SIZE: PageSize = 20;
 
@@ -68,6 +65,12 @@ export default function Dock({
         <Input
           value={query}
           onChange={(e) => setQuery(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              apply();
+            }
+          }}
           placeholder="Search names or taglines…"
           className="w-full bg-slate-800/50 pl-10 text-slate-200 placeholder-slate-500 ring-offset-slate-900 focus:ring-violet-500"
         />
@@ -77,7 +80,7 @@ export default function Dock({
         value={String(pageSize)}
         onValueChange={(v) => setPageSize(Number(v) as PageSize)}
       >
-        <SelectTrigger className="w-full border-slate-700 bg-slate-800/50 text-slate-200 ring-offset-slate-900 focus:ring-violet-500 sm:w-32">
+        <SelectTrigger className="w-full border-slate-700 bg-slate-800/50 text-slate-200 ring-offset-slate-900 focus:ring-violet-500 sm:w-36">
           <SelectValue placeholder="Page size" />
         </SelectTrigger>
         <SelectContent className="border-slate-700 bg-slate-800 text-slate-200">
@@ -87,14 +90,14 @@ export default function Dock({
               value={String(n)}
               className="focus:bg-violet-500/30"
             >
-              {n} / page
+              {n} / page
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
 
       <Select value={tag} onValueChange={(v) => setTag(v as Tag)}>
-        <SelectTrigger className="w-full border-slate-700 bg-slate-800/50 text-slate-200 ring-offset-slate-900 focus:ring-violet-500 sm:w-32">
+        <SelectTrigger className="w-full border-slate-700 bg-slate-800/50 text-slate-200 ring-offset-slate-900 focus:ring-violet-500 sm:w-36">
           <SelectValue placeholder="Tags" />
         </SelectTrigger>
         <SelectContent className="border-slate-700 bg-slate-800 text-slate-200">
@@ -107,7 +110,7 @@ export default function Dock({
               value={t}
               className="capitalize focus:bg-violet-500/30"
             >
-              {t.charAt(0).toUpperCase() + t.slice(1)}
+              {(t as string).charAt(0).toUpperCase() + t.slice(1)}
             </SelectItem>
           ))}
         </SelectContent>
