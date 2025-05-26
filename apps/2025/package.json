@@ -11,7 +11,7 @@
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "lint": "eslint",
     "preview": "next build && next start",
-    "start": "pnpm with-env next start --port 3002",
+    "start": "pnpm with-env next start --port 3003",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"
   },
