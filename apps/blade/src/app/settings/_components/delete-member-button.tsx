@@ -22,8 +22,6 @@ import { api } from "~/trpc/react";
 
 export default function DeleteMemberButton({
   memberId,
-  firstName,
-  lastName,
 }: {
   memberId: string;
   firstName: string;
