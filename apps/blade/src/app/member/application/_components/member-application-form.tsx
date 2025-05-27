@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
+import type {
+  GradTerm} from "@forge/consts/knight-hacks";
 import {
   ALLOWED_PROFILE_PICTURE_EXTENSIONS,
   ALLOWED_PROFILE_PICTURE_TYPES,
   GENDERS,
-  GradTerm,
   KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
   KNIGHTHACKS_MAX_RESUME_SIZE,
   LEVELS_OF_STUDY,

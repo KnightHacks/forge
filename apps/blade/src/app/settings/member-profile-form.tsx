@@ -302,7 +302,7 @@ export function MemberProfileForm({
                 profilePictureUrl = result.profilePictureUrl;
               }
 
-              const { month, day } = TERM_TO_DATE[values.gradTerm as GradTerm];
+              const { month, day } = TERM_TO_DATE[values.gradTerm];
               const gradDateIso = new Date(
                 values.gradYear,
                 month,

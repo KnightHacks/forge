@@ -108,7 +108,6 @@ export const memberRouter = {
         userId: true,
         age: true,
         discordUser: true,
-        points: true,
         dateCreated: true,
         timeCreated: true,
         id: true,

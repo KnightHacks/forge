@@ -84,7 +84,7 @@ const cardLoadInVariants = {
 };
 
 export function GuildMembersDisplay({ members }: GuildMembersDisplayProps) {
-  if (!members || members.length === 0) {
+  if (members.length === 0) {
     return (
       <p className="col-span-full p-10 text-center text-slate-500">
         No members found matching your criteria.
@@ -177,7 +177,7 @@ export function GuildMembersDisplay({ members }: GuildMembersDisplayProps) {
                 </div>
               </div>
 
-              {(m.school || grad || m.about) && (
+              {(m.school ?? grad ?? m.about) && (
                 <div className="mt-4 flex-grow space-y-1 border-t border-slate-700/70 pt-4 text-sm">
                   {m.school && (
                     <p className="font-medium text-slate-300">{m.school}</p>
