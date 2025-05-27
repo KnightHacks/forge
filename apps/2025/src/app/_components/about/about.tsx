@@ -1,7 +1,7 @@
 import AboutSVG from "./about-svg";
 import AboutComicSVG from "./about-comic-svg";
 
-export default function Hero() {
+export default function About() {
   return (
     <div className="flex w-full justify-center px-4 z-10">
       <div className="relative w-[99%] md:w-[60%]">
