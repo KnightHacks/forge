@@ -6,8 +6,8 @@ export default function Home() {
   return (
     <div className="bg-[url('/background.svg')] bg-cover">
       <Hero />
-      <Tracks />
       <About />
+      <Tracks />
     </div>
   );
 }
