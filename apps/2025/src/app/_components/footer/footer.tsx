@@ -35,7 +35,7 @@ export default function Footer() {
                 Copyright © 2019 - 2025 knighthacks. All Rights Reserved.
             </span>
             <span className="justify-center text-center text-sm sm:text-md md:text-lg lg:text-xl">
-                Made with 💜 by the Knight Hacks team.
+                Made with 💜 by the Knight Hacks team. 
             </span>
         </div>
     </div>
