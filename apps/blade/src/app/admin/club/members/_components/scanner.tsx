@@ -34,11 +34,8 @@ const ScannerPopUp = () => {
   const [open, setOpen] = useState(false);
   const checkIn = api.member.eventCheckIn.useMutation({
     onSuccess(opts) {
-      if (!opts) {
-        toast.success("Member Checked in Successfully!");
-        return;
-      }
       toast.success(opts.message);
+      return;
     },
     onError(opts) {
       toast.error(opts.message, {

@@ -16,7 +16,7 @@ export function ResumeButton({ memberId }: Props) {
   const handleClick = async () => {
     try {
       const { url } = await resumeMut.mutateAsync({ memberId });
-      if (!url) throw new Error("No résumé URL from server");
+      if (!url) throw new Error("No resume URL from server");
 
       const tab = window.open(url, "_blank", "noopener,noreferrer");
       if (!tab) {
@@ -27,9 +27,8 @@ export function ResumeButton({ memberId }: Props) {
         a.click();
         a.remove();
       }
-    } catch (err) {
-      console.error(err);
-      alert("Sorry—couldn’t fetch the résumé.");
+    } catch {
+      alert("Failed to download Resume. Please try again later.");
     }
   };
 

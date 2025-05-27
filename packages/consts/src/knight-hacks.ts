@@ -142,6 +142,13 @@ export const ALLOWED_PROFILE_PICTURE_EXTENSIONS = [
   "webp",
 ];
 
+export const TERM_TO_DATE = {
+  Spring: { month: 4, day: 2 }, // May 2
+  Summer: { month: 7, day: 6 }, // Aug 6
+  Fall: { month: 11, day: 10 }, // Dec 10
+} as const;
+export type GradTerm = keyof typeof TERM_TO_DATE;
+
 export const GUILD_TAG_OPTIONS = ["alumni", "current"] as const;
 export type GuildTag = (typeof GUILD_TAG_OPTIONS)[number];
 

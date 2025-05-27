@@ -90,7 +90,7 @@ export default function Dock({
               value={String(n)}
               className="focus:bg-violet-500/30"
             >
-              {n} / page
+              {n} / page
             </SelectItem>
           ))}
         </SelectContent>

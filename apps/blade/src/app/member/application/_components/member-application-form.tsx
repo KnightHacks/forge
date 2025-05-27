@@ -10,12 +10,14 @@ import {
   ALLOWED_PROFILE_PICTURE_EXTENSIONS,
   ALLOWED_PROFILE_PICTURE_TYPES,
   GENDERS,
+  GradTerm,
   KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
   KNIGHTHACKS_MAX_RESUME_SIZE,
   LEVELS_OF_STUDY,
   RACES_OR_ETHNICITIES,
   SCHOOLS,
   SHIRT_SIZES,
+  TERM_TO_DATE,
 } from "@forge/consts/knight-hacks";
 import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
@@ -56,7 +58,6 @@ export function MemberApplicationForm() {
     },
     onError(error) {
       toast.error(`Application submission failed: ${error.message}`);
-      console.error("Create Member Error:", error);
     },
     onSettled() {
       setLoading(false);
@@ -66,10 +67,6 @@ export function MemberApplicationForm() {
   const uploadResume = api.resume.uploadResume.useMutation({
     onError(error) {
       toast.error(`Resume upload failed: ${error.message}`);
-      console.error("Upload Resume Error:", error);
-    },
-    async onSettled() {
-      // Example: await utils.someQuery.invalidate();
     },
   });
 
@@ -88,8 +85,8 @@ export function MemberApplicationForm() {
       points: true,
       dateCreated: true,
       timeCreated: true,
-      profilePictureUrl: true, // Omit as it's handled by separate upload then passed as string
-      // resumeUrl is also part of InsertMemberSchema and handled similarly
+      gradDate: true,
+      profilePictureUrl: true,
     }).extend({
       userId: z.undefined(),
       age: z.undefined(),
@@ -106,11 +103,12 @@ export function MemberApplicationForm() {
         .min(1, "Date of birth is required.")
         .pipe(z.coerce.date())
         .transform((date) => date.toISOString()),
-      gradDate: z
+      gradTerm: z.enum(["Spring", "Summer", "Fall"]),
+      gradYear: z
         .string()
-        .min(1, "Graduation date is required.")
-        .pipe(z.coerce.date())
-        .transform((date) => date.toISOString()),
+        .regex(/^\d{4}$/, "Year must be 4 digits")
+        .transform(Number)
+        .refine((y) => y >= 1900 && y <= 2100, "Year out of range"),
       githubProfileUrl: z
         .string()
         .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")
@@ -233,7 +231,8 @@ export function MemberApplicationForm() {
       email: "",
       phoneNumber: "",
       dob: "",
-      gradDate: "",
+      gradTerm: "Spring",
+      gradYear: (new Date().getFullYear() + 1).toString(),
       githubProfileUrl: "",
       linkedinProfileUrl: "",
       websiteUrl: "",
@@ -305,6 +304,13 @@ export function MemberApplicationForm() {
               }
             }
 
+            const { month, day } = TERM_TO_DATE[values.gradTerm];
+            const gradDateIso = new Date(
+              values.gradYear,
+              month,
+              day,
+            ).toISOString();
+
             const createMemberPayload = {
               firstName: values.firstName,
               lastName: values.lastName,
@@ -315,7 +321,7 @@ export function MemberApplicationForm() {
                 values.phoneNumber === "" ? undefined : values.phoneNumber,
               levelOfStudy: values.levelOfStudy,
               gender: values.gender ?? "Prefer not to answer",
-              gradDate: values.gradDate,
+              gradDate: gradDateIso,
               raceOrEthnicity: values.raceOrEthnicity ?? "Prefer not to answer",
               shirtSize: values.shirtSize,
               githubProfileUrl: values.githubProfileUrl || undefined,
@@ -567,14 +573,47 @@ export function MemberApplicationForm() {
         />
         <FormField
           control={form.control}
-          name="gradDate"
+          name="gradTerm"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem>
               <FormLabel>
-                Graduation Date <span className="text-destructive">*</span>
+                Graduation Term <span className="text-destructive">*</span>
+              </FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a term" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {(["Spring", "Summer", "Fall"] as GradTerm[]).map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="gradYear"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Graduation Year <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
-                <Input type="date" {...field} />
+                <Input
+                  type="number"
+                  min="1900"
+                  max="2100"
+                  placeholder="2026"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
+import type { GradTerm } from "@forge/consts/knight-hacks";
 import {
   ALLOWED_PROFILE_PICTURE_EXTENSIONS,
   ALLOWED_PROFILE_PICTURE_TYPES,
@@ -15,6 +16,7 @@ import {
   RACES_OR_ETHNICITIES,
   SCHOOLS,
   SHIRT_SIZES,
+  TERM_TO_DATE,
 } from "@forge/consts/knight-hacks";
 import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
@@ -89,10 +91,20 @@ export function MemberProfileForm({
     },
   });
 
+  const initTermYear = (() => {
+    if (!member?.gradDate)
+      return { term: "Spring", year: `${new Date().getFullYear() + 1}` };
+    const d = new Date(member.gradDate);
+    const m = d.getUTCMonth();
+    const term = m === 4 ? "Spring" : m === 7 ? "Summer" : "Fall"; // based on fixed months
+    return { term, year: String(d.getUTCFullYear()) };
+  })();
+
   const form = useForm({
     schema: InsertMemberSchema.omit({
       age: true,
       userId: true,
+      gradDate: true,
     }).extend({
       firstName: z.string().min(1, "Required"),
       lastName: z.string().min(1, "Required"),
@@ -207,7 +219,8 @@ export function MemberProfileForm({
       email: member?.email ?? "",
       phoneNumber: member?.phoneNumber ?? "",
       dob: member?.dob,
-      gradDate: member?.gradDate,
+      gradTerm: initTermYear.term as GradTerm,
+      gradYear: initTermYear.year,
       githubProfileUrl: member?.githubProfileUrl ?? "",
       linkedinProfileUrl: member?.linkedinProfileUrl ?? "",
       websiteUrl: member?.websiteUrl ?? "",
@@ -289,15 +302,22 @@ export function MemberProfileForm({
                 profilePictureUrl = result.profilePictureUrl;
               }
 
+              const { month, day } = TERM_TO_DATE[values.gradTerm as GradTerm];
+              const gradDateIso = new Date(
+                values.gradYear,
+                month,
+                day,
+              ).toISOString();
+
               updateMember.mutate({
                 ...values,
                 resumeUrl,
                 profilePictureUrl,
                 phoneNumber:
                   values.phoneNumber === "" ? null : values.phoneNumber,
+                gradDate: gradDateIso,
               });
-            } catch (error) {
-              console.error("Error uploading files or updating member:", error);
+            } catch {
               toast.error(
                 "Something went wrong while processing your changes.",
               );
@@ -583,16 +603,55 @@ export function MemberProfileForm({
               </FormItem>
             )}
           />
+
+          {/* New gradTerm ------------------------------------------- */}
           <FormField
             control={form.control}
-            name="gradDate"
+            name="gradTerm"
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>
                   Graduation Date <span className="text-destructive">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a term" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(["Spring", "Summer", "Fall"] as GradTerm[]).map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* New gradYear ------------------------------------------- */}
+          <FormField
+            control={form.control}
+            name="gradYear"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Graduation Year</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1900"
+                    max="2100"
+                    placeholder="2026"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
