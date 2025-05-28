@@ -62,12 +62,13 @@ export default function CalendarEventsPage({
     return eventMap.get(key) ?? [];
   }
   function renderCell(date: Date) {
-    const hasEvents = getTodoList(date).length > 0;
-    return hasEvents ? (
-      <span data-event-marker className="sr-only">
-        •
-      </span>
-    ) : null;
+  const hasEvents = getTodoList(date).length > 0;
+
+  return hasEvents ? (
+    <div className="flex h-full w-full items-center justify-center">
+      <span className="block h-2 w-2 rounded-full bg-purple-400 shadow-[0_0_10px_2px_rgba(139,92,246,0.6)]" data-event-marker/>
+    </div>
+  ) : null;
   }
   const TodoList = ({ date }: { date: Date }) => {
     const list = getTodoList(date);
@@ -133,13 +134,12 @@ export default function CalendarEventsPage({
                 compact
                 renderCell={renderCell}
                 onSelect={handleSelect}
-                className="w-full text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] [&_.rs-calendar-table-cell-content:focus]:border-none [&_.rs-calendar-table-cell-content:focus]:shadow-none [&_.rs-calendar-table-cell-content:focus]:outline-none [&_.rs-calendar-table-cell-content:focus]:ring-0 [&_.rs-calendar-table-cell-content:has([data-event-marker])]:text-yellow-400 [&_.rs-calendar-table-cell-content:hover]:border-none [&_.rs-calendar-table-cell-content:hover]:bg-[#1E293B]/70 [&_.rs-calendar-table-cell-content:hover]:text-purple-300 [&_.rs-calendar-table-cell-content:hover]:shadow-none [&_.rs-calendar-table-cell-content]:rounded-md [&_.rs-calendar-table-cell-content]:border-none [&_.rs-calendar-table-cell-content]:shadow-none [&_.rs-calendar-table-cell-content]:transition [&_.rs-calendar-table-cell-content]:duration-150 [&_.rs-calendar-table-cell-selected]:!border-none [&_.rs-calendar-table-cell-selected]:!bg-purple-900 [&_.rs-calendar-table-cell-selected]:!text-white [&_.rs-calendar-table-cell-selected_.rs-calendar-table-cell-content]:shadow-none [&_.rs-calendar-table-cell-today]:text-purple-400"
+                className="w-full text-white ..."
                 monthDropdownProps={{
-                  itemClassName:
-                    "bg-[#1E293B]/50 text-white hover:bg-[#334155] cursor-pointer p-2 rounded-md transition-colors",
+                  itemClassName: "bg-[#1E293B]/50 text-white hover:bg-[#334155] cursor-pointer p-2 rounded-md transition-colors",
                 }}
-                showWeekDays
               />
+
             </div>
           </div>
           {selectedDate && (
