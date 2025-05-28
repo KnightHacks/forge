@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
 import { useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
-
 import SponsorCard from "./sponsors-assets/sponsor-card";
+
 
 const companies = [
   { name: "American Express", logo: "/logos/amex.svg" },
@@ -13,19 +13,18 @@ const companies = [
   { name: "Capital One", logo: "/logos/c1.svg" },
   { name: "EA", logo: "/logos/ea.svg" },
   { name: "Facebook", logo: "/logos/facebook.svg" },
-  { name: "Geico", logo: "/logos/Geico.svg" },
+  { name: "Geico", logo: "/logos/geico.svg" },
   { name: "GitHub", logo: "/logos/github.svg" },
   { name: "Goldman Sachs", logo: "/logos/goldman.svg" },
   { name: "Google Cloud", logo: "/logos/googlecloud.svg" },
-  { name: "IBM", logo: "/logos/IBM.svg" },
+  { name: "IBM", logo: "/logos/ibm.svg" },
   { name: "JPMorgan", logo: "/logos/chase.svg" },
   { name: "Lockheed Martin", logo: "/logos/lockheed.svg" },
   { name: "Microsoft", logo: "/logos/microsoft.svg" },
-  { name: "NASA", logo: "/logos/nasa.svg" },
   { name: "NextEra", logo: "/logos/nextera.svg" },
   { name: "RBC", logo: "/logos/rbc.svg" },
   { name: "ServiceNow", logo: "/logos/ServiceNow.svg" },
-  { name: "Synopsys", logo: "/logos/Synopsys.svg" },
+  { name: "Synopsys", logo: "/logos/synopsys.svg" },
   { name: "Texas Instruments", logo: "/logos/texasinstruments.svg" },
 ];
 
@@ -39,17 +38,17 @@ export default function Sponsors() {
   return (
     <section
       ref={containerRef}
-      className="flex flex-col items-center justify-center py-16 md:h-screen"
+      className="relative flex flex-col items-center justify-center py-16 md:h-screen overflow-hidden"
     >
       <h2
         ref={headerRef}
-        className="font-pragati pb-24 pt-32 text-2xl font-bold leading-tight tracking-tight text-white [text-shadow:0px_0px_40px_#6B21A8,0px_0px_20px_#6B21A8,0px_0px_10px_#6B21A8] md:pb-32 md:pt-12 md:text-5xl lg:text-6xl"
+        className="z-10 font-pragati pb-24 pt-32 text-2xl font-bold leading-tight tracking-tight text-white [text-shadow:0px_0px_40px_#6B21A8,0px_0px_20px_#6B21A8,0px_0px_10px_#6B21A8] md:pb-32 md:pt-12 md:text-5xl lg:text-6xl"
       >
         Previously Sponsored By
       </h2>
       <div
         ref={sponsorContainerRef}
-        className="flex flex-wrap justify-center gap-6 px-4"
+        className="z-10 flex flex-wrap justify-center gap-6 px-4 w-full max-w-[50%] mx-auto"
       >
         {companies.map((company, index) => (
           <SponsorCard
