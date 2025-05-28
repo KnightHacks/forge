@@ -62,13 +62,16 @@ export default function CalendarEventsPage({
     return eventMap.get(key) ?? [];
   }
   function renderCell(date: Date) {
-  const hasEvents = getTodoList(date).length > 0;
+    const hasEvents = getTodoList(date).length > 0;
 
-  return hasEvents ? (
-    <div className="flex h-full w-full items-center justify-center">
-      <span className="block h-2 w-2 rounded-full bg-purple-400 shadow-[0_0_10px_2px_rgba(139,92,246,0.6)]" data-event-marker/>
-    </div>
-  ) : null;
+    return hasEvents ? (
+      <div className="flex h-full w-full items-center justify-center">
+        <span
+          className="block h-2 w-2 rounded-full bg-purple-400 shadow-[0_0_10px_2px_rgba(139,92,246,0.6)]"
+          data-event-marker
+        />
+      </div>
+    ) : null;
   }
   const TodoList = ({ date }: { date: Date }) => {
     const list = getTodoList(date);
@@ -136,10 +139,10 @@ export default function CalendarEventsPage({
                 onSelect={handleSelect}
                 className="w-full text-white ..."
                 monthDropdownProps={{
-                  itemClassName: "bg-[#1E293B]/50 text-white hover:bg-[#334155] cursor-pointer p-2 rounded-md transition-colors",
+                  itemClassName:
+                    "bg-[#1E293B]/50 text-white hover:bg-[#334155] cursor-pointer p-2 rounded-md transition-colors",
                 }}
               />
-
             </div>
           </div>
           {selectedDate && (
