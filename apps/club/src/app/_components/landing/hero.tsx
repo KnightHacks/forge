@@ -7,11 +7,6 @@ import NeonTkSVG from "./assets/neon-tk";
 import SwordSVG from "./assets/sword";
 import HeroSVG from "./hero-assets/hero-icon";
 import TypingText from "./hero-assets/typing-text";
-import CoolButton from "./assets/coolbutton";
-import NeonTkSVG from "./assets/neon-tk";
-import SwordSVG from "./assets/sword";
-import HeroSVG from "./hero-assets/hero-icon";
-import TypingText from "./hero-assets/typing-text";
 
 const Hero = ({ bladeUrl }: { bladeUrl: string }) => {
   return (

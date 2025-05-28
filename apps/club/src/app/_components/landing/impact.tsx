@@ -7,9 +7,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import NeonTkSVG from "./assets/neon-tk";
 import SwordSVG from "./assets/sword";
-
-import NeonTkSVG from "./assets/neon-tk";
-import SwordSVG from "./assets/sword";
 import Expandable from "./impact-assets/expandable";
 
 export default function Impact() {
