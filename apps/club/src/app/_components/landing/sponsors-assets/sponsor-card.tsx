@@ -33,7 +33,7 @@ export default function SponsorCard({
         alt={`${sponsor} logo`}
         width={120}
         height={60}
-        className="max-h-16 w-auto object-contain transition-all duration-300 filter brightness-0 invert"
+        className="max-h-16 w-auto object-contain brightness-0 invert filter transition-all duration-300"
       />
     </motion.div>
   );
