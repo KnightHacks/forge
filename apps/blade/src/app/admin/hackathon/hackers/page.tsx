@@ -6,6 +6,7 @@ import { auth } from "@forge/auth";
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import HackerTable from "./_components/hackers-table";
+import HackerScanner from "./_components/scanner";
 
 export const metadata: Metadata = {
   title: "Blade | Hackers",
@@ -32,6 +33,9 @@ export default async function Hackers() {
               Hacker Dashboard
             </h1>
           </div>
+        </div>
+        <div className="my-3 flex justify-center">
+          <HackerScanner />
         </div>
         <div className="rounded-xl pb-8">
           <HackerTable />
