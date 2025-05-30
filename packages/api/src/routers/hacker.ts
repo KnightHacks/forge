@@ -385,6 +385,13 @@ export const hackerRouter = {
         return;
       }
 
+      if (hacker.status !== "confirmed") {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
+        });
+      }
+
       const duplicates = await db
         .select()
         .from(HackerAttendee)
@@ -409,7 +416,7 @@ export const hackerRouter = {
       await db.insert(HackerAttendee).values(hackerAttendee);
 
       await log({
-        title: "User Checked-In",
+        title: "Hacker Checked-In",
         message: `${hacker.firstName} ${hacker.lastName} has been checked in to hackathon ${hackathon.name}`,
         color: "success_green",
         userId: ctx.session.user.discordUserId,

@@ -89,7 +89,7 @@ const HackerScanner = () => {
                   if (hackathonId) {
                     await form.handleSubmit((data) => checkIn.mutate(data))();
                   } else {
-                    toast.error("Please select an event first!");
+                    toast.error("Please select a hackathon first!");
                   }
                 } finally {
                   setTimeout(() => (scanProps.processingScan = false), 3000);
@@ -118,7 +118,7 @@ const HackerScanner = () => {
                       defaultValue=""
                     >
                       <option value="" disabled>
-                        Select an event
+                        Select a hackathon
                       </option>
                       {hackathons?.map((hackathon) => (
                         <option key={hackathon.id} value={hackathon.id}>
