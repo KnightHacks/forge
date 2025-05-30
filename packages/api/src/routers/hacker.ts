@@ -417,7 +417,7 @@ export const hackerRouter = {
 
       await log({
         title: "Hacker Checked-In",
-        message: `${hacker.firstName} ${hacker.lastName} has been checked in to hackathon ${hackathon.name}`,
+        message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon: ${hackathon.name}`,
         color: "success_green",
         userId: ctx.session.user.discordUserId,
       });

@@ -34,7 +34,7 @@ export default async function Hackers() {
             </h1>
           </div>
         </div>
-        <div className="my-3 flex justify-center">
+        <div className="mb-2 flex justify-center">
           <HackerScanner />
         </div>
         <div className="rounded-xl pb-8">
