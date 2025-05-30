@@ -26,7 +26,12 @@ const sponsorsTitle = () => {
           objectFit="cover"
           className="z-10 h-auto w-full"
         />
-        <div className="absolute z-20 font-bold text-blue-600">Sponsors</div>
+        <div
+          className="absolute z-20 text-4xl font-bold text-blue-600"
+          style={{ fontFamily: '"The Last Shuriken"' }}
+        >
+          Sponsors
+        </div>
       </div>
     </div>
   );
