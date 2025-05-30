@@ -3,7 +3,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "../../../../../../packages/ui/src/accordion";
+} from "@forge/ui/accordion";
 import FaqSVG from "./faq-svg";
 import Link from "next/link";
 
