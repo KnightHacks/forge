@@ -2,6 +2,7 @@ import Hero from "./_components/hero/hero";
 import Tracks from "./_components/tracks/tracks";
 import About from "./_components/about/about";
 import Faq from "./_components/faq/faq";
+import Sponsors from "./_components/sponsors/sponsors";
 
 export default function Home() {
   return (
@@ -11,6 +12,7 @@ export default function Home() {
         <About />
         <Tracks />
         <Faq />
+        <Sponsors />
       </div>
     </div>
   );
