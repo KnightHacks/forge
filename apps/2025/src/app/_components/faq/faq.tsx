@@ -9,9 +9,11 @@ import Link from "next/link";
 
 export default function Faq() {
   return (
-    <div className="z-10000 flex w-full justify-center px-4">
+    <div className="relative z-10 flex w-full justify-center px-4">
       <div className="relative w-[99%] md:w-[60%]">
-        <FaqSVG className="z-1000 mb-5 h-40 w-full" />
+        <div className="relative">
+          <FaqSVG className="mb-5 h-40 w-full" />
+        </div>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Column 1 */}
           <div className="space-y-4">
