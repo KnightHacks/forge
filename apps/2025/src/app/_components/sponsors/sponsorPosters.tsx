@@ -17,7 +17,7 @@ const sponsorPosters = () => {
   return (
     <div
       id="background"
-      className="relative z-10 flex h-auto w-full justify-center bg-[#0F131A]"
+      className="relative z-10 flex h-auto w-full justify-center"
     >
       <div className="mt-[5%] mb-[2%] grid w-[75%] grid-cols-2 place-items-center gap-x-4 gap-y-2 sm:gap-x-7 sm:gap-y-5">
         {sponsors.map((sponsor, index) => {
