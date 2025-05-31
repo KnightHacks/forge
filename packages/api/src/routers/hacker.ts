@@ -405,7 +405,7 @@ export const hackerRouter = {
       if (duplicates.length > 0) {
         throw new TRPCError({
           code: "CONFLICT",
-          message: `${hacker.firstName} ${hacker.lastName} is already checked in for the event`,
+          message: `${hacker.firstName} ${hacker.lastName} is already checked into the hackathon`,
         });
       }
 
