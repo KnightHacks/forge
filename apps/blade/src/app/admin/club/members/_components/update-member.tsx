@@ -121,11 +121,10 @@ export default function UpdateMemberButton({
                 const points = Number(values.points);
 
                 updateMember.mutate({
-                  id: member.id,
                   firstName: values.firstName,
                   lastName: values.lastName,
                   email: values.email,
-                  points,
+                  points: points,
                   dob: values.dob,
                   phoneNumber: values.phoneNumber,
                   school: values.school,

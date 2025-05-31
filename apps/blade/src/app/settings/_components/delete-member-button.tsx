@@ -22,8 +22,6 @@ import { api } from "~/trpc/react";
 
 export default function DeleteMemberButton({
   memberId,
-  firstName,
-  lastName,
 }: {
   memberId: string;
   firstName: string;
@@ -53,8 +51,6 @@ export default function DeleteMemberButton({
     setIsLoading(true);
     deleteMember.mutate({
       id: memberId,
-      firstName: firstName,
-      lastName: lastName,
     });
   };
   return (
