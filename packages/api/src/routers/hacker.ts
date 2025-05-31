@@ -365,4 +365,65 @@ export const hackerRouter = {
       .orderBy(desc(Hackathon.startDate));
     return hackathons;
   }),
+  hackathonCheckIn: adminProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        hackathonId: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const hacker = await db.query.Hacker.findFirst({
+        where: (t, { eq }) => eq(t.userId, input.userId),
+      });
+
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.id, input.hackathonId),
+      });
+
+      if (!hacker || !hackathon) {
+        return;
+      }
+
+      if (hacker.status !== "confirmed") {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
+        });
+      }
+
+      const duplicates = await db
+        .select()
+        .from(HackerAttendee)
+        .where(
+          and(
+            eq(HackerAttendee.hackerId, hacker.id),
+            eq(HackerAttendee.hackathonId, input.hackathonId),
+          ),
+        );
+
+      if (duplicates.length > 0) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `${hacker.firstName} ${hacker.lastName} is already checked into the hackathon`,
+        });
+      }
+
+      const hackerAttendee = {
+        hackerId: hacker.id,
+        hackathonId: input.hackathonId,
+      };
+      await db.insert(HackerAttendee).values(hackerAttendee);
+
+      await log({
+        title: "Hacker Checked-In",
+        message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon: ${hackathon.name}`,
+        color: "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
+
+      return {
+        message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!`,
+      };
+    }),
 } satisfies TRPCRouterRecord;
