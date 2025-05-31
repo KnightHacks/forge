@@ -9,7 +9,7 @@ import Link from "next/link";
 
 export default function Faq() {
   return (
-    <div className="relative z-10 flex w-full justify-center px-4">
+    <div className="relative z-10 flex h-full w-full justify-center px-4 mb-60 md:mb-70 lg:mb-95">
       <div className="relative w-[99%] md:w-[60%]">
         <div className="relative">
           <FaqSVG className="mb-5 h-40 w-full" />
@@ -259,7 +259,6 @@ export default function Faq() {
             </Accordion>
           </div>
         </div>
-        <div className="h-screen w-full"></div>
       </div>
     </div>
   );
