@@ -6,10 +6,12 @@ import Faq from "./_components/faq/faq";
 export default function Home() {
   return (
     <div className="bg-[url('/background.svg')] bg-cover">
-      <Hero />
-      <About />
-      <Tracks />
-      <Faq />
+      <div className="relative z-10">
+        <Hero />
+        <About />
+        <Tracks />
+        <Faq />
+      </div>
     </div>
   );
 }
