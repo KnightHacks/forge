@@ -1,16 +1,15 @@
 import Image from "next/image";
 const sponsors = [
-  { src: "/sponsorSectionSvgs/google-logo.svg", alt: "Google" },
-  { src: "/sponsorSectionSvgs/microsoft-logo.svg", alt: "Microsoft" },
-  { src: "/sponsorSectionSvgs/ibm-logo.svg", alt: "IBM" },
-  { src: "/sponsorSectionSvgs/nvidia-logo.svg", alt: "NVIDIA" },
-  { src: "/sponsorSectionSvgs/ea-logo.svg", alt: "EA" },
-  { src: "/sponsorSectionSvgs/meta-logo.svg", alt: "Meta" },
+  { src: "/sponsorSectionSvgs/nasa.svg", alt: "NASA" },
+  { src: "/sponsorSectionSvgs/nextera-energy.svg", alt: "NEXTERA" },
+  { src: "/sponsorSectionSvgs/github-mark.svg", alt: "GITHUB" },
+  { src: "/sponsorSectionSvgs/servicenow.svg", alt: "SERVICENOW" },
 ];
 const sponsorScales: Record<string, string> = {
-  IBM: "scale-175",
-  NVIDIA: "scale-200",
-  default: "scale-100",
+  NEXTERA: "scale-160 ml-1.5 xl:ml-6",
+  NASA: "scale-140",
+  SERVICENOW: "scale-190 ",
+  default: "scale-120",
 };
 
 const sponsorPosters = () => {
