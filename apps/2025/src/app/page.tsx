@@ -1,6 +1,7 @@
 import Hero from "./_components/hero/hero";
 import Tracks from "./_components/tracks/tracks";
 import About from "./_components/about/about";
+import Sponsors from "./_components/sponsors/sponsors";
 import Faq from "./_components/faq/faq";
 
 export default function Home() {
@@ -11,6 +12,7 @@ export default function Home() {
         <About />
         <Tracks />
         <Faq />
+        <Sponsors />
       </div>
     </div>
   );
