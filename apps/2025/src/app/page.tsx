@@ -3,6 +3,7 @@ import Tracks from "./_components/tracks/tracks";
 import About from "./_components/about/about";
 import Faq from "./_components/faq/faq";
 import Sponsors from "./_components/sponsors/sponsors";
+import Partners from "./_components/partners/partners";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
         <Tracks />
         <Faq />
         <Sponsors />
+        <Partners />
       </div>
     </div>
   );

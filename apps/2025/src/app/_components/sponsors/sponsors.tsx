@@ -4,7 +4,7 @@ import SponsorPosters from "./sponsorPosters";
 
 const sponsors = () => {
   return (
-    <div className="mb-48 h-auto w-full lg:mb-[28%]">
+    <div className="mb-24 h-auto w-full lg:mb-24">
       <SponsorsTitle />
       <SponsorPosters />
     </div>
