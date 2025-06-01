@@ -6,6 +6,7 @@ import {
 } from "@forge/ui/accordion";
 import FaqSVG from "./faq-svg";
 import Link from "next/link";
+import Image from "next/image";
 
 interface FaqLink {
   text: string;
@@ -103,11 +104,23 @@ const faqData: FaqItem[] = [
 
 export default function Faq() {
   return (
-    <div className="relative z-10 flex h-full w-full justify-center px-4 mb-60 md:mb-70 lg:mb-95">
-      <div className="relative w-[99%] md:w-[60%]">
-        <div className="relative">
-          <FaqSVG className="mb-5 h-40 w-full" />
+    <div className="relative z-10 flex flex-col items-center h-full w-full mb-60 md:mb-70 lg:mb-95">
+      <div className="relative w-full mb-10">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/sponsorSectionSvgs/sidewalk.svg"
+            alt="Sidewalk background for FAQ title"
+            layout="fill"
+            objectFit="cover"
+            className="w-full h-full"
+            unoptimized={true}
+          />
         </div>
+        <div className="relative z-10 w-full max-w-4xl mx-auto px-4 py-12 md:px-0 md:py-24 lg:py-28">
+          <FaqSVG className="h-auto w-full" />
+        </div>
+      </div>
+      <div className="relative w-[99%] md:w-[80%] px-4">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Column 1 */}
           <div className="space-y-4">
@@ -118,10 +131,10 @@ export default function Faq() {
                   value={faq.id}
                   className="overflow-hidden rounded-lg border-0 bg-[#F7F0C6]"
                 >
-                  <AccordionTrigger className="w-full px-6 py-4 text-left text-slate-800 transition-colors hover:bg-amber-200 hover:no-underline [&[data-state=open]>svg]:rotate-180">
+                  <AccordionTrigger className="w-full px-4 py-3 text-left text-base text-slate-800 transition-colors hover:bg-amber-200 hover:no-underline md:px-8 md:py-5 md:text-lg [&[data-state=open]>svg]:rotate-180">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-4 text-slate-700">
+                  <AccordionContent className="px-4 pt-1 pb-3 text-slate-700 leading-relaxed md:px-8 md:pt-2 md:pb-6">
                     {faq.links ? (
                       <>
                         {faq.answer.split("hackers guide").map((part, index, array) => (
@@ -158,10 +171,10 @@ export default function Faq() {
                   value={faq.id}
                   className="overflow-hidden rounded-lg border-0 bg-[#F7F0C6]"
                 >
-                  <AccordionTrigger className="w-full px-6 py-4 text-left text-slate-800 transition-colors hover:bg-amber-200 hover:no-underline [&[data-state=open]>svg]:rotate-180">
+                  <AccordionTrigger className="w-full px-4 py-3 text-left text-base text-slate-800 transition-colors hover:bg-amber-200 hover:no-underline md:px-8 md:py-5 md:text-lg [&[data-state=open]>svg]:rotate-180">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-4 text-slate-700">
+                  <AccordionContent className="px-4 pt-1 pb-3 text-slate-700 leading-relaxed md:px-8 md:pt-2 md:pb-6">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
