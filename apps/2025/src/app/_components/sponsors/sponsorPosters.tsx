@@ -23,7 +23,6 @@ const SPONSOR_CATEGORIES = {
     logoScaleFactor: 1.2,
     borderColor: "border-slate-200",
     shadowColor: "hover:shadow-slate-200/70",
-    borderAnimationClass: "platinum-border-animate"
   },
   Gold: {
     order: 2,
@@ -31,8 +30,6 @@ const SPONSOR_CATEGORIES = {
     logoScaleFactor: 1.1,
     borderColor: "border-yellow-400",
     shadowColor: "hover:shadow-yellow-400/70",
-    bgShimmerClass: "",
-    borderAnimationClass: ""
   },
   Silver: {
     order: 3,
@@ -40,8 +37,6 @@ const SPONSOR_CATEGORIES = {
     logoScaleFactor: 1.0,
     borderColor: "border-gray-400",
     shadowColor: "hover:shadow-gray-400/70",
-    bgShimmerClass: "",
-    borderAnimationClass: ""
   },
   Bronze: {
     order: 4,
@@ -49,22 +44,25 @@ const SPONSOR_CATEGORIES = {
     logoScaleFactor: 0.9,
     borderColor: "border-orange-400",
     shadowColor: "hover:shadow-orange-400/70",
-    bgShimmerClass: "",
-    borderAnimationClass: ""
   },
 };
 
 type SponsorCategory = keyof typeof SPONSOR_CATEGORIES;
 
 const sponsorPosters = () => {
+  const initialStateForReduce: Record<SponsorCategory, (typeof sponsors)[0][]> =
+    (Object.keys(SPONSOR_CATEGORIES) as SponsorCategory[]).reduce((obj, key) => {
+      obj[key] = [];
+      return obj;
+    }, {} as Record<SponsorCategory, (typeof sponsors)[0][]>);
+
   const groupedSponsors = sponsors.reduce((acc, sponsor) => {
     const category = sponsor.category as SponsorCategory;
-    if (!acc[category]) {
-      acc[category] = [];
+    if (Object.prototype.hasOwnProperty.call(acc, category)) {
+      acc[category].push(sponsor);
     }
-    acc[category].push(sponsor);
     return acc;
-  }, {} as Record<SponsorCategory, typeof sponsors>);
+  }, initialStateForReduce);
 
   const sortedCategories = Object.keys(groupedSponsors).sort(
     (a, b) => SPONSOR_CATEGORIES[a as SponsorCategory].order - SPONSOR_CATEGORIES[b as SponsorCategory].order
@@ -80,14 +78,14 @@ const sponsorPosters = () => {
         return (
           <div key={category} className="w-full mb-16">
             <div className={`mt-[2%] mb-[2%] grid w-[85%] sm:w-[75%] ${categoryConfig.itemClass} mx-auto grid-cols-1 place-items-center gap-x-6 gap-y-6 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-8`}>
-              {(groupedSponsors[category] || []).map((sponsor, index) => {
+              {(groupedSponsors[category]).map((sponsor, index) => {
                 const baseScale = sponsorScales[sponsor.alt] || sponsorScales.default;
                 return (
                   <Link key={index} href={sponsor.link} passHref legacyBehavior>
                     <a
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`relative flex aspect-[190/230] w-full items-center justify-center bg-[#EDE6D9] rounded-lg border-2 ${categoryConfig.borderColor} hover:shadow-2xl ${categoryConfig.shadowColor} hover:scale-105 hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden ${categoryConfig.borderAnimationClass || ''}`}
+                      className={`relative flex aspect-[190/230] w-full items-center justify-center bg-[#EDE6D9] rounded-lg border-2 ${categoryConfig.borderColor} hover:shadow-2xl ${categoryConfig.shadowColor} hover:scale-105 hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden`}
                     >
                       <div className="absolute inset-0 z-0 bg-[repeating-linear-gradient(45deg,rgba(222,213,170,0.4)_0,rgba(222,213,170,0.4)_2px,transparent_2px,transparent_10px)]"></div>
                       
