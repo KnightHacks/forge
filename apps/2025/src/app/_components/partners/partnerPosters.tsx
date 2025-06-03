@@ -4,8 +4,6 @@ import Link from "next/link";
 const partners = [
     { src: "/partnersSection/gwc.png", alt: "GWC", link: "https://girlswhocode.com/" },
     { src: "/partnersSection/ieee.png", alt: "IEEE", link: "https://ieee.cecs.ucf.edu/" },
-    { src: "/partnersSection/swamphacks.svg", alt: "SWAMPHACKS", link: "https://x.swamphacks.com/" },
-    { src: "/partnersSection/hackabull.png", alt: "HACKABULL", link: "https://https://www.hackabull.org/" },
     { src: "/partnersSection/mlh.svg", alt: "MLH", link: "https://mlh.io/" },
     { src: "/partnersSection/cecs.png", alt: "UCF", link: "https://www.cecs.ucf.edu/" },
     
