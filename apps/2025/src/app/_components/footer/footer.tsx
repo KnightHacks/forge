@@ -29,7 +29,7 @@ export default function Footer() {
         />
         <Image
           src={footerSVG}
-          alt="Knight Hacks"
+          alt="Knight Hacks Logo"
           width={2267}
           height={803}
           objectFit="cover"

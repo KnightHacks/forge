@@ -7,6 +7,8 @@ const Logo = ({ size = 874, ...props }: Omit<SVGProps<SVGSVGElement>, 'width' | 
         height={size}
         viewBox="0 0 874 874"
         fill="none"
+        role="img"
+        aria-label="Knight Hacks 2025 Logo"
         xmlns="http://www.w3.org/2000/svg"
         {...props}
     >

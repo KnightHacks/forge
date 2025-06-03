@@ -9,6 +9,8 @@ export default function Comic(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 3627 4390"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      role="img"
+      aria-label="Hello World, AI/Machine Learning, App Development, Game Development, and Embedded Software!"
       {...props}
     >
       <path
