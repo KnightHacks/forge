@@ -27,7 +27,7 @@ const AboutText = () => {
     return (
         <div className="relative m-10">
             <div className="flex items-start">
-                <TextBox width="70%" height="100%" className="mt-4 sm:mt-6 md:mt-8">
+                <TextBox width="70%" height="100%" className="mt-4 sm:mt-6 md:mt-8" textSize="text-base sm:text-lg md:text-xl lg:text-2xl">
                     <p>
                         <em>In the not so distant future...</em>
                     </p>
@@ -37,7 +37,7 @@ const AboutText = () => {
                 <div className="absolute -top-15 sm:-top-25 md:-top-30 -right-2 sm:-right-3 md:-right-15 z-10">
                     <Logo size={logoSize} />
                 </div>
-                <TextBox width="100%" height="100%" className="m-4 sm:m-6 md:m-8">
+                <TextBox width="100%" height="100%" className="m-4 sm:m-6 md:m-8" textSize="text-base sm:text-lg md:text-xl lg:text-2xl">
                     <p>
                         The University of Central Florida's premier hackathon, 
                         <em><strong> KNIGHT HACKS VII, </strong></em> 
@@ -51,7 +51,7 @@ const AboutText = () => {
                 </TextBox>
             </div>
             <div className="flex items-start ml-8">
-                <TextBox width="93%" height="100%" className="mb-8 sm:mb-12 md:mb-16">
+                <TextBox width="93%" height="100%" className="mb-8 sm:mb-12 md:mb-16" textSize="text-base sm:text-lg md:text-xl lg:text-2xl">
                     <p>
                         Our friends 
                         <span className="text-[#1570AD]"> T.K. </span>
