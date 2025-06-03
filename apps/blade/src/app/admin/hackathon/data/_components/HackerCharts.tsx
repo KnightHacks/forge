@@ -60,12 +60,19 @@ export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
                 ))}
               </ToggleGroup>
             </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
-              <FirstTimeInfo hackers={filteredHackers} />
-              <AgeBarChart people={hackers} />
-              <RaceOrEthnicityPie people={hackers} />
-              <SchoolYearPie people={hackers} />
-            </div>
+        {
+          filteredHackers && filteredHackers.length > 0 ?
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
+            <FirstTimeInfo hackers={filteredHackers} />
+            <AgeBarChart people={filteredHackers} />
+            <RaceOrEthnicityPie people={filteredHackers} />
+            <SchoolYearPie people={filteredHackers} />
+          </div>
+          :
+          <h1 className="mt-20 text-center text-xl">
+            No hackers match the current filter
+          </h1>
+        }
           </div>
         )
       )}
