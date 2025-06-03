@@ -39,7 +39,7 @@ export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
 
 
   return (
-    <div className="mt-8">
+    <div className="mt-4 md:mt-8">
       {hackers === null ? (
         <h1 className="mt-20 text-center text-xl">
           This hackathon has no hackers!
@@ -47,9 +47,9 @@ export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
       ) : (
         hackers && (
           <div className="grid gap-4">
-            <div className="flex flex-row gap-4 p-3 w-fit">
-              <h2 className="text-lg font-semibold flex items-center">Filter by status:</h2>
-              <ToggleGroup id="status-select" className="w-fit" variant="outline" type="multiple" value={selectedStatuses} onValueChange={handleStatusChange}>
+            <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-fit">
+              <h2 className="md:text-lg font-semibold flex items-center">Filter by status:</h2>
+              <ToggleGroup className="flex flex-wrap" variant="outline" type="multiple" value={selectedStatuses} onValueChange={handleStatusChange}>
                 <ToggleGroupItem value="all" aria-label="toggle-all">
                   all
                 </ToggleGroupItem>
