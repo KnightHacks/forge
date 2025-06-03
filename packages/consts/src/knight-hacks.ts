@@ -127,6 +127,31 @@ export const EVENT_POINTS: Record<EventTag, number> = {
 export const KNIGHTHACKS_S3_BUCKET_REGION = "us-east-1";
 export const KNIGHTHACKS_MAX_RESUME_SIZE = 5 * 1000000; // 5MB
 
+export const KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE = 2 * 1024 * 1024; // 2MB
+export const ALLOWED_PROFILE_PICTURE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+];
+export const ALLOWED_PROFILE_PICTURE_EXTENSIONS = [
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "webp",
+];
+
+export const TERM_TO_DATE = {
+  Spring: { month: 4, day: 2 }, // May 2
+  Summer: { month: 7, day: 6 }, // Aug 6
+  Fall: { month: 11, day: 10 }, // Dec 10
+} as const;
+export type GradTerm = keyof typeof TERM_TO_DATE;
+
+export const GUILD_TAG_OPTIONS = ["alumni", "current"] as const;
+export type GuildTag = (typeof GUILD_TAG_OPTIONS)[number];
+
 export const MINIO_ENDPOINT = "minio-g0soogg4gs8gwcggw4ococok.knighthacks.org";
 export const BUCKET_NAME = "knight-hacks-qr";
 export const QR_CONTENT_TYPE = "image/png";

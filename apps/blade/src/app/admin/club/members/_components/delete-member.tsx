@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { USE_CAUTION } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
@@ -23,7 +22,7 @@ import { api } from "~/trpc/react";
 export default function DeleteMemberButton({
   member,
 }: {
-  member: InsertMember;
+  member: { id: string; firstName: string; lastName: string };
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [confirm, setConfirm] = useState<string>("");
@@ -50,8 +49,6 @@ export default function DeleteMemberButton({
     setIsLoading(true);
     await deleteMember.mutateAsync({
       id: member.id,
-      firstName: member.firstName,
-      lastName: member.lastName,
     });
   };
 
