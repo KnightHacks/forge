@@ -1,5 +1,6 @@
 import { HACKATHON_APPLICATION_STATES } from "@forge/consts/knight-hacks";
 import { ToggleGroup, ToggleGroupItem } from "@forge/ui/toggle-group";
+import { Tooltip } from "recharts";
 
 import AgeBarChart from "~/app/admin/_components/AgeBarChart";
 import RaceOrEthnicityPie from "~/app/admin/_components/RaceOrEthnicityPie";
@@ -19,16 +20,19 @@ export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
       ) : (
         hackers && (
           <div className="grid gap-4">
-            <ToggleGroup className="w-fit" variant="outline" type="multiple">
-              <ToggleGroupItem value="all" aria-label="toggle-all">
-                all
-              </ToggleGroupItem>
-              {HACKATHON_APPLICATION_STATES.map((item) => (
-                <ToggleGroupItem value={item} aria-label={`toggle-${item}`}>
-                  {item}
+            <div className="flex flex-row gap-4 p-3 w-fit">
+              <h2 className="text-lg font-semibold flex items-center">Filter by status:</h2>
+              <ToggleGroup id="status-select" className="w-fit" variant="outline" type="multiple">
+                <ToggleGroupItem value="all" aria-label="toggle-all">
+                  all
                 </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+                {HACKATHON_APPLICATION_STATES.map((item) => (
+                  <ToggleGroupItem value={item} aria-label={`toggle-${item}`}>
+                    {item}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
               <FirstTimeInfo hackers={hackers} />
               <AgeBarChart people={hackers} />
