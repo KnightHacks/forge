@@ -91,7 +91,7 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
   });
 
   return (
-    <Card data-chart={id} className="flex flex-col">
+    <Card data-chart={id} className="flex flex-col pb-4">
       <ChartStyle id={id} config={baseConfig} />
       <CardHeader className="flex-col items-start gap-4 space-y-0 pb-0">
         <div className="grid gap-1">
