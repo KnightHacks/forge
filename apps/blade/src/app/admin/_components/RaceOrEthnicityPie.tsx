@@ -1,7 +1,7 @@
 "use client";
 
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { ChartConfig } from "@forge/ui/chart";
@@ -89,6 +89,20 @@ export default function RaceOrEthnicityPie({ people }: { people: Person[] }) {
       }
     }
   });
+
+  // update selected pie chart segment if the data changes
+  useEffect(() => {
+    const activeStillExists = raceOrEthnicityData.some(
+      (item) => item.name === activeLevel
+    );
+
+    if (raceOrEthnicityData.length <= 0) {
+      setActiveLevel(null);
+      return;
+    } else if (!activeStillExists && raceOrEthnicityData[0]) {
+      setActiveLevel(raceOrEthnicityData[0].name);
+    }
+  }, [raceOrEthnicityData, activeLevel]);
 
   return (
     <Card data-chart={id} className="flex flex-col pb-4">
