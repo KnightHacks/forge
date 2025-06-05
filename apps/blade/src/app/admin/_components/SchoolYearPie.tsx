@@ -1,7 +1,7 @@
 "use client";
 
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { ChartConfig } from "@forge/ui/chart";
@@ -93,7 +93,7 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
   // update selected pie chart segment if the data changes
   useEffect(() => {
     const activeStillExists = levelOfStudyData.some(
-      (item) => item.name === activeLevel
+      (item) => item.name === activeLevel,
     );
 
     if (levelOfStudyData.length <= 0) {

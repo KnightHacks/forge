@@ -1,7 +1,7 @@
 "use client";
 
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
@@ -70,7 +70,7 @@ export default function SchoolYearPie({
   // update selected pie chart segment if the data changes
   useEffect(() => {
     const activeStillExists = genderData.some(
-      (item) => item.name === activeLevel
+      (item) => item.name === activeLevel,
     );
 
     if (genderData.length <= 0) {
