@@ -394,6 +394,91 @@ importers:
         specifier: 'catalog:'
         version: 5.7.2
 
+  apps/gemiknights:
+    dependencies:
+      '@forge/api':
+        specifier: workspace:*
+        version: link:../../packages/api
+      '@forge/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../../packages/consts
+      '@forge/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@forge/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@gsap/react':
+        specifier: ^2.1.2
+        version: 2.1.2(gsap@3.12.7)(react@18.3.1)
+      '@svgr/webpack':
+        specifier: ^8.1.0
+        version: 8.1.0(typescript@5.7.2)
+      framer-motion:
+        specifier: ^12.0.1
+        version: 12.0.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      geist:
+        specifier: ^1.3.1
+        version: 1.3.1(next@14.2.28(@babel/core@7.26.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+      gsap:
+        specifier: ^3.12.7
+        version: 3.12.7
+      lucide-react:
+        specifier: ^0.469.0
+        version: 0.469.0(react@18.3.1)
+      next:
+        specifier: ^14.2.26
+        version: 14.2.28(@babel/core@7.26.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: catalog:react18
+        version: 18.3.1
+      react-dom:
+        specifier: catalog:react18
+        version: 18.3.1(react@18.3.1)
+      rsuite:
+        specifier: ^5.77.0
+        version: 5.77.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+    devDependencies:
+      '@forge/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@forge/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
+      '@forge/tailwind-config':
+        specifier: workspace:*
+        version: link:../../tooling/tailwind
+      '@forge/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@types/node':
+        specifier: ^22.10.1
+        version: 22.10.2
+      '@types/react':
+        specifier: catalog:react18
+        version: 18.3.18
+      '@types/react-dom':
+        specifier: catalog:react18
+        version: 18.3.5(@types/react@18.3.18)
+      dotenv-cli:
+        specifier: ^7.4.2
+        version: 7.4.4
+      eslint:
+        specifier: 'catalog:'
+        version: 9.17.0(jiti@2.4.2)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.4.2
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 3.4.17(ts-node@10.9.2(@types/node@22.10.2)(typescript@5.7.2))
+      typescript:
+        specifier: 'catalog:'
+        version: 5.7.2
+
   apps/guild:
     dependencies:
       '@forge/api':
