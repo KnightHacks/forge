@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-
-
+import BgSVG from "./_components/graphics/background";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -17,14 +16,14 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://club.knighthacks.org"),
-  title: "Knight Hacks",
-  description: "UCF's largest hackathon and software engineering organization",
+  title: "GemiKnights",
+  description: "Geminite",
   openGraph: {
-    title: "Knight Hacks",
+    title: "GemiKnights",
     description:
-      "UCF's largest hackathon and software engineering organization",
+      "this is the geminite yayayayaya",
     url: "https://club.knighthacks.org",
-    siteName: "Knight Hacks",
+    siteName: "GemiKnights",
   },
 };
 
@@ -38,7 +37,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <div className="absolute inset-0 -z-10">
+        <BgSVG />
         {children}
+      </div>
       </body>
     </html>
   );
