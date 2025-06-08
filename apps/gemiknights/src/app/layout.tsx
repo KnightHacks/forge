@@ -3,8 +3,6 @@ import BgSVG from "./_components/graphics/background";
 import "./globals.css";
 import Navbar from "./_components/navbar/Navbar";
 
-
-
 export const metadata: Metadata = {
   metadataBase: new URL("https://club.knighthacks.org"),
   title: "GemiKnights",
@@ -31,7 +29,7 @@ export default function RootLayout({
         <div className="absolute inset-0 -z-10">
         <BgSVG />
         </div>
-        <Navbar />
+        <span className="tk-peridot-devanagari"><Navbar /></span>
         {children}
       </body>
     </html>
