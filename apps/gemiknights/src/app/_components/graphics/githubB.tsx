@@ -9,6 +9,7 @@ const githubBSVG = (props: SVGProps<SVGSVGElement>) => (
         viewBox="0 0 152.43 43.32"
         {...props}
     >
+        <title>Github Logo</title>
         <defs>
             <style>
                 {`

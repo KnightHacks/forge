@@ -3,10 +3,10 @@ import type { SVGProps } from "react";
 
 const MLHSVG = (props: SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 310.59 130.78" {...props}>
+        <title>MLH Logo</title>
         <defs>
             <style>{`.cls-1{fill:#242425;}.cls-2{fill:#e73427;}.cls-3{fill:#1d539f;}.cls-4{fill:#f8b92a;}`}</style>
         </defs>
-        <title>mlh-logo-color-dark</title>
         <g id="Layer_2" data-name="Layer 2">
             <g id="Layer_1-2" data-name="Layer 1">
                 <g id="mlh-logo-color-dark">

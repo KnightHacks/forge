@@ -1,7 +1,7 @@
 import * as React from "react";
 import type { SVGProps } from "react";
 
-const githubWSVG = (props: SVGProps<SVGSVGElement>) => (
+const githubWSVG: React.FC<SVGProps<SVGSVGElement>> = (props) => (
     <svg
         id="Layer_2" 
         data-name="Layer 2" 
@@ -9,6 +9,7 @@ const githubWSVG = (props: SVGProps<SVGSVGElement>) => (
         viewBox="0 0 152.43 43.32"
         {...props}
     >
+        <title>Github Logo</title>
         <defs>
             <style>
                 {`
