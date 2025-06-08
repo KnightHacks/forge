@@ -18,13 +18,6 @@ const Partners = () => {
                                 interactive={false}
                                 containerClassName="w-full h-full"
                                 blendingValue="hard-light"
-                                gradientBackgroundStart="rgb(67, 19, 61)"
-                                gradientBackgroundEnd="rgb(214, 100, 93)"
-                                firstColor="255, 200, 80"
-                                secondColor="188, 104, 142"
-                                thirdColor="148, 118, 197"
-                                fourthColor="79, 135, 237"
-                                fifthColor="214, 100, 93"
                             />
                         </div>
                         <CardContent className="p-10 xs:p-4 sm:p-6 flex items-center justify-center relative z-10 w-full h-full min-h-[64px] xs:min-h-[80px] sm:min-h-[96px] md:min-h-[110px]">
