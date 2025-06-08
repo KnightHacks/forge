@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import BgSVG from "./_components/graphics/background";
 import "./globals.css";
+import Navbar from "./_components/navbar/Navbar";
 
 
 
@@ -30,6 +31,7 @@ export default function RootLayout({
         <div className="absolute inset-0 -z-10">
         <BgSVG />
         </div>
+        <Navbar />
         {children}
       </body>
     </html>
