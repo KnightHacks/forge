@@ -3,7 +3,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Award, Github, GlobeIcon, Linkedin } from "lucide-react";
+import { Award, Github, GlobeIcon, Info, Linkedin } from "lucide-react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@forge/ui/dialog";
+import { Separator } from "@forge/ui/separator";
 
 import { ResumeButton } from "./resume-button";
 
@@ -62,7 +72,7 @@ function capitalizeFirstLetter(string: string | null | undefined) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-const CARD_ACCENT_GRADIENT = "before:from-violet-600/30 before:to-cyan-500/30"; // Adjusted for subtlety
+const CARD_ACCENT_GRADIENT = "before:from-violet-600/30 before:to-cyan-500/30";
 
 const gridContainerVariants = {
   hidden: { opacity: 0 },
@@ -104,7 +114,7 @@ export function GuildMembersDisplay({ members }: GuildMembersDisplayProps) {
         const isAlumni = !!grad?.isPast;
         const initialBorderColor = isAlumni
           ? "rgba(251, 191, 36, 0.4)"
-          : "rgba(51, 65, 85, 0.7)"; // amber-500/60 vs slate-700/80
+          : "rgba(51, 65, 85, 0.7)";
 
         return (
           <motion.div
@@ -123,122 +133,210 @@ export function GuildMembersDisplay({ members }: GuildMembersDisplayProps) {
               scale: 1.04,
               borderColor: isAlumni
                 ? "rgba(250, 176, 5, 0.7)"
-                : "rgba(139, 92, 246, 0.7)", // Brighter yellow or violet
+                : "rgba(139, 92, 246, 0.7)",
               boxShadow: isAlumni
                 ? "0px 8px 25px rgba(250, 176, 5, 0.3)"
                 : "0px 8px 25px rgba(139, 92, 246, 0.25)",
               transition: { type: "spring", stiffness: 300, damping: 15 },
             }}
             style={{
-              borderColor: initialBorderColor, // Set initial border color for Framer Motion to animate from
+              borderColor: initialBorderColor,
             }}
             className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border bg-slate-900/70 shadow-lg ring-1 backdrop-blur-md before:absolute before:inset-0 before:-z-10 before:bg-gradient-to-br before:opacity-60 before:transition-opacity hover:before:opacity-100 ${CARD_ACCENT_GRADIENT} ${
-              isAlumni
-                ? "ring-yellow-500/30" // Ring color for alumni
-                : "ring-slate-700/50" // Ring color for regular
-            }`}
+              isAlumni ? "ring-yellow-500/30" : "ring-slate-700/50"
+            } min-h-[380px]`}
           >
-            {isAlumni && (
-              <motion.div
-                initial={{ opacity: 0, top: "-20px" }}
-                animate={{ opacity: 1, top: "0.75rem" }} // 12px ( Tailwind's top-3 )
-                transition={{
-                  type: "spring",
-                  stiffness: 250,
-                  damping: 12,
-                  delay: 0.4 + index * 0.02,
-                }}
-                className="absolute right-3 z-10 flex items-center gap-1.5 rounded-full bg-gradient-to-br from-amber-500/40 to-yellow-400/40 px-3 py-1.5 text-xs font-bold text-amber-100 shadow-md backdrop-blur-sm"
-              >
-                <Award size={14} className="opacity-90" />
-                ALUMNI
-              </motion.div>
-            )}
+            <Dialog>
+              {isAlumni && (
+                <motion.div
+                  initial={{ opacity: 0, top: "-20px" }}
+                  animate={{ opacity: 1, top: "0.75rem" }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 250,
+                    damping: 12,
+                    delay: 0.4 + index * 0.02,
+                  }}
+                  className="absolute right-3 z-10 flex items-center gap-1.5 rounded-full bg-gradient-to-br from-amber-500/40 to-yellow-400/40 px-3 py-1.5 text-xs font-bold text-amber-100 shadow-md backdrop-blur-sm"
+                >
+                  <Award size={14} className="opacity-90" />
+                  ALUMNI
+                </motion.div>
+              )}
 
-            <div className="flex flex-grow flex-col p-5">
-              <div className="flex items-center gap-4">
-                <Image
-                  src={m.profilePictureUrl ?? "/placeholder-avatar.png"}
-                  alt={`${capitalizeFirstLetter(m.firstName)} ${capitalizeFirstLetter(m.lastName)}'s avatar`}
-                  width={80}
-                  height={80}
-                  className="h-20 w-20 flex-shrink-0 rounded-full object-cover ring-2 ring-slate-700"
-                />
-                <div className="min-w-0">
-                  <h2 className="truncate text-xl font-semibold text-slate-100">
-                    {capitalizeFirstLetter(m.firstName)}{" "}
-                    {capitalizeFirstLetter(m.lastName)}
-                  </h2>
-                  {m.tagline && (
-                    <p className="truncate text-sm text-slate-400">
-                      {m.tagline}
-                    </p>
-                  )}
+              <div className="flex flex-grow flex-col p-5">
+                <div className="flex items-center gap-4">
+                  <Image
+                    src={m.profilePictureUrl ?? "/placeholder-avatar.png"}
+                    alt={`${capitalizeFirstLetter(m.firstName)} ${capitalizeFirstLetter(m.lastName)}'s avatar`}
+                    width={80}
+                    height={80}
+                    className="h-20 w-20 flex-shrink-0 rounded-full object-cover ring-2 ring-slate-700"
+                  />
+                  <div className="min-w-0">
+                    <h2 className="truncate text-xl font-semibold text-slate-100">
+                      {capitalizeFirstLetter(m.firstName)}{" "}
+                      {capitalizeFirstLetter(m.lastName)}
+                    </h2>
+                    {m.tagline && (
+                      <p className="line-clamp-2 text-sm text-slate-400">
+                        {m.tagline}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {(m.school ?? grad ?? m.about) && (
+                  <div className="mt-4 flex-grow space-y-1 border-t border-slate-700/70 pt-4 text-sm">
+                    {m.school && (
+                      <p className="font-medium text-slate-300">{m.school}</p>
+                    )}
+                    {grad && (
+                      <p className="text-slate-400">
+                        {isAlumni ? "Graduated:" : "Graduates:"}&nbsp;
+                        {grad.term} {grad.year}
+                      </p>
+                    )}
+                    {m.about && (
+                      <p className="mt-2 line-clamp-3 text-slate-400/90">
+                        {m.about}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-auto">
+                  <div className="mt-5 flex flex-nowrap items-center gap-3 border-t border-slate-700/70 pt-4">
+                    {m.githubProfileUrl && (
+                      <Link
+                        href={m.githubProfileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-500 transition-colors duration-200 hover:text-violet-400"
+                        aria-label={`${capitalizeFirstLetter(m.firstName)}'s Github Profile`}
+                      >
+                        <Github size={20} />
+                      </Link>
+                    )}
+                    {m.linkedinProfileUrl && (
+                      <Link
+                        href={m.linkedinProfileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-500 transition-colors duration-200 hover:text-violet-400"
+                        aria-label={`${capitalizeFirstLetter(m.firstName)}'s LinkedIn Profile`}
+                      >
+                        <Linkedin size={20} />
+                      </Link>
+                    )}
+                    {m.websiteUrl && (
+                      <Link
+                        href={m.websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-500 transition-colors duration-200 hover:text-violet-400"
+                        aria-label={`${capitalizeFirstLetter(m.firstName)}'s Personal Website`}
+                      >
+                        <GlobeIcon size={20} />
+                      </Link>
+                    )}
+
+                    <DialogTrigger asChild>
+                      <div
+                        className="ml-auto text-slate-500 transition-colors duration-200 hover:text-violet-400"
+                        aria-label="Show more info"
+                      >
+                        <Info size={20} />
+                      </div>
+                    </DialogTrigger>
+
+                    {m.resumeUrl && (
+                      <span>
+                        <ResumeButton memberId={m.id} />
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              {(m.school ?? grad ?? m.about) && (
-                <div className="mt-4 flex-grow space-y-1 border-t border-slate-700/70 pt-4 text-sm">
-                  {m.school && (
-                    <p className="font-medium text-slate-300">{m.school}</p>
-                  )}
-                  {grad && (
-                    <p className="text-slate-400">
-                      {isAlumni ? "Graduated:" : "Graduates:"}&nbsp;
-                      {grad.term} {grad.year}
-                    </p>
-                  )}
+              <DialogContent className="dark border-slate-700 bg-slate-900/95 text-slate-100 backdrop-blur-lg">
+                <DialogHeader className="items-center text-center">
+                  <Image
+                    src={m.profilePictureUrl ?? "/placeholder-avatar.png"}
+                    alt={`${capitalizeFirstLetter(m.firstName)} ${capitalizeFirstLetter(
+                      m.lastName,
+                    )}'s avatar`}
+                    width={96}
+                    height={96}
+                    className="mb-4 h-24 w-24 rounded-full object-cover ring-2 ring-slate-600"
+                  />
+                  <DialogTitle className="text-2xl">
+                    {capitalizeFirstLetter(m.firstName)}{" "}
+                    {capitalizeFirstLetter(m.lastName)}
+                  </DialogTitle>
+                  <DialogDescription className="text-slate-400">
+                    {m.tagline}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
                   {m.about && (
-                    <p className="mt-2 line-clamp-3 text-slate-400/90">
+                    <p className="text-center text-sm text-slate-300">
                       {m.about}
                     </p>
                   )}
+                  <Separator className="bg-slate-700" />
+                  <div className="text-sm text-slate-400">
+                    <p>
+                      <span className="font-semibold text-slate-300">
+                        School:
+                      </span>{" "}
+                      {m.school}
+                    </p>
+                    {grad && (
+                      <p>
+                        <span className="font-semibold text-slate-300">
+                          Status:
+                        </span>{" "}
+                        {isAlumni ? "Alumni" : "Student"}, {grad.term}{" "}
+                        {grad.year}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-center gap-4 pt-2">
+                    {m.githubProfileUrl && (
+                      <Link
+                        href={m.githubProfileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-500 transition-colors duration-200 hover:text-violet-400"
+                      >
+                        <Github />
+                      </Link>
+                    )}
+                    {m.linkedinProfileUrl && (
+                      <Link
+                        href={m.linkedinProfileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-500 transition-colors duration-200 hover:text-violet-400"
+                      >
+                        <Linkedin />
+                      </Link>
+                    )}
+                    {m.websiteUrl && (
+                      <Link
+                        href={m.websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-500 transition-colors duration-200 hover:text-violet-400"
+                      >
+                        <GlobeIcon />
+                      </Link>
+                    )}
+                    {m.resumeUrl && <ResumeButton memberId={m.id} />}
+                  </div>
                 </div>
-              )}
-
-              <div className="mt-auto">
-                <div className="mt-5 flex flex-nowrap items-center gap-3 border-t border-slate-700/70 pt-4">
-                  {m.githubProfileUrl && (
-                    <Link
-                      href={m.githubProfileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-slate-500 transition-colors duration-200 hover:text-violet-400"
-                      aria-label={`${capitalizeFirstLetter(m.firstName)}'s Github Profile`}
-                    >
-                      <Github size={20} />
-                    </Link>
-                  )}
-                  {m.linkedinProfileUrl && (
-                    <Link
-                      href={m.linkedinProfileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-slate-500 transition-colors duration-200 hover:text-violet-400"
-                      aria-label={`${capitalizeFirstLetter(m.firstName)}'s LinkedIn Profile`}
-                    >
-                      <Linkedin size={20} />
-                    </Link>
-                  )}
-                  {m.websiteUrl && (
-                    <Link
-                      href={m.websiteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-slate-500 transition-colors duration-200 hover:text-violet-400"
-                      aria-label={`${capitalizeFirstLetter(m.firstName)}'s Personal Website`}
-                    >
-                      <GlobeIcon size={20} />
-                    </Link>
-                  )}
-                  {m.resumeUrl && (
-                    <span className="ml-auto">
-                      <ResumeButton memberId={m.id} />
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+              </DialogContent>
+            </Dialog>
           </motion.div>
         );
       })}

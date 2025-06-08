@@ -2,8 +2,6 @@
 
 import { FileText, Loader2 } from "lucide-react";
 
-import { Button } from "@forge/ui/button";
-
 import { api } from "~/trpc/react";
 
 interface Props {
@@ -33,11 +31,8 @@ export function ResumeButton({ memberId }: Props) {
   };
 
   return (
-    <Button
-      size="icon"
-      variant="ghost"
+    <div
       onClick={handleClick}
-      disabled={resumeMut.isPending}
       className="text-slate-500 transition hover:text-violet-400 disabled:opacity-50"
       aria-label="Download résumé"
     >
@@ -46,6 +41,6 @@ export function ResumeButton({ memberId }: Props) {
       ) : (
         <FileText size={20} />
       )}
-    </Button>
+    </div>
   );
 }
