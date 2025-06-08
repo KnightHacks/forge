@@ -156,11 +156,8 @@ export default {
         },
         moveInCircle: {
           '0%': { transform: 'rotate(0deg)' },
-          '20%': { transform: 'rotate(90deg)' },
-          '40%': { transform: 'rotate(180deg)' },
-          '60%': { transform: 'rotate(270deg)' },
-          '80%': { transform: 'rotate(360deg)' },
-          '100%': { transform: 'rotate(0deg)' },
+          '50%': { transform: 'rotate(180deg)' },
+          '100%': { transform: 'rotate(360deg)' },
         },
         moveVertical: {
           '0%': { transform: 'translateY(-50%)' },
