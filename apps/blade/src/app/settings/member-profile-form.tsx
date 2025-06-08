@@ -182,7 +182,11 @@ export function MemberProfileForm({
         .string()
         .pipe(z.coerce.date())
         .transform((date) => date.toISOString()),
-      gradDate: z.string(),
+      gradTerm: z.enum(["Spring", "Summer", "Fall"]),
+      gradYear: z
+        .string()
+        .regex(/^\d{4}$/, "Enter a 4‑digit year")
+        .transform(Number),
       githubProfileUrl: z
         .string()
         .regex(/^https:\/\/.+/, "Invalid URL")
@@ -301,13 +305,11 @@ export function MemberProfileForm({
                 });
                 profilePictureUrl = result.profilePictureUrl;
               }
+              const termKey = values.gradTerm;
+              const { month, day } = TERM_TO_DATE[termKey];
 
-              const { month, day } = TERM_TO_DATE[values.gradTerm];
-              const gradDateIso = new Date(
-                values.gradYear,
-                month,
-                day,
-              ).toISOString();
+              const year = Number(values.gradYear);
+              const gradDateIso = new Date(year, month, day).toISOString();
 
               updateMember.mutate({
                 ...values,
@@ -420,7 +422,7 @@ export function MemberProfileForm({
                   <Input
                     type="file"
                     placeholder=""
-                    {...fileRef}
+                    {...resumeRef}
                     onChange={(event) => {
                       field.onChange(event.target.files?.[0] ?? undefined);
                     }}

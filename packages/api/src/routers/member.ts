@@ -110,7 +110,6 @@ export const memberRouter = {
         discordUser: true,
         dateCreated: true,
         timeCreated: true,
-        id: true,
       }).partial(),
     )
     .mutation(async ({ input, ctx }) => {
@@ -121,13 +120,13 @@ export const memberRouter = {
         });
       }
 
-      const { id, dob, phoneNumber, ...updateData } = input;
+      const { id, dob, phoneNumber, ...updateDataFromInput } = input;
 
       const member = await db.query.Member.findFirst({
         where: (t, { eq }) => eq(t.id, id),
       });
 
-      if (!memberToUpdate) {
+      if (!member) {
         throw new TRPCError({
           message: "Member not found to update!",
           code: "NOT_FOUND",
@@ -137,8 +136,7 @@ export const memberRouter = {
       const normalizedPhone = phoneNumber === "" ? null : phoneNumber;
       const resume = input.resumeUrl ?? member.resumeUrl;
 
-      const { dob, ...updateDataFromInput } = input;
-      let newAge = memberToUpdate.age;
+      let newAge = member.age;
 
       if (dob) {
         const today = new Date();
@@ -171,7 +169,7 @@ export const memberRouter = {
       await db
         .update(Member)
         .set({
-          ...updateData,
+          ...updateDataFromInput,
           resumeUrl: resume,
           dob: dob,
           age: newAge,
@@ -182,24 +180,18 @@ export const memberRouter = {
       const changes = Object.keys(updateDataFromInput).reduce(
         (acc, key) => {
           const typedKey = key as keyof typeof updateDataFromInput;
-          const memberTypedKey = key as keyof typeof memberToUpdate;
+          const memberTypedKey = key as keyof typeof member;
 
           if (
-            Object.prototype.hasOwnProperty.call(
-              memberToUpdate,
-              memberTypedKey,
-            ) &&
-            memberToUpdate[memberTypedKey] !== updateDataFromInput[typedKey]
+            Object.prototype.hasOwnProperty.call(member, memberTypedKey) &&
+            member[memberTypedKey] !== updateDataFromInput[typedKey]
           ) {
             acc[key] = {
-              before: memberToUpdate[memberTypedKey],
+              before: member[memberTypedKey],
               after: updateDataFromInput[typedKey],
             };
           } else if (
-            !Object.prototype.hasOwnProperty.call(
-              memberToUpdate,
-              memberTypedKey,
-            ) &&
+            !Object.prototype.hasOwnProperty.call(member, memberTypedKey) &&
             updateDataFromInput[typedKey] !== null &&
             updateDataFromInput[typedKey] !== undefined
           ) {
