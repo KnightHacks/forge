@@ -8,7 +8,7 @@ import MLHBadge from "./MLHBadge";
 const NAV_LINKS = [
   { href: "#about", label: "About" },
   { href: "#partners", label: "Partners" },
-  { href: "#faqs", label: `FAQ's` },
+  { href: "#faqs", label: `FAQ` },
 ];
 
 const Navbar = () => {

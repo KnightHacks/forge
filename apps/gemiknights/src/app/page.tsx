@@ -1,4 +1,10 @@
 import FAQ from "./_components/faq/faq";
+import GithubBSVG from "./_components/graphics/githubB";
+import GithubWSVG from "./_components/graphics/githubW";
+import GeminiSVG from "./_components/graphics/gemini";
+import GeminiWSVG from "./_components/graphics/geminiW";
+import MLHSVG from "./_components/graphics/mlh";
+import MLHWSVG from "./_components/graphics/mlhW";
 
 export default function HomePage() {
   return (
@@ -6,6 +12,14 @@ export default function HomePage() {
       <span className="tk-peridot-devanagari">lalallala LALALALA</span>
       <span className="tk-forma-djr-display">lalallala LALALA</span>
       <FAQ />
+      <div className="flex gap-4 items-center w-full justify-center">
+        <GithubBSVG />
+        <GithubWSVG />
+        <GeminiSVG />
+        <GeminiWSVG />
+        <MLHSVG />
+        <MLHWSVG />
+      </div>
     </div>
   );
 }
