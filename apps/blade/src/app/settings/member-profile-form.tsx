@@ -312,6 +312,7 @@ export function MemberProfileForm({
               const gradDateIso = new Date(year, month, day).toISOString();
 
               updateMember.mutate({
+                id: member.id,
                 ...values,
                 resumeUrl,
                 profilePictureUrl,
