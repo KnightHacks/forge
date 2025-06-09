@@ -5,7 +5,7 @@ import { BackgroundGradientAnimation } from "../ui/background-gradient-animation
 const Partners = () => {
     return (
         <div className="flex flex-col items-center justify-center w-full gap-4">
-            <span className="tk-peridot-devanagari text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold mb-4 xs:mb-6 sm:mb-8 md:mb-10">
+            <span className="tk-forma-djr-display text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold mb-4 xs:mb-6 sm:mb-8 md:mb-10">
                 Partners
             </span>
             <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full max-w-2xl sm:max-w-3xl md:max-w-4xl lg:max-w-6xl px-2 sm:px-0">
