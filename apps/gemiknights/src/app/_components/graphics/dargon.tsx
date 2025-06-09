@@ -10,7 +10,7 @@ const Dargon = () => {
                 width={100}
                 height={100}
                 draggable={false}
-                className="brightness-0 invert"
+                className="brightness-0 invert z-10"
             />
         </Link>
     );
