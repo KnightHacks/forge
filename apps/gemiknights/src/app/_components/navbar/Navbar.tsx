@@ -9,8 +9,8 @@ const hackersGuide = "https://knight-hacks.notion.site/gemiknights2025";
 
 const NAV_LINKS = [
   { href: "#about", label: "About" },
-  { href: "#partners", label: "Partners" },
   { href: "#faqs", label: `FAQ` },
+  { href: "#partners", label: "Partners" },
   { href: hackersGuide, label: "Hackers Guide", external: true },
 ];
 
