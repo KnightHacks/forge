@@ -28,33 +28,52 @@ export async function UserInterface() {
     );
   }
 
+  if (member.value && hacker.value) {
+    return (
+      <div className="flex justify-center">
+        <Tabs defaultValue="Member" className="max-w-8xl relative w-full">
+          <div className="flex justify-center pb-8">
+            <TabsList className="grid w-full max-w-4xl grid-cols-2">
+              <TabsTrigger
+                value="Member"
+                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
+                Member
+              </TabsTrigger>
+              <TabsTrigger
+                value="Hacker"
+                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
+                Hacker
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <TabsContent value="Member" className="mt-4 w-full">
+            <MemberDashboard member={member.value} />
+          </TabsContent>
+          <TabsContent value="Hacker" className="mt-4 w-full">
+            <HackerDashboard hacker={hacker.value} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  }
+
+  if (member.value) {
+    return (
+      <div className="flex justify-center">
+        <div className="max-w-8xl w-full">
+          <MemberDashboard member={member.value} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex justify-center">
-      <Tabs
-        defaultValue={member.value ? "Member" : hacker.value ? "Hacker" : ""}
-        className="w-[400px]"
-      >
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger
-            value="Member"
-            className="data-[state=active]:bg-primary data-[state=active]:text-white"
-          >
-            Member
-          </TabsTrigger>
-          <TabsTrigger
-            value="Hacker"
-            className="data-[state=active]:bg-primary data-[state=active]:text-white"
-          >
-            Hacker
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent className="absolute left-0 w-full" value="Member">
-          <MemberDashboard member={member.value} />
-        </TabsContent>
-        <TabsContent value="Hacker" className="absolute left-0 mt-32 w-full">
-          <HackerDashboard hacker={hacker.value} />
-        </TabsContent>
-      </Tabs>
+      <div className="max-w-8xl w-full">
+        <HackerDashboard hacker={hacker.value} />
+      </div>
     </div>
   );
 }

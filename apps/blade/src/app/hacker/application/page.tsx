@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@forge/auth";
+import { auth, signIn } from "@forge/auth";
 
-import { SIGN_IN_PATH } from "~/consts";
 import { api } from "~/trpc/server";
 import { HackerFormPage } from "./_components/hacker-application-form";
 
@@ -10,13 +9,32 @@ export default async function HackerApplicationPage() {
   const session = await auth();
 
   if (session == null) {
-    redirect(SIGN_IN_PATH);
+    async function signInAction() {
+      "use server";
+      await signIn("discord", { redirectTo: "/hacker/application" });
+    }
+
+    return (
+      <>
+        <form id="auto-sign-in" action={signInAction} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.getElementById('auto-sign-in').requestSubmit();",
+          }}
+        />
+        <noscript>
+          <form action={signInAction}>
+            <button type="submit">Continue to Discord sign‑in</button>
+          </form>
+        </noscript>
+      </>
+    );
   }
 
   const isHacker = await api.hacker.getHacker();
 
   if (isHacker) {
-    return redirect(SIGN_IN_PATH);
+    return redirect("/dashboard");
   }
 
   return (

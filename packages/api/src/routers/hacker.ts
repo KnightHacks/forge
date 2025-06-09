@@ -312,6 +312,13 @@ export const hackerRouter = {
           status: "confirmed",
         })
         .where(eq(Hacker.id, id));
+
+      await log({
+        title: "Hacker Confirmed",
+        message: `${hacker.firstName} ${hacker.lastName} has confirmed their attendance!`,
+        color: "success_green",
+        userId: hacker.userId,
+      });
     }),
 
   withdrawHacker: protectedProcedure

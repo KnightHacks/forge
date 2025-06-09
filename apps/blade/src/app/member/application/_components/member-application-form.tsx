@@ -807,7 +807,9 @@ export function MemberApplicationForm() {
         />
 
         {loading ? (
-          <Loader2 className="mx-auto my-4 animate-spin" />
+          <div className="flex justify-center">
+            <Loader2 className="animate-spin" />
+          </div>
         ) : (
           <Button type="submit" className="w-full md:w-auto">
             Submit Application

@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 import { cn } from "@forge/ui";
 import { buttonVariants } from "@forge/ui/button";
+
+import { api } from "~/trpc/react";
+import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
   items: {
@@ -16,6 +20,45 @@ interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
 export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
   const pathname = usePathname();
 
+  const { data: member, isLoading: memberLoading } =
+    api.member.getMember.useQuery(undefined, { staleTime: Infinity });
+  const { data: hacker, isLoading: hackerLoading } =
+    api.hacker.getHacker.useQuery(undefined, { staleTime: Infinity });
+
+  if (memberLoading || hackerLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!member && !hacker) {
+    return (
+      <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm">
+        You have not signed up as a Knight Hacks Member or Hacker yet. For
+        inquiries on registration, feel free to reach out in our{" "}
+        <Link
+          href={PERMANENT_DISCORD_INVITE}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline"
+        >
+          Discord
+        </Link>
+        !
+      </div>
+    );
+  }
+
+  const visibleItems = items.filter((item) => {
+    if (item.title.toLowerCase().includes("member")) return !!member;
+    if (item.title.toLowerCase().includes("hacker")) return !!hacker;
+    return true;
+  });
+
+  if (visibleItems.length === 0) return null;
+
   return (
     <nav
       className={cn(
@@ -24,12 +67,12 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
       )}
       {...props}
     >
-      {items.map((item) => (
+      {visibleItems.map((item) => (
         <Link
           replace
           key={item.title}
           href={item.href}
-          scroll={true}
+          scroll
           className={cn(
             buttonVariants({ variant: "ghost" }),
             pathname === item.href

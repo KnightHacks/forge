@@ -124,6 +124,9 @@ export function HackerData({
       </div>
       <div className="flex flex-col justify-center gap-y-6">
         <div>
+          <div className="animate-fade-in pb-2 text-xl font-bold">
+            Hello, {data?.firstName} {data?.lastName}
+          </div>
           <div className="animate-fade-in text-lg font-bold">Status</div>
           <div className="flex gap-x-2">
             <div
@@ -139,12 +142,12 @@ export function HackerData({
             )}
           </div>
         </div>
-        <div>
+        {/* <div>
           <div className="animate-fade-in text-lg font-bold">Class</div>
           <div className="animate-fade-in text-xl font-bold text-black dark:text-white">
             TBD
           </div>
-        </div>
+        </div> */}
       </div>
       <div className="mt-6 flex w-full items-center justify-center gap-x-1 sm:ml-7 md:mt-5 lg:mt-0">
         <HackerQRCodePopup />
