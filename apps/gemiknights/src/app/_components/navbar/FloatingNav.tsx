@@ -1,4 +1,5 @@
 import React from "react";
+
 import NavContent from "./NavContent";
 
 interface NavLink {
@@ -14,7 +15,7 @@ interface FloatingNavProps {
 function FloatingNav({ navLinks, show }: FloatingNavProps) {
   return (
     <nav
-      className={`fixed top-0 left-0 z-40 hidden w-full transition-opacity duration-1000 ease-in-out md:block ${
+      className={`fixed left-0 top-0 z-40 hidden w-full transition-opacity duration-1000 ease-in-out md:block ${
         show ? "opacity-100" : "opacity-0"
       }`}
     >

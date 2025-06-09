@@ -1,5 +1,7 @@
 import React from "react";
+
 import Dargon from "../graphics/dargon";
+
 interface NavLink {
   href: string;
   label: string;
@@ -28,7 +30,9 @@ function NavContent({ navLinks, showGlow = false }: NavContentProps) {
             key={link.href}
             href={link.href}
             className="relative transform rounded-md px-2 py-1 text-lg font-medium text-white transition hover:scale-105 hover:text-[#FBB03B]"
-            {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+            {...(link.external
+              ? { target: "_blank", rel: "noopener noreferrer" }
+              : {})}
           >
             {showGlow && (
               <div className="absolute inset-0 rounded-md bg-[#FBB03B]/30 blur-md" />

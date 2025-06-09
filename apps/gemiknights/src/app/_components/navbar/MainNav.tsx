@@ -1,4 +1,5 @@
 import React from "react";
+
 import NavContent from "./NavContent";
 
 interface NavLink {
@@ -14,7 +15,7 @@ interface MainNavProps {
 function MainNav({ navLinks, showFloating }: MainNavProps) {
   return (
     <nav
-      className={`fixed top-0 left-0 z-50 w-full transition-opacity duration-500 ease-in-out md:backdrop-blur-md ${
+      className={`fixed left-0 top-0 z-50 w-full transition-opacity duration-500 ease-in-out md:backdrop-blur-md ${
         showFloating ? "md:opacity-0" : "opacity-100"
       }`}
     >

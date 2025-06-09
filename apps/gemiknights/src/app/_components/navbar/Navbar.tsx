@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import MainNav from "./MainNav";
+import { useEffect, useState } from "react";
+
 import FloatingNav from "./FloatingNav";
+import MainNav from "./MainNav";
 import MLHBadge from "./MLHBadge";
 
 const hackersGuide = "https://knight-hacks.notion.site/gemiknights2025";

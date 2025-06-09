@@ -14,7 +14,7 @@ export const footerLinks = [
   },
   {
     text: "Contact Us",
-    href:  contact,
+    href: contact,
   },
   {
     text: "Hackers Guide",
@@ -22,4 +22,4 @@ export const footerLinks = [
   },
 ];
 
-export const footerMessage = "Made with 💜 by the Knight Hacks team"; 
+export const footerMessage = "Made with 💜 by the Knight Hacks team";

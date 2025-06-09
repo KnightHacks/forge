@@ -94,11 +94,11 @@ export default {
         "infinite-scroll": "infinite-scroll 160s linear infinite",
         "accordion-down": "accordion-down 0.5s cubic-bezier(0.87, 0, 0.13, 1)",
         "accordion-up": "accordion-up 0.5s cubic-bezier(0.87, 0, 0.13, 1)",
-        "first": "moveVertical 30s ease infinite",
-        "second": "moveInCircle 20s reverse infinite",
-        "third": "moveInCircle 40s linear infinite",
-        "fourth": "moveHorizontal 40s ease infinite",
-        "fifth": "moveInCircle 20s ease infinite",
+        first: "moveVertical 30s ease infinite",
+        second: "moveInCircle 20s reverse infinite",
+        third: "moveInCircle 40s linear infinite",
+        fourth: "moveHorizontal 40s ease infinite",
+        fifth: "moveInCircle 20s ease infinite",
       },
       keyframes: {
         "infinite-scroll": {
@@ -122,47 +122,47 @@ export default {
           "100%": { transform: "rotate(360deg)" },
         },
         "accordion-down": {
-          from: { 
+          from: {
             height: "0",
             opacity: "0",
             padding: "0",
-            margin: "0"
+            margin: "0",
           },
-          to: { 
+          to: {
             height: "var(--radix-accordion-content-height)",
             opacity: "1",
             padding: "1rem",
-            margin: "0.5rem 0"
+            margin: "0.5rem 0",
           },
         },
         "accordion-up": {
-          from: { 
+          from: {
             height: "var(--radix-accordion-content-height)",
             opacity: "1",
             padding: "1rem",
-            margin: "0.5rem 0"
+            margin: "0.5rem 0",
           },
-          to: { 
+          to: {
             height: "0",
             opacity: "0",
             padding: "0",
-            margin: "0"
+            margin: "0",
           },
         },
         moveHorizontal: {
-          '0%': { transform: 'translateX(-50%) translateY(-10%)' },
-          '50%': { transform: 'translateX(50%) translateY(10%)' },
-          '100%': { transform: 'translateX(-50%) translateY(-10%)' },
+          "0%": { transform: "translateX(-50%) translateY(-10%)" },
+          "50%": { transform: "translateX(50%) translateY(10%)" },
+          "100%": { transform: "translateX(-50%) translateY(-10%)" },
         },
         moveInCircle: {
-          '0%': { transform: 'rotate(0deg)' },
-          '50%': { transform: 'rotate(180deg)' },
-          '100%': { transform: 'rotate(360deg)' },
+          "0%": { transform: "rotate(0deg)" },
+          "50%": { transform: "rotate(180deg)" },
+          "100%": { transform: "rotate(360deg)" },
         },
         moveVertical: {
-          '0%': { transform: 'translateY(-50%)' },
-          '50%': { transform: 'translateY(50%)' },
-          '100%': { transform: 'translateY(-50%)' },
+          "0%": { transform: "translateY(-50%)" },
+          "50%": { transform: "translateY(50%)" },
+          "100%": { transform: "translateY(-50%)" },
         },
       },
       screens: {
