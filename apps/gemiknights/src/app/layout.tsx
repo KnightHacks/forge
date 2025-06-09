@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import BgSVG from "./_components/graphics/background";
-import "./globals.css";
 import Navbar from "./_components/navbar/Navbar";
+import Footer from "./_components/footer/footer";
+import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://club.knighthacks.org"),
@@ -35,6 +36,9 @@ export default function RootLayout({
         <main className="flex-1">
           {children}
         </main>
+        <div>
+          <Footer />
+        </div>
       </body>
     </html>
   );
