@@ -17,8 +17,9 @@ export default function Footer() {
                 <Link 
                   href={link.href} 
                   className="text-center text-base sm:text-lg transform transition hover:scale-105 hover:text-[#FBB03B] duration-300"
-                  {...(link.text === "Hackers Guide" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                >
+                  target="_blank"
+                  rel="noopener noreferrer"
+                > 
                   {link.text}
                 </Link>
               </div>
