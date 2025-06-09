@@ -7,12 +7,14 @@ import MainNav from "./MainNav";
 import MLHBadge from "./MLHBadge";
 
 const hackersGuide = "https://knight-hacks.notion.site/gemiknights2025";
+const discordLink = "https://discord.gg/2W2HCvkKAy";
 
 const NAV_LINKS = [
   { href: "#about", label: "About" },
   { href: "#faqs", label: `FAQ` },
   { href: "#partners", label: "Partners" },
   { href: hackersGuide, label: "Hackers Guide", external: true },
+  { href: discordLink, label: "Discord", external: true },
 ];
 
 const Navbar = () => {
