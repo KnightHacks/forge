@@ -1,6 +1,5 @@
 import React from "react";
-import Image from "next/image";
-
+import Dargon from "../graphics/dargon";
 interface NavLink {
   href: string;
   label: string;
@@ -20,14 +19,7 @@ function NavContent({ navLinks, showGlow = false }: NavContentProps) {
           {showGlow && (
             <div className="absolute inset-0 rounded-2xl bg-[#FBB03B]/30 blur-md" />
           )}
-          <Image
-            src="/KH2025Small.svg"
-            alt="Knight Hacks 2025 Logo"
-            width={48}
-            height={48}
-            className="relative z-10 h-12 w-12 object-contain"
-            style={{ filter: "brightness(0) invert(1)" }}
-          />
+          <Dargon />
         </div>
       </div>
       <div className="hidden items-center justify-center gap-8 md:flex">

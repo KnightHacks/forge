@@ -9,7 +9,7 @@ import { faqItems } from "./faq-data";
 const FAQ = () => {
   return (
     <div id="faqs" className="flex flex-col items-center justify-center w-full ">
-        <span className="tk-forma-djr-display text-3xl sm:text-4xl md:text-5xl font-bold mb-6 sm:mb-8 md:mb-10">
+        <span className="tk-forma-djr-display text-3xl sm:text-4xl md:text-5xl font-bold">
             FAQ
         </span>    
         <Accordion type="single" collapsible className="w-3/5">
