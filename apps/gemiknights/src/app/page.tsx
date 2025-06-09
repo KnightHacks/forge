@@ -9,9 +9,13 @@ export default function HomePage() {
     <div className="tk-forma-djr-display flex w-full flex-col items-center justify-center text-4xl">
       <div className="flex h-screen w-full flex-col items-center justify-center">
         <Logo />
-        <span className="text-white text-3xl font-semibold mt-4">June 28th</span>
-        <span className="text-white text-2xl font-semibold">UCF | BA107</span>
-        <span className="text-white text-sm font-semibold"><em>Must be a UCF student to apply</em></span>
+        <span className="mt-4 text-3xl font-semibold text-white">
+          June 28th
+        </span>
+        <span className="text-2xl font-semibold text-white">UCF | BA107</span>
+        <span className="text-sm font-semibold text-white">
+          <em>Must be a UCF student to apply</em>
+        </span>
         <div>
           <Register />
         </div>
