@@ -92,7 +92,6 @@ export function HackerProfileForm({
       : [...allergiesRef.current, allergy];
   };
 
-  // Setup React Hook Form
   const form = useForm({
     schema: InsertHackerSchema.extend({
       userId: z.undefined(),
@@ -102,7 +101,7 @@ export function HackerProfileForm({
       email: z.string().email("Invalid email").min(1, "Required"),
       phoneNumber: z
         .string()
-        .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number"),
+        .regex(/^(\d{10}|\d{3}-\d{3}-\d{4})?$/, "Invalid phone number"),
       dob: z
         .string()
         .pipe(z.coerce.date())
@@ -146,7 +145,6 @@ export function HackerProfileForm({
       resumeUpload: z
         .instanceof(FileList)
         .superRefine((fileList, ctx) => {
-          // Validate number of files is 0 or 1
           if (fileList.length !== 0 && fileList.length !== 1) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
@@ -155,32 +153,31 @@ export function HackerProfileForm({
           }
 
           if (fileList.length === 1) {
-            // Validate type of object in FileList is File
-            if (fileList[0] instanceof File) {
-              // Validate file extension is PDF
-              const fileExtension = fileList[0].name.split(".").pop();
-              if (fileExtension !== "pdf") {
-                ctx.addIssue({
-                  code: z.ZodIssueCode.custom,
-                  message: "Resume must be a PDF",
-                });
-              }
-
-              // Validate file size is <= 5MB
-              if (fileList[0].size > KNIGHTHACKS_MAX_RESUME_SIZE) {
-                ctx.addIssue({
-                  code: z.ZodIssueCode.too_big,
-                  type: "number",
-                  maximum: KNIGHTHACKS_MAX_RESUME_SIZE,
-                  inclusive: true,
-                  exact: false,
-                  message: "File too large: maximum 5MB",
-                });
-              }
-            } else {
+            const file = fileList[0];
+            if (!(file instanceof File)) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: "Object in FileList is undefined",
+              });
+              return;
+            }
+
+            const fileExtension = file.name.split(".").pop();
+            if (fileExtension !== "pdf") {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Resume must be a PDF",
+              });
+            }
+
+            if (file.size > KNIGHTHACKS_MAX_RESUME_SIZE) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.too_big,
+                type: "number",
+                maximum: KNIGHTHACKS_MAX_RESUME_SIZE,
+                inclusive: true,
+                exact: false,
+                message: "File too large: maximum 5MB",
               });
             }
           }
@@ -188,58 +185,76 @@ export function HackerProfileForm({
         .optional(),
     }),
     defaultValues: {
-      firstName: hacker?.firstName,
-      lastName: hacker?.lastName,
-      gender: hacker?.gender,
-      raceOrEthnicity: hacker?.raceOrEthnicity,
+      firstName: hacker?.firstName ?? "",
+      lastName: hacker?.lastName ?? "",
+      gender: hacker?.gender ?? undefined,
+      raceOrEthnicity: hacker?.raceOrEthnicity ?? undefined,
       discordUser: hacker?.discordUser,
-      email: hacker?.email,
+      email: hacker?.email ?? "",
       phoneNumber: hacker?.phoneNumber ?? "",
-      school: hacker?.school,
-      levelOfStudy: hacker?.levelOfStudy,
-      shirtSize: hacker?.shirtSize,
+      school: hacker?.school ?? undefined,
+      levelOfStudy: hacker?.levelOfStudy ?? undefined,
+      shirtSize: hacker?.shirtSize ?? undefined,
       githubProfileUrl: hacker?.githubProfileUrl ?? "",
       linkedinProfileUrl: hacker?.linkedinProfileUrl ?? "",
       websiteUrl: hacker?.websiteUrl ?? "",
-      dob: hacker?.dob,
-      gradDate: hacker?.gradDate,
+      dob: hacker?.dob ?? "",
+      gradDate: hacker?.gradDate ?? "",
       status: hacker?.status,
-      survey1: hacker?.survey1,
-      survey2: hacker?.survey2,
-      isFirstTime: hacker?.isFirstTime,
+      survey1: hacker?.survey1 ?? "",
+      survey2: hacker?.survey2 ?? "",
+      isFirstTime: hacker?.isFirstTime ?? false,
       foodAllergies: hacker?.foodAllergies ?? "",
-      agreesToReceiveEmailsFromMLH: hacker?.agreesToReceiveEmailsFromMLH,
+      agreesToReceiveEmailsFromMLH:
+        hacker?.agreesToReceiveEmailsFromMLH ?? false,
     },
   });
 
   const fileRef = form.register("resumeUpload");
 
-  // Convert a resume to base64 for client-server transmission
+  useEffect(() => {
+    if (!hacker) return;
+    form.reset({
+      firstName: hacker.firstName ?? "",
+      lastName: hacker.lastName ?? "",
+      gender: hacker.gender ?? undefined,
+      raceOrEthnicity: hacker.raceOrEthnicity ?? undefined,
+      discordUser: hacker.discordUser,
+      email: hacker.email ?? "",
+      phoneNumber: hacker.phoneNumber ?? "",
+      school: hacker.school ?? undefined,
+      levelOfStudy: hacker.levelOfStudy ?? undefined,
+      shirtSize: hacker.shirtSize ?? undefined,
+      githubProfileUrl: hacker.githubProfileUrl ?? "",
+      linkedinProfileUrl: hacker.linkedinProfileUrl ?? "",
+      websiteUrl: hacker.websiteUrl ?? "",
+      dob: hacker.dob ?? "",
+      gradDate: hacker.gradDate ?? "",
+      status: hacker.status,
+      survey1: hacker.survey1 ?? "",
+      survey2: hacker.survey2 ?? "",
+      isFirstTime: hacker.isFirstTime ?? false,
+      foodAllergies: hacker.foodAllergies ?? "",
+      agreesToReceiveEmailsFromMLH:
+        hacker.agreesToReceiveEmailsFromMLH ?? false,
+    });
+
+    if (hacker.foodAllergies) {
+      setSelectedAllergies(hacker.foodAllergies.split(","));
+      allergiesRef.current = hacker.foodAllergies.split(",");
+    }
+  }, [hacker, form]);
+
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
-        // Check type before resolving as string
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-        } else {
-          reject(
-            new Error(
-              "Failed to convert file to Base64: Unexpected result type",
-            ),
-          );
-        }
+        if (typeof reader.result === "string") resolve(reader.result);
+        else reject(new Error("Failed to convert file to Base64"));
       };
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
-
-  useEffect(() => {
-    if (hacker?.foodAllergies) {
-      setSelectedAllergies(hacker.foodAllergies.split(","));
-      allergiesRef.current = hacker.foodAllergies.split(",");
-    }
-  }, [hacker]);
 
   if (isError) {
     return (
@@ -279,10 +294,9 @@ export function HackerProfileForm({
               updateHacker.mutate({
                 ...values,
                 id: hacker.id,
-                resumeUrl, // Include uploaded resume URL
+                resumeUrl,
               });
             } catch (error) {
-              // eslint-disable-next-line no-console
               console.error(
                 "Error uploading resume or updating hacker:",
                 error,
@@ -347,7 +361,7 @@ export function HackerProfileForm({
                   Phone Number
                   <span className="text-gray-400">
                     {" "}
-                    &mdash; <i>Optional</i>
+                    — <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -387,7 +401,7 @@ export function HackerProfileForm({
                   Gender
                   <span className="text-gray-400">
                     {" "}
-                    &mdash; <i>Optional</i>
+                    — <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -422,7 +436,7 @@ export function HackerProfileForm({
                   Race or Ethnicity
                   <span className="text-gray-400">
                     {" "}
-                    &mdash; <i>Optional</i>
+                    — <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -615,7 +629,7 @@ export function HackerProfileForm({
                   GitHub Profile
                   <span className="text-gray-400">
                     {" "}
-                    &mdash; <i>Optional</i>
+                    — <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -637,7 +651,7 @@ export function HackerProfileForm({
                   LinkedIn Profile
                   <span className="text-gray-400">
                     {" "}
-                    &mdash; <i>Optional</i>
+                    — <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -659,7 +673,7 @@ export function HackerProfileForm({
                   Personal Website
                   <span className="text-gray-400">
                     {" "}
-                    &mdash; <i>Optional</i>
+                    — <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -678,7 +692,7 @@ export function HackerProfileForm({
                   Resume
                   <span className="text-gray-400">
                     {" "}
-                    &mdash; <i>Optional</i>
+                    — <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -708,7 +722,7 @@ export function HackerProfileForm({
                     Food Allergies/Restrictions
                     <span className="text-gray-400">
                       {" "}
-                      &mdash; <i>Optional</i>
+                      — <i>Optional</i>
                     </span>
                   </FormLabel>
                   <FormControl>

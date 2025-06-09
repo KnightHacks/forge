@@ -21,7 +21,7 @@ export function MemberAppCard() {
         </div>
         <CardTitle className="text-2xl">Become a Member</CardTitle>
         <CardDescription>
-          Join our community of passionate individuals!
+          Join our community of passionate students!
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
@@ -60,9 +60,7 @@ export function HackerAppCard() {
           <Code className="h-8 w-8 text-primary" />
         </div>
         <CardTitle className="text-2xl">Join the Hackathon!</CardTitle>
-        <CardDescription>
-          Build, innovate, and compete in 36 hours!
-        </CardDescription>
+        <CardDescription>Build, innovate, and compete!</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
         <ul className="space-y-2">
@@ -81,9 +79,9 @@ export function HackerAppCard() {
         </ul>
       </CardContent>
       <CardFooter>
-        <Button disabled className="w-full" variant="secondary">
-          Coming soon...
-        </Button>
+        <Link href={"/hacker/application"} className="w-full">
+          <Button className="w-full">Register to Hack</Button>
+        </Link>
       </CardFooter>
     </Card>
   );

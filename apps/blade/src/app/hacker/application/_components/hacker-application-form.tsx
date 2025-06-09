@@ -541,7 +541,7 @@ export function HackerFormPage() {
               </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Why do you want to attend this hack-a-day?"
+                  placeholder="Why do you want to attend?"
                   {...field}
                   value={field.value}
                 />
@@ -561,7 +561,7 @@ export function HackerFormPage() {
               </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="What are your goals at this hack-a-day?"
+                  placeholder="What are your goals for this event?"
                   {...field}
                   value={field.value}
                 />
@@ -747,7 +747,7 @@ export function HackerFormPage() {
               </FormControl>
               <div className="flex items-center space-y-1 leading-none">
                 <FormLabel>
-                  This is my first time participating in a hackathon
+                  This is my first time participating in a Hackathon.
                 </FormLabel>
               </div>
             </FormItem>
@@ -768,7 +768,7 @@ export function HackerFormPage() {
               <div className="flex items-center space-y-1 leading-none">
                 <FormLabel>
                   I authorize MLH to send me occasional emails about relevant
-                  events, career opportunities, and community announcements
+                  events, career opportunities, and community announcements.
                 </FormLabel>
               </div>
             </FormItem>
@@ -776,7 +776,9 @@ export function HackerFormPage() {
         />
 
         {loading ? (
-          <Loader2 className="animate-spin" />
+          <div className="flex justify-center">
+            <Loader2 className="animate-spin" />
+          </div>
         ) : (
           <Button type="submit">Submit</Button>
         )}

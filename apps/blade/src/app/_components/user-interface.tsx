@@ -45,7 +45,7 @@ export async function UserInterface() {
             value="Hacker"
             className="data-[state=active]:bg-primary data-[state=active]:text-white"
           >
-            Hacker (wip)
+            Hacker
           </TabsTrigger>
         </TabsList>
         <TabsContent className="absolute left-0 w-full" value="Member">

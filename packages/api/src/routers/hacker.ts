@@ -52,7 +52,6 @@ export const hackerRouter = {
     return await db.query.Hacker.findMany();
   }),
 
-  // Temporarily admin-only until we roll out hacker applications
   createHacker: adminProcedure
     .input(
       InsertHackerSchema.omit({
@@ -89,6 +88,20 @@ export const hackerRouter = {
         userId,
         age: newAge,
         phoneNumber: input.phoneNumber === "" ? null : input.phoneNumber,
+        status: "pending",
+      });
+
+      const insertedHacker = await db.query.Hacker.findFirst({
+        where: (t, { eq }) => eq(t.userId, userId),
+      });
+
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.name, "GemiKnights"),
+      });
+
+      await db.insert(HackerAttendee).values({
+        hackerId: insertedHacker?.id ?? "",
+        hackathonId: hackathon?.id ?? "",
       });
 
       await log({
@@ -129,7 +142,6 @@ export const hackerRouter = {
       }
 
       const normalizedPhone = phoneNumber === "" ? null : phoneNumber;
-      const resume = input.resumeUrl ?? hacker.resumeUrl;
 
       // Check if the age has been updated
       const today = new Date();
@@ -146,7 +158,7 @@ export const hackerRouter = {
         .update(Hacker)
         .set({
           ...updateData,
-          resumeUrl: resume,
+          resumeUrl: updateData.resumeUrl,
           dob: dob,
           age: newAge,
           phoneNumber: normalizedPhone,
