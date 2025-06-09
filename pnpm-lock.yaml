@@ -185,7 +185,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/db
       '@forge/transactional':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/transactional
       '@forge/ui':
         specifier: workspace:*

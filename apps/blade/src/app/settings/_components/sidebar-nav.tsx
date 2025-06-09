@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
+import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 import { cn } from "@forge/ui";
 import { buttonVariants } from "@forge/ui/button";
 
 import { api } from "~/trpc/react";
-import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
   items: {
