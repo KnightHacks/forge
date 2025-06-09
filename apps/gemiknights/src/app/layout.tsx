@@ -22,15 +22,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full">
       <body
-        className= "antialiased"
+        className="antialiased min-h-screen flex flex-col"
       >
-        <div className="absolute inset-0 -z-10">
-        <BgSVG />
+        <div className="fixed inset-0 -z-10">
+          <div className="w-full h-full" style={{ minHeight: '100vh' }}>
+            <BgSVG className="w-full h-full" preserveAspectRatio="xMidYMid slice" />
+          </div>
         </div>
         <span className="tk-peridot-devanagari"><Navbar /></span>
-        {children}
+        <main className="flex-1">
+          {children}
+        </main>
       </body>
     </html>
   );
