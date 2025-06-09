@@ -115,6 +115,10 @@ export function GuildMembersDisplay({ members }: GuildMembersDisplayProps) {
         const initialBorderColor = isAlumni
           ? "rgba(251, 191, 36, 0.4)"
           : "rgba(51, 65, 85, 0.7)";
+        const profileSrc =
+          m.profilePictureUrl && m.profilePictureUrl.trim().length > 0
+            ? m.profilePictureUrl
+            : "/placeholder-avatar.png";
 
         return (
           <motion.div
@@ -167,7 +171,7 @@ export function GuildMembersDisplay({ members }: GuildMembersDisplayProps) {
               <div className="flex flex-grow flex-col p-5">
                 <div className="flex items-center gap-4">
                   <Image
-                    src={m.profilePictureUrl ?? "/placeholder-avatar.png"}
+                    src={m.profilePictureUrl || "/placeholder-avatar.png"}
                     alt={`${capitalizeFirstLetter(m.firstName)} ${capitalizeFirstLetter(m.lastName)}'s avatar`}
                     width={80}
                     height={80}
@@ -261,7 +265,7 @@ export function GuildMembersDisplay({ members }: GuildMembersDisplayProps) {
               <DialogContent className="dark border-slate-700 bg-slate-900/95 text-slate-100 backdrop-blur-lg">
                 <DialogHeader className="items-center text-center">
                   <Image
-                    src={m.profilePictureUrl ?? "/placeholder-avatar.png"}
+                    src={profileSrc}
                     alt={`${capitalizeFirstLetter(m.firstName)} ${capitalizeFirstLetter(
                       m.lastName,
                     )}'s avatar`}
