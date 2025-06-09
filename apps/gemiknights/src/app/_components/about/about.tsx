@@ -4,11 +4,11 @@ const aboutWords =
 
 const About = () => {
   return (
-    <div id="about" className="py-16 flex flex-col items-center justify-center">
-        <span className="text-5xl font-bold text-center mb-10 tk-forma-djr-display">
+    <div id="about" className="py-8 sm:py-12 md:py-16 flex flex-col items-center justify-center">
+        <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-6 sm:mb-8 md:mb-10 tk-forma-djr-display">
             About Gemiknights
         </span>
-        <span className="text-2xl font-semibold text-center mt-4 max-w-5xl px-4 tk-peridot-devanagari">
+        <span className="text-lg sm:text-xl md:text-2xl font-semibold text-center mt-2 sm:mt-3 md:mt-4 max-w-[90%] sm:max-w-[80%] md:max-w-5xl px-4 sm:px-6 md:px-8 tk-peridot-devanagari">
             {aboutWords}
         </span>
     </div>
