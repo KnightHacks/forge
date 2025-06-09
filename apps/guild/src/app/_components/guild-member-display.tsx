@@ -171,7 +171,7 @@ export function GuildMembersDisplay({ members }: GuildMembersDisplayProps) {
               <div className="flex flex-grow flex-col p-5">
                 <div className="flex items-center gap-4">
                   <Image
-                    src={m.profilePictureUrl || "/placeholder-avatar.png"}
+                    src={profileSrc}
                     alt={`${capitalizeFirstLetter(m.firstName)} ${capitalizeFirstLetter(m.lastName)}'s avatar`}
                     width={80}
                     height={80}
