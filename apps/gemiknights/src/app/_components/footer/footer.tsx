@@ -13,7 +13,11 @@ export default function Footer() {
           {footerLinks.map((link, index) => (
             <>
               <div key={index} className="flex flex-row items-center justify-center mx-10">
-                <Link href={link.href} className="text-center text-lg transform transition hover:scale-105 hover:text-[#FBB03B] duration-300">
+                <Link 
+                  href={link.href} 
+                  className="text-center text-lg transform transition hover:scale-105 hover:text-[#FBB03B] duration-300"
+                  {...(link.text === "Hackers Guide" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                >
                   {link.text}
                 </Link>
               </div><div>

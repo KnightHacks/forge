@@ -5,10 +5,13 @@ import MainNav from "./MainNav";
 import FloatingNav from "./FloatingNav";
 import MLHBadge from "./MLHBadge";
 
+const hackersGuide = "https://knight-hacks.notion.site/gemiknights2025";
+
 const NAV_LINKS = [
   { href: "#about", label: "About" },
   { href: "#partners", label: "Partners" },
   { href: "#faqs", label: `FAQ` },
+  { href: hackersGuide, label: "Hackers Guide", external: true },
 ];
 
 const Navbar = () => {
