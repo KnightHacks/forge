@@ -7,10 +7,10 @@
   "scripts": {
     "build": "pnpm with-env next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
-    "dev": "pnpm with-env next dev --port 3001",
+    "dev": "pnpm with-env next dev --port 3005",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "start": "pnpm with-env next start --port 3001",
+    "start": "pnpm with-env next start --port 3005",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"
   },

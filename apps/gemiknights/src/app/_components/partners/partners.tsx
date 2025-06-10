@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 
 import { BackgroundGradientAnimation } from "../ui/background-gradient-animation";
@@ -33,31 +34,37 @@ const Partners = () => {
             }}
             viewport={{ once: true, amount: 0.2 }}
           >
-            <Card className="group relative w-full overflow-hidden rounded-xl border-none bg-transparent px-4 hover:bg-transparent sm:px-6 md:px-8 lg:px-10">
-              <div className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <BackgroundGradientAnimation
-                  className="h-full w-full"
-                  size="100%"
-                  interactive={false}
-                  containerClassName="w-full h-full"
-                  blendingValue="hard-light"
-                />
-              </div>
-              <CardContent>
-                <div className="xs:h-16 relative h-12 w-full transition-transform duration-300 group-hover:scale-110 sm:h-20 md:h-24 lg:h-28">
-                  <LogoPair.white
-                    className="absolute inset-0 h-full w-full opacity-100 transition-opacity duration-300 group-hover:opacity-0"
-                    width="100%"
-                    height="100%"
-                  />
-                  <LogoPair.color
-                    className="absolute inset-0 h-full w-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                    width="100%"
-                    height="100%"
+            <Link
+              href={LogoPair.link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Card className="group relative w-full overflow-hidden rounded-xl border-none bg-transparent px-4 hover:bg-transparent sm:px-6 md:px-8 lg:px-10">
+                <div className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                  <BackgroundGradientAnimation
+                    className="h-full w-full"
+                    size="100%"
+                    interactive={false}
+                    containerClassName="w-full h-full"
+                    blendingValue="hard-light"
                   />
                 </div>
-              </CardContent>
-            </Card>
+                <CardContent>
+                  <div className="xs:h-16 relative h-12 w-full transition-transform duration-300 group-hover:scale-110 sm:h-20 md:h-24 lg:h-28">
+                    <LogoPair.white
+                      className="absolute inset-0 h-full w-full opacity-100 transition-opacity duration-300 group-hover:opacity-0"
+                      width="100%"
+                      height="100%"
+                    />
+                    <LogoPair.color
+                      className="absolute inset-0 h-full w-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      width="100%"
+                      height="100%"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </motion.div>
         ))}
       </div>

@@ -5,8 +5,6 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { ArrowRight } from "lucide-react";
 
-import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
-
 gsap.registerPlugin(ScrollTrigger);
 
 export default function DiscordCTAButton({
@@ -51,7 +49,7 @@ export default function DiscordCTAButton({
           <button
             onClick={() =>
               window.open(
-                PERMANENT_DISCORD_INVITE,
+                "https://discord.com/invite/Kv5g9vf",
                 "_blank",
                 "noopener,noreferrer",
               )

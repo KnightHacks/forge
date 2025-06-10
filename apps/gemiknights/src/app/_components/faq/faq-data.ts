@@ -7,7 +7,7 @@ export const faqItems = [
   {
     question: "When and where is it happening?",
     answer:
-      "GemiKnights will take place in person on [insert date] at [insert location on campus]. Doors open at [insert time].",
+      "GemiKnights will take place in person on June 28th, 2025 at BA1 107 on UCF Main Campus. For the most recent information on check in and schedule, please refer to the Hackers Guide.",
   },
   {
     question: "Who can attend?",
@@ -43,5 +43,15 @@ export const faqItems = [
     question: "Will there be food?",
     answer:
       "Yes, we'll provide meals and snacks throughout the day to keep you fueled.",
+  },
+  {
+    question: "Can I show up late?",
+    answer:
+      "Yes, we will be allowing for check in for the entirety of the event. However, we recommend arriving early to maximize your time and take advantage of all the resources available.",
+  },
+  {
+    question: "What do I need to do to compete?",
+    answer:
+      "To participate, you MUST register for the event and join the Discord. Upon doing so, you may be accepted. If you are accepted, you MUST confirm your attendance by checking your dashboard. Failure to confirm will result in your spot being forfeit.",
   },
 ];
