@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+
 import { BackgroundGradientAnimation } from "../ui/background-gradient-animation";
 import { Card, CardContent } from "../ui/card";
 import { partnerLogos } from "./partnerLogos";

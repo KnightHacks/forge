@@ -1,9 +1,9 @@
 import About from "./_components/about/about";
+import DiscordCTAButton from "./_components/discord/discord";
 import FAQ from "./_components/faq/faq";
 import Logo from "./_components/graphics/logo";
 import Partners from "./_components/partners/partners";
 import Register from "./_components/register/registerButton";
-import DiscordCTAButton from "./_components/discord/discord";
 
 export default function HomePage() {
   return (

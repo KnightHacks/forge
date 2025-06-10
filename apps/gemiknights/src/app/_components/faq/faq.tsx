@@ -1,12 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@radix-ui/react-accordion";
+import { motion } from "framer-motion";
 
 import { faqItems } from "./faq-data";
 

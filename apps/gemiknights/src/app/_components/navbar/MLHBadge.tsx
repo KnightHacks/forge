@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface MLHBadgeProps {
   showFloating: boolean;

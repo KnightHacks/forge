@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { ArrowRight } from "lucide-react";
@@ -33,7 +33,7 @@ export default function DiscordCTAButton({
           start: "top 75%",
           once: true,
         },
-      }
+      },
     );
   }, []);
 
@@ -53,14 +53,12 @@ export default function DiscordCTAButton({
               window.open(
                 PERMANENT_DISCORD_INVITE,
                 "_blank",
-                "noopener,noreferrer"
+                "noopener,noreferrer",
               )
             }
-            className="group relative flex w-[300px] items-center justify-center rounded-full bg-white px-8 py-3 text-sm md:text-xl font-semibold text-[#ec38bc] transition-all duration-300 ease-in-out hover:bg-gradient-to-r hover:from-[#ec38bc] hover:via-[#f8c255] hover:to-[#ec38bc] hover:text-white md:w-[450px]"
+            className="group relative flex w-[300px] items-center justify-center rounded-full bg-white px-8 py-3 text-sm font-semibold text-[#ec38bc] transition-all duration-300 ease-in-out hover:bg-gradient-to-r hover:from-[#ec38bc] hover:via-[#f8c255] hover:to-[#ec38bc] hover:text-white md:w-[450px] md:text-xl"
           >
-            <div
-              className="absolute left-0 top-0 flex h-full w-11 items-center justify-end rounded-full bg-gradient-to-r from-[#ec38bc] via-[#f8c255] to-[#ec38bc] transition-all duration-200 ease-in-out group-hover:w-full"
-            >
+            <div className="absolute left-0 top-0 flex h-full w-11 items-center justify-end rounded-full bg-gradient-to-r from-[#ec38bc] via-[#f8c255] to-[#ec38bc] transition-all duration-200 ease-in-out group-hover:w-full">
               <span className="mr-3 text-white transition-all duration-200 ease-in-out group-hover:text-white">
                 <ArrowRight size={20} />
               </span>
