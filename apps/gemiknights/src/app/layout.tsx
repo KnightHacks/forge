@@ -8,14 +8,22 @@ import Navbar from "./_components/navbar/Navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://club.knighthacks.org"),
+  metadataBase: new URL("https://gemiknights.knighthacks.org"),
   title: "GemiKnights",
-  description: "Geminite",
+  description:
+    "GemiKnights is a 12-hour mini-Hackathon held by Knight Hacks at the University of Central Florida. Join us on June 28th for a day of building, learning, and innovation with AI!",
   openGraph: {
     title: "GemiKnights",
-    description: "this is the geminite yayayayaya",
-    url: "https://club.knighthacks.org",
+    description:
+      "GemiKnights is a 12-hour mini-Hackathon held by Knight Hacks at the University of Central Florida. Join us on June 28th for a day of building, learning, and innovation with AI!",
+    url: "https://gemiknights.knighthacks.org",
     siteName: "GemiKnights",
+    images: [
+      {
+        url: "https://gemiknights.knighthacks.org/event-banner.png",
+        alt: "Event Banner",
+      },
+    ],
   },
 };
 
