@@ -15,14 +15,23 @@ export default function Footer() {
           {footerLinks.map((link, index) => (
             <React.Fragment key={index}>
               <div className="mx-4 flex flex-row items-center justify-center sm:mx-6 md:mx-10">
-                <Link
-                  href={link.href}
-                  className="transform text-center text-base transition duration-300 hover:scale-105 hover:text-[#FBB03B] sm:text-lg"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {link.text}
-                </Link>
+                {link.href.startsWith("mailto:") ? (
+                  <a
+                    href={link.href}
+                    className="transform text-center text-base transition duration-300 hover:scale-105 hover:text-[#FBB03B] sm:text-lg"
+                  >
+                    {link.text}
+                  </a>
+                ) : (
+                  <Link
+                    href={link.href}
+                    className="transform text-center text-base transition duration-300 hover:scale-105 hover:text-[#FBB03B] sm:text-lg"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {link.text}
+                  </Link>
+                )}
               </div>
               {index < footerLinks.length - 1 && (
                 <div className="hidden sm:block">

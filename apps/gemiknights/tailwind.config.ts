@@ -94,6 +94,8 @@ export default {
         "infinite-scroll": "infinite-scroll 160s linear infinite",
         "accordion-down": "accordion-down 0.5s cubic-bezier(0.87, 0, 0.13, 1)",
         "accordion-up": "accordion-up 0.5s cubic-bezier(0.87, 0, 0.13, 1)",
+        "fade-up": "fade-up 2.8s ease-out forwards",
+        "fade-up-delay": "fade-up 2.8s ease-out forwards 0.4s",
         first: "moveVertical 30s ease infinite",
         second: "moveInCircle 20s reverse infinite",
         third: "moveInCircle 40s linear infinite",
@@ -101,6 +103,7 @@ export default {
         fifth: "moveInCircle 20s ease infinite",
       },
       keyframes: {
+
         "infinite-scroll": {
           from: { transform: "translateX(0)" },
           to: { transform: "translateX(-180%)" },
@@ -120,6 +123,10 @@ export default {
         "rotate-full": {
           "0%": { transform: "rotate(0deg)" },
           "100%": { transform: "rotate(360deg)" },
+        },
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "accordion-down": {
           from: {

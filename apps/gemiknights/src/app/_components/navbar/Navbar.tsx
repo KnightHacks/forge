@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
 import FloatingNav from "./FloatingNav";
 import MainNav from "./MainNav";
@@ -32,7 +33,14 @@ const Navbar = () => {
 
   return (
     <>
-      <MainNav navLinks={NAV_LINKS} />
+      <motion.div
+        initial={{ opacity: 0, y: -40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        <MainNav navLinks={NAV_LINKS} />
+      </motion.div>
+
       <FloatingNav navLinks={NAV_LINKS} show={showFloating} />
       <MLHBadge showFloating={showFloating} />
     </>

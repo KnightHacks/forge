@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import {
   Accordion,
   AccordionContent,
@@ -9,8 +12,15 @@ import { faqItems } from "./faq-data";
 
 const FAQ = () => {
   return (
-    <div id="faqs" className="flex w-full flex-col items-center justify-center">
-      <span className="tk-forma-djr-display text-3xl font-bold sm:text-4xl md:text-5xl">
+    <motion.div
+      id="faqs"
+      className="flex w-full flex-col items-center justify-center"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.4 }}
+    >
+      <span className="tk-forma-djr-display mb-6 text-3xl font-bold sm:mb-8 sm:text-4xl md:mb-10 md:text-5xl">
         FAQ
       </span>
       <Accordion type="single" collapsible className="w-3/5">
@@ -29,7 +39,8 @@ const FAQ = () => {
           </AccordionItem>
         ))}
       </Accordion>
-    </div>
+    </motion.div>
   );
 };
+
 export default FAQ;
