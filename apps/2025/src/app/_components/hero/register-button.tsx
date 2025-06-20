@@ -1,7 +1,6 @@
-import Link from 'next/link';
-import { Bebas_Neue } from "next/font/google"; 
+import { Bebas_Neue } from "next/font/google";
+import Link from "next/link";
 import { env } from "~/env";
-import React from "react";
 
 const bn = Bebas_Neue({
   subsets: ["latin"],
@@ -15,11 +14,11 @@ interface RegisterButtonProps {
 
 export default function RegisterButton({ className }: RegisterButtonProps) {
   return (
-    <Link 
-      href={`${env.BLADE_URL}/hacker/application`} 
-      target="_blank" 
+    <Link
+      href={`${env.BLADE_URL}/hacker/application/knighthacks-viii`}
+      target="_blank"
       rel="noopener noreferrer"
-      className={`${bn.className} ${className} inline-block bg-[#D63434] text-white text-2xl sm:text-3xl md:text-4xl rounded-xl sm:rounded-2xl py-3 px-6 sm:py-4 sm:px-8 hover:bg-[#b82b2b] transition-all duration-300 hover:scale-105 transform whitespace-nowrap`}
+      className={`${bn.className} ${className} inline-block transform rounded-xl bg-[#D63434] px-6 py-3 text-2xl whitespace-nowrap text-white transition-all duration-300 hover:scale-105 hover:bg-[#b82b2b] sm:rounded-2xl sm:px-8 sm:py-4 sm:text-3xl md:text-4xl`}
     >
       Register to hack
     </Link>

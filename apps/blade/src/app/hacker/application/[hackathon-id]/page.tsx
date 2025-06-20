@@ -3,15 +3,21 @@ import { redirect } from "next/navigation";
 import { auth, signIn } from "@forge/auth";
 
 import { api } from "~/trpc/server";
-import { HackerFormPage } from "./_components/hacker-application-form";
+import { HackerFormPage } from "../_components/hacker-application-form";
 
-export default async function HackerApplicationPage() {
+export default async function HackerApplicationPage({
+  params,
+}: {
+  params: { "hackathon-id": string };
+}) {
   const session = await auth();
 
   if (session == null) {
     async function signInAction() {
       "use server";
-      await signIn("discord", { redirectTo: "/hacker/application" });
+      await signIn("discord", {
+        redirectTo: `/hacker/application/${params["hackathon-id"]}`,
+      });
     }
 
     return (
@@ -31,15 +37,22 @@ export default async function HackerApplicationPage() {
     );
   }
 
-  const isHacker = await api.hacker.getHacker();
+  try {
+    const isHacker = await api.hacker.getHacker({
+      hackathonName: params["hackathon-id"],
+    });
 
-  if (isHacker) {
+    if (isHacker != null) {
+      return redirect("/dashboard");
+    }
+  } catch (error) {
+    console.error("Error checking hacker status:", error);
     return redirect("/dashboard");
   }
 
   return (
     <main className="px-8 py-4">
-      <HackerFormPage />
+      <HackerFormPage hackathonId={params["hackathon-id"]} />
     </main>
   );
 }

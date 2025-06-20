@@ -53,7 +53,7 @@ export default function AcceptButton({ hacker }: { hacker: InsertHacker }) {
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: "You have been accepted to GemiKnights @ Knight Hacks!",
+      subject: "GemiKnights 2025 - You're Accepted! Confirm your spot!",
       body: html,
     });
   };

@@ -5,11 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { ChartConfig } from "@forge/ui/chart";
-import {
-  ADMIN_PIE_CHART_COLORS,
-  LEVELS_OF_STUDY,
-  SHORT_LEVELS_OF_STUDY,
-} from "@forge/consts/knight-hacks";
+import { ADMIN_PIE_CHART_COLORS, GENDERS } from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
@@ -26,50 +22,33 @@ import {
 } from "@forge/ui/select";
 
 interface Person {
-  levelOfStudy?: (typeof LEVELS_OF_STUDY)[number];
+  gender?: (typeof GENDERS)[number];
 }
 
-const shortenLevelOfStudy = (levelOfStudy: string): string => {
-  const replacements: Record<string, string> = {
-    // Undergraduate University (2 year - community college or similar)
-    [LEVELS_OF_STUDY[2]]: SHORT_LEVELS_OF_STUDY[0], // Undergraduate University (2 year)
-    // Graduate University (Masters, Professional, Doctoral, etc)
-    [LEVELS_OF_STUDY[4]]: SHORT_LEVELS_OF_STUDY[1], // Graduate University (Masters/PhD)
-    // Other Vocational / Trade Program or Apprenticeship
-    [LEVELS_OF_STUDY[6]]: SHORT_LEVELS_OF_STUDY[2], // Vocational/Trade School
-  };
-  return replacements[levelOfStudy] ?? levelOfStudy;
-};
-
-export default function SchoolYearPie({ people }: { people: Person[] }) {
+export default function GenderPie({ people }: { people: Person[] }) {
   const id = "pie-interactive";
 
-  // set up school year data
-  const levelOfStudyCounts: Record<string, number> = {};
-  people.forEach(({ levelOfStudy }) => {
-    if (levelOfStudy) {
-      levelOfStudyCounts[levelOfStudy] =
-        (levelOfStudyCounts[levelOfStudy] ?? 0) + 1;
-    }
+  // get amount of each gender
+  const genderCounts: Record<string, number> = {};
+  people.forEach(({ gender }) => {
+    if (gender) genderCounts[gender] = (genderCounts[gender] ?? 0) + 1;
   });
-  const levelOfStudyData = Object.entries(levelOfStudyCounts).map(
-    ([levelOfStudy, count]) => ({
-      name: shortenLevelOfStudy(levelOfStudy),
-      amount: count,
-    }),
-  );
+  const genderData = Object.entries(genderCounts).map(([gender, count]) => ({
+    name: gender,
+    amount: count,
+  }));
 
   const [activeLevel, setActiveLevel] = useState(
-    levelOfStudyData[0] ? levelOfStudyData[0].name : null,
+    genderData[0] ? genderData[0].name : null,
   );
 
   const activeIndex = useMemo(
-    () => levelOfStudyData.findIndex((item) => item.name === activeLevel),
-    [activeLevel, levelOfStudyData],
+    () => genderData.findIndex((item) => item.name === activeLevel),
+    [activeLevel, genderData],
   );
-  const studyLevels = useMemo(
-    () => levelOfStudyData.map((item) => item.name),
-    [levelOfStudyData],
+  const genders = useMemo(
+    () => genderData.map((item) => item.name),
+    [genderData],
   );
 
   // set up chart config
@@ -77,13 +56,10 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
     people: { label: "people" },
   };
   let colorIdx = 0;
-  people.forEach(({ levelOfStudy }) => {
-    const shortenedString = levelOfStudy
-      ? shortenLevelOfStudy(levelOfStudy)
-      : undefined;
-    if (shortenedString && !baseConfig[shortenedString]) {
-      baseConfig[shortenedString] = {
-        label: shortenedString,
+  people.forEach(({ gender }) => {
+    if (gender && !baseConfig[gender]) {
+      baseConfig[gender] = {
+        label: gender,
         color: ADMIN_PIE_CHART_COLORS[colorIdx % ADMIN_PIE_CHART_COLORS.length],
       };
       colorIdx++;
@@ -92,24 +68,24 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
 
   // update selected pie chart segment if the data changes
   useEffect(() => {
-    const activeStillExists = levelOfStudyData.some(
+    const activeStillExists = genderData.some(
       (item) => item.name === activeLevel,
     );
 
-    if (levelOfStudyData.length <= 0) {
+    if (genderData.length <= 0) {
       setActiveLevel(null);
       return;
-    } else if (!activeStillExists && levelOfStudyData[0]) {
-      setActiveLevel(levelOfStudyData[0].name);
+    } else if (!activeStillExists && genderData[0]) {
+      setActiveLevel(genderData[0].name);
     }
-  }, [levelOfStudyData, activeLevel]);
+  }, [genderData, activeLevel]);
 
   return (
     <Card data-chart={id} className="flex flex-col pb-4">
       <ChartStyle id={id} config={baseConfig} />
       <CardHeader className="flex-col items-start gap-4 space-y-0 pb-0">
         <div className="grid gap-1">
-          <CardTitle className="text-xl">Year of Study</CardTitle>
+          <CardTitle className="text-xl">Gender</CardTitle>
         </div>
         <Select
           value={activeLevel ? activeLevel : undefined}
@@ -119,10 +95,10 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
             className="ml-auto h-7 rounded-lg pl-2.5"
             aria-label="Select a value"
           >
-            <SelectValue placeholder="Select month" />
+            <SelectValue placeholder="Select gender" />
           </SelectTrigger>
           <SelectContent align="end" className="rounded-xl">
-            {studyLevels.map((key) => {
+            {genders.map((key) => {
               const config = baseConfig[key];
 
               if (!config) {
@@ -162,7 +138,7 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
               content={<ChartTooltipContent hideLabel />}
             />
             <Pie
-              data={levelOfStudyData}
+              data={genderData}
               dataKey="amount"
               nameKey="name"
               innerRadius={60}
@@ -197,23 +173,21 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
                           y={viewBox.cy}
                           className="fill-foreground text-3xl font-bold"
                         >
-                          {levelOfStudyData[
-                            activeIndex
-                          ]?.amount.toLocaleString()}
+                          {genderData[activeIndex]?.amount.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy ?? 0) + 24}
                           className="fill-muted-foreground"
                         >
-                          people
+                          Hackers
                         </tspan>
                       </text>
                     );
                   }
                 }}
               />
-              {levelOfStudyData.map((_, index) => (
+              {genderData.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={

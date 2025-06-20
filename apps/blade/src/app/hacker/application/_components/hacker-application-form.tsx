@@ -42,11 +42,12 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
-export function HackerFormPage() {
+export function HackerFormPage({ hackathonId }: { hackathonId: string }) {
   const router = useRouter();
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const utils = api.useUtils();
+  console.log(hackathonId);
 
   const uploadResume = api.resume.uploadResume.useMutation({
     onError() {
@@ -267,6 +268,7 @@ export function HackerFormPage() {
               survey2: values.survey2,
               foodAllergies: values.foodAllergies,
               resumeUrl,
+              hackathonName: hackathonId,
             });
           } catch (error) {
             // eslint-disable-next-line no-console

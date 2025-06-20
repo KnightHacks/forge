@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { render } from "@react-email/render";
 import { CircleCheckBig, Loader2 } from "lucide-react";
 
 import { USE_CAUTION } from "@forge/consts/knight-hacks";
@@ -19,6 +20,7 @@ import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
 
 import type { api as serverCall } from "~/trpc/server";
+import { GemiKnightsConfirmationEmail } from "~/app/admin/hackathon/hackers/_components/gemiknights-confirmation-email";
 import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
 import { HackerQRCodePopup } from "./hacker-qr-button";
@@ -37,16 +39,43 @@ export function HackerData({
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  const { data: hacker, isError } = api.hacker.getHacker.useQuery(undefined, {
-    initialData: data,
+  const { data: hacker, isError } = api.hacker.getHacker.useQuery(
+    {},
+    {
+      initialData: data,
+    },
+  );
+
+  const sendEmail = api.email.sendEmail.useMutation({
+    onSuccess: () => {
+      toast.success("Check your email for the final step!");
+    },
+    onError: (opts) => {
+      toast.error(opts.message);
+    },
   });
 
   const utils = api.useUtils();
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setLoading(true);
     confirmHacker.mutate({
       id: hacker?.id,
+    });
+
+    if (!hacker) return;
+
+    const html = await render(
+      <GemiKnightsConfirmationEmail
+        name={`${hacker.firstName} ${hacker.lastName}`}
+      />,
+    );
+
+    sendEmail.mutate({
+      from: "donotreply@knighthacks.org",
+      to: hacker.email,
+      subject: "GemiKnights 2025 - FINAL STEP: Complete MLH Registration!",
+      body: html,
     });
   };
 
