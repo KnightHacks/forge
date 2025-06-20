@@ -4,7 +4,11 @@ import { HACKATHON_APPLICATION_STATES } from "@forge/consts/knight-hacks";
 import { ToggleGroup, ToggleGroupItem } from "@forge/ui/toggle-group";
 
 import AgeBarChart from "~/app/admin/_components/AgeBarChart";
+import FirstTimeHackersPie from "~/app/admin/_components/FirstTimeHackersPie";
+import FoodAllergiesBarChart from "~/app/admin/_components/FoodAllergiesBarChart";
+import GenderPie from "~/app/admin/_components/GenderPie";
 import RaceOrEthnicityPie from "~/app/admin/_components/RaceOrEthnicityPie";
+import SchoolBarChart from "~/app/admin/_components/SchoolBarChart";
 import SchoolYearPie from "~/app/admin/_components/SchoolYearPie";
 import { api } from "~/trpc/react";
 import FirstTimeInfo from "./FirstTimeInfo";
@@ -76,9 +80,13 @@ export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
             {filteredHackers && filteredHackers.length > 0 ? (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
                 <FirstTimeInfo hackers={filteredHackers} />
+                <FirstTimeHackersPie people={filteredHackers} />
                 <AgeBarChart people={filteredHackers} />
+                <GenderPie people={filteredHackers} />
                 <RaceOrEthnicityPie people={filteredHackers} />
                 <SchoolYearPie people={filteredHackers} />
+                <SchoolBarChart people={filteredHackers} />
+                <FoodAllergiesBarChart people={filteredHackers} />
               </div>
             ) : (
               <h1 className="mt-20 text-center text-xl">
