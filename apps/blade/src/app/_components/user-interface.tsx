@@ -8,7 +8,7 @@ import { HackerAppCard, MemberAppCard } from "./option-cards";
 export async function UserInterface() {
   const [member, hacker] = await Promise.allSettled([
     api.member.getMember(),
-    api.hacker.getHacker(),
+    api.hacker.getHacker({}),
   ]);
 
   if (member.status === "rejected" || hacker.status === "rejected") {

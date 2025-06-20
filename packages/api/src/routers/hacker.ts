@@ -12,20 +12,53 @@ import {
   InsertHackerSchema,
 } from "@forge/db/schemas/knight-hacks";
 
-import { api } from "~/trpc/server";
 import { adminProcedure, protectedProcedure } from "../trpc";
 import { log } from "../utils";
 
 export const hackerRouter = {
-  getHacker: protectedProcedure.query(async ({ ctx }) => {
-    const hacker = await db
-      .select()
-      .from(Hacker)
-      .where(eq(Hacker.userId, ctx.session.user.id));
+  getHacker: protectedProcedure
+    .input(z.object({ hackathonName: z.string().optional() }))
+    .query(async ({ input, ctx }) => {
+      if (input.hackathonName == undefined) {
+        const hacker = await db
+          .select()
+          .from(Hacker)
+          .where(eq(Hacker.userId, ctx.session.user.id));
+        return hacker[0];
+      }
 
-    if (hacker.length === 0) return null; // Can't return undefined in trpc
-    return hacker[hacker.length - 1];
-  }),
+      console.log("Fetching hackathon with name", input.hackathonName);
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.name, input.hackathonName ?? ""),
+      });
+
+      if (!hackathon) {
+        throw new TRPCError({
+          message: "Hackathon not found!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      const hacker = await db.query.Hacker.findFirst({
+        where: (t, { eq }) => eq(t.userId, ctx.session.user.id),
+      });
+
+      if (!hacker) {
+        return null;
+      }
+
+      // Check if the hacker is registered for this specific hackathon
+      const hackerAttendee = await db.query.HackerAttendee.findFirst({
+        where: (t, { and, eq }) =>
+          and(eq(t.hackerId, hacker.id), eq(t.hackathonId, hackathon.id)),
+      });
+
+      if (!hackerAttendee) {
+        return null;
+      }
+
+      return hacker;
+    }),
 
   getHackers: adminProcedure.input(z.string()).query(async ({ input }) => {
     const hackers = await db
@@ -55,14 +88,18 @@ export const hackerRouter = {
 
   createHacker: protectedProcedure
     .input(
-      InsertHackerSchema.omit({
-        userId: true,
-        age: true,
-        discordUser: true,
+      z.object({
+        ...InsertHackerSchema.omit({
+          userId: true,
+          age: true,
+          discordUser: true,
+        }).shape,
+        hackathonName: z.string(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
       const userId = ctx.session.user.id;
+      const { hackathonName, ...hackerData } = input;
 
       const existingHacker = await db
         .select()
@@ -74,7 +111,7 @@ export const hackerRouter = {
       }
 
       const today = new Date();
-      const birthDate = new Date(input.dob);
+      const birthDate = new Date(hackerData.dob);
       const hasBirthdayPassed =
         birthDate.getMonth() < today.getMonth() ||
         (birthDate.getMonth() === today.getMonth() &&
@@ -84,11 +121,12 @@ export const hackerRouter = {
         : today.getFullYear() - birthDate.getFullYear() - 1;
 
       await db.insert(Hacker).values({
-        ...input,
+        ...hackerData,
         discordUser: ctx.session.user.name ?? "",
         userId,
         age: newAge,
-        phoneNumber: input.phoneNumber === "" ? null : input.phoneNumber,
+        phoneNumber:
+          hackerData.phoneNumber === "" ? null : hackerData.phoneNumber,
         status: "pending",
       });
 
@@ -97,17 +135,24 @@ export const hackerRouter = {
       });
 
       const hackathon = await db.query.Hackathon.findFirst({
-        where: (t, { eq }) => eq(t.name, "GemiKnights"),
+        where: (t, { eq }) => eq(t.name, hackathonName),
       });
+
+      if (!hackathon) {
+        throw new TRPCError({
+          message: "Hackathon not found!",
+          code: "NOT_FOUND",
+        });
+      }
 
       await db.insert(HackerAttendee).values({
         hackerId: insertedHacker?.id ?? "",
-        hackathonId: hackathon?.id ?? "",
+        hackathonId: hackathon.id,
       });
 
       await log({
         title: "Hacker Created",
-        message: `${input.firstName} ${input.lastName} has signed up for the hackathon!`,
+        message: `${hackerData.firstName} ${hackerData.lastName} has signed up for the hackathon!`,
         color: "tk_blue",
         userId: ctx.session.user.discordUserId,
       });

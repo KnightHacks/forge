@@ -15,7 +15,7 @@ export default async function SettingsProfilePage() {
     redirect("/");
   }
 
-  const hackerData = await api.hacker.getHacker();
+  const hackerData = await api.hacker.getHacker({});
 
   if (!hackerData) {
     return (

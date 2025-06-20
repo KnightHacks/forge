@@ -55,9 +55,12 @@ export function HackerProfileForm({
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
   const allergiesRef = useRef<string[]>([]);
 
-  const { data: hacker, isError } = api.hacker.getHacker.useQuery(undefined, {
-    initialData: data,
-  });
+  const { data: hacker, isError } = api.hacker.getHacker.useQuery(
+    {},
+    {
+      initialData: data,
+    },
+  );
 
   const uploadResume = api.resume.uploadResume.useMutation({
     onError() {

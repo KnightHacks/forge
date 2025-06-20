@@ -39,9 +39,12 @@ export function HackerData({
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  const { data: hacker, isError } = api.hacker.getHacker.useQuery(undefined, {
-    initialData: data,
-  });
+  const { data: hacker, isError } = api.hacker.getHacker.useQuery(
+    {},
+    {
+      initialData: data,
+    },
+  );
 
   const sendEmail = api.email.sendEmail.useMutation({
     onSuccess: () => {
