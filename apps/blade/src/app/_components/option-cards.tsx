@@ -79,7 +79,7 @@ export function HackerAppCard() {
         </ul>
       </CardContent>
       <CardFooter>
-        <Link href={"/hacker/application"} className="w-full">
+        <Link href={"/hacker/application/gemiknights"} className="w-full">
           <Button className="w-full">Register to Hack</Button>
         </Link>
       </CardFooter>
