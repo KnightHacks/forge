@@ -11,14 +11,14 @@ import {
   Text,
 } from "@react-email/components";
 
-interface AcceptanceEmailProps {
+interface ConfirmationEmailProps {
   name: string;
 }
 
-const GemiKnightsAcceptanceEmail = ({ name }: AcceptanceEmailProps) => (
+const GemiKnightsConfirmationEmail = ({ name }: ConfirmationEmailProps) => (
   <Html>
     <Head />
-    <Preview>GemiKnights 2025 - You're In!</Preview>
+    <Preview>GemiKnights 2025 - FINAL STEP: Complete MLH Registration!</Preview>
 
     <Tailwind>
       <Body className="bg-gray-50 font-sans text-[16px] text-gray-800">
@@ -38,18 +38,13 @@ const GemiKnightsAcceptanceEmail = ({ name }: AcceptanceEmailProps) => (
               Hey {name}!
             </Text>
             <Text>
-              <span className="text-lg font-bold text-purple-600">
-                YOU'RE IN! 🚀
-              </span>{" "}
-              You've been <span className="font-bold">accepted</span> to{" "}
+              You&apos;re officially in for{" "}
               <span className="font-bold text-purple-600">
                 GemiKnights&nbsp;2025
               </span>{" "}
-              — Knight&nbsp;Hacks'{" "}
-              <span className="font-semibold text-purple-600">
-                FIRST EVER Summer Hackathon!
-              </span>{" "}
-              You're about to be part of something truly historic.
+              — one of the first Summer Hackathons Knight&nbsp;Hacks has ever
+              hosted! We&apos;re making history together and we&apos;re super
+              excited to build something amazing with you and fellow hackers.
             </Text>
 
             <Text className="mt-4">
@@ -62,27 +57,30 @@ const GemiKnightsAcceptanceEmail = ({ name }: AcceptanceEmailProps) => (
             </Text>
 
             <Section className="mt-8 text-center">
-              <Text className="mb-4 text-lg font-semibold text-purple-600">
-                ⚡ SECURE YOUR SPOT:
+              <Text className="mb-4 rounded-lg border-2 border-red-200 bg-red-50 px-4 py-2 text-lg font-semibold text-red-600">
+                🎯 FINAL STEP TO SECURE YOUR SPOT:
               </Text>
+
               <Link
-                href="https://blade.knighthacks.org/dashboard"
-                className="inline-block rounded-xl bg-purple-600 px-6 py-3 text-white no-underline hover:bg-purple-700"
+                href="https://events.mlh.io/events/12675-hack-knights-ucf?_gl=1*drl2yj*_ga*MTY4OTY2NzUyNi4xNzQ3NzA3NTQ0*_ga_E5KT6TC4TK*czE3NDk2MDY1MTckbzI4JGcxJHQxNzQ5NjA2NTIyJGo1NSRsMCRoMA"
+                className="inline-block rounded-xl bg-red-600 px-6 py-3 text-lg font-bold text-white no-underline hover:bg-red-700"
               >
-                Confirm My Attendance
+                Complete MLH Registration
               </Link>
-              <Text className="mt-2 text-xs text-gray-500">
-                You <strong>MUST</strong> confirm by visiting the dashboard
-                above to secure your spot. Please do this by{" "}
-                <strong>June 24th, 2025</strong>. Note that acceptance does NOT
-                guarantee your spot at the event, and confirmation is required
-                on a first come first serve basis.
+
+              <Text className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs text-red-600">
+                <strong>DEADLINE: July 26th, 2025</strong> (2 days before the
+                event)
+                <br />
+                This is the <strong>FINAL STEP</strong> before you&apos;re
+                allowed into the event! The MLH registration helps us provide
+                your info to our amazing sponsors and is required for entry. 🎁
               </Text>
             </Section>
 
             <Section className="mt-6">
               <Text>
-                📚 Ready to dive deep? Check out the{" "}
+                📚 Need the inside scoop? Check out the{" "}
                 <Link
                   href="https://knight-hacks.notion.site/gemiknights2025"
                   className="text-purple-600 underline"
@@ -94,8 +92,7 @@ const GemiKnightsAcceptanceEmail = ({ name }: AcceptanceEmailProps) => (
             </Section>
 
             <Text className="mt-8 text-lg font-semibold text-purple-600">
-              🎯 Get ready to make history at our first ever Summer hackathon!
-              Get excited for GemiKnights!
+              🎉 Let&apos;s make history with the best Summer hackathon ever!
             </Text>
             <Text className="font-semibold">— The Knight Hacks Team</Text>
           </Section>
@@ -118,4 +115,4 @@ const GemiKnightsAcceptanceEmail = ({ name }: AcceptanceEmailProps) => (
   </Html>
 );
 
-export { GemiKnightsAcceptanceEmail };
+export { GemiKnightsConfirmationEmail };

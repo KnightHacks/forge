@@ -12,6 +12,7 @@ import {
   InsertHackerSchema,
 } from "@forge/db/schemas/knight-hacks";
 
+import { api } from "~/trpc/server";
 import { adminProcedure, protectedProcedure } from "../trpc";
 import { log } from "../utils";
 
