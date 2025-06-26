@@ -186,6 +186,7 @@ export function HackerData({
             size="lg"
             className="animate-fade-in gap-2 !rounded-none"
             onClick={handleConfirm}
+            disabled
           >
             {loading ? (
               <Loader2 className="w-[85px] animate-spin" />
