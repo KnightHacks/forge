@@ -538,7 +538,7 @@ export function HackerFormPage({ hackathonId }: { hackathonId: string }) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Why do you want to attend GemiKnights?{" "}
+                Why do you want to attend this Hackathon?{" "}
                 <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
@@ -558,7 +558,7 @@ export function HackerFormPage({ hackathonId }: { hackathonId: string }) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                What do you hope to achieve at GemiKnights?{" "}
+                What do you hope to achieve at this Hackathon?{" "}
                 <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
