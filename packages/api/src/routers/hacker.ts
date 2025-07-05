@@ -1,7 +1,12 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
+import QRCode from "qrcode";
 import { z } from "zod";
 
+import {
+  BUCKET_NAME,
+  KNIGHTHACKS_S3_BUCKET_REGION,
+} from "@forge/consts/knight-hacks";
 import { and, count, desc, eq, exists, getTableColumns } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
@@ -12,6 +17,7 @@ import {
   InsertHackerSchema,
 } from "@forge/db/schemas/knight-hacks";
 
+import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure } from "../trpc";
 import { log } from "../utils";
 
@@ -179,6 +185,36 @@ export const hackerRouter = {
         throw new Error(
           "Hacker already exists for this user in this hackathon.",
         );
+      }
+
+      // Generate QR code for first-time hacker registration
+      try {
+        const existingHackerProfile = await db
+          .select({ id: Hacker.id })
+          .from(Hacker)
+          .where(eq(Hacker.userId, userId));
+
+        if (existingHackerProfile.length === 0) {
+          const objectName = `qr-code-${userId}.png`;
+          const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+          if (!bucketExists) {
+            await minioClient.makeBucket(
+              BUCKET_NAME,
+              KNIGHTHACKS_S3_BUCKET_REGION,
+            );
+          }
+          const qrData = `user:${userId}`;
+          const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
+          await minioClient.putObject(
+            BUCKET_NAME,
+            objectName,
+            qrBuffer,
+            qrBuffer.length,
+            { "Content-Type": "image/png" },
+          );
+        }
+      } catch (error) {
+        console.error("Error with generating QR code: ", error);
       }
 
       const today = new Date();
