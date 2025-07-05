@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Code, Swords } from "lucide-react";
 
+import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 import { cn } from "@forge/ui";
 import { Button, buttonVariants } from "@forge/ui/button";
 import {
@@ -21,22 +22,22 @@ export function MemberAppCard() {
         </div>
         <CardTitle className="text-2xl">Become a Member</CardTitle>
         <CardDescription>
-          Join our community of passionate students!
+          Join our community of passionate students at UCF!
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
         <ul className="space-y-2">
           <li className="flex items-center">
             <span className="mr-2">•</span>
-            Access to exclusive content
+            Fall Kickstart Mentorship
           </li>
           <li className="flex items-center">
             <span className="mr-2">•</span>
-            Monthly newsletters
+            Spring Project Launch
           </li>
           <li className="flex items-center">
             <span className="mr-2">•</span>
-            Community events
+            Exclusive Merch
           </li>
         </ul>
       </CardContent>
@@ -59,8 +60,10 @@ export function HackerAppCard() {
         <div className="mx-auto mb-4 rounded-full bg-primary/10 p-3">
           <Code className="h-8 w-8 text-primary" />
         </div>
-        <CardTitle className="text-2xl">Join the Hackathon!</CardTitle>
-        <CardDescription>Build, innovate, and compete!</CardDescription>
+        <CardTitle className="text-2xl">Join the Hackathon</CardTitle>
+        <CardDescription>
+          Build, innovate, and compete over 12-36 hours!
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
         <ul className="space-y-2">
@@ -79,8 +82,13 @@ export function HackerAppCard() {
         </ul>
       </CardContent>
       <CardFooter>
-        <Link href={"/hacker/application/gemiknights"} className="w-full">
-          <Button className="w-full">Register to Hack</Button>
+        <Link
+          href={PERMANENT_DISCORD_INVITE}
+          className="w-full"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button className="w-full">Contact an Organizer</Button>
         </Link>
       </CardFooter>
     </Card>

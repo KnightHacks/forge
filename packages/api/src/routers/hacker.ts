@@ -159,8 +159,8 @@ export const hackerRouter = {
       });
 
       await log({
-        title: "Hacker Created",
-        message: `${hackerData.firstName} ${hackerData.lastName} has signed up for the hackathon!`,
+        title: `HACKER CREATED FOR ${hackathon.name.toUpperCase()}`,
+        message: `${hackerData.firstName} ${hackerData.lastName} has signed up for the upcoming hackathon: ${hackathon.name.toUpperCase()}!`,
         color: "tk_blue",
         userId: ctx.session.user.discordUserId,
       });
