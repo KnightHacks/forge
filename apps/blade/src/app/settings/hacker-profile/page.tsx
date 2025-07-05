@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
+import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 import { Separator } from "@forge/ui/separator";
 
 import { api, HydrateClient } from "~/trpc/server";
@@ -34,14 +35,19 @@ export default async function SettingsProfilePage() {
           Nothing to see yet
         </h2>
         <p className="mb-1 text-sm text-gray-400">
-          Hacker Applications are not available yet. Please check back later.
+          You have not applied to any hackathons yet.
         </p>
-        <p className="text-sm text-gray-400">
-          Looking for your member profile instead? Check the{" "}
-          <Link href="/settings" className="text-primary hover:underline">
-            member profile
-          </Link>
-          .
+        <p className="mb-1 text-sm text-gray-400">
+          Please reach out to an organizer in the{" "}
+          <Link
+            href={PERMANENT_DISCORD_INVITE}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline"
+          >
+            Discord
+          </Link>{" "}
+          to learn more about our hackathons and how to apply.
         </p>
       </div>
     );

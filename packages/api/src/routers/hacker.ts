@@ -20,6 +20,15 @@ export const hackerRouter = {
     .input(z.object({ hackathonName: z.string().optional() }))
     .query(async ({ input, ctx }) => {
       if (input.hackathonName == undefined) {
+        const hackathon = await db.query.Hackathon.findFirst({
+          where: (t, { and, lt, gte }) =>
+            and(lt(t.endDate, new Date()), gte(t.startDate, new Date())),
+        });
+
+        if (!hackathon) {
+          return null;
+        }
+
         const hacker = await db
           .select()
           .from(Hacker)
@@ -27,7 +36,6 @@ export const hackerRouter = {
         return hacker[0];
       }
 
-      console.log("Fetching hackathon with name", input.hackathonName);
       const hackathon = await db.query.Hackathon.findFirst({
         where: (t, { eq }) => eq(t.name, input.hackathonName ?? ""),
       });
