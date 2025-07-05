@@ -131,6 +131,12 @@ export const Hacker = createTable("hacker", (t) => ({
   agreesToReceiveEmailsFromMLH: t
     .boolean("agrees_to_receive_emails_from_mlh")
     .default(false),
+  agreesToMLHCodeOfConduct: t
+    .boolean("agrees_to_mlh_code_of_conduct")
+    .default(false),
+  agreesToMLHDataSharing: t
+    .boolean("agrees_to_mlh_data_sharing")
+    .default(false),
   dateCreated: t.date().notNull().defaultNow(),
   timeCreated: t.time().notNull().defaultNow(),
 }));
