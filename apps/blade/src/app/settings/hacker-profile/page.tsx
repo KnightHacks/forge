@@ -35,7 +35,7 @@ export default async function SettingsProfilePage() {
           Nothing to see yet
         </h2>
         <p className="mb-1 text-sm text-gray-400">
-          You have not applied to any hackathons yet.
+          You have not applied to any upcoming hackathons yet.
         </p>
         <p className="mb-1 text-sm text-gray-400">
           Please reach out to an organizer in the{" "}
