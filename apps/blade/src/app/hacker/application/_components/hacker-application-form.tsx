@@ -546,7 +546,7 @@ export function HackerFormPage({
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Why do you want to attend this Hackathon?{" "}
+                Why do you want to attend {hackathonName}?{" "}
                 <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
@@ -566,7 +566,7 @@ export function HackerFormPage({
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                What do you hope to achieve at this Hackathon?{" "}
+                What do you hope to achieve at {hackathonName}?{" "}
                 <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
