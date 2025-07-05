@@ -63,6 +63,7 @@ export default async function HackerApplicationPage({
       <HackerFormPage
         hackathonId={params["hackathon-id"]}
         hackathonName={hackathon.displayName}
+        hackathonStartDate={hackathon.startDate.toISOString()}
       />
     </main>
   );
