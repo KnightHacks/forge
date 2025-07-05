@@ -109,13 +109,32 @@ export const hackerRouter = {
       const userId = ctx.session.user.id;
       const { hackathonName, ...hackerData } = input;
 
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.name, hackathonName),
+      });
+
+      if (!hackathon) {
+        throw new TRPCError({
+          message: "Hackathon not found!",
+          code: "NOT_FOUND",
+        });
+      }
+
       const existingHacker = await db
         .select()
         .from(Hacker)
-        .where(eq(Hacker.userId, userId));
+        .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+        .where(
+          and(
+            eq(Hacker.userId, userId),
+            eq(HackerAttendee.hackathonId, hackathon.id),
+          ),
+        );
 
       if (existingHacker.length > 0) {
-        throw new Error("Hacker already exists for this user.");
+        throw new Error(
+          "Hacker already exists for this user in this hackathon.",
+        );
       }
 
       const today = new Date();
@@ -141,17 +160,6 @@ export const hackerRouter = {
       const insertedHacker = await db.query.Hacker.findFirst({
         where: (t, { eq }) => eq(t.userId, userId),
       });
-
-      const hackathon = await db.query.Hackathon.findFirst({
-        where: (t, { eq }) => eq(t.name, hackathonName),
-      });
-
-      if (!hackathon) {
-        throw new TRPCError({
-          message: "Hackathon not found!",
-          code: "NOT_FOUND",
-        });
-      }
 
       await db.insert(HackerAttendee).values({
         hackerId: insertedHacker?.id ?? "",
