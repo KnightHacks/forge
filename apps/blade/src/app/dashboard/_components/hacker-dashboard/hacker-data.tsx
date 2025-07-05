@@ -31,6 +31,7 @@ export function HackerData({
   data,
 }: {
   data: Awaited<ReturnType<(typeof serverCall.hacker)["getHacker"]>>;
+  hackathon: Awaited<ReturnType<(typeof serverCall.hackathon)["getHackathon"]>>;
 }) {
   const [hackerStatus, setHackerStatus] = useState<string | null>("");
   const [hackerStatusColor, setHackerStatusColor] = useState<string>("");
@@ -45,6 +46,11 @@ export function HackerData({
       initialData: data,
     },
   );
+
+  const { data: hackathonData, isError: hackathonError } =
+    api.hackathon.getHackathon.useQuery({
+      hackathonName: undefined,
+    });
 
   const sendEmail = api.email.sendEmail.useMutation({
     onSuccess: () => {
@@ -181,20 +187,40 @@ export function HackerData({
       <div className="mt-6 flex w-full items-center justify-center gap-x-1 sm:ml-7 md:mt-5 lg:mt-0">
         <HackerQRCodePopup />
         {/* Confirm Button */}
-        {hackerStatus === "Accepted" && (
-          <Button
-            size="lg"
-            className="animate-fade-in gap-2 !rounded-none"
-            onClick={handleConfirm}
-            disabled
-          >
-            {loading ? (
-              <Loader2 className="w-[85px] animate-spin" />
-            ) : (
-              <span className="text-lg font-bold text-white">CONFIRM</span>
+
+        {hackerStatus === "Accepted" &&
+          hackathonData?.confirmationDeadline != null && (
+            <Button
+              size="lg"
+              className={`animate-fade-in gap-2 !rounded-none ${
+                hackathonData?.confirmationDeadline &&
+                hackathonData.confirmationDeadline < new Date()
+                  ? "bg-gray-700 hover:bg-gray-900"
+                  : ""
+              }`}
+              onClick={handleConfirm}
+              disabled={
+                hackathonData?.confirmationDeadline &&
+                hackathonData.confirmationDeadline < new Date()
+              }
+            >
+              {loading ? (
+                <Loader2 className="w-[85px] animate-spin" />
+              ) : (
+                <span className="text-lg font-bold text-white">CONFIRM</span>
+              )}
+            </Button>
+          )}
+
+        <div>
+          {hackathonData?.confirmationDeadline &&
+            hackathonData.confirmationDeadline < new Date() && (
+              <div className="w-full py-2 pl-4 text-center text-gray-500">
+                The confirmation deadline has passed.
+              </div>
             )}
-          </Button>
-        )}
+        </div>
+
         {/* Confirm Dialog */}
         <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
           <DialogContent className="sm:max-w-md">

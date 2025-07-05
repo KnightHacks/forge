@@ -16,6 +16,15 @@ import { adminProcedure, protectedProcedure } from "../trpc";
 import { log } from "../utils";
 
 export const hackerRouter = {
+  getPreviousHacker: protectedProcedure.query(async ({ ctx }) => {
+    // Get the most recent hacker profile for this user
+    const hacker = await db.query.Hacker.findFirst({
+      where: (t, { eq }) => eq(t.userId, ctx.session.user.id),
+    });
+
+    return hacker ?? null;
+  }),
+
   getHacker: protectedProcedure
     .input(z.object({ hackathonName: z.string().optional() }))
     .query(async ({ input, ctx }) => {
@@ -89,9 +98,45 @@ export const hackerRouter = {
     return hackers;
   }),
 
-  getAllHackers: adminProcedure.query(async () => {
-    return await db.query.Hacker.findMany();
-  }),
+  getAllHackers: adminProcedure
+    .input(z.object({ hackathonName: z.string().optional() }))
+    .query(async ({ input }) => {
+      const hackathonName = input.hackathonName;
+
+      if (!hackathonName) {
+        return await db.query.Hacker.findMany();
+      }
+
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.name, hackathonName),
+      });
+
+      if (!hackathon) {
+        throw new TRPCError({
+          message: "Hackathon not found!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      const hackers = await db
+        .select()
+        .from(Hacker)
+        .where(
+          exists(
+            db
+              .select()
+              .from(HackerAttendee)
+              .where(
+                and(
+                  eq(HackerAttendee.hackathonId, hackathon.id),
+                  eq(HackerAttendee.hackerId, Hacker.id),
+                ),
+              ),
+          ),
+        );
+
+      return hackers;
+    }),
 
   createHacker: protectedProcedure
     .input(

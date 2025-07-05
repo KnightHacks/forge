@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -56,8 +56,12 @@ export function HackerFormPage({
   const router = useRouter();
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [comboBoxKey, setComboBoxKey] = useState(0);
   const utils = api.useUtils();
   console.log(hackathonId);
+
+  // Get previous hacker profile to pre-fill form
+  const { data: previousHacker } = api.hacker.getPreviousHacker.useQuery();
 
   const uploadResume = api.resume.uploadResume.useMutation({
     onError() {
@@ -256,6 +260,48 @@ export function HackerFormPage({
 
   const fileRef = form.register("resumeUpload");
 
+  useEffect(() => {
+    if (previousHacker) {
+      form.reset({
+        firstName: previousHacker.firstName ?? "",
+        lastName: previousHacker.lastName ?? "",
+        gender: previousHacker.gender ?? undefined,
+        raceOrEthnicity: previousHacker.raceOrEthnicity ?? undefined,
+        discordUser: previousHacker.discordUser ?? "",
+        email: previousHacker.email ?? "",
+        phoneNumber: previousHacker.phoneNumber ?? "",
+        country: previousHacker.country ?? undefined,
+        school: previousHacker.school ?? undefined,
+        levelOfStudy: previousHacker.levelOfStudy ?? undefined,
+        shirtSize: previousHacker.shirtSize ?? undefined,
+        githubProfileUrl: previousHacker.githubProfileUrl ?? "",
+        linkedinProfileUrl: previousHacker.linkedinProfileUrl ?? "",
+        websiteUrl: previousHacker.websiteUrl ?? "",
+        resumeUrl: previousHacker.resumeUrl ?? "", // Keep existing resume URL
+        dob: previousHacker.dob ?? "",
+        gradDate: previousHacker.gradDate ?? "",
+        status: undefined,
+        survey1: "", // Keep survey answers empty for new applications
+        survey2: "", // Keep survey answers empty for new applications
+        isFirstTime: previousHacker.isFirstTime ?? false,
+        foodAllergies: previousHacker.foodAllergies ?? "",
+        agreesToReceiveEmailsFromMLH:
+          previousHacker.agreesToReceiveEmailsFromMLH ?? false,
+        agreesToMLHCodeOfConduct: false, // Always require fresh consent
+        agreesToMLHDataSharing: false, // Always require fresh consent
+      });
+
+      // Set selected allergies for the UI
+      if (previousHacker.foodAllergies) {
+        const allergies = previousHacker.foodAllergies.split(",");
+        setSelectedAllergies(allergies);
+      }
+
+      // Force ResponsiveComboBox components to re-render with new values
+      setComboBoxKey((prev) => prev + 1);
+    }
+  }, [previousHacker, form]);
+
   // Convert a resume to base64 for client-server transmission
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -335,6 +381,24 @@ export function HackerFormPage({
         <p className="text-sm text-gray-400">
           <i>Fill out this form to apply to the Hackathon!</i>
         </p>
+        {previousHacker && (
+          <div className="rounded-md bg-blue-50 p-4 dark:bg-purple-900/20">
+            <div className="flex">
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-purple-800 dark:text-purple-200">
+                  Information Pre-filled
+                </h3>
+                <div className="mt-2 text-sm text-purple-700 dark:text-purple-300">
+                  <p>
+                    We've pre-filled this form with information from your
+                    previous hackathon application. Please review and update any
+                    information as needed.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <FormField
           control={form.control}
           name="firstName"
@@ -424,12 +488,13 @@ export function HackerFormPage({
               </FormLabel>
               <FormControl>
                 <ResponsiveComboBox
+                  key={`country-${comboBoxKey}-${field.value || "empty"}`}
                   items={COUNTRIES}
                   renderItem={(country) => <div>{country}</div>}
                   getItemValue={(country) => country}
                   getItemLabel={(country) => country}
                   onItemSelect={(country) => field.onChange(country)}
-                  buttonPlaceholder="Select your country"
+                  buttonPlaceholder={field.value || "Select your country"}
                   inputPlaceholder="Search for your country"
                 />
               </FormControl>
@@ -450,10 +515,7 @@ export function HackerFormPage({
                 </span>
               </FormLabel>
               <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select your gender" />
@@ -485,10 +547,7 @@ export function HackerFormPage({
                 </span>
               </FormLabel>
               <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select your race or ethnicity" />
@@ -516,10 +575,7 @@ export function HackerFormPage({
                 Level of Study <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select your level of study" />
@@ -548,12 +604,13 @@ export function HackerFormPage({
               </FormLabel>
               <FormControl>
                 <ResponsiveComboBox
+                  key={`school-${comboBoxKey}-${field.value || "empty"}`}
                   items={SCHOOLS}
                   renderItem={(school) => <div>{school}</div>}
                   getItemValue={(school) => school}
                   getItemLabel={(school) => school}
                   onItemSelect={(school) => field.onChange(school)}
-                  buttonPlaceholder="Select your school"
+                  buttonPlaceholder={field.value || "Select your school"}
                   inputPlaceholder="Search for your school"
                 />
               </FormControl>
@@ -585,10 +642,7 @@ export function HackerFormPage({
                 Shirt Size <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select your shirt size" />
@@ -733,6 +787,7 @@ export function HackerFormPage({
                   }}
                 />
               </FormControl>
+
               <FormMessage />
             </FormItem>
           )}
