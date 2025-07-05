@@ -45,9 +45,11 @@ import { api } from "~/trpc/react";
 export function HackerFormPage({
   hackathonId,
   hackathonName,
+  hackathonStartDate,
 }: {
   hackathonId: string;
   hackathonName: string;
+  hackathonStartDate: string;
 }) {
   const router = useRouter();
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
@@ -90,6 +92,21 @@ export function HackerFormPage({
     });
   };
 
+  // Helper function to calculate age
+  const calculateAge = (birthDate: Date, referenceDate: Date): number => {
+    let age = referenceDate.getFullYear() - birthDate.getFullYear();
+    const monthDiff = referenceDate.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && referenceDate.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
+  };
+
   // Setup React Hook Form
   const form = useForm({
     schema: InsertHackerSchema.extend({
@@ -104,6 +121,18 @@ export function HackerFormPage({
       dob: z
         .string()
         .pipe(z.coerce.date())
+        .refine(
+          (date) => {
+            const hackathonDate = new Date(hackathonStartDate);
+            const age = calculateAge(date, hackathonDate);
+
+            return age >= 18;
+          },
+          {
+            message:
+              "You must be at least 18 years old by the hackathon start date to participate",
+          },
+        )
         .transform((date) => date.toISOString()),
       gradDate: z
         .string()
