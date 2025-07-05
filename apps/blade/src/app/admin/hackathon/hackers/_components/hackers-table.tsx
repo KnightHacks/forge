@@ -264,7 +264,10 @@ export default function HackerTable() {
                 {HACKER_STATUS_MAP[hacker.status].name}
               </TableCell>
               <TableCell>
-                <HackerStatusToggle hacker={hacker} />
+                <HackerStatusToggle
+                  hacker={hacker}
+                  hackathonName={activeHackathon?.displayName ?? ""}
+                />
               </TableCell>
               <TableCell className="text-center">
                 <HackerProfileButton hacker={hacker} />
@@ -276,7 +279,10 @@ export default function HackerTable() {
                 <UpdateHackerButton hacker={hacker} />
               </TableCell>
               <TableCell className="text-center">
-                <DeleteHackerButton hacker={hacker} />
+                <DeleteHackerButton
+                  hacker={hacker}
+                  hackathonName={activeHackathon?.displayName ?? ""}
+                />
               </TableCell>
             </TableRow>
           ))}

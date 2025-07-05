@@ -211,7 +211,7 @@ export const hackerRouter = {
       });
 
       await log({
-        title: `HACKER CREATED FOR ${hackathon.name.toUpperCase()}`,
+        title: `Hacker Created for ${hackathon.displayName}`,
         message: `${hackerData.firstName} ${hackerData.lastName} has signed up for the upcoming hackathon: ${hackathon.name.toUpperCase()}!`,
         color: "tk_blue",
         userId: ctx.session.user.discordUserId,
@@ -319,7 +319,11 @@ export const hackerRouter = {
     }),
 
   updateHackerStatus: adminProcedure
-    .input(InsertHackerSchema.pick({ id: true, status: true }))
+    .input(
+      InsertHackerSchema.pick({ id: true, status: true }).extend({
+        hackathonName: z.string().optional(),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
       if (!input.id) {
         throw new TRPCError({
@@ -345,7 +349,7 @@ export const hackerRouter = {
         .where(eq(Hacker.id, input.id));
 
       await log({
-        title: "Hacker Status Updated",
+        title: `Hacker Status Updated ${input.hackathonName ? `for ${input.hackathonName}` : ""}`,
         message: `Hacker status for ${hacker.firstName} ${hacker.lastName} has changed to ${input.status}!`,
         color: "tk_blue",
         userId: ctx.session.user.discordUserId,
@@ -353,7 +357,13 @@ export const hackerRouter = {
     }),
   deleteHacker: adminProcedure
     .input(
-      InsertHackerSchema.pick({ id: true, firstName: true, lastName: true }),
+      InsertHackerSchema.pick({
+        id: true,
+        firstName: true,
+        lastName: true,
+      }).extend({
+        hackathonName: z.string().optional(),
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       if (!input.id) {
@@ -366,7 +376,7 @@ export const hackerRouter = {
       await db.delete(Hacker).where(eq(Hacker.id, input.id));
 
       await log({
-        title: "Hacker Deleted",
+        title: `Hacker Deleted for ${input.hackathonName}`,
         message: `Profile for ${input.firstName} ${input.lastName} has been deleted.`,
         color: "uhoh_red",
         userId: ctx.session.user.discordUserId,

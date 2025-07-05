@@ -16,7 +16,7 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
-export default function WaitlistButton({ hacker }: { hacker: InsertHacker }) {
+export default function WaitlistButton({ hacker, hackathonName }: { hacker: InsertHacker, hackathonName: string }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -54,6 +54,7 @@ export default function WaitlistButton({ hacker }: { hacker: InsertHacker }) {
     updateStatus.mutate({
       id: hacker.id,
       status: "waitlisted",
+      hackathonName,
     });
 
     sendEmail.mutate({

@@ -162,7 +162,9 @@ export function HackerData({
           <div className="animate-fade-in pb-2 text-xl font-bold">
             Hello, {data?.firstName} {data?.lastName}
           </div>
-          <div className="animate-fade-in text-lg font-bold">Status</div>
+          <div className="animate-fade-in text-lg font-bold">
+            Status for {hackathonData?.displayName}
+          </div>
           <div className="flex gap-x-2">
             <div
               className={`text-xl font-bold ${hackerStatusColor} animate-fade-in`}
