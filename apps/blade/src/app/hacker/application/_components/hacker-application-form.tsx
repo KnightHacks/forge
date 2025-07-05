@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import {
   ALLERGIES,
+  COUNTRIES,
   GENDERS,
   KNIGHTHACKS_MAX_RESUME_SIZE,
   LEVELS_OF_STUDY,
@@ -118,6 +119,7 @@ export function HackerFormPage({
       phoneNumber: z
         .string()
         .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number"),
+      country: z.string().min(1, "Required"),
       dob: z
         .string()
         .pipe(z.coerce.date())
@@ -224,6 +226,7 @@ export function HackerFormPage({
       discordUser: "",
       email: "",
       phoneNumber: "",
+      country: undefined,
       school: undefined,
       levelOfStudy: undefined,
       shirtSize: undefined,
@@ -288,6 +291,7 @@ export function HackerFormPage({
               email: values.email,
               dob: values.dob,
               phoneNumber: values.phoneNumber,
+              country: values.country as (typeof COUNTRIES)[number],
               school: values.school,
               levelOfStudy: values.levelOfStudy,
               gender: values.gender ?? "Prefer not to answer",
@@ -394,6 +398,29 @@ export function HackerFormPage({
               </FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="country"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Country of Residence <span className="text-destructive">*</span>
+              </FormLabel>
+              <FormControl>
+                <ResponsiveComboBox
+                  items={COUNTRIES}
+                  renderItem={(country) => <div>{country}</div>}
+                  getItemValue={(country) => country}
+                  getItemLabel={(country) => country}
+                  onItemSelect={(country) => field.onChange(country)}
+                  buttonPlaceholder="Select your country"
+                  inputPlaceholder="Search for your country"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

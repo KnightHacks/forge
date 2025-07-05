@@ -3,6 +3,7 @@ import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 import {
+  COUNTRIES,
   EVENT_FEEDBACK_HEARD,
   EVENT_FEEDBACK_SIMILAR_EVENT,
   EVENT_TAGS,
@@ -101,6 +102,10 @@ export const Hacker = createTable(
     gender: genderEnum().default("Prefer not to answer").notNull(),
     discordUser: t.varchar({ length: 255 }).notNull(),
     age: t.integer().notNull(),
+    country: t
+      .text({ enum: COUNTRIES })
+      .notNull()
+      .default("United States of America"),
     email: t.varchar({ length: 255 }).notNull(),
     phoneNumber: t.varchar({ length: 255 }),
     school: t.text({ enum: SCHOOLS }).notNull(),
