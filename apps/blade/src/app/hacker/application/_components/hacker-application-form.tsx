@@ -42,7 +42,13 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
-export function HackerFormPage({ hackathonId }: { hackathonId: string }) {
+export function HackerFormPage({
+  hackathonId,
+  hackathonName,
+}: {
+  hackathonId: string;
+  hackathonName: string;
+}) {
   const router = useRouter();
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -279,9 +285,11 @@ export function HackerFormPage({ hackathonId }: { hackathonId: string }) {
           }
         })}
       >
-        <h1 className="text-2xl font-bold">Hacker Registration</h1>
+        <h1 className="text-2xl font-bold">
+          {hackathonName} Hacker Registration
+        </h1>
         <p className="text-sm text-gray-400">
-          <i>Fill out this form to apply to the hackathon!</i>
+          <i>Fill out this form to apply to the Hackathon!</i>
         </p>
         <FormField
           control={form.control}
