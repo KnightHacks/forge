@@ -50,9 +50,20 @@ export default async function HackerApplicationPage({
     return redirect("/dashboard");
   }
 
+  const hackathon = await api.hackathon.getHackathon({
+    hackathonName: params["hackathon-id"],
+  });
+
+  if (hackathon == null) {
+    return redirect("/dashboard");
+  }
+
   return (
     <main className="px-8 py-4">
-      <HackerFormPage hackathonId={params["hackathon-id"]} />
+      <HackerFormPage
+        hackathonId={params["hackathon-id"]}
+        hackathonName={hackathon.displayName}
+      />
     </main>
   );
 }

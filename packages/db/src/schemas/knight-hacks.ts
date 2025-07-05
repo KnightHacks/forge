@@ -35,7 +35,11 @@ export const hackathonApplicationStateEnum = pgEnum(
 export const Hackathon = createTable("hackathon", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   name: t.varchar({ length: 255 }).notNull(),
+  displayName: t.varchar({ length: 255 }).notNull().default(""),
   theme: t.varchar({ length: 255 }).notNull(),
+  applicationOpen: t.timestamp().notNull().defaultNow(),
+  applicationDeadline: t.timestamp().notNull().defaultNow(),
+  confirmationDeadline: t.timestamp().notNull().defaultNow(),
   startDate: t.timestamp().notNull(),
   endDate: t.timestamp().notNull(),
 }));
