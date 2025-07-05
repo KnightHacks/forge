@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { ChartConfig } from "@forge/ui/chart";
-import { ADMIN_PIE_CHART_COLORS, GENDERS } from "@forge/consts/knight-hacks";
+import type { GENDERS } from "@forge/consts/knight-hacks";
+import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,

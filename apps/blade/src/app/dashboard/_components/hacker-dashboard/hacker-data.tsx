@@ -31,7 +31,6 @@ export function HackerData({
   data,
 }: {
   data: Awaited<ReturnType<(typeof serverCall.hacker)["getHacker"]>>;
-  hackathon: Awaited<ReturnType<(typeof serverCall.hackathon)["getHackathon"]>>;
 }) {
   const [hackerStatus, setHackerStatus] = useState<string | null>("");
   const [hackerStatusColor, setHackerStatusColor] = useState<string>("");
@@ -160,7 +159,7 @@ export function HackerData({
       <div className="flex flex-col justify-center gap-y-6">
         <div>
           <div className="animate-fade-in pb-2 text-xl font-bold">
-            Hello, {data?.firstName} {data?.lastName}
+            Hello, {data.firstName} {data.lastName}
           </div>
           <div className="animate-fade-in text-lg font-bold">
             Status for {hackathonData?.displayName}
@@ -195,14 +194,14 @@ export function HackerData({
             <Button
               size="lg"
               className={`animate-fade-in gap-2 !rounded-none ${
-                hackathonData?.confirmationDeadline &&
+                hackathonData.confirmationDeadline &&
                 hackathonData.confirmationDeadline < new Date()
                   ? "bg-gray-700 hover:bg-gray-900"
                   : ""
               }`}
               onClick={handleConfirm}
               disabled={
-                hackathonData?.confirmationDeadline &&
+                hackathonData.confirmationDeadline &&
                 hackathonData.confirmationDeadline < new Date()
               }
             >

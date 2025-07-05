@@ -16,7 +16,13 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
-export default function DenyButton({ hacker, hackathonName }: { hacker: InsertHacker, hackathonName: string }) {
+export default function DenyButton({
+  hacker,
+  hackathonName,
+}: {
+  hacker: InsertHacker;
+  hackathonName: string;
+}) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 

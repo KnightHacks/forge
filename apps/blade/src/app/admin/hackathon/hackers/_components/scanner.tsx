@@ -32,7 +32,7 @@ interface CodeScanningProps {
 const HackerScanner = () => {
   const { data: hackathons } = api.hackathon.getHackathons.useQuery();
   const [open, setOpen] = useState(false);
-  const checkIn = api.hacker.hackathonCheckIn.useMutation({
+  const checkIn = api.hackathon.hackathonCheckIn.useMutation({
     onSuccess(opts) {
       if (!opts) {
         toast.success("Hacker Checked in Successfully!");
