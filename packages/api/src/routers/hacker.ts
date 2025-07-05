@@ -21,8 +21,7 @@ export const hackerRouter = {
     .query(async ({ input, ctx }) => {
       if (input.hackathonName == undefined) {
         const hackathon = await db.query.Hackathon.findFirst({
-          where: (t, { and, lt, gte }) =>
-            and(lt(t.endDate, new Date()), gte(t.startDate, new Date())),
+          where: (t, { gt }) => gt(t.endDate, new Date()),
         });
 
         if (!hackathon) {
