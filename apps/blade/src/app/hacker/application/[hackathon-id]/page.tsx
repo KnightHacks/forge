@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth, signIn } from "@forge/auth";
@@ -56,6 +57,30 @@ export default async function HackerApplicationPage({
 
   if (hackathon == null) {
     return redirect("/dashboard");
+  }
+
+  if (hackathon.applicationDeadline < new Date()) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="flex flex-col items-center justify-center">
+          <h1 className="text-2xl font-bold">
+            The application deadline for {hackathon.displayName} has passed.
+          </h1>
+          <p className="text-sm text-gray-500">
+            Stay on the lookout for the next Hackathon by joining our{" "}
+            <Link
+              href="https://discord.gg/blade"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Discord
+            </Link>
+            .
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

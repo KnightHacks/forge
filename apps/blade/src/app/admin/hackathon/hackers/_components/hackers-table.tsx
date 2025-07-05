@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
 
-import type { Hacker, InsertHacker } from "@forge/db/schemas/knight-hacks";
+import type {
+  Hacker,
+  InsertHackathon,
+  InsertHacker,
+} from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@forge/ui/select";
 import {
   Table,
   TableBody,
@@ -53,8 +64,30 @@ export default function HackerTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
   const [activeSort, setActiveSort] = useState<ActiveOrder>("field");
+  const [activeHackathon, setActiveHackathon] =
+    useState<InsertHackathon | null>(null);
 
-  const { data: hackers } = api.hacker.getAllHackers.useQuery();
+  const { data: hackathons } = api.hackathon.getHackathons.useQuery();
+  const { data: hackers } = api.hacker.getAllHackers.useQuery(
+    { hackathonName: activeHackathon?.name },
+    { enabled: !!activeHackathon },
+  );
+
+  // Default to the closest hackathon that hasn't passed
+  useEffect(() => {
+    if (!activeHackathon && hackathons?.length) {
+      const now = new Date();
+      const upcomingHackathons = hackathons.filter(
+        (h) => new Date(h.endDate) > now,
+      );
+      const closestHackathon = upcomingHackathons.sort(
+        (a, b) =>
+          new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+      )[0];
+
+      setActiveHackathon(closestHackathon ?? hackathons[0] ?? null);
+    }
+  }, [hackathons, activeHackathon]);
 
   const filteredHackers = (hackers ?? []).filter((hacker) =>
     Object.values(hacker).some((value) => {
@@ -79,6 +112,7 @@ export default function HackerTable() {
 
     return 0;
   });
+
   const toggleTimeSort = () => {
     setTimeSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     setActiveSort("time");
@@ -87,8 +121,38 @@ export default function HackerTable() {
   const toggleFieldSort = () => {
     setActiveSort("field");
   };
+
   return (
     <div>
+      <div className="mb-4 mt-6 flex flex-col justify-between gap-4 md:flex-row-reverse lg:flex-row-reverse">
+        <Select
+          value={activeHackathon?.name ?? undefined}
+          onValueChange={(name) => {
+            const selectedHackathon =
+              hackathons?.find((h) => h.name === name) ?? null;
+            setActiveHackathon(selectedHackathon);
+          }}
+        >
+          <SelectTrigger
+            className="md:w-1/2 lg:w-1/2"
+            aria-label="Select a hackathon"
+          >
+            <SelectValue placeholder="Select a hackathon..." />
+          </SelectTrigger>
+          <SelectContent>
+            {hackathons?.map((hackathon) => (
+              <SelectItem key={hackathon.id} value={hackathon.name}>
+                {hackathon.name}
+                <span className="me-2" />
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <h2 className="text-2xl font-bold">
+          {activeHackathon?.name ?? "All Hackers"}
+        </h2>
+      </div>
+
       <div className="flex flex-col border-b pb-2">
         <div className="flex items-center gap-2 pb-2">
           <div>
@@ -183,7 +247,7 @@ export default function HackerTable() {
         </TableHeader>
         <TableBody>
           {sortedHackers.map((hacker) => (
-            <TableRow>
+            <TableRow key={hacker.id}>
               <TableCell className="text-center font-medium">
                 {hacker.firstName}
               </TableCell>

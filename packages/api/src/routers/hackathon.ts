@@ -12,12 +12,24 @@ export const hackathonRouter = {
   getHackathon: publicProcedure
     .input(
       z.object({
-        hackathonName: z.string(),
+        hackathonName: z.string().optional(),
       }),
     )
     .query(async ({ input }) => {
+      if (input.hackathonName == undefined) {
+        const hackathon = await db.query.Hackathon.findFirst({
+          where: (t, { gt }) => gt(t.endDate, new Date()),
+        });
+
+        if (!hackathon) {
+          return null;
+        }
+
+        return hackathon;
+      }
+
       return await db.query.Hackathon.findFirst({
-        where: (t, { eq }) => eq(t.name, input.hackathonName),
+        where: (t, { eq }) => eq(t.name, input.hackathonName ?? ""),
       });
     }),
 } satisfies TRPCRouterRecord;
