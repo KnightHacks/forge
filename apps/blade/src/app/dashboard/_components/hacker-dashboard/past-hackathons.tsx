@@ -69,7 +69,7 @@ export function PastHackathonButton({
               <CardHeader>
                 <div className="flex flex-col items-start justify-between sm:flex-row">
                   <div className="order-2 pr-5 text-primary sm:order-1">
-                    <CardTitle>{hackathon.name}</CardTitle>
+                    <CardTitle>{hackathon.displayName}</CardTitle>
                   </div>
                 </div>
               </CardHeader>
