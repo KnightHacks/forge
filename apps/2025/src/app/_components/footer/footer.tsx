@@ -6,7 +6,7 @@ const footerSVG = "./khFull.svg";
 const shadow = "./shadow.svg";
 const mlhcoc = "https://mlh.io/code-of-conduct";
 const sponsor = "https://blade.knighthacks.org/sponsor";
-const contact = "mailto:hack@knighthacks.org";
+const contact = "https://discord.knighthacks.org/";
 const hackersGuide = "https://knighthacks.org/hackers-guide";
 const bn = Bebas_Neue({
   subsets: ["latin"],

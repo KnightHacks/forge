@@ -22,17 +22,17 @@ interface FaqItem {
 const faqData: FaqItem[] = [
   {
     id: "1",
-    question: "What is A Hackathon?",
+    question: "What is a Hackathon?",
     answer: "A hackathon is a weekend-long event where students come together to learn the latest technologies and build innovative projects. These projects can range from involving web or mobile development to building a hardware project, or anything in between. Hackathons are a great way to learn new skills, meet new people, and have fun! Additionally, throughout the weekend we will be hosting workshops, fun social events, networking opportunities with sponsors, free food & swag, and so much more."
   },
   {
     id: "2",
     question: "How long is Knight Hacks?",
-    answer: "Knight hacks is a 36-hour hackathon, beginning at 5pm on Friday (check-in runs from 5-8pm, with the opening ceremony starting at 8pm) and ending at 6pm on Sunday. We encourage you to work on your project for as long as you can during this time."
+    answer: "Knight Hacks is a 36-hour hackathon, beginning at 5pm on Friday (check-in runs from 5-8pm, with the opening ceremony starting at 8pm) and ending at 6pm on Sunday. We encourage you to work on your project for as long as you can during this time."
   },
   {
     id: "3",
-    question: "Who can Attend?",
+    question: "Who can attend?",
     answer: "If you're currently a college student or have graduated in the past year, you're more than welcome to attend! Even beginners are able to attend."
   },
   {
@@ -53,15 +53,15 @@ const faqData: FaqItem[] = [
   {
     id: "7",
     question: "What can I build?",
-    answer: "Anything your heart desires! Whatever you're interested in we will support it. We have five tracks that will have extra resources, sponsored challenges, and other events to inspire you and prepare you. Check out our previous devpost for examples of what participants built in the past!!"
+    answer: "Anything your heart desires! Whatever you're interested in we will support it. We have five tracks that will have extra resources, sponsored challenges, and other events to inspire you and prepare you. Check out our previous Devpost for examples of what participants built in the past!"
   },
   {
     id: "8",
     question: "My question wasn't answered, where can I ask?",
-    answer: "Here's the link to the hackers guide. If a question wasn't answered feel free to ask in the ",
+    answer: "Here's the link to the Hacker's Guide. If a question wasn't answered feel free to ask in the ",
     links: [
-      { text: "hackers guide", href: "#" },
-      { text: "Discord", href: "#" }
+      { text: "Hackers Guide", href: "https://knighthacks.org/hackers-guide"},
+      { text: "Discord", href: "https://discord.knighthacks.org/" }
     ]
   },
   {
@@ -106,8 +106,6 @@ export default function Faq() {
     <div className="pt-40 relative z-10 flex flex-col items-center h-full w-full mb-16 sm:mb-20 md:mb-24 lg:mb-32 xl:mb-40">
       <div className="relative w-full mb-1 sm:mb-2 md:mb-3 lg:mb-4">
         <div className="relative z-10 w-full max-w-xl mx-auto px-4 py-1 sm:py-2 md:py-3 lg:py-4">
-          
-          
           <div className="relative z-10 flex justify-center">
             <FaqSVG className="h-auto w-1/2" />
           </div>
@@ -130,12 +128,12 @@ export default function Faq() {
                   <AccordionContent className="px-3 sm:px-4 md:px-6 lg:px-8 pt-1 sm:pt-2 pb-2 sm:pb-3 md:pb-4 lg:pb-6 text-xs sm:text-sm md:text-base text-slate-700 leading-relaxed">
                     {faq.links ? (
                       <>
-                        {faq.answer.split("hackers guide").map((part, index, array) => (
+                        {faq.answer.split("Hacker's Guide").map((part, index, array) => (
                           <span key={index}>
                             {part}
                             {index < array.length - 1 && (
                               <Link href={faq.links?.[0]?.href ?? "#"} className="text-blue-600 hover:underline">
-                                hackers guide
+                                Hacker's Guide
                               </Link>
                             )}
                           </span>

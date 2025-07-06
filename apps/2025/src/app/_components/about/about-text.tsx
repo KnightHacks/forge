@@ -40,13 +40,13 @@ const AboutText = () => {
                 <TextBox width="100%" height="100%" className="m-4 sm:m-6 md:m-8" textSize="text-base sm:text-lg md:text-xl lg:text-2xl">
                     <p>
                         The University of Central Florida's premier hackathon, 
-                        <em><strong> KNIGHT HACKS VII, </strong></em> 
+                        <em><strong> KNIGHT HACKS VIII, </strong></em> 
                         emerges from the shadows...
 
                         <br /><br />
 
                         During the 36-hour coding showdown, hackers will enlist the power of workshops, 
-                        swag, tech talks, side quests, free food, games, and commnity to save the world!
+                        swag, tech talks, side quests, free food, games, and community to save the world!
                     </p>
                 </TextBox>
             </div>
