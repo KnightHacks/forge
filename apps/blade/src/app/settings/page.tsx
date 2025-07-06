@@ -18,6 +18,11 @@ export default async function SettingsProfilePage() {
   const memberData = await api.member.getMember();
 
   if (!memberData) {
+    const hackerData = await api.hacker.getHacker({});
+    if (hackerData) {
+      redirect("/settings/hacker-profile");
+    }
+
     return (
       <div className="mx-auto flex w-full flex-col items-center justify-center px-4 py-16 text-center">
         <div className="relative mb-6 h-[300px] w-[300px]">
@@ -34,21 +39,20 @@ export default async function SettingsProfilePage() {
           Nothing to see yet
         </h2>
         <p className="mb-1 text-sm text-gray-400">
-          You haven&apos;t submitted a{" "}
-          <Link href="/member/application" className="text-primary">
-            member profile
-          </Link>
-          .
+          You haven&apos;t applied to be a Knight Hacks member yet.
         </p>
-        <p className="text-sm text-gray-400">
-          Looking for your hacker profile instead? Check the{" "}
+        <p className="mb-1 text-sm text-gray-400">
+          Please fill out a{" "}
           <Link
-            href="/settings/hacker-profile"
-            className="text-primary hover:underline"
+            href="/member/application"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline"
           >
-            hacker profile
-          </Link>
-          .
+            Member Application
+          </Link>{" "}
+          to join our annual programs, like Kickstart Mentorship and Project
+          Launch!
         </p>
       </div>
     );

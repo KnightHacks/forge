@@ -9,7 +9,13 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 import { GemiKnightsAcceptanceEmail } from "./gemiknights-acceptance-email";
 
-export default function AcceptButton({ hacker }: { hacker: InsertHacker }) {
+export default function AcceptButton({
+  hacker,
+  hackathonName,
+}: {
+  hacker: InsertHacker;
+  hackathonName: string;
+}) {
   const [isLoading, setIsLoading] = useState(false);
 
   const utils = api.useUtils();
@@ -42,7 +48,7 @@ export default function AcceptButton({ hacker }: { hacker: InsertHacker }) {
   const handleUpdateStatus = async () => {
     setIsLoading(true);
 
-    updateStatus.mutate({ id: hacker.id, status: "accepted" });
+    updateStatus.mutate({ id: hacker.id, status: "accepted", hackathonName });
 
     const html = await render(
       <GemiKnightsAcceptanceEmail

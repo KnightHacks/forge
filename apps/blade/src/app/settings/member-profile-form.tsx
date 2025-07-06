@@ -100,6 +100,21 @@ export function MemberProfileForm({
     return { term, year: String(d.getUTCFullYear()) };
   })();
 
+  // Helper function to calculate age
+  const calculateAge = (birthDate: Date, referenceDate: Date): number => {
+    let age = referenceDate.getFullYear() - birthDate.getFullYear();
+    const monthDiff = referenceDate.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && referenceDate.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
+  };
+
   const form = useForm({
     schema: InsertMemberSchema.omit({
       age: true,
@@ -181,6 +196,17 @@ export function MemberProfileForm({
       dob: z
         .string()
         .pipe(z.coerce.date())
+        .refine(
+          (date) => {
+            const today = new Date();
+            const age = calculateAge(date, today);
+            return age >= 16;
+          },
+          {
+            message:
+              "You must be at least 16 years old to be a Knight Hacks member",
+          },
+        )
         .transform((date) => date.toISOString()),
       gradTerm: z.enum(["Spring", "Summer", "Fall"]),
       gradYear: z

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
@@ -186,6 +187,8 @@ export function HackerProfileForm({
           }
         })
         .optional(),
+      agreesToMLHCodeOfConduct: z.boolean().refine((val) => val === true),
+      agreesToMLHDataSharing: z.boolean().refine((val) => val === true),
     }),
     defaultValues: {
       firstName: hacker?.firstName ?? "",
@@ -210,6 +213,8 @@ export function HackerProfileForm({
       foodAllergies: hacker?.foodAllergies ?? "",
       agreesToReceiveEmailsFromMLH:
         hacker?.agreesToReceiveEmailsFromMLH ?? false,
+      agreesToMLHCodeOfConduct: false,
+      agreesToMLHDataSharing: false,
     },
   });
 
@@ -240,6 +245,8 @@ export function HackerProfileForm({
       foodAllergies: hacker.foodAllergies ?? "",
       agreesToReceiveEmailsFromMLH:
         hacker.agreesToReceiveEmailsFromMLH ?? false,
+      agreesToMLHCodeOfConduct: hacker.agreesToMLHCodeOfConduct ?? false,
+      agreesToMLHDataSharing: hacker.agreesToMLHDataSharing ?? false,
     });
 
     if (hacker.foodAllergies) {
@@ -807,6 +814,90 @@ export function HackerProfileForm({
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="agreesToMLHCodeOfConduct"
+            render={({ field }) => (
+              <FormItem className="flex flex-row space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={!!field.value}
+                    onCheckedChange={field.onChange}
+                    className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+                  />
+                </FormControl>
+                <div className="flex items-center space-y-1 leading-none">
+                  <FormLabel>
+                    I have read and agree to the{" "}
+                    <Link
+                      href="https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      MLH Code of Conduct
+                    </Link>
+                    . <span className="text-destructive">*</span>
+                  </FormLabel>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="agreesToMLHDataSharing"
+            render={({ field }) => (
+              <FormItem className="flex flex-row space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={!!field.value}
+                    onCheckedChange={field.onChange}
+                    className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+                  />
+                </FormControl>
+                <div className="flex items-center space-y-1 leading-none">
+                  <FormLabel>
+                    I authorize you to share my application/registration
+                    information with Major League Hacking for event
+                    administration, ranking, and MLH administration in-line with
+                    the{" "}
+                    <Link
+                      href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      MLH Privacy Policy
+                    </Link>
+                    . I further agree to the terms of both the{" "}
+                    <Link
+                      href="https://github.com/MLH/mlh-policies/blob/main/contest-terms.md"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      MLH Contest Terms and Conditions
+                    </Link>{" "}
+                    and the{" "}
+                    <Link
+                      href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      MLH Privacy Policy
+                    </Link>
+                    . <span className="text-destructive">*</span>
+                  </FormLabel>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="agreesToReceiveEmailsFromMLH"

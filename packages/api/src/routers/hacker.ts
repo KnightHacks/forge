@@ -1,17 +1,22 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
+import QRCode from "qrcode";
 import { z } from "zod";
 
-import { and, count, desc, eq, exists, getTableColumns } from "@forge/db";
+import {
+  BUCKET_NAME,
+  KNIGHTHACKS_S3_BUCKET_REGION,
+} from "@forge/consts/knight-hacks";
+import { and, eq, exists } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
 import {
-  Hackathon,
   Hacker,
   HackerAttendee,
   InsertHackerSchema,
 } from "@forge/db/schemas/knight-hacks";
 
+import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure } from "../trpc";
 import { log } from "../utils";
 
@@ -20,6 +25,14 @@ export const hackerRouter = {
     .input(z.object({ hackathonName: z.string().optional() }))
     .query(async ({ input, ctx }) => {
       if (input.hackathonName == undefined) {
+        const hackathon = await db.query.Hackathon.findFirst({
+          where: (t, { gt }) => gt(t.endDate, new Date()),
+        });
+
+        if (!hackathon) {
+          return null;
+        }
+
         const hacker = await db
           .select()
           .from(Hacker)
@@ -27,7 +40,6 @@ export const hackerRouter = {
         return hacker[0];
       }
 
-      console.log("Fetching hackathon with name", input.hackathonName);
       const hackathon = await db.query.Hackathon.findFirst({
         where: (t, { eq }) => eq(t.name, input.hackathonName ?? ""),
       });
@@ -82,9 +94,45 @@ export const hackerRouter = {
     return hackers;
   }),
 
-  getAllHackers: adminProcedure.query(async () => {
-    return await db.query.Hacker.findMany();
-  }),
+  getAllHackers: adminProcedure
+    .input(z.object({ hackathonName: z.string().optional() }))
+    .query(async ({ input }) => {
+      const hackathonName = input.hackathonName;
+
+      if (!hackathonName) {
+        return await db.query.Hacker.findMany();
+      }
+
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.name, hackathonName),
+      });
+
+      if (!hackathon) {
+        throw new TRPCError({
+          message: "Hackathon not found!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      const hackers = await db
+        .select()
+        .from(Hacker)
+        .where(
+          exists(
+            db
+              .select()
+              .from(HackerAttendee)
+              .where(
+                and(
+                  eq(HackerAttendee.hackathonId, hackathon.id),
+                  eq(HackerAttendee.hackerId, Hacker.id),
+                ),
+              ),
+          ),
+        );
+
+      return hackers;
+    }),
 
   createHacker: protectedProcedure
     .input(
@@ -101,13 +149,62 @@ export const hackerRouter = {
       const userId = ctx.session.user.id;
       const { hackathonName, ...hackerData } = input;
 
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.name, hackathonName),
+      });
+
+      if (!hackathon) {
+        throw new TRPCError({
+          message: "Hackathon not found!",
+          code: "NOT_FOUND",
+        });
+      }
+
       const existingHacker = await db
         .select()
         .from(Hacker)
-        .where(eq(Hacker.userId, userId));
+        .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+        .where(
+          and(
+            eq(Hacker.userId, userId),
+            eq(HackerAttendee.hackathonId, hackathon.id),
+          ),
+        );
 
       if (existingHacker.length > 0) {
-        throw new Error("Hacker already exists for this user.");
+        throw new Error(
+          "Hacker already exists for this user in this hackathon.",
+        );
+      }
+
+      // Generate QR code for first-time hacker registration
+      try {
+        const existingHackerProfile = await db
+          .select({ id: Hacker.id })
+          .from(Hacker)
+          .where(eq(Hacker.userId, userId));
+
+        if (existingHackerProfile.length === 0) {
+          const objectName = `qr-code-${userId}.png`;
+          const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+          if (!bucketExists) {
+            await minioClient.makeBucket(
+              BUCKET_NAME,
+              KNIGHTHACKS_S3_BUCKET_REGION,
+            );
+          }
+          const qrData = `user:${userId}`;
+          const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
+          await minioClient.putObject(
+            BUCKET_NAME,
+            objectName,
+            qrBuffer,
+            qrBuffer.length,
+            { "Content-Type": "image/png" },
+          );
+        }
+      } catch (error) {
+        console.error("Error with generating QR code: ", error);
       }
 
       const today = new Date();
@@ -134,25 +231,14 @@ export const hackerRouter = {
         where: (t, { eq }) => eq(t.userId, userId),
       });
 
-      const hackathon = await db.query.Hackathon.findFirst({
-        where: (t, { eq }) => eq(t.name, hackathonName),
-      });
-
-      if (!hackathon) {
-        throw new TRPCError({
-          message: "Hackathon not found!",
-          code: "NOT_FOUND",
-        });
-      }
-
       await db.insert(HackerAttendee).values({
         hackerId: insertedHacker?.id ?? "",
         hackathonId: hackathon.id,
       });
 
       await log({
-        title: "Hacker Created",
-        message: `${hackerData.firstName} ${hackerData.lastName} has signed up for the hackathon!`,
+        title: `Hacker Created for ${hackathon.displayName}`,
+        message: `${hackerData.firstName} ${hackerData.lastName} has signed up for the upcoming hackathon: ${hackathon.name.toUpperCase()}!`,
         color: "tk_blue",
         userId: ctx.session.user.discordUserId,
       });
@@ -259,7 +345,11 @@ export const hackerRouter = {
     }),
 
   updateHackerStatus: adminProcedure
-    .input(InsertHackerSchema.pick({ id: true, status: true }))
+    .input(
+      InsertHackerSchema.pick({ id: true, status: true }).extend({
+        hackathonName: z.string().optional(),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
       if (!input.id) {
         throw new TRPCError({
@@ -285,7 +375,7 @@ export const hackerRouter = {
         .where(eq(Hacker.id, input.id));
 
       await log({
-        title: "Hacker Status Updated",
+        title: `Hacker Status Updated ${input.hackathonName ? `for ${input.hackathonName}` : ""}`,
         message: `Hacker status for ${hacker.firstName} ${hacker.lastName} has changed to ${input.status}!`,
         color: "tk_blue",
         userId: ctx.session.user.discordUserId,
@@ -293,7 +383,13 @@ export const hackerRouter = {
     }),
   deleteHacker: adminProcedure
     .input(
-      InsertHackerSchema.pick({ id: true, firstName: true, lastName: true }),
+      InsertHackerSchema.pick({
+        id: true,
+        firstName: true,
+        lastName: true,
+      }).extend({
+        hackathonName: z.string().optional(),
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       if (!input.id) {
@@ -306,7 +402,7 @@ export const hackerRouter = {
       await db.delete(Hacker).where(eq(Hacker.id, input.id));
 
       await log({
-        title: "Hacker Deleted",
+        title: `Hacker Deleted for ${input.hackathonName}`,
         message: `Profile for ${input.firstName} ${input.lastName} has been deleted.`,
         color: "uhoh_red",
         userId: ctx.session.user.discordUserId,
@@ -403,92 +499,5 @@ export const hackerRouter = {
           status: "withdrawn",
         })
         .where(eq(Hacker.id, id));
-    }),
-
-  getHackathons: protectedProcedure.query(async ({ ctx }) => {
-    // Get each hackathon and numAttended
-    const hackathonsSubQuery = db
-      .select({
-        id: Hackathon.id,
-        numAttended: count(HackerAttendee.id).as("numAttended"),
-      })
-      .from(Hackathon)
-      .leftJoin(HackerAttendee, eq(Hackathon.id, HackerAttendee.hackathonId))
-      .groupBy(Hackathon.id)
-      .as("hackathonsSubQuery");
-
-    const hackathons = await db
-      .select({
-        ...getTableColumns(Hackathon),
-        numAttended: hackathonsSubQuery.numAttended,
-      })
-      .from(Hackathon)
-      .leftJoin(HackerAttendee, eq(Hackathon.id, HackerAttendee.hackathonId))
-      .leftJoin(Hacker, eq(HackerAttendee.hackerId, Hacker.id))
-      .leftJoin(hackathonsSubQuery, eq(hackathonsSubQuery.id, Hackathon.id)) // Add numAttended to each corresponding event
-      .where(eq(Hacker.userId, ctx.session.user.id))
-      .orderBy(desc(Hackathon.startDate));
-    return hackathons;
-  }),
-  hackathonCheckIn: adminProcedure
-    .input(
-      z.object({
-        userId: z.string(),
-        hackathonId: z.string(),
-      }),
-    )
-    .mutation(async ({ input, ctx }) => {
-      const hacker = await db.query.Hacker.findFirst({
-        where: (t, { eq }) => eq(t.userId, input.userId),
-      });
-
-      const hackathon = await db.query.Hackathon.findFirst({
-        where: (t, { eq }) => eq(t.id, input.hackathonId),
-      });
-
-      if (!hacker || !hackathon) {
-        return;
-      }
-
-      if (hacker.status !== "confirmed") {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
-        });
-      }
-
-      const duplicates = await db
-        .select()
-        .from(HackerAttendee)
-        .where(
-          and(
-            eq(HackerAttendee.hackerId, hacker.id),
-            eq(HackerAttendee.hackathonId, input.hackathonId),
-          ),
-        );
-
-      if (duplicates.length > 0) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: `${hacker.firstName} ${hacker.lastName} is already checked into the hackathon`,
-        });
-      }
-
-      const hackerAttendee = {
-        hackerId: hacker.id,
-        hackathonId: input.hackathonId,
-      };
-      await db.insert(HackerAttendee).values(hackerAttendee);
-
-      await log({
-        title: "Hacker Checked-In",
-        message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon: ${hackathon.name}`,
-        color: "success_green",
-        userId: ctx.session.user.discordUserId,
-      });
-
-      return {
-        message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!`,
-      };
     }),
 } satisfies TRPCRouterRecord;

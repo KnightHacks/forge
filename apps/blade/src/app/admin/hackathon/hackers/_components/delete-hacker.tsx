@@ -22,8 +22,10 @@ import { api } from "~/trpc/react";
 
 export default function DeleteHackerButton({
   hacker,
+  hackathonName,
 }: {
   hacker: InsertHacker;
+  hackathonName: string;
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [confirm, setConfirm] = useState<string>("");
@@ -52,6 +54,7 @@ export default function DeleteHackerButton({
       id: hacker.id,
       firstName: hacker.firstName,
       lastName: hacker.lastName,
+      hackathonName,
     });
   };
 
