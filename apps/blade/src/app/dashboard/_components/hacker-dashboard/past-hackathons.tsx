@@ -16,7 +16,7 @@ import { formatDateTime } from "~/lib/utils";
 export function PastHackathonButton({
   hackathons,
 }: {
-  hackathons: Awaited<ReturnType<(typeof api.hacker)["getHackathons"]>>;
+  hackathons: Awaited<ReturnType<(typeof api.hackathon)["getPastHackathons"]>>;
 }) {
   const mostRecent = hackathons[0];
 

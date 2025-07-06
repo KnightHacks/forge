@@ -61,7 +61,7 @@ export function HackerFormPage({
   console.log(hackathonId);
 
   // Get previous hacker profile to pre-fill form
-  const { data: previousHacker } = api.hacker.getPreviousHacker.useQuery();
+  const { data: previousHacker } = api.hackathon.getPreviousHacker.useQuery();
 
   const uploadResume = api.resume.uploadResume.useMutation({
     onError() {
@@ -263,30 +263,30 @@ export function HackerFormPage({
   useEffect(() => {
     if (previousHacker) {
       form.reset({
-        firstName: previousHacker.firstName ?? "",
-        lastName: previousHacker.lastName ?? "",
-        gender: previousHacker.gender ?? undefined,
-        raceOrEthnicity: previousHacker.raceOrEthnicity ?? undefined,
-        discordUser: previousHacker.discordUser ?? "",
-        email: previousHacker.email ?? "",
-        phoneNumber: previousHacker.phoneNumber ?? "",
-        country: previousHacker.country ?? undefined,
-        school: previousHacker.school ?? undefined,
-        levelOfStudy: previousHacker.levelOfStudy ?? undefined,
-        shirtSize: previousHacker.shirtSize ?? undefined,
-        githubProfileUrl: previousHacker.githubProfileUrl ?? "",
-        linkedinProfileUrl: previousHacker.linkedinProfileUrl ?? "",
-        websiteUrl: previousHacker.websiteUrl ?? "",
-        resumeUrl: previousHacker.resumeUrl ?? "", // Keep existing resume URL
-        dob: previousHacker.dob ?? "",
-        gradDate: previousHacker.gradDate ?? "",
+        firstName: previousHacker.firstName,
+        lastName: previousHacker.lastName,
+        gender: previousHacker.gender,
+        raceOrEthnicity: previousHacker.raceOrEthnicity,
+        discordUser: previousHacker.discordUser,
+        email: previousHacker.email,
+        phoneNumber: previousHacker.phoneNumber,
+        country: previousHacker.country,
+        school: previousHacker.school,
+        levelOfStudy: previousHacker.levelOfStudy,
+        shirtSize: previousHacker.shirtSize,
+        githubProfileUrl: previousHacker.githubProfileUrl,
+        linkedinProfileUrl: previousHacker.linkedinProfileUrl,
+        websiteUrl: previousHacker.websiteUrl,
+        resumeUrl: previousHacker.resumeUrl, // Keep existing resume URL
+        dob: previousHacker.dob,
+        gradDate: previousHacker.gradDate,
         status: undefined,
         survey1: "", // Keep survey answers empty for new applications
         survey2: "", // Keep survey answers empty for new applications
-        isFirstTime: previousHacker.isFirstTime ?? false,
-        foodAllergies: previousHacker.foodAllergies ?? "",
+        isFirstTime: previousHacker.isFirstTime,
+        foodAllergies: previousHacker.foodAllergies,
         agreesToReceiveEmailsFromMLH:
-          previousHacker.agreesToReceiveEmailsFromMLH ?? false,
+          previousHacker.agreesToReceiveEmailsFromMLH,
         agreesToMLHCodeOfConduct: false, // Always require fresh consent
         agreesToMLHDataSharing: false, // Always require fresh consent
       });
@@ -604,13 +604,13 @@ export function HackerFormPage({
               </FormLabel>
               <FormControl>
                 <ResponsiveComboBox
-                  key={`school-${comboBoxKey}-${field.value || "empty"}`}
+                  key={`school-${comboBoxKey}-${field.value}`}
                   items={SCHOOLS}
                   renderItem={(school) => <div>{school}</div>}
                   getItemValue={(school) => school}
                   getItemLabel={(school) => school}
                   onItemSelect={(school) => field.onChange(school)}
-                  buttonPlaceholder={field.value || "Select your school"}
+                  buttonPlaceholder={field.value}
                   inputPlaceholder="Search for your school"
                 />
               </FormControl>

@@ -9,8 +9,8 @@ import {
   YAxis,
 } from "recharts";
 
-import type { ChartConfig } from "@forge/ui/chart";
 import type { SCHOOLS } from "@forge/consts/knight-hacks";
+import type { ChartConfig } from "@forge/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { ChartContainer, ChartTooltip } from "@forge/ui/chart";
 
