@@ -46,10 +46,9 @@ export function HackerData({
     },
   );
 
-  const { data: hackathonData, isError: hackathonError } =
-    api.hackathon.getHackathon.useQuery({
-      hackathonName: undefined,
-    });
+  const { data: hackathonData } = api.hackathon.getHackathon.useQuery({
+    hackathonName: undefined,
+  });
 
   const sendEmail = api.email.sendEmail.useMutation({
     onSuccess: () => {
@@ -158,9 +157,11 @@ export function HackerData({
       </div>
       <div className="flex flex-col justify-center gap-y-6">
         <div>
-          <div className="animate-fade-in pb-2 text-xl font-bold">
-            Hello, {data.firstName} {data.lastName}
-          </div>
+          {hacker?.firstName && hacker.lastName && (
+            <div className="animate-fade-in pb-2 text-xl font-bold">
+              Hello, {hacker.firstName} {hacker.lastName}
+            </div>
+          )}
           <div className="animate-fade-in text-lg font-bold">
             Status for {hackathonData?.displayName}
           </div>
@@ -194,16 +195,12 @@ export function HackerData({
             <Button
               size="lg"
               className={`animate-fade-in gap-2 !rounded-none ${
-                hackathonData.confirmationDeadline &&
                 hackathonData.confirmationDeadline < new Date()
                   ? "bg-gray-700 hover:bg-gray-900"
                   : ""
               }`}
               onClick={handleConfirm}
-              disabled={
-                hackathonData.confirmationDeadline &&
-                hackathonData.confirmationDeadline < new Date()
-              }
+              disabled={hackathonData.confirmationDeadline < new Date()}
             >
               {loading ? (
                 <Loader2 className="w-[85px] animate-spin" />

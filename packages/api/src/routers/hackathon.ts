@@ -18,6 +18,15 @@ export const hackathonRouter = {
     return await db.query.Hackathon.findMany();
   }),
 
+  getPreviousHacker: protectedProcedure.query(async ({ ctx }) => {
+    // Get the most recent hacker profile for this user
+    const hacker = await db.query.Hacker.findFirst({
+      where: (t, { eq }) => eq(t.userId, ctx.session.user.id),
+    });
+
+    return hacker ?? null;
+  }),
+
   getHackathon: publicProcedure
     .input(
       z.object({

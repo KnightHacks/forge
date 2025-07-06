@@ -4,8 +4,8 @@ import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { useEffect, useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
-import type { ChartConfig } from "@forge/ui/chart";
 import type { GENDERS } from "@forge/consts/knight-hacks";
+import type { ChartConfig } from "@forge/ui/chart";
 import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
