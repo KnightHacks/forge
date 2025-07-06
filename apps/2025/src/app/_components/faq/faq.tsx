@@ -6,7 +6,6 @@ import {
 } from "@forge/ui/accordion";
 import FaqSVG from "./faq-svg";
 import Link from "next/link";
-import Image from "next/image";
 
 interface FaqLink {
   text: string;
@@ -107,7 +106,11 @@ export default function Faq() {
     <div className="pt-40 relative z-10 flex flex-col items-center h-full w-full mb-16 sm:mb-20 md:mb-24 lg:mb-32 xl:mb-40">
       <div className="relative w-full mb-1 sm:mb-2 md:mb-3 lg:mb-4">
         <div className="relative z-10 w-full max-w-xl mx-auto px-4 py-1 sm:py-2 md:py-3 lg:py-4">
-          <FaqSVG className="h-auto w-1/2 mx-auto" />
+          
+          
+          <div className="relative z-10 flex justify-center">
+            <FaqSVG className="h-auto w-1/2" />
+          </div>
         </div>
       </div>
       <div className="relative w-[95%] sm:w-[90%] md:w-[85%] lg:w-[80%] xl:w-[75%] px-4">
