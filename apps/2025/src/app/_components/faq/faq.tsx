@@ -104,37 +104,27 @@ const faqData: FaqItem[] = [
 
 export default function Faq() {
   return (
-    <div className="relative z-10 flex flex-col items-center h-full w-full mb-60 md:mb-70 lg:mb-95">
-      <div className="relative w-full mb-10">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/sponsorSectionSvgs/sidewalk.svg"
-            alt="Sidewalk background for FAQ title"
-            layout="fill"
-            objectFit="cover"
-            className="w-full h-full"
-            unoptimized={true}
-          />
-        </div>
-        <div className="relative z-10 w-full max-w-4xl mx-auto px-4 py-12 md:px-0 md:py-24 lg:py-28">
-          <FaqSVG className="h-auto w-full" />
+    <div className="pt-40 relative z-10 flex flex-col items-center h-full w-full mb-16 sm:mb-20 md:mb-24 lg:mb-32 xl:mb-40">
+      <div className="relative w-full mb-1 sm:mb-2 md:mb-3 lg:mb-4">
+        <div className="relative z-10 w-full max-w-xl mx-auto px-4 py-1 sm:py-2 md:py-3 lg:py-4">
+          <FaqSVG className="h-auto w-1/2 mx-auto" />
         </div>
       </div>
-      <div className="relative w-[99%] md:w-[80%] px-4">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="relative w-[95%] sm:w-[90%] md:w-[85%] lg:w-[80%] xl:w-[75%] px-4">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8 lg:grid-cols-2 lg:gap-8 xl:gap-10">
           {/* Column 1 */}
-          <div className="space-y-4">
-            <Accordion type="single" collapsible className="w-full space-y-4">
+          <div className="space-y-3 sm:space-y-4">
+            <Accordion type="single" collapsible className="w-full space-y-3 sm:space-y-4">
               {faqData.slice(0, 8).map((faq) => (
                 <AccordionItem
                   key={faq.id}
                   value={faq.id}
                   className="overflow-hidden rounded-lg border-0 bg-[#F7F0C6]"
                 >
-                  <AccordionTrigger className="w-full px-4 py-3 text-left text-base text-slate-800 transition-colors hover:bg-amber-200 hover:no-underline md:px-8 md:py-5 md:text-lg [&[data-state=open]>svg]:rotate-180">
+                  <AccordionTrigger className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4 lg:py-5 text-left text-sm sm:text-base md:text-lg text-slate-800 transition-colors hover:bg-amber-200 hover:no-underline [&[data-state=open]>svg]:rotate-180">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="px-4 pt-1 pb-3 text-slate-700 leading-relaxed md:px-8 md:pt-2 md:pb-6">
+                  <AccordionContent className="px-3 sm:px-4 md:px-6 lg:px-8 pt-1 sm:pt-2 pb-2 sm:pb-3 md:pb-4 lg:pb-6 text-xs sm:text-sm md:text-base text-slate-700 leading-relaxed">
                     {faq.links ? (
                       <>
                         {faq.answer.split("hackers guide").map((part, index, array) => (
@@ -163,18 +153,18 @@ export default function Faq() {
           </div>
 
           {/* Column 2 */}
-          <div className="space-y-4">
-            <Accordion type="single" collapsible className="w-full space-y-4">
+          <div className="space-y-3 sm:space-y-4">
+            <Accordion type="single" collapsible className="w-full space-y-3 sm:space-y-4">
               {faqData.slice(8).map((faq) => (
                 <AccordionItem
                   key={faq.id}
                   value={faq.id}
                   className="overflow-hidden rounded-lg border-0 bg-[#F7F0C6]"
                 >
-                  <AccordionTrigger className="w-full px-4 py-3 text-left text-base text-slate-800 transition-colors hover:bg-amber-200 hover:no-underline md:px-8 md:py-5 md:text-lg [&[data-state=open]>svg]:rotate-180">
+                  <AccordionTrigger className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4 lg:py-5 text-left text-sm sm:text-base md:text-lg text-slate-800 transition-colors hover:bg-amber-200 hover:no-underline [&[data-state=open]>svg]:rotate-180">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="px-4 pt-1 pb-3 text-slate-700 leading-relaxed md:px-8 md:pt-2 md:pb-6">
+                  <AccordionContent className="px-3 sm:px-4 md:px-6 lg:px-8 pt-1 sm:pt-2 pb-2 sm:pb-3 md:pb-4 lg:pb-6 text-xs sm:text-sm md:text-base text-slate-700 leading-relaxed">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>

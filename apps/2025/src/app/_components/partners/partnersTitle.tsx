@@ -6,18 +6,18 @@ const spikeything = "/sponsorSectionSvgs/spikeything.svg";
 
 const partnersTitle = () => {
   return (
-    <div className="relative z-10 h-auto w-full mb-8 flex items-center justify-center">
-      <div className="relative flex items-center justify-center">
+    <div className="relative z-10 h-auto w-full mb-1 sm:mb-2 md:mb-3 lg:mb-4 flex items-center justify-center">
+      <div className="relative flex items-center justify-center w-[70%] sm:w-[65%] md:w-[60%] lg:w-[55%] xl:w-[50%]">
         <Image
           src={spikeything}
           alt="spikeything"
           width={0}
           height={0}
           sizes="100vw"
-          className="z-10 h-[90%] w-[90%]"
+          className="z-10 h-[70%] w-[70%]"
         />
         <span
-          className="absolute z-20 mt-[5%] text-[10vw] text-[#FBB03B]"
+          className="absolute z-20 mt-[5%] text-[6vw] sm:text-[5vw] md:text-[4vw] lg:text-[3vw] xl:text-[2.5vw] text-[#FBB03B]"
           style={{ fontFamily: '"The Last Shuriken"' }}
         >
           PARTNERS
