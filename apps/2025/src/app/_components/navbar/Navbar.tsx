@@ -7,8 +7,8 @@ import MLHBadge from "./MLHBadge";
 const NAV_LINKS = [
   { href: "#about", label: "About" },
   { href: "#tracks", label: "Tracks" },
-  { href: "#sponsors", label: "Sponsors" },
   { href: "#faqs", label: `FAQ's` },
+  { href: "#sponsors", label: "Sponsors" },
 ];
 
 const Navbar = () => {
@@ -32,7 +32,7 @@ const Navbar = () => {
 
   return (
     <>
-      <FloatingNav navLinks={NAV_LINKS} show={showFloating} />
+      <FloatingNav navLinks={NAV_LINKS} />
       <MLHBadge showFloating={showFloating} />
     </>
   );
