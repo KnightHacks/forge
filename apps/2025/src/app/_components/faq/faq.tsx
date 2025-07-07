@@ -103,7 +103,7 @@ const faqData: FaqItem[] = [
 
 export default function Faq() {
   return (
-    <div className="pt-40 relative z-10 flex flex-col items-center h-full w-full mb-16 sm:mb-20 md:mb-24 lg:mb-32 xl:mb-40">
+    <div id="faqs" className="pt-40 relative z-10 flex flex-col items-center h-full w-full mb-16 sm:mb-20 md:mb-24 lg:mb-32 xl:mb-40">
       <div className="relative w-full mb-1 sm:mb-2 md:mb-3 lg:mb-4">
         <div className="relative z-10 w-full max-w-xl mx-auto px-4 py-1 sm:py-2 md:py-3 lg:py-4">
           <div className="relative z-10 flex justify-center">
