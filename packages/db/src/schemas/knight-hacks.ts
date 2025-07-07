@@ -3,6 +3,7 @@ import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 import {
+  COUNTRIES,
   EVENT_FEEDBACK_HEARD,
   EVENT_FEEDBACK_SIMILAR_EVENT,
   EVENT_TAGS,
@@ -35,7 +36,11 @@ export const hackathonApplicationStateEnum = pgEnum(
 export const Hackathon = createTable("hackathon", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   name: t.varchar({ length: 255 }).notNull(),
+  displayName: t.varchar({ length: 255 }).notNull().default(""),
   theme: t.varchar({ length: 255 }).notNull(),
+  applicationOpen: t.timestamp().notNull().defaultNow(),
+  applicationDeadline: t.timestamp().notNull().defaultNow(),
+  confirmationDeadline: t.timestamp().notNull().defaultNow(),
   startDate: t.timestamp().notNull(),
   endDate: t.timestamp().notNull(),
 }));
@@ -84,54 +89,57 @@ export const Member = createTable(
   }),
 );
 
-export const Hacker = createTable(
-  "hacker",
-  (t) => ({
-    id: t.uuid().notNull().primaryKey().defaultRandom(),
-    userId: t
-      .uuid()
-      .notNull()
-      .references(() => User.id, { onDelete: "cascade" }),
-    firstName: t.varchar({ length: 255 }).notNull(),
-    lastName: t.varchar({ length: 255 }).notNull(),
-    gender: genderEnum().default("Prefer not to answer").notNull(),
-    discordUser: t.varchar({ length: 255 }).notNull(),
-    age: t.integer().notNull(),
-    email: t.varchar({ length: 255 }).notNull(),
-    phoneNumber: t.varchar({ length: 255 }),
-    school: t.text({ enum: SCHOOLS }).notNull(),
-    levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
-    raceOrEthnicity: raceOrEthnicityEnum()
-      .default("Prefer not to answer")
-      .notNull(),
-    shirtSize: shirtSizeEnum().notNull(),
-    githubProfileUrl: t.varchar({ length: 255 }),
-    linkedinProfileUrl: t.varchar({ length: 255 }),
-    websiteUrl: t.varchar({ length: 255 }),
-    resumeUrl: t.varchar({ length: 255 }),
-    dob: t.date().notNull(),
-    gradDate: t.date().notNull(),
-    status: t
-      .text("status", {
-        enum: HACKATHON_APPLICATION_STATES,
-      })
-      .notNull()
-      .default("pending"),
-    survey1: t.text("survey_1").notNull(),
-    survey2: t.text("survey_2").notNull(),
-    isFirstTime: t.boolean("is_first_time").default(false),
-    foodAllergies: t.text("food_allergies"),
-    agreesToReceiveEmailsFromMLH: t
-      .boolean("agrees_to_receive_emails_from_mlh")
-      .default(false),
-    dateCreated: t.date().notNull().defaultNow(),
-    timeCreated: t.time().notNull().defaultNow(),
-  }),
-  (t) => ({
-    uniqueEmail: unique().on(t.email),
-    uniquePhoneNumber: unique().on(t.phoneNumber),
-  }),
-);
+export const Hacker = createTable("hacker", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  userId: t
+    .uuid()
+    .notNull()
+    .references(() => User.id, { onDelete: "cascade" }),
+  firstName: t.varchar({ length: 255 }).notNull(),
+  lastName: t.varchar({ length: 255 }).notNull(),
+  gender: genderEnum().default("Prefer not to answer").notNull(),
+  discordUser: t.varchar({ length: 255 }).notNull(),
+  age: t.integer().notNull(),
+  country: t
+    .text({ enum: COUNTRIES })
+    .notNull()
+    .default("United States of America"),
+  email: t.varchar({ length: 255 }).notNull(),
+  phoneNumber: t.varchar({ length: 255 }),
+  school: t.text({ enum: SCHOOLS }).notNull(),
+  levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
+  raceOrEthnicity: raceOrEthnicityEnum()
+    .default("Prefer not to answer")
+    .notNull(),
+  shirtSize: shirtSizeEnum().notNull(),
+  githubProfileUrl: t.varchar({ length: 255 }),
+  linkedinProfileUrl: t.varchar({ length: 255 }),
+  websiteUrl: t.varchar({ length: 255 }),
+  resumeUrl: t.varchar({ length: 255 }),
+  dob: t.date().notNull(),
+  gradDate: t.date().notNull(),
+  status: t
+    .text("status", {
+      enum: HACKATHON_APPLICATION_STATES,
+    })
+    .notNull()
+    .default("pending"),
+  survey1: t.text("survey_1").notNull(),
+  survey2: t.text("survey_2").notNull(),
+  isFirstTime: t.boolean("is_first_time").default(false),
+  foodAllergies: t.text("food_allergies"),
+  agreesToReceiveEmailsFromMLH: t
+    .boolean("agrees_to_receive_emails_from_mlh")
+    .default(false),
+  agreesToMLHCodeOfConduct: t
+    .boolean("agrees_to_mlh_code_of_conduct")
+    .default(false),
+  agreesToMLHDataSharing: t
+    .boolean("agrees_to_mlh_data_sharing")
+    .default(false),
+  dateCreated: t.date().notNull().defaultNow(),
+  timeCreated: t.time().notNull().defaultNow(),
+}));
 
 export type InsertHacker = typeof Hacker.$inferInsert;
 export type SelectHacker = typeof Hacker.$inferSelect;

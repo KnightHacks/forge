@@ -18,7 +18,7 @@ export default async function HackerDashboard({
 }) {
   const [resume, pastHackathons] = await Promise.allSettled([
     api.resume.getResume(),
-    api.hacker.getHackathons(),
+    api.hackathon.getPastHackathons(),
   ]);
 
   return (

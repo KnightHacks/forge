@@ -21,9 +21,16 @@ export async function UserInterface() {
 
   if (!member.value && !hacker.value) {
     return (
-      <div className="flex flex-wrap justify-center gap-5">
-        <MemberAppCard />
-        <HackerAppCard />
+      <div className="flex flex-col items-center justify-center gap-y-6 font-bold">
+        <p className="w-full max-w-xl text-center">
+          You have not applied to be a Knight Hacks member or hacker for an
+          upcoming Hackathon yet. Please fill out an application below to get
+          started!
+        </p>
+        <div className="flex flex-wrap justify-center gap-5">
+          <MemberAppCard />
+          <HackerAppCard />
+        </div>
       </div>
     );
   }

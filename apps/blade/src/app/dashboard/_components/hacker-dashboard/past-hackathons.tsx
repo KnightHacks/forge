@@ -16,7 +16,7 @@ import { formatDateTime } from "~/lib/utils";
 export function PastHackathonButton({
   hackathons,
 }: {
-  hackathons: Awaited<ReturnType<(typeof api.hacker)["getHackathons"]>>;
+  hackathons: Awaited<ReturnType<(typeof api.hackathon)["getPastHackathons"]>>;
 }) {
   const mostRecent = hackathons[0];
 
@@ -69,7 +69,7 @@ export function PastHackathonButton({
               <CardHeader>
                 <div className="flex flex-col items-start justify-between sm:flex-row">
                   <div className="order-2 pr-5 text-primary sm:order-1">
-                    <CardTitle>{hackathon.name}</CardTitle>
+                    <CardTitle>{hackathon.displayName}</CardTitle>
                   </div>
                 </div>
               </CardHeader>

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 import { cn } from "@forge/ui";
 import { buttonVariants } from "@forge/ui/button";
 
@@ -36,21 +35,7 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
   }
 
   if (!member && !hacker) {
-    return (
-      <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm">
-        You have not signed up as a Knight Hacks Member or Hacker yet. For
-        inquiries on registration, feel free to reach out in our{" "}
-        <Link
-          href={PERMANENT_DISCORD_INVITE}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary underline"
-        >
-          Discord
-        </Link>
-        !
-      </div>
-    );
+    return null;
   }
 
   const visibleItems = items.filter((item) => {
