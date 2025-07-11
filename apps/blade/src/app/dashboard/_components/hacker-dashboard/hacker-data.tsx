@@ -64,7 +64,7 @@ export function HackerData({
   const handleConfirm = async () => {
     setLoading(true);
     confirmHacker.mutate({
-      id: hacker?.id,
+      id: hacker?.id ?? "",
     });
 
     if (!hacker) return;
@@ -86,7 +86,7 @@ export function HackerData({
   const handleWithdraw = () => {
     setLoading(true);
     withdrawHacker.mutate({
-      id: hacker?.id,
+      id: hacker?.id ?? "",
     });
   };
 
