@@ -20,7 +20,7 @@ export default function DenyButton({
   hacker,
   hackathonName,
 }: {
-  hacker: InsertHacker;
+  hacker: InsertHacker & { status: string };
   hackathonName: string;
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -58,7 +58,7 @@ export default function DenyButton({
   const handleUpdateStatus = () => {
     setIsLoading(true);
     updateStatus.mutate({
-      id: hacker.id,
+      id: hacker.id ?? "",
       status: "denied",
       hackathonName,
     });

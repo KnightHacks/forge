@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { and, count, desc, eq, getTableColumns } from "@forge/db";
+import { count, desc, eq, getTableColumns } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Hackathon,
@@ -97,36 +97,29 @@ export const hackathonRouter = {
         return;
       }
 
-      if (hacker.status !== "confirmed") {
+      // Get the hacker's status for this specific hackathon
+      const hackerAttendee = await db.query.HackerAttendee.findFirst({
+        where: (t, { and, eq }) =>
+          and(eq(t.hackerId, hacker.id), eq(t.hackathonId, input.hackathonId)),
+      });
+
+      if (!hackerAttendee) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `${hacker.firstName} ${hacker.lastName} is not registered for this hackathon`,
+        });
+      }
+
+      if (hackerAttendee.status !== "confirmed") {
         throw new TRPCError({
           code: "CONFLICT",
           message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
         });
       }
 
-      const duplicates = await db
-        .select()
-        .from(HackerAttendee)
-        .where(
-          and(
-            eq(HackerAttendee.hackerId, hacker.id),
-            eq(HackerAttendee.hackathonId, input.hackathonId),
-          ),
-        );
-
-      if (duplicates.length > 0) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: `${hacker.firstName} ${hacker.lastName} is already checked into the hackathon`,
-        });
-      }
-
-      const hackerAttendee = {
-        hackerId: hacker.id,
-        hackathonId: input.hackathonId,
-      };
-      await db.insert(HackerAttendee).values(hackerAttendee);
-
+      // Update the status to indicate they're checked in
+      // You might want to add a "checked-in" status to HACKATHON_APPLICATION_STATES
+      // For now, we'll just log the check-in without changing status
       await log({
         title: "Hacker Checked-In",
         message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon: ${hackathon.name}`,

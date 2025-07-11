@@ -6,6 +6,8 @@ import RaceOrEthnicityPie from "../../../_components/RaceOrEthnicityPie";
 import SchoolYearPie from "../../../_components/SchoolYearPie";
 import EngagementInfo from "./member-data/EngagementInfo";
 import GenderPie from "./member-data/GenderPie";
+import SchoolBarChart from "./member-data/SchoolBarChart";
+import ShirtSizePie from "./member-data/ShirtSizePie";
 
 export default function MemberDemographics() {
   const { data: members } = api.member.getMembers.useQuery();
@@ -25,6 +27,8 @@ export default function MemberDemographics() {
           <RaceOrEthnicityPie people={members} />
           <AgeBarChart people={members} />
           <SchoolYearPie people={members} />
+          <SchoolBarChart members={members} />
+          <ShirtSizePie members={members} />
         </div>
       )}
     </div>

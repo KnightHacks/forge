@@ -7,7 +7,7 @@ import {
   BUCKET_NAME,
   KNIGHTHACKS_S3_BUCKET_REGION,
 } from "@forge/consts/knight-hacks";
-import { and, eq, exists } from "@forge/db";
+import { and, eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
 import {
@@ -24,33 +24,36 @@ export const hackerRouter = {
   getHacker: protectedProcedure
     .input(z.object({ hackathonName: z.string().optional() }))
     .query(async ({ input, ctx }) => {
-      if (input.hackathonName == undefined) {
-        const hackathon = await db.query.Hackathon.findFirst({
-          where: (t, { gt }) => gt(t.endDate, new Date()),
+      let hackathon;
+
+      if (input.hackathonName) {
+        // If a hackathon name is provided, grab that hackathon
+        hackathon = await db.query.Hackathon.findFirst({
+          where: (t, { eq }) => eq(t.name, input.hackathonName ?? ""),
         });
+
+        if (!hackathon) {
+          throw new TRPCError({
+            message: "Hackathon not found!",
+            code: "NOT_FOUND",
+          });
+        }
+      } else {
+        // If not provided, grab a FUTURE hackathon with a start date CLOSEST to now
+        const now = new Date();
+        const futureHackathons = await db.query.Hackathon.findMany({
+          where: (t, { gt }) => gt(t.startDate, now),
+          orderBy: (t, { asc }) => [asc(t.startDate)],
+          limit: 1,
+        });
+        hackathon = futureHackathons[0];
 
         if (!hackathon) {
           return null;
         }
-
-        const hacker = await db
-          .select()
-          .from(Hacker)
-          .where(eq(Hacker.userId, ctx.session.user.id));
-        return hacker[0];
       }
 
-      const hackathon = await db.query.Hackathon.findFirst({
-        where: (t, { eq }) => eq(t.name, input.hackathonName ?? ""),
-      });
-
-      if (!hackathon) {
-        throw new TRPCError({
-          message: "Hackathon not found!",
-          code: "NOT_FOUND",
-        });
-      }
-
+      // Find the hacker for the current user
       const hacker = await db.query.Hacker.findFirst({
         where: (t, { eq }) => eq(t.userId, ctx.session.user.id),
       });
@@ -69,26 +72,50 @@ export const hackerRouter = {
         return null;
       }
 
-      return hacker;
+      // Return hacker with status from HackerAttendee
+      return {
+        ...hacker,
+        status: hackerAttendee.status,
+      };
     }),
 
   getHackers: adminProcedure.input(z.string()).query(async ({ input }) => {
     const hackers = await db
-      .select()
+      .select({
+        id: Hacker.id,
+        userId: Hacker.userId,
+        firstName: Hacker.firstName,
+        lastName: Hacker.lastName,
+        gender: Hacker.gender,
+        discordUser: Hacker.discordUser,
+        age: Hacker.age,
+        country: Hacker.country,
+        email: Hacker.email,
+        phoneNumber: Hacker.phoneNumber,
+        school: Hacker.school,
+        levelOfStudy: Hacker.levelOfStudy,
+        raceOrEthnicity: Hacker.raceOrEthnicity,
+        shirtSize: Hacker.shirtSize,
+        githubProfileUrl: Hacker.githubProfileUrl,
+        linkedinProfileUrl: Hacker.linkedinProfileUrl,
+        websiteUrl: Hacker.websiteUrl,
+        resumeUrl: Hacker.resumeUrl,
+        dob: Hacker.dob,
+        gradDate: Hacker.gradDate,
+        survey1: Hacker.survey1,
+        survey2: Hacker.survey2,
+        isFirstTime: Hacker.isFirstTime,
+        foodAllergies: Hacker.foodAllergies,
+        agreesToReceiveEmailsFromMLH: Hacker.agreesToReceiveEmailsFromMLH,
+        agreesToMLHCodeOfConduct: Hacker.agreesToMLHCodeOfConduct,
+        agreesToMLHDataSharing: Hacker.agreesToMLHDataSharing,
+        dateCreated: Hacker.dateCreated,
+        timeCreated: Hacker.timeCreated,
+        status: HackerAttendee.status, // Get hackathon-specific status from HackerAttendee
+      })
       .from(Hacker)
-      .where(
-        exists(
-          db
-            .select()
-            .from(HackerAttendee)
-            .where(
-              and(
-                eq(HackerAttendee.hackathonId, input),
-                eq(HackerAttendee.hackerId, Hacker.id),
-              ),
-            ),
-        ),
-      );
+      .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+      .where(eq(HackerAttendee.hackathonId, input));
 
     if (hackers.length === 0) return null; // Can't return undefined in trpc
     return hackers;
@@ -97,39 +124,71 @@ export const hackerRouter = {
   getAllHackers: adminProcedure
     .input(z.object({ hackathonName: z.string().optional() }))
     .query(async ({ input }) => {
-      const hackathonName = input.hackathonName;
+      let hackathon;
 
-      if (!hackathonName) {
-        return await db.query.Hacker.findMany();
-      }
-
-      const hackathon = await db.query.Hackathon.findFirst({
-        where: (t, { eq }) => eq(t.name, hackathonName),
-      });
-
-      if (!hackathon) {
-        throw new TRPCError({
-          message: "Hackathon not found!",
-          code: "NOT_FOUND",
+      if (input.hackathonName) {
+        // If a hackathon name is provided, grab that hackathon
+        hackathon = await db.query.Hackathon.findFirst({
+          where: (t, { eq }) => eq(t.name, input.hackathonName ?? ""),
         });
+
+        if (!hackathon) {
+          throw new TRPCError({
+            message: "Hackathon not found!",
+            code: "NOT_FOUND",
+          });
+        }
+      } else {
+        // If not provided, grab a FUTURE hackathon with a start date CLOSEST to now
+        const now = new Date();
+        const futureHackathons = await db.query.Hackathon.findMany({
+          where: (t, { gt }) => gt(t.startDate, now),
+          orderBy: (t, { asc }) => [asc(t.startDate)],
+          limit: 1,
+        });
+        hackathon = futureHackathons[0];
+
+        if (!hackathon) {
+          return [];
+        }
       }
 
       const hackers = await db
-        .select()
+        .select({
+          id: Hacker.id,
+          userId: Hacker.userId,
+          firstName: Hacker.firstName,
+          lastName: Hacker.lastName,
+          gender: Hacker.gender,
+          discordUser: Hacker.discordUser,
+          age: Hacker.age,
+          country: Hacker.country,
+          email: Hacker.email,
+          phoneNumber: Hacker.phoneNumber,
+          school: Hacker.school,
+          levelOfStudy: Hacker.levelOfStudy,
+          raceOrEthnicity: Hacker.raceOrEthnicity,
+          shirtSize: Hacker.shirtSize,
+          githubProfileUrl: Hacker.githubProfileUrl,
+          linkedinProfileUrl: Hacker.linkedinProfileUrl,
+          websiteUrl: Hacker.websiteUrl,
+          resumeUrl: Hacker.resumeUrl,
+          dob: Hacker.dob,
+          gradDate: Hacker.gradDate,
+          survey1: Hacker.survey1,
+          survey2: Hacker.survey2,
+          isFirstTime: Hacker.isFirstTime,
+          foodAllergies: Hacker.foodAllergies,
+          agreesToReceiveEmailsFromMLH: Hacker.agreesToReceiveEmailsFromMLH,
+          agreesToMLHCodeOfConduct: Hacker.agreesToMLHCodeOfConduct,
+          agreesToMLHDataSharing: Hacker.agreesToMLHDataSharing,
+          dateCreated: Hacker.dateCreated,
+          timeCreated: Hacker.timeCreated,
+          status: HackerAttendee.status, // Get status from HackerAttendee
+        })
         .from(Hacker)
-        .where(
-          exists(
-            db
-              .select()
-              .from(HackerAttendee)
-              .where(
-                and(
-                  eq(HackerAttendee.hackathonId, hackathon.id),
-                  eq(HackerAttendee.hackerId, Hacker.id),
-                ),
-              ),
-          ),
-        );
+        .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+        .where(eq(HackerAttendee.hackathonId, hackathon.id));
 
       return hackers;
     }),
@@ -224,7 +283,6 @@ export const hackerRouter = {
         age: newAge,
         phoneNumber:
           hackerData.phoneNumber === "" ? null : hackerData.phoneNumber,
-        status: "pending",
       });
 
       const insertedHacker = await db.query.Hacker.findFirst({
@@ -234,6 +292,7 @@ export const hackerRouter = {
       await db.insert(HackerAttendee).values({
         hackerId: insertedHacker?.id ?? "",
         hackathonId: hackathon.id,
+        status: "pending",
       });
 
       await log({
@@ -346,8 +405,17 @@ export const hackerRouter = {
 
   updateHackerStatus: adminProcedure
     .input(
-      InsertHackerSchema.pick({ id: true, status: true }).extend({
-        hackathonName: z.string().optional(),
+      z.object({
+        id: z.string(), // This is the hacker ID
+        hackathonName: z.string(),
+        status: z.enum([
+          "pending",
+          "accepted",
+          "confirmed",
+          "withdrawn",
+          "denied",
+          "waitlisted",
+        ]),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -359,7 +427,7 @@ export const hackerRouter = {
       }
 
       const hacker = await db.query.Hacker.findFirst({
-        where: (t, { eq }) => eq(t.id, input.id ?? ""),
+        where: (t, { eq }) => eq(t.id, input.id),
       });
 
       if (!hacker) {
@@ -369,13 +437,31 @@ export const hackerRouter = {
         });
       }
 
+      // Fetch the hackathon by name to get the ID
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.displayName, input.hackathonName),
+      });
+
+      if (!hackathon) {
+        throw new TRPCError({
+          message: `Hackathon not found! - ${input.hackathonName}`,
+          code: "NOT_FOUND",
+        });
+      }
+
+      // Update status in HackerAttendee table
       await db
-        .update(Hacker)
+        .update(HackerAttendee)
         .set({ status: input.status })
-        .where(eq(Hacker.id, input.id));
+        .where(
+          and(
+            eq(HackerAttendee.hackerId, input.id),
+            eq(HackerAttendee.hackathonId, hackathon.id),
+          ),
+        );
 
       await log({
-        title: `Hacker Status Updated ${input.hackathonName ? `for ${input.hackathonName}` : ""}`,
+        title: `Hacker Status Updated ${hackathon.displayName ? `for ${hackathon.displayName}` : ""}`,
         message: `Hacker status for ${hacker.firstName} ${hacker.lastName} has changed to ${input.status}!`,
         color: "tk_blue",
         userId: ctx.session.user.discordUserId,
@@ -414,7 +500,11 @@ export const hackerRouter = {
     }),
 
   confirmHacker: protectedProcedure
-    .input(InsertHackerSchema.pick({ id: true }))
+    .input(
+      z.object({
+        id: z.string(), // This is the hacker ID
+      }),
+    )
     .mutation(async ({ input }) => {
       if (!input.id) {
         throw new TRPCError({
@@ -423,10 +513,10 @@ export const hackerRouter = {
         });
       }
 
-      const { id } = input;
+      const hackerId = input.id;
 
       const hacker = await db.query.Hacker.findFirst({
-        where: (t, { eq }) => eq(t.id, id),
+        where: (t, { eq }) => eq(t.id, hackerId),
       });
 
       if (!hacker) {
@@ -436,12 +526,41 @@ export const hackerRouter = {
         });
       }
 
-      if (hacker.status === "confirmed") {
+      // Find the FUTURE hackathon with a start date CLOSEST to now (same logic as getHacker)
+      const now = new Date();
+      const futureHackathons = await db.query.Hackathon.findMany({
+        where: (t, { gt }) => gt(t.startDate, now),
+        orderBy: (t, { asc }) => [asc(t.startDate)],
+        limit: 1,
+      });
+      const hackathon = futureHackathons[0];
+
+      if (!hackathon) {
+        throw new TRPCError({
+          message: "No upcoming hackathon found!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      // Get the current status from HackerAttendee
+      const hackerAttendee = await db.query.HackerAttendee.findFirst({
+        where: (t, { and, eq }) =>
+          and(eq(t.hackerId, hackerId), eq(t.hackathonId, hackathon.id)),
+      });
+
+      if (!hackerAttendee) {
+        throw new TRPCError({
+          message: "Hacker is not registered for this hackathon!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      if (hackerAttendee.status === "confirmed") {
         throw new TRPCError({
           message: "Hacker has already been confirmed!",
           code: "UNAUTHORIZED",
         });
-      } else if (hacker.status !== "accepted") {
+      } else if (hackerAttendee.status !== "accepted") {
         throw new TRPCError({
           message: "Hacker has not been accepted!",
           code: "UNAUTHORIZED",
@@ -449,11 +568,16 @@ export const hackerRouter = {
       }
 
       await db
-        .update(Hacker)
+        .update(HackerAttendee)
         .set({
           status: "confirmed",
         })
-        .where(eq(Hacker.id, id));
+        .where(
+          and(
+            eq(HackerAttendee.hackerId, hackerId),
+            eq(HackerAttendee.hackathonId, hackathon.id),
+          ),
+        );
 
       await log({
         title: "Hacker Confirmed",
@@ -464,7 +588,11 @@ export const hackerRouter = {
     }),
 
   withdrawHacker: protectedProcedure
-    .input(InsertHackerSchema.pick({ id: true }))
+    .input(
+      z.object({
+        id: z.string(), // This is the hacker ID
+      }),
+    )
     .mutation(async ({ input }) => {
       if (!input.id) {
         throw new TRPCError({
@@ -473,10 +601,10 @@ export const hackerRouter = {
         });
       }
 
-      const { id } = input;
+      const hackerId = input.id;
 
       const hacker = await db.query.Hacker.findFirst({
-        where: (t, { eq }) => eq(t.id, id),
+        where: (t, { eq }) => eq(t.id, hackerId),
       });
 
       if (!hacker) {
@@ -486,7 +614,36 @@ export const hackerRouter = {
         });
       }
 
-      if (hacker.status !== "confirmed") {
+      // Find the FUTURE hackathon with a start date CLOSEST to now (same logic as getHacker)
+      const now = new Date();
+      const futureHackathons = await db.query.Hackathon.findMany({
+        where: (t, { gt }) => gt(t.startDate, now),
+        orderBy: (t, { asc }) => [asc(t.startDate)],
+        limit: 1,
+      });
+      const hackathon = futureHackathons[0];
+
+      if (!hackathon) {
+        throw new TRPCError({
+          message: "No upcoming hackathon found!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      // Get the current status from HackerAttendee
+      const hackerAttendee = await db.query.HackerAttendee.findFirst({
+        where: (t, { and, eq }) =>
+          and(eq(t.hackerId, hackerId), eq(t.hackathonId, hackathon.id)),
+      });
+
+      if (!hackerAttendee) {
+        throw new TRPCError({
+          message: "Hacker is not registered for this hackathon!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      if (hackerAttendee.status !== "confirmed") {
         throw new TRPCError({
           message: "Hacker is not confirmed!",
           code: "UNAUTHORIZED",
@@ -494,10 +651,15 @@ export const hackerRouter = {
       }
 
       await db
-        .update(Hacker)
+        .update(HackerAttendee)
         .set({
           status: "withdrawn",
         })
-        .where(eq(Hacker.id, id));
+        .where(
+          and(
+            eq(HackerAttendee.hackerId, hackerId),
+            eq(HackerAttendee.hackathonId, hackathon.id),
+          ),
+        );
     }),
 } satisfies TRPCRouterRecord;

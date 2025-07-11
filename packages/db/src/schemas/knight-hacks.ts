@@ -118,12 +118,6 @@ export const Hacker = createTable("hacker", (t) => ({
   resumeUrl: t.varchar({ length: 255 }),
   dob: t.date().notNull(),
   gradDate: t.date().notNull(),
-  status: t
-    .text("status", {
-      enum: HACKATHON_APPLICATION_STATES,
-    })
-    .notNull()
-    .default("pending"),
   survey1: t.text("survey_1").notNull(),
   survey2: t.text("survey_2").notNull(),
   isFirstTime: t.boolean("is_first_time").default(false),
@@ -233,9 +227,16 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
     .references(() => Hackathon.id, {
       onDelete: "cascade",
     }),
+  status: t
+    .text("status", {
+      enum: HACKATHON_APPLICATION_STATES,
+    })
+    .notNull()
+    .default("pending"),
 }));
 
 export const InsertEventAttendeeSchema = createInsertSchema(EventAttendee);
+export const InsertHackerAttendeeSchema = createInsertSchema(HackerAttendee);
 
 export const DuesPayment = createTable("dues_payment", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),

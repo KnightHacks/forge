@@ -8,7 +8,7 @@ export default function HackerStatusToggle({
   hacker,
   hackathonName,
 }: {
-  hacker: InsertHacker;
+  hacker: InsertHacker & { status: string };
   hackathonName: string;
 }) {
   return (
