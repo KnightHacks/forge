@@ -1,79 +1,134 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Bebas_Neue } from "next/font/google";
 
 const footerSVG = "./khFull.svg";
 const shadow = "./shadow.svg";
 const mlhcoc = "https://mlh.io/code-of-conduct";
 const sponsor = "https://blade.knighthacks.org/sponsor";
-const contact = "https://discord.knighthacks.org/";
+const khcoc = "https://knight-hacks.notion.site/code-of-conduct";
 const hackersGuide = "https://knighthacks.org/hackers-guide";
-const bn = Bebas_Neue({
-  subsets: ["latin"],
-  weight: ["400"],
-  display: "swap",
-});
 
 export default function Footer() {
   return (
-    <div className="mx-auto flex flex-col items-center pt-16">
-      <div className="relative w-full">
-        <Image
-          src={shadow}
-          alt="Shadow"
-          width={0}
-          height={0}
-          sizes="100vw"
-          objectFit="cover"
-          className="absolute bottom-0 left-1/2 mb-6 sm:mb-8 md:mb-10 w-full -translate-x-1/2 opacity-75"
-        />
-        <Image
-          src={footerSVG}
-          alt="Knight Hacks Logo"
-          width={2267}
-          height={803}
-          objectFit="cover"
-          className="absolute bottom-0 left-1/2 mb-12 sm:mb-16 md:mb-20 w-1/2 sm:w-2/5 md:w-1/3 lg:w-1/4 -translate-x-1/2"
-        />
-      </div>
-      <div
-        className={`${bn.className} -mt-6 sm:-mt-8 md:-mt-10 flex w-full flex-col justify-center bg-black pt-8 sm:pt-12 md:pt-15 pb-4 sm:pb-5 text-white`}
-      >
-        <div className="mb-2 sm:mb-3 flex flex-col sm:flex-row justify-center items-center px-2 text-center text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl gap-1 sm:gap-2">
-          <Link
-            href={mlhcoc}
-            className="flex transform px-2 sm:px-3 transition hover:scale-105 hover:underline"
-          >
-            MLH code of conduct
-          </Link>
-          <span className="hidden sm:inline">|</span>
-          <Link
-            href={sponsor}
-            className="flex transform px-2 sm:px-3 transition hover:scale-105 hover:underline"
-          >
-            sponsor us
-          </Link>
-          <span className="hidden sm:inline">|</span>
-          <Link
-            href={contact}
-            className="flex transform px-2 sm:px-3 transition hover:scale-105 hover:underline"
-          >
-            contact us
-          </Link>
-          <span className="hidden sm:inline">|</span>
-          <Link
-            href={hackersGuide}
-            className="flex transform px-2 sm:px-3 transition hover:scale-105 hover:underline"
-          >
-            hackers guide
-          </Link>
+    <div className="mx-auto flex flex-col items-center bg-black pt-16 pb-8">
+      {/* Logo Section - Now properly in black background */}
+      <div className="relative mb-12 flex w-full justify-center">
+        <div className="relative">
+          <Image
+            src={shadow}
+            alt="Shadow"
+            width={0}
+            height={0}
+            sizes="100vw"
+            objectFit="cover"
+            className="absolute top-4 left-1/2 w-full max-w-md -translate-x-1/2 opacity-75 sm:max-w-lg md:max-w-xl lg:max-w-2xl"
+          />
+          <Image
+            src={footerSVG}
+            alt="Knight Hacks Logo"
+            width={2267}
+            height={803}
+            objectFit="cover"
+            className="relative h-auto w-64 sm:w-80 md:w-96 lg:w-112 xl:w-128"
+          />
         </div>
-        <span className="justify-center pb-6 sm:pb-8 md:pb-10 text-center text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-2xl">
-          Copyright © 2019 - 2025 knighthacks. All Rights Reserved.
-        </span>
-        <span className="justify-center text-center text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl">
-          Made with 💜 by the Knight Hacks team.
-        </span>
+      </div>
+
+      {/* Footer Content - TextBox Style Cards */}
+      <div className="w-full px-2 py-4">
+        <div className="mx-auto max-w-7xl">
+          {/* Links Section - Three colored cards */}
+          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+            {/* Red Card - MLH & Contact */}
+            <div className="group relative">
+              <div className="relative rounded-none bg-[#F7F0C6] p-4 outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 md:p-6">
+                <div className="text-center">
+                  <h3 className="tk-ccmeanwhile mb-3 text-lg font-bold text-[#d83434] md:text-xl">
+                    COMMUNITY
+                  </h3>
+                  <div className="space-y-2">
+                    <Link
+                      href={mlhcoc}
+                      className="tk-ccmeanwhile block text-sm text-slate-800 transition-colors hover:text-[#d83434] md:text-base"
+                    >
+                      MLH Code of Conduct
+                    </Link>
+                    <Link
+                      href={khcoc}
+                      className="tk-ccmeanwhile block text-sm text-slate-800 transition-colors hover:text-[#d83434] md:text-base"
+                    >
+                      Knight Hacks Code of Conduct
+                    </Link>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
+            </div>
+
+            {/* Yellow Card - Sponsor & Guide */}
+            <div className="group relative">
+              <div className="relative rounded-none bg-[#F7F0C6] p-4 outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 md:p-6">
+                <div className="text-center">
+                  <h3 className="tk-ccmeanwhile mb-3 text-lg font-bold text-[#FBB03B] md:text-xl">
+                    RESOURCES
+                  </h3>
+                  <div className="space-y-2">
+                    <Link
+                      href={sponsor}
+                      className="tk-ccmeanwhile block text-sm text-slate-800 transition-colors hover:text-[#FBB03B] md:text-base"
+                    >
+                      Sponsor Us
+                    </Link>
+                    <Link
+                      href={hackersGuide}
+                      className="tk-ccmeanwhile block text-sm text-slate-800 transition-colors hover:text-[#FBB03B] md:text-base"
+                    >
+                      Hackers Guide
+                    </Link>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
+            </div>
+
+            {/* Blue Card - Event Info */}
+            <div className="group relative">
+              <div className="relative rounded-none bg-[#F7F0C6] p-4 outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 md:p-6">
+                <div className="text-center">
+                  <h3 className="tk-ccmeanwhile mb-3 text-lg font-bold text-[#1570AD] md:text-xl">
+                    EVENT
+                  </h3>
+                  <div className="space-y-2">
+                    <p className="tk-ccmeanwhile text-sm text-slate-800 md:text-base">
+                      36-Hour Hackathon
+                    </p>
+                    <p className="tk-ccmeanwhile text-sm text-slate-800 md:text-base">
+                      Feb 7-9, 2025
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
+            </div>
+          </div>
+
+          {/* Copyright Section - Single centered card */}
+          <div className="flex justify-center">
+            <div className="group relative w-full max-w-2xl">
+              <div className="relative rounded-none bg-[#F7F0C6] p-4 outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 md:p-6">
+                <div className="space-y-2 text-center">
+                  <p className="tk-ccmeanwhile text-sm text-slate-800 md:text-base">
+                    Copyright © 2019 - 2025 knighthacks. All Rights Reserved.
+                  </p>
+                  <p className="tk-ccmeanwhile text-sm text-slate-800 md:text-base">
+                    Made with 💜 by the Knight Hacks team.
+                  </p>
+                </div>
+              </div>
+              <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

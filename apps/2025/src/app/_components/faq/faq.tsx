@@ -30,7 +30,7 @@ const faqData: FaqItem[] = [
     id: "2",
     question: "How long is Knight Hacks?",
     answer:
-      "Knight Hacks is a 36-hour hackathon, beginning at 5pm on Friday (check-in runs from 5-8pm, with the opening ceremony starting at 8pm) and ending at 6pm on Sunday. We encourage you to work on your project for as long as you can during this time.",
+      "Knight Hacks is a 36-hour hackathon, beginning at 5pm on Friday and ending at 6pm on Sunday. We encourage you to work on your project for as long as you can during this time.",
   },
   {
     id: "3",

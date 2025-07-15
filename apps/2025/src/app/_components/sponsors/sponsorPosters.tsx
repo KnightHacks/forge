@@ -70,7 +70,7 @@ const sponsors: Sponsor[] = [
     mobilePosition: "row-start-1 row-span-1 col-start-1 col-span-4",
   },
   {
-    src: "/sponsorSectionSvgs/oneethos.png",
+    src: "/sponsorSectionSvgs/oneethos.svg",
     alt: "ONEETHOS",
     link: "https://oneethos.com/",
     category: "Platinum",
