@@ -62,9 +62,9 @@ const SPONSOR_TIERS = {
 const sponsors: Sponsor[] = [
   // Row 1-2: Google (cols 1-3), OneEthos (cols 4-6)
   {
-    src: "/sponsorSectionSvgs/google.svg",
+    src: "/sponsorSectionSvgs/google.png",
     alt: "GOOGLE",
-    link: "https://google.github.io/adk-docs/",
+    link: "https://cloud.google.com/developers?e=48754805&hl=en",
     category: "Platinum",
     gridPosition: "sm:row-start-1 sm:row-span-2 sm:col-start-1 sm:col-span-3",
     mobilePosition: "row-start-1 row-span-1 col-start-1 col-span-4",
