@@ -43,7 +43,7 @@ interface Sponsor {
 const SPONSOR_TIERS = {
   Platinum: {
     hover:
-      "hover:shadow-2xl hover:shadow-slate-300/80 hover:ring-4 hover:ring-slate-300/50 hover:scale-[1.02]",
+      "hover:shadow-2xl hover:shadow-cyan-300/80 hover:ring-4 hover:ring-cyan-300/50 hover:scale-[1.02]",
   },
   Gold: {
     hover:
