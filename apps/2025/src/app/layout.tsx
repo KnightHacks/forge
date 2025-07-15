@@ -28,7 +28,17 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className="bg-[url('/background.svg')] bg-cover">
+      <body
+        className="bg-[url('/background.svg')] bg-cover bg-center bg-no-repeat"
+        style={{
+          transform: "translate3d(0,0,0)",
+          backfaceVisibility: "hidden",
+          WebkitBackfaceVisibility: "hidden",
+          WebkitTransform: "translate3d(0,0,0)",
+          overflowX: "hidden",
+          minHeight: "100vh",
+        }}
+      >
         <Navbar />
         {children}
         <Footer />
