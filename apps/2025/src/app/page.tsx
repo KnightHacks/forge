@@ -1,9 +1,9 @@
-import Hero from "./_components/hero/hero";
-import Tracks from "./_components/tracks/tracks";
 import About from "./_components/about/about";
 import Faq from "./_components/faq/faq";
-import Sponsors from "./_components/sponsors/sponsors";
+import Hero from "./_components/hero/hero";
 import Partners from "./_components/partners/partners";
+import Sponsors from "./_components/sponsors/sponsors";
+import Tracks from "./_components/tracks/tracks";
 
 export default function Home() {
   return (
@@ -12,9 +12,9 @@ export default function Home() {
         <Hero />
         <About />
         <Tracks />
-        <Faq />
         <Sponsors />
         <Partners />
+        <Faq />
       </div>
     </div>
   );

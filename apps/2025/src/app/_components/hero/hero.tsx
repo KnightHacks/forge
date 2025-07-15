@@ -1,10 +1,12 @@
 import HeroSVG from "./hero-svg";
+import KnightHacksSVG from "./knight-hacks-svg";
 import RegisterButton from "./register-button";
 
 export default function Hero() {
   return (
-    <div className="flex min-h-[80vh] flex-col items-center justify-start pt-64 sm:pt-24 md:pt-28 lg:pt-32 space-y-4 sm:space-y-5 md:space-y-6 lg:space-y-7 md:justify-center md:pt-0">
-      <HeroSVG className="h-auto w-[85%] sm:w-[80%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]" />
+    <div className="flex h-screen flex-col items-center justify-center">
+      <KnightHacksSVG className="h-auto w-[70%] sm:w-[65%] md:w-[55%] lg:w-[45%] xl:w-[40%] 2xl:w-[30%]" />
+      <HeroSVG className="mb-4 h-auto w-[70%] sm:w-[65%] md:mb-8 md:w-[55%] lg:w-[45%] xl:w-[40%] 2xl:w-[30%]" />
       <RegisterButton />
     </div>
   );
