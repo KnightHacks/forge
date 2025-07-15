@@ -6,7 +6,7 @@ const shadow = "./shadow.svg";
 const mlhcoc = "https://mlh.io/code-of-conduct";
 const sponsor = "https://blade.knighthacks.org/sponsor";
 const khcoc = "https://knight-hacks.notion.site/code-of-conduct";
-const hackersGuide = "https://knighthacks.org/hackers-guide";
+const hackersGuide = "https://knight-hacks.notion.site/knight-hacks-viii";
 
 export default function Footer() {
   return (

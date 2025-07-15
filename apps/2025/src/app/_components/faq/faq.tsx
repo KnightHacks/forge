@@ -68,7 +68,10 @@ const faqData: FaqItem[] = [
     answer:
       "Here's the link to the Hacker's Guide. If a question wasn't answered feel free to ask in the ",
     links: [
-      { text: "Hackers Guide", href: "https://knighthacks.org/hackers-guide" },
+      {
+        text: "Hackers Guide",
+        href: "https://knight-hacks.notion.site/knight-hacks-viii",
+      },
       { text: "Discord", href: "https://discord.knighthacks.org/" },
     ],
   },
