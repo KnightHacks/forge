@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import FloatingNav from "./FloatingNav";
 import MLHBadge from "./MLHBadge";
 
 const NAV_LINKS = [
   { href: "#about", label: "About" },
   { href: "#tracks", label: "Tracks" },
-  { href: "#faqs", label: `FAQ's` },
   { href: "#sponsors", label: "Sponsors" },
+  { href: "#faqs", label: `FAQ's` },
 ];
 
 const Navbar = () => {
@@ -17,13 +17,13 @@ const Navbar = () => {
 
   useEffect(() => {
     setMounted(true);
-    
+
     const handleScroll = () => {
       // Show navbar when scrolling, hide when at top
       const shouldShow = window.scrollY > 50;
       setShowFloating(shouldShow);
     };
-    
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
