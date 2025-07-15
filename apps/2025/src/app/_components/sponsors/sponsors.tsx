@@ -5,7 +5,7 @@ const sponsors = () => {
   return (
     <div
       id="sponsors"
-      className="mb-8 h-auto w-full pt-32 sm:mb-12 sm:pt-40 md:mb-16 md:pt-48 lg:mb-20 lg:pt-64 xl:mb-24 xl:pt-80"
+      className="mt-32 mb-8 h-auto w-full sm:mt-40 sm:mb-12 md:mt-48 md:mb-16 lg:mt-64 lg:mb-20 xl:mt-80 xl:mb-24"
     >
       <SponsorsTitle />
       <SponsorPosters />

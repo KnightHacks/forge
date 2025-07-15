@@ -16,19 +16,30 @@ interface FloatingNavProps {
 function FloatingNav({ navLinks }: FloatingNavProps) {
   const [activeSection, setActiveSection] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAtTop, setIsAtTop] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+
+      // Check if we're at the top of the page
+      setIsAtTop(scrollPosition < 100);
+
+      if (scrollPosition < 100) {
+        setActiveSection("");
+        return;
+      }
+
       const sections = navLinks.map((link) => link.href.substring(1));
-      const scrollPosition = window.scrollY + 100;
+      const scrollWithOffset = scrollPosition + 100;
 
       for (const section of sections) {
         const element = document.getElementById(section);
         if (element) {
           const { offsetTop, offsetHeight } = element;
           if (
-            scrollPosition >= offsetTop &&
-            scrollPosition < offsetTop + offsetHeight
+            scrollWithOffset >= offsetTop &&
+            scrollWithOffset < offsetTop + offsetHeight
           ) {
             setActiveSection(section);
             break;
@@ -105,15 +116,26 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
     }
   };
 
+  const handleLogoClick = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
   // Color scheme for alternating active states
+  // About - Yellow, Tracks - Red, Sponsors - Blue, Partners - Yellow, FAQ - Red
   const getNavColors = (index: number): { bg: string; hover: string } => {
     const colorOptions = [
-      { bg: "#d83434", hover: "#b12b2b" }, // Red
-      { bg: "#FBB03B", hover: "#e09c33" }, // Yellow
-      { bg: "#1570AD", hover: "#125a8a" }, // Blue
+      { bg: "#FBB03B", hover: "#e09c33" }, // Yellow - About
+      { bg: "#d83434", hover: "#b12b2b" }, // Red - Tracks
+      { bg: "#1570AD", hover: "#125a8a" }, // Blue - Sponsors
+      { bg: "#FBB03B", hover: "#e09c33" }, // Yellow - Partners
+      { bg: "#d83434", hover: "#b12b2b" }, // Red - FAQ
     ];
-    const colorIndex = index % 3;
-    return colorOptions[colorIndex as 0 | 1 | 2];
+    const colorIndex = index % 5;
+    // Ensure we never return undefined by defaulting to the first color if out of bounds
+    return colorOptions[colorIndex] ?? { bg: "#FBB03B", hover: "#e09c33" };
   };
 
   return (
@@ -131,11 +153,12 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
             {/* Main navbar container with TextBox styling - Made wider */}
             <div className="relative w-5xl max-w-6xl rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
               <div className="flex items-center gap-4 p-4">
-                {/* Logo */}
-                <motion.div
+                {/* Logo - Clickable but no highlight */}
+                <motion.button
+                  onClick={handleLogoClick}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="relative flex h-12 w-12 items-center justify-center rounded-none bg-white outline-1 -outline-offset-1 outline-black"
+                  className="relative flex h-12 w-12 cursor-pointer items-center justify-center rounded-none outline-1 -outline-offset-1 outline-black"
                 >
                   <Image
                     src="/KH2025Small.svg"
@@ -144,12 +167,13 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                     height={40}
                     className="h-10 w-10 object-contain"
                   />
-                </motion.div>
+                </motion.button>
 
                 {/* Desktop Navigation Links */}
                 <div className="flex flex-1 items-center justify-center gap-3">
                   {navLinks.map((link, index) => {
-                    const isActive = activeSection === link.href.substring(1);
+                    const isActive =
+                      !isAtTop && activeSection === link.href.substring(1);
                     const navColors = getNavColors(index);
                     return (
                       <motion.button
@@ -265,7 +289,8 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                 <div className="relative rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
                   <div className="min-w-[200px] space-y-2 p-3">
                     {navLinks.map((link, index) => {
-                      const isActive = activeSection === link.href.substring(1);
+                      const isActive =
+                        !isAtTop && activeSection === link.href.substring(1);
                       const navColors = getNavColors(index);
                       return (
                         <motion.button

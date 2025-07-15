@@ -120,7 +120,7 @@ export default function Faq() {
   return (
     <div
       id="faqs"
-      className="relative z-10 mb-64 flex h-full min-h-screen w-full flex-col items-center pt-40 sm:mb-60 md:mb-72 lg:mb-80 xl:mb-96"
+      className="relative z-10 mt-40 mb-64 flex h-full min-h-screen w-full flex-col items-center sm:mb-60 md:mb-72 lg:mb-80 xl:mb-96"
     >
       <div className="relative z-10 mb-2 flex h-auto w-full items-center justify-center sm:mb-3 md:mb-4 lg:mb-6">
         <div className="relative flex w-[100%] items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%]">
