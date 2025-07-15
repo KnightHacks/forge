@@ -103,7 +103,7 @@ export default function Footer() {
                       36-Hour Hackathon
                     </p>
                     <p className="tk-ccmeanwhile text-sm text-slate-800 md:text-base">
-                      Feb 7-9, 2025
+                      Oct 24 - 26, 2025
                     </p>
                   </div>
                 </div>
