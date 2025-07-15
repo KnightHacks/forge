@@ -117,8 +117,6 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
           top: offsetPosition,
           behavior: "smooth",
         });
-      } else {
-        console.warn(`Section ${href} not found`);
       }
     }, 100); // Small delay to ensure menu closes first
 
@@ -145,8 +143,6 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
         top: offsetPosition,
         behavior: "smooth",
       });
-    } else {
-      console.warn(`Section ${href} not found`);
     }
 
     // Re-enable navbar tweening after smooth scroll completes (increased timeout)

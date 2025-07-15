@@ -106,7 +106,7 @@ export default function PartnerPosters() {
                 className={`${partner.mobilePosition} ${partner.gridPosition} group relative flex items-center justify-center`}
               >
                 {/* Main card */}
-                <div className="relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 hover:scale-[1.02] hover:shadow-2xl hover:ring-4 hover:shadow-blue-400/80 hover:ring-blue-400/50">
+                <div className="relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 hover:scale-[1.02] hover:shadow-2xl hover:ring-4 hover:shadow-[#FBB03B]/80 hover:ring-[#FBB03B]/50">
                   {/* subtle dot pattern */}
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[length:20px_20px] opacity-30" />
 

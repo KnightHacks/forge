@@ -7,10 +7,9 @@ interface NavLink {
 
 interface NavContentProps {
   navLinks: NavLink[];
-  showGlow?: boolean;
 }
 
-function NavContent({ navLinks, showGlow = false }: NavContentProps) {
+function NavContent({ navLinks }: NavContentProps) {
   return (
     <div className="group relative">
       {/* Main navbar container with TextBox styling */}
