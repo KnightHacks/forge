@@ -1,12 +1,26 @@
-import "~/styles/globals.css";
 import type { Metadata } from "next";
-import Navbar from "./_components/navbar/Navbar";
+import "~/styles/globals.css";
 import Footer from "./_components/footer/footer";
+import Navbar from "./_components/navbar/Navbar";
 
 export const metadata: Metadata = {
-  title: "Knight Hacks 2025",
-  description: "The largest hackathon in Orlando",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  metadataBase: new URL("https://2025.knighthacks.org"),
+  title: "Knight Hacks VIII",
+  description:
+    "Knight Hacks VIII is a 36-hour Hackathon held at the University of Central Florida. Join us on October 24th - 26th for a weekend of building, learning, and innovation!",
+  openGraph: {
+    title: "Knight Hacks VIII",
+    description:
+      "Knight Hacks VIII is a 36-hour Hackathon held at the University of Central Florida. Join us on October 24th - 26th for a weekend of building, learning, and innovation!",
+    url: "https://2025.knighthacks.org",
+    siteName: "Knight Hacks VIII",
+    images: [
+      {
+        url: "https://2025.knighthacks.org/event-banner.png",
+        alt: "Event Banner",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
