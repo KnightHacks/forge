@@ -1,52 +1,134 @@
+{
+  /*
+  CURRENT LOGO LAYOUT - DO NOT DELETE
+
+  Larger than Mobile:
+  MLH MLH MLH CECS CECS CECS
+  GWC GWC GWC AI AI AI
+  ACM ACM ACM IEEE IEEE IEEE
+  SASE SASE SASE GDK GDK GDK
+
+  Mobile:
+  MLH MLH CECS CECS
+  GWC GWC AI AI
+  ACM ACM IEEE IEEE
+  SASE SASE GDK GDK
+*/
+}
+
 import Image from "next/image";
 import Link from "next/link";
 
-const partners = [
-    { src: "/partnersSection/gwc.png", alt: "GWC", link: "https://girlswhocode.com/" },
-    { src: "/partnersSection/ieee.png", alt: "IEEE", link: "https://ieee.cecs.ucf.edu/" },
-    { src: "/partnersSection/mlh.svg", alt: "MLH", link: "https://mlh.io/" },
-    { src: "/partnersSection/cecs.png", alt: "UCF", link: "https://www.cecs.ucf.edu/" },
-    
-  ];
+interface Partner {
+  src: string;
+  alt: string;
+  link: string;
+  // Grid positioning for sm+ screens (6-column layout)
+  gridPosition: string;
+  // Grid positioning for mobile (2-column layout)
+  mobilePosition: string;
+}
 
-const partnerScales: Record<string, string> = {
-  default: "scale-100 sm:scale-140 md:scale-160 lg:scale-180",
-};
+const partners: Partner[] = [
+  // Row 1: MLH (cols 1-3), CECS (cols 4-6)
+  {
+    src: "/partnersSection/mlh.svg",
+    alt: "MLH",
+    link: "https://mlh.io/",
+    gridPosition: "sm:row-start-1 sm:row-span-1 sm:col-start-1 sm:col-span-3",
+    mobilePosition: "row-start-1 col-start-1 col-span-2",
+  },
+  {
+    src: "/partnersSection/cecs.png",
+    alt: "UCF CECS",
+    link: "https://www.cecs.ucf.edu/",
+    gridPosition: "sm:row-start-1 sm:row-span-1 sm:col-start-4 sm:col-span-3",
+    mobilePosition: "row-start-1 col-start-3 col-span-2",
+  },
+  // Row 2: GWC (cols 1-3), AI@UCF (cols 4-6)
+  {
+    src: "/partnersSection/gwc.png",
+    alt: "GWC@UCF",
+    link: "https://knightconnect.campuslabs.com/engage/organization/girlswhocode",
+    gridPosition: "sm:row-start-2 sm:row-span-1 sm:col-start-1 sm:col-span-3",
+    mobilePosition: "row-start-2 col-start-1 col-span-2",
+  },
+  {
+    src: "/partnersSection/ai.png",
+    alt: "AI@UCF",
+    link: "https://knightconnect.campuslabs.com/engage/organization/ucfai",
+    gridPosition: "sm:row-start-2 sm:row-span-1 sm:col-start-4 sm:col-span-3",
+    mobilePosition: "row-start-2 col-start-3 col-span-2",
+  },
+  // Row 3: ACM (cols 1-3), IEEE (cols 4-6)
+  {
+    src: "/partnersSection/acm.png",
+    alt: "ACM@UCF",
+    link: "https://knightconnect.campuslabs.com/engage/organization/acm",
+    gridPosition: "sm:row-start-3 sm:row-span-1 sm:col-start-1 sm:col-span-3",
+    mobilePosition: "row-start-3 col-start-1 col-span-2",
+  },
+  {
+    src: "/partnersSection/ieee.png",
+    alt: "IEEE@UCF",
+    link: "https://knightconnect.campuslabs.com/engage/organization/ieee",
+    gridPosition: "sm:row-start-3 sm:row-span-1 sm:col-start-4 sm:col-span-3",
+    mobilePosition: "row-start-3 col-start-3 col-span-2",
+  },
+  // Row 4: SASE (cols 1-3), GDK (cols 4-6)
+  {
+    src: "/partnersSection/sase.png",
+    alt: "SASE@UCF",
+    link: "https://knightconnect.campuslabs.com/engage/organization/saseucf",
+    gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-1 sm:col-span-3",
+    mobilePosition: "row-start-4 col-start-1 col-span-2",
+  },
+  {
+    src: "/partnersSection/gdk.png",
+    alt: "Game Dev Knights",
+    link: "https://knightconnect.campuslabs.com/engage/organization/gamedevknights",
+    gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-4 sm:col-span-3",
+    mobilePosition: "row-start-4 col-start-3 col-span-2",
+  },
+];
 
-const partnerPosters = () => {
+export default function PartnerPosters() {
   return (
-    <div
-      id="background-partners"
-      className="relative z-10 flex h-auto w-full justify-center"
-    >
-      <div className="mt-8 sm:mt-12 md:mt-16 lg:mt-20 mb-8 sm:mb-12 md:mb-16 lg:mb-20 grid md:flex w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%] xl:w-[50%] grid-cols-2 sm:grid-cols-2 md:flex-wrap lg:flex-wrap place-items-center md:justify-center md:items-center gap-3 sm:gap-4 md:gap-5 lg:gap-6">
-        {partners.map((partner, index) => {
-          const scale = partnerScales[partner.alt] || partnerScales.default;
-
-          return (
-            <Link key={index} href={partner.link} passHref legacyBehavior>
+    <div className="w-full px-2 py-4">
+      <div className="mx-auto max-w-7xl">
+        {/* Mobile: 4 cols, SM+: 6 cols */}
+        <div className="grid auto-rows-[120px] grid-cols-4 gap-2 sm:auto-rows-[120px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[140px] md:gap-4 lg:auto-rows-[160px] lg:gap-5">
+          {partners.map((partner, idx) => (
+            <Link key={idx} href={partner.link} passHref legacyBehavior>
               <a
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative flex aspect-[190/230] w-full max-w-[200px] sm:max-w-[220px] md:max-w-[240px] lg:max-w-[260px] items-center justify-center bg-[#EDE6D9] rounded-lg border border-gray-300 hover:shadow-xl hover:shadow-red-500/60 hover:scale-105 transition-all duration-300 cursor-pointer overflow-hidden"
+                className={`${partner.mobilePosition} ${partner.gridPosition} group relative flex items-center justify-center`}
               >
-                <div className="absolute inset-0 z-0 bg-[repeating-linear-gradient(45deg,rgba(222,213,170,0.4)_0,rgba(222,213,170,0.4)_2px,transparent_2px,transparent_10px)]"></div>
-                <div className={`relative z-10 h-[60%] w-[60%] ${scale} `}>
-                  <Image
-                    src={partner.src}
-                    alt={partner.alt}
-                    fill
-                    className="object-contain"
-                    unoptimized={true}
-                  />
+                {/* Main card */}
+                <div className="relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 hover:scale-[1.02] hover:shadow-2xl hover:ring-4 hover:shadow-blue-400/80 hover:ring-blue-400/50">
+                  {/* subtle dot pattern */}
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[length:20px_20px] opacity-30" />
+
+                  {/* logo container */}
+                  <div className="relative flex h-full w-full items-center justify-center">
+                    <Image
+                      src={partner.src}
+                      alt={partner.alt}
+                      fill
+                      className="object-contain p-4 drop-shadow-sm md:p-8"
+                      sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 20vw"
+                    />
+                  </div>
                 </div>
+
+                {/* Black drop shadow */}
+                <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
               </a>
             </Link>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </div>
   );
-};
-
-export default partnerPosters; 
+}
