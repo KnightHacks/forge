@@ -42,17 +42,16 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body
-        className="bg-[url('/background.svg')] bg-cover bg-center bg-no-repeat"
-        style={{
-          transform: "translate3d(0,0,0)",
-          backfaceVisibility: "hidden",
-          WebkitBackfaceVisibility: "hidden",
-          WebkitTransform: "translate3d(0,0,0)",
-          overflowX: "hidden",
-          minHeight: "100vh",
-        }}
-      >
+      <body style={{ overflowX: "hidden", minHeight: "100vh" }}>
+        <div
+          className="fixed inset-0 -z-50 bg-[url('/background.svg')] bg-cover bg-center bg-no-repeat"
+          style={{
+            transform: "translate3d(0,0,0)",
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            WebkitTransform: "translate3d(0,0,0)",
+          }}
+        />
         <Navbar />
         {children}
         <Footer />
