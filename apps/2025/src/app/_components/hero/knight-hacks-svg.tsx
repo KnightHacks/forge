@@ -9,6 +9,7 @@ const KnightHacksSVG = (props: SVGProps<SVGSVGElement>) => (
     fill="currentColor"
     {...props}
   >
+    <title>Knight Hacks 2025 Logo</title>
     <defs id="defs1">
       <clipPath id="clippath">
         <path

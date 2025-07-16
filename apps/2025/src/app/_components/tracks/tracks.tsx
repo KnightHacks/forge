@@ -28,7 +28,10 @@ export default function Tracks() {
         </div>
 
         {/* Comic centered */}
-        <Comic className="h-auto w-[98%] sm:w-[90%] md:w-[65%] lg:w-[55%] xl:w-[50%]" />
+        <Comic
+          aria-label="Choose from Our Hacker Tracks - Hello World, Artificial Intelligence / Machine Learning, App Development, Game Development, and Embedded Software!"
+          className="h-auto w-[98%] sm:w-[90%] md:w-[65%] lg:w-[55%] xl:w-[50%]"
+        />
       </div>
     </div>
   );

@@ -38,6 +38,7 @@ interface Sponsor {
   gridPosition: string;
   // Grid positioning for mobile (4-column layout)
   mobilePosition: string;
+  ariaLabel: string;
 }
 
 const SPONSOR_TIERS = {
@@ -64,6 +65,7 @@ const sponsors: Sponsor[] = [
   {
     src: "/sponsorSectionSvgs/google.png",
     alt: "GOOGLE",
+    ariaLabel: "Google Logo",
     link: "https://cloud.google.com/developers?e=48754805&hl=en",
     category: "Platinum",
     gridPosition: "sm:row-start-1 sm:row-span-2 sm:col-start-1 sm:col-span-3",
@@ -72,6 +74,7 @@ const sponsors: Sponsor[] = [
   {
     src: "/sponsorSectionSvgs/oneethos.svg",
     alt: "ONEETHOS",
+    ariaLabel: "OneEthos Logo",
     link: "https://oneethos.com/",
     category: "Platinum",
     gridPosition: "sm:row-start-1 sm:row-span-2 sm:col-start-4 sm:col-span-3",
@@ -81,6 +84,7 @@ const sponsors: Sponsor[] = [
   {
     src: "/sponsorSectionSvgs/amd.svg",
     alt: "AMD",
+    ariaLabel: "AMD Logo",
     link: "https://www.amd.com/",
     category: "Gold",
     gridPosition: "sm:row-start-3 sm:row-span-2 sm:col-start-1 sm:col-span-2",
@@ -89,6 +93,7 @@ const sponsors: Sponsor[] = [
   {
     src: "/sponsorSectionSvgs/servicenow.svg",
     alt: "SERVICENOW",
+    ariaLabel: "ServiceNow Logo",
     link: "https://www.servicenow.com/",
     category: "Gold",
     gridPosition: "sm:row-start-3 sm:row-span-2 sm:col-start-3 sm:col-span-2",
@@ -97,6 +102,7 @@ const sponsors: Sponsor[] = [
   {
     src: "/sponsorSectionSvgs/nextera-energy.svg",
     alt: "NEXTERA",
+    ariaLabel: "NextEra Logo",
     link: "https://www.nexteraenergy.com/",
     category: "Gold",
     gridPosition: "sm:row-start-3 sm:row-span-2 sm:col-start-5 sm:col-span-2",
@@ -106,6 +112,7 @@ const sponsors: Sponsor[] = [
   {
     src: "/sponsorSectionSvgs/bny.svg",
     alt: "BNY",
+    ariaLabel: "BNY Logo",
     link: "https://www.bnymellon.com/",
     category: "Gold",
     gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-1 sm:col-span-2",
@@ -114,6 +121,7 @@ const sponsors: Sponsor[] = [
   {
     src: "/sponsorSectionSvgs/lockheed-martin.svg",
     alt: "LOCKHEED MARTIN",
+    ariaLabel: "Lockheed Martin Logo",
     link: "https://www.lockheedmartin.com/",
     category: "Silver",
     gridPosition: "sm:row-start-5 sm:row-span-1 sm:col-start-3 sm:col-span-3",
@@ -122,6 +130,7 @@ const sponsors: Sponsor[] = [
   {
     src: "/sponsorSectionSvgs/nvidia.svg",
     alt: "NVIDIA",
+    ariaLabel: "NVIDIA Logo",
     link: "https://www.nvidia.com/",
     category: "Bronze",
     gridPosition: "sm:row-start-5 sm:row-span-1 sm:col-start-6 sm:col-span-1",
@@ -130,6 +139,7 @@ const sponsors: Sponsor[] = [
   {
     src: "/sponsorSectionSvgs/github.png",
     alt: "GITHUB",
+    ariaLabel: "GitHub Logo",
     link: "https://github.com/",
     category: "Silver",
     gridPosition: "sm:row-start-6 sm:row-span-1 sm:col-start-3 sm:col-span-3",
@@ -138,6 +148,7 @@ const sponsors: Sponsor[] = [
   {
     src: "/sponsorSectionSvgs/nasa.svg",
     alt: "NASA",
+    ariaLabel: "NASA Logo",
     link: "https://www.nasa.gov/",
     category: "Bronze",
     gridPosition: "sm:row-start-6 sm:row-span-1 sm:col-start-6 sm:col-span-1",
@@ -147,6 +158,7 @@ const sponsors: Sponsor[] = [
   {
     src: "/sponsorSectionSvgs/impressink.png",
     alt: "IMPRESSINK",
+    ariaLabel: "Impress Ink Logo",
     link: "https://impressink.com/",
     category: "Silver",
     gridPosition: "sm:row-start-7 sm:row-span-1 sm:col-start-1 sm:col-span-3",
@@ -155,6 +167,7 @@ const sponsors: Sponsor[] = [
   {
     src: "/sponsorSectionSvgs/shinies.png",
     alt: "SHINIES PROPS",
+    ariaLabel: "Shinies Props Logo",
     link: "https://www.instagram.com/shiniesprops/",
     category: "Silver",
     gridPosition: "sm:row-start-7 sm:row-span-1 sm:col-start-4 sm:col-span-3",
@@ -172,7 +185,15 @@ export default function SponsorPosters() {
             const tierConfig = SPONSOR_TIERS[sponsor.category];
 
             return (
-              <Link key={idx} href={sponsor.link} passHref legacyBehavior>
+              <Link
+                key={idx}
+                href={sponsor.link}
+                passHref
+                legacyBehavior
+                aria-label={sponsor.ariaLabel}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <a
                   target="_blank"
                   rel="noopener noreferrer"
