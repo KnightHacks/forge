@@ -1,4 +1,3 @@
-import React from "react";
 import Image from "next/image";
 
 interface MLHBadgeProps {
@@ -17,10 +16,11 @@ function MLHBadge({ showFloating }: MLHBadgeProps) {
     >
       <a
         id="mlh-trust-badge"
-        className="block"
+        className="block rounded-sm transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434]"
         href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2026-season&utm_content=white"
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="Major League Hacking 2026 Hackathon Season - Opens in new tab"
       >
         <Image
           src="https://s3.amazonaws.com/logged-assets/trust-badge/2026/mlh-trust-badge-2026-white.svg"

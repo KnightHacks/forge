@@ -8,14 +8,14 @@ import Tracks from "./_components/tracks/tracks";
 export default function Home() {
   return (
     <div className="bg-[url('/background.svg')] bg-cover">
-      <div className="relative z-10">
+      <main id="main-content" className="relative z-10">
         <Hero />
         <About />
         <Tracks />
         <Sponsors />
         <Partners />
         <Faq />
-      </div>
+      </main>
     </div>
   );
 }
