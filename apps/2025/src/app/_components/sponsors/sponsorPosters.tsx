@@ -5,15 +5,17 @@
   Larger than Mobile:
   Google Google Google OneEthos OneEthos OneEthos
   Google Google Google  OneEthos OneEthos OneEthos
+  Pheratech Pheratech Pheratech Impress Impress Impress
+  Pheratech Pheratech Pheratech Shinies Shinies Shinies
   AMD AMD ServiceNow ServiceNow NextEra NextEra
   AMD AMD ServiceNow ServiceNow NextEra NextEra
   BNY BNY Lockheed Martin Lockheed Martin Lockheed Martin NVIDIA
   BNY BNY GitHub GitHub GitHub NASA
-  Impress Impress Impress Shinies Shinies Shinies
-
+   
   Mobile:
   Google Google Google Google
   OneEthos OneEthos OneEthos OneEthos
+  Pheratech Pheratech Pheratech Pheratech
   AMD AMD ServiceNow ServiceNow
   AMD AMD ServiceNow ServiceNow
   NextEra NextEra BNY BNY
@@ -63,7 +65,7 @@ const SPONSOR_TIERS = {
 const sponsors: Sponsor[] = [
   // Row 1-2: Google (cols 1-3), OneEthos (cols 4-6)
   {
-    src: "/sponsorSectionSvgs/google.png",
+    src: "/sponsorSectionSvgs/google.svg",
     alt: "GOOGLE",
     ariaLabel: "Google Logo",
     link: "https://cloud.google.com/developers?e=48754805&hl=en",
@@ -80,89 +82,24 @@ const sponsors: Sponsor[] = [
     gridPosition: "sm:row-start-1 sm:row-span-2 sm:col-start-4 sm:col-span-3",
     mobilePosition: "row-start-2 row-span-1 col-start-1 col-span-4",
   },
-  // Row 3-4: AMD (cols 1-2), ServiceNow (cols 3-4), NextEra (cols 5-6)
+  // Row 3-4: Pheratech (cols 1-3), Impress (col 4-6, row 3), Shinies (col 4-6, row 4)
   {
-    src: "/sponsorSectionSvgs/amd.svg",
-    alt: "AMD",
-    ariaLabel: "AMD Logo",
-    link: "https://www.amd.com/",
-    category: "Gold",
-    gridPosition: "sm:row-start-3 sm:row-span-2 sm:col-start-1 sm:col-span-2",
-    mobilePosition: "row-start-3 row-span-2 col-start-1 col-span-2",
+    src: "/sponsorSectionSvgs/pheratech.png",
+    alt: "PHERATECH SYSTEMS",
+    ariaLabel: "Pheratech Systems Logo",
+    link: "https://pheratech.com/",
+    category: "Platinum",
+    gridPosition: "sm:row-start-3 sm:row-span-2 sm:col-start-1 sm:col-span-3",
+    mobilePosition: "row-start-3 row-span-1 col-start-1 col-span-4",
   },
-  {
-    src: "/sponsorSectionSvgs/servicenow.svg",
-    alt: "SERVICENOW",
-    ariaLabel: "ServiceNow Logo",
-    link: "https://www.servicenow.com/",
-    category: "Gold",
-    gridPosition: "sm:row-start-3 sm:row-span-2 sm:col-start-3 sm:col-span-2",
-    mobilePosition: "row-start-3 row-span-2 col-start-3 col-span-2",
-  },
-  {
-    src: "/sponsorSectionSvgs/nextera-energy.svg",
-    alt: "NEXTERA",
-    ariaLabel: "NextEra Logo",
-    link: "https://www.nexteraenergy.com/",
-    category: "Gold",
-    gridPosition: "sm:row-start-3 sm:row-span-2 sm:col-start-5 sm:col-span-2",
-    mobilePosition: "row-start-5 row-span-2 col-start-1 col-span-2",
-  },
-  // Row 5-6: BNY (cols 1-2, spans 2 rows), Lockheed Martin (cols 3-5, row 5), NVIDIA (col 6, row 5), GitHub (cols 3-5, row 6), NASA (col 6, row 6)
-  {
-    src: "/sponsorSectionSvgs/bny.svg",
-    alt: "BNY",
-    ariaLabel: "BNY Logo",
-    link: "https://www.bnymellon.com/",
-    category: "Gold",
-    gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-1 sm:col-span-2",
-    mobilePosition: "row-start-5 row-span-2 col-start-3 col-span-2",
-  },
-  {
-    src: "/sponsorSectionSvgs/lockheed-martin.svg",
-    alt: "LOCKHEED MARTIN",
-    ariaLabel: "Lockheed Martin Logo",
-    link: "https://www.lockheedmartin.com/",
-    category: "Silver",
-    gridPosition: "sm:row-start-5 sm:row-span-1 sm:col-start-3 sm:col-span-3",
-    mobilePosition: "row-start-7 row-span-1 col-start-1 col-span-3",
-  },
-  {
-    src: "/sponsorSectionSvgs/nvidia.svg",
-    alt: "NVIDIA",
-    ariaLabel: "NVIDIA Logo",
-    link: "https://www.nvidia.com/",
-    category: "Bronze",
-    gridPosition: "sm:row-start-5 sm:row-span-1 sm:col-start-6 sm:col-span-1",
-    mobilePosition: "row-start-7 row-span-1 col-start-4 col-span-1",
-  },
-  {
-    src: "/sponsorSectionSvgs/github.png",
-    alt: "GITHUB",
-    ariaLabel: "GitHub Logo",
-    link: "https://github.com/",
-    category: "Silver",
-    gridPosition: "sm:row-start-6 sm:row-span-1 sm:col-start-3 sm:col-span-3",
-    mobilePosition: "row-start-8 row-span-1 col-start-1 col-span-3",
-  },
-  {
-    src: "/sponsorSectionSvgs/nasa.svg",
-    alt: "NASA",
-    ariaLabel: "NASA Logo",
-    link: "https://www.nasa.gov/",
-    category: "Bronze",
-    gridPosition: "sm:row-start-6 sm:row-span-1 sm:col-start-6 sm:col-span-1",
-    mobilePosition: "row-start-8 row-span-1 col-start-4 col-span-1",
-  },
-  // Row 7: Impress (cols 1-3), Shinies (cols 4-6)
   {
     src: "/sponsorSectionSvgs/impressink.png",
     alt: "IMPRESSINK",
     ariaLabel: "Impress Ink Logo",
     link: "https://impressink.com/",
     category: "Silver",
-    gridPosition: "sm:row-start-7 sm:row-span-1 sm:col-start-1 sm:col-span-3",
-    mobilePosition: "row-start-9 row-span-1 col-start-1 col-span-2",
+    gridPosition: "sm:row-start-3 sm:row-span-1 sm:col-start-4 sm:col-span-3",
+    mobilePosition: "row-start-10 row-span-1 col-start-1 col-span-2",
   },
   {
     src: "/sponsorSectionSvgs/shinies.png",
@@ -170,8 +107,82 @@ const sponsors: Sponsor[] = [
     ariaLabel: "Shinies Props Logo",
     link: "https://www.instagram.com/shiniesprops/",
     category: "Silver",
-    gridPosition: "sm:row-start-7 sm:row-span-1 sm:col-start-4 sm:col-span-3",
-    mobilePosition: "row-start-9 row-span-1 col-start-3 col-span-2",
+    gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-4 sm:col-span-3",
+    mobilePosition: "row-start-10 row-span-1 col-start-3 col-span-2",
+  },
+  // Row 5-6: AMD (cols 1-2), ServiceNow (cols 3-4), NextEra (cols 5-6)
+  {
+    src: "/sponsorSectionSvgs/amd.svg",
+    alt: "AMD",
+    ariaLabel: "AMD Logo",
+    link: "https://www.amd.com/",
+    category: "Gold",
+    gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-1 sm:col-span-2",
+    mobilePosition: "row-start-4 row-span-2 col-start-1 col-span-2",
+  },
+  {
+    src: "/sponsorSectionSvgs/servicenow.svg",
+    alt: "SERVICENOW",
+    ariaLabel: "ServiceNow Logo",
+    link: "https://www.servicenow.com/",
+    category: "Gold",
+    gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-3 sm:col-span-2",
+    mobilePosition: "row-start-4 row-span-2 col-start-3 col-span-2",
+  },
+  {
+    src: "/sponsorSectionSvgs/nextera-energy.svg",
+    alt: "NEXTERA",
+    ariaLabel: "NextEra Logo",
+    link: "https://www.nexteraenergy.com/",
+    category: "Gold",
+    gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-5 sm:col-span-2",
+    mobilePosition: "row-start-6 row-span-2 col-start-1 col-span-2",
+  },
+  // Row 7-8: BNY (cols 1-2), Lockheed Martin (cols 3-5, row 7), NVIDIA (col 6, row 7), GitHub (cols 3-5, row 8), NASA (col 6, row 8)
+  {
+    src: "/sponsorSectionSvgs/bny.svg",
+    alt: "BNY",
+    ariaLabel: "BNY Logo",
+    link: "https://www.bnymellon.com/",
+    category: "Gold",
+    gridPosition: "sm:row-start-7 sm:row-span-2 sm:col-start-1 sm:col-span-2",
+    mobilePosition: "row-start-6 row-span-2 col-start-3 col-span-2",
+  },
+  {
+    src: "/sponsorSectionSvgs/lockheed-martin.svg",
+    alt: "LOCKHEED MARTIN",
+    ariaLabel: "Lockheed Martin Logo",
+    link: "https://www.lockheedmartin.com/",
+    category: "Silver",
+    gridPosition: "sm:row-start-7 sm:row-span-1 sm:col-start-3 sm:col-span-3",
+    mobilePosition: "row-start-8 row-span-1 col-start-1 col-span-3",
+  },
+  {
+    src: "/sponsorSectionSvgs/nvidia.svg",
+    alt: "NVIDIA",
+    ariaLabel: "NVIDIA Logo",
+    link: "https://www.nvidia.com/",
+    category: "Bronze",
+    gridPosition: "sm:row-start-7 sm:row-span-1 sm:col-start-6 sm:col-span-1",
+    mobilePosition: "row-start-8 row-span-1 col-start-4 col-span-1",
+  },
+  {
+    src: "/sponsorSectionSvgs/github.png",
+    alt: "GITHUB",
+    ariaLabel: "GitHub Logo",
+    link: "https://github.com/",
+    category: "Silver",
+    gridPosition: "sm:row-start-8 sm:row-span-1 sm:col-start-3 sm:col-span-3",
+    mobilePosition: "row-start-9 row-span-1 col-start-1 col-span-3",
+  },
+  {
+    src: "/sponsorSectionSvgs/nasa.svg",
+    alt: "NASA",
+    ariaLabel: "NASA Logo",
+    link: "https://www.nasa.gov/",
+    category: "Bronze",
+    gridPosition: "sm:row-start-8 sm:row-span-1 sm:col-start-6 sm:col-span-1",
+    mobilePosition: "row-start-9 row-span-1 col-start-4 col-span-1",
   },
 ];
 

@@ -203,7 +203,7 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
           >
             <div className="group relative">
               {/* Main navbar container with TextBox styling - Made wider */}
-              <div className="relative w-5xl max-w-6xl rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
+              <div className="relative w-4xl max-w-6xl rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 xl:w-5xl">
                 <div className="flex items-center gap-4 p-4">
                   {/* Logo - Clickable but no highlight */}
                   <motion.button
@@ -244,7 +244,7 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                           transition={{ delay: index * 0.1 }}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          className={`tk-ccmeanwhile relative flex min-h-[50px] cursor-pointer items-center justify-center rounded-none px-6 py-3 text-lg font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] ${
+                          className={`tk-ccmeanwhile relative flex min-h-[50px] cursor-pointer items-center justify-center rounded-none px-6 py-3 text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] xl:text-lg ${
                             isActive
                               ? "text-white shadow-lg"
                               : "text-slate-800 hover:text-white"

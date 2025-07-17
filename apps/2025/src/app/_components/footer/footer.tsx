@@ -43,19 +43,19 @@ export default function Footer() {
             <div className="group relative">
               <div className="relative rounded-none bg-[#F7F0C6] p-4 outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 md:p-6">
                 <div className="text-center">
-                  <h3 className="tk-ccmeanwhile mb-3 text-lg font-bold text-[#d83434] md:text-xl">
+                  <h3 className="tk-ccmeanwhile mb-3 text-lg font-bold text-[#d83434] brightness-75 md:text-xl">
                     COMMUNITY
                   </h3>
                   <div className="space-y-2">
                     <Link
                       href={mlhcoc}
-                      className="tk-ccmeanwhile block text-sm text-slate-800 transition-colors hover:text-[#d83434] md:text-base"
+                      className="tk-ccmeanwhile block text-sm text-slate-800 underline transition-colors hover:text-[#d83434] md:text-base"
                     >
                       MLH Code of Conduct
                     </Link>
                     <Link
                       href={khcoc}
-                      className="tk-ccmeanwhile block text-sm text-slate-800 transition-colors hover:text-[#d83434] md:text-base"
+                      className="tk-ccmeanwhile block text-sm text-slate-800 underline transition-colors hover:text-[#d83434] md:text-base"
                     >
                       Knight Hacks Code of Conduct
                     </Link>
@@ -69,19 +69,19 @@ export default function Footer() {
             <div className="group relative">
               <div className="relative rounded-none bg-[#F7F0C6] p-4 outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 md:p-6">
                 <div className="text-center">
-                  <h3 className="tk-ccmeanwhile mb-3 text-lg font-bold text-[#FBB03B] md:text-xl">
+                  <h3 className="tk-ccmeanwhile mb-3 text-lg font-bold text-[#FBB03B] brightness-75 md:text-xl">
                     RESOURCES
                   </h3>
                   <div className="space-y-2">
                     <Link
                       href={sponsor}
-                      className="tk-ccmeanwhile block text-sm text-slate-800 transition-colors hover:text-[#FBB03B] md:text-base"
+                      className="tk-ccmeanwhile block text-sm text-slate-800 underline transition-colors hover:text-[#FBB03B] md:text-base"
                     >
                       Sponsor Us
                     </Link>
                     <Link
                       href={hackersGuide}
-                      className="tk-ccmeanwhile block text-sm text-slate-800 transition-colors hover:text-[#FBB03B] md:text-base"
+                      className="tk-ccmeanwhile block text-sm text-slate-800 underline transition-colors hover:text-[#FBB03B] md:text-base"
                     >
                       Hackers Guide
                     </Link>
@@ -95,7 +95,7 @@ export default function Footer() {
             <div className="group relative">
               <div className="relative rounded-none bg-[#F7F0C6] p-4 outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 md:p-6">
                 <div className="text-center">
-                  <h3 className="tk-ccmeanwhile mb-3 text-lg font-bold text-[#1570AD] md:text-xl">
+                  <h3 className="tk-ccmeanwhile mb-3 text-lg font-bold text-[#1570AD] brightness-75 md:text-xl">
                     EVENT
                   </h3>
                   <div className="space-y-2">
