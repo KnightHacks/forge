@@ -7,7 +7,7 @@ interface MLHBadgeProps {
 function MLHBadge({ showFloating }: MLHBadgeProps) {
   return (
     <div
-      className={`fixed top-0 right-4 z-[9998] transition-all duration-300 ease-in-out ${
+      className={`fixed top-0 right-4 z-[9999] transition-all duration-300 ease-in-out ${
         showFloating
           ? "-translate-y-full opacity-0"
           : "translate-y-0 opacity-100"

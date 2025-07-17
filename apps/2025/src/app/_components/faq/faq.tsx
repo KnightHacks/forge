@@ -1,17 +1,22 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@forge/ui/accordion";
+"use client";
+
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
+import { ChevronDownIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 import Link from "next/link";
+
+/* Radix aliases ----------------------------------------------------------- */
+const Accordion = AccordionPrimitive.Root;
+const AccordionItem = AccordionPrimitive.Item;
+const AccordionTrigger = AccordionPrimitive.Trigger;
+const AccordionContent = AccordionPrimitive.Content;
+
+/* ------------------------------------------------------------------------ */
 
 interface FaqLink {
   text: string;
   href: string;
 }
-
 interface FaqItem {
   id: string;
   question: string;
@@ -19,6 +24,7 @@ interface FaqItem {
   links?: FaqLink[];
 }
 
+/* FAQ DATA ---------------------------------------------------------------- */
 const faqData: FaqItem[] = [
   {
     id: "1",
@@ -30,7 +36,7 @@ const faqData: FaqItem[] = [
     id: "2",
     question: "How long is Knight Hacks?",
     answer:
-      "Knight Hacks is a 36-hour hackathon, beginning at 5pm on Friday and ending at 6pm on Sunday. We encourage you to work on your project for as long as you can during this time.",
+      "Knight Hacks is a 36‑hour hackathon, beginning at 5 pm on Friday and ending at 6 pm on Sunday. We encourage you to work on your project for as long as you can during this time.",
   },
   {
     id: "3",
@@ -48,7 +54,7 @@ const faqData: FaqItem[] = [
     id: "5",
     question: "Do I need a team?",
     answer:
-      "Not at all! You can be a lone wolf, come with a team (no more than four people), or join some teams at Knight Hacks. We'll also have team building activities to help you find the right teammates!",
+      "Not at all! You can be a lone wolf, come with a team (no more than four people), or join some teams at Knight Hacks. We'll also have team‑building activities to help you find the right teammates!",
   },
   {
     id: "6",
@@ -60,7 +66,7 @@ const faqData: FaqItem[] = [
     id: "7",
     question: "What can I build?",
     answer:
-      "Anything your heart desires! Whatever you're interested in we will support it. We have five tracks that will have extra resources, sponsored challenges, and other events to inspire you and prepare you. Check out our previous Devpost for examples of what participants built in the past!",
+      "Anything your heart desires! Whatever you're interested in, we will support it. We have five tracks that will have extra resources, sponsored challenges, and other events to inspire you and prepare you. Check out our previous Devpost for examples of what participants built in the past!",
   },
   {
     id: "8",
@@ -103,7 +109,7 @@ const faqData: FaqItem[] = [
     id: "13",
     question: "What if I've never been to a hackathon before?",
     answer:
-      "That's totally fine; Knight Hacks is beginner-friendly! We have workshops, mentors, and a welcoming environment to help you get started and learn as you go.",
+      "That's totally fine; Knight Hacks is beginner‑friendly! We have workshops, mentors, and a welcoming environment to help you get started and learn as you go.",
   },
   {
     id: "14",
@@ -115,18 +121,21 @@ const faqData: FaqItem[] = [
     id: "15",
     question: "Is Knight Hacks in person or virtual?",
     answer:
-      "Knight Hacks is fully in-person! Everything from check-in to project submission to demos will happen at the venue. Make sure you're able to attend in-person before registering.",
+      "Knight Hacks is fully in‑person! Everything from check‑in to project submission to demos will happen at the venue. Make sure you're able to attend in person before registering.",
   },
 ];
+
+/* ------------------------------------------------------------------------ */
 
 export default function Faq() {
   return (
     <div
       id="faqs"
-      className="relative z-10 mt-40 flex h-full min-h-screen w-full flex-col items-center pb-64 sm:pb-60 md:pb-72 lg:pb-80 xl:pb-96"
+      className="relative z-10 mt-40 flex min-h-screen w-full flex-col items-center pb-16 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40"
     >
-      <div className="relative z-10 mb-2 flex h-auto w-full items-center justify-center sm:mb-3 md:mb-4 lg:mb-6">
-        <div className="relative flex w-[100%] items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%]">
+      {/* ---------- title ---------- */}
+      <div className="relative z-10 mb-2 flex w-full items-center justify-center sm:mb-3 md:mb-4 lg:mb-6">
+        <div className="relative flex w-full items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%]">
           <Image
             src="/sponsorSectionSvgs/spikeything.svg"
             alt="spikeything"
@@ -143,9 +152,11 @@ export default function Faq() {
           </span>
         </div>
       </div>
+
+      {/* ---------- accordion(s) ---------- */}
       <div className="w-full px-2 py-4">
         <div className="mx-auto max-w-7xl">
-          {/* Mobile: Single column with all FAQs */}
+          {/* mobile (single column) */}
           <div className="lg:hidden">
             <Accordion
               type="single"
@@ -153,58 +164,13 @@ export default function Faq() {
               className="min-h-[900px] w-full space-y-3 sm:space-y-4"
             >
               {faqData.map((faq) => (
-                <AccordionItem
-                  key={faq.id}
-                  value={faq.id}
-                  className="group relative overflow-hidden rounded-none border-0"
-                >
-                  {/* Main FAQ Card */}
-                  <div className="relative rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
-                    <AccordionTrigger className="tk-ccmeanwhile w-full px-3 py-2 text-left text-sm text-slate-800 hover:no-underline sm:px-4 sm:py-3 sm:text-base md:px-6 md:py-4 md:text-lg lg:px-8 lg:py-5 [&[data-state=open]>svg]:rotate-180">
-                      {faq.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="tk-ccmeanwhile px-3 pt-1 pb-2 text-xs leading-relaxed text-slate-700 sm:px-4 sm:pt-2 sm:pb-3 sm:text-sm md:px-6 md:pb-4 md:text-base lg:px-8 lg:pb-6">
-                      {faq.links ? (
-                        <>
-                          {faq.answer
-                            .split("Hacker's Guide")
-                            .map((part, index, array) => (
-                              <span key={index}>
-                                {part}
-                                {index < array.length - 1 && (
-                                  <Link
-                                    href={faq.links?.[0]?.href ?? "#"}
-                                    className="text-blue-600 hover:underline"
-                                  >
-                                    Hacker's Guide
-                                  </Link>
-                                )}
-                              </span>
-                            ))}{" "}
-                          <Link
-                            href={faq.links[1]?.href ?? "#"}
-                            className="text-blue-600 hover:underline"
-                          >
-                            Discord
-                          </Link>
-                          .
-                        </>
-                      ) : (
-                        faq.answer
-                      )}
-                    </AccordionContent>
-                  </div>
-
-                  {/* Black drop shadow */}
-                  <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-                </AccordionItem>
+                <FaqCard key={faq.id} {...faq} />
               ))}
             </Accordion>
           </div>
 
-          {/* Desktop: Two columns */}
+          {/* desktop (two columns) */}
           <div className="hidden min-h-[1000px] grid-cols-2 gap-8 py-6 lg:grid xl:gap-10">
-            {/* Column 1 */}
             <div className="space-y-3 sm:space-y-4">
               <Accordion
                 type="single"
@@ -212,56 +178,10 @@ export default function Faq() {
                 className="w-full space-y-3 sm:space-y-4"
               >
                 {faqData.slice(0, 8).map((faq) => (
-                  <AccordionItem
-                    key={faq.id}
-                    value={faq.id}
-                    className="group relative overflow-hidden rounded-none border-0"
-                  >
-                    {/* Main FAQ Card */}
-                    <div className="relative rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
-                      <AccordionTrigger className="tk-ccmeanwhile w-full px-3 py-2 text-left text-sm text-slate-800 hover:no-underline sm:px-4 sm:py-3 sm:text-base md:px-6 md:py-4 md:text-lg lg:px-8 lg:py-5 [&[data-state=open]>svg]:rotate-180">
-                        {faq.question}
-                      </AccordionTrigger>
-                      <AccordionContent className="tk-ccmeanwhile px-3 pt-1 pb-2 text-xs leading-relaxed text-slate-700 sm:px-4 sm:pt-2 sm:pb-3 sm:text-sm md:px-6 md:pb-4 md:text-base lg:px-8 lg:pb-6">
-                        {faq.links ? (
-                          <>
-                            {faq.answer
-                              .split("Hacker's Guide")
-                              .map((part, index, array) => (
-                                <span key={index}>
-                                  {part}
-                                  {index < array.length - 1 && (
-                                    <Link
-                                      href={faq.links?.[0]?.href ?? "#"}
-                                      className="text-blue-600 hover:underline"
-                                    >
-                                      Hacker's Guide
-                                    </Link>
-                                  )}
-                                </span>
-                              ))}{" "}
-                            <Link
-                              href={faq.links[1]?.href ?? "#"}
-                              className="text-blue-600 hover:underline"
-                            >
-                              Discord
-                            </Link>
-                            .
-                          </>
-                        ) : (
-                          faq.answer
-                        )}
-                      </AccordionContent>
-                    </div>
-
-                    {/* Black drop shadow */}
-                    <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-                  </AccordionItem>
+                  <FaqCard key={faq.id} {...faq} />
                 ))}
               </Accordion>
             </div>
-
-            {/* Column 2 */}
             <div className="space-y-3 sm:space-y-4">
               <Accordion
                 type="single"
@@ -269,24 +189,7 @@ export default function Faq() {
                 className="w-full space-y-3 sm:space-y-4"
               >
                 {faqData.slice(8).map((faq) => (
-                  <AccordionItem
-                    key={faq.id}
-                    value={faq.id}
-                    className="group relative overflow-hidden rounded-none border-0"
-                  >
-                    {/* Main FAQ Card */}
-                    <div className="relative rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
-                      <AccordionTrigger className="tk-ccmeanwhile w-full px-3 py-2 text-left text-sm text-slate-800 hover:no-underline sm:px-4 sm:py-3 sm:text-base md:px-6 md:py-4 md:text-lg lg:px-8 lg:py-5 [&[data-state=open]>svg]:rotate-180">
-                        {faq.question}
-                      </AccordionTrigger>
-                      <AccordionContent className="tk-ccmeanwhile px-3 pt-1 pb-2 text-xs leading-relaxed text-slate-700 sm:px-4 sm:pt-2 sm:pb-3 sm:text-sm md:px-6 md:pb-4 md:text-base lg:px-8 lg:pb-6">
-                        {faq.answer}
-                      </AccordionContent>
-                    </div>
-
-                    {/* Black drop shadow */}
-                    <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-                  </AccordionItem>
+                  <FaqCard key={faq.id} {...faq} />
                 ))}
               </Accordion>
             </div>
@@ -294,5 +197,57 @@ export default function Faq() {
         </div>
       </div>
     </div>
+  );
+}
+
+/* reusable card ----------------------------------------------------------- */
+function FaqCard({ id, question, answer, links }: FaqItem) {
+  return (
+    <AccordionItem
+      value={id}
+      className="group relative overflow-hidden rounded-none border-0"
+    >
+      {/* front face */}
+      <div className="relative rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-all duration-200 ease-in-out group-hover:-translate-x-1 group-hover:-translate-y-1">
+        <AccordionTrigger className="tk-ccmeanwhile flex w-full items-center justify-between px-3 py-2 text-left text-sm text-slate-800 transition-all duration-300 ease-in-out hover:no-underline sm:px-4 sm:py-3 sm:text-base md:px-6 md:py-4 md:text-lg lg:px-8 lg:py-5 [&[data-state=open]>svg]:rotate-180">
+          <span className="flex-1 pr-4">{question}</span>
+          <ChevronDownIcon className="h-4 w-4 shrink-0 text-slate-600 transition-transform duration-300 ease-in-out" />
+        </AccordionTrigger>
+
+        <AccordionContent className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm">
+          <div className="tk-ccmeanwhile px-3 pt-1 pb-2 text-xs leading-relaxed text-slate-700 sm:px-4 sm:pt-2 sm:pb-3 sm:text-sm md:px-6 md:pb-4 md:text-base lg:px-8 lg:pb-6">
+            {links ? (
+              <>
+                {answer.split("Hacker's Guide").map((part, i, arr) => (
+                  <span key={i}>
+                    {part}
+                    {i < arr.length - 1 && (
+                      <Link
+                        href={links[0]?.href ?? "#"}
+                        className="text-blue-600 transition-colors duration-200 hover:underline"
+                      >
+                        Hacker's Guide
+                      </Link>
+                    )}
+                  </span>
+                ))}{" "}
+                <Link
+                  href={links[1]?.href ?? "#"}
+                  className="text-blue-600 transition-colors duration-200 hover:underline"
+                >
+                  Discord
+                </Link>
+                .
+              </>
+            ) : (
+              answer
+            )}
+          </div>
+        </AccordionContent>
+      </div>
+
+      {/* shadow */}
+      <div className="absolute inset-0 -z-10 h-full w-full bg-black transition-all duration-200 ease-in-out group-hover:translate-x-2 group-hover:translate-y-2" />
+    </AccordionItem>
   );
 }
