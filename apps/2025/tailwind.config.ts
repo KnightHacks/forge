@@ -1,6 +1,5 @@
 import baseConfig from "@forge/tailwind-config/web";
 import type { Config } from "tailwindcss";
-import animate from "tailwindcss-animate";
 
 const config: Config = {
   content: [
@@ -32,7 +31,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [animate],
+  plugins: [require("tailwindcss-animate")],
 };
 
 export default config;
