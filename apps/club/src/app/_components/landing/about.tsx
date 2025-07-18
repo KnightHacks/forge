@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { lazy, useEffect, useRef } from "react";
+import Image from "next/image";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
-import NeonTkSVG from "./assets/neon-tk";
-import SwordSVG from "./assets/sword";
-import TerminalSVG from "./assets/terminal";
+const NeonTkSVG = lazy(() => import("./assets/neon-tk"));
+const SwordSVG = lazy(() => import("./assets/sword"));
+const TerminalSVG = lazy(() => import("./assets/terminal"));
 
 export default function About() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -70,7 +71,7 @@ export default function About() {
           </p>
         </div>
       </div>
-      <SwordSVG className="animate-float absolute -bottom-20 right-20 hidden h-auto w-full max-w-[400px] text-purple-400 opacity-50 md:block" />
+      <SwordSVG className="animate-float absolute right-20 hidden h-auto w-full max-w-[400px] text-purple-400 opacity-50 md:block" />
       <NeonTkSVG className="animate-float absolute left-10 top-16 hidden h-[200px] w-full max-w-[400px] text-purple-400 opacity-50 md:block" />
       <TerminalSVG className="animate-float absolute -bottom-48 left-[-60px] hidden h-auto w-full max-w-[500px] text-purple-800 opacity-40 md:block" />
     </div>

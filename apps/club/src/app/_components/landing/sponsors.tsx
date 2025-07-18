@@ -42,7 +42,7 @@ export default function Sponsors() {
     >
       <h2
         ref={headerRef}
-        className="font-pragati z-10 pb-24 pt-32 text-2xl font-bold leading-tight tracking-tight text-white [text-shadow:0px_0px_40px_#6B21A8,0px_0px_20px_#6B21A8,0px_0px_10px_#6B21A8] md:pb-32 md:pt-12 md:text-5xl lg:text-6xl"
+        className="font-pragati z-10 pb-12 pt-32 text-2xl font-bold leading-tight tracking-tight text-white [text-shadow:0px_0px_40px_#6B21A8,0px_0px_20px_#6B21A8,0px_0px_10px_#6B21A8] md:pb-32 md:pt-12 md:text-5xl lg:text-6xl"
       >
         Previously Sponsored By
       </h2>

@@ -64,13 +64,13 @@ export default function Impact() {
       ref={containerRef}
       className="relative flex h-screen min-h-screen flex-col items-center justify-center"
     >
-      <NeonTkSVG className="animate-float absolute bottom-[-151px] left-[-40px] hidden w-[300px] text-purple-400 opacity-50 md:block" />
-      <SwordSVG className="animate-float absolute bottom-[-70px] right-20 hidden w-[300px] text-purple-500 opacity-50 md:block" />
+      <NeonTkSVG className="animate-float absolute bottom-[-151px] left-[10px] hidden w-[300px] text-purple-400 opacity-50 md:block" />
+      <SwordSVG className="animate-float absolute right-20 top-0 hidden w-[300px] text-purple-500 opacity-50 md:block" />
       <div
         ref={headerRef}
-        className="mb-3 flex items-center justify-center md:space-x-4"
+        className="flex flex-col items-center justify-center gap-2"
       >
-        <p className="font-pragati mr-3 text-xl font-bold tracking-wide text-white [text-shadow:0px_0px_40px_#6B21A8,0px_0px_20px_#6B21A8,0px_0px_10px_#6B21A8] md:text-3xl">
+        <p className="font-pragati text-xl font-bold tracking-wide text-white [text-shadow:0px_0px_40px_#6B21A8,0px_0px_20px_#6B21A8,0px_0px_10px_#6B21A8] md:text-3xl">
           How we make an
         </p>
         <h1
@@ -82,7 +82,7 @@ export default function Impact() {
       </div>
       <div
         ref={expandableRef}
-        className="mt-32 flex h-[600px] w-full items-center justify-center md:w-2/3 xl:h-[700px]"
+        className="mt-12 flex h-[600px] w-full items-center justify-center md:w-2/3 xl:h-[700px]"
       >
         <Expandable autoPlay={inView} />
       </div>
