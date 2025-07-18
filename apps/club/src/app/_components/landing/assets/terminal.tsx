@@ -3,7 +3,7 @@ import * as React from "react";
 import Image from "next/image";
 
 const TerminalSVG = React.memo((props: SVGProps<SVGSVGElement>) => {
-  const { className, ...rest } = props;
+  const { className } = props;
   return (
     <Image
       alt="terminal"
