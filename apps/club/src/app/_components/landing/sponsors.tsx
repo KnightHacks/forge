@@ -48,7 +48,7 @@ export default function Sponsors() {
       </h2>
       <div
         ref={sponsorContainerRef}
-        className="z-10 mx-auto flex w-full max-w-[50%] flex-wrap justify-center gap-6 px-4"
+        className="z-10 mx-auto flex w-full flex-wrap justify-center gap-6 px-4 md:max-w-[50%]"
       >
         {companies.map((company, index) => (
           <SponsorCard

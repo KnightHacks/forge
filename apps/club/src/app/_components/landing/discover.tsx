@@ -79,7 +79,7 @@ export default function Discover({ memberCount }: { memberCount: number }) {
       className="relative flex h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#1b112b] via-[#331d52] to-[#4c1d95] px-4"
     >
       <NeonTkSVG className="animate-float absolute left-20 top-20 hidden w-[250px] text-purple-500 opacity-50 md:block" />
-      <div className="z-10 flex flex-col items-center space-y-6 text-center">
+      <div className="z-10 mb-48 flex flex-col items-center space-y-6 text-center md:mb-0">
         <div className="flex flex-col items-center space-y-4">
           <div ref={counterRef} className="flex items-baseline gap-3">
             <Counter

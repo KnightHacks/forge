@@ -68,7 +68,7 @@ export default function Impact() {
       <SwordSVG className="animate-float absolute right-20 top-0 hidden w-[300px] text-purple-500 opacity-50 md:block" />
       <div
         ref={headerRef}
-        className="flex flex-col items-center justify-center gap-2"
+        className="mb-16 flex flex-col items-center justify-center gap-2 md:mb-0"
       >
         <p className="font-pragati text-xl font-bold tracking-wide text-white [text-shadow:0px_0px_40px_#6B21A8,0px_0px_20px_#6B21A8,0px_0px_10px_#6B21A8] md:text-3xl">
           How we make an

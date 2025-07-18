@@ -11,7 +11,7 @@ import TypingText from "./hero-assets/typing-text";
 const Hero = ({ bladeUrl }: { bladeUrl: string }) => {
   return (
     <section className="relative min-h-screen overflow-hidden px-4 py-12">
-      <SwordSVG className="animate-float absolute left-[-40px] top-8 block w-[300px] text-purple-400 opacity-50 md:block" />
+      <SwordSVG className="animate-float absolute left-[-40px] top-8 block hidden w-[300px] text-purple-400 opacity-50 md:block" />
       <NeonTkSVG className="animate-float absolute bottom-20 right-20 hidden w-[300px] text-purple-500 opacity-50 md:block" />
 
       <div className="z-50 mx-auto max-w-6xl">
