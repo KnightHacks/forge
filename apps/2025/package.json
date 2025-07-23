@@ -30,6 +30,7 @@
     "react-dom": "catalog:react18",
     "server-only": "^0.0.1",
     "superjson": "2.2.1",
+    "tailwindcss-animate": "^1.0.7",
     "zod": "catalog:"
   },
   "devDependencies": {
