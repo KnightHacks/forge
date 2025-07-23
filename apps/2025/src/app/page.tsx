@@ -1,7 +1,6 @@
 import About from "./_components/about/about";
-import Faq from "./_components/faq/faq";
 import Hero from "./_components/hero/hero";
-import Partners from "./_components/partners/partners";
+import PartnersFaqWrapper from "./_components/partners-faq-wrapper";
 import Sponsors from "./_components/sponsors/sponsors";
 import Tracks from "./_components/tracks/tracks";
 
@@ -13,8 +12,7 @@ export default function Home() {
         <About />
         <Tracks />
         <Sponsors />
-        <Partners />
-        <Faq />
+        <PartnersFaqWrapper />
       </main>
     </div>
   );
