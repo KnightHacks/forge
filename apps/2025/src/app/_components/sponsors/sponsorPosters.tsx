@@ -249,6 +249,7 @@ export default function SponsorPosters() {
                             fill
                             className="object-contain p-4 drop-shadow-sm sm:hidden"
                             sizes="45vw"
+                            draggable={false}
                           />
                           <Image
                             src="/sponsorSectionSvgs/google.svg"
@@ -256,6 +257,7 @@ export default function SponsorPosters() {
                             fill
                             className="hidden object-contain p-8 drop-shadow-sm sm:block"
                             sizes="(max-width: 1024px) 16vw, 12vw"
+                            draggable={false}
                           />
                         </>
                       ) : (
@@ -269,6 +271,7 @@ export default function SponsorPosters() {
                               : "p-4 md:p-8"
                           } ${sponsor.alt === "GITHUB" ? "md:scale-125" : ""}`}
                           sizes="(max-width: 640px) 45vw, (max-width: 1024px) 16vw, 12vw"
+                          draggable={false}
                         />
                       )}
                     </div>
