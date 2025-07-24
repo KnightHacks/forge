@@ -35,8 +35,9 @@ export default function Footer() {
       </div>
 
       {/* Footer Content - TextBox Style Cards */}
-      <div className="w-full px-2 py-4">
-        <div className="mx-auto max-w-7xl">
+      <div className="flex w-full justify-center">
+        <div className="w-[90%] px-2 py-4 sm:w-[85%] md:w-[80%]">
+          <div className="mx-auto max-w-7xl">
           {/* Links Section - Three colored cards */}
           <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
             {/* Red Card - MLH & Contact */}
@@ -127,6 +128,7 @@ export default function Footer() {
               </div>
               <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
             </div>
+          </div>
           </div>
         </div>
       </div>

@@ -3,12 +3,14 @@ import PartnersTitle from "./partnersTitle";
 
 const partners = () => {
   return (
-    <div
-      id="partners"
-      className="mb-16 h-auto w-full sm:mb-20 md:mb-24 lg:mb-32 xl:mb-40"
-    >
-      <PartnersTitle />
-      <PartnerPosters />
+    <div className="flex w-full justify-center">
+      <div
+        id="partners"
+        className="mb-16 h-auto w-[90%] sm:mb-20 md:mb-24 lg:mb-32 xl:mb-40"
+      >
+        <PartnersTitle />
+        <PartnerPosters />
+      </div>
     </div>
   );
 };

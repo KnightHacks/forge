@@ -130,12 +130,13 @@ const faqData: FaqItem[] = [
 
 export default function Faq() {
   return (
-    <div
-      id="faqs"
-      className="relative z-10 mt-40 flex min-h-screen w-full flex-col items-center pb-16 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40"
-    >
-      <PipesBackground />
-      {/* ---------- title ---------- */}
+    <div className="flex w-full justify-center">
+      <div
+        id="faqs"
+        className="relative z-10 mt-40 flex min-h-screen w-[90%] flex-col items-center pb-16 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40"
+      >
+        <PipesBackground />
+        {/* ---------- title ---------- */}
       <div className="relative z-10 mb-2 flex w-full items-center justify-center sm:mb-3 md:mb-4 lg:mb-6">
         <div className="relative flex w-full items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%]">
           <Image
@@ -198,6 +199,7 @@ export default function Faq() {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
