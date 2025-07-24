@@ -1,12 +1,44 @@
+import type { Metadata, Viewport } from "next";
 import "~/styles/globals.css";
-import type { Metadata } from "next";
-import Navbar from "./_components/navbar/Navbar";
 import Footer from "./_components/footer/footer";
+import Navbar from "./_components/navbar/Navbar";
 
 export const metadata: Metadata = {
-  title: "Knight Hacks 2025",
-  description: "The largest hackathon in Orlando",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  metadataBase: new URL("https://2025.knighthacks.org"),
+  title: "Knight Hacks VIII",
+  description:
+    "Knight Hacks VIII is a 36-hour Hackathon held at the University of Central Florida. Join us on October 24th - 26th for a weekend of building, learning, and innovation!",
+  keywords: [
+    "Hackathon",
+    "UCF",
+    "Knight Hacks",
+    "Knight Hacks VIII",
+    "Computer Science",
+    "Software Engineering",
+    "Orlando FL",
+  ],
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    title: "Knight Hacks VIII",
+    type: "website",
+    description:
+      "Knight Hacks VIII is a 36-hour Hackathon held at the University of Central Florida. Join us on October 24th - 26th for a weekend of building, learning, and innovation!",
+    url: "https://2025.knighthacks.org",
+    siteName: "Knight Hacks VIII",
+    images: [
+      {
+        url: "https://2025.knighthacks.org/event-banner.png",
+        alt: "Event Banner",
+      },
+    ],
+  },
+  themeColor: "#c84c3c",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#c84c3c",
 };
 
 export default function RootLayout({
@@ -14,7 +46,16 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className="bg-[url('/background.svg')] bg-cover">
+      <body style={{ overflowX: "hidden", minHeight: "100vh" }}>
+        <div
+          className="fixed inset-0 -z-50 bg-[url('/background.svg')] bg-cover bg-center bg-no-repeat"
+          style={{
+            transform: "translate3d(0,0,0)",
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            WebkitTransform: "translate3d(0,0,0)",
+          }}
+        />
         <Navbar />
         {children}
         <Footer />

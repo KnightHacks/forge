@@ -1,4 +1,3 @@
-import * as React from "react";
 import type { SVGProps } from "react";
 
 const HeroSVG = (props: SVGProps<SVGSVGElement>) => (
@@ -8,8 +7,6 @@ const HeroSVG = (props: SVGProps<SVGSVGElement>) => (
     height="824"
     fill="none"
     viewBox="0 0 1703 824"
-    role="img"
-    aria-label="JOIN THE FIGHT, October 24th-26th, 2025"
     {...props}
   >
     <g fill="#5C9BE4" clipPath="url(#clip0_0_1)">

@@ -247,7 +247,6 @@ export function HackerFormPage({
       resumeUrl: "",
       dob: "",
       gradDate: "",
-      status: undefined,
       survey1: "",
       survey2: "",
       isFirstTime: false,
@@ -280,7 +279,6 @@ export function HackerFormPage({
         resumeUrl: previousHacker.resumeUrl, // Keep existing resume URL
         dob: previousHacker.dob,
         gradDate: previousHacker.gradDate,
-        status: undefined,
         survey1: "", // Keep survey answers empty for new applications
         survey2: "", // Keep survey answers empty for new applications
         isFirstTime: previousHacker.isFirstTime,

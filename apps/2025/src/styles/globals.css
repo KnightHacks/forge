@@ -70,3 +70,68 @@
   font-weight: normal;
   font-style: normal;
 }
+
+/* Custom Scrollbar - TextBox Theme */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+  border: none;
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d83434;
+  border: none;
+  border-radius: 0;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b12b2b;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #8b1a1a;
+}
+
+::-webkit-scrollbar-corner {
+  background: #000000;
+  border: none;
+}
+
+/* Firefox scrollbar */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #d83434 #000000;
+}
+
+@media (max-width: 768px) {
+  body {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
+  }
+  
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

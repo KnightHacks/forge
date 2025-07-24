@@ -13,7 +13,7 @@ export default function AcceptButton({
   hacker,
   hackathonName,
 }: {
-  hacker: InsertHacker;
+  hacker: InsertHacker & { status: string };
   hackathonName: string;
 }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +48,11 @@ export default function AcceptButton({
   const handleUpdateStatus = async () => {
     setIsLoading(true);
 
-    updateStatus.mutate({ id: hacker.id, status: "accepted", hackathonName });
+    updateStatus.mutate({
+      id: hacker.id ?? "",
+      status: "accepted",
+      hackathonName,
+    });
 
     const html = await render(
       <GemiKnightsAcceptanceEmail

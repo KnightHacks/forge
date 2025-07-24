@@ -12,6 +12,7 @@ import SchoolBarChart from "~/app/admin/_components/SchoolBarChart";
 import SchoolYearPie from "~/app/admin/_components/SchoolYearPie";
 import { api } from "~/trpc/react";
 import FirstTimeInfo from "./FirstTimeInfo";
+import ShirtSizePie from "./ShirtSizePie";
 
 export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
   const { data: hackers } = api.hacker.getHackers.useQuery(hackathonId);
@@ -87,6 +88,7 @@ export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
                 <RaceOrEthnicityPie people={filteredHackers} />
                 <SchoolYearPie people={filteredHackers} />
                 <SchoolBarChart people={filteredHackers} />
+                <ShirtSizePie hackers={filteredHackers} />
               </div>
             ) : (
               <h1 className="mt-20 text-center text-xl">

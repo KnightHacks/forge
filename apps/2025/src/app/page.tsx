@@ -1,21 +1,19 @@
-import Hero from "./_components/hero/hero";
-import Tracks from "./_components/tracks/tracks";
 import About from "./_components/about/about";
-import Faq from "./_components/faq/faq";
+import Hero from "./_components/hero/hero";
+import PartnersFaqWrapper from "./_components/partners-faq-wrapper";
 import Sponsors from "./_components/sponsors/sponsors";
-import Partners from "./_components/partners/partners";
+import Tracks from "./_components/tracks/tracks";
 
 export default function Home() {
   return (
     <div className="bg-[url('/background.svg')] bg-cover">
-      <div className="relative z-10">
+      <main id="main-content" className="relative z-10">
         <Hero />
         <About />
         <Tracks />
-        <Faq />
         <Sponsors />
-        <Partners />
-      </div>
+        <PartnersFaqWrapper />
+      </main>
     </div>
   );
 }

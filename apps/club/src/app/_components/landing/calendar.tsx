@@ -110,10 +110,10 @@ export default function CalendarEventsPage({
       ref={containerRef}
       className="relative min-h-screen overflow-hidden px-4 py-12"
     >
-      <div className="mx-auto max-w-6xl">
+      <div className="relative z-20 mx-auto max-w-6xl">
         <h1
           ref={headerRef}
-          className="font-pragati pb-32 text-center text-[20px] font-bold leading-[102px] tracking-[0.05em] text-white [text-shadow:0px_0px_281.064px_#6B21A8,0px_0px_160.608px_#6B21A8,0px_0px_93.688px_#6B21A8,0px_0px_46.844px_#6B21A8,0px_0px_13.384px_#6B21A8,0px_0px_6.692px_#6B21A8] md:text-[45px]"
+          className="font-pragati bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text pb-12 text-center text-[28px] font-extrabold leading-[1.1] tracking-wider text-transparent text-white drop-shadow-[0_4px_32px_rgba(139,92,246,0.7)] md:text-[60px]"
         >
           Stay up to date!
         </h1>
@@ -131,7 +131,7 @@ export default function CalendarEventsPage({
           >
             <div
               ref={calendarRef}
-              className="w-full max-w-lg rounded-xl bg-[#1E293B]/50 p-6 shadow-xl shadow-purple-900/40 backdrop-blur-md"
+              className="relative z-30 w-full max-w-lg rounded-xl bg-[#1E293B]/50 p-6 shadow-xl shadow-purple-900/40 backdrop-blur-md"
             >
               <Calendar
                 compact
@@ -161,8 +161,8 @@ export default function CalendarEventsPage({
         </div>
       </div>
       <TerminalSVG className="animate-float absolute -top-80 right-12 z-0 hidden h-auto w-full max-w-[400px] transform opacity-70 md:block" />
-      <SwordSVG className="animate-float absolute -bottom-72 left-0 hidden w-[500px] text-purple-400 opacity-50 md:block" />
-      <NeonTkSVG className="animate-float absolute -bottom-14 right-24 hidden w-[400px] text-purple-500 opacity-50 md:block" />
+      <SwordSVG className="animate-float absolute -left-40 -top-20 z-0 hidden w-[500px] text-purple-400 opacity-50 md:block" />
+      <NeonTkSVG className="animate-float absolute bottom-14 right-24 hidden w-[400px] text-purple-500 opacity-50 md:block" />
     </section>
   );
 }

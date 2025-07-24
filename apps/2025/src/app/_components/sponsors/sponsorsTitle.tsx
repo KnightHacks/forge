@@ -1,22 +1,21 @@
-import React from "react";
 import Image from "next/image";
 
 const spikeything = "/sponsorSectionSvgs/spikeything.svg";
 
 const sponsorsTitle = () => {
   return (
-    <div className="relative z-10 h-auto w-full mb-2 sm:mb-3 md:mb-4 lg:mb-6 flex items-center justify-center">
-      <div className="relative flex items-center justify-center w-[70%] sm:w-[65%] md:w-[60%] lg:w-[55%] xl:w-[50%]">
+    <div className="relative z-10 mb-2 flex h-auto w-full items-center justify-center sm:mb-3 md:mb-4 lg:mb-6">
+      <div className="relative flex w-[100%] items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%]">
         <Image
           src={spikeything}
           alt="spikeything"
           width={0}
           height={0}
           sizes="100vw"
-          className="z-10 h-[70%] w-[70%]"
+          className="z-10 h-[80%] w-[80%] md:h-[60%] md:w-[60%]"
         />
         <span
-          className="absolute z-20 mt-[5%] text-[6vw] sm:text-[5vw] md:text-[4vw] lg:text-[3vw] xl:text-[2.5vw] text-[#1570AD]"
+          className="absolute top-1/2 left-1/2 z-20 mt-[1%] -translate-x-1/2 -translate-y-1/2 transform text-[6vw] text-[#1570AD] sm:text-[5vw] md:text-[4vw] lg:text-[3vw] xl:text-[2.5vw]"
           style={{ fontFamily: '"The Last Shuriken"' }}
         >
           SPONSORS
