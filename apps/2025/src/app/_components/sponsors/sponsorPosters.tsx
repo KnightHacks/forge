@@ -2,18 +2,18 @@
   /*
   CURRENT LOGO LAYOUT - DO NOT DELETE
 
-  Larger than Mobile:
+  Larger than Mobile (6 columns):
   Google Google Google OneEthos OneEthos OneEthos
-  Google Google Google  OneEthos OneEthos OneEthos
-  Pheratech Pheratech Pheratech Lockheed Martin Lockheed Martin Lockheed Martin
-  Pheratech Pheratech Pheratech GitHub GitHub GitHub
+  Google Google Google OneEthos OneEthos OneEthos
+  Pheratech Pheratech Pheratech Lockheed Lockheed Lockheed
+  Pheratech Pheratech Pheratech GitHub NVIDIA NASA
   AMD AMD Statsig Statsig NextEra NextEra
   AMD AMD Statsig Statsig NextEra NextEra
   BNY BNY ServiceNow ServiceNow Auritas Auritas
   BNY BNY ServiceNow ServiceNow Auritas Auritas
-  NVIDIA NASA Impress Impress Shinies Shinies
+  Impressink Impressink Impressink Shinies Shinies Shinies
    
-  Mobile:
+  Mobile (4 columns):
   Google Google Google Google
   OneEthos OneEthos OneEthos OneEthos
   Pheratech Pheratech Pheratech Pheratech
@@ -21,11 +21,13 @@
   AMD AMD Statsig Statsig
   NextEra NextEra BNY BNY
   NextEra NextEra BNY BNY
-  ServiceNow ServiceNow  Auritas Auritas
-  ServiceNow ServiceNow  Auritas Auritas
-  Lockheed Martin  Lockheed Martin Lockheed Martin NVIDIA
-  GitHub GitHub GitHub NASA
-  Impress Impress Shinies Shinies
+  ServiceNow ServiceNow Auritas Auritas
+  ServiceNow ServiceNow Auritas Auritas
+  Lockheed Lockheed Lockheed GitHub
+  Impressink Impressink Impressink NVIDIA
+  Shinies Shinies Shinies NASA
+
+
 */
 }
 
@@ -85,7 +87,6 @@ const sponsors: Sponsor[] = [
     gridPosition: "sm:row-start-1 sm:row-span-2 sm:col-start-4 sm:col-span-3",
     mobilePosition: "row-start-2 row-span-1 col-start-1 col-span-4",
   },
-  // Row 3-4: Pheratech (cols 1-3), Lockheed Martin (col 4-6, row 3), GitHub (col 4-6, row 4)
   {
     src: "/sponsorSectionSvgs/pheratech.png",
     alt: "PHERATECH SYSTEMS",
@@ -105,15 +106,14 @@ const sponsors: Sponsor[] = [
     mobilePosition: "row-start-10 row-span-1 col-start-1 col-span-3",
   },
   {
-    src: "/sponsorSectionSvgs/github.png",
-    alt: "GITHUB",
-    ariaLabel: "GitHub Logo",
-    link: "https://github.com/",
+    src: "/sponsorSectionSvgs/impressink.png",
+    alt: "IMPRESSINK",
+    ariaLabel: "Impress Ink Logo",
+    link: "https://impressink.com/",
     category: "Silver",
-    gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-4 sm:col-span-3",
+    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-1 sm:col-span-3",
     mobilePosition: "row-start-11 row-span-1 col-start-1 col-span-3",
   },
-  // Row 5-6: AMD (cols 1-2), Statsig (cols 3-4), NextEra (cols 5-6)
   {
     src: "/sponsorSectionSvgs/amd.svg",
     alt: "AMD",
@@ -141,7 +141,6 @@ const sponsors: Sponsor[] = [
     gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-5 sm:col-span-2",
     mobilePosition: "row-start-6 row-span-2 col-start-1 col-span-2",
   },
-  // Row 7-8: BNY (cols 1-2), ServiceNow (cols 3-4), Auritas (cols 5-6)
   {
     src: "/sponsorSectionSvgs/bny.svg",
     alt: "BNY",
@@ -169,15 +168,23 @@ const sponsors: Sponsor[] = [
     gridPosition: "sm:row-start-7 sm:row-span-2 sm:col-start-5 sm:col-span-2",
     mobilePosition: "row-start-8 row-span-2 col-start-3 col-span-2",
   },
-  // Row 9: NVIDIA (col 1), NASA (col 2), Impress (cols 3-4), Shinies (cols 5-6)
+  {
+    src: "/sponsorSectionSvgs/github.png",
+    alt: "GITHUB",
+    ariaLabel: "GitHub Logo",
+    link: "https://github.com/",
+    category: "Bronze",
+    gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-4 sm:col-span-1",
+    mobilePosition: "row-start-10 row-span-1 col-start-4 col-span-1",
+  },
   {
     src: "/sponsorSectionSvgs/nvidia.svg",
     alt: "NVIDIA",
     ariaLabel: "NVIDIA Logo",
     link: "https://www.nvidia.com/",
     category: "Bronze",
-    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-1 sm:col-span-1",
-    mobilePosition: "row-start-10 row-span-1 col-start-4 col-span-1",
+    gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-5 sm:col-span-1",
+    mobilePosition: "row-start-11 row-span-1 col-start-4 col-span-1",
   },
   {
     src: "/sponsorSectionSvgs/nasa.svg",
@@ -185,17 +192,8 @@ const sponsors: Sponsor[] = [
     ariaLabel: "NASA Logo",
     link: "https://www.nasa.gov/",
     category: "Bronze",
-    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-2 sm:col-span-1",
-    mobilePosition: "row-start-11 row-span-1 col-start-4 col-span-1",
-  },
-  {
-    src: "/sponsorSectionSvgs/impressink.png",
-    alt: "IMPRESSINK",
-    ariaLabel: "Impress Ink Logo",
-    link: "https://impressink.com/",
-    category: "Silver",
-    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-3 sm:col-span-2",
-    mobilePosition: "row-start-12 row-span-1 col-start-1 col-span-2",
+    gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-6 sm:col-span-1",
+    mobilePosition: "row-start-12 row-span-1 col-start-4 col-span-1",
   },
   {
     src: "/sponsorSectionSvgs/shinies.png",
@@ -203,17 +201,17 @@ const sponsors: Sponsor[] = [
     ariaLabel: "Shinies Props Logo",
     link: "https://www.instagram.com/shiniesprops/",
     category: "Silver",
-    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-5 sm:col-span-2",
-    mobilePosition: "row-start-12 row-span-1 col-start-3 col-span-2",
+    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-4 sm:col-span-3",
+    mobilePosition: "row-start-12 row-span-1 col-start-1 col-span-3",
   },
 ];
 
 export default function SponsorPosters() {
   return (
-    <div className="w-full px-2 py-4">
-      <div className="mx-auto max-w-7xl">
+    <div className="w-full px-4 py-4">
+      <div className="mx-auto max-w-5xl">
         {/* Mobile: 4 cols, SM+: 6 cols */}
-        <div className="grid auto-rows-[80px] grid-cols-4 gap-2 sm:auto-rows-[100px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[120px] md:gap-4 lg:auto-rows-[140px] lg:gap-5">
+        <div className="grid auto-rows-[70px] grid-cols-4 gap-2 sm:auto-rows-[90px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[110px] md:gap-4 lg:auto-rows-[130px] lg:gap-5">
           {sponsors.map((sponsor, idx) => {
             const tierConfig = SPONSOR_TIERS[sponsor.category];
 
@@ -267,9 +265,9 @@ export default function SponsorPosters() {
                           fill
                           className={`object-contain drop-shadow-sm ${
                             sponsor.alt === "NVIDIA"
-                              ? "md:scale-125"
+                              ? "p-2 sm:p-4 md:p-6 md:scale-125"
                               : "p-4 md:p-8"
-                          } ${sponsor.alt === "GITHUB" ? "md:scale-125" : ""}`}
+                          } ${sponsor.alt === "GITHUB" ? "p-2 sm:p-4 md:p-6 md:scale-125" : ""}`}
                           sizes="(max-width: 640px) 45vw, (max-width: 1024px) 16vw, 12vw"
                           draggable={false}
                         />
