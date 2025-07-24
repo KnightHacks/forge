@@ -7,6 +7,7 @@ import AgeBarChart from "~/app/admin/_components/AgeBarChart";
 import FirstTimeHackersPie from "~/app/admin/_components/FirstTimeHackersPie";
 import FoodAllergiesBarChart from "~/app/admin/_components/FoodAllergiesBarChart";
 import GenderPie from "~/app/admin/_components/GenderPie";
+import MajorBarChart from "~/app/admin/_components/MajorBarChart";
 import RaceOrEthnicityPie from "~/app/admin/_components/RaceOrEthnicityPie";
 import SchoolBarChart from "~/app/admin/_components/SchoolBarChart";
 import SchoolYearPie from "~/app/admin/_components/SchoolYearPie";
@@ -88,6 +89,7 @@ export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
                 <RaceOrEthnicityPie people={filteredHackers} />
                 <SchoolYearPie people={filteredHackers} />
                 <SchoolBarChart people={filteredHackers} />
+                <MajorBarChart people={filteredHackers} />
                 <ShirtSizePie hackers={filteredHackers} />
               </div>
             ) : (

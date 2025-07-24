@@ -10,6 +10,7 @@ import {
   GENDERS,
   HACKATHON_APPLICATION_STATES,
   LEVELS_OF_STUDY,
+  MAJORS,
   RACES_OR_ETHNICITIES,
   SCHOOLS,
   SHIRT_SIZES,
@@ -64,6 +65,7 @@ export const Member = createTable(
     phoneNumber: t.varchar({ length: 255 }),
     school: t.text({ enum: SCHOOLS }).notNull(),
     levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
+    major: t.text({ enum: MAJORS }).notNull().default("Computer Science"),
     gender: genderEnum().default("Prefer not to answer").notNull(),
     raceOrEthnicity: raceOrEthnicityEnum()
       .default("Prefer not to answer")
@@ -108,6 +110,7 @@ export const Hacker = createTable("hacker", (t) => ({
   phoneNumber: t.varchar({ length: 255 }),
   school: t.text({ enum: SCHOOLS }).notNull(),
   levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
+  major: t.text({ enum: MAJORS }).notNull().default("Computer Science"),
   raceOrEthnicity: raceOrEthnicityEnum()
     .default("Prefer not to answer")
     .notNull(),

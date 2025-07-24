@@ -12,6 +12,7 @@ import {
   GENDERS,
   KNIGHTHACKS_MAX_RESUME_SIZE,
   LEVELS_OF_STUDY,
+  MAJORS,
   RACES_OR_ETHNICITIES,
   SCHOOLS,
   SHIRT_SIZES,
@@ -346,6 +347,7 @@ export function HackerFormPage({
               phoneNumber: values.phoneNumber,
               country: values.country as (typeof COUNTRIES)[number],
               school: values.school,
+              major: values.major,
               levelOfStudy: values.levelOfStudy,
               gender: values.gender ?? "Prefer not to answer",
               gradDate: values.gradDate,
@@ -610,6 +612,30 @@ export function HackerFormPage({
                   onItemSelect={(school) => field.onChange(school)}
                   buttonPlaceholder={field.value}
                   inputPlaceholder="Search for your school"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="major"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Major of Study <span className="text-destructive">*</span>
+              </FormLabel>
+              <FormControl>
+                <ResponsiveComboBox
+                  key={`major-${comboBoxKey}-${field.value}`}
+                  items={MAJORS}
+                  renderItem={(major) => <div>{major}</div>}
+                  getItemValue={(major) => major}
+                  getItemLabel={(major) => major}
+                  onItemSelect={(major) => field.onChange(major)}
+                  buttonPlaceholder={field.value}
+                  inputPlaceholder="Search for your major"
                 />
               </FormControl>
               <FormMessage />

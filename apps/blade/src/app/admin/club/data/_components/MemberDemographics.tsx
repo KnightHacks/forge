@@ -2,6 +2,7 @@
 
 import { api } from "~/trpc/react";
 import AgeBarChart from "../../../_components/AgeBarChart";
+import MajorBarChart from "../../../_components/MajorBarChart";
 import RaceOrEthnicityPie from "../../../_components/RaceOrEthnicityPie";
 import SchoolYearPie from "../../../_components/SchoolYearPie";
 import EngagementInfo from "./member-data/EngagementInfo";
@@ -28,6 +29,7 @@ export default function MemberDemographics() {
           <AgeBarChart people={members} />
           <SchoolYearPie people={members} />
           <SchoolBarChart members={members} />
+          <MajorBarChart people={members} />
           <ShirtSizePie members={members} />
         </div>
       )}

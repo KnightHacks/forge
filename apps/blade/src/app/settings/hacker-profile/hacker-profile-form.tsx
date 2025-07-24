@@ -10,6 +10,7 @@ import {
   GENDERS,
   KNIGHTHACKS_MAX_RESUME_SIZE,
   LEVELS_OF_STUDY,
+  MAJORS,
   RACES_OR_ETHNICITIES,
   SCHOOLS,
   SHIRT_SIZES,
@@ -199,6 +200,7 @@ export function HackerProfileForm({
       email: hacker?.email ?? "",
       phoneNumber: hacker?.phoneNumber ?? "",
       school: hacker?.school ?? undefined,
+      major: hacker?.major ?? undefined,
       levelOfStudy: hacker?.levelOfStudy ?? undefined,
       shirtSize: hacker?.shirtSize ?? undefined,
       githubProfileUrl: hacker?.githubProfileUrl ?? "",
@@ -230,6 +232,7 @@ export function HackerProfileForm({
       email: hacker.email,
       phoneNumber: hacker.phoneNumber ?? "",
       school: hacker.school,
+      major: hacker.major,
       levelOfStudy: hacker.levelOfStudy,
       shirtSize: hacker.shirtSize,
       githubProfileUrl: hacker.githubProfileUrl ?? "",
@@ -555,6 +558,29 @@ export function HackerProfileForm({
                     onItemSelect={(school) => field.onChange(school)}
                     buttonPlaceholder={hacker.school}
                     inputPlaceholder="Search for your school"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="major"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Major of Study <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <ResponsiveComboBox
+                    items={MAJORS}
+                    renderItem={(major) => <div>{major}</div>}
+                    getItemValue={(major) => major}
+                    getItemLabel={(major) => major}
+                    onItemSelect={(major) => field.onChange(major)}
+                    buttonPlaceholder={hacker.major}
+                    inputPlaceholder="Search for your major"
                   />
                 </FormControl>
                 <FormMessage />

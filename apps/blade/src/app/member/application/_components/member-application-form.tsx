@@ -14,6 +14,7 @@ import {
   KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
   KNIGHTHACKS_MAX_RESUME_SIZE,
   LEVELS_OF_STUDY,
+  MAJORS,
   RACES_OR_ETHNICITIES,
   SCHOOLS,
   SHIRT_SIZES,
@@ -342,6 +343,7 @@ export function MemberApplicationForm() {
               email: values.email,
               dob: values.dob,
               school: values.school,
+              major: values.major,
               phoneNumber:
                 values.phoneNumber === "" ? undefined : values.phoneNumber,
               levelOfStudy: values.levelOfStudy,
@@ -590,6 +592,29 @@ export function MemberApplicationForm() {
                   onItemSelect={(value) => field.onChange(value)}
                   buttonPlaceholder="Select your school"
                   inputPlaceholder="Search for your school"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="major"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Major of Study <span className="text-destructive">*</span>
+              </FormLabel>
+              <FormControl>
+                <ResponsiveComboBox
+                  items={MAJORS}
+                  renderItem={(item) => <div>{item}</div>}
+                  getItemValue={(item) => item}
+                  getItemLabel={(item) => item}
+                  onItemSelect={(value) => field.onChange(value)}
+                  buttonPlaceholder="Select your major"
+                  inputPlaceholder="Search for your major"
                 />
               </FormControl>
               <FormMessage />
