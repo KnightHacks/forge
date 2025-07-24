@@ -46,6 +46,13 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preload" as="image" href="/background.svg" />
+        <link rel="preload" as="image" href="/about-graphic.svg" />
+        <link rel="preload" as="image" href="/comic.svg" />
+        <link rel="dns-prefetch" href="//mlh.io" />
+        <link rel="dns-prefetch" href="//discord.knighthacks.org" />
+      </head>
       <body style={{ overflowX: "hidden", minHeight: "100vh" }}>
         <div
           className="fixed inset-0 -z-50 bg-[url('/background.svg')] bg-cover bg-center bg-no-repeat"
@@ -54,6 +61,7 @@ export default function RootLayout({
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             WebkitTransform: "translate3d(0,0,0)",
+            willChange: "transform",
           }}
         />
         <Navbar />

@@ -7,6 +7,11 @@ import Tracks from "./_components/tracks/tracks";
 export default function Home() {
   return (
     <div className="bg-[url('/background.svg')] bg-cover">
+      <link rel="preload" as="image" href="/about-graphic.svg" />
+      <link rel="preload" as="image" href="/comic.svg" />
+      <link rel="preload" as="image" href="/background.svg" />
+      <link rel="preload" as="image" href="/khFull.svg" />
+      
       <main id="main-content" className="relative z-10">
         <Hero />
         <About />
