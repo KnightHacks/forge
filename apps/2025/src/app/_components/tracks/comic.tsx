@@ -6,12 +6,12 @@ const Comic = React.memo((props: SVGProps<SVGSVGElement>) => {
   const { className } = props;
   return (
     <Image
-      src="comic.svg"
+      src="/comic.svg"
       alt="Choose from Our Hacker Tracks - Hello World, Artificial Intelligence / Machine Learning, App Development, Game Development, and Embedded Software!"
-      width={3627}
-      height={4390}
+      width={3777}
+      height={5758}
       className={className}
-    ></Image>
+    />
   );
 });
 

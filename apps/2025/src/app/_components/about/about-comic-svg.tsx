@@ -6,7 +6,7 @@ const AboutComicSVG = React.memo((props: SVGProps<SVGSVGElement>) => {
   const { className } = props;
   return (
     <Image
-      src="AboutComic.svg"
+      src="about-graphic.svg"
       alt="Hackers Must Choose - Defeat Darkness, or Take Over the World!"
       width={3777}
       height={5758}
