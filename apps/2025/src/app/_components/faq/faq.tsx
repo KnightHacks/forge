@@ -6,8 +6,6 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 
-import PipesBackground from "../pipes-background";
-
 /* Radix aliases ----------------------------------------------------------- */
 const Accordion = AccordionPrimitive.Root;
 const AccordionItem = AccordionPrimitive.Item;
@@ -141,7 +139,6 @@ export default function Faq() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         viewport={{ once: true, amount: 0.2, margin: "-100px" }}
       >
-        <PipesBackground />
         {/* ---------- title ---------- */}
       <div className="relative z-10 mb-2 flex w-full items-center justify-center sm:mb-3 md:mb-4 lg:mb-6">
         <div className="relative flex w-full items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%]">
