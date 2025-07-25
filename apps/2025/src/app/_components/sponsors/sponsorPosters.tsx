@@ -196,7 +196,7 @@ const sponsors: Sponsor[] = [
     mobilePosition: "row-start-12 row-span-1 col-start-4 col-span-1",
   },
   {
-    src: "/sponsorSectionSvgs/shinies.png",
+    src: "/sponsorSectionSvgs/shinies.svg",
     alt: "SHINIES PROPS",
     ariaLabel: "Shinies Props Logo",
     link: "https://www.instagram.com/shiniesprops/",
@@ -267,7 +267,9 @@ export default function SponsorPosters() {
                             sponsor.alt === "NVIDIA"
                               ? "p-2 sm:p-4 md:p-6 md:scale-125"
                               : "p-4 md:p-8"
-                          } ${sponsor.alt === "GITHUB" ? "p-2 sm:p-4 md:p-6 md:scale-125" : ""}`}
+                          } ${sponsor.alt === "GITHUB" ? "p-2 sm:p-4 md:p-6 md:scale-125" : ""} ${
+                            sponsor.alt === "SHINIES PROPS" ? "brightness-0" : ""
+                          }`}
                           sizes="(max-width: 640px) 45vw, (max-width: 1024px) 16vw, 12vw"
                           draggable={false}
                         />

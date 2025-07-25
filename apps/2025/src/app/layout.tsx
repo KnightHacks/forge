@@ -52,6 +52,13 @@ export default function RootLayout({
         <link rel="preload" as="image" href="/comic.svg" />
         <link rel="dns-prefetch" href="//mlh.io" />
         <link rel="dns-prefetch" href="//discord.knighthacks.org" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          // Reset scroll position on page load
+          window.addEventListener('load', function() {
+            window.scrollTo(0, 0);
+            history.scrollRestoration = 'manual';
+          });
+        ` }} />
       </head>
       <body style={{ overflowX: "hidden", minHeight: "100vh" }}>
         <div

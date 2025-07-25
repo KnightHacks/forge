@@ -1,137 +1,124 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const footerSVG = "./khFull.svg";
-const shadow = "./shadow.svg";
-const mlhcoc = "https://mlh.io/code-of-conduct";
-const sponsor = "https://blade.knighthacks.org/sponsor";
-const khcoc = "https://knight-hacks.notion.site/code-of-conduct";
-const hackersGuide = "https://knight-hacks.notion.site/knight-hacks-viii";
+const FOOTER_LINKS = [
+  {
+    href: "https://mlh.io/code-of-conduct",
+    label: "MLH Code of Conduct",
+    hoverColor: "hover:bg-[#FBB03B]",
+  },
+  {
+    href: "https://knight-hacks.notion.site/code-of-conduct",
+    label: "Knight Hacks Code of Conduct",
+    hoverColor: "hover:bg-[#d83434]",
+  },
+  {
+    href: "https://blade.knighthacks.org/sponsor",
+    label: "Sponsor Us",
+    hoverColor: "hover:bg-[#1570AD]",
+  },
+  {
+    href: "https://knight-hacks.notion.site/knight-hacks-viii",
+    label: "Hackers Guide",
+    hoverColor: "hover:bg-[#FBB03B]",
+  },
+] as const;
+
+interface FooterLinkProps {
+  href: string;
+  label: string;
+  hoverColor: string;
+  isMobile?: boolean;
+}
+
+function FooterLink({ href, label, hoverColor, isMobile = false }: FooterLinkProps) {
+  const baseClasses = "tk-ccmeanwhile relative block rounded-none bg-[#F7F0C6] font-bold text-slate-800 outline-2 -outline-offset-3 outline-black transition-all duration-200 ease-in-out group-hover:-translate-x-1 group-hover:-translate-y-1 hover:text-white";
+  const mobileClasses = "px-2 py-1.5 text-xs sm:px-3 sm:py-2";
+  const desktopClasses = "px-4 py-2 text-sm md:text-base";
+  
+  return (
+    <div className="group relative">
+      <Link
+        href={href}
+        className={`${baseClasses} ${isMobile ? mobileClasses : desktopClasses} ${hoverColor}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {label}
+      </Link>
+      <div className="absolute inset-0 -z-10 h-full w-full bg-black transition-all duration-200 ease-in-out group-hover:translate-x-2 group-hover:translate-y-2" />
+    </div>
+  );
+}
+
+function MobileNavigation() {
+  return (
+    <div className="flex flex-col items-center gap-6 md:hidden">
+      <div className="flex flex-wrap items-center justify-center gap-2 text-white sm:gap-3">
+        {FOOTER_LINKS.map((link) => (
+          <FooterLink
+            key={link.href}
+            href={link.href}
+            label={link.label}
+            hoverColor={link.hoverColor}
+            isMobile={true}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DesktopNavigation() {
+  return (
+    <div className="hidden items-center justify-center gap-8 md:flex">
+      <div className="flex flex-wrap items-center justify-center gap-4 text-white">
+        {FOOTER_LINKS.map((link) => (
+          <FooterLink
+            key={link.href}
+            href={link.href}
+            label={link.label}
+            hoverColor={link.hoverColor}
+            isMobile={false}
+          />
+        ))}
+      </div>
+      <div className="flex items-center ml-4">
+        <Image
+          src="/KH2025Small.svg"
+          alt="Knight Hacks 2025 Logo"
+          width={80}
+          height={80}
+          className="h-16 w-16 md:h-20 md:w-20"
+        />
+      </div>
+    </div>
+  );
+}
+
+function Copyright() {
+  return (
+    <div className="text-center">
+      <p className="tk-ccmeanwhile text-sm text-gray-400 md:text-base">
+        Copyright © 2019 - 2025 knighthacks. All Rights Reserved.
+      </p>
+      <p className="tk-ccmeanwhile mt-1 text-sm text-gray-400 md:text-base">
+        Made with 💜 by the Knight Hacks team.
+      </p>
+    </div>
+  );
+}
 
 export default function Footer() {
   return (
-    <div className="mx-auto flex flex-col items-center bg-black pt-16 pb-8">
-      {/* Logo Section - Now properly in black background */}
-      <div className="relative mb-12 flex w-full justify-center">
-        <div className="relative">
-          <Image
-            src={shadow}
-            alt="Shadow"
-            width={0}
-            height={0}
-            sizes="100vw"
-            objectFit="cover"
-            className="absolute top-4 left-1/2 w-full max-w-md -translate-x-1/2 opacity-75 sm:max-w-lg md:max-w-xl lg:max-w-2xl"
-          />
-          <Image
-            src={footerSVG}
-            alt="Knight Hacks Logo"
-            width={2267}
-            height={803}
-            objectFit="cover"
-            className="relative h-auto w-64 sm:w-80 md:w-96 lg:w-112 xl:w-128"
-          />
+    <footer className="py-8">
+      <div className="mx-auto max-w-7xl px-4">
+        <div className="mb-6 border-t border-gray-800 pt-6">
+          <MobileNavigation />
+          <DesktopNavigation />
         </div>
+        <Copyright />
       </div>
-
-      {/* Footer Content - TextBox Style Cards */}
-      <div className="flex w-full justify-center">
-        <div className="w-[90%] px-2 py-4 sm:w-[85%] md:w-[80%]">
-          <div className="mx-auto max-w-7xl">
-          {/* Links Section - Three colored cards */}
-          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-            {/* Red Card - MLH & Contact */}
-            <div className="group relative">
-              <div className="relative rounded-none bg-[#F7F0C6] p-4 outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 md:p-6">
-                <div className="text-center">
-                  <h3 className="tk-ccmeanwhile mb-3 text-lg font-bold text-[#d83434] brightness-75 md:text-xl">
-                    COMMUNITY
-                  </h3>
-                  <div className="space-y-2">
-                    <Link
-                      href={mlhcoc}
-                      className="tk-ccmeanwhile block text-sm text-slate-800 underline transition-colors hover:text-[#d83434] md:text-base"
-                    >
-                      MLH Code of Conduct
-                    </Link>
-                    <Link
-                      href={khcoc}
-                      className="tk-ccmeanwhile block text-sm text-slate-800 underline transition-colors hover:text-[#d83434] md:text-base"
-                    >
-                      Knight Hacks Code of Conduct
-                    </Link>
-                  </div>
-                </div>
-              </div>
-              <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-            </div>
-
-            {/* Yellow Card - Sponsor & Guide */}
-            <div className="group relative">
-              <div className="relative rounded-none bg-[#F7F0C6] p-4 outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 md:p-6">
-                <div className="text-center">
-                  <h3 className="tk-ccmeanwhile mb-3 text-lg font-bold text-[#FBB03B] brightness-75 md:text-xl">
-                    RESOURCES
-                  </h3>
-                  <div className="space-y-2">
-                    <Link
-                      href={sponsor}
-                      className="tk-ccmeanwhile block text-sm text-slate-800 underline transition-colors hover:text-[#FBB03B] md:text-base"
-                    >
-                      Sponsor Us
-                    </Link>
-                    <Link
-                      href={hackersGuide}
-                      className="tk-ccmeanwhile block text-sm text-slate-800 underline transition-colors hover:text-[#FBB03B] md:text-base"
-                    >
-                      Hackers Guide
-                    </Link>
-                  </div>
-                </div>
-              </div>
-              <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-            </div>
-
-            {/* Blue Card - Event Info */}
-            <div className="group relative">
-              <div className="relative rounded-none bg-[#F7F0C6] p-4 outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 md:p-6">
-                <div className="text-center">
-                  <h3 className="tk-ccmeanwhile mb-3 text-lg font-bold text-[#1570AD] brightness-75 md:text-xl">
-                    EVENT
-                  </h3>
-                  <div className="space-y-2">
-                    <p className="tk-ccmeanwhile text-sm text-slate-800 md:text-base">
-                      36-Hour Hackathon
-                    </p>
-                    <p className="tk-ccmeanwhile text-sm text-slate-800 md:text-base">
-                      Oct 24 - 26, 2025
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-            </div>
-          </div>
-
-          {/* Copyright Section - Single centered card */}
-          <div className="flex justify-center">
-            <div className="group relative w-full max-w-2xl">
-              <div className="relative rounded-none bg-[#F7F0C6] p-4 outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 md:p-6">
-                <div className="space-y-2 text-center">
-                  <p className="tk-ccmeanwhile text-sm text-slate-800 md:text-base">
-                    Copyright © 2019 - 2025 knighthacks. All Rights Reserved.
-                  </p>
-                  <p className="tk-ccmeanwhile text-sm text-slate-800 md:text-base">
-                    Made with 💜 by the Knight Hacks team.
-                  </p>
-                </div>
-              </div>
-              <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-            </div>
-          </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </footer>
   );
 }
