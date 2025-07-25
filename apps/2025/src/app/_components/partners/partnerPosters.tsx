@@ -131,7 +131,7 @@ export default function PartnerPosters() {
                       src={partner.src}
                       alt={partner.alt}
                       fill
-                      className="object-contain p-4 drop-shadow-sm md:p-8"
+                      className={`object-contain p-4 drop-shadow-sm md:p-8 ${partner.alt === "IEEE@UCF" ? "filter brightness-0" : ""}`}
                       sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 20vw"
                       draggable={false}
                     />
