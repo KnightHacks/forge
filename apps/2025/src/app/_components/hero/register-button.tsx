@@ -9,9 +9,8 @@ export default function RegisterButton({ className, url = "https://blade.knighth
   return (
     <div className={`group relative ${className || ""}`}>
       <div className="relative z-0 flex max-w-max items-center overflow-hidden rounded-none p-[3px] md:p-[6px] group-hover:p-0 transition-all duration-300">
-        <div className="moving-border absolute inset-0 h-full w-full rounded-none bg-[conic-gradient(from_0deg,#f44336_0deg,#ff9800_60deg,#ffeb3b_90deg,#2196f3_150deg,#f44336_210deg,transparent_250deg)] group-hover:opacity-0 transition-opacity duration-300" />
-        
-        <div className="relative z-10 flex items-center">
+      <div className="moving-border absolute inset-0 h-full w-full rounded-none bg-[conic-gradient(from_0deg,_#ff0000_0deg,_#cc0033_60deg,_#660099_120deg,_#0000ff_180deg,_#660099_240deg,_#cc0033_300deg,_#ff0000_360deg)] group-hover:opacity-0 transition-opacity duration-300" />
+      <div className="relative z-10 flex items-center">
           <div className="relative rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-all duration-300 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:bg-[#F7F0C6] md:bg-[#F7F0C6] md:group-hover:bg-[#d83434]">
             <Link
               href={url}

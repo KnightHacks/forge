@@ -233,18 +233,20 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                         !isAtTop && activeSection === link.href.substring(1);
                       const navColors = getNavColors(index);
                       return (
-                        <motion.a
+                        <a
                           key={link.href}
                           href={link.href}
-                          onClick={(e) => {
+                          tabIndex={0}
+                          onClick={e => {
                             e.preventDefault();
                             handleDesktopNavClick(link.href);
                           }}
-                          initial={{ opacity: 0, y: -20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleDesktopNavClick(link.href);
+                            }
+                          }}
                           className={`tk-ccmeanwhile relative flex min-h-[50px] cursor-pointer items-center justify-center rounded-none px-6 py-3 text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] xl:text-lg ${
                             isActive
                               ? "text-white shadow-lg"
@@ -261,13 +263,13 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                                   "--hover-bg": navColors.bg,
                                 } as React.CSSProperties)),
                           }}
-                          onMouseEnter={(e) => {
+                          onMouseEnter={e => {
                             if (!isActive) {
                               (e.target as HTMLElement).style.backgroundColor =
                                 navColors.bg;
                             }
                           }}
-                          onMouseLeave={(e) => {
+                          onMouseLeave={e => {
                             if (!isActive) {
                               (e.target as HTMLElement).style.backgroundColor =
                                 "transparent";
@@ -277,7 +279,7 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                           aria-current={isActive ? "page" : undefined}
                         >
                           {link.label}
-                        </motion.a>
+                        </a>
                       );
                     })}
                   </div>
@@ -377,19 +379,21 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                             activeSection === link.href.substring(1);
                           const navColors = getNavColors(index);
                           return (
-                            <motion.a
+                            <a
                               key={link.href}
                               ref={index === 0 ? firstNavLinkRef : undefined}
                               href={link.href}
-                              onClick={(e) => {
+                              tabIndex={0}
+                              onClick={e => {
                                 e.preventDefault();
                                 handleMobileNavClick(link.href);
                               }}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.1 }}
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  handleMobileNavClick(link.href);
+                                }
+                              }}
                               className={`tk-ccmeanwhile flex min-h-[48px] w-full cursor-pointer items-center rounded-none px-4 py-3 text-left text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] ${
                                 isActive
                                   ? "text-white shadow-md"
@@ -400,14 +404,14 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                                   ? navColors.bg
                                   : "transparent",
                               }}
-                              onMouseEnter={(e) => {
+                              onMouseEnter={e => {
                                 if (!isActive) {
                                   (
                                     e.target as HTMLElement
                                   ).style.backgroundColor = navColors.bg;
                                 }
                               }}
-                              onMouseLeave={(e) => {
+                              onMouseLeave={e => {
                                 if (!isActive) {
                                   (
                                     e.target as HTMLElement
@@ -420,7 +424,7 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                               <span className="pointer-events-none">
                                 {link.label}
                               </span>
-                            </motion.a>
+                            </a>
                           );
                         })}
                       </div>

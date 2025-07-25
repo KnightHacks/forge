@@ -2,7 +2,6 @@
 
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
-import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -131,13 +130,10 @@ const faqData: FaqItem[] = [
 export default function Faq() {
   return (
     <div className="flex w-full justify-center">
-      <motion.div
+      <div
         id="faqs"
-        className="relative z-10 mt-40 flex min-h-screen w-[90%] flex-col items-center pb-16 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        viewport={{ once: true, amount: 0.2, margin: "-100px" }}
+        className="relative z-10 mt-40 flex min-h-screen w-[90%] flex-col items-center pb-16 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40 animate-on-scroll"
+        style={{ animation: 'fadeIn 0.8s ease-out forwards' }}
       >
         {/* ---------- title ---------- */}
       <div className="relative z-10 mb-2 flex w-full items-center justify-center sm:mb-3 md:mb-4 lg:mb-6">
@@ -202,7 +198,7 @@ export default function Faq() {
           </div>
         </div>
       </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

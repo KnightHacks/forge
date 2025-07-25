@@ -20,7 +20,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 
 interface Partner {
   src: string;
@@ -102,17 +101,10 @@ export default function PartnerPosters() {
         {/* Mobile: 4 cols, SM+: 6 cols */}
         <div className="grid auto-rows-[120px] grid-cols-4 gap-2 sm:auto-rows-[120px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[140px] md:gap-4 lg:auto-rows-[160px] lg:gap-5">
           {partners.map((partner, idx) => (
-            <motion.div
+            <div
               key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.5,
-                delay: Math.floor(idx / 2) * 0.08, 
-                ease: "easeOut",
-              }}
-              viewport={{ once: true, amount: 0.3, margin: "-50px" }} // Trigger earlier, reduce sensitivity
-              className={`${partner.mobilePosition} ${partner.gridPosition}`}
+              className={`${partner.mobilePosition} ${partner.gridPosition} animate-on-scroll`}
+              style={{ animation: `fadeIn 0.8s ${Math.floor(idx / 2) * 0.08}s ease-out forwards` }}
             >
               <Link href={partner.link} passHref legacyBehavior>
                 <a
@@ -142,7 +134,7 @@ export default function PartnerPosters() {
                 <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
               </a>
             </Link>
-          </motion.div>
+          </div>
           ))}
         </div>
       </div>

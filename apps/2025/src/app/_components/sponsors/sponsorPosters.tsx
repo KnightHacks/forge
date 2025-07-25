@@ -35,7 +35,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 
 type Tier = "Platinum" | "Gold" | "Silver" | "Bronze";
 
@@ -225,17 +224,10 @@ export default function SponsorPosters() {
             const tierConfig = SPONSOR_TIERS[sponsor.category];
 
             return (
-              <motion.div
+              <div
                 key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.5,
-                  delay: Math.floor(idx / 3) * 0.05, // Group animations by 3s
-                  ease: "easeOut",
-                }}
-                viewport={{ once: true, amount: 0.3, margin: "-50px" }}
-                className={`${sponsor.mobilePosition} ${sponsor.gridPosition}`}
+                className={`${sponsor.mobilePosition} ${sponsor.gridPosition} animate-on-scroll`}
+                style={{ animation: `fadeIn 0.8s ${Math.floor(idx / 3) * 0.05}s ease-out forwards` }}
               >
                 <Link
                   href={sponsor.link}
@@ -301,7 +293,7 @@ export default function SponsorPosters() {
                   <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
                 </a>
               </Link>
-            </motion.div>
+            </div>
             );
           })}
         </div>

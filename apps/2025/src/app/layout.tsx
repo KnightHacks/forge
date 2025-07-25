@@ -44,7 +44,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" style={{ background: "transparent" }}>
+    <html lang="en" style={{ background: "#000000" }}>
       <head>
         <link rel="preload" as="image" href="/background.svg" />
         <link rel="preload" as="image" href="/about-graphic.svg" />
@@ -59,7 +59,7 @@ export default function RootLayout({
           });
         ` }} />
       </head>
-      <body style={{ overflowX: "hidden", minHeight: "100vh", background: "transparent" }}>
+      <body style={{ overflowX: "hidden", minHeight: "100vh", background: "#000000" }}>
         <Navbar />
         {children}
       </body>
