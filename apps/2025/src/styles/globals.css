@@ -199,6 +199,52 @@ html {
     }
   }
   
+
+  @keyframes slideInFromRight {
+    0% {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes slideInFromLeft {
+    0% {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+ 
+  .animate-on-scroll {
+    opacity: 0;
+  }
+  
+
+  .animate-slide-in-right {
+    animation: slideInFromRight 0.8s ease-out forwards;
+  }
+  
+  .animate-slide-in-left {
+    animation: slideInFromLeft 0.8s ease-out forwards;
+  }
+  
+  /* Hover effects for interactivity */
+  .hover-lift {
+    transition: transform 0.2s ease-out;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+  
   @keyframes gradientMove {
     0% {
       background-position: 0% 50%;
