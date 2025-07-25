@@ -104,14 +104,14 @@ export default function PartnerPosters() {
           {partners.map((partner, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{
-                duration: 0.4,
-                delay: idx * 0.08,
+                duration: 0.3,
+                delay: Math.floor(idx / 2) * 0.05, // Reduce stagger, group by pairs
                 ease: "easeOut",
               }}
-              viewport={{ once: true, amount: 0.2 }}
+              viewport={{ once: true, amount: 0.3, margin: "-50px" }} // Trigger earlier, reduce sensitivity
               className={`${partner.mobilePosition} ${partner.gridPosition}`}
             >
               <Link href={partner.link} passHref legacyBehavior>

@@ -10,10 +10,10 @@ export default function About() {
     <motion.div
       id="about"
       className="z-10 flex w-full justify-center px-4 pt-6 sm:px-6 md:px-8 md:pt-8 lg:px-12 lg:pt-12"
-      initial={{ opacity: 0, x: -50 }}
+      initial={{ opacity: 0, x: -30 }}
       whileInView={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.3, margin: "-100px" }}
     >
       <div className="relative w-[95%] sm:w-[90%] md:w-[80%] lg:w-[70%] xl:w-[60%]">
         <AboutText />

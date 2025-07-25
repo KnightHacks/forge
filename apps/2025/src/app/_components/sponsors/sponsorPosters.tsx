@@ -227,14 +227,14 @@ export default function SponsorPosters() {
             return (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{
-                  duration: 0.4,
-                  delay: idx * 0.05,
+                  duration: 0.3,
+                  delay: Math.floor(idx / 3) * 0.03, // Group animations by 3s
                   ease: "easeOut",
                 }}
-                viewport={{ once: true, amount: 0.2 }}
+                viewport={{ once: true, amount: 0.3, margin: "-50px" }}
                 className={`${sponsor.mobilePosition} ${sponsor.gridPosition}`}
               >
                 <Link

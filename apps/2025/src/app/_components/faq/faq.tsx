@@ -136,10 +136,10 @@ export default function Faq() {
       <motion.div
         id="faqs"
         className="relative z-10 mt-40 flex min-h-screen w-[90%] flex-col items-center pb-16 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40"
-        initial={{ opacity: 0, y: 50 }}
+        initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        viewport={{ once: true, amount: 0.1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        viewport={{ once: true, amount: 0.2, margin: "-100px" }}
       >
         <PipesBackground />
         {/* ---------- title ---------- */}
