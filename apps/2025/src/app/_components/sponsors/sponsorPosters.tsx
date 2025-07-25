@@ -230,8 +230,8 @@ export default function SponsorPosters() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{
-                  duration: 0.3,
-                  delay: Math.floor(idx / 3) * 0.03, // Group animations by 3s
+                  duration: 0.5,
+                  delay: Math.floor(idx / 3) * 0.05, // Group animations by 3s
                   ease: "easeOut",
                 }}
                 viewport={{ once: true, amount: 0.3, margin: "-50px" }}

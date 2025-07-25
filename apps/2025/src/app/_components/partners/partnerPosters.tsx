@@ -107,8 +107,8 @@ export default function PartnerPosters() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{
-                duration: 0.3,
-                delay: Math.floor(idx / 2) * 0.05, // Reduce stagger, group by pairs
+                duration: 0.5,
+                delay: Math.floor(idx / 2) * 0.08, 
                 ease: "easeOut",
               }}
               viewport={{ once: true, amount: 0.3, margin: "-50px" }} // Trigger earlier, reduce sensitivity
