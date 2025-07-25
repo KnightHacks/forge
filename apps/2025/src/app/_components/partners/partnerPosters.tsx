@@ -1,3 +1,5 @@
+"use client";
+
 {
   /*
   CURRENT LOGO LAYOUT - DO NOT DELETE
@@ -18,6 +20,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 interface Partner {
   src: string;
@@ -99,12 +102,24 @@ export default function PartnerPosters() {
         {/* Mobile: 4 cols, SM+: 6 cols */}
         <div className="grid auto-rows-[120px] grid-cols-4 gap-2 sm:auto-rows-[120px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[140px] md:gap-4 lg:auto-rows-[160px] lg:gap-5">
           {partners.map((partner, idx) => (
-            <Link key={idx} href={partner.link} passHref legacyBehavior>
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`${partner.mobilePosition} ${partner.gridPosition} group relative flex items-center justify-center`}
-              >
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.4,
+                delay: idx * 0.08,
+                ease: "easeOut",
+              }}
+              viewport={{ once: true, amount: 0.2 }}
+              className={`${partner.mobilePosition} ${partner.gridPosition}`}
+            >
+              <Link href={partner.link} passHref legacyBehavior>
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative flex h-full items-center justify-center"
+                >
                 {/* Main card */}
                 <div className="relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 hover:scale-[1.02] hover:shadow-2xl hover:ring-4 hover:shadow-[#FBB03B]/80 hover:ring-[#FBB03B]/50">
                   {/* subtle dot pattern */}
@@ -127,6 +142,7 @@ export default function PartnerPosters() {
                 <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
               </a>
             </Link>
+          </motion.div>
           ))}
         </div>
       </div>

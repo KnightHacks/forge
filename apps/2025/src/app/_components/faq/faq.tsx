@@ -2,8 +2,10 @@
 
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+
 import PipesBackground from "../pipes-background";
 
 /* Radix aliases ----------------------------------------------------------- */
@@ -131,9 +133,13 @@ const faqData: FaqItem[] = [
 export default function Faq() {
   return (
     <div className="flex w-full justify-center">
-      <div
+      <motion.div
         id="faqs"
         className="relative z-10 mt-40 flex min-h-screen w-[90%] flex-col items-center pb-16 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        viewport={{ once: true, amount: 0.1 }}
       >
         <PipesBackground />
         {/* ---------- title ---------- */}
@@ -199,7 +205,7 @@ export default function Faq() {
           </div>
         </div>
       </div>
-    </div>
+      </motion.div>
     </div>
   );
 }

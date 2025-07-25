@@ -11,6 +11,8 @@ export default function Home() {
       <link rel="preload" as="image" href="/comic.svg" />
       <link rel="preload" as="image" href="/background.svg" />
       <link rel="preload" as="image" href="/khFull.svg" />
+      <link rel="preload" as="image" href="/sponsorSectionSvgs/spikeything.svg" />
+      <link rel="preload" as="image" href="/AboutComic.svg" />
       
       <main id="main-content" className="relative z-10">
         <Hero />

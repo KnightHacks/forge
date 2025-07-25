@@ -1,3 +1,5 @@
+"use client";
+
 {
   /*
   CURRENT LOGO LAYOUT - DO NOT DELETE
@@ -33,6 +35,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 type Tier = "Platinum" | "Gold" | "Silver" | "Bronze";
 
@@ -67,8 +70,9 @@ const SPONSOR_TIERS = {
   },
 } as const;
 
+// Sponsors arranged in visual order (left to right, top to bottom)
 const sponsors: Sponsor[] = [
-  // Row 1-2: Google (cols 1-3), OneEthos (cols 4-6)
+  // Row 1: Google (left), OneEthos (right)
   {
     src: "/sponsorSectionSvgs/google.svg",
     alt: "GOOGLE",
@@ -87,6 +91,7 @@ const sponsors: Sponsor[] = [
     gridPosition: "sm:row-start-1 sm:row-span-2 sm:col-start-4 sm:col-span-3",
     mobilePosition: "row-start-2 row-span-1 col-start-1 col-span-4",
   },
+  // Row 3: Pheratech (left), Lockheed Martin (right)
   {
     src: "/sponsorSectionSvgs/pheratech.png",
     alt: "PHERATECH SYSTEMS",
@@ -105,69 +110,7 @@ const sponsors: Sponsor[] = [
     gridPosition: "sm:row-start-3 sm:row-span-1 sm:col-start-4 sm:col-span-3",
     mobilePosition: "row-start-10 row-span-1 col-start-1 col-span-3",
   },
-  {
-    src: "/sponsorSectionSvgs/impressink.png",
-    alt: "IMPRESSINK",
-    ariaLabel: "Impress Ink Logo",
-    link: "https://impressink.com/",
-    category: "Silver",
-    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-1 sm:col-span-3",
-    mobilePosition: "row-start-11 row-span-1 col-start-1 col-span-3",
-  },
-  {
-    src: "/sponsorSectionSvgs/amd.svg",
-    alt: "AMD",
-    ariaLabel: "AMD Logo",
-    link: "https://www.amd.com/",
-    category: "Gold",
-    gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-1 sm:col-span-2",
-    mobilePosition: "row-start-4 row-span-2 col-start-1 col-span-2",
-  },
-  {
-    src: "/sponsorSectionSvgs/statsig.svg",
-    alt: "STATSIG",
-    ariaLabel: "Statsig Logo",
-    link: "https://www.statsig.com/",
-    category: "Gold",
-    gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-3 sm:col-span-2",
-    mobilePosition: "row-start-4 row-span-2 col-start-3 col-span-2",
-  },
-  {
-    src: "/sponsorSectionSvgs/nextera-energy.svg",
-    alt: "NEXTERA",
-    ariaLabel: "NextEra Logo",
-    link: "https://www.nexteraenergy.com/",
-    category: "Gold",
-    gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-5 sm:col-span-2",
-    mobilePosition: "row-start-6 row-span-2 col-start-1 col-span-2",
-  },
-  {
-    src: "/sponsorSectionSvgs/bny.svg",
-    alt: "BNY",
-    ariaLabel: "BNY Logo",
-    link: "https://www.bnymellon.com/",
-    category: "Gold",
-    gridPosition: "sm:row-start-7 sm:row-span-2 sm:col-start-1 sm:col-span-2",
-    mobilePosition: "row-start-6 row-span-2 col-start-3 col-span-2",
-  },
-  {
-    src: "/sponsorSectionSvgs/servicenow.svg",
-    alt: "SERVICENOW",
-    ariaLabel: "ServiceNow Logo",
-    link: "https://www.servicenow.com/",
-    category: "Gold",
-    gridPosition: "sm:row-start-7 sm:row-span-2 sm:col-start-3 sm:col-span-2",
-    mobilePosition: "row-start-8 row-span-2 col-start-1 col-span-2",
-  },
-  {
-    src: "/sponsorSectionSvgs/auritas.svg",
-    alt: "AURITAS",
-    ariaLabel: "Auritas Logo",
-    link: "https://www.auritas.com/",
-    category: "Gold",
-    gridPosition: "sm:row-start-7 sm:row-span-2 sm:col-start-5 sm:col-span-2",
-    mobilePosition: "row-start-8 row-span-2 col-start-3 col-span-2",
-  },
+  // Row 4: GitHub, NVIDIA, NASA (small boxes on right)
   {
     src: "/sponsorSectionSvgs/github.png",
     alt: "GITHUB",
@@ -195,6 +138,72 @@ const sponsors: Sponsor[] = [
     gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-6 sm:col-span-1",
     mobilePosition: "row-start-12 row-span-1 col-start-4 col-span-1",
   },
+  // Row 5-6: AMD, Statsig, NextEra (2x2 grid)
+  {
+    src: "/sponsorSectionSvgs/amd.svg",
+    alt: "AMD",
+    ariaLabel: "AMD Logo",
+    link: "https://www.amd.com/",
+    category: "Gold",
+    gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-1 sm:col-span-2",
+    mobilePosition: "row-start-4 row-span-2 col-start-1 col-span-2",
+  },
+  {
+    src: "/sponsorSectionSvgs/statsig.svg",
+    alt: "STATSIG",
+    ariaLabel: "Statsig Logo",
+    link: "https://www.statsig.com/",
+    category: "Gold",
+    gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-3 sm:col-span-2",
+    mobilePosition: "row-start-4 row-span-2 col-start-3 col-span-2",
+  },
+  {
+    src: "/sponsorSectionSvgs/nextera-energy.svg",
+    alt: "NEXTERA",
+    ariaLabel: "NextEra Logo",
+    link: "https://www.nexteraenergy.com/",
+    category: "Gold",
+    gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-5 sm:col-span-2",
+    mobilePosition: "row-start-6 row-span-2 col-start-1 col-span-2",
+  },
+  // Row 7-8: BNY, ServiceNow, Auritas (2x2 grid)
+  {
+    src: "/sponsorSectionSvgs/bny.svg",
+    alt: "BNY",
+    ariaLabel: "BNY Logo",
+    link: "https://www.bnymellon.com/",
+    category: "Gold",
+    gridPosition: "sm:row-start-7 sm:row-span-2 sm:col-start-1 sm:col-span-2",
+    mobilePosition: "row-start-6 row-span-2 col-start-3 col-span-2",
+  },
+  {
+    src: "/sponsorSectionSvgs/servicenow.svg",
+    alt: "SERVICENOW",
+    ariaLabel: "ServiceNow Logo",
+    link: "https://www.servicenow.com/",
+    category: "Gold",
+    gridPosition: "sm:row-start-7 sm:row-span-2 sm:col-start-3 sm:col-span-2",
+    mobilePosition: "row-start-8 row-span-2 col-start-1 col-span-2",
+  },
+  {
+    src: "/sponsorSectionSvgs/auritas.svg",
+    alt: "AURITAS",
+    ariaLabel: "Auritas Logo",
+    link: "https://www.auritas.com/",
+    category: "Gold",
+    gridPosition: "sm:row-start-7 sm:row-span-2 sm:col-start-5 sm:col-span-2",
+    mobilePosition: "row-start-8 row-span-2 col-start-3 col-span-2",
+  },
+  // Row 9: Impressink (left), Shinies (right)
+  {
+    src: "/sponsorSectionSvgs/impressink.png",
+    alt: "IMPRESSINK",
+    ariaLabel: "Impress Ink Logo",
+    link: "https://impressink.com/",
+    category: "Silver",
+    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-1 sm:col-span-3",
+    mobilePosition: "row-start-11 row-span-1 col-start-1 col-span-3",
+  },
   {
     src: "/sponsorSectionSvgs/shinies.svg",
     alt: "SHINIES PROPS",
@@ -216,20 +225,31 @@ export default function SponsorPosters() {
             const tierConfig = SPONSOR_TIERS[sponsor.category];
 
             return (
-              <Link
+              <motion.div
                 key={idx}
-                href={sponsor.link}
-                passHref
-                legacyBehavior
-                aria-label={sponsor.ariaLabel}
-                target="_blank"
-                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.4,
+                  delay: idx * 0.05,
+                  ease: "easeOut",
+                }}
+                viewport={{ once: true, amount: 0.2 }}
+                className={`${sponsor.mobilePosition} ${sponsor.gridPosition}`}
               >
-                <a
+                <Link
+                  href={sponsor.link}
+                  passHref
+                  legacyBehavior
+                  aria-label={sponsor.ariaLabel}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`${sponsor.mobilePosition} ${sponsor.gridPosition} group relative flex items-center justify-center`}
                 >
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative flex h-full items-center justify-center"
+                  >
                   {/* Main card */}
                   <div
                     className={`relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 ${tierConfig.hover}`}
@@ -281,6 +301,7 @@ export default function SponsorPosters() {
                   <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
                 </a>
               </Link>
+            </motion.div>
             );
           })}
         </div>

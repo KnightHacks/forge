@@ -1,11 +1,19 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 import TextBox from "../textbox";
 import Comic from "./comic";
 
 export default function Tracks() {
   return (
-    <div
+    <motion.div
       id="tracks"
       className="z-10 my-2 mb-4 flex flex-col items-center space-y-1 overflow-x-hidden sm:my-3 sm:mb-6 sm:space-y-2 md:my-4 md:mb-8 md:space-y-3 lg:my-6 lg:mb-12 lg:space-y-4 xl:my-8 xl:mb-16"
+      initial={{ opacity: 0, x: 50 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.2 }}
     >
       <div className="flex w-full flex-col items-center pt-8 sm:pt-12 md:pt-16 lg:pt-20 xl:pt-24">
         <div className="relative w-[95%] sm:w-[90%] md:w-[80%] lg:w-[70%] xl:w-[60%]">
@@ -37,6 +45,6 @@ export default function Tracks() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
