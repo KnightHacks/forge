@@ -7,68 +7,38 @@
 }
 
 /* comic font */
-@import url("https://p.typekit.net/p.css?s=1&k=kjh0ijt&ht=tk&f=35759.35760.35761.35762&a=232442130&app=typekit&e=css");
 
-@font-face {
-  font-family: "ccmeanwhile";
-  src:
-    url("https://use.typekit.net/af/5ac9e0/00000000000000007735aa90/31/l?primer=…&fvd=n4&v=3")
-      format("woff2"),
-    url("https://use.typekit.net/af/5ac9e0/00000000000000007735aa90/31/d?…&v=3")
-      format("woff"),
-    url("https://use.typekit.net/af/5ac9e0/00000000000000007735aa90/31/a?…&v=3")
-      format("opentype");
-  font-style: normal;
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: "ccmeanwhile";
-  src:
-    url("https://use.typekit.net/af/15ea89/00000000000000007735aa94/31/l?…&v=3")
-      format("woff2"),
-    url("https://use.typekit.net/af/15ea89/00000000000000007735aa94/31/d?…&v=3")
-      format("woff"),
-    url("https://use.typekit.net/af/15ea89/00000000000000007735aa94/31/a?…&v=3")
-      format("opentype");
-  font-style: italic;
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: "ccmeanwhile";
-  src:
-    url("https://use.typekit.net/af/5b987e/00000000000000007735aa96/31/l?…&v=3")
-      format("woff2"),
-    url("https://use.typekit.net/af/5b987e/00000000000000007735aa96/31/d?…&v=3")
-      format("woff"),
-    url("https://use.typekit.net/af/5b987e/00000000000000007735aa96/31/a?…&v=3")
-      format("opentype");
-  font-style: italic;
-  font-weight: 700;
-}
-
-@font-face {
-  font-family: "ccmeanwhile";
-  src:
-    url("https://use.typekit.net/af/5b8da9/00000000000000007735aa9a/31/l?…&v=3")
-      format("woff2"),
-    url("https://use.typekit.net/af/5b8da9/00000000000000007735aa9a/31/d?…&v=3")
-      format("woff"),
-    url("https://use.typekit.net/af/5b8da9/00000000000000007735aa9a/31/a?…&v=3")
-      format("opentype");
-  font-style: normal;
-  font-weight: 700;
-}
-
-.tk-ccmeanwhile {
-  font-family: "ccmeanwhile", sans-serif;
-}
 @font-face {
   font-family: "The Last Shuriken";
   src: url("/fonts/TheLastShuriken.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
+}
+
+@font-face {
+  font-family: "Anime Ace BB";
+  src: url("/fonts/animeace2_reg.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Anime Ace BB";
+  src: url("/fonts/animeace2_bld.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Anime Ace BB";
+  src: url("/fonts/animeace2_ital.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+html, body {
+  font-family: "Anime Ace BB", Arial, sans-serif;
 }
 
 /* Custom Scrollbar - TextBox Theme */

@@ -11,6 +11,9 @@ const config: Config = {
       colors: {
         customDark: "#0F131A",
       },
+      fontFamily: {
+        animeace: ['"Anime Ace BB"', 'Arial', 'sans-serif'],
+      },
     },
   },
 };
