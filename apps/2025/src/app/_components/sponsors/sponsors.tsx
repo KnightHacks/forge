@@ -1,21 +1,28 @@
 "use client";
 
+import useStaggeredAnimation from "../hooks/useStaggeredAnimation";
 import SponsorPosters from "./sponsorPosters";
 import SponsorsTitle from "./sponsorsTitle";
 
-const sponsors = () => {
+const Sponsors = () => {
+  const sponsorsRef = useStaggeredAnimation(150);
+
   return (
     <div className="flex w-full justify-center">
       <div
         id="sponsors"
-        className="mt-32 mb-8 h-auto w-[90%] sm:mt-40 sm:mb-12 md:mt-48 md:mb-16 lg:mt-64 lg:mb-20 xl:mt-80 xl:mb-24 animate-on-scroll"
-        style={{ animation: 'fadeIn 0.8s ease-out forwards' }}
+        ref={sponsorsRef}
+        className="mt-32 mb-8 h-auto w-[90%] sm:mt-40 sm:mb-12 md:mt-48 md:mb-16 lg:mt-64 lg:mb-20 xl:mt-80 xl:mb-24"
       >
-        <SponsorsTitle />
-        <SponsorPosters />
+        <div className="stagger-item">
+          <SponsorsTitle />
+        </div>
+        <div className="stagger-item">
+          <SponsorPosters />
+        </div>
       </div>
     </div>
   );
 };
 
-export default sponsors;
+export default Sponsors;

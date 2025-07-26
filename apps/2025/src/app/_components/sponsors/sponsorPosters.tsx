@@ -36,6 +36,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import useStaggeredAnimation from "../hooks/useStaggeredAnimation";
+
 type Tier = "Platinum" | "Gold" | "Silver" | "Bronze";
 
 interface Sponsor {
@@ -215,19 +217,23 @@ const sponsors: Sponsor[] = [
 ];
 
 export default function SponsorPosters() {
+  const sponsorsGridRef = useStaggeredAnimation(60);
+
   return (
     <div className="w-full px-4 py-4">
       <div className="mx-auto max-w-5xl">
         {/* Mobile: 4 cols, SM+: 6 cols */}
-        <div className="grid auto-rows-[70px] grid-cols-4 gap-2 sm:auto-rows-[90px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[110px] md:gap-4 lg:auto-rows-[130px] lg:gap-5">
+        <div 
+          ref={sponsorsGridRef}
+          className="grid auto-rows-[70px] grid-cols-4 gap-2 sm:auto-rows-[90px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[110px] md:gap-4 lg:auto-rows-[130px] lg:gap-5"
+        >
           {sponsors.map((sponsor, idx) => {
             const tierConfig = SPONSOR_TIERS[sponsor.category];
 
             return (
               <div
                 key={idx}
-                className={`${sponsor.mobilePosition} ${sponsor.gridPosition} animate-on-scroll`}
-                style={{ animation: `fadeIn 0.8s ${Math.floor(idx / 3) * 0.05}s ease-out forwards` }}
+                className={`${sponsor.mobilePosition} ${sponsor.gridPosition} stagger-item`}
               >
                 <Link
                   href={sponsor.link}

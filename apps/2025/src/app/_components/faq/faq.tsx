@@ -4,6 +4,7 @@ import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 import Link from "next/link";
+import useStaggeredAnimation from "../hooks/useStaggeredAnimation";
 
 /* Radix aliases ----------------------------------------------------------- */
 const Accordion = AccordionPrimitive.Root;
@@ -128,16 +129,17 @@ const faqData: FaqItem[] = [
 /* ------------------------------------------------------------------------ */
 
 export default function Faq() {
+  const faqTitleRef = useStaggeredAnimation(200);
+
   return (
     <div className="flex w-full justify-center">
       <div
         id="faqs"
-        className="relative z-10 mt-40 flex min-h-screen w-[90%] flex-col items-center pb-16 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40 animate-on-scroll"
-        style={{ animation: 'fadeIn 0.8s ease-out forwards' }}
+        className="relative z-10 mt-40 flex min-h-screen w-[90%] flex-col items-center pb-16 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40"
       >
         {/* ---------- title ---------- */}
-      <div className="relative z-10 mb-2 flex w-full items-center justify-center sm:mb-3 md:mb-4 lg:mb-6">
-        <div className="relative flex w-full items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%]">
+      <div ref={faqTitleRef} className="relative z-10 mb-2 flex w-full items-center justify-center sm:mb-3 md:mb-4 lg:mb-6">
+        <div className="relative flex w-full items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%] stagger-item">
           <Image
             src="/sponsorSectionSvgs/spikeything.svg"
             alt="spikeything"
@@ -165,8 +167,17 @@ export default function Faq() {
               collapsible
               className="min-h-[900px] w-full space-y-3 sm:space-y-4"
             >
-              {faqData.map((faq) => (
-                <FaqCard key={faq.id} {...faq} />
+              {faqData.map((faq, index) => (
+                <div 
+                  key={faq.id} 
+                  className="animate-on-scroll"
+                  style={{ 
+                    animation: `fadeInUp 0.6s ease-out forwards`,
+                    animationDelay: `${index * 0.08}s`
+                  }}
+                >
+                  <FaqCard {...faq} />
+                </div>
               ))}
             </Accordion>
           </div>
@@ -179,8 +190,17 @@ export default function Faq() {
                 collapsible
                 className="w-full space-y-3 sm:space-y-4"
               >
-                {faqData.slice(0, 8).map((faq) => (
-                  <FaqCard key={faq.id} {...faq} />
+                {faqData.slice(0, 8).map((faq, index) => (
+                  <div 
+                    key={faq.id} 
+                    className="animate-on-scroll"
+                    style={{ 
+                      animation: `fadeInUp 0.6s ease-out forwards`,
+                      animationDelay: `${index * 0.08}s`
+                    }}
+                  >
+                    <FaqCard {...faq} />
+                  </div>
                 ))}
               </Accordion>
             </div>
@@ -190,8 +210,17 @@ export default function Faq() {
                 collapsible
                 className="w-full space-y-3 sm:space-y-4"
               >
-                {faqData.slice(8).map((faq) => (
-                  <FaqCard key={faq.id} {...faq} />
+                {faqData.slice(8).map((faq, index) => (
+                  <div 
+                    key={faq.id} 
+                    className="animate-on-scroll"
+                    style={{ 
+                      animation: `fadeInUp 0.6s ease-out forwards`,
+                      animationDelay: `${(index + 8) * 0.08}s`
+                    }}
+                  >
+                    <FaqCard {...faq} />
+                  </div>
                 ))}
               </Accordion>
             </div>

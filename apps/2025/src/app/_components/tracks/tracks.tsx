@@ -5,7 +5,7 @@ import TextBox from "../textbox";
 import Comic from "./comic";
 
 export default function Tracks() {
-  const tracksRef = useScrollAnimation("animate-slide-in-right");
+  const tracksRef = useScrollAnimation("animate-slide-in-left");
 
   return (
     <div

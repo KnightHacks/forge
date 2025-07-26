@@ -94,17 +94,23 @@ const partners: Partner[] = [
   },
 ];
 
+import useStaggeredAnimation from "../hooks/useStaggeredAnimation";
+
 export default function PartnerPosters() {
+  const partnersGridRef = useStaggeredAnimation(80);
+
   return (
     <div className="w-full px-2 py-4">
       <div className="mx-auto max-w-7xl">
         {/* Mobile: 4 cols, SM+: 6 cols */}
-        <div className="grid auto-rows-[120px] grid-cols-4 gap-2 sm:auto-rows-[120px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[140px] md:gap-4 lg:auto-rows-[160px] lg:gap-5">
+        <div 
+          ref={partnersGridRef}
+          className="grid auto-rows-[120px] grid-cols-4 gap-2 sm:auto-rows-[120px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[140px] md:gap-4 lg:auto-rows-[160px] lg:gap-5"
+        >
           {partners.map((partner, idx) => (
             <div
               key={idx}
-              className={`${partner.mobilePosition} ${partner.gridPosition} animate-on-scroll`}
-              style={{ animation: `fadeIn 0.8s ${Math.floor(idx / 2) * 0.08}s ease-out forwards` }}
+              className={`${partner.mobilePosition} ${partner.gridPosition} stagger-item`}
             >
               <Link href={partner.link} passHref legacyBehavior>
                 <a
