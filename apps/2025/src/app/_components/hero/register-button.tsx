@@ -16,7 +16,7 @@ export default function RegisterButton({ className, url = "https://blade.knighth
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="tk-ccmeanwhile relative z-10 inline-block px-8 py-4 text-lg font-bold whitespace-nowrap text-slate-800 transition-colors duration-300 group-hover:text-slate-800 sm:px-10 sm:py-5 sm:text-xl md:px-12 md:py-6 md:text-2xl md:text-slate-800 md:group-hover:text-white lg:text-3xl xl:text-4xl"
+              className="tk-ccmeanwhile relative z-10 inline-block px-8 py-4 text-lg font-bold whitespace-nowrap text-slate-800 transition-colors duration-300 group-hover:text-slate-800 sm:px-10 sm:py-5 sm:text-xl md:px-12 md:py-6 md:text-2xl md:text-slate-800 md:group-hover:text-white lg:text-3xl xl:text-4xl focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] rounded-none"
             >
               Register to hack
             </Link>

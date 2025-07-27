@@ -246,7 +246,7 @@ export default function SponsorPosters() {
                   <a
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group relative flex h-full items-center justify-center"
+                    className="group relative flex h-full items-center justify-center focus:outline-4 focus:outline-offset-2 focus:outline-[#1570AD] rounded-none"
                   >
                   {/* Main card */}
                   <div
