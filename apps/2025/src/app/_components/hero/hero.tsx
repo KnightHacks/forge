@@ -6,7 +6,7 @@ import { env } from "~/env";
 export default function Hero() {
   const registerUrl = env.BLADE_URL + "hacker/application/knighthacks-viii";
   return (
-    <div className="flex h-screen flex-col items-center justify-center relative pt-16 sm:pt-0">
+    <div className="flex h-screen flex-col items-center justify-center relative pt-16 sm:pt-0 transform -translate-y-[10%] sm:translate-y-0">
       {/* @DVidal1205 ty for the knowledge king*/}
       <h1 className="sr-only">Knight Hacks 2025 - Join the Fight! Hackathon October 24-26, 2025</h1>
       

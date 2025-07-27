@@ -69,7 +69,7 @@ const faqData: FaqItem[] = [
     id: "2",
     question: "How long is Knight Hacks?",
     answer:
-      "Knight Hacks is a 36‑hour hackathon, beginning in the late afternoon on Friday 8/24 and ending at the late afternoon on Sunday 8/26. We encourage you to work on your project for as long as you can during this time!",
+      "Knight Hacks is a 36‑hour hackathon, beginning in the late afternoon on Friday 10/24 and ending at the late afternoon on Sunday 10/26. We encourage you to work on your project for as long as you can during this time!",
     category: "event-details",
   },
   {
@@ -359,24 +359,26 @@ export default function Faq() {
         {/* FAQ Content */}
         <div className="w-full px-2 py-4">
           <div className="mx-auto max-w-4xl">
-            <Accordion
-              type="single"
-              collapsible
-              className="w-full space-y-3 sm:space-y-4"
-            >
-              {filteredFaqData.map((faq, index) => (
-                <div 
-                  key={faq.id} 
-                  className="animate-on-scroll"
-                  style={{ 
-                    animation: `fadeInUp 0.6s ease-out forwards`,
-                    animationDelay: `${index * 0.08}s`
-                  }}
-                >
-                  <FaqCard {...faq} />
-                </div>
-              ))}
-            </Accordion>
+            <div style={{ height: '800px' }} className="md:h-[900px] lg:h-[1000px]">
+              <Accordion
+                type="single"
+                collapsible
+                className="w-full space-y-3 sm:space-y-4"
+              >
+                {filteredFaqData.map((faq, index) => (
+                  <div 
+                    key={faq.id} 
+                    className="animate-on-scroll"
+                    style={{ 
+                      animation: `fadeInUp 0.6s ease-out forwards`,
+                      animationDelay: `${index * 0.08}s`
+                    }}
+                  >
+                    <FaqCard {...faq} />
+                  </div>
+                ))}
+              </Accordion>
+            </div>
           </div>
         </div>
       </section>
@@ -398,7 +400,7 @@ function FaqCard({ id, question, answer, links }: FaqItem) {
           <ChevronDownIcon className="h-4 w-4 shrink-0 text-slate-600 transition-transform duration-300 ease-in-out" />
         </AccordionTrigger>
 
-        <AccordionContent className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm">
+        <AccordionContent className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm transition-all duration-300 ease-in-out">
           <div className="tk-ccmeanwhile px-3 pt-1 pb-2 text-xs leading-relaxed text-slate-700 sm:px-4 sm:pt-2 sm:pb-3 sm:text-sm md:px-6 md:pb-4 md:text-base lg:px-8 lg:pb-6">
             {links ? (
               <>

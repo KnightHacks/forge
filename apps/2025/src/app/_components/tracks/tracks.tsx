@@ -17,11 +17,11 @@ export default function Tracks() {
         <div className="relative w-[95%] sm:w-[90%] md:w-[80%] lg:w-[70%] xl:w-[60%]">
           <h2 className="sr-only">Hackathon Tracks</h2>
           <div className="relative -mb-2 w-full hover-lift">
-            <div className="-translate-x-[10%] scale-[0.65] transform sm:scale-75 md:-translate-x-[8%] md:scale-75 lg:-translate-x-[10%] lg:scale-65 xl:-translate-x-[12%] xl:scale-65">
+            <div className="transform scale-75 sm:scale-75 md:-translate-x-[8%] md:scale-75 lg:-translate-x-[10%] lg:scale-65 xl:-translate-x-[12%] xl:scale-65">
               <TextBox
                 width="100%"
                 height="80%"
-                textSize="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl"
+                textSize="text-xs sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl"
                 centering="text-start"
                 className=""
               >
@@ -38,7 +38,7 @@ export default function Tracks() {
           <div className="-mt-2 flex justify-center hover-lift">
             <Comic
               aria-label="Choose from Our Hacker Tracks - Hello World, Artificial Intelligence / Machine Learning, App Development, Game Development, and Embedded Software!"
-              className="h-auto w-[88%] sm:w-[90%] md:w-[89%] lg:w-[87%] xl:w-[85%] 2xl:w-[80%]"
+              className="h-auto w-[95%] sm:w-[90%] md:w-[89%] lg:w-[87%] xl:w-[85%] 2xl:w-[80%]"
             />
           </div>
         </div>
