@@ -323,9 +323,9 @@ export default function Faq() {
       <section
         id="faqs"
         ref={faqRef}
-        className="relative z-10 mt-40 flex min-h-screen w-[90%] flex-col items-center pb-16 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40"
+        className="relative z-10 mt-0 pt-0 sm:mb-0 sm:pt-0 flex min-h-[1300px] pb-0 sm:min-h-0 w-[90%] flex-col items-center md:pb-32 lg:pb-36 xl:pb-40"
       >
-        <div className="relative z-10 mb-6 flex w-full items-center justify-center sm:mb-8 md:mb-10 lg:mb-12">
+        <div className="relative z-10  flex w-full items-center justify-center md:mb-10 lg:mb-12">
           <div className="relative flex w-full items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%] stagger-item animate-pop-out">
             <Image
               src="/sponsorSectionSvgs/spikeything.svg"
@@ -363,7 +363,7 @@ export default function Faq() {
         {/* FAQ Content */}
         <div className="w-full px-2 py-4">
           <div className="mx-auto max-w-4xl">
-            <div style={{ height: '800px' }} className="md:h-[900px] lg:h-[1000px]">
+            <div className="md:h-[900px] lg:h-[1000px]">
               <Accordion
                 type="single"
                 collapsible

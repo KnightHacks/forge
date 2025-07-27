@@ -113,7 +113,7 @@ export default function Footer() {
   return (
     <footer className="py-8 bg-black/50 backdrop-blur-sm">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="mb-6 border-t border-gray-800 pt-6">
+        <div className="mb-6 border-t border-gray-800 pt-6 sm:pt-0">
           <MobileNavigation />
           <DesktopNavigation />
         </div>
