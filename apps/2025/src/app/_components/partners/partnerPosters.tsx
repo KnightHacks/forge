@@ -100,8 +100,8 @@ export default function PartnerPosters() {
   const partnersGridRef = useStaggeredAnimation(80);
 
   return (
-    <div className="w-full px-2 py-4">
-      <div className="mx-auto max-w-7xl">
+    <div className="w-full px-4 py-4">
+      <div className="mx-auto max-w-5xl">
         {/* Mobile: 4 cols, SM+: 6 cols */}
         <div 
           ref={partnersGridRef}

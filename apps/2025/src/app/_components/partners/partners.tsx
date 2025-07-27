@@ -9,7 +9,7 @@ const Partners = () => {
 
   return (
     <div className="flex w-full justify-center">
-      <div
+      <section
         id="partners"
         ref={partnersRef}
         className="mb-16 h-auto w-[90%] sm:mb-20 md:mb-24 lg:mb-32 xl:mb-40"
@@ -20,7 +20,7 @@ const Partners = () => {
         <div className="stagger-item" style={{ animationDelay: '0.5s' }}>
           <PartnerPosters />
         </div>
-      </div>
+      </section>
     </div>
   );
 };
