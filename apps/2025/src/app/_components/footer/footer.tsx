@@ -98,7 +98,7 @@ function DesktopNavigation() {
 
 function Copyright() {
   return (
-    <div className="text-center bg-black/50 backdrop-blur-sm rounded-lg px-4 py-3 mx-auto max-w-fit">
+    <div className="text-center rounded-lg px-4 py-3 mx-auto max-w-fit">
       <p className="tk-ccmeanwhile text-sm text-white md:text-base">
         Copyright © 2019 - 2025 knighthacks. All Rights Reserved.
       </p>
@@ -111,7 +111,7 @@ function Copyright() {
 
 export default function Footer() {
   return (
-    <footer className="py-8 bg-transparent">
+    <footer className="py-8 bg-black/50 backdrop-blur-sm">
       <div className="mx-auto max-w-7xl px-4">
         <div className="mb-6 border-t border-gray-800 pt-6">
           <MobileNavigation />
