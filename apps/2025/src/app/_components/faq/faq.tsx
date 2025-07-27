@@ -313,19 +313,19 @@ function FilterButton({ category, isActive, onClick }: FilterButtonProps) {
 }
 
 export default function Faq() {
-  const faqTitleRef = useStaggeredAnimation(200);
+  const faqRef = useStaggeredAnimation(50);
   const [activeFilter, setActiveFilter] = useState<typeof FILTER_CATEGORIES[number]["id"]>("general");
 
-  // Filter FAQ data based on active filter
   const filteredFaqData = faqData.filter(faq => faq.category === activeFilter);
 
   return (
     <div className="flex w-full justify-center">
       <section
         id="faqs"
+        ref={faqRef}
         className="relative z-10 mt-40 flex min-h-screen w-[90%] flex-col items-center pb-16 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40"
       >
-        <div ref={faqTitleRef} className="relative z-10 mb-6 flex w-full items-center justify-center sm:mb-8 md:mb-10 lg:mb-12">
+        <div className="relative z-10 mb-6 flex w-full items-center justify-center sm:mb-8 md:mb-10 lg:mb-12">
           <div className="relative flex w-full items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%] stagger-item animate-pop-out">
             <Image
               src="/sponsorSectionSvgs/spikeything.svg"
@@ -344,15 +344,19 @@ export default function Faq() {
           </div>
         </div>
 
-        {/* Filter Buttons */}
-        <div className="mb-8 flex flex-wrap items-center justify-center gap-3 md:gap-4">
+
+        <div className="mb-8 flex flex-wrap items-center justify-center gap-3 md:gap-4 stagger-item" style={{ animationDelay: '0.5s' }}>
           {FILTER_CATEGORIES.map((category) => (
-            <FilterButton
+            <div
               key={category.id}
-              category={category}
-              isActive={activeFilter === category.id}
-              onClick={() => setActiveFilter(category.id)}
-            />
+              className="animate-pop-out2"
+            >
+              <FilterButton
+                category={category}
+                isActive={activeFilter === category.id}
+                onClick={() => setActiveFilter(category.id)}
+              />
+            </div>
           ))}
         </div>
 
@@ -365,14 +369,10 @@ export default function Faq() {
                 collapsible
                 className="w-full space-y-3 sm:space-y-4"
               >
-                {filteredFaqData.map((faq, index) => (
+                {filteredFaqData.map((faq) => (
                   <div 
                     key={faq.id} 
-                    className="animate-on-scroll"
-                    style={{ 
-                      animation: `fadeInUp 0.6s ease-out forwards`,
-                      animationDelay: `${index * 0.08}s`
-                    }}
+                    className="stagger-item animate-pop-out"
                   >
                     <FaqCard {...faq} />
                   </div>

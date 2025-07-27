@@ -109,6 +109,25 @@ html {
   }
 }
 
+@keyframes popOut2 {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  30% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.05) translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 @keyframes fadeInUp {
   0% {
     opacity: 0;
@@ -235,11 +254,25 @@ html {
 .animate-pop-out {
   opacity: 0;
   animation: popOut 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  min-height: 60px; /* Prevent layout shift during animation */
 }
 
+.animate-pop-out2 {
+  opacity: 0;
+  animation: popOut2 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  min-height: 60px; /* Prevent layout shift during animation */
+}
+
+.stagger-item {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 1s ease-out, transform 1s ease-out;
+  min-height: 40px; /* Prevent layout shift during animation */
+}
 
 .stagger-item.animate-pop-out {
   animation: popOut 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  min-height: 60px; /* Prevent layout shift during animation */
 }
 
 @media (max-width: 768px) {
