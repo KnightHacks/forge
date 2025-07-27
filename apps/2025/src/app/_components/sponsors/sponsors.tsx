@@ -12,7 +12,7 @@ const Sponsors = () => {
       <section
         id="sponsors"
         ref={sponsorsRef}
-        className="mt-0 pt-0 mb-[200px] sm:pt-0 sm:mb-12 w-[90%] md:mt-48 md:mb-16 lg:mt-64 lg:mb-20 xl:mt-80 xl:mb-24"
+        className="mt-0 pt-0 mb-[100px] min-h-[800px] sm:mt-40 sm:pt-0 sm:mb-20 sm:min-h-0 w-[90%] md:mb-24 lg:mb-32 xl:mb-40"
       >
         <div className="stagger-item animate-pop-out">
           <SponsorsTitle />

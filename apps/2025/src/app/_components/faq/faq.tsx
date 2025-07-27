@@ -323,9 +323,9 @@ export default function Faq() {
       <section
         id="faqs"
         ref={faqRef}
-        className="relative z-10 mt-0 pt-0 sm:mb-0 sm:pt-0 flex min-h-[1300px] pb-0 sm:min-h-0 w-[90%] flex-col items-center md:pb-32 lg:pb-36 xl:pb-40"
+        className="relative z-10 mt-0 pt-0  min-h-[1200px] pb-0 sm:mt-40 sm:pt-0 sm:pb-20 sm:mb-0 sm:min-h-0 w-[90%] flex-col items-center md:pb-32 lg:pb-36 xl:pb-40"
       >
-        <div className="relative z-10  flex w-full items-center justify-center md:mb-10 lg:mb-12">
+        <div className="relative z-10  flex w-full items-center justify-center mb-6 md:mb-10 lg:mb-12">
           <div className="relative flex w-full items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%] stagger-item animate-pop-out">
             <Image
               src="/sponsorSectionSvgs/spikeything.svg"

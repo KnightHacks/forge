@@ -11,9 +11,9 @@ export default function Tracks() {
     <section
       id="tracks"
       ref={tracksRef}
-      className="z-10 mt-0 pt-0 mb-[200px] flex flex-col items-center space-y-1 overflow-x-hidden sm:my-3 sm:mb-6 sm:space-y-2 md:my-4 md:mb-8 md:space-y-3 lg:my-6 lg:mb-12 lg:space-y-4 xl:my-8 xl:mb-16 animate-on-scroll"
+      className="z-10 mt-0 pt-0 mb-[50px] flex flex-col items-center min-h-[800px] space-y-1 overflow-x-hidden sm:mt-40 sm:pt-0 sm:mb-20 sm:space-y-2 sm:min-h-0 md:space-y-3 lg:mb-32 xl:mb-40 animate-on-scroll"
     >
-      <div className="flex w-full flex-col items-center sm:min-h-0 pt-0 sm:pt-12 md:pt-16 lg:pt-20 xl:pt-24">
+      <div className="flex w-full flex-col items-center pt-0 sm:pt-12 md:pt-16 lg:pt-20 xl:pt-24">
         <div className="relative w-[95%] sm:w-[90%] md:w-[80%] lg:w-[70%] xl:w-[60%]">
           <h2 className="sr-only">Hackathon Tracks</h2>
           <div className="relative -mb-2 w-full hover-lift">

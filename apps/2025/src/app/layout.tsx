@@ -33,6 +33,7 @@ export const metadata: Metadata = {
       },
     ],
   },
+  themeColor: "#c84c3c",
 };
 
 export const viewport: Viewport = {
@@ -45,7 +46,7 @@ export default function RootLayout({
   return (
     <html lang="en" style={{ background: "#000000" }}>
       <head>
-        <link rel="preload" as="image" href="/background.svg" />
+        <link rel="preload" as="image" href="https://cdn.jsdelivr.net/gh/KnightHacks/forge@main/apps/2025/public/background.svg" />
         <link rel="preload" as="image" href="/about-graphic.svg" />
         <link rel="preload" as="image" href="/comic.svg" />
         <link rel="dns-prefetch" href="//mlh.io" />
