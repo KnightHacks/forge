@@ -9,11 +9,12 @@ export default function About() {
   const aboutComicRef = useScrollAnimation("animate-slide-in-right");
 
   return (
-    <div
+    <section
       id="about"
       className="z-10 flex w-full justify-center px-4 pt-6 sm:px-6 md:px-8 md:pt-8 lg:px-12 lg:pt-12"
     >
       <div className="relative w-[95%] sm:w-[90%] md:w-[80%] lg:w-[70%] xl:w-[60%]">
+        <h2 className="sr-only">About Knight Hacks</h2>
         <div ref={aboutTextRef} className="hover-lift animate-on-scroll">
           <AboutText />
         </div>
@@ -24,6 +25,6 @@ export default function About() {
           />
         </div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -7,6 +7,9 @@ export default function Hero() {
   const registerUrl = env.BLADE_URL + "hacker/application/knighthacks-viii";
   return (
     <div className="flex h-screen flex-col items-center justify-center relative">
+      {/* @DVidal1205 ty for the knowledge king*/}
+      <h1 className="sr-only">Knight Hacks 2025 - Join the Fight! Hackathon October 24-26, 2025</h1>
+      
       <div className="relative w-full flex items-center justify-center" style={{ zIndex: 1, opacity: 0, animation: 'slideInFromTop 0.8s ease-out forwards' }}>
         <KnightHacksSVG
           role="img"

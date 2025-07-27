@@ -8,13 +8,14 @@ export default function Tracks() {
   const tracksRef = useScrollAnimation("animate-slide-in-left");
 
   return (
-    <div
+    <section
       id="tracks"
       ref={tracksRef}
       className="z-10 my-2 mb-4 flex flex-col items-center space-y-1 overflow-x-hidden sm:my-3 sm:mb-6 sm:space-y-2 md:my-4 md:mb-8 md:space-y-3 lg:my-6 lg:mb-12 lg:space-y-4 xl:my-8 xl:mb-16 animate-on-scroll"
     >
       <div className="flex w-full flex-col items-center pt-8 sm:pt-12 md:pt-16 lg:pt-20 xl:pt-24">
         <div className="relative w-[95%] sm:w-[90%] md:w-[80%] lg:w-[70%] xl:w-[60%]">
+          <h2 className="sr-only">Hackathon Tracks</h2>
           <div className="relative -mb-2 w-full hover-lift">
             <div className="-translate-x-[10%] scale-[0.65] transform sm:scale-75 md:-translate-x-[8%] md:scale-75 lg:-translate-x-[10%] lg:scale-65 xl:-translate-x-[12%] xl:scale-65">
               <TextBox
@@ -42,6 +43,6 @@ export default function Tracks() {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

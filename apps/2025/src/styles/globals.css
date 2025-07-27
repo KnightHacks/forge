@@ -225,21 +225,21 @@ html {
 .stagger-item {
   opacity: 0;
   transform: translateY(20px);
-  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  transition: opacity 1s ease-out, transform 1s ease-out;
 }
 
 .animate-fade-in-up {
-  animation: fadeInUp 0.4s ease-out forwards;
+  animation: fadeInUp 0.8s ease-out forwards;
 }
 
 .animate-pop-out {
   opacity: 0;
-  animation: popOut 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  animation: popOut 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
 }
 
 
 .stagger-item.animate-pop-out {
-  animation: popOut 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  animation: popOut 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
 }
 
 @media (max-width: 768px) {
