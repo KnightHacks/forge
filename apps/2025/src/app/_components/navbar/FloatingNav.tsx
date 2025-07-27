@@ -59,20 +59,36 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
       }
 
       const sections = navLinks.map((link) => link.href.substring(1));
-      const scrollWithOffset = scrollPosition + 100;
+
+      let bestMatch = "";
+      let bestScore = 0;
 
       for (const section of sections) {
         const element = document.getElementById(section);
         if (element) {
-          const { offsetTop, offsetHeight } = element;
-          if (
-            scrollWithOffset >= offsetTop &&
-            scrollWithOffset < offsetTop + offsetHeight
-          ) {
-            setActiveSection(section);
-            break;
+          const rect = element.getBoundingClientRect();
+          const elementTop = rect.top + scrollPosition;
+          const elementBottom = elementTop + rect.height;
+          const viewportTop = scrollPosition;
+          const viewportBottom = scrollPosition + window.innerHeight;
+          
+          const visibleTop = Math.max(elementTop, viewportTop);
+          const visibleBottom = Math.min(elementBottom, viewportBottom);
+          const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+          const visibilityRatio = visibleHeight / rect.height;
+          
+          const distanceFromTop = Math.abs(rect.top);
+          const score = visibilityRatio - (distanceFromTop / 1000);
+          
+          if (score > bestScore && visibilityRatio > 0.1) {
+            bestScore = score;
+            bestMatch = section;
           }
         }
+      }
+
+      if (bestMatch) {
+        setActiveSection(bestMatch);
       }
     };
 
@@ -100,8 +116,35 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
     };
   }, [isMobileMenuOpen]);
 
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+        setTimeout(() => {
+          mobileButtonRef.current?.focus();
+        }, 100);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [isMobileMenuOpen]);
+
   const handleMobileMenuToggle = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+    const newState = !isMobileMenuOpen;
+    setIsMobileMenuOpen(newState);
+    
+
+    if (newState) {
+      setTimeout(() => {
+        firstNavLinkRef.current?.focus();
+      }, 150);
+    } else {
+      setTimeout(() => {
+        mobileButtonRef.current?.focus();
+      }, 100);
+    }
   };
 
   const handleMobileNavClick = (href: string) => {
@@ -202,10 +245,8 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
             aria-label="Main navigation"
           >
             <div className="group relative">
-              {/* Main navbar container with TextBox styling - Made wider */}
-              <div className="relative w-4xl max-w-6xl rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 xl:w-5xl">
-                <div className="flex items-center gap-4 p-4">
-                  {/* Logo - Clickable but no highlight */}
+              <div className="relative w-auto rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
+                <div className="flex items-center justify-center gap-4 md:gap-5 px-24 py-2">
                   <motion.button
                     onClick={handleLogoClick}
                     whileHover={{ scale: 1.05 }}
@@ -223,9 +264,8 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                     />
                   </motion.button>
 
-                  {/* Desktop Navigation Links */}
                   <div
-                    className="flex flex-1 items-center justify-center gap-3"
+                    className="flex items-center gap-3"
                     role="list"
                   >
                     {navLinks.map((link, index) => {
@@ -247,13 +287,13 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                               handleDesktopNavClick(link.href);
                             }
                           }}
-                          className={`tk-ccmeanwhile relative flex min-h-[50px] cursor-pointer items-center justify-center rounded-none px-6 py-3 text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] xl:text-lg ${
+                          className={`tk-ccmeanwhile relative flex min-h-[48px] cursor-pointer items-center justify-center rounded-none px-3 md:px-4 py-3 text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] xl:text-lg ${
                             isActive
                               ? "text-white shadow-lg"
                               : "text-slate-800 hover:text-white"
                           }`}
                           style={{
-                            minWidth: "120px",
+                            minWidth: "90px",
                             backgroundColor: isActive
                               ? navColors.bg
                               : "transparent",

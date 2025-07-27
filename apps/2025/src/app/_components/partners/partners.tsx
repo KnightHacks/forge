@@ -14,10 +14,10 @@ const Partners = () => {
         ref={partnersRef}
         className="mb-16 h-auto w-[90%] sm:mb-20 md:mb-24 lg:mb-32 xl:mb-40"
       >
-        <div className="stagger-item">
+        <div className="stagger-item animate-pop-out">
           <PartnersTitle />
         </div>
-        <div className="stagger-item">
+        <div className="stagger-item" style={{ animationDelay: '0.5s' }}>
           <PartnerPosters />
         </div>
       </div>

@@ -137,9 +137,8 @@ export default function Faq() {
         id="faqs"
         className="relative z-10 mt-40 flex min-h-screen w-[90%] flex-col items-center pb-16 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40"
       >
-        {/* ---------- title ---------- */}
       <div ref={faqTitleRef} className="relative z-10 mb-2 flex w-full items-center justify-center sm:mb-3 md:mb-4 lg:mb-6">
-        <div className="relative flex w-full items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%] stagger-item">
+        <div className="relative flex w-full items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%] stagger-item animate-pop-out">
           <Image
             src="/sponsorSectionSvgs/spikeything.svg"
             alt="spikeything"
@@ -149,7 +148,7 @@ export default function Faq() {
             className="z-10 h-[80%] w-[80%] md:h-[60%] md:w-[60%]"
           />
           <span
-            className="absolute top-1/2 left-1/2 z-20 mt-[1%] -translate-x-1/2 -translate-y-1/2 transform text-[6vw] text-[#d83434] sm:text-[5vw] md:text-[4vw] lg:text-[3vw] xl:text-[2.5vw]"
+            className="absolute top-1/2 left-1/2 z-20 mt-[1%] -translate-x-1/2 -translate-y-1/2 transform text-[6vw] text-[#d83434] sm:text-[5vw] md:text-[4vw] lg:text-[3vw] xl:text-[3.3vw]"
             style={{ fontFamily: '"The Last Shuriken"' }}
           >
             FAQS

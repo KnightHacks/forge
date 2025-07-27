@@ -17,7 +17,15 @@ export default function useStaggeredAnimation(delay = 100) {
           if (entry.isIntersecting) {
             animatableChildren.forEach((child, index) => {
               setTimeout(() => {
-                child.classList.add('animate-fade-in-up');
+                if (child.classList.contains('animate-pop-out')) {
+
+                  child.classList.remove('animate-pop-out');
+                  requestAnimationFrame(() => {
+                    child.classList.add('animate-pop-out');
+                  });
+                } else {
+                  child.classList.add('animate-fade-in-up');
+                }
               }, index * delay);
             });
             
