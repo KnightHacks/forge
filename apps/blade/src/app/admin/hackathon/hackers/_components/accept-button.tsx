@@ -7,7 +7,7 @@ import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import { GemiKnightsAcceptanceEmail } from "./gemiknights-acceptance-email";
+import KH8AcceptanceEmail from "./kh8-acceptance-email";
 
 export default function AcceptButton({
   hacker,
@@ -55,7 +55,7 @@ export default function AcceptButton({
     });
 
     const html = await render(
-      <GemiKnightsAcceptanceEmail
+      <KH8AcceptanceEmail
         name={`${hacker.firstName} ${hacker.lastName}`}
       />,
     );

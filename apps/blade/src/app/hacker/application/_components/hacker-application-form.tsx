@@ -44,6 +44,8 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
+import { render } from "@react-email/render";
+import KH8ApplyEmail from "~/app/admin/hackathon/hackers/_components/kh8-apply-email";
 
 export function HackerFormPage({
   hackathonId,
@@ -87,6 +89,8 @@ export function HackerFormPage({
       setLoading(false);
     },
   });
+
+  const sendEmail = api.email.sendEmail.useMutation()
 
   const toggleAllergy = (allergy: string) => {
     setSelectedAllergies((prev) => {
@@ -365,6 +369,19 @@ export function HackerFormPage({
               foodAllergies: values.foodAllergies,
               resumeUrl,
               hackathonName: hackathonId,
+            });
+
+            const html = await render(
+              <KH8ApplyEmail
+                name={`${values.firstName} ${values.lastName}`}
+              />,
+            );
+            
+            sendEmail.mutate({
+              from: "donotreply@knighthacks.org",
+              to: values.email,
+              subject: "KnightHacks VIII - We recieved your application!",
+              body: html,
             });
           } catch (error) {
             // eslint-disable-next-line no-console

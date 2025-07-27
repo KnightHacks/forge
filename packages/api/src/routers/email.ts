@@ -3,7 +3,7 @@ import type { GaxiosError } from "googleapis-common";
 import { z } from "zod";
 
 import { publicProcedure } from "../trpc";
-import { gmail, log } from "../utils";
+import { gmail } from "../utils";
 
 export const emailRouter = {
   sendEmail: publicProcedure
@@ -30,14 +30,7 @@ export const emailRouter = {
         });
       } catch (err: unknown) {
         const gaxiosError = err as GaxiosError;
-        if (gaxiosError.code === "409" || gaxiosError.status === 409) {
-          await log({
-            title: "SendAs Alias Already Exists",
-            message: `SendAs alias already exists for ${alias}, continuing with email send`,
-            color: "tk_blue",
-            userId: "system",
-          });
-        } else {
+        if (!(gaxiosError.code === "409" || gaxiosError.status === 409)) {
           console.error("Error creating sendAs alias:", err);
           throw new Error(
             `Failed to create sendAs alias: ${
