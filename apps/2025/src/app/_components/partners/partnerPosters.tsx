@@ -94,23 +94,29 @@ const partners: Partner[] = [
   },
 ];
 
+import useStaggeredAnimation from "../hooks/useStaggeredAnimation";
+
 export default function PartnerPosters() {
+  const partnersGridRef = useStaggeredAnimation(80);
+
   return (
-    <div className="w-full px-2 py-4">
-      <div className="mx-auto max-w-7xl">
+    <div className="w-full px-4 py-4">
+      <div className="mx-auto max-w-5xl">
         {/* Mobile: 4 cols, SM+: 6 cols */}
-        <div className="grid auto-rows-[120px] grid-cols-4 gap-2 sm:auto-rows-[120px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[140px] md:gap-4 lg:auto-rows-[160px] lg:gap-5">
+        <div 
+          ref={partnersGridRef}
+          className="grid auto-rows-[120px] grid-cols-4 gap-2 sm:auto-rows-[120px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[140px] md:gap-4 lg:auto-rows-[160px] lg:gap-5"
+        >
           {partners.map((partner, idx) => (
             <div
               key={idx}
-              className={`${partner.mobilePosition} ${partner.gridPosition} animate-on-scroll`}
-              style={{ animation: `fadeIn 0.8s ${Math.floor(idx / 2) * 0.08}s ease-out forwards` }}
+              className={`${partner.mobilePosition} ${partner.gridPosition} stagger-item`}
             >
               <Link href={partner.link} passHref legacyBehavior>
                 <a
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative flex h-full items-center justify-center"
+                  className="group relative flex h-full items-center justify-center focus:outline-4 focus:outline-offset-2 focus:outline-[#FBB03B] rounded-none"
                 >
                 {/* Main card */}
                 <div className="relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 hover:scale-[1.02] hover:shadow-2xl hover:ring-4 hover:shadow-[#FBB03B]/80 hover:ring-[#FBB03B]/50">
