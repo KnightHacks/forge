@@ -47,7 +47,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center">
                     <Img
-                      src="https://i.imgur.com/UvC8nCh.png"
+                      src="https://i.imgur.com/lpTVNl7.png"
                       width={700}
                       height="auto"
                       alt="Divider"
@@ -173,7 +173,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                 </tr>
                 <tr>
                   <td align="center" style={{ padding: "10px 0" }}>
-                    <a href={`${process.env.BLADE_URL}/dashboard`}>
+                    <a href={`https://blade.knighthacks.org/dashboard`}>
                       <Img
                         src="https://i.imgur.com/Lxts1BH.png"
                         width={280}
@@ -374,7 +374,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                           </a>
                         </td>
                         <td align="center">
-                          <a href={`${process.env.BLADE_URL}/guide`}>
+                          <a href={`https://knight-hacks.notion.site/knight-hacks-viii`}>
                             <Img
                               src="https://i.imgur.com/QGmXqoQ.png"
                               width={240}
@@ -413,7 +413,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center">
                     <Img
-                      src="https://i.imgur.com/UvC8nCh.png"
+                      src="https://i.imgur.com/lpTVNl7.png"
                       width={700}
                       height="auto"
                       alt="Divider"

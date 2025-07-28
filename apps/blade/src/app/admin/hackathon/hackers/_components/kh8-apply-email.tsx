@@ -46,7 +46,7 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center">
                     <Img
-                      src="https://i.imgur.com/UvC8nCh.png"
+                      src="https://i.imgur.com/lpTVNl7.png"
                       width={700}
                       height="auto"
                       alt="Divider"
@@ -217,9 +217,9 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                 </tr>
                 <tr>
                   <td align="center" style={{ padding: "10px 0" }}>
-                    <a href={"https://discord.com/invite/Kv5g9vf"}>
+                    <a href={"https://discord.knighthacks.org/"}>
                       <Img
-                        src="https://i.imgur.com/CuX6BqL.png"
+                        src="https://i.imgur.com/msJyhHQ.png"
                         width={280}
                         height="auto"
                         alt="Join Discord Button"
@@ -275,32 +275,36 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                     >
                       <td align="center">
                         <Img
-                          src="https://i.imgur.com/rlx2A55.png"
-                          width={150}
+                          src="https://i.imgur.com/bVdMM2G.png"
+                          width={240}
                           height="auto"
-                          alt="Poster No Text"
+                          alt="Giveaway 1"
                           style={{ height: "auto" }}
                         />
                       </td>
                       <td align="center" style={{ padding: "5px 0" }}>
                         <Img
-                          src="https://i.imgur.com/5TuuXe0.png"
-                          width={150}
+                          src="https://i.imgur.com/bLSybss.png"
+                          width={240}
                           height="auto"
-                          alt="Website Background"
-                          style={{ height: "auto" }}
-                        />
-                      </td>
-                      <td align="center" style={{ padding: "5px 0" }}>
-                        <Img
-                          src="https://i.imgur.com/6X2ux1W.png"
-                          width={150}
-                          height="auto"
-                          alt="Poster No Mascots"
+                          alt="Giveaway 2"
                           style={{ height: "auto" }}
                         />
                       </td>
                     </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style={{ padding: "15px 0" }}>
+                    <a href={"https://www.instagram.com/knighthacks/"}>
+                      <Img
+                        src="https://i.imgur.com/j7SIVO3.png"
+                        width={280}
+                        height="auto"
+                        alt="Join Instagram Button"
+                        style={{ height: "auto" }}
+                      />
+                    </a>
                   </td>
                 </tr>
               </table>
@@ -368,7 +372,7 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center" style={{ padding: "10px 0" }}>
                     <Img
-                      src="https://i.imgur.com/4h4rs7S.png"
+                      src="https://i.imgur.com/uAnkxxw.png"
                       width={500}
                       height="auto"
                       alt="Footer Image"
@@ -390,7 +394,7 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center">
                     <Img
-                      src="https://i.imgur.com/UvC8nCh.png"
+                      src="https://i.imgur.com/lpTVNl7.png"
                       width={700}
                       height="auto"
                       alt="Divider"

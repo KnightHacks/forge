@@ -55,7 +55,7 @@ export default function AcceptButton({
     });
 
     const html = await render(
-      <KH8AcceptanceEmail name={`${hacker.firstName} ${hacker.lastName}`} />,
+      <KH8AcceptanceEmail name={hacker.lastName} />,
     );
 
     sendEmail.mutate({

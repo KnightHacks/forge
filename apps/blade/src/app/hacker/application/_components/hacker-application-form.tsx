@@ -372,7 +372,7 @@ export function HackerFormPage({
             });
 
             const html = await render(
-              <KH8ApplyEmail name={`${values.firstName} ${values.lastName}`} />,
+              <KH8ApplyEmail name={values.firstName} />,
             );
 
             sendEmail.mutate({
