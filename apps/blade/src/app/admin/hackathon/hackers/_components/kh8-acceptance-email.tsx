@@ -374,7 +374,9 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                           </a>
                         </td>
                         <td align="center">
-                          <a href={`https://knight-hacks.notion.site/knight-hacks-viii`}>
+                          <a
+                            href={`https://knight-hacks.notion.site/knight-hacks-viii`}
+                          >
                             <Img
                               src="https://i.imgur.com/QGmXqoQ.png"
                               width={240}

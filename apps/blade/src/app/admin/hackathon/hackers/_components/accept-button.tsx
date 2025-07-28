@@ -54,9 +54,7 @@ export default function AcceptButton({
       hackathonName,
     });
 
-    const html = await render(
-      <KH8AcceptanceEmail name={hacker.lastName} />,
-    );
+    const html = await render(<KH8AcceptanceEmail name={hacker.lastName} />);
 
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
