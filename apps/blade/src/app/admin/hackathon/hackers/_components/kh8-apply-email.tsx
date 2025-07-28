@@ -15,7 +15,7 @@ interface AcceptanceEmailProps {
 }
 
 export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
-  const previewText = `${name}, thank you for applying to KnightHacks!`;
+  const previewText = `${name}, thank you for applying to KnightHacks! Here's what you need to do:`;
 
   return (
     <Html>
@@ -72,7 +72,7 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td
                     // @ts-expect-error td is tripping
-                    background="https://i.imgur.com/EtRmspk.png"
+                    background="https://i.imgur.com/XlGEJ11.png"
                     width="700"
                     height="200"
                     align="left"
@@ -83,7 +83,7 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                     }}
                   >
                     <Text
-                      className=" ml-4 mb-4 p-[22px] text-[28px] font-bold leading-tight text-[#070708]"
+                      className="ml-3 mb-6 p-[22px] text-[28px] font-bold leading-tight text-[#070708]"
                     >
                       <span className="text-[#4075B7]">Thanks for applying,</span>
                       <br/>
@@ -98,7 +98,7 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
 
             <Section className="p-0 text-center">
               <Img
-                src="https://i.imgur.com/rjujtbx.png"
+                src="https://i.imgur.com/R3VbtS9.png"
                 width={600}
                 alt="KnightHacks Banner"
                 className="mt-[-50px] h-auto w-full"
@@ -156,7 +156,7 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                       className=" text-[20px] font-normal leading-[25px] tracking-[0.01em]"
                       style={{ margin: 0 }}
                     >
-                      Now that your application is on file, there’s nothing left for you to do. We will be processing applications [I DONT KNOW WHEN], so keep an eye on your inbox for our signal.
+                      Now that your application is on file, there’s nothing left for you to do. We will be processing applications as we get closer to the date, so keep an eye on your inbox for our signal.
                       <br/><br/>
                       Bide your time, hone your skills.
                       <br/>
@@ -246,27 +246,53 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                   </td>
                 </tr>
                 <tr>
-                  <td align="center" style={{ padding: "20px 0" }}>
+                  <td align="center" style={{ padding: "10px 0" }}>
                     <Img
                       src="https://i.imgur.com/loDXiue.png"
                       width={500}
                       height="auto"
-                      alt="Social Media Graphic"
+                      alt="Poster Graphic"
                       style={{ maxWidth: "100%", height: "auto" }}
                     />
                   </td>
                 </tr>
                 <tr>
-                  <td align="center" style={{ padding: "10px 0" }}>
-                    <a href={`${process.env.BLADE_URL}/dashboard`}>
-                      <Img
-                        src="https://i.imgur.com/UFGVeX2.png"
-                        width={280}
-                        height="auto"
-                        alt="Share Button"
-                        style={{ height: "auto" }}
-                      />
-                    </a>
+                  <td align="center" style={{ padding: "5px 0" }}>
+                    <table
+                      role="presentation"
+                      width="100%"
+                      cellPadding={0}
+                      cellSpacing={0}
+                      border={0}
+                    >
+                      <td align="center">
+                        <Img
+                          src="https://i.imgur.com/rlx2A55.png"
+                          width={150}
+                          height="auto"
+                          alt="Poster No Text"
+                          style={{ height: "auto" }}
+                        />
+                      </td>
+                      <td align="center" style={{ padding: "5px 0" }}>
+                        <Img
+                          src="https://i.imgur.com/5TuuXe0.png"
+                          width={150}
+                          height="auto"
+                          alt="Website Background"
+                          style={{ height: "auto" }}
+                        />
+                      </td>
+                      <td align="center" style={{ padding: "5px 0" }}>
+                        <Img
+                          src="https://i.imgur.com/6X2ux1W.png"
+                          width={150}
+                          height="auto"
+                          alt="Poster No Mascots"
+                          style={{ height: "auto" }}
+                        />
+                      </td>
+                    </table>
                   </td>
                 </tr>
               </table>
@@ -316,24 +342,13 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                       border={0}
                     >
                       <tr>
-                        <td align="center" style={{ paddingRight: "10px" }}>
+                        <td align="center">
                           <a href="https://2025.knighthacks.org/">
                             <Img
                               src="https://i.imgur.com/csimGSU.png"
                               width={240}
                               height="auto"
                               alt="Resource 1"
-                              style={{ height: "auto" }}
-                            />
-                          </a>
-                        </td>
-                        <td align="center">
-                          <a href={`${process.env.BLADE_URL}/guide`}>
-                            <Img
-                              src="https://i.imgur.com/QGmXqoQ.png"
-                              width={240}
-                              height="auto"
-                              alt="Resource 2"
                               style={{ height: "auto" }}
                             />
                           </a>

@@ -72,7 +72,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td
                     // @ts-expect-error td is tripping
-                    background="https://i.imgur.com/EtRmspk.png"
+                    background="https://i.imgur.com/XlGEJ11.png"
                     width="700"
                     height="200"
                     align="left"
@@ -83,10 +83,11 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                     }}
                   >
                     <Text
-                      className=" ml-4 mb-4 p-[22px] text-[28px] font-bold leading-tight text-[#070708]"
+                      className="mb-6 p-[22px] text-[28px] font-bold leading-tight text-[#070708]"
                     >
-                      <span className="text-[#4075B7]">Congrats,</span>
+                      &nbps;<span className="text-[#4075B7]">Congrats,</span>
                       <br/>
+                      &nbps;
                       <span className="text-[32px] font-bold text-[#C04B3D]">
                         {name}!
                       </span>
@@ -98,7 +99,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
 
             <Section className="p-0 text-center">
               <Img
-                src="https://i.imgur.com/6fDiTiv.png"
+                src="https://i.imgur.com/qLVlama.png"
                 width={600}
                 alt="KnightHacks Banner"
                 className="mt-[-50px] h-auto w-full"
@@ -266,27 +267,53 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                   </td>
                 </tr>
                 <tr>
-                  <td align="center" style={{ padding: "20px 0" }}>
+                  <td align="center" style={{ padding: "10px 0" }}>
                     <Img
                       src="https://i.imgur.com/loDXiue.png"
                       width={500}
                       height="auto"
-                      alt="Social Media Graphic"
+                      alt="Poster Graphic"
                       style={{ maxWidth: "100%", height: "auto" }}
                     />
                   </td>
                 </tr>
                 <tr>
-                  <td align="center" style={{ padding: "10px 0" }}>
-                    <a href={`${process.env.BLADE_URL}/dashboard`}>
-                      <Img
-                        src="https://i.imgur.com/UFGVeX2.png"
-                        width={280}
-                        height="auto"
-                        alt="Share Button"
-                        style={{ height: "auto" }}
-                      />
-                    </a>
+                  <td align="center" style={{ padding: "5px 0" }}>
+                    <table
+                      role="presentation"
+                      width="100%"
+                      cellPadding={0}
+                      cellSpacing={0}
+                      border={0}
+                    >
+                      <td align="center">
+                        <Img
+                          src="https://i.imgur.com/rlx2A55.png"
+                          width={150}
+                          height="auto"
+                          alt="Poster No Text"
+                          style={{ height: "auto" }}
+                        />
+                      </td>
+                      <td align="center" style={{ padding: "5px 0" }}>
+                        <Img
+                          src="https://i.imgur.com/5TuuXe0.png"
+                          width={150}
+                          height="auto"
+                          alt="Website Background"
+                          style={{ height: "auto" }}
+                        />
+                      </td>
+                      <td align="center" style={{ padding: "5px 0" }}>
+                        <Img
+                          src="https://i.imgur.com/6X2ux1W.png"
+                          width={150}
+                          height="auto"
+                          alt="Poster No Mascots"
+                          style={{ height: "auto" }}
+                        />
+                      </td>
+                    </table>
                   </td>
                 </tr>
               </table>
