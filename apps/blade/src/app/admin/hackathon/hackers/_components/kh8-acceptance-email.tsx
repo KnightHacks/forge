@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-properties */
 import {
   Body,
   Container,
@@ -19,7 +20,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
 
   return (
     <Html>
-      <Head/>
+      <Head />
       <Tailwind
         config={{
           theme: {
@@ -82,11 +83,9 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                       backgroundPosition: "center",
                     }}
                   >
-                    <Text
-                      className="mb-6 p-[22px] text-[28px] font-bold leading-tight text-[#070708]"
-                    >
+                    <Text className="mb-6 p-[22px] text-[28px] font-bold leading-tight text-[#070708]">
                       &nbps;<span className="text-[#4075B7]">Congrats,</span>
-                      <br/>
+                      <br />
                       &nbps;
                       <span className="text-[32px] font-bold text-[#C04B3D]">
                         {name}!
@@ -143,7 +142,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center" style={{ padding: "20px 0" }}>
                     <Text
-                      className=" text-[40px] font-normal leading-[46px] tracking-[0.01em]"
+                      className="text-[40px] font-normal leading-[46px] tracking-[0.01em]"
                       style={{ margin: 0 }}
                     >
                       1. CONFIRM YOUR{" "}
@@ -154,7 +153,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center" style={{ padding: "10px 0" }}>
                     <Text
-                      className=" text-[20px] font-normal leading-[23px] tracking-[0.01em]"
+                      className="text-[20px] font-normal leading-[23px] tracking-[0.01em]"
                       style={{ margin: 0 }}
                     >
                       (Spots are filling up quickly confirm ASAP!)
@@ -199,7 +198,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center" style={{ padding: "20px 0" }}>
                     <Text
-                      className=" text-[40px] font-normal leading-[46px] tracking-[0.01em]"
+                      className="text-[40px] font-normal leading-[46px] tracking-[0.01em]"
                       style={{ margin: 0 }}
                     >
                       2. JOIN OUR{" "}
@@ -210,7 +209,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center" style={{ padding: "10px 0" }}>
                     <Text
-                      className=" text-[20px] font-normal leading-[23px] tracking-[0.01em]"
+                      className="text-[20px] font-normal leading-[23px] tracking-[0.01em]"
                       style={{ margin: 0 }}
                     >
                       (Required by October 23rd)
@@ -255,7 +254,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center" style={{ padding: "20px 0" }}>
                     <Text
-                      className=" text-[40px] font-normal leading-[46px] tracking-[0.01em]"
+                      className="text-[40px] font-normal leading-[46px] tracking-[0.01em]"
                       style={{ margin: 0 }}
                     >
                       3. SPREAD THE

@@ -19,7 +19,7 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
 
   return (
     <Html>
-      <Head/>
+      <Head />
       <Tailwind
         config={{
           theme: {
@@ -82,11 +82,11 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                       backgroundPosition: "center",
                     }}
                   >
-                    <Text
-                      className="ml-3 mb-6 p-[22px] text-[28px] font-bold leading-tight text-[#070708]"
-                    >
-                      <span className="text-[#4075B7]">Thanks for applying,</span>
-                      <br/>
+                    <Text className="mb-6 ml-3 p-[22px] text-[28px] font-bold leading-tight text-[#070708]">
+                      <span className="text-[#4075B7]">
+                        Thanks for applying,
+                      </span>
+                      <br />
                       <span className="text-[32px] font-bold text-[#C04B3D]">
                         {name}!
                       </span>
@@ -142,7 +142,7 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center" style={{ padding: "20px 0" }}>
                     <Text
-                      className=" text-[40px] font-normal leading-[46px] tracking-[0.01em]"
+                      className="text-[40px] font-normal leading-[46px] tracking-[0.01em]"
                       style={{ margin: 0 }}
                     >
                       1. WATCH YOUR{" "}
@@ -153,14 +153,22 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center" style={{ padding: "10px 0" }}>
                     <Text
-                      className=" text-[20px] font-normal leading-[25px] tracking-[0.01em]"
+                      className="text-[20px] font-normal leading-[25px] tracking-[0.01em]"
                       style={{ margin: 0 }}
                     >
-                      Now that your application is on file, there’s nothing left for you to do. We will be processing applications as we get closer to the date, so keep an eye on your inbox for our signal.
-                      <br/><br/>
+                      Now that your application is on file, there’s nothing left
+                      for you to do. We will be processing applications as we
+                      get closer to the date, so keep an eye on your inbox for
+                      our signal.
+                      <br />
+                      <br />
                       Bide your time, hone your skills.
-                      <br/>
-                      <span className="font-bold text-[#4075B7]">T.K.</span> and <span className="font-bold text-[#C04B3D]">Lenny</span> will need all the help they can get!
+                      <br />
+                      <span className="font-bold text-[#4075B7]">
+                        T.K.
+                      </span> and{" "}
+                      <span className="font-bold text-[#C04B3D]">Lenny</span>{" "}
+                      will need all the help they can get!
                     </Text>
                   </td>
                 </tr>
@@ -178,7 +186,7 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center" style={{ padding: "20px 0" }}>
                     <Text
-                      className=" text-[40px] font-normal leading-[46px] tracking-[0.01em]"
+                      className="text-[40px] font-normal leading-[46px] tracking-[0.01em]"
                       style={{ margin: 0 }}
                     >
                       2. JOIN OUR{" "}
@@ -189,7 +197,7 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center" style={{ padding: "10px 0" }}>
                     <Text
-                      className=" text-[20px] font-normal leading-[23px] tracking-[0.01em]"
+                      className="text-[20px] font-normal leading-[23px] tracking-[0.01em]"
                       style={{ margin: 0 }}
                     >
                       (Required by October 23rd)
@@ -234,7 +242,7 @@ export const KH8ApplyEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td align="center" style={{ padding: "20px 0" }}>
                     <Text
-                      className=" text-[40px] font-normal leading-[46px] tracking-[0.01em]"
+                      className="text-[40px] font-normal leading-[46px] tracking-[0.01em]"
                       style={{ margin: 0 }}
                     >
                       3. SPREAD THE

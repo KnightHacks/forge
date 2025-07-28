@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { render } from "@react-email/render";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
@@ -43,9 +44,8 @@ import {
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
-import { api } from "~/trpc/react";
-import { render } from "@react-email/render";
 import KH8ApplyEmail from "~/app/admin/hackathon/hackers/_components/kh8-apply-email";
+import { api } from "~/trpc/react";
 
 export function HackerFormPage({
   hackathonId,
@@ -90,7 +90,7 @@ export function HackerFormPage({
     },
   });
 
-  const sendEmail = api.email.sendEmail.useMutation()
+  const sendEmail = api.email.sendEmail.useMutation();
 
   const toggleAllergy = (allergy: string) => {
     setSelectedAllergies((prev) => {
@@ -372,11 +372,9 @@ export function HackerFormPage({
             });
 
             const html = await render(
-              <KH8ApplyEmail
-                name={`${values.firstName} ${values.lastName}`}
-              />,
+              <KH8ApplyEmail name={`${values.firstName} ${values.lastName}`} />,
             );
-            
+
             sendEmail.mutate({
               from: "donotreply@knighthacks.org",
               to: values.email,
