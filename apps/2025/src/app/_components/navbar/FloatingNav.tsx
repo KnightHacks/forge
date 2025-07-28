@@ -23,6 +23,33 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileButtonRef = useRef<HTMLButtonElement>(null);
   const firstNavLinkRef = useRef<HTMLAnchorElement>(null);
+  const skipLinkRef = useRef<HTMLAnchorElement>(null);
+  const lastFocusedElement = useRef<HTMLElement | null>(null);
+
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        const activeElement = document.activeElement as HTMLElement;
+        if (activeElement === document.body || activeElement === document.documentElement) {
+          e.preventDefault();
+          skipLinkRef.current?.focus();
+        }
+      }
+    };
+
+    const handleMouseDown = () => {
+      lastFocusedElement.current = document.activeElement as HTMLElement;
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleMouseDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -59,20 +86,36 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
       }
 
       const sections = navLinks.map((link) => link.href.substring(1));
-      const scrollWithOffset = scrollPosition + 100;
+
+      let bestMatch = "";
+      let bestScore = 0;
 
       for (const section of sections) {
         const element = document.getElementById(section);
         if (element) {
-          const { offsetTop, offsetHeight } = element;
-          if (
-            scrollWithOffset >= offsetTop &&
-            scrollWithOffset < offsetTop + offsetHeight
-          ) {
-            setActiveSection(section);
-            break;
+          const rect = element.getBoundingClientRect();
+          const elementTop = rect.top + scrollPosition;
+          const elementBottom = elementTop + rect.height;
+          const viewportTop = scrollPosition;
+          const viewportBottom = scrollPosition + window.innerHeight;
+          
+          const visibleTop = Math.max(elementTop, viewportTop);
+          const visibleBottom = Math.min(elementBottom, viewportBottom);
+          const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+          const visibilityRatio = visibleHeight / rect.height;
+          
+          const distanceFromTop = Math.abs(rect.top);
+          const score = visibilityRatio - (distanceFromTop / 1000);
+          
+          if (score > bestScore && visibilityRatio > 0.1) {
+            bestScore = score;
+            bestMatch = section;
           }
         }
+      }
+
+      if (bestMatch) {
+        setActiveSection(bestMatch);
       }
     };
 
@@ -100,8 +143,37 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
     };
   }, [isMobileMenuOpen]);
 
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+        setTimeout(() => {
+          mobileButtonRef.current?.focus();
+        }, 100);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [isMobileMenuOpen]);
+
   const handleMobileMenuToggle = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+    const newState = !isMobileMenuOpen;
+    setIsMobileMenuOpen(newState);
+    
+
+    if (newState) {
+      setTimeout(() => {
+        firstNavLinkRef.current?.focus();
+      }, 150);
+    } else {
+      setTimeout(() => {
+        mobileButtonRef.current?.focus();
+      }, 100);
+    }
   };
 
   const handleMobileNavClick = (href: string) => {
@@ -183,33 +255,37 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
     <>
       {/* Skip Navigation Link for Screen Readers */}
       <a
+        ref={skipLinkRef}
         href="#main-content"
+        tabIndex={1}
         className="sr-only fixed top-0 left-0 z-[10000] rounded-none bg-[#d83434] px-4 py-2 text-white focus:not-sr-only focus:absolute focus:top-4 focus:left-4"
       >
         Skip to main content
       </a>
 
       {/* Desktop Floating Navbar */}
-      <AnimatePresence>
-        {isNavVisible && (
-          <motion.nav
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed top-4 left-1/2 z-[9999] hidden w-auto -translate-x-1/2 md:block"
-            role="navigation"
-            aria-label="Main navigation"
-          >
+      <motion.nav
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ 
+          y: (isNavVisible || isAtTop) ? 0 : -100,
+          opacity: (isNavVisible || isAtTop) ? 1 : 0
+        }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="fixed top-4 left-1/2 z-[9999] hidden w-auto -translate-x-1/2 md:block"
+        role="navigation"
+        aria-label="Main navigation"
+        style={{
+          pointerEvents: (isNavVisible || isAtTop) ? 'auto' : 'none'
+        }}
+      >
             <div className="group relative">
-              {/* Main navbar container with TextBox styling - Made wider */}
-              <div className="relative w-4xl max-w-6xl rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 xl:w-5xl">
-                <div className="flex items-center gap-4 p-4">
-                  {/* Logo - Clickable but no highlight */}
+              <div className="relative w-auto rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
+                <div className="flex items-center justify-center gap-4 md:gap-5 px-24 py-2">
                   <motion.button
                     onClick={handleLogoClick}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    tabIndex={2}
                     className="relative flex h-12 w-12 cursor-pointer items-center justify-center rounded-none outline-1 -outline-offset-1 outline-black focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434]"
                     aria-label="Go to top of page"
                   >
@@ -223,9 +299,8 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                     />
                   </motion.button>
 
-                  {/* Desktop Navigation Links */}
                   <div
-                    className="flex flex-1 items-center justify-center gap-3"
+                    className="flex items-center gap-3"
                     role="list"
                   >
                     {navLinks.map((link, index) => {
@@ -236,7 +311,7 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                         <a
                           key={link.href}
                           href={link.href}
-                          tabIndex={0}
+                          tabIndex={3 + index}
                           onClick={e => {
                             e.preventDefault();
                             handleDesktopNavClick(link.href);
@@ -247,13 +322,13 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                               handleDesktopNavClick(link.href);
                             }
                           }}
-                          className={`tk-ccmeanwhile relative flex min-h-[50px] cursor-pointer items-center justify-center rounded-none px-6 py-3 text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] xl:text-lg ${
+                          className={`tk-ccmeanwhile relative flex min-h-[48px] cursor-pointer items-center justify-center rounded-none px-3 md:px-4 py-3 text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] xl:text-lg ${
                             isActive
                               ? "text-white shadow-lg"
                               : "text-slate-800 hover:text-white"
                           }`}
                           style={{
-                            minWidth: "120px",
+                            minWidth: "90px",
                             backgroundColor: isActive
                               ? navColors.bg
                               : "transparent",
@@ -290,21 +365,22 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
               <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
             </div>
           </motion.nav>
-        )}
-      </AnimatePresence>
 
       {/* Mobile Floating Button - Always Visible */}
-      <AnimatePresence>
-        {isNavVisible && (
-          <motion.nav
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="mobile-nav-container fixed top-4 left-4 z-[9999] touch-manipulation md:hidden"
-            role="navigation"
-            aria-label="Mobile navigation"
-          >
+      <motion.nav
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ 
+          y: (isNavVisible || isAtTop) ? 0 : -100,
+          opacity: (isNavVisible || isAtTop) ? 1 : 0
+        }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="mobile-nav-container fixed top-4 left-4 z-[9999] touch-manipulation md:hidden"
+        role="navigation"
+        aria-label="Mobile navigation"
+        style={{
+          pointerEvents: (isNavVisible || isAtTop) ? 'auto' : 'none'
+        }}
+      >
             <div className="group relative">
               {/* Mobile button with TextBox styling */}
               <motion.button
@@ -383,7 +459,6 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                               key={link.href}
                               ref={index === 0 ? firstNavLinkRef : undefined}
                               href={link.href}
-                              tabIndex={0}
                               onClick={e => {
                                 e.preventDefault();
                                 handleMobileNavClick(link.href);
@@ -437,8 +512,6 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
               )}
             </AnimatePresence>
           </motion.nav>
-        )}
-      </AnimatePresence>
     </>
   );
 }

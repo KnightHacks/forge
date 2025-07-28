@@ -1,21 +1,28 @@
 "use client";
 
+import useStaggeredAnimation from "../hooks/useStaggeredAnimation";
 import PartnerPosters from "./partnerPosters";
 import PartnersTitle from "./partnersTitle";
 
-const partners = () => {
+const Partners = () => {
+  const partnersRef = useStaggeredAnimation(150);
+
   return (
     <div className="flex w-full justify-center">
-      <div
+      <section
         id="partners"
-        className="mb-16 h-auto w-[90%] sm:mb-20 md:mb-24 lg:mb-32 xl:mb-40 animate-on-scroll"
-        style={{ animation: 'fadeIn 0.8s ease-out forwards' }}
+        ref={partnersRef}
+        className="mt-0 pt-0 mb-[100px] min-h-[800px] sm:mt-40 sm:pt-0 sm:mb-20 sm:min-h-0 w-[90%] md:mb-24 lg:mb-32 xl:mb-40"
       >
-        <PartnersTitle />
-        <PartnerPosters />
-      </div>
+        <div className="stagger-item animate-pop-out">
+          <PartnersTitle />
+        </div>
+        <div className="stagger-item" style={{ animationDelay: '0.5s' }}>
+          <PartnerPosters />
+        </div>
+      </section>
     </div>
   );
 };
 
-export default partners;
+export default Partners;
