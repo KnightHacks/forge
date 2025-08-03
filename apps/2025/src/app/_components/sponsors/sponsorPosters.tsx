@@ -13,7 +13,9 @@
   AMD AMD Statsig Statsig NextEra NextEra
   BNY BNY ServiceNow ServiceNow Auritas Auritas
   BNY BNY ServiceNow ServiceNow Auritas Auritas
-  Impressink Impressink Impressink Shinies Shinies Shinies
+  Morgan&Morgan Morgan&Morgan ImpressInk ImpressInk ImpressInk None
+  Morgan&Morgan Morgan&Morgan Shinies Shinies Shinies None
+
    
   Mobile (4 columns):
   Google Google Google Google
@@ -25,11 +27,10 @@
   NextEra NextEra BNY BNY
   ServiceNow ServiceNow Auritas Auritas
   ServiceNow ServiceNow Auritas Auritas
-  Lockheed Lockheed Lockheed GitHub
-  Impressink Impressink Impressink NVIDIA
-  Shinies Shinies Shinies NASA
-
-
+  Morgan&Morgan Morgan&Morgan ImpressInk ImpressInk
+  Morgan&Morgan Morgan&Morgan Shinies Shinies
+  Lockheed Lockheed Lockheed None
+  GitHub NVIDIA NASA None
 */
 }
 
@@ -71,9 +72,9 @@ const SPONSOR_TIERS = {
   },
 } as const;
 
-// Sponsors arranged in visual order (left to right, top to bottom)
+// Sponsors arranged according to the layout in the docstring
 const sponsors: Sponsor[] = [
-  // Row 1: Google (left), OneEthos (right)
+  // Row 1-2: Google (left 3x2), OneEthos (right 3x2)
   {
     src: "/sponsorSectionSvgs/google.svg",
     alt: "GOOGLE",
@@ -92,7 +93,7 @@ const sponsors: Sponsor[] = [
     gridPosition: "sm:row-start-1 sm:row-span-2 sm:col-start-4 sm:col-span-3",
     mobilePosition: "row-start-2 row-span-1 col-start-1 col-span-4",
   },
-  // Row 3: Pheratech (left), Lockheed Martin (right)
+  // Row 3-4: Pheratech (left 3x2), Lockheed (right 3x1), GitHub/NVIDIA/NASA (right 1x1 each)
   {
     src: "/sponsorSectionSvgs/pheratech.png",
     alt: "PHERATECH SYSTEMS",
@@ -109,9 +110,8 @@ const sponsors: Sponsor[] = [
     link: "https://www.lockheedmartin.com/",
     category: "Silver",
     gridPosition: "sm:row-start-3 sm:row-span-1 sm:col-start-4 sm:col-span-3",
-    mobilePosition: "row-start-10 row-span-1 col-start-1 col-span-3",
+    mobilePosition: "row-start-12 row-span-1 col-start-1 col-span-3",
   },
-  // Row 4: GitHub, NVIDIA, NASA (small boxes on right)
   {
     src: "/sponsorSectionSvgs/github.png",
     alt: "GITHUB",
@@ -119,7 +119,7 @@ const sponsors: Sponsor[] = [
     link: "https://github.com/",
     category: "Bronze",
     gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-4 sm:col-span-1",
-    mobilePosition: "row-start-10 row-span-1 col-start-4 col-span-1",
+    mobilePosition: "row-start-12 row-span-1 col-start-4 col-span-1",
   },
   {
     src: "/sponsorSectionSvgs/nvidia.svg",
@@ -128,7 +128,7 @@ const sponsors: Sponsor[] = [
     link: "https://www.nvidia.com/",
     category: "Bronze",
     gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-5 sm:col-span-1",
-    mobilePosition: "row-start-11 row-span-1 col-start-4 col-span-1",
+    mobilePosition: "row-start-13 row-span-1 col-start-4 col-span-1",
   },
   {
     src: "/sponsorSectionSvgs/nasa.svg",
@@ -137,9 +137,9 @@ const sponsors: Sponsor[] = [
     link: "https://www.nasa.gov/",
     category: "Bronze",
     gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-6 sm:col-span-1",
-    mobilePosition: "row-start-12 row-span-1 col-start-4 col-span-1",
+    mobilePosition: "row-start-13 row-span-1 col-start-1 col-span-1",
   },
-  // Row 5-6: AMD, Statsig, NextEra (2x2 grid)
+  // Row 5-6: AMD (2x2), Statsig (2x2), NextEra (2x2)
   {
     src: "/sponsorSectionSvgs/amd.svg",
     alt: "AMD",
@@ -167,7 +167,7 @@ const sponsors: Sponsor[] = [
     gridPosition: "sm:row-start-5 sm:row-span-2 sm:col-start-5 sm:col-span-2",
     mobilePosition: "row-start-6 row-span-2 col-start-1 col-span-2",
   },
-  // Row 7-8: BNY, ServiceNow, Auritas (2x2 grid)
+  // Row 7-8: BNY (2x2), ServiceNow (2x2), Auritas (2x2)
   {
     src: "/sponsorSectionSvgs/bny.svg",
     alt: "BNY",
@@ -195,15 +195,24 @@ const sponsors: Sponsor[] = [
     gridPosition: "sm:row-start-7 sm:row-span-2 sm:col-start-5 sm:col-span-2",
     mobilePosition: "row-start-8 row-span-2 col-start-3 col-span-2",
   },
-  // Row 9: Impressink (left), Shinies (right)
+  // Row 9-10: Morgan&Morgan (2x2), ImpressInk (3x1), Shinies (3x1), None (1x1)
+  {
+    src: "/sponsorSectionSvgs/morgan-and-morgan.svg",
+    alt: "MORGAN&MORGAN",
+    ariaLabel: "Morgan & Morgan Logo",
+    link: "https://www.forthepeople.com/",
+    category: "Gold",
+    gridPosition: "sm:row-start-9 sm:row-span-2 sm:col-start-1 sm:col-span-2",
+    mobilePosition: "row-start-10 row-span-2 col-start-1 col-span-2",
+  },
   {
     src: "/sponsorSectionSvgs/impressink.png",
     alt: "IMPRESSINK",
     ariaLabel: "Impress Ink Logo",
     link: "https://impressink.com/",
     category: "Silver",
-    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-1 sm:col-span-3",
-    mobilePosition: "row-start-11 row-span-1 col-start-1 col-span-3",
+    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-3 sm:col-span-3",
+    mobilePosition: "row-start-10 row-span-2 col-start-3 col-span-2",
   },
   {
     src: "/sponsorSectionSvgs/shinies.svg",
@@ -211,8 +220,8 @@ const sponsors: Sponsor[] = [
     ariaLabel: "Shinies Props Logo",
     link: "https://www.instagram.com/shiniesprops/",
     category: "Silver",
-    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-4 sm:col-span-3",
-    mobilePosition: "row-start-12 row-span-1 col-start-1 col-span-3",
+    gridPosition: "sm:row-start-10 sm:row-span-1 sm:col-start-3 sm:col-span-3",
+    mobilePosition: "row-start-12 row-span-2 col-start-1 col-span-2",
   },
 ];
 
@@ -223,7 +232,7 @@ export default function SponsorPosters() {
     <div className="w-full px-4 py-4">
       <div className="mx-auto max-w-5xl">
         {/* Mobile: 4 cols, SM+: 6 cols */}
-        <div 
+        <div
           ref={sponsorsGridRef}
           className="grid auto-rows-[70px] grid-cols-4 gap-2 sm:auto-rows-[90px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[110px] md:gap-4 lg:auto-rows-[130px] lg:gap-5"
         >
@@ -246,60 +255,62 @@ export default function SponsorPosters() {
                   <a
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group relative flex h-full items-center justify-center focus:outline-4 focus:outline-offset-2 focus:outline-[#1570AD] rounded-none"
+                    className="group relative flex h-full items-center justify-center rounded-none focus:outline-4 focus:outline-offset-2 focus:outline-[#1570AD]"
                   >
-                  {/* Main card */}
-                  <div
-                    className={`relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 ${tierConfig.hover}`}
-                  >
-                    {/* subtle dot pattern */}
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[length:20px_20px] opacity-30" />
+                    {/* Main card */}
+                    <div
+                      className={`relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 ${tierConfig.hover}`}
+                    >
+                      {/* subtle dot pattern */}
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[length:20px_20px] opacity-30" />
 
-                    {/* logo container */}
-                    <div className="relative flex h-full w-full items-center justify-center">
-                      {sponsor.alt === "GOOGLE" ? (
-                        <>
+                      {/* logo container */}
+                      <div className="relative flex h-full w-full items-center justify-center">
+                        {sponsor.alt === "GOOGLE" ? (
+                          <>
+                            <Image
+                              src="/sponsorSectionSvgs/google-mobile.svg"
+                              alt={sponsor.alt}
+                              fill
+                              className="object-contain p-4 drop-shadow-sm sm:hidden"
+                              sizes="45vw"
+                              draggable={false}
+                            />
+                            <Image
+                              src="/sponsorSectionSvgs/google.svg"
+                              alt={sponsor.alt}
+                              fill
+                              className="hidden object-contain p-8 drop-shadow-sm sm:block"
+                              sizes="(max-width: 1024px) 16vw, 12vw"
+                              draggable={false}
+                            />
+                          </>
+                        ) : (
                           <Image
-                            src="/sponsorSectionSvgs/google-mobile.svg"
+                            src={sponsor.src}
                             alt={sponsor.alt}
                             fill
-                            className="object-contain p-4 drop-shadow-sm sm:hidden"
-                            sizes="45vw"
+                            className={`object-contain drop-shadow-sm ${
+                              sponsor.alt === "NVIDIA"
+                                ? "p-2 sm:p-4 md:scale-125 md:p-6"
+                                : "p-4 md:p-8"
+                            } ${sponsor.alt === "GITHUB" ? "p-2 sm:p-4 md:scale-125 md:p-6" : ""} ${
+                              sponsor.alt === "SHINIES PROPS"
+                                ? "brightness-0"
+                                : ""
+                            }`}
+                            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 16vw, 12vw"
                             draggable={false}
                           />
-                          <Image
-                            src="/sponsorSectionSvgs/google.svg"
-                            alt={sponsor.alt}
-                            fill
-                            className="hidden object-contain p-8 drop-shadow-sm sm:block"
-                            sizes="(max-width: 1024px) 16vw, 12vw"
-                            draggable={false}
-                          />
-                        </>
-                      ) : (
-                        <Image
-                          src={sponsor.src}
-                          alt={sponsor.alt}
-                          fill
-                          className={`object-contain drop-shadow-sm ${
-                            sponsor.alt === "NVIDIA"
-                              ? "p-2 sm:p-4 md:p-6 md:scale-125"
-                              : "p-4 md:p-8"
-                          } ${sponsor.alt === "GITHUB" ? "p-2 sm:p-4 md:p-6 md:scale-125" : ""} ${
-                            sponsor.alt === "SHINIES PROPS" ? "brightness-0" : ""
-                          }`}
-                          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 16vw, 12vw"
-                          draggable={false}
-                        />
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Black drop shadow */}
-                  <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-                </a>
-              </Link>
-            </div>
+                    {/* Black drop shadow */}
+                    <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
+                  </a>
+                </Link>
+              </div>
             );
           })}
         </div>
