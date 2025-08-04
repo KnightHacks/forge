@@ -119,7 +119,7 @@ const sponsors: Sponsor[] = [
     link: "https://github.com/",
     category: "Bronze",
     gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-4 sm:col-span-1",
-    mobilePosition: "row-start-12 row-span-1 col-start-4 col-span-1",
+    mobilePosition: "row-start-13 row-span-1 col-start-1 col-span-1",
   },
   {
     src: "/sponsorSectionSvgs/nvidia.svg",
@@ -128,7 +128,7 @@ const sponsors: Sponsor[] = [
     link: "https://www.nvidia.com/",
     category: "Bronze",
     gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-5 sm:col-span-1",
-    mobilePosition: "row-start-13 row-span-1 col-start-4 col-span-1",
+    mobilePosition: "row-start-13 row-span-1 col-start-2 col-span-1",
   },
   {
     src: "/sponsorSectionSvgs/nasa.svg",
@@ -137,7 +137,7 @@ const sponsors: Sponsor[] = [
     link: "https://www.nasa.gov/",
     category: "Bronze",
     gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-6 sm:col-span-1",
-    mobilePosition: "row-start-13 row-span-1 col-start-1 col-span-1",
+    mobilePosition: "row-start-13 row-span-1 col-start-3 col-span-1",
   },
   // Row 5-6: AMD (2x2), Statsig (2x2), NextEra (2x2)
   {
@@ -212,16 +212,7 @@ const sponsors: Sponsor[] = [
     link: "https://impressink.com/",
     category: "Silver",
     gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-3 sm:col-span-3",
-    mobilePosition: "row-start-10 row-span-2 col-start-3 col-span-2",
-  },
-  {
-    src: "/sponsorSectionSvgs/synopsys.svg",
-    alt: "SYNOPSYS",
-    ariaLabel: "Synopsys Logo",
-    link: "https://www.synopsys.com/",
-    category: "Bronze",
-    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-6 sm:col-span-1",
-    mobilePosition: "row-start-12 row-span-1 col-start-1 col-span-1",
+    mobilePosition: "row-start-10 row-span-1 col-start-3 col-span-2",
   },
   {
     src: "/sponsorSectionSvgs/shinies.svg",
@@ -230,7 +221,16 @@ const sponsors: Sponsor[] = [
     link: "https://www.instagram.com/shiniesprops/",
     category: "Silver",
     gridPosition: "sm:row-start-10 sm:row-span-1 sm:col-start-3 sm:col-span-3",
-    mobilePosition: "row-start-12 row-span-2 col-start-2 col-span-2",
+    mobilePosition: "row-start-11 row-span-1 col-start-3 col-span-2",
+  },
+  {
+    src: "/sponsorSectionSvgs/synopsys.svg",
+    alt: "SYNOPSYS",
+    ariaLabel: "Synopsys Logo",
+    link: "https://www.synopsys.com/",
+    category: "Bronze",
+    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-6 sm:col-span-1",
+    mobilePosition: "row-start-12 row-span-1 col-start-4 col-span-1",
   },
 ];
 
@@ -243,7 +243,7 @@ export default function SponsorPosters() {
         {/* Mobile: 4 cols, SM+: 6 cols */}
         <div
           ref={sponsorsGridRef}
-          className="grid auto-rows-[70px] grid-cols-4 gap-2 sm:auto-rows-[90px] sm:grid-cols-6 sm:gap-3 md:auto-rows-[110px] md:gap-4 lg:auto-rows-[130px] lg:gap-5"
+          className="grid grid-cols-4 grid-rows-[repeat(13,70px)] gap-2 sm:grid-cols-6 sm:grid-rows-[repeat(10,90px)] sm:gap-3 md:grid-rows-[repeat(10,110px)] md:gap-4 lg:grid-rows-[repeat(10,130px)] lg:gap-5"
         >
           {sponsors.map((sponsor, idx) => {
             const tierConfig = SPONSOR_TIERS[sponsor.category];
