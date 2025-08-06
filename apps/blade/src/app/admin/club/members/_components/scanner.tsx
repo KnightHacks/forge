@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AwardIcon, WrenchIcon } from "lucide-react";
 import { QrReader } from "react-qr-reader";
 import { z } from "zod";
 
@@ -30,8 +31,14 @@ interface CodeScanningProps {
   processingScan?: boolean;
 }
 
-const ScannerPopUp = () => {
+const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   const { data: events } = api.event.getEvents.useQuery();
+
+  const filteredEvents = events?.filter((v) => {
+    if (eventType == "Member") return !v.hackathonId;
+    else return v.hackathonId;
+  });
+
   const [open, setOpen] = useState(false);
 
   // Separate current and previous events
@@ -48,7 +55,19 @@ const ScannerPopUp = () => {
     dayAfterEvent.setDate(dayAfterEvent.getDate() + 1);
     return dayAfterEvent < now;
   });
-  const checkIn = api.member.eventCheckIn.useMutation({
+  
+  const memberCheckIn = api.member.eventCheckIn.useMutation({
+    onSuccess(opts) {
+      toast.success(opts.message);
+      return;
+    },
+    onError(opts) {
+      toast.error(opts.message, {
+        icon: "⚠️",
+      });
+    },
+  });
+  const hackerCheckIn = api.hacker.eventCheckIn.useMutation({
     onSuccess(opts) {
       toast.success(opts.message);
       return;
@@ -119,12 +138,15 @@ const ScannerPopUp = () => {
     <Dialog open={open}>
       <DialogTrigger asChild>
         <Button onClick={() => setOpen(true)} size="lg" className="gap-2">
-          <span>Check In Member</span>
+          <span className="flex flex-row gap-2">
+            {eventType == "Member" ? <AwardIcon /> : <WrenchIcon />}
+            <span className="my-auto">Check-in {eventType}</span>
+          </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="h-auto max-h-[80vh] w-full overflow-y-auto [&>button:last-child]:hidden">
         <DialogHeader>
-          <DialogTitle>Check In Member</DialogTitle>
+          <DialogTitle>Check-in {eventType}</DialogTitle>
         </DialogHeader>
         <div className="mt-4">
           <QrReader
@@ -140,7 +162,14 @@ const ScannerPopUp = () => {
 
                   const eventId = form.getValues("eventId");
                   if (eventId) {
-                    await form.handleSubmit((data) => checkIn.mutate(data))();
+                    if (eventType == "Member")
+                      await form.handleSubmit((data) =>
+                        memberCheckIn.mutate(data),
+                      )();
+                    else
+                      await form.handleSubmit((data) =>
+                        hackerCheckIn.mutate(data),
+                      )();
                   } else {
                     toast.error("Please select an event first!");
                   }
@@ -154,7 +183,8 @@ const ScannerPopUp = () => {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit((data) => {
-              checkIn.mutate(data);
+              if (eventType == "Member") memberCheckIn.mutate(data);
+              else hackerCheckIn.mutate(data);
             })}
             className="space-y-4"
           >
@@ -170,6 +200,54 @@ const ScannerPopUp = () => {
                 {renderEventSelect(previousEvents)}
               </TabsContent>
             </Tabs>
+            <FormField
+              name="eventId"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    <span className="flex flex-row gap-2">
+                      Event
+                      <span className="text-muted-foreground">
+                        This event only accepts{" "}
+                        <span className="font-bold text-primary">
+                          {eventType}
+                        </span>{" "}
+                        QR codes.
+                      </span>
+                    </span>
+                  </FormLabel>
+                  <FormControl>
+                    <select
+                      {...field}
+                      className="w-full rounded border p-2"
+                      defaultValue=""
+                      onChange={(e) => {
+                        const selectedEventId = e.target.value;
+                        field.onChange(e);
+                        const selectedEvent = events?.find(
+                          (event) => event.id === selectedEventId,
+                        );
+                        form.setValue(
+                          "eventPoints",
+                          selectedEvent?.points ?? 0,
+                        );
+                      }}
+                    >
+                      <option value="" disabled>
+                        Select an event
+                      </option>
+                      {filteredEvents?.map((event) => (
+                        <option key={event.id} value={event.id}>
+                          {event.name}
+                        </option>
+                      ))}
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </form>
         </Form>
         <div className="flex space-x-2">

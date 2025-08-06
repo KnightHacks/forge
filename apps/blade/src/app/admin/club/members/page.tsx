@@ -36,7 +36,7 @@ export default async function Members() {
               Member Dashboard
             </h1>
             <div className="mb-2 flex justify-center">
-              <ScannerPopUp />
+              <ScannerPopUp eventType="Member" />
             </div>
           </div>
         </div>

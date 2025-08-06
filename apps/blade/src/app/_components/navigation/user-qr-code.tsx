@@ -65,7 +65,7 @@ export function QRCodePopup() {
           <DrawerTrigger asChild>{qrTrigger}</DrawerTrigger>
           <DrawerContent className="mx-auto w-full max-w-sm">
             <DrawerHeader>
-              <DrawerTitle>Your QR Code</DrawerTitle>
+              <DrawerTitle>Your <span className="font-bold text-primary">MEMBER</span> QR Code</DrawerTitle>
             </DrawerHeader>
             {qrContent}
             <DrawerDescription />
@@ -77,7 +77,7 @@ export function QRCodePopup() {
           <DialogTrigger asChild>{qrTrigger}</DialogTrigger>
           <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Your QR Code</DialogTitle>
+              <DialogTitle>Your <span className="font-bold text-primary">MEMBER</span> QR Code</DialogTitle>
             </DialogHeader>
             {qrContent}
             <DialogDescription />

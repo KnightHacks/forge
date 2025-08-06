@@ -13,8 +13,13 @@ export default function PopularityRanking({
   const [displayFullList, setDisplayFullList] = useState<boolean>(false);
 
   const topEvents = events
-    .filter((event) => event.numAttended > 0)
-    .sort((a, b) => b.numAttended - a.numAttended)
+    .filter((event) => event.numAttended + event.numHackerAttended > 0)
+    .sort(
+      (a, b) =>
+        b.numAttended +
+        b.numHackerAttended -
+        (a.numAttended + a.numHackerAttended),
+    )
     .slice(0, 10);
 
   const handleClick = () => setDisplayFullList((prev) => !prev);
@@ -37,7 +42,9 @@ export default function PopularityRanking({
                     {index + 1}. {event.name} &#91;{event.tag.toUpperCase()}
                     &#93;
                   </span>
-                  <span>{event.numAttended} attended</span>
+                  <span>
+                    {event.numAttended + event.numHackerAttended} attended
+                  </span>
                 </li>
               ),
             )}
