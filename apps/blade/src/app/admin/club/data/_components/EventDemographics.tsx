@@ -7,6 +7,7 @@ import {
   ALL_DATES_RANGE_UNIX,
   SEMESTER_START_DATES,
 } from "@forge/consts/knight-hacks";
+import { Checkbox } from "@forge/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -26,7 +27,7 @@ export default function EventDemographics() {
   const { data: events } = api.event.getEvents.useQuery();
   const semestersArr: Semester[] = [
     {
-      name: "All",
+      name: "All Semesters",
       startDate: new Date(ALL_DATES_RANGE_UNIX.start),
       endDate: new Date(ALL_DATES_RANGE_UNIX.end),
     },
@@ -36,6 +37,7 @@ export default function EventDemographics() {
   const [activeSemester, setActiveSemester] = useState<Semester | null>(
     defaultSemester,
   );
+  const [includeHackathons, setIncludeHackathons] = useState(false);
 
   const semestersSet = new Set<string>();
   events?.forEach(({ start_datetime }) => {
@@ -99,11 +101,13 @@ export default function EventDemographics() {
   const filteredEvents = events
     ?.filter((event) => {
       if (activeSemester)
-        return (
-          event.start_datetime > activeSemester.startDate &&
-          event.start_datetime < activeSemester.endDate
-        );
-      return true;
+        return includeHackathons
+          ? event.start_datetime > activeSemester.startDate &&
+              event.start_datetime < activeSemester.endDate
+          : event.start_datetime > activeSemester.startDate &&
+              event.start_datetime < activeSemester.endDate &&
+              !event.hackathonId;
+      return includeHackathons ? true : !event.hackathonId;
     })
     .sort((a, b) => (a.tag > b.tag ? 1 : a.tag < b.tag ? -1 : 0)); // ensure same order of tags
 
@@ -111,28 +115,40 @@ export default function EventDemographics() {
     <div className="my-6">
       {events && (
         <div className="grid gap-4">
-          <Select
-            value={activeSemester?.name ?? undefined}
-            onValueChange={(semester) => {
-              const selectedSemester =
-                semestersArr.find(({ name }) => name === semester) ?? null;
-              setActiveSemester(selectedSemester);
-            }}
-          >
-            <SelectTrigger
-              className="md:w-1/2 lg:w-1/2"
-              aria-label="Select a value"
+          <div className="flex flex-row gap-4">
+            <Select
+              value={activeSemester?.name ?? undefined}
+              onValueChange={(semester) => {
+                const selectedSemester =
+                  semestersArr.find(({ name }) => name === semester) ?? null;
+                setActiveSemester(selectedSemester);
+              }}
             >
-              <SelectValue placeholder="Select semester" />
-            </SelectTrigger>
-            <SelectContent>
-              {semestersArr.map((semester) => (
-                <SelectItem key={semester.name} value={semester.name}>
-                  {semester.name} <span className="me-2" />
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <SelectTrigger
+                className="md:w-1/2 lg:w-1/2"
+                aria-label="Select a value"
+              >
+                <SelectValue placeholder="Select semester" />
+              </SelectTrigger>
+              <SelectContent>
+                {semestersArr.map((semester) => (
+                  <SelectItem key={semester.name} value={semester.name}>
+                    {semester.name} <span className="me-2" />
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex flex-row gap-2">
+              <Checkbox
+                className="my-auto"
+                checked={includeHackathons}
+                onCheckedChange={(e) => {
+                  setIncludeHackathons(e.valueOf() ? true : false);
+                }}
+              />
+              <span className="my-auto text-lg">Include Hackathon Events</span>
+            </div>
+          </div>
           {filteredEvents && filteredEvents.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
               <PopularityRanking events={filteredEvents} />

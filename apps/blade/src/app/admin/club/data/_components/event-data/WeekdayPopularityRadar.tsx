@@ -33,13 +33,15 @@ export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
     string,
     { totalAttendees: number; totalEvents: number }
   > = {};
-  events.forEach(({ start_datetime, numAttended }) => {
-    if (numAttended >= 5) {
+  events.forEach(({ start_datetime, numAttended, numHackerAttended }) => {
+    if (numAttended + numHackerAttended >= 5) {
       switch (start_datetime.getDay()) {
         case 1: {
           weekdayData.Mon = {
             totalAttendees:
-              (weekdayData.Monday?.totalAttendees ?? 0) + numAttended,
+              (weekdayData.Monday?.totalAttendees ?? 0) +
+              numAttended +
+              numHackerAttended,
             totalEvents: (weekdayData.Monday?.totalEvents ?? 0) + 1,
           };
           break;
@@ -47,7 +49,9 @@ export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
         case 2: {
           weekdayData.Tues = {
             totalAttendees:
-              (weekdayData.Tuesday?.totalAttendees ?? 0) + numAttended,
+              (weekdayData.Tuesday?.totalAttendees ?? 0) +
+              numAttended +
+              numHackerAttended,
             totalEvents: (weekdayData.Tuesday?.totalEvents ?? 0) + 1,
           };
           break;
@@ -55,7 +59,9 @@ export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
         case 3: {
           weekdayData.Wed = {
             totalAttendees:
-              (weekdayData.Wednesday?.totalAttendees ?? 0) + numAttended,
+              (weekdayData.Wednesday?.totalAttendees ?? 0) +
+              numAttended +
+              numHackerAttended,
             totalEvents: (weekdayData.Wednesday?.totalEvents ?? 0) + 1,
           };
           break;
@@ -63,7 +69,9 @@ export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
         case 4: {
           weekdayData.Thurs = {
             totalAttendees:
-              (weekdayData.Thursday?.totalAttendees ?? 0) + numAttended,
+              (weekdayData.Thursday?.totalAttendees ?? 0) +
+              numAttended +
+              numHackerAttended,
             totalEvents: (weekdayData.Thursday?.totalEvents ?? 0) + 1,
           };
           break;
@@ -71,7 +79,9 @@ export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
         case 5: {
           weekdayData.Fri = {
             totalAttendees:
-              (weekdayData.Friday?.totalAttendees ?? 0) + numAttended,
+              (weekdayData.Friday?.totalAttendees ?? 0) +
+              numAttended +
+              numHackerAttended,
             totalEvents: (weekdayData.Friday?.totalEvents ?? 0) + 1,
           };
           break;
@@ -80,7 +90,9 @@ export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
           if (start_datetime.getDay() == 0 || start_datetime.getDay() == 6) {
             weekdayData["Sat/Sun"] = {
               totalAttendees:
-                (weekdayData.Weekend?.totalAttendees ?? 0) + numAttended,
+                (weekdayData.Weekend?.totalAttendees ?? 0) +
+                numAttended +
+                numHackerAttended,
               totalEvents: (weekdayData.Weekend?.totalEvents ?? 0) + 1,
             };
           }

@@ -11,8 +11,10 @@ import { and, eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
 import {
+  Event,
   Hacker,
   HackerAttendee,
+  HackerEventAttendee,
   InsertHackerSchema,
 } from "@forge/db/schemas/knight-hacks";
 
@@ -663,5 +665,92 @@ export const hackerRouter = {
             eq(HackerAttendee.hackathonId, hackathon.id),
           ),
         );
+    }),
+  eventCheckIn: adminProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        eventId: z.string().uuid(),
+        eventPoints: z.number(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const hacker = await db.query.Hacker.findFirst({
+        where: (t, { eq }) => eq(t.userId, input.userId),
+      });
+      if (!hacker)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Hacker with User ID ${input.userId} not found.`,
+        });
+
+      const event = await db.query.Event.findFirst({
+        where: eq(Event.id, input.eventId),
+      });
+
+      if (!event)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Event with ID ${input.eventId} not found.`,
+        });
+      if (!event.hackathonId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: `Event with ID ${input.eventId} is not a hackathon event.`,
+        });
+      }
+
+      const hackerAttendee = await db.query.HackerAttendee.findFirst({
+        where: (t, { and, eq }) =>
+          and(
+            eq(t.hackerId, hacker.id),
+            eq(t.hackathonId, event.hackathonId ?? ""),
+          ),
+      });
+
+      if (!hackerAttendee) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `${hacker.firstName} ${hacker.lastName} is not registered for this hackathon`,
+        });
+      }
+
+      if (hackerAttendee.status !== "confirmed") {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
+        });
+      }
+
+      const duplicates = await db
+        .select({ id: HackerEventAttendee.id })
+        .from(HackerEventAttendee)
+        .where(
+          and(
+            eq(HackerEventAttendee.hackerAttId, hackerAttendee.id),
+            eq(HackerEventAttendee.eventId, input.eventId),
+          ),
+        );
+      if (duplicates.length > 0)
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `${hacker.firstName} ${hacker.lastName} is already checked in for the event.`,
+        });
+      await db
+        .insert(HackerEventAttendee)
+        .values({
+          hackerAttId: hackerAttendee.id,
+          eventId: input.eventId,
+          hackathonId: event.hackathonId,
+        });
+      await log({
+        title: "Hacker Checked-In",
+        message: `Hacker ${hacker.firstName} ${hacker.lastName} has been checked in to event ${event.name}.`,
+        color: "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
+      return {
+        message: `Hacker ${hacker.firstName} ${hacker.lastName} has been checked in to this event!`,
+      };
     }),
 } satisfies TRPCRouterRecord;

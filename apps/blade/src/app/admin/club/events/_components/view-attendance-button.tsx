@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 
+import HackerProfileButton from "~/app/admin/hackathon/hackers/_components/hacker-profile";
 import { api } from "~/trpc/react";
 import MemberProfileButton from "../../members/_components/member-profile";
 
@@ -61,11 +62,17 @@ function Attendees({ eventId }: { eventId: string }) {
 
   const {
     data: attendees,
-    isPending,
-    isError,
+    isPending: isPending,
+    isError: isError,
   } = api.event.getAttendees.useQuery(eventId);
 
-  if (isPending) {
+  const {
+    data: hackerAttendees,
+    isPending: hIsPending,
+    isError: hIsError,
+  } = api.event.getHackerAttendees.useQuery(eventId);
+
+  if (isPending || hIsPending) {
     return (
       <div className="mx-auto">
         <Loader2 size={50} className="animate-spin" />
@@ -73,7 +80,7 @@ function Attendees({ eventId }: { eventId: string }) {
     );
   }
 
-  if (isError) {
+  if (isError || hIsError) {
     return (
       <div className="mx-auto">Something went wrong. Please try again.</div>
     );
@@ -92,6 +99,18 @@ function Attendees({ eventId }: { eventId: string }) {
                 {attendee.firstName} {attendee.lastName}
               </span>
               <MemberProfileButton member={attendee} />
+            </div>
+          ))
+        ) : hackerAttendees.length > 0 ? (
+          hackerAttendees.map((attendee) => (
+            <div
+              key={attendee.id}
+              className="flex items-center justify-between border-b pb-2"
+            >
+              <span className="text-lg">
+                {attendee.firstName} {attendee.lastName}
+              </span>
+              <HackerProfileButton hacker={attendee} />
             </div>
           ))
         ) : (

@@ -106,6 +106,8 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const { data: hackathons } = api.hackathon.getHackathons.useQuery();
+
   // TRPC update mutation
   const utils = api.useUtils();
   const updateEvent = api.event.updateEvent.useMutation({
@@ -144,6 +146,11 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       tag: event.tag,
       date: date,
       dues_paying: event.dues_paying,
+      hackathonId: event.hackathonId,
+      hackathonName:
+        hackathons?.find((v) => {
+          return v.id == event.hackathonId;
+        })?.name ?? null,
       startHour: startHour,
       startMinute: startMinute,
       startAmPm: startAmPm,
@@ -155,6 +162,12 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
 
   const onSubmit = form.handleSubmit((values) => {
     setIsLoading(true);
+
+    if (values.dues_paying && values.hackathonId) {
+      toast.error("Hackathon events cannot require dues.");
+      setIsLoading(false);
+      return;
+    }
 
     // Extract year, month, and day explicitly to construct a local Date object
     const [year, month, day] = values.date.split("-").map(Number);
@@ -206,6 +219,11 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       tag: values.tag,
       start_datetime: finalStartDate,
       end_datetime: finalEndDate,
+      hackathonId: values.hackathonId == "none" ? null : values.hackathonId,
+      hackathonName:
+        hackathons?.find((v) => {
+          return v.id == values.hackathonId;
+        })?.name ?? null,
     });
   });
 
@@ -278,6 +296,45 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                             {EVENT_TAGS.map((tagOption) => (
                               <SelectItem key={tagOption} value={tagOption}>
                                 {tagOption}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Hackathon (pulls from Hackathon table) */}
+              <FormField
+                control={form.control}
+                name="hackathonId"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel htmlFor="tag" className="text-right">
+                        Hackathon
+                      </FormLabel>
+                      <FormControl>
+                        <Select
+                          // Use defaultValue if the field already has a value
+                          onValueChange={field.onChange}
+                          defaultValue={field.value ? field.value : "none"}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="Select a tag" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem key="none" value="none">
+                              None
+                            </SelectItem>
+                            {hackathons?.map((h) => (
+                              <SelectItem key={h.id} value={h.id}>
+                                {h.name}
                               </SelectItem>
                             ))}
                           </SelectContent>

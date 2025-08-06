@@ -37,6 +37,7 @@ export function EventsTable() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: events } = api.event.getEvents.useQuery();
+  const { data: hackathons } = api.hackathon.getHackathons.useQuery();
 
   const filteredEvents = (events ?? []).filter((event) =>
     Object.values(event).some((value) => {
@@ -166,39 +167,48 @@ export function EventsTable() {
               Upcoming Events
             </TableCell>
           </TableRow>
-          {upcomingEvents.map((event) => (
-            <TableRow key={event.id}>
-              <TableCell className="text-center font-medium">
-                {event.name}
-              </TableCell>
-              <TableCell className="text-center">{event.tag}</TableCell>
+          {upcomingEvents.map((event) => {
+            const hackathonName = hackathons?.find((v) => {
+              return v.id == event.hackathonId;
+            })?.name;
+            return (
+              <TableRow key={event.id}>
+                <TableCell className="text-center font-medium">
+                  {event.name}
+                </TableCell>
+                <TableCell className="text-center">
+                  {event.tag + (hackathonName ? ` [${hackathonName}]` : "")}
+                </TableCell>
 
-              <TableCell className="text-center">
-                {getFormattedDate(event.start_datetime)}
-              </TableCell>
+                <TableCell className="text-center">
+                  {getFormattedDate(event.start_datetime)}
+                </TableCell>
 
-              <TableCell>{event.location}</TableCell>
+                <TableCell>{event.location}</TableCell>
 
-              <TableCell className="text-right">
-                <ViewAttendanceButton
-                  event={event}
-                  numAttended={event.numAttended}
-                />
-              </TableCell>
+                <TableCell className="text-right">
+                  <ViewAttendanceButton
+                    event={event}
+                    numAttended={event.numAttended + event.numHackerAttended}
+                  />
+                </TableCell>
 
-              <TableCell className="text-center">
-                <EventDetailsButton event={event} />
-              </TableCell>
+                <TableCell className="text-center">
+                  <EventDetailsButton
+                    event={{ ...event, hackathonName: hackathonName }}
+                  />
+                </TableCell>
 
-              <TableCell className="text-center">
-                <UpdateEventButton event={event} />
-              </TableCell>
+                <TableCell className="text-center">
+                  <UpdateEventButton event={event} />
+                </TableCell>
 
-              <TableCell className="text-center">
-                <DeleteEventButton event={event} />
-              </TableCell>
-            </TableRow>
-          ))}
+                <TableCell className="text-center">
+                  <DeleteEventButton event={event} />
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
 
         <TableBody>
@@ -210,46 +220,59 @@ export function EventsTable() {
               Previous Events
             </TableCell>
           </TableRow>
-          {previousEvents.map((event) => (
-            <TableRow key={event.id}>
-              <TableCell className="text-center font-medium">
-                {event.name}
-              </TableCell>
-              <TableCell className="text-center">{event.tag}</TableCell>
+          {previousEvents.map((event) => {
+            const hackathonName = hackathons?.find((v) => {
+              return v.id == event.hackathonId;
+            })?.name;
+            return (
+              <TableRow key={event.id}>
+                <TableCell className="text-center font-medium">
+                  {event.name}
+                </TableCell>
+                <TableCell className="text-center">
+                  {event.tag + (hackathonName ? ` [${hackathonName}]` : "")}
+                </TableCell>
 
-              <TableCell className="text-center">
-                {getFormattedDate(event.start_datetime)}
-              </TableCell>
+                <TableCell className="text-center">
+                  {getFormattedDate(event.start_datetime)}
+                </TableCell>
 
-              <TableCell>{event.location}</TableCell>
+                <TableCell>{event.location}</TableCell>
 
-              <TableCell className="text-right">
-                <ViewAttendanceButton
-                  event={event}
-                  numAttended={event.numAttended}
-                />
-              </TableCell>
+                <TableCell className="text-right">
+                  <ViewAttendanceButton
+                    event={event}
+                    numAttended={event.numAttended}
+                  />
+                </TableCell>
 
-              <TableCell className="text-center">
-                <EventDetailsButton event={event} />
-              </TableCell>
+                <TableCell className="text-center">
+                  <EventDetailsButton
+                    event={{ ...event, hackathonName: hackathonName }}
+                  />
+                </TableCell>
 
-              <TableCell className="text-center">
-                <UpdateEventButton event={event} />
-              </TableCell>
+                <TableCell className="text-center">
+                  <UpdateEventButton event={event} />
+                </TableCell>
 
-              <TableCell className="text-center">
-                <DeleteEventButton event={event} />
-              </TableCell>
-            </TableRow>
-          ))}
+                <TableCell className="text-center">
+                  <DeleteEventButton event={event} />
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
 
         <TableFooter>
           <TableRow>
             <TableCell colSpan={4}>Total Attendance</TableCell>
             <TableCell className="text-right">
-              {sortedEvents.reduce((sum, event) => sum + event.numAttended, 0)}
+              {sortedEvents.reduce(
+                (sum, event) =>
+                  sum + event.numAttended + event.numHackerAttended,
+                0,
+              )}
             </TableCell>
             <TableCell colSpan={3} />
           </TableRow>

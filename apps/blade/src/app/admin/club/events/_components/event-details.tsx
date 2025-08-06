@@ -18,7 +18,11 @@ import {
 
 import { formatDateTime, getTagColor } from "~/lib/utils";
 
-export function EventDetailsButton({ event }: { event: ReturnEvent }) {
+export function EventDetailsButton({
+  event,
+}: {
+  event: ReturnEvent & { hackathonName: string | undefined };
+}) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   return (
@@ -40,6 +44,13 @@ export function EventDetailsButton({ event }: { event: ReturnEvent }) {
               <Badge className={`${getTagColor(event.tag)} whitespace-nowrap`}>
                 {event.tag}
               </Badge>
+              {event.hackathonName && (
+                <Badge
+                  className={`${getTagColor(event.tag)} whitespace-nowrap`}
+                >
+                  {event.hackathonName}
+                </Badge>
+              )}
             </div>
             <DialogDescription className="text-left">
               <ReactMarkdown>{event.description}</ReactMarkdown>
