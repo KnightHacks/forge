@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import z from "zod";
 
 import {
   COUNTRIES,
@@ -196,9 +197,12 @@ export type InsertEvent = typeof Event.$inferInsert;
 export type SelectEvent = typeof Event.$inferSelect;
 export type ReturnEvent = InsertEvent & {
   numAttended: number;
+  numHackerAttended: number;
 };
 
-export const InsertEventSchema = createInsertSchema(Event);
+export const InsertEventSchema = createInsertSchema(Event).extend({
+  hackathonName: z.string().nullable().optional(),
+});
 
 export const EventAttendee = createTable("event_attendee", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -239,6 +243,31 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   timeApplied: t.timestamp().notNull().defaultNow(),
   timeConfirmed: t.timestamp(),
 }));
+
+export const HackerEventAttendee = createTable(
+  "hacker_event_attendee",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackerAttId: t
+      .uuid()
+      .notNull()
+      .references(() => HackerAttendee.id, {
+        onDelete: "cascade",
+      }),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, {
+        onDelete: "cascade",
+      }),
+    eventId: t
+      .uuid()
+      .notNull()
+      .references(() => Event.id, {
+        onDelete: "cascade",
+      }),
+  }),
+);
 
 export const InsertEventAttendeeSchema = createInsertSchema(EventAttendee);
 export const InsertHackerAttendeeSchema = createInsertSchema(HackerAttendee);

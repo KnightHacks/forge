@@ -20,6 +20,9 @@ import { db } from "@forge/db/client";
 import {
   Event,
   EventAttendee,
+  Hacker,
+  HackerAttendee,
+  HackerEventAttendee,
   InsertEventSchema,
   Member,
 } from "@forge/db/schemas/knight-hacks";
@@ -43,9 +46,11 @@ export const eventRouter = {
       .select({
         ...getTableColumns(Event),
         numAttended: count(EventAttendee.id),
+        numHackerAttended: count(HackerEventAttendee.id),
       })
       .from(Event)
       .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
+      .leftJoin(HackerEventAttendee, eq(Event.id, HackerEventAttendee.eventId))
       .groupBy(Event.id)
       .orderBy(desc(Event.start_datetime));
     return events;
@@ -62,6 +67,27 @@ export const eventRouter = {
       .orderBy(Member.firstName);
     return attendees;
   }),
+  getHackerAttendees: adminProcedure
+    .input(z.string())
+    .query(async ({ input }) => {
+      const attendees = await db
+        .select({
+          ...getTableColumns(Hacker),
+        })
+        .from(Event)
+        .innerJoin(
+          HackerEventAttendee,
+          eq(Event.id, HackerEventAttendee.eventId),
+        )
+        .innerJoin(
+          HackerAttendee,
+          eq(HackerEventAttendee.hackerAttId, HackerAttendee.id),
+        )
+        .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+        .where(eq(Event.id, input))
+        .orderBy(Hacker.firstName);
+      return attendees;
+    }),
   createEvent: adminProcedure
     .input(
       InsertEventSchema.omit({ id: true, discordId: true, googleId: true }),
@@ -92,7 +118,13 @@ export const eventRouter = {
       const endLocalIso = endLocalDate.toISOString();
 
       const formattedName =
-        "[" + input.tag.toUpperCase().replace(" ", "-") + "] " + input.name;
+        "[" +
+        input.tag.toUpperCase().replace(" ", "-") +
+        "] " +
+        (input.hackathonName
+          ? `[${input.hackathonName.toUpperCase().replace(" ", "-")}] `
+          : "") +
+        input.name;
 
       // Step 1: Create the event in Discord
       let discordEventId: string | undefined;
@@ -187,7 +219,7 @@ export const eventRouter = {
           ...input,
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
-          points: EVENT_POINTS[input.tag] || 0,
+          points: input.hackathonId ? 0 : EVENT_POINTS[input.tag] || 0,
           discordId: discordEventId,
           googleId: googleEventId,
         });
@@ -273,7 +305,13 @@ export const eventRouter = {
       const endLocalIso = endLocalDate.toISOString();
 
       const formattedName =
-        "[" + input.tag.toUpperCase().replace(" ", "-") + "] " + input.name;
+        "[" +
+        input.tag.toUpperCase().replace(" ", "-") +
+        "] " +
+        (input.hackathonName
+          ? `[${input.hackathonName.toUpperCase().replace(" ", "-")}] `
+          : "") +
+        input.name;
 
       // Step 1: Update the event in Discord
       try {
@@ -412,6 +450,7 @@ export const eventRouter = {
           ...input,
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
+          points: input.hackathonId ? 0 : EVENT_POINTS[input.tag] || 0,
         })
         .where(eq(Event.id, input.id));
     }),
