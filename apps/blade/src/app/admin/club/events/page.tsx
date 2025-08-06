@@ -34,8 +34,9 @@ export default async function Events() {
             <h1 className="pb-4 text-center text-3xl font-extrabold tracking-tight sm:text-5xl">
               Events Dashboard
             </h1>
-            <div className="mb-2 flex justify-center">
-              <ScannerPopUp />
+            <div className="mb-2 flex justify-center gap-2">
+              <ScannerPopUp eventType="Member" />
+              <ScannerPopUp eventType="Hacker" />
             </div>
           </div>
         </div>

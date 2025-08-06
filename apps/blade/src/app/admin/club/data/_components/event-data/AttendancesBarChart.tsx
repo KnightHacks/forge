@@ -42,11 +42,12 @@ export default function AttendancesBarChart({
     string,
     { totalAttendees: number; totalEvents: number }
   > = {};
-  events.forEach(({ tag, numAttended }) => {
-    if (numAttended >= 5) {
+  events.forEach(({ tag, numAttended, numHackerAttended }) => {
+    if (numAttended + numHackerAttended >= 5) {
       tagData[tag] = {
         // data to calculate avg attendees per event type
-        totalAttendees: (tagData[tag]?.totalAttendees ?? 0) + numAttended,
+        totalAttendees:
+          (tagData[tag]?.totalAttendees ?? 0) + numAttended + numHackerAttended,
         totalEvents: (tagData[tag]?.totalEvents ?? 0) + 1,
       };
     }

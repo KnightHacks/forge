@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
+import HackerEventDemographics from "../../club/data/_components/HackerEventDemographics";
 import HackathonDataContent from "./_components/HackathonDataContent";
 
 export const metadata: Metadata = {
@@ -26,8 +28,19 @@ export default async function HackathonData() {
 
   return (
     <HydrateClient>
-      <main className="container">
-        <HackathonDataContent />
+      <main className="container mt-6">
+        <Tabs defaultValue="hackers">
+          <TabsList>
+            <TabsTrigger value="hackers">Hacker data</TabsTrigger>
+            <TabsTrigger value="events">Event data</TabsTrigger>
+          </TabsList>
+          <TabsContent value="hackers">
+            <HackathonDataContent />
+          </TabsContent>
+          <TabsContent value="events">
+            <HackerEventDemographics />
+          </TabsContent>
+        </Tabs>
       </main>
     </HydrateClient>
   );
