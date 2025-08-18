@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
 import { QRCodePopup } from "~/app/_components/navigation/user-qr-code";
 import { DASHBOARD_ICON_SIZE } from "~/consts";
+import { DownloadQRPass } from "./download-qr-pass";
 import { ResumeButton } from "./resume-button";
 
 export function MemberInfo() {
@@ -16,6 +17,7 @@ export function MemberInfo() {
       <CardContent>
         <div className="grid grid-cols-1 gap-4">
           <ResumeButton />
+          <DownloadQRPass />
           <QRCodePopup />
         </div>
       </CardContent>

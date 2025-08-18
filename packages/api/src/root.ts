@@ -7,6 +7,7 @@ import { guildRouter } from "./routers/guild";
 import { hackathonRouter } from "./routers/hackathon";
 import { hackerRouter } from "./routers/hacker";
 import { memberRouter } from "./routers/member";
+import { passkitRouter } from "./routers/passkit";
 import { qrRouter } from "./routers/qr";
 import { resumeRouter } from "./routers/resume";
 import { userRouter } from "./routers/user";
@@ -23,6 +24,7 @@ export const appRouter = createTRPCRouter<{
   user: typeof userRouter;
   resume: typeof resumeRouter;
   qr: typeof qrRouter;
+  passkit: typeof passkitRouter;
   email: typeof emailRouter;
   guild: typeof guildRouter;
 }>({
@@ -36,6 +38,7 @@ export const appRouter = createTRPCRouter<{
   user: userRouter,
   resume: resumeRouter,
   qr: qrRouter,
+  passkit: passkitRouter,
   email: emailRouter,
   guild: guildRouter,
 });
