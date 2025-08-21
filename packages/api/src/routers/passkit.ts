@@ -1,10 +1,11 @@
-import fs from "fs";
 import path from "path";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { PKPass } from "passkit-generator";
 
 import { db } from "@forge/db/client";
+import { env } from "../env";
+import fs from "fs";
 
 import { protectedProcedure } from "../trpc";
 
@@ -23,85 +24,58 @@ export const passkitRouter = {
         });
       }
 
-      // Check if member has paid dues
-      const duesPaid = await db.query.DuesPayment.findFirst({
-        where: (t, { eq }) => eq(t.memberId, member.id),
-      });
+      // Get base64 certs from env
+      // zod guarantees these are strings
+      const wwdrCertStr = env.WWDR_CERT_BASE64;
+      const signerCertStr = env.SIGNER_CERT_BASE64;
+      const signerKeyStr = env.SIGNER_KEY_BASE64;
+      const signerKeyPassStr = env.SIGNER_KEY_PASS_BASE64;
 
-      // Set up paths for required files using a more robust path resolution method
-      // In monorepos, we need to find the actual project root
+      if (!wwdrCertStr || !signerCertStr || !signerKeyStr) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Missing certificate environment variables."
+        });
+      }
+      // Decode PEMs from base64 (including headers/footers)
+      const wwdrCertBuffer = Buffer.from(wwdrCertStr, "base64");
+      const signerCertBuffer = Buffer.from(signerCertStr, "base64");
+      const signerKeyBuffer = Buffer.from(signerKeyStr, "base64");
+      const signerKeyPassBuffer = Buffer.from(signerKeyPassStr, "base64");
+
+      // The passDir is still needed for the pass model assets
       let projectRoot = process.cwd();
-
-      // If we're running from a Next.js app, we need to go up to the monorepo root
       if (projectRoot.includes(".next") || projectRoot.includes("apps/")) {
-        // Navigate up to find the monorepo root (where package.json with workspaces is)
         while (
           !fs.existsSync(path.join(projectRoot, "package.json")) ||
           !fs.existsSync(path.join(projectRoot, "packages"))
         ) {
           const parent = path.dirname(projectRoot);
           if (parent === projectRoot) {
-            // We've reached the filesystem root, something is wrong
             throw new TRPCError({
               code: "INTERNAL_SERVER_ERROR",
-              message:
-                "Could not find monorepo root. Please check your project structure.",
+              message: "Could not find monorepo root. Please check your project structure.",
             });
           }
           projectRoot = parent;
         }
       }
-
-      const passDir = path.join(projectRoot, "packages/api/simple.pass");
-      const wwdrPath = path.join(projectRoot, "packages/api/cert/wwdr.pem");
-      const signerCertPath = path.join(
-        projectRoot,
-        "packages/api/cert/signerCert.pem",
-      );
-      const signerKeyPath = path.join(
-        projectRoot,
-        "packages/api/cert/signerKey.pem",
-      );
-
-      // Check if directories exist
-      if (!fs.existsSync(path.dirname(wwdrPath))) {
-        console.log("Cert directory doesn't exist:", path.dirname(wwdrPath));
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Certificate directory not found: ${path.dirname(wwdrPath)}`,
-        });
-      }
-
-      // list files in the cert directory
-      try {
-        const files = fs.readdirSync(path.dirname(wwdrPath));
-        console.log("Files in cert directory:", files);
-      } catch (dirError) {
-        console.log("Error reading cert directory:", dirError);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Could not read certificate directory: ${String(dirError)}`,
-        });
-      }
-
-      // Read the files
-      const wwdrCertBuffer = fs.readFileSync(wwdrPath);
-
-      const signerCertBuffer = fs.readFileSync(signerCertPath);
-      const signerKeyBuffer = fs.readFileSync(signerKeyPath);
+      const passDir = path.join(projectRoot, "packages/transactional/passes/member.pass");
 
       const pass = await PKPass.from(
         {
-          model: passDir, // This is the path to the pass directory
+          model: passDir,
           certificates: {
             wwdr: wwdrCertBuffer,
             signerCert: signerCertBuffer,
             signerKey: signerKeyBuffer,
-            signerKeyPassphrase: "knighthacks",
+            signerKeyPassphrase: signerKeyPassBuffer.toString("utf-8"),
           },
         },
         {
           serialNumber: member.id,
+          passTypeIdentifier: env.PASS_TYPE_IDENTIFIER,
+          teamIdentifier: env.TEAM_IDENTIFIER,
         },
       );
 
@@ -172,7 +146,7 @@ export const passkitRouter = {
       console.error("Error generating passkit pass:", error);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to generate passkit pass",
+        message: `Failed to generate passkit pass: ${error instanceof Error ? error.message : "Unknown error"}`,
       });
     }
   }),
