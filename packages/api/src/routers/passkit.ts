@@ -1,12 +1,12 @@
+import fs from "fs";
 import path from "path";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { PKPass } from "passkit-generator";
 
 import { db } from "@forge/db/client";
-import { env } from "../env";
-import fs from "fs";
 
+import { env } from "../env";
 import { protectedProcedure } from "../trpc";
 
 export const passkitRouter = {
@@ -34,7 +34,7 @@ export const passkitRouter = {
       if (!wwdrCertStr || !signerCertStr || !signerKeyStr) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Missing certificate environment variables."
+          message: "Missing certificate environment variables.",
         });
       }
       // Decode PEMs from base64 (including headers/footers)
@@ -54,13 +54,17 @@ export const passkitRouter = {
           if (parent === projectRoot) {
             throw new TRPCError({
               code: "INTERNAL_SERVER_ERROR",
-              message: "Could not find monorepo root. Please check your project structure.",
+              message:
+                "Could not find monorepo root. Please check your project structure.",
             });
           }
           projectRoot = parent;
         }
       }
-      const passDir = path.join(projectRoot, "packages/transactional/passes/member.pass");
+      const passDir = path.join(
+        projectRoot,
+        "packages/transactional/passes/member.pass",
+      );
 
       const pass = await PKPass.from(
         {
@@ -86,7 +90,7 @@ export const passkitRouter = {
         key: "accessType",
         label: "General Access",
         value: "Event Entry Pass",
-        textAlignment: "PKTextAlignmentCenter"
+        textAlignment: "PKTextAlignmentCenter",
       });
 
       pass.secondaryFields.length = 0;
@@ -98,7 +102,7 @@ export const passkitRouter = {
           month: "long",
           day: "numeric",
         }),
-        textAlignment: "PKTextAlignmentCenter"
+        textAlignment: "PKTextAlignmentCenter",
       });
 
       pass.auxiliaryFields.length = 0;
@@ -107,14 +111,14 @@ export const passkitRouter = {
           key: "name",
           label: "NAME",
           value: `${member.firstName} ${member.lastName}`,
-          textAlignment: "PKTextAlignmentCenter"
+          textAlignment: "PKTextAlignmentCenter",
         },
         {
           key: "discord",
           label: "DISCORD",
           value: member.discordUser,
-          textAlignment: "PKTextAlignmentCenter"
-        }
+          textAlignment: "PKTextAlignmentCenter",
+        },
       );
 
       // Set locations for relevance using the proper method

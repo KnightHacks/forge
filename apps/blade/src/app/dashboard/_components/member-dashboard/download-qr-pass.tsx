@@ -23,7 +23,7 @@ export function DownloadQRPass() {
         }
 
         // Convert base64 to blob
-        const byteCharacters = atob(data.passBuffer as string);
+        const byteCharacters = atob(data.passBuffer);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
@@ -37,7 +37,7 @@ export function DownloadQRPass() {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = data.fileName as string;
+        link.download = data.fileName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
