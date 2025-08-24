@@ -12,6 +12,12 @@ export const env = createEnv({
     MINIO_ENDPOINT: z.string(),
     MINIO_ACCESS_KEY: z.string(),
     MINIO_SECRET_KEY: z.string(),
+    WWDR_CERT_BASE64: z.string(),
+    SIGNER_CERT_BASE64: z.string(),
+    SIGNER_KEY_BASE64: z.string(),
+    SIGNER_KEY_PASS_BASE64: z.string(),
+    PASS_TYPE_IDENTIFIER: z.string(),
+    TEAM_IDENTIFIER: z.string(),
   },
   experimental__runtimeEnv: {},
   skipValidation:
