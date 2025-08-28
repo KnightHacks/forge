@@ -1,17 +1,18 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 const PANELS = [
-  "/bluelock/panel01.jpg",
-  "/bluelock/panel02.jpg",
-  "/bluelock/panel03.jpg",
-  "/bluelock/panel04.jpg",
-  "/bluelock/panel05.jpg",
-  "/bluelock/panel06.jpg",
-  "/bluelock/panel07.jpg",
-  "/bluelock/panel08.jpg",
-  "/bluelock/panel09.jpg",
+  "/bluelock/panel1.jpg",
+  "/bluelock/panel2.jpg",
+  "/bluelock/panel3.jpg",
+  "/bluelock/panel4.jpg",
+  "/bluelock/panel5.jpg",
+  "/bluelock/panel6.jpg",
+  "/bluelock/panel7.jpg",
+  "/bluelock/panel8.jpg",
+  "/bluelock/panel9.jpg",
   "/bluelock/panel10.jpg",
   "/bluelock/panel11.jpg",
   "/bluelock/panel12.jpg",
@@ -21,11 +22,11 @@ const PANELS = [
   "/bluelock/panel16.jpg",
 ];
 
-const COLS = 7;                         // number of columns
-const COL_WIDTH = 220;                  // px per column
-const GAP_X = 16;                       // px between columns
-const SPEED_RANGE = [18, 34] as const;  // seconds per loop [min, max]
-const MIN_IMGS_PER_COL = 16;            // how many unique panels per column (before duplication to loop)
+const COLS = 7; // number of columns
+const COL_WIDTH = 220; // px per column
+const GAP_X = 16; // px between columns
+const SPEED_RANGE = [35, 38] as const; // seconds per loop [min, max]
+const MIN_IMGS_PER_COL = 16; // how many unique panels per column (before duplication to loop)
 
 function randBetween([min, max]: readonly [number, number]) {
   return min + Math.random() * (max - min);
@@ -35,9 +36,12 @@ function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    const tmp = a[i]!;
-    a[i] = a[j]!;
-    a[j] = tmp;
+    const ai = a[i];
+    const aj = a[j];
+    // Guards satisfy the type checker and the lint rule
+    if (ai === undefined || aj === undefined) continue;
+    a[i] = aj;
+    a[j] = ai;
   }
   return a;
 }
@@ -49,7 +53,10 @@ function sample<T>(arr: T[], k: number): T[] {
 
 function Column({ index }: { index: number }) {
   // Different pictures per column
-  const baseSet = sample(PANELS, Math.max(MIN_IMGS_PER_COL, Math.ceil(PANELS.length * 0.5)));
+  const baseSet = sample(
+    PANELS,
+    Math.max(MIN_IMGS_PER_COL, Math.ceil(PANELS.length * 0.5)),
+  );
   const images = shuffle(baseSet); // unique order per column
 
   // Unique speed & offset
@@ -76,13 +83,33 @@ function Column({ index }: { index: number }) {
         {/* Stack A */}
         <div className="panel-stack">
           {images.map((src, i) => (
-            <img key={`a-${i}`} src={src} alt="" className="panel-img" />
+            <div key={`a-${i}`} className="img-wrap">
+              <Image
+                src={src}
+                alt=""
+                width={1000} // intrinsic ratio (2:3 here)
+                height={1500}
+                sizes="(max-width: 520px) 150px, (max-width: 768px) 180px, 220px"
+                style={{ width: "100%", height: "auto" }}
+                priority={i < 3} // optional: helps LCP a bit
+              />
+            </div>
           ))}
         </div>
         {/* Stack B (duplicate for seamless loop) */}
         <div className="panel-stack">
           {images.map((src, i) => (
-            <img key={`b-${i}`} src={src} alt="" className="panel-img" />
+            <div key={`a-${i}`} className="img-wrap">
+              <Image
+                src={src}
+                alt=""
+                width={1000}            // intrinsic ratio (2:3 here)
+                height={1500}
+                sizes="(max-width: 520px) 150px, (max-width: 768px) 180px, 220px"
+                style={{ width: "100%", height: "auto" }}
+                priority={i < 3}        // optional: helps LCP a bit
+              />
+            </div>
           ))}
         </div>
       </div>
@@ -107,24 +134,30 @@ export default function Page() {
       {/* Foreground Content */}
       <section className="content">
         <div className="card">
-          <h1 className="title">Aiden Letourneau</h1>
           <p className="subtitle">
-            Hey, I'm Aiden. I really enjoy building with a team. 
-            I'm here to learn from you guys and contribute using 
-            the experience I already have. I look forward to this 
-            season of KnightHacks! <br/> 
-            P.S. Talk to me about Blue Lock 😛</p>
+            <div style={{fontSize: "1.5em"}}>Hey, I'm Aiden!</div> I really enjoy building with a team. I'm here to
+            learn from you guys and contribute using the experience I already
+            have. I look forward to this season of KnightHacks! <br />
+            P.S. I like a some Blue Lock 😛
+          </p>
           <div className="links">
-            <iframe 
-            src="/Letourneau_Aiden_Resume.pdf" 
-            className="w-full h-[400px] border rounded-lg"
-            >
-            </iframe>
+            <iframe
+              src="/Letourneau_Aiden_Resume.pdf"
+              className="h-[400px] w-full rounded-lg border"
+            ></iframe>
             <div className="link-row">
-              <Link href="https://github.com/aidenletourneau" target="_blank" className="link">
+              <Link
+                href="https://github.com/aidenletourneau"
+                target="_blank"
+                className="link"
+              >
                 GitHub
               </Link>
-              <Link href="https://www.linkedin.com/in/aiden-letourneau-4670a22a8/" target="_blank" className="link">
+              <Link
+                href="https://www.linkedin.com/in/aiden-letourneau-4670a22a8/"
+                target="_blank"
+                className="link"
+              >
                 LinkedIn
               </Link>
             </div>
@@ -134,19 +167,39 @@ export default function Page() {
 
       {/* Global keyframes so animation names always resolve */}
       <style jsx global>{`
-        html, body { height: 100%; overflow: hidden; }
+        html,
+        body {
+          height: 100%;
+          overflow: hidden;
+        }
 
         @keyframes scroll-up {
-          0%   { transform: translate3d(0, 0%, 0); }
-          100% { transform: translate3d(0, -50%, 0); }
+          0% {
+            transform: translate3d(0, 0%, 0);
+          }
+          100% {
+            transform: translate3d(0, -50%, 0);
+          }
         }
         @keyframes scroll-down {
-          0%   { transform: translate3d(0, -50%, 0); }
-          100% { transform: translate3d(0, 0%, 0); }
+          0% {
+            transform: translate3d(0, -50%, 0);
+          }
+          100% {
+            transform: translate3d(0, 0%, 0);
+          }
         }
       `}</style>
 
       <style jsx>{`
+
+        .img-wrap { width: 100%; }
+        :global(img) {
+          object-fit: cover;
+          pointer-events: none;
+          user-select: none;
+        }
+
         .root {
           height: 100vh;
           overflow: hidden;
@@ -167,13 +220,13 @@ export default function Page() {
           left: 50%;
           transform: translateX(-50%);
           display: flex;
-          height: 100vh;   /* anchor for % heights below */
+          height: 100vh; /* anchor for % heights below */
           padding: 0 24px;
         }
 
         .col {
           position: relative;
-          height: 100%;     /* % for children resolves */
+          height: 100%; /* % for children resolves */
         }
 
         .stack {
@@ -181,7 +234,7 @@ export default function Page() {
           top: 0;
           left: 0;
           width: 100%;
-          height: 200%;     /* two stacks tall for seamless loop */
+          height: 200%; /* two stacks tall for seamless loop */
         }
 
         .panel-stack {
@@ -214,11 +267,19 @@ export default function Page() {
         }
         .fade-top {
           top: 0;
-          background: linear-gradient(to bottom, rgba(11,16,32,1), rgba(11,16,32,0));
+          background: linear-gradient(
+            to bottom,
+            rgba(11, 16, 32, 1),
+            rgba(11, 16, 32, 0)
+          );
         }
         .fade-bottom {
           bottom: 0;
-          background: linear-gradient(to top, rgba(11,16,32,1), rgba(11,16,32,0));
+          background: linear-gradient(
+            to top,
+            rgba(11, 16, 32, 1),
+            rgba(11, 16, 32, 0)
+          );
         }
 
         .content {
@@ -243,10 +304,18 @@ export default function Page() {
           text-align: center;
           box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
         }
-        .title { font-size: 2.25rem; font-weight: 800; margin: 0 0 6px; }
-        .subtitle { margin: 0 0 16px; opacity: 1; }
 
-        .links { display: grid; gap: 12px; justify-items: center; }
+        .subtitle {
+          margin: 0 0 16px;
+          opacity: 1;
+          font-size: 1.5em
+        }
+
+        .links {
+          display: grid;
+          gap: 12px;
+          justify-items: center;
+        }
         .btn {
           padding: 10px 16px;
           border-radius: 12px;
@@ -254,17 +323,47 @@ export default function Page() {
           color: #fff;
           text-decoration: none;
           font-weight: 700;
-          transition: transform .15s ease, box-shadow .15s ease;
-          box-shadow: 0 6px 14px rgba(91,124,250,.35);
+          transition:
+            transform 0.15s ease,
+            box-shadow 0.15s ease;
+          box-shadow: 0 6px 14px rgba(91, 124, 250, 0.35);
         }
-        .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(91,124,250,.4); }
+        .btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 10px 20px rgba(91, 124, 250, 0.4);
+        }
 
-        .link-row { display: flex; gap: 18px; flex-wrap: wrap; }
-        .link { color: #cfe1ff; text-decoration: underline; }
+        .link-row {
+          display: flex;
+          gap: 18px;
+          flex-wrap: wrap;
+        }
+        .link {
+          color: #cfe1ff;
+          text-decoration: underline;
+        }
 
-        @media (max-width: 1024px) { .columns { transform: translateX(-50%) scale(.9); } }
-        @media (max-width: 768px)  { .columns { transform: translateX(-50%) scale(.8); } }
-        @media (max-width: 520px)  { .columns { transform: translateX(-50%) scale(.7); } .card { padding: 18px; } .title { font-size: 1.8rem; } }
+        @media (max-width: 1024px) {
+          .columns {
+            transform: translateX(-50%) scale(0.9);
+          }
+        }
+        @media (max-width: 768px) {
+          .columns {
+            transform: translateX(-50%) scale(0.8);
+          }
+        }
+        @media (max-width: 520px) {
+          .columns {
+            transform: translateX(-50%) scale(0.7);
+          }
+          .card {
+            padding: 18px;
+          }
+          .title {
+            font-size: 1.8rem;
+          }
+        }
       `}</style>
     </main>
   );
