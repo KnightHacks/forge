@@ -134,8 +134,9 @@ export default function Page() {
       {/* Foreground Content */}
       <section className="content">
         <div className="card">
-          <p className="subtitle">
-            <div style={{fontSize: "1.5em"}}>Hey, I'm Aiden!</div> I really enjoy building with a team. I'm here to
+          
+          <div style={{fontSize: "1.5em"}}>Hey, I'm Aiden!</div> 
+          <p className="subtitle">I really enjoy building with a team. I'm here to
             learn from you guys and contribute using the experience I already
             have. I look forward to this season of KnightHacks! <br />
             P.S. I like a some Blue Lock 😛
