@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { Code, Swords } from "lucide-react";
 
-import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 import { cn } from "@forge/ui";
-import { Button, buttonVariants } from "@forge/ui/button";
+import { buttonVariants } from "@forge/ui/button";
 import {
   Card,
   CardContent,
@@ -53,7 +52,7 @@ export function MemberAppCard() {
   );
 }
 
-export function HackerAppCard() {
+export function HackerAppCard({ hackathonName }: { hackathonName: string }) {
   return (
     <Card className="flex flex-col px-4 hover:border-primary">
       <CardHeader className="text-center">
@@ -83,12 +82,10 @@ export function HackerAppCard() {
       </CardContent>
       <CardFooter>
         <Link
-          href={PERMANENT_DISCORD_INVITE}
-          className="w-full"
-          target="_blank"
-          rel="noopener noreferrer"
+          href={"/hacker/application/" + hackathonName}
+          className={cn(buttonVariants({ variant: "primary" }), "w-full")}
         >
-          <Button className="w-full">Contact an Organizer</Button>
+          Register Now
         </Link>
       </CardFooter>
     </Card>

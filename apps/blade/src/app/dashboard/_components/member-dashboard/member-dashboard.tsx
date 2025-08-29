@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
 import type { api as serverCall } from "~/trpc/server";
+import { MemberAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
 import { EventNumber } from "./event/event-number";
 import { EventShowcase } from "./event/event-showcase";
@@ -20,7 +20,24 @@ export default async function MemberDashboard({
   member: Awaited<ReturnType<(typeof serverCall.member)["getMember"]>>;
 }) {
   if (!member) {
-    redirect("/member/application");
+    return (
+      <div className="flex flex-col items-center justify-center gap-y-6 text-xl font-semibold">
+        <p className="w-full max-w-xl text-center">
+          <div className="font-normal">
+            Are you a UCF student?
+            <br className="mb-2" />
+            Are you passionate about the world of tech and want to take your
+            skills to the next level?
+            <br />
+            <br />
+          </div>
+          Sign up to become a KnightHacks member today!
+        </p>
+        <div className="flex flex-wrap justify-center gap-5">
+          <MemberAppCard />
+        </div>
+      </div>
+    );
   }
 
   const [events, dues] = await Promise.allSettled([

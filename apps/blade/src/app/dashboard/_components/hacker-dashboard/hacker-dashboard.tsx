@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import type { api as serverCall } from "~/trpc/server";
+import { HackerAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
 import { HackerData } from "./hacker-data";
 import { HackerResumeButton } from "./hacker-resume-button";
@@ -20,6 +21,26 @@ export default async function HackerDashboard({
     api.resume.getResume(),
     api.hackathon.getPastHackathons(),
   ]);
+
+  const currentHackathon = await api.hackathon.getCurrentHackathon();
+
+  if (!hacker) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-y-6 text-xl font-semibold">
+        <p className="w-full max-w-xl text-center text-2xl">
+          Register for KnightHacks today!
+        </p>
+        <div className="flex flex-wrap justify-center gap-5">
+          {
+            //if there is no current hackathon then this page is never rendered anyway
+            currentHackathon && (
+              <HackerAppCard hackathonName={currentHackathon.name} />
+            )
+          }
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

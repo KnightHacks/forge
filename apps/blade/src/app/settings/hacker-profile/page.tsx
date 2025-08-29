@@ -17,6 +17,7 @@ export default async function SettingsProfilePage() {
   }
 
   const hackerData = await api.hacker.getHacker({});
+  const currentHackathon = await api.hackathon.getCurrentHackathon();
 
   if (!hackerData) {
     return (
@@ -64,7 +65,7 @@ export default async function SettingsProfilePage() {
             </p>
           </div>
           <Separator />
-          <HackerProfileForm data={hackerData} />
+          <HackerProfileForm data={hackerData} hackathon={currentHackathon} />
         </div>
       </HydrateClient>
     </div>
