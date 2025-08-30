@@ -42,15 +42,15 @@ export default function Projects({ projects }: ProjectsProps) {
       <div className="relative">
         <div className="overflow-hidden rounded-xl shadow-2xl">
           <div
-            className="flex transition-transform ease-in-out duration-500 bg-white"
+            className="flex transition-transform ease-in-out duration-500"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
           >
             {projects.map((project) => (
-              <div key={project.id} className="w-full flex-shrink-0">
+              <div key={project.id} className="w-full flex-shrink-0 bg-white">
                 <img 
                   src={project.imageUrl} 
                   alt={project.title} 
-                  className="w-full h-64 object-cover"
+                  className="w-full h-64 object-contain bg-white"
                 />
                 <div className="p-8">
                   <div className="flex justify-between items-center mb-4">
