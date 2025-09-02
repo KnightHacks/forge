@@ -1,11 +1,16 @@
-import VerticalLinks, { type LinkItem } from "./_components/navlinks";
+import VerticalLinks from "./_components/navlinks";
 import CenterIcon from "./_components/centericon";
+
+interface LinkItem {
+  label: string;
+  href: string;
+};
 
 export default function Portal() {
   const left: LinkItem[] = [
-    { label: "about", href: "/about" },
-    { label: "experience", href: "/experience" },
-    { label: "projects", href: "/projects" },
+    { label: "about", href: "/ethan-mckissic/about" },
+    { label: "projects", href: "/ethan-mckissic/projects" },
+    { label: "skills", href: "/ethan-mckissic/skills" },
   ];
 
   const right: LinkItem[] = [
@@ -16,22 +21,19 @@ export default function Portal() {
 
   return (
     <main className="fixed inset-0 overflow-hidden">
-      {/* Background layer */}
       <div
-        className="absolute inset-0 bg-cover bg-center blur-lg"
-        style={{ backgroundImage: "url('/blue.jpg')" }}
+        className="absolute inset-0 bg-cover bg-no-repeat blur-md"
+        style={{ backgroundImage: "url('/blue_road.jpg')" }}
       />
-
-      {/* Optional: a subtle dark overlay so text/icons pop */}
       <div className="absolute inset-0 bg-black/30" />
 
-      {/* Foreground content */}
+      {/* Main */}
       <div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
-                   grid grid-cols-[1fr_275px_1fr] items-center gap-20 md:gap-48 sm:gap-8 z-10"
+                   grid grid-cols-[1fr_275px_1fr] items-center gap-20 md:gap-48 sm:gap-8 z-10 animate-fade-in"
       >
         <VerticalLinks items={left} ariaLabel="primary" />
-        <CenterIcon src="/blue_jvne.jpg" size={275} />
+        <CenterIcon src="/blue_jvne.jpg" size={250} />
         <VerticalLinks items={right} align="right" ariaLabel="external" />
       </div>
     </main>

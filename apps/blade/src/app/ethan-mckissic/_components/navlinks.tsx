@@ -1,12 +1,12 @@
 import Link from "next/link";
 
-export type LinkItem = {
+interface LinkItem {
   label: string;
-  href: string;          // internal ("/about") or external ("https://...")
-  newTab?: boolean;      // force target=_blank (defaults true for externals)
+  href: string;       
+  newTab?: boolean;      
 };
 
-type Props = {
+interface Props {
   items: LinkItem[];
   align?: "left" | "right";
   ariaLabel?: string;
@@ -14,7 +14,7 @@ type Props = {
 
 const base =
   "text-4xl mb-6 tracking-wide transition hover:opacity-80 hover:-translate-y-0.5 " +
-  "focus:outline-none focus:ring-2 focus:ring-white/40 rounded italic text-shadow-lg";
+  "focus:outline-none focus:ring-2 focus:ring-white/40 rounded italic drop-shadow-lg";
 
 function isExternal(href: string) {
   return href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:");
