@@ -33,7 +33,7 @@ interface CodeScanningProps {
 const ScannerPopUp = () => {
   const { data: events } = api.event.getEvents.useQuery();
   const [open, setOpen] = useState(false);
-  
+
   // Separate current and previous events
   const currentDate = new Date();
   currentDate.setHours(0);
@@ -90,10 +90,7 @@ const ScannerPopUp = () => {
                 const selectedEvent = eventsList?.find(
                   (event) => event.id === selectedEventId,
                 );
-                form.setValue(
-                  "eventPoints",
-                  selectedEvent?.points ?? 0,
-                );
+                form.setValue("eventPoints", selectedEvent?.points ?? 0);
               }}
             >
               <option value="" disabled>
