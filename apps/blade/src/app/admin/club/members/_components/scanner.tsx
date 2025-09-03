@@ -21,6 +21,7 @@ import {
   FormMessage,
   useForm,
 } from "@forge/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
@@ -32,6 +33,16 @@ interface CodeScanningProps {
 const ScannerPopUp = () => {
   const { data: events } = api.event.getEvents.useQuery();
   const [open, setOpen] = useState(false);
+  
+  // Separate current and previous events
+  const currentDate = new Date();
+  currentDate.setHours(0);
+  const currentEvents = (events ?? []).filter(
+    (event) => event.start_datetime >= currentDate,
+  );
+  const previousEvents = (events ?? []).filter(
+    (event) => event.start_datetime < currentDate,
+  );
   const checkIn = api.member.eventCheckIn.useMutation({
     onSuccess(opts) {
       toast.success(opts.message);
@@ -60,6 +71,46 @@ const ScannerPopUp = () => {
     setOpen(false);
     window.location.reload();
   };
+
+  const renderEventSelect = (eventsList: typeof events) => (
+    <FormField
+      name="eventId"
+      control={form.control}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Event</FormLabel>
+          <FormControl>
+            <select
+              {...field}
+              className="w-full rounded border p-2"
+              defaultValue=""
+              onChange={(e) => {
+                const selectedEventId = e.target.value;
+                field.onChange(e);
+                const selectedEvent = eventsList?.find(
+                  (event) => event.id === selectedEventId,
+                );
+                form.setValue(
+                  "eventPoints",
+                  selectedEvent?.points ?? 0,
+                );
+              }}
+            >
+              <option value="" disabled>
+                Select an event
+              </option>
+              {eventsList?.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.name}
+                </option>
+              ))}
+            </select>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
 
   return (
     <Dialog open={open}>
@@ -104,43 +155,18 @@ const ScannerPopUp = () => {
             })}
             className="space-y-4"
           >
-            <FormField
-              name="eventId"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Event</FormLabel>
-                  <FormControl>
-                    <select
-                      {...field}
-                      className="w-full rounded border p-2"
-                      defaultValue=""
-                      onChange={(e) => {
-                        const selectedEventId = e.target.value;
-                        field.onChange(e);
-                        const selectedEvent = events?.find(
-                          (event) => event.id === selectedEventId,
-                        );
-                        form.setValue(
-                          "eventPoints",
-                          selectedEvent?.points ?? 0,
-                        );
-                      }}
-                    >
-                      <option value="" disabled>
-                        Select an event
-                      </option>
-                      {events?.map((event) => (
-                        <option key={event.id} value={event.id}>
-                          {event.name}
-                        </option>
-                      ))}
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <Tabs defaultValue="current" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="current">Upcoming Events</TabsTrigger>
+                <TabsTrigger value="previous">Previous Events</TabsTrigger>
+              </TabsList>
+              <TabsContent value="current" className="space-y-4">
+                {renderEventSelect(currentEvents)}
+              </TabsContent>
+              <TabsContent value="previous" className="space-y-4">
+                {renderEventSelect(previousEvents)}
+              </TabsContent>
+            </Tabs>
           </form>
         </Form>
         <div className="flex space-x-2">
