@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileUserIcon } from "lucide-react";
+import { FileUserIcon, LinkIcon } from "lucide-react";
 
 import { ResumeIcon } from "@forge/ui";
 
@@ -79,6 +79,13 @@ function Intro() {
             >
               <FileUserIcon className="size-10" />
             </Link>
+            <a
+              href="https://jerryhe.dev"
+              target="_blank"
+              className="flex size-14 items-center justify-center space-x-2 rounded-full bg-blue-500 p-2 font-semibold text-white hover:bg-blue-700"
+            >
+              <LinkIcon className="size-8" />
+            </a>
           </div>
         </div>
       </div>
