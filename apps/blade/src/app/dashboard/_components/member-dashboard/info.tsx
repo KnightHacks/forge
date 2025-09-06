@@ -16,9 +16,9 @@ export function MemberInfo() {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 gap-4">
-          <ResumeButton />
-          <DownloadQRPass />
           <QRCodePopup />
+          <DownloadQRPass />
+          <ResumeButton />
         </div>
       </CardContent>
     </Card>

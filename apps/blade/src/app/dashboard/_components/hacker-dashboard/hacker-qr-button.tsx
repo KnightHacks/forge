@@ -12,6 +12,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@forge/ui/drawer";
 
 import { api } from "~/trpc/react";
 
@@ -21,7 +29,7 @@ export function HackerQRCodePopup() {
 
     if (isError) {
       return (
-        <div className="flex h-[40vw] max-h-[80vh] w-[40vw] items-center justify-center overflow-y-auto">
+        <div className="flex items-center justify-center overflow-y-auto">
           <div className="text-black">
             Something went wrong. please try again
           </div>
@@ -31,7 +39,7 @@ export function HackerQRCodePopup() {
 
     if (isLoading) {
       return (
-        <div className="flex h-[40vw] max-h-[80vh] w-[40vw] items-center justify-center overflow-y-auto">
+        <div className="flex items-center justify-center overflow-y-auto">
           <Loader2 color="#000000" size={50} className="animate-spin" />
         </div>
       );
@@ -39,7 +47,7 @@ export function HackerQRCodePopup() {
 
     if (userQR?.qrCodeUrl) {
       return (
-        <div className="flex h-[40vw] max-h-[80vh] w-[40vw] items-center justify-center overflow-y-auto">
+        <div className="flex items-center justify-center overflow-y-auto">
           <Image
             unoptimized
             src={userQR.qrCodeUrl}
@@ -52,34 +60,55 @@ export function HackerQRCodePopup() {
     }
 
     return (
-      <div className="flex h-[40vw] max-h-[80vh] w-[40vw] items-center justify-center overflow-y-auto">
+      <div className="flex items-center justify-center overflow-y-auto">
         <div className="text-black">No QR Code found.</div>
       </div>
     );
   };
+
+  const qrTrigger = (
+    <Button
+      size="lg"
+      className="animate-fade-in gap-2 !rounded-none border border-[#1F2937] !bg-white !shadow-none hover:!bg-[#E5E7EB] dark:!bg-[#0A0F1D] dark:hover:!bg-[#1F2937] px-3 sm:px-8"
+    >
+      <QrCode className="h-5 w-5 dark:hidden" color="#000000" />
+      <QrCode className="hidden h-5 w-5 dark:block" color="#FFFFFF" />
+      <span className="text-lg font-bold text-black dark:text-white">QR</span>
+    </Button>
+  );
+
+  const qrContent = (
+    <div className="flex items-center justify-center p-6">
+      <div className="rounded-lg bg-white p-4">{getQR()}</div>
+    </div>
+  );
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          size="lg"
-          className="animate-fade-in gap-2 !rounded-none border border-[#1F2937] !bg-white !shadow-none hover:!bg-[#E5E7EB] dark:!bg-[#0A0F1D] dark:hover:!bg-[#1F2937]"
-        >
-          <QrCode className="h-5 w-5 dark:hidden" color="#000000" />
-          <QrCode className="hidden h-5 w-5 dark:block" color="#FFFFFF" />
-          <span className="text-lg font-bold text-black dark:text-white">
-            QR
-          </span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Your QR Code</DialogTitle>
-        </DialogHeader>
-        <div className="flex items-center justify-center p-6">
-          <div className="rounded-lg bg-white p-4">{getQR()}</div>
-        </div>
-      </DialogContent>
-      <DialogDescription></DialogDescription>
-    </Dialog>
+    <>
+      <div className="md:hidden">
+        <Drawer>
+          <DrawerTrigger asChild>{qrTrigger}</DrawerTrigger>
+          <DrawerContent className="mx-auto w-full max-w-sm">
+            <DrawerHeader>
+              <DrawerTitle>Your QR Code</DrawerTitle>
+            </DrawerHeader>
+            {qrContent}
+            <DrawerDescription />
+          </DrawerContent>
+        </Drawer>
+      </div>
+      <div className="hidden md:block">
+        <Dialog>
+          <DialogTrigger asChild>{qrTrigger}</DialogTrigger>
+          <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Your QR Code</DialogTitle>
+            </DialogHeader>
+            {qrContent}
+            <DialogDescription />
+          </DialogContent>
+        </Dialog>
+      </div>
+    </>
   );
 }

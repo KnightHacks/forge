@@ -34,10 +34,8 @@ export default function PaymentButton({ member }: { member: InsertMember }) {
     }
   };
   return (
-    <div className="relative top-3">
-      <Button onClick={handleCheckout} disabled={disableButton}>
-        Pay Dues
-      </Button>
-    </div>
+    <Button onClick={handleCheckout} disabled={disableButton} className="w-full">
+      Pay Dues
+    </Button>
   );
 }

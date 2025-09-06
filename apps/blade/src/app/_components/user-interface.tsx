@@ -57,13 +57,13 @@ export async function UserInterface() {
       >
         <div className="flex justify-center pb-8">
           <div className="w-full max-w-4xl">
-            <h2 className="mb-4 text-center text-xl font-bold">
+            <h1 className="mb-4 text-center text-2xl font-bold sm:text-3xl">
               Select Your Dashboard
-            </h2>
+            </h1>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger
                 value="Member"
-                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+                className="whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-white"
               >
                 {!member.value ? (
                   "Become a Member"
@@ -76,7 +76,7 @@ export async function UserInterface() {
               </TabsTrigger>
               <TabsTrigger
                 value="Hacker"
-                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+                className="whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-white"
               >
                 <span className="sm:hidden">
                   {currentHackathon ? currentHackathon.displayName : "Hacker"}
@@ -91,10 +91,14 @@ export async function UserInterface() {
           </div>
         </div>
         <TabsContent value="Member" className="mt-4 w-full">
-          <MemberDashboard member={member.value} />
+          <div className="mx-auto w-[95%] max-w-[70rem]">
+            <MemberDashboard member={member.value} />
+          </div>
         </TabsContent>
         <TabsContent value="Hacker" className="mt-4 w-full">
-          <HackerDashboard hacker={hacker.value} />
+          <div className="mx-auto w-[95%] max-w-[70rem]">
+            <HackerDashboard hacker={hacker.value} />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

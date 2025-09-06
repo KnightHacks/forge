@@ -193,8 +193,8 @@ export function HackerData({
         {hackerStatus === "Accepted" &&
           hackathonData?.confirmationDeadline != null && (
             <Button
-              size="lg"
-              className={`animate-fade-in gap-2 !rounded-none ${
+              size="sm"
+              className={`animate-fade-in gap-2 !rounded-none sm:size-lg ${
                 hackathonData.confirmationDeadline < new Date()
                   ? "bg-gray-700 hover:bg-gray-900"
                   : ""
@@ -254,8 +254,8 @@ export function HackerData({
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <Button
-                size="lg"
-                className="animate-fade-in gap-2 !rounded-none !bg-destructive hover:!bg-destructive/80"
+                size="sm"
+                className="animate-fade-in gap-2 !rounded-none !bg-destructive hover:!bg-destructive/80 sm:size-lg"
               >
                 <span className="text-lg font-bold text-white">WITHDRAW</span>
               </Button>

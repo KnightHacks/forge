@@ -1,5 +1,7 @@
+"use client";
+
 import Image from "next/image";
-import { QrCode } from "lucide-react";
+import { Loader2, QrCode } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import {
@@ -10,16 +12,36 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
-
-import { api } from "~/trpc/server";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@forge/ui/drawer";
+import { api } from "~/trpc/react";
 
 export function QRCodePopup() {
-  const getQR = async () => {
-    const userQR = await api.qr.getQRCode();
+  const { data: userQR, isLoading, isError } = api.qr.getQRCode.useQuery();
 
-    if (userQR.qrCodeUrl) {
-      return (
-        <div className="flex h-[40vw] max-h-[80vh] w-[40vw] items-center justify-center overflow-y-auto">
+  const qrTrigger = (
+    <Button size="sm" className="w-full gap-2">
+      <QrCode className="h-4 w-4" />
+      <span className="font-bold">View QR Code</span>
+    </Button>
+  );
+
+  const qrContent = (
+    <div className="flex items-center justify-center p-6">
+      {isError && (
+        <div className="text-black">Something went wrong. please try again</div>
+      )}
+      {isLoading && (
+        <Loader2 color="#000000" size={50} className="animate-spin" />
+      )}
+      {userQR?.qrCodeUrl && (
+        <div className="rounded-lg bg-white p-4">
           <Image
             unoptimized
             src={userQR.qrCodeUrl}
@@ -28,28 +50,39 @@ export function QRCodePopup() {
             height={400}
           />
         </div>
-      );
-    }
+      )}
+      {!isLoading && !userQR?.qrCodeUrl && !isError && (
+        <div className="text-black">No QR Code found.</div>
+      )}
+    </div>
+  );
 
-    return <p>No QR Code found</p>;
-  };
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
-          <QrCode className="h-4 w-4" />
-          <span>View QR Code</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Your QR Code</DialogTitle>
-        </DialogHeader>
-        <div className="flex items-center justify-center p-6">
-          <div className="rounded-lg bg-white p-4">{getQR()}</div>
-        </div>
-      </DialogContent>
-      <DialogDescription></DialogDescription>
-    </Dialog>
+    <>
+      <div className="md:hidden">
+        <Drawer>
+          <DrawerTrigger asChild>{qrTrigger}</DrawerTrigger>
+          <DrawerContent className="mx-auto w-full max-w-sm">
+            <DrawerHeader>
+              <DrawerTitle>Your QR Code</DrawerTitle>
+            </DrawerHeader>
+            {qrContent}
+            <DrawerDescription />
+          </DrawerContent>
+        </Drawer>
+      </div>
+      <div className="hidden md:block">
+        <Dialog>
+          <DialogTrigger asChild>{qrTrigger}</DialogTrigger>
+          <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Your QR Code</DialogTitle>
+            </DialogHeader>
+            {qrContent}
+            <DialogDescription />
+          </DialogContent>
+        </Dialog>
+      </div>
+    </>
   );
 }
