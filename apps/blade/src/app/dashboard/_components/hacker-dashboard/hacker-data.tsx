@@ -194,7 +194,7 @@ export function HackerData({
           hackathonData?.confirmationDeadline != null && (
             <Button
               size="sm"
-              className={`animate-fade-in gap-2 !rounded-none sm:size-lg ${
+              className={`animate-fade-in sm:size-lg gap-2 !rounded-none ${
                 hackathonData.confirmationDeadline < new Date()
                   ? "bg-gray-700 hover:bg-gray-900"
                   : ""
@@ -255,7 +255,7 @@ export function HackerData({
             <DialogTrigger asChild>
               <Button
                 size="sm"
-                className="animate-fade-in gap-2 !rounded-none !bg-destructive hover:!bg-destructive/80 sm:size-lg"
+                className="animate-fade-in sm:size-lg gap-2 !rounded-none !bg-destructive hover:!bg-destructive/80"
               >
                 <span className="text-lg font-bold text-white">WITHDRAW</span>
               </Button>

@@ -44,13 +44,11 @@ export default async function HackerDashboard({
 
   return (
     <>
-      <div className="mb-8 animate-fade-in">
+      <div className="animate-fade-in mb-8">
         <h2 className="text-xl font-bold tracking-tight">
           Hello, {hacker.firstName}!
         </h2>
-        <p className="text-muted-foreground">
-          Hackathon Dashboard
-        </p>
+        <p className="text-muted-foreground">Hackathon Dashboard</p>
       </div>
       <div className="animate-mobile-initial-expand relative mx-auto flex h-0 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:py-0 sm:pb-0 lg:max-h-56">
         {/* Main content */}

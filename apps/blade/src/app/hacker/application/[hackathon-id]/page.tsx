@@ -46,8 +46,7 @@ export default async function HackerApplicationPage({
     if (isHacker != null) {
       return redirect("/dashboard");
     }
-  } catch (error) {
-    console.error("Error checking hacker status:", error);
+  } catch {
     return redirect("/dashboard");
   }
 

@@ -56,7 +56,7 @@ export default async function MemberDashboard({
   return (
     <div className="flex-col md:flex">
       <div className="flex-1 space-y-4">
-        <div className="mb-8 flex animate-fade-in items-center justify-between space-y-2">
+        <div className="animate-fade-in mb-8 flex items-center justify-between space-y-2">
           <div>
             <h2 className="text-xl font-bold tracking-tight">
               Hello, {member.firstName}!
@@ -66,7 +66,7 @@ export default async function MemberDashboard({
         </div>
         {/* Unified View */}
         <div className="animate-mobile-initial-expand space-y-4">
-          <div className="grid animate-fade-in gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="animate-fade-in grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Payment status={dues.value.duesPaid} member={member} />
             <MemberInfo />
             <Points size={member.points} />

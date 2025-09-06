@@ -311,11 +311,7 @@ export function HackerProfileForm({
                 id: hacker.id,
                 resumeUrl,
               });
-            } catch (error) {
-              console.error(
-                "Error uploading resume or updating hacker:",
-                error,
-              );
+            } catch {
               toast.error(
                 "Something went wrong while processing your changes.",
               );

@@ -69,7 +69,7 @@ export function HackerQRCodePopup() {
   const qrTrigger = (
     <Button
       size="lg"
-      className="animate-fade-in gap-2 !rounded-none border border-[#1F2937] !bg-white !shadow-none hover:!bg-[#E5E7EB] dark:!bg-[#0A0F1D] dark:hover:!bg-[#1F2937] px-3 sm:px-8"
+      className="animate-fade-in gap-2 !rounded-none border border-[#1F2937] !bg-white px-3 !shadow-none hover:!bg-[#E5E7EB] dark:!bg-[#0A0F1D] dark:hover:!bg-[#1F2937] sm:px-8"
     >
       <QrCode className="h-5 w-5 dark:hidden" color="#000000" />
       <QrCode className="hidden h-5 w-5 dark:block" color="#FFFFFF" />
