@@ -47,6 +47,7 @@ export const getTagColor = (tag: EventTagsColor) => {
     Workshop: "bg-teal-100 text-teal-800",
     OPS: "bg-purple-100 text-purple-800",
     Hackathon: "bg-violet-100 text-violet-800",
+    Collabs: "bg-red-100 text-red-800",
   };
   return colors[tag];
 };
