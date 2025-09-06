@@ -70,7 +70,7 @@ export async function UserInterface() {
                 ) : (
                   <>
                     <span className="sm:hidden">Member</span>
-                    <span className="hidden sm:inline">Member Dashboard</span>
+                    <span className="hidden sm:inline">Member</span>
                   </>
                 )}
               </TabsTrigger>
