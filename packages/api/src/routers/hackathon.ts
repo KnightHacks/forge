@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { count, desc, eq, getTableColumns } from "@forge/db";
+import { and, count, desc, eq, getTableColumns, lt } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Hackathon,
@@ -61,7 +61,7 @@ export const hackathonRouter = {
     }),
 
   getPastHackathons: protectedProcedure.query(async ({ ctx }) => {
-    // Get each hackathon and numAttended
+    // Subquery: each hackathon with number attended
     const hackathonsSubQuery = db
       .select({
         id: Hackathon.id,
@@ -80,9 +80,15 @@ export const hackathonRouter = {
       .from(Hackathon)
       .leftJoin(HackerAttendee, eq(Hackathon.id, HackerAttendee.hackathonId))
       .leftJoin(Hacker, eq(HackerAttendee.hackerId, Hacker.id))
-      .leftJoin(hackathonsSubQuery, eq(hackathonsSubQuery.id, Hackathon.id)) // Add numAttended to each corresponding event
-      .where(eq(Hacker.userId, ctx.session.user.id))
+      .leftJoin(hackathonsSubQuery, eq(hackathonsSubQuery.id, Hackathon.id))
+      .where(
+        and(
+          eq(Hacker.userId, ctx.session.user.id),
+          lt(Hackathon.endDate, new Date()), // Only past hackathons
+        ),
+      )
       .orderBy(desc(Hackathon.startDate));
+
     return hackathons;
   }),
 
