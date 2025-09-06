@@ -44,6 +44,12 @@ export default async function HackerDashboard({
 
   return (
     <>
+      <div className="mb-4">
+        <h2 className="text-3xl font-bold tracking-tight">Hacker Dashboard</h2>
+        <p className="text-muted-foreground">
+          Welcome to the {currentHackathon?.name} dashboard!
+        </p>
+      </div>
       <div className="animate-mobile-initial-expand relative mx-auto flex h-0 w-[90%] max-w-[70rem] bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:py-0 sm:pb-0 lg:max-h-56">
         {/* Main content */}
         <HackerData data={hacker} />

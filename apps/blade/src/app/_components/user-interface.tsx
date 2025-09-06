@@ -56,20 +56,39 @@ export async function UserInterface() {
         className="max-w-8xl relative w-full"
       >
         <div className="flex justify-center pb-8">
-          <TabsList className="grid w-full max-w-4xl grid-cols-2">
-            <TabsTrigger
-              value="Member"
-              className="data-[state=active]:bg-primary data-[state=active]:text-white"
-            >
-              {`${!member.value ? "Become a " : ""}Member`}
-            </TabsTrigger>
-            <TabsTrigger
-              value="Hacker"
-              className="data-[state=active]:bg-primary data-[state=active]:text-white"
-            >
-              {currentHackathon ? currentHackathon.displayName : "Hacker"}
-            </TabsTrigger>
-          </TabsList>
+          <div className="w-full max-w-4xl">
+            <h2 className="mb-4 text-center text-xl font-bold">
+              Select Your Dashboard
+            </h2>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger
+                value="Member"
+                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
+                {!member.value ? (
+                  "Become a Member"
+                ) : (
+                  <>
+                    <span className="sm:hidden">Member</span>
+                    <span className="hidden sm:inline">Member Dashboard</span>
+                  </>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="Hacker"
+                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
+                <span className="sm:hidden">
+                  {currentHackathon ? currentHackathon.displayName : "Hacker"}
+                </span>
+                <span className="hidden sm:inline">
+                  {currentHackathon
+                    ? `${currentHackathon.displayName}`
+                    : "Hacker Dashboard"}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
         <TabsContent value="Member" className="mt-4 w-full">
           <MemberDashboard member={member.value} />

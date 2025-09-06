@@ -11,6 +11,7 @@ import { TRPCReactProvider } from "~/trpc/react";
 import "./globals.css";
 
 import { env } from "~/env";
+import { NextAuthProvider } from "./_components/next-auth-provider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -47,7 +48,9 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <TRPCReactProvider>{props.children}</TRPCReactProvider>
+          <TRPCReactProvider>
+            <NextAuthProvider>{props.children}</NextAuthProvider>
+          </TRPCReactProvider>
           <div className="fixed bottom-4 right-4">
             <ThemeToggle />
           </div>
