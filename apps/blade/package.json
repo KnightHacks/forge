@@ -62,6 +62,7 @@
     "dotenv-cli": "^7.4.2",
     "eslint": "catalog:",
     "jiti": "^2.3.3",
+    "jsonwebtoken": "^9.0.2",
     "prettier": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:"

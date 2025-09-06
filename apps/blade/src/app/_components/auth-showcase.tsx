@@ -14,6 +14,7 @@ import { UserDropdown } from "./navigation/user-dropdown";
 
 export async function Auth() {
   const session = await auth();
+  // console.log("Session: ", session);
   const isAdmin = await api.auth.getAdminStatus();
 
   return (

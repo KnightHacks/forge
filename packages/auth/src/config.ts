@@ -51,6 +51,7 @@ export const authConfig = {
   ],
   callbacks: {
     session: (opts) => {
+      console.log("Opts: ", opts);
       if (!("user" in opts))
         throw new Error("unreachable with session strategy");
       return {

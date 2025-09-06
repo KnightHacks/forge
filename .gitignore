@@ -16,6 +16,9 @@ coverage
 out/
 next-env.d.ts
 
+#blade
+apps/blade/e2e-tests/playwright/.auth
+
 # nitro
 .nitro/
 .output/
