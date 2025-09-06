@@ -59,7 +59,7 @@ const ScannerPopUp = () => {
       });
     },
   });
-  
+
   const form = useForm({
     schema: z.object({
       userId: z.string(),
