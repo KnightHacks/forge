@@ -54,15 +54,20 @@ export function EventsTable() {
     return 0;
   });
 
-  const upcomingDate = new Date();
-  upcomingDate.setHours(0);
-  const upcomingEvents = [...sortedEvents].filter(
-    (event) => event.start_datetime >= upcomingDate,
-  );
+  const now = new Date();
+  const upcomingEvents = [...sortedEvents].filter((event) => {
+    const eventEndTime = new Date(event.end_datetime);
+    const dayAfterEvent = new Date(eventEndTime);
+    dayAfterEvent.setDate(dayAfterEvent.getDate() + 1);
+    return dayAfterEvent >= now;
+  });
 
-  const previousEvents = [...sortedEvents].filter(
-    (event) => event.start_datetime < upcomingDate,
-  );
+  const previousEvents = [...sortedEvents].filter((event) => {
+    const eventEndTime = new Date(event.end_datetime);
+    const dayAfterEvent = new Date(eventEndTime);
+    dayAfterEvent.setDate(dayAfterEvent.getDate() + 1);
+    return dayAfterEvent < now;
+  });
 
   return (
     <div>

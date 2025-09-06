@@ -35,14 +35,19 @@ const ScannerPopUp = () => {
   const [open, setOpen] = useState(false);
 
   // Separate current and previous events
-  const currentDate = new Date();
-  currentDate.setHours(0);
-  const currentEvents = (events ?? []).filter(
-    (event) => event.start_datetime >= currentDate,
-  );
-  const previousEvents = (events ?? []).filter(
-    (event) => event.start_datetime < currentDate,
-  );
+  const now = new Date();
+  const currentEvents = (events ?? []).filter((event) => {
+    const eventEndTime = new Date(event.end_datetime);
+    const dayAfterEvent = new Date(eventEndTime);
+    dayAfterEvent.setDate(dayAfterEvent.getDate() + 1);
+    return dayAfterEvent >= now;
+  });
+  const previousEvents = (events ?? []).filter((event) => {
+    const eventEndTime = new Date(event.end_datetime);
+    const dayAfterEvent = new Date(eventEndTime);
+    dayAfterEvent.setDate(dayAfterEvent.getDate() + 1);
+    return dayAfterEvent < now;
+  });
   const checkIn = api.member.eventCheckIn.useMutation({
     onSuccess(opts) {
       toast.success(opts.message);
@@ -54,6 +59,7 @@ const ScannerPopUp = () => {
       });
     },
   });
+  
   const form = useForm({
     schema: z.object({
       userId: z.string(),
