@@ -54,12 +54,12 @@ export default function AcceptButton({
       hackathonName,
     });
 
-    const html = await render(<KH8AcceptanceEmail name={hacker.lastName} />);
+    const html = await render(<KH8AcceptanceEmail name={hacker.firstName}/>);
 
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: "GemiKnights 2025 - You're Accepted! Confirm your spot!",
+      subject: "KnightHacks VIII - You're Accepted! Confirm your spot!",
       body: html,
     });
   };
