@@ -368,7 +368,7 @@ export function MemberApplicationForm() {
             };
 
             await createMember.mutateAsync(createMemberPayload);
-          } catch (error) {
+          } catch {
             setLoading(false);
           }
         })}
