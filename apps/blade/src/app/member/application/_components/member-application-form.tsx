@@ -58,7 +58,13 @@ export function MemberApplicationForm() {
       router.refresh();
     },
     onError(error) {
-      toast.error(`Application submission failed: ${error.message}`);
+      if (
+        /duplicate key value violates unique constraint/i.test(error.message)
+      ) {
+        toast.error("A member with this info already exists");
+      } else {
+        toast.error(`Application submission failed ${error.message}`);
+      }
     },
     onSettled() {
       setLoading(false);
@@ -363,11 +369,6 @@ export function MemberApplicationForm() {
 
             await createMember.mutateAsync(createMemberPayload);
           } catch (error) {
-            if (error instanceof Error) {
-              toast.error(`Submission error: ${error.message}`);
-            } else {
-              toast.error("An unexpected error occurred during submission.");
-            }
             setLoading(false);
           }
         })}
