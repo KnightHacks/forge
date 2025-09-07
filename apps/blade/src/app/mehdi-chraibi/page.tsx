@@ -1,26 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect } from "react";
 
 export default function MehdiChraibiPage() {
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("opacity-100", "translate-y-0");
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    document.querySelectorAll(".scroll-section").forEach(el => observer.observe(el));
-
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <main className="relative flex flex-col items-center min-h-screen w-full text-gray-900 overflow-hidden">
       {/* Background image */}
@@ -32,7 +14,7 @@ export default function MehdiChraibiPage() {
       {/* Content */}
       <div className="relative z-10 w-full flex flex-col items-center">
         {/* Profile & Intro Section */}
-        <section className="scroll-section flex flex-col items-center opacity-0 transform translate-y-12 transition-all duration-700 ease-out py-32">
+        <section className="flex flex-col items-center py-32">
           <Image
             src="/IMG_1699-photoaidcom-cropped.png"
             alt="Mehdi Chraibi"
@@ -90,17 +72,19 @@ export default function MehdiChraibiPage() {
           </div>
         </section>
 
-        {/* Placeholder Scroll Section with Quote */}
-        <section className="scroll-section opacity-0 transform translate-y-12 transition-all duration-700 ease-out py-32 max-w-2xl text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">More about me</h2>
-          <p className="text-lg text-gray-200 mb-4">
-            I'm a transfer from Valencia, so everything is a bit new to me.
-            My hobbies include reading, working out, and collecting quotes. Here's one:
-          </p>
+        {/* More About Me Section */}
+        <section className="py-32 text-center w-full mt-32">
+          <div className="mx-auto max-w-xl px-4">
+            <h2 className="text-3xl font-bold text-white mb-4">More about me</h2>
+            <p className="text-lg text-gray-200 mb-4 leading-relaxed">
+              I'm a transfer from Valencia, so everything is a bit new to me.
+              My hobbies include reading, working out, and collecting quotes. Here's one:
+            </p>
 
-          <blockquote className="text-xl text-gray-200 italic border-l-4 border-yellow-500 pl-6 text-left mx-auto max-w-xl whitespace-pre-line">
-            {"\"Never regret thy fall,\nO Icarus of the fearless flight\nFor the greatest tragedy of them all\nIs never to feel the burning light.\""}
-          </blockquote>
+            <blockquote className="text-xl text-gray-200 italic border-l-4 border-yellow-500 pl-6 text-left mx-auto max-w-xl whitespace-pre-line">
+              {"\"Never regret thy fall,\nO Icarus of the fearless flight\nFor the greatest tragedy of them all\nIs never to feel the burning light.\""}
+            </blockquote>
+          </div>
         </section>
       </div>
     </main>
