@@ -8,8 +8,8 @@ function Intro() {
     <div className="flex flex-col items-center justify-center pb-6 pt-20 text-center">
       <ImageFlipCard
         className="mb-3 size-48 rounded-full border-2 border-white object-cover md:mb-9"
-        frontImage="jerry-assets/JerryPhoto.png"
-        backImage="jerry-assets/headshotCrop.jpg"
+        frontImage="/jerry-assets/JerryPhoto.png"
+        backImage="/jerry-assets/headshotCrop.jpg"
         frontAlt="Cartoon Jerry"
         backAlt="Real Jerry"
       />
