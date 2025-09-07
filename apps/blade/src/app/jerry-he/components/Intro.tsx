@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FileUserIcon, LinkIcon } from "lucide-react";
 
-import { ResumeIcon } from "@forge/ui";
+
 
 import ImageFlipCard from "./shared/ImageFlipCard";
 
