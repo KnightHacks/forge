@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { FileUserIcon, LinkIcon } from "lucide-react";
 
-
-
 import ImageFlipCard from "./shared/ImageFlipCard";
 
 function Intro() {
