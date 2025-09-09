@@ -11,12 +11,12 @@ import {
   Text,
 } from "@react-email/components";
 
-interface AcceptanceEmailProps {
+interface ConfirmationEmailProps {
   name: string;
 }
 
-export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
-  const previewText = `Congrats, ${name}! You've been accepted to Knight Hacks VIII! 🎉`;
+export const KH8ConfirmationEmail = ({ name }: ConfirmationEmailProps) => {
+  const previewText = `Congrats, ${name}! Your spot at Knight Hacks VIII is secured 🎉`;
 
   return (
     <Html>
@@ -66,7 +66,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                           {name}
                         </span>
                       </Text>
-                      <Img src="https://i.imgur.com/gwDlJIm.png" className="w-[500px] h-[200px] absolute mt-[72px]"/>
+                      <Img src="https://i.imgur.com/W2DrFwX.png" className="w-[500px] h-[200px] absolute mt-[72px]"/>
                   </td>
                 </tr>
               </table>
@@ -97,64 +97,72 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                   </td>
                 </tr>
                 <tr>
-                  <td>
-                      <Text className="text-[36px] leading-tight text-[#C04B3D] font-bold italic underline">
-                        NEXT STEPS...
+                  <td className="">
+                      <Text className="text-[36px] leading-tight text-[#C04B3D] font-bold underline">
+                        Welcome to Knight Hacks VIII!
+                      </Text>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4">
+                      <Text className="text-[20px] leading-tight text-black">
+                        We're so happy you chose to join us on this journey, and we can't wait to have you at the event! Now that you're confirmed, <span className="font-bold text-[#4075b7]">your spot is saved</span> and you can rest easy.  
+                        However, we'd recommend doing <span className="font-bold">these 3 things</span> before you get here, so that you can maximize your enjoyment of the event:
                       </Text>
                   </td>
                 </tr>
                 <tr>
                   <td className="">
                       <Text className="text-[28px] leading-tight text-[#4075b7] font-bold">
-                        1) Confirm your attendance!
+                        1) Build a Team!
                       </Text>
                   </td>
                 </tr>
                 <tr>
                   <td className="px-4">
                     <Text className="text-[20px] leading-tight text-black">
-                      While you have been accepted to <span className="font-bold text-[#C04B3D]">Knight Hacks VIII</span>, you have <span className="font-bold">one last step</span>.
-                      <br/><br/>
-                      Confirm that you are able to attend the event using Blade, at your <Link href={"https://blade.knighthacks.org/dashboard"} className="text-[#4075b7] underline">
-                        hacker dashboard.
-                      </Link> If you do not confirm by the deadline, you may <span className="text-[#C04B3D]">lose your spot</span>, so do this <span className="font-bold">ASAP!</span>
+                      While you can submit solo, everything's better with a team, and <span className="font-bold text-[#C04B3D]">Knight Hacks</span> is no different. If you don't have anyone to go with, don't worry! 
+                      We will have in-person team building at the start of the event, or you can find teammates on our <Link href={"https://discord.com/invite/Kv5g9vf"} className="text-[#4075b7] underline">
+                        Discord server!
+                      </Link> 
                     </Text>
                   </td>
                 </tr>
                 <tr>
                   <td className="">
                       <Text className="text-[28px] leading-tight text-[#4075b7] font-bold">
-                        2) Join our Discord! <span className="italic text-[24px] font-normal text-muted-foreground">(required by October 23rd)</span>
+                        2) Read the Hacker's Guide!
                       </Text>
                   </td>
                 </tr>
                 <tr>
                   <td className="px-4">
                     <Text className="text-[20px] leading-tight text-black">
-                      Here, you can <span className="text-[#4075b7]">connect</span> with fellow Hackers, Mentors, and Organizers on our <Link href={"https://discord.com/invite/Kv5g9vf"} className="text-[#4075b7] underline">
-                        Discord server.
-                      </Link> Stay updated on <span className="text-[#C04B3D]">live</span> annoucements, find teammates, and get your questions answered.
-                      <br/><br/>
-                      Make sure that your <span className="font-bold">Blade</span> account matches your Discord account by clicking on your profile icon in Blade, and checking the displayed handle for a match.
-                       You are <span className="text-[#C04B3D]">required</span> to join the Discord this year, as all of our event communications will take place in our <span className="font-bold text-[#C04B3D]">Knight Hacks VIII channels.</span>
+                      Your best friend during <span className="font-bold text-[#C04B3D]">Knight Hacks VIII</span> will be the <Link href={"https://knight-hacks.notion.site/knight-hacks-viii"} className="text-[#4075b7] underline">
+                        Hacker's Guide.
+                      </Link> Everything you need to know about the event will be posted there, like <span className="text-[#4075b7]">schedules, sponsor challenges, prizes, </span> 
+                      and <span className="text-[#C04B3D]">MORE!</span> Be sure to keep an eye on it, as the Guide will be regularly updated as we get closer to the event.
                     </Text>
                   </td>
                 </tr>
-                <hr/>
+                <tr>
+                  <td className="">
+                      <Text className="text-[28px] leading-tight text-[#4075b7] font-bold">
+                        3) Spread the EXCITEMENT!
+                      </Text>
+                  </td>
+                </tr>
                 <tr>
                   <td className="px-4">
                     <Text className="text-[20px] leading-tight text-black">
-                      <span className="font-bold italic">Are you ready?</span><br/><br/>
-                      <span className="font-bold text-[#4075b7]">T.K.</span> and <span className="font-bold text-[#C04B3D]">Lenny</span> need your talent to turn the tides of their war. 
-                      If you think you're ready, <span className="text-[#C04B3D]">confirm</span> today! The fate of <span className="font-bold text-[#C04B3D]">Knight Hacks VIII</span> rests in <span className="text-[#4075b7]">your</span> hands.
+                      Rally your team for <span className="font-bold text-[#C04B3D]">Knight Hacks VIII!</span> Post on your LinkedIn to show employers what you've got, or tell your friends to join the fray on Instagram! 
+                      Follow our Instagram page at <Link href={"https://www.instagram.com/knighthacks/"} className="underline text-[#4075b7]">@knighthacks</Link> for even more flyers and posts to get hyped ahead of the event, or make your own using <span className="text-[#4075b7]">#knighthacks</span>!
                     </Text>
                   </td>
                 </tr>
                 <tr>
                   <td align="center" className="px-4 mx-auto">
-                    <Link href="https://blade.knighthacks.org/dashboard">
-                      <Img className="w-[400px] mx-auto" src="https://i.imgur.com/qrYuyLP.png"/>
-                    </Link>
+                    <Img className="w-[300px] mx-auto" src="https://i.imgur.com/loDXiue.png"/>
                   </td>
                 </tr>
               </table>
@@ -191,4 +199,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
   );
 };
 
-export default KH8AcceptanceEmail;
+export default KH8ConfirmationEmail;
+
+
+                
