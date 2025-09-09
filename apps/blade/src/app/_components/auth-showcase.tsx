@@ -1,20 +1,19 @@
+import { redirect } from "next/navigation";
+
 import { auth } from "@forge/auth";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuList,
-} from "@forge/ui/navigation-menu";
 import { Separator } from "@forge/ui/separator";
 
 import { api } from "~/trpc/server";
-import { AuthHome } from "./auth-home";
 import { Hero } from "./hero";
 import ClubLogo from "./navigation/club-logo";
-import { UserDropdown } from "./navigation/user-dropdown";
 
 export async function Auth() {
   const session = await auth();
-  const isAdmin = await api.auth.getAdminStatus();
+  await api.auth.getAdminStatus();
+
+  if (session) {
+    redirect("/dashboard");
+  }
 
   return (
     <div className="absolute inset-0 flex items-center justify-center">
@@ -23,18 +22,9 @@ export async function Auth() {
           <div className="flex w-full items-center justify-start gap-x-2 text-lg font-extrabold sm:text-[2rem]">
             <ClubLogo />
           </div>
-          {session && (
-            <NavigationMenu className="h-[35px] w-[35px]">
-              <NavigationMenuList>
-                <NavigationMenuItem className="flex items-center justify-center">
-                  <UserDropdown isAdmin={isAdmin} />
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-          )}
         </div>
         <Separator className="absolute top-16 sm:top-20" />
-        {!session ? <Hero /> : <AuthHome />}
+        <Hero />
       </div>
     </div>
   );

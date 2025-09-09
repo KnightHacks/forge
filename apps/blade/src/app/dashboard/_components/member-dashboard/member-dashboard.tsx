@@ -55,31 +55,26 @@ export default async function MemberDashboard({
 
   return (
     <div className="flex-col md:flex">
-      <div className="flex-1 space-y-4 p-8 pt-6">
-        <div className="flex items-center justify-between space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight">
-            Hello, {member.firstName}
-          </h2>
+      <div className="flex-1 space-y-4">
+        <div className="animate-fade-in mb-8 flex items-center justify-between space-y-2">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">
+              Hello, {member.firstName}!
+            </h2>
+            <p className="text-muted-foreground">Member Dashboard</p>
+          </div>
         </div>
-        {/* Desktop View */}
-        <div className="hidden space-y-4 md:grid">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Unified View */}
+        <div className="animate-mobile-initial-expand space-y-4">
+          <div className="animate-fade-in grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Payment status={dues.value.duesPaid} member={member} />
+            <MemberInfo />
             <Points size={member.points} />
             <EventNumber size={events.value.length} />
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <MemberInfo />
+          <div className="animate-fade-in">
             <EventShowcase events={events.value} member={member} />
           </div>
-        </div>
-        {/* Mobile View */}
-        <div className="space-y-4 md:hidden">
-          <Payment status={dues.value.duesPaid} member={member} />
-          <MemberInfo />
-          <Points size={member.points} />
-          <EventNumber size={events.value.length} />
-          <EventShowcase events={events.value} member={member} />
         </div>
       </div>
     </div>

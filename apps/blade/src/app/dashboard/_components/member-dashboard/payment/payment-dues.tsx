@@ -20,15 +20,19 @@ export function Payment({
         <CreditCard color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
       </CardHeader>
       <CardContent>
-        <div className="flex flex-row items-center justify-between">
+        <div className="flex flex-col gap-2 md:pt-4">
           <div
-            className={`text-2xl font-bold ${status ? "text-green-600" : "text-red-600"}`}
+            className={`text-2xl font-bold ${
+              status ? "text-green-600" : "text-red-600"
+            }`}
           >
             {status ? "Paid" : "Not Paid"}
           </div>
           {!status && <PaymentButton member={member} />}
+          <p className="text-center text-[11px] text-muted-foreground">
+            Current Fall & Spring
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">Current Fall & Spring</p>
       </CardContent>
     </Card>
   );
