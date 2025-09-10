@@ -5516,3 +5516,7 @@ export interface Semester {
   startDate: Date;
   endDate: Date;
 }
+
+// emails
+export const EMAIL_DISPLAY_NAME = "Knight Hacks";
+export const EMAIL_USER_ID = "Me";

@@ -2,6 +2,8 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import type { GaxiosError } from "googleapis-common";
 import { z } from "zod";
 
+import { EMAIL_DISPLAY_NAME, EMAIL_USER_ID } from "@forge/consts/knight-hacks";
+
 import { publicProcedure } from "../trpc";
 import { gmail } from "../utils";
 
@@ -20,10 +22,10 @@ export const emailRouter = {
 
       try {
         await gmail.users.settings.sendAs.create({
-          userId: "me",
+          userId: EMAIL_USER_ID,
           requestBody: {
             sendAsEmail: alias,
-            displayName: "Knight Hacks",
+            displayName: EMAIL_DISPLAY_NAME,
             treatAsAlias: true,
             isDefault: false,
           },
