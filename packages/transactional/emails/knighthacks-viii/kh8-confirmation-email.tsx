@@ -174,18 +174,18 @@ export const KH8ConfirmationEmail = ({ name }: ConfirmationEmailProps) => {
                 cellPadding={0}
                 cellSpacing={0}
                 border={0}
-                bgcolor="#C04B3D"
+                bgcolor="#702c24"
                 className="p-[16px]"
               >
                 <tr>
                   <td className="px-4 text-center">
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://discord.com/invite/Kv5g9vf">Discord</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://www.instagram.com/knighthacks/">Instagram</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://blade.knighthacks.org/dashboard">Blade</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://knight-hacks.notion.site/knight-hacks-viii">Hacker's Guide</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://mlh.io/code-of-conduct">MLH Code of Conduct</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://knight-hacks.notion.site/code-of-conduct">Knight Hacks Code of Conduct</Link>
-                    <Text className="text-[14px] leading-tight text-black">
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://discord.com/invite/Kv5g9vf">Discord</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://www.instagram.com/knighthacks/">Instagram</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://blade.knighthacks.org/dashboard">Blade</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://knight-hacks.notion.site/knight-hacks-viii">Hacker's Guide</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://mlh.io/code-of-conduct">MLH Code of Conduct</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://knight-hacks.notion.site/code-of-conduct">Knight Hacks Code of Conduct</Link>
+                    <Text className="text-[14px] leading-tight text-[#F7F0C6]">
                       Made with 💛 by the Knight Hacks team.
                     </Text>
                   </td>

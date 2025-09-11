@@ -13,8 +13,9 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 import { toast } from "@forge/ui/toast";
-
+import { KH8BlacklistEmail } from "@forge/transactional/emails/knighthacks-viii/kh8-blacklist-email"
 import { api } from "~/trpc/react";
+import { render } from "@react-email/render";
 
 export default function DenyButton({
   hacker,
@@ -55,7 +56,7 @@ export default function DenyButton({
     },
   });
 
-  const handleUpdateStatus = () => {
+  const handleUpdateStatus = async () => {
     setIsLoading(true);
     updateStatus.mutate({
       id: hacker.id ?? "",
@@ -63,11 +64,13 @@ export default function DenyButton({
       hackathonName,
     });
 
+    const html = await render(<KH8BlacklistEmail name={hacker.firstName}/>)
+
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: "Your application to Knight Hacks",
-      body: "<h1>you didnt make it<h1>", // change..
+      subject: "Knight Hacks VIII - Denial",
+      body: html
     });
   };
 

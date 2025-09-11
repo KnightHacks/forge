@@ -15,7 +15,7 @@ interface ConfirmationEmailProps {
 }
 
 export const KH8WaitlistEmail = ({ name }: ConfirmationEmailProps) => {
-  const previewText = `Congrats, ${name}! Your spot at Knight Hacks VIII is secured 🎉`;
+  const previewText = `${name}, you have been waitlisted for Knight Hacks VIII.`;
 
   return (
     <Html>
@@ -75,7 +75,7 @@ export const KH8WaitlistEmail = ({ name }: ConfirmationEmailProps) => {
                   <td className="px-4">
                       <Text className="text-[20px] leading-tight text-black">
                         <span className="font-bold text-[24px] text-[#C04B3D]">{name},</span><br/><br/>
-                        Unfortunately, we have hit the capacity for our event, and have to make the tough decision to <span className="text-[#C04B3D] font-bold">waitlist you for Knight Hacks VIII.</span> We know this is tough to hear, and we wish we could've brought you in. 
+                        Unfortunately, we have hit the capacity for our event, and have to make the difficult decision to <span className="text-[#C04B3D] font-bold">waitlist you for Knight Hacks VIII.</span> We know this is tough to hear, and we wish we could've brought you in. 
                         <br/><br/>
                         As we draw nearer to the event, some hackers may fail to confirm their attendance. If this happens, we will begin to pull people from the waitlist into the accepted pool. 
                         If you are selected, you will recieve an acceptance email, and your status on Blade will be updated. However, <span className="text-[#C04B3D] font-bold">there is no guarantee you will removed from the waitlist.</span>
@@ -96,18 +96,18 @@ export const KH8WaitlistEmail = ({ name }: ConfirmationEmailProps) => {
                 cellPadding={0}
                 cellSpacing={0}
                 border={0}
-                bgcolor="#C04B3D"
+                bgcolor="#702c24"
                 className="p-[16px]"
               >
                 <tr>
                   <td className="px-4 text-center">
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://discord.com/invite/Kv5g9vf">Discord</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://www.instagram.com/knighthacks/">Instagram</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://blade.knighthacks.org/dashboard">Blade</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://knight-hacks.notion.site/knight-hacks-viii">Hacker's Guide</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://mlh.io/code-of-conduct">MLH Code of Conduct</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://knight-hacks.notion.site/code-of-conduct">Knight Hacks Code of Conduct</Link>
-                    <Text className="text-[14px] leading-tight text-black">
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://discord.com/invite/Kv5g9vf">Discord</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://www.instagram.com/knighthacks/">Instagram</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://blade.knighthacks.org/dashboard">Blade</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://knight-hacks.notion.site/knight-hacks-viii">Hacker's Guide</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://mlh.io/code-of-conduct">MLH Code of Conduct</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://knight-hacks.notion.site/code-of-conduct">Knight Hacks Code of Conduct</Link>
+                    <Text className="text-[14px] leading-tight text-[#F7F0C6]">
                       Made with 💛 by the Knight Hacks team.
                     </Text>
                   </td>

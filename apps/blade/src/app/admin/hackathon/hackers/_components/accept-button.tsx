@@ -7,7 +7,7 @@ import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import KH8AcceptanceEmail from "./kh8-acceptance-email";
+import KH8AcceptanceEmail from "@forge/transactional/emails/knighthacks-viii/kh8-acceptance-email";
 
 export default function AcceptButton({
   hacker,
@@ -59,7 +59,7 @@ export default function AcceptButton({
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: "KnightHacks VIII - You're Accepted! Confirm your spot!",
+      subject: "[ACTION REQUIRED] Knight Hacks VIII - You're Accepted! Confirm your spot!",
       body: html,
     });
   };

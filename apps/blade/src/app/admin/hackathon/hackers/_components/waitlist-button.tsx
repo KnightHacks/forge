@@ -15,6 +15,8 @@ import {
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
+import { render } from "@react-email/render";
+import KH8WaitlistEmail from "@forge/transactional/emails/knighthacks-viii/kh8-waitlist-email";
 
 export default function WaitlistButton({
   hacker,
@@ -55,7 +57,7 @@ export default function WaitlistButton({
     },
   });
 
-  const handleUpdateStatus = () => {
+  const handleUpdateStatus = async () => {
     setIsLoading(true);
     updateStatus.mutate({
       id: hacker.id ?? "",
@@ -63,11 +65,13 @@ export default function WaitlistButton({
       hackathonName,
     });
 
+    const html = await render(<KH8WaitlistEmail name={hacker.firstName}/>)
+
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: "Your application to Knight Hacks",
-      body: "<h1>you almost made it<h1>", // change..
+      subject: "Knight Hacks VIII - Waitlisted",
+      body: html
     });
   };
 

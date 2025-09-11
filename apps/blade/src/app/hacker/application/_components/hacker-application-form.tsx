@@ -44,7 +44,7 @@ import {
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
-import KH8ApplyEmail from "~/app/admin/hackathon/hackers/_components/kh8-apply-email";
+import KH8ApplyEmail from "@forge/transactional/emails/knighthacks-viii/kh8-apply-email";
 import { api } from "~/trpc/react";
 
 export function HackerFormPage({
@@ -377,7 +377,7 @@ export function HackerFormPage({
             sendEmail.mutate({
               from: "donotreply@knighthacks.org",
               to: values.email,
-              subject: "KnightHacks VIII - We recieved your application!",
+              subject: "Knight Hacks VIII - We recieved your application!",
               body: html,
             });
           } catch (error) {
