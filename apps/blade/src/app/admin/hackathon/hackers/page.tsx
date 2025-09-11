@@ -6,6 +6,7 @@ import { auth } from "@forge/auth";
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import HackerTable from "./_components/hackers-table";
+import HackerStatusCounter from "./_components/HackerStatusCounter";
 import HackerScanner from "./_components/scanner";
 
 export const metadata: Metadata = {
@@ -24,6 +25,8 @@ export default async function Hackers() {
     redirect("/");
   }
 
+  const currentActiveHackathon = await api.hackathon.getCurrentHackathon();
+
   return (
     <HydrateClient>
       <main className="container h-screen">
@@ -33,6 +36,13 @@ export default async function Hackers() {
               Hacker Dashboard
             </h1>
           </div>
+        </div>
+        <div>
+          {currentActiveHackathon ? (
+            <HackerStatusCounter hackathonId={currentActiveHackathon.id} />
+          ) : (
+            <div>No upcoming hackathon.</div>
+          )}{" "}
         </div>
         <div className="mb-2 flex justify-center">
           <HackerScanner />
