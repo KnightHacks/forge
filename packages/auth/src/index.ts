@@ -1,15 +1,28 @@
 import NextAuth from "next-auth";
 
-import { authConfig } from "./config";
+import { authConfig, isDummyEnvironment } from "./config";
 
 export type { Session } from "next-auth";
 
-const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+const nextAuth = NextAuth(authConfig);
 
-export { handlers, auth, signIn, signOut };
+// Create a wrapper for auth that returns null in dummy environment
+const originalAuth = nextAuth.auth;
+const wrappedAuth = (...args: Parameters<typeof originalAuth>) => {
+  if (isDummyEnvironment) {
+    return null;
+  }
+  return originalAuth(...args);
+};
+
+export const handlers = nextAuth.handlers;
+export const auth = wrappedAuth;
+export const signIn = nextAuth.signIn;
+export const signOut = nextAuth.signOut;
 
 export {
   invalidateSessionToken,
   validateToken,
   isSecureContext,
+  isDummyEnvironment,
 } from "./config";

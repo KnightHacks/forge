@@ -32,9 +32,12 @@ const adapter = DrizzleAdapter(db, {
 
 export const isSecureContext = env.NODE_ENV !== "development";
 
+// Skip all authentication when using dummy values
+export const isDummyEnvironment = env.DISCORD_CLIENT_ID === "dummy";
+
 export const authConfig = {
-  adapter,
-  providers: [
+  adapter: isDummyEnvironment ? undefined : adapter,
+  providers: isDummyEnvironment ? [] : [
     Discord({
       clientId: env.DISCORD_CLIENT_ID,
       clientSecret: env.DISCORD_CLIENT_SECRET,
