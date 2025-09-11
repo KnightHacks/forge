@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./emails/*": {
+      "default": "./emails/*.tsx"
+    }
   },
   "license": "MIT",
   "scripts": {
