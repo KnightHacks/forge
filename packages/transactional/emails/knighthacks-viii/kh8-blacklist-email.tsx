@@ -14,8 +14,8 @@ interface ConfirmationEmailProps {
   name: string;
 }
 
-export const KH8CapacityEmail = ({ name }: ConfirmationEmailProps) => {
-  const previewText = `Congrats, ${name}! Your spot at Knight Hacks VIII is secured 🎉`;
+export const KH8BlacklistEmail = ({ name }: ConfirmationEmailProps) => {
+  const previewText = `${name}, you have been denied from Knight Hacks VIII.`;
 
   return (
     <Html>
@@ -75,10 +75,18 @@ export const KH8CapacityEmail = ({ name }: ConfirmationEmailProps) => {
                   <td className="px-4">
                       <Text className="text-[20px] leading-tight text-black">
                         <span className="font-bold text-[24px] text-[#C04B3D]">{name},</span><br/><br/>
-                        Unfortunately, we have finalized our list of attendees, and have to make the tough decision to <span className="text-[#C04B3D] font-bold">deny you from Knight Hacks VIII. </span> 
-                        We have hit capacity for our venue, and regret that we could not find room for you.
+                        Unfortunately, due to poor conduct at prior Knight Hacks or MLH-partnered events, we have made the difficult decision to <span className="text-[#C04B3D] font-bold">deny you from Knight Hacks VIII. </span> 
                         <br/><br/>
-                        This decision was You can try again at our next hackathon.
+                        You can read the <Link className="text-[#4075b7] underline" href="https://knight-hacks.notion.site/code-of-conduct">
+                        Knight Hacks Code of Conduct</Link>, as well as the <Link className="text-[#4075b7] underline" href="https://mlh.io/code-of-conduct">
+                        MLH Code of Conduct</Link>, using the links provided. For further questions, you can also email us at <Link className="text-[#4075b7] underline" href="mailto:hack@knighthacks.org">
+                        hack@knighthacks.org</Link>.
+                        <br/><br/>
+                        This decision is <span className="text-[#C04B3D] font-bold">final.</span>
+                        <br/><br/>
+                        However, you can try applying again at our next hackathon, or keep an eye on our <Link href={"https://discord.com/invite/Kv5g9vf"} className="text-[#4075b7] underline">
+                          Discord
+                        </Link> for news on other hackathons in the region.
                         <br/><br/>
                         Thanks for your interest,<br/>
                         <span className="font-bold text-[#4075b7]">The Knight Hacks Team</span>
@@ -94,18 +102,18 @@ export const KH8CapacityEmail = ({ name }: ConfirmationEmailProps) => {
                 cellPadding={0}
                 cellSpacing={0}
                 border={0}
-                bgcolor="#C04B3D"
+                bgcolor="#702c24"
                 className="p-[16px]"
               >
                 <tr>
                   <td className="px-4 text-center">
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://discord.com/invite/Kv5g9vf">Discord</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://www.instagram.com/knighthacks/">Instagram</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://blade.knighthacks.org/dashboard">Blade</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://knight-hacks.notion.site/knight-hacks-viii">Hacker's Guide</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://mlh.io/code-of-conduct">MLH Code of Conduct</Link>
-                    <Link className="text-[#F8D03F] underline mr-2" href="https://knight-hacks.notion.site/code-of-conduct">Knight Hacks Code of Conduct</Link>
-                    <Text className="text-[14px] leading-tight text-black">
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://discord.com/invite/Kv5g9vf">Discord</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://www.instagram.com/knighthacks/">Instagram</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://blade.knighthacks.org/dashboard">Blade</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://knight-hacks.notion.site/knight-hacks-viii">Hacker's Guide</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://mlh.io/code-of-conduct">MLH Code of Conduct</Link>
+                    <Link className="text-[#F7F0C6] underline mr-2" href="https://knight-hacks.notion.site/code-of-conduct">Knight Hacks Code of Conduct</Link>
+                    <Text className="text-[14px] leading-tight text-[#F7F0C6]">
                       Made with 💛 by the Knight Hacks team.
                     </Text>
                   </td>
@@ -119,7 +127,7 @@ export const KH8CapacityEmail = ({ name }: ConfirmationEmailProps) => {
   );
 };
 
-export default KH8CapacityEmail;
+export default KH8BlacklistEmail;
 
 
                 
