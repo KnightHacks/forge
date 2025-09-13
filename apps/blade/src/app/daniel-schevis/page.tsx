@@ -105,7 +105,12 @@ export default function DanielSchevisPage() {
                 <Linkedin className="w-5 h-5" />
                 <span>NEURAL_LINK</span>
               </button>
-              <a href="/resume-daniel-schevis.pdf" target="_blank" rel="noopener noreferrer" download="Daniel-Schevis-Resume.pdf" className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold py-3 px-6 rounded-lg transform hover:scale-105 transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-yellow-500/50">
+              <a 
+                href="/resume-daniel-schevis.pdf" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold py-3 px-6 rounded-lg transform hover:scale-105 transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-yellow-500/50"
+              >
                 <User className="w-5 h-5" />
                 <span>DATA_FILE</span>
               </a>
