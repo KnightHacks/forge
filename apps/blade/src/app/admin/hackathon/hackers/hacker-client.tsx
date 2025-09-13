@@ -11,7 +11,7 @@ export default function HackersClient({
 }: {
   currentActiveHackathon: { id: string } | null;
 }) {
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
 
   return (
     <main className="container h-screen">
@@ -23,26 +23,23 @@ export default function HackersClient({
         </div>
       </div>
 
-      {/* Status counter section */}
       <div>
         {currentActiveHackathon ? (
           <HackerStatusCounter
             hackathonId={currentActiveHackathon.id}
-            onClick={setStatusFilter}
+            onClick={setFilterStatus}
           />
         ) : (
           <div>No upcoming hackathon.</div>
         )}
       </div>
 
-      {/* Scanner section */}
       <div className="mb-9 flex justify-center">
         <HackerScanner />
       </div>
 
-      {/* Table section */}
       <div className="rounded-xl pb-8">
-        <HackerTable statusFilter={statusFilter} />
+        <HackerTable filterStatus={filterStatus} />
       </div>
     </main>
   );

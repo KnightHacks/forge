@@ -59,9 +59,9 @@ type TimeOrder = "asc" | "desc";
 type ActiveOrder = "time" | "field";
 
 export default function HackerTable({
-  statusFilter,
+  filterStatus,
 }: {
-  statusFilter: string | null;
+  filterStatus: string | null;
 }) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
@@ -94,12 +94,10 @@ export default function HackerTable({
   }, [hackathons, activeHackathon]);
 
   const filteredHackers = (hackers ?? [])
-    // first, filter by status if one is set
     .filter((hacker) => {
-      if (!statusFilter) return true; // no filter, keep all
-      return hacker.status === statusFilter;
+      if (!filterStatus) return true;
+      return hacker.status === filterStatus;
     })
-    // then apply your search filter
     .filter((hacker) =>
       Object.values(hacker).some((value) => {
         if (value === null) return false;
