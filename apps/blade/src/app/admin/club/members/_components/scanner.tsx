@@ -43,19 +43,19 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
 
   // Separate current and previous events
   const now = new Date();
-  const currentEvents = (events ?? []).filter((event) => {
+  const currentEvents = (filteredEvents ?? []).filter((event) => {
     const eventEndTime = new Date(event.end_datetime);
     const dayAfterEvent = new Date(eventEndTime);
     dayAfterEvent.setDate(dayAfterEvent.getDate() + 1);
     return dayAfterEvent >= now;
   });
-  const previousEvents = (events ?? []).filter((event) => {
+  const previousEvents = (filteredEvents ?? []).filter((event) => {
     const eventEndTime = new Date(event.end_datetime);
     const dayAfterEvent = new Date(eventEndTime);
     dayAfterEvent.setDate(dayAfterEvent.getDate() + 1);
     return dayAfterEvent < now;
   });
-  
+
   const memberCheckIn = api.member.eventCheckIn.useMutation({
     onSuccess(opts) {
       toast.success(opts.message);
@@ -97,13 +97,22 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
     window.location.reload();
   };
 
-  const renderEventSelect = (eventsList: typeof events) => (
+  const renderEventSelect = (filteredEvents: typeof events) => (
     <FormField
       name="eventId"
       control={form.control}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Event</FormLabel>
+          <FormLabel>
+            <span className="flex flex-row gap-2">
+              Event
+              <span className="text-muted-foreground">
+                This event only accepts{" "}
+                <span className="font-bold text-primary">{eventType}</span> QR
+                codes.
+              </span>
+            </span>
+          </FormLabel>
           <FormControl>
             <select
               {...field}
@@ -112,7 +121,7 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               onChange={(e) => {
                 const selectedEventId = e.target.value;
                 field.onChange(e);
-                const selectedEvent = eventsList?.find(
+                const selectedEvent = filteredEvents?.find(
                   (event) => event.id === selectedEventId,
                 );
                 form.setValue("eventPoints", selectedEvent?.points ?? 0);
@@ -121,7 +130,7 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               <option value="" disabled>
                 Select an event
               </option>
-              {eventsList?.map((event) => (
+              {filteredEvents?.map((event) => (
                 <option key={event.id} value={event.id}>
                   {event.name}
                 </option>
@@ -200,54 +209,6 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
                 {renderEventSelect(previousEvents)}
               </TabsContent>
             </Tabs>
-            <FormField
-              name="eventId"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    <span className="flex flex-row gap-2">
-                      Event
-                      <span className="text-muted-foreground">
-                        This event only accepts{" "}
-                        <span className="font-bold text-primary">
-                          {eventType}
-                        </span>{" "}
-                        QR codes.
-                      </span>
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <select
-                      {...field}
-                      className="w-full rounded border p-2"
-                      defaultValue=""
-                      onChange={(e) => {
-                        const selectedEventId = e.target.value;
-                        field.onChange(e);
-                        const selectedEvent = events?.find(
-                          (event) => event.id === selectedEventId,
-                        );
-                        form.setValue(
-                          "eventPoints",
-                          selectedEvent?.points ?? 0,
-                        );
-                      }}
-                    >
-                      <option value="" disabled>
-                        Select an event
-                      </option>
-                      {filteredEvents?.map((event) => (
-                        <option key={event.id} value={event.id}>
-                          {event.name}
-                        </option>
-                      ))}
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </form>
         </Form>
         <div className="flex space-x-2">
