@@ -764,13 +764,11 @@ export const hackerRouter = {
           code: "CONFLICT",
           message: `${hacker.firstName} ${hacker.lastName} is already checked in for the event.`,
         });
-      await db
-        .insert(HackerEventAttendee)
-        .values({
-          hackerAttId: hackerAttendee.id,
-          eventId: input.eventId,
-          hackathonId: event.hackathonId,
-        });
+      await db.insert(HackerEventAttendee).values({
+        hackerAttId: hackerAttendee.id,
+        eventId: input.eventId,
+        hackathonId: event.hackathonId,
+      });
       await db
         .update(HackerAttendee)
         .set({ points: sql`${HackerAttendee.points} + ${input.eventPoints}` })
