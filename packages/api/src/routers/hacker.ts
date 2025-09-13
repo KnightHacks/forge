@@ -7,7 +7,7 @@ import {
   BUCKET_NAME,
   KNIGHTHACKS_S3_BUCKET_REGION,
 } from "@forge/consts/knight-hacks";
-import { and, eq, count } from "@forge/db";
+import { and, count, eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
 import {
@@ -667,18 +667,34 @@ export const hackerRouter = {
   statusCountByHackathonId: adminProcedure
     .input(z.string())
     .query(async ({ input: hackathonId }) => {
-      const statuses = ["pending", "accepted", "confirmed", "withdrawn", "denied", "waitlisted", "checkedin"] as const;
+      const statuses = [
+        "pending",
+        "accepted",
+        "confirmed",
+        "withdrawn",
+        "denied",
+        "waitlisted",
+        "checkedin",
+      ] as const;
 
       const results = await Promise.all(
         statuses.map(async (s) => {
           const rows = await db
             .select({ count: count() })
             .from(HackerAttendee)
-            .where(and(eq(HackerAttendee.hackathonId, hackathonId), eq(HackerAttendee.status, s)));
+            .where(
+              and(
+                eq(HackerAttendee.hackathonId, hackathonId),
+                eq(HackerAttendee.status, s),
+              ),
+            );
           return [s, Number(rows[0]?.count ?? 0)] as const;
         }),
       );
 
-      return Object.fromEntries(results) as Record<(typeof statuses)[number], number>;
+      return Object.fromEntries(results) as Record<
+        (typeof statuses)[number],
+        number
+      >;
     }),
-  } satisfies TRPCRouterRecord;
+} satisfies TRPCRouterRecord;
