@@ -240,6 +240,7 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
     })
     .notNull()
     .default("pending"),
+  points: t.integer().notNull().default(0),
 }));
 
 export const HackerEventAttendee = createTable(
