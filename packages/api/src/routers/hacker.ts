@@ -7,7 +7,7 @@ import {
   BUCKET_NAME,
   KNIGHTHACKS_S3_BUCKET_REGION,
 } from "@forge/consts/knight-hacks";
-import { and, eq } from "@forge/db";
+import { and, eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
 import {
@@ -743,6 +743,10 @@ export const hackerRouter = {
           eventId: input.eventId,
           hackathonId: event.hackathonId,
         });
+      await db
+        .update(HackerAttendee)
+        .set({ points: sql`${HackerAttendee.points} + ${input.eventPoints}` })
+        .where(eq(HackerAttendee.id, hackerAttendee.id));
       await log({
         title: "Hacker Checked-In",
         message: `Hacker ${hacker.firstName} ${hacker.lastName} has been checked in to event ${event.name}.`,

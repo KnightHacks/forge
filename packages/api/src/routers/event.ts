@@ -219,7 +219,7 @@ export const eventRouter = {
           ...input,
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
-          points: input.hackathonId ? 0 : EVENT_POINTS[input.tag] || 0,
+          points: EVENT_POINTS[input.tag] || 0,
           discordId: discordEventId,
           googleId: googleEventId,
         });
