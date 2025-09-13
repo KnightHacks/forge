@@ -90,7 +90,10 @@ export function HackerQRCodePopup() {
           <DrawerTrigger asChild>{qrTrigger}</DrawerTrigger>
           <DrawerContent className="mx-auto w-full max-w-sm">
             <DrawerHeader>
-              <DrawerTitle>Your <span className="font-bold text-primary">HACKER</span> QR Code</DrawerTitle>
+              <DrawerTitle>
+                Your <span className="font-bold text-primary">HACKER</span> QR
+                Code
+              </DrawerTitle>
             </DrawerHeader>
             {qrContent}
             <DrawerDescription />
@@ -102,7 +105,10 @@ export function HackerQRCodePopup() {
           <DialogTrigger asChild>{qrTrigger}</DialogTrigger>
           <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Your <span className="font-bold text-primary">HACKER</span> QR Code</DialogTitle>
+              <DialogTitle>
+                Your <span className="font-bold text-primary">HACKER</span> QR
+                Code
+              </DialogTitle>
             </DialogHeader>
             {qrContent}
             <DialogDescription />
