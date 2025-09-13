@@ -242,6 +242,7 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
     .default("pending"),
   timeApplied: t.timestamp().notNull().defaultNow(),
   timeConfirmed: t.timestamp(),
+  points: t.integer().notNull().default(0),
 }));
 
 export const HackerEventAttendee = createTable(
