@@ -1,6 +1,6 @@
 import type { socialCard } from "./Social.tsx"
 
-export const socials: socialCard[] = [
+export const socialInfo: socialCard[] = [
     {
         key: 1,
         img: "/linkedin-svgrepo.svg",
