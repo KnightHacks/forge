@@ -23,7 +23,6 @@ export default async function Hackers() {
 
   return (
     <HydrateClient>
-      {/* moved entire page.tsx to hackers-client.tsx cause i needed to use useState */}
       <HackerClient currentActiveHackathon={currentActiveHackathon ?? null} />
     </HydrateClient>
   );
