@@ -58,7 +58,11 @@ type SortOrder = "asc" | "desc" | null;
 type TimeOrder = "asc" | "desc";
 type ActiveOrder = "time" | "field";
 
-export default function HackerTable() {
+export default function HackerTable({
+  filterStatus,
+}: {
+  filterStatus: string | null;
+}) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -89,12 +93,20 @@ export default function HackerTable() {
     }
   }, [hackathons, activeHackathon]);
 
-  const filteredHackers = (hackers ?? []).filter((hacker) =>
-    Object.values(hacker).some((value) => {
-      if (value === null) return false;
-      return value.toString().toLowerCase().includes(searchTerm.toLowerCase());
-    }),
-  );
+  const filteredHackers = (hackers ?? [])
+    .filter((hacker) => {
+      if (!filterStatus) return true;
+      return hacker.status === filterStatus;
+    })
+    .filter((hacker) =>
+      Object.values(hacker).some((value) => {
+        if (value === null) return false;
+        return value
+          .toString()
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+      }),
+    );
 
   const sortedHackers = [...filteredHackers].sort((a, b) => {
     const dateA = parseDate(a.dateCreated, a.timeCreated);
