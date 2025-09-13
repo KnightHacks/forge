@@ -664,21 +664,21 @@ export const hackerRouter = {
           ),
         );
     }),
-statusCountsByHackathonId: adminProcedure
-  .input(z.string())
-  .query(async ({ input: hackathonId }) => {
-    const statuses = ["pending", "accepted", "confirmed", "withdrawn", "denied", "waitlisted", "checkedin"] as const;
+  statusCountByHackathonId: adminProcedure
+    .input(z.string())
+    .query(async ({ input: hackathonId }) => {
+      const statuses = ["pending", "accepted", "confirmed", "withdrawn", "denied", "waitlisted", "checkedin"] as const;
 
-    const results = await Promise.all(
-      statuses.map(async (s) => {
-        const rows = await db
-          .select({ count: count() })
-          .from(HackerAttendee)
-          .where(and(eq(HackerAttendee.hackathonId, hackathonId), eq(HackerAttendee.status, s)));
-        return [s, Number(rows[0]?.count ?? 0)] as const;
-      }),
-    );
+      const results = await Promise.all(
+        statuses.map(async (s) => {
+          const rows = await db
+            .select({ count: count() })
+            .from(HackerAttendee)
+            .where(and(eq(HackerAttendee.hackathonId, hackathonId), eq(HackerAttendee.status, s)));
+          return [s, Number(rows[0]?.count ?? 0)] as const;
+        }),
+      );
 
-    return Object.fromEntries(results) as Record<(typeof statuses)[number], number>;
-  }),
-} satisfies TRPCRouterRecord;
+      return Object.fromEntries(results) as Record<(typeof statuses)[number], number>;
+    }),
+  } satisfies TRPCRouterRecord;
