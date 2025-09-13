@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { HACKER_STATUS_MAP } from "~/consts";
 import HackerStatusCounter from "./_components/hacker-status-counter";
 import HackerTable from "./_components/hackers-table";
 import HackerScanner from "./_components/scanner";
@@ -33,7 +34,40 @@ export default function HackersClient({
           <div>No upcoming hackathon.</div>
         )}
       </div>
-
+      <div className="mb-6 text-center text-lg font-medium">
+        {filterStatus ? (
+          <div className="text-center">
+            <span>You are currently viewing hackers with the status: </span>
+            {filterStatus in HACKER_STATUS_MAP ? (
+              <span
+                className={
+                  HACKER_STATUS_MAP[
+                    filterStatus as keyof typeof HACKER_STATUS_MAP
+                  ].color
+                }
+              >
+                {
+                  HACKER_STATUS_MAP[
+                    filterStatus as keyof typeof HACKER_STATUS_MAP
+                  ].name
+                }
+              </span>
+            ) : (
+              (() => {
+                return (
+                  <span>
+                    You are seeing this because the filterStatus does not match
+                    with hack status map, I got lazy and told typescript to just
+                    trust me, sorry lol
+                  </span>
+                );
+              })()
+            )}
+          </div>
+        ) : (
+          <div>You are currently viewing all hackers.</div>
+        )}
+      </div>
       <div className="mb-9 flex justify-center">
         <HackerScanner />
       </div>
