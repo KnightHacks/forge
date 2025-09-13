@@ -55,7 +55,7 @@ const HackerStatusCounter = ({
     },
     {
       label: "checkedin",
-      status: "Checked In",
+      status: "Checked-In",
       count: checkedin,
       color: "#845EC2",
     },
