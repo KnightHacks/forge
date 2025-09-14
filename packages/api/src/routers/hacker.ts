@@ -2,10 +2,10 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
-import { HACKATHON_APPLICATION_STATES } from "@forge/consts/knight-hacks";
 
 import {
   BUCKET_NAME,
+  HACKATHON_APPLICATION_STATES,
   KNIGHTHACKS_S3_BUCKET_REGION,
 } from "@forge/consts/knight-hacks";
 import { and, count, eq } from "@forge/db";
@@ -668,7 +668,6 @@ export const hackerRouter = {
   statusCountByHackathonId: adminProcedure
     .input(z.string())
     .query(async ({ input: hackathonId }) => {
-
       const results = await Promise.all(
         HACKATHON_APPLICATION_STATES.map(async (s) => {
           const rows = await db
