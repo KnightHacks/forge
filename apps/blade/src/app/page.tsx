@@ -1,12 +1,8 @@
 import { HydrateClient } from "~/trpc/server";
 import { Auth } from "./_components/auth-showcase";
+import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  return (
-    <HydrateClient>
-      <main className="container h-screen py-16">
-        <Auth />
-      </main>
-    </HydrateClient>
-  );
+  redirect("/dion");
+  return null;
 }
