@@ -28,7 +28,32 @@ export default function Page() {
       {/*-------------------------------------------------------Body-----------------------------------------------------------------*/}
 
       <div>
-        <p>yoo</p>
+        <p>
+          Wassup! I'm Hector and I'm a rising sophomore. I'm on the come up!
+        </p>
+
+        <p>These are the tools/concepts I'm learning:</p>
+        <ul>
+          <li>Next.js and NextAuth.js</li>
+          <li>SEO Optimization</li>
+          <li>Postgres</li>
+          <li>Tailwind CSS and UI/UX Design</li>
+          <li>TypeScript</li>
+        </ul>
+
+        <p>
+          Since running cross country in high school, I loved being part of a
+          team. It makes what you do more fun and you get to make friends along
+          the way. This is why I want to join the dev team. I know I’ll be
+          surrounded by like-minded people, and together we’ll contribute to a
+          great organization whose focus is to help people like me.
+        </p>
+
+        <p>
+          Programming aside, I’m a hooper and I dabble in other sports. My
+          favorite anime is Hunter x Hunter. I’m also always down for eats LOL.
+          Hope I get to meet y’all soon!
+        </p>
       </div>
 
       {/* ------------------------------------------------------------------------------------------------------------- */}
