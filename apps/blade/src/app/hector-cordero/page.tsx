@@ -1,3 +1,6 @@
+import Image from "next/image";
+import Link from "next/link";
+
 export const metadata = {
   title: "Hector Cordero | KnightHacks Dev Application",
   description: "Calm luh Application, nun too crazy",
@@ -8,7 +11,15 @@ export default function Page() {
     <main>
       {/* -------------------------------------------------------Header----------------------------------------------------------------- */}
       <div className="flex items-center gap-6">
-        <label htmlFor="avatar-modal"></label>
+        <label htmlFor="avatar-modal">
+          <Image
+            src="/hector.jpg"
+            alt="Hector Cordero"
+            fill
+            sizes="130px"
+            priority
+          />
+        </label>
 
         <div>
           <h1 className="font-bold tracking-tight">
@@ -22,7 +33,11 @@ export default function Page() {
       {/*-------------------------------------------------------------------------------------------------------------*/}
 
       {/*-------------------------------------------------------Actions-----------------------------------------------------------------*/}
+      <div>
+        <Link href="/Resume2025.pdf">Resume</Link>
 
+        <Link href="https://www.linkedin.com/in/hectorhcordero"></Link>
+      </div>
       {/*-------------------------------------------------------------------------------------------------------------*/}
 
       {/*-------------------------------------------------------Body-----------------------------------------------------------------*/}
@@ -60,7 +75,15 @@ export default function Page() {
 
       {/* -------------------------------------------------Cover at Full Size----------------------------------------------------- */}
 
-      <label htmlFor="avatar-modal"></label>
+      <label htmlFor="avatar-modal">
+        <Image
+          src="/hector.jpg"
+          alt="Hector Cordero"
+          width={1200}
+          height={1200}
+          priority
+        />
+      </label>
 
       {/* ------------------------------------------------------------------------------------------------------------- */}
     </main>
