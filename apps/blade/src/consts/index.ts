@@ -27,11 +27,11 @@ export const HACKER_STATUS_MAP = {
 };
 
 export const HACKER_CLIENT_STATUS_LIST = [
-  { label: "accepted",   status: "Accepted",   color: "#6BCB77" },
-  { label: "confirmed",  status: "Confirmed",  color: "#00C9A7" },
-  { label: "pending",    status: "Pending",    color: "#FFD93D" },
+  { label: "accepted", status: "Accepted", color: "#6BCB77" },
+  { label: "confirmed", status: "Confirmed", color: "#00C9A7" },
+  { label: "pending", status: "Pending", color: "#FFD93D" },
   { label: "waitlisted", status: "Waitlisted", color: "#4D96FF" },
-  { label: "denied",     status: "Denied",     color: "#FF5E5E" },
-  { label: "withdrawn",  status: "Withdrawn",  color: "#FF6B6B" },
-  { label: "checkedin",  status: "Checked-In", color: "#845EC2" },
+  { label: "denied", status: "Denied", color: "#FF5E5E" },
+  { label: "withdrawn", status: "Withdrawn", color: "#FF6B6B" },
+  { label: "checkedin", status: "Checked-In", color: "#845EC2" },
 ];
