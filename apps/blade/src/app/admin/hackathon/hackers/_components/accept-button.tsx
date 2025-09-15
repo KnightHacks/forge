@@ -3,11 +3,11 @@ import { render } from "@react-email/render";
 import { Check, Loader2 } from "lucide-react";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
+import AcceptanceEmail from "@forge/transactional/emails/knighthacks-viii/acceptance-email";
 import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import KH8AcceptanceEmail from "@forge/transactional/emails/knighthacks-viii/kh8-acceptance-email";
 
 export default function AcceptButton({
   hacker,
@@ -54,12 +54,12 @@ export default function AcceptButton({
       hackathonName,
     });
 
-    const html = await render(<KH8AcceptanceEmail name={hacker.firstName}/>);
+    const html = await render(<AcceptanceEmail name={hacker.firstName} />);
 
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: "[ACTION REQUIRED] Knight Hacks VIII - You're Accepted! Confirm your spot!",
+      subject: `[ACTION REQUIRED] ${hackathonName} - You're Accepted! Confirm your spot!`,
       body: html,
     });
   };
