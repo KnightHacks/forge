@@ -19,6 +19,7 @@ import {
   SHIRT_SIZES,
 } from "@forge/consts/knight-hacks";
 import { InsertHackerSchema } from "@forge/db/schemas/knight-hacks";
+import ApplyEmail from "@forge/transactional/emails/knighthacks-viii/apply-email";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -44,7 +45,6 @@ import {
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
-import KH8ApplyEmail from "@forge/transactional/emails/knighthacks-viii/kh8-apply-email";
 import { api } from "~/trpc/react";
 
 export function HackerFormPage({
@@ -370,9 +370,7 @@ export function HackerFormPage({
               hackathonName: hackathonId,
             });
 
-            const html = await render(
-              <KH8ApplyEmail name={values.firstName} />,
-            );
+            const html = await render(<ApplyEmail name={values.firstName} />);
 
             sendEmail.mutate({
               from: "donotreply@knighthacks.org",

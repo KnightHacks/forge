@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { render } from "@react-email/render";
 import { Loader2, X } from "lucide-react";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
+// import BlacklistEmail from "@forge/transactional/emails/knighthacks-viii/blacklist-email";
+import CapacityEmail from "@forge/transactional/emails/knighthacks-viii/capacity-email";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -13,9 +16,8 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 import { toast } from "@forge/ui/toast";
-import { KH8BlacklistEmail } from "@forge/transactional/emails/knighthacks-viii/kh8-blacklist-email"
+
 import { api } from "~/trpc/react";
-import { render } from "@react-email/render";
 
 export default function DenyButton({
   hacker,
@@ -64,13 +66,13 @@ export default function DenyButton({
       hackathonName,
     });
 
-    const html = await render(<KH8BlacklistEmail name={hacker.firstName}/>)
+    const html = await render(<CapacityEmail name={hacker.firstName} />);
 
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: "Knight Hacks VIII - Denial",
-      body: html
+      subject: `${hackathonName} - Denial`,
+      body: html,
     });
   };
 
