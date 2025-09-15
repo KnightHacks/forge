@@ -90,10 +90,10 @@ export default function DanielSchevisPage() {
                 <Github className="w-5 h-5" />
                 <span>GITHUB_ACCESS</span>
               </a>
-              <button className="bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-pink-500 dark:to-purple-500 hover:from-cyan-500 hover:to-blue-500 dark:hover:from-pink-400 dark:hover:to-purple-400 text-white font-bold py-3 px-6 rounded-lg transform hover:scale-105 transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-cyan-500/50 dark:shadow-pink-500/50">
+              <a href="https://www.linkedin.com/in/daniel-schevis-8434662b3/" target="_blank" rel="noopener noreferrer" className="bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-pink-500 dark:to-purple-500 hover:from-cyan-500 hover:to-blue-500 dark:hover:from-pink-400 dark:hover:to-purple-400 text-white font-bold py-3 px-6 rounded-lg transform hover:scale-105 transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-cyan-500/50 dark:shadow-pink-500/50">
                 <Linkedin className="w-5 h-5" />
                 <span>NEURAL_LINK</span>
-              </button>
+              </a>
               <a 
                 href="/resume-daniel-schevis.pdf" 
                 target="_blank" 
