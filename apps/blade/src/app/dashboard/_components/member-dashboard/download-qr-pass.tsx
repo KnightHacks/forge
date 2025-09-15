@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Loader2 } from "lucide-react";
+import { Loader2, WalletCards } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
@@ -85,8 +85,8 @@ export function DownloadQRPass() {
           </>
         ) : canDownload ? (
           <>
-            <Download className="h-4 w-4" />
-            Download Apple Wallet Pass
+            <WalletCards className="h-4 w-4" />
+            Apple Wallet
           </>
         ) : (
           "No member information found"

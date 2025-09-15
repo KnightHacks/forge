@@ -163,6 +163,7 @@ export const EVENT_TAGS = [
   "Workshop",
   "OPS",
   "Hackathon",
+  "Collabs",
 ] as const;
 
 export const EVENT_FEEDBACK_HEARD = [
@@ -193,6 +194,7 @@ export const EVENT_POINTS: Record<EventTag, number> = {
   Workshop: 25,
   OPS: 20,
   Hackathon: 1,
+  Collabs: 40,
 } as const;
 
 export const KNIGHTHACKS_S3_BUCKET_REGION = "us-east-1";
@@ -289,7 +291,8 @@ export type EventTagsColor =
   | "Class Support"
   | "Workshop"
   | "OPS"
-  | "Hackathon";
+  | "Hackathon"
+  | "Collabs";
 
 export const GENDERS = [
   "Man",

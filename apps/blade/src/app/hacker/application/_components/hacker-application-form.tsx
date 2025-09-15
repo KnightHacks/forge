@@ -61,7 +61,6 @@ export function HackerFormPage({
   const [loading, setLoading] = useState(false);
   const [comboBoxKey, setComboBoxKey] = useState(0);
   const utils = api.useUtils();
-  console.log(hackathonId);
 
   // Get previous hacker profile to pre-fill form
   const { data: previousHacker } = api.hackathon.getPreviousHacker.useQuery();
