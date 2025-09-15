@@ -14,8 +14,8 @@ interface Props {
 
 const base =
   "text-4xl mb-6 tracking-wide transition hover:opacity-80 hover:-translate-y-0.5 " +
-  "focus:outline-none focus:ring-2 focus:ring-white/40 rounded italic drop-shadow-lg";
-
+  "focus:outline-none focus:ring-2 focus:ring-white/40 rounded italic drop-shadow-lg"; 
+ 
 function isExternal(href: string) {
   return href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:");
 }
@@ -37,11 +37,11 @@ export default function VerticalLinks({ items, align = "left", ariaLabel = "link
           >
             {label}
           </a>
-        ) : (
+        ) : ( 
           <Link key={label} href={href} className={base}>
             {label}
           </Link>
-        );
+        ); 
       })}
     </nav>
   );

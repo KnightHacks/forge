@@ -35,7 +35,7 @@ export default function CenterIcon({
             alt={alt}
             width={size}
             height={size}
-            className="rounded-full shadow-lg object-cover"
+            className="rounded-full w-full h-full shadow-lg object-cover"
             priority
           />
         </div>

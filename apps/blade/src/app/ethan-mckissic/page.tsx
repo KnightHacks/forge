@@ -33,7 +33,7 @@ export default function Portal() {
                    grid grid-cols-[1fr_275px_1fr] items-center gap-20 md:gap-48 sm:gap-8 z-10 animate-fade-in"
       >
         <VerticalLinks items={left} ariaLabel="primary" />
-        <CenterIcon src="/blue_jvne.jpg" size={250} />
+        <CenterIcon src="/mojang.jpg" size={260} />
         <VerticalLinks items={right} align="right" ariaLabel="external" />
       </div>
     </main>
