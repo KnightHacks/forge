@@ -6,6 +6,7 @@ import { render } from "@react-email/render";
 import { CircleCheckBig, Loader2 } from "lucide-react";
 
 import { USE_CAUTION } from "@forge/consts/knight-hacks";
+import ConfirmationEmail from "@forge/transactional/emails/knighthacks-viii/confirmation-email";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -20,7 +21,6 @@ import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
 
 import type { api as serverCall } from "~/trpc/server";
-import { GemiKnightsConfirmationEmail } from "~/app/admin/hackathon/hackers/_components/gemiknights-confirmation-email";
 import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
 import { HackerQRCodePopup } from "./hacker-qr-button";
@@ -38,6 +38,9 @@ export function HackerData({
   const [confirmationText, setConfirmationText] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  const { data: currentHackathon } =
+    api.hackathon.getCurrentHackathon.useQuery();
 
   const { data: hacker, isError } = api.hacker.getHacker.useQuery(
     {},
@@ -69,16 +72,12 @@ export function HackerData({
 
     if (!hacker) return;
 
-    const html = await render(
-      <GemiKnightsConfirmationEmail
-        name={`${hacker.firstName} ${hacker.lastName}`}
-      />,
-    );
+    const html = await render(<ConfirmationEmail name={hacker.firstName} />);
 
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: "GemiKnights 2025 - FINAL STEP: Complete MLH Registration!",
+      subject: `${currentHackathon?.displayName} - FINAL STEP: Complete MLH Registration!`,
       body: html,
     });
   };
