@@ -56,3 +56,6 @@ dist/
 *.pem
 *.p12
 *.p8
+# MinIO data and executable
+data/
+minio.exe
