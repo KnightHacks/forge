@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 
-const selfies = [
+const selfies: string[] = [
     "/assets/me.gif",
     "/assets/selfie.png",
     "/assets/slayqueen.gif",
@@ -32,12 +32,16 @@ export default function Slider() {
 
             <p className="font-semibold text-xl">Pictures of me:</p>
             <div className="relative w-80 aspect-square overflow-hidden rounded-xl transition-transform hover:scale-105">
-                <img 
-                    key={currentIndex}
-                    src={selfies[currentIndex]} 
-                    alt="me"
-                    className="w-full h-full object-cover"
-                />
+                {selfies[currentIndex] && (
+                    <Image 
+                        key={currentIndex}
+                        src={selfies[currentIndex]} 
+                        alt="me"
+                        width={300}
+                        height={300}
+                        className="w-full h-full object-cover"
+                    />
+                )}
                 {/* prev/next buttons */}
                 {selfies.length > 1 && (
                     <>

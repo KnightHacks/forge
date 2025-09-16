@@ -55,16 +55,17 @@ export default function GifCarousel({ img, size, audio }: { img:string; size:num
             
             {/* gif carousel */}
             <div className="slider-track flex w-[200%]">
-                {[...Array(3)].map((_, groupIdx) => (
+                {[...Array<number>(3)].map((_, groupIdx) => (
                     <div key={groupIdx} className="flex shrink-0">
-                        {[...Array(6)].map((_, gifIdx) => (
+                        {[...Array<number>(6)].map((_, gifIdx) => (
                             <Image 
                                 key={gifIdx}
                                 src={img}
-                                alt="Chiikawa Gwenchana Ding Ding Ding"
+                                alt="Chiikawa"
                                 width={size}
                                 height={size}
                                 className="mx-8"
+                                unoptimized
                             />
                         ))}
                     </div>

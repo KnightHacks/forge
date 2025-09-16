@@ -3,7 +3,7 @@ import { LucideFileText, LucideGlobe } from "lucide-react";
 import { FaGithubAlt, FaLinkedinIn } from "react-icons/fa";
 import Image from "next/image";
 
-type socialLink = {
+interface socialLink {
     href: string;
     label: string;
     icon: React.ElementType; // works for both react-icons + lucide-react

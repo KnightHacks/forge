@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-type CardProps = {
+interface CardProps {
     title?: string;
     description?: string[];
     topleft: string;
@@ -19,7 +19,7 @@ export default function Card({ title, description, topleft, bottomright, youtube
                 </h2>
             )}
 
-            {description && description.map((desc, idx) => (
+            {description?.map((desc, idx) => (
                 <p key={idx} className="text-start mt-2">
                     {desc}
                 </p>
@@ -50,23 +50,27 @@ export default function Card({ title, description, topleft, bottomright, youtube
                 )}
             </div>
                   
-            <Image
-                src={topleft}
-                alt="top-right deco"
-                width={100}
-                height={100}
-                className="absolute -top-10 -left-10 pointer-events-none"
-                unoptimized
-            />
-
-            <Image
-                src={bottomright}
-                alt="bottom-right deco"
-                width={120}
-                height={120}
-                className="absolute -bottom-12 -right-12 pointer-events-none"
-                unoptimized
-            />
+            <div className="absolute -top-10 -left-10 w-[100px] h-[100px] pointer-events-none">
+                <Image
+                    src={topleft}
+                    alt="top-right deco"
+                    fill
+                    sizes="100px"
+                    className="object-contain"
+                    unoptimized
+                />
+            </div>
+            
+            <div className="absolute -bottom-12 -right-12 w-[120px] h-[120px] pointer-events-none">
+                <Image
+                    src={bottomright}
+                    alt="bottom-right deco"
+                    fill
+                    sizes="120px"
+                    className="object-contain"
+                    unoptimized
+                />
+            </div>            
         </div>
     );
 }

@@ -1,7 +1,5 @@
-import Image from "next/image";
 import Card from "./_components/card";
 import GifCarousel from "./_components/gifcarousel";
-import LongCard from "./_components/grid";
 import Navbar from "./_components/navbar";
 import AnimeGrid from "./_components/grid";
 import Slider from "./_components/slider";
