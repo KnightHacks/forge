@@ -11,7 +11,7 @@ import Image from 'next/image'
 export default function Social(social: socialCard) {
     return (
         <a 
-            className="hover:-motion-rotate-loop-10 hover:motion-duration-1000 px-5 motion-reduce:transition-none motionreduce:hover:transform-none"
+            className="transition delay-100 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 px-5 motion-reduce:transition-none motionreduce:hover:transform-none"
             href={social.link}
             target="_blank"
         >
