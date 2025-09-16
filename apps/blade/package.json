@@ -12,7 +12,7 @@
     "lint": "eslint",
     "start": "pnpm with-env next start",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ../../.env --"
+    "with-env": "dotenv -e .env --"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.717.0",
