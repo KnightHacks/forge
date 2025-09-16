@@ -60,6 +60,14 @@ export const hackathonRouter = {
       });
     }),
 
+  getHackathonById: publicProcedure
+    .input(z.string())
+    .query(async ({ input }) => {
+      return await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.id, input),
+      });
+    }),
+
   getPastHackathons: protectedProcedure.query(async ({ ctx }) => {
     // Subquery: each hackathon with number attended
     const hackathonsSubQuery = db

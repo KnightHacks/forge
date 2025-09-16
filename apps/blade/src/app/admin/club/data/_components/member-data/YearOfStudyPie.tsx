@@ -5,11 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { ChartConfig } from "@forge/ui/chart";
-import {
-  ADMIN_PIE_CHART_COLORS,
-  LEVELS_OF_STUDY,
-  SHORT_LEVELS_OF_STUDY,
-} from "@forge/consts/knight-hacks";
+import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
@@ -25,104 +21,151 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 
-interface Person {
-  levelOfStudy?: (typeof LEVELS_OF_STUDY)[number];
+interface Member {
+  gradDate: Date | string;
+  levelOfStudy: string;
 }
 
-const shortenLevelOfStudy = (levelOfStudy: string): string => {
-  const replacements: Record<string, string> = {
-    // Undergraduate University (2 year - community college or similar)
-    [LEVELS_OF_STUDY[2]]: SHORT_LEVELS_OF_STUDY[0], // Undergraduate University (2 year)
-    // Graduate University (Masters, Professional, Doctoral, etc)
-    [LEVELS_OF_STUDY[4]]: SHORT_LEVELS_OF_STUDY[1], // Graduate University (Masters/PhD)
-    // Other Vocational / Trade Program or Apprenticeship
-    [LEVELS_OF_STUDY[6]]: SHORT_LEVELS_OF_STUDY[2], // Vocational/Trade School
-  };
-  return replacements[levelOfStudy] ?? levelOfStudy;
-};
+interface YearOfStudyPieProps {
+  members: Member[];
+}
 
-export default function SchoolYearPie({ people }: { people: Person[] }) {
+export default function YearOfStudyPie({ members }: YearOfStudyPieProps) {
   const id = "pie-interactive";
 
-  // set up school year data
-  const levelOfStudyCounts: Record<string, number> = {};
-  people.forEach(({ levelOfStudy }) => {
-    if (levelOfStudy) {
-      levelOfStudyCounts[levelOfStudy] =
-        (levelOfStudyCounts[levelOfStudy] ?? 0) + 1;
+  // Calculate year of study based on graduation date relative to current date
+  const calculateYearOfStudy = (
+    gradDate: Date | string,
+    member: Member,
+  ): string => {
+    // Convert gradDate to Date object if it's a string
+    const gradDateObj =
+      typeof gradDate === "string" ? new Date(gradDate) : gradDate;
+    const currentDate = new Date();
+
+    // Check if dates are valid
+    if (isNaN(gradDateObj.getTime())) {
+      return "Unknown";
+    }
+
+    const gradYear = gradDateObj.getFullYear();
+    const currentYear = currentDate.getFullYear();
+    const yearsUntilGrad = gradYear - currentYear;
+
+    // Check for high school students - but use graduation date logic if they've graduated
+    if (
+      member.levelOfStudy === "Less than Secondary / High School" ||
+      member.levelOfStudy === "Secondary / High School"
+    ) {
+      // If their HS graduation date has passed, classify them based on years since graduation
+      if (yearsUntilGrad < 0) {
+        const yearsSinceHSGrad = Math.abs(yearsUntilGrad);
+        if (yearsSinceHSGrad <= 1) return "Freshman";
+        if (yearsSinceHSGrad <= 2) return "Sophomore";
+        if (yearsSinceHSGrad <= 3) return "Junior";
+        if (yearsSinceHSGrad <= 4) return "Senior";
+        return "Alumni"; // 5+ years since HS graduation
+      }
+      // Still in high school
+      return "High School";
+    }
+
+    // Check for graduate students (Masters, PhD, etc.)
+    if (
+      member.levelOfStudy ===
+        "Graduate University (Masters, Professional, Doctoral, etc)" ||
+      member.levelOfStudy === "Post Doctorate"
+    ) {
+      return "Graduate";
+    }
+
+    // If graduation date has passed, they are alumni
+    if (yearsUntilGrad < 0) return "Alumni";
+
+    // Current year graduates are still seniors until they actually graduate
+    if (yearsUntilGrad === 0) return "Senior";
+    if (yearsUntilGrad === 1) return "Senior";
+    if (yearsUntilGrad === 2) return "Junior";
+    if (yearsUntilGrad === 3) return "Sophomore";
+    if (yearsUntilGrad >= 4) return "Freshman";
+
+    return "Unknown";
+  };
+
+  // Get amount of each year
+  const yearCounts: Record<string, number> = {};
+  members.forEach((member) => {
+    if (member.gradDate) {
+      const year = calculateYearOfStudy(member.gradDate, member);
+      yearCounts[year] = (yearCounts[year] ?? 0) + 1;
     }
   });
-  const levelOfStudyData = Object.entries(levelOfStudyCounts).map(
-    ([levelOfStudy, count]) => ({
-      name: shortenLevelOfStudy(levelOfStudy),
-      amount: count,
-    }),
-  );
 
-  const [activeLevel, setActiveLevel] = useState(
-    levelOfStudyData[0] ? levelOfStudyData[0].name : null,
+  const yearData = Object.entries(yearCounts).map(([year, count]) => ({
+    name: year,
+    amount: count,
+  }));
+
+  const [activeYear, setActiveYear] = useState(
+    yearData[0] ? yearData[0].name : null,
   );
 
   const activeIndex = useMemo(
-    () => levelOfStudyData.findIndex((item) => item.name === activeLevel),
-    [activeLevel, levelOfStudyData],
-  );
-  const studyLevels = useMemo(
-    () => levelOfStudyData.map((item) => item.name),
-    [levelOfStudyData],
+    () => yearData.findIndex((item) => item.name === activeYear),
+    [activeYear, yearData],
   );
 
-  // set up chart config
+  const yearNames = useMemo(
+    () => yearData.map((item) => item.name),
+    [yearData],
+  );
+
+  // Set up chart config
   const baseConfig: ChartConfig = {
     people: { label: "people" },
   };
   let colorIdx = 0;
-  people.forEach(({ levelOfStudy }) => {
-    const shortenedString = levelOfStudy
-      ? shortenLevelOfStudy(levelOfStudy)
-      : undefined;
-    if (shortenedString && !baseConfig[shortenedString]) {
-      baseConfig[shortenedString] = {
-        label: shortenedString,
+  yearData.forEach(({ name }) => {
+    if (!baseConfig[name]) {
+      baseConfig[name] = {
+        label: name,
         color: ADMIN_PIE_CHART_COLORS[colorIdx % ADMIN_PIE_CHART_COLORS.length],
       };
       colorIdx++;
     }
   });
 
-  // update selected pie chart segment if the data changes
+  // Update selected pie chart segment if the data changes
   useEffect(() => {
-    const activeStillExists = levelOfStudyData.some(
-      (item) => item.name === activeLevel,
-    );
+    const activeStillExists = yearData.some((item) => item.name === activeYear);
 
-    if (levelOfStudyData.length <= 0) {
-      setActiveLevel(null);
+    if (yearData.length <= 0) {
+      setActiveYear(null);
       return;
-    } else if (!activeStillExists && levelOfStudyData[0]) {
-      setActiveLevel(levelOfStudyData[0].name);
+    } else if (!activeStillExists && yearData[0]) {
+      setActiveYear(yearData[0].name);
     }
-  }, [levelOfStudyData, activeLevel]);
+  }, [yearData, activeYear]);
 
   return (
     <Card data-chart={id} className="flex flex-col pb-4">
       <ChartStyle id={id} config={baseConfig} />
       <CardHeader className="flex-col items-start gap-4 space-y-0 pb-0">
         <div className="grid gap-1">
-          <CardTitle className="text-xl">Level of Study</CardTitle>
+          <CardTitle className="text-xl">Year of Study</CardTitle>
         </div>
         <Select
-          value={activeLevel ? activeLevel : undefined}
-          onValueChange={setActiveLevel}
+          value={activeYear ? activeYear : undefined}
+          onValueChange={setActiveYear}
         >
           <SelectTrigger
             className="ml-auto h-7 rounded-lg pl-2.5"
             aria-label="Select a value"
           >
-            <SelectValue placeholder="Select month" />
+            <SelectValue placeholder="Select year" />
           </SelectTrigger>
           <SelectContent align="end" className="rounded-xl">
-            {studyLevels.map((key) => {
+            {yearNames.map((key) => {
               const config = baseConfig[key];
 
               if (!config) {
@@ -162,7 +205,7 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
               content={<ChartTooltipContent hideLabel />}
             />
             <Pie
-              data={levelOfStudyData}
+              data={yearData}
               dataKey="amount"
               nameKey="name"
               innerRadius={60}
@@ -197,9 +240,7 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
                           y={viewBox.cy}
                           className="fill-foreground text-3xl font-bold"
                         >
-                          {levelOfStudyData[
-                            activeIndex
-                          ]?.amount.toLocaleString()}
+                          {yearData[activeIndex]?.amount.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
@@ -213,7 +254,7 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
                   }
                 }}
               />
-              {levelOfStudyData.map((_, index) => (
+              {yearData.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={

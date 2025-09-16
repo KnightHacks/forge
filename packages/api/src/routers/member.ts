@@ -318,6 +318,30 @@ export const memberRouter = {
         ),
   ),
 
+  getMemberAttendanceCounts: adminProcedure.query(async () => {
+    // Get attendance count for each member
+    const memberAttendance = await db
+      .select({
+        memberId: Member.id,
+        firstName: Member.firstName,
+        lastName: Member.lastName,
+        points: Member.points,
+        eventsAttended: count(EventAttendee.id),
+      })
+      .from(Member)
+      .leftJoin(EventAttendee, eq(Member.id, EventAttendee.memberId))
+      .leftJoin(
+        Event,
+        and(
+          eq(EventAttendee.eventId, Event.id),
+          isNull(Event.hackathonId), // Only club events, not hackathon events
+        ),
+      )
+      .groupBy(Member.id, Member.firstName, Member.lastName, Member.points);
+
+    return memberAttendance;
+  }),
+
   createDuesPayingMember: adminProcedure
     .input(InsertMemberSchema.pick({ id: true }))
     .mutation(async ({ input, ctx }) => {
