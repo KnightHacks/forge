@@ -3,10 +3,10 @@ import {
   Container,
   Head,
   Html,
+  Link,
   Preview,
   Section,
   Tailwind,
-  Link,
   Text,
 } from "@react-email/components";
 
@@ -19,7 +19,7 @@ export const KH8WaitlistEmail = ({ name }: ConfirmationEmailProps) => {
 
   return (
     <Html>
-      <Head/>
+      <Head />
       <Tailwind
         config={{
           theme: {
@@ -31,11 +31,13 @@ export const KH8WaitlistEmail = ({ name }: ConfirmationEmailProps) => {
           },
         }}
       >
-        <Body className="bg-white m-0 p-0 font-sans"
-        style={{backgroundColor: "#ffffff"}}>
+        <Body
+          className="m-0 bg-white p-0 font-sans"
+          style={{ backgroundColor: "#ffffff" }}
+        >
           <Preview>{previewText}</Preview>
 
-          <Container className=" mx-auto max-w-[700px] p-0 bg-[#F7F0C6]">
+          <Container className="mx-auto max-w-[700px] bg-[#F7F0C6] p-0">
             <Section className="p-0">
               <table
                 role="presentation"
@@ -46,18 +48,18 @@ export const KH8WaitlistEmail = ({ name }: ConfirmationEmailProps) => {
                 bgcolor="#F7F0C6"
               >
                 <tr>
-                  <td 
+                  <td
                     // @ts-expect-error td is tripping
                     background="https://i.imgur.com/OdRQ4Xy.jpeg"
-                    align="right" 
+                    align="right"
                     width="700"
                     height="180"
                     valign="top"
                     style={{
-                      backgroundSize: "700px 365px"
+                      backgroundSize: "700px 365px",
                     }}
-                    className="rounded-t-md relative"
-                    />
+                    className="relative rounded-t-md"
+                  />
                 </tr>
               </table>
             </Section>
@@ -73,18 +75,46 @@ export const KH8WaitlistEmail = ({ name }: ConfirmationEmailProps) => {
               >
                 <tr>
                   <td className="px-4">
-                      <Text className="text-[20px] leading-tight text-black">
-                        <span className="font-bold text-[24px] text-[#C04B3D]">{name},</span><br/><br/>
-                        Unfortunately, we have hit the capacity for our event, and have to make the difficult decision to <span className="text-[#C04B3D] font-bold">waitlist you for Knight Hacks VIII.</span> We know this is tough to hear, and we wish we could've brought you in. 
-                        <br/><br/>
-                        As we draw nearer to the event, some hackers may fail to confirm their attendance. If this happens, we will begin to pull people from the waitlist into the accepted pool. 
-                        If you are selected, you will recieve an acceptance email, and your status on Blade will be updated. However, <span className="text-[#C04B3D] font-bold">there is no guarantee you will removed from the waitlist.</span>
-                        <br/><br/>
-                        In the case that you stay waitlisted, you can try again at our next hackathon.
-                        <br/><br/>
-                        Thanks for your interest,<br/>
-                        <span className="font-bold text-[#4075b7]">The Knight Hacks Team</span>
-                      </Text>
+                    <Text className="text-[20px] leading-tight text-black">
+                      <span className="text-[24px] font-bold text-[#C04B3D]">
+                        {name},
+                      </span>
+                      <br />
+                      <br />
+                      Unfortunately, we have hit capacity for our event and have
+                      to make the difficult decision to{" "}
+                      <span className="font-bold text-[#C04B3D]">
+                        waitlist you for Knight Hacks VIII.
+                      </span>{" "}
+                      We know this is tough to hear, and we wish we could have
+                      brought you in.
+                      <br />
+                      <br />
+                      As we draw nearer to the event, some hackers may fail to
+                      confirm their attendance. If this happens, we will begin
+                      to pull people from the waitlist into the accepted pool.
+                      If you are selected, you will receive an acceptance email,
+                      and your status on Blade will be updated. However,{" "}
+                      <span className="font-bold text-[#C04B3D]">
+                        there is no guarantee you will be removed from the
+                        waitlist.
+                      </span>
+                      <br />
+                      <br />
+                      If you do not hear back from us by{" "}
+                      <span className="font-bold">October 17th</span>, then we
+                      are at capacity and you will not be let in. Please refrain
+                      from traveling to the venue, as we will not be allowing
+                      people in on the day of the event.
+                      <br />
+                      <br />
+                      In the case that you remain waitlisted, we encourage you
+                      to try again at our next hackathon.
+                      <br />
+                      <br />
+                      Thanks for your interest,
+                      <br />
+                    </Text>
                   </td>
                 </tr>
               </table>
@@ -101,12 +131,42 @@ export const KH8WaitlistEmail = ({ name }: ConfirmationEmailProps) => {
               >
                 <tr>
                   <td className="px-4 text-center">
-                    <Link className="text-[#F7F0C6] underline mr-2" href="https://discord.com/invite/Kv5g9vf">Discord</Link>
-                    <Link className="text-[#F7F0C6] underline mr-2" href="https://www.instagram.com/knighthacks/">Instagram</Link>
-                    <Link className="text-[#F7F0C6] underline mr-2" href="https://blade.knighthacks.org/dashboard">Blade</Link>
-                    <Link className="text-[#F7F0C6] underline mr-2" href="https://knight-hacks.notion.site/knight-hacks-viii">Hacker's Guide</Link>
-                    <Link className="text-[#F7F0C6] underline mr-2" href="https://mlh.io/code-of-conduct">MLH Code of Conduct</Link>
-                    <Link className="text-[#F7F0C6] underline mr-2" href="https://knight-hacks.notion.site/code-of-conduct">Knight Hacks Code of Conduct</Link>
+                    <Link
+                      className="mr-2 text-[#F7F0C6] underline"
+                      href="https://discord.com/invite/Kv5g9vf"
+                    >
+                      Discord
+                    </Link>
+                    <Link
+                      className="mr-2 text-[#F7F0C6] underline"
+                      href="https://www.instagram.com/knighthacks/"
+                    >
+                      Instagram
+                    </Link>
+                    <Link
+                      className="mr-2 text-[#F7F0C6] underline"
+                      href="https://blade.knighthacks.org/dashboard"
+                    >
+                      Blade
+                    </Link>
+                    <Link
+                      className="mr-2 text-[#F7F0C6] underline"
+                      href="https://knight-hacks.notion.site/knight-hacks-viii"
+                    >
+                      Hacker's Guide
+                    </Link>
+                    <Link
+                      className="mr-2 text-[#F7F0C6] underline"
+                      href="https://mlh.io/code-of-conduct"
+                    >
+                      MLH Code of Conduct
+                    </Link>
+                    <Link
+                      className="mr-2 text-[#F7F0C6] underline"
+                      href="https://knight-hacks.notion.site/code-of-conduct"
+                    >
+                      Knight Hacks Code of Conduct
+                    </Link>
                     <Text className="text-[14px] leading-tight text-[#F7F0C6]">
                       Made with 💛 by the Knight Hacks team.
                     </Text>
@@ -122,6 +182,3 @@ export const KH8WaitlistEmail = ({ name }: ConfirmationEmailProps) => {
 };
 
 export default KH8WaitlistEmail;
-
-
-                
