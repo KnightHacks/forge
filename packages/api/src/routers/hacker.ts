@@ -114,6 +114,8 @@ export const hackerRouter = {
         dateCreated: Hacker.dateCreated,
         timeCreated: Hacker.timeCreated,
         status: HackerAttendee.status, // Get hackathon-specific status from HackerAttendee
+        timeApplied: HackerAttendee.timeApplied, // Get when they applied to this specific hackathon
+        timeConfirmed: HackerAttendee.timeConfirmed, // Get when they confirmed attendance
       })
       .from(Hacker)
       .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
@@ -574,6 +576,7 @@ export const hackerRouter = {
         .update(HackerAttendee)
         .set({
           status: "confirmed",
+          timeConfirmed: new Date(),
         })
         .where(
           and(
@@ -657,6 +660,7 @@ export const hackerRouter = {
         .update(HackerAttendee)
         .set({
           status: "withdrawn",
+          timeConfirmed: undefined,
         })
         .where(
           and(

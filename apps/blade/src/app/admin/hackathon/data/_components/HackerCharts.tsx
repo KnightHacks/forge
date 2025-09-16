@@ -86,7 +86,10 @@ export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
             {filteredHackers && filteredHackers.length > 0 ? (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
                 <FirstTimeInfo hackers={filteredHackers} />
-                <ApplicationsOverTimeBarChart hackers={filteredHackers} />
+                <ApplicationsOverTimeBarChart
+                  hackers={filteredHackers}
+                  selectedStatuses={selectedStatuses}
+                />
                 <FoodAllergiesBarChart people={filteredHackers} />
                 <FirstTimeHackersPie people={filteredHackers} />
                 <AgeBarChart people={filteredHackers} />

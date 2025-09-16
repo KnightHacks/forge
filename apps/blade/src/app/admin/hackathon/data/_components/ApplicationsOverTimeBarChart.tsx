@@ -31,31 +31,50 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 interface Hacker {
-  dateCreated: Date | string;
+  timeApplied: Date | string;
+  timeConfirmed?: Date | string | null;
 }
 
 interface ApplicationsOverTimeBarChartProps {
   hackers: Hacker[];
+  selectedStatuses: string[];
 }
 
 export default function ApplicationsOverTimeBarChart({
   hackers,
+  selectedStatuses,
 }: ApplicationsOverTimeBarChartProps) {
-  // Create 2-week buckets for applications
+  // Determine which time field to use based on selected statuses
+  const useConfirmedTime =
+    selectedStatuses.includes("confirmed") &&
+    selectedStatuses.length === 1 &&
+    !selectedStatuses.includes("all");
+
+  const chartTitle = useConfirmedTime
+    ? "Confirmations Over Time"
+    : "Applications Over Time";
+  const timeFieldLabel = useConfirmedTime ? "confirmations" : "applications";
+
+  // Create 1-week buckets for applications/confirmations
   const createTimeBuckets = (hackers: Hacker[]) => {
     if (hackers.length === 0) return [];
 
-    // Find the date range
+    // Find the date range using the appropriate time field
     const dates = hackers
-      .map((h) => h.dateCreated)
+      .map((h) => (useConfirmedTime ? h.timeConfirmed : h.timeApplied))
       .filter(Boolean)
       .map((d) => (typeof d === "string" ? new Date(d) : d))
       .filter((d) => !isNaN(d.getTime()));
 
     if (dates.length === 0) return [];
 
-    const minDate = new Date(Math.min(...dates.map((d) => d.getTime())));
-    const maxDate = new Date(Math.max(...dates.map((d) => d.getTime())));
+    const validDates = dates.filter(
+      (d): d is Date => d instanceof Date && !isNaN(d.getTime()),
+    );
+    if (validDates.length === 0) return [];
+
+    const minDate = new Date(Math.min(...validDates.map((d) => d.getTime())));
+    const maxDate = new Date(Math.max(...validDates.map((d) => d.getTime())));
 
     // Create 1-week buckets
     const buckets: Record<string, number> = {};
@@ -75,14 +94,15 @@ export default function ApplicationsOverTimeBarChart({
       currentDate = new Date(bucketEnd);
     }
 
-    // Count applications in each bucket
+    // Count applications/confirmations in each bucket
     hackers.forEach((hacker) => {
-      if (!hacker.dateCreated) return;
+      const timeField = useConfirmedTime
+        ? hacker.timeConfirmed
+        : hacker.timeApplied;
+      if (!timeField) return;
 
       const applicationDate =
-        typeof hacker.dateCreated === "string"
-          ? new Date(hacker.dateCreated)
-          : hacker.dateCreated;
+        typeof timeField === "string" ? new Date(timeField) : timeField;
 
       // Skip invalid dates
       if (isNaN(applicationDate.getTime())) return;
@@ -102,22 +122,22 @@ export default function ApplicationsOverTimeBarChart({
       }
     });
 
-    return Object.entries(buckets).map(([period, applications]) => ({
+    return Object.entries(buckets).map(([period, count]) => ({
       period,
-      applications,
+      [timeFieldLabel]: count,
     }));
   };
 
   const timeData = createTimeBuckets(hackers);
-  const totalApplications = timeData.reduce(
-    (sum, { applications }) => sum + applications,
+  const totalCount = timeData.reduce(
+    (sum, item) => sum + (Number(item[timeFieldLabel]) || 0),
     0,
   );
 
   return (
     <Card className="col-span-1 md:col-span-2">
       <CardHeader>
-        <CardTitle>Applications Over Time</CardTitle>
+        <CardTitle>{chartTitle}</CardTitle>
       </CardHeader>
       <CardContent>
         {timeData.length > 0 ? (
@@ -145,7 +165,7 @@ export default function ApplicationsOverTimeBarChart({
                 content={<ChartTooltipContent indicator="dashed" />}
               />
               <Bar
-                dataKey="applications"
+                dataKey={timeFieldLabel}
                 fill="var(--color-applications)"
                 radius={4}
               >
@@ -169,7 +189,7 @@ export default function ApplicationsOverTimeBarChart({
           Each bar represents a 1-week period
         </div>
         <div className="text-xs text-muted-foreground">
-          Total applications: {totalApplications}
+          Total {timeFieldLabel}: {totalCount}
         </div>
       </CardFooter>
     </Card>
