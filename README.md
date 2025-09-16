@@ -2,32 +2,28 @@
   <a href="https://discord.gg/ynr44H6KAY">
       <img width="125" height="125" src="./.github/knight-hacks-logo.svg"/>
   </a>
-  <h1>Forge</h1>
+  <h1>Hellowsh, my name is Buhgowsh</h1>
 </div>
 
 > [!NOTE]
 >
-> Interested in learning more about this repository? Please join [Knight Hacks' community Discord server](https://discord.gg/ynr44H6KAY)!
+> This individual waited until the last minute to finish up their dev team application (CHOPPED)
 
 ## 👋 Introduction
 
-Welcome to Knight Hacks' monorepo, Forge! It contains the source code for all applications created by our development team!
+Hello vro, I'm gurted out rn
 
 ## 🗺 Layout
 
-- [`.github`](/.github) Contains all of our GitHub-related files
-- [`apps`](/apps) Applications we've built and maintain
-- [`packages`](/packages) Packages we share across our applications
-- [`tooling`](/tooling) Configuration files for tools we use when building our applications
-- [`turbo/generators`](/turbo/generators) A CLI tool to generate boilerplate for a new package under [`packages`](/packages)
+- [`josh-sawyer`](/apps/blade/src/app/josh-sawyer) Contains all of the files relevant to my application, except for the pictures for the social icons, which are in the public folder
 
 ## 👏 Contributing
 
-If you would like to contribute to this repository, please read our [contributing guide](./CONTRIBUTING.md)!
+nah this probably not the move lowk
 
 ## ❓ FAQ
 
-If you have any questions, please ask them in [our community Discord server](https://discord.gg/ynr44H6KAY)!
+If you have any questions, please dm me (buhgowsh in discord)!
 
 ## 📝 License
 
