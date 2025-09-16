@@ -12,11 +12,15 @@ import RaceOrEthnicityPie from "~/app/admin/_components/RaceOrEthnicityPie";
 import SchoolBarChart from "~/app/admin/_components/SchoolBarChart";
 import SchoolYearPie from "~/app/admin/_components/SchoolYearPie";
 import { api } from "~/trpc/react";
+import ApplicationsOverTimeBarChart from "./ApplicationsOverTimeBarChart";
 import FirstTimeInfo from "./FirstTimeInfo";
+import LevelOfStudyPie from "./LevelOfStudyPie";
 import ShirtSizePie from "./ShirtSizePie";
 
 export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
   const { data: hackers } = api.hacker.getHackers.useQuery(hackathonId);
+  const { data: hackathon } =
+    api.hackathon.getHackathonById.useQuery(hackathonId);
 
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["all"]);
   const handleStatusChange = (values: string[]) => {
@@ -82,12 +86,19 @@ export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
             {filteredHackers && filteredHackers.length > 0 ? (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
                 <FirstTimeInfo hackers={filteredHackers} />
+                <ApplicationsOverTimeBarChart hackers={filteredHackers} />
                 <FoodAllergiesBarChart people={filteredHackers} />
                 <FirstTimeHackersPie people={filteredHackers} />
                 <AgeBarChart people={filteredHackers} />
                 <GenderPie people={filteredHackers} />
                 <RaceOrEthnicityPie people={filteredHackers} />
                 <SchoolYearPie people={filteredHackers} />
+                {hackathon && (
+                  <LevelOfStudyPie
+                    hackers={filteredHackers}
+                    hackathonDate={hackathon.startDate}
+                  />
+                )}
                 <SchoolBarChart people={filteredHackers} />
                 <MajorBarChart people={filteredHackers} />
                 <ShirtSizePie hackers={filteredHackers} />
