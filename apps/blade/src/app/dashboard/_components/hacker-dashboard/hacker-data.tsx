@@ -23,6 +23,7 @@ import { toast } from "@forge/ui/toast";
 import type { api as serverCall } from "~/trpc/server";
 import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
+import ConfirmWithTOS from "./confirm-button";
 import { HackerQRCodePopup } from "./hacker-qr-button";
 
 type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
@@ -191,22 +192,11 @@ export function HackerData({
 
         {hackerStatus === "Accepted" &&
           hackathonData?.confirmationDeadline != null && (
-            <Button
-              size="sm"
-              className={`animate-fade-in sm:size-lg gap-2 !rounded-none ${
-                hackathonData.confirmationDeadline < new Date()
-                  ? "bg-gray-700 hover:bg-gray-900"
-                  : ""
-              }`}
-              onClick={handleConfirm}
-              disabled={hackathonData.confirmationDeadline < new Date()}
-            >
-              {loading ? (
-                <Loader2 className="w-[85px] animate-spin" />
-              ) : (
-                <span className="text-lg font-bold text-white">CONFIRM</span>
-              )}
-            </Button>
+            <ConfirmWithTOS
+              isLoading={loading}
+              hackathonData={hackathonData}
+              handleConfirm={handleConfirm}
+            />
           )}
 
         <div>

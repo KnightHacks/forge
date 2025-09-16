@@ -114,7 +114,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                   <td className="">
                     <Text className="text-[28px] font-bold leading-tight text-[#4075b7]">
                       1) Confirm your attendance!{" "}
-                      <span className="text-[18px] font-normal italic text-muted-foreground">
+                      <span className="text-[22px] font-normal italic text-muted-foreground">
                         (Required by October 22nd)
                       </span>
                     </Text>
@@ -149,7 +149,7 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                   <td className="">
                     <Text className="text-[28px] font-bold leading-tight text-[#4075b7]">
                       2) Join our Discord!{" "}
-                      <span className="text-[18px] font-normal italic text-muted-foreground">
+                      <span className="text-[22px] font-normal italic text-muted-foreground">
                         (Required by October 22nd)
                       </span>
                     </Text>
