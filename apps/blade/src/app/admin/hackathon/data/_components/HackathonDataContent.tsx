@@ -21,7 +21,12 @@ export default function HackathonDataContent() {
 
   useEffect(() => {
     if (!activeHackathon && hackathons?.length) {
-      setActiveHackathon(hackathons[0] ?? null);
+      // Sort hackathons by start date descending to get the latest one
+      const sortedHackathons = [...hackathons].sort(
+        (a, b) =>
+          new Date(b.startDate).getTime() - new Date(a.startDate).getTime(),
+      );
+      setActiveHackathon(sortedHackathons[0] ?? null);
     }
   }, [hackathons, activeHackathon]);
 
