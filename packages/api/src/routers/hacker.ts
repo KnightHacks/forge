@@ -5,9 +5,10 @@ import { z } from "zod";
 
 import {
   BUCKET_NAME,
+  HACKATHON_APPLICATION_STATES,
   KNIGHTHACKS_S3_BUCKET_REGION,
 } from "@forge/consts/knight-hacks";
-import { and, eq } from "@forge/db";
+import { and, count, eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
 import {
@@ -663,5 +664,28 @@ export const hackerRouter = {
             eq(HackerAttendee.hackathonId, hackathon.id),
           ),
         );
+    }),
+  statusCountByHackathonId: adminProcedure
+    .input(z.string())
+    .query(async ({ input: hackathonId }) => {
+      const results = await Promise.all(
+        HACKATHON_APPLICATION_STATES.map(async (s) => {
+          const rows = await db
+            .select({ count: count() })
+            .from(HackerAttendee)
+            .where(
+              and(
+                eq(HackerAttendee.hackathonId, hackathonId),
+                eq(HackerAttendee.status, s),
+              ),
+            );
+          return [s, Number(rows[0]?.count ?? 0)] as const;
+        }),
+      );
+
+      return Object.fromEntries(results) as Record<
+        (typeof HACKATHON_APPLICATION_STATES)[number],
+        number
+      >;
     }),
 } satisfies TRPCRouterRecord;
