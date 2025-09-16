@@ -236,6 +236,8 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
     })
     .notNull()
     .default("pending"),
+  timeApplied: t.timestamp().notNull().defaultNow(),
+  timeConfirmed: t.timestamp(),
 }));
 
 export const InsertEventAttendeeSchema = createInsertSchema(EventAttendee);
