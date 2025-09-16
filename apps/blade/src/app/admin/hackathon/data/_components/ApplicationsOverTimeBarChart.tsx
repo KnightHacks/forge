@@ -64,7 +64,7 @@ export default function ApplicationsOverTimeBarChart({
       .map((h) => (useConfirmedTime ? h.timeConfirmed : h.timeApplied))
       .filter(Boolean)
       .map((d) => (typeof d === "string" ? new Date(d) : d))
-      .filter((d) => !isNaN(d.getTime()));
+      .filter((d) => d && !isNaN(d.getTime()));
 
     if (dates.length === 0) return [];
 
