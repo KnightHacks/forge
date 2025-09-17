@@ -70,7 +70,7 @@ export default function WaitlistButton({
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: `${hackathonName} - Waitlisted`,
+      subject: `${hackathonName} Waitlist Information`,
       body: html,
     });
   };
