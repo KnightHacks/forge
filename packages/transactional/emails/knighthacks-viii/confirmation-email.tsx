@@ -215,16 +215,11 @@ export const KH8ConfirmationEmail = ({ name }: ConfirmationEmailProps) => {
                   </td>
                 </tr>
                 <tr>
-                  <td align="left" className="pl-4 pt-2">
-                    <a
-                      href={
-                        "https://blade.knighthacks.org/knighthacksacceptance.png"
-                      }
-                      className="inline-block rounded-md bg-[#C04B3D] px-6 py-3 text-center font-bold text-white no-underline"
-                      download
-                    >
-                      Download acceptance asset
-                    </a>
+                  <td align="center" className="mx-auto px-4">
+                    <Img
+                      className="mx-auto w-[300px]"
+                      src="http://blade.knighthacks.org/knighthacksacceptance.png"
+                    />
                   </td>
                 </tr>
               </table>
