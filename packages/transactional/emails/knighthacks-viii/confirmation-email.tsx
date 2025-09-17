@@ -20,7 +20,10 @@ export const KH8ConfirmationEmail = ({ name }: ConfirmationEmailProps) => {
 
   return (
     <Html>
-      <Head />
+      <Head>
+        <meta name="color-scheme" content="light"></meta>
+        <meta name="supported-color-schemes" content="light"></meta>
+      </Head>
       <Tailwind
         config={{
           theme: {
