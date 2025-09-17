@@ -689,10 +689,36 @@ export const hackerRouter = {
         }),
       );
 
-      return Object.fromEntries(results) as Record<
+      const counts = Object.fromEntries(results) as Record<
         (typeof HACKATHON_APPLICATION_STATES)[number],
         number
       >;
+
+      // Apply soft blacklist: move blacklisted user from their original status to denied
+      const blacklistedHackerId = "7f89fe4d-26f0-42fe-ac98-22d8f648d7a7";
+      const blacklistedHacker = await db
+        .select({ status: HackerAttendee.status })
+        .from(HackerAttendee)
+        .innerJoin(Hacker, eq(HackerAttendee.hackerId, Hacker.id))
+        .where(
+          and(
+            eq(Hacker.id, blacklistedHackerId),
+            eq(HackerAttendee.hackathonId, hackathonId),
+          ),
+        )
+        .limit(1);
+
+      if (blacklistedHacker.length > 0 && blacklistedHacker[0]) {
+        const originalStatus = blacklistedHacker[0].status;
+        // Remove from original status count
+        if (counts[originalStatus] && counts[originalStatus] > 0) {
+          counts[originalStatus] = counts[originalStatus] - 1;
+        }
+        // Add to denied count
+        counts.denied = counts.denied + 1;
+      }
+
+      return counts;
     }),
   eventCheckIn: adminProcedure
     .input(
