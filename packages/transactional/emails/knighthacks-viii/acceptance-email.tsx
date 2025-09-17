@@ -91,9 +91,12 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                 <tr>
                   <td>
                     <hr />
-                    <Text className="pb-3 text-center text-[40px] font-extrabold text-[#F3B518]">
-                      Confirm your attendance
-                    </Text>
+                    <Link href="https://blade.knighthacks.org/dashboard">
+                      <Img
+                        className="mx-auto w-[400px]"
+                        src="https://i.imgur.com/qrYuyLP.png"
+                      />
+                    </Link>
                     <Text className="text-center text-[32px] font-bold leading-tight text-black">
                       October 24th - 26th, 2025
                       <br />
@@ -219,46 +222,6 @@ export const KH8AcceptanceEmail = ({ name }: AcceptanceEmailProps) => {
                         src="https://i.imgur.com/qrYuyLP.png"
                       />
                     </Link>
-                  </td>
-                </tr>
-              </table>
-            </Section>
-            <Section className="p-0">
-              <table
-                role="presentation"
-                width="100%"
-                cellPadding={0}
-                cellSpacing={0}
-                border={0}
-                bgcolor="#F7F0C6"
-                className="p-[24px]"
-              >
-                <tr>
-                  <td>
-                    <Text className="mb-2 text-center text-[32px] font-extrabold leading-tight text-[#4075b7]">
-                      3) Share your acceptance!
-                    </Text>
-                    <Text className="mx-auto max-w-[560px] text-center text-[18px] leading-tight text-black">
-                      Download the official Knight Hacks VIII acceptance graphic
-                      and share it on your socials. Don’t forget to tag{" "}
-                      <span className="font-bold text-[#C04B3D]">
-                        @knighthacks
-                      </span>
-                      !
-                    </Text>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" className="pt-2">
-                    <a
-                      href={
-                        "https://blade.knighthacks.org/knighthacksacceptance.png"
-                      }
-                      className="inline-block rounded-md bg-[#C04B3D] px-6 py-3 text-center font-bold text-white no-underline"
-                      download
-                    >
-                      Download acceptance asset
-                    </a>
                   </td>
                 </tr>
               </table>

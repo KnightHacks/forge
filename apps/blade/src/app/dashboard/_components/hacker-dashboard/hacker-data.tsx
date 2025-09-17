@@ -56,7 +56,7 @@ export function HackerData({
 
   const sendEmail = api.email.sendEmail.useMutation({
     onSuccess: () => {
-      toast.success("Check your email for the final step!");
+      toast.success("You're Confirmed!");
     },
     onError: (opts) => {
       toast.error(opts.message);
@@ -78,7 +78,7 @@ export function HackerData({
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: `${currentHackathon?.displayName} - FINAL STEP: Complete MLH Registration!`,
+      subject: `See you at ${currentHackathon?.displayName}!`,
       body: html,
     });
   };
