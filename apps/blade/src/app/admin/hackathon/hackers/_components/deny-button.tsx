@@ -71,7 +71,7 @@ export default function DenyButton({
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: `${hackathonName} - Denial`,
+      subject: `${hackathonName} Status Update`,
       body: html,
     });
   };

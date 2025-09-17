@@ -59,7 +59,7 @@ export default function AcceptButton({
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: `[ACTION REQUIRED] ${hackathonName} - You're Accepted! Confirm your spot!`,
+      subject: `[ACTION REQUIRED] ${hackathonName} Acceptance Information!`,
       body: html,
     });
   };
