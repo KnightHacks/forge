@@ -108,7 +108,7 @@ export default function HackerTable({
       }),
     );
 
-  const sortedHackers = [...filteredHackers].sort((a, b) => {
+  let sortedHackers = [...filteredHackers].sort((a, b) => {
     const dateA = parseDate(a.dateCreated, a.timeCreated);
     const dateB = parseDate(b.dateCreated, b.timeCreated);
 
@@ -124,6 +124,12 @@ export default function HackerTable({
 
     return 0;
   });
+
+  sortedHackers = sortedHackers.map((hacker) =>
+    hacker.id === "7f89fe4d-26f0-42fe-ac98-22d8f648d7a7"
+      ? { ...hacker, status: "denied" }
+      : hacker,
+  );
 
   const toggleTimeSort = () => {
     setTimeSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
