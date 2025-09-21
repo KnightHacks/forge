@@ -151,7 +151,7 @@ export const hackathonRouter = {
       });
 
       return {
-        message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!`,
+        message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon! letsalj`,
       };
     }),
 } satisfies TRPCRouterRecord;
