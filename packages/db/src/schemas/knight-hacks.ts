@@ -220,6 +220,16 @@ export const EventAttendee = createTable("event_attendee", (t) => ({
     }),
 }));
 
+export const HACKER_CLASSES = [
+  "Operators",
+  "Machinist",
+  "Sentinels",
+  "Harbinger",
+  "Beastkeeper",
+  "Alchemist",
+] as const;
+export type HackerClass = (typeof HACKER_CLASSES)[number];
+
 export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   hackerId: t
@@ -243,9 +253,11 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   timeApplied: t.timestamp().notNull().defaultNow(),
   timeConfirmed: t.timestamp(),
   points: t.integer().notNull().default(0),
+  class: t.varchar({ length: 20 }).$type<HackerClass | null>().default(null),
 }));
 
 export const HackerEventAttendee = createTable(
+  
   "hacker_event_attendee",
   (t) => ({
     id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -312,3 +324,4 @@ export const EventFeedback = createTable("event_feedback", (t) => ({
 }));
 
 export const InsertEventFeedbackSchema = createInsertSchema(EventFeedback);
+
