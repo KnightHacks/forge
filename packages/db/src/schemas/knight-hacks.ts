@@ -225,6 +225,7 @@ export const HACKER_CLASSES = [
   "Machinist",
   "Sentinels",
   "Harbinger",
+<<<<<<< HEAD
   "Monstologist",
   "Alchemist",
 ] as const;
@@ -239,6 +240,12 @@ export const AssignedClassCheckinSchema = z.union([
   z.literal("All"),
   z.enum(HACKER_CLASSES),
 ]);
+=======
+  "Beastkeeper",
+  "Alchemist",
+] as const;
+export type HackerClass = (typeof HACKER_CLASSES)[number];
+>>>>>>> 611d18fe (added HACKER_CLASSES for the roles that will be assigned to the hackers that check in and added a class column to the hackerattendee table)
 
 export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -264,11 +271,15 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   timeConfirmed: t.timestamp(),
   points: t.integer().notNull().default(0),
   class: t.varchar({ length: 20 }).$type<HackerClass | null>().default(null),
+<<<<<<< HEAD
 
   allowedRepeatCheckIn: t.boolean().notNull().default(false),
+=======
+>>>>>>> 611d18fe (added HACKER_CLASSES for the roles that will be assigned to the hackers that check in and added a class column to the hackerattendee table)
 }));
 
 export const HackerEventAttendee = createTable(
+  
   "hacker_event_attendee",
   (t) => ({
     id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -335,3 +346,4 @@ export const EventFeedback = createTable("event_feedback", (t) => ({
 }));
 
 export const InsertEventFeedbackSchema = createInsertSchema(EventFeedback);
+
