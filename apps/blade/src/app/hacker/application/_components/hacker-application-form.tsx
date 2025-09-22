@@ -60,6 +60,7 @@ export function HackerFormPage({
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [comboBoxKey, setComboBoxKey] = useState(0);
+  const [tosAccepted, setTosAccepted] = useState(false);
   const utils = api.useUtils();
 
   // Get previous hacker profile to pre-fill form
@@ -331,6 +332,13 @@ export function HackerFormPage({
         noValidate
         onSubmit={form.handleSubmit(async (values) => {
           setLoading(true);
+
+          if (!tosAccepted) {
+            toast.error("Please Accept the Knight Hacks Terms of Service");
+            setLoading(false);
+            return;
+          }
+
           try {
             let resumeUrl = "";
             if (values.resumeUpload?.length && values.resumeUpload[0]) {
@@ -1026,6 +1034,31 @@ export function HackerFormPage({
             </FormItem>
           )}
         />
+
+        <div className="flex flex-row space-x-3 space-y-0 py-2">
+          <div>
+            <Checkbox
+              checked={tosAccepted}
+              onCheckedChange={(v) => setTosAccepted(!!v)}
+              className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+              aria-labelledby="tos-visual-label"
+            />
+          </div>
+
+          <div className="space-y-1 leading-none">
+            <div id="tos-visual-label" className="text-sm font-medium">
+              By checking this box you acknowledge that you agree to the{" "}
+              <Link
+                href="https://knight-hacks.notion.site/kh-25-tos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-blue-600 underline underline-offset-4 hover:no-underline"
+              >
+                Knight Hacks Terms of Service
+              </Link>
+            </div>
+          </div>
+        </div>
 
         {loading ? (
           <div className="flex justify-center">
