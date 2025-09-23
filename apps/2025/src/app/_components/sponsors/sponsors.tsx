@@ -12,12 +12,12 @@ const Sponsors = () => {
       <section
         id="sponsors"
         ref={sponsorsRef}
-        className="mt-0 pt-0 mb-[100px] min-h-[800px] sm:mt-40 sm:pt-0 sm:mb-20 sm:min-h-0 w-[90%] md:mb-24 lg:mb-32 xl:mb-40"
+        className="mt-0 mb-[100px] min-h-[800px] w-[90%] pt-0 sm:mt-40 sm:mb-20 sm:min-h-0 sm:pt-0 md:mb-24 lg:mb-32 xl:mb-40"
       >
         <div className="stagger-item animate-pop-out">
           <SponsorsTitle />
         </div>
-        <div className="stagger-item" style={{ animationDelay: '0.5s' }}>
+        <div className="stagger-item" style={{ animationDelay: "0.5s" }}>
           <SponsorPosters />
         </div>
       </section>
