@@ -2,11 +2,13 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import { and, count, desc, eq, getTableColumns, lt } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Hackathon,
   Hacker,
+  HACKER_CLASSES,
   HackerAttendee,
 } from "@forge/db/schemas/knight-hacks";
 
@@ -140,18 +142,75 @@ export const hackathonRouter = {
         });
       }
 
-      // Update the status to indicate they're checked in
-      // You might want to add a "checked-in" status to HACKATHON_APPLICATION_STATES
-      // For now, we'll just log the check-in without changing status
+      let assignedClass: HackerClass | null = hackerAttendee.class ?? null;
+
+      await db.transaction(async (tx) => {
+        const doesHackerHaveClass = await tx.query.HackerAttendee.findFirst({
+          where: (t, { and, eq }) =>
+            and(
+              eq(t.hackerId, hacker.id),
+              eq(t.hackathonId, input.hackathonId),
+            ),
+        });
+        //REPEATED CHECK-INA
+        if (doesHackerHaveClass?.class) {
+          assignedClass = doesHackerHaveClass.class;
+          return;
+        }
+
+        const totalHackerinClass = await Promise.all(
+          HACKER_CLASSES.map(async (cls) => {
+            const rows = await tx
+              .select({ c: count() })
+              .from(HackerAttendee)
+              .where(
+                and(
+                  eq(HackerAttendee.hackathonId, input.hackathonId),
+                  eq(HackerAttendee.class, cls),
+                ),
+              );
+            return { cls, count: Number(rows[0]?.c ?? 0) } as const;
+          }),
+        );
+
+        const leastPopulatedClass = Math.min(...totalHackerinClass.map((c) => c.count));
+        const candidates = totalHackerinClass
+          .filter((c) => c.count === leastPopulatedClass)
+          .map((c) => c.cls);
+
+        const pick: HackerClass =
+          candidates[Math.floor(Math.random() * candidates.length)] ??
+          HACKER_CLASSES[0];
+
+        await tx
+          .update(HackerAttendee)
+          .set({ class: pick })
+          .where(
+            and(
+              eq(HackerAttendee.hackerId, hacker.id),
+              eq(HackerAttendee.hackathonId, input.hackathonId),
+            ),
+          );
+
+        assignedClass = pick;
+      });
+
+      // // Update the status to indicate they're checked in
+      // // You might want to add a "checked-in" status to HACKATHON_APPLICATION_STATES
+      // // For now, we'll just log the check-in without changing status
       await log({
         title: "Hacker Checked-In",
-        message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon: ${hackathon.name}`,
+        message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon: ${hackathon.name}${
+          assignedClass ? ` (Class: ${assignedClass})` : ""
+        }`,
         color: "success_green",
         userId: ctx.session.user.discordUserId,
       });
 
       return {
-        message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon! letsalj`,
+        message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!${
+          assignedClass ? ` Assigned class: ${assignedClass}.` : ""
+        }`,
       };
     }),
 } satisfies TRPCRouterRecord;

@@ -21,7 +21,7 @@ If you are not a Knight Hacks dev team member, you can still contribute to Forge
 
 ### Database
 
-Install Docker Desktop if you don't already have it. 
+Install Docker Desktop if you don't already have it.
 
 To create a Postgres database locally with docker, you can run `docker compose up`. You will then need to push the schema to the database by running `pnpm db:push`.
 
