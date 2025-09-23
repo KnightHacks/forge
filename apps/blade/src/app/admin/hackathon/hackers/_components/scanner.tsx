@@ -104,10 +104,14 @@ const HackerScanner = () => {
                   }
                 } finally {
 <<<<<<< HEAD
+<<<<<<< HEAD
                   setTimeout(() => (scanProps.processingScan = false), 6000);
 =======
                   setTimeout(() => (scanProps.processingScan = false), 7000);
 >>>>>>> b80417ba (made toast larger: on mobile it fills the entire screen, on tablet it fills half the screen, and on desktop it fill like a quarter of the screen, changed the timeout from 3000 seconds to 7000 seconds, so it is more persistent)
+=======
+                  setTimeout(() => (scanProps.processingScan = false), 4000);
+>>>>>>> 9e87baad (formating a bunch of files, added least class assinment logic to hackathon.ts)
                 }
               }
             }}
