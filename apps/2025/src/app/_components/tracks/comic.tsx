@@ -16,16 +16,16 @@ const Comic = React.memo((props: SVGProps<SVGSVGElement>) => {
       placeholder="blur"
       blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzc3NyIgaGVpZ2h0PSI1NzU4IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmM2Y0ZjYiLz48L3N2Zz4="
       style={{
-        imageRendering: 'auto',
-        filter: 'none',
-        transform: 'translateZ(0)',
-        backfaceVisibility: 'hidden',
-        willChange: 'transform',
+        imageRendering: "auto",
+        filter: "none",
+        transform: "translateZ(0)",
+        backfaceVisibility: "hidden",
+        willChange: "transform",
       }}
     />
   );
 });
 
-Comic.displayName = 'Comic';
+Comic.displayName = "Comic";
 
 export default Comic;
