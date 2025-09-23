@@ -257,7 +257,6 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
 }));
 
 export const HackerEventAttendee = createTable(
-  
   "hacker_event_attendee",
   (t) => ({
     id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -324,4 +323,3 @@ export const EventFeedback = createTable("event_feedback", (t) => ({
 }));
 
 export const InsertEventFeedbackSchema = createInsertSchema(EventFeedback);
-
