@@ -46,20 +46,34 @@ export default function RootLayout({
   return (
     <html lang="en" style={{ background: "#000000" }}>
       <head>
-        <link rel="preload" as="image" href="https://cdn.jsdelivr.net/gh/KnightHacks/forge@main/apps/2025/public/background.svg?v=1" />
+        <link
+          rel="preload"
+          as="image"
+          href="https://cdn.jsdelivr.net/gh/KnightHacks/forge@main/apps/2025/public/background.svg?v=1"
+        />
         <link rel="preload" as="image" href="/about-graphic.svg" />
         <link rel="preload" as="image" href="/comic.svg" />
         <link rel="dns-prefetch" href="//mlh.io" />
         <link rel="dns-prefetch" href="//discord.knighthacks.org" />
-        <script dangerouslySetInnerHTML={{ __html: `
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
           // Reset scroll position on page load
           window.addEventListener('load', function() {
             window.scrollTo(0, 0);
             history.scrollRestoration = 'manual';
           });
-        ` }} />
+        `,
+          }}
+        />
       </head>
-      <body style={{ overflowX: "hidden", minHeight: "100vh", background: "#000000" }}>
+      <body
+        style={{
+          overflowX: "hidden",
+          minHeight: "100vh",
+          background: "#000000",
+        }}
+      >
         <Navbar />
         {children}
       </body>

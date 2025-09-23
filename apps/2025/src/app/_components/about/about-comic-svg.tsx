@@ -19,6 +19,6 @@ const AboutComicSVG = React.memo((props: SVGProps<SVGSVGElement>) => {
   );
 });
 
-AboutComicSVG.displayName = 'AboutComicSVG';
+AboutComicSVG.displayName = "AboutComicSVG";
 
 export default AboutComicSVG;

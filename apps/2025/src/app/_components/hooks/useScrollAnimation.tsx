@@ -24,7 +24,7 @@ export default function useScrollAnimation(animationClass: string) {
       {
         threshold: 0.2, // Trigger when 20% visible
         rootMargin: "0px 0px -50px 0px", // Trigger slightly before fully in view
-      }
+      },
     );
 
     observer.observe(element);
