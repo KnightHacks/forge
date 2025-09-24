@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 "use client";
 
 import React, { useState } from "react";
@@ -44,6 +45,15 @@ const RepeatDropdown = ({ hackathonId }: { hackathonId: string }) => {
     } catch {
       toast.error("Failed to update repeat check-ins.");
     }
+=======
+import React, { useState } from "react";
+
+const RepeatDropdown = () => {
+  const [selectedOption, setSelectedOption] = useState("none");
+
+  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedOption(event.target.value);
+>>>>>>> bb2cee49 (prettier format and added some logic to get the alowed repeated checkin ppl to checkin and have thier status for repeatedcheckin become false)
   };
 
   return (
@@ -56,6 +66,7 @@ const RepeatDropdown = ({ hackathonId }: { hackathonId: string }) => {
         className="rounded border p-2 dark:bg-black dark:text-white"
       >
         <option value="none">None</option>
+<<<<<<< HEAD
         <option value="all">All classes</option>
         <option value="Operators">Operators</option>
         <option value="Machinist">Machinist</option>
@@ -65,6 +76,16 @@ const RepeatDropdown = ({ hackathonId }: { hackathonId: string }) => {
         <option value="Alchemist">Alchemist</option>
       </select>
       <Button onClick={handleApply}>Apply</Button>
+=======
+        <option value="allclasses">All classes</option>
+        <option value="operators">Operators</option>
+        <option value="machinist">Machinist</option>
+        <option value="sentinels">Sentinels</option>
+        <option value="harbinger">Harbinger</option>
+        <option value="beastkeeper">Beastkeeper</option>
+        <option value="alchemist">Alchemist</option>
+      </select>
+>>>>>>> bb2cee49 (prettier format and added some logic to get the alowed repeated checkin ppl to checkin and have thier status for repeatedcheckin become false)
     </div>
   );
 };
