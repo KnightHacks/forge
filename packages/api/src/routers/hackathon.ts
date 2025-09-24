@@ -152,8 +152,10 @@ export const hackathonRouter = {
               eq(t.hackathonId, input.hackathonId),
             ),
         });
-        //REPEATED CHECK-INA
+        //REPEATED CHECK-IN 
+        // let allowedRepeatCheckIn = false;
         if (doesHackerHaveClass?.class) {
+
           assignedClass = doesHackerHaveClass.class;
           return;
         }
@@ -211,6 +213,9 @@ export const hackathonRouter = {
         message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!${
           assignedClass ? ` Assigned class: ${assignedClass}.` : ""
         }`,
+        firstName: hacker.firstName,
+        lastName: hacker.lastName,
+        class: assignedClass,
       };
     }),
 } satisfies TRPCRouterRecord;
