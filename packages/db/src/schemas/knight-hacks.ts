@@ -229,6 +229,7 @@ export const HACKER_CLASSES = [
   "Alchemist",
 ] as const;
 export type HackerClass = (typeof HACKER_CLASSES)[number];
+export type RepeatPolicy = "none" | "all" | "class";
 
 export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),

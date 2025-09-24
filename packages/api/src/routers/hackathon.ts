@@ -135,14 +135,48 @@ export const hackathonRouter = {
         });
       }
 
-      if (hackerAttendee.status !== "confirmed" ) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
-        });
-      }
-
       let assignedClass: HackerClass | null = hackerAttendee.class ?? null;
+
+
+      await log({
+        title: "Hacker Checked-In",
+        message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon: ${hackathon.name}${
+          assignedClass ? ` (Class: ${assignedClass})` : ""
+        }`,
+        color: "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
+      if (hackerAttendee.status !== "confirmed") {
+        if (hackerAttendee.status !== "checkedin") {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
+          });
+        }
+        if (hackerAttendee.allowedRepeatCheckIn) {
+          await db
+            .update(HackerAttendee)
+            .set({ allowedRepeatCheckIn: false })
+            .where(
+              and(
+                eq(HackerAttendee.hackerId, hacker.id),
+                eq(HackerAttendee.hackathonId, input.hackathonId),
+              ),
+            );
+          return {
+            message: `${hacker.firstName} ${hacker.lastName} checked in`,
+            firstName: hacker.firstName,
+            lastName: hacker.lastName,
+            class: assignedClass,
+          };
+        }
+        return {
+          message: `${hacker.firstName} ${hacker.lastName} already checked in`,
+          firstName: hacker.firstName,
+          lastName: hacker.lastName,
+          class: `already checked in or they don't have the correct role, this is their role: ${hackerAttendee.status} please check if this matches with the role that was called`,
+        };
+      }
 
       await db.transaction(async (tx) => {
         const doesHackerHaveClass = await tx.query.HackerAttendee.findFirst({
@@ -152,8 +186,8 @@ export const hackathonRouter = {
               eq(t.hackathonId, input.hackathonId),
             ),
         });
-        //REPEATED CHECK-IN 
-        // let allowedRepeatCheckIn = false;
+
+        //delete this later prob will never get here
         if (doesHackerHaveClass?.class) {
           assignedClass = doesHackerHaveClass.class;
           return;
@@ -174,7 +208,9 @@ export const hackathonRouter = {
           }),
         );
 
-        const leastPopulatedClass = Math.min(...totalHackerinClass.map((c) => c.count));
+        const leastPopulatedClass = Math.min(
+          ...totalHackerinClass.map((c) => c.count),
+        );
         const candidates = totalHackerinClass
           .filter((c) => c.count === leastPopulatedClass)
           .map((c) => c.cls);
@@ -195,7 +231,6 @@ export const hackathonRouter = {
 
         assignedClass = pick;
       });
-
 
       await log({
         title: "Hacker Checked-In",
