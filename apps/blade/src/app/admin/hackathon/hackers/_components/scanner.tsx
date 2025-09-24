@@ -36,19 +36,29 @@ const HackerScanner = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [assignedClass, setAssignedClass] = useState("");
+<<<<<<< HEAD
   const [firstCheck, setFirstCheck] = useState("");
 
+=======
+>>>>>>> c565ac24 (added allowedRepeatCheckin boolean to the hackerattendee table also changed hackathonCheckIn so it also returns firstName, lastName, and class, added dialog popup box that blocks camera to confirm legal first and last name with class)
   const checkIn = api.hackathon.hackathonCheckIn.useMutation({
     onSuccess(opts) {
       if (!opts) {
         toast.success("Hacker Checked in Successfully!");
         return;
       }
+<<<<<<< HEAD
       toast.success(opts.message);
       setFirstName(opts.firstName);
       setLastName(opts.lastName);
       setAssignedClass(opts.class ?? "No class assigned");
       setFirstCheck(opts.messageforHackers);
+=======
+      toast.success(opts.firstName);
+      setFirstName(opts.firstName);
+      setLastName(opts.lastName);
+      setAssignedClass(opts.class ?? "No class assigned");
+>>>>>>> c565ac24 (added allowedRepeatCheckin boolean to the hackerattendee table also changed hackathonCheckIn so it also returns firstName, lastName, and class, added dialog popup box that blocks camera to confirm legal first and last name with class)
       setOpenPersistentDialog(true);
     },
     onError(opts) {
@@ -160,7 +170,10 @@ const HackerScanner = () => {
         {openPersistentDialog && (
           <div>
             <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-10 bg-black text-center text-white">
+<<<<<<< HEAD
               <div className="absolute top-5 px-5 font-bold">{firstCheck}</div>
+=======
+>>>>>>> c565ac24 (added allowedRepeatCheckin boolean to the hackerattendee table also changed hackathonCheckIn so it also returns firstName, lastName, and class, added dialog popup box that blocks camera to confirm legal first and last name with class)
               <div className="text-6xl font-bold">{firstName}</div>
               <div className="text-6xl font-bold">{lastName}</div>
               <div className="text-2xl font-bold">{assignedClass}</div>
