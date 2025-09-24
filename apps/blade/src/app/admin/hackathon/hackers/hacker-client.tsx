@@ -75,6 +75,7 @@ export default function HackersClient({
       <div className="flex justify-center">
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         <RepeatDropdown hackathonId={currentActiveHackathon?.id ?? ""} />
 =======
         Allow repeat check-ins placeholder
@@ -82,6 +83,9 @@ export default function HackersClient({
 =======
         <RepeatDropdown />
 >>>>>>> bb2cee49 (prettier format and added some logic to get the alowed repeated checkin ppl to checkin and have thier status for repeatedcheckin become false)
+=======
+        <RepeatDropdown hackathonId={currentActiveHackathon?.id ?? ""} />
+>>>>>>> 54f60ab6 (repeat checkins for certain classes, repeat for aall and none)
       </div>
 
       <div className="rounded-xl pb-8">
