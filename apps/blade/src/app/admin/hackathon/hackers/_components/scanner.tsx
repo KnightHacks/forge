@@ -32,13 +32,21 @@ interface CodeScanningProps {
 const HackerScanner = () => {
   const { data: hackathons } = api.hackathon.getHackathons.useQuery();
   const [open, setOpen] = useState(false);
+  const [openPersistentDialog, setOpenPersistentDialog] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [assignedClass, setAssignedClass] = useState("");
   const checkIn = api.hackathon.hackathonCheckIn.useMutation({
     onSuccess(opts) {
       if (!opts) {
         toast.success("Hacker Checked in Successfully!");
         return;
       }
-      toast.success(opts.message);
+      toast.success(opts.firstName);
+      setFirstName(opts.firstName);
+      setLastName(opts.lastName);
+      setAssignedClass(opts.class ?? "No class assigned");
+      setOpenPersistentDialog(true);
     },
     onError(opts) {
       toast.error(opts.message, {
@@ -138,6 +146,21 @@ const HackerScanner = () => {
             Close
           </Button>
         </div>
+        {openPersistentDialog && (
+          <div>
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-10 bg-black text-center text-white">
+              <div className="text-6xl font-bold">{firstName}</div>
+              <div className="text-6xl font-bold">{lastName}</div>
+              <div className="text-2xl font-bold">{assignedClass}</div>
+              <button
+                className="absolute bottom-10 rounded-xl bg-blue-500 px-8 py-2 font-bold hover:bg-blue-600"
+                onClick={() => setOpenPersistentDialog(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
