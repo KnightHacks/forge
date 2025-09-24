@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
-import { and, count, desc, eq, getTableColumns, lt } from "@forge/db";
+import { and, count, desc, eq, getTableColumns, lt} from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Hackathon,
@@ -14,6 +14,7 @@ import {
 
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { log } from "../utils";
+const zHackerClass = z.enum(HACKER_CLASSES);
 
 export const hackathonRouter = {
   getHackathons: publicProcedure.query(async () => {
@@ -249,5 +250,47 @@ export const hackathonRouter = {
         lastName: hacker.lastName,
         class: assignedClass,
       };
+    }),
+    
+     setAllowedRepeatCheckIn: adminProcedure
+    .input(
+      z.object({
+        hackathonId: z.string(),
+        mode: z.enum(["all", "none", "class"]),
+        cls: zHackerClass.optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const baseWhere = eq(HackerAttendee.hackathonId, input.hackathonId);
+
+      if (input.mode === "none") {
+        await db
+          .update(HackerAttendee)
+          .set({ allowedRepeatCheckIn: false })
+          .where(baseWhere);
+        return { updated: true };
+      }
+
+      if (input.mode === "all") {
+        await db
+          .update(HackerAttendee)
+          .set({ allowedRepeatCheckIn: true })
+          .where(baseWhere);
+        return { updated: true };
+      }
+
+      if (!input.cls) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Class is required when mode is 'class'.",
+        });
+      }
+
+      await db
+        .update(HackerAttendee)
+        .set({ allowedRepeatCheckIn: true })
+        .where(and(baseWhere, eq(HackerAttendee.class, input.cls)));
+
+      return { updated: true };
     }),
 } satisfies TRPCRouterRecord;
