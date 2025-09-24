@@ -5,6 +5,7 @@ import { useState } from "react";
 import { HACKER_STATUS_MAP } from "~/consts";
 import HackerStatusCounter from "./_components/hacker-status-counter";
 import HackerTable from "./_components/hackers-table";
+import RepeatDropdown from "./_components/repeat-dropdown";
 import HackerScanner from "./_components/scanner";
 
 export default function HackersClient({
@@ -72,7 +73,7 @@ export default function HackersClient({
         <HackerScanner />
       </div>
       <div className="flex justify-center">
-        Allow repeat check-ins placeholder
+        <RepeatDropdown />
       </div>
 
       <div className="rounded-xl pb-8">
