@@ -71,6 +71,9 @@ export default function HackersClient({
       <div className="mb-9 flex justify-center">
         <HackerScanner />
       </div>
+      <div className="flex justify-center">
+        Allow repeat check-ins placeholder
+      </div>
 
       <div className="rounded-xl pb-8">
         <HackerTable filterStatus={filterStatus} />
