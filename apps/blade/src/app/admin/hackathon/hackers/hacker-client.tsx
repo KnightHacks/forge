@@ -73,7 +73,7 @@ export default function HackersClient({
         <HackerScanner />
       </div>
       <div className="flex justify-center">
-        <RepeatDropdown />
+        <RepeatDropdown hackathonId={currentActiveHackathon?.id ?? ""} />
       </div>
 
       <div className="rounded-xl pb-8">
