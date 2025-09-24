@@ -73,7 +73,11 @@ export default function HackersClient({
         <HackerScanner />
       </div>
       <div className="flex justify-center">
+<<<<<<< HEAD
         <RepeatDropdown hackathonId={currentActiveHackathon?.id ?? ""} />
+=======
+        Allow repeat check-ins placeholder
+>>>>>>> 84787acd (I don't knw what happened and how it was fixed but qr scanner just kept scanning twice for some reason so changing the timeout I think mad eit so scans once every 9 seconds, not sure if it will go back to scanning twice but something here worked)
       </div>
 
       <div className="rounded-xl pb-8">
