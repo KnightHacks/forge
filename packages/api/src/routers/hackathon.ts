@@ -135,7 +135,7 @@ export const hackathonRouter = {
         });
       }
 
-      if (hackerAttendee.status !== "confirmed") {
+      if (hackerAttendee.status !== "confirmed" ) {
         throw new TRPCError({
           code: "CONFLICT",
           message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
@@ -155,7 +155,6 @@ export const hackathonRouter = {
         //REPEATED CHECK-IN 
         // let allowedRepeatCheckIn = false;
         if (doesHackerHaveClass?.class) {
-
           assignedClass = doesHackerHaveClass.class;
           return;
         }
@@ -186,7 +185,7 @@ export const hackathonRouter = {
 
         await tx
           .update(HackerAttendee)
-          .set({ class: pick })
+          .set({ class: pick, status: "checkedin" })
           .where(
             and(
               eq(HackerAttendee.hackerId, hacker.id),
@@ -197,9 +196,7 @@ export const hackathonRouter = {
         assignedClass = pick;
       });
 
-      // // Update the status to indicate they're checked in
-      // // You might want to add a "checked-in" status to HACKATHON_APPLICATION_STATES
-      // // For now, we'll just log the check-in without changing status
+
       await log({
         title: "Hacker Checked-In",
         message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon: ${hackathon.name}${
