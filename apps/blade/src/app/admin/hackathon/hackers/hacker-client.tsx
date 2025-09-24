@@ -67,6 +67,15 @@ export default function HackersClient({
           <div>You are currently viewing all hackers.</div>
         )}
       </div>
+<<<<<<< HEAD
+=======
+      <div className="mb-9 flex justify-center">
+        <HackerScanner />
+      </div>
+      <div className="flex justify-center">
+        Allow repeat check-ins placeholder
+      </div>
+>>>>>>> 4cf50dcc (I don't knw what happened and how it was fixed but qr scanner just kept scanning twice for some reason so changing the timeout I think mad eit so scans once every 9 seconds, not sure if it will go back to scanning twice but something here worked)
 
       <div className="rounded-xl pb-8">
         <HackerTable filterStatus={filterStatus} />
