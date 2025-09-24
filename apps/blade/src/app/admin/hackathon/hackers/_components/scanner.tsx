@@ -37,16 +37,21 @@ const HackerScanner = () => {
   const [lastName, setLastName] = useState("");
   const [assignedClass, setAssignedClass] = useState("");
 <<<<<<< HEAD
+<<<<<<< HEAD
   const [firstCheck, setFirstCheck] = useState("");
 
 =======
 >>>>>>> c565ac24 (added allowedRepeatCheckin boolean to the hackerattendee table also changed hackathonCheckIn so it also returns firstName, lastName, and class, added dialog popup box that blocks camera to confirm legal first and last name with class)
+=======
+
+>>>>>>> 84787acd (I don't knw what happened and how it was fixed but qr scanner just kept scanning twice for some reason so changing the timeout I think mad eit so scans once every 9 seconds, not sure if it will go back to scanning twice but something here worked)
   const checkIn = api.hackathon.hackathonCheckIn.useMutation({
     onSuccess(opts) {
       if (!opts) {
         toast.success("Hacker Checked in Successfully!");
         return;
       }
+<<<<<<< HEAD
 <<<<<<< HEAD
       toast.success(opts.message);
       setFirstName(opts.firstName);
@@ -55,6 +60,9 @@ const HackerScanner = () => {
       setFirstCheck(opts.messageforHackers);
 =======
       toast.success(opts.firstName);
+=======
+      toast.success(opts.message);
+>>>>>>> 84787acd (I don't knw what happened and how it was fixed but qr scanner just kept scanning twice for some reason so changing the timeout I think mad eit so scans once every 9 seconds, not sure if it will go back to scanning twice but something here worked)
       setFirstName(opts.firstName);
       setLastName(opts.lastName);
       setAssignedClass(opts.class ?? "No class assigned");
@@ -115,6 +123,7 @@ const HackerScanner = () => {
                 } finally {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                   setTimeout(() => (scanProps.processingScan = false), 6000);
 =======
                   setTimeout(() => (scanProps.processingScan = false), 7000);
@@ -122,6 +131,9 @@ const HackerScanner = () => {
 =======
                   setTimeout(() => (scanProps.processingScan = false), 4000);
 >>>>>>> 9e87baad (formating a bunch of files, added least class assinment logic to hackathon.ts)
+=======
+                  setTimeout(() => (scanProps.processingScan = false), 9000);
+>>>>>>> 84787acd (I don't knw what happened and how it was fixed but qr scanner just kept scanning twice for some reason so changing the timeout I think mad eit so scans once every 9 seconds, not sure if it will go back to scanning twice but something here worked)
                 }
               }
             }}
