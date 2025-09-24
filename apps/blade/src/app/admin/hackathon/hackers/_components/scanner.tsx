@@ -36,13 +36,14 @@ const HackerScanner = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [assignedClass, setAssignedClass] = useState("");
+
   const checkIn = api.hackathon.hackathonCheckIn.useMutation({
     onSuccess(opts) {
       if (!opts) {
         toast.success("Hacker Checked in Successfully!");
         return;
       }
-      toast.success(opts.firstName);
+      toast.success(opts.message);
       setFirstName(opts.firstName);
       setLastName(opts.lastName);
       setAssignedClass(opts.class ?? "No class assigned");
@@ -100,7 +101,7 @@ const HackerScanner = () => {
                     toast.error("Please select a hackathon first!");
                   }
                 } finally {
-                  setTimeout(() => (scanProps.processingScan = false), 4000);
+                  setTimeout(() => (scanProps.processingScan = false), 9000);
                 }
               }
             }}
