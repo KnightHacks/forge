@@ -3,7 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
-import { and, count, desc, eq, getTableColumns, lt} from "@forge/db";
+import { CLASS_ROLE_ID, KH_EVENT_ROLE_ID } from "@forge/consts/knight-hacks";
+import { and, count, desc, eq, getTableColumns, lt } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Hackathon,
@@ -13,9 +14,9 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
-import { log } from "../utils";
-const zHackerClass = z.enum(HACKER_CLASSES);
+import { addRoleToMember, log, resolveDiscordUserId } from "../utils";
 
+const zHackerClass = z.enum(HACKER_CLASSES);
 export const hackathonRouter = {
   getHackathons: publicProcedure.query(async () => {
     return await db.query.Hackathon.findMany();
@@ -138,15 +139,6 @@ export const hackathonRouter = {
 
       let assignedClass: HackerClass | null = hackerAttendee.class ?? null;
 
-
-      await log({
-        title: "Hacker Checked-In",
-        message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon: ${hackathon.name}${
-          assignedClass ? ` (Class: ${assignedClass})` : ""
-        }`,
-        color: "success_green",
-        userId: ctx.session.user.discordUserId,
-      });
       if (hackerAttendee.status !== "confirmed") {
         if (hackerAttendee.status !== "checkedin") {
           throw new TRPCError({
@@ -165,12 +157,18 @@ export const hackathonRouter = {
               ),
             );
           return {
-            message: `${hacker.firstName} ${hacker.lastName} checked in`,
+            message: `${hacker.firstName} ${hacker.lastName} checked in for the event (or what everr e)`,
             firstName: hacker.firstName,
             lastName: hacker.lastName,
             class: assignedClass,
           };
         }
+        await log({
+          title: `Hacker Checked-In attempt failed`,
+          message: `${hacker.firstName} ${hacker.lastName} has attempted check in but either role has not been called or already checked in once`,
+          color: "uhoh_red",
+          userId: ctx.session.user.discordUserId,
+        });
         return {
           message: `${hacker.firstName} ${hacker.lastName} already checked in`,
           firstName: hacker.firstName,
@@ -188,8 +186,10 @@ export const hackathonRouter = {
             ),
         });
 
-        //delete this later prob will never get here
-        if (doesHackerHaveClass?.class) {
+        if (
+          doesHackerHaveClass?.class &&
+          doesHackerHaveClass.class in HACKER_CLASSES
+        ) {
           assignedClass = doesHackerHaveClass.class;
           return;
         }
@@ -233,15 +233,43 @@ export const hackathonRouter = {
         assignedClass = pick;
       });
 
+      const discordId = await resolveDiscordUserId(hacker.discordUser);
+      if (!discordId) {
+        await log({
+          title: "Discord role assign skipped",
+          message: `Could not resolve Discord ID for "${hacker.discordUser}".`,
+          color: "uhoh_red",
+          userId: ctx.session.user.discordUserId,
+        });
+      } else {
+        try {
+          await addRoleToMember(discordId, KH_EVENT_ROLE_ID);
+          console.log(`Assigned role ${KH_EVENT_ROLE_ID} to user ${discordId}`);
+
+          if (assignedClass) {
+            await addRoleToMember(discordId, CLASS_ROLE_ID[assignedClass]);
+          }
+        } catch (e) {
+          await log({
+            title: "Discord role assign failed",
+            message: `Failed to assign Discord roles for "${hacker.discordUser}".`,
+            color: "uhoh_red",
+            userId: ctx.session.user.discordUserId,
+          });
+          console.error(
+            "Failed to assign Discord roles:",
+            (e as Error).message,
+          );
+        }
+      }
       await log({
-        title: "Hacker Checked-In",
-        message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon: ${hackathon.name}${
-          assignedClass ? ` (Class: ${assignedClass})` : ""
+        title: `Hacker Checked-In`,
+        message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon: ${hackathon.name} ${
+          assignedClass ? ` (Class: ${assignedClass}).` : ""
         }`,
         color: "success_green",
         userId: ctx.session.user.discordUserId,
       });
-
       return {
         message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!${
           assignedClass ? ` Assigned class: ${assignedClass}.` : ""
@@ -251,8 +279,8 @@ export const hackathonRouter = {
         class: assignedClass,
       };
     }),
-    
-     setAllowedRepeatCheckIn: adminProcedure
+
+  setAllowedRepeatCheckIn: adminProcedure
     .input(
       z.object({
         hackathonId: z.string(),
