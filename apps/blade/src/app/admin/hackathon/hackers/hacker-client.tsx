@@ -5,7 +5,6 @@ import { useState } from "react";
 import { HACKER_STATUS_MAP } from "~/consts";
 import HackerStatusCounter from "./_components/hacker-status-counter";
 import HackerTable from "./_components/hackers-table";
-import RepeatDropdown from "./_components/repeat-dropdown";
 import HackerScanner from "./_components/scanner";
 
 export default function HackersClient({
@@ -71,21 +70,6 @@ export default function HackersClient({
       </div>
       <div className="mb-9 flex justify-center">
         <HackerScanner />
-      </div>
-      <div className="flex justify-center">
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        <RepeatDropdown hackathonId={currentActiveHackathon?.id ?? ""} />
-=======
-        Allow repeat check-ins placeholder
->>>>>>> 84787acd (I don't knw what happened and how it was fixed but qr scanner just kept scanning twice for some reason so changing the timeout I think mad eit so scans once every 9 seconds, not sure if it will go back to scanning twice but something here worked)
-=======
-        <RepeatDropdown />
->>>>>>> bb2cee49 (prettier format and added some logic to get the alowed repeated checkin ppl to checkin and have thier status for repeatedcheckin become false)
-=======
-        <RepeatDropdown hackathonId={currentActiveHackathon?.id ?? ""} />
->>>>>>> 54f60ab6 (repeat checkins for certain classes, repeat for aall and none)
       </div>
 
       <div className="rounded-xl pb-8">
