@@ -265,12 +265,17 @@ export const PROD_DISCORD_ROLE_HARBINGER = "1415702341214011392";
 export const DEV_DISCORD_ROLE_HARBINGER = "1420819326075801670";
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 export const PROD_DISCORD_ROLE_MONSTOLOGIST = "1415702361653121044";
 export const DEV_DISCORD_ROLE_MONSTOLOGIST = "1420819295759237222";
 =======
 export const PROD_DISCORD_ROLE_BEASTKEEPER = "1415702361653121044";
 export const DEV_DISCORD_ROLE_BEASTKEEPER = "1420819295759237222";
 >>>>>>> 56b0d389 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
+=======
+export const PROD_DISCORD_ROLE_BEASTKEEPER = "1415702361653121044";
+export const DEV_DISCORD_ROLE_BEASTKEEPER = "1420819295759237222";
+>>>>>>> 14c69601 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
 
 export const PROD_DISCORD_ROLE_ALCHEMIST = "1415702383274491934";
 export const DEV_DISCORD_ROLE_ALCHEMIST = "1420819309965611140";
@@ -281,6 +286,7 @@ export const KH_EVENT_ROLE_ID = IS_PROD
   ? PROD_DISCORD_ROLE_KNIGHT_HACKS_8
   : DEV_DISCORD_ROLE_KNIGHT_HACKS_8;
 <<<<<<< HEAD
+<<<<<<< HEAD
 export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
 
 export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
@@ -288,10 +294,15 @@ export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
 
 export const CLASS_ROLE_ID: Record<HackerClass, string> = {
 >>>>>>> 56b0d389 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
+=======
+
+export const CLASS_ROLE_ID: Record<HackerClass, string> = {
+>>>>>>> 14c69601 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
   Operators: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,
   Machinist: IS_PROD ? PROD_DISCORD_ROLE_MACHINIST : DEV_DISCORD_ROLE_MACHINIST,
   Sentinels: IS_PROD ? PROD_DISCORD_ROLE_SENTINELS : DEV_DISCORD_ROLE_SENTINELS,
   Harbinger: IS_PROD ? PROD_DISCORD_ROLE_HARBINGER : DEV_DISCORD_ROLE_HARBINGER,
+<<<<<<< HEAD
 <<<<<<< HEAD
   Monstologist: IS_PROD
     ? PROD_DISCORD_ROLE_MONSTOLOGIST
@@ -299,12 +310,17 @@ export const CLASS_ROLE_ID: Record<HackerClass, string> = {
   Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
 } as const satisfies Record<AssignableHackerClass, string>;
 =======
+=======
+>>>>>>> 14c69601 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
   Beastkeeper: IS_PROD
     ? PROD_DISCORD_ROLE_BEASTKEEPER
     : DEV_DISCORD_ROLE_BEASTKEEPER,
   Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
 };
+<<<<<<< HEAD
 >>>>>>> 56b0d389 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
+=======
+>>>>>>> 14c69601 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
 
 export const MEMBER_PROFILE_ICON_SIZE = 24;
 
