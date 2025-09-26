@@ -101,7 +101,7 @@ const HackerScanner = () => {
                     toast.error("Please select a hackathon first!");
                   }
                 } finally {
-                  setTimeout(() => (scanProps.processingScan = false), 9000);
+                  setTimeout(() => (scanProps.processingScan = false), 6000);
                 }
               }
             }}
