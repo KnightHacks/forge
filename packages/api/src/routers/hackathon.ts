@@ -158,7 +158,7 @@ export const hackathonRouter = {
             firstName: hacker.firstName,
             lastName: hacker.lastName,
             class: assignedClass,
-            messageforHackers:" ",
+            messageforHackers: " ",
           };
         }
         await log({
@@ -276,7 +276,8 @@ export const hackathonRouter = {
         firstName: hacker.firstName,
         lastName: hacker.lastName,
         class: assignedClass,
-        messageforHackers: "Make sure that the hacker's name matches their Blade's first name and last name, and send them to the proper line to get their lanyards.",
+        messageforHackers:
+          "Make sure that the hacker's name matches their Blade's first name and last name, and send them to the proper line to get their lanyards.",
       };
     }),
 
