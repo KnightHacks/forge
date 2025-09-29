@@ -36,6 +36,7 @@ const HackerScanner = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [assignedClass, setAssignedClass] = useState("");
+  const [firstCheck, setFirstCheck] = useState("");
 
   const checkIn = api.hackathon.hackathonCheckIn.useMutation({
     onSuccess(opts) {
@@ -47,6 +48,7 @@ const HackerScanner = () => {
       setFirstName(opts.firstName);
       setLastName(opts.lastName);
       setAssignedClass(opts.class ?? "No class assigned");
+      setFirstCheck(opts.messageforHackers);
       setOpenPersistentDialog(true);
     },
     onError(opts) {
@@ -150,11 +152,7 @@ const HackerScanner = () => {
         {openPersistentDialog && (
           <div>
             <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-10 bg-black text-center text-white">
-              <div className="absolute top-5 px-5 font-bold">
-                If this is the check-in at the start of the Hackathon, and you
-                see this but the little toast says they are not confirmed, it
-                means the scanner scanned twice, let bro in
-              </div>
+              <div className="absolute top-5 px-5 font-bold">{firstCheck}</div>
               <div className="text-6xl font-bold">{firstName}</div>
               <div className="text-6xl font-bold">{lastName}</div>
               <div className="text-2xl font-bold">{assignedClass}</div>
