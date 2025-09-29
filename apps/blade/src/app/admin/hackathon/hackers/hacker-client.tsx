@@ -5,7 +5,6 @@ import { useState } from "react";
 import { HACKER_STATUS_MAP } from "~/consts";
 import HackerStatusCounter from "./_components/hacker-status-counter";
 import HackerTable from "./_components/hackers-table";
-import HackerScanner from "./_components/scanner";
 
 export default function HackersClient({
   currentActiveHackathon,
@@ -67,9 +66,6 @@ export default function HackersClient({
         ) : (
           <div>You are currently viewing all hackers.</div>
         )}
-      </div>
-      <div className="mb-9 flex justify-center">
-        <HackerScanner />
       </div>
 
       <div className="rounded-xl pb-8">
