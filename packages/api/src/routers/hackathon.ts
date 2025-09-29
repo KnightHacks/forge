@@ -138,7 +138,6 @@ export const hackathonRouter = {
       }
 
       let assignedClass: HackerClass | null = hackerAttendee.class ?? null;
-
       if (hackerAttendee.status !== "confirmed") {
         if (hackerAttendee.status !== "checkedin") {
           throw new TRPCError({
@@ -157,10 +156,11 @@ export const hackathonRouter = {
               ),
             );
           return {
-            message: `${hacker.firstName} ${hacker.lastName} checked in for the event (or what everr e)`,
+            message: `${hacker.firstName} ${hacker.lastName} checked in for the event`,
             firstName: hacker.firstName,
             lastName: hacker.lastName,
             class: assignedClass,
+            messageforHackers:" ",
           };
         }
         await log({
@@ -174,6 +174,7 @@ export const hackathonRouter = {
           firstName: hacker.firstName,
           lastName: hacker.lastName,
           class: `already checked in or they don't have the correct role, this is their role: ${hackerAttendee.status} please check if this matches with the role that was called`,
+          messageforHackers: " ",
         };
       }
 
@@ -277,6 +278,7 @@ export const hackathonRouter = {
         firstName: hacker.firstName,
         lastName: hacker.lastName,
         class: assignedClass,
+        messageforHackers: "Make sure that the hacker's name matches their Blade's first name and last name, and send them to the proper line to get their lanyards.",
       };
     }),
 
