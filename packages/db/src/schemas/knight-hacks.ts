@@ -264,6 +264,7 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   timeConfirmed: t.timestamp(),
   points: t.integer().notNull().default(0),
   class: t.varchar({ length: 20 }).$type<HackerClass | null>().default(null),
+  
   allowedRepeatCheckIn: t.boolean().notNull().default(false),
 }));
 
