@@ -164,8 +164,11 @@ export const EVENT_TAGS = [
   "Class Support",
   "Workshop",
   "OPS",
-  "Hackathon",
   "Collabs",
+  "Check-in",
+  "Merch",
+  "Food",
+  "Ceremony",
 ] as const;
 
 export const EVENT_FEEDBACK_HEARD = [
@@ -186,17 +189,20 @@ type EventTag = (typeof EVENT_TAGS)[number];
 
 export const EVENT_POINTS: Record<EventTag, number> = {
   GBM: 35,
-  Social: 35,
+  Social: 25,
   Kickstart: 25,
   "Project Launch": 25,
   "Hello World": 25,
-  Sponsorship: 40,
+  Sponsorship: 50,
   "Tech Exploration": 25,
   "Class Support": 25,
   Workshop: 25,
   OPS: 20,
-  Hackathon: 1,
   Collabs: 40,
+  "Check-in": 5,
+  Merch: 5,
+  Food: 5,
+  Ceremony: 50,
 } as const;
 
 export const KNIGHTHACKS_S3_BUCKET_REGION = "us-east-1";
@@ -258,8 +264,8 @@ export const DEV_DISCORD_ROLE_SENTINELS = "1420819277279137892";
 export const PROD_DISCORD_ROLE_HARBINGER = "1415702341214011392";
 export const DEV_DISCORD_ROLE_HARBINGER = "1420819326075801670";
 
-export const PROD_DISCORD_ROLE_BEASTKEEPER = "1415702361653121044";
-export const DEV_DISCORD_ROLE_BEASTKEEPER = "1420819295759237222";
+export const PROD_DISCORD_ROLE_MONSTOLOGIST = "1415702361653121044";
+export const DEV_DISCORD_ROLE_MONSTOLOGIST = "1420819295759237222";
 
 export const PROD_DISCORD_ROLE_ALCHEMIST = "1415702383274491934";
 export const DEV_DISCORD_ROLE_ALCHEMIST = "1420819309965611140";
@@ -275,9 +281,9 @@ export const CLASS_ROLE_ID: Record<HackerClass, string> = {
   Machinist: IS_PROD ? PROD_DISCORD_ROLE_MACHINIST : DEV_DISCORD_ROLE_MACHINIST,
   Sentinels: IS_PROD ? PROD_DISCORD_ROLE_SENTINELS : DEV_DISCORD_ROLE_SENTINELS,
   Harbinger: IS_PROD ? PROD_DISCORD_ROLE_HARBINGER : DEV_DISCORD_ROLE_HARBINGER,
-  Beastkeeper: IS_PROD
-    ? PROD_DISCORD_ROLE_BEASTKEEPER
-    : DEV_DISCORD_ROLE_BEASTKEEPER,
+  Monstologist: IS_PROD
+    ? PROD_DISCORD_ROLE_MONSTOLOGIST
+    : DEV_DISCORD_ROLE_MONSTOLOGIST,
   Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
 };
 
@@ -332,7 +338,11 @@ export type EventTagsColor =
   | "Workshop"
   | "OPS"
   | "Hackathon"
-  | "Collabs";
+  | "Collabs"
+  | "Check-in"
+  | "Merch"
+  | "Food"
+  | "Ceremony";
 
 export const GENDERS = [
   "Man",
