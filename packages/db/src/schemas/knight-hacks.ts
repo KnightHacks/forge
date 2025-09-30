@@ -225,7 +225,7 @@ export const HACKER_CLASSES = [
   "Machinist",
   "Sentinels",
   "Harbinger",
-  "Beastkeeper",
+  "Monstologist",
   "Alchemist",
 ] as const;
 export type HackerClass = (typeof HACKER_CLASSES)[number];
