@@ -266,6 +266,7 @@ export const DEV_DISCORD_ROLE_HARBINGER = "1420819326075801670";
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export const PROD_DISCORD_ROLE_MONSTOLOGIST = "1415702361653121044";
 export const DEV_DISCORD_ROLE_MONSTOLOGIST = "1420819295759237222";
 =======
@@ -276,6 +277,10 @@ export const DEV_DISCORD_ROLE_BEASTKEEPER = "1420819295759237222";
 export const PROD_DISCORD_ROLE_BEASTKEEPER = "1415702361653121044";
 export const DEV_DISCORD_ROLE_BEASTKEEPER = "1420819295759237222";
 >>>>>>> 14c69601 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
+=======
+export const PROD_DISCORD_ROLE_MONSTOLOGIST = "1415702361653121044";
+export const DEV_DISCORD_ROLE_MONSTOLOGIST = "1420819295759237222";
+>>>>>>> 49c7e20b (new event tags)
 
 export const PROD_DISCORD_ROLE_ALCHEMIST = "1415702383274491934";
 export const DEV_DISCORD_ROLE_ALCHEMIST = "1420819309965611140";
@@ -304,6 +309,7 @@ export const CLASS_ROLE_ID: Record<HackerClass, string> = {
   Harbinger: IS_PROD ? PROD_DISCORD_ROLE_HARBINGER : DEV_DISCORD_ROLE_HARBINGER,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   Monstologist: IS_PROD
     ? PROD_DISCORD_ROLE_MONSTOLOGIST
     : DEV_DISCORD_ROLE_MONSTOLOGIST,
@@ -315,6 +321,11 @@ export const CLASS_ROLE_ID: Record<HackerClass, string> = {
   Beastkeeper: IS_PROD
     ? PROD_DISCORD_ROLE_BEASTKEEPER
     : DEV_DISCORD_ROLE_BEASTKEEPER,
+=======
+  Monstologist: IS_PROD
+    ? PROD_DISCORD_ROLE_MONSTOLOGIST
+    : DEV_DISCORD_ROLE_MONSTOLOGIST,
+>>>>>>> 49c7e20b (new event tags)
   Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
 };
 <<<<<<< HEAD
