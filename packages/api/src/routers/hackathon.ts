@@ -158,7 +158,7 @@ export const hackathonRouter = {
             firstName: hacker.firstName,
             lastName: hacker.lastName,
             class: assignedClass,
-            messageforHackers: " ",
+            messageforHackers: "check in successful",
           };
         }
         await log({
@@ -171,8 +171,8 @@ export const hackathonRouter = {
           message: `${hacker.firstName} ${hacker.lastName} already checked in`,
           firstName: hacker.firstName,
           lastName: hacker.lastName,
-          class: `already checked in or they don't have the correct role, this is their role: ${hackerAttendee.status} please check if this matches with the role that was called`,
-          messageforHackers: " ",
+          class: assignedClass,
+          messageforHackers: "Fail, repeated or class not called",
         };
       }
 
