@@ -230,6 +230,10 @@ export const HACKER_CLASSES = [
 ] as const;
 export type HackerClass = (typeof HACKER_CLASSES)[number];
 export type RepeatPolicy = "none" | "all" | "class";
+export const AssignedClassCheckinSchema = z.union([
+  z.literal("All"),
+  z.enum(HACKER_CLASSES),
+]);
 
 export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -255,8 +259,7 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   timeConfirmed: t.timestamp(),
   points: t.integer().notNull().default(0),
   class: t.varchar({ length: 20 }).$type<HackerClass | null>().default(null),
-
-  allowedRepeatCheckIn: t.boolean().notNull().default(false),
+  fastPass: t.boolean().notNull().default(false),
 }));
 
 export const HackerEventAttendee = createTable(
