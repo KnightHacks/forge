@@ -28,6 +28,13 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 import ToggleButton from "../../../../admin/hackathon/hackers/_components/toggle-button";
+<<<<<<< HEAD
+=======
+
+interface CodeScanningProps {
+  processingScan?: boolean;
+}
+>>>>>>> e5d3427e (lots of moving things around and just making the errors go away, mostly same code with slight tweaks)
 
 const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   const { data: events } = api.event.getEvents.useQuery();
@@ -44,8 +51,11 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   const [assignedClass, setAssignedClass] = useState("");
   const [checkInMessage, setCheckInMessage] = useState("");
   const [toggleRepeatedCheckIn, setToggleRepeatedCheckIn] = useState(false);
+<<<<<<< HEAD
 
   const scanningRef = useRef(false);
+=======
+>>>>>>> e5d3427e (lots of moving things around and just making the errors go away, mostly same code with slight tweaks)
 
   const now = new Date();
   const currentEvents = (filteredEvents ?? []).filter((event) => {
@@ -79,9 +89,13 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
       setLastName(opts.lastName);
       setAssignedClass(opts.class ?? "No class assigned");
       setCheckInMessage(opts.messageforHackers);
+<<<<<<< HEAD
       if (opts.eventName === "Check-in") {
         setOpenPersistentDialog(true);
       }
+=======
+      setOpenPersistentDialog(true);
+>>>>>>> e5d3427e (lots of moving things around and just making the errors go away, mostly same code with slight tweaks)
       return;
     },
     onError(opts) {
@@ -108,7 +122,11 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
       userId: "",
       eventPoints: 0,
       hackathonId: "",
+<<<<<<< HEAD
       assignedClassCheckin: "All",
+=======
+      assignedClassCheckin: "",
+>>>>>>> e5d3427e (lots of moving things around and just making the errors go away, mostly same code with slight tweaks)
       repeatedCheckin: false,
     },
   });
@@ -221,6 +239,7 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
           <QrReader
             scanDelay={2000}
             constraints={{ facingMode: "environment" }}
+<<<<<<< HEAD
             onResult={async (result, _) => {
               if (!result) return;
               if (scanningRef.current) return;
@@ -234,6 +253,26 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
                     await form.handleSubmit((data) =>
                       hackerEventCheckIn.mutate(data),
                     )();
+=======
+            onResult={async (result, _, codeReader) => {
+              const scanProps = codeReader as CodeScanningProps;
+              if (!scanProps.processingScan && !!result) {
+                scanProps.processingScan = true;
+                try {
+                  const userId = result.getText().substring(5);
+                  form.setValue("userId", userId);
+                  const eventId = form.getValues("eventId");
+                  if (eventId) {
+                    if (eventType === "Hacker") {
+                      await form.handleSubmit((data) =>
+                        hackerEventCheckIn.mutate(data),
+                      )();
+                    } else {
+                      await form.handleSubmit((data) =>
+                        memberCheckIn.mutate(data),
+                      )();
+                    }
+>>>>>>> e5d3427e (lots of moving things around and just making the errors go away, mostly same code with slight tweaks)
                   } else {
                     await form.handleSubmit((data) =>
                       memberCheckIn.mutate(data),
@@ -265,8 +304,12 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               </TabsList>
               <TabsContent value="current" className="space-y-4">
                 {renderEventSelect(currentEvents)}
+<<<<<<< HEAD
                 {eventType === "Hacker" && renderClassCheckinSelect()}
 
+=======
+                {renderClassCheckinSelect()}
+>>>>>>> e5d3427e (lots of moving things around and just making the errors go away, mostly same code with slight tweaks)
                 <ToggleButton
                   isToggled={toggleRepeatedCheckIn}
                   onToggle={(value) => {
@@ -277,7 +320,11 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               </TabsContent>
               <TabsContent value="previous" className="space-y-4">
                 {renderEventSelect(previousEvents)}
+<<<<<<< HEAD
                 {eventType === "Hacker" && renderClassCheckinSelect()}
+=======
+                {renderClassCheckinSelect()}
+>>>>>>> e5d3427e (lots of moving things around and just making the errors go away, mostly same code with slight tweaks)
                 <ToggleButton
                   isToggled={toggleRepeatedCheckIn}
                   onToggle={(value) => {

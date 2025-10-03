@@ -103,6 +103,7 @@ export const hackathonRouter = {
     .input(
       z.object({
         hackathonId: z.string(),
+
       }),
     )
     .query(async ({ input }) => {
