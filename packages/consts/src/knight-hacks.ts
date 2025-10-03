@@ -1,5 +1,6 @@
 import type { HackerClass } from "../../db/src/schemas/knight-hacks";
 
+
 export const LEVELS_OF_STUDY = [
   "Less than Secondary / High School",
   "Secondary / High School",
