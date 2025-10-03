@@ -785,7 +785,7 @@ export const hackerRouter = {
             message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
           });
       }
-      if (hackerAttendee.status === "confirmed") {
+      if (hackerAttendee.status === "confirmed" && event.tag === "Check-in") {
              await db.transaction(async (tx) => {
         const doesHackerHaveClass = await tx.query.HackerAttendee.findFirst({
           where: (t, { and, eq }) =>
