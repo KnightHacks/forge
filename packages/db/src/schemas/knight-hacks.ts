@@ -228,7 +228,14 @@ export const HACKER_CLASSES = [
   "Monstologist",
   "Alchemist",
 ] as const;
-export type HackerClass = (typeof HACKER_CLASSES)[number];
+export const SPECIAL_HACKER_CLASSES = ["VIP"] as const;
+export const HACKER_CLASSES_ALL = [
+  ...HACKER_CLASSES,
+  ...SPECIAL_HACKER_CLASSES,
+] as const;
+export type HackerClass = (typeof HACKER_CLASSES_ALL)[number];
+export const HackerClassEnum = z.enum(HACKER_CLASSES_ALL);
+
 export type RepeatPolicy = "none" | "all" | "class";
 export const AssignedClassCheckinSchema = z.union([
   z.literal("All"),
