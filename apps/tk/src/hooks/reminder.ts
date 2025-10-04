@@ -7,6 +7,7 @@ import { db } from "@forge/db/client";
 import { Event as DBEvent } from "@forge/db/schemas/knight-hacks";
 
 import {
+  DISCORD_HACKATHON_ROLE_ID,
   DISCORD_PROD_GUILD_ID,
   DISCORD_REMINDER_ROLE_ID,
   EVENT_BANNER_IMAGE,
@@ -14,6 +15,18 @@ import {
 import { env } from "../env";
 
 // Function to retrieve the appropriate events for the day
+async function getHackathonActive() {
+  // Comparison date given that our DB end date will likely be at midnight
+  let endCompDate = new Date(Date.now());
+  endCompDate.setHours(23, 59, 59, 999);
+
+  return await db.query.Hackathon.findFirst({
+    orderBy: (t, { asc }) => asc(t.endDate),
+    where: (t, { and, gte, lte }) =>
+      and(gte(t.endDate, endCompDate), lte(t.startDate, new Date())),
+  });
+}
+
 async function getEvents() {
   // If today is Sunday, return the events for the entire week
   if (new Date().getDay() === 0) {
@@ -320,6 +333,91 @@ async function cronLogic(webhook: WebhookClient) {
   });
 }
 
+async function hackathonMorningCron(webhook: WebhookClient) {
+  const activeHackathon = await getHackathonActive();
+
+  // Do not run if there is no active hackathon
+  if (!activeHackathon) {
+    return;
+  }
+
+  // Load only the events for the active hackathon
+  const hackathonEvents = (await getEvents()).filter(
+    (group) => group.events.some((event) => event.hackathonId === activeHackathon.id),
+  );
+
+  // Calculate total number of events
+  const totalEvents = hackathonEvents.reduce(
+    (sum, group) => sum + group.events.length,
+    0,
+  );
+
+  // If there are no events, send no events message
+  if (totalEvents === 0) {
+    return;
+  }
+
+  await webhook.send({
+    content: `# ⚔️ ${activeHackathon.displayName} ⚔️\nGood morning, <@&${DISCORD_HACKATHON_ROLE_ID}> hackers!\nIt is **Day ${Math.ceil((Date.now() - activeHackathon.startDate.getTime()) / 86400000)}** of ${activeHackathon.displayName}! Here's all the events planned for today!`,
+  });
+
+  for (const group of hackathonEvents) {
+    for (const event of group.events) {
+      const formattedTag =
+        "[" + event.tag.toUpperCase().replace(" ", "-") + "]";
+
+      // Construct the event URL
+      const discordEventURL =
+        "https://discord.com/events/" +
+        DISCORD_PROD_GUILD_ID +
+        "/" +
+        event.discordId;
+
+      const eventEmbed = new EmbedBuilder()
+        .setColor(0xcca4f4)
+        .setTitle(event.name)
+        .setAuthor({
+          name: `${formattedTag}`,
+        })
+        .setURL(discordEventURL)
+        .addFields([
+          {
+            name: "Location",
+            value: event.location,
+            inline: true,
+          },
+          {
+            name: "Time",
+            value: new Date(
+              new Date(event.start_datetime).setHours(
+                new Date(event.start_datetime).getHours(),
+              ),
+            ).toLocaleString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }) + " - " + new Date(
+              new Date(event.end_datetime).setHours(
+                new Date(event.end_datetime).getHours(),
+              ),
+            ).toLocaleString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }),
+            inline: true,
+          },
+        ])
+        .setThumbnail(EVENT_BANNER_IMAGE);
+
+      // Send the message (embed)
+      await webhook.send({
+        embeds: [eventEmbed],
+      });
+    }
+  }
+}
+
 // Event Reminders webhook
 export function execute() {
   // Create a public and pre (hidden) webhook client for daily reminders
@@ -329,12 +427,16 @@ export function execute() {
   const preWebhook = new WebhookClient({
     url: env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL,
   });
+  const hackathonWebhook = new WebhookClient({
+    url: env.DISCORD_HACKATHON_WEBHOOK_URL,
+  });
 
   try {
-    // PRE-REMINDERS for Testing: 8:00AM
+    // PRE-REMINDERS for Testing: 8:00AM, 8:00AM for Hackathon
     cron.schedule("0 8 * * *", () => {
       // Avoid returning a Promise from the cron callback
       void cronLogic(preWebhook);
+      void hackathonMorningCron(hackathonWebhook); // Call every morning at 8:00AM
     });
 
     // PUBLIC-REMINDERS for Testing: 12:00PM
