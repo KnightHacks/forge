@@ -458,7 +458,7 @@ export function execute() {
     });
 
     // During hackathon, check events every 15 minutes
-    cron.schedule("*/1 * * * *", () => {
+    cron.schedule("*/15 * * * *", () => {
       void hackathonWarnCron(hackathonWebhook)
     })
   } catch (err) {
