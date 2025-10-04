@@ -117,14 +117,16 @@ export const eventRouter = {
       const startLocalIso = startLocalDate.toISOString();
       const endLocalIso = endLocalDate.toISOString();
 
-      const formattedName =
-        "[" +
-        input.tag.toUpperCase().replace(" ", "-") +
-        "] " +
-        (input.hackathonName
-          ? `[${input.hackathonName.toUpperCase().replace(" ", "-")}] `
-          : "") +
-        input.name;
+      const formattedName = "[" +
+      input.tag.toUpperCase().replace(" ", "-") +
+      "] " +
+      input.name;
+
+      const hackDesc = (input.hackathonName
+        ? `### ⚔️ ${input.hackathonName} ⚔️\n\n`
+        : "");
+
+      const pointDesc = `\n\n**⭐ ${EVENT_POINTS[input.tag] || 0} Points**`;
 
       // Step 1: Create the event in Discord
       let discordEventId: string | undefined;
@@ -133,7 +135,7 @@ export const eventRouter = {
           Routes.guildScheduledEvents(KNIGHTHACKS_GUILD_ID),
           {
             body: {
-              description: input.description,
+              description: hackDesc + input.description + pointDesc,
               name: formattedName,
               privacy_level: DISCORD_EVENT_PRIVACY_LEVEL,
               scheduled_start_time: startLocalIso, // Use ISO for Discord
@@ -304,14 +306,16 @@ export const eventRouter = {
       const startLocalIso = startLocalDate.toISOString();
       const endLocalIso = endLocalDate.toISOString();
 
-      const formattedName =
-        (input.hackathonName
-          ? `[${input.hackathonName.toUpperCase().replace(" ", "-")}] `
-          : 
-        "[" +
+      const formattedName = "[" +
         input.tag.toUpperCase().replace(" ", "-") +
-        "] ") +
+        "] " +
         input.name;
+
+      const hackDesc = (input.hackathonName
+        ? `### ⚔️ ${input.hackathonName} ⚔️\n\n`
+        : "");
+
+      const pointDesc = `\n\n**⭐ ${EVENT_POINTS[input.tag] || 0} Points**`;
 
       // Step 1: Update the event in Discord
       try {
@@ -319,7 +323,7 @@ export const eventRouter = {
           Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, input.discordId),
           {
             body: {
-              description: input.description,
+              description: hackDesc + input.description + pointDesc,
               name: formattedName,
               privacy_level: DISCORD_EVENT_PRIVACY_LEVEL,
               scheduled_start_time: startLocalIso,

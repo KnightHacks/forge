@@ -11,6 +11,7 @@ import {
   DISCORD_PROD_GUILD_ID,
   DISCORD_REMINDER_ROLE_ID,
   EVENT_BANNER_IMAGE,
+  HACK_BANNER_IMAGE,
 } from "../consts";
 import { env } from "../env";
 
@@ -208,66 +209,13 @@ async function getHackEvents(hId: string) {
     orderBy: (evs, {asc}) => asc(evs.start_datetime), 
     where: (ev, {eq}) => eq(ev.hackathonId, hId)
   })).filter((ev) => {
-    // returns hours from now that the event starts in
-    const start = (ev.start_datetime.getTime() - Date.now()) / 3600000
-
-    // event must start within 24 hours
-    return start <= 24
+    // returns minutes from now that the event starts in
+    const start = (ev.start_datetime.getTime() - Date.now()) / 60000
+    // event must start within 15 minutes, -1 is padding for events that have just started
+    return start <= 15 && start >= -1
   })
 
   return events
-}
-
-function constructHackEmbed(event:Event) {
-  const formattedTag =
-      "[" + event.tag.toUpperCase().replace(" ", "-") + "]";
-
-    // Construct the event URL
-    const discordEventURL =
-      "https://discord.com/events/" +
-      DISCORD_PROD_GUILD_ID +
-      "/" +
-      event.discordId;
-
-    const eventEmbed = new EmbedBuilder()
-      .setColor(0xcca4f4)
-      .setTitle(event.name)
-      //.setDescription(event.description.length > 100 ? event.description.substring(0,100) + "..." : event.description) concatenate if longer than 100 chars
-      .setAuthor({
-        name: `${formattedTag}`,
-      })
-      .setURL(discordEventURL)
-      .addFields([
-        {
-          name: "Location",
-          value: event.location,
-          inline: true,
-        },
-        {
-          name: "Time",
-          value: new Date(
-            new Date(event.start_datetime).setHours(
-              new Date(event.start_datetime).getHours(),
-            ),
-          ).toLocaleString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          }) + " - " + new Date(
-            new Date(event.end_datetime).setHours(
-              new Date(event.end_datetime).getHours(),
-            ),
-          ).toLocaleString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          }),
-          inline: true,
-        },
-      ])
-      .setThumbnail(EVENT_BANNER_IMAGE);
-
-    return eventEmbed
 }
 
 // Extract the cron job body so we can have a pre-reminders hook to test the logic each morning
@@ -402,7 +350,7 @@ async function cronLogic(webhook: WebhookClient) {
   });
 }
 
-async function hackathonMorningCron(webhook: WebhookClient) {
+async function hackathonWarnCron(webhook: WebhookClient) {
   const activeHackathon = await getHackathonActive();
 
   // Do not run if there is no active hackathon
@@ -418,52 +366,59 @@ async function hackathonMorningCron(webhook: WebhookClient) {
     return;
   }
 
-  const dayCount = Math.ceil((Date.now() - activeHackathon.startDate.getTime()) / 86400000)
-
   await webhook.send({
-    content: `# ⚔️ ${activeHackathon.displayName}: DAY ${dayCount}\nGood morning, ${DISCORD_HACKATHON_ROLE_ID} hackers!\nIt is **Day ${dayCount}** of **${activeHackathon.displayName}**! Here's all the events planned for today!`,
+    content: `## ⚠️ Starting soon!\nAttention, <@&${DISCORD_HACKATHON_ROLE_ID}> hackers!\nThese events are starting in the next **15 minutes!**`,
   });
 
   for (const event of hackathonEvents) {
     
-    const eventEmbed = constructHackEmbed(event)
+    const formattedTag =
+      "[" + event.tag.toUpperCase().replace(" ", "-") + "]";
 
-    // Send the message (embed)
-    await webhook.send({
-      embeds: [eventEmbed],
-    });
-  }
-}
+    // Construct the event URL
+    const discordEventURL =
+      "https://discord.com/events/" +
+      DISCORD_PROD_GUILD_ID +
+      "/" +
+      event.discordId;
 
-async function hackathonWarnCron(webhook: WebhookClient) {
-  const activeHackathon = await getHackathonActive();
-
-  // Do not run if there is no active hackathon
-  if (!activeHackathon) {
-    return;
-  }
-
-  // Load only the events for the active hackathon
-  const hackathonEvents = (await getHackEvents(activeHackathon.id)).filter((ev) => {
-    // returns minutes from now that the event starts in
-    const start = (ev.start_datetime.getTime() - Date.now()) / 60000
-    console.log(ev.name + " (" + ev.start_datetime.getTime() + ") " + "starts in " + start + ", currently " + Date.now())
-    // event must start within 15 minutes
-    return start <= 15
-  })
-
-  // If there are no events, send no events message
-  if (hackathonEvents.length === 0) {
-    return;
-  }
-
-  await webhook.send({
-    content: `## ⚠️ Starting soon!\nAttention, <${DISCORD_HACKATHON_ROLE_ID}> hackers!\nThese events are starting in the next **15 minutes!**`,
-  });
-
-  for (const event of hackathonEvents) {
-    
-    const eventEmbed = constructHackEmbed(event)
+    const eventEmbed = new EmbedBuilder()
+      .setColor(0xc04b3d)
+      .setTitle(event.name)
+      .setDescription(event.description.length > 100 ? event.description.substring(0,100) + "..." : event.description)
+      .setAuthor({
+        name: `${formattedTag}`,
+      })
+      .setURL(discordEventURL)
+      .addFields([
+        {
+          name: "Location",
+          value: event.location,
+          inline: true,
+        },
+        {
+          name: "Time",
+          value: new Date(
+            new Date(event.start_datetime).setHours(
+              new Date(event.start_datetime).getHours(),
+            ),
+          ).toLocaleString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          }) + " - " + new Date(
+            new Date(event.end_datetime).setHours(
+              new Date(event.end_datetime).getHours(),
+            ),
+          ).toLocaleString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          }),
+          inline: true,
+        },
+      ])
+      .setThumbnail(HACK_BANNER_IMAGE);
 
     // Send the message (embed)
     await webhook.send({
@@ -490,11 +445,10 @@ export function execute() {
   });
 
   try {
-    // PRE-REMINDERS for Testing: 8:00AM, 8:00AM for Hackathon
+    // PRE-REMINDERS for Testing: 8:00AM
     cron.schedule("0 8 * * *", () => {
       // Avoid returning a Promise from the cron callback
       void cronLogic(preWebhook);
-      void hackathonMorningCron(hackathonWebhook); // Greet every morning at 8am
     });
 
     // PUBLIC-REMINDERS for Testing: 12:00PM
