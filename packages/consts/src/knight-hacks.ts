@@ -317,6 +317,7 @@ export const CLASS_ROLE_ID: Record<HackerClass, string> = {
     ? PROD_DISCORD_ROLE_MONSTOLOGIST
     : DEV_DISCORD_ROLE_MONSTOLOGIST,
   Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
+<<<<<<< HEAD
 } as const satisfies Record<AssignableHackerClass, string>;
 =======
 =======
@@ -330,6 +331,9 @@ export const CLASS_ROLE_ID: Record<HackerClass, string> = {
     : DEV_DISCORD_ROLE_MONSTOLOGIST,
 >>>>>>> 49c7e20b (new event tags)
   Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
+=======
+  VIP: IS_PROD ? PROD_VIP_ID : DEV_VIP_ID,
+>>>>>>> c6fdc6bd (added vip stuff)
 };
 <<<<<<< HEAD
 >>>>>>> 56b0d389 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
