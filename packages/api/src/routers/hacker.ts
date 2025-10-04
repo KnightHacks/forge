@@ -806,32 +806,36 @@ export const hackerRouter = {
             return;
           }
 
-          const totalHackerinClass = await Promise.all(
-            HACKER_CLASSES.map(async (cls) => {
-              const rows = await tx
-                .select({ c: count() })
-                .from(HackerAttendee)
-                .where(
-                  and(
-                    eq(HackerAttendee.hackathonId, input.hackathonId),
-                    eq(HackerAttendee.class, cls),
-                  ),
-                );
-              return { cls, count: Number(rows[0]?.c ?? 0) } as const;
-            }),
-          );
+          let pick: HackerClass;
+          if (hackerAttendee.fastPass) {
+            pick = "VIP";
+          } else {
+            const totalHackerinClass = await Promise.all(
+              HACKER_CLASSES.map(async (cls) => {
+                const rows = await tx
+                  .select({ c: count() })
+                  .from(HackerAttendee)
+                  .where(
+                    and(
+                      eq(HackerAttendee.hackathonId, input.hackathonId),
+                      eq(HackerAttendee.class, cls),
+                    ),
+                  );
+                return { cls, count: Number(rows[0]?.c ?? 0) } as const;
+              }),
+            );
 
-          const leastPopulatedClass = Math.min(
-            ...totalHackerinClass.map((c) => c.count),
-          );
-          const candidates = totalHackerinClass
-            .filter((c) => c.count === leastPopulatedClass)
-            .map((c) => c.cls);
+            const leastPopulatedClass = Math.min(
+              ...totalHackerinClass.map((c) => c.count),
+            );
+            const candidates = totalHackerinClass
+              .filter((c) => c.count === leastPopulatedClass)
+              .map((c) => c.cls);
 
-          const pick: HackerClass =
-            candidates[Math.floor(Math.random() * candidates.length)] ??
-            HACKER_CLASSES[0];
-
+            pick =
+              candidates[Math.floor(Math.random() * candidates.length)] ??
+              HACKER_CLASSES[0];
+          }
           await tx
             .update(HackerAttendee)
             .set({ class: pick, status: "checkedin" })
