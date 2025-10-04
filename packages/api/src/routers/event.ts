@@ -305,12 +305,12 @@ export const eventRouter = {
       const endLocalIso = endLocalDate.toISOString();
 
       const formattedName =
-        "[" +
-        input.tag.toUpperCase().replace(" ", "-") +
-        "] " +
         (input.hackathonName
           ? `[${input.hackathonName.toUpperCase().replace(" ", "-")}] `
-          : "") +
+          : 
+        "[" +
+        input.tag.toUpperCase().replace(" ", "-") +
+        "] ") +
         input.name;
 
       // Step 1: Update the event in Discord
