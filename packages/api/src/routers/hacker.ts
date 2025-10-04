@@ -987,12 +987,7 @@ export const hackerRouter = {
         lastName: hacker.lastName,
         class: assignedClass,
         messageforHackers: "Check their badge and send them to event area",
-<<<<<<< HEAD
         eventName: eventTag,
-=======
-        fastPass: hackerAttendee.fastPass,
-        eventName: event.name,
->>>>>>> db2ba989 (on added eventName to onSuccess so we can haave presistentDialog only on Check-in)
       };
     }),
 } satisfies TRPCRouterRecord;
