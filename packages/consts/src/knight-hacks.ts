@@ -1,6 +1,5 @@
 import type { HackerClass } from "../../db/src/schemas/knight-hacks";
 
-
 export const LEVELS_OF_STUDY = [
   "Less than Secondary / High School",
   "Secondary / High School",
@@ -270,6 +269,9 @@ export const DEV_DISCORD_ROLE_MONSTOLOGIST = "1420819295759237222";
 
 export const PROD_DISCORD_ROLE_ALCHEMIST = "1415702383274491934";
 export const DEV_DISCORD_ROLE_ALCHEMIST = "1420819309965611140";
+
+export const PROD_VIP_ID = "1423358570203844689";
+export const DEV_VIP_ID = "1423366084874080327";
 
 export const IS_PROD = process.env.NODE_ENV === "production";
 
