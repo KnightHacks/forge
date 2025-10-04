@@ -15,8 +15,6 @@ import {
 } from "../consts";
 import { env } from "../env";
 
-interface Event { name: string; id: string; discordId: string; googleId: string; tag: "GBM" | "Social" | "Kickstart" | "Project Launch" | "Hello World" | "Sponsorship" | "Tech Exploration" | "Class Support" | "Workshop" | "OPS" | "Hackathon" | "Collabs"; description: string; start_datetime: Date; end_datetime: Date; location: string; dues_paying: boolean; points: number | null; hackathonId: string | null; }
-
 // Function to retrieve the appropriate events for the day
 async function getHackathonActive() {
   // Comparison date given that our DB end date will likely be at midnight
@@ -205,17 +203,19 @@ async function getEvents() {
 }
 
 async function getHackEvents(hId: string) {
-  const events = (await db.query.Event.findMany({
-    orderBy: (evs, {asc}) => asc(evs.start_datetime), 
-    where: (ev, {eq}) => eq(ev.hackathonId, hId)
-  })).filter((ev) => {
+  const events = (
+    await db.query.Event.findMany({
+      orderBy: (evs, { asc }) => asc(evs.start_datetime),
+      where: (ev, { eq }) => eq(ev.hackathonId, hId),
+    })
+  ).filter((ev) => {
     // returns minutes from now that the event starts in
-    const start = (ev.start_datetime.getTime() - Date.now()) / 60000
+    const start = (ev.start_datetime.getTime() - Date.now()) / 60000;
     // event must start within 15 minutes, -1 is padding for events that have just started
-    return start <= 15 && start >= -1
-  })
+    return start <= 15 && start >= -1;
+  });
 
-  return events
+  return events;
 }
 
 // Extract the cron job body so we can have a pre-reminders hook to test the logic each morning
@@ -359,7 +359,7 @@ async function hackathonWarnCron(webhook: WebhookClient) {
   }
 
   // Load only the events for the active hackathon
-  const hackathonEvents = await getHackEvents(activeHackathon.id)
+  const hackathonEvents = await getHackEvents(activeHackathon.id);
 
   // If there are no events, send no events message
   if (hackathonEvents.length === 0) {
@@ -371,9 +371,7 @@ async function hackathonWarnCron(webhook: WebhookClient) {
   });
 
   for (const event of hackathonEvents) {
-    
-    const formattedTag =
-      "[" + event.tag.toUpperCase().replace(" ", "-") + "]";
+    const formattedTag = "[" + event.tag.toUpperCase().replace(" ", "-") + "]";
 
     // Construct the event URL
     const discordEventURL =
@@ -385,7 +383,11 @@ async function hackathonWarnCron(webhook: WebhookClient) {
     const eventEmbed = new EmbedBuilder()
       .setColor(0xc04b3d)
       .setTitle(event.name)
-      .setDescription(event.description.length > 100 ? event.description.substring(0,100) + "..." : event.description)
+      .setDescription(
+        event.description.length > 100
+          ? event.description.substring(0, 100) + "..."
+          : event.description,
+      )
       .setAuthor({
         name: `${formattedTag}`,
       })
@@ -398,23 +400,26 @@ async function hackathonWarnCron(webhook: WebhookClient) {
         },
         {
           name: "Time",
-          value: new Date(
-            new Date(event.start_datetime).setHours(
-              new Date(event.start_datetime).getHours(),
-            ),
-          ).toLocaleString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          }) + " - " + new Date(
-            new Date(event.end_datetime).setHours(
-              new Date(event.end_datetime).getHours(),
-            ),
-          ).toLocaleString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          }),
+          value:
+            new Date(
+              new Date(event.start_datetime).setHours(
+                new Date(event.start_datetime).getHours(),
+              ),
+            ).toLocaleString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }) +
+            " - " +
+            new Date(
+              new Date(event.end_datetime).setHours(
+                new Date(event.end_datetime).getHours(),
+              ),
+            ).toLocaleString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }),
           inline: true,
         },
       ])
@@ -459,8 +464,8 @@ export function execute() {
 
     // During hackathon, check events every 15 minutes
     cron.schedule("*/15 * * * *", () => {
-      void hackathonWarnCron(hackathonWebhook)
-    })
+      void hackathonWarnCron(hackathonWebhook);
+    });
   } catch (err) {
     // silences eslint. type safety with our errors basically
     console.error("An unknown error occurred: ", err);
