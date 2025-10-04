@@ -2,26 +2,26 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
-import type { HackerClass } from "@forge/db/schemas/knight-hacks";
-import { CLASS_ROLE_ID, KH_EVENT_ROLE_ID } from "@forge/consts/knight-hacks";
 
+import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import {
   BUCKET_NAME,
+  CLASS_ROLE_ID,
   HACKATHON_APPLICATION_STATES,
+  KH_EVENT_ROLE_ID,
   KNIGHTHACKS_S3_BUCKET_REGION,
 } from "@forge/consts/knight-hacks";
 import { and, count, eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
-
 import {
+  AssignedClassCheckinSchema,
   Event,
   Hacker,
+  HACKER_CLASSES,
   HackerAttendee,
   HackerEventAttendee,
   InsertHackerSchema,
-  HACKER_CLASSES,
-  AssignedClassCheckinSchema
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
@@ -725,7 +725,7 @@ export const hackerRouter = {
 
       return counts;
     }),
-    
+
   eventCheckIn: adminProcedure
     .input(
       z.object({
@@ -778,122 +778,130 @@ export const hackerRouter = {
       }
 
       let assignedClass: HackerClass | null = hackerAttendee.class ?? null;
-      
-      if (hackerAttendee.status !== "confirmed" && hackerAttendee.status !== "checkedin") {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
-          });
+
+      if (
+        hackerAttendee.status !== "confirmed" &&
+        hackerAttendee.status !== "checkedin"
+      ) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
+        });
       }
       if (hackerAttendee.status === "confirmed" && event.tag === "Check-in") {
-             await db.transaction(async (tx) => {
-        const doesHackerHaveClass = await tx.query.HackerAttendee.findFirst({
-          where: (t, { and, eq }) =>
-            and(
-              eq(t.hackerId, hacker.id),
-              eq(t.hackathonId, input.hackathonId),
-            ),
-        });
+        await db.transaction(async (tx) => {
+          const doesHackerHaveClass = await tx.query.HackerAttendee.findFirst({
+            where: (t, { and, eq }) =>
+              and(
+                eq(t.hackerId, hacker.id),
+                eq(t.hackathonId, input.hackathonId),
+              ),
+          });
 
-        if (
-          doesHackerHaveClass?.class &&
-          doesHackerHaveClass.class in HACKER_CLASSES
-        ) {
-          assignedClass = doesHackerHaveClass.class;
-          return;
-        }
+          if (
+            doesHackerHaveClass?.class &&
+            doesHackerHaveClass.class in HACKER_CLASSES
+          ) {
+            assignedClass = doesHackerHaveClass.class;
+            return;
+          }
 
-        const totalHackerinClass = await Promise.all(
-          HACKER_CLASSES.map(async (cls) => {
-            const rows = await tx
-              .select({ c: count() })
-              .from(HackerAttendee)
-              .where(
-                and(
-                  eq(HackerAttendee.hackathonId, input.hackathonId),
-                  eq(HackerAttendee.class, cls),
-                ),
-              );
-            return { cls, count: Number(rows[0]?.c ?? 0) } as const;
-          }),
-        );
-
-        const leastPopulatedClass = Math.min(
-          ...totalHackerinClass.map((c) => c.count),
-        );
-        const candidates = totalHackerinClass
-          .filter((c) => c.count === leastPopulatedClass)
-          .map((c) => c.cls);
-
-        const pick: HackerClass =
-          candidates[Math.floor(Math.random() * candidates.length)] ??
-          HACKER_CLASSES[0];
-
-        await tx
-          .update(HackerAttendee)
-          .set({ class: pick, status: "checkedin" })
-          .where(
-            and(
-              eq(HackerAttendee.hackerId, hacker.id),
-              eq(HackerAttendee.hackathonId, input.hackathonId),
-            ),
+          const totalHackerinClass = await Promise.all(
+            HACKER_CLASSES.map(async (cls) => {
+              const rows = await tx
+                .select({ c: count() })
+                .from(HackerAttendee)
+                .where(
+                  and(
+                    eq(HackerAttendee.hackathonId, input.hackathonId),
+                    eq(HackerAttendee.class, cls),
+                  ),
+                );
+              return { cls, count: Number(rows[0]?.c ?? 0) } as const;
+            }),
           );
 
-        assignedClass = pick;
-      });
+          const leastPopulatedClass = Math.min(
+            ...totalHackerinClass.map((c) => c.count),
+          );
+          const candidates = totalHackerinClass
+            .filter((c) => c.count === leastPopulatedClass)
+            .map((c) => c.cls);
 
-      const discordId = await resolveDiscordUserId(hacker.discordUser);
-      if (!discordId) {
-        await log({
-          title: "Discord role assign skipped",
-          message: `Could not resolve Discord ID for "${hacker.discordUser}".`,
-          color: "uhoh_red",
-          userId: ctx.session.user.discordUserId,
+          const pick: HackerClass =
+            candidates[Math.floor(Math.random() * candidates.length)] ??
+            HACKER_CLASSES[0];
+
+          await tx
+            .update(HackerAttendee)
+            .set({ class: pick, status: "checkedin" })
+            .where(
+              and(
+                eq(HackerAttendee.hackerId, hacker.id),
+                eq(HackerAttendee.hackathonId, input.hackathonId),
+              ),
+            );
+
+          assignedClass = pick;
         });
-      } else {
-        try {
-          await addRoleToMember(discordId, KH_EVENT_ROLE_ID);
-          console.log(`Assigned role ${KH_EVENT_ROLE_ID} to user ${discordId}`);
 
-          if (assignedClass) {
-            await addRoleToMember(discordId, CLASS_ROLE_ID[assignedClass]);
-          }
-        } catch (e) {
+        const discordId = await resolveDiscordUserId(hacker.discordUser);
+        if (!discordId) {
           await log({
-            title: "Discord role assign failed",
-            message: `Failed to assign Discord roles for "${hacker.discordUser}".`,
+            title: "Discord role assign skipped",
+            message: `Could not resolve Discord ID for "${hacker.discordUser}".`,
             color: "uhoh_red",
             userId: ctx.session.user.discordUserId,
           });
-          console.error(
-            "Failed to assign Discord roles:",
-            (e as Error).message,
-          );
+        } else {
+          try {
+            await addRoleToMember(discordId, KH_EVENT_ROLE_ID);
+            console.log(
+              `Assigned role ${KH_EVENT_ROLE_ID} to user ${discordId}`,
+            );
+
+            if (assignedClass) {
+              await addRoleToMember(discordId, CLASS_ROLE_ID[assignedClass]);
+            }
+          } catch (e) {
+            await log({
+              title: "Discord role assign failed",
+              message: `Failed to assign Discord roles for "${hacker.discordUser}".`,
+              color: "uhoh_red",
+              userId: ctx.session.user.discordUserId,
+            });
+            console.error(
+              "Failed to assign Discord roles:",
+              (e as Error).message,
+            );
+          }
         }
+        await log({
+          title: `Hacker Checked-In`,
+          message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon ${
+            assignedClass ? ` (Class: ${assignedClass}).` : ""
+          }`,
+          color: "success_green",
+          userId: ctx.session.user.discordUserId,
+        });
+        return {
+          message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!${
+            assignedClass ? ` Assigned class: ${assignedClass}.` : ""
+          }`,
+          firstName: hacker.firstName,
+          lastName: hacker.lastName,
+          class: assignedClass,
+          color: "text-[#4ade80]",
+          messageforHackers: "Check ID, and send them to correct lanyard area",
+          status: "success",
+        };
       }
-      await log({
-        title: `Hacker Checked-In`,
-        message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon ${
-          assignedClass ? ` (Class: ${assignedClass}).` : ""
-        }`,
-        color: "success_green",
-        userId: ctx.session.user.discordUserId,
-      });
-      return {
-        message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!${
-          assignedClass ? ` Assigned class: ${assignedClass}.` : ""
-        }`,
-        firstName: hacker.firstName,
-        lastName: hacker.lastName,
-        class: assignedClass,
-        color: "text-[#4ade80]",
-        messageforHackers:
-          "Check ID, and send them to correct lanyard area",
-        status: "success",
-      };
-      }
-      if(input.assignedClassCheckin !== "All" && hackerAttendee.class !== input.assignedClassCheckin && !hackerAttendee.fastPass){
-          throw new TRPCError({
+      if (
+        input.assignedClassCheckin !== "All" &&
+        hackerAttendee.class !== input.assignedClassCheckin &&
+        !hackerAttendee.fastPass
+      ) {
+        throw new TRPCError({
           code: "UNAUTHORIZED",
           message: `Only ${input.assignedClassCheckin} hackers can check in. Hacker has class ${hackerAttendee.class}.`,
         });
@@ -920,7 +928,7 @@ export const hackerRouter = {
       await db
         .update(HackerAttendee)
         .set({ points: sql`${HackerAttendee.points} + ${input.eventPoints}` })
-        .where(eq(HackerAttendee.id, hackerAttendee.id))
+        .where(eq(HackerAttendee.id, hackerAttendee.id));
       await log({
         title: "Hacker Checked-In",
         message: `Hacker ${hacker.firstName} ${hacker.lastName} has been checked in to event ${event.name}.`,
@@ -933,10 +941,8 @@ export const hackerRouter = {
         lastName: hacker.lastName,
         class: assignedClass,
         color: "text-[#4ade80]",
-        messageforHackers:
-          "Check their badge and send them to event area",
+        messageforHackers: "Check their badge and send them to event area",
         fastPass: hackerAttendee.fastPass,
       };
     }),
-
 } satisfies TRPCRouterRecord;
