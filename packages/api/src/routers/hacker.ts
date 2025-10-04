@@ -15,15 +15,14 @@ import {
 import { and, count, eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
-
 import {
+  AssignedClassCheckinSchema,
   Event,
   Hacker,
+  HACKER_CLASSES,
   HackerAttendee,
   HackerEventAttendee,
   InsertHackerSchema,
-  HACKER_CLASSES,
-  AssignedClassCheckinSchema
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
@@ -991,5 +990,4 @@ export const hackerRouter = {
         eventName: eventTag,
       };
     }),
-
 } satisfies TRPCRouterRecord;
