@@ -90,12 +90,18 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
       setAssignedClass(opts.class ?? "No class assigned");
       setCheckInMessage(opts.messageforHackers);
 <<<<<<< HEAD
+<<<<<<< HEAD
       if (opts.eventName === "Check-in") {
         setOpenPersistentDialog(true);
       }
 =======
       setOpenPersistentDialog(true);
 >>>>>>> e5d3427e (lots of moving things around and just making the errors go away, mostly same code with slight tweaks)
+=======
+      if (opts.eventName === "Check-in") {
+        setOpenPersistentDialog(true);
+      }
+>>>>>>> db2ba989 (on added eventName to onSuccess so we can haave presistentDialog only on Check-in)
       return;
     },
     onError(opts) {
