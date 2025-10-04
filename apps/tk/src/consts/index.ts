@@ -28,6 +28,7 @@ export const DISCORD_HACKATHON_ROLE_ID = "1420819573816692857";
 export const DISCORD_PROD_GUILD_ID = "486628710443778071";
 
 export const EVENT_BANNER_IMAGE = "https://i.imgur.com/Jr1cyxT.png";
+export const HACK_BANNER_IMAGE = "https://i.imgur.com/lpTVNl7.png";
 
 export const BUBBLE_WRAP_TEXT = "||pop||||pop||||pop||||pop||||pop||||pop||\n";
 

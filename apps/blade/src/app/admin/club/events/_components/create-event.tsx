@@ -190,7 +190,7 @@ export function CreateEventButton() {
                 hackathonName:
                   hackathons?.find((v) => {
                     return v.id == values.hackathonId;
-                  })?.name ?? null,
+                  })?.displayName ?? null,
               });
             })}
             noValidate
@@ -291,7 +291,7 @@ export function CreateEventButton() {
                             </SelectItem>
                             {hackathons?.map((h) => (
                               <SelectItem key={h.id} value={h.id}>
-                                {h.name}
+                                {h.displayName}
                               </SelectItem>
                             ))}
                           </SelectContent>

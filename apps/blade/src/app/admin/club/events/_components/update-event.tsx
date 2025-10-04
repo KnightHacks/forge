@@ -150,7 +150,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       hackathonName:
         hackathons?.find((v) => {
           return v.id == event.hackathonId;
-        })?.name ?? null,
+        })?.displayName ?? null,
       startHour: startHour,
       startMinute: startMinute,
       startAmPm: startAmPm,
@@ -223,7 +223,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       hackathonName:
         hackathons?.find((v) => {
           return v.id == values.hackathonId;
-        })?.name ?? null,
+        })?.displayName ?? null,
     });
   });
 
@@ -334,7 +334,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                             </SelectItem>
                             {hackathons?.map((h) => (
                               <SelectItem key={h.id} value={h.id}>
-                                {h.name}
+                                {h.displayName}
                               </SelectItem>
                             ))}
                           </SelectContent>
