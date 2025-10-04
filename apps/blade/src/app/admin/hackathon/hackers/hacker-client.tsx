@@ -5,17 +5,6 @@ import { useState } from "react";
 import { HACKER_STATUS_MAP } from "~/consts";
 import HackerStatusCounter from "./_components/hacker-status-counter";
 import HackerTable from "./_components/hackers-table";
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> bb2cee49 (prettier format and added some logic to get the alowed repeated checkin ppl to checkin and have thier status for repeatedcheckin become false)
-import RepeatDropdown from "./_components/repeat-dropdown";
-=======
->>>>>>> e5d3427e (lots of moving things around and just making the errors go away, mostly same code with slight tweaks)
-import HackerScanner from "./_components/scanner";
->>>>>>> 08dafe4e (prettier format and added some logic to get the alowed repeated checkin ppl to checkin and have thier status for repeatedcheckin become false)
 
 export default function HackersClient({
   currentActiveHackathon,
@@ -78,31 +67,7 @@ export default function HackersClient({
           <div>You are currently viewing all hackers.</div>
         )}
       </div>
-<<<<<<< HEAD
-=======
-      <div className="mb-9 flex justify-center">
-        <HackerScanner />
-      </div>
-<<<<<<< HEAD
-      <div className="flex justify-center">
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 54f60ab6 (repeat checkins for certain classes, repeat for aall and none)
-        <RepeatDropdown hackathonId={currentActiveHackathon?.id ?? ""} />
-      </div>
->>>>>>> 4cf50dcc (I don't knw what happened and how it was fixed but qr scanner just kept scanning twice for some reason so changing the timeout I think mad eit so scans once every 9 seconds, not sure if it will go back to scanning twice but something here worked)
-=======
-        Allow repeat check-ins placeholder
-=======
-        <RepeatDropdown />
->>>>>>> bb2cee49 (prettier format and added some logic to get the alowed repeated checkin ppl to checkin and have thier status for repeatedcheckin become false)
-      </div>
->>>>>>> 84787acd (I don't knw what happened and how it was fixed but qr scanner just kept scanning twice for some reason so changing the timeout I think mad eit so scans once every 9 seconds, not sure if it will go back to scanning twice but something here worked)
 
-=======
->>>>>>> e5d3427e (lots of moving things around and just making the errors go away, mostly same code with slight tweaks)
       <div className="rounded-xl pb-8">
         <HackerTable filterStatus={filterStatus} />
       </div>
