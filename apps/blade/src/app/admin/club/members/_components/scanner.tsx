@@ -82,7 +82,9 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
       setLastName(opts.lastName);
       setAssignedClass(opts.class ?? "No class assigned");
       setCheckInMessage(opts.messageforHackers);
-      setOpenPersistentDialog(true);
+      if (opts.eventName === "Check-in") {
+        setOpenPersistentDialog(true);
+      }
       return;
     },
     onError(opts) {

@@ -947,6 +947,7 @@ export const hackerRouter = {
         color: "text-[#4ade80]",
         messageforHackers: "Check their badge and send them to event area",
         fastPass: hackerAttendee.fastPass,
+        eventName: event.name,
       };
     }),
 } satisfies TRPCRouterRecord;
