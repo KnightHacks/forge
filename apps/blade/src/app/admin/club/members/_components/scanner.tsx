@@ -77,7 +77,7 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   });
   const hackerEventCheckIn = api.hacker.eventCheckIn.useMutation({
     onSuccess(opts) {
-      toast.success(opts.eventName);
+      toast.success(opts.message);
       setFirstName(opts.firstName);
       setLastName(opts.lastName);
       setAssignedClass(opts.class ?? "No class assigned");
