@@ -3,8 +3,8 @@ import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
 
-import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import type { AssignableHackerClass } from "@forge/consts/knight-hacks";
+import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import {
   BUCKET_NAME,
   CLASS_ROLE_ID,
@@ -747,7 +747,7 @@ export const hackerRouter = {
       const hacker = await db.query.Hacker.findFirst({
         where: (t, { eq }) => eq(t.userId, input.userId),
       });
-      
+
       if (!hacker)
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -803,7 +803,6 @@ export const hackerRouter = {
           message: `${hacker.firstName} ${hacker.lastName} has not checked in for this hackathon`,
         });
       }
-
 
       if (hackerAttendee.status === "confirmed" && eventTag === "Check-in") {
         await db.transaction(async (tx) => {
@@ -954,7 +953,7 @@ export const hackerRouter = {
         .update(HackerAttendee)
         .set({ points: sql`${HackerAttendee.points} + ${input.eventPoints}` })
         .where(eq(HackerAttendee.id, hackerAttendee.id));
-        
+
       await log({
         title: "Hacker Checked-In",
         message: `Hacker ${hacker.firstName} ${hacker.lastName} has been checked in to event ${eventTag}.`,
