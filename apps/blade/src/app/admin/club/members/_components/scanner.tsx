@@ -111,7 +111,7 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
       userId: "",
       eventPoints: 0,
       hackathonId: "",
-      assignedClassCheckin: "",
+      assignedClassCheckin: "All",
       repeatedCheckin: false,
     },
   });
@@ -266,7 +266,8 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               </TabsList>
               <TabsContent value="current" className="space-y-4">
                 {renderEventSelect(currentEvents)}
-                {renderClassCheckinSelect()}
+                {eventType === "Hacker" && renderClassCheckinSelect()}
+
                 <ToggleButton
                   isToggled={toggleRepeatedCheckIn}
                   onToggle={(value) => {
@@ -277,7 +278,7 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               </TabsContent>
               <TabsContent value="previous" className="space-y-4">
                 {renderEventSelect(previousEvents)}
-                {renderClassCheckinSelect()}
+                {eventType === "Hacker" && renderClassCheckinSelect()}
                 <ToggleButton
                   isToggled={toggleRepeatedCheckIn}
                   onToggle={(value) => {
