@@ -1,5 +1,4 @@
 import type { HackerClass } from "../../db/src/schemas/knight-hacks";
-import { PROD_VIP_ID, DEV_VIP_ID } from "../../../packages/api/src/utils";
 
 export const LEVELS_OF_STUDY = [
   "Less than Secondary / High School",
@@ -293,6 +292,7 @@ export const KH_EVENT_ROLE_ID = IS_PROD
   : DEV_DISCORD_ROLE_KNIGHT_HACKS_8;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
 
 export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
@@ -304,6 +304,11 @@ export const CLASS_ROLE_ID: Record<HackerClass, string> = {
 
 export const CLASS_ROLE_ID: Record<HackerClass, string> = {
 >>>>>>> 14c69601 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
+=======
+export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
+
+export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
+>>>>>>> c405d39d (me when im in the wrong directory, this is the discord fix and moving the vip role into utils.ts and fastpass logic that was supposed to be pushed mb gang)
   Operators: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,
   Machinist: IS_PROD ? PROD_DISCORD_ROLE_MACHINIST : DEV_DISCORD_ROLE_MACHINIST,
   Sentinels: IS_PROD ? PROD_DISCORD_ROLE_SENTINELS : DEV_DISCORD_ROLE_SENTINELS,
@@ -315,6 +320,7 @@ export const CLASS_ROLE_ID: Record<HackerClass, string> = {
     ? PROD_DISCORD_ROLE_MONSTOLOGIST
     : DEV_DISCORD_ROLE_MONSTOLOGIST,
   Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
+<<<<<<< HEAD
 <<<<<<< HEAD
 } as const satisfies Record<AssignableHackerClass, string>;
 =======
@@ -337,6 +343,9 @@ export const CLASS_ROLE_ID: Record<HackerClass, string> = {
 >>>>>>> 56b0d389 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
 =======
 >>>>>>> 14c69601 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
+=======
+} as const satisfies Record<AssignableHackerClass, string>;
+>>>>>>> c405d39d (me when im in the wrong directory, this is the discord fix and moving the vip role into utils.ts and fastpass logic that was supposed to be pushed mb gang)
 
 export const MEMBER_PROFILE_ICON_SIZE = 24;
 
