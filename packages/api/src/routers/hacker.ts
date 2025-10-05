@@ -3,8 +3,12 @@ import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
 
+<<<<<<< HEAD
 import type { AssignableHackerClass } from "@forge/consts/knight-hacks";
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
+=======
+import type { HackerClass} from "@forge/db/schemas/knight-hacks";
+>>>>>>> d54b5904 (delted fastpass column, moved discord role id to utils.ts, logic in hacker.ts looks at if hacker has vip role on discord)
 import {
   BUCKET_NAME,
   CLASS_ROLE_ID,
@@ -758,6 +762,10 @@ export const hackerRouter = {
       const event = await db.query.Event.findFirst({
         where: eq(Event.id, input.eventId),
       });
+<<<<<<< HEAD
+=======
+      
+>>>>>>> d54b5904 (delted fastpass column, moved discord role id to utils.ts, logic in hacker.ts looks at if hacker has vip role on discord)
       if (!event)
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -770,7 +778,10 @@ export const hackerRouter = {
         });
       }
       const eventTag = event.tag;
+<<<<<<< HEAD
 
+=======
+>>>>>>> d54b5904 (delted fastpass column, moved discord role id to utils.ts, logic in hacker.ts looks at if hacker has vip role on discord)
       const hackerAttendee = await db.query.HackerAttendee.findFirst({
         where: (t, { and, eq }) =>
           and(
@@ -803,6 +814,11 @@ export const hackerRouter = {
           message: `${hacker.firstName} ${hacker.lastName} has not checked in for this hackathon`,
         });
       }
+<<<<<<< HEAD
+=======
+      const discordId = await resolveDiscordUserId(hacker.discordUser);
+      const isVIP = discordId ? await isDiscordVIP(discordId) : false;
+>>>>>>> d54b5904 (delted fastpass column, moved discord role id to utils.ts, logic in hacker.ts looks at if hacker has vip role on discord)
 
       if (hackerAttendee.status === "confirmed" && eventTag === "Check-in") {
         await db.transaction(async (tx) => {
@@ -880,10 +896,14 @@ export const hackerRouter = {
             );
             // VIP will already be given the discord role ahead of time, so no need to assign again
             if (assignedClass && !isVIP) {
+<<<<<<< HEAD
               await addRoleToMember(
                 discordId,
                 CLASS_ROLE_ID[assignedClass as AssignableHackerClass],
               );
+=======
+              await addRoleToMember(discordId, CLASS_ROLE_ID[assignedClass]);
+>>>>>>> d54b5904 (delted fastpass column, moved discord role id to utils.ts, logic in hacker.ts looks at if hacker has vip role on discord)
             }
           } catch (e) {
             await log({
@@ -987,6 +1007,10 @@ export const hackerRouter = {
         lastName: hacker.lastName,
         class: assignedClass,
         messageforHackers: "Check their badge and send them to event area",
+<<<<<<< HEAD
+=======
+        fastPass: isVIP,
+>>>>>>> d54b5904 (delted fastpass column, moved discord role id to utils.ts, logic in hacker.ts looks at if hacker has vip role on discord)
         eventName: eventTag,
       };
     }),
