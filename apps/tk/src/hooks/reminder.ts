@@ -211,8 +211,8 @@ async function getHackEvents(hId: string) {
   ).filter((ev) => {
     // returns minutes from now that the event starts in
     const start = (ev.start_datetime.getTime() - Date.now()) / 60000;
-    // event must start within 15 minutes, -1 is padding for events that have just started
-    return start <= 15 && start >= -1;
+    // event must start in 15 minutes, padding of 1 minute
+    return start <= 16 && start >= 14;
   });
 
   return events;
@@ -462,8 +462,8 @@ export function execute() {
       void cronLogic(pubWebhook);
     });
 
-    // During hackathon, check events every 15 minutes
-    cron.schedule("*/15 * * * *", () => {
+    // During hackathon, check events every 5 minutes
+    cron.schedule("*/5 * * * *", () => {
       void hackathonWarnCron(hackathonWebhook);
     });
   } catch (err) {
