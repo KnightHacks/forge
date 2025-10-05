@@ -1,5 +1,4 @@
 import type { HackerClass } from "../../db/src/schemas/knight-hacks";
-import { PROD_VIP_ID, DEV_VIP_ID } from "../../../packages/api/src/utils";
 
 export const LEVELS_OF_STUDY = [
   "Less than Secondary / High School",
@@ -276,8 +275,9 @@ export const IS_PROD = process.env.NODE_ENV === "production";
 export const KH_EVENT_ROLE_ID = IS_PROD
   ? PROD_DISCORD_ROLE_KNIGHT_HACKS_8
   : DEV_DISCORD_ROLE_KNIGHT_HACKS_8;
+export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
 
-export const CLASS_ROLE_ID: Record<HackerClass, string> = {
+export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
   Operators: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,
   Machinist: IS_PROD ? PROD_DISCORD_ROLE_MACHINIST : DEV_DISCORD_ROLE_MACHINIST,
   Sentinels: IS_PROD ? PROD_DISCORD_ROLE_SENTINELS : DEV_DISCORD_ROLE_SENTINELS,
@@ -286,8 +286,7 @@ export const CLASS_ROLE_ID: Record<HackerClass, string> = {
     ? PROD_DISCORD_ROLE_MONSTOLOGIST
     : DEV_DISCORD_ROLE_MONSTOLOGIST,
   Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
-  VIP: IS_PROD ? PROD_VIP_ID : DEV_VIP_ID,
-};
+} as const satisfies Record<AssignableHackerClass, string>;
 
 export const MEMBER_PROFILE_ICON_SIZE = 24;
 
