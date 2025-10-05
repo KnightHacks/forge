@@ -26,6 +26,9 @@ const KNIGHTHACKS_GUILD_ID = IS_PROD
   ? (PROD_KNIGHTHACKS_GUILD_ID as string)
   : (DEV_KNIGHTHACKS_GUILD_ID as string);
 
+export const PROD_VIP_ID = "1423358570203844689";
+export const DEV_VIP_ID = "1423366084874080327";
+const VIP_ID = IS_PROD ? (PROD_VIP_ID as string) : (DEV_VIP_ID as string);
 export const discord = new REST({ version: "10" }).setToken(
   env.DISCORD_BOT_TOKEN,
 );
@@ -71,6 +74,13 @@ export const isDiscordMember = async (user: Session["user"]) => {
     return false;
   }
 };
+
+export async function isDiscordVIP(discordUserId: string) {
+  const guildMember = (await discord.get(
+    Routes.guildMember(GUILD_ID, discordUserId),
+  )) as APIGuildMember;
+  return guildMember.roles.includes(VIP_ID);
+}
 
 const GOOGLE_PRIVATE_KEY = Buffer.from(env.GOOGLE_PRIVATE_KEY_B64, "base64")
   .toString("utf-8")
