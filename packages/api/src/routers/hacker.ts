@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
 
-import type { HackerClass } from "@forge/db/schemas/knight-hacks";
+import type { HackerClass} from "@forge/db/schemas/knight-hacks";
 import {
   BUCKET_NAME,
   CLASS_ROLE_ID,
@@ -26,7 +26,12 @@ import {
 
 import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure } from "../trpc";
-import { addRoleToMember, log, resolveDiscordUserId } from "../utils";
+import {
+  addRoleToMember,
+  isDiscordVIP,
+  log,
+  resolveDiscordUserId,
+} from "../utils";
 
 export const hackerRouter = {
   getHacker: protectedProcedure
@@ -750,7 +755,7 @@ export const hackerRouter = {
       const event = await db.query.Event.findFirst({
         where: eq(Event.id, input.eventId),
       });
-
+      
       if (!event)
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -762,6 +767,7 @@ export const hackerRouter = {
           message: `Event with ID ${input.eventId} is not a hackathon event.`,
         });
       }
+      const eventTag = event.tag;
       const hackerAttendee = await db.query.HackerAttendee.findFirst({
         where: (t, { and, eq }) =>
           and(
@@ -788,7 +794,16 @@ export const hackerRouter = {
           message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
         });
       }
-      if (hackerAttendee.status === "confirmed" && event.tag === "Check-in") {
+      if (eventTag !== "Check-in" && hackerAttendee.status !== "checkedin") {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `${hacker.firstName} ${hacker.lastName} has not checked in for this hackathon`,
+        });
+      }
+      const discordId = await resolveDiscordUserId(hacker.discordUser);
+      const isVIP = discordId ? await isDiscordVIP(discordId) : false;
+
+      if (hackerAttendee.status === "confirmed" && eventTag === "Check-in") {
         await db.transaction(async (tx) => {
           const doesHackerHaveClass = await tx.query.HackerAttendee.findFirst({
             where: (t, { and, eq }) =>
@@ -807,7 +822,7 @@ export const hackerRouter = {
           }
 
           let pick: HackerClass;
-          if (hackerAttendee.fastPass) {
+          if (isVIP) {
             pick = "VIP";
           } else {
             const totalHackerinClass = await Promise.all(
@@ -849,7 +864,6 @@ export const hackerRouter = {
           assignedClass = pick;
         });
 
-        const discordId = await resolveDiscordUserId(hacker.discordUser);
         if (!discordId) {
           await log({
             title: "Discord role assign skipped",
@@ -863,8 +877,8 @@ export const hackerRouter = {
             console.log(
               `Assigned role ${KH_EVENT_ROLE_ID} to user ${discordId}`,
             );
-
-            if (assignedClass) {
+            // VIP will already be given the discord role ahead of time, so no need to assign again
+            if (assignedClass && !isVIP) {
               await addRoleToMember(discordId, CLASS_ROLE_ID[assignedClass]);
             }
           } catch (e) {
@@ -903,7 +917,7 @@ export const hackerRouter = {
       if (
         input.assignedClassCheckin !== "All" &&
         hackerAttendee.class !== input.assignedClassCheckin &&
-        !hackerAttendee.fastPass
+        !isVIP
       ) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
@@ -935,7 +949,7 @@ export const hackerRouter = {
         .where(eq(HackerAttendee.id, hackerAttendee.id));
       await log({
         title: "Hacker Checked-In",
-        message: `Hacker ${hacker.firstName} ${hacker.lastName} has been checked in to event ${event.name}.`,
+        message: `Hacker ${hacker.firstName} ${hacker.lastName} has been checked in to event ${eventTag}.`,
         color: "success_green",
         userId: ctx.session.user.discordUserId,
       });
@@ -946,8 +960,8 @@ export const hackerRouter = {
         class: assignedClass,
         color: "text-[#4ade80]",
         messageforHackers: "Check their badge and send them to event area",
-        fastPass: hackerAttendee.fastPass,
-        eventName: event.name,
+        fastPass: isVIP,
+        eventName: eventTag,
       };
     }),
 } satisfies TRPCRouterRecord;
