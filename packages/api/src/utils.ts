@@ -27,12 +27,17 @@ const KNIGHTHACKS_GUILD_ID = IS_PROD
   : (DEV_KNIGHTHACKS_GUILD_ID as string);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 const PROD_VIP_ID = "1423358570203844689";
 const DEV_VIP_ID = "1423366084874080327";
 =======
 export const PROD_VIP_ID = "1423358570203844689";
 export const DEV_VIP_ID = "1423366084874080327";
 >>>>>>> d54b5904 (delted fastpass column, moved discord role id to utils.ts, logic in hacker.ts looks at if hacker has vip role on discord)
+=======
+const PROD_VIP_ID = "1423358570203844689";
+const DEV_VIP_ID = "1423366084874080327";
+>>>>>>> c405d39d (me when im in the wrong directory, this is the discord fix and moving the vip role into utils.ts and fastpass logic that was supposed to be pushed mb gang)
 const VIP_ID = IS_PROD ? (PROD_VIP_ID as string) : (DEV_VIP_ID as string);
 export const discord = new REST({ version: "10" }).setToken(
   env.DISCORD_BOT_TOKEN,
@@ -79,6 +84,7 @@ export const isDiscordMember = async (user: Session["user"]) => {
     return false;
   }
 };
+
 
 export async function isDiscordVIP(discordUserId: string) {
   const guildMember = (await discord.get(
