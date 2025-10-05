@@ -3,7 +3,8 @@ import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
 
-import type { HackerClass} from "@forge/db/schemas/knight-hacks";
+import type { HackerClass } from "@forge/db/schemas/knight-hacks";
+import type { AssignableHackerClass } from "@forge/consts/knight-hacks";
 import {
   BUCKET_NAME,
   CLASS_ROLE_ID,
@@ -746,16 +747,17 @@ export const hackerRouter = {
       const hacker = await db.query.Hacker.findFirst({
         where: (t, { eq }) => eq(t.userId, input.userId),
       });
+      
       if (!hacker)
         throw new TRPCError({
           code: "NOT_FOUND",
           message: `Hacker with User ID ${input.userId} not found.`,
         });
-
+      const discordId = await resolveDiscordUserId(hacker.discordUser);
+      const isVIP = discordId ? await isDiscordVIP(discordId) : false;
       const event = await db.query.Event.findFirst({
         where: eq(Event.id, input.eventId),
       });
-      
       if (!event)
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -768,6 +770,7 @@ export const hackerRouter = {
         });
       }
       const eventTag = event.tag;
+
       const hackerAttendee = await db.query.HackerAttendee.findFirst({
         where: (t, { and, eq }) =>
           and(
@@ -800,8 +803,7 @@ export const hackerRouter = {
           message: `${hacker.firstName} ${hacker.lastName} has not checked in for this hackathon`,
         });
       }
-      const discordId = await resolveDiscordUserId(hacker.discordUser);
-      const isVIP = discordId ? await isDiscordVIP(discordId) : false;
+
 
       if (hackerAttendee.status === "confirmed" && eventTag === "Check-in") {
         await db.transaction(async (tx) => {
@@ -879,7 +881,10 @@ export const hackerRouter = {
             );
             // VIP will already be given the discord role ahead of time, so no need to assign again
             if (assignedClass && !isVIP) {
-              await addRoleToMember(discordId, CLASS_ROLE_ID[assignedClass]);
+              await addRoleToMember(
+                discordId,
+                CLASS_ROLE_ID[assignedClass as AssignableHackerClass],
+              );
             }
           } catch (e) {
             await log({
@@ -924,6 +929,7 @@ export const hackerRouter = {
           message: `Only ${input.assignedClassCheckin} hackers can check in. Hacker has class ${hackerAttendee.class}.`,
         });
       }
+
       const duplicates = await db
         .select({ id: HackerEventAttendee.id })
         .from(HackerEventAttendee)
@@ -933,6 +939,7 @@ export const hackerRouter = {
             eq(HackerEventAttendee.eventId, input.eventId),
           ),
         );
+
       if (duplicates.length > 0 && !input.repeatedCheckin)
         throw new TRPCError({
           code: "CONFLICT",
@@ -947,6 +954,7 @@ export const hackerRouter = {
         .update(HackerAttendee)
         .set({ points: sql`${HackerAttendee.points} + ${input.eventPoints}` })
         .where(eq(HackerAttendee.id, hackerAttendee.id));
+        
       await log({
         title: "Hacker Checked-In",
         message: `Hacker ${hacker.firstName} ${hacker.lastName} has been checked in to event ${eventTag}.`,
