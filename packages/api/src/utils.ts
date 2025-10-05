@@ -75,7 +75,6 @@ export const isDiscordMember = async (user: Session["user"]) => {
   }
 };
 
-
 export async function isDiscordVIP(discordUserId: string) {
   const guildMember = (await discord.get(
     Routes.guildMember(GUILD_ID, discordUserId),
