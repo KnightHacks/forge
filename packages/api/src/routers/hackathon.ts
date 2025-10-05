@@ -9,7 +9,7 @@ import {
   HackerAttendee,
 } from "@forge/db/schemas/knight-hacks";
 
-import {  protectedProcedure, publicProcedure } from "../trpc";
+import { protectedProcedure, publicProcedure } from "../trpc";
 
 export const hackathonRouter = {
   getHackathons: publicProcedure.query(async () => {
