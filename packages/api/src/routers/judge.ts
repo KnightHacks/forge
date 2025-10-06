@@ -17,19 +17,18 @@ const getSecret = () => {
   return s;
 };
 
+// Base64URL helper (encode only — using Buffer's "base64url")
 const b64url = (input: Buffer | string) =>
-  Buffer.from(input)
-    .toString("base64")
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
+  Buffer.isBuffer(input)
+    ? input.toString("base64url")
+    : Buffer.from(input).toString("base64url");
 
 const hmac = (data: string) =>
   crypto.createHmac("sha256", getSecret()).update(data).digest("base64url");
 
 interface MagicPayload {
   sub: string;
-  roomId: number;
+  roomName: string;
   iat: number;
   exp: number;
 }
@@ -42,7 +41,7 @@ const signMagicToken = (
   const nowSec = Math.floor(Date.now() / 1000);
   const fullPayload: MagicPayload = {
     sub: "knighthacks-judging",
-    roomId: payload.roomId,
+    roomName: payload.roomName,
     iat: nowSec,
     exp: nowSec + ttlSeconds,
   };
@@ -67,13 +66,11 @@ const verifyMagicToken = (token: string): MagicPayload => {
       code: "UNAUTHORIZED",
       message: "Invalid Token signature",
     });
-
   if (!payloadB64)
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Invalid Token payload",
     });
-
   if (!headerB64)
     throw new TRPCError({
       code: "UNAUTHORIZED",
@@ -81,14 +78,17 @@ const verifyMagicToken = (token: string): MagicPayload => {
     });
 
   const expected = hmac(`${headerB64}.${payloadB64}`);
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+  // Constant-time compare
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid signature" });
   }
 
   let payload: MagicPayload;
   try {
     payload = JSON.parse(
-      Buffer.from(payloadB64, "base64").toString("utf8"),
+      Buffer.from(payloadB64, "base64url").toString("utf8"),
     ) as MagicPayload;
   } catch {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Bad payload" });
@@ -101,7 +101,7 @@ const verifyMagicToken = (token: string): MagicPayload => {
     });
   }
   const nowSec = Math.floor(Date.now() / 1000);
-  if (payload.exp < nowSec) {
+  if (payload.exp < nowSec - 30) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Token expired" });
   }
   return payload;
@@ -111,17 +111,19 @@ export const judgeRouter = {
   generateToken: adminProcedure
     .input(
       z.object({
-        roomId: z.number(),
+        roomName: z.string(),
         ttlSeconds: z.number().int().positive().optional(),
       }),
     )
     .query(({ input }) => {
       const token = signMagicToken(
-        { roomId: input.roomId },
+        { roomName: input.roomName },
         input.ttlSeconds ?? 15 * 60,
       );
 
-      const magicUrl = `${env.BLADE_URL}judge/activate?token=${encodeURIComponent(token)}`;
+      const magicUrl = `${env.BLADE_URL}judge/activate?token=${encodeURIComponent(
+        token,
+      )}`;
 
       return { magicUrl };
     }),
@@ -134,21 +136,16 @@ export const judgeRouter = {
     )
     .mutation(async ({ input }) => {
       const payload = verifyMagicToken(input.token);
-      const { roomId } = payload;
+      const { roomName } = payload;
 
-      console.log("check 1");
-      console.log("Room Id: ", roomId);
-
-      const sessionToken = crypto.randomUUID();
+      const sessionToken = crypto.randomBytes(32).toString("hex");
       const expires = new Date(Date.now() + SESSION_TTL_HOURS * 60 * 60 * 1000);
 
       await db.insert(JudgeSession).values({
         sessionToken,
-        roomId: roomId,
+        roomName,
         expires,
       });
-
-      const maxAge = SESSION_TTL_HOURS * 60 * 60;
 
       cookies().set({
         name: "sessionToken",
@@ -157,12 +154,12 @@ export const judgeRouter = {
         sameSite: "lax",
         secure: env.NODE_ENV === "production",
         path: "/",
-        maxAge,
+        maxAge: SESSION_TTL_HOURS * 60 * 60,
       });
 
       return {
         ok: true,
-        roomId,
+        roomName,
       };
     }),
 };
