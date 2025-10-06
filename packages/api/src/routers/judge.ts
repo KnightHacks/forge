@@ -28,7 +28,7 @@ const hmac = (data: string) =>
   crypto.createHmac("sha256", getSecret()).update(data).digest("base64url");
 
 interface MagicPayload {
-  sub: "knighthacks-judging";
+  sub: string;
   roomId: number;
   iat: number;
   exp: number;
@@ -61,6 +61,25 @@ const verifyMagicToken = (token: string): MagicPayload => {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Malformed token" });
 
   const [headerB64, payloadB64, sig] = parts;
+
+  if (!sig)
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Invalid Token signature",
+    });
+
+  if (!payloadB64)
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Invalid Token payload",
+    });
+
+  if (!headerB64)
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Invalid Token header",
+    });
+
   const expected = hmac(`${headerB64}.${payloadB64}`);
   if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid signature" });
@@ -68,7 +87,9 @@ const verifyMagicToken = (token: string): MagicPayload => {
 
   let payload: MagicPayload;
   try {
-    payload = JSON.parse(Buffer.from(payloadB64, "base64").toString("utf8"));
+    payload = JSON.parse(
+      Buffer.from(payloadB64, "base64").toString("utf8"),
+    ) as MagicPayload;
   } catch {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Bad payload" });
   }
@@ -120,7 +141,7 @@ export const judgeRouter = {
 
       const sessionToken = crypto.randomUUID();
       const expires = new Date(Date.now() + SESSION_TTL_HOURS * 60 * 60 * 1000);
-      console.log("Session insert");
+
       await db.insert(JudgeSession).values({
         sessionToken,
         roomId: roomId,
