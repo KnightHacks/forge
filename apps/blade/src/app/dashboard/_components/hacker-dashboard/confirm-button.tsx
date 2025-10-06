@@ -18,16 +18,19 @@ export default function ConfirmWithTOS({
   hackathonData,
   handleConfirm,
   isLoading,
+  numConfirmed,
 }: {
   hackathonData: { displayName?: string; confirmationDeadline?: Date | null };
   handleConfirm: () => Promise<void> | void;
   isLoading: boolean;
+  numConfirmed: number;
 }) {
   const [open, setOpen] = useState(false);
 
   const disabled =
     !hackathonData.confirmationDeadline ||
-    hackathonData.confirmationDeadline < new Date();
+    hackathonData.confirmationDeadline < new Date() ||
+    numConfirmed >= 1100;
 
   return (
     <Dialog
@@ -47,7 +50,9 @@ export default function ConfirmWithTOS({
           {isLoading ? (
             <Loader2 className="w-[85px] animate-spin" />
           ) : (
-            <span className="text-lg font-bold text-white">CONFIRM</span>
+            <span className="text-lg font-bold text-white">
+              {disabled ? "CONFIRMATION CLOSED" : "CONFIRM"}
+            </span>
           )}
         </Button>
       </DialogTrigger>

@@ -1,5 +1,4 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { and, count, desc, eq, getTableColumns, lt } from "@forge/db";
@@ -10,8 +9,7 @@ import {
   HackerAttendee,
 } from "@forge/db/schemas/knight-hacks";
 
-import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
-import { log } from "../utils";
+import { protectedProcedure, publicProcedure } from "../trpc";
 
 export const hackathonRouter = {
   getHackathons: publicProcedure.query(async () => {
@@ -100,58 +98,18 @@ export const hackathonRouter = {
     return hackathons;
   }),
 
-  hackathonCheckIn: adminProcedure
+  getNumConfirmed: protectedProcedure
     .input(
       z.object({
-        userId: z.string(),
         hackathonId: z.string(),
       }),
     )
-    .mutation(async ({ input, ctx }) => {
-      const hacker = await db.query.Hacker.findFirst({
-        where: (t, { eq }) => eq(t.userId, input.userId),
+    .query(async ({ input }) => {
+      const hackers = await db.query.HackerAttendee.findMany({
+        where: (t, { eq, and }) =>
+          and(eq(t.hackathonId, input.hackathonId), eq(t.status, "confirmed")),
       });
 
-      const hackathon = await db.query.Hackathon.findFirst({
-        where: (t, { eq }) => eq(t.id, input.hackathonId),
-      });
-
-      if (!hacker || !hackathon) {
-        return;
-      }
-
-      // Get the hacker's status for this specific hackathon
-      const hackerAttendee = await db.query.HackerAttendee.findFirst({
-        where: (t, { and, eq }) =>
-          and(eq(t.hackerId, hacker.id), eq(t.hackathonId, input.hackathonId)),
-      });
-
-      if (!hackerAttendee) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `${hacker.firstName} ${hacker.lastName} is not registered for this hackathon`,
-        });
-      }
-
-      if (hackerAttendee.status !== "confirmed") {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: `${hacker.firstName} ${hacker.lastName} has not confirmed for this hackathon`,
-        });
-      }
-
-      // Update the status to indicate they're checked in
-      // You might want to add a "checked-in" status to HACKATHON_APPLICATION_STATES
-      // For now, we'll just log the check-in without changing status
-      await log({
-        title: "Hacker Checked-In",
-        message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon: ${hackathon.name}`,
-        color: "success_green",
-        userId: ctx.session.user.discordUserId,
-      });
-
-      return {
-        message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!`,
-      };
+      return hackers.length;
     }),
 } satisfies TRPCRouterRecord;

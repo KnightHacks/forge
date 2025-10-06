@@ -220,6 +220,26 @@ export const EventAttendee = createTable("event_attendee", (t) => ({
     }),
 }));
 
+export const HACKER_CLASSES = [
+  "Operators",
+  "Machinist",
+  "Sentinels",
+  "Harbinger",
+  "Monstologist",
+  "Alchemist",
+] as const;
+export const SPECIAL_HACKER_CLASSES = ["VIP"] as const;
+export const HACKER_CLASSES_ALL = [
+  ...HACKER_CLASSES,
+  ...SPECIAL_HACKER_CLASSES,
+] as const;
+export type HackerClass = (typeof HACKER_CLASSES_ALL)[number];
+export type RepeatPolicy = "none" | "all" | "class";
+export const AssignedClassCheckinSchema = z.union([
+  z.literal("All"),
+  z.enum(HACKER_CLASSES),
+]);
+
 export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   hackerId: t
@@ -243,6 +263,7 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   timeApplied: t.timestamp().notNull().defaultNow(),
   timeConfirmed: t.timestamp(),
   points: t.integer().notNull().default(0),
+  class: t.varchar({ length: 20 }).$type<HackerClass | null>().default(null),
 }));
 
 export const HackerEventAttendee = createTable(

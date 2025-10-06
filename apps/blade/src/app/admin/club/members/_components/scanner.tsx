@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AwardIcon, WrenchIcon } from "lucide-react";
 import { QrReader } from "react-qr-reader";
 import { z } from "zod";
 
+import { HACKER_CLASSES } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -26,10 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-
-interface CodeScanningProps {
-  processingScan?: boolean;
-}
+import ToggleButton from "../../../../admin/hackathon/hackers/_components/toggle-button";
 
 const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   const { data: events } = api.event.getEvents.useQuery();
@@ -40,8 +38,16 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   });
 
   const [open, setOpen] = useState(false);
+  const [openPersistentDialog, setOpenPersistentDialog] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [assignedClass, setAssignedClass] = useState("");
+  const [checkInMessage, setCheckInMessage] = useState("");
+  const [toggleRepeatedCheckIn, setToggleRepeatedCheckIn] = useState(false);
+  const [errorColor, setErrorColor] = useState("text-red-500");
 
-  // Separate current and previous events
+  const scanningRef = useRef(false);
+
   const now = new Date();
   const currentEvents = (filteredEvents ?? []).filter((event) => {
     const eventEndTime = new Date(event.end_datetime);
@@ -67,34 +73,63 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
       });
     },
   });
-  const hackerCheckIn = api.hacker.eventCheckIn.useMutation({
+  const hackerEventCheckIn = api.hacker.eventCheckIn.useMutation({
     onSuccess(opts) {
       toast.success(opts.message);
+      setErrorColor("");
+      setFirstName(opts.firstName);
+      setLastName(opts.lastName);
+      setAssignedClass(opts.class ?? "No class assigned");
+      setCheckInMessage(opts.messageforHackers);
+      setOpenPersistentDialog(true);
+
       return;
     },
     onError(opts) {
+      if (!openPersistentDialog) {
+        toast.error(opts.message, {
+          icon: "⚠️",
+        });
+        setErrorColor("text-red-500");
+        setCheckInMessage(opts.message);
+        setFirstName("Error");
+        setLastName("Error");
+        setAssignedClass("");
+        setOpenPersistentDialog(true);
+      }
       toast.error(opts.message, {
         icon: "⚠️",
       });
     },
   });
-
+  const AssignedClassCheckinSchema = z.union([
+    z.literal("All"),
+    z.enum(HACKER_CLASSES),
+  ]);
   const form = useForm({
     schema: z.object({
       userId: z.string(),
       eventId: z.string(),
       eventPoints: z.number(),
+      hackathonId: z.string(),
+      assignedClassCheckin: AssignedClassCheckinSchema,
+      repeatedCheckin: z.boolean(),
     }),
     defaultValues: {
       eventId: "",
       userId: "",
       eventPoints: 0,
+      hackathonId: "",
+      assignedClassCheckin: "All",
+      repeatedCheckin: false,
     },
   });
-
   const closeModal = () => {
     setOpen(false);
     window.location.reload();
+  };
+  const closePersistentDialog = () => {
+    setOpenPersistentDialog(false);
   };
 
   const renderEventSelect = (filteredEvents: typeof events) => (
@@ -125,6 +160,7 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
                   (event) => event.id === selectedEventId,
                 );
                 form.setValue("eventPoints", selectedEvent?.points ?? 0);
+                form.setValue("hackathonId", selectedEvent?.hackathonId ?? "");
               }}
             >
               <option value="" disabled>
@@ -133,6 +169,42 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               {filteredEvents?.map((event) => (
                 <option key={event.id} value={event.id}>
                   {event.name}
+                </option>
+              ))}
+            </select>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+  const renderClassCheckinSelect = () => (
+    <FormField
+      name="assignedClassCheckin"
+      control={form.control}
+      render={({ field }) => (
+        <FormItem className="space-y-2">
+          <FormLabel>Check-in class</FormLabel>
+          <FormControl>
+            <select
+              {...field}
+              className="w-full rounded border p-2"
+              defaultValue=""
+              onChange={(e) => {
+                const selectedClass = e.target.value;
+                field.onChange(e);
+                form.setValue("assignedClassCheckin", selectedClass);
+              }}
+            >
+              <option value="" disabled>
+                Select a class
+              </option>
+              <option key="All" value="All">
+                All
+              </option>
+              {HACKER_CLASSES.map((HackerClass) => (
+                <option key={HackerClass} value={HackerClass}>
+                  {HackerClass}
                 </option>
               ))}
             </select>
@@ -153,38 +225,39 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
           </span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="h-auto max-h-[80vh] w-full overflow-y-auto [&>button:last-child]:hidden">
+      <DialogContent className="h-auto w-full overflow-y-auto 2xl:max-h-[90vh] [&>button:last-child]:hidden">
         <DialogHeader>
-          <DialogTitle>Check-in {eventType}</DialogTitle>
+          <DialogTitle className="absolute">Check-in {eventType}</DialogTitle>
         </DialogHeader>
-        <div className="mt-4">
+        <div>
           <QrReader
+            scanDelay={2000}
             constraints={{ facingMode: "environment" }}
-            onResult={async (result, _, codeReader) => {
-              const scanProps = codeReader as CodeScanningProps;
-              if (!scanProps.processingScan && !!result) {
-                scanProps.processingScan = true;
-
-                try {
-                  const userId = result.getText().substring(5);
-                  form.setValue("userId", userId);
-
-                  const eventId = form.getValues("eventId");
-                  if (eventId) {
-                    if (eventType == "Member")
-                      await form.handleSubmit((data) =>
-                        memberCheckIn.mutate(data),
-                      )();
-                    else
-                      await form.handleSubmit((data) =>
-                        hackerCheckIn.mutate(data),
-                      )();
+            onResult={async (result, _) => {
+              if (!result) return;
+              if (scanningRef.current) return;
+              scanningRef.current = true;
+              try {
+                const userId = result.getText().substring(5);
+                form.setValue("userId", userId);
+                const eventId = form.getValues("eventId");
+                if (eventId) {
+                  if (eventType === "Hacker") {
+                    await form.handleSubmit((data) =>
+                      hackerEventCheckIn.mutate(data),
+                    )();
                   } else {
-                    toast.error("Please select an event first!");
+                    await form.handleSubmit((data) =>
+                      memberCheckIn.mutate(data),
+                    )();
                   }
-                } finally {
-                  setTimeout(() => (scanProps.processingScan = false), 3000);
+                } else {
+                  toast.error("Please select an event first!");
                 }
+              } finally {
+                setTimeout(() => {
+                  scanningRef.current = false;
+                }, 3000);
               }
             }}
           />
@@ -192,8 +265,8 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit((data) => {
-              if (eventType == "Member") memberCheckIn.mutate(data);
-              else hackerCheckIn.mutate(data);
+              if (eventType == "Hacker") hackerEventCheckIn.mutate(data);
+              else memberCheckIn.mutate(data);
             })}
             className="space-y-4"
           >
@@ -204,9 +277,26 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               </TabsList>
               <TabsContent value="current" className="space-y-4">
                 {renderEventSelect(currentEvents)}
+                {eventType === "Hacker" && renderClassCheckinSelect()}
+
+                <ToggleButton
+                  isToggled={toggleRepeatedCheckIn}
+                  onToggle={(value) => {
+                    setToggleRepeatedCheckIn(value);
+                    form.setValue("repeatedCheckin", value);
+                  }}
+                />
               </TabsContent>
               <TabsContent value="previous" className="space-y-4">
                 {renderEventSelect(previousEvents)}
+                {eventType === "Hacker" && renderClassCheckinSelect()}
+                <ToggleButton
+                  isToggled={toggleRepeatedCheckIn}
+                  onToggle={(value) => {
+                    setToggleRepeatedCheckIn(value);
+                    form.setValue("repeatedCheckin", value);
+                  }}
+                />
               </TabsContent>
             </Tabs>
           </form>
@@ -216,6 +306,20 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
             Close
           </Button>
         </div>
+        {openPersistentDialog && (
+          <div className="fixed inset-0 z-[1000] flex w-full flex-col items-center justify-center gap-10 bg-black p-10 text-center text-3xl font-bold">
+            <div className="absolute top-10 w-56 text-lg">{checkInMessage}</div>
+            <div className={errorColor}>{firstName}</div>
+            <div className={errorColor}>{lastName}</div>
+            <div className="text-2xl">{assignedClass}</div>
+            <Button
+              onClick={closePersistentDialog}
+              className="absolute bottom-10 w-56"
+            >
+              Close
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

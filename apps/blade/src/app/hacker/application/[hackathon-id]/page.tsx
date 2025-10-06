@@ -44,6 +44,7 @@ export default async function HackerApplicationPage({
     });
 
     if (isHacker != null) {
+      console.log("isHacker redirect", isHacker);
       return redirect("/dashboard");
     }
   } catch {
@@ -55,6 +56,7 @@ export default async function HackerApplicationPage({
   });
 
   if (hackathon == null) {
+    console.log("hackathon redirect", hackathon);
     return redirect("/dashboard");
   }
 
