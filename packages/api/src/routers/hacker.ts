@@ -954,7 +954,7 @@ export const hackerRouter = {
         .where(eq(HackerAttendee.id, hackerAttendee.id));
 
       if (eventTag === "Check-in") {
-                await log({
+        await log({
           title: `Hacker Checked-In`,
           message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon ${
             assignedClass ? ` (Class: ${assignedClass}).` : ""
@@ -971,7 +971,6 @@ export const hackerRouter = {
           class: assignedClass,
           messageforHackers: "Check ID, and send them to correct lanyard area",
           eventName: eventTag,
-
         };
       }
       await log({
