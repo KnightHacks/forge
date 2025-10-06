@@ -200,7 +200,7 @@ export function HackerData({
               isLoading={loading}
               hackathonData={hackathonData}
               handleConfirm={handleConfirm}
-              numConfirmed={numConfirmed}
+              numConfirmed={numConfirmed ?? 0}
             />
           )}
 
