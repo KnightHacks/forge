@@ -131,7 +131,7 @@ export const judgeRouter = {
   activateToken: publicProcedure
     .input(
       z.object({
-        token: z.string().min(16),
+        token: z.string().min(16).max(2048), // 2 KB,
       }),
     )
     .mutation(async ({ input }) => {
