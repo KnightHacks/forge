@@ -200,11 +200,7 @@ export function HackerData({
               isLoading={loading}
               hackathonData={hackathonData}
               handleConfirm={handleConfirm}
-<<<<<<< HEAD
               numConfirmed={numConfirmed ?? 0}
-=======
-              numConfirmed={numConfirmed}
->>>>>>> 1214b061 (update conf logic and fix scan spam w ref)
             />
           )}
 
