@@ -264,23 +264,8 @@ export const DEV_DISCORD_ROLE_SENTINELS = "1420819277279137892";
 export const PROD_DISCORD_ROLE_HARBINGER = "1415702341214011392";
 export const DEV_DISCORD_ROLE_HARBINGER = "1420819326075801670";
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 export const PROD_DISCORD_ROLE_MONSTOLOGIST = "1415702361653121044";
 export const DEV_DISCORD_ROLE_MONSTOLOGIST = "1420819295759237222";
-=======
-export const PROD_DISCORD_ROLE_BEASTKEEPER = "1415702361653121044";
-export const DEV_DISCORD_ROLE_BEASTKEEPER = "1420819295759237222";
->>>>>>> 56b0d389 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
-=======
-export const PROD_DISCORD_ROLE_BEASTKEEPER = "1415702361653121044";
-export const DEV_DISCORD_ROLE_BEASTKEEPER = "1420819295759237222";
->>>>>>> 14c69601 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
-=======
-export const PROD_DISCORD_ROLE_MONSTOLOGIST = "1415702361653121044";
-export const DEV_DISCORD_ROLE_MONSTOLOGIST = "1420819295759237222";
->>>>>>> 49c7e20b (new event tags)
 
 export const PROD_DISCORD_ROLE_ALCHEMIST = "1415702383274491934";
 export const DEV_DISCORD_ROLE_ALCHEMIST = "1420819309965611140";
@@ -290,62 +275,18 @@ export const IS_PROD = process.env.NODE_ENV === "production";
 export const KH_EVENT_ROLE_ID = IS_PROD
   ? PROD_DISCORD_ROLE_KNIGHT_HACKS_8
   : DEV_DISCORD_ROLE_KNIGHT_HACKS_8;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
 
 export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
-=======
-
-export const CLASS_ROLE_ID: Record<HackerClass, string> = {
->>>>>>> 56b0d389 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
-=======
-
-export const CLASS_ROLE_ID: Record<HackerClass, string> = {
->>>>>>> 14c69601 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
-=======
-export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
-
-export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
->>>>>>> c405d39d (me when im in the wrong directory, this is the discord fix and moving the vip role into utils.ts and fastpass logic that was supposed to be pushed mb gang)
   Operators: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,
   Machinist: IS_PROD ? PROD_DISCORD_ROLE_MACHINIST : DEV_DISCORD_ROLE_MACHINIST,
   Sentinels: IS_PROD ? PROD_DISCORD_ROLE_SENTINELS : DEV_DISCORD_ROLE_SENTINELS,
   Harbinger: IS_PROD ? PROD_DISCORD_ROLE_HARBINGER : DEV_DISCORD_ROLE_HARBINGER,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   Monstologist: IS_PROD
     ? PROD_DISCORD_ROLE_MONSTOLOGIST
     : DEV_DISCORD_ROLE_MONSTOLOGIST,
   Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
-<<<<<<< HEAD
-<<<<<<< HEAD
 } as const satisfies Record<AssignableHackerClass, string>;
-=======
-=======
->>>>>>> 14c69601 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
-  Beastkeeper: IS_PROD
-    ? PROD_DISCORD_ROLE_BEASTKEEPER
-    : DEV_DISCORD_ROLE_BEASTKEEPER,
-=======
-  Monstologist: IS_PROD
-    ? PROD_DISCORD_ROLE_MONSTOLOGIST
-    : DEV_DISCORD_ROLE_MONSTOLOGIST,
->>>>>>> 49c7e20b (new event tags)
-  Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
-=======
-  VIP: IS_PROD ? PROD_VIP_ID : DEV_VIP_ID,
->>>>>>> c6fdc6bd (added vip stuff)
-};
-<<<<<<< HEAD
->>>>>>> 56b0d389 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
-=======
->>>>>>> 14c69601 (added role ids and tk bot will give discord roles upon checkin and cleaned up counters, awaitlogs and other stuff that was used for testing)
-=======
-} as const satisfies Record<AssignableHackerClass, string>;
->>>>>>> c405d39d (me when im in the wrong directory, this is the discord fix and moving the vip role into utils.ts and fastpass logic that was supposed to be pushed mb gang)
 
 export const MEMBER_PROFILE_ICON_SIZE = 24;
 
