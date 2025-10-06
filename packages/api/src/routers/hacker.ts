@@ -898,25 +898,25 @@ export const hackerRouter = {
             );
           }
         }
-        await log({
-          title: `Hacker Checked-In`,
-          message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon ${
-            assignedClass ? ` (Class: ${assignedClass}).` : ""
-          }`,
-          color: "success_green",
-          userId: ctx.session.user.discordUserId,
-        });
-        return {
-          message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!${
-            assignedClass ? ` Assigned class: ${assignedClass}.` : ""
-          }`,
-          firstName: hacker.firstName,
-          lastName: hacker.lastName,
-          class: assignedClass,
-          color: "text-[#4ade80]",
-          messageforHackers: "Check ID, and send them to correct lanyard area",
-          status: "success",
-        };
+        // await log({
+        //   title: `Hacker Checked-In`,
+        //   message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon ${
+        //     assignedClass ? ` (Class: ${assignedClass}).` : ""
+        //   }`,
+        //   color: "success_green",
+        //   userId: ctx.session.user.discordUserId,
+        // });
+        // return {
+        //   message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!${
+        //     assignedClass ? ` Assigned class: ${assignedClass}.` : ""
+        //   }`,
+        //   firstName: hacker.firstName,
+        //   lastName: hacker.lastName,
+        //   class: assignedClass,
+        //   color: "text-[#4ade80]",
+        //   messageforHackers: "Check ID, and send them to correct lanyard area",
+        //   status: "success",
+        // };
       }
       if (
         input.assignedClassCheckin !== "All" &&
@@ -954,6 +954,27 @@ export const hackerRouter = {
         .set({ points: sql`${HackerAttendee.points} + ${input.eventPoints}` })
         .where(eq(HackerAttendee.id, hackerAttendee.id));
 
+      if (eventTag === "Check-in") {
+                await log({
+          title: `Hacker Checked-In`,
+          message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon ${
+            assignedClass ? ` (Class: ${assignedClass}).` : ""
+          }`,
+          color: "success_green",
+          userId: ctx.session.user.discordUserId,
+        });
+        return {
+          message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!${
+            assignedClass ? ` Assigned class: ${assignedClass}.` : ""
+          }`,
+          firstName: hacker.firstName,
+          lastName: hacker.lastName,
+          class: assignedClass,
+          messageforHackers: "Check ID, and send them to correct lanyard area",
+          eventName: eventTag,
+
+        };
+      }
       await log({
         title: "Hacker Checked-In",
         message: `Hacker ${hacker.firstName} ${hacker.lastName} has been checked in to event ${eventTag}.`,
@@ -965,9 +986,7 @@ export const hackerRouter = {
         firstName: hacker.firstName,
         lastName: hacker.lastName,
         class: assignedClass,
-        color: "text-[#4ade80]",
         messageforHackers: "Check their badge and send them to event area",
-        fastPass: isVIP,
         eventName: eventTag,
       };
     }),
