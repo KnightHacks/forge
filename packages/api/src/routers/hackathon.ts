@@ -97,4 +97,19 @@ export const hackathonRouter = {
 
     return hackathons;
   }),
+
+  getNumConfirmed: protectedProcedure
+    .input(
+      z.object({
+        hackathonId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const hackers = await db.query.HackerAttendee.findMany({
+        where: (t, { eq, and }) =>
+          and(eq(t.hackathonId, input.hackathonId), eq(t.status, "confirmed")),
+      });
+
+      return hackers.length;
+    }),
 } satisfies TRPCRouterRecord;
