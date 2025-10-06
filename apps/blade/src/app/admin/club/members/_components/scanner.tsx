@@ -44,6 +44,7 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   const [assignedClass, setAssignedClass] = useState("");
   const [checkInMessage, setCheckInMessage] = useState("");
   const [toggleRepeatedCheckIn, setToggleRepeatedCheckIn] = useState(false);
+  const [errorColor, setErrorColor] = useState("text-red-500");
 
   const scanningRef = useRef(false);
 
@@ -75,16 +76,27 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   const hackerEventCheckIn = api.hacker.eventCheckIn.useMutation({
     onSuccess(opts) {
       toast.success(opts.message);
+      setErrorColor("");
       setFirstName(opts.firstName);
       setLastName(opts.lastName);
       setAssignedClass(opts.class ?? "No class assigned");
       setCheckInMessage(opts.messageforHackers);
-      if (opts.eventName === "Check-in") {
-        setOpenPersistentDialog(true);
-      }
+      setOpenPersistentDialog(true);
+
       return;
     },
     onError(opts) {
+      if (!openPersistentDialog) {
+        toast.error(opts.message, {
+          icon: "⚠️",
+        });
+        setErrorColor("text-red-500");
+        setCheckInMessage(opts.message);
+        setFirstName("Error");
+        setLastName("Error");
+        setAssignedClass("");
+        setOpenPersistentDialog(true);
+      }
       toast.error(opts.message, {
         icon: "⚠️",
       });
@@ -297,8 +309,8 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
         {openPersistentDialog && (
           <div className="fixed inset-0 z-[1000] flex w-full flex-col items-center justify-center gap-10 bg-black p-10 text-center text-3xl font-bold">
             <div className="absolute top-10 w-56 text-lg">{checkInMessage}</div>
-            <div>{firstName}</div>
-            <div>{lastName}</div>
+            <div className={errorColor}>{firstName}</div>
+            <div className={errorColor}>{lastName}</div>
             <div className="text-2xl">{assignedClass}</div>
             <Button
               onClick={closePersistentDialog}
