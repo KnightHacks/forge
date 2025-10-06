@@ -63,3 +63,13 @@ export const Session = createTable("session", (t) => ({
 export const SessionRelations = relations(Session, ({ one }) => ({
   user: one(User, { fields: [Session.userId], references: [User.id] }),
 }));
+
+export const JudgeSession = createTable("judge_session", (t) => ({
+  sessionToken: t.varchar({ length: 255 }).notNull().primaryKey(),
+  roomId: t.integer().notNull(),
+  expires: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+  createdAt: t
+    .timestamp({ mode: "date", withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}));

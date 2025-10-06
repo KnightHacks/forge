@@ -6,6 +6,7 @@ import { eventFeedbackRouter } from "./routers/event-feedback";
 import { guildRouter } from "./routers/guild";
 import { hackathonRouter } from "./routers/hackathon";
 import { hackerRouter } from "./routers/hacker";
+import { judgeRouter } from "./routers/judge";
 import { memberRouter } from "./routers/member";
 import { passkitRouter } from "./routers/passkit";
 import { qrRouter } from "./routers/qr";
@@ -27,6 +28,7 @@ export const appRouter = createTRPCRouter<{
   passkit: typeof passkitRouter;
   email: typeof emailRouter;
   guild: typeof guildRouter;
+  judge: typeof judgeRouter;
 }>({
   auth: authRouter,
   duesPayment: duesPaymentRouter,
@@ -41,6 +43,7 @@ export const appRouter = createTRPCRouter<{
   passkit: passkitRouter,
   email: emailRouter,
   guild: guildRouter,
+  judge: judgeRouter,
 });
 
 // export type definition of API
