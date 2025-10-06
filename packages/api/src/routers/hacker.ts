@@ -752,7 +752,6 @@ export const hackerRouter = {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: `Hacker with User ID ${input.userId} not found.`,
-
         });
       const discordId = await resolveDiscordUserId(hacker.discordUser);
       const isVIP = discordId ? await isDiscordVIP(discordId) : false;
