@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AwardIcon, WrenchIcon } from "lucide-react";
 import { QrReader } from "react-qr-reader";
 import { z } from "zod";
@@ -29,10 +29,6 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 import ToggleButton from "../../../../admin/hackathon/hackers/_components/toggle-button";
 
-interface CodeScanningProps {
-  processingScan?: boolean;
-}
-
 const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   const { data: events } = api.event.getEvents.useQuery();
 
@@ -49,7 +45,8 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   const [checkInMessage, setCheckInMessage] = useState("");
   const [toggleRepeatedCheckIn, setToggleRepeatedCheckIn] = useState(false);
 
-  // Separate current and previous events
+  const scanningRef = useRef(false);
+
   const now = new Date();
   const currentEvents = (filteredEvents ?? []).filter((event) => {
     const eventEndTime = new Date(event.end_datetime);
@@ -222,31 +219,33 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
         </DialogHeader>
         <div>
           <QrReader
+            scanDelay={2000}
             constraints={{ facingMode: "environment" }}
-            onResult={async (result, _, codeReader) => {
-              const scanProps = codeReader as CodeScanningProps;
-              if (!scanProps.processingScan && !!result) {
-                scanProps.processingScan = true;
-                try {
-                  const userId = result.getText().substring(5);
-                  form.setValue("userId", userId);
-                  const eventId = form.getValues("eventId");
-                  if (eventId) {
-                    if (eventType === "Hacker") {
-                      await form.handleSubmit((data) =>
-                        hackerEventCheckIn.mutate(data),
-                      )();
-                    } else {
-                      await form.handleSubmit((data) =>
-                        memberCheckIn.mutate(data),
-                      )();
-                    }
+            onResult={async (result, _) => {
+              if (!result) return;
+              if (scanningRef.current) return;
+              scanningRef.current = true;
+              try {
+                const userId = result.getText().substring(5);
+                form.setValue("userId", userId);
+                const eventId = form.getValues("eventId");
+                if (eventId) {
+                  if (eventType === "Hacker") {
+                    await form.handleSubmit((data) =>
+                      hackerEventCheckIn.mutate(data),
+                    )();
                   } else {
-                    toast.error("Please select an event first!");
+                    await form.handleSubmit((data) =>
+                      memberCheckIn.mutate(data),
+                    )();
                   }
-                } finally {
-                  setTimeout(() => (scanProps.processingScan = false), 3000);
+                } else {
+                  toast.error("Please select an event first!");
                 }
+              } finally {
+                setTimeout(() => {
+                  scanningRef.current = false;
+                }, 3000);
               }
             }}
           />
