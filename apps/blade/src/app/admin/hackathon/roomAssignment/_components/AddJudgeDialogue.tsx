@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -15,7 +14,7 @@ import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 
 interface AddJudgeDialogProps {
-  onAddJudge: (judgeName: string, roomName: string) => void;
+  onAddJudge: (judgeName: string, roomName: string) => Promise<void>;
 }
 
 export const AddJudgeDialog: React.FC<AddJudgeDialogProps> = ({
@@ -24,13 +23,16 @@ export const AddJudgeDialog: React.FC<AddJudgeDialogProps> = ({
   const [open, setOpen] = useState(false);
   const [judgeName, setJudgeName] = useState("");
   const [roomName, setRoomName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (judgeName.trim()) {
-      onAddJudge(judgeName, roomName);
+      setIsLoading(true);
+      await onAddJudge(judgeName, roomName);
       setJudgeName("");
       setRoomName("");
       setOpen(false);
+      setIsLoading(false);
     }
   };
 
@@ -54,9 +56,9 @@ export const AddJudgeDialog: React.FC<AddJudgeDialogProps> = ({
               value={judgeName}
               onChange={(e) => setJudgeName(e.target.value)}
               placeholder="Enter judge name"
-              onKeyDown={(e) => {
+              onKeyDown={async (e) => {
                 if (e.key === "Enter") {
-                  handleSubmit();
+                  await handleSubmit();
                 }
               }}
             />
@@ -68,21 +70,29 @@ export const AddJudgeDialog: React.FC<AddJudgeDialogProps> = ({
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
               placeholder="Assign room"
-              onKeyDown={(e) => {
+              onKeyDown={async (e) => {
                 if (e.key === "Enter") {
-                  handleSubmit();
+                  await handleSubmit();
                 }
               }}
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!judgeName.trim()}>
-            Add Judge
-          </Button>
+          {isLoading ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <Button onClick={handleSubmit} disabled={!judgeName.trim()}>
+              Add Judge
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
