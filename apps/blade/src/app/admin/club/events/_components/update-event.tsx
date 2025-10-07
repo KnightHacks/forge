@@ -75,6 +75,8 @@ function parseDateTime(value: string | Date) {
     return { date: "", hour: "", minute: "", amPm: "PM" as const };
   }
 
+  d.setDate(d.getDate() + 1);
+
   // Format local YYYY-MM-DD for <input type="date">
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -150,10 +152,10 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
         })?.displayName ?? null,
       startHour: startHour,
       startMinute: startMinute,
-      startAmPm: startAmPm,
+      startAmPm: startAmPm as "AM" | "PM",
       endHour: endHour,
       endMinute: endMinute,
-      endAmPm: endAmPm,
+      endAmPm: endAmPm as "AM" | "PM",
     },
   });
 
