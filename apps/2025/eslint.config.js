@@ -14,7 +14,7 @@ export default [
   {
     rules: {
       "@typescript-eslint/prefer-nullish-coalescing": "off",
-      "@next/next/no-page-custom-font": "off", 
+      "@next/next/no-page-custom-font": "off",
     },
   },
 ];

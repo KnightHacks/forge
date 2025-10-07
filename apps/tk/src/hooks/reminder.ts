@@ -7,13 +7,27 @@ import { db } from "@forge/db/client";
 import { Event as DBEvent } from "@forge/db/schemas/knight-hacks";
 
 import {
+  DISCORD_HACKATHON_ROLE_ID,
   DISCORD_PROD_GUILD_ID,
   DISCORD_REMINDER_ROLE_ID,
   EVENT_BANNER_IMAGE,
+  HACK_BANNER_IMAGE,
 } from "../consts";
 import { env } from "../env";
 
 // Function to retrieve the appropriate events for the day
+async function getHackathonActive() {
+  // Comparison date given that our DB end date will likely be at midnight
+  const endCompDate = new Date(Date.now());
+  endCompDate.setHours(23, 59, 59, 999);
+
+  return await db.query.Hackathon.findFirst({
+    orderBy: (t, { asc }) => asc(t.endDate),
+    where: (t, { and, gte, lte }) =>
+      and(gte(t.endDate, endCompDate), lte(t.startDate, new Date())),
+  });
+}
+
 async function getEvents() {
   // If today is Sunday, return the events for the entire week
   if (new Date().getDay() === 0) {
@@ -188,6 +202,22 @@ async function getEvents() {
   return prefixGroups;
 }
 
+async function getHackEvents(hId: string) {
+  const events = (
+    await db.query.Event.findMany({
+      orderBy: (evs, { asc }) => asc(evs.start_datetime),
+      where: (ev, { eq }) => eq(ev.hackathonId, hId),
+    })
+  ).filter((ev) => {
+    // returns minutes from now that the event starts in
+    const start = (ev.start_datetime.getTime() - Date.now()) / 60000;
+    // event must start in 15 minutes, padding of 1 minute
+    return start <= 16 && start >= 14;
+  });
+
+  return events;
+}
+
 // Extract the cron job body so we can have a pre-reminders hook to test the logic each morning
 async function cronLogic(webhook: WebhookClient) {
   // Gather all of the events for the day (grouped by prefix)
@@ -320,6 +350,92 @@ async function cronLogic(webhook: WebhookClient) {
   });
 }
 
+async function hackathonWarnCron(webhook: WebhookClient) {
+  const activeHackathon = await getHackathonActive();
+
+  // Do not run if there is no active hackathon
+  if (!activeHackathon) {
+    return;
+  }
+
+  // Load only the events for the active hackathon
+  const hackathonEvents = await getHackEvents(activeHackathon.id);
+
+  // If there are no events, send no events message
+  if (hackathonEvents.length === 0) {
+    return;
+  }
+
+  await webhook.send({
+    content: `## ⚠️ Starting soon!\nAttention, <@&${DISCORD_HACKATHON_ROLE_ID}> hackers!\nThese events are starting in the next **15 minutes!**`,
+  });
+
+  for (const event of hackathonEvents) {
+    const formattedTag = "[" + event.tag.toUpperCase().replace(" ", "-") + "]";
+
+    // Construct the event URL
+    const discordEventURL =
+      "https://discord.com/events/" +
+      DISCORD_PROD_GUILD_ID +
+      "/" +
+      event.discordId;
+
+    const eventEmbed = new EmbedBuilder()
+      .setColor(0xc04b3d)
+      .setTitle(event.name)
+      .setDescription(
+        event.description.length > 100
+          ? event.description.substring(0, 100) + "..."
+          : event.description,
+      )
+      .setAuthor({
+        name: `${formattedTag}`,
+      })
+      .setURL(discordEventURL)
+      .addFields([
+        {
+          name: "Location",
+          value: event.location,
+          inline: true,
+        },
+        {
+          name: "Time",
+          value:
+            new Date(
+              new Date(event.start_datetime).setHours(
+                new Date(event.start_datetime).getHours(),
+              ),
+            ).toLocaleString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }) +
+            " - " +
+            new Date(
+              new Date(event.end_datetime).setHours(
+                new Date(event.end_datetime).getHours(),
+              ),
+            ).toLocaleString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }),
+          inline: true,
+        },
+      ])
+      .setThumbnail(HACK_BANNER_IMAGE);
+
+    // Send the message (embed)
+    await webhook.send({
+      embeds: [eventEmbed],
+    });
+  }
+
+  await webhook.send({
+    content: `We'll see you there! **Don't forget your lanyard and your Blade QR code!**`,
+  });
+}
+
 // Event Reminders webhook
 export function execute() {
   // Create a public and pre (hidden) webhook client for daily reminders
@@ -328,6 +444,9 @@ export function execute() {
   });
   const preWebhook = new WebhookClient({
     url: env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL,
+  });
+  const hackathonWebhook = new WebhookClient({
+    url: env.DISCORD_HACKATHON_WEBHOOK_URL,
   });
 
   try {
@@ -341,6 +460,11 @@ export function execute() {
     cron.schedule("0 11 * * *", () => {
       // Avoid returning a Promise from the cron callback
       void cronLogic(pubWebhook);
+    });
+
+    // During hackathon, check events every 5 minutes
+    cron.schedule("*/5 * * * *", () => {
+      void hackathonWarnCron(hackathonWebhook);
     });
   } catch (err) {
     // silences eslint. type safety with our errors basically

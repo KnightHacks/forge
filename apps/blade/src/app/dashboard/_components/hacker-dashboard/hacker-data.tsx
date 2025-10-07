@@ -54,6 +54,10 @@ export function HackerData({
     hackathonName: undefined,
   });
 
+  const { data: numConfirmed } = api.hackathon.getNumConfirmed.useQuery({
+    hackathonId: currentHackathon?.id ?? "",
+  });
+
   const sendEmail = api.email.sendEmail.useMutation({
     onSuccess: () => {
       toast.success("You're Confirmed!");
@@ -196,6 +200,7 @@ export function HackerData({
               isLoading={loading}
               hackathonData={hackathonData}
               handleConfirm={handleConfirm}
+              numConfirmed={numConfirmed ?? 0}
             />
           )}
 

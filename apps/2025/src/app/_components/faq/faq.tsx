@@ -24,7 +24,12 @@ interface FaqItem {
   question: string;
   answer: string;
   links?: FaqLink[];
-  category: "general" | "event-details" | "preparation" | "logistics" | "sponsor-volunteer";
+  category:
+    | "general"
+    | "event-details"
+    | "preparation"
+    | "logistics"
+    | "sponsor-volunteer";
 }
 
 /* FILTER CATEGORIES ------------------------------------------------------- */
@@ -289,7 +294,7 @@ const faqData: FaqItem[] = [
 /* ------------------------------------------------------------------------ */
 
 interface FilterButtonProps {
-  category: typeof FILTER_CATEGORIES[number];
+  category: (typeof FILTER_CATEGORIES)[number];
   isActive: boolean;
   onClick: () => void;
 }
@@ -299,34 +304,41 @@ function FilterButton({ category, isActive, onClick }: FilterButtonProps) {
     <div className="group relative">
       <button
         onClick={onClick}
-        className={`tk-ccmeanwhile relative block rounded-none font-bold text-white outline-2 -outline-offset-3 outline-black transition-all duration-200 ease-in-out group-hover:-translate-x-1 group-hover:-translate-y-1 hover:brightness-110 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] focus:brightness-110 text-center px-3 py-2 text-sm md:text-base ${category.bgColor} ${
-          isActive ? "brightness-110 -translate-x-1 -translate-y-1" : ""
+        className={`tk-ccmeanwhile relative block rounded-none px-3 py-2 text-center text-sm font-bold text-white outline-2 -outline-offset-3 outline-black transition-all duration-200 ease-in-out group-hover:-translate-x-1 group-hover:-translate-y-1 hover:brightness-110 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] focus:brightness-110 md:text-base ${category.bgColor} ${
+          isActive ? "-translate-x-1 -translate-y-1 brightness-110" : ""
         }`}
       >
         {category.label}
       </button>
-      <div className={`absolute inset-0 -z-10 h-full w-full bg-black transition-all duration-200 ease-in-out ${
-        isActive ? "translate-x-2 translate-y-2" : "group-hover:translate-x-2 group-hover:translate-y-2"
-      }`} />
+      <div
+        className={`absolute inset-0 -z-10 h-full w-full bg-black transition-all duration-200 ease-in-out ${
+          isActive
+            ? "translate-x-2 translate-y-2"
+            : "group-hover:translate-x-2 group-hover:translate-y-2"
+        }`}
+      />
     </div>
   );
 }
 
 export default function Faq() {
   const faqRef = useStaggeredAnimation(50);
-  const [activeFilter, setActiveFilter] = useState<typeof FILTER_CATEGORIES[number]["id"]>("general");
+  const [activeFilter, setActiveFilter] =
+    useState<(typeof FILTER_CATEGORIES)[number]["id"]>("general");
 
-  const filteredFaqData = faqData.filter(faq => faq.category === activeFilter);
+  const filteredFaqData = faqData.filter(
+    (faq) => faq.category === activeFilter,
+  );
 
   return (
     <div className="flex w-full justify-center">
       <section
         id="faqs"
         ref={faqRef}
-        className="relative z-10 mt-0 pt-0 pb-16 sm:mt-40 sm:pt-0 sm:pb-20 w-[90%] flex flex-col items-center md:pb-32 lg:pb-36 xl:pb-40 isolate"
+        className="relative isolate z-10 mt-0 flex w-[90%] flex-col items-center pt-0 pb-16 sm:mt-40 sm:pt-0 sm:pb-20 md:pb-32 lg:pb-36 xl:pb-40"
       >
-        <div className="relative z-10  flex w-full items-center justify-center mb-6 md:mb-10 lg:mb-12">
-          <div className="relative flex w-full items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%] stagger-item animate-pop-out">
+        <div className="relative z-10 mb-6 flex w-full items-center justify-center md:mb-10 lg:mb-12">
+          <div className="stagger-item animate-pop-out relative flex w-full items-center justify-center sm:w-[95%] md:w-[75%] lg:w-[70%] xl:w-[65%]">
             <Image
               src="/sponsorSectionSvgs/spikeything.svg"
               alt=""
@@ -344,13 +356,12 @@ export default function Faq() {
           </div>
         </div>
 
-
-        <div className="mb-8 flex flex-wrap items-center justify-center gap-3 md:gap-4 stagger-item" style={{ animationDelay: '0.5s' }}>
+        <div
+          className="stagger-item mb-8 flex flex-wrap items-center justify-center gap-3 md:gap-4"
+          style={{ animationDelay: "0.5s" }}
+        >
           {FILTER_CATEGORIES.map((category) => (
-            <div
-              key={category.id}
-              className="animate-pop-out2"
-            >
+            <div key={category.id} className="animate-pop-out2">
               <FilterButton
                 category={category}
                 isActive={activeFilter === category.id}
@@ -365,16 +376,9 @@ export default function Faq() {
           <div className="mx-auto max-w-4xl">
             {/* Fixed height container to prevent background shifting */}
             <div className="min-h-[1000px] sm:min-h-[1100px] md:min-h-[1200px] lg:min-h-[1300px]">
-              <Accordion
-                type="single"
-                collapsible
-                className="w-full space-y-4"
-              >
+              <Accordion type="single" collapsible className="w-full space-y-4">
                 {filteredFaqData.map((faq) => (
-                  <div 
-                    key={faq.id} 
-                    className="stagger-item animate-pop-out"
-                  >
+                  <div key={faq.id} className="stagger-item animate-pop-out">
                     <FaqCard {...faq} />
                   </div>
                 ))}

@@ -1,8 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans:
-    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
@@ -37,7 +36,8 @@
   font-display: swap;
 }
 
-html, body {
+html,
+body {
   font-family: "Anime Ace BB", Arial, sans-serif;
 }
 
@@ -79,7 +79,6 @@ html {
   scrollbar-color: #d83434 #000000;
 }
 
-
 @keyframes moving-border {
   0% {
     transform: rotate(0deg) scale(10);
@@ -92,7 +91,6 @@ html {
 .moving-border {
   animation: moving-border 4s linear infinite;
 }
-
 
 @keyframes popOut {
   0% {
@@ -214,7 +212,6 @@ html {
   transform: translateY(20px);
 }
 
-
 .hover-lift {
   transition: transform 0.2s ease-out;
 }
@@ -240,11 +237,12 @@ html {
   animation: gradientMove 3s ease infinite;
 }
 
-
 .stagger-item {
   opacity: 0;
   transform: translateY(20px);
-  transition: opacity 1s ease-out, transform 1s ease-out;
+  transition:
+    opacity 1s ease-out,
+    transform 1s ease-out;
 }
 
 .animate-fade-in-up {
@@ -266,7 +264,9 @@ html {
 .stagger-item {
   opacity: 0;
   transform: translateY(20px);
-  transition: opacity 1s ease-out, transform 1s ease-out;
+  transition:
+    opacity 1s ease-out,
+    transform 1s ease-out;
   min-height: 40px; /* Prevent layout shift during animation */
 }
 
@@ -281,37 +281,37 @@ html {
     transform: translate3d(0, 0, 0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    
+
     -webkit-background-size: cover;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
-    
+
     -webkit-overflow-scrolling: touch;
     will-change: scroll-position;
   }
-  
+
   html {
     scroll-behavior: auto !important; /* Prevent auto-scrolling on refresh */
     scroll-padding-top: 0;
     overflow-x: hidden;
     width: 100%;
   }
-  
+
   body {
     overflow-x: hidden;
     width: 100%;
     height: 100%;
     position: relative;
   }
-  
+
   /* Performance optimizations for scroll */
   * {
     transform-style: preserve-3d;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
-  
+
   /* Reduce motion for users who prefer it */
   @media (prefers-reduced-motion: reduce) {
     * {
@@ -320,12 +320,11 @@ html {
       transition-duration: 0.01ms !important;
     }
   }
-  
+
   * {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
 
   [data-framer-motion] {
     will-change: transform, opacity;
@@ -334,8 +333,7 @@ html {
     -webkit-backface-visibility: hidden;
     z-index: 1;
   }
-  
-  
+
   .motion-safe\:animate-in {
     isolation: isolate;
   }

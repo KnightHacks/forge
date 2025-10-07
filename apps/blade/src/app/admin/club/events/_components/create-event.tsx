@@ -84,6 +84,7 @@ export function CreateEventButton() {
     discordId: true,
     googleId: true,
   }).extend({
+    hackathonId: z.union([z.string().uuid(), z.literal("none")]).optional(),
     date: z.string(),
     startHour: z.string(),
     startMinute: z.string(),
@@ -101,7 +102,7 @@ export function CreateEventButton() {
       dues_paying: false,
       location: "",
       tag: EVENT_TAGS[0],
-      hackathonId: null,
+      hackathonId: "none",
       date: "",
       startHour: "",
       startMinute: "",
@@ -190,7 +191,7 @@ export function CreateEventButton() {
                 hackathonName:
                   hackathons?.find((v) => {
                     return v.id == values.hackathonId;
-                  })?.name ?? null,
+                  })?.displayName ?? null,
               });
             })}
             noValidate
@@ -291,7 +292,7 @@ export function CreateEventButton() {
                             </SelectItem>
                             {hackathons?.map((h) => (
                               <SelectItem key={h.id} value={h.id}>
-                                {h.name}
+                                {h.displayName}
                               </SelectItem>
                             ))}
                           </SelectContent>

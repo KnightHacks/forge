@@ -26,12 +26,14 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
   const skipLinkRef = useRef<HTMLAnchorElement>(null);
   const lastFocusedElement = useRef<HTMLElement | null>(null);
 
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Tab') {
+      if (e.key === "Tab") {
         const activeElement = document.activeElement as HTMLElement;
-        if (activeElement === document.body || activeElement === document.documentElement) {
+        if (
+          activeElement === document.body ||
+          activeElement === document.documentElement
+        ) {
           e.preventDefault();
           skipLinkRef.current?.focus();
         }
@@ -42,12 +44,12 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
       lastFocusedElement.current = document.activeElement as HTMLElement;
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('mousedown', handleMouseDown);
-    
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleMouseDown);
+
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleMouseDown);
     };
   }, []);
 
@@ -98,15 +100,15 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
           const elementBottom = elementTop + rect.height;
           const viewportTop = scrollPosition;
           const viewportBottom = scrollPosition + window.innerHeight;
-          
+
           const visibleTop = Math.max(elementTop, viewportTop);
           const visibleBottom = Math.min(elementBottom, viewportBottom);
           const visibleHeight = Math.max(0, visibleBottom - visibleTop);
           const visibilityRatio = visibleHeight / rect.height;
-          
+
           const distanceFromTop = Math.abs(rect.top);
-          const score = visibilityRatio - (distanceFromTop / 1000);
-          
+          const score = visibilityRatio - distanceFromTop / 1000;
+
           if (score > bestScore && visibilityRatio > 0.1) {
             bestScore = score;
             bestMatch = section;
@@ -143,10 +145,9 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
     };
   }, [isMobileMenuOpen]);
 
-
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isMobileMenuOpen) {
+      if (e.key === "Escape" && isMobileMenuOpen) {
         setIsMobileMenuOpen(false);
         setTimeout(() => {
           mobileButtonRef.current?.focus();
@@ -154,16 +155,15 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
       }
     };
 
-    document.addEventListener('keydown', handleKeyPress);
+    document.addEventListener("keydown", handleKeyPress);
     return () => {
-      document.removeEventListener('keydown', handleKeyPress);
+      document.removeEventListener("keydown", handleKeyPress);
     };
   }, [isMobileMenuOpen]);
 
   const handleMobileMenuToggle = () => {
     const newState = !isMobileMenuOpen;
     setIsMobileMenuOpen(newState);
-    
 
     if (newState) {
       setTimeout(() => {
@@ -266,43 +266,184 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
       {/* Desktop Floating Navbar */}
       <motion.nav
         initial={{ y: -100, opacity: 0 }}
-        animate={{ 
-          y: (isNavVisible || isAtTop) ? 0 : -100,
-          opacity: (isNavVisible || isAtTop) ? 1 : 0
+        animate={{
+          y: isNavVisible || isAtTop ? 0 : -100,
+          opacity: isNavVisible || isAtTop ? 1 : 0,
         }}
         transition={{ duration: 0.3, ease: "easeOut" }}
         className="fixed top-4 left-1/2 z-[9999] hidden w-auto -translate-x-1/2 md:block"
         role="navigation"
         aria-label="Main navigation"
         style={{
-          pointerEvents: (isNavVisible || isAtTop) ? 'auto' : 'none'
+          pointerEvents: isNavVisible || isAtTop ? "auto" : "none",
         }}
       >
-            <div className="group relative">
-              <div className="relative w-auto rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
-                <div className="flex items-center justify-center gap-4 md:gap-5 px-24 py-2">
-                  <motion.button
-                    onClick={handleLogoClick}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    tabIndex={2}
-                    className="relative flex h-12 w-12 cursor-pointer items-center justify-center rounded-none outline-1 -outline-offset-1 outline-black focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434]"
-                    aria-label="Go to top of page"
-                  >
-                    <Image
-                      src="/KH2025Small.svg"
-                      alt="Knight Hacks 2025 Logo"
-                      width={40}
-                      height={40}
-                      className="h-10 w-10 object-contain"
-                      draggable={false}
-                    />
-                  </motion.button>
+        <div className="group relative">
+          <div className="relative w-auto rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
+            <div className="flex items-center justify-center gap-4 px-24 py-2 md:gap-5">
+              <motion.button
+                onClick={handleLogoClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                tabIndex={2}
+                className="relative flex h-12 w-12 cursor-pointer items-center justify-center rounded-none outline-1 -outline-offset-1 outline-black focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434]"
+                aria-label="Go to top of page"
+              >
+                <Image
+                  src="/KH2025Small.svg"
+                  alt="Knight Hacks 2025 Logo"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 object-contain"
+                  draggable={false}
+                />
+              </motion.button>
 
-                  <div
-                    className="flex items-center gap-3"
-                    role="list"
-                  >
+              <div className="flex items-center gap-3" role="list">
+                {navLinks.map((link, index) => {
+                  const isActive =
+                    !isAtTop && activeSection === link.href.substring(1);
+                  const navColors = getNavColors(index);
+                  return (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      tabIndex={3 + index}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleDesktopNavClick(link.href);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleDesktopNavClick(link.href);
+                        }
+                      }}
+                      className={`tk-ccmeanwhile relative flex min-h-[48px] cursor-pointer items-center justify-center rounded-none px-3 py-3 text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] md:px-4 xl:text-lg ${
+                        isActive
+                          ? "text-white shadow-lg"
+                          : "text-slate-800 hover:text-white"
+                      }`}
+                      style={{
+                        minWidth: "90px",
+                        backgroundColor: isActive
+                          ? navColors.bg
+                          : "transparent",
+                        ...(isActive
+                          ? {}
+                          : ({
+                              "--hover-bg": navColors.bg,
+                            } as React.CSSProperties)),
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          (e.target as HTMLElement).style.backgroundColor =
+                            navColors.bg;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          (e.target as HTMLElement).style.backgroundColor =
+                            "transparent";
+                        }
+                      }}
+                      role="listitem"
+                      aria-current={isActive ? "page" : undefined}
+                    >
+                      {link.label}
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Black drop shadow */}
+          <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
+        </div>
+      </motion.nav>
+
+      {/* Mobile Floating Button - Always Visible */}
+      <motion.nav
+        initial={{ y: -100, opacity: 0 }}
+        animate={{
+          y: isNavVisible || isAtTop ? 0 : -100,
+          opacity: isNavVisible || isAtTop ? 1 : 0,
+        }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="mobile-nav-container fixed top-4 left-4 z-[9999] touch-manipulation md:hidden"
+        role="navigation"
+        aria-label="Mobile navigation"
+        style={{
+          pointerEvents: isNavVisible || isAtTop ? "auto" : "none",
+        }}
+      >
+        <div className="group relative">
+          {/* Mobile button with TextBox styling */}
+          <motion.button
+            ref={mobileButtonRef}
+            onClick={handleMobileMenuToggle}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="relative flex h-12 w-12 cursor-pointer touch-manipulation items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434]"
+            style={{ WebkitTapHighlightColor: "transparent" }}
+            aria-label={
+              isMobileMenuOpen
+                ? "Close navigation menu"
+                : "Open navigation menu"
+            }
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-navigation-menu"
+          >
+            <div className="pointer-events-none flex flex-col gap-1.5">
+              <motion.div
+                animate={
+                  isMobileMenuOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }
+                }
+                className="h-0.5 w-6 rounded-none bg-slate-800"
+              />
+              <motion.div
+                animate={isMobileMenuOpen ? { opacity: 0 } : { opacity: 1 }}
+                className="h-0.5 w-6 rounded-none bg-slate-800"
+              />
+              <motion.div
+                animate={
+                  isMobileMenuOpen
+                    ? { rotate: -45, y: -8 }
+                    : { rotate: 0, y: 0 }
+                }
+                className="h-0.5 w-6 rounded-none bg-slate-800"
+              />
+            </div>
+          </motion.button>
+
+          {/* Black drop shadow for mobile button */}
+          <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              ref={mobileMenuRef}
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="mobile-nav-container absolute top-full left-0 z-[9999] mt-2 touch-manipulation"
+              style={{
+                WebkitTapHighlightColor: "transparent",
+                maxHeight: "calc(100vh - 100px)",
+                overflowY: "auto",
+              }}
+              id="mobile-navigation-menu"
+              role="menu"
+              aria-labelledby="mobile-menu-button"
+            >
+              <div className="group relative">
+                {/* Mobile menu with TextBox styling */}
+                <div className="relative rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
+                  <div className="min-w-[200px] space-y-2 p-3">
                     {navLinks.map((link, index) => {
                       const isActive =
                         !isAtTop && activeSection === link.href.substring(1);
@@ -310,208 +451,59 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                       return (
                         <a
                           key={link.href}
+                          ref={index === 0 ? firstNavLinkRef : undefined}
                           href={link.href}
-                          tabIndex={3 + index}
-                          onClick={e => {
+                          onClick={(e) => {
                             e.preventDefault();
-                            handleDesktopNavClick(link.href);
+                            handleMobileNavClick(link.href);
                           }}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') {
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
-                              handleDesktopNavClick(link.href);
+                              handleMobileNavClick(link.href);
                             }
                           }}
-                          className={`tk-ccmeanwhile relative flex min-h-[48px] cursor-pointer items-center justify-center rounded-none px-3 md:px-4 py-3 text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] xl:text-lg ${
+                          className={`tk-ccmeanwhile flex min-h-[48px] w-full cursor-pointer items-center rounded-none px-4 py-3 text-left text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] ${
                             isActive
-                              ? "text-white shadow-lg"
+                              ? "text-white shadow-md"
                               : "text-slate-800 hover:text-white"
                           }`}
                           style={{
-                            minWidth: "90px",
                             backgroundColor: isActive
                               ? navColors.bg
                               : "transparent",
-                            ...(isActive
-                              ? {}
-                              : ({
-                                  "--hover-bg": navColors.bg,
-                                } as React.CSSProperties)),
                           }}
-                          onMouseEnter={e => {
+                          onMouseEnter={(e) => {
                             if (!isActive) {
                               (e.target as HTMLElement).style.backgroundColor =
                                 navColors.bg;
                             }
                           }}
-                          onMouseLeave={e => {
+                          onMouseLeave={(e) => {
                             if (!isActive) {
                               (e.target as HTMLElement).style.backgroundColor =
                                 "transparent";
                             }
                           }}
-                          role="listitem"
+                          role="menuitem"
                           aria-current={isActive ? "page" : undefined}
                         >
-                          {link.label}
+                          <span className="pointer-events-none">
+                            {link.label}
+                          </span>
                         </a>
                       );
                     })}
                   </div>
                 </div>
+
+                {/* Black drop shadow for mobile menu */}
+                <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
               </div>
-
-              {/* Black drop shadow */}
-              <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-            </div>
-          </motion.nav>
-
-      {/* Mobile Floating Button - Always Visible */}
-      <motion.nav
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ 
-          y: (isNavVisible || isAtTop) ? 0 : -100,
-          opacity: (isNavVisible || isAtTop) ? 1 : 0
-        }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        className="mobile-nav-container fixed top-4 left-4 z-[9999] touch-manipulation md:hidden"
-        role="navigation"
-        aria-label="Mobile navigation"
-        style={{
-          pointerEvents: (isNavVisible || isAtTop) ? 'auto' : 'none'
-        }}
-      >
-            <div className="group relative">
-              {/* Mobile button with TextBox styling */}
-              <motion.button
-                ref={mobileButtonRef}
-                onClick={handleMobileMenuToggle}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative flex h-12 w-12 cursor-pointer touch-manipulation items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434]"
-                style={{ WebkitTapHighlightColor: "transparent" }}
-                aria-label={
-                  isMobileMenuOpen
-                    ? "Close navigation menu"
-                    : "Open navigation menu"
-                }
-                aria-expanded={isMobileMenuOpen}
-                aria-controls="mobile-navigation-menu"
-              >
-                <div className="pointer-events-none flex flex-col gap-1.5">
-                  <motion.div
-                    animate={
-                      isMobileMenuOpen
-                        ? { rotate: 45, y: 8 }
-                        : { rotate: 0, y: 0 }
-                    }
-                    className="h-0.5 w-6 rounded-none bg-slate-800"
-                  />
-                  <motion.div
-                    animate={isMobileMenuOpen ? { opacity: 0 } : { opacity: 1 }}
-                    className="h-0.5 w-6 rounded-none bg-slate-800"
-                  />
-                  <motion.div
-                    animate={
-                      isMobileMenuOpen
-                        ? { rotate: -45, y: -8 }
-                        : { rotate: 0, y: 0 }
-                    }
-                    className="h-0.5 w-6 rounded-none bg-slate-800"
-                  />
-                </div>
-              </motion.button>
-
-              {/* Black drop shadow for mobile button */}
-              <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-            </div>
-
-            {/* Mobile Menu Dropdown */}
-            <AnimatePresence>
-              {isMobileMenuOpen && (
-                <motion.div
-                  ref={mobileMenuRef}
-                  initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="mobile-nav-container absolute top-full left-0 z-[9999] mt-2 touch-manipulation"
-                  style={{
-                    WebkitTapHighlightColor: "transparent",
-                    maxHeight: "calc(100vh - 100px)",
-                    overflowY: "auto",
-                  }}
-                  id="mobile-navigation-menu"
-                  role="menu"
-                  aria-labelledby="mobile-menu-button"
-                >
-                  <div className="group relative">
-                    {/* Mobile menu with TextBox styling */}
-                    <div className="relative rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
-                      <div className="min-w-[200px] space-y-2 p-3">
-                        {navLinks.map((link, index) => {
-                          const isActive =
-                            !isAtTop &&
-                            activeSection === link.href.substring(1);
-                          const navColors = getNavColors(index);
-                          return (
-                            <a
-                              key={link.href}
-                              ref={index === 0 ? firstNavLinkRef : undefined}
-                              href={link.href}
-                              onClick={e => {
-                                e.preventDefault();
-                                handleMobileNavClick(link.href);
-                              }}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault();
-                                  handleMobileNavClick(link.href);
-                                }
-                              }}
-                              className={`tk-ccmeanwhile flex min-h-[48px] w-full cursor-pointer items-center rounded-none px-4 py-3 text-left text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] ${
-                                isActive
-                                  ? "text-white shadow-md"
-                                  : "text-slate-800 hover:text-white"
-                              }`}
-                              style={{
-                                backgroundColor: isActive
-                                  ? navColors.bg
-                                  : "transparent",
-                              }}
-                              onMouseEnter={e => {
-                                if (!isActive) {
-                                  (
-                                    e.target as HTMLElement
-                                  ).style.backgroundColor = navColors.bg;
-                                }
-                              }}
-                              onMouseLeave={e => {
-                                if (!isActive) {
-                                  (
-                                    e.target as HTMLElement
-                                  ).style.backgroundColor = "transparent";
-                                }
-                              }}
-                              role="menuitem"
-                              aria-current={isActive ? "page" : undefined}
-                            >
-                              <span className="pointer-events-none">
-                                {link.label}
-                              </span>
-                            </a>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Black drop shadow for mobile menu */}
-                    <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.nav>
     </>
   );
 }

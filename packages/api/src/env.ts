@@ -18,6 +18,8 @@ export const env = createEnv({
     SIGNER_KEY_PASS_BASE64: z.string(),
     PASS_TYPE_IDENTIFIER: z.string(),
     TEAM_IDENTIFIER: z.string(),
+    AUTH_SECRET: z.string(),
+    BLADE_URL: z.string(),
   },
   experimental__runtimeEnv: {},
   skipValidation:
