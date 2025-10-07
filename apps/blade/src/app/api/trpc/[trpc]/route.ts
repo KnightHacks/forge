@@ -24,7 +24,7 @@ export const OPTIONS = () => {
 
 const handler = auth(async (req) => {
   const contentLength = req.headers.get("content-length");
-  const maxSize = 4_000_000; // 4MB in bytes
+  const maxSize = 4_194_304; // 4MB in bytes
 
   //Return 413 if the content-length is too large
   if (contentLength && parseInt(contentLength) > maxSize) {
