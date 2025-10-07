@@ -347,7 +347,9 @@ export type EventTagsColor =
   | "Check-in"
   | "Merch"
   | "Food"
-  | "Ceremony";
+  | "Ceremony"
+  | "CAREER-FAIR"
+  | "RSO-FAIR";
 
 export const GENDERS = [
   "Man",
