@@ -63,8 +63,6 @@ export function CreateEventButton() {
   const createEvent = api.event.createEvent.useMutation({
     onSuccess() {
       toast.success("Event created successfully!");
-
-      // Close dialog & reset form
       setIsOpen(false);
       form.reset();
     },
@@ -85,7 +83,9 @@ export function CreateEventButton() {
     googleId: true,
   }).extend({
     hackathonId: z.union([z.string().uuid(), z.literal("none")]).optional(),
-    date: z.string(),
+    // NEW: separate start and end dates
+    startDate: z.string(),
+    endDate: z.string(),
     startHour: z.string(),
     startMinute: z.string(),
     startAmPm: z.enum(["AM", "PM"]),
@@ -103,7 +103,8 @@ export function CreateEventButton() {
       location: "",
       tag: EVENT_TAGS[0],
       hackathonId: "none",
-      date: "",
+      startDate: "",
+      endDate: "",
       startHour: "",
       startMinute: "",
       startAmPm: "PM",
@@ -127,52 +128,63 @@ export function CreateEventButton() {
             onSubmit={form.handleSubmit((values) => {
               setIsLoading(true);
 
-              if (values.dues_paying && values.hackathonId) {
+              // Fix: only block dues when a real hackathon is chosen
+              if (values.dues_paying && values.hackathonId !== "none") {
                 toast.error("Hackathon events cannot require dues.");
                 setIsLoading(false);
                 return;
               }
 
-              // Extract year, month, and day explicitly to construct a local Date object
-              const [year, month, day] = values.date.split("-").map(Number);
+              // Parse start date
+              const parseYMD = (ymd: string) => {
+                const [y, m, d] = ymd.split("-").map(Number);
+                if (!y || !m || !d) return null;
+                // Construct local Date (no TZ shift from Date.parse of ISO without time)
+                return new Date(y, m - 1, d);
+              };
 
-              if (!year || !month || !day) {
-                toast.error("Invalid date format.");
+              const startDateOnly = parseYMD(values.startDate);
+              const endDateOnly = parseYMD(values.endDate);
+
+              if (!startDateOnly) {
+                toast.error("Please provide a valid start date.");
+                setIsLoading(false);
+                return;
+              }
+              if (!endDateOnly) {
+                toast.error("Please provide a valid end date.");
                 setIsLoading(false);
                 return;
               }
 
-              // Convert start date + hour/minute/amPm to a valid Date object
-              const finalStartDate = new Date(year, month - 1, day); // Months are 0-based in JS
-              let hour24 = parseInt(values.startHour, 10) || 0;
-              if (values.startAmPm === "PM" && hour24 < 12) {
-                hour24 += 12;
-              }
-              if (values.startAmPm === "AM" && hour24 === 12) {
-                hour24 = 0;
-              }
+              // Convert 12h -> 24h
+              const to24h = (hh: string, ampm: "AM" | "PM") => {
+                let h = parseInt(hh, 10) || 0;
+                if (ampm === "PM" && h < 12) h += 12;
+                if (ampm === "AM" && h === 12) h = 0;
+                return h;
+              };
+
+              // Build final datetimes (local time)
+              const finalStartDate = new Date(startDateOnly);
               finalStartDate.setHours(
-                hour24,
+                to24h(values.startHour, values.startAmPm),
                 parseInt(values.startMinute, 10) || 0,
+                0,
+                0,
               );
 
-              // Convert end date + hour/minute/amPm to a valid Date object
-              const finalEndDate = new Date(year, month - 1, day); // Construct date in local time
-              let endHour24 = parseInt(values.endHour, 10) || 0;
-              if (values.endAmPm === "PM" && endHour24 < 12) {
-                endHour24 += 12;
-              }
-              if (values.endAmPm === "AM" && endHour24 === 12) {
-                endHour24 = 0;
-              }
+              const finalEndDate = new Date(endDateOnly);
               finalEndDate.setHours(
-                endHour24,
+                to24h(values.endHour, values.endAmPm),
                 parseInt(values.endMinute, 10) || 0,
+                0,
+                0,
               );
 
-              // Ensure the end date is after the start date
+              // Ensure the end datetime is after the start datetime
               if (finalEndDate <= finalStartDate) {
-                toast.error("End date must be after the start date.");
+                toast.error("End date/time must be after the start date/time.");
                 setIsLoading(false);
                 return;
               }
@@ -187,11 +199,10 @@ export function CreateEventButton() {
                 start_datetime: finalStartDate,
                 end_datetime: finalEndDate,
                 hackathonId:
-                  values.hackathonId == "none" ? null : values.hackathonId,
+                  values.hackathonId === "none" ? null : values.hackathonId,
                 hackathonName:
-                  hackathons?.find((v) => {
-                    return v.id == values.hackathonId;
-                  })?.displayName ?? null,
+                  hackathons?.find((v) => v.id === values.hackathonId)
+                    ?.displayName ?? null,
               });
             })}
             noValidate
@@ -229,7 +240,7 @@ export function CreateEventButton() {
                 )}
               />
 
-              {/* Tag (enum from EVENT_TAGS) */}
+              {/* Tag */}
               <FormField
                 control={form.control}
                 name="tag"
@@ -241,7 +252,6 @@ export function CreateEventButton() {
                       </FormLabel>
                       <FormControl>
                         <Select
-                          // Use defaultValue if the field already has a value
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
@@ -265,25 +275,24 @@ export function CreateEventButton() {
                 )}
               />
 
-              {/* Hackathon (pulls from Hackathon table) */}
+              {/* Hackathon */}
               <FormField
                 control={form.control}
                 name="hackathonId"
                 render={({ field }) => (
                   <FormItem>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel htmlFor="tag" className="text-right">
+                      <FormLabel htmlFor="hackathonId" className="text-right">
                         Hackathon
                       </FormLabel>
                       <FormControl>
                         <Select
-                          // Use defaultValue if the field already has a value
                           onValueChange={field.onChange}
                           defaultValue={"none"}
                         >
                           <FormControl>
                             <SelectTrigger className="col-span-3">
-                              <SelectValue placeholder="Select a tag" />
+                              <SelectValue placeholder="Select a hackathon" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -304,14 +313,14 @@ export function CreateEventButton() {
                 )}
               />
 
-              {/* Date (Calendar popover) */}
+              {/* Start Date */}
               <FormField
                 control={form.control}
-                name="date"
+                name="startDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">Date</FormLabel>
+                      <FormLabel className="text-right">Start Date</FormLabel>
                       <FormControl className="col-span-3">
                         <Input type="date" {...field} />
                       </FormControl>
@@ -321,9 +330,9 @@ export function CreateEventButton() {
                 )}
               />
 
-              {/* Start Time (Hour, Minute, AM/PM) */}
+              {/* Start Time */}
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">Start</Label>
+                <Label className="text-right">Start Time</Label>
                 <div className="col-span-3 flex items-center space-x-2">
                   {/* Hour */}
                   <FormField
@@ -355,7 +364,6 @@ export function CreateEventButton() {
                     )}
                   />
                   <span>:</span>
-
                   {/* Minute */}
                   <FormField
                     control={form.control}
@@ -385,7 +393,6 @@ export function CreateEventButton() {
                       </FormItem>
                     )}
                   />
-
                   {/* AM/PM */}
                   <FormField
                     control={form.control}
@@ -418,9 +425,26 @@ export function CreateEventButton() {
                 </div>
               </div>
 
-              {/* End Time (Hour, Minute, AM/PM) */}
+              {/* End Date */}
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">End Date</FormLabel>
+                      <FormControl className="col-span-3">
+                        <Input type="date" {...field} />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* End Time */}
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">End</Label>
+                <Label className="text-right">End Time</Label>
                 <div className="col-span-3 flex items-center space-x-2">
                   {/* Hour */}
                   <FormField
@@ -452,7 +476,6 @@ export function CreateEventButton() {
                     )}
                   />
                   <span>:</span>
-
                   {/* Minute */}
                   <FormField
                     control={form.control}
@@ -482,7 +505,6 @@ export function CreateEventButton() {
                       </FormItem>
                     )}
                   />
-
                   {/* AM/PM */}
                   <FormField
                     control={form.control}
@@ -495,7 +517,7 @@ export function CreateEventButton() {
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger className="w-[80px]">
+                              <SelectTrigger className="w/[80px] w-[80px]">
                                 <SelectValue placeholder="AM/PM" />
                               </SelectTrigger>
                             </FormControl>
