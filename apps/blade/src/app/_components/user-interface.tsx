@@ -13,6 +13,7 @@ export async function UserInterface() {
   ]);
 
   const currentHackathon = await api.hackathon.getCurrentHackathon();
+  console.log("Hacker: ", hacker.status);
 
   if (member.status === "rejected" || hacker.status === "rejected") {
     return (
