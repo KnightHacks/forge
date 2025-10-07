@@ -169,6 +169,8 @@ export const EVENT_TAGS = [
   "Merch",
   "Food",
   "Ceremony",
+  "CAREER-FAIR",
+  "RSO-FAIR",
 ] as const;
 
 export const EVENT_FEEDBACK_HEARD = [
@@ -203,6 +205,8 @@ export const EVENT_POINTS: Record<EventTag, number> = {
   Merch: 5,
   Food: 5,
   Ceremony: 50,
+  "CAREER-FAIR": 100,
+  "RSO-FAIR": 50,
 } as const;
 
 export const KNIGHTHACKS_S3_BUCKET_REGION = "us-east-1";
