@@ -90,6 +90,8 @@ export const hackerRouter = {
       return {
         ...hacker,
         status: hackerAttendee.status,
+        class: hackerAttendee.class,
+        points: hackerAttendee.points,
       };
     }),
 
