@@ -15,11 +15,6 @@ export default async function HackathonDashboard({
 }: {
   hacker: Awaited<ReturnType<(typeof serverCall.hacker)["getHacker"]>>;
 }) {
-  //   const [resume, pastHackathons] = await Promise.allSettled([
-  //     api.resume.getResume(),
-  //     api.hackathon.getPastHackathons(),
-  //   ]);
-
   const currentHackathon = await api.hackathon.getCurrentHackathon();
 
   if (!hacker) {
@@ -29,12 +24,9 @@ export default async function HackathonDashboard({
           Register for KnightHacks today!
         </p>
         <div className="flex flex-wrap justify-center gap-5">
-          {
-            //if there is no current hackathon then this page is never rendered anyway
-            currentHackathon && (
-              <HackerAppCard hackathonName={currentHackathon.name} />
-            )
-          }
+          {currentHackathon && (
+            <HackerAppCard hackathonName={currentHackathon.name} />
+          )}
         </div>
       </div>
     );
@@ -48,7 +40,7 @@ export default async function HackathonDashboard({
         </h2>
         <p className="text-muted-foreground">Hackathon Dashboard</p>
       </div>
-      <div className="animate-mobile-initial-expand relative mx-auto flex h-0 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:py-0 sm:pb-0 lg:max-h-56">
+      <div className="animate-mobile-initial-expand relative mx-auto flex min-h-[400px] bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:py-6 lg:min-h-[380px]">
         {/* Main content */}
         <HackathonData data={hacker} />
 
@@ -59,7 +51,7 @@ export default async function HackathonDashboard({
         <div
           className="absolute bottom-0 right-0 h-0 w-0"
           style={{
-            borderBottom: "20px solid #6C26D9", // Change to bg color
+            borderBottom: "20px solid #6C26D9",
             borderLeft: "20px solid transparent",
           }}
         ></div>
