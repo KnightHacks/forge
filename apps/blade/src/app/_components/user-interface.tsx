@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
 import { api } from "~/trpc/server";
+import HackathonDashboard from "../dashboard/_components/hackathon-dashboard/hackathon-dashboard";
 import HackerDashboard from "../dashboard/_components/hacker-dashboard/hacker-dashboard";
 import MemberDashboard from "../dashboard/_components/member-dashboard/member-dashboard";
 import { HackerAppCard, MemberAppCard } from "./option-cards";
@@ -12,6 +13,7 @@ export async function UserInterface() {
   ]);
 
   const currentHackathon = await api.hackathon.getCurrentHackathon();
+  console.log("Hacker: ", hacker.status);
 
   if (member.status === "rejected" || hacker.status === "rejected") {
     return (
@@ -97,7 +99,11 @@ export async function UserInterface() {
         </TabsContent>
         <TabsContent value="Hacker" className="mt-4 w-full">
           <div className="mx-auto w-[95%] max-w-[70rem]">
-            <HackerDashboard hacker={hacker.value} />
+            {(hacker.value?.status as string) === "checkedin" ? (
+              <HackathonDashboard hacker={hacker.value} />
+            ) : (
+              <HackerDashboard hacker={hacker.value} />
+            )}
           </div>
         </TabsContent>
       </Tabs>
