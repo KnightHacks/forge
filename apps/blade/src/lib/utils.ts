@@ -52,6 +52,8 @@ export const getTagColor = (tag: EventTagsColor) => {
     Ceremony: "bg-amber-100 text-amber-800",
     Merch: "bg-lime-100 text-lime-800",
     Food: "bg-rose-100 text-rose-800",
+    "CAREER-FAIR": "bg-lime-100 text-lime-800", // change later
+    "RSO-FAIR": "bg-lime-100 text-lime-800", // change later
   };
   return colors[tag];
 };
