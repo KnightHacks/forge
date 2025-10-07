@@ -517,7 +517,7 @@ export function CreateEventButton() {
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger className="w/[80px] w-[80px]">
+                              <SelectTrigger className="w-[80px]">
                                 <SelectValue placeholder="AM/PM" />
                               </SelectTrigger>
                             </FormControl>
