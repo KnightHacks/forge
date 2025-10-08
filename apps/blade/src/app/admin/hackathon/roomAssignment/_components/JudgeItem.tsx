@@ -1,11 +1,9 @@
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import React from "react";
+import { Trash } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
-
-import { DeleteJudgeDialog } from "./DeleteJudgeDialogue";
 
 interface Judge {
   judgeId: string;
@@ -24,14 +22,15 @@ export const JudgeItem: React.FC<JudgeItemProps> = ({
   onSave,
   onDelete,
 }) => {
-  const [editedRoom, setEditedRoom] = useState(judge.roomName || "");
+  const [editedRoom, setEditedRoom] = React.useState(judge.roomName || "");
   const hasChanged = editedRoom !== (judge.roomName || "");
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleSave = () => {
-    setIsLoading(true);
     onSave(judge.judgeId, editedRoom);
-    setIsLoading(false);
+  };
+
+  const handleDelete = () => {
+    onDelete(judge.judgeId);
   };
 
   return (
@@ -49,17 +48,21 @@ export const JudgeItem: React.FC<JudgeItemProps> = ({
             placeholder="Assign room"
             className="h-8 flex-1 text-sm"
           />
-          {hasChanged &&
-            (isLoading ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <Button size="sm" onClick={handleSave} className="h-8 px-3">
-                Save
-              </Button>
-            ))}
+          {hasChanged && (
+            <Button size="sm" onClick={handleSave} className="h-8 px-3">
+              Save
+            </Button>
+          )}
         </div>
       </div>
-      <DeleteJudgeDialog onDelete={onDelete} judge={judge} />
+      <Button
+        size="icon"
+        variant="destructive"
+        className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+        onClick={handleDelete}
+      >
+        <Trash className="h-4 w-4 text-white" />
+      </Button>
     </div>
   );
 };
