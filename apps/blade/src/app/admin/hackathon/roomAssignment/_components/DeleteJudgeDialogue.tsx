@@ -48,7 +48,7 @@ export const DeleteJudgeDialog: React.FC<DeleteJudgeDialogProps> = ({
           <DialogTitle>Delete Judge</DialogTitle>
         </DialogHeader>
         Are you sure you want to delete this judge?
-        <DialogFooter>
+        <DialogFooter className="mt-4 flex w-full flex-row justify-end space-x-2">
           <Button
             variant="outline"
             onClick={() => setOpen(false)}
