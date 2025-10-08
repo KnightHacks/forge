@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import type { api as serverCall } from "~/trpc/server";
 import { HackerAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
+import HackingCountdown from "./countdown";
 import { HackathonData } from "./hackathon-data";
 
 export const metadata: Metadata = {
@@ -34,40 +35,46 @@ export default async function HackathonDashboard({
 
   return (
     <>
-      <div className="animate-fade-in mb-8">
-        <h2 className="text-xl font-bold tracking-tight">
+      <div className="animate-fade-in mb-4 px-4 sm:mb-8 sm:px-0">
+        <h2 className="text-lg font-bold tracking-tight sm:text-xl">
           Hello, {hacker.firstName}!
         </h2>
-        <p className="text-muted-foreground">Hackathon Dashboard</p>
+        <p className="text-sm text-muted-foreground sm:text-base">
+          Hackathon Dashboard
+        </p>
       </div>
-      <div className="animate-mobile-initial-expand relative mx-auto flex min-h-[400px] bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:py-6 lg:min-h-[380px]">
+      <div className="animate-mobile-initial-expand mx-auto flex min-h-[300px] bg-[#E5E7EB] px-2 py-4 dark:bg-[#0A0F1D] sm:relative sm:px-0 sm:py-6 lg:min-h-[380px]">
         {/* Main content */}
         <HackathonData data={hacker} />
 
-        {/* Transparent Triangle overlay in bottom right corner */}
-        <div className="border-b-solid border-l-solid absolute bottom-0 right-0 h-0 w-0 border-b-[30px] border-l-[30px] border-b-background border-l-transparent"></div>
+        {/* Transparent Triangle overlay in bottom right corner - hidden on mobile */}
+        <div className="border-b-solid border-l-solid absolute bottom-0 right-0 hidden h-0 w-0 border-b-[30px] border-l-[30px] border-b-background border-l-transparent sm:block"></div>
 
-        {/* Triangle in bottom right corner */}
+        {/* Triangle in bottom right corner - hidden on mobile */}
         <div
-          className="absolute bottom-0 right-0 h-0 w-0"
+          className="absolute bottom-0 right-0 hidden h-0 w-0 sm:block"
           style={{
             borderBottom: "20px solid #6C26D9",
             borderLeft: "20px solid transparent",
           }}
         ></div>
 
-        {/* Top rectangle */}
-        <div className="absolute -top-[1.4rem] right-0 h-6 w-40 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:w-96">
+        {/* Top rectangle - hidden on mobile */}
+        <div className="absolute -top-[1.4rem] right-0 hidden h-6 w-40 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:block sm:w-96">
           <div className="border-t-solid border-r-solid absolute left-0 top-0 h-0 w-0 border-r-[23px] border-t-[23px] border-r-transparent border-t-background"></div>
         </div>
 
-        {/* Bottom rectangle */}
-        <div className="absolute -bottom-[1.46rem] left-0 h-6 w-40 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:w-48">
+        {/* Bottom rectangle - hidden on mobile */}
+        <div className="absolute -bottom-[1.46rem] left-0 hidden h-6 w-40 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:block sm:w-48">
           <div className="border-b-solid border-l-solid absolute bottom-0 right-0 h-0 w-0 border-b-[24px] border-l-[24px] border-b-background border-l-transparent"></div>
         </div>
 
-        {/* Left side rectangle */}
-        <div className="absolute -left-3 top-0 h-full w-[0.4rem] bg-primary"></div>
+        {/* Left side rectangle - hidden on mobile */}
+        <div className="absolute -left-3 top-0 hidden h-full w-[0.4rem] bg-primary sm:block"></div>
+      </div>
+
+      <div className="animate-fade-in mb-8 mt-8 px-4 sm:mt-12 sm:px-0">
+        <HackingCountdown />
       </div>
     </>
   );
