@@ -1,4 +1,5 @@
 import type { EventTagsColor } from "@forge/consts/knight-hacks";
+import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 
 export const formatDateTime = (date: Date) => {
   // Create a new Date object 5 hours behind the original
@@ -56,4 +57,11 @@ export const getTagColor = (tag: EventTagsColor) => {
     "RSO-FAIR": "bg-lime-100 text-lime-800", // change later
   };
   return colors[tag];
+};
+
+export const getClassTeam = (tag: HackerClass) => {
+  if (["Harbinger", "Alchemist", "Monstologist"].includes(tag)) {
+    return { team: "Team Monsters", teamColor: "#e03131" };
+  }
+  return { team: "Team T.K", teamColor: "#228be6" };
 };

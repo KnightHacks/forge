@@ -7,6 +7,7 @@ import { BookOpen, CircleCheckBig, Trophy } from "lucide-react";
 
 import type { api as serverCall } from "~/trpc/server";
 import { HACKER_STATUS_MAP } from "~/consts";
+import { getClassTeam } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { HackerQRCodePopup } from "../hacker-dashboard/hacker-qr-button";
 import { DownloadQRPass } from "../member-dashboard/download-qr-pass";
@@ -31,6 +32,9 @@ export function HackathonData({
   const { data: hackathonData } = api.hackathon.getHackathon.useQuery({
     hackathonName: undefined,
   });
+
+  // @ts-expect-error - hacker type doesn't include class property
+  const { teamColor, team } = getClassTeam(hacker?.class || "Operators");
 
   function getStatusName(status: StatusKey) {
     if (!status) return "";
@@ -58,64 +62,86 @@ export function HackathonData({
   }
 
   return (
-    <div className="flex h-full w-full flex-col gap-4 p-4 sm:p-6 lg:flex-row lg:gap-6">
+    <div className="flex h-full w-full flex-col gap-3 overflow-scroll p-2 sm:gap-4 sm:p-4 lg:flex-row lg:gap-6 lg:p-6">
       {/* Left Section - Name, Status, Image, and Actions */}
-      <div className="flex flex-1 flex-col justify-evenly gap-5 lg:border-r lg:border-border lg:pr-8">
+      <div className="flex flex-1 flex-col justify-evenly gap-4 lg:border-r lg:border-border lg:pr-8">
         {/* Profile Card */}
-        <div className="rounded-xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+        <div className="rounded-xl border bg-card p-3 shadow-sm transition-shadow hover:shadow-md sm:p-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
             {/* Name and Info Column */}
-            <div className="flex-1 space-y-3">
+            <div className="flex-1 space-y-2 sm:space-y-3">
               {hacker?.firstName && hacker.lastName && (
-                <h1 className="animate-fade-in text-3xl font-bold tracking-tight">
+                <h1 className="animate-fade-in text-2xl font-bold tracking-tight sm:text-3xl">
                   {hacker.firstName} {hacker.lastName}
                 </h1>
               )}
 
-              <div className="animate-fade-in flex items-center gap-2 text-base text-muted-foreground">
-                <span className="font-medium">{hacker?.class}</span>
+              <div className="animate-fade-in flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:text-base">
+                <span
+                  className="font-medium"
+                  style={{
+                    color: teamColor,
+                    textShadow: `0 0 10px ${teamColor}, 0 0 20px ${teamColor}`,
+                  }}
+                >
+                  {/* @ts-expect-error - hacker type doesn't include class property */}
+                  {hacker?.class}
+                </span>
                 <span className="text-border">•</span>
-                <span className="font-semibold text-foreground">Team T.K</span>
+                <span
+                  className="font-semibold text-foreground"
+                  style={{
+                    color: teamColor,
+                    textShadow: `0 0 10px ${teamColor}, 0 0 20px ${teamColor}`,
+                  }}
+                >
+                  {team}
+                </span>
               </div>
 
               {/* Status Badge */}
               <div className="animate-fade-in space-y-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px]">
                   Status for {hackathonData?.displayName}
                 </p>
-                <div className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 shadow-sm">
-                  <span className={`text-base font-bold ${hackerStatusColor}`}>
+                <div className="inline-flex items-center gap-2 rounded-full border bg-background px-2.5 py-1 shadow-sm sm:px-3 sm:py-1.5">
+                  <span
+                    className={`text-sm font-bold sm:text-base ${hackerStatusColor}`}
+                  >
                     {hackerStatus}
                   </span>
                   {hackerStatus === "Confirmed" && (
-                    <CircleCheckBig className="h-4 w-4" color="#00C9A7" />
+                    <CircleCheckBig
+                      className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                      color="#00C9A7"
+                    />
                   )}
                 </div>
               </div>
             </div>
 
             {/* TK Image */}
-            <div className="animate-fade-in relative h-24 w-24 flex-shrink-0 self-center overflow-hidden rounded-lg border-2 border-border/50 bg-accent/20 shadow-sm sm:self-start">
+            <div className="animate-fade-in relative h-20 w-20 flex-shrink-0 self-center overflow-hidden rounded-lg border-2 border-border/50 bg-accent/20 shadow-sm sm:h-24 sm:w-24 sm:self-start">
               <Image
                 src="/tk-dashboard-img.svg"
                 alt="Image of TK"
                 fill
                 style={{ objectFit: "contain" }}
                 priority
-                sizes="96px"
+                sizes="(max-width: 640px) 80px, 96px"
               />
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="space-y-2 sm:space-y-3">
+          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs">
             Quick Actions
           </h3>
 
           {/* QR Code and Apple Wallet */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
             <HackerQRCodePopup />
             <DownloadQRPass />
           </div>
@@ -123,7 +149,7 @@ export function HackathonData({
           {/* Hacker Guide Link */}
           <Link
             href={"https://knight-hacks.notion.site/knight-hacks-viii"}
-            className="group flex w-3/4 items-center gap-2.5 rounded-lg border bg-card px-5 py-3 text-sm font-semibold shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md sm:w-auto"
+            className="group flex w-full items-center gap-2.5 rounded-lg border bg-card px-4 py-2.5 text-sm font-semibold shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md sm:w-auto sm:px-5 sm:py-3"
           >
             <BookOpen className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
             <span>Hacker's Guide</span>
@@ -134,37 +160,38 @@ export function HackathonData({
       {/* Right Section - Hack Points */}
       <div className="flex flex-1 items-center justify-center lg:pl-8">
         <div className="w-full max-w-md">
-          <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-background to-accent/10 p-6 shadow-lg transition-transform hover:scale-[1.02]">
+          <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-background to-accent/10 p-4 shadow-lg transition-transform hover:scale-[1.02] sm:p-6">
             {/* Decorative gradient overlay */}
-            <div className="absolute right-0 top-0 h-32 w-32 -translate-y-10 translate-x-10 rounded-full bg-primary/10 blur-3xl" />
+            <div className="absolute right-0 top-0 h-24 w-24 -translate-y-8 translate-x-8 rounded-full bg-primary/10 blur-3xl sm:h-32 sm:w-32 sm:-translate-y-10 sm:translate-x-10" />
 
             <div className="relative">
               {/* Icon */}
-              <div className="mb-3 flex justify-center">
-                <div className="rounded-full bg-primary/10 p-2.5">
-                  <Trophy className="h-7 w-7 text-primary" />
+              <div className="mb-2 flex justify-center sm:mb-3">
+                <div className="rounded-full bg-primary/10 p-2 sm:p-2.5">
+                  <Trophy className="h-6 w-6 text-primary sm:h-7 sm:w-7" />
                 </div>
               </div>
 
-              <h2 className="mb-2.5 text-center text-2xl font-bold">
+              <h2 className="mb-2 text-center text-xl font-bold sm:mb-2.5 sm:text-2xl">
                 Hack Points
               </h2>
 
-              <p className="mb-6 text-center text-sm leading-relaxed text-muted-foreground">
+              <p className="mb-4 text-center text-xs leading-relaxed text-muted-foreground sm:mb-6 sm:text-sm">
                 Accumulate by attending workshops, socials, meals, sponsor fair,
                 and more!
               </p>
 
               {/* Points Display */}
-              <div className="mb-6 flex items-center justify-center">
-                <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 px-6 py-5">
-                  <div className="text-center text-6xl font-bold tabular-nums tracking-tight">
+              <div className="mb-4 flex items-center justify-center sm:mb-6">
+                <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 px-4 py-3 sm:px-6 sm:py-5">
+                  <div className="text-center text-4xl font-bold tabular-nums tracking-tight sm:text-6xl">
+                    {/* @ts-expect-error - hacker type doesn't include points property */}
                     {hacker?.points || 0}
                   </div>
                 </div>
               </div>
 
-              <button className="w-full rounded-lg bg-primary/10 py-2.5 text-sm font-semibold text-primary transition-all hover:bg-primary/20 hover:shadow-md">
+              <button className="w-full rounded-lg bg-primary/10 py-2 text-sm font-semibold text-primary transition-all hover:bg-primary/20 hover:shadow-md sm:py-2.5">
                 View Leaderboard
               </button>
             </div>
