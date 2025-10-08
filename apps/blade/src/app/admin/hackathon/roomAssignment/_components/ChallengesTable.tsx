@@ -19,11 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from "@forge/ui/table";
-import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 import { AddJudgeDialog } from "./AddJudgeDialogue";
 import { JudgeItem } from "./JudgeItem"; // Adjust path as needed
+import { toast } from "@forge/ui/toast";
 
 const data = {
   judges: [
@@ -123,8 +123,8 @@ export function ChallengesTable() {
   //const hackathonId = await api.hackathon.getCurrentHackathon();
   const hackathonId = "h1";
   //if(!hackathonId) return <p> Hackathon Not Found </p>
-  //
-  const utils = api.useUtils();
+	//
+	const utils = api.useUtils();
   const challenges = data.challenges.filter(
     (a) => a.hackathonId == hackathonId,
   );
@@ -176,7 +176,7 @@ export function ChallengesTable() {
                   <Label>Room Name</Label>
                 </TableHead>
                 <TableHead className="text-center">
-                  <Label>Judges</Label>
+                  <Label>Judges Count</Label>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -228,7 +228,7 @@ export function ChallengesTable() {
                             Judges
                           </Label>
                           <AddJudgeDialog
-                            onAddJudge={async (judgeName, roomName) => {
+                            onAddJudge={(judgeName, roomName) => {
                               setJudges((judges) => [
                                 ...judges,
                                 {
@@ -238,8 +238,7 @@ export function ChallengesTable() {
                                   challengeId: challenge.challengeId,
                                 },
                               ]);
-                              await new Promise((r) => setTimeout(r, 2000));
-                              toast.success(`Added Judge ${judgeName}`);
+															toast.success(`Added Judge ${judgeName}`);
                               // Handle adding the judge here
                             }}
                           />
@@ -250,10 +249,7 @@ export function ChallengesTable() {
                               key={judge.judgeId}
                               judge={judge}
                               onSave={(judgeId, roomName) => {
-                                const judgeName: string | undefined =
-                                  judges.find(
-                                    (j) => j.judgeId == judgeId,
-                                  )?.judgeName;
+																const judgeName: string | undefined = judges.find(j => j.judgeId == judgeId)?.judgeName;
                                 setJudges((judges) =>
                                   [...judges].map((j) =>
                                     j.judgeId != judgeId
@@ -261,22 +257,17 @@ export function ChallengesTable() {
                                       : { ...j, roomName: roomName },
                                   ),
                                 );
-                                toast.success(
-                                  `Judge ${judgeName}'s room has been changed to ${roomName}`,
-                                );
+																toast.success(`Judge ${judgeName}'s room has been changed to ${roomName}`);
                               }}
                               onDelete={(judgeId) => {
-                                const judgeName: string | undefined =
-                                  judges.find(
-                                    (j) => j.judgeId == judgeId,
-                                  )?.judgeName;
+																const judgeName: string | undefined = judges.find(j => j.judgeId == judgeId)?.judgeName;
                                 setJudges((judges) =>
                                   [...judges].filter(
                                     (j) => j.judgeId != judgeId,
                                   ),
                                 );
                                 // Handle delete here
-                                toast.success(`Deleted Judge ${judgeName}`);
+																toast.success(`Deleted Judge ${judgeName}`);
                               }}
                             />
                           ))}
