@@ -33,8 +33,7 @@ export function HackathonData({
     hackathonName: undefined,
   });
 
-  // @ts-expect-error - hacker type doesn't include class property
-  const { teamColor, team } = getClassTeam(hacker?.class || "Operators");
+  const { teamColor, team } = getClassTeam(hacker?.class);
 
   function getStatusName(status: StatusKey) {
     if (!status) return "";
@@ -84,7 +83,6 @@ export function HackathonData({
                     textShadow: `0 0 10px ${teamColor}, 0 0 20px ${teamColor}`,
                   }}
                 >
-                  {/* @ts-expect-error - hacker type doesn't include class property */}
                   {hacker?.class}
                 </span>
                 <span className="text-border">•</span>
@@ -185,7 +183,6 @@ export function HackathonData({
               <div className="mb-4 flex items-center justify-center sm:mb-6">
                 <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 px-4 py-3 sm:px-6 sm:py-5">
                   <div className="text-center text-4xl font-bold tabular-nums tracking-tight sm:text-6xl">
-                    {/* @ts-expect-error - hacker type doesn't include points property */}
                     {hacker?.points || 0}
                   </div>
                 </div>
