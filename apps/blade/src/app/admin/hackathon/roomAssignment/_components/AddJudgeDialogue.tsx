@@ -44,7 +44,7 @@ export const AddJudgeDialog: React.FC<AddJudgeDialogProps> = ({
           Add Judge
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="">
         <DialogHeader>
           <DialogTitle>Add Judge</DialogTitle>
         </DialogHeader>
@@ -78,7 +78,7 @@ export const AddJudgeDialog: React.FC<AddJudgeDialogProps> = ({
             />
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex w-full flex-row justify-end space-x-2">
           <Button
             variant="outline"
             onClick={() => setOpen(false)}
