@@ -19,31 +19,34 @@ interface ExpandableProps {
 }
 
 const List = ({ item, className, index, activeItem, ...props }: ImageProps) => {
+  const isActive = index === activeItem;
+
   return (
     <div
       className={cn(
-        "relative flex h-40 w-full cursor-pointer overflow-hidden rounded-md transition-all delay-0 duration-300 ease-in-out md:h-full md:w-20",
-        {
-          "flex-grow": index === activeItem,
-        },
+        "relative h-40 cursor-pointer overflow-hidden rounded-md transition-all duration-300 ease-in-out md:h-full",
+        isActive
+          ? "z-10 w-full scale-100 md:w-[720px]"
+          : "w-full scale-95 opacity-70 blur-[1px] md:w-32",
         className,
       )}
+      style={{ willChange: "transform, width, opacity" }}
       {...props}
     >
       <Image
         src={item.image}
         alt={item.title}
-        height={0}
-        width={0}
-        className={cn("h-full w-full object-cover", {
-          "blur-[2px]": index !== activeItem,
-        })}
+        width={800}
+        height={600}
+        loading={isActive ? "eager" : "lazy"}
+        priority={isActive}
+        className="h-full w-full object-cover transition-all duration-300 ease-in-out"
       />
-      {index === activeItem && (
-        <div className="absolute bottom-2 left-2 rounded-lg bg-gradient-to-r from-purple-900 to-[#0F172A] py-1 text-xs sm:bottom-4 sm:left-4 md:h-auto md:text-lg">
+      {isActive && (
+        <div className="backdrop-blur-xs absolute bottom-4 left-4 z-10 rounded-xl bg-[#281a37]/80 px-4 py-2 shadow-md md:bottom-6 md:left-6">
           <WaveReveal
             duration="1000ms"
-            className="font-pragati bg-clip-text text-[20px] font-bold leading-tight md:mb-2 md:items-start md:justify-start md:text-center md:text-[60px]"
+            className="font-pragati text-xl font-bold tracking-tight text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] md:text-4xl"
             text={item.title}
             direction="up"
           />
@@ -59,12 +62,20 @@ const items = [
     title: "Hackathons",
   },
   {
-    image: "/jeff.png",
+    image: "/workshops2.jpg",
     title: "Workshops",
   },
   {
-    image: "/members.JPG",
-    title: "Leadership",
+    image: "/projects1.JPG",
+    title: "Projects",
+  },
+  {
+    image: "/workshops.jpg",
+    title: "Mentorship",
+  },
+  {
+    image: "/community.png",
+    title: "Community",
   },
 ];
 
@@ -85,7 +96,7 @@ export default function Expandable({
       if (!isHovering) {
         setActiveItem((prev) => (prev + 1) % list.length);
       }
-    }, 6000); // Slower autoplay for better mobile UX
+    }, 6000);
 
     return () => clearInterval(interval);
   }, [autoPlay, list.length, isHovering]);
@@ -93,7 +104,7 @@ export default function Expandable({
   return (
     <div
       className={cn(
-        "flex h-auto w-full flex-col items-center gap-2 md:h-full md:flex-row",
+        "mt-10 flex h-auto w-full flex-col items-center justify-center gap-2 md:h-full md:flex-row",
         className,
       )}
     >

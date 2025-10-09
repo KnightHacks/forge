@@ -8,8 +8,9 @@ import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 
+import CoolButton2 from "./assets/coolbutton2";
+import NeonTkSVG from "./assets/neon-tk";
 import Counter from "./discover-assets/counter";
-import DiscoverButton from "./discover-assets/discover-button";
 
 export default function Discover({ memberCount }: { memberCount: number }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,16 +42,11 @@ export default function Discover({ memberCount }: { memberCount: number }) {
     });
 
     tl.fromTo(
-      container,
-      { backgroundColor: "rgba(15, 23, 42, 0)" }, // Changed color to match #0F172A
-      { backgroundColor: "rgba(15, 23, 42, 1)", duration: 1 },
+      group,
+      { opacity: 0, y: 50 },
+      { opacity: 100, y: 0, duration: 1 },
+      0.2,
     )
-      .fromTo(
-        group,
-        { opacity: 0, y: 50 },
-        { opacity: 100, y: 0, duration: 1 },
-        0.2,
-      )
       .fromTo(
         counter,
         { opacity: 0, y: 50 },
@@ -80,9 +76,10 @@ export default function Discover({ memberCount }: { memberCount: number }) {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#0F172A] via-purple-900 to-purple-950 px-4"
+      className="relative flex h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#1b112b] via-[#331d52] to-[#4c1d95] px-4"
     >
-      <div className="z-10 flex flex-col items-center space-y-6 text-center">
+      <NeonTkSVG className="animate-float absolute left-20 top-20 hidden w-[250px] text-purple-500 opacity-50 md:block" />
+      <div className="z-10 mb-48 flex flex-col items-center space-y-6 text-center md:mb-0">
         <div className="flex flex-col items-center space-y-4">
           <div ref={counterRef} className="flex items-baseline gap-3">
             <Counter
@@ -95,23 +92,29 @@ export default function Discover({ memberCount }: { memberCount: number }) {
           </div>
           <p
             ref={textRef}
-            className="font-pragati max-w-2xl text-[28px] font-bold tracking-wide text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] md:text-[48px]"
+            className="font-pragati max-w-2xl pb-16 text-[28px] font-bold tracking-wide text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] md:text-[48px]"
           >
             Your Journey Begins Here
           </p>
         </div>
-        <div ref={buttonRef}>
-          <DiscoverButton
-            text="Join the Community!"
-            className="w-[300px] transform transition-all duration-300 hover:scale-105 hover:shadow-xl md:w-[450px]"
-            onClick={() =>
-              window.open(
-                PERMANENT_DISCORD_INVITE as string,
-                "_blank",
-                "noopener,noreferrer",
-              )
-            }
-          />
+        <div
+          ref={buttonRef}
+          className="relative z-0 flex max-w-max items-center overflow-hidden rounded-full p-[3px]"
+        >
+          <div className="moving-border absolute inset-0 h-full w-full rounded-full bg-[conic-gradient(from_0deg,#9722b6_20deg,#8b5cf6_140deg,transparent_240deg)]" />
+          <div className="relative z-10 flex items-center">
+            <CoolButton2
+              label="Join the Community!"
+              className="flex w-[300px] items-center justify-center md:w-[450px]"
+              onClick={() =>
+                window.open(
+                  PERMANENT_DISCORD_INVITE as string,
+                  "_blank",
+                  "noopener,noreferrer",
+                )
+              }
+            />
+          </div>
         </div>
       </div>
 

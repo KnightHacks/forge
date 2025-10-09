@@ -20,6 +20,9 @@ import { db } from "@forge/db/client";
 import {
   Event,
   EventAttendee,
+  Hacker,
+  HackerAttendee,
+  HackerEventAttendee,
   InsertEventSchema,
   Member,
 } from "@forge/db/schemas/knight-hacks";
@@ -43,9 +46,11 @@ export const eventRouter = {
       .select({
         ...getTableColumns(Event),
         numAttended: count(EventAttendee.id),
+        numHackerAttended: count(HackerEventAttendee.id),
       })
       .from(Event)
       .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
+      .leftJoin(HackerEventAttendee, eq(Event.id, HackerEventAttendee.eventId))
       .groupBy(Event.id)
       .orderBy(desc(Event.start_datetime));
     return events;
@@ -62,31 +67,77 @@ export const eventRouter = {
       .orderBy(Member.firstName);
     return attendees;
   }),
+  getHackerAttendees: adminProcedure
+    .input(z.string())
+    .query(async ({ input }) => {
+      const attendees = await db
+        .select({
+          ...getTableColumns(Hacker),
+        })
+        .from(Event)
+        .innerJoin(
+          HackerEventAttendee,
+          eq(Event.id, HackerEventAttendee.eventId),
+        )
+        .innerJoin(
+          HackerAttendee,
+          eq(HackerEventAttendee.hackerAttId, HackerAttendee.id),
+        )
+        .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+        .where(eq(Event.id, input))
+        .orderBy(Hacker.firstName);
+      return attendees;
+    }),
   createEvent: adminProcedure
     .input(
       InsertEventSchema.omit({ id: true, discordId: true, googleId: true }),
     )
     .mutation(async ({ input, ctx }) => {
-      // Step 0: Declare consts
+      // Step 0: Convert provided start/end datetimes into Local Date objects
       const startDatetime = new Date(input.start_datetime);
-      const startIsoTimestamp = startDatetime.toISOString();
       const endDatetime = new Date(input.end_datetime);
-      const endIsoTimestamp = endDatetime.toISOString();
+
+      // Construct local Date objects (year, month, date, hour, minute) to avoid UTC shifting
+      const startLocalDate = new Date(
+        startDatetime.getFullYear(),
+        startDatetime.getMonth(),
+        startDatetime.getDate(),
+        startDatetime.getHours(),
+        startDatetime.getMinutes(),
+      );
+      const endLocalDate = new Date(
+        endDatetime.getFullYear(),
+        endDatetime.getMonth(),
+        endDatetime.getDate(),
+        endDatetime.getHours(),
+        endDatetime.getMinutes(),
+      );
+
+      // Convert these local Date objects to ISO strings for Discord & Google Calendar
+      const startLocalIso = startLocalDate.toISOString();
+      const endLocalIso = endLocalDate.toISOString();
+
       const formattedName =
         "[" + input.tag.toUpperCase().replace(" ", "-") + "] " + input.name;
 
-      // Step 1: Make the event in Discord
-      let discordEventId;
+      const hackDesc = input.hackathonName
+        ? `### ⚔️ ${input.hackathonName} ⚔️\n\n`
+        : "";
+
+      const pointDesc = `\n\n**⭐ ${EVENT_POINTS[input.tag] || 0} Points**`;
+
+      // Step 1: Create the event in Discord
+      let discordEventId: string | undefined;
       try {
         const response = (await discord.post(
           Routes.guildScheduledEvents(KNIGHTHACKS_GUILD_ID),
           {
             body: {
-              description: input.description,
+              description: hackDesc + input.description + pointDesc,
               name: formattedName,
               privacy_level: DISCORD_EVENT_PRIVACY_LEVEL,
-              scheduled_start_time: startIsoTimestamp,
-              scheduled_end_time: endIsoTimestamp,
+              scheduled_start_time: startLocalIso, // Use ISO for Discord
+              scheduled_end_time: endLocalIso, // Use ISO for Discord
               entity_type: DISCORD_EVENT_TYPE,
               entity_metadata: {
                 location: input.location,
@@ -104,17 +155,17 @@ export const eventRouter = {
       }
 
       // Step 2: Insert the event into the Google Calendar
-      let googleEventId;
+      let googleEventId: string | undefined;
       try {
         const response = await calendar.events.insert({
           calendarId: GOOGLE_CALENDAR_ID,
           requestBody: {
             end: {
-              dateTime: endIsoTimestamp,
+              dateTime: endLocalIso, // ISO for Google Calendar
               timeZone: CALENDAR_TIME_ZONE,
             },
             start: {
-              dateTime: startIsoTimestamp,
+              dateTime: startLocalIso, // ISO for Google Calendar
               timeZone: CALENDAR_TIME_ZONE,
             },
             description: input.description,
@@ -122,17 +173,19 @@ export const eventRouter = {
             location: input.location,
           },
         } as calendar_v3.Params$Resource$Events$Insert);
-        googleEventId = response.data.id;
+        googleEventId = response.data.id ?? undefined;
       } catch (error) {
         console.error("ERROR MESSAGE:", JSON.stringify(error, null, 2));
 
         // Clean up the event in Discord if the Google Calendar event fails
-        try {
-          await discord.delete(
-            Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, discordEventId),
-          );
-        } catch (error) {
-          console.error(JSON.stringify(error, null, 2));
+        if (discordEventId) {
+          try {
+            await discord.delete(
+              Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, discordEventId),
+            );
+          } catch (cleanupErr) {
+            console.error(JSON.stringify(cleanupErr, null, 2));
+          }
         }
 
         throw new TRPCError({
@@ -141,14 +194,13 @@ export const eventRouter = {
         });
       }
 
-      // Step 3: Insert the event into the database with the discord id.
+      // Step 3: Insert the event into the database (using Date objects for timestamp columns)
       if (!discordEventId) {
         throw new TRPCError({
           message: "Failed to create event in Discord",
           code: "BAD_REQUEST",
         });
       }
-
       if (!googleEventId) {
         throw new TRPCError({
           message: "Failed to create event in Google Calendar (no google ID)",
@@ -157,8 +209,16 @@ export const eventRouter = {
       }
 
       try {
+        // Step 3: Update the event in the database using Date objects
+        const dayBeforeStart = new Date(startLocalDate);
+        dayBeforeStart.setDate(dayBeforeStart.getDate() - 1);
+        const dayBeforeEnd = new Date(endLocalDate);
+        dayBeforeEnd.setDate(dayBeforeEnd.getDate() - 1);
+
         await db.insert(Event).values({
           ...input,
+          start_datetime: dayBeforeStart,
+          end_datetime: dayBeforeEnd,
           points: EVENT_POINTS[input.tag] || 0,
           discordId: discordEventId,
           googleId: googleEventId,
@@ -171,8 +231,8 @@ export const eventRouter = {
           await discord.delete(
             Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, discordEventId),
           );
-        } catch (error) {
-          console.error(JSON.stringify(error, null, 2));
+        } catch (cleanupErr) {
+          console.error(JSON.stringify(cleanupErr, null, 2));
         }
 
         // Clean up the event in Google Calendar if the database insert fails
@@ -181,8 +241,8 @@ export const eventRouter = {
             calendarId: GOOGLE_CALENDAR_ID,
             eventId: googleEventId,
           });
-        } catch (error) {
-          console.error(JSON.stringify(error, null, 2));
+        } catch (cleanupErr) {
+          console.error(JSON.stringify(cleanupErr, null, 2));
         }
 
         throw new TRPCError({
@@ -191,6 +251,7 @@ export const eventRouter = {
         });
       }
 
+      // Step 4: Log the creation
       await log({
         title: "Event Created",
         message: `The event **${formattedName}** was created.`,
@@ -198,6 +259,7 @@ export const eventRouter = {
         userId: ctx.session.user.discordUserId,
       });
     }),
+
   updateEvent: adminProcedure
     .input(InsertEventSchema)
     .mutation(async ({ input, ctx }) => {
@@ -219,13 +281,37 @@ export const eventRouter = {
         });
       }
 
-      // Step 0: Declare consts
+      // Step 0: Convert provided start/end datetimes into Local Date objects
       const startDatetime = new Date(input.start_datetime);
-      const startIsoTimestamp = startDatetime.toISOString();
       const endDatetime = new Date(input.end_datetime);
-      const endIsoTimestamp = endDatetime.toISOString();
+
+      const startLocalDate = new Date(
+        startDatetime.getFullYear(),
+        startDatetime.getMonth(),
+        startDatetime.getDate(),
+        startDatetime.getHours(),
+        startDatetime.getMinutes(),
+      );
+      const endLocalDate = new Date(
+        endDatetime.getFullYear(),
+        endDatetime.getMonth(),
+        endDatetime.getDate(),
+        endDatetime.getHours(),
+        endDatetime.getMinutes(),
+      );
+
+      // Convert to ISO for Discord & Google
+      const startLocalIso = startLocalDate.toISOString();
+      const endLocalIso = endLocalDate.toISOString();
+
       const formattedName =
         "[" + input.tag.toUpperCase().replace(" ", "-") + "] " + input.name;
+
+      const hackDesc = input.hackathonName
+        ? `### ⚔️ ${input.hackathonName} ⚔️\n\n`
+        : "";
+
+      const pointDesc = `\n\n**⭐ ${EVENT_POINTS[input.tag] || 0} Points**`;
 
       // Step 1: Update the event in Discord
       try {
@@ -233,11 +319,11 @@ export const eventRouter = {
           Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, input.discordId),
           {
             body: {
-              description: input.description,
+              description: hackDesc + input.description + pointDesc,
               name: formattedName,
               privacy_level: DISCORD_EVENT_PRIVACY_LEVEL,
-              scheduled_start_time: startIsoTimestamp,
-              scheduled_end_time: endIsoTimestamp,
+              scheduled_start_time: startLocalIso,
+              scheduled_end_time: endLocalIso,
               entity_type: DISCORD_EVENT_TYPE,
               entity_metadata: {
                 location: input.location,
@@ -253,18 +339,18 @@ export const eventRouter = {
         });
       }
 
-      // Step 2: Update the event in the Google Calendar
+      // Step 2: Update the event in Google Calendar
       try {
         await calendar.events.update({
           calendarId: GOOGLE_CALENDAR_ID,
           eventId: input.googleId,
           requestBody: {
             end: {
-              dateTime: endIsoTimestamp,
+              dateTime: endLocalIso,
               timeZone: CALENDAR_TIME_ZONE,
             },
             start: {
-              dateTime: startIsoTimestamp,
+              dateTime: startLocalIso,
               timeZone: CALENDAR_TIME_ZONE,
             },
             description: input.description,
@@ -280,7 +366,7 @@ export const eventRouter = {
         });
       }
 
-      // Create a log of the changes for logger
+      // Create a record of changes for logging
       const updateData = { ...input };
       const changes = Object.keys(updateData).reduce(
         (acc, key) => {
@@ -301,12 +387,12 @@ export const eventRouter = {
           string,
           {
             before: string | number | Date | boolean | null;
-            after: string | number | Date | null | boolean | undefined;
+            after: string | number | Date | boolean | null | undefined;
           }
         >,
       );
 
-      // Add start_datetime and end_datetime to changes if they are different
+      // Check if start_datetime / end_datetime changed
       if (String(event.start_datetime) !== String(input.start_datetime)) {
         changes.start_datetime = {
           before: event.start_datetime,
@@ -320,7 +406,7 @@ export const eventRouter = {
         };
       }
 
-      // Convert the changes object to a string for the log
+      // Format these changes into a string for logs
       const changesString = Object.entries(changes)
         .map(([key, value]) => {
           const before =
@@ -347,14 +433,26 @@ export const eventRouter = {
 
       await log({
         title: "Event Updated",
-        message: `Event **${oldFormattedName}** was updated.
-        \n**Changes:\n**${changesString}`,
+        message: `Event **${oldFormattedName}** was updated.\n**Changes:**\n${changesString}`,
         color: "blade_purple",
         userId: ctx.session.user.discordUserId,
       });
 
-      // Step 3: Update the event in the database
-      await db.update(Event).set(input).where(eq(Event.id, input.id));
+      // Step 3: Update the event in the database using Date objects
+      const dayBeforeStart = new Date(startLocalDate);
+      dayBeforeStart.setDate(dayBeforeStart.getDate() - 1);
+      const dayBeforeEnd = new Date(endLocalDate);
+      dayBeforeEnd.setDate(dayBeforeEnd.getDate() - 1);
+
+      await db
+        .update(Event)
+        .set({
+          ...input,
+          start_datetime: dayBeforeStart,
+          end_datetime: dayBeforeEnd,
+          points: input.hackathonId ? 0 : EVENT_POINTS[input.tag] || 0,
+        })
+        .where(eq(Event.id, input.id));
     }),
   deleteEvent: adminProcedure
     .input(

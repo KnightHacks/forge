@@ -30,6 +30,7 @@
     "@trpc/server": "catalog:",
     "discord-api-types": "^0.37.113",
     "minio": "^8.0.3",
+    "passkit-generator": "^3.4.0",
     "qrcode": "^1.5.4",
     "stripe": "^17.4.0",
     "superjson": "2.2.1",

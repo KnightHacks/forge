@@ -1,3 +1,5 @@
+import type { HackerClass } from "../../db/src/schemas/knight-hacks";
+
 export const LEVELS_OF_STUDY = [
   "Less than Secondary / High School",
   "Secondary / High School",
@@ -11,6 +13,92 @@ export const LEVELS_OF_STUDY = [
   "I’m not currently a student",
   "Prefer not to answer",
 ] as const;
+
+export const ALLERGIES = [
+  "Milk",
+  "Eggs",
+  "Fish",
+  "Crustacean Shellfish",
+  "Tree Nuts",
+  "Peanuts",
+  "Wheat",
+  "Soybeans",
+  "Halal",
+  "Kosher",
+  "Vegetarian",
+  "Vegan",
+] as const;
+
+export const MAJORS = [
+  "Computer Science",
+  "Information Technology",
+  "Software Engineering",
+  "Computer Engineering",
+  "Digital Media",
+  "Business",
+  "Accounting",
+  "Aerospace Engineering",
+  "Anthropology",
+  "Architecture",
+  "Art",
+  "Astronomy",
+  "Biochemistry",
+  "Biology",
+  "Biomedical Engineering",
+  "Chemical Engineering",
+  "Chemistry",
+  "Civil Engineering",
+  "Communication",
+  "Criminal Justice",
+  "Data Science",
+  "Design",
+  "Economics",
+  "Education",
+  "Electrical Engineering",
+  "English",
+  "Environmental Science",
+  "Finance",
+  "Game Design",
+  "Geography",
+  "Geology",
+  "Graphic Design",
+  "Health Sciences",
+  "History",
+  "Hospitality Management",
+  "Human Resources",
+  "Industrial Engineering",
+  "International Relations",
+  "Journalism",
+  "Languages",
+  "Law",
+  "Linguistics",
+  "Management",
+  "Marketing",
+  "Mathematics",
+  "Mechanical Engineering",
+  "Medicine",
+  "Music",
+  "Nursing",
+  "Philosophy",
+  "Physics",
+  "Political Science",
+  "Pre-Med",
+  "Pre-Law",
+  "Psychology",
+  "Public Administration",
+  "Public Health",
+  "Religious Studies",
+  "Social Work",
+  "Sociology",
+  "Statistics",
+  "Theater",
+  "Urban Planning",
+  "Veterinary Science",
+  "Interdisciplinary Studies",
+  "Other",
+] as const;
+
+export type Major = (typeof MAJORS)[number];
 
 export const SHORT_LEVELS_OF_STUDY = [
   "Undergraduate University (2 year)",
@@ -76,7 +164,13 @@ export const EVENT_TAGS = [
   "Class Support",
   "Workshop",
   "OPS",
-  "Hackathon",
+  "Collabs",
+  "Check-in",
+  "Merch",
+  "Food",
+  "Ceremony",
+  "CAREER-FAIR",
+  "RSO-FAIR",
 ] as const;
 
 export const EVENT_FEEDBACK_HEARD = [
@@ -97,20 +191,51 @@ type EventTag = (typeof EVENT_TAGS)[number];
 
 export const EVENT_POINTS: Record<EventTag, number> = {
   GBM: 35,
-  Social: 35,
+  Social: 25,
   Kickstart: 25,
   "Project Launch": 25,
   "Hello World": 25,
-  Sponsorship: 40,
+  Sponsorship: 50,
   "Tech Exploration": 25,
   "Class Support": 25,
   Workshop: 25,
   OPS: 20,
-  Hackathon: 1,
+  Collabs: 40,
+  "Check-in": 5,
+  Merch: 5,
+  Food: 5,
+  Ceremony: 50,
+  "CAREER-FAIR": 100,
+  "RSO-FAIR": 50,
 } as const;
 
 export const KNIGHTHACKS_S3_BUCKET_REGION = "us-east-1";
 export const KNIGHTHACKS_MAX_RESUME_SIZE = 5 * 1000000; // 5MB
+
+export const KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE = 2 * 1024 * 1024; // 2MB
+export const ALLOWED_PROFILE_PICTURE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+];
+export const ALLOWED_PROFILE_PICTURE_EXTENSIONS = [
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "webp",
+];
+
+export const TERM_TO_DATE = {
+  Spring: { month: 4, day: 2 }, // May 2
+  Summer: { month: 7, day: 6 }, // Aug 6
+  Fall: { month: 11, day: 10 }, // Dec 10
+} as const;
+export type GradTerm = keyof typeof TERM_TO_DATE;
+
+export const GUILD_TAG_OPTIONS = ["alumni", "current"] as const;
+export type GuildTag = (typeof GUILD_TAG_OPTIONS)[number];
 
 export const MINIO_ENDPOINT = "minio-g0soogg4gs8gwcggw4ococok.knighthacks.org";
 export const BUCKET_NAME = "knight-hacks-qr";
@@ -127,6 +252,45 @@ export const DEV_KNIGHTHACKS_GUILD_ID = "1151877367434850364";
 
 export const PROD_KNIGHTHACKS_LOG_CHANNEL = "1324885515412963531";
 export const DEV_KNIGHTHACKS_LOG_CHANNEL = "1284582557689843785";
+
+export const PROD_DISCORD_ROLE_KNIGHT_HACKS_8 = "1408025502119231498";
+export const DEV_DISCORD_ROLE_KNIGHT_HACKS_8 = "1420819573816692857";
+
+export const PROD_DISCORD_ROLE_OPERATORS = "1415702220825038879";
+export const DEV_DISCORD_ROLE_OPERATORS = "1420819261223600239";
+
+export const PROD_DISCORD_ROLE_MACHINIST = "1415702276433248406";
+export const DEV_DISCORD_ROLE_MACHINIST = "1420819223797698683";
+
+export const PROD_DISCORD_ROLE_SENTINELS = "1415702308494250136";
+export const DEV_DISCORD_ROLE_SENTINELS = "1420819277279137892";
+
+export const PROD_DISCORD_ROLE_HARBINGER = "1415702341214011392";
+export const DEV_DISCORD_ROLE_HARBINGER = "1420819326075801670";
+
+export const PROD_DISCORD_ROLE_MONSTOLOGIST = "1415702361653121044";
+export const DEV_DISCORD_ROLE_MONSTOLOGIST = "1420819295759237222";
+
+export const PROD_DISCORD_ROLE_ALCHEMIST = "1415702383274491934";
+export const DEV_DISCORD_ROLE_ALCHEMIST = "1420819309965611140";
+
+export const IS_PROD = process.env.NODE_ENV === "production";
+
+export const KH_EVENT_ROLE_ID = IS_PROD
+  ? PROD_DISCORD_ROLE_KNIGHT_HACKS_8
+  : DEV_DISCORD_ROLE_KNIGHT_HACKS_8;
+export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
+
+export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
+  Operators: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,
+  Machinist: IS_PROD ? PROD_DISCORD_ROLE_MACHINIST : DEV_DISCORD_ROLE_MACHINIST,
+  Sentinels: IS_PROD ? PROD_DISCORD_ROLE_SENTINELS : DEV_DISCORD_ROLE_SENTINELS,
+  Harbinger: IS_PROD ? PROD_DISCORD_ROLE_HARBINGER : DEV_DISCORD_ROLE_HARBINGER,
+  Monstologist: IS_PROD
+    ? PROD_DISCORD_ROLE_MONSTOLOGIST
+    : DEV_DISCORD_ROLE_MONSTOLOGIST,
+  Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
+} as const satisfies Record<AssignableHackerClass, string>;
 
 export const MEMBER_PROFILE_ICON_SIZE = 24;
 
@@ -178,7 +342,14 @@ export type EventTagsColor =
   | "Class Support"
   | "Workshop"
   | "OPS"
-  | "Hackathon";
+  | "Hackathon"
+  | "Collabs"
+  | "Check-in"
+  | "Merch"
+  | "Food"
+  | "Ceremony"
+  | "CAREER-FAIR"
+  | "RSO-FAIR";
 
 export const GENDERS = [
   "Man",
@@ -5347,3 +5518,58 @@ export const SCHOOLS = [
 export const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL"] as const;
 
 export const SPONSOR_TIERS = ["gold", "silver", "bronze", "other"] as const;
+
+export const ADMIN_PIE_CHART_COLORS: readonly string[] = [
+  "#f72585",
+  "#b5179e",
+  "#7209b7",
+  "#3a0ca3",
+  "#4361ee",
+  "#4895ef",
+  "#4cc9f0",
+  "#560bad",
+  "#480ca8",
+] as const;
+
+export const DEFAULT_COLOR = "#ffffff";
+
+export const WEEKDAY_ORDER: string[] = [
+  "Mon",
+  "Tues",
+  "Wed",
+  "Thurs",
+  "Fri",
+  "Sat/Sun",
+] as const;
+
+export const RANKING_STYLES: string[] = [
+  "md:text-lg lg:text-lg font-bold text-yellow-500",
+  "md:text-lg lg:text-lg font-semibold text-gray-400",
+  "md:text-lg lg:text-lg font-medium text-orange-500",
+];
+
+export const SEMESTER_START_DATES = {
+  spring: {
+    month: 0,
+    day: 1, // first day of January
+  },
+  summer: {
+    month: 4,
+    day: 1, // first day of May
+  },
+  fall: {
+    month: 7,
+    day: 15, // middle of August
+  },
+} as const;
+
+export const ALL_DATES_RANGE_UNIX = {
+  start: -8640000000000000,
+  end: 8640000000000000,
+} as const;
+
+export interface Semester {
+  name: string;
+  startDate: Date;
+  endDate: Date;
+}

@@ -15,6 +15,7 @@ const config = {
     "@forge/db",
     "@forge/ui",
     "@forge/validators",
+    "forge/transactional",
   ],
 
   /** We already do linting and typechecking as separate tasks in CI */
@@ -26,7 +27,6 @@ const config = {
       {
         protocol: "https",
         hostname: "minio-g0soogg4gs8gwcggw4ococok.knighthacks.org",
-        pathname: "/knight-hacks-qr/**",
       },
     ],
   },

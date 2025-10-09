@@ -19,6 +19,7 @@ import {
   sql,
 } from "@forge/db";
 import { db } from "@forge/db/client";
+import { Session } from "@forge/db/schemas/auth";
 import {
   DuesPayment,
   Event,
@@ -32,46 +33,43 @@ import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { log } from "../utils";
 
 export const memberRouter = {
-  // -------------------- MEMBER DASHBOARD ENDPOINTS --------------------
   createMember: protectedProcedure
     .input(
       InsertMemberSchema.omit({
+        id: true,
         userId: true,
         age: true,
         discordUser: true,
+        points: true,
+        dateCreated: true,
+        timeCreated: true,
       }),
     )
     .mutation(async ({ input, ctx }) => {
       try {
         const userId = ctx.session.user.id;
-
         const existingMember = await db
-          .select()
+          .select({ id: Member.id })
           .from(Member)
           .where(eq(Member.userId, userId));
 
         if (existingMember.length === 0) {
           const objectName = `qr-code-${userId}.png`;
           const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
-
           if (!bucketExists) {
             await minioClient.makeBucket(
               BUCKET_NAME,
               KNIGHTHACKS_S3_BUCKET_REGION,
             );
           }
-
           const qrData = `user:${userId}`;
           const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
-
           await minioClient.putObject(
             BUCKET_NAME,
             objectName,
             qrBuffer,
             qrBuffer.length,
-            {
-              "Content-Type": "image/png",
-            },
+            { "Content-Type": "image/png" },
           );
         }
       } catch (error) {
@@ -90,10 +88,10 @@ export const memberRouter = {
 
       await db.insert(Member).values({
         ...input,
-        discordUser: ctx.session.user.name ?? "",
         userId: ctx.session.user.id,
+        discordUser: ctx.session.user.name ?? "",
         age: newAge,
-        phoneNumber: input.phoneNumber == "" ? null : input.phoneNumber,
+        phoneNumber: input.phoneNumber === "" ? null : input.phoneNumber,
       });
 
       await log({
@@ -110,7 +108,9 @@ export const memberRouter = {
         userId: true,
         age: true,
         discordUser: true,
-      }),
+        dateCreated: true,
+        timeCreated: true,
+      }).partial(),
     )
     .mutation(async ({ input, ctx }) => {
       if (!input.id) {
@@ -120,7 +120,7 @@ export const memberRouter = {
         });
       }
 
-      const { id, dob, ...updateData } = input;
+      const { id, dob, phoneNumber, ...updateDataFromInput } = input;
 
       const member = await db.query.Member.findFirst({
         where: (t, { eq }) => eq(t.id, id),
@@ -128,45 +128,76 @@ export const memberRouter = {
 
       if (!member) {
         throw new TRPCError({
-          message: "Member not found!",
+          message: "Member not found to update!",
           code: "NOT_FOUND",
         });
       }
 
-      const resume = input.resumeUrl ? input.resumeUrl : member.resumeUrl;
+      const normalizedPhone = phoneNumber === "" ? null : phoneNumber;
+      const resume = input.resumeUrl ?? member.resumeUrl;
 
-      // Check if the age has been updated
-      const today = new Date();
-      const birthDate = new Date(dob);
-      const hasBirthdayPassed =
-        birthDate.getMonth() < today.getMonth() ||
-        (birthDate.getMonth() === today.getMonth() &&
-          birthDate.getDate() <= today.getDate());
-      const newAge = hasBirthdayPassed
-        ? today.getFullYear() - birthDate.getFullYear()
-        : today.getFullYear() - birthDate.getFullYear() - 1;
+      let newAge = member.age;
+
+      if (dob) {
+        const today = new Date();
+        const birthDate = new Date(dob);
+        const hasBirthdayPassed =
+          birthDate.getMonth() < today.getMonth() ||
+          (birthDate.getMonth() === today.getMonth() &&
+            birthDate.getDate() <= today.getDate());
+        newAge = hasBirthdayPassed
+          ? today.getFullYear() - birthDate.getFullYear()
+          : today.getFullYear() - birthDate.getFullYear() - 1;
+      }
+
+      const dataToSet: Partial<typeof Member.$inferInsert> = {
+        ...updateDataFromInput,
+        age: newAge,
+      };
+
+      if (dob) {
+        dataToSet.dob = dob;
+      }
+      if (input.phoneNumber !== undefined) {
+        dataToSet.phoneNumber =
+          input.phoneNumber === "" ? null : input.phoneNumber;
+      }
+      if (input.resumeUrl !== undefined) {
+        dataToSet.resumeUrl = input.resumeUrl;
+      }
 
       await db
         .update(Member)
         .set({
-          ...updateData,
+          ...updateDataFromInput,
           resumeUrl: resume,
           dob: dob,
           age: newAge,
-          phoneNumber: input.phoneNumber == "" ? null : input.phoneNumber,
+          phoneNumber: normalizedPhone,
         })
         .where(eq(Member.userId, ctx.session.user.id));
 
-      // Create a log of the changes for logger
-      const changes = Object.keys(updateData).reduce(
+      const changes = Object.keys(updateDataFromInput).reduce(
         (acc, key) => {
+          const typedKey = key as keyof typeof updateDataFromInput;
+          const memberTypedKey = key as keyof typeof member;
+
           if (
-            member[key as keyof typeof member] !==
-            updateData[key as keyof typeof updateData]
+            Object.prototype.hasOwnProperty.call(member, memberTypedKey) &&
+            member[memberTypedKey] !== updateDataFromInput[typedKey]
           ) {
             acc[key] = {
-              before: member[key as keyof typeof member],
-              after: updateData[key as keyof typeof updateData],
+              before: member[memberTypedKey],
+              after: updateDataFromInput[typedKey],
+            };
+          } else if (
+            !Object.prototype.hasOwnProperty.call(member, memberTypedKey) &&
+            updateDataFromInput[typedKey] !== null &&
+            updateDataFromInput[typedKey] !== undefined
+          ) {
+            acc[key] = {
+              before: null,
+              after: updateDataFromInput[typedKey],
             };
           }
           return acc;
@@ -174,11 +205,18 @@ export const memberRouter = {
         {} as Record<
           string,
           {
-            before: string | number | null;
-            after: string | number | null | undefined;
+            before: string | number | boolean | null;
+            after: string | number | boolean | null | undefined;
           }
         >,
       );
+
+      if ((member.phoneNumber ?? "") !== (normalizedPhone ?? "")) {
+        changes.phoneNumber = {
+          before: member.phoneNumber,
+          after: normalizedPhone,
+        };
+      }
 
       // Convert the changes object to a string for the log
       const changesString = Object.entries(changes)
@@ -198,39 +236,40 @@ export const memberRouter = {
     }),
 
   deleteMember: protectedProcedure
-    .input(
-      InsertMemberSchema.pick({ id: true, firstName: true, lastName: true }),
-    )
+    .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ input, ctx }) => {
-      if (!input.id) {
+      const memberToDelete = await db.query.Member.findFirst({
+        where: eq(Member.id, input.id),
+        columns: { firstName: true, lastName: true },
+      });
+      if (!memberToDelete) {
         throw new TRPCError({
-          message: "Member ID is required to delete a member!",
-          code: "BAD_REQUEST",
+          code: "NOT_FOUND",
+          message: "Member to delete not found.",
         });
       }
-
       await db.delete(Member).where(eq(Member.id, input.id));
-
       await log({
         title: "Member Deleted",
-        message: `Profile for ${input.firstName} ${input.lastName} has been deleted.`,
+        message: `Profile for ${memberToDelete.firstName} ${memberToDelete.lastName} (ID: ${input.id}) has been deleted.`,
         color: "uhoh_red",
         userId: ctx.session.user.discordUserId,
       });
+
+      if (ctx.session.user.id) {
+        await db.delete(Session).where(eq(Session.userId, ctx.session.user.id));
+      }
     }),
 
   getMember: protectedProcedure.query(async ({ ctx }) => {
-    const member = await db
-      .select()
-      .from(Member)
-      .where(eq(Member.userId, ctx.session.user.id));
-
-    if (member.length === 0) return null; // Can't return undefined in trpc
-    return member[member.length - 1];
+    const member = await db.query.Member.findFirst({
+      where: eq(Member.userId, ctx.session.user.id),
+    });
+    if (!member) return null;
+    return member;
   }),
 
   getEvents: protectedProcedure.query(async ({ ctx }) => {
-    // Get each event and numAttended
     const eventsSubQuery = db
       .select({
         id: Event.id,
@@ -240,7 +279,6 @@ export const memberRouter = {
       .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
       .groupBy(Event.id)
       .as("eventsSubQuery");
-
     const events = await db
       .select({
         ...getTableColumns(Event),
@@ -249,7 +287,7 @@ export const memberRouter = {
       .from(Event)
       .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
       .leftJoin(Member, eq(EventAttendee.memberId, Member.id))
-      .leftJoin(eventsSubQuery, eq(eventsSubQuery.id, Event.id)) // Add numAttended to each corresponding event
+      .leftJoin(eventsSubQuery, eq(eventsSubQuery.id, Event.id))
       .where(
         and(eq(Member.userId, ctx.session.user.id), isNull(Event.hackathonId)),
       )
@@ -257,56 +295,74 @@ export const memberRouter = {
     return events;
   }),
 
-  // -------------------- ADMIN DASHBOARD ENDPOINTS --------------------
-  getMembers: adminProcedure.query(async () => {
-    return await db.query.Member.findMany();
-  }),
+  getMembers: adminProcedure.query(
+    async () => await db.query.Member.findMany(),
+  ),
+  getMemberCount: publicProcedure.query(
+    async () =>
+      (await db.select({ count: count() }).from(Member))[0]?.count ?? 0,
+  ),
 
-  getMemberCount: publicProcedure.query(async () => {
-    const members = await db.query.Member.findMany();
-    return members.length || 0;
-  }),
-
-  getDuesPayingMembers: adminProcedure.query(async () => {
-    const duesPayingMembers = await db
-      .select()
-      .from(Member)
-      .where(
-        exists(
-          db
-            .select()
-            .from(DuesPayment)
-            .where(eq(DuesPayment.memberId, Member.id)),
+  getDuesPayingMembers: adminProcedure.query(
+    async () =>
+      await db
+        .select()
+        .from(Member)
+        .where(
+          exists(
+            db
+              .select()
+              .from(DuesPayment)
+              .where(eq(DuesPayment.memberId, Member.id)),
+          ),
         ),
-      );
+  ),
 
-    return duesPayingMembers;
+  getMemberAttendanceCounts: adminProcedure.query(async () => {
+    // Get attendance count for each member
+    const memberAttendance = await db
+      .select({
+        memberId: Member.id,
+        firstName: Member.firstName,
+        lastName: Member.lastName,
+        points: Member.points,
+        eventsAttended: count(EventAttendee.id),
+      })
+      .from(Member)
+      .leftJoin(EventAttendee, eq(Member.id, EventAttendee.memberId))
+      .leftJoin(
+        Event,
+        and(
+          eq(EventAttendee.eventId, Event.id),
+          isNull(Event.hackathonId), // Only club events, not hackathon events
+        ),
+      )
+      .groupBy(Member.id, Member.firstName, Member.lastName, Member.points);
+
+    return memberAttendance;
   }),
 
   createDuesPayingMember: adminProcedure
     .input(InsertMemberSchema.pick({ id: true }))
     .mutation(async ({ input, ctx }) => {
-      if (!input.id) {
+      if (!input.id)
         throw new TRPCError({
           message: "Member ID is required to update dues paying status!",
           code: "BAD_REQUEST",
         });
-      }
       await db.insert(DuesPayment).values({
         memberId: input.id,
         amount: DUES_PAYMENT as number,
         paymentDate: new Date(),
         year: new Date().getFullYear(),
       });
-
-      const member = await db
-        .select()
-        .from(Member)
-        .where(eq(Member.id, input.id));
-
+      const member = await db.query.Member.findFirst({
+        where: eq(Member.id, input.id),
+        columns: { firstName: true, lastName: true },
+      });
       await log({
         title: "Dues Status Accredited",
-        message: `${member[0]?.firstName} ${member[0]?.lastName} has been accredited dues status.`,
+        message: `${member?.firstName} ${member?.lastName} has been accredited dues status.`,
         color: "success_green",
         userId: ctx.session.user.discordUserId,
       });
@@ -315,22 +371,19 @@ export const memberRouter = {
   deleteDuesPayingMember: adminProcedure
     .input(InsertMemberSchema.pick({ id: true }))
     .mutation(async ({ input, ctx }) => {
-      if (!input.id) {
+      if (!input.id)
         throw new TRPCError({
           message: "Member ID is required to update dues paying status!",
           code: "BAD_REQUEST",
         });
-      }
       await db.delete(DuesPayment).where(eq(DuesPayment.memberId, input.id));
-
-      const member = await db
-        .select()
-        .from(Member)
-        .where(eq(Member.id, input.id));
-
+      const member = await db.query.Member.findFirst({
+        where: eq(Member.id, input.id),
+        columns: { firstName: true, lastName: true },
+      });
       await log({
         title: "Dues Status Revoked",
-        message: `${member[0]?.firstName} ${member[0]?.lastName} has been revoked of dues status.`,
+        message: `${member?.firstName} ${member?.lastName} has been revoked of dues status.`,
         color: "uhoh_red",
         userId: ctx.session.user.discordUserId,
       });
@@ -340,7 +393,8 @@ export const memberRouter = {
     await db.delete(DuesPayment);
     await log({
       title: "ALL DUES CLEARED",
-      message: `ALL DUES HAVE BEEN CLEARED. THIS ACTION IS REVERSIBLE FOR ONLY 7 DAYS.`,
+      message:
+        "ALL DUES HAVE BEEN CLEARED. THIS ACTION IS REVERSIBLE FOR ONLY 7 DAYS.",
       color: "uhoh_red",
       userId: ctx.session.user.discordUserId,
     });
@@ -350,36 +404,39 @@ export const memberRouter = {
     .input(
       z.object({
         userId: z.string(),
-        eventId: z.string(),
+        eventId: z.string().uuid(),
         eventPoints: z.number(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
       const member = await db.query.Member.findFirst({
-        where: (t, { eq }) => eq(t.userId, input.userId),
+        where: eq(Member.userId, input.userId),
       });
-
-      const event = await db.query.Event.findFirst({
-        where: (t, { eq }) => eq(t.id, input.eventId),
-      });
-
-      if (!member) {
-        return;
-      }
-
-      const duesPayingMember = await db.query.DuesPayment.findFirst({
-        where: (t, { eq }) => eq(t.memberId, member.id),
-      });
-
-      if (event?.dues_paying && !duesPayingMember) {
+      if (!member)
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: `${member.firstName} ${member.lastName} cannot check into a dues paying event!`,
+          code: "NOT_FOUND",
+          message: `Member with User ID ${input.userId} not found.`,
         });
+      const event = await db.query.Event.findFirst({
+        where: eq(Event.id, input.eventId),
+      });
+      if (!event)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Event with ID ${input.eventId} not found.`,
+        });
+      if (event.dues_paying) {
+        const duesPayingMember = await db.query.DuesPayment.findFirst({
+          where: eq(DuesPayment.memberId, member.id),
+        });
+        if (!duesPayingMember)
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: `${member.firstName} ${member.lastName} cannot check into a dues-paying event without paying dues.`,
+          });
       }
-
       const duplicates = await db
-        .select()
+        .select({ id: EventAttendee.id })
         .from(EventAttendee)
         .where(
           and(
@@ -387,35 +444,24 @@ export const memberRouter = {
             eq(EventAttendee.eventId, input.eventId),
           ),
         );
-
-      if (duplicates.length > 0) {
+      if (duplicates.length > 0)
         throw new TRPCError({
           code: "CONFLICT",
-          message: `${member.firstName} ${member.lastName} is already checked in for the event`,
+          message: `${member.firstName} ${member.lastName} is already checked in for the event.`,
         });
-      }
-
-      const eventAttendee = {
-        memberId: member.id,
-        eventId: input.eventId,
-      };
-      await db.insert(EventAttendee).values(eventAttendee);
-
-      // Increment the points for the member
+      await db
+        .insert(EventAttendee)
+        .values({ memberId: member.id, eventId: input.eventId });
       await db
         .update(Member)
-        .set({
-          points: sql`${Member.points} + ${input.eventPoints}`, // Ensure input.eventPoints is parsed as a number
-        })
+        .set({ points: sql`${Member.points} + ${input.eventPoints}` })
         .where(eq(Member.id, member.id));
-
       await log({
         title: "User Checked-In",
-        message: `${member.firstName} ${member.lastName} has been checked in to event ${event?.name}`,
+        message: `${member.firstName} ${member.lastName} has been checked in to event ${event.name}.`,
         color: "success_green",
         userId: ctx.session.user.discordUserId,
       });
-
       return {
         message: `${member.firstName} ${member.lastName} has been checked in to this event!`,
       };

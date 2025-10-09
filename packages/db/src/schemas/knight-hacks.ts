@@ -1,14 +1,17 @@
 import { relations } from "drizzle-orm";
 import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import z from "zod";
 
 import {
+  COUNTRIES,
   EVENT_FEEDBACK_HEARD,
   EVENT_FEEDBACK_SIMILAR_EVENT,
   EVENT_TAGS,
   GENDERS,
   HACKATHON_APPLICATION_STATES,
   LEVELS_OF_STUDY,
+  MAJORS,
   RACES_OR_ETHNICITIES,
   SCHOOLS,
   SHIRT_SIZES,
@@ -35,10 +38,17 @@ export const hackathonApplicationStateEnum = pgEnum(
 export const Hackathon = createTable("hackathon", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   name: t.varchar({ length: 255 }).notNull(),
+  displayName: t.varchar({ length: 255 }).notNull().default(""),
   theme: t.varchar({ length: 255 }).notNull(),
+  applicationOpen: t.timestamp().notNull().defaultNow(),
+  applicationDeadline: t.timestamp().notNull().defaultNow(),
+  confirmationDeadline: t.timestamp().notNull().defaultNow(),
   startDate: t.timestamp().notNull(),
   endDate: t.timestamp().notNull(),
 }));
+
+export type InsertHackathon = typeof Hackathon.$inferInsert;
+export type SelectHackathon = typeof Hackathon.$inferSelect;
 
 export const Member = createTable(
   "member",
@@ -56,10 +66,15 @@ export const Member = createTable(
     phoneNumber: t.varchar({ length: 255 }),
     school: t.text({ enum: SCHOOLS }).notNull(),
     levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
+    major: t.text({ enum: MAJORS }).notNull().default("Computer Science"),
     gender: genderEnum().default("Prefer not to answer").notNull(),
     raceOrEthnicity: raceOrEthnicityEnum()
       .default("Prefer not to answer")
       .notNull(),
+    guildProfileVisible: t.boolean().notNull().default(true),
+    tagline: t.varchar("tagline", { length: 80 }),
+    about: t.varchar("about", { length: 500 }),
+    profilePictureUrl: t.varchar("profile_picture_url", { length: 255 }),
     shirtSize: shirtSizeEnum().notNull(),
     githubProfileUrl: t.varchar({ length: 255 }),
     linkedinProfileUrl: t.varchar({ length: 255 }),
@@ -77,6 +92,56 @@ export const Member = createTable(
   }),
 );
 
+export const Hacker = createTable("hacker", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  userId: t
+    .uuid()
+    .notNull()
+    .references(() => User.id, { onDelete: "cascade" }),
+  firstName: t.varchar({ length: 255 }).notNull(),
+  lastName: t.varchar({ length: 255 }).notNull(),
+  gender: genderEnum().default("Prefer not to answer").notNull(),
+  discordUser: t.varchar({ length: 255 }).notNull(),
+  age: t.integer().notNull(),
+  country: t
+    .text({ enum: COUNTRIES })
+    .notNull()
+    .default("United States of America"),
+  email: t.varchar({ length: 255 }).notNull(),
+  phoneNumber: t.varchar({ length: 255 }),
+  school: t.text({ enum: SCHOOLS }).notNull(),
+  levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
+  major: t.text({ enum: MAJORS }).notNull().default("Computer Science"),
+  raceOrEthnicity: raceOrEthnicityEnum()
+    .default("Prefer not to answer")
+    .notNull(),
+  shirtSize: shirtSizeEnum().notNull(),
+  githubProfileUrl: t.varchar({ length: 255 }),
+  linkedinProfileUrl: t.varchar({ length: 255 }),
+  websiteUrl: t.varchar({ length: 255 }),
+  resumeUrl: t.varchar({ length: 255 }),
+  dob: t.date().notNull(),
+  gradDate: t.date().notNull(),
+  survey1: t.text("survey_1").notNull(),
+  survey2: t.text("survey_2").notNull(),
+  isFirstTime: t.boolean("is_first_time").default(false),
+  foodAllergies: t.text("food_allergies"),
+  agreesToReceiveEmailsFromMLH: t
+    .boolean("agrees_to_receive_emails_from_mlh")
+    .default(false),
+  agreesToMLHCodeOfConduct: t
+    .boolean("agrees_to_mlh_code_of_conduct")
+    .default(false),
+  agreesToMLHDataSharing: t
+    .boolean("agrees_to_mlh_data_sharing")
+    .default(false),
+  dateCreated: t.date().notNull().defaultNow(),
+  timeCreated: t.time().notNull().defaultNow(),
+}));
+
+export type InsertHacker = typeof Hacker.$inferInsert;
+export type SelectHacker = typeof Hacker.$inferSelect;
+
 export type InsertMember = typeof Member.$inferInsert;
 export type SelectMember = typeof Member.$inferSelect;
 
@@ -85,29 +150,7 @@ export const MemberRelations = relations(Member, ({ one }) => ({
 }));
 
 export const InsertMemberSchema = createInsertSchema(Member);
-
-export const HackathonApplication = createTable(
-  "hackathon_application",
-  (t) => ({
-    memberId: t
-      .uuid()
-      .notNull()
-      .references(() => Member.id, {
-        onDelete: "cascade",
-      }),
-    hackathonId: t
-      .uuid()
-      .notNull()
-      .references(() => Hackathon.id, {
-        onDelete: "cascade",
-      }),
-    state: t
-      .varchar({ length: 255, enum: HACKATHON_APPLICATION_STATES })
-      .notNull(),
-    // Dynamic json fields (e.g. survey responses)
-    survey: t.jsonb().notNull(),
-  }),
-);
+export const InsertHackerSchema = createInsertSchema(Hacker);
 
 export const Sponsor = createTable("sponsor", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -154,9 +197,12 @@ export type InsertEvent = typeof Event.$inferInsert;
 export type SelectEvent = typeof Event.$inferSelect;
 export type ReturnEvent = InsertEvent & {
   numAttended: number;
+  numHackerAttended: number;
 };
 
-export const InsertEventSchema = createInsertSchema(Event);
+export const InsertEventSchema = createInsertSchema(Event).extend({
+  hackathonName: z.string().nullable().optional(),
+});
 
 export const EventAttendee = createTable("event_attendee", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -174,7 +220,79 @@ export const EventAttendee = createTable("event_attendee", (t) => ({
     }),
 }));
 
+export const HACKER_CLASSES = [
+  "Operators",
+  "Machinist",
+  "Sentinels",
+  "Harbinger",
+  "Monstologist",
+  "Alchemist",
+] as const;
+export const SPECIAL_HACKER_CLASSES = ["VIP"] as const;
+export const HACKER_CLASSES_ALL = [
+  ...HACKER_CLASSES,
+  ...SPECIAL_HACKER_CLASSES,
+] as const;
+export type HackerClass = (typeof HACKER_CLASSES_ALL)[number];
+export type RepeatPolicy = "none" | "all" | "class";
+export const AssignedClassCheckinSchema = z.union([
+  z.literal("All"),
+  z.enum(HACKER_CLASSES),
+]);
+
+export const HackerAttendee = createTable("hacker_attendee", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  hackerId: t
+    .uuid()
+    .notNull()
+    .references(() => Hacker.id, {
+      onDelete: "cascade",
+    }),
+  hackathonId: t
+    .uuid()
+    .notNull()
+    .references(() => Hackathon.id, {
+      onDelete: "cascade",
+    }),
+  status: t
+    .text("status", {
+      enum: HACKATHON_APPLICATION_STATES,
+    })
+    .notNull()
+    .default("pending"),
+  timeApplied: t.timestamp().notNull().defaultNow(),
+  timeConfirmed: t.timestamp(),
+  points: t.integer().notNull().default(0),
+  class: t.varchar({ length: 20 }).$type<HackerClass | null>().default(null),
+}));
+
+export const HackerEventAttendee = createTable(
+  "hacker_event_attendee",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackerAttId: t
+      .uuid()
+      .notNull()
+      .references(() => HackerAttendee.id, {
+        onDelete: "cascade",
+      }),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, {
+        onDelete: "cascade",
+      }),
+    eventId: t
+      .uuid()
+      .notNull()
+      .references(() => Event.id, {
+        onDelete: "cascade",
+      }),
+  }),
+);
+
 export const InsertEventAttendeeSchema = createInsertSchema(EventAttendee);
+export const InsertHackerAttendeeSchema = createInsertSchema(HackerAttendee);
 
 export const DuesPayment = createTable("dues_payment", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),

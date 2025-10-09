@@ -10,6 +10,7 @@ import {
   DEV_KNIGHTHACKS_GUILD_ID,
   DEV_KNIGHTHACKS_LOG_CHANNEL,
   GOOGLE_PERSONIFY_EMAIL,
+  IS_PROD,
   PROD_DISCORD_ADMIN_ROLE_ID,
   PROD_KNIGHTHACKS_GUILD_ID,
   PROD_KNIGHTHACKS_LOG_CHANNEL,
@@ -17,19 +18,37 @@ import {
 
 import { env } from "./env";
 
-const DISCORD_ADMIN_ROLE_ID =
-  env.NODE_ENV === "production"
-    ? (PROD_DISCORD_ADMIN_ROLE_ID as string)
-    : (DEV_DISCORD_ADMIN_ROLE_ID as string);
+const DISCORD_ADMIN_ROLE_ID = IS_PROD
+  ? (PROD_DISCORD_ADMIN_ROLE_ID as string)
+  : (DEV_DISCORD_ADMIN_ROLE_ID as string);
 
-const KNIGHTHACKS_GUILD_ID =
-  env.NODE_ENV === "production"
-    ? (PROD_KNIGHTHACKS_GUILD_ID as string)
-    : (DEV_KNIGHTHACKS_GUILD_ID as string);
+const KNIGHTHACKS_GUILD_ID = IS_PROD
+  ? (PROD_KNIGHTHACKS_GUILD_ID as string)
+  : (DEV_KNIGHTHACKS_GUILD_ID as string);
 
+const PROD_VIP_ID = "1423358570203844689";
+const DEV_VIP_ID = "1423366084874080327";
+const VIP_ID = IS_PROD ? (PROD_VIP_ID as string) : (DEV_VIP_ID as string);
 export const discord = new REST({ version: "10" }).setToken(
   env.DISCORD_BOT_TOKEN,
 );
+const GUILD_ID = IS_PROD ? PROD_KNIGHTHACKS_GUILD_ID : DEV_KNIGHTHACKS_GUILD_ID;
+
+export async function addRoleToMember(discordUserId: string, roleId: string) {
+  await discord.put(Routes.guildMemberRole(GUILD_ID, discordUserId, roleId), {
+    body: {},
+  });
+}
+
+export async function resolveDiscordUserId(
+  username: string,
+): Promise<string | null> {
+  const q = username.trim().toLowerCase();
+  const members = (await discord.get(
+    `${Routes.guildMembersSearch(GUILD_ID)}?query=${encodeURIComponent(q)}&limit=1`,
+  )) as APIGuildMember[];
+  return members[0]?.user.id ?? null;
+}
 
 export const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
 
@@ -56,17 +75,34 @@ export const isDiscordMember = async (user: Session["user"]) => {
   }
 };
 
+export async function isDiscordVIP(discordUserId: string) {
+  const guildMember = (await discord.get(
+    Routes.guildMember(GUILD_ID, discordUserId),
+  )) as APIGuildMember;
+  return guildMember.roles.includes(VIP_ID);
+}
+
 const GOOGLE_PRIVATE_KEY = Buffer.from(env.GOOGLE_PRIVATE_KEY_B64, "base64")
   .toString("utf-8")
   .replace(/\\n/g, "\n");
+
+const gapiCalendar = "https://www.googleapis.com/auth/calendar";
+const gapiGmailSend = "https://www.googleapis.com/auth/gmail.send";
+const gapiGmailSettingsSharing =
+  "https://www.googleapis.com/auth/gmail.settings.sharing";
 
 const auth = new google.auth.JWT(
   env.GOOGLE_CLIENT_EMAIL,
   undefined,
   GOOGLE_PRIVATE_KEY,
-  ["https://www.googleapis.com/auth/calendar"],
+  [gapiCalendar, gapiGmailSend, gapiGmailSettingsSharing],
   GOOGLE_PERSONIFY_EMAIL as string,
 );
+
+export const gmail = google.gmail({
+  version: "v1",
+  auth: auth,
+});
 
 export const calendar = google.calendar({
   version: "v3",

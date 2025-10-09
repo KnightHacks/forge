@@ -1,46 +1,40 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 interface SponsorCardProps extends React.HTMLAttributes<HTMLDivElement> {
-  fromColor?: string;
-  viaColor?: string;
-  toColor?: string;
   imgUrl: string;
   sponsor: string;
+  index: number;
 }
 
 export default function SponsorCard({
-  sponsor,
   imgUrl,
-  fromColor = "#4158D0",
-  viaColor = "#C850C0",
-  toColor = "#FFCC70",
+  sponsor,
+  index,
 }: SponsorCardProps) {
   return (
-    <div
-      className="hover:shadow-glow group relative overflow-hidden rounded-3xl shadow-lg transition-all duration-300 hover:scale-105"
-      style={{
-        backgroundImage: `linear-gradient(to right, ${fromColor}, ${viaColor}, ${toColor})`,
-        padding: "3px",
-      }}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05, duration: 0.5, ease: "easeOut" }}
+      viewport={{ once: true }}
+      className="group relative flex h-20 w-32 items-center justify-center transition-transform duration-300 hover:scale-105 md:h-24 md:w-36"
     >
-      <div className="relative flex h-44 w-28 flex-col justify-between rounded-[calc(1.5rem-3px)] bg-blue-950 p-4 transition-all duration-300 group-hover:bg-blue-900 md:h-56 md:w-48">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-blue-950/30 to-blue-950/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <span className="pointer-events-none absolute -top-11 left-1/2 z-20 -translate-x-1/2 overflow-hidden rounded-md bg-black px-3 py-1 text-xs font-semibold text-white opacity-0 shadow-xl ring-1 ring-white/10 backdrop-blur-md transition-all duration-300 group-hover:opacity-100">
+        <span className="relative z-10">{sponsor}</span>
+        <span className="absolute inset-0 translate-x-[-100%] bg-white/10 blur-sm transition-transform duration-500 ease-in-out group-hover:translate-x-[100%]" />
+      </span>
 
-        <div className="relative z-10 mb-2 text-lg font-bold text-gray-100 transition-colors duration-300 group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-pink-600 group-hover:bg-clip-text group-hover:text-transparent">
-          {sponsor}
-        </div>
-
-        <div className="relative z-10 flex h-full items-center justify-center">
-          <Image
-            src={imgUrl}
-            alt={`${sponsor} logo`}
-            width={120}
-            height={120}
-            className="max-h-32 w-auto object-contain transition-all duration-300"
-          />
-        </div>
-      </div>
-    </div>
+      <Image
+        src={imgUrl}
+        alt={`${sponsor} logo`}
+        width={120}
+        height={60}
+        className="max-h-16 w-auto object-contain brightness-0 invert filter transition-all duration-300"
+      />
+    </motion.div>
   );
 }

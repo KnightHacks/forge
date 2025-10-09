@@ -74,15 +74,24 @@ export const resumeRouter = {
     }),
   getResume: protectedProcedure.query(async ({ ctx }) => {
     const bucketName = "member-resumes";
+
+    // Find a member resume
     const member = await db.query.Member.findFirst({
       where: (t, { eq }) => eq(t.userId, ctx.session.user.id),
     });
 
-    if (!member) {
+    // Find a hacker resume
+    const hacker = await db.query.Hacker.findFirst({
+      where: (t, { eq }) => eq(t.userId, ctx.session.user.id),
+    });
+
+    // If neither member nor hacker found, return null
+    if (!member && !hacker) {
+      console.error("No resume found for user");
       return { url: null };
     }
 
-    const filename = member.resumeUrl;
+    const filename = member?.resumeUrl ?? hacker?.resumeUrl;
 
     if (!filename) {
       console.error("No resume URL found for user");

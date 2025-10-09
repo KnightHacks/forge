@@ -17,20 +17,19 @@ import {
   DropdownMenuTrigger,
 } from "@forge/ui/dropdown-menu";
 
-import type { roleItems } from "./reuseable-user-dropdown";
+import type { roleItems } from "./reusable-user-dropdown";
 import { USER_DROPDOWN_ICON_COLOR, USER_DROPDOWN_ICON_SIZE } from "~/consts";
 import { api } from "~/trpc/react";
-import { adminItems, memberItems } from "./reuseable-user-dropdown";
+import {
+  adminClubItems,
+  adminHackathonItems,
+  adminItems,
+  userItems,
+} from "./reusable-user-dropdown";
 
-// If you need to conditionally render some dropdown items, please refer to ./reuseable-user-dropdown
+// If you need to conditionally render some dropdown items, please refer to ./reusable-user-dropdown
 
-export function UserDropdown({
-  memberExists,
-  isAdmin,
-}: {
-  memberExists: boolean;
-  isAdmin: boolean;
-}) {
+export function UserDropdown({ isAdmin }: { isAdmin: boolean }) {
   const utils = api.useUtils();
   const router = useRouter();
   const { data } = api.user.getUserAvatar.useQuery();
@@ -53,6 +52,10 @@ export function UserDropdown({
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           {isAdmin && <DropdownMenuRoleItems items={adminItems} />}
+          <DropdownMenuLabel>Club</DropdownMenuLabel>
+          {isAdmin && <DropdownMenuRoleItems items={adminClubItems} />}
+          <DropdownMenuLabel>Hackathon</DropdownMenuLabel>
+          {isAdmin && <DropdownMenuRoleItems items={adminHackathonItems} />}
           <DropdownMenuItem
             className="gap-x-1.5"
             onSelect={() => router.push("/dashboard")}
@@ -64,7 +67,7 @@ export function UserDropdown({
             <span>Dashboard</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          {memberExists && <DropdownMenuRoleItems items={memberItems} />}
+          <DropdownMenuRoleItems items={userItems} />
         </DropdownMenuGroup>
         {/* Made signing out client-side due to dropdown item keyboard accessibility issues */}
         <DropdownMenuItem onSelect={() => signOut()}>

@@ -1,0 +1,23 @@
+{
+  "formatVersion": 1,
+  "passTypeIdentifier": "pass.tld.domain.subdomain",
+  "teamIdentifier": "ABC123DEFG",
+  "organizationName": "Knight Hacks",
+  "description": "Knight Hacks Event Pass",
+  "logoText": "Knight Hacks",
+  "foregroundColor": "rgb(255, 255, 255)",
+  "backgroundColor": "rgb(200, 76, 60)",
+  "labelColor": "rgb(255, 255, 255)",
+  "eventTicket": {
+    "primaryFields": [],
+    "secondaryFields": [],
+    "auxiliaryFields": []
+  },
+  "barcode": {
+    "format": "PKBarcodeFormatQR",
+    "message": "",
+    "messageEncoding": "iso-8859-1",
+    "altText": "Scan for event access"
+  },
+  "locations": []
+}

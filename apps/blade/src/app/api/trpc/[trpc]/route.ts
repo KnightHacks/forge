@@ -23,6 +23,32 @@ export const OPTIONS = () => {
 };
 
 const handler = auth(async (req) => {
+  const contentLength = req.headers.get("content-length");
+  const maxSize = 4_194_304; // 4MB in bytes
+
+  if (contentLength && parseInt(contentLength) > maxSize) {
+    const response = new Response(
+      JSON.stringify({
+        error: {
+          message: `Request too large: ${(parseInt(contentLength) / 1_000_000).toFixed(2)}MB (max: ${(maxSize / 1_000_000).toFixed(2)}MB)`,
+          code: -32000,
+          data: {
+            code: "PAYLOAD_TOO_LARGE",
+            httpStatus: 413,
+          },
+        },
+      }),
+      {
+        status: 413,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    setCorsHeaders(response);
+    return response;
+  }
+
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     router: appRouter,
@@ -33,10 +59,10 @@ const handler = auth(async (req) => {
         headers: req.headers,
       }),
     onError({ error, path }) {
+      // eslint-disable-next-line no-console
       console.error(`>>> tRPC Error on '${path}'`, error);
     },
   });
-
   setCorsHeaders(response);
   return response;
 });

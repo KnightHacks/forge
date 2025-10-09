@@ -22,9 +22,12 @@ export const DISCORD_LEETCODE_ROLE_ID = "1264645162060091483";
 
 export const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
 
+export const DISCORD_HACKATHON_ROLE_ID = "1408025502119231498";
+
 export const DISCORD_PROD_GUILD_ID = "486628710443778071";
 
 export const EVENT_BANNER_IMAGE = "https://i.imgur.com/Jr1cyxT.png";
+export const HACK_BANNER_IMAGE = "https://i.imgur.com/lpTVNl7.png";
 
 export const BUBBLE_WRAP_TEXT = "||pop||||pop||||pop||||pop||||pop||||pop||\n";
 

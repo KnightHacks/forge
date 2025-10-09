@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 import type { api as serverCall } from "~/trpc/server";
+import { MemberAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
-import { MemberAppCard } from "../../../_components/option-cards";
 import { EventNumber } from "./event/event-number";
 import { EventShowcase } from "./event/event-showcase";
 import { MemberInfo } from "./info";
@@ -21,8 +21,21 @@ export default async function MemberDashboard({
 }) {
   if (!member) {
     return (
-      <div className="mt-10 flex items-center justify-center">
-        <MemberAppCard />
+      <div className="flex flex-col items-center justify-center gap-y-6 text-xl font-semibold">
+        <p className="w-full max-w-xl text-center">
+          <div className="font-normal">
+            Are you a UCF student?
+            <br className="mb-2" />
+            Are you passionate about the world of tech and want to take your
+            skills to the next level?
+            <br />
+            <br />
+          </div>
+          Sign up to become a KnightHacks member today!
+        </p>
+        <div className="flex flex-wrap justify-center gap-5">
+          <MemberAppCard />
+        </div>
       </div>
     );
   }
@@ -42,33 +55,26 @@ export default async function MemberDashboard({
 
   return (
     <div className="flex-col md:flex">
-      <div className="flex-1 space-y-4 p-8 pt-6">
-        <div className="flex items-center justify-between space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight">
-            Welcome, {member.firstName}
-          </h2>
+      <div className="flex-1 space-y-4">
+        <div className="animate-fade-in mb-8 flex items-center justify-between space-y-2">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">
+              Hello, {member.firstName}!
+            </h2>
+            <p className="text-muted-foreground">Member Dashboard</p>
+          </div>
         </div>
-        {/* Desktop View */}
-        <div className="hidden space-y-4 md:grid">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Payment status={dues.value.duesPaid} />
+        {/* Unified View */}
+        <div className="animate-mobile-initial-expand space-y-4">
+          <div className="animate-fade-in grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Payment status={dues.value.duesPaid} member={member} />
+            <MemberInfo />
             <Points size={member.points} />
             <EventNumber size={events.value.length} />
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <MemberInfo />
-            </div>
+          <div className="animate-fade-in">
             <EventShowcase events={events.value} member={member} />
           </div>
-        </div>
-        {/* Mobile View */}
-        <div className="space-y-4 md:hidden">
-          <Payment status={dues.value.duesPaid} />
-          <MemberInfo />
-          <Points size={member.points} />
-          <EventNumber size={events.value.length} />
-          <EventShowcase events={events.value} member={member} />
         </div>
       </div>
     </div>

@@ -1,23 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
+import type { GradTerm } from "@forge/consts/knight-hacks";
 import {
+  ALLOWED_PROFILE_PICTURE_EXTENSIONS,
+  ALLOWED_PROFILE_PICTURE_TYPES,
   GENDERS,
+  KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
   KNIGHTHACKS_MAX_RESUME_SIZE,
   LEVELS_OF_STUDY,
+  MAJORS,
   RACES_OR_ETHNICITIES,
   SCHOOLS,
   SHIRT_SIZES,
+  TERM_TO_DATE,
 } from "@forge/consts/knight-hacks";
 import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
+import { Checkbox } from "@forge/ui/checkbox";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,6 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
+import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
@@ -40,17 +50,21 @@ import { api } from "~/trpc/react";
 export function MemberApplicationForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const utils = api.useUtils();
 
   const createMember = api.member.createMember.useMutation({
     onSuccess() {
       toast.success("Application submitted successfully!");
-      // user gets sent back to homepage upon successful form submission
       router.push("/dashboard");
       router.refresh();
     },
-    onError() {
-      toast.error("Oops! Something went wrong. Please try again later.");
+    onError(error) {
+      if (
+        /duplicate key value violates unique constraint/i.test(error.message)
+      ) {
+        toast.error("A member with this info already exists");
+      } else {
+        toast.error(`Application submission failed ${error.message}`);
+      }
     },
     onSettled() {
       setLoading(false);
@@ -58,36 +72,75 @@ export function MemberApplicationForm() {
   });
 
   const uploadResume = api.resume.uploadResume.useMutation({
-    onError() {
-      toast.error("There was a problem storing your resume, please try again!");
-    },
-    async onSettled() {
-      await utils.resume.invalidate();
+    onError(error) {
+      toast.error(`Resume upload failed: ${error.message}`);
     },
   });
 
+  const uploadProfilePicture = api.guild.uploadProfilePicture.useMutation({
+    onError(error) {
+      toast.error(`Profile picture upload failed: ${error.message}`);
+    },
+  });
+
+  // Helper function to calculate age
+  const calculateAge = (birthDate: Date, referenceDate: Date): number => {
+    let age = referenceDate.getFullYear() - birthDate.getFullYear();
+    const monthDiff = referenceDate.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && referenceDate.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
+  };
+
   const form = useForm({
-    schema: InsertMemberSchema.omit({ discordUser: true }).extend({
-      // userId will be derived from the user's session on the server
+    schema: InsertMemberSchema.omit({
+      discordUser: true,
+      userId: true,
+      age: true,
+      id: true,
+      points: true,
+      dateCreated: true,
+      timeCreated: true,
+      gradDate: true,
+      profilePictureUrl: true,
+    }).extend({
       userId: z.undefined(),
+      age: z.undefined(),
       firstName: z.string().min(1, "Required"),
       lastName: z.string().min(1, "Required"),
-      // Age will be derived from dob on the server
-      age: z.undefined(),
       email: z.string().email("Invalid email").min(1, "Required"),
       phoneNumber: z
         .string()
-        // validates phone number with/without dashes
-        .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number"),
-      // Read from date input as string, convert and validate as date, then transform to ISO string
+        .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number")
+        .optional()
+        .or(z.literal("")), // Allow empty string, will be converted to null
       dob: z
         .string()
+        .min(1, "Date of birth is required.")
         .pipe(z.coerce.date())
+        .refine(
+          (date) => {
+            const today = new Date();
+            const age = calculateAge(date, today);
+            return age >= 16;
+          },
+          {
+            message: "You must be at least 16 years old to join Knight Hacks",
+          },
+        )
         .transform((date) => date.toISOString()),
-      gradDate: z
+      gradTerm: z.enum(["Spring", "Summer", "Fall"]),
+      gradYear: z
         .string()
-        .pipe(z.coerce.date())
-        .transform((date) => date.toISOString()),
+        .regex(/^\d{4}$/, "Year must be 4 digits")
+        .transform(Number)
+        .refine((y) => y >= 1900 && y <= 2100, "Year out of range"),
       githubProfileUrl: z
         .string()
         .regex(/^https:\/\/.+/, "Invalid URL: Please try again with https://")
@@ -124,41 +177,80 @@ export function MemberApplicationForm() {
       resumeUpload: z
         .instanceof(FileList)
         .superRefine((fileList, ctx) => {
-          // Validate number of files is 0 or 1
-          if (fileList.length !== 0 && fileList.length !== 1) {
+          if (fileList.length > 1) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: "Only 0 or 1 files allowed",
+              message: "Only 0 or 1 resume allowed",
             });
           }
-
           if (fileList.length === 1) {
-            // Validate type of object in FileList is File
-            if (fileList[0] instanceof File) {
-              // Validate file extension is PDF
-              const fileExtension = fileList[0].name.split(".").pop();
+            const file = fileList[0];
+            if (file instanceof File) {
+              const fileExtension = file.name.split(".").pop()?.toLowerCase();
               if (fileExtension !== "pdf") {
                 ctx.addIssue({
                   code: z.ZodIssueCode.custom,
                   message: "Resume must be a PDF",
                 });
               }
-
-              // Validate file size is <= 5MB
-              if (fileList[0].size > KNIGHTHACKS_MAX_RESUME_SIZE) {
+              if (file.size > KNIGHTHACKS_MAX_RESUME_SIZE) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_big,
                   type: "number",
                   maximum: KNIGHTHACKS_MAX_RESUME_SIZE,
                   inclusive: true,
-                  exact: false,
                   message: "File too large: maximum 5MB",
                 });
               }
             } else {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: "Object in FileList is undefined",
+                message: "Resume file object is invalid",
+              });
+            }
+          }
+        })
+        .optional(),
+      guildProfileVisible: z.boolean().optional(),
+      tagline: z
+        .string()
+        .max(80, "Tagline must be 80 characters or less")
+        .optional(),
+      about: z
+        .string()
+        .max(500, "About section must be 500 characters or less")
+        .optional(),
+      profilePictureUpload: z
+        .instanceof(FileList)
+        .superRefine((fileList, ctx) => {
+          if (fileList.length > 1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Only one profile picture is allowed",
+            });
+          }
+          if (fileList.length === 1) {
+            const file = fileList[0];
+            if (file instanceof File) {
+              if (!ALLOWED_PROFILE_PICTURE_TYPES.includes(file.type)) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: `Invalid file type. Allowed: ${ALLOWED_PROFILE_PICTURE_EXTENSIONS.join(", ")}`,
+                });
+              }
+              if (file.size > KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.too_big,
+                  type: "number",
+                  maximum: KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
+                  inclusive: true,
+                  message: `File too large: maximum ${KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE / (1024 * 1024)}MB`,
+                });
+              }
+            } else {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Profile picture file object is invalid",
               });
             }
           }
@@ -171,21 +263,25 @@ export function MemberApplicationForm() {
       email: "",
       phoneNumber: "",
       dob: "",
-      gradDate: "",
+      gradTerm: "Spring",
+      gradYear: (new Date().getFullYear() + 1).toString(),
       githubProfileUrl: "",
       linkedinProfileUrl: "",
       websiteUrl: "",
+      guildProfileVisible: true,
+      tagline: "",
+      about: "",
+      resumeUrl: "",
     },
   });
 
   const fileRef = form.register("resumeUpload");
+  const profilePictureFileRef = form.register("profilePictureUpload");
 
-  // Convert a resume to base64 for client-server transmission
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
-        // Check type before resolving as string
         if (typeof reader.result === "string") {
           resolve(reader.result);
         } else {
@@ -207,46 +303,86 @@ export function MemberApplicationForm() {
         noValidate
         onSubmit={form.handleSubmit(async (values) => {
           setLoading(true);
+
           try {
-            let resumeUrl = "";
+            let finalResumeUrl = values.resumeUrl ?? ""; // Use existing URL from defaults if any, or empty
             if (values.resumeUpload?.length && values.resumeUpload[0]) {
               const file = values.resumeUpload[0];
               const base64File = await fileToBase64(file);
-              resumeUrl = await uploadResume.mutateAsync({
+              const uploadResult = await uploadResume.mutateAsync({
                 fileName: file.name,
                 fileContent: base64File,
               });
+              finalResumeUrl = uploadResult; // uploadResume from api.resume.uploadResume returns the path/URL string
             }
 
-            createMember.mutate({
+            let finalProfilePictureUrl = ""; // Initialize
+            if (
+              values.profilePictureUpload?.length &&
+              values.profilePictureUpload[0]
+            ) {
+              const file = values.profilePictureUpload[0];
+              const base64File = await fileToBase64(file);
+
+              // The following line might show ESLint errors if tRPC types are not correctly synced.
+              // Ensure backend `memberRouter` is updated and client types are regenerated.
+              const uploadResult = await uploadProfilePicture.mutateAsync({
+                fileName: file.name,
+                fileContent: base64File,
+              });
+
+              if (typeof uploadResult.profilePictureUrl === "string") {
+                finalProfilePictureUrl = uploadResult.profilePictureUrl;
+              }
+            }
+
+            const { month, day } = TERM_TO_DATE[values.gradTerm];
+            const gradDateIso = new Date(
+              values.gradYear,
+              month,
+              day,
+            ).toISOString();
+
+            const createMemberPayload = {
               firstName: values.firstName,
               lastName: values.lastName,
               email: values.email,
               dob: values.dob,
-              phoneNumber: values.phoneNumber,
               school: values.school,
+              major: values.major,
+              phoneNumber:
+                values.phoneNumber === "" ? undefined : values.phoneNumber,
               levelOfStudy: values.levelOfStudy,
               gender: values.gender ?? "Prefer not to answer",
-              gradDate: values.gradDate,
+              gradDate: gradDateIso,
               raceOrEthnicity: values.raceOrEthnicity ?? "Prefer not to answer",
               shirtSize: values.shirtSize,
-              githubProfileUrl: values.githubProfileUrl,
-              linkedinProfileUrl: values.linkedinProfileUrl,
-              websiteUrl: values.websiteUrl,
-              resumeUrl, // Include uploaded resume URL
-            });
-          } catch (error) {
-            console.error("Error uploading resume or creating member:", error);
-            toast.error(
-              "Something went wrong while processing your application.",
-            );
+              githubProfileUrl: values.githubProfileUrl || undefined,
+              linkedinProfileUrl: values.linkedinProfileUrl || undefined,
+              websiteUrl: values.websiteUrl || undefined,
+              resumeUrl: finalResumeUrl || undefined,
+              guildProfileVisible: values.guildProfileVisible ?? true,
+              tagline: values.tagline || undefined,
+              about: values.about || undefined,
+              profilePictureUrl: finalProfilePictureUrl || undefined,
+            };
+
+            await createMember.mutateAsync(createMemberPayload);
+          } catch {
+            setLoading(false);
           }
         })}
       >
-        <h1 className="text-2xl font-bold">Application Form</h1>
+        <h1 className="text-2xl font-bold">Membership Application Form</h1>
         <p className="text-sm text-gray-400">
-          <i>Fill out this form to become a member of Knight Hacks!</i>
+          <i>
+            Note: this application is for membership of Knight Hacks the{" "}
+            <span className="italic underline">organization</span> - NOT the
+            Hackathon.
+          </i>
         </p>
+
+        <h2 className="pt-6 text-xl font-bold">Personal Information</h2>
         <FormField
           control={form.control}
           name="firstName"
@@ -277,7 +413,6 @@ export function MemberApplicationForm() {
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="email"
@@ -339,25 +474,20 @@ export function MemberApplicationForm() {
                   &mdash; <i>Optional</i>
                 </span>
               </FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your gender" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {GENDERS.map((gender) => (
-                      <SelectItem key={gender} value={gender}>
-                        {gender}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your gender" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {GENDERS.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -374,29 +504,52 @@ export function MemberApplicationForm() {
                   &mdash; <i>Optional</i>
                 </span>
               </FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your race or ethnicity" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {RACES_OR_ETHNICITIES.map((raceOrEthnicity) => (
-                      <SelectItem key={raceOrEthnicity} value={raceOrEthnicity}>
-                        {raceOrEthnicity}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your race or ethnicity" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {RACES_OR_ETHNICITIES.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="shirtSize"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Shirt Size <span className="text-destructive">*</span>
+              </FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your shirt size" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {SHIRT_SIZES.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <h2 className="pt-6 text-xl font-bold">Academic Information</h2>
         <FormField
           control={form.control}
           name="levelOfStudy"
@@ -405,25 +558,20 @@ export function MemberApplicationForm() {
               <FormLabel>
                 Level of Study <span className="text-destructive">*</span>
               </FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your level of study" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {LEVELS_OF_STUDY.map((levelOfStudy) => (
-                      <SelectItem key={levelOfStudy} value={levelOfStudy}>
-                        {levelOfStudy}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your level of study" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {LEVELS_OF_STUDY.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -439,10 +587,10 @@ export function MemberApplicationForm() {
               <FormControl>
                 <ResponsiveComboBox
                   items={SCHOOLS}
-                  renderItem={(school) => <div>{school}</div>}
-                  getItemValue={(school) => school}
-                  getItemLabel={(school) => school}
-                  onItemSelect={(school) => field.onChange(school)}
+                  renderItem={(item) => <div>{item}</div>}
+                  getItemValue={(item) => item}
+                  getItemLabel={(item) => item}
+                  onItemSelect={(value) => field.onChange(value)}
                   buttonPlaceholder="Select your school"
                   inputPlaceholder="Search for your school"
                 />
@@ -453,14 +601,22 @@ export function MemberApplicationForm() {
         />
         <FormField
           control={form.control}
-          name="gradDate"
+          name="major"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem>
               <FormLabel>
-                Graduation Date <span className="text-destructive">*</span>
+                Major of Study <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
-                <Input type="date" {...field} />
+                <ResponsiveComboBox
+                  items={MAJORS}
+                  renderItem={(item) => <div>{item}</div>}
+                  getItemValue={(item) => item}
+                  getItemLabel={(item) => item}
+                  onItemSelect={(value) => field.onChange(value)}
+                  buttonPlaceholder="Select your major"
+                  inputPlaceholder="Search for your major"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -468,47 +624,172 @@ export function MemberApplicationForm() {
         />
         <FormField
           control={form.control}
-          name="shirtSize"
+          name="gradTerm"
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Shirt Size <span className="text-destructive">*</span>
+                Graduation Term <span className="text-destructive">*</span>
+              </FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a term" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {(["Spring", "Summer", "Fall"] as GradTerm[]).map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="gradYear"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Graduation Year <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your shirt size" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {SHIRT_SIZES.map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  type="number"
+                  min="1900"
+                  max="2100"
+                  placeholder="2026"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        <h2 className="pt-6 text-xl font-bold">
+          Guild Profile Customization - (Optional)
+        </h2>
+        <p className="text-sm text-gray-400">
+          Personalize how you appear on the Knight Hacks{" "}
+          <Link
+            href={"https://guild.knighthacks.org"}
+            className="italic underline hover:text-gray-100"
+          >
+            Guild
+          </Link>{" "}
+          collective. This information helps others connect with you and learn
+          more about your interests and skills, and every field is optional.
+        </p>
+
+        <FormField
+          control={form.control}
+          name="guildProfileVisible"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Profile Visibility</FormLabel>
+                <FormDescription>
+                  Make your Guild profile visible to other Knight Hacks members.
+                </FormDescription>
+              </div>
+              <FormControl className="flex h-full items-center">
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="profilePictureUpload"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Profile Picture</FormLabel>
+              <FormControl>
+                <Input
+                  type="file"
+                  accept={ALLOWED_PROFILE_PICTURE_TYPES.join(",")}
+                  {...profilePictureFileRef}
+                  onChange={(event) =>
+                    field.onChange(
+                      event.target.files?.[0] ? event.target.files : undefined,
+                    )
+                  }
+                />
+              </FormControl>
+              <FormDescription>
+                Upload a square picture (JPG, PNG, GIF, WEBP). Max{" "}
+                {KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE / (1024 * 1024)}MB.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="tagline"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tagline / Short Bio</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="e.g., Aspiring Innovator | Knight Hacks Organizer"
+                  {...field}
+                  maxLength={80}
+                />
+              </FormControl>
+              <FormDescription>
+                A brief (max 80 chars) intro. Visible in member listings. Be
+                creative!
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="about"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>About Me</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Share more about your interests, projects, skills..."
+                  {...field}
+                  maxLength={500}
+                  rows={5}
+                />
+              </FormControl>
+              <FormDescription>
+                Elaborate a bit (max 500 chars). This appears on your detailed
+                Guild profile.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div>
+          <h3 className="pt-4 text-lg font-medium">Links</h3>
+          <p className="mt-1 text-sm text-gray-400">
+            Share your professional and project links.
+          </p>
+        </div>
         <FormField
           control={form.control}
           name="githubProfileUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                GitHub Profile
-                <span className="text-gray-400">
-                  {" "}
-                  &mdash; <i>Optional</i>
-                </span>
-              </FormLabel>
+              <FormLabel>GitHub Profile</FormLabel>
               <FormControl>
                 <Input
                   placeholder="https://github.com/knighthacks"
@@ -524,13 +805,7 @@ export function MemberApplicationForm() {
           name="linkedinProfileUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Linkedin Profile
-                <span className="text-gray-400">
-                  {" "}
-                  &mdash; <i>Optional</i>
-                </span>
-              </FormLabel>
+              <FormLabel>LinkedIn Profile</FormLabel>
               <FormControl>
                 <Input
                   placeholder="https://www.linkedin.com/company/knight-hacks"
@@ -546,13 +821,7 @@ export function MemberApplicationForm() {
           name="websiteUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Personal Website
-                <span className="text-gray-400">
-                  {" "}
-                  &mdash; <i>Optional</i>
-                </span>
-              </FormLabel>
+              <FormLabel>Personal Website</FormLabel>
               <FormControl>
                 <Input placeholder="https://knighthacks.org" {...field} />
               </FormControl>
@@ -560,38 +829,42 @@ export function MemberApplicationForm() {
             </FormItem>
           )}
         />
+
+        <h2 className="pt-6 text-lg font-bold">Resume</h2>
         <FormField
           control={form.control}
           name="resumeUpload"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Resume
-                <span className="text-gray-400">
-                  {" "}
-                  &mdash; <i>Optional</i>
-                </span>
-              </FormLabel>
+              <FormLabel>Upload Resume</FormLabel>
               <FormControl>
                 <Input
                   type="file"
+                  accept=".pdf"
                   {...fileRef}
-                  onChange={(event) => {
+                  onChange={(event) =>
                     field.onChange(
                       event.target.files?.[0] ? event.target.files : undefined,
-                    );
-                  }}
+                    )
+                  }
                 />
               </FormControl>
+              <FormDescription>
+                PDF format only, max 5MB. May be shared with sponsors.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
         {loading ? (
-          <Loader2 className="animate-spin" />
+          <div className="flex justify-center">
+            <Loader2 className="animate-spin" />
+          </div>
         ) : (
-          <Button type="submit">Submit</Button>
+          <Button type="submit" className="w-full md:w-auto">
+            Submit Application
+          </Button>
         )}
       </form>
     </Form>
