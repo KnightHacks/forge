@@ -117,7 +117,7 @@ const sponsors: Sponsor[] = [
     alt: "ROBLOX",
     ariaLabel: "Roblox Logo",
     link: "https://www.roblox.com/",
-    category: "Bronze",
+    category: "Silver",
     gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-4 sm:col-span-3",
     mobilePosition: "row-start-13 row-span-1 col-start-1 col-span-3",
   },
