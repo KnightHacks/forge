@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, CircleCheckBig, Trophy } from "lucide-react";
+import { AlertCircle, BookOpen, CircleCheckBig, Trophy } from "lucide-react";
 
 import type { api as serverCall } from "~/trpc/server";
 import { HACKER_STATUS_MAP } from "~/consts";
@@ -11,6 +11,7 @@ import { getClassTeam } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { HackerQRCodePopup } from "../hacker-dashboard/hacker-qr-button";
 import { DownloadQRPass } from "../member-dashboard/download-qr-pass";
+import AlertButton from "./issue-dialog";
 
 type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
 
@@ -133,7 +134,7 @@ export function HackathonData({
         </div>
 
         {/* Action Buttons */}
-        <div className="space-y-4 sm:space-y-4">
+        <div className="space-y-2 sm:space-y-4">
           <h3 className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs md:text-start">
             Quick Actions
           </h3>
@@ -145,13 +146,16 @@ export function HackathonData({
           </div>
 
           {/* Hacker Guide Link */}
-          <Link
-            href={"https://knight-hacks.notion.site/knight-hacks-viii"}
-            className="group flex w-full items-center gap-3 rounded-lg border bg-card px-5 py-3 text-base font-semibold shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md sm:w-auto sm:px-5 sm:py-3 sm:text-sm"
-          >
-            <BookOpen className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
-            <span>Hacker's Guide</span>
-          </Link>
+          <div className="flex flex-col items-center gap-3 sm:flex-row md:justify-start">
+            <Link
+              href={"https://knight-hacks.notion.site/knight-hacks-viii"}
+              className="group flex w-full items-center gap-3 rounded-lg border bg-card px-5 py-3 text-base font-semibold shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md sm:w-auto sm:px-5 sm:py-3 sm:text-sm"
+            >
+              <BookOpen className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
+              <span>Hacker's Guide</span>
+            </Link>
+            <AlertButton />
+          </div>
         </div>
       </div>
 

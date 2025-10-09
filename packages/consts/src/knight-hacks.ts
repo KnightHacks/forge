@@ -5573,3 +5573,8 @@ export interface Semester {
   startDate: Date;
   endDate: Date;
 }
+
+export const OFFICER_ROLE_ID =
+  process.env.NODE_ENV === "production"
+    ? "486629374758748180"
+    : "1246637685011906560";
