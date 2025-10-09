@@ -34,7 +34,7 @@ export function HackathonData({
     hackathonName: undefined,
   });
 
-  const { teamColor, team } = getClassTeam(hacker?.class);
+  const { teamColor, team, imgUrl } = getClassTeam(hacker?.class);
 
   function getStatusName(status: StatusKey) {
     if (!status) return "";
@@ -71,12 +71,12 @@ export function HackathonData({
             {/* Name and Info Column */}
             <div className="flex-1 space-y-4 sm:space-y-4">
               {hacker?.firstName && hacker.lastName && (
-                <h1 className="animate-fade-in text-3xl font-bold tracking-tight sm:text-3xl">
+                <h1 className="animate-fade-in text-center text-3xl font-bold tracking-tight sm:text-3xl md:text-start">
                   {hacker.firstName} {hacker.lastName}
                 </h1>
               )}
 
-              <div className="animate-fade-in flex flex-wrap items-center gap-2 text-base text-muted-foreground sm:text-base">
+              <div className="animate-fade-in flex flex-wrap items-center justify-center gap-2 text-base text-muted-foreground sm:text-base md:justify-start">
                 <span
                   className="font-medium"
                   style={{
@@ -99,8 +99,8 @@ export function HackathonData({
               </div>
 
               {/* Status Badge */}
-              <div className="animate-fade-in space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px]">
+              <div className="animate-fade-in flex flex-col items-center space-y-3 md:items-start md:justify-start">
+                <p className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px] md:text-start">
                   Status for {hackathonData?.displayName}
                 </p>
                 <div className="inline-flex items-center gap-2.5 rounded-full border bg-background px-3 py-2 shadow-sm sm:px-3 sm:py-1.5">
@@ -120,14 +120,14 @@ export function HackathonData({
             </div>
 
             {/* TK Image */}
-            <div className="animate-fade-in relative h-28 w-28 flex-shrink-0 self-center overflow-hidden rounded-lg border-2 border-border/50 bg-accent/20 shadow-sm sm:h-32 sm:w-32 sm:self-start">
+            <div className="animate-fade-in relative h-28 w-28 flex-shrink-0 self-center overflow-hidden shadow-sm sm:h-32 sm:w-32 sm:self-start">
               <Image
-                src="/tk-dashboard-img.svg"
-                alt="Image of TK"
+                src={imgUrl}
+                alt="Team Mascot Image"
                 fill
-                style={{ objectFit: "contain" }}
+                className="rounded-full object-cover"
                 priority
-                sizes="(max-width: 640px) 112px, 128px"
+                sizes="(max-width: 800px) 112px, 128px"
               />
             </div>
           </div>
