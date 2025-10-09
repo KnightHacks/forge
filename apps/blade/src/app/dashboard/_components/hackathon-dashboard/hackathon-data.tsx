@@ -61,21 +61,21 @@ export function HackathonData({
   }
 
   return (
-    <div className="flex h-full w-full flex-col gap-3 overflow-scroll p-2 sm:gap-4 sm:p-4 lg:flex-row lg:gap-6 lg:p-6">
+    <div className="flex h-full w-full flex-col gap-3 p-2 sm:gap-4 sm:p-4 lg:flex-row lg:gap-6 lg:p-6">
       {/* Left Section - Name, Status, Image, and Actions */}
       <div className="flex flex-1 flex-col justify-evenly gap-4 lg:border-r lg:border-border lg:pr-8">
         {/* Profile Card */}
-        <div className="rounded-xl border bg-card p-3 shadow-sm transition-shadow hover:shadow-md sm:p-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+        <div className="rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-6">
             {/* Name and Info Column */}
-            <div className="flex-1 space-y-2 sm:space-y-3">
+            <div className="flex-1 space-y-4 sm:space-y-4">
               {hacker?.firstName && hacker.lastName && (
-                <h1 className="animate-fade-in text-2xl font-bold tracking-tight sm:text-3xl">
+                <h1 className="animate-fade-in text-3xl font-bold tracking-tight sm:text-3xl">
                   {hacker.firstName} {hacker.lastName}
                 </h1>
               )}
 
-              <div className="animate-fade-in flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:text-base">
+              <div className="animate-fade-in flex flex-wrap items-center gap-2 text-base text-muted-foreground sm:text-base">
                 <span
                   className="font-medium"
                   style={{
@@ -98,19 +98,19 @@ export function HackathonData({
               </div>
 
               {/* Status Badge */}
-              <div className="animate-fade-in space-y-1.5">
-                <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px]">
+              <div className="animate-fade-in space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px]">
                   Status for {hackathonData?.displayName}
                 </p>
-                <div className="inline-flex items-center gap-2 rounded-full border bg-background px-2.5 py-1 shadow-sm sm:px-3 sm:py-1.5">
+                <div className="inline-flex items-center gap-2.5 rounded-full border bg-background px-3 py-2 shadow-sm sm:px-3 sm:py-1.5">
                   <span
-                    className={`text-sm font-bold sm:text-base ${hackerStatusColor}`}
+                    className={`text-base font-bold sm:text-base ${hackerStatusColor}`}
                   >
                     {hackerStatus}
                   </span>
                   {hackerStatus === "Confirmed" && (
                     <CircleCheckBig
-                      className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                      className="h-4 w-4 sm:h-4 sm:w-4"
                       color="#00C9A7"
                     />
                   )}
@@ -119,27 +119,27 @@ export function HackathonData({
             </div>
 
             {/* TK Image */}
-            <div className="animate-fade-in relative h-20 w-20 flex-shrink-0 self-center overflow-hidden rounded-lg border-2 border-border/50 bg-accent/20 shadow-sm sm:h-24 sm:w-24 sm:self-start">
+            <div className="animate-fade-in relative h-28 w-28 flex-shrink-0 self-center overflow-hidden rounded-lg border-2 border-border/50 bg-accent/20 shadow-sm sm:h-32 sm:w-32 sm:self-start">
               <Image
                 src="/tk-dashboard-img.svg"
                 alt="Image of TK"
                 fill
                 style={{ objectFit: "contain" }}
                 priority
-                sizes="(max-width: 640px) 80px, 96px"
+                sizes="(max-width: 640px) 112px, 128px"
               />
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="space-y-2 sm:space-y-3">
-          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs">
+        <div className="space-y-4 sm:space-y-4">
+          <h3 className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs md:text-start">
             Quick Actions
           </h3>
 
           {/* QR Code and Apple Wallet */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+          <div className="flex flex-row items-center justify-center gap-3 sm:flex-row sm:gap-3 md:justify-start">
             <HackerQRCodePopup />
             <DownloadQRPass />
           </div>
@@ -147,9 +147,9 @@ export function HackathonData({
           {/* Hacker Guide Link */}
           <Link
             href={"https://knight-hacks.notion.site/knight-hacks-viii"}
-            className="group flex w-full items-center gap-2.5 rounded-lg border bg-card px-4 py-2.5 text-sm font-semibold shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md sm:w-auto sm:px-5 sm:py-3"
+            className="group flex w-full items-center gap-3 rounded-lg border bg-card px-5 py-3 text-base font-semibold shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md sm:w-auto sm:px-5 sm:py-3 sm:text-sm"
           >
-            <BookOpen className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+            <BookOpen className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
             <span>Hacker's Guide</span>
           </Link>
         </div>
@@ -160,13 +160,22 @@ export function HackathonData({
         <div className="w-full max-w-md">
           <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-background to-accent/10 p-4 shadow-lg transition-transform hover:scale-[1.02] sm:p-6">
             {/* Decorative gradient overlay */}
-            <div className="absolute right-0 top-0 h-24 w-24 -translate-y-8 translate-x-8 rounded-full bg-primary/10 blur-3xl sm:h-32 sm:w-32 sm:-translate-y-10 sm:translate-x-10" />
+            <div
+              className="absolute right-0 top-0 h-24 w-24 -translate-y-8 translate-x-8 rounded-full blur-3xl sm:h-32 sm:w-32 sm:-translate-y-10 sm:translate-x-10"
+              style={{ backgroundColor: `${teamColor}20` }}
+            />
 
             <div className="relative">
               {/* Icon */}
               <div className="mb-2 flex justify-center sm:mb-3">
-                <div className="rounded-full bg-primary/10 p-2 sm:p-2.5">
-                  <Trophy className="h-6 w-6 text-primary sm:h-7 sm:w-7" />
+                <div
+                  className="rounded-full p-2 sm:p-2.5"
+                  style={{ backgroundColor: `${teamColor}20` }}
+                >
+                  <Trophy
+                    className="h-6 w-6 sm:h-7 sm:w-7"
+                    style={{ color: teamColor }}
+                  />
                 </div>
               </div>
 
@@ -181,14 +190,38 @@ export function HackathonData({
 
               {/* Points Display */}
               <div className="mb-4 flex items-center justify-center sm:mb-6">
-                <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 px-4 py-3 sm:px-6 sm:py-5">
-                  <div className="text-center text-4xl font-bold tabular-nums tracking-tight sm:text-6xl">
+                <div
+                  className="rounded-xl px-4 py-3 sm:px-6 sm:py-5"
+                  style={{
+                    background: `linear-gradient(to bottom right, ${teamColor}33, ${teamColor}0d)`,
+                    boxShadow: `0 0 20px ${teamColor}40`,
+                  }}
+                >
+                  <div
+                    className="text-center text-4xl font-bold tabular-nums tracking-tight sm:text-6xl"
+                    style={{
+                      color: teamColor,
+                      textShadow: `0 0 10px ${teamColor}80`,
+                    }}
+                  >
                     {hacker?.points || 0}
                   </div>
                 </div>
               </div>
 
-              <button className="w-full rounded-lg bg-primary/10 py-2 text-sm font-semibold text-primary transition-all hover:bg-primary/20 hover:shadow-md sm:py-2.5">
+              <button
+                className="w-full rounded-lg py-2 text-sm font-semibold transition-all hover:shadow-md sm:py-2.5"
+                style={{
+                  backgroundColor: `${teamColor}20`,
+                  color: teamColor,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = `${teamColor}33`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = `${teamColor}20`;
+                }}
+              >
                 View Leaderboard
               </button>
             </div>
