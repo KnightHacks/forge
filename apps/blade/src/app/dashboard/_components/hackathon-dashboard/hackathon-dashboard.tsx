@@ -4,9 +4,8 @@ import type { api as serverCall } from "~/trpc/server";
 import { HackerAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
 import HackingCountdown from "./countdown";
-import UpcomingEvents from "./event/upcoming-events";
 import { HackathonData } from "./hackathon-data";
-import { MobileHackathonData } from "./mobile-hackathon-data";
+import UpcomingEvents from "./upcoming-events";
 
 export const metadata: Metadata = {
   title: "Hacker Dashboard",
@@ -45,7 +44,7 @@ export default async function HackathonDashboard({
           Hackathon Dashboard
         </p>
       </div>
-      <div className="animate-mobile-initial-expand mx-auto flex min-h-[1000px] bg-[#E5E7EB] px-2 py-4 dark:bg-[#0A0F1D] sm:relative sm:px-0 sm:py-6 lg:min-h-[380px]">
+      <div className="animate-mobile-initial-expand mx-auto flex min-h-[900px] bg-[#E5E7EB] px-2 py-4 dark:bg-[#0A0F1D] sm:relative sm:px-0 sm:py-6 lg:min-h-[380px]">
         {/* Main content */}
         <HackathonData data={hacker} />
 
