@@ -43,7 +43,7 @@ export default async function UpcomingEvents() {
               className="border-2 border-primary/20 bg-card shadow-lg transition-shadow duration-300 hover:shadow-xl"
             >
               <CardHeader className="pb-4">
-                <CardTitle className="mb-2 text-4xl font-bold text-primary">
+                <CardTitle className="mb-2 text-4xl font-bold text-primary text-white">
                   {event.name}
                 </CardTitle>
                 <CardDescription className="text-lg font-medium">
@@ -51,7 +51,7 @@ export default async function UpcomingEvents() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-base leading-relaxed text-foreground">
+                <p className="text-base leading-relaxed text-foreground text-white">
                   {event.description}
                 </p>
 

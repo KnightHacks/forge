@@ -61,7 +61,15 @@ export const getTagColor = (tag: EventTagsColor) => {
 
 export const getClassTeam = (tag: HackerClass) => {
   if (["Harbinger", "Alchemist", "Monstologist"].includes(tag)) {
-    return { team: "Team Monstrosity", teamColor: "#e03131" };
+    return {
+      team: "Team Monstrosity",
+      teamColor: "#e03131",
+      imgUrl: "/khviii/lenneth.png",
+    };
   }
-  return { team: "Team Humanity", teamColor: "#228be6" };
+  return {
+    team: "Team Humanity",
+    teamColor: "#228be6",
+    imgUrl: "/khviii/tkhero.png",
+  };
 };
