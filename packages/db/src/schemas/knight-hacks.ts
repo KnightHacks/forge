@@ -348,7 +348,7 @@ export const Challenges = createTable("challenges", (t) => ({
 
 export const InsertChallengesSchema = createInsertSchema(Challenges);
 
-const SUBMISSION_STATUS = ["Pending"] as const;
+const SUBMISSION_STATUS = ["Pending", "Submitted"] as const;
 export const submissionStatusEnum = pgEnum("submission_status", SUBMISSION_STATUS);
 
 export const Submissions = createTable("submissions", (t) => ({
