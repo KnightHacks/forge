@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { AlertCircle, BookOpen, CircleCheckBig, Trophy } from "lucide-react";
+import { BookOpen, CircleCheckBig, Trophy } from "lucide-react";
+
+import { HACKER_CLASS_INFO } from "@forge/consts/knight-hacks";
 
 import type { api as serverCall } from "~/trpc/server";
 import { HACKER_STATUS_MAP } from "~/consts";
@@ -34,7 +36,7 @@ export function HackathonData({
     hackathonName: undefined,
   });
 
-  const { teamColor, team, imgUrl } = getClassTeam(hacker?.class);
+  const { teamColor, team, classPfp } = HACKER_CLASS_INFO[hacker?.class];
 
   function getStatusName(status: StatusKey) {
     if (!status) return "";
@@ -122,7 +124,7 @@ export function HackathonData({
             {/* TK Image */}
             <div className="animate-fade-in relative h-28 w-28 flex-shrink-0 self-center overflow-hidden shadow-sm sm:h-32 sm:w-32 sm:self-start">
               <Image
-                src={imgUrl}
+                src={classPfp}
                 alt="Team Mascot Image"
                 fill
                 className="rounded-full object-cover"
