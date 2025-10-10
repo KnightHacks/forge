@@ -333,3 +333,56 @@ export const EventFeedback = createTable("event_feedback", (t) => ({
 }));
 
 export const InsertEventFeedbackSchema = createInsertSchema(EventFeedback);
+
+export const Challenges = createTable("challenges", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  title: t.text().notNull(),
+  location: t.text().notNull(),
+  hackatonId: t
+    .uuid()
+    .notNull()
+    .references(() => Hackathon.id, {
+      onDelete: "cascade",
+    }),
+}));
+
+export const InsertChallengesSchema = createInsertSchema(Challenges);
+
+export const Submissions = createTable("submissions", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  challengeId: t
+  .uuid()
+  .notNull()
+  .references(() => Challenges.id, {
+    onDelete: "cascade",
+  }),
+  teamId: t
+  .uuid()
+  .notNull()
+  .references(() => Teams.id, {
+    onDelete: "cascade",
+  }),
+  status: t.text().notNull(), // TODO: check what status are allowed and make a union type
+  hackatonId: t
+    .uuid()
+    .notNull()
+    .references(() => Hackathon.id, {
+      onDelete: "cascade",
+    }),
+}));
+
+export const InsertSubmissionsSchema = createInsertSchema(Submissions);
+
+export const Teams = createTable("teams", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  submissionLink: t.text().notNull(), // TODO: check what this refers to
+  submissionStatus: t.text().notNull(),
+  hackatonId: t
+    .uuid()
+    .notNull()
+    .references(() => Hackathon.id, {
+      onDelete: "cascade",
+    }),
+}));
+
+export const InsertTeamsSchema = createInsertSchema(Teams);
