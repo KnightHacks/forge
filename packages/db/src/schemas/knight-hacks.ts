@@ -348,6 +348,9 @@ export const Challenges = createTable("challenges", (t) => ({
 
 export const InsertChallengesSchema = createInsertSchema(Challenges);
 
+const SUBMISSION_STATUS = ["Pending"] as const;
+export const submissionStatusEnum = pgEnum("submission_status", SUBMISSION_STATUS);
+
 export const Submissions = createTable("submissions", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   challengeId: t
@@ -362,7 +365,7 @@ export const Submissions = createTable("submissions", (t) => ({
   .references(() => Teams.id, {
     onDelete: "cascade",
   }),
-  status: t.text().notNull(), // TODO: check what status are allowed and make a union type
+  status: submissionStatusEnum().notNull(), // TODO: check if this is correct and what other status there are
   hackatonId: t
     .uuid()
     .notNull()
@@ -373,16 +376,35 @@ export const Submissions = createTable("submissions", (t) => ({
 
 export const InsertSubmissionsSchema = createInsertSchema(Submissions);
 
+const PROJECT_SUBMISSION_STATUS = ["Submitted", "Draft"] as const;
+export const projectSubmissionStatusEnum = pgEnum("project_submission_status", PROJECT_SUBMISSION_STATUS);
+
+const HIGHEST_STEP_COMPLETED = ["Submit", "Additional info", "Project details", "Manage team", "Project overview"] as const;
+export const highestStepCompletedEnum = pgEnum("highest_step_completed", HIGHEST_STEP_COMPLETED);
+
 export const Teams = createTable("teams", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
-  submissionLink: t.text().notNull(), // TODO: check what this refers to
-  submissionStatus: t.text().notNull(),
-  hackatonId: t
+  hackathonId: t
     .uuid()
     .notNull()
     .references(() => Hackathon.id, {
       onDelete: "cascade",
-    }),
+  }),
+
+  // Core project info
+  projectTitle: t.text().notNull(),
+  submissionUrl: t.text(),
+  projectStatus: projectSubmissionStatusEnum().notNull(),
+  projectCreatedAt: t.timestamp().notNull(),
+  highestStepCompleted: highestStepCompletedEnum(),
+
+  // Devpost link
+  devpostUrl: t.text(),
+  
+  // Team info
+  notes: t.text(),
+  universities: t.text(),
+  emails: t.text(),
 }));
 
 export const InsertTeamsSchema = createInsertSchema(Teams);
