@@ -32,6 +32,7 @@
     "minio": "^8.0.3",
     "passkit-generator": "^3.4.0",
     "qrcode": "^1.5.4",
+    "resend": "^3.2.0",
     "stripe": "^17.4.0",
     "superjson": "2.2.1",
     "zod": "catalog:"
