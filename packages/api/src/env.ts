@@ -5,8 +5,8 @@ export const env = createEnv({
   server: {
     STRIPE_SECRET_KEY: z.string(),
     DISCORD_BOT_TOKEN: z.string(),
-    GOOGLE_CLIENT_EMAIL: z.string(),
-    GOOGLE_PRIVATE_KEY_B64: z.string(),
+    RESEND_API_KEY: z.string(),
+    RESEND_FROM_EMAIL: z.string().email(),
     NODE_ENV: z.enum(["development", "production"]).optional(),
     STRIPE_SECRET_WEBHOOK_KEY: z.string(),
     MINIO_ENDPOINT: z.string(),
