@@ -178,7 +178,7 @@ export const sendEmail = async ({
 }): Promise<{ success: true; messageId: string }> => {
   try {
     const { data, error } = await resend.emails.send({
-      from: from || env.RESEND_FROM_EMAIL,
+      from: from ?? env.RESEND_FROM_EMAIL,
       to,
       subject,
       html,
@@ -187,6 +187,10 @@ export const sendEmail = async ({
     if (error) {
       console.error("Resend error:", error);
       throw new Error(`Failed to send email: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error("Failed to send email: No data returned from Resend");
     }
 
     return { success: true, messageId: data.id };
