@@ -9,11 +9,12 @@ import { HACKER_CLASS_INFO } from "@forge/consts/knight-hacks";
 
 import type { api as serverCall } from "~/trpc/server";
 import { HACKER_STATUS_MAP } from "~/consts";
-import { getClassTeam } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { HackerQRCodePopup } from "../hacker-dashboard/hacker-qr-button";
 import { DownloadQRPass } from "../member-dashboard/download-qr-pass";
 import AlertButton from "./issue-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@forge/ui/dialog";
+import { PointLeaderboard } from "./point-leaderboard";
 
 type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
 
@@ -96,7 +97,7 @@ export function HackathonData({
                     textShadow: `0 0 10px ${teamColor}, 0 0 20px ${teamColor}`,
                   }}
                 >
-                  {team}
+                  {"Team " + team}
                 </span>
               </div>
 
@@ -105,16 +106,15 @@ export function HackathonData({
                 <p className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px] md:text-start">
                   Status for {hackathonData?.displayName}
                 </p>
-                <div className="inline-flex items-center gap-2.5 rounded-full border bg-background px-3 py-2 shadow-sm sm:px-3 sm:py-1.5">
+                <div className="inline-flex items-center gap-2.5 rounded-full bg-background shadow-sm">
                   <span
-                    className={`text-base font-bold sm:text-base ${hackerStatusColor}`}
+                    className={`text-base font-bold sm:text-lg uppercase ${hackerStatusColor}`}
                   >
                     {hackerStatus}
                   </span>
-                  {hackerStatus === "Confirmed" && (
+                  {hackerStatus === "Checked-in" && (
                     <CircleCheckBig
-                      className="h-4 w-4 sm:h-4 sm:w-4"
-                      color="#00C9A7"
+                      className={`h-4 w-4 sm:h-4 sm:w-4 ${hackerStatusColor}`}
                     />
                   )}
                 </div>
@@ -142,7 +142,7 @@ export function HackathonData({
           </h3>
 
           {/* QR Code and Apple Wallet */}
-          <div className="flex flex-row items-center justify-center gap-3 sm:flex-row sm:gap-3 md:justify-start">
+          <div className="flex flex-row items-center justify-between gap-3 sm:flex-row sm:gap-3 sm:justify-start">
             <HackerQRCodePopup />
             <DownloadQRPass />
           </div>
@@ -214,22 +214,34 @@ export function HackathonData({
                   </div>
                 </div>
               </div>
-
-              <button
-                className="w-full rounded-lg py-2 text-sm font-semibold transition-all hover:shadow-md sm:py-2.5"
-                style={{
-                  backgroundColor: `${teamColor}20`,
-                  color: teamColor,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = `${teamColor}33`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = `${teamColor}20`;
-                }}
-              >
-                View Leaderboard
-              </button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button
+                    className="w-full rounded-lg py-2 text-sm font-semibold transition-all hover:shadow-md sm:py-2.5"
+                    style={{
+                      backgroundColor: `${teamColor}20`,
+                      color: teamColor,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = `${teamColor}33`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = `${teamColor}20`;
+                    }}
+                  >
+                    View Leaderboard
+                  </button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      Leaderboard
+                    </DialogTitle>
+                  </DialogHeader>
+                  <PointLeaderboard hacker={hacker} hId={hackathonData?.name ?? ""}/>
+                </DialogContent>
+              </Dialog>
+              
             </div>
           </div>
         </div>
