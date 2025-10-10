@@ -5574,6 +5574,45 @@ export interface Semester {
   endDate: Date;
 }
 
+interface ClassInfo {
+  team: string;
+  teamColor: string;
+  classPfp: string;
+}
+
+export const HACKER_CLASS_INFO: Record<AssignableHackerClass, ClassInfo> = {
+  Machinist: {
+    team: "Team Humanity",
+    teamColor: "#228be6",
+    classPfp: "/khviii/machinist.png",
+  },
+  Operators: {
+    team: "Team Humanity",
+    teamColor: "#228be6",
+    classPfp: "/khviii/operators.png",
+  },
+  Sentinels: {
+    team: "Team Humanity",
+    teamColor: "#228be6",
+    classPfp: "/khviii/sentinels.png",
+  },
+  Monstologist: {
+    team: "Team Monstrosity",
+    teamColor: "#e03131",
+    classPfp: "/khviii/monstologist.png",
+  },
+  Harbinger: {
+    team: "Team Monstrosity",
+    teamColor: "#e03131",
+    classPfp: "/khviii/harbinger.png",
+  },
+  Alchemist: {
+    team: "Team Monstrosity",
+    teamColor: "#e03131",
+    classPfp: "/khviii/alchemist.png",
+  },
+};
+
 export const OFFICER_ROLE_ID =
   process.env.NODE_ENV === "production"
     ? "486629374758748180"
