@@ -44,73 +44,85 @@ export default function HackingCountdown() {
   const formatNumber = (num: number) => String(num).padStart(2, "0");
 
   return (
-    <div className="flex items-center justify-center rounded-lg border bg-gradient-to-br from-background to-accent/10 p-3 sm:p-4">
-      <Card className="w-full max-w-3xl border-0 bg-gradient-to-tr from-background/50 to-primary/5 shadow-lg backdrop-blur-sm">
+    <div className="flex items-center justify-center rounded-lg border bg-gradient-to-tr from-background/50 to-primary/5 shadow-lg backdrop-blur-sm p-3 sm:p-4">
+      <Card className="w-full max-w-3xl border-0 bg-transparent">
         <CardContent className="p-3 sm:p-4 lg:p-6">
-          <h1 className="mb-3 text-center text-2xl font-bold tracking-tight sm:mb-4 sm:text-3xl lg:text-4xl">
-            Hacking Ends In
+          <h1 className="mb-3 tracking-wider text-muted-foreground text-center text-xl font-bold sm:mb-4 sm:text-2xl lg:text-3xl">
+            HACKING ENDS IN
           </h1>
 
-          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 lg:gap-3">
+          <div className="flex flex-wrap items-center justify-center shadow-lg gap-1.5 sm:gap-2 lg:gap-3">
             {/* Days */}
             <div className="flex items-center gap-1 sm:gap-2">
               <Card className="shadow-md">
-                <CardContent className="flex min-w-[70px] flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
-                  <div className="text-3xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
+                <CardContent className="flex flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
+                  <div className="text-xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
                     {formatNumber(timeLeft.days)}
                   </div>
-                  <div className="mt-1 text-xs font-semibold text-muted-foreground sm:text-sm lg:text-base">
+                  <div className="mt-1 text-xs font-semibold text-muted-foreground hidden sm:block sm:text-sm lg:text-base">
                     Days
+                  </div>
+                  <div className="mt-1 text-xs font-semibold text-muted-foreground block sm:hidden sm:text-sm lg:text-base">
+                    D
                   </div>
                 </CardContent>
               </Card>
-              <div className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+              <div className="text-xl font-bold sm:text-3xl lg:text-4xl">
                 :
               </div>
             </div>
 
             {/* Hours */}
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shadow-lg">
               <Card className="shadow-md">
-                <CardContent className="flex min-w-[70px] flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
-                  <div className="text-3xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
+                <CardContent className="flex flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
+                  <div className="text-xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
                     {formatNumber(timeLeft.hours)}
                   </div>
-                  <div className="mt-1 text-xs font-semibold text-muted-foreground sm:text-sm lg:text-base">
+                  <div className="mt-1 text-xs font-semibold text-muted-foreground hidden sm:block sm:text-sm lg:text-base">
                     Hours
+                  </div>
+                  <div className="mt-1 text-xs font-semibold text-muted-foreground block sm:hidden sm:text-sm lg:text-base">
+                    H
                   </div>
                 </CardContent>
               </Card>
-              <div className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+              <div className="text-xl font-bold sm:text-3xl lg:text-4xl">
                 :
               </div>
             </div>
 
             {/* Minutes */}
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shadow-lg">
               <Card className="shadow-md">
-                <CardContent className="flex min-w-[70px] flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
-                  <div className="text-3xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
+                <CardContent className="flex flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
+                  <div className="text-xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
                     {formatNumber(timeLeft.minutes)}
                   </div>
-                  <div className="mt-1 text-xs font-semibold text-muted-foreground sm:text-sm lg:text-base">
+                  <div className="mt-1 text-xs font-semibold text-muted-foreground hidden sm:block sm:text-sm lg:text-base">
                     Minutes
+                  </div>
+                  <div className="mt-1 text-xs font-semibold text-muted-foreground block sm:hidden sm:text-sm lg:text-base">
+                    M
                   </div>
                 </CardContent>
               </Card>
-              <div className="text-2xl font-bold sm:text-3xl lg:text-4xl">
+              <div className="text-xl font-bold sm:text-3xl lg:text-4xl">
                 :
               </div>
             </div>
 
             {/* Seconds */}
-            <Card className="shadow-md">
-              <CardContent className="flex min-w-[70px] flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
-                <div className="text-3xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
+            <Card className="shadow-lg">
+              <CardContent className="flex flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
+                <div className="text-xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
                   {formatNumber(timeLeft.seconds)}
                 </div>
-                <div className="mt-1 text-xs font-semibold text-muted-foreground sm:text-sm lg:text-base">
+                <div className="mt-1 text-xs font-semibold text-muted-foreground hidden sm:block sm:text-sm lg:text-base">
                   Seconds
+                </div>
+                <div className="mt-1 text-xs font-semibold text-muted-foreground block sm:hidden sm:text-sm lg:text-base">
+                  S
                 </div>
               </CardContent>
             </Card>

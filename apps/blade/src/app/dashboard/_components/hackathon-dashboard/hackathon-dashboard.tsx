@@ -5,6 +5,7 @@ import { HackerAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
 import HackingCountdown from "./countdown";
 import { HackathonData } from "./hackathon-data";
+import { TeamPoints } from "./team-points";
 import UpcomingEvents from "./upcoming-events";
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export default async function HackathonDashboard({
     return (
       <div className="flex flex-col items-center justify-center gap-y-6 text-xl font-semibold">
         <p className="w-full max-w-xl text-center text-2xl">
-          Register for KnightHacks today!
+          Register for Knight Hacks today!
         </p>
         <div className="flex flex-wrap justify-center gap-5">
           {currentHackathon && (
@@ -44,7 +45,8 @@ export default async function HackathonDashboard({
           Hackathon Dashboard
         </p>
       </div>
-      <div className="animate-mobile-initial-expand mx-auto flex min-h-[900px] bg-[#E5E7EB] px-2 py-4 dark:bg-[#0A0F1D] sm:relative sm:px-0 sm:py-6 lg:min-h-[380px]">
+      
+      <div className="animate-mobile-initial-expand rounded-lg mx-auto flex min-h-[900px] bg-[#E5E7EB] px-2 py-4 dark:bg-[#0A0F1D] sm:relative sm:px-0 sm:py-6 lg:min-h-[380px]">
         {/* Main content */}
         <HackathonData data={hacker} />
 
@@ -73,12 +75,13 @@ export default async function HackathonDashboard({
         {/* Left side rectangle - hidden on mobile */}
         <div className="absolute -left-3 top-0 hidden h-full w-[0.4rem] bg-primary sm:block"></div>
       </div>
-
-      <div className="animate-fade-in mb-8 mt-8 px-4 sm:mt-12 sm:px-0">
+      <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
+        <TeamPoints hId={currentHackathon?.name || ""} hClass={hacker.class || "Alchemist"} />
+      </div>
+      <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
         <HackingCountdown />
       </div>
-
-      <div>
+      <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
         <UpcomingEvents />
       </div>
     </>

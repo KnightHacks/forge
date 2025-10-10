@@ -69,11 +69,11 @@ export function HackerQRCodePopup() {
   const qrTrigger = (
     <Button
       size="lg"
-      className="animate-fade-in gap-2 !rounded-none border border-[#1F2937] !bg-white px-3 !shadow-none hover:!bg-[#E5E7EB] dark:!bg-[#0A0F1D] dark:hover:!bg-[#1F2937] sm:px-8"
+      className="w-full group animate-fade-in shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md gap-2 rounded-lg border bg-card border-[#1F2937] hover:bg-card px-5 py-3 sm:px-8"
     >
-      <QrCode className="h-5 w-5 dark:hidden" color="#000000" />
-      <QrCode className="hidden h-5 w-5 dark:block" color="#FFFFFF" />
-      <span className="text-lg font-bold text-black dark:text-white">QR</span>
+      <QrCode className="h-5 w-5 dark:hidden text-muted-foreground transition-colors group-hover:text-primary" />
+      <QrCode className="hidden h-5 w-5 dark:block text-muted-foreground transition-colors group-hover:text-primary"/>
+      <span className="text-base font-bold text-black dark:text-white">QR</span>
     </Button>
   );
 
@@ -85,7 +85,7 @@ export function HackerQRCodePopup() {
 
   return (
     <>
-      <div className="md:hidden">
+      <div className="md:hidden w-full sm:w-auto">
         <Drawer>
           <DrawerTrigger asChild>{qrTrigger}</DrawerTrigger>
           <DrawerContent className="mx-auto w-full max-w-sm">
@@ -100,7 +100,7 @@ export function HackerQRCodePopup() {
           </DrawerContent>
         </Drawer>
       </div>
-      <div className="hidden md:block">
+      <div className="hidden md:block w-full sm:w-auto">
         <Dialog>
           <DialogTrigger asChild>{qrTrigger}</DialogTrigger>
           <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">

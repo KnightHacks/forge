@@ -220,6 +220,10 @@ export const EventAttendee = createTable("event_attendee", (t) => ({
     }),
 }));
 
+export const HACKER_TEAMS = [
+  "Humanity",
+  "Monstrosity"
+] as const;
 export const HACKER_CLASSES = [
   "Operators",
   "Machinist",
