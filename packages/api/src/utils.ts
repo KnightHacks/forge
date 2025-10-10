@@ -2,8 +2,7 @@ import type { APIGuildMember } from "discord-api-types/v10";
 import { cookies } from "next/headers";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
-import { and, eq, gt } from "drizzle-orm";
-import { google } from "googleapis";
+import { Resend } from "resend";
 import Stripe from "stripe";
 
 import type { Session } from "@forge/auth";
@@ -12,7 +11,6 @@ import {
   DEV_DISCORD_ADMIN_ROLE_ID,
   DEV_KNIGHTHACKS_GUILD_ID,
   DEV_KNIGHTHACKS_LOG_CHANNEL,
-  GOOGLE_PERSONIFY_EMAIL,
   IS_PROD,
   OFFICER_ROLE_ID,
   PERMISSIONS,
@@ -59,6 +57,9 @@ export async function resolveDiscordUserId(
 }
 
 export const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
+
+// Initialize Resend
+export const resend = new Resend(env.RESEND_API_KEY);
 
 export const isDiscordAdmin = async (user: Session["user"]) => {
   try {
@@ -163,32 +164,41 @@ export async function isDiscordVIP(discordUserId: string) {
   return guildMember.roles.includes(VIP_ID);
 }
 
-const GOOGLE_PRIVATE_KEY = Buffer.from(env.GOOGLE_PRIVATE_KEY_B64, "base64")
-  .toString("utf-8")
-  .replace(/\\n/g, "\n");
+// Email sending utility function using Resend
+export const sendEmail = async ({
+  to,
+  subject,
+  html,
+  from,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  from?: string;
+}): Promise<{ success: true; messageId: string }> => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: from || env.RESEND_FROM_EMAIL,
+      to,
+      subject,
+      html,
+    });
 
-const gapiCalendar = "https://www.googleapis.com/auth/calendar";
-const gapiGmailSend = "https://www.googleapis.com/auth/gmail.send";
-const gapiGmailSettingsSharing =
-  "https://www.googleapis.com/auth/gmail.settings.sharing";
+    if (error) {
+      console.error("Resend error:", error);
+      throw new Error(`Failed to send email: ${error.message}`);
+    }
 
-const auth = new google.auth.JWT(
-  env.GOOGLE_CLIENT_EMAIL,
-  undefined,
-  GOOGLE_PRIVATE_KEY,
-  [gapiCalendar, gapiGmailSend, gapiGmailSettingsSharing],
-  GOOGLE_PERSONIFY_EMAIL as string,
-);
-
-export const gmail = google.gmail({
-  version: "v1",
-  auth: auth,
-});
-
-export const calendar = google.calendar({
-  version: "v3",
-  auth: auth,
-});
+    return { success: true, messageId: data.id };
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw new Error(
+      `Failed to send email: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`,
+    );
+  }
+};
 
 const KNIGHTHACKS_LOG_CHANNEL =
   env.NODE_ENV === "production"
