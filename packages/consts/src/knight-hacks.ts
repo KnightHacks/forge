@@ -282,9 +282,9 @@ export const KH_EVENT_ROLE_ID = IS_PROD
 export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
 
 export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
-  Operators: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,
+  Operator: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,
   Machinist: IS_PROD ? PROD_DISCORD_ROLE_MACHINIST : DEV_DISCORD_ROLE_MACHINIST,
-  Sentinels: IS_PROD ? PROD_DISCORD_ROLE_SENTINELS : DEV_DISCORD_ROLE_SENTINELS,
+  Sentinel: IS_PROD ? PROD_DISCORD_ROLE_SENTINELS : DEV_DISCORD_ROLE_SENTINELS,
   Harbinger: IS_PROD ? PROD_DISCORD_ROLE_HARBINGER : DEV_DISCORD_ROLE_HARBINGER,
   Monstologist: IS_PROD
     ? PROD_DISCORD_ROLE_MONSTOLOGIST
@@ -5586,15 +5586,15 @@ export const HACKER_CLASS_INFO: Record<AssignableHackerClass, ClassInfo> = {
     teamColor: "#228be6",
     classPfp: "/khviii/machinist.png",
   },
-  Operators: {
+  Operator: {
     team: "Humanity",
     teamColor: "#228be6",
-    classPfp: "/khviii/operators.png",
+    classPfp: "/khviii/operator.png",
   },
-  Sentinels: {
+  Sentinel: {
     team: "Humanity",
     teamColor: "#228be6",
-    classPfp: "/khviii/sentinels.png",
+    classPfp: "/khviii/sentinel.png",
   },
   Monstologist: {
     team: "Monstrosity",
