@@ -65,7 +65,7 @@ export default async function HackathonDashboard({
   }
   const { teamColor, team, classPfp } = (
     HACKER_CLASS_INFO as unknown as string[]
-  )[hacker.class] as HackerClassInfo;
+  )[hacker.class as string] as HackerClassInfo;
 
   return (
     <>
