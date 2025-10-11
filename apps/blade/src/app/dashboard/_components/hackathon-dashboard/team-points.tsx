@@ -1,6 +1,7 @@
 "use client";
 
-import { HACKER_TEAMS, HackerClass } from "@forge/db/schemas/knight-hacks";
+import type { HackerClass } from "@forge/db/schemas/knight-hacks";
+import { HACKER_TEAMS } from "@forge/db/schemas/knight-hacks";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
 import { Crown, Dot, Loader, Star } from "lucide-react";
 import { useEffect, useState } from "react";
