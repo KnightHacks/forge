@@ -958,7 +958,6 @@ export const hackerRouter = {
       const eventTag = event.tag;
       let discordId: string | null = null;
       let isVIP = false;
-      console.log(`Event Tag: ${eventTag}`);
       if (eventTag == "Check-in") {
         discordId = await resolveDiscordUserId(hacker.discordUser);
         isVIP = discordId ? await isDiscordVIP(discordId) : false;
