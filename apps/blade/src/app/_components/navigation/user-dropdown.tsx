@@ -25,11 +25,12 @@ import {
   adminHackathonItems,
   adminItems,
   userItems,
+  volunteerClubItems,
 } from "./reusable-user-dropdown";
 
 // If you need to conditionally render some dropdown items, please refer to ./reusable-user-dropdown
 
-export function UserDropdown({ isAdmin }: { isAdmin: boolean }) {
+export function UserDropdown({ isAdmin, isVolunteer }: { isAdmin: boolean; isVolunteer: boolean }) {
   const utils = api.useUtils();
   const router = useRouter();
   const { data } = api.user.getUserAvatar.useQuery();
@@ -53,7 +54,11 @@ export function UserDropdown({ isAdmin }: { isAdmin: boolean }) {
         <DropdownMenuGroup>
           {isAdmin && <DropdownMenuRoleItems items={adminItems} />}
           <DropdownMenuLabel>Club</DropdownMenuLabel>
-          {isAdmin && <DropdownMenuRoleItems items={adminClubItems} />}
+          {isAdmin ? (
+            <DropdownMenuRoleItems items={adminClubItems} />
+          ) : (
+            isVolunteer && <DropdownMenuRoleItems items={volunteerClubItems} />
+          )}
           <DropdownMenuLabel>Hackathon</DropdownMenuLabel>
           {isAdmin && <DropdownMenuRoleItems items={adminHackathonItems} />}
           <DropdownMenuItem
