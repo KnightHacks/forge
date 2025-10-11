@@ -91,6 +91,8 @@ export default function ResultsTable() {
         p.challenges.includes(filters.challenge!.title),
       );
 
+    // TODO: judge and room filters can later be added here
+
     if (searchTerm)
       result = result.filter((p) =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -108,6 +110,16 @@ export default function ResultsTable() {
 
     return result;
   }, [projects, filters, searchTerm, sortField, sortOrder]);
+
+  // --- Derived stats ---
+  const totalProjects = filteredProjects.length;
+  const avgScore =
+    totalProjects > 0
+      ? (
+          filteredProjects.reduce((sum, p) => sum + p.overallRating, 0) /
+          totalProjects
+        ).toFixed(1)
+      : "0.0";
 
   return (
     <main className="container h-screen">
@@ -135,6 +147,15 @@ export default function ResultsTable() {
           rooms={rooms}
           onFilterChange={setFilters}
         />
+
+        <div className="flex justify-center gap-8 text-md font-bold">
+          <div>
+            Returned {totalProjects} Project{totalProjects !== 1 ? "s" : ""}
+          </div>
+          <div>
+            Average Rating: {avgScore}
+          </div>
+        </div>
       </div>
 
       {/* Table */}
@@ -151,19 +172,13 @@ export default function ResultsTable() {
                 setSortOrder={setSortOrder}
               />
             </TableHead>
-            <TableHead className="text-center">
-              <Label>Link</Label>
-            </TableHead>
-            <TableHead className="text-center">
-              <Label>Status</Label>
-            </TableHead>
-            <TableHead className="text-center">
-              <Label>Challenges</Label>
-            </TableHead>
+            <TableHead className="text-center"><Label>Link</Label></TableHead>
+            <TableHead className="text-center"><Label>Status</Label></TableHead>
+            <TableHead className="text-center"><Label>Challenges</Label></TableHead>
             <TableHead className="text-center">
               <SortButton
                 field="specificRating"
-                label="Specific"
+                label="Challenge Rating"
                 sortField={sortField}
                 sortOrder={sortOrder}
                 setSortField={setSortField}
@@ -173,7 +188,7 @@ export default function ResultsTable() {
             <TableHead className="text-center">
               <SortButton
                 field="overallRating"
-                label="Rating"
+                label="Overall Rating"
                 sortField={sortField}
                 sortOrder={sortOrder}
                 setSortField={setSortField}
@@ -206,19 +221,23 @@ export default function ResultsTable() {
                 </TableCell>
                 <TableCell className="text-center">
                   {project.status === "Winner" ? (
-                    <span className="rounded bg-green-100 px-2 py-1 text-green-700">
+                    <span className="rounded bg-green-500 px-2 py-1 text-white">
                       Winner
                     </span>
                   ) : (
-                    <span className="rounded bg-gray-100 px-2 py-1 text-gray-700">
-                      Participant
+                    <span className="rounded bg-gray-600 px-2 py-1 text-white">
+                      Submitted
                     </span>
                   )}
                 </TableCell>
-                <TableCell className="text-center">
-                  {project.challenges.join(", ")}
+                <TableCell className="text-center max-w-[180px] truncate">
+                  <span title={project.challenges.join(", ")}>
+                    {project.challenges.join(", ")}
+                  </span>
                 </TableCell>
-                <TableCell className="text-center">{project.specificRating}</TableCell>
+                <TableCell className="text-center">
+                    {filters.challenge ? project.specificRating : "—"}
+                </TableCell>
                 <TableCell className="text-center">{project.overallRating}</TableCell>
               </TableRow>
             ))
