@@ -17,11 +17,12 @@ export default async function UpcomingEvents() {
   const events = await api.event.getEvents();
 
   const now = Date.now();
-  const fiveHoursLater = now + 5 * 60 * 60 * 1000;
+  const fiveHoursLater = now + 10 * 60 * 60 * 1000;
 
   const upcomingEvents = events
     .filter((event) => {
-      const start = new Date(event.start_datetime).getTime();
+      const oneDayOffset = 24 * 60 * 60 * 1000;
+      const start = new Date(event.start_datetime).getTime() + oneDayOffset;
       return (
         event.hackathonId != null && start >= now && start <= fiveHoursLater
       );
