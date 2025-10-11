@@ -373,24 +373,6 @@ export const Submissions = createTable("submissions", (t) => ({
 
 export const InsertSubmissionsSchema = createInsertSchema(Submissions);
 
-const PROJECT_SUBMISSION_STATUS = ["Submitted", "Draft"] as const;
-export const projectSubmissionStatusEnum = pgEnum(
-  "project_submission_status",
-  PROJECT_SUBMISSION_STATUS,
-);
-
-const HIGHEST_STEP_COMPLETED = [
-  "Submit",
-  "Additional info",
-  "Project details",
-  "Manage team",
-  "Project overview",
-] as const;
-export const highestStepCompletedEnum = pgEnum(
-  "highest_step_completed",
-  HIGHEST_STEP_COMPLETED,
-);
-
 export const Teams = createTable("teams", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   hackathonId: t
@@ -403,9 +385,7 @@ export const Teams = createTable("teams", (t) => ({
   // Core project info
   projectTitle: t.text().notNull(),
   submissionUrl: t.text(),
-  projectStatus: projectSubmissionStatusEnum().notNull(),
   projectCreatedAt: t.timestamp().notNull(),
-  highestStepCompleted: highestStepCompletedEnum(),
 
   // Devpost link
   devpostUrl: t.text(),
