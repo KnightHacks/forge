@@ -131,10 +131,7 @@ export default async function HackathonDashboard({
         <div className="absolute -left-3 top-0 hidden h-full w-[0.4rem] bg-primary sm:block"></div>
       </div>
       <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
-        <TeamPoints
-          hId={currentHackathon?.name || ""}
-          hClass={hacker.class || "Alchemist"}
-        />
+        <TeamPoints hId={currentHackathon?.name || ""} hClass={hacker.class} />
       </div>
       <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
         <HackingCountdown />
