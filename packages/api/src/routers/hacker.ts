@@ -753,8 +753,7 @@ export const hackerRouter = {
           code: "NOT_FOUND",
           message: `Hacker with User ID ${input.userId} not found.`,
         });
-      const discordId = await resolveDiscordUserId(hacker.discordUser);
-      const isVIP = discordId ? await isDiscordVIP(discordId) : false;
+
       const event = await db.query.Event.findFirst({
         where: eq(Event.id, input.eventId),
       });
@@ -770,6 +769,13 @@ export const hackerRouter = {
         });
       }
       const eventTag = event.tag;
+      let discordId: string | null = null;
+      let isVIP = false;
+      console.log(`Event Tag: ${eventTag}`);
+      if (eventTag == "Check-in") {
+        discordId = await resolveDiscordUserId(hacker.discordUser);
+        isVIP = discordId ? await isDiscordVIP(discordId) : false;
+      }
       const hackerAttendee = await db.query.HackerAttendee.findFirst({
         where: (t, { and, eq }) =>
           and(
@@ -897,34 +903,15 @@ export const hackerRouter = {
             );
           }
         }
-        // await log({
-        //   title: `Hacker Checked-In`,
-        //   message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon ${
-        //     assignedClass ? ` (Class: ${assignedClass}).` : ""
-        //   }`,
-        //   color: "success_green",
-        //   userId: ctx.session.user.discordUserId,
-        // });
-        // return {
-        //   message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!${
-        //     assignedClass ? ` Assigned class: ${assignedClass}.` : ""
-        //   }`,
-        //   firstName: hacker.firstName,
-        //   lastName: hacker.lastName,
-        //   class: assignedClass,
-        //   color: "text-[#4ade80]",
-        //   messageforHackers: "Check ID, and send them to correct lanyard area",
-        //   status: "success",
-        // };
       }
       if (
         input.assignedClassCheckin !== "All" &&
         hackerAttendee.class !== input.assignedClassCheckin &&
-        !isVIP
+        hackerAttendee.class !== "VIP"
       ) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
-          message: `Only ${input.assignedClassCheckin} hackers can check in. Hacker has class ${hackerAttendee.class}.`,
+          message: `Only ${input.assignedClassCheckin} hackers can check in. Hacker has class ${hackerAttendee.class}`,
         });
       }
 
