@@ -37,7 +37,7 @@ export default async function HackathonDashboard({
     );
   }
 
-  if (!(hacker.class in HACKER_CLASS_INFO)) {
+  if (!hacker.class || !(hacker.class in HACKER_CLASS_INFO)) {
     return (
       <div className="flex flex-col items-center justify-center gap-y-6 px-4 py-12 text-center">
         <div className="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950">
