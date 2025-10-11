@@ -7,11 +7,13 @@ import Stripe from "stripe";
 import type { Session } from "@forge/auth";
 import {
   DEV_DISCORD_ADMIN_ROLE_ID,
+  DEV_DISCORD_VOLUNTEER_ROLE_ID,
   DEV_KNIGHTHACKS_GUILD_ID,
   DEV_KNIGHTHACKS_LOG_CHANNEL,
   GOOGLE_PERSONIFY_EMAIL,
   IS_PROD,
   PROD_DISCORD_ADMIN_ROLE_ID,
+  PROD_DISCORD_VOLUNTEER_ROLE_ID,
   PROD_KNIGHTHACKS_GUILD_ID,
   PROD_KNIGHTHACKS_LOG_CHANNEL,
 } from "@forge/consts/knight-hacks";
@@ -21,6 +23,10 @@ import { env } from "./env";
 const DISCORD_ADMIN_ROLE_ID = IS_PROD
   ? (PROD_DISCORD_ADMIN_ROLE_ID as string)
   : (DEV_DISCORD_ADMIN_ROLE_ID as string);
+
+const DISCORD_VOLUNTEER_ROLE_ID = IS_PROD
+  ? (PROD_DISCORD_VOLUNTEER_ROLE_ID as string)
+  : (DEV_DISCORD_VOLUNTEER_ROLE_ID as string);
 
 const KNIGHTHACKS_GUILD_ID = IS_PROD
   ? (PROD_KNIGHTHACKS_GUILD_ID as string)
@@ -58,6 +64,18 @@ export const isDiscordAdmin = async (user: Session["user"]) => {
       Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
     )) as APIGuildMember;
     return guildMember.roles.includes(DISCORD_ADMIN_ROLE_ID);
+  } catch (err) {
+    console.error("Error: ", err);
+    return false;
+  }
+};
+
+export const isVolunteer = async (user: Session["user"]) => {
+  try {
+    const guildMember = (await discord.get(
+      Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
+    )) as APIGuildMember;
+    return guildMember.roles.includes(DISCORD_VOLUNTEER_ROLE_ID);
   } catch (err) {
     console.error("Error: ", err);
     return false;
