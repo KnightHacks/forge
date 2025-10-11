@@ -71,27 +71,25 @@ export function DownloadQRPass() {
   const canDownload = member?.firstName && member.lastName;
 
   return (
-    <div className="space-y-2">
-      <Button
-        size="sm"
-        className="w-full gap-1"
-        onClick={handleDownload}
-        disabled={!canDownload || isDownloading}
-      >
-        {isDownloading ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Generating Pass...
-          </>
-        ) : canDownload ? (
-          <>
-            <WalletCards className="h-4 w-4" />
-            Apple Wallet
-          </>
-        ) : (
-          "No member information found"
-        )}
-      </Button>
-    </div>
+    <Button
+    size="lg"
+    className="w-full sm:w-auto group animate-fade-in shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md gap-2 rounded-lg border bg-card border-[#1F2937] hover:bg-card px-5 py-3 sm:px-8"
+    onClick={handleDownload}
+      disabled={!canDownload || isDownloading}
+    >
+      {isDownloading ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Generating Pass...
+        </>
+      ) : canDownload ? (
+        <>
+          <WalletCards className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+          Apple Wallet
+        </>
+      ) : (
+        "No member information found"
+      )}
+    </Button>
   );
 }
