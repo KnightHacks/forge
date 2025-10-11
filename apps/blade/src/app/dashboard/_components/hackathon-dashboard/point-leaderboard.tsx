@@ -52,7 +52,6 @@ export function PointLeaderboard({
   const [activeTop, setTop] = useState(overall);
 
   useEffect(() => {
-    console.log(data);
     if (data) {
       setOverall(
         data.topA

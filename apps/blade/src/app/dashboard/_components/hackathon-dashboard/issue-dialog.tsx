@@ -15,7 +15,7 @@ import { Label } from "@forge/ui/label";
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
-import { api } from "~/trpc/react"; // Adjust this import to your tRPC setup
+import { api } from "~/trpc/react";
 
 export default function AlertButton() {
   const [open, setOpen] = useState(false);
@@ -29,7 +29,9 @@ export default function AlertButton() {
         toast.success("Issue reported successfully!");
       },
       onError: (error) => {
-        toast.error(`Error: ${error.message}`);
+        const errorMessage =
+          error instanceof Error ? error.message : "An error occurred";
+        toast.error(`Error: ${errorMessage}`);
       },
     });
 
@@ -80,7 +82,7 @@ export default function AlertButton() {
             </Button>
             <Button
               type="submit"
-              disabled={!issue.trim() || reportIssueMutation.isLoading}
+              disabled={!issue.trim() || reportIssueMutation.isPending}
             >
               {reportIssueMutation.isLoading ? "Submitting..." : "Submit"}
             </Button>
