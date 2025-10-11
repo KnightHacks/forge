@@ -25,7 +25,6 @@ export function TeamPoints({
 
   function updateByTeam() {
     if (!classPoints) return;
-    console.log(classPoints);
     let a = 0;
     let b = 0;
     for (let i = 0; i < classPoints.length; i++) {

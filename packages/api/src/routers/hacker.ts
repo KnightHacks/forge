@@ -12,7 +12,7 @@ import {
   KH_EVENT_ROLE_ID,
   KNIGHTHACKS_S3_BUCKET_REGION,
 } from "@forge/consts/knight-hacks";
-import { and, count, desc, eq, gt, lt, or, sql, sum } from "@forge/db";
+import { and, count, desc, eq, gt, or, sql, sum } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
 import {

@@ -5574,7 +5574,7 @@ export interface Semester {
   endDate: Date;
 }
 
-interface ClassInfo {
+export interface ClassInfo {
   team: string;
   teamColor: string;
   classPfp: string;
