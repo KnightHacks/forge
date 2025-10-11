@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { HACKER_CLASS_INFO } from "@forge/consts/knight-hacks";
+
 import type { api as serverCall } from "~/trpc/server";
 import { HackerAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
@@ -18,6 +20,7 @@ export default async function HackathonDashboard({
 }: {
   hacker: Awaited<ReturnType<(typeof serverCall.hacker)["getHacker"]>>;
 }) {
+  const { teamColor, team, classPfp } = HACKER_CLASS_INFO[hacker?.class];
   const currentHackathon = await api.hackathon.getCurrentHackathon();
 
   if (!hacker) {
@@ -38,17 +41,32 @@ export default async function HackathonDashboard({
   return (
     <>
       <div className="animate-fade-in mb-4 px-4 sm:mb-8 sm:px-0">
-        <h2 className="text-lg font-bold tracking-tight sm:text-xl">
-          Hello, {hacker.firstName}!
+        <h2 className="flex flex-wrap items-center gap-2 text-lg font-bold tracking-tight sm:text-xl">
+          <span>Hello,</span>
+          <span
+            className="font-bold"
+            style={{
+              color: teamColor,
+              textShadow: `0 0 10px ${teamColor}, 0 0 20px ${teamColor}`,
+            }}
+          >
+            {hacker.class}
+          </span>
+          <span>{hacker.firstName}!</span>
         </h2>
         <p className="text-sm text-muted-foreground sm:text-base">
           Hackathon Dashboard
         </p>
       </div>
-      
-      <div className="animate-mobile-initial-expand rounded-lg mx-auto flex min-h-[900px] bg-[#E5E7EB] px-2 py-4 dark:bg-[#0A0F1D] sm:relative sm:px-0 sm:py-6 lg:min-h-[380px]">
+
+      <div className="animate-mobile-initial-expand mx-auto flex min-h-[900px] rounded-lg bg-[#E5E7EB] px-2 py-4 dark:bg-[#0A0F1D] sm:relative sm:px-0 sm:py-6 lg:min-h-[380px]">
         {/* Main content */}
-        <HackathonData data={hacker} />
+        <HackathonData
+          data={hacker}
+          teamColor={teamColor}
+          classPfp={classPfp}
+          team={team}
+        />
 
         {/* Transparent Triangle overlay in bottom right corner - hidden on mobile */}
         <div className="border-b-solid border-l-solid absolute bottom-0 right-0 hidden h-0 w-0 border-b-[30px] border-l-[30px] border-b-background border-l-transparent sm:block"></div>
@@ -76,7 +94,10 @@ export default async function HackathonDashboard({
         <div className="absolute -left-3 top-0 hidden h-full w-[0.4rem] bg-primary sm:block"></div>
       </div>
       <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
-        <TeamPoints hId={currentHackathon?.name || ""} hClass={hacker.class || "Alchemist"} />
+        <TeamPoints
+          hId={currentHackathon?.name || ""}
+          hClass={hacker.class || "Alchemist"}
+        />
       </div>
       <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
         <HackingCountdown />
