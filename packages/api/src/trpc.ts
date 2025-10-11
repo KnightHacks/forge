@@ -13,7 +13,7 @@ import { ZodError } from "zod";
 import type { Session } from "@forge/auth";
 import { auth, validateToken } from "@forge/auth";
 
-import { isDiscordAdmin } from "./utils";
+import { isDiscordAdmin, isVolunteer } from "./utils";
 
 /**
  * Isomorphic Session getter for API requests
@@ -153,6 +153,19 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   return next({
     ctx: {
       // infers the `session` as non-nullable
+      session: { ...ctx.session, user: ctx.session.user },
+    },
+  });
+});
+
+export const volunteerProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const isValidVolunteer = await isVolunteer(ctx.session.user);
+  if (!isValidVolunteer) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  return next({
+    ctx: {
       session: { ...ctx.session, user: ctx.session.user },
     },
   });
