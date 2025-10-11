@@ -170,3 +170,20 @@ export const volunteerProcedure = protectedProcedure.use(async ({ ctx, next }) =
     },
   });
 });
+
+export const adminOrVolunteerProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const [isValidAdmin, isValidVolunteer] = await Promise.all([
+    isDiscordAdmin(ctx.session.user),
+    isVolunteer(ctx.session.user)
+  ]);
+  
+  if (!isValidAdmin && !isValidVolunteer) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  return next({
+    ctx: {
+      session: { ...ctx.session, user: ctx.session.user },
+    },
+  });
+});
