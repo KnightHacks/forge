@@ -19,7 +19,6 @@ import {
 } from "@forge/consts/knight-hacks";
 
 import { User } from "./auth";
-import { boolean } from "drizzle-orm/mysql-core";
 
 const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
@@ -352,17 +351,17 @@ export const InsertChallengesSchema = createInsertSchema(Challenges);
 export const Submissions = createTable("submissions", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   challengeId: t
-  .uuid()
-  .notNull()
-  .references(() => Challenges.id, {
-    onDelete: "cascade",
-  }),
+    .uuid()
+    .notNull()
+    .references(() => Challenges.id, {
+      onDelete: "cascade",
+    }),
   teamId: t
-  .uuid()
-  .notNull()
-  .references(() => Teams.id, {
-    onDelete: "cascade",
-  }),
+    .uuid()
+    .notNull()
+    .references(() => Teams.id, {
+      onDelete: "cascade",
+    }),
   judgedStatus: t.boolean().notNull().default(false),
   hackatonId: t
     .uuid()
@@ -375,10 +374,22 @@ export const Submissions = createTable("submissions", (t) => ({
 export const InsertSubmissionsSchema = createInsertSchema(Submissions);
 
 const PROJECT_SUBMISSION_STATUS = ["Submitted", "Draft"] as const;
-export const projectSubmissionStatusEnum = pgEnum("project_submission_status", PROJECT_SUBMISSION_STATUS);
+export const projectSubmissionStatusEnum = pgEnum(
+  "project_submission_status",
+  PROJECT_SUBMISSION_STATUS,
+);
 
-const HIGHEST_STEP_COMPLETED = ["Submit", "Additional info", "Project details", "Manage team", "Project overview"] as const;
-export const highestStepCompletedEnum = pgEnum("highest_step_completed", HIGHEST_STEP_COMPLETED);
+const HIGHEST_STEP_COMPLETED = [
+  "Submit",
+  "Additional info",
+  "Project details",
+  "Manage team",
+  "Project overview",
+] as const;
+export const highestStepCompletedEnum = pgEnum(
+  "highest_step_completed",
+  HIGHEST_STEP_COMPLETED,
+);
 
 export const Teams = createTable("teams", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -387,7 +398,7 @@ export const Teams = createTable("teams", (t) => ({
     .notNull()
     .references(() => Hackathon.id, {
       onDelete: "cascade",
-  }),
+    }),
 
   // Core project info
   projectTitle: t.text().notNull(),
@@ -398,7 +409,7 @@ export const Teams = createTable("teams", (t) => ({
 
   // Devpost link
   devpostUrl: t.text(),
-  
+
   // Team info
   notes: t.text(),
   universities: t.text(),
