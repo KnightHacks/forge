@@ -3,23 +3,18 @@
 import { useEffect, useState } from "react";
 import { Dot, Loader } from "lucide-react";
 
-import type {
-  HACKER_CLASSES_ALL,
-  HackerClass,
-} from "@forge/db/schemas/knight-hacks";
+import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import { HACKER_TEAMS } from "@forge/db/schemas/knight-hacks";
 
 import type { api as serverCall } from "~/trpc/server";
 import { getClassTeam } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
-type HackerClassAll = typeof HACKER_CLASSES_ALL;
-
 interface LeaderboardEntry {
   firstName: string;
   lastName: string;
   points: number;
-  class: HackerClassAll | null;
+  class: HackerClass | null;
   id: string;
 }
 
@@ -75,7 +70,7 @@ export function PointLeaderboard({
         setTop(data?.topB ?? []);
         break;
     }
-  }, [activeInd]);
+  }, [activeInd, data, overall]);
 
   useEffect(() => {
     if (activeTop)
@@ -83,7 +78,7 @@ export function PointLeaderboard({
         !activeTop.find((v) => v.id == hacker?.id) &&
           (data?.place[activeInd] ?? -1) != -1,
       );
-  }, [activeTop]);
+  }, [activeTop, hacker?.id, data?.place, activeInd]);
 
   return (
     <>
