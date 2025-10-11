@@ -431,3 +431,26 @@ export const Judges = createTable("judges", (t) => ({
 }));
 
 export const InsertJudgesSchema = createInsertSchema(Judges);
+export const JudgedSubmission = createTable("judged_submission", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  hackathonId: t
+    .uuid()
+    .notNull()
+    .references(() => Hackathon.id),
+  submissionId: t
+    .uuid()
+    .notNull()
+    .references(() => Submissions.id),
+  judgeId: t.uuid().notNull(),
+  //.references(() => Judge.id), WHEN JUDGE DB ADDED, INCLUDE THE REF
+  privateFeedback: t.varchar({ length: 255 }).notNull(),
+  publicFeedback: t.varchar({ length: 255 }).notNull(),
+  originality_rating: t.integer().notNull(),
+  design_rating: t.integer().notNull(),
+  technical_understanding_rating: t.integer().notNull(),
+  implementation_rating: t.integer().notNull(),
+  wow_factor_rating: t.integer().notNull(),
+}));
+
+export const InsertJudgedSubmissionSchema =
+  createInsertSchema(JudgedSubmission);
