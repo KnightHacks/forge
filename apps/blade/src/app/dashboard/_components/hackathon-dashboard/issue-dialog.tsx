@@ -84,7 +84,7 @@ export default function AlertButton() {
               type="submit"
               disabled={!issue.trim() || reportIssueMutation.isPending}
             >
-              {reportIssueMutation.isLoading ? "Submitting..." : "Submit"}
+              {reportIssueMutation.isPending ? "Submitting..." : "Submit"}
             </Button>
           </DialogFooter>
         </form>
