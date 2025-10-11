@@ -19,6 +19,7 @@ import {
 } from "@forge/consts/knight-hacks";
 
 import { User } from "./auth";
+import { boolean } from "drizzle-orm/mysql-core";
 
 const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
@@ -348,9 +349,6 @@ export const Challenges = createTable("challenges", (t) => ({
 
 export const InsertChallengesSchema = createInsertSchema(Challenges);
 
-const SUBMISSION_STATUS = ["Pending", "Submitted"] as const;
-export const submissionStatusEnum = pgEnum("submission_status", SUBMISSION_STATUS);
-
 export const Submissions = createTable("submissions", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   challengeId: t
@@ -365,7 +363,7 @@ export const Submissions = createTable("submissions", (t) => ({
   .references(() => Teams.id, {
     onDelete: "cascade",
   }),
-  status: submissionStatusEnum().notNull(), // TODO: check if this is correct and what other status there are
+  judgedStatus: t.boolean().notNull().default(false),
   hackatonId: t
     .uuid()
     .notNull()
