@@ -63,9 +63,17 @@ export default async function HackathonDashboard({
     team: string;
     classPfp: string;
   }
-  const { teamColor, team, classPfp } = (
-    HACKER_CLASS_INFO as unknown as string[]
-  )[hacker.class as string] as HackerClassInfo;
+
+  const HACKER_CLASS_INFO_TYPED: Record<string, HackerClassInfo> =
+    HACKER_CLASS_INFO as Record<string, HackerClassInfo>;
+
+  const classInfo = HACKER_CLASS_INFO_TYPED[hacker.class] ?? {
+    teamColor: "#000000",
+    team: "Unknown Team",
+    classPfp: "/default.png",
+  };
+
+  const { teamColor, team, classPfp } = classInfo;
 
   return (
     <>
