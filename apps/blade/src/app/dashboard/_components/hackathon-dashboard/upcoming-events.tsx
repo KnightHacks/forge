@@ -21,8 +21,10 @@ export default async function UpcomingEvents() {
 
   const upcomingEvents = events
     .filter((event) => {
-      const start = new Date(event.start_datetime).getTime(); // adjust key if needed
-      return event.hackathonId != null && start >= now;
+      const start = new Date(event.start_datetime).getTime();
+      return (
+        event.hackathonId != null && start >= now && start <= fiveHoursLater
+      );
     })
     .sort(
       (a, b) =>
