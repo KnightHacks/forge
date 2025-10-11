@@ -20,7 +20,6 @@ export default async function HackathonDashboard({
 }: {
   hacker: Awaited<ReturnType<(typeof serverCall.hacker)["getHacker"]>>;
 }) {
-  const { teamColor, team, classPfp } = HACKER_CLASS_INFO[hacker?.class];
   const currentHackathon = await api.hackathon.getCurrentHackathon();
 
   if (!hacker) {
@@ -37,6 +36,29 @@ export default async function HackathonDashboard({
       </div>
     );
   }
+
+  if (!(hacker.class in HACKER_CLASS_INFO)) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-y-6 px-4 py-12 text-center">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950">
+          <h3 className="mb-2 text-xl font-semibold text-red-800 dark:text-red-200">
+            Configuration Error
+          </h3>
+          <p className="text-red-700 dark:text-red-300">
+            Unable to load your team information. Please contact support or try
+            refreshing the page.
+          </p>
+          {hacker.class && (
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+              Class: {hacker.class}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const { teamColor, team, classPfp } = HACKER_CLASS_INFO[hacker.class];
 
   return (
     <>
