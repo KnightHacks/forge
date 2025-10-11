@@ -5,7 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, CircleCheckBig, Trophy } from "lucide-react";
 
-import { HACKER_CLASS_INFO } from "@forge/consts/knight-hacks";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@forge/ui/dialog";
 
 import type { api as serverCall } from "~/trpc/server";
 import { HACKER_STATUS_MAP } from "~/consts";
@@ -13,15 +19,20 @@ import { api } from "~/trpc/react";
 import { HackerQRCodePopup } from "../hacker-dashboard/hacker-qr-button";
 import { DownloadQRPass } from "../member-dashboard/download-qr-pass";
 import AlertButton from "./issue-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@forge/ui/dialog";
 import { PointLeaderboard } from "./point-leaderboard";
 
 type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
 
 export function HackathonData({
   data,
+  teamColor,
+  team,
+  classPfp,
 }: {
   data: Awaited<ReturnType<(typeof serverCall.hacker)["getHacker"]>>;
+  teamColor: string;
+  team: string;
+  classPfp: string;
 }) {
   const [hackerStatus, setHackerStatus] = useState<string | null>("");
   const [hackerStatusColor, setHackerStatusColor] = useState<string>("");
@@ -36,8 +47,6 @@ export function HackathonData({
   const { data: hackathonData } = api.hackathon.getHackathon.useQuery({
     hackathonName: undefined,
   });
-
-  const { teamColor, team, classPfp } = HACKER_CLASS_INFO[hacker?.class];
 
   function getStatusName(status: StatusKey) {
     if (!status) return "";
@@ -108,7 +117,7 @@ export function HackathonData({
                 </p>
                 <div className="inline-flex items-center gap-2.5 rounded-full bg-background shadow-sm">
                   <span
-                    className={`text-base font-bold sm:text-lg uppercase ${hackerStatusColor}`}
+                    className={`text-base font-bold uppercase sm:text-lg ${hackerStatusColor}`}
                   >
                     {hackerStatus}
                   </span>
@@ -142,7 +151,7 @@ export function HackathonData({
           </h3>
 
           {/* QR Code and Apple Wallet */}
-          <div className="flex flex-row items-center justify-between gap-3 sm:flex-row sm:gap-3 sm:justify-start">
+          <div className="flex flex-row items-center justify-between gap-3 sm:flex-row sm:justify-start sm:gap-3">
             <HackerQRCodePopup />
             <DownloadQRPass />
           </div>
@@ -234,14 +243,14 @@ export function HackathonData({
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>
-                      Leaderboard
-                    </DialogTitle>
+                    <DialogTitle>Leaderboard</DialogTitle>
                   </DialogHeader>
-                  <PointLeaderboard hacker={hacker} hId={hackathonData?.name ?? ""}/>
+                  <PointLeaderboard
+                    hacker={hacker}
+                    hId={hackathonData?.name ?? ""}
+                  />
                 </DialogContent>
               </Dialog>
-              
             </div>
           </div>
         </div>
