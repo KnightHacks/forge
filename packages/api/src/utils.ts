@@ -2,6 +2,7 @@ import type { APIGuildMember } from "discord-api-types/v10";
 import { cookies } from "next/headers";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
+import { and, eq, gt } from "drizzle-orm";
 import { Resend } from "resend";
 import Stripe from "stripe";
 
@@ -283,4 +284,29 @@ export const getJudgeSessionFromCookie = async () => {
     .limit(1);
 
   return rows[0] ?? null;
+};
+
+interface CalendarStub {
+  events: {
+    insert: (params: unknown) => Promise<{ data: { id: string } }>;
+    update: (params: unknown) => Promise<{ data: { id: string } }>;
+    delete: (params: unknown) => Promise<Record<string, never>>;
+  };
+}
+
+export const calendar: CalendarStub = {
+  events: {
+    insert: (_params: unknown) => {
+      console.warn("Google Calendar integration not implemented - stub called");
+      return Promise.resolve({ data: { id: "stub-event-id" } });
+    },
+    update: (_params: unknown) => {
+      console.warn("Google Calendar integration not implemented - stub called");
+      return Promise.resolve({ data: { id: "stub-event-id" } });
+    },
+    delete: (_params: unknown) => {
+      console.warn("Google Calendar integration not implemented - stub called");
+      return Promise.resolve({});
+    },
+  },
 };
