@@ -42,7 +42,7 @@ export function CheckInPage() {
             </CardHeader>
             <CardContent>
               <div className="flex justify-center">
-                <ScannerPopUp eventType="Hacker" />
+                <ScannerPopUp eventType="Member" />
               </div>
             </CardContent>
           </Card>
@@ -56,7 +56,7 @@ export function CheckInPage() {
                 Manual Entry
               </CardTitle>
               <CardDescription>
-                Manually enter user information for check-ins when QR scanning
+                Manually enter member information for check-ins when QR scanning
                 is not available
               </CardDescription>
             </CardHeader>
