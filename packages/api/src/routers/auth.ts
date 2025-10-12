@@ -2,7 +2,6 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
 import { invalidateSessionToken } from "@forge/auth";
-import { PERMISSIONS } from "@forge/consts/knight-hacks";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
 import { isDiscordAdmin, isDiscordMember, getUserPermissions, userHasPermission, userHasFullAdmin, userHasCheckIn} from "../utils";
