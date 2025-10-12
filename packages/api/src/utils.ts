@@ -83,7 +83,9 @@ export const getUserPermissions = async (
       Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
     )) as APIGuildMember;
 
-    const userPermissionArray = new Array(Object.keys(PERMISSIONS).length).fill("0");
+    const userPermissionArray = new Array(Object.keys(PERMISSIONS).length).fill(
+      "0",
+    );
 
     for (const roleId of guildMember.roles) {
       if (roleId in ROLE_PERMISSIONS) {
