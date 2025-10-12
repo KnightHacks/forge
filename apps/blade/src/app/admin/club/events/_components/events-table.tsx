@@ -194,7 +194,7 @@ export function EventsTable() {
 
                 <TableCell className="text-center">
                   <EventDetailsButton
-                    event={{ ...event, hackathonName: null }}
+                    event={{ ...event, hackathonName: undefined }}
                   />
                 </TableCell>
 
@@ -242,7 +242,7 @@ export function EventsTable() {
 
                 <TableCell className="text-center">
                   <EventDetailsButton
-                    event={{ ...event, hackathonName: null }}
+                    event={{ ...event, hackathonName: undefined }}
                   />
                 </TableCell>
 
