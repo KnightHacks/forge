@@ -12,11 +12,11 @@ import {
   DEV_KNIGHTHACKS_LOG_CHANNEL,
   GOOGLE_PERSONIFY_EMAIL,
   IS_PROD,
+  PERMISSIONS,
   PROD_DISCORD_ADMIN_ROLE_ID,
   PROD_KNIGHTHACKS_GUILD_ID,
   PROD_KNIGHTHACKS_LOG_CHANNEL,
   ROLE_PERMISSIONS,
-  PERMISSIONS,
 } from "@forge/consts/knight-hacks";
 
 import { env } from "./env";
@@ -67,39 +67,45 @@ export const isDiscordAdmin = async (user: Session["user"]) => {
   }
 };
 
-export const hasPermission = (userPermissions: string, permission: PermissionIndex): boolean => {
+export const hasPermission = (
+  userPermissions: string,
+  permission: PermissionIndex,
+): boolean => {
   const permissionBit = userPermissions[permission];
-  return permissionBit === '1';
+  return permissionBit === "1";
 };
 
 export const combinePermissions = (permissionStrings: string[]): string => {
-  if (permissionStrings.length === 0) return '0'.repeat(Object.keys(PERMISSIONS).length);
-  
-  const maxLength = Math.max(...permissionStrings.map(p => p.length));
-  let result = '';
-  
+  if (permissionStrings.length === 0)
+    return "0".repeat(Object.keys(PERMISSIONS).length);
+
+  const maxLength = Math.max(...permissionStrings.map((p) => p.length));
+  let result = "";
+
   for (let i = 0; i < maxLength; i++) {
     let hasPermissionAtIndex = false;
     for (const permString of permissionStrings) {
-      if (permString[i] === '1') {
+      if (permString[i] === "1") {
         hasPermissionAtIndex = true;
         break;
       }
     }
-    result += hasPermissionAtIndex ? '1' : '0';
+    result += hasPermissionAtIndex ? "1" : "0";
   }
-  
+
   return result;
 };
 
-export const getUserPermissions = async (user: Session["user"]): Promise<string> => {
+export const getUserPermissions = async (
+  user: Session["user"],
+): Promise<string> => {
   try {
     const guildMember = (await discord.get(
       Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
     )) as APIGuildMember;
 
     const userPermissionStrings: string[] = [];
-    
+
     for (const roleId of guildMember.roles) {
       if (ROLE_PERMISSIONS[roleId]) {
         userPermissionStrings.push(ROLE_PERMISSIONS[roleId]);
@@ -109,32 +115,32 @@ export const getUserPermissions = async (user: Session["user"]): Promise<string>
     return combinePermissions(userPermissionStrings);
   } catch (err) {
     console.error("Error getting user permissions: ", err);
-    return '0'.repeat(Object.keys(PERMISSIONS).length);
+    return "0".repeat(Object.keys(PERMISSIONS).length);
   }
 };
 
-// 🔥 KEY FUNCTION: Enhanced permission check with FULL_ADMIN override
 export const userHasPermission = async (
-  user: Session["user"], 
-  permission: PermissionIndex
+  user: Session["user"],
+  permission: PermissionIndex,
 ): Promise<boolean> => {
   const userPermissions = await getUserPermissions(user);
-  
-  // 🚀 FULL_ADMIN override: If user has FULL_ADMIN (index 0), they can access everything
+
   if (hasPermission(userPermissions, PERMISSIONS.FULL_ADMIN)) {
     return true;
   }
-  
-  // Otherwise check the specific permission
+
   return hasPermission(userPermissions, permission);
 };
 
-// Specific permission check functions for convenience
-export const userHasFullAdmin = async (user: Session["user"]): Promise<boolean> => {
+export const userHasFullAdmin = async (
+  user: Session["user"],
+): Promise<boolean> => {
   return userHasPermission(user, PERMISSIONS.FULL_ADMIN);
 };
 
-export const userHasCheckIn = async (user: Session["user"]): Promise<boolean> => {
+export const userHasCheckIn = async (
+  user: Session["user"],
+): Promise<boolean> => {
   return userHasPermission(user, PERMISSIONS.CHECK_IN);
 };
 
