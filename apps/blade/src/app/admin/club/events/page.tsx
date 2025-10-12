@@ -43,7 +43,7 @@ export default async function Events() {
           </div>
         </div>
         <div className="rounded-xl pb-8">
-          <EventsTable hasFullAdmin={hasFullAdmin}/>
+          <EventsTable hasFullAdmin={hasFullAdmin} />
         </div>
       </main>
     </HydrateClient>

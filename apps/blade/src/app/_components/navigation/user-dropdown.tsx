@@ -24,8 +24,8 @@ import {
   adminClubItems,
   adminHackathonItems,
   adminItems,
+  checkInOnlyItems,
   userItems,
-  checkInOnlyItems
 } from "./reusable-user-dropdown";
 
 interface UserDropdownProps {

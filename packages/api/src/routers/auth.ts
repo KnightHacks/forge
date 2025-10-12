@@ -4,7 +4,14 @@ import { z } from "zod";
 import { invalidateSessionToken } from "@forge/auth";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
-import { isDiscordAdmin, isDiscordMember, getUserPermissions, userHasPermission, userHasFullAdmin, userHasCheckIn} from "../utils";
+import {
+  getUserPermissions,
+  isDiscordAdmin,
+  isDiscordMember,
+  userHasCheckIn,
+  userHasFullAdmin,
+  userHasPermission,
+} from "../utils";
 
 export const authRouter = {
   getSession: publicProcedure.query(({ ctx }) => {
@@ -56,7 +63,6 @@ export const authRouter = {
     }
     return userHasCheckIn(ctx.session.user);
   }),
-
 
   signOut: protectedProcedure.mutation(async (opts) => {
     if (!opts.ctx.token) {
