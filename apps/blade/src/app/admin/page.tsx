@@ -65,6 +65,12 @@ export default async function Admin() {
                 <Link href="/admin/hackathon/hackers">
                   <Button>Hackers</Button>
                 </Link>
+                <Link href="/admin/hackathon/events">
+                  <Button>Events</Button>
+                </Link>
+                <Link href="/admin/hackathon/check-in">
+                  <Button>Check-in</Button>
+                </Link>
                 <Link href="/admin/hackathon/data">
                   <Button>Data</Button>
                 </Link>
