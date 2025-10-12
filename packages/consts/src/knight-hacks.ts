@@ -297,9 +297,9 @@ export const KH_EVENT_ROLE_ID = IS_PROD
 export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
 
 export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
-  Operators: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,
+  Operator: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,
   Machinist: IS_PROD ? PROD_DISCORD_ROLE_MACHINIST : DEV_DISCORD_ROLE_MACHINIST,
-  Sentinels: IS_PROD ? PROD_DISCORD_ROLE_SENTINELS : DEV_DISCORD_ROLE_SENTINELS,
+  Sentinel: IS_PROD ? PROD_DISCORD_ROLE_SENTINELS : DEV_DISCORD_ROLE_SENTINELS,
   Harbinger: IS_PROD ? PROD_DISCORD_ROLE_HARBINGER : DEV_DISCORD_ROLE_HARBINGER,
   Monstologist: IS_PROD
     ? PROD_DISCORD_ROLE_MONSTOLOGIST
@@ -5595,3 +5595,47 @@ export interface Semester {
   startDate: Date;
   endDate: Date;
 }
+
+export interface ClassInfo {
+  team: string;
+  teamColor: string;
+  classPfp: string;
+}
+
+export const HACKER_CLASS_INFO: Record<AssignableHackerClass, ClassInfo> = {
+  Machinist: {
+    team: "Humanity",
+    teamColor: "#228be6",
+    classPfp: "/khviii/machinist.png",
+  },
+  Operator: {
+    team: "Humanity",
+    teamColor: "#228be6",
+    classPfp: "/khviii/operator.png",
+  },
+  Sentinel: {
+    team: "Humanity",
+    teamColor: "#228be6",
+    classPfp: "/khviii/sentinel.png",
+  },
+  Monstologist: {
+    team: "Monstrosity",
+    teamColor: "#e03131",
+    classPfp: "/khviii/monstologist.png",
+  },
+  Harbinger: {
+    team: "Monstrosity",
+    teamColor: "#e03131",
+    classPfp: "/khviii/harbinger.png",
+  },
+  Alchemist: {
+    team: "Monstrosity",
+    teamColor: "#e03131",
+    classPfp: "/khviii/alchemist.png",
+  },
+};
+
+export const OFFICER_ROLE_ID =
+  process.env.NODE_ENV === "production"
+    ? "486629374758748180"
+    : "1246637685011906560";
