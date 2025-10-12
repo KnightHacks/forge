@@ -352,7 +352,6 @@ export const hackerRouter = {
         )
         .orderBy(desc(HackerAttendee.points))
         .limit(5);
-      console.log(topB);
 
       // stores your place in each sorted leaderboard
       // 0: team A, 2: overall, 3: team B
@@ -368,6 +367,7 @@ export const hackerRouter = {
           : await db.$count(
               HackerAttendee,
               and(
+                eq(HackerAttendee.hackathonId, hackathon.id),
                 gt(HackerAttendee.points, input.hPoints),
                 or(
                   eq(HackerAttendee.class, HACKER_CLASSES[0]),
@@ -378,13 +378,17 @@ export const hackerRouter = {
             ),
         await db.$count(
           HackerAttendee,
-          gt(HackerAttendee.points, input.hPoints),
+          and(
+            eq(HackerAttendee.hackathonId, hackathon.id),
+            gt(HackerAttendee.points, input.hPoints),
+          ),
         ),
         ind < 3
           ? -1
           : await db.$count(
               HackerAttendee,
               and(
+                eq(HackerAttendee.hackathonId, hackathon.id),
                 gt(HackerAttendee.points, input.hPoints),
                 or(
                   eq(HackerAttendee.class, HACKER_CLASSES[3]),

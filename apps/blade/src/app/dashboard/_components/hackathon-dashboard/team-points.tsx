@@ -23,18 +23,6 @@ export function TeamPoints({
   const [byTeam, setByTeam] = useState<number[]>([0, 0]);
   const team = getClassTeam(hClass);
 
-  function updateByTeam() {
-    if (!classPoints) return;
-    let a = 0;
-    let b = 0;
-    for (let i = 0; i < classPoints.length; i++) {
-      if (i < classPoints.length / 2) a += classPoints.at(i) || 0;
-      else b += classPoints.at(i) || 0;
-    }
-
-    setByTeam([a, b]);
-  }
-
   function formatPts(pt: number) {
     const fmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
     if (pt >= 1000) return `${fmt.format(pt / 1000)}k`;
@@ -47,8 +35,23 @@ export function TeamPoints({
   }
 
   useEffect(() => {
+    function updateByTeam() {
+      if (!classPoints) return;
+      let a = 0;
+      let b = 0;
+      for (let i = 0; i < classPoints.length; i++) {
+        if (i < classPoints.length / 2) a += classPoints.at(i) || 0;
+        else b += classPoints.at(i) || 0;
+      }
+
+      setByTeam([a, b]);
+    }
+
     if (classPoints) updateByTeam();
   }, [classPoints]);
+
+  const humanityHex = "#4075b7";
+  const monstrosityHex = "#c04b3d";
 
   return (
     <Card className="bg-gradient-to-tr from-background/50 to-primary/5 shadow-lg backdrop-blur-sm">
@@ -57,20 +60,20 @@ export function TeamPoints({
           <div
             className="font-semibold tracking-wider"
             style={{
-              color: "#4075b7",
+              color: `${humanityHex}`,
               textShadow:
                 team.team == HACKER_TEAMS[0]
-                  ? `0 0 10px ${"#4075b7"}, 0 0 20px ${"#4075b7"}`
+                  ? `0 0 10px ${humanityHex}, 0 0 20px ${humanityHex}`
                   : "",
             }}
           >{`${team.team == HACKER_TEAMS[0] ? "> " : ""}${HACKER_TEAMS[0].toUpperCase()}`}</div>
           <div
             className="font-semibold tracking-wider"
             style={{
-              color: "#c04b3d",
+              color: monstrosityHex,
               textShadow:
                 team.team == HACKER_TEAMS[1]
-                  ? `0 0 10px ${"#c04b3d"}, 0 0 20px ${"#c04b3d"}`
+                  ? `0 0 10px ${monstrosityHex}, 0 0 20px ${monstrosityHex}`
                   : "",
             }}
           >{`${HACKER_TEAMS[1].toUpperCase()}${team.team == HACKER_TEAMS[1] ? " <" : ""}`}</div>
