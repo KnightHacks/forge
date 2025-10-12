@@ -129,6 +129,32 @@ export const checkInOnlyItems: roleItems[] = [
   },
 ];
 
+export const scannerOnlyClubItems: roleItems[] = [
+  {
+    name: "Check-in",
+    component: (
+      <TicketCheck
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/club/check-in",
+  },
+];
+
+export const scannerOnlyHackathonItems: roleItems[] = [
+  {
+    name: "Check-in",
+    component: (
+      <TicketCheck
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/hackathon/check-in",
+  },
+];
+
 export const userItems: roleItems[] = [
   {
     name: "Settings",

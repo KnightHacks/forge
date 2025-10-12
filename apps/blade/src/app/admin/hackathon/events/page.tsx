@@ -20,9 +20,10 @@ export default async function HackathonEvents() {
     redirect(SIGN_IN_PATH);
   }
 
-  // Check if the user has access to Blade
-  const isAdmin = await api.auth.getAdminStatus();
-  if (!isAdmin) {
+  // Check if the user has access to Events
+  const hasFullAdmin = await api.auth.hasFullAdmin();
+
+  if (!hasFullAdmin) {
     redirect("/");
   }
 
@@ -46,3 +47,4 @@ export default async function HackathonEvents() {
     </HydrateClient>
   );
 }
+

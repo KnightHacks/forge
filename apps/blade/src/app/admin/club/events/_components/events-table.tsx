@@ -29,11 +29,7 @@ type Event = ReturnEvent;
 type SortField = keyof Event;
 type SortOrder = "asc" | "desc" | null;
 
-interface EventsTableProps {
-  hasFullAdmin?: boolean;
-}
-
-export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
+export function EventsTable() {
   const [sortField, setSortField] = useState<SortField | null>(
     "start_datetime",
   );
@@ -90,7 +86,7 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
                 className="pl-8"
               />
             </div>
-            {hasFullAdmin && <CreateEventButton />}
+            <CreateEventButton />
           </div>
           <div className="whitespace-nowrap text-center text-sm font-bold">
             Returned {sortedEvents.length}{" "}
@@ -155,16 +151,14 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
             <TableHead className="text-center">
               <Label>Event Details</Label>
             </TableHead>
-            {hasFullAdmin && (
-              <TableHead className="text-center">
-                <Label>Update</Label>
-              </TableHead>
-            )}
-            {hasFullAdmin && (
-              <TableHead className="text-center">
-                <Label>Delete</Label>
-              </TableHead>
-            )}
+
+            <TableHead className="text-center">
+              <Label>Update</Label>
+            </TableHead>
+
+            <TableHead className="text-center">
+              <Label>Delete</Label>
+            </TableHead>
           </TableRow>
         </TableHeader>
 
@@ -172,7 +166,7 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
           <TableRow>
             <TableCell
               className="text- bg-muted/50 font-bold sm:text-center"
-              colSpan={hasFullAdmin ? 8 : 6}
+              colSpan={8}
             >
               Upcoming Events
             </TableCell>
@@ -204,17 +198,13 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
                   />
                 </TableCell>
 
-                {hasFullAdmin && (
-                  <TableCell className="text-center">
-                    <UpdateEventButton event={event} />
-                  </TableCell>
-                )}
+                <TableCell className="text-center">
+                  <UpdateEventButton event={event} />
+                </TableCell>
 
-                {hasFullAdmin && (
-                  <TableCell className="text-center">
-                    <DeleteEventButton event={event} />
-                  </TableCell>
-                )}
+                <TableCell className="text-center">
+                  <DeleteEventButton event={event} />
+                </TableCell>
               </TableRow>
             );
           })}
@@ -224,7 +214,7 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
           <TableRow>
             <TableCell
               className="bg-muted/50 text-left font-bold sm:text-center"
-              colSpan={hasFullAdmin ? 8 : 6}
+              colSpan={8}
             >
               Previous Events
             </TableCell>
@@ -256,17 +246,13 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
                   />
                 </TableCell>
 
-                {hasFullAdmin && (
-                  <TableCell className="text-center">
-                    <UpdateEventButton event={event} />
-                  </TableCell>
-                )}
+                <TableCell className="text-center">
+                  <UpdateEventButton event={event} />
+                </TableCell>
 
-                {hasFullAdmin && (
-                  <TableCell className="text-center">
-                    <DeleteEventButton event={event} />
-                  </TableCell>
-                )}
+                <TableCell className="text-center">
+                  <DeleteEventButton event={event} />
+                </TableCell>
               </TableRow>
             );
           })}
@@ -278,7 +264,7 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
             <TableCell className="text-right">
               {sortedEvents.reduce((sum, event) => sum + event.numAttended, 0)}
             </TableCell>
-            <TableCell colSpan={hasFullAdmin ? 3 : 1} />
+            <TableCell colSpan={3} />
           </TableRow>
         </TableFooter>
       </Table>
