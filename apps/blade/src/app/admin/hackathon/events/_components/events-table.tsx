@@ -37,11 +37,12 @@ export function EventsTable() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: events } = api.event.getEvents.useQuery();
+  const { data: hackathons } = api.hackathon.getHackathons.useQuery();
 
-  // Only show club events (events without hackathonId)
-  const clubEvents = (events ?? []).filter((event) => !event.hackathonId);
+  // Only show hackathon events (events with hackathonId)
+  const hackathonEvents = (events ?? []).filter((event) => event.hackathonId);
 
-  const filteredEvents = clubEvents.filter((event) =>
+  const filteredEvents = hackathonEvents.filter((event) =>
     Object.values(event).some((value) => {
       if (value === null) return false;
       // Convert value to string for searching
@@ -170,12 +171,17 @@ export function EventsTable() {
             </TableCell>
           </TableRow>
           {upcomingEvents.map((event) => {
+            const hackathonName = hackathons?.find((v) => {
+              return v.id == event.hackathonId;
+            })?.name;
             return (
               <TableRow key={event.id}>
                 <TableCell className="text-center font-medium">
                   {event.name}
                 </TableCell>
-                <TableCell className="text-center">{event.tag}</TableCell>
+                <TableCell className="text-center">
+                  {event.tag + (hackathonName ? ` [${hackathonName}]` : "")}
+                </TableCell>
 
                 <TableCell className="text-center">
                   {getFormattedDate(event.start_datetime)}
@@ -186,13 +192,13 @@ export function EventsTable() {
                 <TableCell className="text-right">
                   <ViewAttendanceButton
                     event={event}
-                    numAttended={event.numAttended}
+                    numAttended={event.numHackerAttended}
                   />
                 </TableCell>
 
                 <TableCell className="text-center">
                   <EventDetailsButton
-                    event={{ ...event, hackathonName: null }}
+                    event={{ ...event, hackathonName: hackathonName }}
                   />
                 </TableCell>
 
@@ -218,12 +224,17 @@ export function EventsTable() {
             </TableCell>
           </TableRow>
           {previousEvents.map((event) => {
+            const hackathonName = hackathons?.find((v) => {
+              return v.id == event.hackathonId;
+            })?.name;
             return (
               <TableRow key={event.id}>
                 <TableCell className="text-center font-medium">
                   {event.name}
                 </TableCell>
-                <TableCell className="text-center">{event.tag}</TableCell>
+                <TableCell className="text-center">
+                  {event.tag + (hackathonName ? ` [${hackathonName}]` : "")}
+                </TableCell>
 
                 <TableCell className="text-center">
                   {getFormattedDate(event.start_datetime)}
@@ -234,13 +245,13 @@ export function EventsTable() {
                 <TableCell className="text-right">
                   <ViewAttendanceButton
                     event={event}
-                    numAttended={event.numAttended}
+                    numAttended={event.numHackerAttended}
                   />
                 </TableCell>
 
                 <TableCell className="text-center">
                   <EventDetailsButton
-                    event={{ ...event, hackathonName: null }}
+                    event={{ ...event, hackathonName: hackathonName }}
                   />
                 </TableCell>
 
@@ -260,7 +271,10 @@ export function EventsTable() {
           <TableRow>
             <TableCell colSpan={4}>Total Attendance</TableCell>
             <TableCell className="text-right">
-              {sortedEvents.reduce((sum, event) => sum + event.numAttended, 0)}
+              {sortedEvents.reduce(
+                (sum, event) => sum + event.numHackerAttended,
+                0,
+              )}
             </TableCell>
             <TableCell colSpan={3} />
           </TableRow>

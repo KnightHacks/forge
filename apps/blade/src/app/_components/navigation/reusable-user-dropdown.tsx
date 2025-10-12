@@ -85,6 +85,16 @@ export const adminHackathonItems: roleItems[] = [
     route: "/admin/hackathon/hackers",
   },
   {
+    name: "Events",
+    component: (
+      <CalendarDays
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/hackathon/events",
+  },
+  {
     name: "Check-in",
     component: (
       <TicketCheck
