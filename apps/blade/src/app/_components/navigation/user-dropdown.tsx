@@ -24,7 +24,6 @@ import {
   adminClubItems,
   adminHackathonItems,
   adminItems,
-  checkInOnlyItems,
   scannerOnlyClubItems,
   scannerOnlyHackathonItems,
   userItems,

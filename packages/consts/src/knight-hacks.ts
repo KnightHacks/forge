@@ -272,7 +272,7 @@ export const PERMISSIONS = {
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSIONS;
-export type PermissionIndex = typeof PERMISSIONS[PermissionKey];
+export type PermissionIndex = (typeof PERMISSIONS)[PermissionKey];
 
 export const PROD_KNIGHTHACKS_GUILD_ID = "486628710443778071";
 export const DEV_KNIGHTHACKS_GUILD_ID = "1151877367434850364";
