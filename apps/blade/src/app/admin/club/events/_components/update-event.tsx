@@ -60,6 +60,7 @@ const UpdateFormSchema = InsertEventSchema.omit({
   googleId: true,
 }).extend({
   date: z.string(),
+  endDate: z.string(),
   startHour: z.string(),
   startMinute: z.string(),
   startAmPm: z.enum(amPmOptions),
@@ -68,36 +69,32 @@ const UpdateFormSchema = InsertEventSchema.omit({
   endAmPm: z.enum(amPmOptions),
 });
 
-function parseDateTime(isoString: string) {
-  const dateObj = new Date(isoString);
-  if (isNaN(dateObj.getTime())) {
-    return {
-      date: "",
-      hour: "",
-      minute: "",
-      amPm: "PM" as const,
-    };
+function parseDateTime(value: string | Date) {
+  const d = value instanceof Date ? new Date(value) : new Date(value);
+  if (isNaN(d.getTime())) {
+    return { date: "", hour: "", minute: "", amPm: "PM" as const };
   }
 
-  dateObj.setDate(dateObj.getDate() + 1);
-  dateObj.setDate(dateObj.getDate());
-  const formattedDate = dateObj.toISOString().split("T")[0];
+  d.setDate(d.getDate() + 1);
 
-  let hour24 = dateObj.getHours();
-  const mins = dateObj.getMinutes();
-  const amPm = hour24 >= 12 ? "PM" : ("AM" as "AM" | "PM");
+  // Format local YYYY-MM-DD for <input type="date">
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const formattedDate = `${yyyy}-${mm}-${dd}`;
 
-  // Convert 24-hour to 12-hour
-  if (hour24 === 0) {
-    hour24 = 12; // 0 => 12 AM
-  } else if (hour24 > 12) {
-    hour24 -= 12;
-  }
+  let hour24 = d.getHours();
+  const mins = d.getMinutes();
+  const amPm = hour24 >= 12 ? "PM" : "AM";
+
+  // 24h -> 12h
+  if (hour24 === 0) hour24 = 12;
+  else if (hour24 > 12) hour24 -= 12;
 
   return {
     date: formattedDate,
-    hour: hour24.toString().padStart(2, "0"),
-    minute: mins.toString().padStart(2, "0"),
+    hour: String(hour24).padStart(2, "0"),
+    minute: String(mins).padStart(2, "0"),
     amPm,
   };
 }
@@ -105,6 +102,8 @@ function parseDateTime(isoString: string) {
 export function UpdateEventButton({ event }: { event: InsertEvent }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const { data: hackathons } = api.hackathon.getHackathons.useQuery();
 
   // TRPC update mutation
   const utils = api.useUtils();
@@ -129,6 +128,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
     amPm: startAmPm,
   } = parseDateTime(event.start_datetime.toString());
   const {
+    date: endDate,
     hour: endHour,
     minute: endMinute,
     amPm: endAmPm,
@@ -143,18 +143,30 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       location: event.location || "",
       tag: event.tag,
       date: date,
+      endDate: endDate,
       dues_paying: event.dues_paying,
+      hackathonId: event.hackathonId,
+      hackathonName:
+        hackathons?.find((v) => {
+          return v.id == event.hackathonId;
+        })?.displayName ?? null,
       startHour: startHour,
       startMinute: startMinute,
-      startAmPm: startAmPm,
+      startAmPm: startAmPm as "AM" | "PM",
       endHour: endHour,
       endMinute: endMinute,
-      endAmPm: endAmPm,
+      endAmPm: endAmPm as "AM" | "PM",
     },
   });
 
   const onSubmit = form.handleSubmit((values) => {
     setIsLoading(true);
+
+    if (values.dues_paying && values.hackathonId) {
+      toast.error("Hackathon events cannot require dues.");
+      setIsLoading(false);
+      return;
+    }
 
     // Extract year, month, and day explicitly to construct a local Date object
     const [year, month, day] = values.date.split("-").map(Number);
@@ -176,15 +188,18 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
     }
     finalStartDate.setHours(hour24, parseInt(values.startMinute, 10) || 0);
 
+    const [eyear, emonth, eday] = values.endDate.split("-").map(Number);
+    if (!eyear || !emonth || !eday) {
+      toast.error("Invalid end date format.");
+      setIsLoading(false);
+      return;
+    }
+
     // Convert end date + hour/minute/amPm to a valid Date object
-    const finalEndDate = new Date(year, month - 1, day); // Construct date in local time
+    const finalEndDate = new Date(eyear, emonth - 1, eday);
     let endHour24 = parseInt(values.endHour, 10) || 0;
-    if (values.endAmPm === "PM" && endHour24 < 12) {
-      endHour24 += 12;
-    }
-    if (values.endAmPm === "AM" && endHour24 === 12) {
-      endHour24 = 0;
-    }
+    if (values.endAmPm === "PM" && endHour24 < 12) endHour24 += 12;
+    if (values.endAmPm === "AM" && endHour24 === 12) endHour24 = 0;
     finalEndDate.setHours(endHour24, parseInt(values.endMinute, 10) || 0);
 
     // Ensure the end date is after the start date
@@ -206,6 +221,11 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       tag: values.tag,
       start_datetime: finalStartDate,
       end_datetime: finalEndDate,
+      hackathonId: values.hackathonId == "none" ? null : values.hackathonId,
+      hackathonName:
+        hackathons?.find((v) => {
+          return v.id == values.hackathonId;
+        })?.displayName ?? null,
     });
   });
 
@@ -289,7 +309,46 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                 )}
               />
 
-              {/* Date (Calendar popover) */}
+              {/* Hackathon (pulls from Hackathon table) */}
+              <FormField
+                control={form.control}
+                name="hackathonId"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel htmlFor="tag" className="text-right">
+                        Hackathon
+                      </FormLabel>
+                      <FormControl>
+                        <Select
+                          // Use defaultValue if the field already has a value
+                          onValueChange={field.onChange}
+                          defaultValue={field.value ? field.value : "none"}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="Select a tag" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem key="none" value="none">
+                              None
+                            </SelectItem>
+                            {hackathons?.map((h) => (
+                              <SelectItem key={h.id} value={h.id}>
+                                {h.displayName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Start Date */}
               <FormField
                 control={form.control}
                 name="date"
@@ -402,6 +461,23 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                   />
                 </div>
               </div>
+
+              {/* End Date — NEW */}
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">End Date</FormLabel>
+                      <FormControl className="col-span-3">
+                        <Input type="date" {...field} />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               {/* End Time (Hour, Minute, AM/PM) */}
               <div className="grid grid-cols-4 items-center gap-4">

@@ -28,7 +28,7 @@ export default async function HackerDashboard({
     return (
       <div className="flex flex-col items-center justify-center gap-y-6 text-xl font-semibold">
         <p className="w-full max-w-xl text-center text-2xl">
-          Register for KnightHacks today!
+          Register for Knight Hacks today!
         </p>
         <div className="flex flex-wrap justify-center gap-5">
           {

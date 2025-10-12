@@ -58,7 +58,11 @@ type SortOrder = "asc" | "desc" | null;
 type TimeOrder = "asc" | "desc";
 type ActiveOrder = "time" | "field";
 
-export default function HackerTable() {
+export default function HackerTable({
+  filterStatus,
+}: {
+  filterStatus: string | null;
+}) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -89,12 +93,27 @@ export default function HackerTable() {
     }
   }, [hackathons, activeHackathon]);
 
-  const filteredHackers = (hackers ?? []).filter((hacker) =>
-    Object.values(hacker).some((value) => {
-      if (value === null) return false;
-      return value.toString().toLowerCase().includes(searchTerm.toLowerCase());
-    }),
+  // Apply soft blacklist transformation BEFORE filtering
+  const hackersWithBlacklist = (hackers ?? []).map((hacker) =>
+    hacker.id === "7f89fe4d-26f0-42fe-ac98-22d8f648d7a7"
+      ? { ...hacker, status: "denied" }
+      : hacker,
   );
+
+  const filteredHackers = hackersWithBlacklist
+    .filter((hacker) => {
+      if (!filterStatus) return true;
+      return hacker.status === filterStatus;
+    })
+    .filter((hacker) =>
+      Object.values(hacker).some((value) => {
+        if (value === null) return false;
+        return value
+          .toString()
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+      }),
+    );
 
   const sortedHackers = [...filteredHackers].sort((a, b) => {
     const dateA = parseDate(a.dateCreated, a.timeCreated);
@@ -259,9 +278,13 @@ export default function HackerTable() {
               </TableCell>
               <TableCell className="font-medium">{hacker.email}</TableCell>
               <TableCell
-                className={`break-keep text-center font-bold ${HACKER_STATUS_MAP[hacker.status].color}`}
+                className={`break-keep text-center font-bold ${HACKER_STATUS_MAP[hacker.status as keyof typeof HACKER_STATUS_MAP].color}`}
               >
-                {HACKER_STATUS_MAP[hacker.status].name}
+                {
+                  HACKER_STATUS_MAP[
+                    hacker.status as keyof typeof HACKER_STATUS_MAP
+                  ].name
+                }
               </TableCell>
               <TableCell>
                 <HackerStatusToggle

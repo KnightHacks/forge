@@ -20,6 +20,9 @@ import { db } from "@forge/db/client";
 import {
   Event,
   EventAttendee,
+  Hacker,
+  HackerAttendee,
+  HackerEventAttendee,
   InsertEventSchema,
   Member,
 } from "@forge/db/schemas/knight-hacks";
@@ -43,9 +46,11 @@ export const eventRouter = {
       .select({
         ...getTableColumns(Event),
         numAttended: count(EventAttendee.id),
+        numHackerAttended: count(HackerEventAttendee.id),
       })
       .from(Event)
       .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
+      .leftJoin(HackerEventAttendee, eq(Event.id, HackerEventAttendee.eventId))
       .groupBy(Event.id)
       .orderBy(desc(Event.start_datetime));
     return events;
@@ -62,6 +67,27 @@ export const eventRouter = {
       .orderBy(Member.firstName);
     return attendees;
   }),
+  getHackerAttendees: adminProcedure
+    .input(z.string())
+    .query(async ({ input }) => {
+      const attendees = await db
+        .select({
+          ...getTableColumns(Hacker),
+        })
+        .from(Event)
+        .innerJoin(
+          HackerEventAttendee,
+          eq(Event.id, HackerEventAttendee.eventId),
+        )
+        .innerJoin(
+          HackerAttendee,
+          eq(HackerEventAttendee.hackerAttId, HackerAttendee.id),
+        )
+        .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+        .where(eq(Event.id, input))
+        .orderBy(Hacker.firstName);
+      return attendees;
+    }),
   createEvent: adminProcedure
     .input(
       InsertEventSchema.omit({ id: true, discordId: true, googleId: true }),
@@ -94,6 +120,12 @@ export const eventRouter = {
       const formattedName =
         "[" + input.tag.toUpperCase().replace(" ", "-") + "] " + input.name;
 
+      const hackDesc = input.hackathonName
+        ? `### ⚔️ ${input.hackathonName} ⚔️\n\n`
+        : "";
+
+      const pointDesc = `\n\n**⭐ ${EVENT_POINTS[input.tag] || 0} Points**`;
+
       // Step 1: Create the event in Discord
       let discordEventId: string | undefined;
       try {
@@ -101,7 +133,7 @@ export const eventRouter = {
           Routes.guildScheduledEvents(KNIGHTHACKS_GUILD_ID),
           {
             body: {
-              description: input.description,
+              description: hackDesc + input.description + pointDesc,
               name: formattedName,
               privacy_level: DISCORD_EVENT_PRIVACY_LEVEL,
               scheduled_start_time: startLocalIso, // Use ISO for Discord
@@ -275,13 +307,19 @@ export const eventRouter = {
       const formattedName =
         "[" + input.tag.toUpperCase().replace(" ", "-") + "] " + input.name;
 
+      const hackDesc = input.hackathonName
+        ? `### ⚔️ ${input.hackathonName} ⚔️\n\n`
+        : "";
+
+      const pointDesc = `\n\n**⭐ ${EVENT_POINTS[input.tag] || 0} Points**`;
+
       // Step 1: Update the event in Discord
       try {
         await discord.patch(
           Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, input.discordId),
           {
             body: {
-              description: input.description,
+              description: hackDesc + input.description + pointDesc,
               name: formattedName,
               privacy_level: DISCORD_EVENT_PRIVACY_LEVEL,
               scheduled_start_time: startLocalIso,
@@ -412,6 +450,7 @@ export const eventRouter = {
           ...input,
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
+          points: input.hackathonId ? 0 : EVENT_POINTS[input.tag] || 0,
         })
         .where(eq(Event.id, input.id));
     }),

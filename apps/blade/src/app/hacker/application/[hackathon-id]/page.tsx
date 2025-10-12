@@ -60,7 +60,7 @@ export default async function HackerApplicationPage({
 
   if (hackathon.applicationDeadline < new Date()) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center">
+      <div className="flex h-screen w-screen items-center justify-center text-center">
         <div className="flex flex-col items-center justify-center">
           <h1 className="text-2xl font-bold">
             The application deadline for {hackathon.displayName} has passed.

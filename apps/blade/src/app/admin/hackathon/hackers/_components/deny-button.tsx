@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { render } from "@react-email/render";
 import { Loader2, X } from "lucide-react";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
+// import BlacklistEmail from "@forge/transactional/emails/knighthacks-viii/blacklist-email";
+import CapacityEmail from "@forge/transactional/emails/knighthacks-viii/capacity-email";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -55,7 +58,7 @@ export default function DenyButton({
     },
   });
 
-  const handleUpdateStatus = () => {
+  const handleUpdateStatus = async () => {
     setIsLoading(true);
     updateStatus.mutate({
       id: hacker.id ?? "",
@@ -63,11 +66,13 @@ export default function DenyButton({
       hackathonName,
     });
 
+    const html = await render(<CapacityEmail name={hacker.firstName} />);
+
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: "Your application to Knight Hacks",
-      body: "<h1>you didnt make it<h1>", // change..
+      subject: `${hackathonName} Status Update`,
+      body: html,
     });
   };
 

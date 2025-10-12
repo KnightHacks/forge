@@ -6,6 +6,7 @@ import { render } from "@react-email/render";
 import { CircleCheckBig, Loader2 } from "lucide-react";
 
 import { USE_CAUTION } from "@forge/consts/knight-hacks";
+import ConfirmationEmail from "@forge/transactional/emails/knighthacks-viii/confirmation-email";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -20,9 +21,9 @@ import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
 
 import type { api as serverCall } from "~/trpc/server";
-import { GemiKnightsConfirmationEmail } from "~/app/admin/hackathon/hackers/_components/gemiknights-confirmation-email";
 import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
+import ConfirmWithTOS from "./confirm-button";
 import { HackerQRCodePopup } from "./hacker-qr-button";
 
 type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
@@ -39,6 +40,9 @@ export function HackerData({
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
+  const { data: currentHackathon } =
+    api.hackathon.getCurrentHackathon.useQuery();
+
   const { data: hacker, isError } = api.hacker.getHacker.useQuery(
     {},
     {
@@ -50,9 +54,13 @@ export function HackerData({
     hackathonName: undefined,
   });
 
+  const { data: numConfirmed } = api.hackathon.getNumConfirmed.useQuery({
+    hackathonId: currentHackathon?.id ?? "",
+  });
+
   const sendEmail = api.email.sendEmail.useMutation({
     onSuccess: () => {
-      toast.success("Check your email for the final step!");
+      toast.success("You're Confirmed!");
     },
     onError: (opts) => {
       toast.error(opts.message);
@@ -69,16 +77,12 @@ export function HackerData({
 
     if (!hacker) return;
 
-    const html = await render(
-      <GemiKnightsConfirmationEmail
-        name={`${hacker.firstName} ${hacker.lastName}`}
-      />,
-    );
+    const html = await render(<ConfirmationEmail name={hacker.firstName} />);
 
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: "GemiKnights 2025 - FINAL STEP: Complete MLH Registration!",
+      subject: `See you at ${currentHackathon?.displayName}!`,
       body: html,
     });
   };
@@ -192,22 +196,12 @@ export function HackerData({
 
         {hackerStatus === "Accepted" &&
           hackathonData?.confirmationDeadline != null && (
-            <Button
-              size="sm"
-              className={`animate-fade-in sm:size-lg gap-2 !rounded-none ${
-                hackathonData.confirmationDeadline < new Date()
-                  ? "bg-gray-700 hover:bg-gray-900"
-                  : ""
-              }`}
-              onClick={handleConfirm}
-              disabled={hackathonData.confirmationDeadline < new Date()}
-            >
-              {loading ? (
-                <Loader2 className="w-[85px] animate-spin" />
-              ) : (
-                <span className="text-lg font-bold text-white">CONFIRM</span>
-              )}
-            </Button>
+            <ConfirmWithTOS
+              isLoading={loading}
+              hackathonData={hackathonData}
+              handleConfirm={handleConfirm}
+              numConfirmed={numConfirmed ?? 0}
+            />
           )}
 
         <div>

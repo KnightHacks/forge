@@ -109,7 +109,7 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
       <ChartStyle id={id} config={baseConfig} />
       <CardHeader className="flex-col items-start gap-4 space-y-0 pb-0">
         <div className="grid gap-1">
-          <CardTitle className="text-xl">Year of Study</CardTitle>
+          <CardTitle className="text-xl">Level of Study</CardTitle>
         </div>
         <Select
           value={activeLevel ? activeLevel : undefined}

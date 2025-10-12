@@ -11,6 +11,7 @@ export const env = createEnv({
     DISCORD_WEATHER_API_KEY: z.string(),
     DISCORD_DAILY_REMINDERS_WEBHOOK_URL: z.string(),
     DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL: z.string(),
+    DISCORD_HACKATHON_WEBHOOK_URL: z.string(),
   },
   runtimeEnvStrict: {
     DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
@@ -24,6 +25,7 @@ export const env = createEnv({
       process.env.DISCORD_DAILY_REMINDERS_WEBHOOK_URL,
     DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL:
       process.env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL,
+    DISCORD_HACKATHON_WEBHOOK_URL: process.env.DISCORD_HACKATHON_WEBHOOK_URL,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",

@@ -69,11 +69,11 @@ export function HackerQRCodePopup() {
   const qrTrigger = (
     <Button
       size="lg"
-      className="animate-fade-in gap-2 !rounded-none border border-[#1F2937] !bg-white px-3 !shadow-none hover:!bg-[#E5E7EB] dark:!bg-[#0A0F1D] dark:hover:!bg-[#1F2937] sm:px-8"
+      className="animate-fade-in group w-full gap-2 rounded-lg border border-[#1F2937] bg-card px-5 py-3 shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:bg-card hover:shadow-md sm:px-8"
     >
-      <QrCode className="h-5 w-5 dark:hidden" color="#000000" />
-      <QrCode className="hidden h-5 w-5 dark:block" color="#FFFFFF" />
-      <span className="text-lg font-bold text-black dark:text-white">QR</span>
+      <QrCode className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary dark:hidden" />
+      <QrCode className="hidden h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary dark:block" />
+      <span className="text-base font-bold text-black dark:text-white">QR</span>
     </Button>
   );
 
@@ -85,24 +85,30 @@ export function HackerQRCodePopup() {
 
   return (
     <>
-      <div className="md:hidden">
+      <div className="w-full sm:w-auto md:hidden">
         <Drawer>
           <DrawerTrigger asChild>{qrTrigger}</DrawerTrigger>
           <DrawerContent className="mx-auto w-full max-w-sm">
             <DrawerHeader>
-              <DrawerTitle>Your QR Code</DrawerTitle>
+              <DrawerTitle>
+                Your <span className="font-bold text-primary">HACKER</span> QR
+                Code
+              </DrawerTitle>
             </DrawerHeader>
             {qrContent}
             <DrawerDescription />
           </DrawerContent>
         </Drawer>
       </div>
-      <div className="hidden md:block">
+      <div className="hidden w-full sm:w-auto md:block">
         <Dialog>
           <DialogTrigger asChild>{qrTrigger}</DialogTrigger>
           <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Your QR Code</DialogTitle>
+              <DialogTitle>
+                Your <span className="font-bold text-primary">HACKER</span> QR
+                Code
+              </DialogTitle>
             </DialogHeader>
             {qrContent}
             <DialogDescription />

@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { render } from "@react-email/render";
 import { ClipboardList, Loader2 } from "lucide-react";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
+import WaitlistEmail from "@forge/transactional/emails/knighthacks-viii/waitlist-email";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -55,7 +57,7 @@ export default function WaitlistButton({
     },
   });
 
-  const handleUpdateStatus = () => {
+  const handleUpdateStatus = async () => {
     setIsLoading(true);
     updateStatus.mutate({
       id: hacker.id ?? "",
@@ -63,11 +65,13 @@ export default function WaitlistButton({
       hackathonName,
     });
 
+    const html = await render(<WaitlistEmail name={hacker.firstName} />);
+
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: "Your application to Knight Hacks",
-      body: "<h1>you almost made it<h1>", // change..
+      subject: `${hackathonName} Waitlist Information`,
+      body: html,
     });
   };
 

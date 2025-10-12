@@ -19,6 +19,7 @@ import {
   SHIRT_SIZES,
 } from "@forge/consts/knight-hacks";
 import { InsertHackerSchema } from "@forge/db/schemas/knight-hacks";
+import ApplyEmail from "@forge/transactional/emails/knighthacks-viii/apply-email";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -44,7 +45,6 @@ import {
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
-import KH8ApplyEmail from "~/app/admin/hackathon/hackers/_components/kh8-apply-email";
 import { api } from "~/trpc/react";
 
 export function HackerFormPage({
@@ -60,6 +60,7 @@ export function HackerFormPage({
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [comboBoxKey, setComboBoxKey] = useState(0);
+  const [tosAccepted, setTosAccepted] = useState(false);
   const utils = api.useUtils();
 
   // Get previous hacker profile to pre-fill form
@@ -331,6 +332,13 @@ export function HackerFormPage({
         noValidate
         onSubmit={form.handleSubmit(async (values) => {
           setLoading(true);
+
+          if (!tosAccepted) {
+            toast.error("Please Accept the Knight Hacks Terms of Service");
+            setLoading(false);
+            return;
+          }
+
           try {
             let resumeUrl = "";
             if (values.resumeUpload?.length && values.resumeUpload[0]) {
@@ -370,14 +378,12 @@ export function HackerFormPage({
               hackathonName: hackathonId,
             });
 
-            const html = await render(
-              <KH8ApplyEmail name={values.firstName} />,
-            );
+            const html = await render(<ApplyEmail name={values.firstName} />);
 
             sendEmail.mutate({
               from: "donotreply@knighthacks.org",
               to: values.email,
-              subject: "KnightHacks VIII - We recieved your application!",
+              subject: "Knight Hacks VIII - We recieved your application!",
               body: html,
             });
           } catch (error) {
@@ -1028,6 +1034,31 @@ export function HackerFormPage({
             </FormItem>
           )}
         />
+
+        <div className="flex flex-row space-x-3 space-y-0 py-2">
+          <div>
+            <Checkbox
+              checked={tosAccepted}
+              onCheckedChange={(v) => setTosAccepted(!!v)}
+              className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+              aria-labelledby="tos-visual-label"
+            />
+          </div>
+
+          <div className="space-y-1 leading-none">
+            <div id="tos-visual-label" className="text-sm font-medium">
+              By checking this box you acknowledge that you agree to the{" "}
+              <Link
+                href="https://knight-hacks.notion.site/kh-25-tos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-blue-600 underline underline-offset-4 hover:no-underline"
+              >
+                Knight Hacks Terms of Service
+              </Link>
+            </div>
+          </div>
+        </div>
 
         {loading ? (
           <div className="flex justify-center">

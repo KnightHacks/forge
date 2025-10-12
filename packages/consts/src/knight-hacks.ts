@@ -1,3 +1,5 @@
+import type { HackerClass } from "../../db/src/schemas/knight-hacks";
+
 export const LEVELS_OF_STUDY = [
   "Less than Secondary / High School",
   "Secondary / High School",
@@ -162,8 +164,13 @@ export const EVENT_TAGS = [
   "Class Support",
   "Workshop",
   "OPS",
-  "Hackathon",
   "Collabs",
+  "Check-in",
+  "Merch",
+  "Food",
+  "Ceremony",
+  "CAREER-FAIR",
+  "RSO-FAIR",
 ] as const;
 
 export const EVENT_FEEDBACK_HEARD = [
@@ -184,17 +191,22 @@ type EventTag = (typeof EVENT_TAGS)[number];
 
 export const EVENT_POINTS: Record<EventTag, number> = {
   GBM: 35,
-  Social: 35,
+  Social: 25,
   Kickstart: 25,
   "Project Launch": 25,
   "Hello World": 25,
-  Sponsorship: 40,
+  Sponsorship: 50,
   "Tech Exploration": 25,
   "Class Support": 25,
   Workshop: 25,
   OPS: 20,
-  Hackathon: 1,
   Collabs: 40,
+  "Check-in": 5,
+  Merch: 5,
+  Food: 5,
+  Ceremony: 50,
+  "CAREER-FAIR": 100,
+  "RSO-FAIR": 50,
 } as const;
 
 export const KNIGHTHACKS_S3_BUCKET_REGION = "us-east-1";
@@ -240,6 +252,45 @@ export const DEV_KNIGHTHACKS_GUILD_ID = "1151877367434850364";
 
 export const PROD_KNIGHTHACKS_LOG_CHANNEL = "1324885515412963531";
 export const DEV_KNIGHTHACKS_LOG_CHANNEL = "1284582557689843785";
+
+export const PROD_DISCORD_ROLE_KNIGHT_HACKS_8 = "1408025502119231498";
+export const DEV_DISCORD_ROLE_KNIGHT_HACKS_8 = "1420819573816692857";
+
+export const PROD_DISCORD_ROLE_OPERATORS = "1415702220825038879";
+export const DEV_DISCORD_ROLE_OPERATORS = "1420819261223600239";
+
+export const PROD_DISCORD_ROLE_MACHINIST = "1415702276433248406";
+export const DEV_DISCORD_ROLE_MACHINIST = "1420819223797698683";
+
+export const PROD_DISCORD_ROLE_SENTINELS = "1415702308494250136";
+export const DEV_DISCORD_ROLE_SENTINELS = "1420819277279137892";
+
+export const PROD_DISCORD_ROLE_HARBINGER = "1415702341214011392";
+export const DEV_DISCORD_ROLE_HARBINGER = "1420819326075801670";
+
+export const PROD_DISCORD_ROLE_MONSTOLOGIST = "1415702361653121044";
+export const DEV_DISCORD_ROLE_MONSTOLOGIST = "1420819295759237222";
+
+export const PROD_DISCORD_ROLE_ALCHEMIST = "1415702383274491934";
+export const DEV_DISCORD_ROLE_ALCHEMIST = "1420819309965611140";
+
+export const IS_PROD = process.env.NODE_ENV === "production";
+
+export const KH_EVENT_ROLE_ID = IS_PROD
+  ? PROD_DISCORD_ROLE_KNIGHT_HACKS_8
+  : DEV_DISCORD_ROLE_KNIGHT_HACKS_8;
+export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
+
+export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
+  Operator: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,
+  Machinist: IS_PROD ? PROD_DISCORD_ROLE_MACHINIST : DEV_DISCORD_ROLE_MACHINIST,
+  Sentinel: IS_PROD ? PROD_DISCORD_ROLE_SENTINELS : DEV_DISCORD_ROLE_SENTINELS,
+  Harbinger: IS_PROD ? PROD_DISCORD_ROLE_HARBINGER : DEV_DISCORD_ROLE_HARBINGER,
+  Monstologist: IS_PROD
+    ? PROD_DISCORD_ROLE_MONSTOLOGIST
+    : DEV_DISCORD_ROLE_MONSTOLOGIST,
+  Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
+} as const satisfies Record<AssignableHackerClass, string>;
 
 export const MEMBER_PROFILE_ICON_SIZE = 24;
 
@@ -292,7 +343,13 @@ export type EventTagsColor =
   | "Workshop"
   | "OPS"
   | "Hackathon"
-  | "Collabs";
+  | "Collabs"
+  | "Check-in"
+  | "Merch"
+  | "Food"
+  | "Ceremony"
+  | "CAREER-FAIR"
+  | "RSO-FAIR";
 
 export const GENDERS = [
   "Man",
@@ -5516,3 +5573,47 @@ export interface Semester {
   startDate: Date;
   endDate: Date;
 }
+
+export interface ClassInfo {
+  team: string;
+  teamColor: string;
+  classPfp: string;
+}
+
+export const HACKER_CLASS_INFO: Record<AssignableHackerClass, ClassInfo> = {
+  Machinist: {
+    team: "Humanity",
+    teamColor: "#228be6",
+    classPfp: "/khviii/machinist.png",
+  },
+  Operator: {
+    team: "Humanity",
+    teamColor: "#228be6",
+    classPfp: "/khviii/operator.png",
+  },
+  Sentinel: {
+    team: "Humanity",
+    teamColor: "#228be6",
+    classPfp: "/khviii/sentinel.png",
+  },
+  Monstologist: {
+    team: "Monstrosity",
+    teamColor: "#e03131",
+    classPfp: "/khviii/monstologist.png",
+  },
+  Harbinger: {
+    team: "Monstrosity",
+    teamColor: "#e03131",
+    classPfp: "/khviii/harbinger.png",
+  },
+  Alchemist: {
+    team: "Monstrosity",
+    teamColor: "#e03131",
+    classPfp: "/khviii/alchemist.png",
+  },
+};
+
+export const OFFICER_ROLE_ID =
+  process.env.NODE_ENV === "production"
+    ? "486629374758748180"
+    : "1246637685011906560";
