@@ -21,8 +21,9 @@ export default async function Events() {
   }
 
   // Check if the user has access to Blade
-  const isAdmin = await api.auth.getAdminStatus();
-  if (!isAdmin) {
+  const hasAccess = await api.auth.hasCheckIn();
+
+  if (!hasAccess) {
     redirect("/");
   }
 
