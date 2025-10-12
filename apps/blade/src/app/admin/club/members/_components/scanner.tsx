@@ -278,25 +278,28 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               <TabsContent value="current" className="space-y-4">
                 {renderEventSelect(currentEvents)}
                 {eventType === "Hacker" && renderClassCheckinSelect()}
-
-                <ToggleButton
-                  isToggled={toggleRepeatedCheckIn}
-                  onToggle={(value) => {
-                    setToggleRepeatedCheckIn(value);
-                    form.setValue("repeatedCheckin", value);
-                  }}
-                />
+                {eventType === "Hacker" && (
+                  <ToggleButton
+                    isToggled={toggleRepeatedCheckIn}
+                    onToggle={(value) => {
+                      setToggleRepeatedCheckIn(value);
+                      form.setValue("repeatedCheckin", value);
+                    }}
+                  />
+                )}
               </TabsContent>
               <TabsContent value="previous" className="space-y-4">
                 {renderEventSelect(previousEvents)}
                 {eventType === "Hacker" && renderClassCheckinSelect()}
-                <ToggleButton
-                  isToggled={toggleRepeatedCheckIn}
-                  onToggle={(value) => {
-                    setToggleRepeatedCheckIn(value);
-                    form.setValue("repeatedCheckin", value);
-                  }}
-                />
+                {eventType === "Hacker" && (
+                  <ToggleButton
+                    isToggled={toggleRepeatedCheckIn}
+                    onToggle={(value) => {
+                      setToggleRepeatedCheckIn(value);
+                      form.setValue("repeatedCheckin", value);
+                    }}
+                  />
+                )}
               </TabsContent>
             </Tabs>
           </form>

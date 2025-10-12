@@ -5,6 +5,15 @@ import { z } from "zod";
 
 import { db } from "@forge/db/client";
 import { JudgeSession } from "@forge/db/schemas/auth";
+import {
+  Submissions,
+  JudgedSubmission,
+  InsertJudgedSubmissionSchema,
+} from "@forge/db/schemas/knight-hacks";
+
+import {
+  eq,
+} from "@forge/db";
 
 import { env } from "../env";
 import { adminProcedure, publicProcedure } from "../trpc";
@@ -161,5 +170,49 @@ export const judgeRouter = {
         ok: true,
         roomName,
       };
+    }),
+
+
+  createJudgedSubmission: publicProcedure
+    .input(
+      InsertJudgedSubmissionSchema.omit({
+        hackathonId: true,
+        id: true
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      
+      const submission = await db.query.Submissions.findFirst({
+        where: (t, { eq }) => eq(t.id, input.submissionId)
+      })
+
+      if (!submission){
+        throw new TRPCError({
+          message: "Submission not found to update!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      if (submission.judgedStatus){
+        throw new TRPCError({
+          message: "Submission already judged!",
+          code: "CONFLICT",
+        });
+      }
+
+      await db.insert(JudgedSubmission).values({
+        hackathonId: submission.hackathonId, 
+        ...input,
+      });
+
+      // update judged status in submission db
+      submission.judgedStatus = true
+
+      await db
+        .update(Submissions)
+        .set({
+          ...submission
+        })
+        .where(eq(Submissions.id, submission.id));
     }),
 };
