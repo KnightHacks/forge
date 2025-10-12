@@ -2,6 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
 import { invalidateSessionToken } from "@forge/auth";
+import type { PermissionIndex } from "@forge/consts/knight-hacks";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
 import {
@@ -47,7 +48,7 @@ export const authRouter = {
       if (!ctx.session) {
         return Promise.resolve(false);
       }
-      return userHasPermission(ctx.session.user, input.permission as any);
+      return userHasPermission(ctx.session.user, input.permission as PermissionIndex);
     }),
 
   hasFullAdmin: publicProcedure.query(({ ctx }): Promise<boolean> => {
