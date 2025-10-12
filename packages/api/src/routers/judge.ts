@@ -1,15 +1,22 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { TRPCError } from "@trpc/server";
-import { asc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@forge/db/client";
 import { JudgeSession } from "@forge/db/schemas/auth";
-import { Judges } from "@forge/db/schemas/knight-hacks";
+import {
+  Challenges,
+  InsertJudgedSubmissionSchema,
+  JudgedSubmission,
+  Judges,
+  Submissions,
+  Teams,
+} from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
-import { adminProcedure, publicProcedure } from "../trpc";
+import { judgeProcedure, publicProcedure } from "../trpc";
 
 const SESSION_TTL_HOURS = 8;
 
@@ -110,7 +117,92 @@ const verifyMagicToken = (token: string): MagicPayload => {
 };
 
 export const judgeRouter = {
-  generateToken: adminProcedure
+  // Query: submissions (optionally by hackathonId) with joined metadata
+  getSubmissions: judgeProcedure
+    .input(
+      z.object({
+        hackathonId: z.string().optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const submissions = await db
+        .select({
+          id: Submissions.id,
+          projectName: Teams.projectTitle,
+          devpost: Teams.devpostUrl,
+          description: Teams.notes,
+          challenge: Challenges.title,
+          challengeId: Submissions.challengeId,
+          teamId: Submissions.teamId,
+          judgedStatus: Submissions.judgedStatus,
+          hackathonId: Submissions.hackathonId,
+        })
+        .from(Submissions)
+        .leftJoin(Teams, eq(Submissions.teamId, Teams.id))
+        .leftJoin(Challenges, eq(Submissions.challengeId, Challenges.id))
+        .where(
+          input.hackathonId
+            ? eq(Submissions.hackathonId, input.hackathonId)
+            : undefined,
+        );
+
+      return submissions.map((s) => ({
+        id: s.id,
+        projectName: s.projectName ?? "Untitled Project",
+        devpost: s.devpost ?? "No Devpost link provided",
+        description: s.description ?? "No description provided",
+        challenge: s.challenge ?? "No challenge specified",
+        challengeId: s.challengeId,
+        teamId: s.teamId,
+        judgedStatus: s.judgedStatus,
+        hackathonId: s.hackathonId,
+      }));
+    }),
+
+  // Query: whether this judge has already submitted a rubric for this submission
+  hasGivenRubric: judgeProcedure
+    .input(
+      z.object({
+        submissionId: z.string(),
+        judgeId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const existingRubric = await db.query.JudgedSubmission.findFirst({
+        where: (t, { eq, and }) =>
+          and(
+            eq(t.submissionId, input.submissionId),
+            eq(t.judgeId, input.judgeId),
+          ),
+      });
+
+      return !!existingRubric;
+    }),
+
+  // Query: judges with their (optional) challenge title
+  getJudges: publicProcedure.query(async () => {
+    const judges = await db
+      .select({
+        id: Judges.id,
+        name: Judges.name,
+        roomName: Judges.roomName,
+        challengeId: Judges.challengeId,
+        challengeTitle: Challenges.title,
+      })
+      .from(Judges)
+      .leftJoin(Challenges, eq(Judges.challengeId, Challenges.id));
+
+    return judges.map((judge) => ({
+      id: judge.id,
+      name: judge.name,
+      roomName: judge.roomName,
+      challengeId: judge.challengeId,
+      challengeTitle: judge.challengeTitle ?? "No Challenge",
+    }));
+  }),
+
+  // Admin: generate a short-lived activation URL
+  generateToken: judgeProcedure
     .input(
       z.object({
         roomName: z.string(),
@@ -130,10 +222,11 @@ export const judgeRouter = {
       return { magicUrl }; // put this in QR code/s
     }),
 
+  // Public: activate token -> create JudgeSession + cookie
   activateToken: publicProcedure
     .input(
       z.object({
-        token: z.string().min(16).max(2048), // 2 KB,
+        token: z.string().min(16).max(2048), // 2 KB
       }),
     )
     .mutation(async ({ input }) => {
@@ -164,35 +257,89 @@ export const judgeRouter = {
         roomName,
       };
     }),
-  // Query, no input, list all judges
-  getJudges: publicProcedure.query(async () => {
-    return await db.select().from(Judges).orderBy(asc(Judges.name));
-  }),
 
+  // Public: create a judged submission and flip the submission's judgedStatus
+  createJudgedSubmission: publicProcedure
+    .input(
+      InsertJudgedSubmissionSchema.omit({
+        hackathonId: true,
+        id: true,
+      }),
+    )
+    .mutation(async ({ input }) => {
+      // Validate the submission exists
+      const submission = await db.query.Submissions.findFirst({
+        where: (t, { eq }) => eq(t.id, input.submissionId),
+      });
+
+      if (!submission) {
+        throw new TRPCError({
+          message: "Submission not found to update!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      // Validate the judge exists and get their challengeId
+      const judge = await db.query.Judges.findFirst({
+        where: (j, { eq }) => eq(j.id, input.judgeId),
+      });
+
+      if (!judge) {
+        throw new TRPCError({
+          message: "Judge not found!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      // Check if judge's challengeId matches submission's challengeId
+      if (judge.challengeId !== submission.challengeId) {
+        throw new TRPCError({
+          message:
+            "Judge is not authorized to evaluate submissions for this challenge!",
+          code: "FORBIDDEN",
+        });
+      }
+
+      // Ensure this judge hasn't already judged this specific submission
+      const alreadyJudged = await db.query.JudgedSubmission.findFirst({
+        where: (t, { and, eq }) =>
+          and(
+            eq(t.submissionId, input.submissionId),
+            eq(t.judgeId, input.judgeId),
+          ),
+      });
+
+      if (alreadyJudged) {
+        throw new TRPCError({
+          message: "Submission already judged by this judge!",
+          code: "CONFLICT",
+        });
+      }
+
+      // Insert JudgedSubmission
+      await db.insert(JudgedSubmission).values({
+        hackathonId: submission.hackathonId,
+        ...input,
+      });
+
+      // Mark the submission as judged (boolean)
+      await db
+        .update(Submissions)
+        .set({ judgedStatus: true })
+        .where(eq(Submissions.id, submission.id));
+
+      return { ok: true };
+    }),
   // Mutation: create a new judge
-  createJudge: adminProcedure
+  createJudge: judgeProcedure
     .input(
       z.object({
-        name: z.string().min(1).max(100), // Or some other min/max combo
+        name: z.string().min(1).max(100),
         roomName: z.string().optional(),
         challengeId: z.string().uuid(),
       }),
     )
     .mutation(async ({ input }) => {
-      if (!input.name) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Not a valid judge",
-        });
-      }
-
-      if (!input.challengeId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Not a valid challenge",
-        });
-      }
-
       const challengeExists = await db.query.Challenges.findFirst({
         where: (c, { eq }) => eq(c.id, input.challengeId),
       });
@@ -208,10 +355,12 @@ export const judgeRouter = {
         roomName: input.roomName ?? "Unassigned",
         challengeId: input.challengeId,
       });
+
+      return { ok: true };
     }),
 
-  //Mutation: update the judge object
-  updateJudge: adminProcedure
+  // Mutation: update the judge object
+  updateJudge: judgeProcedure
     .input(
       z.object({
         id: z.string().uuid(),
@@ -220,20 +369,6 @@ export const judgeRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      if (!input.id) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid Judge",
-        });
-      }
-
-      if (!input.roomName) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Not a valid room",
-        });
-      }
-
       const judge = await db.query.Judges.findFirst({
         where: (j, { eq }) => eq(j.id, input.id),
       });
@@ -242,8 +377,9 @@ export const judgeRouter = {
       }
 
       if (input.challengeId) {
+        const challengeId: string = input.challengeId;
         const challengeExists = await db.query.Challenges.findFirst({
-          where: (c, { eq }) => eq(c.id, input.challengeId ?? ""), // Since challenge is req
+          where: (c, { eq }) => eq(c.id, challengeId),
         });
         if (!challengeExists) {
           throw new TRPCError({
@@ -260,10 +396,12 @@ export const judgeRouter = {
           challengeId: input.challengeId ?? judge.challengeId,
         })
         .where(eq(Judges.id, input.id));
+
+      return { ok: true };
     }),
 
   // Mutation: delete a judge
-  deleteJudge: adminProcedure
+  deleteJudge: judgeProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ input }) => {
       const judge = await db.query.Judges.findFirst({
@@ -273,5 +411,6 @@ export const judgeRouter = {
         throw new TRPCError({ code: "NOT_FOUND", message: "Judge not found" });
       }
       await db.delete(Judges).where(eq(Judges.id, input.id));
+      return { ok: true };
     }),
 };
