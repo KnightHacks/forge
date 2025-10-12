@@ -19,9 +19,9 @@ export default async function HackathonCheckIn() {
     redirect(SIGN_IN_PATH);
   }
 
-  // Check if the user has access to Blade
-  const isAdmin = await api.auth.getAdminStatus();
-  if (!isAdmin) {
+  // Check if the user has access to the scanner
+  const hasAccess = await api.auth.hasCheckIn();
+  if (!hasAccess) {
     redirect("/");
   }
 
@@ -44,4 +44,3 @@ export default async function HackathonCheckIn() {
     </HydrateClient>
   );
 }
-
