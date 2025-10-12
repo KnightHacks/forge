@@ -182,8 +182,6 @@ export const judgeRouter = {
     )
     .mutation(async ({ input, ctx }) => {
       
-
-      // find submission
       const submission = await db.query.Submissions.findFirst({
         where: (t, { eq }) => eq(t.id, input.submissionId)
       })
@@ -195,8 +193,15 @@ export const judgeRouter = {
         });
       }
 
+      if (submission.judgedStatus){
+        throw new TRPCError({
+          message: "Submission already judged!",
+          code: "CONFLICT",
+        });
+      }
+
       await db.insert(JudgedSubmission).values({
-        hackathonId: submission?.hackathonId, 
+        hackathonId: submission.hackathonId, 
         ...input,
       });
 
