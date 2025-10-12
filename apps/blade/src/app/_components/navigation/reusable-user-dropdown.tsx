@@ -171,19 +171,6 @@ export const scannerOnlyHackathonItems: roleItems[] = [
   },
 ];
 
-export const checkInOnlyItems: roleItems[] = [
-  {
-    name: "Events",
-    component: (
-      <CalendarDays
-        color={USER_DROPDOWN_ICON_COLOR}
-        size={USER_DROPDOWN_ICON_SIZE}
-      />
-    ),
-    route: "/admin/club/events",
-  },
-];
-
 export const userItems: roleItems[] = [
   {
     name: "Settings",
