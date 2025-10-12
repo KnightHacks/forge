@@ -22,6 +22,7 @@ export default async function Events() {
 
   // Check if the user has access to Blade
   const hasAccess = await api.auth.hasCheckIn();
+  const hasFullAdmin = await api.auth.hasFullAdmin();
 
   if (!hasAccess) {
     redirect("/");
@@ -42,7 +43,7 @@ export default async function Events() {
           </div>
         </div>
         <div className="rounded-xl pb-8">
-          <EventsTable />
+          <EventsTable hasFullAdmin={hasFullAdmin}/>
         </div>
       </main>
     </HydrateClient>
