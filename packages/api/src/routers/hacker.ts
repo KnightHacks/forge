@@ -12,7 +12,7 @@ import {
   KH_EVENT_ROLE_ID,
   KNIGHTHACKS_S3_BUCKET_REGION,
 } from "@forge/consts/knight-hacks";
-import { and, count, eq, sql } from "@forge/db";
+import { and, count, desc, eq, gt, or, sql, sum } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
 import {
@@ -90,6 +90,8 @@ export const hackerRouter = {
       return {
         ...hacker,
         status: hackerAttendee.status,
+        class: hackerAttendee.class,
+        points: hackerAttendee.points,
       };
     }),
 
@@ -209,6 +211,195 @@ export const hackerRouter = {
         .where(eq(HackerAttendee.hackathonId, hackathon.id));
 
       return hackers;
+    }),
+
+  getPointsByClass: protectedProcedure
+    .input(z.object({ hackathonName: z.string().optional() }))
+    .query(async ({ input }) => {
+      let hackathon;
+      const points: number[] = [];
+
+      HACKER_CLASSES.forEach(() => {
+        points.push(0);
+      });
+
+      if (input.hackathonName) {
+        // If a hackathon name is provided, grab that hackathon
+        hackathon = await db.query.Hackathon.findFirst({
+          where: (t, { eq }) => eq(t.name, input.hackathonName ?? ""),
+        });
+
+        if (!hackathon) {
+          return points;
+        }
+      } else {
+        // If not provided, grab a FUTURE hackathon with a start date CLOSEST to now
+        const now = new Date();
+        const futureHackathons = await db.query.Hackathon.findMany({
+          where: (t, { gt }) => gt(t.startDate, now),
+          orderBy: (t, { asc }) => [asc(t.startDate)],
+          limit: 1,
+        });
+        hackathon = futureHackathons[0];
+
+        if (!hackathon) {
+          return points;
+        }
+      }
+
+      for (let i = 0; i < HACKER_CLASSES.length; i++) {
+        const c = HACKER_CLASSES[i];
+        const s = await db
+          .select({
+            sum: sum(HackerAttendee.points).mapWith(Number),
+          })
+          .from(HackerAttendee)
+          .where(
+            and(
+              eq(HackerAttendee.hackathonId, hackathon.id),
+              eq(HackerAttendee.class, c ?? "Alchemist"),
+            ),
+          );
+
+        points[i] = s.at(0)?.sum ?? 0;
+      }
+
+      return points;
+    }),
+
+  getTopHackers: protectedProcedure
+    .input(
+      z.object({
+        hackathonName: z.string().optional(),
+        hPoints: z.number(),
+        hClass: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      let hackathon;
+
+      if (input.hackathonName) {
+        // If a hackathon name is provided, grab that hackathon
+        hackathon = await db.query.Hackathon.findFirst({
+          where: (t, { eq }) => eq(t.name, input.hackathonName ?? ""),
+        });
+
+        if (!hackathon) {
+          return { topA: [], topB: [], place: [0, 0, 0] };
+        }
+      } else {
+        // If not provided, grab a FUTURE hackathon with a start date CLOSEST to now
+        const now = new Date();
+        const futureHackathons = await db.query.Hackathon.findMany({
+          where: (t, { gt }) => gt(t.startDate, now),
+          orderBy: (t, { asc }) => [asc(t.startDate)],
+          limit: 1,
+        });
+        hackathon = futureHackathons[0];
+
+        if (!hackathon) {
+          return { topA: [], topB: [], place: [0, 0, 0] };
+        }
+      }
+
+      // this code is going to start looking really stupid
+      // but its all so that we dont have to send like half the DB of hackers to the client
+      // and hopefully save performance
+
+      const topA = await db
+        .select({
+          firstName: Hacker.firstName,
+          lastName: Hacker.lastName,
+          points: HackerAttendee.points,
+          class: HackerAttendee.class,
+          id: Hacker.id,
+        })
+        .from(HackerAttendee)
+        .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+        .where(
+          and(
+            eq(HackerAttendee.hackathonId, hackathon.id),
+            or(
+              eq(HackerAttendee.class, HACKER_CLASSES[0]),
+              eq(HackerAttendee.class, HACKER_CLASSES[1]),
+              eq(HackerAttendee.class, HACKER_CLASSES[2]),
+            ),
+          ),
+        )
+        .orderBy(desc(HackerAttendee.points))
+        .limit(5);
+      console.log(topA);
+
+      const topB = await db
+        .select({
+          firstName: Hacker.firstName,
+          lastName: Hacker.lastName,
+          points: HackerAttendee.points,
+          class: HackerAttendee.class,
+          id: Hacker.id,
+        })
+        .from(HackerAttendee)
+        .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+        .where(
+          and(
+            eq(HackerAttendee.hackathonId, hackathon.id),
+            or(
+              eq(HackerAttendee.class, HACKER_CLASSES[3]),
+              eq(HackerAttendee.class, HACKER_CLASSES[4]),
+              eq(HackerAttendee.class, HACKER_CLASSES[5]),
+            ),
+          ),
+        )
+        .orderBy(desc(HackerAttendee.points))
+        .limit(5);
+
+      // stores your place in each sorted leaderboard
+      // 0: team A, 2: overall, 3: team B
+
+      let ind = 0;
+      HACKER_CLASSES.forEach((v, i) => {
+        if (v == input.hClass) ind = i;
+      });
+
+      const place = [
+        ind >= 3
+          ? -1
+          : await db.$count(
+              HackerAttendee,
+              and(
+                eq(HackerAttendee.hackathonId, hackathon.id),
+                gt(HackerAttendee.points, input.hPoints),
+                or(
+                  eq(HackerAttendee.class, HACKER_CLASSES[0]),
+                  eq(HackerAttendee.class, HACKER_CLASSES[1]),
+                  eq(HackerAttendee.class, HACKER_CLASSES[2]),
+                ),
+              ),
+            ),
+        await db.$count(
+          HackerAttendee,
+          and(
+            eq(HackerAttendee.hackathonId, hackathon.id),
+            gt(HackerAttendee.points, input.hPoints),
+          ),
+        ),
+        ind < 3
+          ? -1
+          : await db.$count(
+              HackerAttendee,
+              and(
+                eq(HackerAttendee.hackathonId, hackathon.id),
+                gt(HackerAttendee.points, input.hPoints),
+                or(
+                  eq(HackerAttendee.class, HACKER_CLASSES[3]),
+                  eq(HackerAttendee.class, HACKER_CLASSES[4]),
+                  eq(HackerAttendee.class, HACKER_CLASSES[5]),
+                ),
+              ),
+            ),
+      ];
+
+      return { topA: topA, topB: topB, place: place };
     }),
 
   createHacker: protectedProcedure
