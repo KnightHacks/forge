@@ -262,6 +262,15 @@ export const PERMISSIONS = {
 export type PermissionKey = keyof typeof PERMISSIONS;
 export type PermissionIndex = (typeof PERMISSIONS)[PermissionKey];
 
+export const PERMISSIONS = {
+  FULL_ADMIN: 0,
+  CHECK_IN: 1,
+  // Future permissions will be added here with incremental indices
+  // EVENTS_MANAGE: 2,
+  // MEMBERS_MANAGE: 3,
+  // etc.
+} as const;
+
 export const PROD_KNIGHTHACKS_GUILD_ID = "486628710443778071";
 export const DEV_KNIGHTHACKS_GUILD_ID = "1151877367434850364";
 
