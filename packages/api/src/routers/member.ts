@@ -29,7 +29,12 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import { adminProcedure, checkInProcedure, protectedProcedure, publicProcedure } from "../trpc";
+import {
+  adminProcedure,
+  checkInProcedure,
+  protectedProcedure,
+  publicProcedure,
+} from "../trpc";
 import { log } from "../utils";
 
 export const memberRouter = {
