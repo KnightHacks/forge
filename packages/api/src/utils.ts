@@ -75,27 +75,6 @@ export const hasPermission = (
   return permissionBit === "1";
 };
 
-export const combinePermissions = (permissionStrings: string[]): string => {
-  if (permissionStrings.length === 0)
-    return "0".repeat(Object.keys(PERMISSIONS).length);
-
-  const maxLength = Math.max(...permissionStrings.map((p) => p.length));
-  let result = "";
-
-  for (let i = 0; i < maxLength; i++) {
-    let hasPermissionAtIndex = false;
-    for (const permString of permissionStrings) {
-      if (permString[i] === "1") {
-        hasPermissionAtIndex = true;
-        break;
-      }
-    }
-    result += hasPermissionAtIndex ? "1" : "0";
-  }
-
-  return result;
-};
-
 export const getUserPermissions = async (
   user: Session["user"],
 ): Promise<string> => {
@@ -104,15 +83,15 @@ export const getUserPermissions = async (
       Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
     )) as APIGuildMember;
 
-    const userPermissionStrings: string[] = [];
+    const userPermissionArray = new Array(Object.keys(PERMISSIONS).length).fill("0");
 
     for (const roleId of guildMember.roles) {
-      if (ROLE_PERMISSIONS[roleId]) {
-        userPermissionStrings.push(ROLE_PERMISSIONS[roleId]);
+      if (roleId in ROLE_PERMISSIONS) {
+        userPermissionArray[ROLE_PERMISSIONS[roleId]] = "1";
       }
     }
 
-    return combinePermissions(userPermissionStrings);
+    return userPermissionArray.join("");
   } catch (err) {
     console.error("Error getting user permissions: ", err);
     return "0".repeat(Object.keys(PERMISSIONS).length);
