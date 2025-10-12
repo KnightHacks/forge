@@ -89,7 +89,12 @@ export const getUserPermissions = async (
 
     for (const roleId of guildMember.roles) {
       if (roleId in ROLE_PERMISSIONS) {
-        userPermissionArray[ROLE_PERMISSIONS[roleId]] = "1";
+        const permissionIndex = (ROLE_PERMISSIONS as Record<string, number>)[
+          roleId
+        ];
+        if (permissionIndex !== undefined) {
+          userPermissionArray[permissionIndex] = "1";
+        }
       }
     }
 
