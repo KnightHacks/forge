@@ -196,7 +196,7 @@ export const judgeRouter = {
       }
 
       await db.insert(JudgedSubmission).values({
-        hackathonId: submission?.hackatonId, 
+        hackathonId: submission?.hackathonId, 
         ...input,
       });
 
