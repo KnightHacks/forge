@@ -29,11 +29,7 @@ type Event = ReturnEvent;
 type SortField = keyof Event;
 type SortOrder = "asc" | "desc" | null;
 
-interface EventsTableProps {
-  hasFullAdmin?: boolean;
-}
-
-export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
+export function EventsTable() {
   const [sortField, setSortField] = useState<SortField | null>(
     "start_datetime",
   );
@@ -41,11 +37,12 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: events } = api.event.getEvents.useQuery();
+  const { data: hackathons } = api.hackathon.getHackathons.useQuery();
 
-  // Only show club events (events without hackathonId)
-  const clubEvents = (events ?? []).filter((event) => !event.hackathonId);
+  // Only show hackathon events (events with hackathonId)
+  const hackathonEvents = (events ?? []).filter((event) => event.hackathonId);
 
-  const filteredEvents = clubEvents.filter((event) =>
+  const filteredEvents = hackathonEvents.filter((event) =>
     Object.values(event).some((value) => {
       if (value === null) return false;
       // Convert value to string for searching
@@ -90,7 +87,7 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
                 className="pl-8"
               />
             </div>
-            {hasFullAdmin && <CreateEventButton />}
+            <CreateEventButton />
           </div>
           <div className="whitespace-nowrap text-center text-sm font-bold">
             Returned {sortedEvents.length}{" "}
@@ -155,16 +152,12 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
             <TableHead className="text-center">
               <Label>Event Details</Label>
             </TableHead>
-            {hasFullAdmin && (
-              <TableHead className="text-center">
-                <Label>Update</Label>
-              </TableHead>
-            )}
-            {hasFullAdmin && (
-              <TableHead className="text-center">
-                <Label>Delete</Label>
-              </TableHead>
-            )}
+            <TableHead className="text-center">
+              <Label>Update</Label>
+            </TableHead>
+            <TableHead className="text-center">
+              <Label>Delete</Label>
+            </TableHead>
           </TableRow>
         </TableHeader>
 
@@ -172,18 +165,23 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
           <TableRow>
             <TableCell
               className="text- bg-muted/50 font-bold sm:text-center"
-              colSpan={hasFullAdmin ? 8 : 6}
+              colSpan={8}
             >
               Upcoming Events
             </TableCell>
           </TableRow>
           {upcomingEvents.map((event) => {
+            const hackathonName = hackathons?.find((v) => {
+              return v.id == event.hackathonId;
+            })?.name;
             return (
               <TableRow key={event.id}>
                 <TableCell className="text-center font-medium">
                   {event.name}
                 </TableCell>
-                <TableCell className="text-center">{event.tag}</TableCell>
+                <TableCell className="text-center">
+                  {event.tag + (hackathonName ? ` [${hackathonName}]` : "")}
+                </TableCell>
 
                 <TableCell className="text-center">
                   {getFormattedDate(event.start_datetime)}
@@ -194,27 +192,23 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
                 <TableCell className="text-right">
                   <ViewAttendanceButton
                     event={event}
-                    numAttended={event.numAttended}
+                    numAttended={event.numHackerAttended}
                   />
                 </TableCell>
 
                 <TableCell className="text-center">
                   <EventDetailsButton
-                    event={{ ...event, hackathonName: null }}
+                    event={{ ...event, hackathonName: hackathonName }}
                   />
                 </TableCell>
 
-                {hasFullAdmin && (
-                  <TableCell className="text-center">
-                    <UpdateEventButton event={event} />
-                  </TableCell>
-                )}
+                <TableCell className="text-center">
+                  <UpdateEventButton event={event} />
+                </TableCell>
 
-                {hasFullAdmin && (
-                  <TableCell className="text-center">
-                    <DeleteEventButton event={event} />
-                  </TableCell>
-                )}
+                <TableCell className="text-center">
+                  <DeleteEventButton event={event} />
+                </TableCell>
               </TableRow>
             );
           })}
@@ -224,18 +218,23 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
           <TableRow>
             <TableCell
               className="bg-muted/50 text-left font-bold sm:text-center"
-              colSpan={hasFullAdmin ? 8 : 6}
+              colSpan={8}
             >
               Previous Events
             </TableCell>
           </TableRow>
           {previousEvents.map((event) => {
+            const hackathonName = hackathons?.find((v) => {
+              return v.id == event.hackathonId;
+            })?.name;
             return (
               <TableRow key={event.id}>
                 <TableCell className="text-center font-medium">
                   {event.name}
                 </TableCell>
-                <TableCell className="text-center">{event.tag}</TableCell>
+                <TableCell className="text-center">
+                  {event.tag + (hackathonName ? ` [${hackathonName}]` : "")}
+                </TableCell>
 
                 <TableCell className="text-center">
                   {getFormattedDate(event.start_datetime)}
@@ -246,27 +245,23 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
                 <TableCell className="text-right">
                   <ViewAttendanceButton
                     event={event}
-                    numAttended={event.numAttended}
+                    numAttended={event.numHackerAttended}
                   />
                 </TableCell>
 
                 <TableCell className="text-center">
                   <EventDetailsButton
-                    event={{ ...event, hackathonName: null }}
+                    event={{ ...event, hackathonName: hackathonName }}
                   />
                 </TableCell>
 
-                {hasFullAdmin && (
-                  <TableCell className="text-center">
-                    <UpdateEventButton event={event} />
-                  </TableCell>
-                )}
+                <TableCell className="text-center">
+                  <UpdateEventButton event={event} />
+                </TableCell>
 
-                {hasFullAdmin && (
-                  <TableCell className="text-center">
-                    <DeleteEventButton event={event} />
-                  </TableCell>
-                )}
+                <TableCell className="text-center">
+                  <DeleteEventButton event={event} />
+                </TableCell>
               </TableRow>
             );
           })}
@@ -276,9 +271,12 @@ export function EventsTable({ hasFullAdmin = false }: EventsTableProps) {
           <TableRow>
             <TableCell colSpan={4}>Total Attendance</TableCell>
             <TableCell className="text-right">
-              {sortedEvents.reduce((sum, event) => sum + event.numAttended, 0)}
+              {sortedEvents.reduce(
+                (sum, event) => sum + event.numHackerAttended,
+                0,
+              )}
             </TableCell>
-            <TableCell colSpan={hasFullAdmin ? 3 : 1} />
+            <TableCell colSpan={3} />
           </TableRow>
         </TableFooter>
       </Table>
