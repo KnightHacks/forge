@@ -20,6 +20,11 @@ export default async function HackathonDashboard({
 }: {
   hacker: Awaited<ReturnType<(typeof serverCall.hacker)["getHacker"]>>;
 }) {
+  interface HackerClassInfo {
+    teamColor: string;
+    team: string;
+    classPfp: string;
+  }
   const currentHackathon = await api.hackathon.getCurrentHackathon();
 
   if (!hacker) {
