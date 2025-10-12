@@ -26,7 +26,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import { adminProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, checkInProcedure, protectedProcedure } from "../trpc";
 import {
   addRoleToMember,
   isDiscordVIP,
@@ -923,7 +923,7 @@ export const hackerRouter = {
       return counts;
     }),
 
-  eventCheckIn: adminProcedure
+  eventCheckIn: checkInProcedure
     .input(
       z.object({
         userId: z.string(),

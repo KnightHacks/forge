@@ -24,17 +24,29 @@ import {
   adminClubItems,
   adminHackathonItems,
   adminItems,
+  checkInOnlyItems,
   userItems,
 } from "./reusable-user-dropdown";
 
+interface UserDropdownProps {
+  hasCheckIn: boolean;
+  hasFullAdmin: boolean;
+}
+
 // If you need to conditionally render some dropdown items, please refer to ./reusable-user-dropdown
 
-export function UserDropdown({ isAdmin }: { isAdmin: boolean }) {
+export function UserDropdown({ hasCheckIn, hasFullAdmin }: UserDropdownProps) {
   const utils = api.useUtils();
   const router = useRouter();
   const { data } = api.user.getUserAvatar.useQuery();
 
   void utils.member.getMember.prefetch();
+
+  const canAccessClub = hasFullAdmin || hasCheckIn;
+  const canAccessHackathon = hasFullAdmin;
+  const canAccessAdmin = hasFullAdmin;
+
+  const clubItems = hasFullAdmin ? adminClubItems : checkInOnlyItems;
 
   return (
     <DropdownMenu>
@@ -51,11 +63,19 @@ export function UserDropdown({ isAdmin }: { isAdmin: boolean }) {
         <DropdownMenuLabel>{data ? data.name : "My Account"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {isAdmin && <DropdownMenuRoleItems items={adminItems} />}
-          <DropdownMenuLabel>Club</DropdownMenuLabel>
-          {isAdmin && <DropdownMenuRoleItems items={adminClubItems} />}
-          <DropdownMenuLabel>Hackathon</DropdownMenuLabel>
-          {isAdmin && <DropdownMenuRoleItems items={adminHackathonItems} />}
+          {canAccessAdmin && <DropdownMenuRoleItems items={adminItems} />}
+          {canAccessClub && (
+            <>
+              <DropdownMenuLabel>Club</DropdownMenuLabel>
+              <DropdownMenuRoleItems items={clubItems} />
+            </>
+          )}
+          {canAccessHackathon && (
+            <>
+              <DropdownMenuLabel>Hackathon</DropdownMenuLabel>
+              <DropdownMenuRoleItems items={adminHackathonItems} />
+            </>
+          )}
           <DropdownMenuItem
             className="gap-x-1.5"
             onSelect={() => router.push("/dashboard")}
