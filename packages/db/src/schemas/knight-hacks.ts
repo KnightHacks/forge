@@ -220,10 +220,11 @@ export const EventAttendee = createTable("event_attendee", (t) => ({
     }),
 }));
 
+export const HACKER_TEAMS = ["Humanity", "Monstrosity"] as const;
 export const HACKER_CLASSES = [
-  "Operators",
+  "Operator",
   "Machinist",
-  "Sentinels",
+  "Sentinel",
   "Harbinger",
   "Monstologist",
   "Alchemist",
@@ -338,7 +339,7 @@ export const Challenges = createTable("challenges", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t.text().notNull(),
   location: t.text().notNull(),
-  hackatonId: t
+  hackathonId: t
     .uuid()
     .notNull()
     .references(() => Hackathon.id, {
@@ -363,7 +364,7 @@ export const Submissions = createTable("submissions", (t) => ({
       onDelete: "cascade",
     }),
   judgedStatus: t.boolean().notNull().default(false),
-  hackatonId: t
+  hackathonId: t
     .uuid()
     .notNull()
     .references(() => Hackathon.id, {
