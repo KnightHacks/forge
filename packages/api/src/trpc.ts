@@ -12,6 +12,7 @@ import { ZodError } from "zod";
 
 import type { Session } from "@forge/auth";
 import { auth, validateToken } from "@forge/auth";
+import { PERMISSIONS } from "@forge/consts/knight-hacks";
 
 import {
   getJudgeSessionFromCookie,
