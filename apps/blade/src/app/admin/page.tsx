@@ -52,6 +52,9 @@ export default async function Admin() {
                 <Link href="/admin/club/events">
                   <Button>Events</Button>
                 </Link>
+                <Link href="/admin/club/check-in">
+                  <Button>Check-in</Button>
+                </Link>
                 <Link href="/admin/club/data">
                   <Button>Data</Button>
                 </Link>
