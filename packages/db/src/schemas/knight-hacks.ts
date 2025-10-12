@@ -441,8 +441,10 @@ export const JudgedSubmission = createTable("judged_submission", (t) => ({
     .uuid()
     .notNull()
     .references(() => Submissions.id),
-  judgeId: t.uuid().notNull(),
-  //.references(() => Judge.id), WHEN JUDGE DB ADDED, INCLUDE THE REF
+  judgeId: t
+    .uuid()
+    .notNull()
+    .references(() => Judges.id),
   privateFeedback: t.varchar({ length: 255 }).notNull(),
   publicFeedback: t.varchar({ length: 255 }).notNull(),
   originality_rating: t.integer().notNull(),
