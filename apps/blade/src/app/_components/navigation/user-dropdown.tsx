@@ -34,8 +34,6 @@ interface UserDropdownProps {
   hasFullAdmin: boolean;
 }
 
-// If you need to conditionally render some dropdown items, please refer to ./reusable-user-dropdown
-
 export function UserDropdown({ hasCheckIn, hasFullAdmin }: UserDropdownProps) {
   const utils = api.useUtils();
   const router = useRouter();
