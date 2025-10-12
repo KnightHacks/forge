@@ -5,6 +5,7 @@ import { google } from "googleapis";
 import Stripe from "stripe";
 
 import type { Session } from "@forge/auth";
+import type { PermissionIndex } from "@forge/consts/knight-hacks";
 import {
   DEV_DISCORD_ADMIN_ROLE_ID,
   DEV_KNIGHTHACKS_GUILD_ID,
@@ -16,7 +17,6 @@ import {
   PROD_KNIGHTHACKS_LOG_CHANNEL,
   ROLE_PERMISSIONS,
   PERMISSIONS,
-  type PermissionIndex,
 } from "@forge/consts/knight-hacks";
 
 import { env } from "./env";
