@@ -259,6 +259,9 @@ export const PERMISSIONS = {
   // etc.
 } as const;
 
+export type PermissionKey = keyof typeof PERMISSIONS;
+export type PermissionIndex = typeof PERMISSIONS[PermissionKey];
+
 export const PROD_KNIGHTHACKS_GUILD_ID = "486628710443778071";
 export const DEV_KNIGHTHACKS_GUILD_ID = "1151877367434850364";
 
@@ -303,6 +306,11 @@ export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
     : DEV_DISCORD_ROLE_MONSTOLOGIST,
   Alchemist: IS_PROD ? PROD_DISCORD_ROLE_ALCHEMIST : DEV_DISCORD_ROLE_ALCHEMIST,
 } as const satisfies Record<AssignableHackerClass, string>;
+
+export const ROLE_PERMISSIONS: Record<string, string> = {
+  [IS_PROD ? PROD_DISCORD_ADMIN_ROLE_ID : DEV_DISCORD_ADMIN_ROLE_ID]: "10",
+  [IS_PROD ? PROD_DISCORD_VOLUNTEER_ROLE_ID : DEV_DISCORD_VOLUNTEER_ROLE_ID]: "01",
+};
 
 export const MEMBER_PROFILE_ICON_SIZE = 24;
 
