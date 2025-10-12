@@ -47,7 +47,7 @@ export const authRouter = {
       if (!ctx.session) {
         return Promise.resolve(false);
       }
-      return userHasPermission(ctx.session.user, input.permission);
+      return userHasPermission(ctx.session.user, input.permission as any);
     }),
 
   hasFullAdmin: publicProcedure.query(({ ctx }): Promise<boolean> => {
