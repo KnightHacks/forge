@@ -13,9 +13,8 @@ import { ZodError } from "zod";
 import type { Session } from "@forge/auth";
 import { auth, validateToken } from "@forge/auth";
 
-import { isDiscordAdmin, userHasPermission, userHasFullAdmin, userHasCheckIn  } from "./utils";
+import { isDiscordAdmin, userHasFullAdmin, userHasCheckIn } from "./utils";
 
-import { PERMISSIONS } from "@forge/consts/knight-hacks";
 /**
  * Isomorphic Session getter for API requests
  * - Expo requests will have a session token in the Authorization header
