@@ -16,10 +16,14 @@
   "dependencies": {
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
+    "@forge/validators": "workspace:*",
     "@t3-oss/env-core": "^0.11.1",
     "discord.js": "^14.16.3",
+    "drizzle-orm": "^0.35.1",
     "jimp": "^0.22.12",
     "node-cron": "^3.0.3",
+    "postgres": "^3.4.3",
+    "resend": "^3.2.0",
     "zod": "catalog:"
   },
   "devDependencies": {
