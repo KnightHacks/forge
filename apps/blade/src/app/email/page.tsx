@@ -8,11 +8,15 @@ import { api } from "~/trpc/react";
 export default function EmailTestPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
-  const [testEmail, setTestEmail] = useState("test@example.com");
+  const [testEmail, setTestEmail] = useState("samborges@knighthacks.org");
   const [testSubject, setTestSubject] = useState("Test Email");
   const [_testBody, _setTestBody] = useState("<h1>Hello World!</h1><p>This is a test email.</p>");
   const [testPriority, setTestPriority] = useState<"now" | "high" | "standard" | "low">("standard");
   const [batchEmails, setBatchEmails] = useState("user1@example.com,user2@example.com,user3@example.com");
+  const [scheduleMinutes, setScheduleMinutes] = useState(2);
+  const [blacklistDays, setBlacklistDays] = useState<number[]>([]);
+  const [blacklistTimeStart, setBlacklistTimeStart] = useState("00:00");
+  const [blacklistTimeEnd, setBlacklistTimeEnd] = useState("23:59");
 
   // Queries - using any for now until types are regenerated
   const queueStatus = (api as any).emailQueue?.getQueueStatus?.useQuery?.() || { data: null, isLoading: false };
@@ -69,6 +73,45 @@ export default function EmailTestPage() {
     },
   }) || { mutate: () => setResult("❌ Email queue not available") };
 
+  const scheduleEmail = (api as any).emailQueue?.scheduleEmail?.useMutation?.({
+    onSuccess: (data: any) => {
+      setResult(`✅ Email scheduled successfully! ID: ${data.emailId}, Scheduled for: ${data.scheduledFor}`);
+      setIsLoading(false);
+      queueStatus.refetch?.();
+      queuedEmails.refetch?.();
+    },
+    onError: (error: any) => {
+      setResult(`❌ Error: ${error.message}`);
+      setIsLoading(false);
+    },
+  }) || { mutate: () => setResult("❌ Email queue not available") };
+
+  const queueEmailWithBlacklist = (api as any).emailQueue?.queueEmailWithBlacklist?.useMutation?.({
+    onSuccess: (data: any) => {
+      setResult(`✅ Email queued with blacklist rules! ID: ${data.emailId}`);
+      setIsLoading(false);
+      queueStatus.refetch?.();
+      queuedEmails.refetch?.();
+    },
+    onError: (error: any) => {
+      setResult(`❌ Error: ${error.message}`);
+      setIsLoading(false);
+    },
+  }) || { mutate: () => setResult("❌ Email queue not available") };
+
+  const queuePriorityEmails = (api as any).emailQueue?.queuePriorityEmails?.useMutation?.({
+    onSuccess: (data: any) => {
+      setResult(`✅ Priority emails queued successfully! Count: ${data.emails.length}`);
+      setIsLoading(false);
+      queueStatus.refetch?.();
+      queuedEmails.refetch?.();
+    },
+    onError: (error: any) => {
+      setResult(`❌ Error: ${error.message}`);
+      setIsLoading(false);
+    },
+  }) || { mutate: () => setResult("❌ Email queue not available") };
+
   const handleSendTestEmail = () => {
     setIsLoading(true);
     setResult(null);
@@ -108,6 +151,69 @@ export default function EmailTestPage() {
     });
   };
 
+  const handleScheduleEmail = () => {
+    setIsLoading(true);
+    setResult(null);
+    scheduleEmail.mutate({
+      to: testEmail,
+      subject: testSubject,
+      html: _testBody,
+      priority: testPriority,
+      scheduleMinutes: scheduleMinutes,
+    });
+  };
+
+  const handleQueueEmailWithBlacklist = () => {
+    setIsLoading(true);
+    setResult(null);
+    queueEmailWithBlacklist.mutate({
+      to: testEmail,
+      subject: testSubject,
+      html: _testBody,
+      priority: testPriority,
+      blacklistRules: {
+        daysOfWeek: blacklistDays,
+        timeRanges: [{
+          start: blacklistTimeStart,
+          end: blacklistTimeEnd,
+        }]
+      }
+    });
+  };
+
+  const handleQueuePriorityEmails = () => {
+    setIsLoading(true);
+    setResult(null);
+    queuePriorityEmails.mutate({
+      emails: [
+        {
+          to: `${testEmail.split('@')[0]}+urgent@${testEmail.split('@')[1]}`,
+          subject: `[URGENT] ${testSubject}`,
+          html: `<h1>URGENT: ${testSubject}</h1><p>This is a high priority email.</p>`,
+          priority: 'now'
+        },
+        {
+          to: `${testEmail.split('@')[0]}+important@${testEmail.split('@')[1]}`,
+          subject: `[IMPORTANT] ${testSubject}`,
+          html: `<h1>IMPORTANT: ${testSubject}</h1><p>This is an important email.</p>`,
+          priority: 'high'
+        },
+        {
+          to: `${testEmail.split('@')[0]}+normal@${testEmail.split('@')[1]}`,
+          subject: testSubject,
+          html: `<h1>${testSubject}</h1><p>This is a standard priority email.</p>`,
+          priority: 'standard'
+        },
+        {
+          to: `${testEmail.split('@')[0]}+low@${testEmail.split('@')[1]}`,
+          subject: `[LOW] ${testSubject}`,
+          html: `<h1>LOW PRIORITY: ${testSubject}</h1><p>This is a low priority email.</p>`,
+          priority: 'low'
+        }
+      ]
+    });
+  };
+
   return (
     <div className="container mx-auto p-8 max-w-6xl">
       <h1 className="text-3xl font-bold mb-8">📧 Email Queue Test Dashboard</h1>
@@ -141,7 +247,7 @@ export default function EmailTestPage() {
       </div>
 
       {/* Test Forms */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
         {/* Direct Email Test */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
           <h2 className="text-xl font-bold mb-4">🚀 Direct Email Test</h2>
@@ -279,6 +385,185 @@ export default function EmailTestPage() {
             >
               {isLoading ? "Updating..." : "Update Config (Test Settings)"}
         </button>
+          </div>
+        </div>
+
+        {/* Schedule Email */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h2 className="text-xl font-bold mb-4">⏰ Schedule Email</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Email Address</label>
+              <input
+                type="email"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                placeholder="test@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Subject</label>
+              <input
+                type="text"
+                value={testSubject}
+                onChange={(e) => setTestSubject(e.target.value)}
+                className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                placeholder="Scheduled Email Subject"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Schedule (minutes from now)</label>
+              <input
+                type="number"
+                min="1"
+                max="10080"
+                value={scheduleMinutes}
+                onChange={(e) => setScheduleMinutes(Number(e.target.value))}
+                className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                placeholder="2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Priority</label>
+              <select
+                value={testPriority}
+                onChange={(e) => setTestPriority(e.target.value as "now" | "high" | "standard" | "low")}
+                className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+              >
+                <option value="now">Now (Highest)</option>
+                <option value="high">High</option>
+                <option value="standard">Standard</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <button
+              onClick={handleScheduleEmail}
+              disabled={isLoading}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              {isLoading ? "Scheduling..." : "Schedule Email"}
+            </button>
+          </div>
+        </div>
+
+        {/* Blacklist Email */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h2 className="text-xl font-bold mb-4">🚫 Blacklist Email</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Email Address</label>
+              <input
+                type="email"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                placeholder="test@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Subject</label>
+              <input
+                type="text"
+                value={testSubject}
+                onChange={(e) => setTestSubject(e.target.value)}
+                className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                placeholder="Blacklisted Email Subject"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Block Days</label>
+              <div className="grid grid-cols-4 gap-2">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                  <label key={day} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={blacklistDays.includes(index)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setBlacklistDays([...blacklistDays, index]);
+                        } else {
+                          setBlacklistDays(blacklistDays.filter(d => d !== index));
+                        }
+                      }}
+                      className="rounded"
+                    />
+                    <span className="text-sm">{day}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Start Time</label>
+                <input
+                  type="time"
+                  value={blacklistTimeStart}
+                  onChange={(e) => setBlacklistTimeStart(e.target.value)}
+                  className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">End Time</label>
+                <input
+                  type="time"
+                  value={blacklistTimeEnd}
+                  onChange={(e) => setBlacklistTimeEnd(e.target.value)}
+                  className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                />
+              </div>
+            </div>
+            <button
+              onClick={handleQueueEmailWithBlacklist}
+              disabled={isLoading}
+              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              {isLoading ? "Queueing..." : "Queue Blacklisted Email"}
+            </button>
+          </div>
+        </div>
+
+        {/* Priority Emails Demo */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h2 className="text-xl font-bold mb-4">🎯 Priority Emails Demo</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Base Email Address</label>
+              <input
+                type="email"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                placeholder="test@example.com"
+              />
+              <p className="text-xs text-gray-500 mt-1">Will create variants: +urgent, +important, +normal, +low</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Subject</label>
+              <input
+                type="text"
+                value={testSubject}
+                onChange={(e) => setTestSubject(e.target.value)}
+                className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                placeholder="Priority Test Subject"
+              />
+            </div>
+            <button
+              onClick={handleQueuePriorityEmails}
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-red-600 to-gray-600 hover:from-red-700 hover:to-gray-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              {isLoading ? "Queueing..." : "Queue All Priority Levels"}
+            </button>
+            <div className="text-xs text-gray-500">
+              <p>Creates 4 emails with different priorities:</p>
+              <ul className="list-disc list-inside mt-1">
+                <li>NOW: Urgent email</li>
+                <li>HIGH: Important email</li>
+                <li>STANDARD: Normal email</li>
+                <li>LOW: Low priority email</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
