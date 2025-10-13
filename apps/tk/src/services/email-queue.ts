@@ -1,0 +1,416 @@
+import { eq, and, asc, sql } from "drizzle-orm";
+import { Resend } from "resend";
+
+import { env } from "../env";
+import { db } from "../lib/db";
+import type {
+  SelectEmailQueue,
+  InsertEmailQueue,
+} from "@forge/db/schemas/knight-hacks";
+import {
+  EmailQueue,
+  EmailDailyCount,
+  EmailConfig,
+} from "@forge/db/schemas/knight-hacks";
+
+// Initialize Resend
+const resend = new Resend(env.RESEND_API_KEY);
+
+// Priority mapping for ordering
+const _PRIORITY_ORDER = {
+  now: 1,
+  high: 2,
+  standard: 3,
+  low: 4,
+} as const;
+
+type _Priority = keyof typeof _PRIORITY_ORDER;
+
+interface BlacklistRules {
+  daysOfWeek?: number[]; // 0 = Sunday, 1 = Monday, etc.
+  timeRanges?: {
+    start: string; // "HH:MM" format
+    end: string;   // "HH:MM" format
+  }[];
+}
+
+export class EmailQueueService {
+  /**
+   * Get emails ready to be sent, ordered by priority and timestamp
+   */
+  async getNextEmailsToSend(limit: number): Promise<SelectEmailQueue[]> {
+    const now = new Date();
+    
+    return await db
+      .select()
+      .from(EmailQueue)
+      .where(
+        and(
+          sql`status IN ('pending', 'scheduled')`,
+          sql`scheduled_for IS NULL OR scheduled_for <= ${sql.raw(`'${now.toISOString()}'`)}`
+        )
+      )
+      .orderBy(
+        sql`CASE priority 
+          WHEN 'now' THEN 1 
+          WHEN 'high' THEN 2 
+          WHEN 'standard' THEN 3 
+          WHEN 'low' THEN 4 
+        END`,
+        asc(EmailQueue.created_at),
+        asc(EmailQueue.batch_id),
+        asc(EmailQueue.batch_position)
+      )
+      .limit(limit);
+  }
+
+  /**
+   * Check daily email limit and return remaining capacity
+   */
+  async checkDailyLimit(): Promise<{ count: number; limit: number; remaining: number }> {
+    const todayParts = new Date().toISOString().split('T');
+    const today = todayParts[0];
+    if (!today) {
+      throw new Error('Failed to get today\'s date');
+    }
+    
+    // Get or create today's count record
+    let dailyCount = await db
+      .select()
+      .from(EmailDailyCount)
+      .where(eq(EmailDailyCount.date, today))
+      .limit(1);
+
+    if (dailyCount.length === 0) {
+      // Get default limit from config
+      const config = await this.getEmailConfig();
+      await db.insert(EmailDailyCount).values({
+        date: today,
+        count: 0,
+        limit: config.dailyLimit,
+      });
+      dailyCount = await db
+        .select()
+        .from(EmailDailyCount)
+        .where(eq(EmailDailyCount.date, today))
+        .limit(1);
+    }
+
+    const count = dailyCount[0]?.count ?? 0;
+    const limit = dailyCount[0]?.limit ?? 100;
+    const remaining = Math.max(0, limit - count);
+
+    return { count, limit, remaining };
+  }
+
+  /**
+   * Increment daily email count
+   */
+  async incrementDailyCount(count: number): Promise<void> {
+    const todayParts = new Date().toISOString().split('T');
+    const today = todayParts[0];
+    if (!today) {
+      throw new Error('Failed to get today\'s date');
+    }
+    
+    await db
+      .update(EmailDailyCount)
+              .set({
+                count: sql`count + ${count}`,
+                updated_at: new Date(),
+              })
+      .where(eq(EmailDailyCount.date, today));
+  }
+
+  /**
+   * Check if email can be sent based on blacklist rules
+   */
+  canSendEmail(email: SelectEmailQueue): boolean {
+    if (!email.blacklist_rules) return true;
+    
+    const rules = email.blacklist_rules as BlacklistRules;
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const timeString = now.toTimeString().slice(0, 5); // "HH:MM"
+
+    // Check day of week restrictions
+    if (rules.daysOfWeek?.includes(dayOfWeek)) {
+      return false;
+    }
+
+    // Check time range restrictions
+    if (rules.timeRanges) {
+      for (const range of rules.timeRanges) {
+        if (this.isTimeInRange(timeString, range.start, range.end)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Check if current time falls within a restricted range
+   */
+  private isTimeInRange(currentTime: string, startTime: string, endTime: string): boolean {
+    const current = this.timeToMinutes(currentTime);
+    const start = this.timeToMinutes(startTime);
+    const end = this.timeToMinutes(endTime);
+
+    // Handle ranges that cross midnight
+    if (start > end) {
+      return current >= start || current <= end;
+    }
+    
+    return current >= start && current <= end;
+  }
+
+  /**
+   * Convert time string "HH:MM" to minutes since midnight
+   */
+  private timeToMinutes(time: string): number {
+    const parts = time.split(':');
+    const hours = parts[0];
+    const minutes = parts[1];
+    if (!hours || !minutes) {
+      throw new Error(`Invalid time format: ${time}`);
+    }
+    return Number(hours) * 60 + Number(minutes);
+  }
+
+  /**
+   * Process a batch of emails
+   */
+  async processBatch(batchId: string, remainingLimit: number): Promise<{
+    sent: number;
+    scheduled: number;
+  }> {
+    const batchEmails = await db
+      .select()
+      .from(EmailQueue)
+      .where(
+        and(
+          eq(EmailQueue.batch_id, batchId),
+          sql`status IN ('pending', 'scheduled')`
+        )
+      )
+      .orderBy(asc(EmailQueue.batch_position));
+
+    let sent = 0;
+    let scheduled = 0;
+
+    for (const email of batchEmails) {
+      if (sent >= remainingLimit) {
+                // Schedule remaining emails for next available time
+                const nextAvailableTime = this.getNextAvailableTime();
+                await db
+                  .update(EmailQueue)
+                  .set({
+                    scheduled_for: nextAvailableTime,
+                    status: 'scheduled',
+                    updated_at: new Date(),
+                  })
+                  .where(eq(EmailQueue.id, email.id));
+        scheduled++;
+      } else {
+        // Send this email
+        const success = await this.sendEmailFromQueue(email.id);
+        if (success) {
+          sent++;
+        }
+      }
+    }
+
+    return { sent, scheduled };
+  }
+
+  /**
+   * Send email from queue
+   */
+  async sendEmailFromQueue(emailId: string): Promise<boolean> {
+    const email = await db
+      .select()
+      .from(EmailQueue)
+      .where(eq(EmailQueue.id, emailId))
+      .limit(1);
+
+    if (email.length === 0) return false;
+
+    const emailData = email[0];
+    if (!emailData) {
+      return false;
+    }
+
+    try {
+      // Mark as processing
+      await db
+        .update(EmailQueue)
+                .set({
+                  status: 'processing',
+                  attempts: sql`attempts + 1`,
+                  updated_at: new Date(),
+                })
+        .where(eq(EmailQueue.id, emailId));
+
+      // Send email via Resend
+      const { error } = await resend.emails.send({
+        from: emailData.from ?? env.RESEND_FROM_EMAIL,
+        to: emailData.to,
+        subject: emailData.subject,
+        html: emailData.html,
+      });
+
+      if (error) {
+        throw new Error(`Resend error: ${error.message}`);
+      }
+
+      // Mark as completed
+      await db
+        .update(EmailQueue)
+                .set({
+                  status: 'completed',
+                  processed_at: new Date(),
+                  updated_at: new Date(),
+                })
+        .where(eq(EmailQueue.id, emailId));
+
+      return true;
+    } catch (error) {
+      console.error(`Failed to send email ${emailId}:`, error);
+      
+      // Mark as failed if max attempts reached
+      const updatedEmail = await db
+        .select()
+        .from(EmailQueue)
+        .where(eq(EmailQueue.id, emailId))
+        .limit(1);
+
+      const attempts = updatedEmail[0]?.attempts ?? 0;
+      const maxAttempts = updatedEmail[0]?.max_attempts ?? 3;
+
+      if (attempts >= maxAttempts) {
+        await db
+          .update(EmailQueue)
+                .set({
+                  status: 'failed',
+                  last_error: error instanceof Error ? error.message : 'Unknown error',
+                  updated_at: new Date(),
+                })
+          .where(eq(EmailQueue.id, emailId));
+      } else {
+        // Reset to pending for retry
+        await db
+          .update(EmailQueue)
+        .set({
+          status: 'pending',
+          last_error: error instanceof Error ? error.message : 'Unknown error',
+          updated_at: new Date(),
+        })
+          .where(eq(EmailQueue.id, emailId));
+      }
+
+      return false;
+    }
+  }
+
+  /**
+   * Get next available time when emails can be sent
+   */
+  private getNextAvailableTime(): Date {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 0, 0, 0); // Default to 9 AM tomorrow
+    
+    return tomorrow;
+  }
+
+  /**
+   * Get email configuration
+   */
+  async getEmailConfig(): Promise<{ dailyLimit: number; cronSchedule: string; enabled: boolean }> {
+    try {
+      const config = await db
+        .select()
+        .from(EmailConfig)
+        .limit(1);
+
+      if (config.length === 0) {
+        // Create default config
+        await db.insert(EmailConfig).values({
+          daily_limit: parseInt(env.EMAIL_DAILY_LIMIT ?? '100'),
+          cron_schedule: env.EMAIL_QUEUE_CRON ?? '*/5 * * * * *',
+          enabled: true,
+        });
+        
+        return {
+          dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? '100'),
+          cronSchedule: env.EMAIL_QUEUE_CRON ?? '*/5 * * * * *',
+          enabled: true,
+        };
+      }
+
+      const configData = config[0];
+      if (!configData) {
+        return {
+          dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? '100'),
+          cronSchedule: env.EMAIL_QUEUE_CRON ?? '*/5 * * * * *',
+          enabled: true,
+        };
+      }
+      
+      return {
+        dailyLimit: configData.daily_limit,
+        cronSchedule: configData.cron_schedule,
+        enabled: configData.enabled,
+      };
+    } catch (error) {
+      console.warn("Failed to get email config, using defaults:", error);
+      return {
+        dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? '100'),
+        cronSchedule: env.EMAIL_QUEUE_CRON ?? '*/5 * * * * *',
+        enabled: true,
+      };
+    }
+  }
+
+  /**
+   * Add email to queue
+   */
+  async queueEmail(emailData: Omit<InsertEmailQueue, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+            const result = await db.insert(EmailQueue).values({
+              ...emailData,
+              created_at: new Date(),
+              updated_at: new Date(),
+            }).returning({ id: EmailQueue.id });
+
+    const firstResult = result[0];
+    if (!firstResult) {
+      throw new Error('Failed to create email queue entry');
+    }
+    
+    return firstResult.id;
+  }
+
+  /**
+   * Add batch emails to queue
+   */
+  async queueBatchEmail(
+    batchId: string,
+    recipients: string[],
+    emailData: Omit<InsertEmailQueue, 'id' | 'to' | 'batch_id' | 'batch_position' | 'created_at' | 'updated_at'>
+  ): Promise<string[]> {
+            const emails = recipients.map((to, index) => ({
+              ...emailData,
+              to,
+              batch_id: batchId,
+              batch_position: index + 1,
+              created_at: new Date(),
+              updated_at: new Date(),
+            }));
+
+    const result = await db.insert(EmailQueue).values(emails).returning({ id: EmailQueue.id });
+    return result.map(r => r.id);
+  }
+}

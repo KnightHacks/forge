@@ -438,34 +438,40 @@ async function hackathonWarnCron(webhook: WebhookClient) {
 
 // Event Reminders webhook
 export function execute() {
-  // Create a public and pre (hidden) webhook client for daily reminders
-  const pubWebhook = new WebhookClient({
+  // Create webhook clients only if URLs are provided
+  const pubWebhook = env.DISCORD_DAILY_REMINDERS_WEBHOOK_URL ? new WebhookClient({
     url: env.DISCORD_DAILY_REMINDERS_WEBHOOK_URL,
-  });
-  const preWebhook = new WebhookClient({
+  }) : null;
+  const preWebhook = env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL ? new WebhookClient({
     url: env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL,
-  });
-  const hackathonWebhook = new WebhookClient({
+  }) : null;
+  const hackathonWebhook = env.DISCORD_HACKATHON_WEBHOOK_URL ? new WebhookClient({
     url: env.DISCORD_HACKATHON_WEBHOOK_URL,
-  });
+  }) : null;
 
   try {
     // PRE-REMINDERS for Testing: 8:00AM
-    cron.schedule("0 8 * * *", () => {
-      // Avoid returning a Promise from the cron callback
-      void cronLogic(preWebhook);
-    });
+    if (preWebhook) {
+      cron.schedule("0 8 * * *", () => {
+        // Avoid returning a Promise from the cron callback
+        void cronLogic(preWebhook);
+      });
+    }
 
     // PUBLIC-REMINDERS for Testing: 12:00PM
-    cron.schedule("0 11 * * *", () => {
-      // Avoid returning a Promise from the cron callback
-      void cronLogic(pubWebhook);
-    });
+    if (pubWebhook) {
+      cron.schedule("0 11 * * *", () => {
+        // Avoid returning a Promise from the cron callback
+        void cronLogic(pubWebhook);
+      });
+    }
 
     // During hackathon, check events every 5 minutes
-    cron.schedule("*/5 * * * *", () => {
-      void hackathonWarnCron(hackathonWebhook);
-    });
+    if (hackathonWebhook) {
+      cron.schedule("*/5 * * * *", () => {
+        void hackathonWarnCron(hackathonWebhook);
+      });
+    }
   } catch (err) {
     // silences eslint. type safety with our errors basically
     console.error("An unknown error occurred: ", err);
