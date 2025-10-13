@@ -24,17 +24,38 @@ import {
   adminClubItems,
   adminHackathonItems,
   adminItems,
+  scannerOnlyClubItems,
+  scannerOnlyHackathonItems,
   userItems,
 } from "./reusable-user-dropdown";
 
-// If you need to conditionally render some dropdown items, please refer to ./reusable-user-dropdown
+interface UserDropdownProps {
+  hasCheckIn: boolean;
+  hasFullAdmin: boolean;
+}
 
-export function UserDropdown({ isAdmin }: { isAdmin: boolean }) {
+export function UserDropdown({ hasCheckIn, hasFullAdmin }: UserDropdownProps) {
   const utils = api.useUtils();
   const router = useRouter();
   const { data } = api.user.getUserAvatar.useQuery();
 
   void utils.member.getMember.prefetch();
+
+  const canAccessClub = hasFullAdmin || hasCheckIn;
+  const canAccessHackathon = hasFullAdmin || hasCheckIn;
+  const canAccessAdmin = hasFullAdmin || hasCheckIn;
+
+  // Determine which items to show based on permissions
+  const clubItems = hasFullAdmin
+    ? adminClubItems
+    : hasCheckIn
+      ? scannerOnlyClubItems
+      : [];
+  const hackathonItems = hasFullAdmin
+    ? adminHackathonItems
+    : hasCheckIn
+      ? scannerOnlyHackathonItems
+      : [];
 
   return (
     <DropdownMenu>
@@ -51,11 +72,19 @@ export function UserDropdown({ isAdmin }: { isAdmin: boolean }) {
         <DropdownMenuLabel>{data ? data.name : "My Account"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {isAdmin && <DropdownMenuRoleItems items={adminItems} />}
-          <DropdownMenuLabel>Club</DropdownMenuLabel>
-          {isAdmin && <DropdownMenuRoleItems items={adminClubItems} />}
-          <DropdownMenuLabel>Hackathon</DropdownMenuLabel>
-          {isAdmin && <DropdownMenuRoleItems items={adminHackathonItems} />}
+          {canAccessAdmin && <DropdownMenuRoleItems items={adminItems} />}
+          {canAccessClub && clubItems.length > 0 && (
+            <>
+              <DropdownMenuLabel>Club</DropdownMenuLabel>
+              <DropdownMenuRoleItems items={clubItems} />
+            </>
+          )}
+          {canAccessHackathon && hackathonItems.length > 0 && (
+            <>
+              <DropdownMenuLabel>Hackathon</DropdownMenuLabel>
+              <DropdownMenuRoleItems items={hackathonItems} />
+            </>
+          )}
           <DropdownMenuItem
             className="gap-x-1.5"
             onSelect={() => router.push("/dashboard")}

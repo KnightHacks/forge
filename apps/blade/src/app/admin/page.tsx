@@ -20,8 +20,10 @@ export default async function Admin() {
     redirect(SIGN_IN_PATH);
   }
 
-  const isAdmin = await api.auth.getAdminStatus();
-  if (!isAdmin) {
+  const hasCheckIn = await api.auth.hasCheckIn();
+  const hasFullAdmin = await api.auth.hasFullAdmin();
+
+  if (!hasCheckIn && !hasFullAdmin) {
     redirect("/");
   }
 
@@ -41,35 +43,60 @@ export default async function Admin() {
             Let&apos;s get cooking.
           </h1>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-center">Club</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap items-center justify-center gap-4">
-                <Link href="/admin/club/members">
-                  <Button>Members</Button>
-                </Link>
-                <Link href="/admin/club/events">
-                  <Button>Events</Button>
-                </Link>
-                <Link href="/admin/club/data">
-                  <Button>Data</Button>
-                </Link>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-center">Hackathon</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap items-center justify-center gap-4">
-                <Link href="/admin/hackathon/hackers">
-                  <Button>Hackers</Button>
-                </Link>
-                <Link href="/admin/hackathon/data">
-                  <Button>Data</Button>
-                </Link>
-              </CardContent>
-            </Card>
+            {(hasFullAdmin || hasCheckIn) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-center">Club</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center justify-center gap-4">
+                  {hasFullAdmin && (
+                    <>
+                      <Link href="/admin/club/members">
+                        <Button>Members</Button>
+                      </Link>
+                      <Link href="/admin/club/events">
+                        <Button>Events</Button>
+                      </Link>
+                      <Link href="/admin/club/data">
+                        <Button>Data</Button>
+                      </Link>
+                    </>
+                  )}
+                  {(hasFullAdmin || hasCheckIn) && (
+                    <Link href="/admin/club/check-in">
+                      <Button>Check-in</Button>
+                    </Link>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+            {(hasFullAdmin || hasCheckIn) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-center">Hackathon</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center justify-center gap-4">
+                  {hasFullAdmin && (
+                    <>
+                      <Link href="/admin/hackathon/hackers">
+                        <Button>Hackers</Button>
+                      </Link>
+                      <Link href="/admin/hackathon/events">
+                        <Button>Events</Button>
+                      </Link>
+                      <Link href="/admin/hackathon/data">
+                        <Button>Data</Button>
+                      </Link>
+                    </>
+                  )}
+                  {(hasFullAdmin || hasCheckIn) && (
+                    <Link href="/admin/hackathon/check-in">
+                      <Button>Check-in</Button>
+                    </Link>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

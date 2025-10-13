@@ -29,7 +29,12 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
+import {
+  adminProcedure,
+  checkInProcedure,
+  protectedProcedure,
+  publicProcedure,
+} from "../trpc";
 import { log } from "../utils";
 
 export const memberRouter = {
@@ -400,7 +405,7 @@ export const memberRouter = {
     });
   }),
 
-  eventCheckIn: adminProcedure
+  eventCheckIn: checkInProcedure
     .input(
       z.object({
         userId: z.string(),

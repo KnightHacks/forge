@@ -12,7 +12,8 @@ import ClubLogo from "./club-logo";
 import { UserDropdown } from "./user-dropdown";
 
 export async function SessionNavbar() {
-  const isAdmin = await api.auth.getAdminStatus();
+  const hasCheckIn = await api.auth.hasCheckIn();
+  const hasFullAdmin = await api.auth.hasFullAdmin();
 
   return (
     <div className="flex items-center justify-between px-3 py-3 sm:px-10 sm:py-5">
@@ -25,7 +26,7 @@ export async function SessionNavbar() {
       <NavigationMenu className="h-[35px] w-[35px]">
         <NavigationMenuList>
           <NavigationMenuItem className="flex items-center justify-center">
-            <UserDropdown isAdmin={isAdmin} />
+            <UserDropdown hasCheckIn={hasCheckIn} hasFullAdmin={hasFullAdmin} />
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
