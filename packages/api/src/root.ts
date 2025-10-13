@@ -15,6 +15,7 @@ import { qrRouter } from "./routers/qr";
 import { resumeRouter } from "./routers/resume";
 import { userRouter } from "./routers/user";
 import { createTRPCRouter } from "./trpc";
+import { emailQueueRouter } from "./routers/email-queue";
 
 export const appRouter = createTRPCRouter<{
   auth: typeof authRouter;
@@ -29,6 +30,7 @@ export const appRouter = createTRPCRouter<{
   qr: typeof qrRouter;
   passkit: typeof passkitRouter;
   email: typeof emailRouter;
+  emailQueue: typeof emailQueueRouter;
   guild: typeof guildRouter;
   judge: typeof judgeRouter;
   challenge: typeof challengeRouter;
@@ -46,6 +48,7 @@ export const appRouter = createTRPCRouter<{
   qr: qrRouter,
   passkit: passkitRouter,
   email: emailRouter,
+  emailQueue: emailQueueRouter,
   guild: guildRouter,
   judge: judgeRouter,
   challenge: challengeRouter,
