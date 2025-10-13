@@ -162,4 +162,6 @@ export const judgeRouter = {
         roomName,
       };
     }),
+
+    //ADD CRUD for judges here? For room assignment?
 };
