@@ -41,15 +41,25 @@ export class EmailQueueService {
   async getNextEmailsToSend(limit: number): Promise<SelectEmailQueue[]> {
     const now = new Date();
     
+    // First, update scheduled emails that are ready to be sent
+    await db
+      .update(EmailQueue)
+      .set({
+        status: 'pending',
+        updated_at: new Date(),
+      })
+      .where(
+        and(
+          eq(EmailQueue.status, 'scheduled'),
+          sql`scheduled_for IS NOT NULL AND scheduled_for <= ${sql.raw(`'${now.toISOString()}'`)}`
+        )
+      );
+
+    // Then get all pending emails
     return await db
       .select()
       .from(EmailQueue)
-      .where(
-        and(
-          sql`status IN ('pending', 'scheduled')`,
-          sql`scheduled_for IS NULL OR scheduled_for <= ${sql.raw(`'${now.toISOString()}'`)}`
-        )
-      )
+      .where(eq(EmailQueue.status, 'pending'))
       .orderBy(
         sql`CASE priority 
           WHEN 'now' THEN 1 
@@ -62,6 +72,27 @@ export class EmailQueueService {
         asc(EmailQueue.batch_position)
       )
       .limit(limit);
+  }
+
+  /**
+   * Clean up stuck emails (emails stuck in processing status for too long)
+   */
+  async cleanupStuckEmails(): Promise<void> {
+    const fiveMinutesAgo = new Date();
+    fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
+
+    await db
+      .update(EmailQueue)
+      .set({
+        status: 'pending',
+        updated_at: new Date(),
+      })
+      .where(
+        and(
+          eq(EmailQueue.status, 'processing'),
+          sql`updated_at < ${sql.raw(`'${fiveMinutesAgo.toISOString()}'`)}`
+        )
+      );
   }
 
   /**

@@ -45,6 +45,9 @@ async function processEmailQueue(emailService: EmailQueueService, client: Client
     return;
   }
 
+  // Clean up any stuck emails first
+  await emailService.cleanupStuckEmails();
+
   // Get daily limit and current count
   const { count, limit, remaining } = await emailService.checkDailyLimit();
   console.log(`Daily limit: ${limit}, Current count: ${count}, Remaining: ${remaining}`);
@@ -60,16 +63,13 @@ async function processEmailQueue(emailService: EmailQueueService, client: Client
   const emailsToSend = await emailService.getNextEmailsToSend(remaining);
   console.log(`Found ${emailsToSend.length} emails ready to send`);
   
-  // Debug: Log details of emails found
+  // Debug: Log details of emails found with priority order
   if (emailsToSend.length > 0) {
-    console.log("Emails found:", emailsToSend.map(e => ({
-      id: e.id,
-      to: e.to,
-      priority: e.priority,
-      status: e.status,
-      scheduled_for: e.scheduled_for,
-      created_at: e.created_at
-    })));
+    console.log(`Found ${emailsToSend.length} emails ready to send:`);
+    emailsToSend.forEach((e, index) => {
+      const scheduledInfo = e.scheduled_for ? `(was scheduled for ${e.scheduled_for.toISOString()})` : '(immediate)';
+      console.log(`  ${index + 1}. [${e.priority.toUpperCase()}] ${e.subject} (${e.to}) - ${scheduledInfo}`);
+    });
   }
 
   if (emailsToSend.length === 0) {
@@ -86,31 +86,32 @@ async function processEmailQueue(emailService: EmailQueueService, client: Client
   for (const email of emailsToSend) {
     // Check blacklist rules
     if (!emailService.canSendEmail(email)) {
-      console.log(`Email ${email.id} skipped due to blacklist rules`);
+      console.log(`Email ${email.id} [${email.priority.toUpperCase()}] "${email.subject}" skipped due to blacklist rules`);
       skippedCount++;
       continue;
     }
 
     // Handle batch emails
-    if (email.batchId) {
-      if (processedBatches.has(email.batchId)) {
+    if (email.batch_id) {
+      if (processedBatches.has(email.batch_id)) {
         continue; // Skip if we already processed this batch
       }
       
-      processedBatches.add(email.batchId);
-      const batchResult = await emailService.processBatch(email.batchId, remaining - sentCount);
+      processedBatches.add(email.batch_id);
+      const batchResult = await emailService.processBatch(email.batch_id, remaining - sentCount);
       sentCount += batchResult.sent;
       
-      console.log(`Batch ${email.batchId}: sent ${batchResult.sent}, scheduled ${batchResult.scheduled}`);
+      console.log(`Batch ${email.batch_id}: sent ${batchResult.sent}, scheduled ${batchResult.scheduled}`);
     } else {
       // Send individual email
+      console.log(`Sending email ${email.id} [${email.priority.toUpperCase()}] "${email.subject}" to ${email.to}`);
       const success = await emailService.sendEmailFromQueue(email.id);
       if (success) {
+        console.log(`✅ Successfully sent email ${email.id}`);
         sentCount++;
-        console.log(`Email ${email.id} sent successfully`);
       } else {
+        console.log(`❌ Failed to send email ${email.id}`);
         failedCount++;
-        console.log(`Email ${email.id} failed to send`);
       }
     }
 
@@ -143,7 +144,6 @@ async function processEmailQueue(emailService: EmailQueueService, client: Client
 async function sendDiscordUpdate(client: Client, title: string, message: string) {
   try {
     // You can configure this channel ID in environment variables
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const channelId = env.DISCORD_EMAIL_QUEUE_CHANNEL_ID;
     
     if (!channelId) {
@@ -151,7 +151,6 @@ async function sendDiscordUpdate(client: Client, title: string, message: string)
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const channel = await client.channels.fetch(channelId);
     if (channel?.isTextBased() && 'send' in channel) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
