@@ -9,7 +9,7 @@ import ScannerPopUp from "../../club/members/_components/scanner";
 import { EventsTable } from "./_components/events-table";
 
 export const metadata: Metadata = {
-  title: "Blade | Hackathon Events",
+  title: "Blade Hackathon Events",
   description: "Manage Knight Hacks hackathon events.",
 };
 
