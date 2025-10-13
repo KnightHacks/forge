@@ -338,6 +338,7 @@ export const InsertEventFeedbackSchema = createInsertSchema(EventFeedback);
 export const Challenges = createTable("challenges", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t.text().notNull(),
+  location: t.text(),
   hackathonId: t
     .uuid()
     .notNull()
