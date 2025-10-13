@@ -9,18 +9,24 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
+import { RubricForm } from "./rubric-form";
+
 const mockData = [
   {
+    id: "1",
     projectName: "wow",
     devpost: "https://devpost.com/software/overcharged",
     description: "does cool things",
     judge: "fernando",
+    judgeId: "judge-1",
   },
   {
+    id: "2",
     projectName: "cool",
     devpost: "https://devpost.com/software/lazyfood",
     description: "also does cool things",
     judge: "ailon",
+    judgeId: "judge-2",
   },
 ];
 
@@ -33,6 +39,7 @@ export function ProjectsTable({ data = mockData }) {
           <TableHead>Devpost</TableHead>
           <TableHead>Description</TableHead>
           <TableHead className="text-right">Judge</TableHead>
+          <TableHead className="text-center">Evaluation</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -51,6 +58,13 @@ export function ProjectsTable({ data = mockData }) {
             </TableCell>
             <TableCell>{project.description}</TableCell>
             <TableCell className="text-right">{project.judge}</TableCell>
+            <TableCell className="text-center">
+              <RubricForm
+                submissionId={project.id}
+                judgeId={project.judgeId}
+                size="sm"
+              />
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
