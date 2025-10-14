@@ -27,6 +27,7 @@ import { Slider } from "@forge/ui/slider";
 import { Textarea } from "@forge/ui/textarea";
 
 import { api } from "~/trpc/react";
+import { toast } from "@forge/ui/toast";
 
 const RUBRIC_SLIDER_MINIMUM = 1;
 const RUBRIC_SLIDER_MAXIMUM = 10;
@@ -35,10 +36,12 @@ const RUBRIC_SLIDER_STEP = 1;
 export function RubricForm({
   submissionId,
   judgeId,
+  projectName,
   size,
 }: {
   submissionId: string;
   judgeId: string;
+  projectName: string;
   size: "md" | "sm" | "lg" | "icon" | null | undefined;
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -107,14 +110,14 @@ export function RubricForm({
         .number()
         .min(RUBRIC_SLIDER_MINIMUM)
         .max(RUBRIC_SLIDER_MAXIMUM),
-      public_feedback: z.string(),
-      private_feedback: z.string(),
+      publicFeedback: z.string(),
+      privateFeedback: z.string(),
     }),
     defaultValues: {
       submissionId,
       judgeId,
-      public_feedback: "",
-      private_feedback: "",
+      publicFeedback: "",
+      privateFeedback: "",
     },
   });
 
@@ -130,7 +133,7 @@ export function RubricForm({
         className="max-h-[80vh] overflow-y-auto"
       >
         <DialogHeader>
-          <DialogTitle>Project Evaluation Rubric</DialogTitle>
+          <DialogTitle className="text-center">{projectName}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -146,8 +149,8 @@ export function RubricForm({
                   values.technical_understanding_rating,
                 implementation_rating: values.implementation_rating,
                 wow_factor_rating: values.wow_factor_rating,
-                public_feedback: values.public_feedback,
-                private_feedback: values.private_feedback,
+                publicFeedback: values.publicFeedback,
+                privateFeedback: values.privateFeedback,
               });
             })}
             noValidate
@@ -313,7 +316,7 @@ export function RubricForm({
               {/* Public Feedback */}
               <FormField
                 control={form.control}
-                name="public_feedback"
+                name="publicFeedback"
                 render={({ field }) => (
                   <FormItem className="pl-8 pr-8 text-center sm:p-0">
                     <FormLabel>
@@ -340,7 +343,7 @@ export function RubricForm({
               {/* Private Feedback */}
               <FormField
                 control={form.control}
-                name="private_feedback"
+                name="privateFeedback"
                 render={({ field }) => (
                   <FormItem className="pl-8 pr-8 text-center sm:p-0">
                     <FormLabel>
