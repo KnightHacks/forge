@@ -2,12 +2,14 @@ import crypto from "crypto";
 import { cookies } from "next/headers";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { eq } from "drizzle-orm";
 
 import { db } from "@forge/db/client";
+import { Judges } from "@forge/db/schemas/knight-hacks";
 import { JudgeSession } from "@forge/db/schemas/auth";
 
 import { env } from "../env";
-import { adminProcedure, publicProcedure } from "../trpc";
+import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 
 const SESSION_TTL_HOURS = 8;
 
@@ -163,5 +165,61 @@ export const judgeRouter = {
       };
     }),
 
-    //ADD CRUD for judges here? For room assignment?
+    // Query, no input, list all judges (no particular order)
+    list: publicProcedure.query(async () => {
+      return await db.select().from(Judges); // Do we want to order by judge name?
+    }),
+    
+    // Mutation: create a new judge
+    create: protectedProcedure
+      .input(
+        z.object({
+          name: z.string().min(1).max(100), // Or some other min/max combo 
+          roomName: z.string().optional(),
+        }),
+      )
+      .mutation(async ({ input }) => {
+        await db.insert(Judges).values({
+          name: input.name,
+          roomName: input.roomName ?? "Unassigned",
+          //Do we want challenges to still be here? Dhruv said judges dont get assigned challenges anymore
+        });
+    }), // Do we want it to return the created judge?
+
+    //Mutation: update the judge (just the room assignment? no challenge anymore)
+    update: protectedProcedure
+      .input(
+        z.object({
+          id: z.string().uuid(),
+          roomName: z.string().optional(),
+        }),
+      )
+      .mutation(async ({ input }) => {
+        const judge = await db.query.Judges.findFirst({
+          where: (j, { eq }) => eq(j.id, input.id),
+        });
+        if (!judge) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Judge not found" });
+        }
+        
+        await db.update(Judges)
+        .set({roomName: input.roomName ?? judge.roomName,
+        }).where(eq(Judges.id, input.id));
+    }),
+
+    // Mutation: delete a judge
+    delete: adminProcedure
+      .input(
+        z.object({ id: z.string().uuid() }),
+      )
+      .mutation(async ({ input }) => {
+        const judge = await db.query.Judges.findFirst({
+          where: (j, { eq }) => eq(j.id, input.id),
+        });
+        if (!judge) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Judge not found" });
+        }
+        await db.delete(Judges).where(eq(Judges.id, input.id));
+    }),
+
 };
