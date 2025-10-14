@@ -1,10 +1,16 @@
+import { z } from "zod";
+
 import { db } from "@forge/db/client";
-import { Challenges } from "@forge/db/schemas/knight-hacks";
 
 import { publicProcedure } from "../trpc";
 
 export const challengeRouter = {
-  list: publicProcedure.query(async () => {
-    return await db.select().from(Challenges);
-  }),
+  list: publicProcedure
+    .input(z.object({ hackathonId: z.string() }))
+    .query(async ({ input }) => {
+      const challenges = db.query.Challenges.findMany({
+        where: (t, { eq }) => eq(t.hackathonId, input.hackathonId),
+      });
+      return challenges;
+    }),
 };

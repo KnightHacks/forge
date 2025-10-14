@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@forge/db/client";
@@ -167,7 +167,7 @@ export const judgeRouter = {
 
   // Query, no input, list all judges (no particular order)
   list: publicProcedure.query(async () => {
-    return await db.select().from(Judges); // Do we want to order by judge name?
+    return await db.select().from(Judges).orderBy(asc(Judges.name));
   }),
 
   // Mutation: create a new judge
