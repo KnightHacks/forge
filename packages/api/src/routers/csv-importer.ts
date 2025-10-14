@@ -85,13 +85,13 @@ export const csvImporterRouter = {
                 ).add("Overall")
             );
 
-            await db.insert(Challenges).values(
+            const insertedChallenges = await db.insert(Challenges).values(
                 challenges.map((challenge: string) => ({
                     title: challenge,
                     location: null,
                     hackathonId: input.hackathon_id,
                 }))
-            );
+            ).returning();
 
             // Group by teams
 
@@ -106,9 +106,13 @@ export const csvImporterRouter = {
                 teamMap.get(teamId).push(record);
             });
 
+            const challengeIdMap = new Map(insertedChallenges.map(challenge => [challenge.title, challenge.id]));
+            console.log(challengeIdMap);
+            console.log("test");
+
             // Populate teams table
         
-            await db.insert(Teams).values(
+            const insertedTeams = await db.insert(Teams).values(
                 Array.from(teamMap.entries()).map(([teamName, teamRows]) => ({
                     hackathonId: input.hackathon_id,
                     projectTitle: teamName,
@@ -119,15 +123,22 @@ export const csvImporterRouter = {
                     emails: teamRows[0].emails,
                     universities: teamRows[0]["Team Colleges/Universities"] ?? teamRows[0]["List All Of The Universities Or Schools That Your Team Members Currently Attend."],
                 }))
-            );
+            ).returning();
+
+            const teamIdMap = new Map(insertedTeams.map(team => [team.projectTitle, team.id]));
 
             // Populate submissions table
 
-            // await db.insert(Submissions).values(
-            //     processedRecords.map((record: unknown) => ({
-
-            //     }))
-            // );
+            await db.insert(Submissions).values(
+                Array.from(teamMap.entries()).flatMap(([teamName, teamRows]) => 
+                    teamRows.map(record => ({
+                        challengeId: challengeIdMap.get(record["Opt-In Prize"]) ?? challengeIdMap.get("Overall"),
+                        teamId: teamIdMap.get(teamName),
+                        judgedStatus: false,
+                        hackathonId: input.hackathon_id,
+                    })
+                ))
+            );
 
             return processedRecords;
         } catch (error) {
