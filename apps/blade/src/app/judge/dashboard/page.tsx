@@ -1,24 +1,47 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
-import { FilterBar } from "../_components/filter-bar";
+import { api } from "~/trpc/server";
 import { ProjectsTable } from "../_components/projects-table";
-import { SearchBar } from "../_components/search-bar";
 
-export default function Page() {
-  return (
-    <div className="container h-screen py-16">
-      <div className="flex flex-col justify-center gap-6">
-        <FilterBar />
-        <SearchBar />
-
+export default async function Page() {
+  const currentHackathon = await api.hackathon.getCurrentHackathon();
+  if (!currentHackathon) {
+    return (
+      <div className="container mx-auto py-16">
         <Card>
           <CardHeader>
-            <CardTitle className="text-center">Judge Dashboard</CardTitle>
+            <CardTitle className="text-center text-red-600">
+              Error Loading Hackathon
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <ProjectsTable />
+            <p className="text-center text-gray-600">
+              Unable to load the current hackathon. Please contact an
+              administrator.
+            </p>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="space-y-6">
+        {/* Welcome Header */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center text-2xl">
+              🏆 Judge Dashboard
+            </CardTitle>
+            <p className="text-center text-gray-600">
+              Welcome to the judging interface for {currentHackathon.name}
+            </p>
+          </CardHeader>
+        </Card>
+
+        {/* Projects Table */}
+        <ProjectsTable hackathonId={currentHackathon.id} />
       </div>
     </div>
   );
