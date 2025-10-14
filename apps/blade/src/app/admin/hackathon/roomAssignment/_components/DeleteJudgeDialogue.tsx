@@ -1,6 +1,8 @@
+import type { InferSelectModel } from "drizzle-orm";
 import { useState } from "react";
 import { Loader2, Trash } from "lucide-react";
 
+import { Judges as DBJudges } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -10,30 +12,38 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
+import { toast } from "@forge/ui/toast";
 
-interface Judge {
-  judgeId: string;
-  judgeName: string;
-  roomName?: string | null;
-}
+type Judge = InferSelectModel<typeof DBJudges>;
 
 interface DeleteJudgeDialogProps {
-  onDelete: (judgeId: string) => void;
   judge: Judge;
 }
 
 export const DeleteJudgeDialog: React.FC<DeleteJudgeDialogProps> = ({
-  onDelete,
   judge,
 }) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const deleteJudge = api.judge.delete.useMutation({
+    onSuccess() {
+      toast.success(`Judge ${judge.name} was successfully deleted!`);
+      setOpen(false);
+    },
+    onError(opts) {
+      toast.error(opts.message);
+    },
+    onSettled() {
+      setIsLoading(false);
+    },
+  });
+
   const handleSubmit = () => {
     setIsLoading(true);
-    onDelete(judge.judgeId);
-    setOpen(false);
-    setIsLoading(false);
+    deleteJudge.mutate({
+      id: judge.id,
+    });
   };
 
   return (

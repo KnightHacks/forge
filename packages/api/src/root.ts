@@ -3,6 +3,7 @@ import { challengeRouter } from "./routers/challenges";
 import { csvImporterRouter } from "./routers/csv-importer";
 import { duesPaymentRouter } from "./routers/dues-payment";
 import { emailRouter } from "./routers/email";
+import { emailQueueRouter } from "./routers/email-queue";
 import { eventRouter } from "./routers/event";
 import { eventFeedbackRouter } from "./routers/event-feedback";
 import { guildRouter } from "./routers/guild";
@@ -15,7 +16,6 @@ import { qrRouter } from "./routers/qr";
 import { resumeRouter } from "./routers/resume";
 import { userRouter } from "./routers/user";
 import { createTRPCRouter } from "./trpc";
-import { emailQueueRouter } from "./routers/email-queue";
 
 export const appRouter = createTRPCRouter<{
   auth: typeof authRouter;
