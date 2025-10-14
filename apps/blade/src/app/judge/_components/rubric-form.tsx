@@ -25,7 +25,6 @@ import {
 } from "@forge/ui/form";
 import { Slider } from "@forge/ui/slider";
 import { Textarea } from "@forge/ui/textarea";
-import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
@@ -44,43 +43,40 @@ export function RubricForm({
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isRubricGiven, setIsRubricGiven] = useState<boolean>(false);
   const [originalityValue, setOriginalityValue] = useState(5);
   const [designValue, setDesignValue] = useState(5);
   const [technicalValue, setTechnicalValue] = useState(5);
   const [implementationValue, setImplementationValue] = useState(5);
   const [wowFactorValue, setWowFactorValue] = useState(5);
 
-  // Merge in Aidan's branch and connect endpoint properly
-  // const { data: hasGivenRubric } = api.judge.hasGivenRubric.useQuery({
-  //   submissionId,
-  //   judgeId,
-  // });
+  const { data: hasGivenRubric } = api.judge.hasGivenRubric.useQuery({
+    submissionId,
+    judgeId,
+  });
 
   const utils = api.useUtils();
 
-  // Merge in Aidan's branch and connect endpoint properly
-  // const createRubric = api.judge.createJudgedSubmission.useMutation({
-  //   async onSuccess() {
-  //     toast.success("Rubric submitted successfully!");
-  //     setIsOpen(false);
-  //     await utils.judge.invalidate();
-  //   },
-  //   onError(error) {
-  //     if (error.data?.code === "FORBIDDEN") {
-  //       toast.error(
-  //         "You cannot give rubric more than once for this submission!",
-  //       );
-  //     } else if (error.data?.code === "NOT_FOUND") {
-  //       toast.error("Cannot find submission/judge!");
-  //     } else {
-  //       toast.error("Oops! Something went wrong. Please try again later.");
-  //     }
-  //   },
-  //   onSettled() {
-  //     setIsLoading(false);
-  //   },
-  // });
+  const createRubric = api.judge.createJudgedSubmission.useMutation({
+    async onSuccess() {
+      toast.success("Rubric submitted successfully!");
+      setIsOpen(false);
+      await utils.judge.invalidate();
+    },
+    onError(error) {
+      if (error.data?.code === "FORBIDDEN") {
+        toast.error(
+          "You cannot give rubric more than once for this submission!",
+        );
+      } else if (error.data?.code === "NOT_FOUND") {
+        toast.error("Cannot find submission/judge!");
+      } else {
+        toast.error("Oops! Something went wrong. Please try again later.");
+      }
+    },
+    onSettled() {
+      setIsLoading(false);
+    },
+  });
 
   const form = useForm({
     schema: InsertJudgedSubmissionSchema.extend({
@@ -120,7 +116,7 @@ export function RubricForm({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size={size} disabled={isRubricGiven}>
+        <Button variant="outline" size={size}>
           Rubric
         </Button>
       </DialogTrigger>
