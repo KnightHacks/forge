@@ -2,7 +2,7 @@ import { publicProcedure } from "../trpc";
 import z from 'zod';
 import { parse } from 'csv-parse/sync';
 import { db } from "@forge/db/client";
-import { Challenges, Teams } from "@forge/db/schemas/knight-hacks";
+import { Challenges, Submissions, Teams } from "@forge/db/schemas/knight-hacks";
 
 export const csvImporterRouter = {
     import: publicProcedure.input(z.object({
@@ -93,24 +93,41 @@ export const csvImporterRouter = {
                 }))
             );
 
+            // Group by teams
+
+            const teamMap = new Map();
+                processedRecords.forEach(record => {
+                const teamId = record["Project Title"]; 
+                
+                if (!teamMap.has(teamId)) {
+                    teamMap.set(teamId, []);
+                }
+                
+                teamMap.get(teamId).push(record);
+            });
+
             // Populate teams table
         
             await db.insert(Teams).values(
-                processedRecords.map((record: unknown) => ({
+                Array.from(teamMap.entries()).map(([teamName, teamRows]) => ({
                     hackathonId: input.hackathon_id,
-                    projectTitle: record["Project Title"],
-                    submissionUrl: record["Submission Url"],
-                    projectCreatedAt: new Date(record["Project Created At"]),
-                    devpostUrl: record["Submission Url"],
-                    notes: record["Notes"],
-                    emails: record.emails,
-                    universities: record["Team Colleges/Universities"] ?? record ["List All Of The Universities Or Schools That Your Team Members Currently Attend."],
+                    projectTitle: teamName,
+                    submissionUrl: teamRows[0]["Submission Url"],
+                    projectCreatedAt: new Date(teamRows[0]["Project Created At"]),
+                    devpostUrl: teamRows[0]["Submission Url"],
+                    notes: teamRows[0]["Notes"],
+                    emails: teamRows[0].emails,
+                    universities: teamRows[0]["Team Colleges/Universities"] ?? teamRows[0]["List All Of The Universities Or Schools That Your Team Members Currently Attend."],
                 }))
             );
 
             // Populate submissions table
 
-            
+            // await db.insert(Submissions).values(
+            //     processedRecords.map((record: unknown) => ({
+
+            //     }))
+            // );
 
             return processedRecords;
         } catch (error) {
