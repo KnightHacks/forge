@@ -1,5 +1,7 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
+
 import {
   Dialog,
   DialogContent,
@@ -27,10 +29,21 @@ interface ChallengesProps {
 }
 
 export function ChallengesTable({ hackathonId }: ChallengesProps) {
-  const { data: challenges } = api.challenge.list.useQuery({
-    hackathonId: hackathonId,
-  });
-  const { data: judges } = api.judge.list.useQuery();
+  const { data: challenges, isLoading: isLoadingChallenges } =
+    api.challenge.list.useQuery({
+      hackathonId: hackathonId,
+    });
+  const { data: judges, isLoading: isLoadingJudges } =
+    api.judge.list.useQuery();
+
+  if (isLoadingChallenges || isLoadingJudges) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
   if (!challenges) return <p> No Challenges </p>;
 
   const challengesExpanded = challenges.map((challenge) => {
