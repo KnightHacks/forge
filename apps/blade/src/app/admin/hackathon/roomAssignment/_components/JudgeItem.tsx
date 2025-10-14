@@ -25,7 +25,7 @@ export const JudgeItem: React.FC<JudgeItemProps> = ({ judge }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const utils = api.useUtils();
-  const updateJudge = api.judge.update.useMutation({
+  const updateJudge = api.judge.updateJudge.useMutation({
     onSuccess() {
       toast.success(
         `${judge.name}'s room was successfully updated to ${editedRoom}`,

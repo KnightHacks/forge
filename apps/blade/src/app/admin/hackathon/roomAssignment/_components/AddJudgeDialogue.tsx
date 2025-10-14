@@ -33,7 +33,7 @@ export const AddJudgeDialog: React.FC<AddJudgeProps> = ({ challenge }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const utils = api.useUtils();
-  const createJudge = api.judge.create.useMutation({
+  const createJudge = api.judge.createJudge.useMutation({
     onSuccess() {
       toast.success(`Successfully added Judge ${judgeName}`);
       setOpen(false);

@@ -30,11 +30,11 @@ interface ChallengesProps {
 
 export function ChallengesTable({ hackathonId }: ChallengesProps) {
   const { data: challenges, isLoading: isLoadingChallenges } =
-    api.challenge.list.useQuery({
+    api.challenge.getChallenges.useQuery({
       hackathonId: hackathonId,
     });
   const { data: judges, isLoading: isLoadingJudges } =
-    api.judge.list.useQuery();
+    api.judge.getJudges.useQuery();
 
   if (isLoadingChallenges || isLoadingJudges) {
     return (
