@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+"use client";
 
 import {
   Dialog,
@@ -18,38 +18,33 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
-import { api } from "~/trpc/server";
+import { api } from "~/trpc/react";
 import { AddJudgeDialog } from "./AddJudgeDialogue";
 import { JudgeItem } from "./JudgeItem"; // Adjust path as needed
 
-//export async function ChallengesTable(){
-export async function ChallengesTable() {
-  const hackathonId = await api.hackathon.getCurrentHackathon();
-  if (!hackathonId) return <p> Hackathon Not Found </p>;
+interface ChallengesProps {
+  hackathonId: string;
+}
 
-  const challenges = await api.challenges.list();
-  const judges = await api.judge.list();
+export function ChallengesTable({ hackathonId }: ChallengesProps) {
+  const { data: challenges } = api.challenge.list.useQuery({
+    hackathonId: hackathonId,
+  });
+  const { data: judges } = api.judge.list.useQuery();
+  if (!challenges) return <p> No Challenges </p>;
 
-  const challengesExpanded = useMemo(
-    () =>
-      challenges.map((challenge) => {
-        const filteredJudges = judges.filter(
-          (j) => j.challengeId == challenge.challengeId,
-        );
-        const filteredRooms = Array.from(
-          new Set(
-            filteredJudges.filter((j) => j.roomName).map((j) => j.roomName),
-          ),
-        );
-        const extendedChallenge = {
-          ...challenge,
-          judges: filteredJudges,
-          rooms: filteredRooms,
-        };
-        return extendedChallenge;
-      }),
-    [challenges, judges],
-  );
+  const challengesExpanded = challenges.map((challenge) => {
+    const filteredJudges = judges?.filter((j) => j.challengeId == challenge.id);
+    const filteredRooms = Array.from(
+      new Set(filteredJudges?.filter((j) => j.roomName).map((j) => j.roomName)),
+    );
+    const extendedChallenge = {
+      ...challenge,
+      judges: filteredJudges ?? [],
+      rooms: filteredRooms,
+    };
+    return extendedChallenge;
+  });
 
   return (
     <>
@@ -80,17 +75,17 @@ export async function ChallengesTable() {
             </TableHeader>
             <TableBody>
               {challengesExpanded.map((challenge) => (
-                <Dialog key={challenge.challengeId}>
+                <Dialog key={challenge.id}>
                   <DialogTrigger asChild>
                     <TableRow>
                       <TableCell className="text-center font-medium">
-                        {challenge.challengeId.slice(0, 3) + "..."}
+                        {challenge.id.slice(0, 3) + "..."}
                       </TableCell>
                       <TableCell className="text-center font-medium">
-                        {challenge.challengeTitle}
+                        {challenge.title}
                       </TableCell>
                       <TableCell className="text-center font-medium">
-                        {challenge.sponsorName}
+                        {challenge.sponsor}
                       </TableCell>
                       <TableCell className="text-center font-medium">
                         {challenge.rooms.length != 1
@@ -100,17 +95,17 @@ export async function ChallengesTable() {
                       <TableCell className="text-center font-medium">
                         {challenge.judges.length > 1
                           ? challenge.judges.length + " judges"
-                          : challenge.judges[0]?.judgeName}
+                          : challenge.judges[0]?.name}
                       </TableCell>
                     </TableRow>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
                       <DialogTitle className="text-xl">
-                        {challenge.challengeTitle}
+                        {challenge.title}
                       </DialogTitle>
                       <DialogDescription className="pt-2">
-                        {challenge.challengeDescription}
+                        {challenge.description}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-6 py-4">
@@ -129,7 +124,7 @@ export async function ChallengesTable() {
                         </div>
                         <div className="space-y-2">
                           {challenge.judges.map((judge) => (
-                            <JudgeItem key={judge.judgeId} judge={judge} />
+                            <JudgeItem key={judge.id} judge={judge} />
                           ))}
                         </div>
                       </div>

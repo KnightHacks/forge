@@ -1,8 +1,10 @@
+"use client";
+
 import type { InferSelectModel } from "drizzle-orm";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
-import { Judges as DBJudges } from "@forge/db/schemas/knight-hacks";
+import type { Judges as DBJudges } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
@@ -22,16 +24,18 @@ export const JudgeItem: React.FC<JudgeItemProps> = ({ judge }) => {
   const hasChanged = editedRoom !== (judge.roomName || "");
   const [isLoading, setIsLoading] = useState(false);
 
+  const utils = api.useUtils();
   const updateJudge = api.judge.update.useMutation({
     onSuccess() {
       toast.success(
-        `${judge.judgeName}'s room was successfully updated to ${editedRoom}`,
+        `${judge.name}'s room was successfully updated to ${editedRoom}`,
       );
     },
     onError(opts) {
       toast.error(opts.message);
     },
-    onSettled() {
+    async onSettled() {
+      await utils.judge.invalidate();
       setIsLoading(false);
     },
   });
@@ -58,6 +62,11 @@ export const JudgeItem: React.FC<JudgeItemProps> = ({ judge }) => {
             onChange={(e) => setEditedRoom(e.target.value)}
             placeholder="Assign room"
             className="h-8 flex-1 text-sm"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSave();
+              }
+            }}
           />
           {hasChanged &&
             (isLoading ? (

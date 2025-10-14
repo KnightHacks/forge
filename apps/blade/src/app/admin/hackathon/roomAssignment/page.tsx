@@ -19,9 +19,12 @@ export default async function Hackers() {
   const isAdmin = await api.auth.getAdminStatus();
   if (!isAdmin) redirect("/");
 
+  const currentHackathon = await api.hackathon.getCurrentHackathon();
+  if (!currentHackathon) return <p> Hackathon Not Found </p>;
+
   return (
     <HydrateClient>
-      <ChallengesTable />
+      <ChallengesTable hackathonId={currentHackathon.id} />
     </HydrateClient>
   );
 }
