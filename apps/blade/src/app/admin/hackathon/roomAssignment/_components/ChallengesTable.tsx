@@ -1,6 +1,4 @@
-"use client";
-
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import {
   Dialog,
@@ -19,118 +17,18 @@ import {
   TableHeader,
   TableRow,
 } from "@forge/ui/table";
-import { toast } from "@forge/ui/toast";
 
-import { api } from "~/trpc/react";
+import { api } from "~/trpc/server";
 import { AddJudgeDialog } from "./AddJudgeDialogue";
 import { JudgeItem } from "./JudgeItem"; // Adjust path as needed
 
-const data = {
-  judges: [
-    {
-      judgeId: "j1",
-      judgeName: "Dr. Sarah Chen",
-      roomName: "Room A",
-      challengeId: "c1",
-    },
-    {
-      judgeId: "j2",
-      judgeName: "Michael Rodriguez",
-      roomName: null,
-      challengeId: "c2",
-    },
-    {
-      judgeId: "j3",
-      judgeName: "Emily Thompson",
-      roomName: "Room A",
-      challengeId: "c1",
-    },
-    {
-      judgeId: "j4",
-      judgeName: "James Park",
-      roomName: "Room C",
-      challengeId: "c3",
-    },
-    {
-      judgeId: "j5",
-      judgeName: "Lisa Anderson",
-      roomName: null,
-      challengeId: "c3",
-    },
-    {
-      judgeId: "j6",
-      judgeName: "Lisa Anderson 2",
-      roomName: "Room D",
-      challengeId: "c3",
-    },
-  ],
-  challenges: [
-    {
-      challengeId: "c1",
-      challengeTitle: "AI for Healthcare",
-      challengeDescription:
-        "Build an AI-powered solution to improve patient care and medical diagnostics",
-      sponsorName: "MedTech Corp",
-      hackathonId: "h1",
-    },
-    {
-      challengeId: "c2",
-      challengeTitle: "Sustainable Energy Dashboard",
-      challengeDescription:
-        "Create a real-time dashboard for monitoring and optimizing renewable energy usage",
-      sponsorName: "GreenEnergy Solutions",
-      hackathonId: "h1",
-    },
-    {
-      challengeId: "c3",
-      challengeTitle: "FinTech Security",
-      challengeDescription:
-        "Develop innovative security solutions for digital payment systems",
-      sponsorName: "SecureBank Inc",
-      hackathonId: "h1",
-    },
-    {
-      challengeId: "c4",
-      challengeTitle: "Education Accessibility",
-      challengeDescription:
-        "Design tools to make online education more accessible to students with disabilities",
-      sponsorName: "EduTech Foundation",
-      hackathonId: "h2",
-    },
-    {
-      challengeId: "c5",
-      challengeTitle: "Smart City IoT",
-      challengeDescription:
-        "Build IoT solutions for smart city infrastructure and urban planning",
-      sponsorName: "UrbanTech Systems",
-      hackathonId: "h2",
-    },
-  ],
-  hackathons: [
-    {
-      hackathonId: "h1",
-      hackathonName: "Spring Hack 2025",
-    },
-    {
-      hackathonId: "h2",
-      hackathonName: "Fall Innovation Challenge 2024",
-    },
-  ],
-};
-
 //export async function ChallengesTable(){
-export function ChallengesTable() {
-  //const hackathonId = await api.hackathon.getCurrentHackathon();
-  const hackathonId = "h1";
-  //if(!hackathonId) return <p> Hackathon Not Found </p>
-  //
-  const utils = api.useUtils();
-  const challenges = data.challenges.filter(
-    (a) => a.hackathonId == hackathonId,
-  );
-  const [judges, setJudges] = useState(data.judges);
-  //const challenges = api.challenges.getChallenges(hackathonId);
-  //const judges = api.admin.hackathon.getJudges();
+export async function ChallengesTable() {
+  const hackathonId = await api.hackathon.getCurrentHackathon();
+  if (!hackathonId) return <p> Hackathon Not Found </p>;
+
+  const challenges = await api.challenges.list();
+  const judges = await api.judge.list();
 
   const challengesExpanded = useMemo(
     () =>
@@ -227,58 +125,11 @@ export function ChallengesTable() {
                           <Label className="text-base font-semibold">
                             Judges
                           </Label>
-                          <AddJudgeDialog
-                            onAddJudge={async (judgeName, roomName) => {
-                              setJudges((judges) => [
-                                ...judges,
-                                {
-                                  judgeId: Math.random().toString(),
-                                  judgeName: judgeName,
-                                  roomName: roomName,
-                                  challengeId: challenge.challengeId,
-                                },
-                              ]);
-                              await new Promise((r) => setTimeout(r, 2000));
-                              toast.success(`Added Judge ${judgeName}`);
-                              // Handle adding the judge here
-                            }}
-                          />
+                          <AddJudgeDialog challenge={challenge} />
                         </div>
                         <div className="space-y-2">
                           {challenge.judges.map((judge) => (
-                            <JudgeItem
-                              key={judge.judgeId}
-                              judge={judge}
-                              onSave={(judgeId, roomName) => {
-                                const judgeName: string | undefined =
-                                  judges.find(
-                                    (j) => j.judgeId == judgeId,
-                                  )?.judgeName;
-                                setJudges((judges) =>
-                                  [...judges].map((j) =>
-                                    j.judgeId != judgeId
-                                      ? j
-                                      : { ...j, roomName: roomName },
-                                  ),
-                                );
-                                toast.success(
-                                  `Judge ${judgeName}'s room has been changed to ${roomName}`,
-                                );
-                              }}
-                              onDelete={(judgeId) => {
-                                const judgeName: string | undefined =
-                                  judges.find(
-                                    (j) => j.judgeId == judgeId,
-                                  )?.judgeName;
-                                setJudges((judges) =>
-                                  [...judges].filter(
-                                    (j) => j.judgeId != judgeId,
-                                  ),
-                                );
-                                // Handle delete here
-                                toast.success(`Deleted Judge ${judgeName}`);
-                              }}
-                            />
+                            <JudgeItem key={judge.judgeId} judge={judge} />
                           ))}
                         </div>
                       </div>
