@@ -2,7 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import { useState } from "react";
 import { Loader2, Trash } from "lucide-react";
 
-import { Judges as DBJudges } from "@forge/db/schemas/knight-hacks";
+import type { Judges as DBJudges } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -13,6 +13,8 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 import { toast } from "@forge/ui/toast";
+
+import { api } from "~/trpc/react";
 
 type Judge = InferSelectModel<typeof DBJudges>;
 
@@ -26,6 +28,7 @@ export const DeleteJudgeDialog: React.FC<DeleteJudgeDialogProps> = ({
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const utils = api.useUtils();
   const deleteJudge = api.judge.delete.useMutation({
     onSuccess() {
       toast.success(`Judge ${judge.name} was successfully deleted!`);
@@ -34,7 +37,8 @@ export const DeleteJudgeDialog: React.FC<DeleteJudgeDialogProps> = ({
     onError(opts) {
       toast.error(opts.message);
     },
-    onSettled() {
+    async onSettled() {
+      await utils.judge.invalidate();
       setIsLoading(false);
     },
   });
@@ -66,13 +70,15 @@ export const DeleteJudgeDialog: React.FC<DeleteJudgeDialogProps> = ({
           >
             Cancel
           </Button>
-          {isLoading ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <Button variant="destructive" onClick={handleSubmit}>
-              Delete
-            </Button>
-          )}
+          <div className="flex items-center justify-center">
+            {isLoading ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <Button variant="destructive" onClick={handleSubmit}>
+                Delete
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
