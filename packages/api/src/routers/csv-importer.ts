@@ -8,7 +8,7 @@ export const csvImporterRouter = {
     import: publicProcedure.input(z.object({
         hackathon_id: z.string(),
         csvContent: z.string(),
-    })).mutation(async ({ input, ctx }) => {
+    })).mutation(async ({ input }) => {
         try {
             // Get raw records
             const rawRecords = parse(input.csvContent, {
@@ -28,6 +28,10 @@ export const csvImporterRouter = {
             // Can't really happen, but it's here to solve ts complains
             if (!headerRow) {
                 throw new Error('CSV file is empty');
+            }
+
+            if (dataRows.length == 0) {
+                throw new Error('CSV file has headers but no data');
             }
 
             // Map every index to its header name
