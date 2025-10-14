@@ -25,9 +25,9 @@ import {
 } from "@forge/ui/form";
 import { Slider } from "@forge/ui/slider";
 import { Textarea } from "@forge/ui/textarea";
+import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import { toast } from "@forge/ui/toast";
 
 const RUBRIC_SLIDER_MINIMUM = 1;
 const RUBRIC_SLIDER_MAXIMUM = 10;
@@ -48,19 +48,9 @@ export function RubricForm({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [originalityValue, setOriginalityValue] = useState(5);
   const [designValue, setDesignValue] = useState(5);
-  const [isRubricGiven, setIsRubricGiven] = useState<boolean>(false);
   const [technicalValue, setTechnicalValue] = useState(5);
   const [implementationValue, setImplementationValue] = useState(5);
   const [wowFactorValue, setWowFactorValue] = useState(5);
-
-  const { data: hasGivenRubric } = api.judge.hasGivenRubric.useQuery({
-    submissionId,
-    judgeId,
-  });
-
-  useEffect(() => {
-    setIsRubricGiven(hasGivenRubric ?? false);
-  }, [hasGivenRubric]);
 
   const utils = api.useUtils();
 
@@ -70,13 +60,18 @@ export function RubricForm({
       setIsOpen(false);
       await utils.judge.invalidate();
     },
-    onError(error) {
+    onError(error: any) {
+      console.error("Rubric submission error:", error);
       if (error.data?.code === "FORBIDDEN") {
         toast.error(
           "You cannot give rubric more than once for this submission!",
         );
       } else if (error.data?.code === "NOT_FOUND") {
         toast.error("Cannot find submission/judge!");
+      } else if (error.data?.code === "CONFLICT") {
+        toast.error("You've already judged this submission!");
+      } else if (error.message) {
+        toast.error(`Error: ${error.message}`);
       } else {
         toast.error("Oops! Something went wrong. Please try again later.");
       }
@@ -87,35 +82,21 @@ export function RubricForm({
   });
 
   const form = useForm({
-    schema: InsertJudgedSubmissionSchema.extend({
-      submissionId: z.string().nonempty(),
-      judgeId: z.string().nonempty(),
-      originality_rating: z
-        .number()
-        .min(RUBRIC_SLIDER_MINIMUM)
-        .max(RUBRIC_SLIDER_MAXIMUM),
-      design_rating: z
-        .number()
-        .min(RUBRIC_SLIDER_MINIMUM)
-        .max(RUBRIC_SLIDER_MAXIMUM),
-      technical_understanding_rating: z
-        .number()
-        .min(RUBRIC_SLIDER_MINIMUM)
-        .max(RUBRIC_SLIDER_MAXIMUM),
-      implementation_rating: z
-        .number()
-        .min(RUBRIC_SLIDER_MINIMUM)
-        .max(RUBRIC_SLIDER_MAXIMUM),
-      wow_factor_rating: z
-        .number()
-        .min(RUBRIC_SLIDER_MINIMUM)
-        .max(RUBRIC_SLIDER_MAXIMUM),
-      publicFeedback: z.string(),
-      privateFeedback: z.string(),
+    schema: InsertJudgedSubmissionSchema.omit({
+      hackathonId: true,
+      id: true,
+    }).extend({
+      publicFeedback: z.string().min(1, "Public feedback is required"),
+      privateFeedback: z.string().min(1, "Private feedback is required"),
     }),
     defaultValues: {
       submissionId,
       judgeId,
+      originality_rating: 5,
+      design_rating: 5,
+      technical_understanding_rating: 5,
+      implementation_rating: 5,
+      wow_factor_rating: 5,
       publicFeedback: "",
       privateFeedback: "",
     },
@@ -124,7 +105,7 @@ export function RubricForm({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size={size} disabled={isRubricGiven}>
+        <Button variant="outline" size={size}>
           Rubric
         </Button>
       </DialogTrigger>
