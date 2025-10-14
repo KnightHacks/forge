@@ -402,13 +402,7 @@ export const InsertTeamsSchema = createInsertSchema(Teams);
 export const Judges = createTable("judges", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   name: t.text().notNull(),
-  location: t.text().notNull(),
-  challengeId: t
-    .uuid()
-    .notNull()
-    .references(() => Challenges.id, {
-      onDelete: "cascade",
-    }),
+  roomName: t.text().notNull(),
 }));
 
 export const InsertJudgesSchema = createInsertSchema(Judges);
