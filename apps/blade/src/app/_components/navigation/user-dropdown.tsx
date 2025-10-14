@@ -24,7 +24,8 @@ import {
   adminClubItems,
   adminHackathonItems,
   adminItems,
-  checkInOnlyItems,
+  scannerOnlyClubItems,
+  scannerOnlyHackathonItems,
   userItems,
 } from "./reusable-user-dropdown";
 
@@ -32,8 +33,6 @@ interface UserDropdownProps {
   hasCheckIn: boolean;
   hasFullAdmin: boolean;
 }
-
-// If you need to conditionally render some dropdown items, please refer to ./reusable-user-dropdown
 
 export function UserDropdown({ hasCheckIn, hasFullAdmin }: UserDropdownProps) {
   const utils = api.useUtils();
@@ -43,10 +42,20 @@ export function UserDropdown({ hasCheckIn, hasFullAdmin }: UserDropdownProps) {
   void utils.member.getMember.prefetch();
 
   const canAccessClub = hasFullAdmin || hasCheckIn;
-  const canAccessHackathon = hasFullAdmin;
-  const canAccessAdmin = hasFullAdmin;
+  const canAccessHackathon = hasFullAdmin || hasCheckIn;
+  const canAccessAdmin = hasFullAdmin || hasCheckIn;
 
-  const clubItems = hasFullAdmin ? adminClubItems : checkInOnlyItems;
+  // Determine which items to show based on permissions
+  const clubItems = hasFullAdmin
+    ? adminClubItems
+    : hasCheckIn
+      ? scannerOnlyClubItems
+      : [];
+  const hackathonItems = hasFullAdmin
+    ? adminHackathonItems
+    : hasCheckIn
+      ? scannerOnlyHackathonItems
+      : [];
 
   return (
     <DropdownMenu>
@@ -64,16 +73,16 @@ export function UserDropdown({ hasCheckIn, hasFullAdmin }: UserDropdownProps) {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           {canAccessAdmin && <DropdownMenuRoleItems items={adminItems} />}
-          {canAccessClub && (
+          {canAccessClub && clubItems.length > 0 && (
             <>
               <DropdownMenuLabel>Club</DropdownMenuLabel>
               <DropdownMenuRoleItems items={clubItems} />
             </>
           )}
-          {canAccessHackathon && (
+          {canAccessHackathon && hackathonItems.length > 0 && (
             <>
               <DropdownMenuLabel>Hackathon</DropdownMenuLabel>
-              <DropdownMenuRoleItems items={adminHackathonItems} />
+              <DropdownMenuRoleItems items={hackathonItems} />
             </>
           )}
           <DropdownMenuItem

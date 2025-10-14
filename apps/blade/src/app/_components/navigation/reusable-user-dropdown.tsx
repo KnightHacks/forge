@@ -4,6 +4,7 @@ import {
   Settings,
   ShieldCheck,
   Swords,
+  TicketCheck,
   User,
 } from "lucide-react";
 
@@ -54,6 +55,16 @@ export const adminClubItems: roleItems[] = [
     route: "/admin/club/events",
   },
   {
+    name: "Check-in",
+    component: (
+      <TicketCheck
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/club/check-in",
+  },
+  {
     name: "Data",
     component: (
       <ChartPie
@@ -72,6 +83,26 @@ export const adminHackathonItems: roleItems[] = [
       <Swords color={USER_DROPDOWN_ICON_COLOR} size={USER_DROPDOWN_ICON_SIZE} />
     ),
     route: "/admin/hackathon/hackers",
+  },
+  {
+    name: "Events",
+    component: (
+      <CalendarDays
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/hackathon/events",
+  },
+  {
+    name: "Check-in",
+    component: (
+      <TicketCheck
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/hackathon/check-in",
   },
   {
     name: "Data",
@@ -95,6 +126,32 @@ export const checkInOnlyItems: roleItems[] = [
       />
     ),
     route: "/admin/club/events",
+  },
+];
+
+export const scannerOnlyClubItems: roleItems[] = [
+  {
+    name: "Check-in",
+    component: (
+      <TicketCheck
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/club/check-in",
+  },
+];
+
+export const scannerOnlyHackathonItems: roleItems[] = [
+  {
+    name: "Check-in",
+    component: (
+      <TicketCheck
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/hackathon/check-in",
   },
 ];
 
