@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Loader2, Plus } from "lucide-react";
-
+import type { InferSelectModel } from "drizzle-orm";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -11,28 +11,50 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
-import { Label } from "@forge/ui/label";
+import { Label } from "@forge/ui/label"
+import { Challenges as DBChallenge } from "@forge/db/schemas/knight-hacks";bel";
+import { toast } from "@forge/ui/toast";
 
-interface AddJudgeDialogProps {
-  onAddJudge: (judgeName: string, roomName: string) => Promise<void>;
+import { api } from "~/trpc/react";
+
+type Challenge = InferSelectModel<typeof DBChallenge>;
+
+interface AddJudgeProps {
+  challenge: Challenge
 }
 
-export const AddJudgeDialog: React.FC<AddJudgeDialogProps> = ({
-  onAddJudge,
+export const AddJudgeDialog: React.FC<AddJudgeProps> = ({
+  challenge
 }) => {
   const [open, setOpen] = useState(false);
   const [judgeName, setJudgeName] = useState("");
   const [roomName, setRoomName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const createJudge = api.judge.create.useMutation({
+    onSuccess() {
+      toast.success(`Successfully added Judge ${judgeName}`);
+      setOpen(false);
+      setIsLoading(false);
+    },
+    onError(opts) {
+      toast.error(opts.message);
+    },
+    onSettled() {
+      setIsLoading(false);
+    },
+  });
+
   const handleSubmit = async () => {
     if (judgeName.trim()) {
       setIsLoading(true);
-      await onAddJudge(judgeName, roomName);
       setJudgeName("");
       setRoomName("");
-      setOpen(false);
-      setIsLoading(false);
+      createJudge.mutate({
+        name: judgeName,
+        roomName: roomName,
+        challengeId: challenge.id
+      })
     }
   };
 
