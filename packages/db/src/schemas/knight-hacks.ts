@@ -338,13 +338,14 @@ export const InsertEventFeedbackSchema = createInsertSchema(EventFeedback);
 export const Challenges = createTable("challenges", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t.text().notNull(),
-  location: t.text().notNull(),
   hackathonId: t
     .uuid()
     .notNull()
     .references(() => Hackathon.id, {
       onDelete: "cascade",
     }),
+  description: t.text().notNull(),
+  sponsor: t.text().notNull(),
 }));
 
 export const InsertChallengesSchema = createInsertSchema(Challenges);

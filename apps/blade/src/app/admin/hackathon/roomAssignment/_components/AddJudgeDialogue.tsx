@@ -1,6 +1,10 @@
+"use client";
+
+import type { InferSelectModel } from "drizzle-orm";
 import { useState } from "react";
 import { Loader2, Plus } from "lucide-react";
-import type { InferSelectModel } from "drizzle-orm";
+
+import type { Challenges as DBChallenge } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -11,8 +15,7 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
-import { Label } from "@forge/ui/label"
-import { Challenges as DBChallenge } from "@forge/db/schemas/knight-hacks";bel";
+import { Label } from "@forge/ui/label";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
@@ -20,41 +23,41 @@ import { api } from "~/trpc/react";
 type Challenge = InferSelectModel<typeof DBChallenge>;
 
 interface AddJudgeProps {
-  challenge: Challenge
+  challenge: Challenge;
 }
 
-export const AddJudgeDialog: React.FC<AddJudgeProps> = ({
-  challenge
-}) => {
+export const AddJudgeDialog: React.FC<AddJudgeProps> = ({ challenge }) => {
   const [open, setOpen] = useState(false);
   const [judgeName, setJudgeName] = useState("");
   const [roomName, setRoomName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const utils = api.useUtils();
   const createJudge = api.judge.create.useMutation({
     onSuccess() {
       toast.success(`Successfully added Judge ${judgeName}`);
       setOpen(false);
       setIsLoading(false);
+      setJudgeName("");
+      setRoomName("");
     },
     onError(opts) {
       toast.error(opts.message);
     },
-    onSettled() {
+    async onSettled() {
+      await utils.judge.invalidate();
       setIsLoading(false);
     },
   });
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (judgeName.trim()) {
       setIsLoading(true);
-      setJudgeName("");
-      setRoomName("");
       createJudge.mutate({
         name: judgeName,
         roomName: roomName,
-        challengeId: challenge.id
-      })
+        challengeId: challenge.id,
+      });
     }
   };
 
@@ -78,9 +81,9 @@ export const AddJudgeDialog: React.FC<AddJudgeProps> = ({
               value={judgeName}
               onChange={(e) => setJudgeName(e.target.value)}
               placeholder="Enter judge name"
-              onKeyDown={async (e) => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  await handleSubmit();
+                  handleSubmit();
                 }
               }}
             />
@@ -92,9 +95,9 @@ export const AddJudgeDialog: React.FC<AddJudgeProps> = ({
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
               placeholder="Assign room"
-              onKeyDown={async (e) => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  await handleSubmit();
+                  handleSubmit();
                 }
               }}
             />
@@ -108,13 +111,16 @@ export const AddJudgeDialog: React.FC<AddJudgeProps> = ({
           >
             Cancel
           </Button>
-          {isLoading ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <Button onClick={handleSubmit} disabled={!judgeName.trim()}>
-              Add Judge
-            </Button>
-          )}
+
+          <div className="flex items-center justify-center">
+            {isLoading ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <Button onClick={handleSubmit} disabled={!judgeName.trim()}>
+                Add Judge
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
