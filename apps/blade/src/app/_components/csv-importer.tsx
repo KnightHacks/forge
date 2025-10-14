@@ -7,6 +7,7 @@ import { api } from "~/trpc/react";
 export default function CsvImporter() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+
     const importer = api.csvImporter.import.useMutation({
         onSuccess: (data) => {
             console.log(data);
@@ -22,11 +23,13 @@ export default function CsvImporter() {
             return;
         }
 
+        
         const file = e.target.files[0];
-
+        
         const csvContent = await file.text();
+        console.log(csvContent);
 
-        importer.mutate({ csvContent });
+        importer.mutate({ csvContent, hackathon_id: "44c8e930-9186-406e-9cfd-d40e73a9b721" });
         
         return;
     };
