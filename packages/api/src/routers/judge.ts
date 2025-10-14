@@ -165,13 +165,13 @@ export const judgeRouter = {
       };
     }),
 
-  // Query, no input, list all judges (no particular order)
-  list: publicProcedure.query(async () => {
+  // Query, no input, list all judges
+  getJudges: publicProcedure.query(async () => {
     return await db.select().from(Judges).orderBy(asc(Judges.name));
   }),
 
   // Mutation: create a new judge
-  create: adminProcedure
+  createJudge: adminProcedure
     .input(
       z.object({
         name: z.string().min(1).max(100), // Or some other min/max combo
@@ -180,17 +180,28 @@ export const judgeRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      if (input.challengeId) {
-        // Prolly wanna verify challenge is real
-        const challengeExists = await db.query.Challenges.findFirst({
-          where: (c, { eq }) => eq(c.id, input.challengeId),
+      if (!input.name) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Not a valid judge",
         });
-        if (!challengeExists) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Challenge does not exist",
-          });
-        }
+      }
+
+      if (!input.challengeId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Not a valid challenge",
+        });
+      }
+
+      const challengeExists = await db.query.Challenges.findFirst({
+        where: (c, { eq }) => eq(c.id, input.challengeId),
+      });
+      if (!challengeExists) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Challenge does not exist",
+        });
       }
 
       await db.insert(Judges).values({
@@ -201,7 +212,7 @@ export const judgeRouter = {
     }),
 
   //Mutation: update the judge object
-  update: adminProcedure
+  updateJudge: adminProcedure
     .input(
       z.object({
         id: z.string().uuid(),
@@ -210,6 +221,20 @@ export const judgeRouter = {
       }),
     )
     .mutation(async ({ input }) => {
+      if (!input.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid Judge",
+        });
+      }
+
+      if (!input.roomName) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Not a valid room",
+        });
+      }
+
       const judge = await db.query.Judges.findFirst({
         where: (j, { eq }) => eq(j.id, input.id),
       });
@@ -239,7 +264,7 @@ export const judgeRouter = {
     }),
 
   // Mutation: delete a judge
-  delete: adminProcedure
+  deleteJudge: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ input }) => {
       const judge = await db.query.Judges.findFirst({

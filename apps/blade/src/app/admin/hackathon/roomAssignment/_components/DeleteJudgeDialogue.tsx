@@ -29,7 +29,7 @@ export const DeleteJudgeDialog: React.FC<DeleteJudgeDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const utils = api.useUtils();
-  const deleteJudge = api.judge.delete.useMutation({
+  const deleteJudge = api.judge.deleteJudge.useMutation({
     onSuccess() {
       toast.success(`Judge ${judge.name} was successfully deleted!`);
       setOpen(false);
