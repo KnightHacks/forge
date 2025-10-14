@@ -1,43 +1,53 @@
+import type { InferSelectModel } from "drizzle-orm";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
+import { Judges as DBJudges } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { toast } from "@forge/ui/toast";
 
+import { api } from "~/trpc/react";
 import { DeleteJudgeDialog } from "./DeleteJudgeDialogue";
 
-interface Judge {
-  judgeId: string;
-  judgeName: string;
-  roomName?: string | null;
-}
+type Judge = InferSelectModel<typeof DBJudges>;
 
 interface JudgeItemProps {
   judge: Judge;
-  onSave: (judgeId: string, roomName: string) => void;
-  onDelete: (judgeId: string) => void;
 }
 
-export const JudgeItem: React.FC<JudgeItemProps> = ({
-  judge,
-  onSave,
-  onDelete,
-}) => {
+export const JudgeItem: React.FC<JudgeItemProps> = ({ judge }) => {
   const [editedRoom, setEditedRoom] = useState(judge.roomName || "");
   const hasChanged = editedRoom !== (judge.roomName || "");
   const [isLoading, setIsLoading] = useState(false);
 
+  const updateJudge = api.judge.update.useMutation({
+    onSuccess() {
+      toast.success(
+        `${judge.judgeName}'s room was successfully updated to ${editedRoom}`,
+      );
+    },
+    onError(opts) {
+      toast.error(opts.message);
+    },
+    onSettled() {
+      setIsLoading(false);
+    },
+  });
+
   const handleSave = () => {
     setIsLoading(true);
-    onSave(judge.judgeId, editedRoom);
-    setIsLoading(false);
+    updateJudge.mutate({
+      id: judge.id,
+      roomName: editedRoom,
+    });
   };
 
   return (
     <div className="flex items-start gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/50">
       <div className="min-w-0 flex-1 space-y-2">
-        <p className="font-medium">{judge.judgeName}</p>
+        <p className="font-medium">{judge.name}</p>
         <div className="flex items-center gap-2">
           <Label className="text-muted-forgeground whitespace-nowrap text-xs">
             Room:
@@ -59,7 +69,7 @@ export const JudgeItem: React.FC<JudgeItemProps> = ({
             ))}
         </div>
       </div>
-      <DeleteJudgeDialog onDelete={onDelete} judge={judge} />
+      <DeleteJudgeDialog judge={judge} />
     </div>
   );
 };

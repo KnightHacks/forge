@@ -1,4 +1,5 @@
 import { authRouter } from "./routers/auth";
+import { challengeRouter } from "./routers/challenges";
 import { duesPaymentRouter } from "./routers/dues-payment";
 import { emailRouter } from "./routers/email";
 import { eventRouter } from "./routers/event";
@@ -29,6 +30,7 @@ export const appRouter = createTRPCRouter<{
   email: typeof emailRouter;
   guild: typeof guildRouter;
   judge: typeof judgeRouter;
+  challenge: typeof challengeRouter;
 }>({
   auth: authRouter,
   duesPayment: duesPaymentRouter,
@@ -44,6 +46,7 @@ export const appRouter = createTRPCRouter<{
   email: emailRouter,
   guild: guildRouter,
   judge: judgeRouter,
+  challenge: challengeRouter,
 });
 
 // export type definition of API

@@ -1,12 +1,12 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { TRPCError } from "@trpc/server";
-import { z } from "zod";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 
 import { db } from "@forge/db/client";
-import { Judges } from "@forge/db/schemas/knight-hacks";
 import { JudgeSession } from "@forge/db/schemas/auth";
+import { Judges } from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
 import { adminProcedure, publicProcedure } from "../trpc";
@@ -165,88 +165,89 @@ export const judgeRouter = {
       };
     }),
 
-    // Query, no input, list all judges (no particular order)
-    list: publicProcedure.query(async () => {
-      return await db.select().from(Judges); // Do we want to order by judge name?
-    }),
+  // Query, no input, list all judges (no particular order)
+  list: publicProcedure.query(async () => {
+    return await db.select().from(Judges); // Do we want to order by judge name?
+  }),
 
-    // Mutation: create a new judge
-    create: adminProcedure
-      .input(
-        z.object({
-          name: z.string().min(1).max(100), // Or some other min/max combo 
-          roomName: z.string().optional(),
-          challengeId: z.string().uuid(),
-        }),
-      )
-      .mutation(async ({ input }) => {
-        if (input.challengeId) { // Prolly wanna verify challenge is real
-          const challengeExists = await db.query.Challenges.findFirst({
-            where: (c, { eq }) => eq(c.id, input.challengeId),
+  // Mutation: create a new judge
+  create: adminProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(100), // Or some other min/max combo
+        roomName: z.string().optional(),
+        challengeId: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      if (input.challengeId) {
+        // Prolly wanna verify challenge is real
+        const challengeExists = await db.query.Challenges.findFirst({
+          where: (c, { eq }) => eq(c.id, input.challengeId),
+        });
+        if (!challengeExists) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Challenge does not exist",
           });
-          if (!challengeExists) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: "Challenge does not exist",
-            });
-          }
         }
+      }
 
-        await db.insert(Judges).values({
-          name: input.name,
-          roomName: input.roomName ?? "Unassigned",
-          challengeId: input.challengeId,
+      await db.insert(Judges).values({
+        name: input.name,
+        roomName: input.roomName ?? "Unassigned",
+        challengeId: input.challengeId,
+      });
+    }),
+
+  //Mutation: update the judge object
+  update: adminProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        roomName: z.string(),
+        challengeId: z.string().uuid().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const judge = await db.query.Judges.findFirst({
+        where: (j, { eq }) => eq(j.id, input.id),
+      });
+      if (!judge) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Judge not found" });
+      }
+
+      if (input.challengeId) {
+        const challengeExists = await db.query.Challenges.findFirst({
+          where: (c, { eq }) => eq(c.id, input.challengeId ?? ""), // Since challenge is req
+        });
+        if (!challengeExists) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Challenge does not exist",
+          });
+        }
+      }
+
+      await db
+        .update(Judges)
+        .set({
+          roomName: input.roomName,
+          challengeId: input.challengeId ?? judge.challengeId,
         })
+        .where(eq(Judges.id, input.id));
     }),
 
-    //Mutation: update the judge object
-    update: adminProcedure
-      .input(
-        z.object({
-          id: z.string().uuid(),
-          roomName: z.string(),
-          challengeId: z.string().uuid().optional(),
-        }),
-      )
-      .mutation(async ({ input }) => {
-
-        const judge = await db.query.Judges.findFirst({
-          where: (j, { eq }) => eq(j.id, input.id),
-        });
-        if (!judge) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Judge not found" });
-        }
-
-        if (input.challengeId) {
-          const challengeExists = await db.query.Challenges.findFirst({
-            where: (c, { eq }) => eq(c.id, input.challengeId ?? ""), // Since challenge is req
-        });
-          if (!challengeExists) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: "Challenge does not exist",
-            });
-          }
-        }
-        
-        await db.update(Judges)
-        .set({roomName: input.roomName, challengeId: input.challengeId ?? judge.challengeId
-        }).where(eq(Judges.id, input.id));
+  // Mutation: delete a judge
+  delete: adminProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ input }) => {
+      const judge = await db.query.Judges.findFirst({
+        where: (j, { eq }) => eq(j.id, input.id),
+      });
+      if (!judge) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Judge not found" });
+      }
+      await db.delete(Judges).where(eq(Judges.id, input.id));
     }),
-
-    // Mutation: delete a judge
-    delete: adminProcedure
-      .input(
-        z.object({ id: z.string().uuid() }),
-      )
-      .mutation(async ({ input }) => {
-        const judge = await db.query.Judges.findFirst({
-          where: (j, { eq }) => eq(j.id, input.id),
-        });
-        if (!judge) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Judge not found" });
-        }
-        await db.delete(Judges).where(eq(Judges.id, input.id));
-    }),
-
 };
