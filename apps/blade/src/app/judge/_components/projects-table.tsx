@@ -62,6 +62,7 @@ export function ProjectsTable({ data = mockData }) {
               <RubricForm
                 submissionId={project.id}
                 judgeId={project.judgeId}
+                projectName={project.projectName}
                 size="sm"
               />
             </TableCell>
