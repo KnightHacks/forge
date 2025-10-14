@@ -45,6 +45,7 @@ export function RubricForm({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [originalityValue, setOriginalityValue] = useState(5);
   const [designValue, setDesignValue] = useState(5);
+  const [isRubricGiven, setIsRubricGiven] = useState<boolean>(false);
   const [technicalValue, setTechnicalValue] = useState(5);
   const [implementationValue, setImplementationValue] = useState(5);
   const [wowFactorValue, setWowFactorValue] = useState(5);
@@ -53,6 +54,10 @@ export function RubricForm({
     submissionId,
     judgeId,
   });
+
+  useEffect(() => {
+    setIsRubricGiven(hasGivenRubric ?? false);
+  }, [hasGivenRubric]);
 
   const utils = api.useUtils();
 
@@ -116,7 +121,7 @@ export function RubricForm({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size={size}>
+        <Button variant="outline" size={size} disabled={isRubricGiven}>
           Rubric
         </Button>
       </DialogTrigger>
