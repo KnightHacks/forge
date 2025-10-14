@@ -5,15 +5,18 @@ import { google } from "googleapis";
 import Stripe from "stripe";
 
 import type { Session } from "@forge/auth";
+import type { PermissionIndex } from "@forge/consts/knight-hacks";
 import {
   DEV_DISCORD_ADMIN_ROLE_ID,
   DEV_KNIGHTHACKS_GUILD_ID,
   DEV_KNIGHTHACKS_LOG_CHANNEL,
   GOOGLE_PERSONIFY_EMAIL,
   IS_PROD,
+  PERMISSIONS,
   PROD_DISCORD_ADMIN_ROLE_ID,
   PROD_KNIGHTHACKS_GUILD_ID,
   PROD_KNIGHTHACKS_LOG_CHANNEL,
+  ROLE_PERMISSIONS,
 } from "@forge/consts/knight-hacks";
 
 import { env } from "./env";
@@ -62,6 +65,67 @@ export const isDiscordAdmin = async (user: Session["user"]) => {
     console.error("Error: ", err);
     return false;
   }
+};
+
+export const hasPermission = (
+  userPermissions: string,
+  permission: PermissionIndex,
+): boolean => {
+  const permissionBit = userPermissions[permission];
+  return permissionBit === "1";
+};
+
+export const getUserPermissions = async (
+  user: Session["user"],
+): Promise<string> => {
+  try {
+    const guildMember = (await discord.get(
+      Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
+    )) as APIGuildMember;
+
+    const userPermissionArray = new Array(Object.keys(PERMISSIONS).length).fill(
+      "0",
+    );
+
+    for (const roleId of guildMember.roles) {
+      if (roleId in ROLE_PERMISSIONS) {
+        const permissionIndex = ROLE_PERMISSIONS[roleId];
+        if (permissionIndex !== undefined) {
+          userPermissionArray[permissionIndex] = "1";
+        }
+      }
+    }
+
+    return userPermissionArray.join("");
+  } catch (err) {
+    console.error("Error getting user permissions: ", err);
+    return "0".repeat(Object.keys(PERMISSIONS).length);
+  }
+};
+
+export const userHasPermission = async (
+  user: Session["user"],
+  permission: PermissionIndex,
+): Promise<boolean> => {
+  const userPermissions = await getUserPermissions(user);
+
+  if (hasPermission(userPermissions, PERMISSIONS.FULL_ADMIN)) {
+    return true;
+  }
+
+  return hasPermission(userPermissions, permission);
+};
+
+export const userHasFullAdmin = async (
+  user: Session["user"],
+): Promise<boolean> => {
+  return userHasPermission(user, PERMISSIONS.FULL_ADMIN);
+};
+
+export const userHasCheckIn = async (
+  user: Session["user"],
+): Promise<boolean> => {
+  return userHasPermission(user, PERMISSIONS.CHECK_IN);
 };
 
 export const isDiscordMember = async (user: Session["user"]) => {
