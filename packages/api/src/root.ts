@@ -23,7 +23,6 @@ export const appRouter = createTRPCRouter<{
   member: typeof memberRouter;
   hackathon: typeof hackathonRouter;
   hacker: typeof hackerRouter;
-  judgeSubmissions: typeof judgeSubmissionsRouter;
   event: typeof eventRouter;
   eventFeedback: typeof eventFeedbackRouter;
   user: typeof userRouter;
@@ -35,6 +34,7 @@ export const appRouter = createTRPCRouter<{
   judge: typeof judgeRouter;
   challenge: typeof challengeRouter;
   csvImporter: typeof csvImporterRouter;
+  judgeSubmissions: typeof judgeSubmissionsRouter;
 }>({
   auth: authRouter,
   duesPayment: duesPaymentRouter,
@@ -43,7 +43,6 @@ export const appRouter = createTRPCRouter<{
   hacker: hackerRouter,
   event: eventRouter,
   eventFeedback: eventFeedbackRouter,
-  judgeSubmissions: judgeSubmissionsRouter,
   user: userRouter,
   resume: resumeRouter,
   qr: qrRouter,
@@ -53,6 +52,7 @@ export const appRouter = createTRPCRouter<{
   judge: judgeRouter,
   challenge: challengeRouter,
   csvImporter: csvImporterRouter,
+  judgeSubmissions: judgeSubmissionsRouter,
 });
 
 // export type definition of API
