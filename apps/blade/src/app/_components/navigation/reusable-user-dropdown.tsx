@@ -7,6 +7,7 @@ import {
   Swords,
   TicketCheck,
   User,
+  Users,
 } from "lucide-react";
 
 import { USER_DROPDOWN_ICON_COLOR, USER_DROPDOWN_ICON_SIZE } from "~/consts";
@@ -121,6 +122,13 @@ export const adminHackathonItems: roleItems[] = [
       <Hotel color={USER_DROPDOWN_ICON_COLOR} size={USER_DROPDOWN_ICON_SIZE} />
     ),
     route: "/admin/hackathon/roomAssignment",
+  },
+  {
+    name: "Judge Assignment",
+    component: (
+      <Users color={USER_DROPDOWN_ICON_COLOR} size={USER_DROPDOWN_ICON_SIZE} />
+    ),
+    route: "/admin/hackathon/judge-assignment",
   },
 ];
 
