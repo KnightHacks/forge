@@ -1,21 +1,28 @@
 "use client";
 
 import { useMemo, useState } from "react";
-
+import dynamic from "next/dynamic";
 import { Button } from "@forge/ui/button";
+import { api } from "~/trpc/react";
+
+// --- NEW: local result type for the tRPC call
+interface GenerateTokenResult { magicUrl: string }
+
+// Proper dynamic import; cast so TS is happy
+const QRCode = dynamic(() => import("react-qr-code").then(m => m.default), {
+  ssr: false,
+}) as unknown as React.ComponentType<{ value: string; size?: number; className?: string }>;
 
 export interface QRRoom {
   id: string;
   label: string;
-  link: string;
+  link: string; // magicUrl from judge.generateToken
 }
 
 export default function QRCodesClient() {
-  // show grid
-  const [generated, setGenerated] = useState<boolean>(false);
-  // room data
+  const [generated, setGenerated] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [rooms, setRooms] = useState<QRRoom[]>([]);
-  // which room is expanded (null = none)
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const expandedRoom = useMemo(
@@ -23,23 +30,39 @@ export default function QRCodesClient() {
     [rooms, expandedId],
   );
 
-  const handleGenerate = () => {
-    // For testing: create 6 room templates & pretend magic links were minted.
-    // Replace `link` with your real room URL once backend is ready.
-    const base =
-      typeof window !== "undefined"
-        ? window.location.origin
-        : "http://localhost:3000";
-    const six: QRRoom[] = Array.from({ length: 6 }).map((_, i) => {
-      const n = i + 1;
-      return {
-        id: `room-${n}`,
-        label: `Room ${n}`,
-        link: `${base}/judge`, // static QR per room
-      };
-    });
-    setRooms(six);
-    setGenerated(true);
+  // Imperative fetch for a tRPC *query*
+  const utils = api.useUtils();
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    try {
+      // For now: generate 6 test rooms
+      const labels = Array.from({ length: 6 }, (_, i) => `Room ${i + 1}`);
+
+      const minted: QRRoom[] = await Promise.all(
+        labels.map(async (label) => {
+          // --- NOTE: explicitly type the fetch result to avoid 'any'
+          const { magicUrl } =
+            (await utils.judge.generateToken.fetch({ roomName: label })) as GenerateTokenResult;
+
+          return {
+            id: label.toLowerCase().replace(/\s+/g, "-"),
+            label,
+            link: magicUrl,
+          };
+        }),
+      );
+
+      setRooms(minted);
+      setGenerated(true);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      // eslint-disable-next-line no-console
+      console.error("Failed to generate links:", err);
+      alert(`Failed to generate links: ${message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,10 +82,11 @@ export default function QRCodesClient() {
         <div className="flex justify-center pb-12">
           <Button
             onClick={handleGenerate}
+            disabled={loading}
             className="h-14 rounded-2xl px-8 text-base"
             variant="primary"
           >
-            Generate Magic Links & QR Codes
+            {loading ? "Generating…" : "Generate Magic Links & QR Codes"}
           </Button>
         </div>
       )}
@@ -81,40 +105,24 @@ export default function QRCodesClient() {
                 className="rounded-2xl border p-4 shadow-sm transition hover:shadow-md"
               >
                 <header className="mb-3 flex items-center justify-between">
-                  <h3 className="truncate text-base font-semibold">
-                    {room.label}
-                  </h3>
-                  <span className="text-xs text-muted-foreground">
-                    Static QR
-                  </span>
+                  <h3 className="truncate text-base font-semibold">{room.label}</h3>
+                  <span className="text-xs text-muted-foreground">Magic QR</span>
                 </header>
 
-                {/* QR preview placeholder — swap with real QR component later */}
+                {/* Real QR preview */}
                 <div className="mb-4 flex items-center justify-center">
-                  <div className="flex h-40 w-40 items-center justify-center rounded-lg border text-center text-xs text-muted-foreground">
-                    QR for
-                    <br />
-                    <span className="font-mono">
-                      {room.link.replace(/^https?:\/\//, "")}
-                    </span>
-                  </div>
+                  <QRCode value={room.link} size={160} />
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Button
-                    size="sm"
-                    className="rounded-xl"
-                    onClick={() => setExpandedId(room.id)}
-                  >
+                  <Button size="sm" className="rounded-xl" onClick={() => setExpandedId(room.id)}>
                     Expand
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     className="rounded-xl"
-                    onClick={() =>
-                      void navigator.clipboard.writeText(room.link)
-                    }
+                    onClick={() => void navigator.clipboard.writeText(room.link)}
                   >
                     Copy Link
                   </Button>
@@ -166,20 +174,12 @@ function FullscreenQR(props: { room: QRRoom; onClose: () => void }) {
           <h3 id="qr-dialog-title" className="text-xl font-semibold">
             {room.label}
           </h3>
-          <p className="mt-1 truncate text-xs text-muted-foreground">
-            {room.link}
-          </p>
+          <p className="mt-1 truncate text-xs text-muted-foreground">{room.link}</p>
         </div>
 
-        {/* QR Preview (placeholder) */}
+        {/* Large QR */}
         <div className="flex items-center justify-center py-6">
-          <div className="flex h-[420px] w-[420px] items-center justify-center rounded-2xl border text-center text-sm text-muted-foreground">
-            QR for
-            <br />
-            <span className="font-mono">
-              {room.link.replace(/^https?:\/\//, "")}
-            </span>
-          </div>
+          <QRCode value={room.link} size={380} />
         </div>
 
         {/* Actions */}
@@ -193,9 +193,7 @@ function FullscreenQR(props: { room: QRRoom; onClose: () => void }) {
           </Button>
           <Button
             className="rounded-xl"
-            onClick={() =>
-              window.open(room.link, "_blank", "noopener,noreferrer")
-            }
+            onClick={() => window.open(room.link, "_blank", "noopener,noreferrer")}
           >
             Open Link
           </Button>
