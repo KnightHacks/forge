@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   ChartPie,
+  Hotel,
   Settings,
   ShieldCheck,
   Swords,
@@ -113,6 +114,13 @@ export const adminHackathonItems: roleItems[] = [
       />
     ),
     route: "/admin/hackathon/data",
+  },
+  {
+    name: "Room Assignment",
+    component: (
+      <Hotel color={USER_DROPDOWN_ICON_COLOR} size={USER_DROPDOWN_ICON_SIZE} />
+    ),
+    route: "/admin/hackathon/roomAssignment",
   },
 ];
 

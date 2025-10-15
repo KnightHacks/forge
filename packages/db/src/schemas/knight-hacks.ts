@@ -403,13 +403,14 @@ export const InsertEmailConfigSchema = createInsertSchema(EmailConfig);
 export const Challenges = createTable("challenges", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t.text().notNull(),
-  location: t.text().notNull(),
   hackathonId: t
     .uuid()
     .notNull()
     .references(() => Hackathon.id, {
       onDelete: "cascade",
     }),
+  description: t.text().notNull(),
+  sponsor: t.text().notNull(),
 }));
 
 export const InsertChallengesSchema = createInsertSchema(Challenges);
@@ -463,3 +464,17 @@ export const Teams = createTable("teams", (t) => ({
 }));
 
 export const InsertTeamsSchema = createInsertSchema(Teams);
+
+export const Judges = createTable("judges", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.text().notNull(),
+  roomName: t.text().notNull(),
+  challengeId: t
+    .uuid()
+    .notNull()
+    .references(() => Challenges.id, {
+      onDelete: "cascade",
+    }),
+}));
+
+export const InsertJudgesSchema = createInsertSchema(Judges);

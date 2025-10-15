@@ -1,10 +1,12 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { TRPCError } from "@trpc/server";
+import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@forge/db/client";
 import { JudgeSession } from "@forge/db/schemas/auth";
+import { Judges } from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
 import { adminProcedure, publicProcedure } from "../trpc";
@@ -161,5 +163,116 @@ export const judgeRouter = {
         ok: true,
         roomName,
       };
+    }),
+
+  // Query, no input, list all judges
+  getJudges: publicProcedure.query(async () => {
+    return await db.select().from(Judges).orderBy(asc(Judges.name));
+  }),
+
+  // Mutation: create a new judge
+  createJudge: adminProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(100), // Or some other min/max combo
+        roomName: z.string().optional(),
+        challengeId: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      if (!input.name) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Not a valid judge",
+        });
+      }
+
+      if (!input.challengeId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Not a valid challenge",
+        });
+      }
+
+      const challengeExists = await db.query.Challenges.findFirst({
+        where: (c, { eq }) => eq(c.id, input.challengeId),
+      });
+      if (!challengeExists) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Challenge does not exist",
+        });
+      }
+
+      await db.insert(Judges).values({
+        name: input.name,
+        roomName: input.roomName ?? "Unassigned",
+        challengeId: input.challengeId,
+      });
+    }),
+
+  //Mutation: update the judge object
+  updateJudge: adminProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        roomName: z.string(),
+        challengeId: z.string().uuid().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      if (!input.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid Judge",
+        });
+      }
+
+      if (!input.roomName) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Not a valid room",
+        });
+      }
+
+      const judge = await db.query.Judges.findFirst({
+        where: (j, { eq }) => eq(j.id, input.id),
+      });
+      if (!judge) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Judge not found" });
+      }
+
+      if (input.challengeId) {
+        const challengeExists = await db.query.Challenges.findFirst({
+          where: (c, { eq }) => eq(c.id, input.challengeId ?? ""), // Since challenge is req
+        });
+        if (!challengeExists) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Challenge does not exist",
+          });
+        }
+      }
+
+      await db
+        .update(Judges)
+        .set({
+          roomName: input.roomName,
+          challengeId: input.challengeId ?? judge.challengeId,
+        })
+        .where(eq(Judges.id, input.id));
+    }),
+
+  // Mutation: delete a judge
+  deleteJudge: adminProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ input }) => {
+      const judge = await db.query.Judges.findFirst({
+        where: (j, { eq }) => eq(j.id, input.id),
+      });
+      if (!judge) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Judge not found" });
+      }
+      await db.delete(Judges).where(eq(Judges.id, input.id));
     }),
 };
