@@ -62,7 +62,6 @@ export default function CsvImporter({
     const file = e.target.files[0];
 
     const csvContent = await file.text();
-    console.log(csvContent);
 
     importer.mutate({
       csvContent,
