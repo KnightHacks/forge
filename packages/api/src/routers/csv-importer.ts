@@ -1,6 +1,7 @@
 import { parse } from "csv-parse/sync";
 import z from "zod";
 
+import { DEVPOST_TEAM_MEMBER_EMAIL_OFFSET } from "@forge/consts/knight-hacks";
 import { eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Challenges, Submissions, Teams } from "@forge/db/schemas/knight-hacks";
@@ -84,8 +85,14 @@ export const csvImporterRouter = {
 
           const email1 = record["Submitter Email"];
           const email2 = record["Team Member 1 Email"];
-          const email3 = recordValues[teamMember1EmailIndex + 3];
-          const email4 = recordValues[teamMember1EmailIndex + 6];
+          const email3 =
+            recordValues[
+              teamMember1EmailIndex + DEVPOST_TEAM_MEMBER_EMAIL_OFFSET
+            ];
+          const email4 =
+            recordValues[
+              teamMember1EmailIndex + DEVPOST_TEAM_MEMBER_EMAIL_OFFSET * 2
+            ];
 
           // Combine emails into comma-separated string, filtering out empty values
           const emails = [email1, email2, email3, email4]
@@ -166,11 +173,18 @@ export const csvImporterRouter = {
               const firstRow = teamRows[0];
               if (!firstRow) throw new Error(`No rows for team ${matchKey}`);
 
+              const projectCreatedAt = new Date(firstRow["Project Created At"]);
+              if (isNaN(projectCreatedAt.getTime())) {
+                throw new Error(
+                  `Invalid date format for project "${firstRow["Project Title"]}": "${firstRow["Project Created At"]}"`,
+                );
+              }
+
               return {
                 hackathonId: input.hackathon_id,
                 projectTitle: firstRow["Project Title"],
                 submissionUrl: firstRow["Submission Url"],
-                projectCreatedAt: new Date(firstRow["Project Created At"]),
+                projectCreatedAt,
                 isProjectSubmitted:
                   firstRow["Highest Step Completed"] === "Submit"
                     ? true
@@ -183,7 +197,7 @@ export const csvImporterRouter = {
                   firstRow[
                     "List All Of The Universities Or Schools That Your Team Members Currently Attend."
                   ],
-                matchKey: matchKey,
+                matchKey,
               };
             },
           );

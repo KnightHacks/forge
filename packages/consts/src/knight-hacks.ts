@@ -5639,3 +5639,5 @@ export const OFFICER_ROLE_ID =
   process.env.NODE_ENV === "production"
     ? "486629374758748180"
     : "1246637685011906560";
+
+export const DEVPOST_TEAM_MEMBER_EMAIL_OFFSET = 3;
