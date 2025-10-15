@@ -10,6 +10,11 @@ export const blacklistRulesSchema = z.object({
     start: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/), // HH:MM format
     end: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),   // HH:MM format
   })).optional(),
+  dateRanges: z.array(z.object({
+    startDate: z.string().datetime(), // ISO string
+    endDate: z.string().datetime(),   // ISO string
+    reason: z.string().optional(),
+  })).optional(),
 });
 
 // Email queue input schema
