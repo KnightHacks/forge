@@ -269,9 +269,7 @@ export function RubricForm({
                 name="wow_factor_rating"
                 render={({ field }) => (
                   <FormItem className="text-center">
-                    <FormLabel>
-                      How impressive and impactful is this project overall?
-                    </FormLabel>
+                    <FormLabel>How much did this project WOW you?</FormLabel>
                     <FormControl>
                       <div className="flex flex-row justify-center gap-2">
                         <p className="font-bold">1</p>
