@@ -127,7 +127,7 @@ export const judgeRouter = {
         token,
       )}`;
 
-      return { magicUrl };
+      return { magicUrl }; // put this in QR code/s
     }),
 
   activateToken: publicProcedure
