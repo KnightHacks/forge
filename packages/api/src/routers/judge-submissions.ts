@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import{eq, and, like, avg, count } from '@forge/db';
 import { db } from "@forge/db/client";
-import { adminProcedure, publicProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure } from "../trpc";
 import { JudgedSubmission, Judges, Submissions, Teams, Challenges } from "@forge/db/schemas/knight-hacks";
 
 
