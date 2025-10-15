@@ -8,8 +8,8 @@ import { api, HydrateClient } from "~/trpc/server";
 import HackerClient from "./hacker-client";
 
 export const metadata: Metadata = {
-  title: "Blade | Hackers",
-  description: "Manage Knight Hacks hackers.",
+  title: "Blade | Judge Assignment",
+  description: "Generate Magic Links for Judges",
 };
 
 export default async function Hackers() {
