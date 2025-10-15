@@ -22,7 +22,7 @@ interface Challenge {
 interface ResultsFilterProps {
   judges: Judge[];
   challenges: Challenge[];
-  onFilterChange: (filters: { judge: string; challenge: string; }) => void;
+  onFilterChange: (filters: { judge: Judge | null; challenge: Challenge | null; }) => void;
 }
 
 export default function ResultsFilter({
@@ -37,8 +37,16 @@ export default function ResultsFilter({
 
   // Update parent when filters change
   useEffect(() => {
-    onFilterChange(filters);
-  }, [filters, onFilterChange]);
+    const selectedJudge =
+      filters.judge === "all"
+        ? null
+        : judges.find((j) => j.id === filters.judge) || null;
+    const selectedChallenge =
+      filters.challenge === "all"
+        ? null
+        : challenges.find((c) => c.id === filters.challenge) || null;
+    onFilterChange({ judge: selectedJudge, challenge: selectedChallenge });
+  }, [filters, judges, challenges, onFilterChange]);
 
   return (
     <div className="mt-2 mb-2 flex flex-col gap-4 md:flex-row md:items-center md:justify-center">
