@@ -1,107 +1,140 @@
 "use client";
 
+import { api } from "~/trpc/react";
 import { useState, useMemo } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import {
   Table,
-  TableBody,
   TableCell,
+  TableBody,
   TableHead,
   TableHeader,
   TableRow,
 } from "@forge/ui/table";
+
 import ResultsFilter from "./results-filter";
 import SortButton from "~/app/admin/_components/SortButton";
 
 export default function ResultsTable() {
-  const [sortField, setSortField] = useState<"name" | "specificRating" | "overallRating" | null>("name");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>("asc");
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // Mock filter data
-  const judges = [
-    { id: "1", name: "Lenny" },
-    { id: "2", name: "Ethan" },
-  ];
-  const challenges = [
-    { id: "1", title: "Google" },
-    { id: "2", title: "Nvidia" },
-    { id: "3", title: "OneEthos" },
-  ];
-  const rooms = [
-    { id: "1", name: "Room A" },
-    { id: "2", name: "Room B" },
-  ];
-
-  // Mock projects
-  const projects = useMemo(() => [
-    {
-      id: "p1",
-      name: "Project 1",
-      devpost: "https://devpost.com/securedrive",
-      status: "Winner",
-      challenges: ["Google", "Nvidia"],
-      specificRating: 9.2,
-      overallRating: 8.7,
-    },
-    {
-      id: "p2",
-      name: "Project 2",
-      devpost: "https://devpost.com/codevault",
-      status: "Participant",
-      challenges: ["OneEthos"],
-      specificRating: 7.5,
-      overallRating: 7.8,
-    },
-    {
-      id: "p3",
-      name: "Project 3",
-      devpost: "https://devpost.com/chainguard",
-      status: "Winner",
-      challenges: ["Google", "OneEthos"],
-      specificRating: 9.8,
-      overallRating: 9.5,
-    },
-    {
-      id: "p4",
-      name: "Project 4",
-      devpost: "https://devpost.com/bugbountyhub",
-      status: "Participant",
-      challenges: ["Nvidia", "OneEthos"],
-      specificRating: 8.1,
-      overallRating: 8.0,
-    },
-  ], []);
-
   const [filters, setFilters] = useState({
     judge: null as { id: string; name: string } | null,
     challenge: null as { id: string; title: string } | null,
-    room: null as { id: string; name: string } | null,
   });
 
-  // --- Derived filtered/sorted data ---
+  const [sortField, setSortField] = useState<"projectTitle" | "specificRating" | "overallRating" | null>("projectTitle");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>("asc");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Fetch ALL judged submissions without filters
+  const { data: judgedSubmissions, isLoading } = api.judgeSubmissions.getJudgedSubmissions.useQuery({});
+
+  // Transform submissions into projects
+  const allProjects = useMemo(() => {
+    if (!judgedSubmissions) return [];
+
+    return judgedSubmissions.map((s) => {
+      const ratings = [
+        s.originality_rating,
+        s.design_rating,
+        s.technical_understanding_rating,
+        s.implementation_rating,
+        s.wow_factor_rating,
+      ].filter((r): r is number => r !== null);
+
+      const average = ratings.length > 0
+        ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
+        : 0;
+
+      return {
+        id: s.id,
+        projectTitle: s.projectTitle,
+        devpostUrl: s.devpostUrl,
+        challengeTitle: s.challengeTitle,
+        judgeName: s.judgeName,
+        originality_rating: s.originality_rating,
+        design_rating: s.design_rating,
+        technical_understanding_rating: s.technical_understanding_rating,
+        implementation_rating: s.implementation_rating,
+        wow_factor_rating: s.wow_factor_rating,
+        privateFeedback: s.privateFeedback,
+        publicFeedback: s.publicFeedback,
+        overallRating: Number(average.toFixed(1)),
+        specificRating: Number(average.toFixed(1)),
+      };
+    });
+  }, [judgedSubmissions]);
+
+  // Extract unique judges and challenges for filters
+  const judges = useMemo(() => {
+    if (!judgedSubmissions) return [];
+    const uniqueJudges = new Map<string, string>();
+    judgedSubmissions.forEach((s) => {
+      if (s.judgeName) {
+        uniqueJudges.set(s.judgeName, s.judgeName);
+      }
+    });
+    return Array.from(uniqueJudges.entries()).map(([name]) => ({
+      id: name,
+      name,
+    }));
+  }, [judgedSubmissions]);
+
+  const challenges = useMemo(() => {
+    if (!judgedSubmissions) return [];
+    const uniqueChallenges = new Map<string, string>();
+    judgedSubmissions.forEach((s) => {
+      if (s.challengeTitle) {
+        uniqueChallenges.set(s.challengeTitle, s.challengeTitle);
+      }
+    });
+    return Array.from(uniqueChallenges.entries()).map(([title]) => ({
+      id: title,
+      title,
+    }));
+  }, [judgedSubmissions]);
+
+  // Apply client-side filtering and sorting
   const filteredProjects = useMemo(() => {
-    let result = projects;
+    let result = [...allProjects];
 
-    // Filter by challenge (mock behavior)
-    if (filters.challenge)
+    // Apply search filter
+    if (searchTerm) {
       result = result.filter((p) =>
-        p.challenges.includes(filters.challenge!.title),
+        p.projectTitle?.toLowerCase().includes(searchTerm.toLowerCase())
       );
+    }
 
-    // TODO: judge and room filters can later be added here
+    // Apply judge filter
+    if (filters.judge) {
+      result = result.filter((p) => p.judgeName === filters.judge!.name);
+    }
 
-    if (searchTerm)
-      result = result.filter((p) =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
+    // Apply challenge filter
+    if (filters.challenge) {
+      result = result.filter((p) => p.challengeTitle === filters.challenge!.title);
+    }
 
+    // Apply sorting
     if (sortField && sortOrder) {
-      result = [...result].sort((a, b) => {
-        const aVal = a[sortField];
-        const bVal = b[sortField];
+      result.sort((a, b) => {
+        let aVal: string | number | null;
+        let bVal: string | number | null;
+
+        if (sortField === "projectTitle") {
+          aVal = a.projectTitle?.toLowerCase() ?? "";
+          bVal = b.projectTitle?.toLowerCase() ?? "";
+        } else {
+          aVal = a[sortField];
+          bVal = b[sortField];
+        }
+
+        // Handle null values
+        if (aVal === null && bVal === null) return 0;
+        if (aVal === null) return sortOrder === "asc" ? 1 : -1;
+        if (bVal === null) return sortOrder === "asc" ? -1 : 1;
+
         if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
         if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
         return 0;
@@ -109,17 +142,31 @@ export default function ResultsTable() {
     }
 
     return result;
-  }, [projects, filters, searchTerm, sortField, sortOrder]);
+  }, [allProjects, searchTerm, filters, sortField, sortOrder]);
 
-  // --- Derived stats ---
+  // Calculate statistics
   const totalProjects = filteredProjects.length;
   const avgScore =
     totalProjects > 0
       ? (
-          filteredProjects.reduce((sum, p) => sum + p.overallRating, 0) /
+          filteredProjects.reduce((sum, p) => sum + (p.overallRating ?? 0), 0) /
           totalProjects
         ).toFixed(1)
       : "0.0";
+
+  // Calculate judging counts per project
+  const judgingCounts = useMemo(() => {
+    const counts = new Map<string, { judged: number; submitted: number }>();
+    allProjects.forEach((p) => {
+      if (p.projectTitle) {
+        const current = counts.get(p.projectTitle) ?? { judged: 0, submitted: 0 };
+        current.judged += 1;
+        current.submitted += 1; // Assuming all submissions are judged for now
+        counts.set(p.projectTitle, current);
+      }
+    });
+    return counts;
+  }, [allProjects]);
 
   return (
     <main className="container h-screen">
@@ -144,7 +191,6 @@ export default function ResultsTable() {
         <ResultsFilter
           judges={judges}
           challenges={challenges}
-          rooms={rooms}
           onFilterChange={setFilters}
         />
 
@@ -152,9 +198,7 @@ export default function ResultsTable() {
           <div>
             Returned {totalProjects} Project{totalProjects !== 1 ? "s" : ""}
           </div>
-          <div>
-            Average Rating: {avgScore}
-          </div>
+          <div>Average Rating: {avgScore}</div>
         </div>
       </div>
 
@@ -164,7 +208,7 @@ export default function ResultsTable() {
           <TableRow>
             <TableHead className="text-center">
               <SortButton
-                field="name"
+                field="projectTitle"
                 label="Project Name"
                 sortField={sortField}
                 sortOrder={sortOrder}
@@ -173,7 +217,7 @@ export default function ResultsTable() {
               />
             </TableHead>
             <TableHead className="text-center"><Label>Link</Label></TableHead>
-            <TableHead className="text-center"><Label>Status</Label></TableHead>
+            <TableHead className="text-center"><Label>Judging Status</Label></TableHead>
             <TableHead className="text-center"><Label>Challenges</Label></TableHead>
             <TableHead className="text-center">
               <SortButton
@@ -199,48 +243,57 @@ export default function ResultsTable() {
         </TableHeader>
 
         <TableBody>
-          {filteredProjects.length === 0 ? (
+          {isLoading ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">
-                No results found.
+              <TableCell colSpan={6} className="text-center py-8">
+                Loading results...
+              </TableCell>
+            </TableRow>
+          ) : !judgedSubmissions?.length || filteredProjects.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-8">
+                No results found
               </TableCell>
             </TableRow>
           ) : (
-            filteredProjects.map((project) => (
-              <TableRow key={project.id}>
-                <TableCell className="text-center font-medium">{project.name}</TableCell>
-                <TableCell className="text-center">
-                  <a
-                    href={project.devpost}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    Devpost
-                  </a>
-                </TableCell>
-                <TableCell className="text-center">
-                  {project.status === "Winner" ? (
-                    <span className="rounded bg-green-500 px-2 py-1 text-white">
-                      Winner
+            filteredProjects.map((project) => {
+              const counts = judgingCounts.get(project.projectTitle ?? "") ?? { judged: 0, submitted: 0 };
+              const ratio = `${counts.judged}/${counts.submitted}`;
+
+              return (
+                <TableRow key={project.id}>
+                  <TableCell className="text-center font-medium">
+                    {project.projectTitle ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {project.devpostUrl ? (
+                      <a
+                        href={project.devpostUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        Devpost
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">{ratio}</TableCell>
+                  <TableCell className="text-center max-w-[180px] truncate">
+                    <span title={project.challengeTitle ?? ""}>
+                      {project.challengeTitle ?? "—"}
                     </span>
-                  ) : (
-                    <span className="rounded bg-gray-600 px-2 py-1 text-white">
-                      Submitted
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="text-center max-w-[180px] truncate">
-                  <span title={project.challenges.join(", ")}>
-                    {project.challenges.join(", ")}
-                  </span>
-                </TableCell>
-                <TableCell className="text-center">
-                    {filters.challenge ? project.specificRating : "—"}
-                </TableCell>
-                <TableCell className="text-center">{project.overallRating}</TableCell>
-              </TableRow>
-            ))
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {project.specificRating ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {project.overallRating ?? "—"}
+                  </TableCell>
+                </TableRow>
+              );
+            })
           )}
         </TableBody>
       </Table>
