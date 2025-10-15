@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { api } from "~/trpc/server";
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -15,13 +17,9 @@ export async function middleware(req: NextRequest) {
   }
 
   // Ask our validator API if the sessionToken is valid & unexpired
-  const res = await fetch(new URL("/api/judge/session", req.url), {
-    // forward cookie so the API can read it
-    headers: { cookie: `sessionToken=${token}` },
-    cache: "no-store",
-  });
+  const res = await api.judge.isJudge();
 
-  if (res.ok) return NextResponse.next();
+  if (res) return NextResponse.next();
 
   // Invalid/expired -> boot to home
   return NextResponse.redirect(new URL("/", req.url));

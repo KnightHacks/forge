@@ -13,7 +13,7 @@ import { ZodError } from "zod";
 import type { Session } from "@forge/auth";
 import { auth, validateToken } from "@forge/auth";
 
-import { getJudgeSessionFromCookie, isJudgeAdmin } from "./routers/judge-auth";
+import { getJudgeSessionFromCookie, isJudgeAdmin } from "./routers/judge";
 import { isDiscordAdmin, userHasCheckIn, userHasFullAdmin } from "./utils";
 
 /**

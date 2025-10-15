@@ -1,6 +1,7 @@
 // apps/blade/app/api/judge/session/route.ts
 import { NextResponse } from "next/server";
-import { getJudgeSessionFromCookie } from "../../../../../../packages/api/src/routers/judge-auth";
+
+import { getJudgeSessionFromCookie } from "../../../../../../packages/api/src/routers/judge";
 
 export async function GET() {
   const row = await getJudgeSessionFromCookie();
