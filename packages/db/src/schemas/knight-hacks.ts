@@ -347,6 +347,8 @@ export const Challenges = createTable("challenges", (t) => ({
     }),
   description: t.text().notNull(),
   sponsor: t.text().notNull(),
+}), (table) => ({
+  uniqueTitlePerHackathon: unique().on(table.title, table.hackathonId)
 }));
 
 export const InsertChallengesSchema = createInsertSchema(Challenges);
@@ -372,6 +374,8 @@ export const Submissions = createTable("submissions", (t) => ({
     .references(() => Hackathon.id, {
       onDelete: "cascade",
     }),
+}), (table) => ({
+  uniqueTeamPerChallenge: unique().on(table.teamId, table.challengeId)
 }));
 
 export const InsertSubmissionsSchema = createInsertSchema(Submissions);
@@ -398,6 +402,11 @@ export const Teams = createTable("teams", (t) => ({
   notes: t.text(),
   universities: t.text(),
   emails: t.text(),
+
+  // Csv matching
+  // To uniqueliy identify a team when comparing it with devpost csv data
+  // firstName and lastName are the csv's submitter first and last names which are never null
+  matchKey: t.text().unique(), // should have the format of ${firstName}_${lastName}:${createdAt}:${projectTitle}
 }));
 
 export const InsertTeamsSchema = createInsertSchema(Teams);
