@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
@@ -48,7 +48,7 @@ interface Submission {
 interface Judge {
   id: string;
   name: string;
-  location: string;
+  roomName: string;
   challengeId: string;
   challengeTitle: string;
 }
@@ -75,6 +75,15 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
   const submissions = data as Submission[];
   const judgesList = judges as Judge[];
 
+  // Auto-filter challenge based on selected judge
+  useEffect(() => {
+    if (selectedJudge) {
+      setChallengeFilter(selectedJudge.challengeTitle);
+    } else {
+      setChallengeFilter("");
+    }
+  }, [selectedJudge]);
+
   // Unique challenges
   const uniqueChallenges = useMemo(() => {
     const set = new Set(
@@ -93,17 +102,17 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
     let regex: RegExp | null = null;
     try {
       regex = new RegExp(q, "i"); // 'i' for case-insensitive search
-    } catch (err) {
+    } catch {
       // Invalid regex input — fallback to simple substring check
       return judgesList.filter((j) =>
-        `${j.name} ${j.challengeTitle} ${j.location}`
+        `${j.name} ${j.challengeTitle} ${j.roomName}`
           .toLowerCase()
           .includes(q.toLowerCase()),
       );
     }
 
     return judgesList.filter((j) => {
-      const haystack = `${j.name} ${j.challengeTitle} ${j.location}`;
+      const haystack = `${j.name} ${j.challengeTitle} ${j.roomName}`;
       return regex.test(haystack);
     });
   }, [judgesList, judgeSearch]);
@@ -158,8 +167,8 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
                 >
                   {selectedJudge
                     ? `${selectedJudge.name} — ${selectedJudge.challengeTitle}${
-                        selectedJudge.location
-                          ? ` (${selectedJudge.location})`
+                        selectedJudge.roomName
+                          ? ` (${selectedJudge.roomName})`
                           : ""
                       }`
                     : judgesLoading
@@ -184,7 +193,7 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
                         <CommandItem
                           key={judge.id}
                           // value is still useful for a11y; filtering is custom
-                          value={`${judge.name} ${judge.challengeTitle} ${judge.location ?? ""}`}
+                          value={`${judge.name} ${judge.challengeTitle} ${judge.roomName}`}
                           onSelect={() => {
                             setSelectedJudge(judge);
                             setSelectedJudgeId(judge.id); // <-- important for RubricForm
@@ -202,9 +211,9 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
                             <span className="font-medium">
                               {judge.name} — {judge.challengeTitle}
                             </span>
-                            {judge.location ? (
+                            {judge.roomName ? (
                               <span className="text-sm text-muted-foreground">
-                                {judge.location}
+                                {judge.roomName}
                               </span>
                             ) : null}
                           </div>
@@ -241,22 +250,25 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
               <label htmlFor="challenge-filter" className="text-sm font-medium">
                 Filter by Challenge:
               </label>
-              <Select
-                value={challengeFilter}
-                onValueChange={setChallengeFilter}
-              >
-                <SelectTrigger className="min-w-[200px]">
-                  <SelectValue placeholder="All Challenges" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Challenges</SelectItem>
-                  {uniqueChallenges.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={challengeFilter}
+                  onValueChange={setChallengeFilter}
+                  disabled={!!selectedJudge}
+                >
+                  <SelectTrigger className="min-w-[200px]">
+                    <SelectValue placeholder="All Challenges" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Challenges</SelectItem>
+                    {uniqueChallenges.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="text-sm text-gray-600">
