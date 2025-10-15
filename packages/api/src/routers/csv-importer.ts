@@ -5,6 +5,7 @@ import { db } from "@forge/db/client";
 import { Challenges, Submissions, Teams } from "@forge/db/schemas/knight-hacks";
 
 import { publicProcedure } from "../trpc";
+import { eq, sql } from "@forge/db";
 
 interface CsvImporterRecord {
   "Opt-In Prize": string | null;
@@ -12,6 +13,8 @@ interface CsvImporterRecord {
   "Submission Url": string | null; // A submission can be null if the project was never submitted
   "Highest Step Completed": string;
   "Project Created At": string;
+  "Submitter First Name": string;
+  "Submitter Last Name": string;
   "Submitter Email": string;
   "Team Member 1 Email": string;
   Notes: string;
@@ -120,8 +123,15 @@ export const csvImporterRouter = {
                 sponsor: "",
               })),
             )
-            .onConflictDoNothing()
+            .onConflictDoNothing({
+                target: [Challenges.title, Challenges.hackathonId]
+            })
             .returning();
+
+            const allChallenges = await tx
+                .select()
+                .from(Challenges)
+                .where(eq(Challenges.hackathonId, input.hackathon_id));
 
           // Group by teams
 
@@ -130,19 +140,23 @@ export const csvImporterRouter = {
             (CsvImporterRecord & { emails: string })[]
           >();
           processedRecords.forEach((record) => {
-            const teamId = record["Project Title"];
+            const firstName = record["Submitter First Name"].trim();
+            const lastName = record["Submitter Last Name"].trim();
+            const createdAt = record["Project Created At"];
+            const teamName = record["Project Title"];
+            const matchKey = `${firstName}_${lastName}:${createdAt}:${teamName}`;
 
-            const team = teamMap.get(teamId);
+            const team = teamMap.get(matchKey);
 
             if (team) {
               team.push(record);
             } else {
-              teamMap.set(teamId, [record]);
+              teamMap.set(matchKey, [record]);
             }
           });
 
           const challengeIdMap = new Map(
-            insertedChallenges.map((challenge) => [
+            allChallenges.map((challenge) => [
               challenge.title,
               challenge.id,
             ]),
@@ -150,16 +164,13 @@ export const csvImporterRouter = {
 
           // Populate teams table
 
-          const insertedTeams = await tx
-            .insert(Teams)
-            .values(
-              Array.from(teamMap.entries()).map(([teamName, teamRows]) => {
+          const teamValues = Array.from(teamMap.entries()).map(([matchKey, teamRows]) => {
                 const firstRow = teamRows[0];
-                if (!firstRow) throw new Error(`No rows for team ${teamName}`);
+                if (!firstRow) throw new Error(`No rows for team ${matchKey}`);
 
                 return {
                   hackathonId: input.hackathon_id,
-                  projectTitle: teamName,
+                  projectTitle: firstRow["Project Title"],
                   submissionUrl: firstRow["Submission Url"],
                   projectCreatedAt: new Date(firstRow["Project Created At"]),
                   isProjectSubmitted: firstRow["Highest Step Completed"] === "Submit" ? true : false,
@@ -171,26 +182,52 @@ export const csvImporterRouter = {
                     firstRow[
                       "List All Of The Universities Or Schools That Your Team Members Currently Attend."
                     ],
+                  matchKey: matchKey,
                 };
-              }),
-            )
-            .onConflictDoNothing()
-            .returning();
+            });
+
+            if (teamValues.length === 0) {
+                throw new Error("No valid teams found in CSV");
+            }
+
+          const insertedTeams = await tx
+            .insert(Teams)
+            .values(teamValues)
+            .onConflictDoUpdate({
+                target: Teams.matchKey,
+                set: {
+                    projectTitle: sql`excluded.project_title`,
+                    submissionUrl: sql`excluded.submission_url`,
+                    projectCreatedAt: sql`excluded.project_created_at`,
+                    isProjectSubmitted: sql`excluded.is_project_submitted`,
+                    devpostUrl: sql`excluded.devpost_url`,
+                    notes: sql`excluded.notes`,
+                    emails: sql`excluded.emails`,
+                    universities: sql`excluded.universities`,
+                },
+                where: eq(Teams.isProjectSubmitted, false)
+            }).returning();
+
+            // Query all teams instead of using .returning() to avoid data being skipped
+            const allTeams = await tx
+                .select()
+                .from(Teams)
+                .where(eq(Teams.hackathonId, input.hackathon_id));
 
           const teamIdMap = new Map(
-            insertedTeams.map((team) => [team.projectTitle, team.id]),
+            allTeams.map((team) => [team.matchKey, team.id]),
           );
 
           // Populate submissions table
 
           const submissions = Array.from(teamMap.entries()).flatMap(
-            ([teamName, teamRows]) =>
+            ([matchKey, teamRows]) =>
               teamRows
                 .map((record) => {
-                  const challengeId =
-                    challengeIdMap.get(record["Opt-In Prize"] ?? "Overall") ??
-                    challengeIdMap.get("Overall"); // Second "Overall" is here in case "Opt-In Prize" exists but it's challenge returns null
-                  const teamId = teamIdMap.get(teamName);
+                  const optInPrize = record["Opt-In Prize"];
+                    const challengeKey = (optInPrize && optInPrize !== "") ? optInPrize : "Overall";
+                    const challengeId = challengeIdMap.get(challengeKey) ?? challengeIdMap.get("Overall"); // Second "Overall" is here in case "Opt-In Prize" exists but it's challenge returns null
+                  const teamId = teamIdMap.get(matchKey);
 
                   // Only return if both IDs exist
                   if (!challengeId || !teamId) return null;
@@ -208,17 +245,36 @@ export const csvImporterRouter = {
                 ),
           );
 
-          await tx
+          // Deduplicate by team id and challenge id
+          const uniqueSubmissions = Array.from(
+            new Map(
+                submissions.map(sub => [
+                `${sub.teamId}-${sub.challengeId}`,
+                sub
+                ])
+            ).values()
+        );
+
+          if (uniqueSubmissions.length === 0) {
+            throw Error("No valid submissions to insert");
+          }
+
+          const insertedSubmissions = await tx
             .insert(Submissions)
-            .values(submissions)
-            .onConflictDoNothing();
+            .values(uniqueSubmissions)
+            .onConflictDoUpdate({
+                target: [Submissions.teamId, Submissions.challengeId],
+                set: {
+                    judgedStatus: sql`excluded.judged_status`
+                }
+            }).returning();
 
           return {
             success: true,
             recordsProcessed: processedRecords.length,
             teamsCreated: insertedTeams.length,
             challengesCreated: insertedChallenges.length,
-            submissionsCreated: submissions.length,
+            submissionsCreated: insertedSubmissions.length,
           };
         });
 
