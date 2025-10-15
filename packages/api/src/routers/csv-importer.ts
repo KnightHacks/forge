@@ -96,7 +96,7 @@ export const csvImporterRouter = {
 
           // Combine emails into comma-separated string, filtering out empty values
           const emails = [email1, email2, email3, email4]
-            .filter((email) => email && email !== "")
+            .filter((email): email is string => Boolean(email) && email !== "") // Boolean(email) makes sure to handle undefined emails
             .join(", ");
 
           return {
