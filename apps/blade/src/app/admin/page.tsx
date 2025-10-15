@@ -43,11 +43,67 @@ export default async function Admin() {
           <h1 className="mb-2 w-full break-words text-center text-3xl font-extrabold leading-tight tracking-tight sm:text-[3rem]">
             Let&apos;s get cooking.
           </h1>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {(hasFullAdmin || hasCheckIn) && (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {(hasFullAdmin || hasCheckIn) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-center">Club</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-wrap items-center justify-center gap-4">
+                    {hasFullAdmin && (
+                      <>
+                        <Link href="/admin/club/members">
+                          <Button>Members</Button>
+                        </Link>
+                        <Link href="/admin/club/events">
+                          <Button>Events</Button>
+                        </Link>
+                        <Link href="/admin/club/data">
+                          <Button>Data</Button>
+                        </Link>
+                      </>
+                    )}
+                    {(hasFullAdmin || hasCheckIn) && (
+                      <Link href="/admin/club/check-in">
+                        <Button>Check-in</Button>
+                      </Link>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+              {(hasFullAdmin || hasCheckIn) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-center">Hackathon</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-wrap items-center justify-center gap-4">
+                    {hasFullAdmin && (
+                      <>
+                        <Link href="/admin/hackathon/hackers">
+                          <Button>Hackers</Button>
+                        </Link>
+                        <Link href="/admin/hackathon/events">
+                          <Button>Events</Button>
+                        </Link>
+                        <Link href="/admin/hackathon/data">
+                          <Button>Data</Button>
+                        </Link>
+                      </>
+                    )}
+                    {(hasFullAdmin || hasCheckIn) && (
+                      <Link href="/admin/hackathon/check-in">
+                        <Button>Check-in</Button>
+                      </Link>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+            {hasFullAdmin && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-center">Club</CardTitle>
+                  <CardTitle className="text-center">Email Dashboard</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-wrap items-center justify-center gap-4">
                   {hasFullAdmin && (
