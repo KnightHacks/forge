@@ -27,9 +27,9 @@ export default function ResultsTable() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>("asc");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch ALL judged submissions without filters
+  // Fetch all judged submissions without filters
   const { data: judgedSubmissions, isLoading } = api.judgeSubmissions.getJudgedSubmissions.useQuery({});
-
+ 
   // Transform submissions into projects
   const allProjects = useMemo(() => {
     if (!judgedSubmissions) return [];
@@ -41,7 +41,7 @@ export default function ResultsTable() {
         s.technical_understanding_rating,
         s.implementation_rating,
         s.wow_factor_rating,
-      ].filter((r): r is number => r !== null);
+      ].filter((r) => r);
 
       const average = ratings.length > 0
         ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
@@ -66,7 +66,7 @@ export default function ResultsTable() {
     });
   }, [judgedSubmissions]);
 
-  // Extract unique judges and challenges for filters
+  // Extract judges and challenges for filters
   const judges = useMemo(() => {
     if (!judgedSubmissions) return [];
     const uniqueJudges = new Map<string, string>();
@@ -102,18 +102,18 @@ export default function ResultsTable() {
     // Apply search filter
     if (searchTerm) {
       result = result.filter((p) =>
-        p.projectTitle?.toLowerCase().includes(searchTerm.toLowerCase())
+        p.projectTitle.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Apply judge filter
     if (filters.judge) {
-      result = result.filter((p) => p.judgeName === filters.judge!.name);
+      result = result.filter((p) => p.judgeName === filters.judge?.name);
     }
 
     // Apply challenge filter
     if (filters.challenge) {
-      result = result.filter((p) => p.challengeTitle === filters.challenge!.title);
+      result = result.filter((p) => p.challengeTitle === filters.challenge?.title);
     }
 
     // Apply sorting
@@ -123,17 +123,17 @@ export default function ResultsTable() {
         let bVal: string | number | null;
 
         if (sortField === "projectTitle") {
-          aVal = a.projectTitle?.toLowerCase() ?? "";
-          bVal = b.projectTitle?.toLowerCase() ?? "";
+          aVal = a.projectTitle.toLowerCase();
+          bVal = b.projectTitle.toLowerCase();
         } else {
           aVal = a[sortField];
           bVal = b[sortField];
         }
 
         // Handle null values
-        if (aVal === null && bVal === null) return 0;
-        if (aVal === null) return sortOrder === "asc" ? 1 : -1;
-        if (bVal === null) return sortOrder === "asc" ? -1 : 1;
+        if (aVal && bVal) return 0;
+        if (aVal) return sortOrder === "asc" ? 1 : -1;
+        if (bVal) return sortOrder === "asc" ? -1 : 1;
 
         if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
         if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
@@ -149,7 +149,7 @@ export default function ResultsTable() {
   const avgScore =
     totalProjects > 0
       ? (
-          filteredProjects.reduce((sum, p) => sum + (p.overallRating ?? 0), 0) /
+          filteredProjects.reduce((sum, p) => sum + (p.overallRating), 0) /
           totalProjects
         ).toFixed(1)
       : "0.0";
@@ -161,7 +161,7 @@ export default function ResultsTable() {
       if (p.projectTitle) {
         const current = counts.get(p.projectTitle) ?? { judged: 0, submitted: 0 };
         current.judged += 1;
-        current.submitted += 1; // Assuming all submissions are judged for now
+        current.submitted += 1; // This assumes  all submissions are judged for now (should get updated)
         counts.set(p.projectTitle, current);
       }
     });
@@ -252,18 +252,18 @@ export default function ResultsTable() {
           ) : !judgedSubmissions?.length || filteredProjects.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="text-center py-8">
-                No results found
+                No results found.
               </TableCell>
             </TableRow>
           ) : (
             filteredProjects.map((project) => {
-              const counts = judgingCounts.get(project.projectTitle ?? "") ?? { judged: 0, submitted: 0 };
+              const counts = judgingCounts.get(project.projectTitle) ?? { judged: 0, submitted: 0 };
               const ratio = `${counts.judged}/${counts.submitted}`;
 
               return (
                 <TableRow key={project.id}>
                   <TableCell className="text-center font-medium">
-                    {project.projectTitle ?? "—"}
+                    {project.projectTitle}
                   </TableCell>
                   <TableCell className="text-center">
                     {project.devpostUrl ? (
@@ -281,15 +281,15 @@ export default function ResultsTable() {
                   </TableCell>
                   <TableCell className="text-center">{ratio}</TableCell>
                   <TableCell className="text-center max-w-[180px] truncate">
-                    <span title={project.challengeTitle ?? ""}>
-                      {project.challengeTitle ?? "—"}
+                    <span title={project.challengeTitle}>
+                      {project.challengeTitle}
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
-                    {project.specificRating ?? "—"}
+                    {project.specificRating}
                   </TableCell>
                   <TableCell className="text-center">
-                    {project.overallRating ?? "—"}
+                    {project.overallRating}
                   </TableCell>
                 </TableRow>
               );
