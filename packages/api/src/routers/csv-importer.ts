@@ -4,6 +4,20 @@ import { parse } from 'csv-parse/sync';
 import { db } from "@forge/db/client";
 import { Challenges, Submissions, Teams } from "@forge/db/schemas/knight-hacks";
 
+interface CsvImporterRecord {
+    "Opt-In Prize": string | null,
+    "Project Title": string,
+    "Submission Url": string,
+    "Project Status": string,
+    "Judging Status": string,
+    "Highest Step Completed": string,
+    "Project Created At": string,
+    "Submitted Email": string,
+    "Team Member 1 Email": string,
+    "Notes": string,
+    [key: string]: string | null;
+};
+
 export const csvImporterRouter = {
     import: publicProcedure.input(z.object({
         hackathon_id: z.string(),
@@ -44,7 +58,7 @@ export const csvImporterRouter = {
                     record[key] = value;
                 });
                 
-                return record;
+                return record as CsvImporterRecord;
             });
 
             // Filter submitted projects
@@ -85,7 +99,7 @@ export const csvImporterRouter = {
                 new Set(
                     processedRecords
                     .map(record => record["Opt-In Prize"]) 
-                    .filter((record): record is string => record !== undefined && record !== "")
+                    .filter((record): record is string => record !== null && record !== "")
                 ).add("Overall")
             );
 
@@ -99,15 +113,17 @@ export const csvImporterRouter = {
 
             // Group by teams
 
-            const teamMap = new Map();
+            const teamMap = new Map<string, (CsvImporterRecord & {emails: string})[]>();
                 processedRecords.forEach(record => {
-                const teamId = record["Project Title"]; 
+                const teamId = record["Project Title"];
+
+                const team = teamMap.get(teamId);
                 
-                if (!teamMap.has(teamId)) {
-                    teamMap.set(teamId, []);
+                if (team) {
+                    team.push(record);
+                } else {
+                    teamMap.set(teamId, [record]);
                 }
-                
-                teamMap.get(teamId).push(record);
             });
 
             const challengeIdMap = new Map(insertedChallenges.map(challenge => [challenge.title, challenge.id]));
@@ -117,32 +133,47 @@ export const csvImporterRouter = {
             // Populate teams table
         
             const insertedTeams = await db.insert(Teams).values(
-                Array.from(teamMap.entries()).map(([teamName, teamRows]) => ({
-                    hackathonId: input.hackathon_id,
-                    projectTitle: teamName,
-                    submissionUrl: teamRows[0]["Submission Url"],
-                    projectCreatedAt: new Date(teamRows[0]["Project Created At"]),
-                    devpostUrl: teamRows[0]["Submission Url"],
-                    notes: teamRows[0]["Notes"],
-                    emails: teamRows[0].emails,
-                    universities: teamRows[0]["Team Colleges/Universities"] ?? teamRows[0]["List All Of The Universities Or Schools That Your Team Members Currently Attend."],
-                }))
+                Array.from(teamMap.entries()).map(([teamName, teamRows]) => {
+                    const firstRow = teamRows[0];
+                    if (!firstRow) throw new Error(`No rows for team ${teamName}`);
+
+                    return {
+                        hackathonId: input.hackathon_id,
+                        projectTitle: teamName,
+                        submissionUrl: firstRow["Submission Url"],
+                        projectCreatedAt: new Date(firstRow["Project Created At"]),
+                        devpostUrl: firstRow["Submission Url"],
+                        notes: firstRow.Notes,
+                        emails: firstRow.emails,
+                        universities: firstRow["Team Colleges/Universities"] ?? firstRow["List All Of The Universities Or Schools That Your Team Members Currently Attend."],
+                    }
+                })
             ).returning();
 
             const teamIdMap = new Map(insertedTeams.map(team => [team.projectTitle, team.id]));
 
             // Populate submissions table
 
-            await db.insert(Submissions).values(
-                Array.from(teamMap.entries()).flatMap(([teamName, teamRows]) => 
-                    teamRows.map(record => ({
-                        challengeId: challengeIdMap.get(record["Opt-In Prize"]) ?? challengeIdMap.get("Overall"),
-                        teamId: teamIdMap.get(teamName),
-                        judgedStatus: false,
-                        hackathonId: input.hackathon_id,
-                    })
-                ))
+            const submissions = Array.from(teamMap.entries()).flatMap(([teamName, teamRows]) =>
+            teamRows
+                .map(record => {
+                const challengeId = challengeIdMap.get(record["Opt-In Prize"] ?? "Overall");
+                const teamId = teamIdMap.get(teamName);
+                
+                // Only return if both IDs exist
+                if (!challengeId || !teamId) return null;
+                
+                return {
+                    challengeId,
+                    teamId,
+                    judgedStatus: false,
+                    hackathonId: input.hackathon_id,
+                };
+                })
+                .filter((submission): submission is NonNullable<typeof submission> => submission !== null)
             );
+
+            await db.insert(Submissions).values(submissions);
 
             return processedRecords;
         } catch (error) {
