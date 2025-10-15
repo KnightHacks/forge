@@ -32,6 +32,11 @@ interface BlacklistRules {
     start: string; // "HH:MM" format
     end: string;   // "HH:MM" format
   }[];
+  dateRanges?: {
+    startDate: string; // ISO datetime string
+    endDate: string;   // ISO datetime string
+    reason?: string;
+  }[];
 }
 
 export class EmailQueueService {
@@ -161,6 +166,20 @@ export class EmailQueueService {
     
     const rules = email.blacklist_rules as BlacklistRules;
     const now = new Date();
+
+    // Check date range restrictions
+    if (rules.dateRanges) {
+      for (const range of rules.dateRanges) {
+        const startDate = new Date(range.startDate);
+        const endDate = new Date(range.endDate);
+        
+        if (now >= startDate && now <= endDate) {
+          console.log(`Email ${email.id} blocked by date range: ${range.startDate} to ${range.endDate} (reason: ${range.reason || 'No reason provided'})`);
+          return false;
+        }
+      }
+    }
+
     const dayOfWeek = now.getDay();
     const timeString = now.toTimeString().slice(0, 5); // "HH:MM"
 
