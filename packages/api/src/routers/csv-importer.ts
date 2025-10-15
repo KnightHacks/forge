@@ -113,7 +113,7 @@ export const csvImporterRouter = {
                         location: null,
                         hackathonId: input.hackathon_id,
                     }))
-                ).returning();
+                ).onConflictDoNothing().returning();
 
                 // Group by teams
 
@@ -150,7 +150,7 @@ export const csvImporterRouter = {
                             universities: firstRow["Team Colleges/Universities"] ?? firstRow["List All Of The Universities Or Schools That Your Team Members Currently Attend."],
                         }
                     })
-                ).returning();
+                ).onConflictDoNothing().returning();
 
                 const teamIdMap = new Map(insertedTeams.map(team => [team.projectTitle, team.id]));
 
@@ -175,7 +175,7 @@ export const csvImporterRouter = {
                     .filter((submission): submission is NonNullable<typeof submission> => submission !== null)
                 );
 
-                await tx.insert(Submissions).values(submissions);
+                await tx.insert(Submissions).values(submissions).onConflictDoNothing();
 
                 return {
                     success: true,
