@@ -15,7 +15,7 @@ interface CsvImporterRecord {
     "Submitter Email": string,
     "Team Member 1 Email": string,
     "Notes": string,
-    [key: string]: string | null;
+    [key: string]: string | null; // Field to treat this interface as a Record<string, string>
 };
 
 export const csvImporterRouter = {
@@ -128,8 +128,6 @@ export const csvImporterRouter = {
             });
 
             const challengeIdMap = new Map(insertedChallenges.map(challenge => [challenge.title, challenge.id]));
-            console.log(challengeIdMap);
-            console.log("test");
 
             // Populate teams table
         
