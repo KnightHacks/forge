@@ -4,15 +4,35 @@ import { useState, useEffect, useRef } from "react";
 import { EmailSectionOne } from "./emailp1";
 import { EmailSectionTwo } from "./emailp2";
 
+interface EmailFormData {
+    to: string;
+    from: string;
+    subject: string;
+    body: string;
+    recipients?: string[]; // For batch mode
+    isBatchMode?: boolean;
+}
+
 export const EmailDash = () => {
     const [showSectionTwo, setShowSectionTwo] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
+    const [emailData, setEmailData] = useState<EmailFormData | null>(null);
+    const [currentMode, setCurrentMode] = useState<boolean>(false);
     const sectionTwoRef = useRef<HTMLDivElement>(null);
     const sectionOneRef = useRef<HTMLDivElement>(null);
 
-    const handleSchedule = () => {
+    const handleSchedule = (data: EmailFormData) => {
+        setEmailData(data);
+        setCurrentMode(data.isBatchMode || false);
         setShowSectionTwo(true);
         setIsClosing(false);
+    };
+
+    const handleModeChange = (isBatchMode: boolean) => {
+        setCurrentMode(isBatchMode);
+        if (emailData) {
+            setEmailData({ ...emailData, isBatchMode });
+        }
     };
 
     const handleClose = () => {
@@ -24,6 +44,7 @@ export const EmailDash = () => {
         setTimeout(() => {
             setShowSectionTwo(false);
             setIsClosing(false);
+            setEmailData(null);
         }, 700); 
     };
 
@@ -39,11 +60,15 @@ export const EmailDash = () => {
     return (
         <div className="py-20">
             <div ref={sectionOneRef}>
-                <EmailSectionOne onSchedule={handleSchedule} />
+                <EmailSectionOne onSchedule={handleSchedule} onModeChange={handleModeChange} />
             </div>
-            {showSectionTwo && (
+            {showSectionTwo && emailData && (
                 <div ref={sectionTwoRef}>
-                    <EmailSectionTwo onClose={handleClose} isClosing={isClosing} />
+                    <EmailSectionTwo 
+                        onClose={handleClose} 
+                        isClosing={isClosing} 
+                        emailData={emailData} 
+                    />
                 </div>
             )}
         </div>
