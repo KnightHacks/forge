@@ -6,7 +6,7 @@ import { eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Challenges, Submissions, Teams } from "@forge/db/schemas/knight-hacks";
 
-import { publicProcedure } from "../trpc";
+import { adminProcedure } from "../trpc";
 
 interface CsvImporterRecord {
   "Opt-In Prize": string | null;
@@ -23,7 +23,7 @@ interface CsvImporterRecord {
 }
 
 export const csvImporterRouter = {
-  import: publicProcedure
+  import: adminProcedure
     .input(
       z.object({
         hackathon_id: z.string(),
