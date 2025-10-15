@@ -110,7 +110,7 @@ export const csvImporterRouter = {
                   (record): record is string =>
                     record !== null && record !== "",
                 ),
-            ).add("Overall"),
+            ).add("General"),
           );
 
           const insertedChallenges = await tx
@@ -218,39 +218,52 @@ export const csvImporterRouter = {
             allTeams.map((team) => [team.matchKey, team.id]),
           );
 
+          const generalChallengeId = challengeIdMap.get("General");
+          if (!generalChallengeId) {
+            throw new Error("General challenge not found");
+          }
+
           // Populate submissions table
 
           const submissions = Array.from(teamMap.entries()).flatMap(
-            ([matchKey, teamRows]) =>
-              teamRows
-                .map((record) => {
-                  const optInPrize = record["Opt-In Prize"];
-                    const challengeKey = (optInPrize && optInPrize !== "") ? optInPrize : "Overall";
-                    const challengeId = challengeIdMap.get(challengeKey) ?? challengeIdMap.get("Overall"); // Second "Overall" is here in case "Opt-In Prize" exists but it's challenge returns null
-                  const teamId = teamIdMap.get(matchKey);
+            ([matchKey, teamRows]) => {
+                const teamId = teamIdMap.get(matchKey);
+                if (!teamId) return [];
 
-                  // Only return if both IDs exist
-                  if (!challengeId || !teamId) return null;
+                const challengeIds = new Set<string>();
+                
+                // Always add a submission to "General" for every team
+                challengeIds.add(generalChallengeId);
 
-                  return {
+
+                // Add any opt-in challenges
+                teamRows.forEach((record) => {
+                    const optInPrize = record["Opt-In Prize"];
+
+                    if (optInPrize && optInPrize !== "") {
+                        const challengeId = challengeIdMap.get(optInPrize);
+                        
+                        if (challengeId) {
+                            challengeIds.add(challengeId);
+                        }
+                    }
+                });
+
+                return Array.from(challengeIds).map((challengeId) => ({
                     challengeId,
                     teamId,
                     judgedStatus: false,
                     hackathonId: input.hackathon_id,
-                  };
-                })
-                .filter(
-                  (submission): submission is NonNullable<typeof submission> =>
-                    submission !== null,
-                ),
+                }));
+            }
           );
 
           // Deduplicate by team id and challenge id
           const uniqueSubmissions = Array.from(
             new Map(
                 submissions.map(sub => [
-                `${sub.teamId}-${sub.challengeId}`,
-                sub
+                    `${sub.teamId}-${sub.challengeId}`,
+                    sub
                 ])
             ).values()
         );
