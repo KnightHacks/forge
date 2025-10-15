@@ -1,17 +1,46 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { Button } from "@forge/ui/button";
 
 import { api } from "~/trpc/react";
 
-export default function CsvImporter() {
+export default function CsvImporter({
+  onSuccess,
+  onError,
+}: {
+  onSuccess?: (data: {
+    success: boolean;
+    recordsProcessed: number;
+    teamsCreated: number;
+    challengesCreated: number;
+    submissionsCreated: number;
+  }) => void;
+  onError?: (error: string) => void;
+}) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getCurrentHackathon = api.hackathon.getCurrentHackathon.useQuery();
+
+  useEffect(() => {
+    if (
+      !getCurrentHackathon.isLoading &&
+      getCurrentHackathon.data === undefined
+    ) {
+      console.error("There was an error getting the current hackathon.");
+      onError?.("There was an error getting the current hackathon.");
+    }
+  }, [getCurrentHackathon.isLoading, getCurrentHackathon.data, onError]);
+
+  const hackathon_id = getCurrentHackathon.data?.id;
 
   const importer = api.csvImporter.import.useMutation({
     onSuccess: (data) => {
-      console.log(data);
+      onSuccess?.(data);
+    },
+    onError: (error) => {
+      onError?.(error.message);
     },
   });
 
@@ -20,7 +49,13 @@ export default function CsvImporter() {
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (hackathon_id === undefined) {
+      onError?.("There was an error getting the current hackathon id.");
+      return;
+    }
+
     if (!e.target.files?.[0]) {
+      onError?.("There was an error opening the selected file.");
       return;
     }
 
@@ -31,7 +66,7 @@ export default function CsvImporter() {
 
     importer.mutate({
       csvContent,
-      hackathon_id: "44c8e930-9186-406e-9cfd-d40e73a9b721",
+      hackathon_id: hackathon_id,
     });
 
     return;
