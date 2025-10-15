@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import QRCodesClient from "./judges-client";
+import QRCodesClient from "./_components/judges-client";
 
 export const metadata: Metadata = {
   title: "Blade | Hackers",
