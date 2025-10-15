@@ -30,7 +30,6 @@ export const AddJudgeDialog: React.FC<AddJudgeProps> = ({ challenge }) => {
   const [open, setOpen] = useState(false);
   const [judgeName, setJudgeName] = useState("");
   const [roomName, setRoomName] = useState("");
-  const [location, setLocation] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const utils = api.useUtils();
@@ -41,7 +40,6 @@ export const AddJudgeDialog: React.FC<AddJudgeProps> = ({ challenge }) => {
       setIsLoading(false);
       setJudgeName("");
       setRoomName("");
-      setLocation("");
     },
     onError(opts) {
       toast.error(opts.message);
