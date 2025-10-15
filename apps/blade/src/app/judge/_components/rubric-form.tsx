@@ -61,7 +61,7 @@ export function RubricForm({
       setIsOpen(false);
       await utils.judge.invalidate();
     },
-    onError(error: TRPCError) {
+    onError(error) {
       if (!error.data) {
         toast.error("Submission failed, contact an adminstrator");
       }
