@@ -87,6 +87,9 @@ export default async function Admin() {
                       <Link href="/admin/hackathon/data">
                         <Button>Data</Button>
                       </Link>
+                      <Link href="/admin/hackathon/judge-assignment">
+                        <Button>Judge Assignment</Button>
+                      </Link>
                     </>
                   )}
                   {(hasFullAdmin || hasCheckIn) && (
