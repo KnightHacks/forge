@@ -156,7 +156,7 @@ export const csvImporterRouter = {
             const submissions = Array.from(teamMap.entries()).flatMap(([teamName, teamRows]) =>
             teamRows
                 .map(record => {
-                const challengeId = challengeIdMap.get(record["Opt-In Prize"] ?? "Overall");
+                const challengeId = challengeIdMap.get(record["Opt-In Prize"] ?? "Overall") ?? challengeIdMap.get("Overall"); // Second "Overall" is here in case "Opt-In Prize" exists but it's challenge returns null
                 const teamId = teamIdMap.get(teamName);
                 
                 // Only return if both IDs exist
