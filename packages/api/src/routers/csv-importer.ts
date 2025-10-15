@@ -12,7 +12,7 @@ interface CsvImporterRecord {
     "Judging Status": string,
     "Highest Step Completed": string,
     "Project Created At": string,
-    "Submitted Email": string,
+    "Submitter Email": string,
     "Team Member 1 Email": string,
     "Notes": string,
     [key: string]: string | null;
@@ -78,12 +78,13 @@ export const csvImporterRouter = {
                 const columnNames = Object.keys(firstRecord);
                 const teamMember1EmailIndex = columnNames.indexOf("Team Member 1 Email");
                 
-                const email1 = record["Team Member 1 Email"];
-                const email2 = recordValues[teamMember1EmailIndex + 3];
-                const email3 = recordValues[teamMember1EmailIndex + 6];
+                const email1 = record["Submitter Email"];
+                const email2 = record["Team Member 1 Email"];
+                const email3 = recordValues[teamMember1EmailIndex + 3];
+                const email4 = recordValues[teamMember1EmailIndex + 6];
                 
                 // Combine emails into comma-separated string, filtering out empty values
-                const emails = [email1, email2, email3]
+                const emails = [email1, email2, email3, email4]
                     .filter(email => email && email !== '')
                     .join(', ');
                 
