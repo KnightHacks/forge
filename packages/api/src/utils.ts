@@ -24,6 +24,7 @@ import { db } from "@forge/db/client";
 import { JudgeSession } from "@forge/db/schemas/auth";
 
 import { env } from "./env";
+import { passkitRouter } from "./routers/passkit";
 
 const DISCORD_ADMIN_ROLE_ID = IS_PROD
   ? (PROD_DISCORD_ADMIN_ROLE_ID as string)
