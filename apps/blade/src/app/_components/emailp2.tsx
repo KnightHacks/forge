@@ -21,7 +21,7 @@ interface EmailFormData {
     from: string;
     subject: string;
     body: string;
-    recipients?: string[]; // For batch mode
+    recipients?: string[];
     isBatchMode?: boolean;
 }
 
@@ -36,10 +36,9 @@ export const EmailSectionTwo = ({ onClose, isClosing, emailData }: EmailSectionT
     const scheduleEmailMutation = (api as any).emailQueue.scheduleEmail.useMutation();
     const scheduleBatchEmailMutation = (api as any).emailQueue.queueBatchEmail.useMutation();
 
-    // Combine date and time into a single datetime
     const getCombinedDateTime = (): Date | undefined => {
         if (!scheduleDate) return undefined;
-        if (!scheduleTime) return scheduleDate; // If no time selected, use date at midnight
+        if (!scheduleTime) return scheduleDate; 
 
         const combined = new Date(scheduleDate);
         combined.setHours(scheduleTime.getHours(), scheduleTime.getMinutes(), 0, 0);
@@ -67,13 +66,11 @@ export const EmailSectionTwo = ({ onClose, isClosing, emailData }: EmailSectionT
             };
 
             if (emailData.isBatchMode && emailData.recipients) {
-                // Send batch email
                 await scheduleBatchEmailMutation.mutateAsync({
                     recipients: emailData.recipients,
                     ...emailPayload
                 });
             } else {
-                // Send single email
                 await scheduleEmailMutation.mutateAsync({
                     to: emailData.to,
                     ...emailPayload
@@ -84,7 +81,6 @@ export const EmailSectionTwo = ({ onClose, isClosing, emailData }: EmailSectionT
                 setIsSent(false);
             }, 2000);
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.error("Failed to schedule email:", error);
             setIsSent(false);
             alert("Failed to schedule email. Please try again.");

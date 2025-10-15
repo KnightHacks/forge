@@ -18,7 +18,7 @@ interface EmailFormData {
     from: string;
     subject: string;
     body: string;
-    recipients?: string[]; // For batch mode
+    recipients?: string[]; 
     isBatchMode?: boolean;
 }
 
@@ -39,7 +39,6 @@ export const EmailSectionOne = ({ onSchedule, onModeChange }: EmailSectionOnePro
 
     const handleRecipientsChange = (value: string) => {
         setRecipientsText(value);
-        // Parse recipients from textarea (one per line or comma-separated)
         const recipients = value
             .split(/[,\n]/)
             .map(email => email.trim())
@@ -58,18 +57,15 @@ export const EmailSectionOne = ({ onSchedule, onModeChange }: EmailSectionOnePro
         if (!newBatchMode) {
             setRecipientsText("");
         }
-        // Notify parent component of mode change
         onModeChange?.(newBatchMode);
     };
 
     const handleSchedule = () => {
-        // Basic validation
         if (formData.isBatchMode) {
             if (!formData.recipients || formData.recipients.length === 0 || !formData.subject || !formData.body) {
                 alert("Please fill in all required fields (Recipients, Subject, and Email Content)");
                 return;
             }
-            // Validate email addresses
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             const invalidEmails = formData.recipients.filter(email => !emailRegex.test(email));
             if (invalidEmails.length > 0) {
@@ -83,7 +79,6 @@ export const EmailSectionOne = ({ onSchedule, onModeChange }: EmailSectionOnePro
             }
         }
 
-        // Ensure we pass the complete form data including batch mode
         const dataToPass = {
             ...formData,
             isBatchMode: formData.isBatchMode || false,
