@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import QRCode from "react-qr-code";
 
 import { Button } from "@forge/ui/button";
+import { Input } from "@forge/ui/input";
 
 import { api } from "~/trpc/react";
 
@@ -19,10 +20,10 @@ export interface QRRoom {
 }
 
 export default function QRCodesClient() {
-  const [generated, setGenerated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rooms, setRooms] = useState<QRRoom[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [newRoomName, setNewRoomName] = useState("");
 
   const expandedRoom = useMemo(
     () => rooms.find((r) => r.id === expandedId) ?? null,
@@ -32,36 +33,52 @@ export default function QRCodesClient() {
   // Imperative fetch for a tRPC *query*
   const utils = api.useUtils();
 
-  const handleGenerate = async () => {
+  const handleGenerateRoom = async () => {
+    if (!newRoomName.trim()) {
+      alert("Please enter a room name");
+      return;
+    }
+
+    // Check if room already exists
+    const existingRoom = rooms.find(
+      (room) => room.label.toLowerCase() === newRoomName.toLowerCase(),
+    );
+    if (existingRoom) {
+      alert("A room with this name already exists");
+      return;
+    }
+
     setLoading(true);
     try {
-      // For now: generate 6 test rooms
-      const labels = Array.from({ length: 6 }, (_, i) => `Room ${i + 1}`);
+      // Generate magic URL for the new room
+      const { magicUrl } = (await utils.judge.generateToken.fetch({
+        roomName: newRoomName.trim(),
+      })) as GenerateTokenResult;
 
-      const minted: QRRoom[] = await Promise.all(
-        labels.map(async (label) => {
-          // --- NOTE: explicitly type the fetch result to avoid 'any'
-          const { magicUrl } = (await utils.judge.generateToken.fetch({
-            roomName: label,
-          })) as GenerateTokenResult;
+      const newRoom: QRRoom = {
+        id: newRoomName.toLowerCase().replace(/\s+/g, "-"),
+        label: newRoomName.trim(),
+        link: magicUrl,
+      };
 
-          return {
-            id: label.toLowerCase().replace(/\s+/g, "-"),
-            label,
-            link: magicUrl,
-          };
-        }),
-      );
-
-      setRooms(minted);
-      setGenerated(true);
+      setRooms((prev) => [...prev, newRoom]);
+      setNewRoomName("");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       // eslint-disable-next-line no-console
-      console.error("Failed to generate links:", err);
-      alert(`Failed to generate links: ${message}`);
+      console.error("Failed to generate room:", err);
+      alert(`Failed to generate room: ${message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteRoom = (roomId: string) => {
+    if (confirm("Are you sure you want to delete this room's QR code?")) {
+      setRooms((prev) => prev.filter((room) => room.id !== roomId));
+      if (expandedId === roomId) {
+        setExpandedId(null);
+      }
     }
   };
 
@@ -77,25 +94,36 @@ export default function QRCodesClient() {
         </p>
       </div>
 
-      {/* Big primary action */}
-      {!generated && (
-        <div className="flex justify-center pb-12">
+      {/* Room input form */}
+      <div className="mx-auto max-w-md pb-12">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Enter room name..."
+            value={newRoomName}
+            onChange={(e) => setNewRoomName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                void handleGenerateRoom();
+              }
+            }}
+            className="flex-1"
+          />
           <Button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="h-14 rounded-2xl px-8 text-base"
+            onClick={handleGenerateRoom}
+            disabled={loading || !newRoomName.trim()}
+            className="rounded-xl"
             variant="primary"
           >
-            {loading ? "Generating…" : "Generate Magic Links & QR Codes"}
+            {loading ? "Generating..." : "Add Room"}
           </Button>
         </div>
-      )}
+      </div>
 
       {/* Grid of room QR tiles */}
-      {generated && (
+      {rooms.length > 0 && (
         <section>
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Rooms</h2>
+            <h2 className="text-lg font-semibold">Rooms ({rooms.length})</h2>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -118,10 +146,10 @@ export default function QRCodesClient() {
                   <QRCode value={room.link} size={160} />
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <Button
                     size="sm"
-                    className="rounded-xl"
+                    className="flex-1 rounded-xl"
                     onClick={() => setExpandedId(room.id)}
                   >
                     Expand
@@ -134,13 +162,30 @@ export default function QRCodesClient() {
                       void navigator.clipboard.writeText(room.link)
                     }
                   >
-                    Copy Link
+                    Copy
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="rounded-xl"
+                    onClick={() => handleDeleteRoom(room.id)}
+                  >
+                    Delete
                   </Button>
                 </div>
               </article>
             ))}
           </div>
         </section>
+      )}
+
+      {/* Empty state */}
+      {rooms.length === 0 && (
+        <div className="py-12 text-center">
+          <p className="text-muted-foreground">
+            No rooms created yet. Add a room above to get started.
+          </p>
+        </div>
       )}
 
       {/* Full-screen overlay for expanded QR */}
