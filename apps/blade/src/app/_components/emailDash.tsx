@@ -58,7 +58,7 @@ export const EmailDash = () => {
     }, [showSectionTwo, isClosing]);
 
     return (
-        <div className="py-20">
+        <div className="py-10 md:py-20">
             <div ref={sectionOneRef}>
                 <EmailSectionOne onSchedule={handleSchedule} onModeChange={handleModeChange} />
             </div>

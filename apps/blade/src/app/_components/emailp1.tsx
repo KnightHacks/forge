@@ -95,11 +95,11 @@ export const EmailSectionOne = ({ onSchedule, onModeChange }: EmailSectionOnePro
 
     return (
         <TooltipProvider>
-            <div className="flex items-center justify-center mb-4 pt-20">
-                <Card className="w-2/3">
+            <div className="flex items-center justify-center mb-4 pt-20 px-4">
+                <Card className="w-full max-w-4xl md:w-2/3">
                     <CardHeader>
                         <CardTitle className="text-left flex items-center justify-between">
-                            <span>Send Email</span>
+                            <span className="text-lg md:text-xl">Send Email</span>
                              <Tooltip>
                                  <TooltipTrigger asChild>
                                      <Button
@@ -137,7 +137,7 @@ export const EmailSectionOne = ({ onSchedule, onModeChange }: EmailSectionOnePro
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex gap-4 mb-4">
+                            <div className="flex flex-col md:flex-row gap-4 mb-4">
                                 <InputGroup className="flex-1">
                                     <InputGroupAddon>
                                         <InputGroupText>To:</InputGroupText>
@@ -167,7 +167,7 @@ export const EmailSectionOne = ({ onSchedule, onModeChange }: EmailSectionOnePro
                         )}
 
                         {formData.isBatchMode && (
-                            <div className="flex gap-4 mb-4">
+                            <div className="flex flex-col md:flex-row gap-4 mb-4">
                                 <div className="flex-1"></div>
                                 <Select onValueChange={(value) => handleInputChange("from", value)}>
                                     <SelectTrigger className="flex-1">
@@ -199,12 +199,12 @@ export const EmailSectionOne = ({ onSchedule, onModeChange }: EmailSectionOnePro
                         <InputGroup className="flex w-full mb-4">
                             <InputGroupTextarea
                                 placeholder="Dear Lenny..."
-                                className="h-48"
+                                className="h-32 md:h-48"
                                 value={formData.body}
                                 onChange={(e) => handleInputChange("body", e.target.value)}
                             />
                         </InputGroup>
-                        <Button onClick={handleSchedule} className="hover:scale-105 transition-transform duration-300 transform">Schedule</Button>
+                        <Button onClick={handleSchedule} className="hover:scale-105 transition-transform duration-300 transform w-full md:w-auto">Schedule</Button>
                     </CardContent>
                 </Card>
             </div>

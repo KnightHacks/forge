@@ -29,12 +29,12 @@ export function DateRangePicker({
   const [isEndOpen, setIsEndOpen] = React.useState(false);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col md:flex-row items-center gap-2">
       <Popover open={isStartOpen} onOpenChange={setIsStartOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="w-[200px] justify-start text-left font-normal text-muted-foreground"
+            className="w-full md:w-[200px] justify-start text-left font-normal text-muted-foreground"
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {startDate ? format(startDate, "PPP") : "Start Date"}
@@ -51,18 +51,22 @@ export function DateRangePicker({
               }
               setIsStartOpen(false);
             }}
-            disabled={(date) => date < new Date()}
+            disabled={(date) => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              return date < today;
+            }}
           />
         </PopoverContent>
       </Popover>
 
-      <span className="text-gray-500">to</span>
+      <span className="text-gray-500 text-sm md:text-base">to</span>
 
       <Popover open={isEndOpen} onOpenChange={setIsEndOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="w-[200px] justify-start text-left font-normal text-muted-foreground"
+            className="w-full md:w-[200px] justify-start text-left font-normal text-muted-foreground"
             disabled={!startDate}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -79,7 +83,9 @@ export function DateRangePicker({
             }}
             disabled={(date) => {
               if (!startDate) return true;
-              return date < startDate || date < new Date();
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              return date < startDate || date < today;
             }}
           />
         </PopoverContent>

@@ -92,12 +92,12 @@ export const EmailSectionTwo = ({ onClose, isClosing, emailData }: EmailSectionT
     };
 
     return (
-        <div className={`flex items-center justify-center pb-40 transition-all duration-700 ${isClosing ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
+        <div className={`flex items-center justify-center pb-40 transition-all duration-700 px-4 ${isClosing ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
             }`}>
-            <Card className={`w-2/3 transition-all duration-800 ${isClosing ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+            <Card className={`w-full max-w-4xl md:w-2/3 transition-all duration-800 ${isClosing ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
                 }`}>
                 <CardHeader>
-                    <CardTitle className="text-left">
+                    <CardTitle className="text-left text-lg md:text-xl">
                         {emailData.isBatchMode ?
                             `Schedule Batch Email (${emailData.recipients?.length || 0} recipients)` :
                             "Schedule Email"
@@ -126,9 +126,9 @@ export const EmailSectionTwo = ({ onClose, isClosing, emailData }: EmailSectionT
                             </SelectGroup>
                         </SelectContent>
                     </Select>
-                    <div className="my-4 items-center flex gap-4">
+                    <div className="my-4 items-center flex flex-col md:flex-row gap-4">
                         <span className="text-sm">Schedule Date & Time (Optional):</span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col md:flex-row items-center gap-2">
                             <DatePicker
                                 value={scheduleDate}
                                 onChange={setScheduleDate}
@@ -139,7 +139,7 @@ export const EmailSectionTwo = ({ onClose, isClosing, emailData }: EmailSectionT
                             />
                         </div>
                     </div>
-                    <div className="my-4 items-center flex gap-4">
+                    <div className="my-4 items-center flex flex-col md:flex-row gap-4">
                         <span className="text-sm">Blacklist Date Range:</span>
                         <DateRangePicker
                             startDate={blacklistStartDate}
@@ -149,7 +149,7 @@ export const EmailSectionTwo = ({ onClose, isClosing, emailData }: EmailSectionT
                         />
                     </div>
 
-                    <Button onClick={handleSend} className={`transition-all duration-300 flex transform hover:scale-105 ${isSent ? (emailData.isBatchMode ? 'w-32' : 'w-24') : (emailData.isBatchMode ? 'w-28' : 'w-20')}`}>
+                    <Button onClick={handleSend} className={`transition-all duration-300 flex transform hover:scale-105 w-full md:w-auto ${isSent ? (emailData.isBatchMode ? 'md:w-32' : 'md:w-24') : (emailData.isBatchMode ? 'md:w-28' : 'md:w-20')}`}>
                         <div className="relative overflow-hidden w-full h-full flex items-center justify-center">
                             <div className={`transition-transform duration-300 ${isSent ? '-translate-y-full' : 'translate-y-0'}`}>
                                 <span>{emailData.isBatchMode ? 'Send Batch' : 'Send'}</span>
