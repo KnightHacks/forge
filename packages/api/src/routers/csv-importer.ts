@@ -10,8 +10,6 @@ interface CsvImporterRecord {
   "Opt-In Prize": string | null;
   "Project Title": string;
   "Submission Url": string;
-  "Project Status": string;
-  "Judging Status": string;
   "Highest Step Completed": string;
   "Project Created At": string;
   "Submitter Email": string;
