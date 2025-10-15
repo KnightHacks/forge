@@ -20,6 +20,7 @@ import {
 } from "@forge/consts/knight-hacks";
 
 import { env } from "./env";
+import { passkitRouter } from "./routers/passkit";
 
 const DISCORD_ADMIN_ROLE_ID = IS_PROD
   ? (PROD_DISCORD_ADMIN_ROLE_ID as string)
@@ -36,6 +37,8 @@ export const discord = new REST({ version: "10" }).setToken(
   env.DISCORD_BOT_TOKEN,
 );
 const GUILD_ID = IS_PROD ? PROD_KNIGHTHACKS_GUILD_ID : DEV_KNIGHTHACKS_GUILD_ID;
+
+
 
 export async function addRoleToMember(discordUserId: string, roleId: string) {
   await discord.put(Routes.guildMemberRole(GUILD_ID, discordUserId, roleId), {
@@ -209,3 +212,6 @@ export async function log({
     },
   });
 }
+
+
+
