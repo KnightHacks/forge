@@ -389,6 +389,7 @@ export const Teams = createTable("teams", (t) => ({
   projectTitle: t.text().notNull(),
   submissionUrl: t.text(),
   projectCreatedAt: t.timestamp().notNull(),
+  isProjectSubmitted: t.boolean().notNull().default(false),
 
   // Devpost link
   devpostUrl: t.text(),

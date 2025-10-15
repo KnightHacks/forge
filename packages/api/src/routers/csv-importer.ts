@@ -9,7 +9,7 @@ import { publicProcedure } from "../trpc";
 interface CsvImporterRecord {
   "Opt-In Prize": string | null;
   "Project Title": string;
-  "Submission Url": string;
+  "Submission Url": string | null; // A submission can be null if the project was never submitted
   "Highest Step Completed": string;
   "Project Created At": string;
   "Submitter Email": string;
@@ -65,15 +65,10 @@ export const csvImporterRouter = {
           return record as CsvImporterRecord;
         });
 
-        // Filter submitted projects
-        const submittedRecords = headerRecords.filter(
-          (record) => record["Highest Step Completed"] === "Submit",
-        );
-
         // Process records to include emails field
-        const processedRecords = submittedRecords.map((record) => {
+        const processedRecords = headerRecords.map((record) => {
           const recordValues = Object.values(record);
-          const firstRecord = submittedRecords[0];
+          const firstRecord = headerRecords[0];
 
           if (!firstRecord) {
             throw new Error("Unable to read CSV structure");
@@ -167,6 +162,7 @@ export const csvImporterRouter = {
                   projectTitle: teamName,
                   submissionUrl: firstRow["Submission Url"],
                   projectCreatedAt: new Date(firstRow["Project Created At"]),
+                  isProjectSubmitted: firstRow["Highest Step Completed"] === "Submit" ? true : false,
                   devpostUrl: firstRow["Submission Url"],
                   notes: firstRow.Notes,
                   emails: firstRow.emails,
