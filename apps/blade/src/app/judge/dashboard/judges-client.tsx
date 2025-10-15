@@ -1,17 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import dynamic from "next/dynamic";
+import QRCode from "react-qr-code";
+
 import { Button } from "@forge/ui/button";
+
 import { api } from "~/trpc/react";
 
 // --- NEW: local result type for the tRPC call
-interface GenerateTokenResult { magicUrl: string }
-
-// Proper dynamic import; cast so TS is happy
-const QRCode = dynamic(() => import("react-qr-code").then(m => m.default), {
-  ssr: false,
-}) as unknown as React.ComponentType<{ value: string; size?: number; className?: string }>;
+interface GenerateTokenResult {
+  magicUrl: string;
+}
 
 export interface QRRoom {
   id: string;
@@ -42,8 +41,9 @@ export default function QRCodesClient() {
       const minted: QRRoom[] = await Promise.all(
         labels.map(async (label) => {
           // --- NOTE: explicitly type the fetch result to avoid 'any'
-          const { magicUrl } =
-            (await utils.judge.generateToken.fetch({ roomName: label })) as GenerateTokenResult;
+          const { magicUrl } = (await utils.judge.generateToken.fetch({
+            roomName: label,
+          })) as GenerateTokenResult;
 
           return {
             id: label.toLowerCase().replace(/\s+/g, "-"),
@@ -105,24 +105,34 @@ export default function QRCodesClient() {
                 className="rounded-2xl border p-4 shadow-sm transition hover:shadow-md"
               >
                 <header className="mb-3 flex items-center justify-between">
-                  <h3 className="truncate text-base font-semibold">{room.label}</h3>
-                  <span className="text-xs text-muted-foreground">Magic QR</span>
+                  <h3 className="truncate text-base font-semibold">
+                    {room.label}
+                  </h3>
+                  <span className="text-xs text-muted-foreground">
+                    Magic QR
+                  </span>
                 </header>
 
                 {/* Real QR preview */}
-                <div className="mb-4 flex items-center justify-center">
+                <div className="mb-4 flex items-center justify-center bg-white p-2">
                   <QRCode value={room.link} size={160} />
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Button size="sm" className="rounded-xl" onClick={() => setExpandedId(room.id)}>
+                  <Button
+                    size="sm"
+                    className="rounded-xl"
+                    onClick={() => setExpandedId(room.id)}
+                  >
                     Expand
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     className="rounded-xl"
-                    onClick={() => void navigator.clipboard.writeText(room.link)}
+                    onClick={() =>
+                      void navigator.clipboard.writeText(room.link)
+                    }
                   >
                     Copy Link
                   </Button>
@@ -174,11 +184,13 @@ function FullscreenQR(props: { room: QRRoom; onClose: () => void }) {
           <h3 id="qr-dialog-title" className="text-xl font-semibold">
             {room.label}
           </h3>
-          <p className="mt-1 truncate text-xs text-muted-foreground">{room.link}</p>
+          <p className="mt-1 truncate text-xs text-muted-foreground">
+            {room.link}
+          </p>
         </div>
 
         {/* Large QR */}
-        <div className="flex items-center justify-center py-6">
+        <div className="flex items-center justify-center bg-white py-6">
           <QRCode value={room.link} size={380} />
         </div>
 
@@ -193,7 +205,9 @@ function FullscreenQR(props: { room: QRRoom; onClose: () => void }) {
           </Button>
           <Button
             className="rounded-xl"
-            onClick={() => window.open(room.link, "_blank", "noopener,noreferrer")}
+            onClick={() =>
+              window.open(room.link, "_blank", "noopener,noreferrer")
+            }
           >
             Open Link
           </Button>

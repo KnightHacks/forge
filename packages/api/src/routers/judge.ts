@@ -19,7 +19,7 @@ const getSecret = () => {
   return s;
 };
 
-// Base64URL helper (encode only — using Buffer's "base64url")
+// Base64URL helper
 const b64url = (input: Buffer | string) =>
   Buffer.isBuffer(input)
     ? input.toString("base64url")
