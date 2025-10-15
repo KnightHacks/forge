@@ -55,9 +55,6 @@ export const AddJudgeDialog: React.FC<AddJudgeProps> = ({ challenge }) => {
   const handleSubmit = () => {
     if (judgeName.trim()) {
       setIsLoading(true);
-      console.log("JudgeName: ", judgeName);
-      console.log("Room Name: ", roomName);
-      console.log("ChallengeId: ", challenge.id);
       createJudge.mutate({
         name: judgeName,
         roomName: roomName,
