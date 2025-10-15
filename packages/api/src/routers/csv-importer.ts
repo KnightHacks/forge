@@ -231,7 +231,10 @@ export const csvImporterRouter = {
           const submissions = Array.from(teamMap.entries()).flatMap(
             ([matchKey, teamRows]) => {
               const teamId = teamIdMap.get(matchKey);
-              if (!teamId) return [];
+              if (!teamId) {
+                console.error(`Team not found for matchKey: ${matchKey}`);
+                throw new Error(`Failed to find team ID for: ${matchKey}`);
+              }
 
               const challengeIds = new Set<string>();
 
