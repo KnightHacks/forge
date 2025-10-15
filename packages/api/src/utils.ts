@@ -1,6 +1,8 @@
 import type { APIGuildMember } from "discord-api-types/v10";
+import { cookies } from "next/headers";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
+import { and, eq, gt } from "drizzle-orm";
 import { google } from "googleapis";
 import Stripe from "stripe";
 
@@ -18,9 +20,10 @@ import {
   PROD_KNIGHTHACKS_LOG_CHANNEL,
   ROLE_PERMISSIONS,
 } from "@forge/consts/knight-hacks";
+import { db } from "@forge/db/client";
+import { JudgeSession } from "@forge/db/schemas/auth";
 
 import { env } from "./env";
-import { passkitRouter } from "./routers/passkit";
 
 const DISCORD_ADMIN_ROLE_ID = IS_PROD
   ? (PROD_DISCORD_ADMIN_ROLE_ID as string)
@@ -37,8 +40,6 @@ export const discord = new REST({ version: "10" }).setToken(
   env.DISCORD_BOT_TOKEN,
 );
 const GUILD_ID = IS_PROD ? PROD_KNIGHTHACKS_GUILD_ID : DEV_KNIGHTHACKS_GUILD_ID;
-
-
 
 export async function addRoleToMember(discordUserId: string, roleId: string) {
   await discord.put(Routes.guildMemberRole(GUILD_ID, discordUserId, roleId), {
@@ -213,5 +214,48 @@ export async function log({
   });
 }
 
+export const isJudgeAdmin = async (
+  _user: Session["user"] | null | undefined,
+) => {
+  try {
+    const token = cookies().get("sessionToken")?.value;
+    if (!token) return false;
 
+    const now = new Date();
+    const rows = await db
+      .select({ sessionToken: JudgeSession.sessionToken })
+      .from(JudgeSession)
+      .where(
+        and(
+          eq(JudgeSession.sessionToken, token),
+          gt(JudgeSession.expires, now),
+        ),
+      )
+      .limit(1);
 
+    return rows.length > 0;
+  } catch (err) {
+    console.error("isJudgeAdmin DB check error:", err);
+    return false;
+  }
+};
+
+export const getJudgeSessionFromCookie = async () => {
+  const token = cookies().get("sessionToken")?.value;
+  if (!token) return null;
+
+  const now = new Date();
+  const rows = await db
+    .select({
+      sessionToken: JudgeSession.sessionToken,
+      roomName: JudgeSession.roomName,
+      expires: JudgeSession.expires,
+    })
+    .from(JudgeSession)
+    .where(
+      and(eq(JudgeSession.sessionToken, token), gt(JudgeSession.expires, now)),
+    )
+    .limit(1);
+
+  return rows[0] ?? null;
+};
