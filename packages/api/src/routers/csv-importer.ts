@@ -122,8 +122,9 @@ export const csvImporterRouter = {
             .values(
               challenges.map((challenge: string) => ({
                 title: challenge,
-                location: null,
                 hackathonId: input.hackathon_id,
+                description: "",
+                sponsor: "",
               })),
             )
             .onConflictDoNothing()
