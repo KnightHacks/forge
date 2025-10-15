@@ -174,7 +174,13 @@ export const csvImporterRouter = {
 
             await db.insert(Submissions).values(submissions);
 
-            return processedRecords;
+            return {
+                success: true,
+                recordsProcessed: processedRecords.length,
+                teamsCreated: insertedTeams.length,
+                challengesCreated: insertedChallenges.length,
+                submissionsCreated: submissions.length,
+            };
         } catch (error) {
             console.error('CSV import error:', error);
 
