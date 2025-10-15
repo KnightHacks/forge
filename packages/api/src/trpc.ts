@@ -13,8 +13,13 @@ import { ZodError } from "zod";
 import type { Session } from "@forge/auth";
 import { auth, validateToken } from "@forge/auth";
 
-import { getJudgeSessionFromCookie, isJudgeAdmin } from "./routers/judge";
-import { isDiscordAdmin, userHasCheckIn, userHasFullAdmin } from "./utils";
+import {
+  getJudgeSessionFromCookie,
+  isDiscordAdmin,
+  isJudgeAdmin,
+  userHasCheckIn,
+  userHasFullAdmin,
+} from "./utils";
 
 /**
  * Isomorphic Session getter for API requests

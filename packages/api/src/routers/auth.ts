@@ -9,6 +9,7 @@ import {
   getUserPermissions,
   isDiscordAdmin,
   isDiscordMember,
+  isJudgeAdmin,
   userHasCheckIn,
   userHasFullAdmin,
   userHasPermission,
@@ -59,6 +60,16 @@ export const authRouter = {
       return Promise.resolve(false);
     }
     return userHasFullAdmin(ctx.session.user);
+  }),
+
+  getJudgeStatus: publicProcedure.query(async ({ ctx }) => {
+    console.log("running");
+    if (!ctx.session) {
+      return Promise.resolve(false);
+    }
+    const isJudge = await isJudgeAdmin(ctx.session.user);
+    console.log("Is Judge: ", isJudge);
+    return isJudge;
   }),
 
   hasCheckIn: publicProcedure.query(({ ctx }): Promise<boolean> => {

@@ -1,10 +1,9 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { TRPCError } from "@trpc/server";
-import { and, asc, eq, gt } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import type { Session } from "@forge/auth";
 import { db } from "@forge/db/client";
 import { JudgeSession } from "@forge/db/schemas/auth";
 import { Judges } from "@forge/db/schemas/knight-hacks";
@@ -13,52 +12,6 @@ import { env } from "../env";
 import { adminProcedure, publicProcedure } from "../trpc";
 
 const SESSION_TTL_HOURS = 8;
-
-export const isJudgeAdmin = async (
-  _user: Session["user"] | null | undefined,
-) => {
-  try {
-    const token = cookies().get("sessionToken")?.value;
-    if (!token) return false;
-
-    const now = new Date();
-    const rows = await db
-      .select({ sessionToken: JudgeSession.sessionToken })
-      .from(JudgeSession)
-      .where(
-        and(
-          eq(JudgeSession.sessionToken, token),
-          gt(JudgeSession.expires, now),
-        ),
-      )
-      .limit(1);
-
-    return !!rows[0];
-  } catch (err) {
-    console.error("isJudgeAdmin DB check error:", err);
-    return false;
-  }
-};
-
-export const getJudgeSessionFromCookie = async () => {
-  const token = cookies().get("sessionToken")?.value;
-  if (!token) return null;
-
-  const now = new Date();
-  const rows = await db
-    .select({
-      sessionToken: JudgeSession.sessionToken,
-      roomName: JudgeSession.roomName,
-      expires: JudgeSession.expires,
-    })
-    .from(JudgeSession)
-    .where(
-      and(eq(JudgeSession.sessionToken, token), gt(JudgeSession.expires, now)),
-    )
-    .limit(1);
-
-  return rows[0] ?? null;
-};
 
 const getSecret = () => {
   const s = env.AUTH_SECRET;
@@ -211,11 +164,6 @@ export const judgeRouter = {
         roomName,
       };
     }),
-
-  isJudge: publicProcedure.query(async ({ ctx }) => {
-    return isJudgeAdmin(ctx.session?.user);
-  }),
-
   // Query, no input, list all judges
   getJudges: publicProcedure.query(async () => {
     return await db.select().from(Judges).orderBy(asc(Judges.name));
