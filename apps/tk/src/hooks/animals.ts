@@ -27,7 +27,9 @@ interface DuckProps {
 
 export function execute() {
   if (!env.DISCORD_ANIMAL_WEBHOOK_URL) {
-    console.warn("DISCORD_ANIMAL_WEBHOOK_URL not configured, skipping animal hooks");
+    console.warn(
+      "DISCORD_ANIMAL_WEBHOOK_URL not configured, skipping animal hooks",
+    );
     return;
   }
 
