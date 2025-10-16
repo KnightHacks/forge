@@ -274,3 +274,28 @@ export const getJudgeSessionFromCookie = async () => {
 
   return rows[0] ?? null;
 };
+
+interface CalendarStub {
+  events: {
+    insert: (params: unknown) => Promise<{ data: { id: string } }>;
+    update: (params: unknown) => Promise<{ data: { id: string } }>;
+    delete: (params: unknown) => Promise<Record<string, never>>;
+  };
+}
+
+export const calendar: CalendarStub = {
+  events: {
+    insert: (_params: unknown) => {
+      console.warn("Google Calendar integration not implemented - stub called");
+      return Promise.resolve({ data: { id: "stub-event-id" } });
+    },
+    update: (_params: unknown) => {
+      console.warn("Google Calendar integration not implemented - stub called");
+      return Promise.resolve({ data: { id: "stub-event-id" } });
+    },
+    delete: (_params: unknown) => {
+      console.warn("Google Calendar integration not implemented - stub called");
+      return Promise.resolve({});
+    },
+  },
+};

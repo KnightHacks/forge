@@ -55,12 +55,9 @@ export const EmailSectionTwo = ({
   >();
   const [blacklistEndDate, setBlacklistEndDate] = useState<Date | undefined>();
 
-  const scheduleEmailMutation = (
-    api as any
-  ).emailQueue.scheduleEmail.useMutation();
-  const scheduleBatchEmailMutation = (
-    api as any
-  ).emailQueue.queueBatchEmail.useMutation();
+  const scheduleEmailMutation = api.emailQueue.scheduleEmail.useMutation();
+  const scheduleBatchEmailMutation =
+    api.emailQueue.queueBatchEmail.useMutation();
 
   const getCombinedDateTime = (): Date | undefined => {
     if (!scheduleDate) return undefined;
@@ -112,6 +109,7 @@ export const EmailSectionTwo = ({
         setIsSent(false);
       }, 2000);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Failed to schedule email:", error);
       setIsSent(false);
       alert("Failed to schedule email. Please try again.");

@@ -180,7 +180,7 @@ export class EmailQueueService {
 
         if (now >= startDate && now <= endDate) {
           console.log(
-            `Email ${email.id} blocked by date range: ${range.startDate} to ${range.endDate} (reason: ${range.reason || "No reason provided"})`,
+            `Email ${email.id} blocked by date range: ${range.startDate} to ${range.endDate} (reason: ${range.reason ?? "No reason provided"})`,
           );
           return false;
         }

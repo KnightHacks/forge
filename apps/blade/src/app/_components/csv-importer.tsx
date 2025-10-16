@@ -28,6 +28,7 @@ export default function CsvImporter({
       !getCurrentHackathon.isLoading &&
       getCurrentHackathon.data === undefined
     ) {
+      // eslint-disable-next-line no-console
       console.error("There was an error getting the current hackathon.");
       onError?.("There was an error getting the current hackathon.");
     }
