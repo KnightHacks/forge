@@ -131,7 +131,7 @@ export const EmailSectionOne = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant={formData.isBatchMode ? "default" : "outline"}
+                    variant={formData.isBatchMode ? "primary" : "outline"}
                     size="sm"
                     onClick={toggleBatchMode}
                     className="transform transition-transform duration-300 hover:scale-105"
