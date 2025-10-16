@@ -1,5 +1,6 @@
 import { authRouter } from "./routers/auth";
 import { challengeRouter } from "./routers/challenges";
+import { csvImporterRouter } from "./routers/csv-importer";
 import { duesPaymentRouter } from "./routers/dues-payment";
 import { emailRouter } from "./routers/email";
 import { eventRouter } from "./routers/event";
@@ -33,6 +34,7 @@ export const appRouter = createTRPCRouter<{
   guild: typeof guildRouter;
   judge: typeof judgeRouter;
   challenge: typeof challengeRouter;
+  csvImporter: typeof csvImporterRouter;
 }>({
   auth: authRouter,
   duesPayment: duesPaymentRouter,
@@ -50,6 +52,7 @@ export const appRouter = createTRPCRouter<{
   guild: guildRouter,
   judge: judgeRouter,
   challenge: challengeRouter,
+  csvImporter: csvImporterRouter,
 });
 
 // export type definition of API

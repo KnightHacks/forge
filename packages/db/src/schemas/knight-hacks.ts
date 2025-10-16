@@ -400,43 +400,56 @@ export type SelectEmailConfig = typeof EmailConfig.$inferSelect;
 export const InsertEmailQueueSchema = createInsertSchema(EmailQueue);
 export const InsertEmailDailyCountSchema = createInsertSchema(EmailDailyCount);
 export const InsertEmailConfigSchema = createInsertSchema(EmailConfig);
-export const Challenges = createTable("challenges", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  title: t.text().notNull(),
-  hackathonId: t
-    .uuid()
-    .notNull()
-    .references(() => Hackathon.id, {
-      onDelete: "cascade",
-    }),
-  description: t.text().notNull(),
-  sponsor: t.text().notNull(),
-}));
+
+export const Challenges = createTable(
+  "challenges",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    title: t.text().notNull(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, {
+        onDelete: "cascade",
+      }),
+    description: t.text().notNull(),
+    sponsor: t.text().notNull(),
+  }),
+  (table) => ({
+    uniqueTitlePerHackathon: unique().on(table.title, table.hackathonId),
+  }),
+);
 
 export const InsertChallengesSchema = createInsertSchema(Challenges);
 
-export const Submissions = createTable("submissions", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  challengeId: t
-    .uuid()
-    .notNull()
-    .references(() => Challenges.id, {
-      onDelete: "cascade",
-    }),
-  teamId: t
-    .uuid()
-    .notNull()
-    .references(() => Teams.id, {
-      onDelete: "cascade",
-    }),
-  judgedStatus: t.boolean().notNull().default(false),
-  hackathonId: t
-    .uuid()
-    .notNull()
-    .references(() => Hackathon.id, {
-      onDelete: "cascade",
-    }),
-}));
+export const Submissions = createTable(
+  "submissions",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    challengeId: t
+      .uuid()
+      .notNull()
+      .references(() => Challenges.id, {
+        onDelete: "cascade",
+      }),
+    teamId: t
+      .uuid()
+      .notNull()
+      .references(() => Teams.id, {
+        onDelete: "cascade",
+      }),
+    judgedStatus: t.boolean().notNull().default(false),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, {
+        onDelete: "cascade",
+      }),
+  }),
+  (table) => ({
+    uniqueTeamPerChallenge: unique().on(table.teamId, table.challengeId),
+  }),
+);
 
 export const InsertSubmissionsSchema = createInsertSchema(Submissions);
 
@@ -453,6 +466,7 @@ export const Teams = createTable("teams", (t) => ({
   projectTitle: t.text().notNull(),
   submissionUrl: t.text(),
   projectCreatedAt: t.timestamp().notNull(),
+  isProjectSubmitted: t.boolean().notNull().default(false),
 
   // Devpost link
   devpostUrl: t.text(),
@@ -461,6 +475,11 @@ export const Teams = createTable("teams", (t) => ({
   notes: t.text(),
   universities: t.text(),
   emails: t.text(),
+
+  // Csv matching
+  // To uniqueliy identify a team when comparing it with devpost csv data
+  // firstName and lastName are the csv's submitter first and last names which are never null
+  matchKey: t.text().unique(), // should have the format of ${firstName}_${lastName}:${createdAt}:${projectTitle}
 }));
 
 export const InsertTeamsSchema = createInsertSchema(Teams);
@@ -478,3 +497,28 @@ export const Judges = createTable("judges", (t) => ({
 }));
 
 export const InsertJudgesSchema = createInsertSchema(Judges);
+export const JudgedSubmission = createTable("judged_submission", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  hackathonId: t
+    .uuid()
+    .notNull()
+    .references(() => Hackathon.id),
+  submissionId: t
+    .uuid()
+    .notNull()
+    .references(() => Submissions.id),
+  judgeId: t
+    .uuid()
+    .notNull()
+    .references(() => Judges.id),
+  privateFeedback: t.varchar({ length: 255 }).notNull(),
+  publicFeedback: t.varchar({ length: 255 }).notNull(),
+  originality_rating: t.integer().notNull(),
+  design_rating: t.integer().notNull(),
+  technical_understanding_rating: t.integer().notNull(),
+  implementation_rating: t.integer().notNull(),
+  wow_factor_rating: t.integer().notNull(),
+}));
+
+export const InsertJudgedSubmissionSchema =
+  createInsertSchema(JudgedSubmission);

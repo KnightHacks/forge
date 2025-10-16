@@ -13,7 +13,13 @@ import { ZodError } from "zod";
 import type { Session } from "@forge/auth";
 import { auth, validateToken } from "@forge/auth";
 
-import { isDiscordAdmin, userHasCheckIn, userHasFullAdmin } from "./utils";
+import {
+  getJudgeSessionFromCookie,
+  isDiscordAdmin,
+  isJudgeAdmin,
+  userHasCheckIn,
+  userHasFullAdmin,
+} from "./utils";
 
 /**
  * Isomorphic Session getter for API requests
@@ -187,3 +193,24 @@ export const checkInProcedure = protectedProcedure.use(
     });
   },
 );
+
+export const judgeProcedure = publicProcedure.use(async ({ ctx, next }) => {
+  let isAdmin;
+  if (ctx.session) {
+    isAdmin = await isDiscordAdmin(ctx.session.user);
+  }
+  const isJudge = await isJudgeAdmin(ctx.session?.user);
+
+  if (!isAdmin && !isJudge) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  const judgeSession = await getJudgeSessionFromCookie();
+
+  return next({
+    ctx: {
+      ...ctx,
+      judgeSession, // { sessionToken, roomName, expires } | null
+    },
+  });
+});
