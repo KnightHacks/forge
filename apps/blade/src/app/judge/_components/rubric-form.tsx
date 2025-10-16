@@ -1,6 +1,5 @@
 "use client";
 
-import type { TRPCError } from "@trpc/server";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -73,13 +72,13 @@ export function RubricForm({
       if (!(error as CustomError).data) {
         toast.error("Submission failed, contact an adminstrator");
       }
-      if ((error as CustomError).data.code === "FORBIDDEN") {
+      if ((error as CustomError).data?.code === "FORBIDDEN") {
         toast.error(
           "You cannot give rubric more than once for this submission!",
         );
-      } else if ((error as CustomError).data.code === "NOT_FOUND") {
+      } else if ((error as CustomError).data?.code === "NOT_FOUND") {
         toast.error("Cannot find submission/judge!");
-      } else if ((error as CustomError).data.code === "CONFLICT") {
+      } else if ((error as CustomError).data?.code === "CONFLICT") {
         toast.error("You've already judged this submission!");
       } else if ((error as CustomError).message) {
         toast.error(`Error: ${(error as CustomError).message}`);
