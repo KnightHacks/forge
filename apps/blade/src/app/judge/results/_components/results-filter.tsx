@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import {
   Select,
   SelectContent,
@@ -22,7 +23,10 @@ interface Challenge {
 interface ResultsFilterProps {
   judges: Judge[];
   challenges: Challenge[];
-  onFilterChange: (filters: { judge: Judge | null; challenge: Challenge | null; }) => void;
+  onFilterChange: (filters: {
+    judge: Judge | null;
+    challenge: Challenge | null;
+  }) => void;
 }
 
 export default function ResultsFilter({
@@ -30,7 +34,7 @@ export default function ResultsFilter({
   challenges,
   onFilterChange,
 }: ResultsFilterProps) {
-  const [filters, setFilters] = useState<{ judge: string; challenge: string;}>({
+  const [filters, setFilters] = useState<{ judge: string; challenge: string }>({
     judge: "all",
     challenge: "all",
   });
@@ -49,7 +53,7 @@ export default function ResultsFilter({
   }, [filters, judges, challenges, onFilterChange]);
 
   return (
-    <div className="mt-2 mb-2 flex flex-col gap-4 md:flex-row md:items-center md:justify-center">
+    <div className="mb-2 mt-2 flex flex-col gap-4 md:flex-row md:items-center md:justify-center">
       {/* Judge Filter */}
       <Select
         value={filters.judge}
