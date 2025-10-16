@@ -1,6 +1,5 @@
 "use client";
 
-import type { TRPCClientError } from "@trpc/client";
 import type { TRPCError } from "@trpc/server";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -60,6 +59,7 @@ export function RubricForm({
     data: {
       code: string;
     };
+    message: string;
   }
 
   const createRubric = api.judge.createJudgedSubmission.useMutation({
