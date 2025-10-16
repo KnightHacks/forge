@@ -1,9 +1,17 @@
+import { redirect } from "next/navigation";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
 import { api } from "~/trpc/server";
 import { ProjectsTable } from "../_components/projects-table";
 
 export default async function Page() {
+  const isJudge = await api.auth.getJudgeStatus();
+  const isAdmin = await api.auth.getAdminStatus();
+
+  if (!isJudge && !isAdmin) {
+    redirect("/");
+  }
   const currentHackathon = await api.hackathon.getCurrentHackathon();
   if (!currentHackathon) {
     return (
