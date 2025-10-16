@@ -137,11 +137,12 @@ export default function ResultsTable() {
           bVal = b[sortField];
         }
 
-        // Handle null values
-        if (aVal && bVal) return 0;
-        if (aVal) return sortOrder === "asc" ? 1 : -1;
-        if (bVal) return sortOrder === "asc" ? -1 : 1;
+        // Handle null/undefined values
+        if (aVal == null && bVal == null) return 0;
+        if (aVal == null) return sortOrder === "asc" ? 1 : -1;
+        if (bVal == null) return sortOrder === "asc" ? -1 : 1;
 
+        // Compare values
         if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
         if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
         return 0;
@@ -160,23 +161,6 @@ export default function ResultsTable() {
           totalProjects
         ).toFixed(1)
       : "0.0";
-
-  // Calculate judging counts per project
-  const judgingCounts = useMemo(() => {
-    const counts = new Map<string, { judged: number; submitted: number }>();
-    allProjects.forEach((p) => {
-      if (p.projectTitle) {
-        const current = counts.get(p.projectTitle) ?? {
-          judged: 0,
-          submitted: 0,
-        };
-        current.judged += 1;
-        current.submitted += 1; // This assumes  all submissions are judged for now (should get updated)
-        counts.set(p.projectTitle, current);
-      }
-    });
-    return counts;
-  }, [allProjects]);
 
   return (
     <main className="container h-screen">
@@ -230,7 +214,7 @@ export default function ResultsTable() {
               <Label>Link</Label>
             </TableHead>
             <TableHead className="text-center">
-              <Label>Judging Status</Label>
+              <Label>Judge Name</Label>
             </TableHead>
             <TableHead className="text-center">
               <Label>Challenges</Label>
@@ -273,12 +257,6 @@ export default function ResultsTable() {
             </TableRow>
           ) : (
             filteredProjects.map((project) => {
-              const counts = judgingCounts.get(project.projectTitle) ?? {
-                judged: 0,
-                submitted: 0,
-              };
-              const ratio = `${counts.judged}/${counts.submitted}`;
-
               return (
                 <TableRow key={project.id}>
                   <TableCell className="text-center font-medium">
@@ -298,7 +276,9 @@ export default function ResultsTable() {
                       "—"
                     )}
                   </TableCell>
-                  <TableCell className="text-center">{ratio}</TableCell>
+                  <TableCell className="text-center">
+                    {project.judgeName}
+                  </TableCell>
                   <TableCell className="max-w-[180px] truncate text-center">
                     <span title={project.challengeTitle}>
                       {project.challengeTitle}
