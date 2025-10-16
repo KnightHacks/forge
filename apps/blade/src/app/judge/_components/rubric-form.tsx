@@ -1,6 +1,6 @@
 "use client";
 
-import type { TRPCClientErrorLike } from "@trpc/client";
+import type { TRPCClientErrorLike, TRPCErrorShape } from "@trpc/client";
 import type { TRPCError } from "@trpc/server";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -57,18 +57,14 @@ export function RubricForm({
 
   const utils = api.useUtils();
 
-  type CreateJudgedSubmissionProc =
-    AppRouter["judge"]["createJudgedSubmission"];
-
-  type JudgeFeedbackError = TRPCClientErrorLike<CreateJudgedSubmissionProc>;
-
   const createRubric = api.judge.createJudgedSubmission.useMutation({
     async onSuccess() {
       toast.success("Rubric submitted successfully!");
       setIsOpen(false);
       await utils.judge.invalidate();
     },
-    onError(error: JudgeFeedbackError) {
+    // @ts-expect-error: intentionally using 'any' for generic error handling
+    onError(error: any) {
       if (!error.data) {
         toast.error("Submission failed, contact an adminstrator");
       }
