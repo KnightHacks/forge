@@ -1,21 +1,22 @@
 "use client";
 
-import { api } from "~/trpc/react";
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
+
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import {
   Table,
-  TableCell,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@forge/ui/table";
 
-import ResultsFilter from "./results-filter";
 import SortButton from "~/app/admin/_components/SortButton";
+import { api } from "~/trpc/react";
+import ResultsFilter from "./results-filter";
 
 export default function ResultsTable() {
   const [filters, setFilters] = useState({
@@ -23,13 +24,16 @@ export default function ResultsTable() {
     challenge: null as { id: string; title: string } | null,
   });
 
-  const [sortField, setSortField] = useState<"projectTitle" | "specificRating" | "overallRating" | null>("projectTitle");
+  const [sortField, setSortField] = useState<
+    "projectTitle" | "specificRating" | "overallRating" | null
+  >("projectTitle");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>("asc");
   const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch all judged submissions without filters
-  const { data: judgedSubmissions, isLoading } = api.judgeSubmissions.getJudgedSubmissions.useQuery({});
- 
+  const { data: judgedSubmissions, isLoading } =
+    api.judge.getJudgedSubmissions.useQuery({});
+
   // Transform submissions into projects
   const allProjects = useMemo(() => {
     if (!judgedSubmissions) return [];
@@ -43,9 +47,10 @@ export default function ResultsTable() {
         s.wow_factor_rating,
       ].filter((r) => r);
 
-      const average = ratings.length > 0
-        ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
-        : 0;
+      const average =
+        ratings.length > 0
+          ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
+          : 0;
 
       return {
         id: s.id,
@@ -102,7 +107,7 @@ export default function ResultsTable() {
     // Apply search filter
     if (searchTerm) {
       result = result.filter((p) =>
-        p.projectTitle.toLowerCase().includes(searchTerm.toLowerCase())
+        p.projectTitle.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -113,7 +118,9 @@ export default function ResultsTable() {
 
     // Apply challenge filter
     if (filters.challenge) {
-      result = result.filter((p) => p.challengeTitle === filters.challenge?.title);
+      result = result.filter(
+        (p) => p.challengeTitle === filters.challenge?.title,
+      );
     }
 
     // Apply sorting
@@ -149,7 +156,7 @@ export default function ResultsTable() {
   const avgScore =
     totalProjects > 0
       ? (
-          filteredProjects.reduce((sum, p) => sum + (p.overallRating), 0) /
+          filteredProjects.reduce((sum, p) => sum + p.overallRating, 0) /
           totalProjects
         ).toFixed(1)
       : "0.0";
@@ -159,7 +166,10 @@ export default function ResultsTable() {
     const counts = new Map<string, { judged: number; submitted: number }>();
     allProjects.forEach((p) => {
       if (p.projectTitle) {
-        const current = counts.get(p.projectTitle) ?? { judged: 0, submitted: 0 };
+        const current = counts.get(p.projectTitle) ?? {
+          judged: 0,
+          submitted: 0,
+        };
         current.judged += 1;
         current.submitted += 1; // This assumes  all submissions are judged for now (should get updated)
         counts.set(p.projectTitle, current);
@@ -177,7 +187,7 @@ export default function ResultsTable() {
       </div>
 
       {/* Search + Filters */}
-      <div className="relative w-full flex flex-col gap-3 mb-4">
+      <div className="relative mb-4 flex w-full flex-col gap-3">
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -194,7 +204,7 @@ export default function ResultsTable() {
           onFilterChange={setFilters}
         />
 
-        <div className="flex justify-center gap-8 text-md font-bold">
+        <div className="text-md flex justify-center gap-8 font-bold">
           <div>
             Returned {totalProjects} Project{totalProjects !== 1 ? "s" : ""}
           </div>
@@ -216,9 +226,15 @@ export default function ResultsTable() {
                 setSortOrder={setSortOrder}
               />
             </TableHead>
-            <TableHead className="text-center"><Label>Link</Label></TableHead>
-            <TableHead className="text-center"><Label>Judging Status</Label></TableHead>
-            <TableHead className="text-center"><Label>Challenges</Label></TableHead>
+            <TableHead className="text-center">
+              <Label>Link</Label>
+            </TableHead>
+            <TableHead className="text-center">
+              <Label>Judging Status</Label>
+            </TableHead>
+            <TableHead className="text-center">
+              <Label>Challenges</Label>
+            </TableHead>
             <TableHead className="text-center">
               <SortButton
                 field="specificRating"
@@ -245,19 +261,22 @@ export default function ResultsTable() {
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={6} className="py-8 text-center">
                 Loading results...
               </TableCell>
             </TableRow>
           ) : !judgedSubmissions?.length || filteredProjects.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={6} className="py-8 text-center">
                 No results found.
               </TableCell>
             </TableRow>
           ) : (
             filteredProjects.map((project) => {
-              const counts = judgingCounts.get(project.projectTitle) ?? { judged: 0, submitted: 0 };
+              const counts = judgingCounts.get(project.projectTitle) ?? {
+                judged: 0,
+                submitted: 0,
+              };
               const ratio = `${counts.judged}/${counts.submitted}`;
 
               return (
@@ -280,7 +299,7 @@ export default function ResultsTable() {
                     )}
                   </TableCell>
                   <TableCell className="text-center">{ratio}</TableCell>
-                  <TableCell className="text-center max-w-[180px] truncate">
+                  <TableCell className="max-w-[180px] truncate text-center">
                     <span title={project.challengeTitle}>
                       {project.challengeTitle}
                     </span>

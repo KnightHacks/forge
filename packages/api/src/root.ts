@@ -9,7 +9,6 @@ import { guildRouter } from "./routers/guild";
 import { hackathonRouter } from "./routers/hackathon";
 import { hackerRouter } from "./routers/hacker";
 import { judgeRouter } from "./routers/judge";
-import { judgeSubmissionsRouter } from "./routers/judge-submissions";
 import { memberRouter } from "./routers/member";
 import { passkitRouter } from "./routers/passkit";
 import { qrRouter } from "./routers/qr";
@@ -34,7 +33,6 @@ export const appRouter = createTRPCRouter<{
   judge: typeof judgeRouter;
   challenge: typeof challengeRouter;
   csvImporter: typeof csvImporterRouter;
-  judgeSubmissions: typeof judgeSubmissionsRouter;
 }>({
   auth: authRouter,
   duesPayment: duesPaymentRouter,
@@ -52,7 +50,6 @@ export const appRouter = createTRPCRouter<{
   judge: judgeRouter,
   challenge: challengeRouter,
   csvImporter: csvImporterRouter,
-  judgeSubmissions: judgeSubmissionsRouter,
 });
 
 // export type definition of API
