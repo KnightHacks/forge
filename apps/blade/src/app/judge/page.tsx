@@ -10,5 +10,5 @@ export default async function Page() {
     redirect("/");
   }
 
-  return <div>Judging</div>;
+  redirect("/judge/dashboard");
 }
