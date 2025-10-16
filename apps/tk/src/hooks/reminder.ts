@@ -439,15 +439,21 @@ async function hackathonWarnCron(webhook: WebhookClient) {
 // Event Reminders webhook
 export function execute() {
   // Create webhook clients only if URLs are provided
-  const pubWebhook = env.DISCORD_DAILY_REMINDERS_WEBHOOK_URL ? new WebhookClient({
-    url: env.DISCORD_DAILY_REMINDERS_WEBHOOK_URL,
-  }) : null;
-  const preWebhook = env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL ? new WebhookClient({
-    url: env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL,
-  }) : null;
-  const hackathonWebhook = env.DISCORD_HACKATHON_WEBHOOK_URL ? new WebhookClient({
-    url: env.DISCORD_HACKATHON_WEBHOOK_URL,
-  }) : null;
+  const pubWebhook = env.DISCORD_DAILY_REMINDERS_WEBHOOK_URL
+    ? new WebhookClient({
+        url: env.DISCORD_DAILY_REMINDERS_WEBHOOK_URL,
+      })
+    : null;
+  const preWebhook = env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL
+    ? new WebhookClient({
+        url: env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL,
+      })
+    : null;
+  const hackathonWebhook = env.DISCORD_HACKATHON_WEBHOOK_URL
+    ? new WebhookClient({
+        url: env.DISCORD_HACKATHON_WEBHOOK_URL,
+      })
+    : null;
 
   try {
     // PRE-REMINDERS for Testing: 8:00AM

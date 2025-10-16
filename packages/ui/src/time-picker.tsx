@@ -1,10 +1,18 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Clock } from "lucide-react"
-import { cn } from "@forge/ui"
-import { InputGroup, InputGroupInput } from "@forge/ui/input-group"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from "@forge/ui/select"
+import * as React from "react";
+import { Clock } from "lucide-react";
+
+import { cn } from "@forge/ui";
+import { InputGroup, InputGroupInput } from "@forge/ui/input-group";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@forge/ui/select";
 
 interface TimePickerProps {
   value?: Date;
@@ -15,13 +23,13 @@ interface TimePickerProps {
   label?: string;
 }
 
-export function TimePicker({ 
-  value, 
-  onChange, 
-  placeholder: _placeholder = "Select time", 
-  className, 
+export function TimePicker({
+  value,
+  onChange,
+  placeholder: _placeholder = "Select time",
+  className,
   use12Hour = true,
-  label 
+  label,
 }: TimePickerProps) {
   const [hours, setHours] = React.useState<string>("");
   const [minutes, setMinutes] = React.useState<string>("");
@@ -31,17 +39,17 @@ export function TimePicker({
     if (value) {
       const h = value.getHours();
       const m = value.getMinutes();
-      
+
       if (use12Hour) {
         const displayHours = h === 0 ? 12 : h > 12 ? h - 12 : h;
-        const displayAmpm = h < 12 ? 'AM' : 'PM';
-        setHours(displayHours.toString().padStart(2, '0'));
-        setMinutes(m.toString().padStart(2, '0'));
+        const displayAmpm = h < 12 ? "AM" : "PM";
+        setHours(displayHours.toString().padStart(2, "0"));
+        setMinutes(m.toString().padStart(2, "0"));
         setAmpm(displayAmpm);
       } else {
-        setHours(h.toString().padStart(2, '0'));
-        setMinutes(m.toString().padStart(2, '0'));
-        setAmpm('');
+        setHours(h.toString().padStart(2, "0"));
+        setMinutes(m.toString().padStart(2, "0"));
+        setAmpm("");
       }
     } else {
       setHours("");
@@ -50,17 +58,21 @@ export function TimePicker({
     }
   }, [value, use12Hour]);
 
-  const updateTime = (newHours: string, newMinutes: string, newAmpm: string) => {
+  const updateTime = (
+    newHours: string,
+    newMinutes: string,
+    newAmpm: string,
+  ) => {
     if (onChange && newHours && newMinutes) {
       let hour24 = parseInt(newHours) || 0;
       const minute = parseInt(newMinutes) || 0;
-      
+
       if (use12Hour && newAmpm) {
-        const isAM = newAmpm.toUpperCase() === 'AM';
+        const isAM = newAmpm.toUpperCase() === "AM";
         if (isAM && hour24 === 12) hour24 = 0;
         if (!isAM && hour24 !== 12) hour24 = hour24 + 12;
       }
-      
+
       const date = new Date();
       date.setHours(hour24, minute, 0, 0);
       onChange(date);
@@ -71,13 +83,13 @@ export function TimePicker({
     if (onChange && newHours) {
       let hour24 = parseInt(newHours) || 0;
       const minute = parseInt(minutes) || 0;
-      
+
       if (use12Hour && ampm) {
-        const isAM = ampm.toUpperCase() === 'AM';
+        const isAM = ampm.toUpperCase() === "AM";
         if (isAM && hour24 === 12) hour24 = 0;
         if (!isAM && hour24 !== 12) hour24 = hour24 + 12;
       }
-      
+
       const date = new Date();
       date.setHours(hour24, minute, 0, 0);
       onChange(date);
@@ -88,13 +100,13 @@ export function TimePicker({
     if (onChange && newMinutes) {
       let hour24 = parseInt(hours) || 0;
       const minute = parseInt(newMinutes) || 0;
-      
+
       if (use12Hour && ampm) {
-        const isAM = ampm.toUpperCase() === 'AM';
+        const isAM = ampm.toUpperCase() === "AM";
         if (isAM && hour24 === 12) hour24 = 0;
         if (!isAM && hour24 !== 12) hour24 = hour24 + 12;
       }
-      
+
       const date = new Date();
       date.setHours(hour24, minute, 0, 0);
       onChange(date);
@@ -102,7 +114,7 @@ export function TimePicker({
   };
 
   const handleHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value.replace(/\D/g, '');
+    const input = e.target.value.replace(/\D/g, "");
     if (input.length <= 2) {
       setHours(input);
     }
@@ -127,7 +139,7 @@ export function TimePicker({
   };
 
   const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value.replace(/\D/g, '');
+    const input = e.target.value.replace(/\D/g, "");
     if (input.length <= 2) {
       setMinutes(input);
     }
@@ -169,9 +181,9 @@ export function TimePicker({
             maxLength={2}
           />
         </InputGroup>
-          
+
         <span className="text-muted-foreground">:</span>
-          
+
         <InputGroup className="w-16">
           <InputGroupInput
             type="text"
@@ -183,7 +195,7 @@ export function TimePicker({
             maxLength={2}
           />
         </InputGroup>
-          
+
         {use12Hour && (
           <Select value={ampm} onValueChange={handleAmpmChange}>
             <SelectTrigger className="w-20">
@@ -199,5 +211,5 @@ export function TimePicker({
         )}
       </div>
     </div>
-  )
+  );
 }
