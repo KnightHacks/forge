@@ -1,12 +1,10 @@
 "use client";
 
-import type { TRPCClientErrorLike, TRPCErrorShape } from "@trpc/client";
 import type { TRPCError } from "@trpc/server";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
-import type { AppRouter } from "@forge/api";
 import { InsertJudgedSubmissionSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
@@ -63,7 +61,7 @@ export function RubricForm({
       setIsOpen(false);
       await utils.judge.invalidate();
     },
-    // @ts-expect-error: intentionally using 'any' for generic error handling
+    // eslint-disable @typescript-eslint/no-explicit-any
     onError(error: any) {
       if (!error.data) {
         toast.error("Submission failed, contact an adminstrator");
