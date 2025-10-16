@@ -2,8 +2,8 @@ import type { APIGuildMember } from "discord-api-types/v10";
 import { cookies } from "next/headers";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
-import { Resend } from "resend";
 import { and, eq, gt } from "drizzle-orm";
+import { Resend } from "resend";
 import Stripe from "stripe";
 
 import type { Session } from "@forge/auth";

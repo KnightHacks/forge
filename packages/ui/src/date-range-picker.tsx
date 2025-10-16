@@ -6,11 +6,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import { Calendar } from "@forge/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@forge/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 
 interface DateRangePickerProps {
   startDate?: Date;
@@ -19,22 +15,22 @@ interface DateRangePickerProps {
   onEndDateChange: (date: Date | undefined) => void;
 }
 
-export function DateRangePicker({ 
-  startDate, 
-  endDate, 
-  onStartDateChange, 
-  onEndDateChange
+export function DateRangePicker({
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
 }: DateRangePickerProps) {
   const [isStartOpen, setIsStartOpen] = React.useState(false);
   const [isEndOpen, setIsEndOpen] = React.useState(false);
 
   return (
-    <div className="flex flex-col md:flex-row items-center gap-2">
+    <div className="flex flex-col items-center gap-2 md:flex-row">
       <Popover open={isStartOpen} onOpenChange={setIsStartOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="w-full md:w-[200px] justify-start text-left font-normal text-muted-foreground"
+            className="w-full justify-start text-left font-normal text-muted-foreground md:w-[200px]"
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {startDate ? format(startDate, "PPP") : "Start Date"}
@@ -60,13 +56,13 @@ export function DateRangePicker({
         </PopoverContent>
       </Popover>
 
-      <span className="text-gray-500 text-sm md:text-base">to</span>
+      <span className="text-sm text-gray-500 md:text-base">to</span>
 
       <Popover open={isEndOpen} onOpenChange={setIsEndOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="w-full md:w-[200px] justify-start text-left font-normal text-muted-foreground"
+            className="w-full justify-start text-left font-normal text-muted-foreground md:w-[200px]"
             disabled={!startDate}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />

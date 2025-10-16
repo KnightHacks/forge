@@ -338,17 +338,17 @@ export const InsertEventFeedbackSchema = createInsertSchema(EventFeedback);
 // Email Queue Tables
 export const emailQueueStatusEnum = pgEnum("email_queue_status", [
   "pending",
-  "processing", 
+  "processing",
   "completed",
   "failed",
-  "scheduled"
+  "scheduled",
 ]);
 
 export const emailPriorityEnum = pgEnum("email_priority", [
   "now",
-  "high", 
+  "high",
   "standard",
-  "low"
+  "low",
 ]);
 
 export const EmailQueue = createTable("email_queue", (t) => ({

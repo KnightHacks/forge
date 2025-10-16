@@ -6,15 +6,23 @@ export const emailPrioritySchema = z.enum(["now", "high", "standard", "low"]);
 // Blacklist rules schema
 export const blacklistRulesSchema = z.object({
   daysOfWeek: z.array(z.number().min(0).max(6)).optional(), // 0 = Sunday, 6 = Saturday
-  timeRanges: z.array(z.object({
-    start: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/), // HH:MM format
-    end: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),   // HH:MM format
-  })).optional(),
-  dateRanges: z.array(z.object({
-    startDate: z.string().datetime(), // ISO string
-    endDate: z.string().datetime(),   // ISO string
-    reason: z.string().optional(),
-  })).optional(),
+  timeRanges: z
+    .array(
+      z.object({
+        start: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/), // HH:MM format
+        end: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/), // HH:MM format
+      }),
+    )
+    .optional(),
+  dateRanges: z
+    .array(
+      z.object({
+        startDate: z.string().datetime(), // ISO string
+        endDate: z.string().datetime(), // ISO string
+        reason: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
 // Email queue input schema

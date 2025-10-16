@@ -1,17 +1,18 @@
-import { eq, and, asc, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { Resend } from "resend";
+
+import type {
+  InsertEmailQueue,
+  SelectEmailQueue,
+} from "@forge/db/schemas/knight-hacks";
+import {
+  EmailConfig,
+  EmailDailyCount,
+  EmailQueue,
+} from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
 import { db } from "../lib/db";
-import type {
-  SelectEmailQueue,
-  InsertEmailQueue,
-} from "@forge/db/schemas/knight-hacks";
-import {
-  EmailQueue,
-  EmailDailyCount,
-  EmailConfig,
-} from "@forge/db/schemas/knight-hacks";
 
 // Initialize Resend
 const resend = new Resend(env.RESEND_API_KEY);
@@ -30,11 +31,11 @@ interface BlacklistRules {
   daysOfWeek?: number[]; // 0 = Sunday, 1 = Monday, etc.
   timeRanges?: {
     start: string; // "HH:MM" format
-    end: string;   // "HH:MM" format
+    end: string; // "HH:MM" format
   }[];
   dateRanges?: {
     startDate: string; // ISO datetime string
-    endDate: string;   // ISO datetime string
+    endDate: string; // ISO datetime string
     reason?: string;
   }[];
 }
@@ -45,26 +46,26 @@ export class EmailQueueService {
    */
   async getNextEmailsToSend(limit: number): Promise<SelectEmailQueue[]> {
     const now = new Date();
-    
+
     // First, update scheduled emails that are ready to be sent
     await db
       .update(EmailQueue)
       .set({
-        status: 'pending',
+        status: "pending",
         updated_at: new Date(),
       })
       .where(
         and(
-          eq(EmailQueue.status, 'scheduled'),
-          sql`scheduled_for IS NOT NULL AND scheduled_for <= ${sql.raw(`'${now.toISOString()}'`)}`
-        )
+          eq(EmailQueue.status, "scheduled"),
+          sql`scheduled_for IS NOT NULL AND scheduled_for <= ${sql.raw(`'${now.toISOString()}'`)}`,
+        ),
       );
 
     // Then get all pending emails
     return await db
       .select()
       .from(EmailQueue)
-      .where(eq(EmailQueue.status, 'pending'))
+      .where(eq(EmailQueue.status, "pending"))
       .orderBy(
         sql`CASE priority 
           WHEN 'now' THEN 1 
@@ -74,7 +75,7 @@ export class EmailQueueService {
         END`,
         asc(EmailQueue.created_at),
         asc(EmailQueue.batch_id),
-        asc(EmailQueue.batch_position)
+        asc(EmailQueue.batch_position),
       )
       .limit(limit);
   }
@@ -89,27 +90,31 @@ export class EmailQueueService {
     await db
       .update(EmailQueue)
       .set({
-        status: 'pending',
+        status: "pending",
         updated_at: new Date(),
       })
       .where(
         and(
-          eq(EmailQueue.status, 'processing'),
-          sql`updated_at < ${sql.raw(`'${fiveMinutesAgo.toISOString()}'`)}`
-        )
+          eq(EmailQueue.status, "processing"),
+          sql`updated_at < ${sql.raw(`'${fiveMinutesAgo.toISOString()}'`)}`,
+        ),
       );
   }
 
   /**
    * Check daily email limit and return remaining capacity
    */
-  async checkDailyLimit(): Promise<{ count: number; limit: number; remaining: number }> {
-    const todayParts = new Date().toISOString().split('T');
+  async checkDailyLimit(): Promise<{
+    count: number;
+    limit: number;
+    remaining: number;
+  }> {
+    const todayParts = new Date().toISOString().split("T");
     const today = todayParts[0];
     if (!today) {
-      throw new Error('Failed to get today\'s date');
+      throw new Error("Failed to get today's date");
     }
-    
+
     // Get or create today's count record
     let dailyCount = await db
       .select()
@@ -143,18 +148,18 @@ export class EmailQueueService {
    * Increment daily email count
    */
   async incrementDailyCount(count: number): Promise<void> {
-    const todayParts = new Date().toISOString().split('T');
+    const todayParts = new Date().toISOString().split("T");
     const today = todayParts[0];
     if (!today) {
-      throw new Error('Failed to get today\'s date');
+      throw new Error("Failed to get today's date");
     }
-    
+
     await db
       .update(EmailDailyCount)
-              .set({
-                count: sql`count + ${count}`,
-                updated_at: new Date(),
-              })
+      .set({
+        count: sql`count + ${count}`,
+        updated_at: new Date(),
+      })
       .where(eq(EmailDailyCount.date, today));
   }
 
@@ -163,7 +168,7 @@ export class EmailQueueService {
    */
   canSendEmail(email: SelectEmailQueue): boolean {
     if (!email.blacklist_rules) return true;
-    
+
     const rules = email.blacklist_rules as BlacklistRules;
     const now = new Date();
 
@@ -172,9 +177,11 @@ export class EmailQueueService {
       for (const range of rules.dateRanges) {
         const startDate = new Date(range.startDate);
         const endDate = new Date(range.endDate);
-        
+
         if (now >= startDate && now <= endDate) {
-          console.log(`Email ${email.id} blocked by date range: ${range.startDate} to ${range.endDate} (reason: ${range.reason || 'No reason provided'})`);
+          console.log(
+            `Email ${email.id} blocked by date range: ${range.startDate} to ${range.endDate} (reason: ${range.reason || "No reason provided"})`,
+          );
           return false;
         }
       }
@@ -203,7 +210,11 @@ export class EmailQueueService {
   /**
    * Check if current time falls within a restricted range
    */
-  private isTimeInRange(currentTime: string, startTime: string, endTime: string): boolean {
+  private isTimeInRange(
+    currentTime: string,
+    startTime: string,
+    endTime: string,
+  ): boolean {
     const current = this.timeToMinutes(currentTime);
     const start = this.timeToMinutes(startTime);
     const end = this.timeToMinutes(endTime);
@@ -212,7 +223,7 @@ export class EmailQueueService {
     if (start > end) {
       return current >= start || current <= end;
     }
-    
+
     return current >= start && current <= end;
   }
 
@@ -220,7 +231,7 @@ export class EmailQueueService {
    * Convert time string "HH:MM" to minutes since midnight
    */
   private timeToMinutes(time: string): number {
-    const parts = time.split(':');
+    const parts = time.split(":");
     const hours = parts[0];
     const minutes = parts[1];
     if (!hours || !minutes) {
@@ -232,7 +243,10 @@ export class EmailQueueService {
   /**
    * Process a batch of emails
    */
-  async processBatch(batchId: string, remainingLimit: number): Promise<{
+  async processBatch(
+    batchId: string,
+    remainingLimit: number,
+  ): Promise<{
     sent: number;
     scheduled: number;
   }> {
@@ -242,8 +256,8 @@ export class EmailQueueService {
       .where(
         and(
           eq(EmailQueue.batch_id, batchId),
-          sql`status IN ('pending', 'scheduled')`
-        )
+          sql`status IN ('pending', 'scheduled')`,
+        ),
       )
       .orderBy(asc(EmailQueue.batch_position));
 
@@ -252,16 +266,16 @@ export class EmailQueueService {
 
     for (const email of batchEmails) {
       if (sent >= remainingLimit) {
-                // Schedule remaining emails for next available time
-                const nextAvailableTime = this.getNextAvailableTime();
-                await db
-                  .update(EmailQueue)
-                  .set({
-                    scheduled_for: nextAvailableTime,
-                    status: 'scheduled',
-                    updated_at: new Date(),
-                  })
-                  .where(eq(EmailQueue.id, email.id));
+        // Schedule remaining emails for next available time
+        const nextAvailableTime = this.getNextAvailableTime();
+        await db
+          .update(EmailQueue)
+          .set({
+            scheduled_for: nextAvailableTime,
+            status: "scheduled",
+            updated_at: new Date(),
+          })
+          .where(eq(EmailQueue.id, email.id));
         scheduled++;
       } else {
         // Send this email
@@ -296,11 +310,11 @@ export class EmailQueueService {
       // Mark as processing
       await db
         .update(EmailQueue)
-                .set({
-                  status: 'processing',
-                  attempts: sql`attempts + 1`,
-                  updated_at: new Date(),
-                })
+        .set({
+          status: "processing",
+          attempts: sql`attempts + 1`,
+          updated_at: new Date(),
+        })
         .where(eq(EmailQueue.id, emailId));
 
       // Send email via Resend
@@ -318,17 +332,17 @@ export class EmailQueueService {
       // Mark as completed
       await db
         .update(EmailQueue)
-                .set({
-                  status: 'completed',
-                  processed_at: new Date(),
-                  updated_at: new Date(),
-                })
+        .set({
+          status: "completed",
+          processed_at: new Date(),
+          updated_at: new Date(),
+        })
         .where(eq(EmailQueue.id, emailId));
 
       return true;
     } catch (error) {
       console.error(`Failed to send email ${emailId}:`, error);
-      
+
       // Mark as failed if max attempts reached
       const updatedEmail = await db
         .select()
@@ -342,21 +356,23 @@ export class EmailQueueService {
       if (attempts >= maxAttempts) {
         await db
           .update(EmailQueue)
-                .set({
-                  status: 'failed',
-                  last_error: error instanceof Error ? error.message : 'Unknown error',
-                  updated_at: new Date(),
-                })
+          .set({
+            status: "failed",
+            last_error:
+              error instanceof Error ? error.message : "Unknown error",
+            updated_at: new Date(),
+          })
           .where(eq(EmailQueue.id, emailId));
       } else {
         // Reset to pending for retry
         await db
           .update(EmailQueue)
-        .set({
-          status: 'pending',
-          last_error: error instanceof Error ? error.message : 'Unknown error',
-          updated_at: new Date(),
-        })
+          .set({
+            status: "pending",
+            last_error:
+              error instanceof Error ? error.message : "Unknown error",
+            updated_at: new Date(),
+          })
           .where(eq(EmailQueue.id, emailId));
       }
 
@@ -372,31 +388,32 @@ export class EmailQueueService {
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(9, 0, 0, 0); // Default to 9 AM tomorrow
-    
+
     return tomorrow;
   }
 
   /**
    * Get email configuration
    */
-  async getEmailConfig(): Promise<{ dailyLimit: number; cronSchedule: string; enabled: boolean }> {
+  async getEmailConfig(): Promise<{
+    dailyLimit: number;
+    cronSchedule: string;
+    enabled: boolean;
+  }> {
     try {
-      const config = await db
-        .select()
-        .from(EmailConfig)
-        .limit(1);
+      const config = await db.select().from(EmailConfig).limit(1);
 
       if (config.length === 0) {
         // Create default config
         await db.insert(EmailConfig).values({
-          daily_limit: parseInt(env.EMAIL_DAILY_LIMIT ?? '100'),
-          cron_schedule: env.EMAIL_QUEUE_CRON ?? '*/5 * * * * *',
+          daily_limit: parseInt(env.EMAIL_DAILY_LIMIT ?? "100"),
+          cron_schedule: env.EMAIL_QUEUE_CRON ?? "*/5 * * * * *",
           enabled: true,
         });
-        
+
         return {
-          dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? '100'),
-          cronSchedule: env.EMAIL_QUEUE_CRON ?? '*/5 * * * * *',
+          dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? "100"),
+          cronSchedule: env.EMAIL_QUEUE_CRON ?? "*/5 * * * * *",
           enabled: true,
         };
       }
@@ -404,12 +421,12 @@ export class EmailQueueService {
       const configData = config[0];
       if (!configData) {
         return {
-          dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? '100'),
-          cronSchedule: env.EMAIL_QUEUE_CRON ?? '*/5 * * * * *',
+          dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? "100"),
+          cronSchedule: env.EMAIL_QUEUE_CRON ?? "*/5 * * * * *",
           enabled: true,
         };
       }
-      
+
       return {
         dailyLimit: configData.daily_limit,
         cronSchedule: configData.cron_schedule,
@@ -418,8 +435,8 @@ export class EmailQueueService {
     } catch (error) {
       console.warn("Failed to get email config, using defaults:", error);
       return {
-        dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? '100'),
-        cronSchedule: env.EMAIL_QUEUE_CRON ?? '*/5 * * * * *',
+        dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? "100"),
+        cronSchedule: env.EMAIL_QUEUE_CRON ?? "*/5 * * * * *",
         enabled: true,
       };
     }
@@ -428,18 +445,23 @@ export class EmailQueueService {
   /**
    * Add email to queue
    */
-  async queueEmail(emailData: Omit<InsertEmailQueue, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
-            const result = await db.insert(EmailQueue).values({
-              ...emailData,
-              created_at: new Date(),
-              updated_at: new Date(),
-            }).returning({ id: EmailQueue.id });
+  async queueEmail(
+    emailData: Omit<InsertEmailQueue, "id" | "created_at" | "updated_at">,
+  ): Promise<string> {
+    const result = await db
+      .insert(EmailQueue)
+      .values({
+        ...emailData,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .returning({ id: EmailQueue.id });
 
     const firstResult = result[0];
     if (!firstResult) {
-      throw new Error('Failed to create email queue entry');
+      throw new Error("Failed to create email queue entry");
     }
-    
+
     return firstResult.id;
   }
 
@@ -449,18 +471,24 @@ export class EmailQueueService {
   async queueBatchEmail(
     batchId: string,
     recipients: string[],
-    emailData: Omit<InsertEmailQueue, 'id' | 'to' | 'batch_id' | 'batch_position' | 'created_at' | 'updated_at'>
+    emailData: Omit<
+      InsertEmailQueue,
+      "id" | "to" | "batch_id" | "batch_position" | "created_at" | "updated_at"
+    >,
   ): Promise<string[]> {
-            const emails = recipients.map((to, index) => ({
-              ...emailData,
-              to,
-              batch_id: batchId,
-              batch_position: index + 1,
-              created_at: new Date(),
-              updated_at: new Date(),
-            }));
+    const emails = recipients.map((to, index) => ({
+      ...emailData,
+      to,
+      batch_id: batchId,
+      batch_position: index + 1,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }));
 
-    const result = await db.insert(EmailQueue).values(emails).returning({ id: EmailQueue.id });
-    return result.map(r => r.id);
+    const result = await db
+      .insert(EmailQueue)
+      .values(emails)
+      .returning({ id: EmailQueue.id });
+    return result.map((r) => r.id);
   }
 }

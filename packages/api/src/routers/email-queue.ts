@@ -1,22 +1,22 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import { eq, and, desc, sql, asc } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@forge/db/client";
 import {
-  EmailQueue,
-  EmailDailyCount,
   EmailConfig,
+  EmailDailyCount,
+  EmailQueue,
 } from "@forge/db/schemas/knight-hacks";
 import {
-  emailQueueInputSchema,
   batchEmailInputSchema,
-  emailConfigInputSchema,
-  updateEmailInputSchema,
-  queueStatusSchema,
-  paginatedEmailsSchema,
-  emailPrioritySchema,
   blacklistRulesSchema,
+  emailConfigInputSchema,
+  emailPrioritySchema,
+  emailQueueInputSchema,
+  paginatedEmailsSchema,
+  queueStatusSchema,
+  updateEmailInputSchema,
 } from "@forge/validators";
 
 import { publicProcedure } from "../trpc";
@@ -26,19 +26,22 @@ export const emailQueueRouter = {
   queueEmail: publicProcedure
     .input(emailQueueInputSchema)
     .mutation(async ({ input }) => {
-      const result = await db.insert(EmailQueue).values({
-        to: input.to,
-        from: input.from,
-        subject: input.subject,
-        html: input.html,
-        priority: input.priority,
-        scheduled_for: input.scheduledFor,
-        blacklist_rules: input.blacklistRules,
-        editable_until: input.editableUntil,
-        max_attempts: input.maxAttempts,
-        created_at: new Date(),
-        updated_at: new Date(),
-      }).returning({ id: EmailQueue.id });
+      const result = await db
+        .insert(EmailQueue)
+        .values({
+          to: input.to,
+          from: input.from,
+          subject: input.subject,
+          html: input.html,
+          priority: input.priority,
+          scheduled_for: input.scheduledFor,
+          blacklist_rules: input.blacklistRules,
+          editable_until: input.editableUntil,
+          max_attempts: input.maxAttempts,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .returning({ id: EmailQueue.id });
 
       return { success: true, emailId: result[0]?.id };
     }),
@@ -64,13 +67,16 @@ export const emailQueueRouter = {
         updated_at: new Date(),
       }));
 
-      const result = await db.insert(EmailQueue).values(emails).returning({ id: EmailQueue.id });
-      
-      return { 
-        success: true, 
-        batchId, 
-        emailIds: result.map(r => r.id),
-        count: result.length 
+      const result = await db
+        .insert(EmailQueue)
+        .values(emails)
+        .returning({ id: EmailQueue.id });
+
+      return {
+        success: true,
+        batchId,
+        emailIds: result.map((r) => r.id),
+        count: result.length,
       };
     }),
 
@@ -79,7 +85,7 @@ export const emailQueueRouter = {
     .input(updateEmailInputSchema)
     .mutation(async ({ input }) => {
       const { id, ...updateData } = input;
-      
+
       // Check if email is editable
       const email = await db
         .select()
@@ -95,9 +101,9 @@ export const emailQueueRouter = {
       if (!emailData) {
         throw new Error("Email not found");
       }
-      
+
       // Check if email can still be edited
-      if (emailData.status !== 'pending' && emailData.status !== 'scheduled') {
+      if (emailData.status !== "pending" && emailData.status !== "scheduled") {
         throw new Error("Email cannot be edited - already processed");
       }
 
@@ -134,83 +140,80 @@ export const emailQueueRouter = {
       if (!emailData) {
         throw new Error("Email not found");
       }
-      
+
       // Only allow deletion of pending/scheduled emails
-      if (emailData.status !== 'pending' && emailData.status !== 'scheduled') {
+      if (emailData.status !== "pending" && emailData.status !== "scheduled") {
         throw new Error("Email cannot be deleted - already processed");
       }
 
-      await db
-        .delete(EmailQueue)
-        .where(eq(EmailQueue.id, input.id));
+      await db.delete(EmailQueue).where(eq(EmailQueue.id, input.id));
 
       return { success: true };
     }),
 
   // Get queue status
-  getQueueStatus: publicProcedure
-    .output(queueStatusSchema)
-    .query(async () => {
-      // Get queue length
-      const queueResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(EmailQueue)
-        .where(sql`status IN ('pending', 'scheduled')`);
+  getQueueStatus: publicProcedure.output(queueStatusSchema).query(async () => {
+    // Get queue length
+    const queueResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(EmailQueue)
+      .where(sql`status IN ('pending', 'scheduled')`);
 
-      const queueLength = Number(queueResult[0]?.count ?? 0);
+    const queueLength = Number(queueResult[0]?.count ?? 0);
 
-      // Get daily count and limit
-      const todayParts = new Date().toISOString().split('T');
-      const today = todayParts[0];
-      if (!today) {
-        throw new Error("Failed to get today's date");
-      }
-      const dailyCountResult = await db
-        .select()
-        .from(EmailDailyCount)
-        .where(eq(EmailDailyCount.date, today))
-        .limit(1);
+    // Get daily count and limit
+    const todayParts = new Date().toISOString().split("T");
+    const today = todayParts[0];
+    if (!today) {
+      throw new Error("Failed to get today's date");
+    }
+    const dailyCountResult = await db
+      .select()
+      .from(EmailDailyCount)
+      .where(eq(EmailDailyCount.date, today))
+      .limit(1);
 
-      const dailyCount = dailyCountResult[0]?.count ?? 0;
-      const dailyLimit = dailyCountResult[0]?.limit ?? 100;
-      const remainingCapacity = Math.max(0, dailyLimit - dailyCount);
+    const dailyCount = dailyCountResult[0]?.count ?? 0;
+    const dailyLimit = dailyCountResult[0]?.limit ?? 100;
+    const remainingCapacity = Math.max(0, dailyLimit - dailyCount);
 
-      // Get next scheduled email time
-      const nextEmailResult = await db
-        .select({ scheduled_for: EmailQueue.scheduled_for })
-        .from(EmailQueue)
-        .where(sql`status = 'scheduled' AND scheduled_for IS NOT NULL`)
-        .orderBy(asc(EmailQueue.scheduled_for))
-        .limit(1);
+    // Get next scheduled email time
+    const nextEmailResult = await db
+      .select({ scheduled_for: EmailQueue.scheduled_for })
+      .from(EmailQueue)
+      .where(sql`status = 'scheduled' AND scheduled_for IS NOT NULL`)
+      .orderBy(asc(EmailQueue.scheduled_for))
+      .limit(1);
 
-      const nextSendTime = nextEmailResult[0]?.scheduled_for;
+    const nextSendTime = nextEmailResult[0]?.scheduled_for;
 
-      // Get config
-      const configResult = await db
-        .select()
-        .from(EmailConfig)
-        .limit(1);
+    // Get config
+    const configResult = await db.select().from(EmailConfig).limit(1);
 
-      const isEnabled = configResult[0]?.enabled ?? true;
+    const isEnabled = configResult[0]?.enabled ?? true;
 
-      return {
-        queueLength,
-        dailyCount,
-        dailyLimit,
-        remainingCapacity,
-        nextSendTime: nextSendTime?.toISOString(),
-        isEnabled,
-      };
-    }),
+    return {
+      queueLength,
+      dailyCount,
+      dailyLimit,
+      remainingCapacity,
+      nextSendTime: nextSendTime?.toISOString(),
+      isEnabled,
+    };
+  }),
 
   // Get queued emails with pagination
   getQueuedEmails: publicProcedure
-    .input(z.object({
-      page: z.number().min(1).default(1),
-      pageSize: z.number().min(1).max(100).default(20),
-      status: z.enum(["pending", "processing", "completed", "failed", "scheduled"]).optional(),
-      priority: z.enum(["now", "high", "standard", "low"]).optional(),
-    }))
+    .input(
+      z.object({
+        page: z.number().min(1).default(1),
+        pageSize: z.number().min(1).max(100).default(20),
+        status: z
+          .enum(["pending", "processing", "completed", "failed", "scheduled"])
+          .optional(),
+        priority: z.enum(["now", "high", "standard", "low"]).optional(),
+      }),
+    )
     .output(paginatedEmailsSchema)
     .query(async ({ input }) => {
       const { page, pageSize, status, priority } = input;
@@ -225,7 +228,8 @@ export const emailQueueRouter = {
         conditions.push(eq(EmailQueue.priority, priority));
       }
 
-      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+      const whereClause =
+        conditions.length > 0 ? and(...conditions) : undefined;
 
       // Get emails
       const emails = await db
@@ -246,7 +250,7 @@ export const emailQueueRouter = {
       const totalPages = Math.ceil(total / pageSize);
 
       return {
-        emails: emails.map(email => ({
+        emails: emails.map((email) => ({
           ...email,
           batchId: email.batch_id ?? undefined,
           batchPosition: email.batch_position ?? undefined,
@@ -269,10 +273,7 @@ export const emailQueueRouter = {
   updateEmailConfig: publicProcedure
     .input(emailConfigInputSchema)
     .mutation(async ({ input }) => {
-      const configResult = await db
-        .select()
-        .from(EmailConfig)
-        .limit(1);
+      const configResult = await db.select().from(EmailConfig).limit(1);
 
       if (configResult.length === 0) {
         // Create new config
@@ -303,140 +304,158 @@ export const emailQueueRouter = {
     }),
 
   // Get email configuration
-  getEmailConfig: publicProcedure
-    .query(async () => {
-      try {
-        const configResult = await db
-          .select()
-          .from(EmailConfig)
-          .limit(1);
+  getEmailConfig: publicProcedure.query(async () => {
+    try {
+      const configResult = await db.select().from(EmailConfig).limit(1);
 
-        if (configResult.length === 0) {
-          // Return default config
-          return {
-            dailyLimit: 100,
-            cronSchedule: "*/5 * * * * *",
-            enabled: true,
-          };
-        }
-
-        const config = configResult[0];
-        if (!config) {
-          return {
-            dailyLimit: 100,
-            cronSchedule: "*/5 * * * * *",
-            enabled: true,
-          };
-        }
-
-        return {
-          dailyLimit: config.daily_limit,
-          cronSchedule: config.cron_schedule,
-          enabled: config.enabled,
-        };
-      } catch (error) {
-        // If table doesn't exist or has wrong structure, return default config
-        console.warn("EmailConfig table not found or has wrong structure, using defaults:", error);
+      if (configResult.length === 0) {
+        // Return default config
         return {
           dailyLimit: 100,
-          cronSchedule: "*/5 * * * *",
+          cronSchedule: "*/5 * * * * *",
           enabled: true,
         };
       }
-    }),
+
+      const config = configResult[0];
+      if (!config) {
+        return {
+          dailyLimit: 100,
+          cronSchedule: "*/5 * * * * *",
+          enabled: true,
+        };
+      }
+
+      return {
+        dailyLimit: config.daily_limit,
+        cronSchedule: config.cron_schedule,
+        enabled: config.enabled,
+      };
+    } catch (error) {
+      // If table doesn't exist or has wrong structure, return default config
+      console.warn(
+        "EmailConfig table not found or has wrong structure, using defaults:",
+        error,
+      );
+      return {
+        dailyLimit: 100,
+        cronSchedule: "*/5 * * * *",
+        enabled: true,
+      };
+    }
+  }),
 
   // Schedule an email for future delivery
   scheduleEmail: publicProcedure
-    .input(z.object({
-      to: z.string().email(),
-      from: z.string().email().optional(),
-      subject: z.string().min(1).max(500),
-      html: z.string().min(1),
-      priority: emailPrioritySchema.default("standard"),
-      scheduledFor: z.date().optional(), // Changed from scheduleDate to scheduledFor
-      blacklistRules: blacklistRulesSchema.optional(),
-      editableUntil: z.date().optional(),
-      maxAttempts: z.number().min(1).max(10).default(3),
-    }))
+    .input(
+      z.object({
+        to: z.string().email(),
+        from: z.string().email().optional(),
+        subject: z.string().min(1).max(500),
+        html: z.string().min(1),
+        priority: emailPrioritySchema.default("standard"),
+        scheduledFor: z.date().optional(), // Changed from scheduleDate to scheduledFor
+        blacklistRules: blacklistRulesSchema.optional(),
+        editableUntil: z.date().optional(),
+        maxAttempts: z.number().min(1).max(10).default(3),
+      }),
+    )
     .mutation(async ({ input }) => {
-      const result = await db.insert(EmailQueue).values({
-        to: input.to,
-        from: input.from,
-        subject: input.subject,
-        html: input.html,
-        priority: input.priority,
-        scheduled_for: input.scheduledFor, // Use scheduledFor directly
-        blacklist_rules: input.blacklistRules,
-        editable_until: input.editableUntil,
-        max_attempts: input.maxAttempts,
-        status: input.scheduledFor ? 'scheduled' : 'pending',
-        created_at: new Date(),
-        updated_at: new Date(),
-      }).returning({ id: EmailQueue.id });
+      const result = await db
+        .insert(EmailQueue)
+        .values({
+          to: input.to,
+          from: input.from,
+          subject: input.subject,
+          html: input.html,
+          priority: input.priority,
+          scheduled_for: input.scheduledFor, // Use scheduledFor directly
+          blacklist_rules: input.blacklistRules,
+          editable_until: input.editableUntil,
+          max_attempts: input.maxAttempts,
+          status: input.scheduledFor ? "scheduled" : "pending",
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .returning({ id: EmailQueue.id });
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         emailId: result[0]?.id,
         scheduledFor: input.scheduledFor?.toISOString(),
-        status: input.scheduledFor ? 'scheduled' : 'pending',
-        message: input.scheduledFor ? `Email scheduled for ${input.scheduledFor.toISOString()}` : 'Email queued for immediate delivery'
+        status: input.scheduledFor ? "scheduled" : "pending",
+        message: input.scheduledFor
+          ? `Email scheduled for ${input.scheduledFor.toISOString()}`
+          : "Email queued for immediate delivery",
       };
     }),
 
   // Queue emails with blacklist rules
   queueEmailWithBlacklist: publicProcedure
-    .input(z.object({
-      to: z.string().email(),
-      from: z.string().email().optional(),
-      subject: z.string().min(1).max(500),
-      html: z.string().min(1),
-      priority: emailPrioritySchema.default("standard"),
-      blacklistRules: blacklistRulesSchema,
-      scheduledFor: z.date().optional(),
-      editableUntil: z.date().optional(),
-      maxAttempts: z.number().min(1).max(10).default(3),
-    }))
+    .input(
+      z.object({
+        to: z.string().email(),
+        from: z.string().email().optional(),
+        subject: z.string().min(1).max(500),
+        html: z.string().min(1),
+        priority: emailPrioritySchema.default("standard"),
+        blacklistRules: blacklistRulesSchema,
+        scheduledFor: z.date().optional(),
+        editableUntil: z.date().optional(),
+        maxAttempts: z.number().min(1).max(10).default(3),
+      }),
+    )
     .mutation(async ({ input }) => {
-      const result = await db.insert(EmailQueue).values({
-        to: input.to,
-        from: input.from,
-        subject: input.subject,
-        html: input.html,
-        priority: input.priority,
-        scheduled_for: input.scheduledFor,
-        blacklist_rules: input.blacklistRules,
-        editable_until: input.editableUntil,
-        max_attempts: input.maxAttempts,
-        status: input.scheduledFor ? 'scheduled' : 'pending',
-        created_at: new Date(),
-        updated_at: new Date(),
-      }).returning({ id: EmailQueue.id });
+      const result = await db
+        .insert(EmailQueue)
+        .values({
+          to: input.to,
+          from: input.from,
+          subject: input.subject,
+          html: input.html,
+          priority: input.priority,
+          scheduled_for: input.scheduledFor,
+          blacklist_rules: input.blacklistRules,
+          editable_until: input.editableUntil,
+          max_attempts: input.maxAttempts,
+          status: input.scheduledFor ? "scheduled" : "pending",
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .returning({ id: EmailQueue.id });
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         emailId: result[0]?.id,
         blacklistRules: input.blacklistRules,
-        message: `Email queued with blacklist rules`
+        message: `Email queued with blacklist rules`,
       };
     }),
 
   // Queue multiple emails with different priorities (useful for campaigns)
   queuePriorityEmails: publicProcedure
-    .input(z.object({
-      emails: z.array(z.object({
-        to: z.string().email(),
-        from: z.string().email().optional(),
-        subject: z.string().min(1).max(500),
-        html: z.string().min(1),
-        priority: emailPrioritySchema,
-        scheduledFor: z.date().optional(),
-        blacklistRules: blacklistRulesSchema.optional(),
-        editableUntil: z.date().optional(),
-        maxAttempts: z.number().min(1).max(10).default(3),
-      })).min(1).max(50),
-    }))
+    .input(
+      z.object({
+        emails: z
+          .array(
+            z.object({
+              to: z.string().email(),
+              from: z.string().email().optional(),
+              subject: z.string().min(1).max(500),
+              html: z.string().min(1),
+              priority: emailPrioritySchema,
+              scheduledFor: z.date().optional(),
+              blacklistRules: blacklistRulesSchema.optional(),
+              editableUntil: z.date().optional(),
+              maxAttempts: z.number().min(1).max(10).default(3),
+            }),
+          )
+          .min(1)
+          .max(50),
+      }),
+    )
     .mutation(async ({ input }) => {
-      const emails = input.emails.map(emailData => ({
+      const emails = input.emails.map((emailData) => ({
         to: emailData.to,
         from: emailData.from,
         subject: emailData.subject,
@@ -446,27 +465,29 @@ export const emailQueueRouter = {
         blacklist_rules: emailData.blacklistRules,
         editable_until: emailData.editableUntil,
         max_attempts: emailData.maxAttempts,
-        status: emailData.scheduledFor ? 'scheduled' as const : 'pending' as const,
+        status: emailData.scheduledFor
+          ? ("scheduled" as const)
+          : ("pending" as const),
         created_at: new Date(),
         updated_at: new Date(),
       }));
 
-      const result = await db.insert(EmailQueue).values(emails).returning({ 
+      const result = await db.insert(EmailQueue).values(emails).returning({
         id: EmailQueue.id,
         priority: EmailQueue.priority,
         subject: EmailQueue.subject,
-        status: EmailQueue.status
+        status: EmailQueue.status,
       });
 
-      return { 
-        success: true, 
-        emails: result.map(r => ({
+      return {
+        success: true,
+        emails: result.map((r) => ({
           id: r.id,
           priority: r.priority,
           subject: r.subject,
-          status: r.status
+          status: r.status,
         })),
-        message: `Queued ${result.length} emails with different priorities`
+        message: `Queued ${result.length} emails with different priorities`,
       };
     }),
 } satisfies TRPCRouterRecord;
