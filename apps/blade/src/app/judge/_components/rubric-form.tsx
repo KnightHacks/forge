@@ -55,6 +55,13 @@ export function RubricForm({
 
   const utils = api.useUtils();
 
+  interface CustomError {
+    data: {
+      code: string;
+    } | null;
+    message: string;
+  }
+
   const createRubric = api.judge.createJudgedSubmission.useMutation({
     async onSuccess() {
       toast.success("Rubric submitted successfully!");
@@ -63,19 +70,23 @@ export function RubricForm({
     },
     // eslint-disable @typescript-eslint/no-explicit-any
     onError(error: any) {
-      if (!error.data) {
+      if (!(error as CustomError).data) {
         toast.error("Submission failed, contact an adminstrator");
       }
-      if ((error.data as TRPCError).code === "FORBIDDEN") {
+      if (((error as CustomError).data as TRPCError).code === "FORBIDDEN") {
         toast.error(
           "You cannot give rubric more than once for this submission!",
         );
-      } else if ((error.data as TRPCError).code === "NOT_FOUND") {
+      } else if (
+        ((error as CustomError).data as TRPCError).code === "NOT_FOUND"
+      ) {
         toast.error("Cannot find submission/judge!");
-      } else if ((error.data as TRPCError).code === "CONFLICT") {
+      } else if (
+        ((error as CustomError).data as TRPCError).code === "CONFLICT"
+      ) {
         toast.error("You've already judged this submission!");
-      } else if (error.message) {
-        toast.error(`Error: ${error.message}`);
+      } else if ((error as CustomError).message) {
+        toast.error(`Error: ${(error as CustomError).message}`);
       } else {
         toast.error("Oops! Something went wrong. Please try again later.");
       }
