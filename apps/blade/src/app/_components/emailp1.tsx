@@ -150,8 +150,8 @@ export const EmailSectionOne = ({ onSchedule, onModeChange }: EmailSectionOnePro
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
-                                            <SelectItem value="donotreply@knighthacks.org">Main (donotreply@knighthacks.org)</SelectItem>
-                                            <SelectItem value="onboarding@resend.dev">Dev Testing (onboarding@resend.dev)</SelectItem>
+                                        <SelectItem value="no-reply@knighthacks.org">Main (no-reply@knighthacks.org)</SelectItem>
+                                        <SelectItem value="onboarding@resend.dev">Dev Testing (onboarding@resend.dev)</SelectItem>
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
@@ -167,10 +167,7 @@ export const EmailSectionOne = ({ onSchedule, onModeChange }: EmailSectionOnePro
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
-                                            <SelectItem value="tk@knighthacks.org">TK (tk@knighthacks.org)</SelectItem>
-                                            <SelectItem value="admin@knighthacks.org">Admin (admin@knighthacks.org)</SelectItem>
-                                            <SelectItem value="events@knighthacks.org">Events (events@knighthacks.org)</SelectItem>
-                                            <SelectItem value="support@knighthacks.org">Support (support@knighthacks.org)</SelectItem>
+                                            <SelectItem value="no-reply@knighthacks.org">Main (no-reply@knighthacks.org)</SelectItem>
                                             <SelectItem value="onboarding@resend.dev">Dev Testing (onboarding@resend.dev)</SelectItem>
                                         </SelectGroup>
                                     </SelectContent>
