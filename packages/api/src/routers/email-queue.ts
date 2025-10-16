@@ -353,33 +353,23 @@ export const emailQueueRouter = {
       subject: z.string().min(1).max(500),
       html: z.string().min(1),
       priority: emailPrioritySchema.default("standard"),
-      scheduleMinutes: z.number().min(1).max(10080).optional(), // Up to 1 week
-      scheduleDate: z.date().optional(), // Specific date/time
+      scheduledFor: z.date().optional(), // Changed from scheduleDate to scheduledFor
       blacklistRules: blacklistRulesSchema.optional(),
       editableUntil: z.date().optional(),
       maxAttempts: z.number().min(1).max(10).default(3),
     }))
     .mutation(async ({ input }) => {
-      let scheduledFor: Date | undefined;
-      
-      if (input.scheduleDate) {
-        scheduledFor = input.scheduleDate;
-      } else if (input.scheduleMinutes) {
-        scheduledFor = new Date();
-        scheduledFor.setMinutes(scheduledFor.getMinutes() + Number(input.scheduleMinutes));
-      }
-
       const result = await db.insert(EmailQueue).values({
         to: input.to,
         from: input.from,
         subject: input.subject,
         html: input.html,
         priority: input.priority,
-        scheduled_for: scheduledFor,
+        scheduled_for: input.scheduledFor, // Use scheduledFor directly
         blacklist_rules: input.blacklistRules,
         editable_until: input.editableUntil,
         max_attempts: input.maxAttempts,
-        status: scheduledFor ? 'scheduled' : 'pending',
+        status: input.scheduledFor ? 'scheduled' : 'pending',
         created_at: new Date(),
         updated_at: new Date(),
       }).returning({ id: EmailQueue.id });
@@ -387,9 +377,9 @@ export const emailQueueRouter = {
       return { 
         success: true, 
         emailId: result[0]?.id,
-        scheduledFor: scheduledFor?.toISOString(),
-        status: scheduledFor ? 'scheduled' : 'pending',
-        message: scheduledFor ? `Email scheduled for ${scheduledFor.toISOString()}` : 'Email queued for immediate delivery'
+        scheduledFor: input.scheduledFor?.toISOString(),
+        status: input.scheduledFor ? 'scheduled' : 'pending',
+        message: input.scheduledFor ? `Email scheduled for ${input.scheduledFor.toISOString()}` : 'Email queued for immediate delivery'
       };
     }),
 
