@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
+import type { AppRouter } from "@forge/api";
 import { InsertJudgedSubmissionSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
@@ -56,9 +57,10 @@ export function RubricForm({
 
   const utils = api.useUtils();
 
-  type JudgeFeedbackError = TRPCClientErrorLike<
-    typeof api.judge.createJudgedSubmission
-  >;
+  type CreateJudgedSubmissionProc =
+    AppRouter["judge"]["createJudgedSubmission"];
+
+  type JudgeFeedbackError = TRPCClientErrorLike<CreateJudgedSubmissionProc>;
 
   const createRubric = api.judge.createJudgedSubmission.useMutation({
     async onSuccess() {
