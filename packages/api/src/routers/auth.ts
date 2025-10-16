@@ -63,12 +63,7 @@ export const authRouter = {
   }),
 
   getJudgeStatus: publicProcedure.query(async ({ ctx }) => {
-    console.log("running");
-    if (!ctx.session) {
-      return Promise.resolve(false);
-    }
-    const isJudge = await isJudgeAdmin(ctx.session.user);
-    console.log("Is Judge: ", isJudge);
+    const isJudge = await isJudgeAdmin(ctx.session?.user);
     return isJudge;
   }),
 
