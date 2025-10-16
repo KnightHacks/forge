@@ -62,6 +62,11 @@ const randInt = (max: number) => {
 
 // Leetcode Daily Problem Webhook
 export function execute(client: Client) {
+  if (!env.DISCORD_LEETCODE_DAILY_WEBHOOK_URL) {
+    console.warn("DISCORD_LEETCODE_DAILY_WEBHOOK_URL not configured, skipping daily leetcode hook");
+    return;
+  }
+
   // Create a new Webhook client instance using the DAILY webhook URL
   const webhook = new WebhookClient({
     url: env.DISCORD_LEETCODE_DAILY_WEBHOOK_URL,
