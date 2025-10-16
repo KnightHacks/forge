@@ -195,8 +195,13 @@ export const checkInProcedure = protectedProcedure.use(
 );
 
 export const judgeProcedure = publicProcedure.use(async ({ ctx, next }) => {
-  const isValidJudge = await isJudgeAdmin(ctx.session?.user);
-  if (!isValidJudge) {
+  let isAdmin;
+  if (ctx.session) {
+    isAdmin = await isDiscordAdmin(ctx.session.user);
+  }
+  const isJudge = await isJudgeAdmin(ctx.session?.user);
+
+  if (!isAdmin && !isJudge) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
@@ -208,7 +213,4 @@ export const judgeProcedure = publicProcedure.use(async ({ ctx, next }) => {
       judgeSession, // { sessionToken, roomName, expires } | null
     },
   });
-  // make sure the ctx session token is in session table
-  // if token not in table, throw trpc error "UNAUTHORIZED"
-  // if it is, return next, with the context
 });
