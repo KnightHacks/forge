@@ -1,6 +1,7 @@
 "use client";
 
 import type { TRPCError } from "@trpc/server";
+import type { TRPCClientError } from "@trpc/client";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -61,7 +62,7 @@ export function RubricForm({
       setIsOpen(false);
       await utils.judge.invalidate();
     },
-    onError(error) {
+    onError(error: TRPCClientError<any>) {
       if (!error.data) {
         toast.error("Submission failed, contact an adminstrator");
       }
