@@ -68,7 +68,7 @@ export function RubricForm({
       setIsOpen(false);
       await utils.judge.invalidate();
     },
-    // eslint-disable @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError(error: any) {
       if (!(error as CustomError).data) {
         toast.error("Submission failed, contact an adminstrator");
