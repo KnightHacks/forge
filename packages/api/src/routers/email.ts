@@ -1,11 +1,39 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import type { GaxiosError } from "googleapis-common";
 import { z } from "zod";
 
 import { publicProcedure } from "../trpc";
-import { gmail } from "../utils";
+import { sendEmail } from "../utils";
 
 export const emailRouter = {
+  testEmail: publicProcedure
+    .input(
+      z.object({
+        to: z.string().email(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const response = await sendEmail({
+          to: input.to,
+          subject: "Test Email from Knight Hacks",
+          html: `
+            <h1>Test Email</h1>
+            <p>This is a test email to verify Resend integration is working.</p>
+            <p>Sent at: ${new Date().toISOString()}</p>
+          `,
+        });
+
+        return { success: true, messageId: response.messageId };
+      } catch (error) {
+        console.error("Test email error:", error);
+        throw new Error(
+          `Failed to send test email: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+        );
+      }
+    }),
+
   sendEmail: publicProcedure
     .input(
       z.object({
@@ -16,53 +44,15 @@ export const emailRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      const alias = input.from;
-
       try {
-        await gmail.users.settings.sendAs.create({
-          userId: "me",
-          requestBody: {
-            sendAsEmail: alias,
-            displayName: "Knight Hacks",
-            treatAsAlias: true,
-            isDefault: false,
-          },
-        });
-      } catch (err: unknown) {
-        const gaxiosError = err as GaxiosError;
-        if (!(gaxiosError.code === "409" || gaxiosError.status === 409)) {
-          console.error("Error creating sendAs alias:", err);
-          throw new Error(
-            `Failed to create sendAs alias: ${
-              gaxiosError.message || "Unknown error"
-            }`,
-          );
-        }
-      }
-
-      try {
-        const rawMessage = [
-          `From: ${alias}`,
-          `To: ${input.to}`,
-          "MIME-Version: 1.0",
-          "Content-Type: text/html; charset=utf-8",
-          `Subject: ${input.subject}`,
-          "",
-          input.body,
-        ].join("\n");
-
-        const encodedMessage = Buffer.from(rawMessage)
-          .toString("base64")
-          .replace(/\+/g, "-")
-          .replace(/\//g, "_")
-          .replace(/=+$/, "");
-
-        const response = await gmail.users.messages.send({
-          userId: "me",
-          requestBody: { raw: encodedMessage },
+        const response = await sendEmail({
+          to: input.to,
+          subject: input.subject,
+          html: input.body,
+          from: input.from,
         });
 
-        return { success: true, messageId: response.data.id };
+        return response;
       } catch (error) {
         console.error("Error sending email:", {
           error: error instanceof Error ? error.message : error,

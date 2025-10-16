@@ -3,6 +3,7 @@ import { challengeRouter } from "./routers/challenges";
 import { csvImporterRouter } from "./routers/csv-importer";
 import { duesPaymentRouter } from "./routers/dues-payment";
 import { emailRouter } from "./routers/email";
+import { emailQueueRouter } from "./routers/email-queue";
 import { eventRouter } from "./routers/event";
 import { eventFeedbackRouter } from "./routers/event-feedback";
 import { guildRouter } from "./routers/guild";
@@ -29,6 +30,7 @@ export const appRouter = createTRPCRouter<{
   qr: typeof qrRouter;
   passkit: typeof passkitRouter;
   email: typeof emailRouter;
+  emailQueue: typeof emailQueueRouter;
   guild: typeof guildRouter;
   judge: typeof judgeRouter;
   challenge: typeof challengeRouter;
@@ -46,6 +48,7 @@ export const appRouter = createTRPCRouter<{
   qr: qrRouter,
   passkit: passkitRouter,
   email: emailRouter,
+  emailQueue: emailQueueRouter,
   guild: guildRouter,
   judge: judgeRouter,
   challenge: challengeRouter,

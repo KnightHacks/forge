@@ -37,7 +37,11 @@
   "prettier": "@forge/prettier-config",
   "pnpm": {
     "overrides": {
-      "@types/node": "^22.10.1"
+      "@types/node": "^22.10.1",
+      "react": "^18.3.1",
+      "react-dom": "^18.3.1",
+      "@types/react": "^18.3.1",
+      "@types/react-dom": "^18.3.1"
     }
   }
 }
