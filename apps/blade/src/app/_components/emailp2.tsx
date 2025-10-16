@@ -50,7 +50,7 @@ export const EmailSectionTwo = ({ onClose, isClosing, emailData }: EmailSectionT
             setIsSent(true);
 
             const emailPayload = {
-                from: emailData.from || "onboarding@resend.dev",
+                from: emailData.from || "no-reply@knighthacks.org",
                 subject: emailData.subject,
                 html: emailData.body,
                 priority: priority as "now" | "high" | "standard" | "low",
