@@ -18,19 +18,16 @@ export const EmailDash = () => {
   const [showSectionTwo, setShowSectionTwo] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [emailData, setEmailData] = useState<EmailFormData | null>(null);
-  const [currentMode, setCurrentMode] = useState<boolean>(false);
   const sectionTwoRef = useRef<HTMLDivElement>(null);
   const sectionOneRef = useRef<HTMLDivElement>(null);
 
   const handleSchedule = (data: EmailFormData) => {
     setEmailData(data);
-    setCurrentMode(data.isBatchMode || false);
     setShowSectionTwo(true);
     setIsClosing(false);
   };
 
   const handleModeChange = (isBatchMode: boolean) => {
-    setCurrentMode(isBatchMode);
     if (emailData) {
       setEmailData({ ...emailData, isBatchMode });
     }

@@ -6,7 +6,7 @@ import { env } from "../env";
 // Create the connection
 const connectionString = env.DATABASE_URL;
 const client = postgres(connectionString, {
-  onnotice: () => {}, // Suppress notices
+  onnotice: () => undefined, // Suppress notices
 });
 
 // Create the database instance
