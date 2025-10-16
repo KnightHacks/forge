@@ -158,11 +158,6 @@ export default function ResultsTable() {
           bVal = b[sortField];
         }
 
-        // Handle null/undefined values
-        if (aVal == null && bVal == null) return 0;
-        if (aVal == null) return sortOrder === "asc" ? 1 : -1;
-        if (bVal == null) return sortOrder === "asc" ? -1 : 1;
-
         // Compare values
         if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
         if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
@@ -182,14 +177,6 @@ export default function ResultsTable() {
           totalProjects
         ).toFixed(1)
       : "0.0";
-
-  const getRatingColor = (rating: number | null) => {
-    if (!rating) return "text-gray-400";
-    if (rating >= 4.5) return "text-green-600";
-    if (rating >= 3.5) return "text-blue-600";
-    if (rating >= 2.5) return "text-yellow-600";
-    return "text-orange-600";
-  };
 
   const getRatingBadgeVariant = (
     rating: number,
