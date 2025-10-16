@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+
 import { HydrateClient } from "~/trpc/server";
 import ResultsTable from "./_components/results-table";
 
