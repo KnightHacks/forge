@@ -1,7 +1,7 @@
 "use client";
 
-import type { TRPCError } from "@trpc/server";
 import type { TRPCClientError } from "@trpc/client";
+import type { TRPCError } from "@trpc/server";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -56,13 +56,19 @@ export function RubricForm({
 
   const utils = api.useUtils();
 
+  interface CustomError {
+    data: {
+      code: string;
+    };
+  }
+
   const createRubric = api.judge.createJudgedSubmission.useMutation({
     async onSuccess() {
       toast.success("Rubric submitted successfully!");
       setIsOpen(false);
       await utils.judge.invalidate();
     },
-    onError(error: TRPCClientError<any>) {
+    onError(error: CustomError) {
       if (!error.data) {
         toast.error("Submission failed, contact an adminstrator");
       }
