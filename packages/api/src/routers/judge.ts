@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import type { SQL } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { TRPCError } from "@trpc/server";
 import { and, avg, count, eq, like } from "drizzle-orm";
@@ -424,7 +425,7 @@ export const judgeRouter = {
       }),
     )
     .query(async ({ input }) => {
-      let query = db
+      const baseQuery = db
         .select({
           // From JudgedSubmission, all ratings
           id: JudgedSubmission.id,
@@ -456,7 +457,7 @@ export const judgeRouter = {
         .innerJoin(Teams, eq(Submissions.teamId, Teams.id))
         .innerJoin(Challenges, eq(Submissions.challengeId, Challenges.id));
 
-      const conditions = [];
+      const conditions: SQL[] = [];
 
       if (input.searchTeamName) {
         conditions.push(like(Teams.projectTitle, `%${input.searchTeamName}%`));
@@ -468,11 +469,10 @@ export const judgeRouter = {
         conditions.push(eq(Judges.id, input.judgeFilter));
       }
 
-      if (conditions.length > 0) {
-        query = query.where(and(...conditions)) as any;
-      }
-
-      const result = await query;
+      const result =
+        conditions.length > 0
+          ? await baseQuery.where(and(...conditions))
+          : await baseQuery;
       return result;
     }),
 
