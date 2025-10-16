@@ -1,10 +1,31 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import {
+  Award,
+  Code,
+  ExternalLink,
+  Eye,
+  Lightbulb,
+  Palette,
+  Search,
+  Star,
+  Zap,
+} from "lucide-react";
 
+import { Badge } from "@forge/ui/badge";
+import { Button } from "@forge/ui/button";
+import { Card, CardContent } from "@forge/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { Separator } from "@forge/ui/separator";
 import {
   Table,
   TableBody,
@@ -162,6 +183,23 @@ export default function ResultsTable() {
         ).toFixed(1)
       : "0.0";
 
+  const getRatingColor = (rating: number | null) => {
+    if (!rating) return "text-gray-400";
+    if (rating >= 4.5) return "text-green-600";
+    if (rating >= 3.5) return "text-blue-600";
+    if (rating >= 2.5) return "text-yellow-600";
+    return "text-orange-600";
+  };
+
+  const getRatingBadgeVariant = (
+    rating: number,
+  ): "default" | "secondary" | "destructive" | "outline" => {
+    if (rating >= 4.5) return "default";
+    if (rating >= 3.5) return "secondary";
+    if (rating >= 2.5) return "outline";
+    return "destructive";
+  };
+
   return (
     <main className="container h-screen">
       <div className="flex flex-col items-center justify-center gap-4 py-12">
@@ -239,19 +277,22 @@ export default function ResultsTable() {
                 setSortOrder={setSortOrder}
               />
             </TableHead>
+            <TableHead className="text-center">
+              <Label>Details</Label>
+            </TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={6} className="py-8 text-center">
+              <TableCell colSpan={7} className="py-8 text-center">
                 Loading results...
               </TableCell>
             </TableRow>
           ) : !judgedSubmissions?.length || filteredProjects.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="py-8 text-center">
+              <TableCell colSpan={7} className="py-8 text-center">
                 No results found.
               </TableCell>
             </TableRow>
@@ -289,6 +330,263 @@ export default function ResultsTable() {
                   </TableCell>
                   <TableCell className="text-center">
                     {project.overallRating}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2 text-2xl">
+                            <Award className="h-6 w-6 text-primary" />
+                            {project.projectTitle}
+                          </DialogTitle>
+                        </DialogHeader>
+
+                        <div className="space-y-6">
+                          {/* Project Info Card */}
+                          <Card>
+                            <CardContent className="pt-6">
+                              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div className="flex items-center gap-2">
+                                  <Badge
+                                    variant="outline"
+                                    className="font-normal"
+                                  >
+                                    <Star className="mr-1 h-3 w-3" />
+                                    Judge
+                                  </Badge>
+                                  <span className="font-medium">
+                                    {project.judgeName}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge
+                                    variant="outline"
+                                    className="font-normal"
+                                  >
+                                    <Award className="mr-1 h-3 w-3" />
+                                    Challenge
+                                  </Badge>
+                                  <span
+                                    className="truncate font-medium"
+                                    title={project.challengeTitle}
+                                  >
+                                    {project.challengeTitle}
+                                  </span>
+                                </div>
+                                {project.devpostUrl && (
+                                  <div className="col-span-full">
+                                    <a
+                                      href={project.devpostUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:underline"
+                                    >
+                                      <ExternalLink className="h-4 w-4" />
+                                      View Project on Devpost
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <Separator />
+
+                          {/* Ratings Section */}
+                          <div>
+                            <div className="mb-4 flex items-center gap-2">
+                              <Star className="h-5 w-5 text-primary" />
+                              <h3 className="text-xl font-semibold">
+                                Ratings Breakdown
+                              </h3>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                              {/* Individual Ratings */}
+                              <Card>
+                                <CardContent className="space-y-3 pt-6">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Lightbulb className="h-4 w-4 text-yellow-500" />
+                                      <span className="text-sm font-medium">
+                                        Originality
+                                      </span>
+                                    </div>
+                                    <Badge
+                                      variant={
+                                        project.originality_rating
+                                          ? getRatingBadgeVariant(
+                                              project.originality_rating,
+                                            )
+                                          : "outline"
+                                      }
+                                    >
+                                      {project.originality_rating || "—"}
+                                    </Badge>
+                                  </div>
+
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Palette className="h-4 w-4 text-pink-500" />
+                                      <span className="text-sm font-medium">
+                                        Design
+                                      </span>
+                                    </div>
+                                    <Badge
+                                      variant={
+                                        project.design_rating
+                                          ? getRatingBadgeVariant(
+                                              project.design_rating,
+                                            )
+                                          : "outline"
+                                      }
+                                    >
+                                      {project.design_rating || "—"}
+                                    </Badge>
+                                  </div>
+
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Code className="h-4 w-4 text-blue-500" />
+                                      <span className="text-sm font-medium">
+                                        Technical
+                                      </span>
+                                    </div>
+                                    <Badge
+                                      variant={
+                                        project.technical_understanding_rating
+                                          ? getRatingBadgeVariant(
+                                              project.technical_understanding_rating,
+                                            )
+                                          : "outline"
+                                      }
+                                    >
+                                      {project.technical_understanding_rating ||
+                                        "—"}
+                                    </Badge>
+                                  </div>
+                                </CardContent>
+                              </Card>
+
+                              <Card>
+                                <CardContent className="space-y-3 pt-6">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Award className="h-4 w-4 text-green-500" />
+                                      <span className="text-sm font-medium">
+                                        Implementation
+                                      </span>
+                                    </div>
+                                    <Badge
+                                      variant={
+                                        project.implementation_rating
+                                          ? getRatingBadgeVariant(
+                                              project.implementation_rating,
+                                            )
+                                          : "outline"
+                                      }
+                                    >
+                                      {project.implementation_rating || "—"}
+                                    </Badge>
+                                  </div>
+
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Zap className="h-4 w-4 text-purple-500" />
+                                      <span className="text-sm font-medium">
+                                        Wow Factor
+                                      </span>
+                                    </div>
+                                    <Badge
+                                      variant={
+                                        project.wow_factor_rating
+                                          ? getRatingBadgeVariant(
+                                              project.wow_factor_rating,
+                                            )
+                                          : "outline"
+                                      }
+                                    >
+                                      {project.wow_factor_rating || "—"}
+                                    </Badge>
+                                  </div>
+
+                                  <Separator />
+
+                                  <div className="flex items-center justify-between pt-1">
+                                    <div className="flex items-center gap-2">
+                                      <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                                      <span className="text-sm font-bold">
+                                        Overall Rating
+                                      </span>
+                                    </div>
+                                    <Badge
+                                      variant="default"
+                                      className="text-base font-bold"
+                                    >
+                                      {project.overallRating}
+                                    </Badge>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </div>
+                          </div>
+
+                          <Separator />
+
+                          {/* Feedback Section */}
+                          <div>
+                            <h3 className="mb-4 text-xl font-semibold">
+                              Feedback
+                            </h3>
+                            <div className="space-y-4">
+                              {project.publicFeedback && (
+                                <Card>
+                                  <CardContent className="pt-6">
+                                    <div className="mb-3 flex items-center gap-2">
+                                      <Badge>Public Feedback</Badge>
+                                    </div>
+                                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-white">
+                                      {project.publicFeedback}
+                                    </p>
+                                  </CardContent>
+                                </Card>
+                              )}
+
+                              {project.privateFeedback && (
+                                <Card>
+                                  <CardContent className="pt-6">
+                                    <div className="mb-3 flex items-center gap-2">
+                                      <Badge variant="secondary">
+                                        Private Feedback
+                                      </Badge>
+                                    </div>
+                                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-white">
+                                      {project.privateFeedback}
+                                    </p>
+                                  </CardContent>
+                                </Card>
+                              )}
+
+                              {!project.publicFeedback &&
+                                !project.privateFeedback && (
+                                  <Card>
+                                    <CardContent className="pt-6">
+                                      <p className="text-center italic text-gray-500">
+                                        No feedback provided
+                                      </p>
+                                    </CardContent>
+                                  </Card>
+                                )}
+                            </div>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </TableCell>
                 </TableRow>
               );
