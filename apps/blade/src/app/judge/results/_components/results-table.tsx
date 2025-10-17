@@ -72,16 +72,6 @@ export default function ResultsTable() {
       submissionGroups.get(submissionId)!.push(submission);
     });
 
-    // Debug: Log the grouping results
-    console.log(
-      "Submission groups:",
-      Array.from(submissionGroups.entries()).map(([id, subs]) => ({
-        submissionId: id,
-        count: subs.length,
-        judges: subs.map((s) => s.judgeName),
-      })),
-    );
-
     // Convert groups to projects
     return Array.from(submissionGroups.entries()).map(
       ([submissionId, submissions]) => {
