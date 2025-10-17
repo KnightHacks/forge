@@ -271,7 +271,6 @@ export const csvImporterRouter = {
               return Array.from(challengeIds).map((challengeId) => ({
                 challengeId,
                 teamId,
-                judgedStatus: false,
                 hackathonId: input.hackathon_id,
               }));
             },
@@ -296,9 +295,7 @@ export const csvImporterRouter = {
             .values(uniqueSubmissions)
             .onConflictDoUpdate({
               target: [Submissions.teamId, Submissions.challengeId],
-              set: {
-                judgedStatus: sql`excluded.judged_status`,
-              },
+              set: {},
             })
             .returning();
 

@@ -372,7 +372,6 @@ export const Submissions = createTable(
       .references(() => Teams.id, {
         onDelete: "cascade",
       }),
-    judgedStatus: t.boolean().notNull().default(false),
     hackathonId: t
       .uuid()
       .notNull()

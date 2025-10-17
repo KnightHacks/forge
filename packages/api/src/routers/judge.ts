@@ -2,7 +2,7 @@ import crypto from "crypto";
 import type { SQL } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { TRPCError } from "@trpc/server";
-import { and, avg, count, eq, like } from "drizzle-orm";
+import { and, avg, count, eq, gt, like } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@forge/db/client";
@@ -17,7 +17,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
-import { judgeProcedure, publicProcedure } from "../trpc";
+import { adminProcedure, judgeProcedure, publicProcedure } from "../trpc";
 
 const SESSION_TTL_HOURS = 8;
 
@@ -135,7 +135,6 @@ export const judgeRouter = {
           challenge: Challenges.title,
           challengeId: Submissions.challengeId,
           teamId: Submissions.teamId,
-          judgedStatus: Submissions.judgedStatus,
           hackathonId: Submissions.hackathonId,
         })
         .from(Submissions)
@@ -155,7 +154,6 @@ export const judgeRouter = {
         challenge: s.challenge ?? "No challenge specified",
         challengeId: s.challengeId,
         teamId: s.teamId,
-        judgedStatus: s.judgedStatus,
         hackathonId: s.hackathonId,
       }));
     }),
@@ -259,7 +257,7 @@ export const judgeRouter = {
       };
     }),
 
-  // Public: create a judged submission and flip the submission's judgedStatus
+  // Public: create a judged submission
   createJudgedSubmission: publicProcedure
     .input(
       InsertJudgedSubmissionSchema.omit({
@@ -322,12 +320,6 @@ export const judgeRouter = {
         hackathonId: submission.hackathonId,
         ...input,
       });
-
-      // Mark the submission as judged (boolean)
-      await db
-        .update(Submissions)
-        .set({ judgedStatus: true })
-        .where(eq(Submissions.id, submission.id));
 
       return { ok: true };
     }),
@@ -558,5 +550,32 @@ export const judgeRouter = {
         .limit(1);
 
       return result[0] ?? null;
+    }),
+
+  // Admin: Get all unique rooms with session counts
+  getRoomsWithSessionCounts: adminProcedure.query(async () => {
+    const now = new Date();
+    const rooms = await db
+      .select({
+        roomName: JudgeSession.roomName,
+        sessionCount: count(JudgeSession.sessionToken),
+      })
+      .from(JudgeSession)
+      .where(gt(JudgeSession.expires, now))
+      .groupBy(JudgeSession.roomName)
+      .orderBy(JudgeSession.roomName);
+
+    return rooms;
+  }),
+
+  // Admin: Delete all sessions for a specific room
+  deleteSessionsByRoom: adminProcedure
+    .input(z.object({ roomName: z.string() }))
+    .mutation(async ({ input }) => {
+      const result = await db
+        .delete(JudgeSession)
+        .where(eq(JudgeSession.roomName, input.roomName));
+
+      return { deletedCount: result.rowCount ?? 0 };
     }),
 };
