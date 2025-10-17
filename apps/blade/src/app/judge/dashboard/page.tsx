@@ -15,7 +15,7 @@ export default async function Page() {
   const currentHackathon = await api.hackathon.getCurrentHackathon();
   if (!currentHackathon) {
     return (
-      <div className="container mx-auto py-16">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-center text-red-600">
@@ -34,23 +34,21 @@ export default async function Page() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-6">
-        {/* Welcome Header */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center text-2xl">
-              🏆 Judge Dashboard
-            </CardTitle>
-            <p className="text-center text-gray-600">
-              Welcome to the judging interface for {currentHackathon.name}
-            </p>
-          </CardHeader>
-        </Card>
+    <div className="space-y-6">
+      {/* Welcome Header */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-center text-2xl">
+            🏆 Judge Dashboard
+          </CardTitle>
+          <p className="text-center text-gray-600">
+            Welcome to the judging interface for {currentHackathon.name}
+          </p>
+        </CardHeader>
+      </Card>
 
-        {/* Projects Table */}
-        <ProjectsTable hackathonId={currentHackathon.id} />
-      </div>
+      {/* Projects Table */}
+      <ProjectsTable hackathonId={currentHackathon.id} />
     </div>
   );
 }
