@@ -17,7 +17,12 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
-import { adminProcedure, judgeProcedure, publicProcedure } from "../trpc";
+import {
+  adminProcedure,
+  judgeProcedure,
+  officerProcedure,
+  publicProcedure,
+} from "../trpc";
 
 const SESSION_TTL_HOURS = 8;
 
@@ -553,7 +558,7 @@ export const judgeRouter = {
     }),
 
   // Admin: Get all unique rooms with session counts
-  getRoomsWithSessionCounts: adminProcedure.query(async () => {
+  getRoomsWithSessionCounts: officerProcedure.query(async () => {
     const now = new Date();
     const rooms = await db
       .select({
@@ -569,7 +574,7 @@ export const judgeRouter = {
   }),
 
   // Admin: Delete all sessions for a specific room
-  deleteSessionsByRoom: adminProcedure
+  deleteSessionsByRoom: officerProcedure
     .input(z.object({ roomName: z.string() }))
     .mutation(async ({ input }) => {
       const result = await db

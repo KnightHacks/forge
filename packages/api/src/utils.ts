@@ -14,6 +14,7 @@ import {
   DEV_KNIGHTHACKS_LOG_CHANNEL,
   GOOGLE_PERSONIFY_EMAIL,
   IS_PROD,
+  OFFICER_ROLE_ID,
   PERMISSIONS,
   PROD_DISCORD_ADMIN_ROLE_ID,
   PROD_KNIGHTHACKS_GUILD_ID,
@@ -65,6 +66,18 @@ export const isDiscordAdmin = async (user: Session["user"]) => {
       Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
     )) as APIGuildMember;
     return guildMember.roles.includes(DISCORD_ADMIN_ROLE_ID);
+  } catch (err) {
+    console.error("Error: ", err);
+    return false;
+  }
+};
+
+export const userIsOfficer = async (user: Session["user"]) => {
+  try {
+    const guildMember = (await discord.get(
+      Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
+    )) as APIGuildMember;
+    return guildMember.roles.includes(OFFICER_ROLE_ID);
   } catch (err) {
     console.error("Error: ", err);
     return false;
@@ -214,9 +227,7 @@ export async function log({
   });
 }
 
-export const isJudgeAdmin = async (
-  _user: Session["user"] | null | undefined,
-) => {
+export const isJudgeAdmin = async () => {
   try {
     const token = cookies().get("sessionToken")?.value;
     if (!token) return false;
