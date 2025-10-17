@@ -13,6 +13,7 @@ import {
   userHasCheckIn,
   userHasFullAdmin,
   userHasPermission,
+  userIsOfficer,
 } from "../utils";
 
 export const authRouter = {
@@ -35,7 +36,12 @@ export const authRouter = {
     }
     return isDiscordMember(ctx.session.user);
   }),
-
+  getOfficerStatus: publicProcedure.query(({ ctx }): Promise<boolean> => {
+    if (!ctx.session) {
+      return Promise.resolve(false);
+    }
+    return userIsOfficer(ctx.session.user);
+  }),
   getUserPermissions: publicProcedure.query(({ ctx }): Promise<string> => {
     if (!ctx.session) {
       return Promise.resolve("00");
@@ -62,8 +68,8 @@ export const authRouter = {
     return userHasFullAdmin(ctx.session.user);
   }),
 
-  getJudgeStatus: publicProcedure.query(async ({ ctx }) => {
-    const isJudge = await isJudgeAdmin(ctx.session?.user);
+  getJudgeStatus: publicProcedure.query(async () => {
+    const isJudge = await isJudgeAdmin();
     return isJudge;
   }),
 

@@ -19,6 +19,7 @@ import {
   isJudgeAdmin,
   userHasCheckIn,
   userHasFullAdmin,
+  userIsOfficer,
 } from "./utils";
 
 /**
@@ -194,12 +195,27 @@ export const checkInProcedure = protectedProcedure.use(
   },
 );
 
+export const officerProcedure = protectedProcedure.use(
+  async ({ ctx, next }) => {
+    const isOfficer = await userIsOfficer(ctx.session.user);
+    if (!isOfficer) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+    return next({
+      ctx: {
+        // infers the `session` as non-nullable
+        session: { ...ctx.session, user: ctx.session.user },
+      },
+    });
+  },
+);
+
 export const judgeProcedure = publicProcedure.use(async ({ ctx, next }) => {
   let isAdmin;
   if (ctx.session) {
     isAdmin = await isDiscordAdmin(ctx.session.user);
   }
-  const isJudge = await isJudgeAdmin(ctx.session?.user);
+  const isJudge = await isJudgeAdmin();
 
   if (!isAdmin && !isJudge) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
