@@ -6,7 +6,7 @@ import { eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Challenges, Submissions, Teams } from "@forge/db/schemas/knight-hacks";
 
-import { adminProcedure } from "../trpc";
+import { officerProcedure } from "../trpc";
 
 interface CsvImporterRecord {
   "Opt-In Prize": string | null;
@@ -23,7 +23,7 @@ interface CsvImporterRecord {
 }
 
 export const csvImporterRouter = {
-  import: adminProcedure
+  import: officerProcedure
     .input(
       z.object({
         hackathon_id: z.string(),
@@ -293,9 +293,8 @@ export const csvImporterRouter = {
           const insertedSubmissions = await tx
             .insert(Submissions)
             .values(uniqueSubmissions)
-            .onConflictDoUpdate({
+            .onConflictDoNothing({
               target: [Submissions.teamId, Submissions.challengeId],
-              set: {},
             })
             .returning();
 
