@@ -10,12 +10,13 @@ import {
   Palette,
   Search,
   Star,
+  Users,
   Zap,
 } from "lucide-react";
 
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
-import { Card, CardContent } from "@forge/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -46,7 +47,7 @@ export default function ResultsTable() {
   });
 
   const [sortField, setSortField] = useState<
-    "projectTitle" | "specificRating" | "overallRating" | null
+    "projectTitle" | "specificRating" | "overallRating" | "judgeCount" | null
   >("projectTitle");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>("asc");
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,41 +56,96 @@ export default function ResultsTable() {
   const { data: judgedSubmissions, isLoading } =
     api.judge.getJudgedSubmissions.useQuery({});
 
-  // Transform submissions into projects
+  // Transform submissions into projects, merging by submission ID
   const allProjects = useMemo(() => {
     if (!judgedSubmissions) return [];
 
-    return judgedSubmissions.map((s) => {
-      const ratings = [
-        s.originality_rating,
-        s.design_rating,
-        s.technical_understanding_rating,
-        s.implementation_rating,
-        s.wow_factor_rating,
-      ].filter((r) => r);
+    // Group submissions by submission ID
+    const submissionGroups = new Map<string, typeof judgedSubmissions>();
 
-      const average =
-        ratings.length > 0
-          ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
-          : 0;
-
-      return {
-        id: s.id,
-        projectTitle: s.projectTitle,
-        devpostUrl: s.devpostUrl,
-        challengeTitle: s.challengeTitle,
-        judgeName: s.judgeName,
-        originality_rating: s.originality_rating,
-        design_rating: s.design_rating,
-        technical_understanding_rating: s.technical_understanding_rating,
-        implementation_rating: s.implementation_rating,
-        wow_factor_rating: s.wow_factor_rating,
-        privateFeedback: s.privateFeedback,
-        publicFeedback: s.publicFeedback,
-        overallRating: Number(average.toFixed(1)),
-        specificRating: Number(average.toFixed(1)),
-      };
+    judgedSubmissions.forEach((submission) => {
+      // Use the submission ID to group multiple judge evaluations of the same project
+      const submissionId = submission.submissionId;
+      if (!submissionGroups.has(submissionId)) {
+        submissionGroups.set(submissionId, []);
+      }
+      submissionGroups.get(submissionId)!.push(submission);
     });
+
+    // Debug: Log the grouping results
+    console.log(
+      "Submission groups:",
+      Array.from(submissionGroups.entries()).map(([id, subs]) => ({
+        submissionId: id,
+        count: subs.length,
+        judges: subs.map((s) => s.judgeName),
+      })),
+    );
+
+    // Convert groups to projects
+    return Array.from(submissionGroups.entries()).map(
+      ([submissionId, submissions]) => {
+        const firstSubmission = submissions[0];
+
+        // Calculate average ratings across all judges
+        const allRatings = submissions.flatMap((s) =>
+          [
+            s.originality_rating,
+            s.design_rating,
+            s.technical_understanding_rating,
+            s.implementation_rating,
+            s.wow_factor_rating,
+          ].filter((r) => r),
+        );
+
+        const averageRating =
+          allRatings.length > 0
+            ? allRatings.reduce((sum, r) => sum + r, 0) / allRatings.length
+            : 0;
+
+        // Calculate average for each category
+        const calculateCategoryAverage = (
+          category: keyof typeof firstSubmission,
+        ) => {
+          const categoryRatings = submissions
+            .map((s) => s[category])
+            .filter((r) => r !== null && r !== undefined);
+          return categoryRatings.length > 0
+            ? categoryRatings.reduce((sum, r) => sum + (r as number), 0) /
+                categoryRatings.length
+            : 0;
+        };
+
+        return {
+          id: submissionId,
+          projectTitle: firstSubmission.projectTitle,
+          devpostUrl: firstSubmission.devpostUrl,
+          challengeTitle: firstSubmission.challengeTitle,
+          judgeCount: submissions.length,
+          judgeNames: submissions.map((s) => s.judgeName).filter(Boolean),
+          submissions: submissions, // Store all submissions for detailed view
+          originality_rating: Number(
+            calculateCategoryAverage("originality_rating").toFixed(1),
+          ),
+          design_rating: Number(
+            calculateCategoryAverage("design_rating").toFixed(1),
+          ),
+          technical_understanding_rating: Number(
+            calculateCategoryAverage("technical_understanding_rating").toFixed(
+              1,
+            ),
+          ),
+          implementation_rating: Number(
+            calculateCategoryAverage("implementation_rating").toFixed(1),
+          ),
+          wow_factor_rating: Number(
+            calculateCategoryAverage("wow_factor_rating").toFixed(1),
+          ),
+          overallRating: Number(averageRating.toFixed(1)),
+          specificRating: Number(averageRating.toFixed(1)),
+        };
+      },
+    );
   }, [judgedSubmissions]);
 
   // Extract judges and challenges for filters
@@ -132,9 +188,11 @@ export default function ResultsTable() {
       );
     }
 
-    // Apply judge filter
+    // Apply judge filter - check if any of the judge names match
     if (filters.judge) {
-      result = result.filter((p) => p.judgeName === filters.judge?.name);
+      result = result.filter((p) =>
+        p.judgeNames.includes(filters.judge?.name || ""),
+      );
     }
 
     // Apply challenge filter
@@ -170,6 +228,10 @@ export default function ResultsTable() {
 
   // Calculate statistics
   const totalProjects = filteredProjects.length;
+  const totalEvaluations = filteredProjects.reduce(
+    (sum, p) => sum + p.judgeCount,
+    0,
+  );
   const avgScore =
     totalProjects > 0
       ? (
@@ -215,7 +277,8 @@ export default function ResultsTable() {
 
         <div className="text-md flex justify-center gap-8 font-bold">
           <div>
-            Returned {totalProjects} Project{totalProjects !== 1 ? "s" : ""}
+            {totalProjects} Project{totalProjects !== 1 ? "s" : ""} (
+            {totalEvaluations} Evaluations)
           </div>
           <div>Average Rating: {avgScore}</div>
         </div>
@@ -239,7 +302,14 @@ export default function ResultsTable() {
               <Label>Link</Label>
             </TableHead>
             <TableHead className="text-center">
-              <Label>Judge Name</Label>
+              <SortButton
+                field="judgeCount"
+                label="Judges"
+                sortField={sortField}
+                sortOrder={sortOrder}
+                setSortField={setSortField}
+                setSortOrder={setSortOrder}
+              />
             </TableHead>
             <TableHead className="text-center">
               <Label>Challenges</Label>
@@ -305,7 +375,17 @@ export default function ResultsTable() {
                     )}
                   </TableCell>
                   <TableCell className="text-center">
-                    {project.judgeName}
+                    <div className="flex flex-col gap-1">
+                      <Badge variant="outline" className="text-xs">
+                        {project.judgeCount} Judge
+                        {project.judgeCount !== 1 ? "s" : ""}
+                      </Badge>
+                      <div className="text-xs text-muted-foreground">
+                        {project.judgeNames.slice(0, 2).join(", ")}
+                        {project.judgeNames.length > 2 &&
+                          ` +${project.judgeNames.length - 2} more`}
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell className="max-w-[180px] truncate text-center">
                     <span title={project.challengeTitle}>
@@ -343,11 +423,11 @@ export default function ResultsTable() {
                                     variant="outline"
                                     className="font-normal"
                                   >
-                                    <Star className="mr-1 h-3 w-3" />
-                                    Judge
+                                    <Users className="mr-1 h-3 w-3" />
+                                    Judges ({project.judgeCount})
                                   </Badge>
                                   <span className="font-medium">
-                                    {project.judgeName}
+                                    {project.judgeNames.join(", ")}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -384,17 +464,16 @@ export default function ResultsTable() {
 
                           <Separator />
 
-                          {/* Ratings Section */}
+                          {/* Overall Average Ratings */}
                           <div>
                             <div className="mb-4 flex items-center gap-2">
                               <Star className="h-5 w-5 text-primary" />
                               <h3 className="text-xl font-semibold">
-                                Ratings Breakdown
+                                Overall Average Ratings
                               </h3>
                             </div>
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                              {/* Individual Ratings */}
                               <Card>
                                 <CardContent className="space-y-3 pt-6">
                                   <div className="flex items-center justify-between">
@@ -405,13 +484,9 @@ export default function ResultsTable() {
                                       </span>
                                     </div>
                                     <Badge
-                                      variant={
-                                        project.originality_rating
-                                          ? getRatingBadgeVariant(
-                                              project.originality_rating,
-                                            )
-                                          : "outline"
-                                      }
+                                      variant={getRatingBadgeVariant(
+                                        project.originality_rating,
+                                      )}
                                     >
                                       {project.originality_rating || "—"}
                                     </Badge>
@@ -425,13 +500,9 @@ export default function ResultsTable() {
                                       </span>
                                     </div>
                                     <Badge
-                                      variant={
-                                        project.design_rating
-                                          ? getRatingBadgeVariant(
-                                              project.design_rating,
-                                            )
-                                          : "outline"
-                                      }
+                                      variant={getRatingBadgeVariant(
+                                        project.design_rating,
+                                      )}
                                     >
                                       {project.design_rating || "—"}
                                     </Badge>
@@ -445,13 +516,9 @@ export default function ResultsTable() {
                                       </span>
                                     </div>
                                     <Badge
-                                      variant={
-                                        project.technical_understanding_rating
-                                          ? getRatingBadgeVariant(
-                                              project.technical_understanding_rating,
-                                            )
-                                          : "outline"
-                                      }
+                                      variant={getRatingBadgeVariant(
+                                        project.technical_understanding_rating,
+                                      )}
                                     >
                                       {project.technical_understanding_rating ||
                                         "—"}
@@ -470,13 +537,9 @@ export default function ResultsTable() {
                                       </span>
                                     </div>
                                     <Badge
-                                      variant={
-                                        project.implementation_rating
-                                          ? getRatingBadgeVariant(
-                                              project.implementation_rating,
-                                            )
-                                          : "outline"
-                                      }
+                                      variant={getRatingBadgeVariant(
+                                        project.implementation_rating,
+                                      )}
                                     >
                                       {project.implementation_rating || "—"}
                                     </Badge>
@@ -490,13 +553,9 @@ export default function ResultsTable() {
                                       </span>
                                     </div>
                                     <Badge
-                                      variant={
-                                        project.wow_factor_rating
-                                          ? getRatingBadgeVariant(
-                                              project.wow_factor_rating,
-                                            )
-                                          : "outline"
-                                      }
+                                      variant={getRatingBadgeVariant(
+                                        project.wow_factor_rating,
+                                      )}
                                     >
                                       {project.wow_factor_rating || "—"}
                                     </Badge>
@@ -508,7 +567,7 @@ export default function ResultsTable() {
                                     <div className="flex items-center gap-2">
                                       <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
                                       <span className="text-sm font-bold">
-                                        Overall Rating
+                                        Overall Average
                                       </span>
                                     </div>
                                     <Badge
@@ -525,50 +584,171 @@ export default function ResultsTable() {
 
                           <Separator />
 
-                          {/* Feedback Section */}
+                          {/* Individual Judge Evaluations */}
                           <div>
-                            <h3 className="mb-4 text-xl font-semibold">
-                              Feedback
-                            </h3>
+                            <div className="mb-4 flex items-center gap-2">
+                              <Users className="h-5 w-5 text-primary" />
+                              <h3 className="text-xl font-semibold">
+                                Individual Judge Evaluations
+                              </h3>
+                            </div>
+
                             <div className="space-y-4">
-                              {project.publicFeedback && (
-                                <Card>
-                                  <CardContent className="pt-6">
-                                    <div className="mb-3 flex items-center gap-2">
-                                      <Badge>Public Feedback</Badge>
-                                    </div>
-                                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-white">
-                                      {project.publicFeedback}
-                                    </p>
-                                  </CardContent>
-                                </Card>
-                              )}
+                              {project.submissions.map((submission, index) => {
+                                const submissionRatings = [
+                                  submission.originality_rating,
+                                  submission.design_rating,
+                                  submission.technical_understanding_rating,
+                                  submission.implementation_rating,
+                                  submission.wow_factor_rating,
+                                ].filter((r) => r);
 
-                              {project.privateFeedback && (
-                                <Card>
-                                  <CardContent className="pt-6">
-                                    <div className="mb-3 flex items-center gap-2">
-                                      <Badge variant="secondary">
-                                        Private Feedback
-                                      </Badge>
-                                    </div>
-                                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-white">
-                                      {project.privateFeedback}
-                                    </p>
-                                  </CardContent>
-                                </Card>
-                              )}
+                                const submissionAverage =
+                                  submissionRatings.length > 0
+                                    ? submissionRatings.reduce(
+                                        (sum, r) => sum + r,
+                                        0,
+                                      ) / submissionRatings.length
+                                    : 0;
 
-                              {!project.publicFeedback &&
-                                !project.privateFeedback && (
-                                  <Card>
-                                    <CardContent className="pt-6">
-                                      <p className="text-center italic text-gray-500">
-                                        No feedback provided
-                                      </p>
+                                return (
+                                  <Card key={index}>
+                                    <CardHeader>
+                                      <div className="flex items-center justify-between">
+                                        <CardTitle className="text-lg">
+                                          {submission.judgeName ||
+                                            `Judge ${index + 1}`}
+                                        </CardTitle>
+                                        <Badge variant="outline">
+                                          Avg: {submissionAverage.toFixed(1)}
+                                        </Badge>
+                                      </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <div className="space-y-2">
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium">
+                                              Originality
+                                            </span>
+                                            <Badge
+                                              variant={
+                                                submission.originality_rating
+                                                  ? getRatingBadgeVariant(
+                                                      submission.originality_rating,
+                                                    )
+                                                  : "outline"
+                                              }
+                                            >
+                                              {submission.originality_rating ||
+                                                "—"}
+                                            </Badge>
+                                          </div>
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium">
+                                              Design
+                                            </span>
+                                            <Badge
+                                              variant={
+                                                submission.design_rating
+                                                  ? getRatingBadgeVariant(
+                                                      submission.design_rating,
+                                                    )
+                                                  : "outline"
+                                              }
+                                            >
+                                              {submission.design_rating || "—"}
+                                            </Badge>
+                                          </div>
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium">
+                                              Technical
+                                            </span>
+                                            <Badge
+                                              variant={
+                                                submission.technical_understanding_rating
+                                                  ? getRatingBadgeVariant(
+                                                      submission.technical_understanding_rating,
+                                                    )
+                                                  : "outline"
+                                              }
+                                            >
+                                              {submission.technical_understanding_rating ||
+                                                "—"}
+                                            </Badge>
+                                          </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium">
+                                              Implementation
+                                            </span>
+                                            <Badge
+                                              variant={
+                                                submission.implementation_rating
+                                                  ? getRatingBadgeVariant(
+                                                      submission.implementation_rating,
+                                                    )
+                                                  : "outline"
+                                              }
+                                            >
+                                              {submission.implementation_rating ||
+                                                "—"}
+                                            </Badge>
+                                          </div>
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium">
+                                              Wow Factor
+                                            </span>
+                                            <Badge
+                                              variant={
+                                                submission.wow_factor_rating
+                                                  ? getRatingBadgeVariant(
+                                                      submission.wow_factor_rating,
+                                                    )
+                                                  : "outline"
+                                              }
+                                            >
+                                              {submission.wow_factor_rating ||
+                                                "—"}
+                                            </Badge>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Feedback for this judge */}
+                                      {(submission.publicFeedback ||
+                                        submission.privateFeedback) && (
+                                        <div className="mt-4 space-y-2">
+                                          {submission.publicFeedback && (
+                                            <div>
+                                              <Badge className="mb-2">
+                                                Public Feedback
+                                              </Badge>
+                                              <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                                                {submission.publicFeedback}
+                                              </p>
+                                            </div>
+                                          )}
+                                          {submission.privateFeedback && (
+                                            <div>
+                                              <Badge
+                                                variant="secondary"
+                                                className="mb-2"
+                                              >
+                                                Private Feedback
+                                              </Badge>
+                                              <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                                                {submission.privateFeedback}
+                                              </p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
                                     </CardContent>
                                   </Card>
-                                )}
+                                );
+                              })}
                             </div>
                           </div>
                         </div>
