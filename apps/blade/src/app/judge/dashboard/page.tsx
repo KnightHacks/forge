@@ -1,6 +1,16 @@
 import { redirect } from "next/navigation";
+import { AlertTriangle, Trophy } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
+import { Alert, AlertDescription } from "@forge/ui/alert";
+import { Badge } from "@forge/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@forge/ui/card";
+import { Separator } from "@forge/ui/separator";
 
 import { api } from "~/trpc/server";
 import { ProjectsTable } from "../_components/projects-table";
@@ -15,40 +25,73 @@ export default async function Page() {
   const currentHackathon = await api.hackathon.getCurrentHackathon();
   if (!currentHackathon) {
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center text-red-600">
-              Error Loading Hackathon
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center text-gray-600">
-              Unable to load the current hackathon. Please contact an
-              administrator.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="mx-auto max-w-6xl space-y-6 p-6">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <div className="flex flex-col gap-2">
+              <span className="font-semibold">Error Loading Hackathon</span>
+              <span>
+                Unable to load the current hackathon. Please contact an
+                administrator.
+              </span>
+            </div>
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       {/* Welcome Header */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-center text-2xl">
-            🏆 Judge Dashboard
-          </CardTitle>
-          <p className="text-center text-gray-600">
-            Welcome to the judging interface for {currentHackathon.name}
-          </p>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-3xl font-bold">
+                <Trophy className="text-purple-400" /> Judge Dashboard
+              </CardTitle>
+              <CardDescription className="mt-2 text-base">
+                Welcome to the judging interface
+              </CardDescription>
+            </div>
+            <div className="text-right">
+              <Badge variant="outline" className="text-white">
+                {isAdmin ? "Admin" : "Judge"}
+              </Badge>
+            </div>
+          </div>
+          <Separator className="my-4" />
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="font-medium text-gray-300">Hackathon</p>
+              <p className="text-white-300 font-semibold text-purple-400">
+                {currentHackathon.displayName}
+              </p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-300">Theme</p>
+              <p className="font-semibold text-purple-400">
+                {currentHackathon.theme}
+              </p>
+            </div>
+          </div>
         </CardHeader>
       </Card>
 
       {/* Projects Table */}
-      <ProjectsTable hackathonId={currentHackathon.id} />
+      <Card>
+        <CardHeader>
+          <CardTitle>Projects</CardTitle>
+          <CardDescription>
+            Review and evaluate all submitted projects
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ProjectsTable hackathonId={currentHackathon.id} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
