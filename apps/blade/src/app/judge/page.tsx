@@ -130,7 +130,7 @@ export default async function Page() {
               <p className="text-sm font-medium text-muted-foreground">
                 Your Role
               </p>
-              <Badge>{isJudge ? "Judge" : "Amin"}</Badge>
+              <Badge>{isJudge ? "Judge" : "Admin"}</Badge>
             </div>
           </div>
         </CardContent>
