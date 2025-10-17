@@ -72,27 +72,33 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
   const { data: judges = [], isLoading: judgesLoading } =
     api.judge.getJudges.useQuery();
 
+  const { data: challenges = [], isLoading: challengesLoading } =
+    api.challenge.getChallenges.useQuery({
+      hackathonId: hackathonId ?? "",
+    });
+
   const submissions = data as Submission[];
   const judgesList = judges as Judge[];
 
   // Auto-filter challenge based on selected judge
   useEffect(() => {
     if (selectedJudge) {
-      setChallengeFilter(selectedJudge.challengeTitle);
+      setChallengeFilter(selectedJudge.challengeId);
     } else {
       setChallengeFilter("");
     }
   }, [selectedJudge]);
 
-  // Unique challenges
-  const uniqueChallenges = useMemo(() => {
-    const set = new Set(
-      submissions
-        .map((p) => p.challenge.trim())
-        .filter((c): c is string => Boolean(c && c.length > 0)),
+  // Filter challenges to only show those that have submissions
+  const challengesWithSubmissions = useMemo(() => {
+    const submissionChallengeIds = new Set(
+      submissions.map((s) => s.challengeId).filter(Boolean),
     );
-    return [...set].sort((a, b) => a.localeCompare(b));
-  }, [submissions]);
+
+    return challenges
+      .filter((challenge) => submissionChallengeIds.has(challenge.id))
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }, [challenges, submissions]);
 
   // Searchable judge list
   const filteredJudges = useMemo(() => {
@@ -121,9 +127,9 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
   const filteredData = useMemo(() => {
     let filtered = submissions;
 
-    // Filter by challenge
+    // Filter by challenge ID
     if (challengeFilter && challengeFilter !== "all") {
-      filtered = filtered.filter((p) => p.challenge === challengeFilter);
+      filtered = filtered.filter((p) => p.challengeId === challengeFilter);
     }
 
     // Text search
@@ -261,9 +267,9 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Challenges</SelectItem>
-                    {uniqueChallenges.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
+                    {challengesWithSubmissions.map((challenge) => (
+                      <SelectItem key={challenge.id} value={challenge.id}>
+                        {challenge.title}
                       </SelectItem>
                     ))}
                   </SelectContent>
