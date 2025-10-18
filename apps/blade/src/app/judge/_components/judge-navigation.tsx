@@ -39,12 +39,6 @@ export function JudgeNavigation() {
       <CardContent className="p-3 sm:p-4">
         {/* Mobile header with menu toggle */}
         <div className="flex items-center justify-between sm:hidden">
-          <Link href="/">
-            <Button variant="outline" size="sm" className="gap-2 text-xs">
-              <Home className="h-4 w-4" />
-              <span className="xs:inline hidden">Main Site</span>
-            </Button>
-          </Link>
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="rounded-md p-2 transition-colors hover:bg-gray-100"
