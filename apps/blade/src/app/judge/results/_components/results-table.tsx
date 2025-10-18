@@ -197,11 +197,11 @@ export default function ResultsTable() {
       );
     }
 
-    // Apply sorting
+    // Apply Sorting
     if (sortField && sortOrder) {
       result.sort((a, b) => {
-        let aVal: string | number | null;
-        let bVal: string | number | null;
+        let aVal: string | number | null | undefined;
+        let bVal: string | number | null | undefined;
 
         if (sortField === "projectTitle") {
           aVal = a.projectTitle?.toLowerCase();
@@ -210,6 +210,10 @@ export default function ResultsTable() {
           aVal = a[sortField];
           bVal = b[sortField];
         }
+
+        // Handle null/undefined values
+        if (aVal == null) return 1;
+        if (bVal == null) return -1;
 
         // Compare values
         if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
