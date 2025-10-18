@@ -104,7 +104,7 @@ export default function ResultsTable() {
             | "implementation_rating"
             | "wow_factor_rating",
         ): number => {
-          const categoryRatings = submissions.map((s) => s[category] as number);
+          const categoryRatings = submissions.map((s) => s[category]);
           return categoryRatings.length > 0
             ? categoryRatings.reduce((sum, r) => sum + r, 0) /
                 categoryRatings.length
@@ -179,7 +179,7 @@ export default function ResultsTable() {
     // Apply search filter
     if (searchTerm) {
       result = result.filter((p) =>
-        p.projectTitle.toLowerCase().includes(searchTerm.toLowerCase()),
+        p.projectTitle?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -204,8 +204,8 @@ export default function ResultsTable() {
         let bVal: string | number | null;
 
         if (sortField === "projectTitle") {
-          aVal = a.projectTitle.toLowerCase();
-          bVal = b.projectTitle.toLowerCase();
+          aVal = a.projectTitle?.toLowerCase();
+          bVal = b.projectTitle?.toLowerCase();
         } else {
           aVal = a[sortField];
           bVal = b[sortField];
