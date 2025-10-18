@@ -243,7 +243,7 @@ export default function ResultsTable() {
     <main className="container h-screen">
       <div className="flex flex-col items-center justify-center gap-4 py-12">
         <h1 className="pb-4 text-center text-3xl font-extrabold tracking-tight sm:text-5xl">
-          Results Dashboard
+          Results
         </h1>
       </div>
 
