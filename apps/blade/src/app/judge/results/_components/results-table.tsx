@@ -97,20 +97,25 @@ export default function ResultsTable() {
 
         // Calculate average for each category
         const calculateCategoryAverage = (
-          category: keyof typeof firstSubmission,
-        ) => {
-          const categoryRatings = submissions.map((s) => s[category]);
+          category:
+            | "originality_rating"
+            | "design_rating"
+            | "technical_understanding_rating"
+            | "implementation_rating"
+            | "wow_factor_rating",
+        ): number => {
+          const categoryRatings = submissions.map((s) => s[category] as number);
           return categoryRatings.length > 0
-            ? categoryRatings.reduce((sum, r) => sum + (r as number), 0) /
+            ? categoryRatings.reduce((sum, r) => sum + r, 0) /
                 categoryRatings.length
             : 0;
         };
 
         return {
           id: submissionId,
-          projectTitle: firstSubmission.projectTitle,
-          devpostUrl: firstSubmission.devpostUrl,
-          challengeTitle: firstSubmission.challengeTitle,
+          projectTitle: firstSubmission?.projectTitle,
+          devpostUrl: firstSubmission?.devpostUrl,
+          challengeTitle: firstSubmission?.challengeTitle,
           judgeCount: submissions.length,
           judgeNames: submissions.map((s) => s.judgeName).filter(Boolean),
           submissions: submissions, // Store all submissions for detailed view
