@@ -67,31 +67,36 @@ export const hackerRouter = {
         }
       }
 
-      // Find the hacker for the current user
-      const hacker = await db.query.Hacker.findFirst({
-        where: (t, { eq }) => eq(t.userId, ctx.session.user.id),
-      });
+      // Find the hacker for the current user with their attendee info
+      const rows = await db
+        .select({
+          hacker: Hacker,
+          status: HackerAttendee.status,
+          class: HackerAttendee.class,
+          points: HackerAttendee.points,
+        })
+        .from(Hacker)
+        .innerJoin(HackerAttendee, eq(HackerAttendee.hackerId, Hacker.id))
+        .where(
+          and(
+            eq(Hacker.userId, ctx.session.user.id),
+            eq(HackerAttendee.hackathonId, hackathon.id),
+          ),
+        )
+        .limit(1);
 
-      if (!hacker) {
-        return null;
-      }
+      const result = rows[0];
 
-      // Check if the hacker is registered for this specific hackathon
-      const hackerAttendee = await db.query.HackerAttendee.findFirst({
-        where: (t, { and, eq }) =>
-          and(eq(t.hackerId, hacker.id), eq(t.hackathonId, hackathon.id)),
-      });
-
-      if (!hackerAttendee) {
+      if (!result) {
         return null;
       }
 
       // Return hacker with status from HackerAttendee
       return {
-        ...hacker,
-        status: hackerAttendee.status,
-        class: hackerAttendee.class,
-        points: hackerAttendee.points,
+        ...result.hacker,
+        status: result.status,
+        class: result.class,
+        points: result.points,
       };
     }),
 
