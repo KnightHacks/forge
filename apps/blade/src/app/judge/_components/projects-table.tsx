@@ -72,10 +72,9 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
   const { data: judges = [], isLoading: judgesLoading } =
     api.judge.getJudges.useQuery();
 
-  const { data: challenges = [], isLoading: challengesLoading } =
-    api.challenge.getChallenges.useQuery({
-      hackathonId: hackathonId ?? "",
-    });
+  const { data: challenges = [] } = api.challenge.getChallenges.useQuery({
+    hackathonId: hackathonId ?? "",
+  });
 
   const submissions = data as Submission[];
   const judgesList = judges as Judge[];
