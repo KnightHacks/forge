@@ -22,6 +22,7 @@ export default async function Admin() {
 
   const hasCheckIn = await api.auth.hasCheckIn();
   const hasFullAdmin = await api.auth.hasFullAdmin();
+  const isOfficer = await api.auth.getOfficerStatus();
 
   if (!hasCheckIn && !hasFullAdmin) {
     redirect("/");
@@ -90,9 +91,6 @@ export default async function Admin() {
                       <Link href="/admin/hackathon/judge-assignment">
                         <Button>Judge Assignment</Button>
                       </Link>
-                      <Link href="/admin/control-room">
-                        <Button>Control Room</Button>
-                      </Link>
                     </>
                   )}
                   {(hasFullAdmin || hasCheckIn) && (
@@ -104,6 +102,15 @@ export default async function Admin() {
               </Card>
             )}
           </div>
+          {isOfficer && (
+            <Card>
+              <CardContent className="flex items-center justify-center p-5">
+                <Link href="/admin/hackathon/control-room">
+                  <Button>Control Room</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </HydrateClient>
