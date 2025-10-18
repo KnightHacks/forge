@@ -64,12 +64,14 @@ export default function ResultsTable() {
     const submissionGroups = new Map<string, typeof judgedSubmissions>();
 
     judgedSubmissions.forEach((submission) => {
-      // Use the submission ID to group multiple judge evaluations of the same project
-      const submissionId = submission.submissionId;
-      if (!submissionGroups.has(submissionId)) {
-        submissionGroups.set(submissionId, []);
-      }
-      submissionGroups.get(submissionId)!.push(submission);
+      const { submissionId } = submission;
+
+      // Get existing group or initialize a new one
+      const group = submissionGroups.get(submissionId) ?? [];
+      group.push(submission);
+
+      // Re-set the group (important if it was newly created)
+      submissionGroups.set(submissionId, group);
     });
 
     // Convert groups to projects
@@ -97,9 +99,7 @@ export default function ResultsTable() {
         const calculateCategoryAverage = (
           category: keyof typeof firstSubmission,
         ) => {
-          const categoryRatings = submissions
-            .map((s) => s[category])
-            .filter((r) => r !== null && r !== undefined);
+          const categoryRatings = submissions.map((s) => s[category]);
           return categoryRatings.length > 0
             ? categoryRatings.reduce((sum, r) => sum + (r as number), 0) /
                 categoryRatings.length

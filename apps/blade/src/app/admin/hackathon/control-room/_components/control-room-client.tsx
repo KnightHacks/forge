@@ -13,17 +13,16 @@ export default function ControlRoomClient() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const {
-    data: rooms,
-    isLoading,
-    refetch,
-  } = api.judge.getRoomsWithSessionCounts.useQuery();
+  const utils = api.useUtils();
+
+  const { data: rooms, isLoading } =
+    api.judge.getRoomsWithSessionCounts.useQuery();
 
   const deleteSessionsMutation = api.judge.deleteSessionsByRoom.useMutation({
     onSuccess: (data) => {
       setSuccessMessage(`Successfully deleted ${data.deletedCount} sessions`);
       setErrorMessage(null);
-      refetch();
+      void utils.judge.getRoomsWithSessionCounts.invalidate(); // Flush session cache
     },
     onError: (error) => {
       setErrorMessage(error.message);
