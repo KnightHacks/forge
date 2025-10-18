@@ -17,12 +17,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
-import {
-  adminProcedure,
-  judgeProcedure,
-  officerProcedure,
-  publicProcedure,
-} from "../trpc";
+import { judgeProcedure, officerProcedure, publicProcedure } from "../trpc";
 
 const SESSION_TTL_HOURS = 8;
 
