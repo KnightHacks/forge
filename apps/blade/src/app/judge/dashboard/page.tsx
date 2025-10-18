@@ -25,7 +25,7 @@ export default async function Page() {
   const currentHackathon = await api.hackathon.getCurrentHackathon();
   if (!currentHackathon) {
     return (
-      <div className="mx-auto max-w-6xl space-y-6 p-6">
+      <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
@@ -43,27 +43,28 @@ export default async function Page() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-6">
+    <div className="mx-auto max-w-7xl space-y-4 p-4 sm:space-y-6 sm:p-6">
       {/* Welcome Header */}
       <Card>
         <CardHeader>
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-3xl font-bold">
-                <Trophy className="text-purple-400" /> Judge Dashboard
+              <CardTitle className="flex items-center gap-2 text-2xl font-bold sm:text-3xl">
+                <Trophy className="h-6 w-6 text-purple-400 sm:h-7 sm:w-7" />{" "}
+                Judge Dashboard
               </CardTitle>
-              <CardDescription className="mt-2 text-base">
+              <CardDescription className="mt-2 text-sm sm:text-base">
                 Welcome to the judging interface
               </CardDescription>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <Badge variant="outline" className="text-white">
                 {isAdmin ? "Admin" : "Judge"}
               </Badge>
             </div>
           </div>
           <Separator className="my-4" />
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:gap-4">
             <div>
               <p className="font-medium text-gray-300">Hackathon</p>
               <p className="text-white-300 font-semibold text-purple-400">
@@ -83,8 +84,8 @@ export default async function Page() {
       {/* Projects Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Projects</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl sm:text-2xl">Projects</CardTitle>
+          <CardDescription className="text-sm sm:text-base">
             Review and evaluate all submitted projects
           </CardDescription>
         </CardHeader>
