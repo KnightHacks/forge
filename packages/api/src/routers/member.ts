@@ -308,6 +308,36 @@ export const memberRouter = {
       (await db.select({ count: count() }).from(Member))[0]?.count ?? 0,
   ),
 
+  giveMemberPoints: adminProcedure
+    .input(z.object({
+      id: z.string(),
+      amount: z.number()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const member = await db.query.Member.findFirst({
+        where: eq(Member.id, input.id),
+      });
+
+      if(!member) {
+        throw new TRPCError({
+          message: "Could not find a member",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      await db
+        .update(Member)
+        .set({ points: sql`${Member.points} + ${input.amount}` })
+        .where(eq(Member.id, member.id));
+
+      await log({
+        title: `Gave Points`,
+        message: `Gave ${input.amount} points to ${member.firstName} ${member.lastName} (Member)`,
+        color: "tk_blue",
+        userId: ctx.session.user.discordUserId,
+      });
+    }),
+
   getDuesPayingMembers: adminProcedure.query(
     async () =>
       await db
