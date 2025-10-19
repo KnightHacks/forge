@@ -5606,32 +5606,32 @@ export const HACKER_CLASS_INFO: Record<AssignableHackerClass, ClassInfo> = {
   Machinist: {
     team: "Humanity",
     teamColor: "#228be6",
-    classPfp: "/khviii/machinist.png",
+    classPfp: "/khviii/machinist.jpg",
   },
   Operator: {
     team: "Humanity",
     teamColor: "#228be6",
-    classPfp: "/khviii/operator.png",
+    classPfp: "/khviii/operator.jpg",
   },
   Sentinel: {
     team: "Humanity",
     teamColor: "#228be6",
-    classPfp: "/khviii/sentinel.png",
+    classPfp: "/khviii/sentinel.jpg",
   },
   Monstologist: {
     team: "Monstrosity",
     teamColor: "#e03131",
-    classPfp: "/khviii/monstologist.png",
+    classPfp: "/khviii/monstologist.jpg",
   },
   Harbinger: {
     team: "Monstrosity",
     teamColor: "#e03131",
-    classPfp: "/khviii/harbinger.png",
+    classPfp: "/khviii/harbinger.jpg",
   },
   Alchemist: {
     team: "Monstrosity",
     teamColor: "#e03131",
-    classPfp: "/khviii/alchemist.png",
+    classPfp: "/khviii/alchemist.jpg",
   },
 };
 
