@@ -56,7 +56,7 @@ export const hackerRouter = {
         // If not provided, grab a FUTURE hackathon with a start date CLOSEST to now
         const now = new Date();
         const futureHackathons = await db.query.Hackathon.findMany({
-          where: (t, { gt }) => gt(t.startDate, now),
+          where: (t, { gt }) => gt(t.endDate, now),
           orderBy: (t, { asc }) => [asc(t.startDate)],
           limit: 1,
         });

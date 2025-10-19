@@ -22,7 +22,7 @@ export default async function MemberDashboard({
   if (!member) {
     return (
       <div className="flex flex-col items-center justify-center gap-y-6 text-xl font-semibold">
-        <p className="w-full max-w-xl text-center">
+        <div className="w-full max-w-xl text-center">
           <div className="font-normal">
             Are you a UCF student?
             <br className="mb-2" />
@@ -32,7 +32,7 @@ export default async function MemberDashboard({
             <br />
           </div>
           Sign up to become a KnightHacks member today!
-        </p>
+        </div>
         <div className="flex flex-wrap justify-center gap-5">
           <MemberAppCard />
         </div>
