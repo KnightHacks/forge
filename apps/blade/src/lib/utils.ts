@@ -64,12 +64,12 @@ export const getClassTeam = (tag: HackerClass) => {
     return {
       team: "Monstrosity",
       teamColor: "#e03131",
-      imgUrl: "/khviii/lenneth.png",
+      imgUrl: "/khviii/lenneth.jpg",
     };
   }
   return {
     team: "Humanity",
     teamColor: "#228be6",
-    imgUrl: "/khviii/tkhero.png",
+    imgUrl: "/khviii/tkhero.jpg",
   };
 };
