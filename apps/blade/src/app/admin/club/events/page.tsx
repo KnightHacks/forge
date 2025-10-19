@@ -7,6 +7,7 @@ import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import ScannerPopUp from "../members/_components/scanner";
 import { EventsTable } from "./_components/events-table";
+import { AddPoints } from "../../_components/AddPoints";
 
 export const metadata: Metadata = {
   title: "Club Events",
@@ -34,8 +35,9 @@ export default async function Events() {
             <h1 className="pb-4 text-center text-3xl font-extrabold tracking-tight sm:text-5xl">
               Club Events Dashboard
             </h1>
-            <div className="mb-2 flex justify-center gap-2">
+            <div className="mb-2 flex flex-row justify-center gap-2">
               <ScannerPopUp eventType="Member" />
+              <AddPoints type="Member"/>
             </div>
           </div>
         </div>
