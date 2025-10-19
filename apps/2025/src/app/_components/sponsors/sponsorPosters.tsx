@@ -13,7 +13,7 @@
   AMD AMD Statsig Statsig NextEra NextEra
   BNY BNY ServiceNow ServiceNow Auritas Auritas
   BNY BNY ServiceNow ServiceNow Auritas Auritas
-  Morgan&Morgan Morgan&Morgan ImpressInk ImpressInk ImpressInk Synopsys
+  Morgan&Morgan Morgan&Morgan ImpressInk ImpressInk ImpressInk 
   Morgan&Morgan Morgan&Morgan Shinies Shinies Shinies None
 
    
@@ -29,7 +29,7 @@
   ServiceNow ServiceNow Auritas Auritas
   Morgan&Morgan Morgan&Morgan ImpressInk ImpressInk
   Morgan&Morgan Morgan&Morgan Shinies Shinies
-  Lockheed Lockheed Lockheed Synopsys
+  Lockheed Lockheed Lockheed
   GitHub NVIDIA NASA None
 */
 }
@@ -110,7 +110,7 @@ const sponsors: Sponsor[] = [
     link: "https://www.lockheedmartin.com/",
     category: "Silver",
     gridPosition: "sm:row-start-3 sm:row-span-1 sm:col-start-4 sm:col-span-3",
-    mobilePosition: "row-start-12 row-span-1 col-start-1 col-span-3",
+    mobilePosition: "row-start-12 row-span-1 col-start-1 col-span-4",
   },
   {
     src: "/sponsorSectionSvgs/github.png",
@@ -119,16 +119,7 @@ const sponsors: Sponsor[] = [
     link: "https://github.com/",
     category: "Bronze",
     gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-4 sm:col-span-1",
-    mobilePosition: "row-start-13 row-span-1 col-start-1 col-span-1",
-  },
-  {
-    src: "/sponsorSectionSvgs/nvidia.svg",
-    alt: "NVIDIA",
-    ariaLabel: "NVIDIA Logo",
-    link: "https://www.nvidia.com/",
-    category: "Bronze",
-    gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-5 sm:col-span-1",
-    mobilePosition: "row-start-13 row-span-1 col-start-2 col-span-1",
+    mobilePosition: "row-start-13 row-span-1 col-start-1 col-span-2",
   },
   {
     src: "/sponsorSectionSvgs/nasa.svg",
@@ -137,7 +128,16 @@ const sponsors: Sponsor[] = [
     link: "https://www.nasa.gov/",
     category: "Bronze",
     gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-6 sm:col-span-1",
-    mobilePosition: "row-start-13 row-span-1 col-start-3 col-span-1",
+    mobilePosition: "row-start-13 row-span-1 col-start-3 col-span-2",
+  },
+  {
+    src: "/sponsorSectionSvgs/nvidia.svg",
+    alt: "NVIDIA",
+    ariaLabel: "NVIDIA Logo",
+    link: "https://www.nvidia.com/",
+    category: "Bronze",
+    gridPosition: "sm:row-start-4 sm:row-span-1 sm:col-start-5 sm:col-span-1",
+    mobilePosition: "row-start-14 row-span-2 col-start-1 col-span-4",
   },
   // Row 5-6: AMD (2x2), Statsig (2x2), NextEra (2x2)
   {
@@ -195,7 +195,7 @@ const sponsors: Sponsor[] = [
     gridPosition: "sm:row-start-7 sm:row-span-2 sm:col-start-5 sm:col-span-2",
     mobilePosition: "row-start-8 row-span-2 col-start-3 col-span-2",
   },
-  // Row 9-10: Morgan&Morgan (2x2), ImpressInk (3x1), Synopsys (1x1), Shinies (3x1), None (1x1)
+  // Row 9-10: Morgan&Morgan (2x2), ImpressInk (4x1), Shinies (4x1), None (1x1)
   {
     src: "/sponsorSectionSvgs/morgan-and-morgan.svg",
     alt: "MORGAN&MORGAN",
@@ -211,7 +211,7 @@ const sponsors: Sponsor[] = [
     ariaLabel: "Impress Ink Logo",
     link: "https://impressink.com/",
     category: "Silver",
-    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-3 sm:col-span-3",
+    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-3 sm:col-span-4",
     mobilePosition: "row-start-10 row-span-1 col-start-3 col-span-2",
   },
   {
@@ -220,17 +220,8 @@ const sponsors: Sponsor[] = [
     ariaLabel: "Shinies Props Logo",
     link: "https://www.instagram.com/shiniesprops/",
     category: "Silver",
-    gridPosition: "sm:row-start-10 sm:row-span-1 sm:col-start-3 sm:col-span-3",
+    gridPosition: "sm:row-start-10 sm:row-span-1 sm:col-start-3 sm:col-span-4",
     mobilePosition: "row-start-11 row-span-1 col-start-3 col-span-2",
-  },
-  {
-    src: "/sponsorSectionSvgs/synopsys.svg",
-    alt: "SYNOPSYS",
-    ariaLabel: "Synopsys Logo",
-    link: "https://www.synopsys.com/",
-    category: "Bronze",
-    gridPosition: "sm:row-start-9 sm:row-span-1 sm:col-start-6 sm:col-span-1",
-    mobilePosition: "row-start-12 row-span-1 col-start-4 col-span-1",
   },
 ];
 
