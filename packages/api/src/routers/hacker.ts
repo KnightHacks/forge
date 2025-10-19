@@ -18,7 +18,6 @@ import { Session } from "@forge/db/schemas/auth";
 import {
   AssignedClassCheckinSchema,
   Event,
-  Hackathon,
   Hacker,
   HACKER_CLASSES,
   HackerAttendee,
@@ -623,10 +622,10 @@ export const hackerRouter = {
       z.object({
         id: z.string(),
         hackathonName: z.string(),
-        amount: z.number()
-      })
+        amount: z.number(),
+      }),
     )
-    .mutation(async ({input, ctx}) => {
+    .mutation(async ({ input, ctx }) => {
       if (!input.id) {
         throw new TRPCError({
           message: "Hacker ID is required to update a member's status!",
@@ -658,14 +657,15 @@ export const hackerRouter = {
       }
 
       const attendee = await db.query.HackerAttendee.findFirst({
-        where: (t, { eq, and }) => and(eq(t.hackathonId, hackathon.id), eq(t.hackerId, hacker.id))
-      })
+        where: (t, { eq, and }) =>
+          and(eq(t.hackathonId, hackathon.id), eq(t.hackerId, hacker.id)),
+      });
 
       if (!attendee) {
         throw new TRPCError({
           message: `Attendee not found for ${hacker.firstName} ${hacker.lastName}`,
           code: "NOT_FOUND",
-        })
+        });
       }
 
       await db

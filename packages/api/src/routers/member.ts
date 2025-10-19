@@ -309,16 +309,18 @@ export const memberRouter = {
   ),
 
   giveMemberPoints: adminProcedure
-    .input(z.object({
-      id: z.string(),
-      amount: z.number()
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+        amount: z.number(),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
       const member = await db.query.Member.findFirst({
         where: eq(Member.id, input.id),
       });
 
-      if(!member) {
+      if (!member) {
         throw new TRPCError({
           message: "Could not find a member",
           code: "BAD_REQUEST",
