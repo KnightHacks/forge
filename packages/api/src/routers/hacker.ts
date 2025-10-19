@@ -18,6 +18,7 @@ import { Session } from "@forge/db/schemas/auth";
 import {
   AssignedClassCheckinSchema,
   Event,
+  Hackathon,
   Hacker,
   HACKER_CLASSES,
   HackerAttendee,
@@ -612,6 +613,74 @@ export const hackerRouter = {
         title: "Hacker Updated",
         message: `Blade profile for ${hacker.firstName} ${hacker.lastName} has been updated.
             \n**Changes:**\n${changesString}`,
+        color: "tk_blue",
+        userId: ctx.session.user.discordUserId,
+      });
+    }),
+
+  giveHackerPoints: adminProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        hackathonName: z.string(),
+        amount: z.number()
+      })
+    )
+    .mutation(async ({input, ctx}) => {
+      if (!input.id) {
+        throw new TRPCError({
+          message: "Hacker ID is required to update a member's status!",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      const hacker = await db.query.Hacker.findFirst({
+        where: (t, { eq }) => eq(t.id, input.id),
+      });
+
+      if (!hacker) {
+        throw new TRPCError({
+          message: "Hacker not found!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      // Fetch the hackathon by name to get the ID
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.name, input.hackathonName),
+      });
+
+      if (!hackathon) {
+        throw new TRPCError({
+          message: `Hackathon not found! - ${input.hackathonName}`,
+          code: "NOT_FOUND",
+        });
+      }
+
+      const attendee = await db.query.HackerAttendee.findFirst({
+        where: (t, { eq, and }) => and(eq(t.hackathonId, hackathon.id), eq(t.hackerId, hacker.id))
+      })
+
+      if (!attendee) {
+        throw new TRPCError({
+          message: `Attendee not found for ${hacker.firstName} ${hacker.lastName}`,
+          code: "NOT_FOUND",
+        })
+      }
+
+      await db
+        .update(HackerAttendee)
+        .set({ points: attendee.points + input.amount })
+        .where(
+          and(
+            eq(HackerAttendee.hackerId, input.id),
+            eq(HackerAttendee.hackathonId, hackathon.id),
+          ),
+        );
+
+      await log({
+        title: `Gave Points`,
+        message: `Gave ${input.amount} points to ${hacker.firstName} ${hacker.lastName} for ${hackathon.displayName}`,
         color: "tk_blue",
         userId: ctx.session.user.discordUserId,
       });
