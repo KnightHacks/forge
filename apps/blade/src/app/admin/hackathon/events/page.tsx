@@ -5,9 +5,9 @@ import { auth } from "@forge/auth";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
+import { AddPoints } from "../../_components/AddPoints";
 import ScannerPopUp from "../../club/members/_components/scanner";
 import { EventsTable } from "./_components/events-table";
-import { AddPoints } from "../../_components/AddPoints";
 
 export const metadata: Metadata = {
   title: "Blade Hackathon Events",
@@ -38,7 +38,7 @@ export default async function HackathonEvents() {
             </h1>
             <div className="mb-2 flex flex-row justify-center gap-2">
               <ScannerPopUp eventType="Hacker" />
-              <AddPoints type="Hacker"/>
+              <AddPoints type="Hacker" />
             </div>
           </div>
         </div>

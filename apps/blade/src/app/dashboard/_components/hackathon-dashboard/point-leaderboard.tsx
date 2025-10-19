@@ -46,6 +46,10 @@ export function PointLeaderboard({
   const [activeInd, setInd] = useState(-1);
   const [activeTop, setTop] = useState(overall);
 
+  const { data: isAdmin } = api.auth.getAdminStatus.useQuery();
+
+  const targetDate = new Date("2025-10-25T23:00:00").getTime();
+
   useEffect(() => {
     if (data) {
       setOverall(
@@ -80,7 +84,36 @@ export function PointLeaderboard({
       );
   }, [activeTop, hacker?.id, data?.place, activeInd]);
 
-  return (
+  return targetDate <= Date.now() && !isAdmin ? (
+    <>
+      <p>
+        The leaderboard has been hidden while we decide who gets to be crowned{" "}
+        <b>Most Involved Hacker.</b>
+      </p>
+      <p>
+        However, the fight's not over yet. Keep on earning points! Everything
+        will still be counted until the end of the event.
+      </p>
+      <p>
+        Make sure to come to the <b>Closing Ceremony</b> to see the winners!
+      </p>
+      <div
+        className="rounded-lg border p-1 text-center text-xl shadow-md"
+        style={{ backgroundColor: team.teamColor + "22" }}
+      >
+        You have{" "}
+        <b
+          style={{
+            color: team.teamColor,
+            textShadow: `0 0 10px ${team.teamColor}, 0 0 20px ${team.teamColor}`,
+          }}
+        >
+          {hacker?.points}
+        </b>{" "}
+        points.
+      </div>
+    </>
+  ) : (
     <>
       <div className="grid w-full grid-cols-3 gap-2">
         <button

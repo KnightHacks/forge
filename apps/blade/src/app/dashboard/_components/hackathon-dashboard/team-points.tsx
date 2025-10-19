@@ -94,7 +94,7 @@ export function TeamPoints({
             {!classPoints ? (
               <Loader className="my-auto size-5 animate-spin" />
             ) : (
-              <div className="flex flex-row gap-0.5 text-xs sm:text-base">
+              <div className="flex flex-row gap-0.5 overflow-x-clip text-xs sm:text-base">
                 <div className="hidden pr-2 text-center text-muted-foreground sm:block">
                   {team.team != HACKER_TEAMS[0]
                     ? ""
@@ -122,7 +122,7 @@ export function TeamPoints({
             {!classPoints ? (
               <Loader className="my-auto size-5 animate-spin" />
             ) : (
-              <div className="my-auto flex flex-row gap-0.5 text-xs sm:text-base">
+              <div className="my-auto flex flex-row gap-0.5 overflow-x-clip text-xs sm:text-base">
                 {(byTeam.at(1) || 0) >= (byTeam.at(0) || 0) && (
                   <Crown className="my-auto size-4 sm:size-5" />
                 )}
