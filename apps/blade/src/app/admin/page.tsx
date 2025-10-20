@@ -89,6 +89,9 @@ export default async function Admin() {
                         <Link href="/admin/hackathon/data">
                           <Button>Data</Button>
                         </Link>
+                        <Link href="/admin/hackathon/judge-assignment">
+                          <Button>Judge Assignment</Button>
+                        </Link>
                       </>
                     )}
                     {(hasFullAdmin || hasCheckIn) && (
@@ -106,54 +109,9 @@ export default async function Admin() {
                   <CardTitle className="text-center">Email Dashboard</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-wrap items-center justify-center gap-4">
-                  {hasFullAdmin && (
-                    <>
-                      <Link href="/admin/club/members">
-                        <Button>Members</Button>
-                      </Link>
-                      <Link href="/admin/club/events">
-                        <Button>Events</Button>
-                      </Link>
-                      <Link href="/admin/club/data">
-                        <Button>Data</Button>
-                      </Link>
-                    </>
-                  )}
-                  {(hasFullAdmin || hasCheckIn) && (
-                    <Link href="/admin/club/check-in">
-                      <Button>Check-in</Button>
-                    </Link>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-            {(hasFullAdmin || hasCheckIn) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-center">Hackathon</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-wrap items-center justify-center gap-4">
-                  {hasFullAdmin && (
-                    <>
-                      <Link href="/admin/hackathon/hackers">
-                        <Button>Hackers</Button>
-                      </Link>
-                      <Link href="/admin/hackathon/events">
-                        <Button>Events</Button>
-                      </Link>
-                      <Link href="/admin/hackathon/data">
-                        <Button>Data</Button>
-                      </Link>
-                      <Link href="/admin/hackathon/judge-assignment">
-                        <Button>Judge Assignment</Button>
-                      </Link>
-                    </>
-                  )}
-                  {(hasFullAdmin || hasCheckIn) && (
-                    <Link href="/admin/hackathon/check-in">
-                      <Button>Check-in</Button>
-                    </Link>
-                  )}
+                  <Link href="/admin/email">
+                    <Button>Let's send some emails!</Button>
+                  </Link>
                 </CardContent>
               </Card>
             )}
