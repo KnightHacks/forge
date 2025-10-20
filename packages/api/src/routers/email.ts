@@ -5,35 +5,7 @@ import { publicProcedure } from "../trpc";
 import { sendEmail } from "../utils";
 
 export const emailRouter = {
-  testEmail: publicProcedure
-    .input(
-      z.object({
-        to: z.string().email(),
-      }),
-    )
-    .mutation(async ({ input }) => {
-      try {
-        const response = await sendEmail({
-          to: input.to,
-          subject: "Test Email from Knight Hacks",
-          html: `
-            <h1>Test Email</h1>
-            <p>This is a test email to verify Resend integration is working.</p>
-            <p>Sent at: ${new Date().toISOString()}</p>
-          `,
-        });
-
-        return { success: true, messageId: response.messageId };
-      } catch (error) {
-        console.error("Test email error:", error);
-        throw new Error(
-          `Failed to send test email: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`,
-        );
-      }
-    }),
-
+  
   sendEmail: publicProcedure
     .input(
       z.object({

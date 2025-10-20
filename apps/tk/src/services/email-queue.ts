@@ -27,6 +27,15 @@ const _PRIORITY_ORDER = {
 
 type _Priority = keyof typeof _PRIORITY_ORDER;
 
+// Email status constants
+const EMAIL_STATUS = {
+  PENDING: "pending",
+  SCHEDULED: "scheduled",
+  PROCESSING: "processing",
+  COMPLETED: "completed",
+  FAILED: "failed",
+} as const;
+
 interface BlacklistRules {
   daysOfWeek?: number[]; // 0 = Sunday, 1 = Monday, etc.
   timeRanges?: {
@@ -51,12 +60,12 @@ export class EmailQueueService {
     await db
       .update(EmailQueue)
       .set({
-        status: "pending",
+        status: EMAIL_STATUS.PENDING,
         updated_at: new Date(),
       })
       .where(
         and(
-          eq(EmailQueue.status, "scheduled"),
+          eq(EmailQueue.status, EMAIL_STATUS.SCHEDULED),
           sql`scheduled_for IS NOT NULL AND scheduled_for <= ${sql.raw(`'${now.toISOString()}'`)}`,
         ),
       );
@@ -65,7 +74,7 @@ export class EmailQueueService {
     return await db
       .select()
       .from(EmailQueue)
-      .where(eq(EmailQueue.status, "pending"))
+      .where(eq(EmailQueue.status, EMAIL_STATUS.PENDING))
       .orderBy(
         sql`CASE priority 
           WHEN 'now' THEN 1 
@@ -90,12 +99,12 @@ export class EmailQueueService {
     await db
       .update(EmailQueue)
       .set({
-        status: "pending",
+        status: EMAIL_STATUS.PENDING,
         updated_at: new Date(),
       })
       .where(
         and(
-          eq(EmailQueue.status, "processing"),
+          eq(EmailQueue.status, EMAIL_STATUS.PROCESSING),
           sql`updated_at < ${sql.raw(`'${fiveMinutesAgo.toISOString()}'`)}`,
         ),
       );
@@ -256,7 +265,7 @@ export class EmailQueueService {
       .where(
         and(
           eq(EmailQueue.batch_id, batchId),
-          sql`status IN ('pending', 'scheduled')`,
+          sql`status IN ('${EMAIL_STATUS.PENDING}', '${EMAIL_STATUS.SCHEDULED}')`,
         ),
       )
       .orderBy(asc(EmailQueue.batch_position));
@@ -272,7 +281,7 @@ export class EmailQueueService {
           .update(EmailQueue)
           .set({
             scheduled_for: nextAvailableTime,
-            status: "scheduled",
+            status: EMAIL_STATUS.SCHEDULED,
             updated_at: new Date(),
           })
           .where(eq(EmailQueue.id, email.id));
@@ -311,7 +320,7 @@ export class EmailQueueService {
       await db
         .update(EmailQueue)
         .set({
-          status: "processing",
+          status: EMAIL_STATUS.PROCESSING,
           attempts: sql`attempts + 1`,
           updated_at: new Date(),
         })
@@ -333,7 +342,7 @@ export class EmailQueueService {
       await db
         .update(EmailQueue)
         .set({
-          status: "completed",
+          status: EMAIL_STATUS.COMPLETED,
           processed_at: new Date(),
           updated_at: new Date(),
         })
@@ -357,7 +366,7 @@ export class EmailQueueService {
         await db
           .update(EmailQueue)
           .set({
-            status: "failed",
+            status: EMAIL_STATUS.FAILED,
             last_error:
               error instanceof Error ? error.message : "Unknown error",
             updated_at: new Date(),
@@ -368,7 +377,7 @@ export class EmailQueueService {
         await db
           .update(EmailQueue)
           .set({
-            status: "pending",
+            status: EMAIL_STATUS.PENDING,
             last_error:
               error instanceof Error ? error.message : "Unknown error",
             updated_at: new Date(),
