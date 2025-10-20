@@ -20,6 +20,15 @@ export const authRouter = {
   getSession: publicProcedure.query(({ ctx }) => {
     return ctx.session;
   }),
+
+  liveness: publicProcedure.query(() => {
+    return {
+      ok: true,
+      ts: Date.now(),
+      uptimeSec: Math.floor(process.uptime()),
+    };
+  }),
+
   getSecretMessage: protectedProcedure.query(() => {
     return "you can see this secret message!";
   }),
