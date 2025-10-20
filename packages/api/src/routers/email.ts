@@ -5,7 +5,6 @@ import { publicProcedure } from "../trpc";
 import { sendEmail } from "../utils";
 
 export const emailRouter = {
-  
   sendEmail: publicProcedure
     .input(
       z.object({
