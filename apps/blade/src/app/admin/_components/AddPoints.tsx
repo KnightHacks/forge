@@ -48,30 +48,28 @@ export function AddPoints({ type }: { type: "Member" | "Hacker" }) {
   const [openSub, setOpenSub] = useState(false);
   const [points, setPoints] = useState(0);
 
-  const givePoints =
-    type == "Hacker"
-      ? api.hacker.giveHackerPoints.useMutation({
-          onSuccess() {
-            toast.success(
-              `Gave ${points} points to ${selectedUser?.firstName} ${selectedUser?.lastName}`,
-            );
-            setselectedUser(null);
-          },
-          onError(opts) {
-            toast.error(opts.message);
-          },
-        })
-      : api.member.giveMemberPoints.useMutation({
-          onSuccess() {
-            toast.success(
-              `Gave ${points} points to ${selectedUser?.firstName} ${selectedUser?.lastName}`,
-            );
-            setselectedUser(null);
-          },
-          onError(opts) {
-            toast.error(opts.message);
-          },
-        });
+  const giveHackerPoints = api.hacker.giveHackerPoints.useMutation({
+    onSuccess() {
+      toast.success(
+        `Gave ${points} points to ${selectedUser?.firstName} ${selectedUser?.lastName}`,
+      );
+      setselectedUser(null);
+    },
+    onError(opts) {
+      toast.error(opts.message);
+    },
+  });
+  const giveMemberPoints = api.member.giveMemberPoints.useMutation({
+    onSuccess() {
+      toast.success(
+        `Gave ${points} points to ${selectedUser?.firstName} ${selectedUser?.lastName}`,
+      );
+      setselectedUser(null);
+    },
+    onError(opts) {
+      toast.error(opts.message);
+    },
+  });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -163,12 +161,12 @@ export function AddPoints({ type }: { type: "Member" | "Hacker" }) {
             disabled={!selectedUser || !points}
             onClick={() =>
               type == "Hacker"
-                ? givePoints.mutate({
+                ? giveHackerPoints.mutate({
                     amount: points,
                     id: selectedUser?.id ?? "",
                     hackathonName: activeHackathon?.name ?? "",
                   })
-                : givePoints.mutate({
+                : giveMemberPoints.mutate({
                     amount: points,
                     id: selectedUser?.id ?? "",
                   })
