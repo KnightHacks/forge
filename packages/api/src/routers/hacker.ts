@@ -1009,16 +1009,6 @@ export const hackerRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const hacker = await db.query.Hacker.findFirst({
-        where: (t, { eq }) => eq(t.userId, input.userId),
-      });
-
-      if (!hacker)
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Hacker with User ID ${input.userId} not found.`,
-        });
-
       const event = await db.query.Event.findFirst({
         where: eq(Event.id, input.eventId),
       });
@@ -1033,26 +1023,51 @@ export const hackerRouter = {
           message: `Event with ID ${input.eventId} is not a hackathon event.`,
         });
       }
+
+      // Find hacker with matching attendee
+      const rows = await db
+        .select({
+          hacker: Hacker,
+          status: HackerAttendee.status,
+          class: HackerAttendee.class,
+          points: HackerAttendee.points,
+          hackerAttendeeId: HackerAttendee.id,
+        })
+        .from(Hacker)
+        .innerJoin(HackerAttendee, eq(HackerAttendee.hackerId, Hacker.id))
+        .where(
+          and(
+            eq(Hacker.userId, input.userId),
+            eq(HackerAttendee.hackathonId, event.hackathonId),
+          ),
+        )
+        .limit(1);
+
+      const result = rows[0];
+
+      if (!result) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Hacker with User ID ${input.userId} not found or not registered for this hackathon.`,
+        });
+      }
+
+      const hacker = result.hacker;
+      const hackerAttendee = {
+        id: result.hackerAttendeeId,
+        status: result.status,
+        class: result.class,
+        points: result.points,
+        hackathonId: event.hackathonId,
+        hackerId: hacker.id,
+      };
+
       const eventTag = event.tag;
       let discordId: string | null = null;
       let isVIP = false;
       if (eventTag == "Check-in") {
         discordId = await resolveDiscordUserId(hacker.discordUser);
         isVIP = discordId ? await isDiscordVIP(discordId) : false;
-      }
-      const hackerAttendee = await db.query.HackerAttendee.findFirst({
-        where: (t, { and, eq }) =>
-          and(
-            eq(t.hackerId, hacker.id),
-            eq(t.hackathonId, event.hackathonId ?? ""),
-          ),
-      });
-
-      if (!hackerAttendee) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `${hacker.firstName} ${hacker.lastName} is not registered for this hackathon`,
-        });
       }
 
       let assignedClass: HackerClass | null = hackerAttendee.class ?? null;
@@ -1075,19 +1090,9 @@ export const hackerRouter = {
 
       if (hackerAttendee.status === "confirmed" && eventTag === "Check-in") {
         await db.transaction(async (tx) => {
-          const doesHackerHaveClass = await tx.query.HackerAttendee.findFirst({
-            where: (t, { and, eq }) =>
-              and(
-                eq(t.hackerId, hacker.id),
-                eq(t.hackathonId, input.hackathonId),
-              ),
-          });
-
-          if (
-            doesHackerHaveClass?.class &&
-            doesHackerHaveClass.class in HACKER_CLASSES
-          ) {
-            assignedClass = doesHackerHaveClass.class;
+          // Use the already fetched hackerAttendee data instead of querying again
+          if (hackerAttendee.class && hackerAttendee.class in HACKER_CLASSES) {
+            assignedClass = hackerAttendee.class;
             return;
           }
 
@@ -1127,7 +1132,7 @@ export const hackerRouter = {
             .where(
               and(
                 eq(HackerAttendee.hackerId, hacker.id),
-                eq(HackerAttendee.hackathonId, input.hackathonId),
+                eq(HackerAttendee.hackathonId, event.hackathonId),
               ),
             );
 
