@@ -2,9 +2,18 @@
 
 import { useMemo, useState } from "react";
 import QRCode from "react-qr-code";
+import { Check, ChevronsUpDown } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
-import { Input } from "@forge/ui/input";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@forge/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 
 import { api } from "~/trpc/react";
 
@@ -23,7 +32,14 @@ export default function QRCodesClient() {
   const [loading, setLoading] = useState(false);
   const [rooms, setRooms] = useState<QRRoom[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [newRoomName, setNewRoomName] = useState("");
+  const [selectedRoom, setSelectedRoom] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [open, setOpen] = useState(false);
+
+  // Fetch unique room names from judges table
+  const { data: availableRooms } = api.judge.getUniqueRoomNames.useQuery();
 
   const expandedRoom = useMemo(
     () => rooms.find((r) => r.id === expandedId) ?? null,
@@ -34,14 +50,14 @@ export default function QRCodesClient() {
   const utils = api.useUtils();
 
   const handleGenerateRoom = async () => {
-    if (!newRoomName.trim()) {
-      alert("Please enter a room name");
+    if (!selectedRoom) {
+      alert("Please select a room");
       return;
     }
 
     // Check if room already exists
     const existingRoom = rooms.find(
-      (room) => room.label.toLowerCase() === newRoomName.toLowerCase(),
+      (room) => room.label.toLowerCase() === selectedRoom.name.toLowerCase(),
     );
     if (existingRoom) {
       alert("A room with this name already exists");
@@ -50,19 +66,19 @@ export default function QRCodesClient() {
 
     setLoading(true);
     try {
-      // Generate magic URL for the new room
+      // Generate magic URL for the selected room
       const { magicUrl } = (await utils.judge.generateToken.fetch({
-        roomName: newRoomName.trim(),
+        roomName: selectedRoom.name,
       })) as GenerateTokenResult;
 
       const newRoom: QRRoom = {
-        id: newRoomName.toLowerCase().replace(/\s+/g, "-"),
-        label: newRoomName.trim(),
+        id: selectedRoom.id,
+        label: selectedRoom.name,
         link: magicUrl,
       };
 
       setRooms((prev) => [...prev, newRoom]);
-      setNewRoomName("");
+      setSelectedRoom(null);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       // eslint-disable-next-line no-console
@@ -94,27 +110,66 @@ export default function QRCodesClient() {
         </p>
       </div>
 
-      {/* Room input form */}
+      {/* Room selection form */}
       <div className="mx-auto max-w-md pb-12">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Enter room name..."
-            value={newRoomName}
-            onChange={(e) => setNewRoomName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                void handleGenerateRoom();
-              }
-            }}
-            className="flex-1"
-          />
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Select Room</label>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full justify-between"
+                >
+                  {selectedRoom
+                    ? selectedRoom.name
+                    : "Select room..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput placeholder="Search rooms..." />
+                  <CommandList>
+                    <CommandEmpty>No rooms found.</CommandEmpty>
+                    <CommandGroup>
+                      {availableRooms?.map((room) => (
+                        <CommandItem
+                          key={room.id}
+                          value={room.name}
+                          onSelect={() => {
+                            setSelectedRoom({
+                              id: room.id,
+                              name: room.name,
+                            });
+                            setOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={`mr-2 h-4 w-4 ${
+                              selectedRoom?.id === room.id
+                                ? "opacity-100"
+                                : "opacity-0"
+                            }`}
+                          />
+                          {room.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
           <Button
             onClick={handleGenerateRoom}
-            disabled={loading || !newRoomName.trim()}
-            className="rounded-xl"
+            disabled={loading || !selectedRoom}
+            className="w-full rounded-xl"
             variant="primary"
           >
-            {loading ? "Generating..." : "Add Room"}
+            {loading ? "Generating..." : "Generate QR Code"}
           </Button>
         </div>
       </div>
@@ -183,7 +238,7 @@ export default function QRCodesClient() {
       {rooms.length === 0 && (
         <div className="py-12 text-center">
           <p className="text-muted-foreground">
-            No rooms created yet. Add a room above to get started.
+            No QR codes generated yet. Select a room above to get started.
           </p>
         </div>
       )}
