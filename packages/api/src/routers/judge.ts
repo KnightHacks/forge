@@ -2,7 +2,7 @@ import crypto from "crypto";
 import type { SQL } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { TRPCError } from "@trpc/server";
-import { and, avg, count, distinct, eq, groupBy, gt, like } from "drizzle-orm";
+import { and, avg, count, eq, gt, like } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@forge/db/client";

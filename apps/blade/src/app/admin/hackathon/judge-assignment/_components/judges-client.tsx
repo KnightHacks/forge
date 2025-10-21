@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import QRCode from "react-qr-code";
 import { Check, ChevronsUpDown } from "lucide-react";
+import QRCode from "react-qr-code";
 
 import { Button } from "@forge/ui/button";
 import {
@@ -123,9 +123,7 @@ export default function QRCodesClient() {
                   aria-expanded={open}
                   className="w-full justify-between"
                 >
-                  {selectedRoom
-                    ? selectedRoom.name
-                    : "Select room..."}
+                  {selectedRoom ? selectedRoom.name : "Select room..."}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
