@@ -298,7 +298,7 @@ export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
 
 export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
   Operator: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,
-  Machinist: IS_PROD ? PROD_DISCORD_ROLE_MACHINIST : DEV_DISCORD_ROLE_MACHINIST,
+  Mechanist: IS_PROD ? PROD_DISCORD_ROLE_MACHINIST : DEV_DISCORD_ROLE_MACHINIST,
   Sentinel: IS_PROD ? PROD_DISCORD_ROLE_SENTINELS : DEV_DISCORD_ROLE_SENTINELS,
   Harbinger: IS_PROD ? PROD_DISCORD_ROLE_HARBINGER : DEV_DISCORD_ROLE_HARBINGER,
   Monstologist: IS_PROD
@@ -5603,10 +5603,10 @@ export interface ClassInfo {
 }
 
 export const HACKER_CLASS_INFO: Record<AssignableHackerClass, ClassInfo> = {
-  Machinist: {
+  Mechanist: {
     team: "Humanity",
     teamColor: "#228be6",
-    classPfp: "/khviii/machinist.jpg",
+    classPfp: "/khviii/mechanist.jpg",
   },
   Operator: {
     team: "Humanity",

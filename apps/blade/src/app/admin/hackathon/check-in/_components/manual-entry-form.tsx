@@ -131,7 +131,7 @@ export function ManualEntryForm() {
     assignedClassCheckin:
       | "All"
       | "Operator"
-      | "Machinist"
+      | "Mechanist"
       | "Sentinel"
       | "Harbinger"
       | "Monstologist"
