@@ -28,7 +28,7 @@ export function PointLeaderboard({
   const dummy: HackerClass[] = [
     "Operator",
     "Harbinger",
-    "Machinist",
+    "Mechanist",
     "Sentinel",
     "Monstologist",
   ];
