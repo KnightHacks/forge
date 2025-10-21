@@ -2,7 +2,7 @@ import crypto from "crypto";
 import type { SQL } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { TRPCError } from "@trpc/server";
-import { and, avg, count, eq, gt, like } from "drizzle-orm";
+import { and, avg, count, distinct, eq, gt, groupBy, like } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@forge/db/client";
@@ -578,4 +578,21 @@ export const judgeRouter = {
 
       return { deletedCount: result.rowCount ?? 0 };
     }),
+
+  // Query: get unique room names from judges table
+  getUniqueRoomNames: judgeProcedure.query(async () => {
+    const rooms = await db
+      .select({
+        roomName: Judges.roomName,
+      })
+      .from(Judges)
+      .where(like(Judges.roomName, "%")) // Get all non-null room names
+      .groupBy(Judges.roomName)
+      .orderBy(Judges.roomName);
+
+    return rooms.map((room) => ({
+      id: room.roomName,
+      name: room.roomName,
+    }));
+  }),
 };
