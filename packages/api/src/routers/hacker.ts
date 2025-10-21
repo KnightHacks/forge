@@ -1132,7 +1132,7 @@ export const hackerRouter = {
             .where(
               and(
                 eq(HackerAttendee.hackerId, hacker.id),
-                eq(HackerAttendee.hackathonId, event.hackathonId),
+                eq(HackerAttendee.hackathonId, input.hackathonId),
               ),
             );
 
