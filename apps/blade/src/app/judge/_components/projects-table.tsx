@@ -76,6 +76,15 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
     hackathonId: hackathonId ?? "",
   });
 
+  // Get submissions that have already been judged by the selected judge
+  const { data: judgedSubmissions = [] } =
+    api.judge.getJudgedSubmissions.useQuery(
+      {},
+      {
+        enabled: !!selectedJudgeId,
+      },
+    );
+
   const submissions = data as Submission[];
   const judgesList = judges as Judge[];
 
@@ -126,6 +135,16 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
   const filteredData = useMemo(() => {
     let filtered = submissions;
 
+    // Filter out submissions already judged by the selected judge
+    if (selectedJudgeId && judgedSubmissions.length > 0) {
+      const judgedSubmissionIds = new Set(
+        judgedSubmissions
+          .filter((js) => js.judgeId === selectedJudgeId)
+          .map((js) => js.submissionId),
+      );
+      filtered = filtered.filter((p) => !judgedSubmissionIds.has(p.id));
+    }
+
     // Filter by challenge ID
     if (challengeFilter && challengeFilter !== "all") {
       filtered = filtered.filter((p) => p.challengeId === challengeFilter);
@@ -143,7 +162,13 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
     }
 
     return filtered;
-  }, [submissions, challengeFilter, searchQuery]);
+  }, [
+    submissions,
+    challengeFilter,
+    searchQuery,
+    selectedJudgeId,
+    judgedSubmissions,
+  ]);
 
   if (isLoading) return <div>Loading submissions...</div>;
   if (error)

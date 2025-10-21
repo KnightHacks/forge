@@ -2,7 +2,7 @@ import crypto from "crypto";
 import type { SQL } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { TRPCError } from "@trpc/server";
-import { and, avg, count, distinct, eq, gt, groupBy, like } from "drizzle-orm";
+import { and, avg, count, distinct, eq, groupBy, gt, like } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@forge/db/client";
@@ -422,6 +422,7 @@ export const judgeRouter = {
           // From JudgedSubmission, all ratings
           id: JudgedSubmission.id,
           submissionId: JudgedSubmission.submissionId,
+          judgeId: JudgedSubmission.judgeId,
           originality_rating: JudgedSubmission.originality_rating,
           design_rating: JudgedSubmission.design_rating,
           technical_understanding_rating:
