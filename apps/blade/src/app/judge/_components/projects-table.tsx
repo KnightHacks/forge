@@ -192,7 +192,7 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
                   variant="outline"
                   role="combobox"
                   aria-expanded={openJudge}
-                  className="w-full justify-between"
+                  className="w-full justify-between overflow-hidden"
                   disabled={judgesLoading}
                 >
                   {selectedJudge
@@ -280,7 +280,7 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
               <label htmlFor="challenge-filter" className="text-sm font-medium">
                 Filter by Challenge:
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 overflow-hidden">
                 <Select
                   value={challengeFilter}
                   onValueChange={setChallengeFilter}
