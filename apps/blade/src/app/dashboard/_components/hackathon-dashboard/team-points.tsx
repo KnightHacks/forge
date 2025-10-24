@@ -54,7 +54,7 @@ export function TeamPoints({
   const monstrosityHex = "#c04b3d";
 
   return (
-    <Card className="bg-gradient-to-tr from-background/50 to-primary/5 shadow-lg backdrop-blur-sm gap-2">
+    <Card className="gap-2 bg-gradient-to-tr from-background/50 to-primary/5 shadow-lg backdrop-blur-sm">
       <CardHeader className="py-0">
         <div className="flex w-full flex-row justify-between text-sm sm:text-lg">
           <div

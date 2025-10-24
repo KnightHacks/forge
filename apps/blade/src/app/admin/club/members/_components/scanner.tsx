@@ -5,7 +5,8 @@ import { AwardIcon, WrenchIcon } from "lucide-react";
 import { QrReader } from "react-qr-reader";
 import { z } from "zod";
 
-import { HACKER_CLASSES, HackerClass } from "@forge/db/schemas/knight-hacks";
+import type { HackerClass } from "@forge/db/schemas/knight-hacks";
+import { HACKER_CLASSES } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -26,9 +27,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { toast } from "@forge/ui/toast";
 
+import { getClassTeam } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import ToggleButton from "../../../../admin/hackathon/hackers/_components/toggle-button";
-import { getClassTeam } from "~/lib/utils";
 
 const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   const { data: events } = api.event.getEvents.useQuery();
@@ -77,7 +78,9 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   const hackerEventCheckIn = api.hacker.eventCheckIn.useMutation({
     onSuccess(opts) {
       toast.success(opts.message);
-      setErrorColor(opts.messageforHackers.includes("[ERROR]") ? "text-red-500" : "");
+      setErrorColor(
+        opts.messageforHackers.includes("[ERROR]") ? "text-red-500" : "",
+      );
       setFirstName(opts.firstName);
       setLastName(opts.lastName);
       setAssignedClass(opts.class ?? "No class assigned");
@@ -314,11 +317,13 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
           <div className="fixed inset-0 z-[1000] flex w-full flex-col items-center justify-center gap-6 bg-black p-10 text-center text-3xl font-bold">
             <Button
               onClick={closePersistentDialog}
-              className="absolute text-lg font-semibold top-10 w-56"
+              className="absolute top-10 w-56 text-lg font-semibold"
             >
               CLOSE
             </Button>
-            <div className="border-b pb-2 w-56 -mb-2 text-lg font-bold text-muted-foreground">CHECKED IN</div>
+            <div className="-mb-2 w-56 border-b pb-2 text-lg font-bold text-muted-foreground">
+              CHECKED IN
+            </div>
             <div className="flex flex-col gap-1">
               <div className="text-sm text-muted-foreground">FIRST</div>
               <div>{firstName}</div>
@@ -329,14 +334,28 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
             </div>
             <div className="flex flex-col gap-1">
               <div className="text-sm text-muted-foreground">CLASS</div>
-              <div className="text-2xl" style={{color: getClassTeam(assignedClass as HackerClass).teamColor, textShadow: `0 0 10px ${getClassTeam(assignedClass as HackerClass).teamColor}, 0 0 20px ${getClassTeam(assignedClass as HackerClass).teamColor}`}}>{assignedClass}</div>
+              <div
+                className="text-2xl"
+                style={{
+                  color: getClassTeam(assignedClass as HackerClass).teamColor,
+                  textShadow: `0 0 10px ${getClassTeam(assignedClass as HackerClass).teamColor}, 0 0 20px ${getClassTeam(assignedClass as HackerClass).teamColor}`,
+                }}
+              >
+                {assignedClass}
+              </div>
             </div>
-            <div className="border-t w-56 -my-2"/>
-            {errorColor != "" ?
-              <div className={`top-10 w-56 text-base font-normal text-white p-1 bg-red-900 border-red-500 border rounded-sm whitespace-pre-line`}>{checkInMessage}</div>
-              :
-              <div className="top-10 w-56 text-base font-normal whitespace-pre-line">{checkInMessage}</div>
-            }
+            <div className="-my-2 w-56 border-t" />
+            {errorColor != "" ? (
+              <div
+                className={`top-10 w-56 whitespace-pre-line rounded-sm border border-red-500 bg-red-900 p-1 text-base font-normal text-white`}
+              >
+                {checkInMessage}
+              </div>
+            ) : (
+              <div className="top-10 w-56 whitespace-pre-line text-base font-normal">
+                {checkInMessage}
+              </div>
+            )}
           </div>
         )}
       </DialogContent>
