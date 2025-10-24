@@ -54,7 +54,7 @@ export default function HackingCountdown() {
           <div className="flex flex-wrap items-center justify-center gap-1.5 shadow-lg sm:gap-2 lg:gap-3">
             {/* Days */}
             <div className="flex items-center gap-1 sm:gap-2">
-              <Card className="shadow-md">
+              <Card className="shadow-md p-0">
                 <CardContent className="flex flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
                   <div className="text-xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
                     {formatNumber(timeLeft.days)}
@@ -72,7 +72,7 @@ export default function HackingCountdown() {
 
             {/* Hours */}
             <div className="flex items-center gap-1 shadow-lg sm:gap-2">
-              <Card className="shadow-md">
+              <Card className="shadow-md p-0">
                 <CardContent className="flex flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
                   <div className="text-xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
                     {formatNumber(timeLeft.hours)}
@@ -90,7 +90,7 @@ export default function HackingCountdown() {
 
             {/* Minutes */}
             <div className="flex items-center gap-1 shadow-lg sm:gap-2">
-              <Card className="shadow-md">
+              <Card className="shadow-md p-0">
                 <CardContent className="flex flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
                   <div className="text-xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
                     {formatNumber(timeLeft.minutes)}
@@ -107,7 +107,7 @@ export default function HackingCountdown() {
             </div>
 
             {/* Seconds */}
-            <Card className="shadow-lg">
+            <Card className="shadow-lg p-0">
               <CardContent className="flex flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
                 <div className="text-xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
                   {formatNumber(timeLeft.seconds)}

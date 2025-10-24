@@ -1064,11 +1064,9 @@ export const hackerRouter = {
 
       const eventTag = event.tag;
       let discordId: string | null = null;
-      let isVIP = false;
-      if (eventTag == "Check-in") {
-        discordId = await resolveDiscordUserId(hacker.discordUser);
-        isVIP = discordId ? await isDiscordVIP(discordId) : false;
-      }
+
+      discordId = await resolveDiscordUserId(hacker.discordUser);
+      const isVIP = discordId ? await isDiscordVIP(discordId) : false;
 
       let assignedClass: HackerClass | null = hackerAttendee.class ?? null;
 
@@ -1096,36 +1094,30 @@ export const hackerRouter = {
             return;
           }
 
-          let pick: HackerClass;
-          if (isVIP) {
-            pick = "VIP";
-          } else {
-            const totalHackerinClass = await Promise.all(
-              HACKER_CLASSES.map(async (cls) => {
-                const rows = await tx
-                  .select({ c: count() })
-                  .from(HackerAttendee)
-                  .where(
-                    and(
-                      eq(HackerAttendee.hackathonId, input.hackathonId),
-                      eq(HackerAttendee.class, cls),
-                    ),
-                  );
-                return { cls, count: Number(rows[0]?.c ?? 0) } as const;
-              }),
-            );
+          const totalHackerinClass = await Promise.all(
+            HACKER_CLASSES.map(async (cls) => {
+              const rows = await tx
+                .select({ c: count() })
+                .from(HackerAttendee)
+                .where(
+                  and(
+                    eq(HackerAttendee.hackathonId, input.hackathonId),
+                    eq(HackerAttendee.class, cls),
+                  ),
+                );
+              return { cls, count: Number(rows[0]?.c ?? 0) } as const;
+            }),
+          );
 
-            const leastPopulatedClass = Math.min(
-              ...totalHackerinClass.map((c) => c.count),
-            );
-            const candidates = totalHackerinClass
-              .filter((c) => c.count === leastPopulatedClass)
-              .map((c) => c.cls);
+          const leastPopulatedClass = Math.min(
+            ...totalHackerinClass.map((c) => c.count),
+          );
+          const candidates = totalHackerinClass
+            .filter((c) => c.count === leastPopulatedClass)
+            .map((c) => c.cls);
 
-            pick =
-              candidates[Math.floor(Math.random() * candidates.length)] ??
-              HACKER_CLASSES[0];
-          }
+          const pick:HackerClass = candidates[Math.floor(Math.random() * candidates.length)] ?? HACKER_CLASSES[0];
+          
           await tx
             .update(HackerAttendee)
             .set({ class: pick, status: "checkedin" })
@@ -1153,7 +1145,7 @@ export const hackerRouter = {
               `Assigned role ${KH_EVENT_ROLE_ID} to user ${discordId}`,
             );
             // VIP will already be given the discord role ahead of time, so no need to assign again
-            if (assignedClass && !isVIP) {
+            if (assignedClass) {
               await addRoleToMember(
                 discordId,
                 CLASS_ROLE_ID[assignedClass as AssignableHackerClass],
@@ -1176,12 +1168,16 @@ export const hackerRouter = {
       if (
         input.assignedClassCheckin !== "All" &&
         hackerAttendee.class !== input.assignedClassCheckin &&
-        hackerAttendee.class !== "VIP"
+        !isVIP
       ) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: `Only ${input.assignedClassCheckin} hackers can check in. Hacker has class ${hackerAttendee.class}`,
-        });
+        return {
+          message: `Hacker ${hacker.firstName} ${hacker.lastName} has already checked into this event!`,
+          firstName: hacker.firstName,
+          lastName: hacker.lastName,
+          class: assignedClass,
+          messageforHackers: `[ERROR]\nOnly ${input.assignedClassCheckin} hackers can check in. Hacker has class ${hackerAttendee.class}`,
+          eventName: eventTag,
+        };
       }
 
       const duplicates = await db
@@ -1195,10 +1191,14 @@ export const hackerRouter = {
         );
 
       if (duplicates.length > 0 && !input.repeatedCheckin)
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: `${hacker.firstName} ${hacker.lastName} is already checked in for the event.`,
-        });
+        return {
+          message: `Hacker ${hacker.firstName} ${hacker.lastName} has already checked into this event!`,
+          firstName: hacker.firstName,
+          lastName: hacker.lastName,
+          class: assignedClass,
+          messageforHackers: "[ERROR]\nThe hacker has already checked into this event.",
+          eventName: eventTag,
+        };
       await db.insert(HackerEventAttendee).values({
         hackerAttId: hackerAttendee.id,
         eventId: input.eventId,
