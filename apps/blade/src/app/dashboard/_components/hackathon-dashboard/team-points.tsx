@@ -54,8 +54,8 @@ export function TeamPoints({
   const monstrosityHex = "#c04b3d";
 
   return (
-    <Card className="bg-gradient-to-tr from-background/50 to-primary/5 shadow-lg backdrop-blur-sm">
-      <CardHeader className="py-4">
+    <Card className="bg-gradient-to-tr from-background/50 to-primary/5 shadow-lg backdrop-blur-sm gap-2">
+      <CardHeader className="py-0">
         <div className="flex w-full flex-row justify-between text-sm sm:text-lg">
           <div
             className="font-semibold tracking-wider"
@@ -79,7 +79,7 @@ export function TeamPoints({
           >{`${HACKER_TEAMS[1].toUpperCase()}${team.team == HACKER_TEAMS[1] ? " <" : ""}`}</div>
         </div>
       </CardHeader>
-      <CardContent className="pb-2">
+      <CardContent className="py-0">
         <div className="flex flex-row justify-between gap-1 rounded-xl border p-1">
           <div
             className="flex flex-row justify-end rounded-l-lg border border-[#4075b7] p-2 px-1 transition-all duration-200 sm:px-2"
