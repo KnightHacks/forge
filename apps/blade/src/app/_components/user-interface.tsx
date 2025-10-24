@@ -52,10 +52,7 @@ export async function UserInterface() {
 
   return (
     <div className="flex justify-center">
-      <Tabs
-        defaultValue={!member.value ? "Hacker" : "Member"}
-        className="max-w-8xl relative w-full"
-      >
+      <Tabs defaultValue="Hacker" className="max-w-8xl relative w-full">
         <div className="flex justify-center pb-8">
           <div className="w-full max-w-4xl">
             <h1 className="mb-4 text-center text-2xl font-bold sm:text-3xl">

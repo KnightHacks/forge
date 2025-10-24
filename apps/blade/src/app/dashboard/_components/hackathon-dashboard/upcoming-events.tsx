@@ -17,7 +17,7 @@ export default async function UpcomingEvents() {
   const events = await api.event.getEvents();
 
   const now = Date.now();
-  const fiveHoursLater = now + 10 * 60 * 60 * 1000;
+  const fiveHoursLater = now + 5 * 60 * 60 * 1000;
 
   const upcomingEvents = events
     .filter((event) => {
