@@ -1116,8 +1116,10 @@ export const hackerRouter = {
             .filter((c) => c.count === leastPopulatedClass)
             .map((c) => c.cls);
 
-          const pick:HackerClass = candidates[Math.floor(Math.random() * candidates.length)] ?? HACKER_CLASSES[0];
-          
+          const pick: HackerClass =
+            candidates[Math.floor(Math.random() * candidates.length)] ??
+            HACKER_CLASSES[0];
+
           await tx
             .update(HackerAttendee)
             .set({ class: pick, status: "checkedin" })
@@ -1196,7 +1198,8 @@ export const hackerRouter = {
           firstName: hacker.firstName,
           lastName: hacker.lastName,
           class: assignedClass,
-          messageforHackers: "[ERROR]\nThe hacker has already checked into this event.",
+          messageforHackers:
+            "[ERROR]\nThe hacker has already checked into this event.",
           eventName: eventTag,
         };
       await db.insert(HackerEventAttendee).values({

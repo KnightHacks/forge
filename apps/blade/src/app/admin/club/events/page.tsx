@@ -35,7 +35,7 @@ export default async function Events() {
             <h1 className="pb-4 text-center text-3xl font-extrabold tracking-tight sm:text-5xl">
               Club Events Dashboard
             </h1>
-            <div className="mb-2 flex flex-col sm:flex-row justify-center gap-2">
+            <div className="mb-2 flex flex-col justify-center gap-2 sm:flex-row">
               <ScannerPopUp eventType="Member" />
               <AddPoints type="Member" />
             </div>
