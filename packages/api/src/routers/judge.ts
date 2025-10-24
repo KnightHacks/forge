@@ -214,7 +214,7 @@ export const judgeRouter = {
         input.ttlSeconds ?? 15 * 60,
       );
 
-      const magicUrl = `${env.BLADE_URL}judge/activate?token=${encodeURIComponent(
+      const magicUrl = `${env.BLADE_URL}/judge/activate?token=${encodeURIComponent(
         token,
       )}`;
 
