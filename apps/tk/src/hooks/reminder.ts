@@ -208,12 +208,27 @@ async function getHackEvents(hId: string) {
       orderBy: (evs, { asc }) => asc(evs.start_datetime),
       where: (ev, { eq }) => eq(ev.hackathonId, hId),
     })
-  ).filter((ev) => {
-    // returns minutes from now that the event starts in
-    const start = (ev.start_datetime.getTime() - Date.now()) / 60000;
-    // event must start in 15 minutes, padding of 1 minute
-    return start <= 16 && start >= 14;
-  });
+  )
+    .filter((ev) => {
+      // Add 1 day (24h) to both start and end before comparison
+      const adjustedStart = new Date(
+        ev.start_datetime.getTime() + 24 * 60 * 60 * 1000,
+      );
+
+      // minutes until adjusted event starts
+      const start = (adjustedStart.getTime() - Date.now()) / 60000;
+
+      // event must start in 15 minutes (±1 minute padding)
+      return start <= 16 && start >= 14;
+    })
+    .map((ev) => ({
+      // also return the adjusted times so later code uses the shifted values
+      ...ev,
+      start_datetime: new Date(
+        ev.start_datetime.getTime() + 24 * 60 * 60 * 1000,
+      ),
+      end_datetime: new Date(ev.end_datetime.getTime() + 24 * 60 * 60 * 1000),
+    }));
 
   return events;
 }
