@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Pencil } from "lucide-react";
 import { z } from "zod";
 
 import type { InsertEvent } from "@forge/db/schemas/knight-hacks";
-import { EVENT_TAGS } from "@forge/consts/knight-hacks";
+import { EVENT_POINTS, EVENT_TAGS } from "@forge/consts/knight-hacks";
 import { InsertEventSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -67,6 +67,7 @@ const UpdateFormSchema = InsertEventSchema.omit({
   endHour: z.string(),
   endMinute: z.string(),
   endAmPm: z.enum(amPmOptions),
+  points: z.number().optional(),
 });
 
 function parseDateTime(value: string | Date) {
@@ -156,8 +157,16 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       endHour: endHour,
       endMinute: endMinute,
       endAmPm: endAmPm as "AM" | "PM",
+      points: EVENT_POINTS[event.tag] ?? 0,
     },
   });
+
+  // Auto-update points when tag changes
+  useEffect(() => {
+    const currentTag = form.getValues("tag");
+    const points = EVENT_POINTS[currentTag] || 0;
+    form.setValue("points", points);
+  }, [form.watch("tag")]);
 
   const onSubmit = form.handleSubmit((values) => {
     setIsLoading(true);
@@ -226,6 +235,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
         hackathons?.find((v) => {
           return v.id == values.hackathonId;
         })?.displayName ?? null,
+      points: values.points,
     });
   });
 

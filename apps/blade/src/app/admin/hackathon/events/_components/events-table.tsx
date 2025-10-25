@@ -149,6 +149,16 @@ export function EventsTable() {
                 setSortOrder={setSortOrder}
               />
             </TableHead>
+            <TableHead className="text-right">
+              <SortButton
+                field="points"
+                label="Points"
+                sortField={sortField}
+                sortOrder={sortOrder}
+                setSortField={setSortField}
+                setSortOrder={setSortOrder}
+              />
+            </TableHead>
             <TableHead className="text-center">
               <Label>Event Details</Label>
             </TableHead>
@@ -165,7 +175,7 @@ export function EventsTable() {
           <TableRow>
             <TableCell
               className="text- bg-muted/50 font-bold sm:text-center"
-              colSpan={8}
+              colSpan={9}
             >
               Upcoming Events
             </TableCell>
@@ -196,6 +206,10 @@ export function EventsTable() {
                   />
                 </TableCell>
 
+                <TableCell className="text-right">
+                  {event.points ?? 0}
+                </TableCell>
+
                 <TableCell className="text-center">
                   <EventDetailsButton
                     event={{ ...event, hackathonName: hackathonName }}
@@ -218,7 +232,7 @@ export function EventsTable() {
           <TableRow>
             <TableCell
               className="bg-muted/50 text-left font-bold sm:text-center"
-              colSpan={8}
+              colSpan={9}
             >
               Previous Events
             </TableCell>
@@ -249,6 +263,10 @@ export function EventsTable() {
                   />
                 </TableCell>
 
+                <TableCell className="text-right">
+                  {event.points ?? 0}
+                </TableCell>
+
                 <TableCell className="text-center">
                   <EventDetailsButton
                     event={{ ...event, hackathonName: hackathonName }}
@@ -273,6 +291,12 @@ export function EventsTable() {
             <TableCell className="text-right">
               {sortedEvents.reduce(
                 (sum, event) => sum + event.numHackerAttended,
+                0,
+              )}
+            </TableCell>
+            <TableCell className="text-right">
+              {sortedEvents.reduce(
+                (sum, event) => sum + (event.points ?? 0),
                 0,
               )}
             </TableCell>
