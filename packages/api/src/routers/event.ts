@@ -450,7 +450,7 @@ export const eventRouter = {
           ...input,
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
-          points: input.hackathonId ? 0 : EVENT_POINTS[input.tag] || 0,
+          points: input.hackathonId ? EVENT_POINTS[input.tag] || 0 : 0,
         })
         .where(eq(Event.id, input.id));
     }),
