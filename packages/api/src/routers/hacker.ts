@@ -492,7 +492,7 @@ export const hackerRouter = {
 
       await db.insert(Hacker).values({
         ...hackerData,
-        discordUser: ctx.session.user.name ?? "",
+        discordUser: ctx.session.user.name,
         userId,
         age: newAge,
         phoneNumber:

@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { DiscordLogoIcon } from "@radix-ui/react-icons";
@@ -31,7 +33,6 @@ export function Hero() {
                     size="lg"
                     className="w-full"
                     formAction={async () => {
-                      "use server";
                       await signIn("discord", {
                         redirectTo: "/dashboard",
                       });
