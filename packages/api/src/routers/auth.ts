@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
 import type { PermissionIndex } from "@forge/consts/knight-hacks";
-import { invalidateSessionToken } from "@forge/auth";
+import { invalidateSessionToken } from "@forge/auth/server";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
 import {

@@ -10,7 +10,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import type { Session } from "@forge/auth";
+import type { Session } from "@forge/auth/server";
 import { validateToken } from "@forge/auth/server";
 
 import {

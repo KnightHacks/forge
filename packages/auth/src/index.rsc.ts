@@ -10,7 +10,9 @@ import {
 export { validateToken, invalidateSessionToken, isSecureContext };
 
 export type Session = Omit<typeof betterAuthInstance.$Infer.Session, "user"> & {
-  user: (typeof betterAuthInstance.$Infer.Session)["user"];
+  user: (typeof betterAuthInstance.$Infer.Session)["user"] & {
+    discordUserId: string;
+  };
 };
 
 export const handlers = {
