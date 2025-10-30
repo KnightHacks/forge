@@ -1,86 +1,100 @@
-import type {
-  DefaultSession,
-  NextAuthConfig,
-  Session as NextAuthSession,
-} from "next-auth";
-import type { DiscordProfile } from "next-auth/providers/discord";
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import Discord from "next-auth/providers/discord";
+import { randomUUID } from "crypto";
+import { headers } from "next/headers";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
 import { db } from "@forge/db/client";
-import { Account, Session, User } from "@forge/db/schemas/auth";
+import { Account, Session, User, Verifications } from "@forge/db/schemas/auth";
 
 import { env } from "./env";
 
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      discordUserId: string;
-    } & DefaultSession["user"];
-  }
-  interface User {
-    discordUserId: string;
-  }
-}
-
-const adapter = DrizzleAdapter(db, {
-  usersTable: User,
-  accountsTable: Account,
-  sessionsTable: Session,
-});
-
 export const isSecureContext = env.NODE_ENV !== "development";
 
-export const authConfig = {
-  adapter,
-  providers: [
-    Discord({
-      clientId: env.DISCORD_CLIENT_ID,
-      clientSecret: env.DISCORD_CLIENT_SECRET,
-      profile: (profile: DiscordProfile) => {
-        return {
-          discordUserId: profile.id,
-          name: profile.username,
-          email: profile.email ?? "",
-          image: profile.avatar,
-          id: profile.id,
-        };
-      },
-    }),
-  ],
-  callbacks: {
-    session: (opts) => {
-      if (!("user" in opts))
-        throw new Error("unreachable with session strategy");
-      return {
-        ...opts.session,
-        user: {
-          ...opts.session.user,
-          id: opts.user.id,
-          discordUserId: opts.user.discordUserId,
-        },
-      };
+export const auth = betterAuth({
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema: {
+      user: User,
+      account: Account,
+      session: Session,
+      verification: Verifications,
+    },
+  }),
+  secret: env.BETTER_AUTH_SECRET,
+
+  session: {
+    fields: {
+      expiresAt: "expires",
+      token: "sessionToken",
     },
   },
-} satisfies NextAuthConfig;
 
-export const validateToken = async (
-  token: string,
-): Promise<NextAuthSession | null> => {
-  const sessionToken = token.slice("Bearer ".length);
-  const session = await adapter.getSessionAndUser?.(sessionToken);
-  return session
-    ? {
-        user: {
-          ...session.user,
-        },
-        expires: session.session.expires.toISOString(),
-      }
-    : null;
+  account: {
+    fields: {
+      accountId: "providerAccountId",
+      providerId: "provider",
+      refreshToken: "refresh_token",
+      accessToken: "access_token",
+      accessTokenExpiresAt: "expires_at",
+      idToken: "id_token",
+    },
+  },
+
+  socialProviders: {
+    discord: {
+      clientId: env.DISCORD_CLIENT_ID,
+      clientSecret: env.DISCORD_CLIENT_SECRET,
+      mapProfileToUser: (profile) => {
+        return {
+          id: randomUUID(),
+          name: profile.global_name ?? profile.username,
+          email: profile.email,
+          image: profile.avatar
+            ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
+            : undefined,
+          emailVerified: profile.verified || false,
+          discordUserId: profile.id, // Map Discord ID here
+        };
+      },
+    },
+  },
+
+  baseURL: "http://localhost:3000",
+  user: {
+    additionalFields: {
+      discordUserId: {
+        type: "string",
+        required: true,
+      },
+    },
+  },
+
+  advanced: {
+    useSecureCookies: isSecureContext,
+    database: {
+      generateId: () => randomUUID(),
+    },
+  },
+});
+
+// Validate session token from request headers
+export const validateToken = async () => {
+  const headersList = headers();
+  const session = await auth.api.getSession({ headers: headersList });
+
+  if (!session) return null;
+  return {
+    user: session.user,
+    session: session.session,
+    expires: session.session.expiresAt.toISOString(),
+  };
 };
 
+// Revoke session token
 export const invalidateSessionToken = async (token: string) => {
-  const sessionToken = token.slice("Bearer ".length);
-  await adapter.deleteSession?.(sessionToken);
+  const sessionToken = token.replace(/^Bearer\s+/i, "");
+  await auth.api.revokeSession({
+    body: { token: sessionToken },
+    headers: new Headers({ Authorization: `Bearer ${sessionToken}` }),
+  });
 };

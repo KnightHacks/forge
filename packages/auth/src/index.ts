@@ -1,15 +1,53 @@
-import NextAuth from "next-auth";
+import { createAuthClient } from "better-auth/react";
 
-import { authConfig } from "./config";
+export const authClient = createAuthClient({
+  baseURL: "http://localhost:3000",
+  plugins: [
+    {
+      id: "discord-user",
+      $InferServerPlugin: {} as {
+        id: string;
+        schema: {
+          user: {
+            fields: {
+              discordUserId: { type: "string" };
+            };
+          };
+        };
+      },
+    },
+  ],
+});
 
-export type { Session } from "next-auth";
+export type Session = Omit<typeof authClient.$Infer.Session, "user"> & {
+  user: (typeof authClient.$Infer.Session)["user"] & {
+    discordUserId: string;
+  };
+};
 
-const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+export const auth = async () => {
+  const sess = await authClient.getSession();
+  if (!sess.data) return null;
+  return sess.data;
+};
 
-export { handlers, auth, signIn, signOut };
+export const signIn = async (
+  provider: string,
+  { redirectTo }: { redirectTo: string },
+) => {
+  await authClient.signIn.social({
+    provider: provider,
+    callbackURL: redirectTo,
+  });
+};
 
-export {
-  invalidateSessionToken,
-  validateToken,
-  isSecureContext,
-} from "./config";
+export const signOut = async () => {
+  await authClient.signOut();
+};
+
+export const invalidateSessionToken = async (token: string) => {
+  const sessionToken = token.replace(/^Bearer\s+/i, "");
+  await authClient.revokeSession({
+    token: sessionToken,
+  });
+};
