@@ -53,13 +53,14 @@ export const auth = betterAuth({
             ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
             : undefined,
           emailVerified: profile.verified || false,
-          discordUserId: profile.id, // Map Discord ID here
+          discordUserId: profile.id,
         };
       },
     },
   },
 
-  baseURL: "http://localhost:3000",
+  baseURL:
+    env.NODE_ENV === "production" ? env.BLADE_URL : "http://localhost:3000",
   user: {
     additionalFields: {
       discordUserId: {
@@ -77,7 +78,6 @@ export const auth = betterAuth({
   },
 });
 
-// Validate session token from request headers
 export const validateToken = async () => {
   const headersList = headers();
   const session = await auth.api.getSession({ headers: headersList });
@@ -90,7 +90,6 @@ export const validateToken = async () => {
   };
 };
 
-// Revoke session token
 export const invalidateSessionToken = async (token: string) => {
   const sessionToken = token.replace(/^Bearer\s+/i, "");
   await auth.api.revokeSession({
