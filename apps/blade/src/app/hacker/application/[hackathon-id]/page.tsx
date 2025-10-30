@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { auth, signIn } from "@forge/auth";
+import { auth } from "@forge/auth";
 
 import { api } from "~/trpc/server";
 import { HackerFormPage } from "../_components/hacker-application-form";
@@ -14,28 +14,28 @@ export default async function HackerApplicationPage({
   const session = await auth();
 
   if (session == null) {
-    async function signInAction() {
-      "use server";
-      await signIn("discord", {
-        redirectTo: `/hacker/application/${params["hackathon-id"]}`,
-      });
-    }
+    return redirect("/");
+    // async function signInAction() {
+    //   await signIn("discord", {
+    //     redirectTo: `/hacker/application/${params["hackathon-id"]}`,
+    //   });
+    // }
 
-    return (
-      <>
-        <form id="auto-sign-in" action={signInAction} />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: "document.getElementById('auto-sign-in').requestSubmit();",
-          }}
-        />
-        <noscript>
-          <form action={signInAction}>
-            <button type="submit">Continue to Discord sign‑in</button>
-          </form>
-        </noscript>
-      </>
-    );
+    // return (
+    //   <>
+    //     <form id="auto-sign-in" action={signInAction} />
+    //     <script
+    //       dangerouslySetInnerHTML={{
+    //         __html: "document.getElementById('auto-sign-in').requestSubmit();",
+    //       }}
+    //     />
+    //     <noscript>
+    //       <form action={signInAction}>
+    //         <button type="submit">Continue to Discord sign‑in</button>
+    //       </form>
+    //     </noscript>
+    //   </>
+    // );
   }
 
   try {
