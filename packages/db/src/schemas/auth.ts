@@ -10,16 +10,16 @@ export const User = createTable("user", (t) => ({
   discordUserId: t.varchar({ length: 255 }).notNull(),
   name: t.varchar({ length: 255 }),
   email: t.varchar({ length: 255 }),
-  emailVerified: t.boolean().notNull().default(false), 
+  emailVerified: t.boolean().notNull().default(false),
   image: t.varchar({ length: 255 }),
-    createdAt: t
-      .timestamp({ mode: "date", withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: t
-      .timestamp({ mode: "date", withTimezone: true })
-      .defaultNow()
-      .notNull(),
+  createdAt: t
+    .timestamp({ mode: "date", withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: t
+    .timestamp({ mode: "date", withTimezone: true })
+    .defaultNow()
+    .notNull(),
 }));
 
 export const UserRelations = relations(User, ({ many, one }) => ({
@@ -30,7 +30,7 @@ export const UserRelations = relations(User, ({ many, one }) => ({
 export const Account = createTable(
   "account",
   (t) => ({
-		id: t.text().notNull(),
+    id: t.text().notNull(),
     userId: t
       .uuid()
       .notNull()
@@ -39,7 +39,7 @@ export const Account = createTable(
     providerAccountId: t.varchar({ length: 255 }).notNull(),
     refresh_token: t.varchar({ length: 255 }),
     access_token: t.text(),
-		expires_at: t.timestamp({ mode: "date", withTimezone: true }),
+    expires_at: t.timestamp({ mode: "date", withTimezone: true }),
     scope: t.varchar({ length: 255 }),
     id_token: t.text(),
     createdAt: t
@@ -63,18 +63,27 @@ export const AccountRelations = relations(Account, ({ one }) => ({
 }));
 
 export const Session = createTable("session", (t) => ({
-	id: t.text().notNull().primaryKey(),
+  id: t.text().notNull().primaryKey(),
   sessionToken: t.varchar({ length: 255 }).notNull(),
-  userId: t.uuid().notNull().references(() => User.id, { onDelete: "cascade" }),
+  userId: t
+    .uuid()
+    .notNull()
+    .references(() => User.id, { onDelete: "cascade" }),
   expires: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
-  ipAddress: t.varchar({ length: 255 }),          // add
-  userAgent: t.varchar({ length: 1024 }),         // add
-  createdAt: t.timestamp({ mode: "date", withTimezone: true }).defaultNow().notNull(),
-  updatedAt: t.timestamp({ mode: "date", withTimezone: true }).defaultNow().notNull(),
+  ipAddress: t.varchar({ length: 255 }), // add
+  userAgent: t.varchar({ length: 1024 }), // add
+  createdAt: t
+    .timestamp({ mode: "date", withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: t
+    .timestamp({ mode: "date", withTimezone: true })
+    .defaultNow()
+    .notNull(),
 }));
 
 export const SessionRelations = relations(Session, ({ one }) => ({
-	user: one(User, { fields: [Session.userId], references: [User.id] }),
+  user: one(User, { fields: [Session.userId], references: [User.id] }),
 }));
 
 export const JudgeSession = createTable("judge_session", (t) => ({
@@ -88,10 +97,10 @@ export const JudgeSession = createTable("judge_session", (t) => ({
 }));
 
 export const Verifications = createTable("verification", (t) => ({
-  id: t.text().primaryKey().notNull(),       
-  identifier: t.text().notNull(),            
-  value: t.text().notNull(),                 
-  expiresAt: t.timestamp().notNull(),        
-  createdAt: t.timestamp().defaultNow().notNull(),  
-  updatedAt: t.timestamp().defaultNow().notNull(),  
+  id: t.text().primaryKey().notNull(),
+  identifier: t.text().notNull(),
+  value: t.text().notNull(),
+  expiresAt: t.timestamp().notNull(),
+  createdAt: t.timestamp().defaultNow().notNull(),
+  updatedAt: t.timestamp().defaultNow().notNull(),
 }));
