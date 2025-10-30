@@ -1,7 +1,9 @@
 import { createAuthClient } from "better-auth/react";
 
+import { env } from "./env";
+
 export const authClient = createAuthClient({
-  baseURL: "http://localhost:3000",
+  baseURL: env.NEXT_PUBLIC_BLADE_URL,
   plugins: [
     {
       id: "discord-user",
@@ -18,12 +20,6 @@ export const authClient = createAuthClient({
     },
   ],
 });
-
-export type Session = Omit<typeof authClient.$Infer.Session, "user"> & {
-  user: (typeof authClient.$Infer.Session)["user"] & {
-    discordUserId: string;
-  };
-};
 
 export const auth = async () => {
   const sess = await authClient.getSession();
@@ -43,11 +39,5 @@ export const signIn = async (
 
 export const signOut = async () => {
   await authClient.signOut();
-};
-
-export const invalidateSessionToken = async (token: string) => {
-  const sessionToken = token.replace(/^Bearer\s+/i, "");
-  await authClient.revokeSession({
-    token: sessionToken,
-  });
+  if (typeof window !== "undefined") window.location.reload();
 };
