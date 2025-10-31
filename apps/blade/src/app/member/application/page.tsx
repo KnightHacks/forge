@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@forge/auth";
+import { auth, signIn } from "@forge/auth/server";
 
 import { api } from "~/trpc/server";
 import { MemberApplicationForm } from "./_components/member-application-form";
@@ -9,11 +9,10 @@ export default async function MemberApplicationPage() {
   const session = await auth();
 
   if (session == null) {
-    return redirect("/");
+    signIn("discord", { redirectTo: "/member/application" });
     // async function signInAction() {
     //   await signIn("discord", { redirectTo: "/member/application" });
     // }
-
     // return (
     //   <>
     //     <form id="auto-sign-in" action={signInAction} />

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { auth } from "@forge/auth";
+import { auth, signIn } from "@forge/auth/server";
 
 import { api } from "~/trpc/server";
 import { HackerFormPage } from "../_components/hacker-application-form";
@@ -14,7 +14,9 @@ export default async function HackerApplicationPage({
   const session = await auth();
 
   if (session == null) {
-    return redirect("/");
+    signIn("discord", {
+      redirectTo: `/hacker/application/${params["hackathon-id"]}`,
+    });
     // async function signInAction() {
     //   await signIn("discord", {
     //     redirectTo: `/hacker/application/${params["hackathon-id"]}`,
