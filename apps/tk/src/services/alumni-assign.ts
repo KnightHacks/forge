@@ -45,7 +45,7 @@ async function syncAlumniRoles() {
       try {
         await addRoleToMember(discordId, ALUMNI_DEV_ROLE_ID);
       } catch (err) {
-        console.error(`Failed to add alumni role to ${discordId}:`, err);
+        console.error(`Failed to add alumni discord role to ${discordId}:`, err);
       }
     }
 
@@ -56,18 +56,18 @@ async function syncAlumniRoles() {
         try {
           await removeRoleFromMember(discordId, ALUMNI_DEV_ROLE_ID);
         } catch (err) {
-          console.error(`Failed to remove alumni role from ${discordId}:`, err);
+          console.error(`Failed to remove alumni discord role from ${discordId}:`, err);
         }
       }
     }
 
-    console.log("Alumni Discord role sync completed successfully");
+    console.log("Alumni discord role sync completed successfully");
   } catch (err) {
-    console.error("Unexpected error during alumni sync:", err);
+    console.error("Unexpected error during alumni discord role sync:", err);
   }
 }
 
-// Run every morning
+// runs as a cron job every morning
 cron.schedule("0 8 * * *", () => {
   void syncAlumniRoles();
 });
