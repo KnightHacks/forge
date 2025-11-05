@@ -49,9 +49,7 @@ export const auth = betterAuth({
           id: randomUUID(),
           name: profile.global_name ?? profile.username,
           email: profile.email,
-          image: profile.avatar
-            ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
-            : undefined,
+          image: profile.avatar ?? "",
           emailVerified: profile.verified || false,
           discordUserId: profile.id,
         };
