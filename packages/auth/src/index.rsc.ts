@@ -9,6 +9,7 @@ import {
   isSecureContext,
   validateToken,
 } from "./config";
+import { env } from "./env";
 
 export { validateToken, invalidateSessionToken, isSecureContext };
 
@@ -73,5 +74,7 @@ export const signIn = (
   provider: string,
   { redirectTo }: { redirectTo: string },
 ) => {
-  redirect(`/api/auth/signin?provider=${provider}&callbackURL=${redirectTo}`);
+  redirect(
+    `${env.NEXT_PUBLIC_BLADE_URL}/api/auth/signin?provider=${provider}&callbackURL=${redirectTo}`,
+  );
 };
