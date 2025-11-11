@@ -9,13 +9,16 @@ export const env = createEnv({
       process.env.NODE_ENV === "production"
         ? z.string().min(1)
         : z.string().min(1).optional(),
-    NODE_ENV: z.enum(["development", "production"]).optional(),
     BLADE_URL: z.string(),
   },
   client: {
     NEXT_PUBLIC_BLADE_URL: z.string().url(),
   },
+  shared: {
+    NODE_ENV: z.enum(["development", "production"]).optional(),
+  },
   experimental__runtimeEnv: {
+    NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_BLADE_URL:
       process.env.NEXT_PUBLIC_BLADE_URL || "http://localhost:3000",
   },
