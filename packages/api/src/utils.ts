@@ -6,7 +6,7 @@ import { and, eq, gt } from "drizzle-orm";
 import { Resend } from "resend";
 import Stripe from "stripe";
 
-import type { Session } from "@forge/auth";
+import type { Session } from "@forge/auth/server";
 import type { PermissionIndex } from "@forge/consts/knight-hacks";
 import {
   DEV_DISCORD_ADMIN_ROLE_ID,

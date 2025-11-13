@@ -1,4 +1,7 @@
 {
   "extends": "@forge/tsconfig/base.json",
-  "include": ["src"]
+  "include": ["src"],
+  "compilerOptions": {
+    "lib": ["ES2015", "DOM", "DOM.Iterable"]
+  }
 }

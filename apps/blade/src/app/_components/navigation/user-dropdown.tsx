@@ -3,8 +3,8 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { LayoutDashboard } from "lucide-react";
-import { signOut } from "next-auth/react";
 
+import { signOut } from "@forge/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@forge/ui/avatar";
 import { Button } from "@forge/ui/button";
 import {

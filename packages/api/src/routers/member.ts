@@ -94,7 +94,7 @@ export const memberRouter = {
       await db.insert(Member).values({
         ...input,
         userId: ctx.session.user.id,
-        discordUser: ctx.session.user.name ?? "",
+        discordUser: ctx.session.user.name,
         age: newAge,
         phoneNumber: input.phoneNumber === "" ? null : input.phoneNumber,
       });

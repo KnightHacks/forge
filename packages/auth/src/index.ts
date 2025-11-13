@@ -1,15 +1,43 @@
-import NextAuth from "next-auth";
+import { createAuthClient } from "better-auth/react";
 
-import { authConfig } from "./config";
+import { env } from "./env";
 
-export type { Session } from "next-auth";
+export const authClient = createAuthClient({
+  baseURL: env.NEXT_PUBLIC_BLADE_URL,
+  plugins: [
+    {
+      id: "discord-user",
+      $InferServerPlugin: {} as {
+        id: string;
+        schema: {
+          user: {
+            fields: {
+              discordUserId: { type: "string" };
+            };
+          };
+        };
+      },
+    },
+  ],
+});
 
-const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+export const auth = async () => {
+  const sess = await authClient.getSession();
+  if (!sess.data) return null;
+  return sess.data;
+};
 
-export { handlers, auth, signIn, signOut };
+export const signIn = async (
+  provider: string,
+  { redirectTo }: { redirectTo: string },
+) => {
+  await authClient.signIn.social({
+    provider: provider,
+    callbackURL: redirectTo,
+  });
+};
 
-export {
-  invalidateSessionToken,
-  validateToken,
-  isSecureContext,
-} from "./config";
+export const signOut = async () => {
+  await authClient.signOut();
+  if (typeof window !== "undefined") window.location.reload();
+};
