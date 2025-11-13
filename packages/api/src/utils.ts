@@ -47,10 +47,12 @@ export async function addRoleToMember(discordUserId: string, roleId: string) {
   });
 }
 
-export async function removeRoleFromMember(discordUserId: string, roleId: string) {
+export async function removeRoleFromMember(
+  discordUserId: string,
+  roleId: string,
+) {
   await discord.delete(Routes.guildMemberRole(GUILD_ID, discordUserId, roleId));
 }
-
 
 export async function resolveDiscordUserId(
   username: string,
