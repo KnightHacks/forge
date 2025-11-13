@@ -1,73 +1,58 @@
 import cron from "node-cron";
-import { and, lte, isNotNull } from "drizzle-orm";
+import { and, or, lte, isNull, isNotNull, gt } from "drizzle-orm";
 import { db } from "@forge/db/client";
-import { Member } from "@forge/consts/db/src/schemas/knight-hacks";
-import { KNIGHTHACKS_GUILD_ID as GUILD_ID, addRoleToMember, removeRoleFromMember, resolveDiscordUserId, discord } from "../../../../packages/api/src/utils";
+import { Member } from "@forge/db/schemas/knight-hacks";
+import { addRoleToMember, removeRoleFromMember, resolveDiscordUserId } from "../../../../packages/api/src/utils";
 
-const ALUMNI_DEV_ROLE_ID = "1433223673975668898"; 
-
-// Fetch all members in the guild who currently have the alumni role
-export async function getCurrentAlumniDiscordMembers(): Promise<string[]> {
-  try {
-    const response = (await discord.get(
-      `/guilds/${GUILD_ID}/roles/${ALUMNI_DEV_ROLE_ID}/members`
-    )) as { user: { id: string } }[];
-
-    return response.map((member) => member.user.id);
-  } catch (err) {
-    console.error("Failed to fetch current alumni members from the Knight Hacks discord server:", err);
-    return [];
-  }
-}
+// TODO: Change this to PROD before submitting PR
+const ALUMNI_PROD_ROLE = "486629512101232661";
 
 async function syncAlumniRoles() {
   try {
     const today = new Date().toISOString().slice(0, 10);
 
-    // Fetch graduated members from DB
+    // Add role to members whos grad date has passed
     const graduatedMembers = await db
       .select({ discordUser: Member.discordUser })
       .from(Member)
       .where(and(lte(Member.gradDate, today), isNotNull(Member.discordUser)));
 
-    if (!graduatedMembers.length) return;
-
-    const graduatedDiscordIds: string[] = [];
-
-    // Get discord ID from discord user
     for (const { discordUser } of graduatedMembers) {
-      const discordId = await resolveDiscordUserId(discordUser);
-      if (discordId) graduatedDiscordIds.push(discordId);
-    }
-
-    // Add alumni role to graduated members
-    for (const discordId of graduatedDiscordIds) {
       try {
-        await addRoleToMember(discordId, ALUMNI_DEV_ROLE_ID);
+        const discordId = await resolveDiscordUserId(discordUser);
+        if (discordId) await addRoleToMember(discordId, ALUMNI_PROD_ROLE);
       } catch (err) {
-        console.error(`Failed to add alumni discord role to ${discordId}:`, err);
+        console.error(`Failed to add alumni role for ${discordUser}:`, err);
       }
     }
 
-    // Remove alumni role from members who changed grad date
-    const currentAlumniDiscordIds = await getCurrentAlumniDiscordMembers();
-    for (const discordId of currentAlumniDiscordIds) {
-      if (!graduatedDiscordIds.includes(discordId)) {
-        try {
-          await removeRoleFromMember(discordId, ALUMNI_DEV_ROLE_ID);
-        } catch (err) {
-          console.error(`Failed to remove alumni discord role from ${discordId}:`, err);
-        }
+    // Remove role from members whos grad date hasnt passed
+    // NOTE: Discord API v10 means we cant grab all discord users with the 
+    // alumni role in the server. So this was the workaround :/
+    const nonGraduatedMembers = await db
+    .select({ discordUser: Member.discordUser })
+    .from(Member)
+    .where(and(isNotNull(Member.discordUser), or(gt(Member.gradDate, today), isNull(Member.gradDate))));
+
+
+    for (const { discordUser } of nonGraduatedMembers) {
+      try {
+        const discordId = await resolveDiscordUserId(discordUser);
+        if (discordId) await removeRoleFromMember(discordId, ALUMNI_PROD_ROLE);
+      } catch (err) {
+        console.error(`Failed to remove alumni role for ${discordUser}:`, err);
       }
     }
 
-    console.log("Alumni discord role sync completed successfully");
+    console.log("Alumni discord role sync completed successfully.");
   } catch (err) {
     console.error("Unexpected error during alumni discord role sync:", err);
   }
 }
 
-// runs as a cron job every morning
+export { syncAlumniRoles };
+
+// run every morning at 8 AM
 cron.schedule("0 8 * * *", () => {
   void syncAlumniRoles();
 });
