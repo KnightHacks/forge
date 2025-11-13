@@ -4,7 +4,6 @@ import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
 import { addRoleToMember, removeRoleFromMember, resolveDiscordUserId } from "../../../../packages/api/src/utils";
 
-// TODO: Change this to PROD before submitting PR
 const ALUMNI_PROD_ROLE = "486629512101232661";
 
 async function syncAlumniRoles() {
