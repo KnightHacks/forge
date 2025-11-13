@@ -1,8 +1,14 @@
+import { and, gt, isNotNull, isNull, lte, or } from "drizzle-orm";
 import cron from "node-cron";
-import { and, or, lte, isNull, isNotNull, gt } from "drizzle-orm";
+
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
-import { addRoleToMember, removeRoleFromMember, resolveDiscordUserId } from "../../../../packages/api/src/utils";
+
+import {
+  addRoleToMember,
+  removeRoleFromMember,
+  resolveDiscordUserId,
+} from "../../../../packages/api/src/utils";
 
 const ALUMNI_PROD_ROLE = "486629512101232661";
 
@@ -26,13 +32,17 @@ async function syncAlumniRoles() {
     }
 
     // Remove role from members whos grad date hasnt passed
-    // NOTE: Discord API v10 means we cant grab all discord users with the 
+    // NOTE: Discord API v10 means we cant grab all discord users with the
     // alumni role in the server. So this was the workaround :/
     const nonGraduatedMembers = await db
-    .select({ discordUser: Member.discordUser })
-    .from(Member)
-    .where(and(isNotNull(Member.discordUser), or(gt(Member.gradDate, today), isNull(Member.gradDate))));
-
+      .select({ discordUser: Member.discordUser })
+      .from(Member)
+      .where(
+        and(
+          isNotNull(Member.discordUser),
+          or(gt(Member.gradDate, today), isNull(Member.gradDate)),
+        ),
+      );
 
     for (const { discordUser } of nonGraduatedMembers) {
       try {
