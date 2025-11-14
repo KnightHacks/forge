@@ -1,9 +1,9 @@
 // import { execute as beep } from "./beep";
+import { execute as alumniSync } from "./alumni-assign";
 import { execute as animals } from "./animals";
 import { execute as daily } from "./daily";
 import { execute as emailQueue } from "./email-queue";
 import { execute as reminder } from "./reminder";
-import { execute as alumniSync } from "./alumni-assign";
 
 // Export all commands
 export const hooks = {
@@ -12,5 +12,5 @@ export const hooks = {
   animals,
   reminder,
   emailQueue,
-  alumniSync
+  alumniSync,
 };
