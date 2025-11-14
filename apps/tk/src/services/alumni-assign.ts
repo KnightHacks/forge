@@ -1,5 +1,4 @@
 import { and, gt, isNotNull, isNull, lte, or } from "drizzle-orm";
-import cron from "node-cron";
 
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
@@ -60,8 +59,3 @@ async function syncAlumniRoles() {
 }
 
 export { syncAlumniRoles };
-
-// run every morning at 8 AM
-cron.schedule("0 8 * * *", () => {
-  void syncAlumniRoles();
-});
