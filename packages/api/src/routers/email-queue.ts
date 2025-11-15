@@ -312,7 +312,7 @@ export const emailQueueRouter = {
         // Return default config
         return {
           dailyLimit: 100,
-          cronSchedule: "*/5 * * * * *",
+          cronSchedule: "0 0 * * * *",
           enabled: true,
         };
       }
@@ -321,7 +321,7 @@ export const emailQueueRouter = {
       if (!config) {
         return {
           dailyLimit: 100,
-          cronSchedule: "*/5 * * * * *",
+          cronSchedule: "0 0 * * * *",
           enabled: true,
         };
       }
@@ -339,7 +339,7 @@ export const emailQueueRouter = {
       );
       return {
         dailyLimit: 100,
-        cronSchedule: "*/5 * * * *",
+        cronSchedule: "0 * * * *",
         enabled: true,
       };
     }
