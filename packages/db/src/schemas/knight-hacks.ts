@@ -505,7 +505,7 @@ export const EmailDailyCount = createTable("email_daily_count", (t) => ({
 export const EmailConfig = createTable("email_config", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   daily_limit: t.integer().notNull().default(100),
-  cron_schedule: t.varchar({ length: 50 }).notNull().default("*/5 * * * * *"),
+  cron_schedule: t.varchar({ length: 50 }).notNull().default("0 0 * * * *"),
   enabled: t.boolean().notNull().default(true),
   updated_at: t.timestamp().notNull().defaultNow(),
 }));
