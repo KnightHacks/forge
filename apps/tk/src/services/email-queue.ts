@@ -416,13 +416,13 @@ export class EmailQueueService {
         // Create default config
         await db.insert(EmailConfig).values({
           daily_limit: parseInt(env.EMAIL_DAILY_LIMIT ?? "100"),
-          cron_schedule: env.EMAIL_QUEUE_CRON ?? "*/5 * * * * *",
+          cron_schedule: env.EMAIL_QUEUE_CRON ?? "0 0 * * * *",
           enabled: true,
         });
 
         return {
           dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? "100"),
-          cronSchedule: env.EMAIL_QUEUE_CRON ?? "*/5 * * * * *",
+          cronSchedule: env.EMAIL_QUEUE_CRON ?? "0 0 * * * *",
           enabled: true,
         };
       }
@@ -431,7 +431,7 @@ export class EmailQueueService {
       if (!configData) {
         return {
           dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? "100"),
-          cronSchedule: env.EMAIL_QUEUE_CRON ?? "*/5 * * * * *",
+          cronSchedule: env.EMAIL_QUEUE_CRON ?? "0 0 * * * *",
           enabled: true,
         };
       }
