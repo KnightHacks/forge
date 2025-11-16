@@ -28,7 +28,7 @@ export function Donate() {
             onMouseLeave={() => setHover(false)}
             asChild
           >
-            <Link href={"WOWZA"}>
+            <Link href={"https://buy.stripe.com/8x228qa5K1oUe9VdHkcfK0c"}>
               <Heart
                 size={DASHBOARD_ICON_SIZE}
                 fill={hover ? "white" : "none"}
