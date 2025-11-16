@@ -411,7 +411,7 @@ export function MemberApplicationForm() {
               levelOfStudy: values.levelOfStudy,
               gender: values.gender ?? "Prefer not to answer",
               gradDate: gradDateIso,
-              company: values.company,
+              company: isAlumni ? values.company : null,
               raceOrEthnicity: values.raceOrEthnicity ?? "Prefer not to answer",
               shirtSize: values.shirtSize,
               githubProfileUrl: values.githubProfileUrl || undefined,
