@@ -3,15 +3,81 @@ import type { Metadata } from "next";
 import type { api as serverCall } from "~/trpc/server";
 import { MemberAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
+import { AlumniDiscord } from "./AlumniDiscord";
 import { EventNumber } from "./event/event-number";
 import { EventShowcase } from "./event/event-showcase";
 import { MemberInfo } from "./info";
+import { Donate } from "./payment/donate";
 import { Payment } from "./payment/payment-dues";
 import { Points } from "./points";
 
 export const metadata: Metadata = {
   title: "Member Dashboard",
   description: "The official Knight Hacks Member Dashboard",
+};
+
+interface Member {
+  gradDate: Date | string;
+  levelOfStudy: string;
+}
+
+// Calculate year of study based on graduation date relative to current date
+const calculateYearOfStudy = (
+  gradDate: Date | string,
+  member: Member,
+): string => {
+  // Convert gradDate to Date object if it's a string
+  const gradDateObj =
+    typeof gradDate === "string" ? new Date(gradDate) : gradDate;
+  const currentDate = new Date();
+
+  // Check if dates are valid
+  if (isNaN(gradDateObj.getTime())) {
+    return "Unknown";
+  }
+
+  const gradYear = gradDateObj.getFullYear();
+  const currentYear = currentDate.getFullYear();
+  const yearsUntilGrad = gradYear - currentYear;
+
+  // Check for high school students - but use graduation date logic if they've graduated
+  if (
+    member.levelOfStudy === "Less than Secondary / High School" ||
+    member.levelOfStudy === "Secondary / High School"
+  ) {
+    // If their HS graduation date has passed, classify them based on years since graduation
+    if (yearsUntilGrad < 0) {
+      const yearsSinceHSGrad = Math.abs(yearsUntilGrad);
+      if (yearsSinceHSGrad <= 1) return "Freshman";
+      if (yearsSinceHSGrad <= 2) return "Sophomore";
+      if (yearsSinceHSGrad <= 3) return "Junior";
+      if (yearsSinceHSGrad <= 4) return "Senior";
+      return "Alumni"; // 5+ years since HS graduation
+    }
+    // Still in high school
+    return "High School";
+  }
+
+  // Check for graduate students (Masters, PhD, etc.)
+  if (
+    member.levelOfStudy ===
+      "Graduate University (Masters, Professional, Doctoral, etc)" ||
+    member.levelOfStudy === "Post Doctorate"
+  ) {
+    return "Graduate";
+  }
+
+  // If graduation date has passed, they are alumni
+  if (yearsUntilGrad < 0) return "Alumni";
+
+  // Current year graduates are still seniors until they actually graduate
+  if (yearsUntilGrad === 0) return "Senior";
+  if (yearsUntilGrad === 1) return "Senior";
+  if (yearsUntilGrad === 2) return "Junior";
+  if (yearsUntilGrad === 3) return "Sophomore";
+  if (yearsUntilGrad >= 4) return "Freshman";
+
+  return "Unknown";
 };
 
 export default async function MemberDashboard({
@@ -53,6 +119,9 @@ export default async function MemberDashboard({
     );
   }
 
+  const isAlumni = calculateYearOfStudy(member.gradDate, member) === "Alumni";
+  console.log("IS THE USER AN ALUMNI", isAlumni);
+
   return (
     <div className="flex-col md:flex">
       <div className="flex-1 space-y-4">
@@ -61,15 +130,21 @@ export default async function MemberDashboard({
             <h2 className="text-xl font-bold tracking-tight">
               Hello, {member.firstName}!
             </h2>
-            <p className="text-muted-foreground">Member Dashboard</p>
+            <p className="text-muted-foreground">
+              {`${isAlumni ? "Alumni" : "Member"}`} Dashboard
+            </p>
           </div>
         </div>
         {/* Unified View */}
         <div className="animate-mobile-initial-expand space-y-4">
           <div className="animate-fade-in grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Payment status={dues.value.duesPaid} member={member} />
+            {isAlumni ? (
+              <Donate />
+            ) : (
+              <Payment status={dues.value.duesPaid} member={member} />
+            )}
             <MemberInfo />
-            <Points size={member.points} />
+            {isAlumni ? <AlumniDiscord /> : <Points size={member.points} />}
             <EventNumber size={events.value.length} />
           </div>
           <div className="animate-fade-in">
