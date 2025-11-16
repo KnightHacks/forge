@@ -176,6 +176,9 @@ export default function MemberTable() {
               <Label>Dues Paying?</Label>
             </TableHead>
             <TableHead className="text-center">
+              <Label>Company</Label>
+            </TableHead>
+            <TableHead className="text-center">
               <Label>Dues Toggle</Label>
             </TableHead>
             <TableHead className="text-center">
@@ -204,6 +207,9 @@ export default function MemberTable() {
               <TableCell className="font-medium">{member.email}</TableCell>
               <TableCell className="text-center font-medium">
                 {duesMap.has(member.id) ? "Yes" : "No"}
+              </TableCell>
+              <TableCell className="text-center">
+                {member.company ?? ""}
               </TableCell>
               <TableCell className="text-center">
                 <DuesToggleButton
