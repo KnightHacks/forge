@@ -301,7 +301,6 @@ export function MemberApplicationForm() {
       phoneNumber: "",
       dob: "",
       gradTerm: "Spring",
-      company: null,
       gradYear: (new Date().getFullYear() + 1).toString(),
       githubProfileUrl: "",
       linkedinProfileUrl: "",
@@ -344,7 +343,6 @@ export function MemberApplicationForm() {
     const { month, day } = TERM_TO_DATE[gradTerm];
     const gradDateIso = new Date(Number(gradYear), month, day).toISOString();
     const isAlumni = calcAlumniStatus(gradDateIso, levelOfStudy);
-    console.log(isAlumni);
     return isAlumni;
   }, [gradYear, gradTerm, levelOfStudy]);
 
@@ -725,7 +723,36 @@ export function MemberApplicationForm() {
         />
 
         {isAlumni && (
-          <h2 className="pt-6 text-xl font-bold">Alumni Information</h2>
+          <>
+            <h2 className="pt-6 text-xl font-bold">Alumni Information</h2>
+            <FormField
+              control={form.control}
+              name="company"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Current Company
+                    <span className="text-gray-400">
+                      {" "}
+                      &mdash; <i>Optional</i>
+                    </span>
+                  </FormLabel>
+                  <FormControl>
+                    <ResponsiveComboBox
+                      items={COMPANIES}
+                      renderItem={(item) => <div>{item}</div>}
+                      getItemValue={(item) => item}
+                      getItemLabel={(item) => item}
+                      onItemSelect={(value) => field.onChange(value)}
+                      buttonPlaceholder="Select your company"
+                      inputPlaceholder="Search for your company"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
         )}
 
         <h2 className="pt-6 text-xl font-bold">

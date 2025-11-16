@@ -36,7 +36,6 @@ export const hackathonApplicationStateEnum = pgEnum(
   "hackathon_application_state",
   HACKATHON_APPLICATION_STATES,
 );
-export const alumniCompaniesEnum = pgEnum("companies", COMPANIES);
 
 export const Hackathon = createTable("hackathon", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -85,7 +84,7 @@ export const Member = createTable(
     resumeUrl: t.varchar({ length: 255 }),
     dob: t.date().notNull(),
     gradDate: t.date().notNull(),
-    company: alumniCompaniesEnum(),
+    company: t.varchar({ length: 255 }),
     points: t.integer().notNull().default(0),
     dateCreated: t.date().notNull().defaultNow(),
     timeCreated: t.time().notNull().defaultNow(),
