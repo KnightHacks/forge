@@ -20,8 +20,12 @@ export function AlumniDiscord() {
         <p className="mb-2 text-left text-[12px]">
           Chat in the exlusive Alumni-only Knight Hacks Discord channel!
         </p>
-        <Button className="w-full bg-[#5865F2]" asChild>
-          <Link href={"WOWZA"}>
+        <Button className="w-full bg-[#5865F2] hover:bg-[#3D4CF6]" asChild>
+          <Link
+            href={
+              "https://discord.com/channels/486628710443778071/1052981290267312248"
+            }
+          >
             <MessageSquare size={DASHBOARD_ICON_SIZE} className="mr-1" />
             Discord Channel
           </Link>
