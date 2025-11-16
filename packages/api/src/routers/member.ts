@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
 
+import { COMPANIES } from "@forge/consts/consts/src/knight-hacks";
 import {
   BUCKET_NAME,
   DUES_PAYMENT,
@@ -26,6 +27,7 @@ import {
   EventAttendee,
   InsertMemberSchema,
   Member,
+  OtherCompanies,
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
@@ -90,6 +92,18 @@ export const memberRouter = {
       const newAge = hasBirthdayPassed
         ? today.getFullYear() - birthDate.getFullYear()
         : today.getFullYear() - birthDate.getFullYear() - 1;
+
+      //If the company the user entered doesn't already exist, add it to the other companies db
+      const company = input.company;
+      if (company && !(COMPANIES as readonly string[]).includes(company)) {
+        try {
+          await db.insert(OtherCompanies).values({
+            name: company,
+          });
+        } catch (error) {
+          console.log("Unable to insert company: ", error);
+        }
+      }
 
       await db.insert(Member).values({
         ...input,
