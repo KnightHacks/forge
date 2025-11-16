@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -47,42 +47,6 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-
-const calcAlumniStatus = (
-  gradDate: Date | string,
-  levelOfStudy: string | undefined,
-): boolean => {
-  const gradDateObj =
-    typeof gradDate === "string" ? new Date(gradDate) : gradDate;
-  const currentDate = new Date();
-
-  if (isNaN(gradDateObj.getTime())) return false;
-
-  const gradYear = gradDateObj.getFullYear();
-  const currentYear = currentDate.getFullYear();
-  const yearsUntilGrad = gradYear - currentYear;
-
-  if (
-    levelOfStudy &&
-    (levelOfStudy === "Less than Secondary / High School" ||
-      levelOfStudy === "Secondary / High School")
-  ) {
-    if (yearsUntilGrad < -4) return true;
-    return false;
-  }
-
-  if (
-    levelOfStudy &&
-    (levelOfStudy ===
-      "Graduate University (Masters, Professional, Doctoral, etc)" ||
-      levelOfStudy === "Post Doctorate")
-  ) {
-    return false;
-  }
-
-  if (yearsUntilGrad < 0) return true;
-  return false;
-};
 
 export function MemberApplicationForm() {
   const router = useRouter();
@@ -337,20 +301,7 @@ export function MemberApplicationForm() {
       reader.readAsDataURL(file);
     });
 
-  const [gradYear, gradTerm, levelOfStudy] = [
-    form.watch("gradYear"),
-    form.watch("gradTerm"),
-    form.watch("levelOfStudy"),
-  ];
-
   const [showOtherCompany, setShowOtherCompany] = useState(false);
-
-  const isAlumni = useMemo(() => {
-    const { month, day } = TERM_TO_DATE[gradTerm];
-    const gradDateIso = new Date(Number(gradYear), month, day).toISOString();
-    const isAlumni = calcAlumniStatus(gradDateIso, levelOfStudy);
-    return isAlumni;
-  }, [gradYear, gradTerm, levelOfStudy]);
 
   return (
     <Form {...form}>
@@ -411,7 +362,7 @@ export function MemberApplicationForm() {
               levelOfStudy: values.levelOfStudy,
               gender: values.gender ?? "Prefer not to answer",
               gradDate: gradDateIso,
-              company: isAlumni ? values.company : null,
+              company: values.company,
               raceOrEthnicity: values.raceOrEthnicity ?? "Prefer not to answer",
               shirtSize: values.shirtSize,
               githubProfileUrl: values.githubProfileUrl || undefined,
@@ -728,64 +679,62 @@ export function MemberApplicationForm() {
           )}
         />
 
-        {isAlumni && (
-          <>
-            <h2 className="pt-6 text-xl font-bold">Alumni Information</h2>
-            <FormField
-              control={form.control}
-              name="company"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Current Company
-                    <span className="text-gray-400">
-                      {" "}
-                      &mdash; <i>Optional</i>
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <ResponsiveComboBox
-                      items={[...COMPANIES, ...otherCompanies, "Other"]}
-                      renderItem={(item) => <div>{item}</div>}
-                      getItemValue={(item) => item}
-                      getItemLabel={(item) => item}
-                      onItemSelect={(value) => {
-                        if (value === "Other") {
-                          setShowOtherCompany(true);
-                          field.onChange("");
-                        } else {
-                          setShowOtherCompany(false);
-                          field.onChange(value);
-                        }
-                      }}
-                      buttonPlaceholder="Select your company"
-                      inputPlaceholder="Search for your company"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {showOtherCompany && (
-              <FormField
-                control={form.control}
-                name="company"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Other Company</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Your Company"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <h2 className="pt-6 text-xl font-bold">
+          Current/most recent employment
+        </h2>
+        <FormField
+          control={form.control}
+          name="company"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Current Company
+                <span className="text-gray-400">
+                  {" "}
+                  &mdash; <i>Optional</i>
+                </span>
+              </FormLabel>
+              <FormControl>
+                <ResponsiveComboBox
+                  items={[...COMPANIES, ...otherCompanies, "Other"]}
+                  renderItem={(item) => <div>{item}</div>}
+                  getItemValue={(item) => item}
+                  getItemLabel={(item) => item}
+                  onItemSelect={(value) => {
+                    if (value === "Other") {
+                      setShowOtherCompany(true);
+                      field.onChange("");
+                    } else {
+                      setShowOtherCompany(false);
+                      field.onChange(value);
+                    }
+                  }}
+                  buttonPlaceholder="Select your company"
+                  inputPlaceholder="Search for your company"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {showOtherCompany && (
+          <FormField
+            control={form.control}
+            name="company"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Other Company</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Your Company"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </>
+          />
         )}
 
         <h2 className="pt-6 text-xl font-bold">
