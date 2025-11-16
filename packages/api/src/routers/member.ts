@@ -185,6 +185,17 @@ export const memberRouter = {
         dataToSet.resumeUrl = input.resumeUrl;
       }
 
+      const company = input.company;
+      if (company && !(COMPANIES as readonly string[]).includes(company)) {
+        try {
+          await db.insert(OtherCompanies).values({
+            name: company,
+          });
+        } catch (error) {
+          console.log("Unable to insert company: ", error);
+        }
+      }
+
       await db
         .update(Member)
         .set({
