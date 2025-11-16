@@ -22,40 +22,25 @@ interface Member {
 }
 
 // Calculate year of study based on graduation date relative to current date
-const calculateYearOfStudy = (
-  gradDate: Date | string,
-  member: Member,
-): string => {
+const calcAlumniStatus = (gradDate: Date | string, member: Member): Boolean => {
   // Convert gradDate to Date object if it's a string
   const gradDateObj =
     typeof gradDate === "string" ? new Date(gradDate) : gradDate;
   const currentDate = new Date();
 
   // Check if dates are valid
-  if (isNaN(gradDateObj.getTime())) {
-    return "Unknown";
-  }
+  if (isNaN(gradDateObj.getTime())) return false;
 
   const gradYear = gradDateObj.getFullYear();
   const currentYear = currentDate.getFullYear();
   const yearsUntilGrad = gradYear - currentYear;
 
-  // Check for high school students - but use graduation date logic if they've graduated
   if (
     member.levelOfStudy === "Less than Secondary / High School" ||
     member.levelOfStudy === "Secondary / High School"
   ) {
-    // If their HS graduation date has passed, classify them based on years since graduation
-    if (yearsUntilGrad < 0) {
-      const yearsSinceHSGrad = Math.abs(yearsUntilGrad);
-      if (yearsSinceHSGrad <= 1) return "Freshman";
-      if (yearsSinceHSGrad <= 2) return "Sophomore";
-      if (yearsSinceHSGrad <= 3) return "Junior";
-      if (yearsSinceHSGrad <= 4) return "Senior";
-      return "Alumni"; // 5+ years since HS graduation
-    }
-    // Still in high school
-    return "High School";
+    if (yearsUntilGrad < -4) return true;
+    return false;
   }
 
   // Check for graduate students (Masters, PhD, etc.)
@@ -64,20 +49,14 @@ const calculateYearOfStudy = (
       "Graduate University (Masters, Professional, Doctoral, etc)" ||
     member.levelOfStudy === "Post Doctorate"
   ) {
-    return "Graduate";
+    return false;
   }
 
   // If graduation date has passed, they are alumni
-  if (yearsUntilGrad < 0) return "Alumni";
+  if (yearsUntilGrad < 0) return true;
 
   // Current year graduates are still seniors until they actually graduate
-  if (yearsUntilGrad === 0) return "Senior";
-  if (yearsUntilGrad === 1) return "Senior";
-  if (yearsUntilGrad === 2) return "Junior";
-  if (yearsUntilGrad === 3) return "Sophomore";
-  if (yearsUntilGrad >= 4) return "Freshman";
-
-  return "Unknown";
+  return false;
 };
 
 export default async function MemberDashboard({
@@ -119,7 +98,7 @@ export default async function MemberDashboard({
     );
   }
 
-  const isAlumni = calculateYearOfStudy(member.gradDate, member) === "Alumni";
+  const isAlumni = calcAlumniStatus(member.gradDate, member);
   console.log("IS THE USER AN ALUMNI", isAlumni);
 
   return (
