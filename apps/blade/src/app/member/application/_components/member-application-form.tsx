@@ -51,7 +51,7 @@ import { api } from "~/trpc/react";
 const calcAlumniStatus = (
   gradDate: Date | string,
   levelOfStudy: string | undefined,
-): Boolean => {
+): boolean => {
   const gradDateObj =
     typeof gradDate === "string" ? new Date(gradDate) : gradDate;
   const currentDate = new Date();
