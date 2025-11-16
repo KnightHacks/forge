@@ -339,6 +339,8 @@ export function MemberApplicationForm() {
     form.watch("levelOfStudy"),
   ];
 
+  const [showOtherCompany, setShowOtherCompany] = useState(false);
+
   const isAlumni = useMemo(() => {
     const { month, day } = TERM_TO_DATE[gradTerm];
     const gradDateIso = new Date(Number(gradYear), month, day).toISOString();
@@ -739,11 +741,19 @@ export function MemberApplicationForm() {
                   </FormLabel>
                   <FormControl>
                     <ResponsiveComboBox
-                      items={COMPANIES}
+                      items={[...COMPANIES, "Other"]}
                       renderItem={(item) => <div>{item}</div>}
                       getItemValue={(item) => item}
                       getItemLabel={(item) => item}
-                      onItemSelect={(value) => field.onChange(value)}
+                      onItemSelect={(value) => {
+                        if (value === "Other") {
+                          setShowOtherCompany(true);
+                          field.onChange("");
+                        } else {
+                          setShowOtherCompany(false);
+                          field.onChange(value);
+                        }
+                      }}
                       buttonPlaceholder="Select your company"
                       inputPlaceholder="Search for your company"
                     />
@@ -752,6 +762,25 @@ export function MemberApplicationForm() {
                 </FormItem>
               )}
             />
+            {showOtherCompany && (
+              <FormField
+                control={form.control}
+                name="company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Other Company</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Your Company"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </>
         )}
 
