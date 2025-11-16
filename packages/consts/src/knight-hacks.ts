@@ -5537,6 +5537,8 @@ export const SCHOOLS = [
   "Marlboro High School",
 ] as const;
 
+export const COMPANIES = ["Meta", "Google", "Microsoft"] as const;
+
 export const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL"] as const;
 
 export const SPONSOR_TIERS = ["gold", "silver", "bronze", "other"] as const;
