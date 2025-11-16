@@ -3,9 +3,9 @@ import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
 
-import { COMPANIES } from "@forge/consts/consts/src/knight-hacks";
 import {
   BUCKET_NAME,
+  COMPANIES,
   DUES_PAYMENT,
   KNIGHTHACKS_S3_BUCKET_REGION,
 } from "@forge/consts/knight-hacks";

@@ -87,6 +87,10 @@ const calcAlumniStatus = (
 export function MemberApplicationForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { data: otherCompaniesObj } = api.companies.getCompanies.useQuery();
+  const otherCompanies = otherCompaniesObj
+    ? otherCompaniesObj.map((c) => c.name)
+    : [];
 
   const createMember = api.member.createMember.useMutation({
     onSuccess() {
@@ -741,7 +745,7 @@ export function MemberApplicationForm() {
                   </FormLabel>
                   <FormControl>
                     <ResponsiveComboBox
-                      items={[...COMPANIES, "Other"]}
+                      items={[...COMPANIES, ...otherCompanies, "Other"]}
                       renderItem={(item) => <div>{item}</div>}
                       getItemValue={(item) => item}
                       getItemLabel={(item) => item}
