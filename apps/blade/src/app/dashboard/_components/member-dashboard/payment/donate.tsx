@@ -4,12 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { CreditCard, Heart } from "lucide-react";
 
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
 import { DASHBOARD_ICON_SIZE } from "~/consts";
-import PaymentButton from "./payment-button";
 
 export function Donate() {
   const [hover, setHover] = useState(false);

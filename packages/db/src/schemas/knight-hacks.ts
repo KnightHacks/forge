@@ -4,7 +4,6 @@ import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
 import {
-  COMPANIES,
   COUNTRIES,
   EVENT_FEEDBACK_HEARD,
   EVENT_FEEDBACK_SIMILAR_EVENT,
@@ -522,3 +521,9 @@ export type SelectEmailConfig = typeof EmailConfig.$inferSelect;
 export const InsertEmailQueueSchema = createInsertSchema(EmailQueue);
 export const InsertEmailDailyCountSchema = createInsertSchema(EmailDailyCount);
 export const InsertEmailConfigSchema = createInsertSchema(EmailConfig);
+
+export const OtherCompanies = createTable("companies", (t) => ({
+  name: t.varchar({ length: 255 }).notNull().primaryKey(),
+}));
+
+export const InsertOtherCompaniesSchema = createInsertSchema(OtherCompanies);

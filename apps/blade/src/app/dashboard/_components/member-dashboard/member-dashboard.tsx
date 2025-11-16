@@ -22,7 +22,7 @@ interface Member {
 }
 
 // Calculate year of study based on graduation date relative to current date
-const calcAlumniStatus = (gradDate: Date | string, member: Member): Boolean => {
+const calcAlumniStatus = (gradDate: Date | string, member: Member): boolean => {
   // Convert gradDate to Date object if it's a string
   const gradDateObj =
     typeof gradDate === "string" ? new Date(gradDate) : gradDate;
