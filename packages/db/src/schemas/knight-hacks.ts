@@ -5,6 +5,7 @@ import z from "zod";
 
 import {
   COUNTRIES,
+  DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
   EVENT_FEEDBACK_HEARD,
   EVENT_FEEDBACK_SIMILAR_EVENT,
   EVENT_TAGS,
@@ -505,7 +506,10 @@ export const EmailDailyCount = createTable("email_daily_count", (t) => ({
 export const EmailConfig = createTable("email_config", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   daily_limit: t.integer().notNull().default(100),
-  cron_schedule: t.varchar({ length: 50 }).notNull().default("0 0 * * * *"),
+  cron_schedule: t
+    .varchar({ length: 50 })
+    .notNull()
+    .default(DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE),
   enabled: t.boolean().notNull().default(true),
   updated_at: t.timestamp().notNull().defaultNow(),
 }));
