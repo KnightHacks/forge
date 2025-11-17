@@ -99,7 +99,6 @@ export default async function MemberDashboard({
   }
 
   const isAlumni = calcAlumniStatus(member.gradDate, member);
-  console.log("IS THE USER AN ALUMNI", isAlumni);
 
   return (
     <div className="flex-col md:flex">
