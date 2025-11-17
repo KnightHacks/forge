@@ -1,11 +1,11 @@
 import { and, asc, eq, sql } from "drizzle-orm";
 import { Resend } from "resend";
 
-import { DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE } from "@forge/consts/knight-hacks";
 import type {
   InsertEmailQueue,
   SelectEmailQueue,
 } from "@forge/db/schemas/knight-hacks";
+import { DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE } from "@forge/consts/knight-hacks";
 import {
   EmailConfig,
   EmailDailyCount,
@@ -449,8 +449,7 @@ export class EmailQueueService {
       console.warn("Failed to get email config, using defaults:", error);
       return {
         dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? "100"),
-        cronSchedule:
-          env.EMAIL_QUEUE_CRON ?? DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
+        cronSchedule: env.EMAIL_QUEUE_CRON ?? DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
         enabled: true,
       };
     }
