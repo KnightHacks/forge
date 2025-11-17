@@ -1,6 +1,7 @@
 import { and, asc, eq, sql } from "drizzle-orm";
 import { Resend } from "resend";
 
+import { DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE } from "@forge/consts/knight-hacks";
 import type {
   InsertEmailQueue,
   SelectEmailQueue,
@@ -416,13 +417,15 @@ export class EmailQueueService {
         // Create default config
         await db.insert(EmailConfig).values({
           daily_limit: parseInt(env.EMAIL_DAILY_LIMIT ?? "100"),
-          cron_schedule: env.EMAIL_QUEUE_CRON ?? "0 0 * * * *",
+          cron_schedule:
+            env.EMAIL_QUEUE_CRON ?? DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
           enabled: true,
         });
 
         return {
           dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? "100"),
-          cronSchedule: env.EMAIL_QUEUE_CRON ?? "0 0 * * * *",
+          cronSchedule:
+            env.EMAIL_QUEUE_CRON ?? DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
           enabled: true,
         };
       }
@@ -431,7 +434,8 @@ export class EmailQueueService {
       if (!configData) {
         return {
           dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? "100"),
-          cronSchedule: env.EMAIL_QUEUE_CRON ?? "0 0 * * * *",
+          cronSchedule:
+            env.EMAIL_QUEUE_CRON ?? DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
           enabled: true,
         };
       }
@@ -445,7 +449,8 @@ export class EmailQueueService {
       console.warn("Failed to get email config, using defaults:", error);
       return {
         dailyLimit: parseInt(env.EMAIL_DAILY_LIMIT ?? "100"),
-        cronSchedule: env.EMAIL_QUEUE_CRON ?? "*/5 * * * * *",
+        cronSchedule:
+          env.EMAIL_QUEUE_CRON ?? DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
         enabled: true,
       };
     }

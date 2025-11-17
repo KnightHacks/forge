@@ -5554,6 +5554,7 @@ export const ADMIN_PIE_CHART_COLORS: readonly string[] = [
 ] as const;
 
 export const DEFAULT_COLOR = "#ffffff";
+export const DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE = "0 * * * *";
 
 export const WEEKDAY_ORDER: string[] = [
   "Mon",
