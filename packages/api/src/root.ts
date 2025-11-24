@@ -16,6 +16,7 @@ import { passkitRouter } from "./routers/passkit";
 import { qrRouter } from "./routers/qr";
 import { resumeRouter } from "./routers/resume";
 import { userRouter } from "./routers/user";
+import { formsRouter } from "./routers/forms";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter<{
@@ -37,6 +38,7 @@ export const appRouter = createTRPCRouter<{
   challenge: typeof challengeRouter;
   csvImporter: typeof csvImporterRouter;
   companies: typeof companiesRouter;
+	forms: typeof formsRouter;
 }>({
   auth: authRouter,
   duesPayment: duesPaymentRouter,
@@ -56,6 +58,7 @@ export const appRouter = createTRPCRouter<{
   challenge: challengeRouter,
   csvImporter: csvImporterRouter,
   companies: companiesRouter,
+	forms: formsRouter
 });
 
 // export type definition of API
