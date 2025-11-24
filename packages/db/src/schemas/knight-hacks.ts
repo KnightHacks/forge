@@ -532,7 +532,9 @@ export const OtherCompanies = createTable("companies", (t) => ({
 
 export const InsertOtherCompaniesSchema = createInsertSchema(OtherCompanies);
 
-export const FormsSchemas = createTable("schemas", (t) => ({
+export const FormsSchemas = createTable("form_schemas", (t) => ({
   name: t.varchar({ length: 255 }).notNull().primaryKey(),
   createdAt: t.timestamp().notNull().defaultNow(),
+  formData: t.jsonb().notNull(),
+  formValidatorJson: t.jsonb().notNull(),
 }));
