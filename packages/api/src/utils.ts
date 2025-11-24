@@ -328,6 +328,7 @@ type OptionalSchema =
   | { success: false; msg: string };
 
 function createJsonSchemaValidator({
+  optional,
   type,
   options,
   min,
@@ -384,6 +385,8 @@ function createJsonSchemaValidator({
     if (schema.type === "string") schema.minLength = min;
     if (schema.type === "array") schema.minItems = min;
     if (schema.type === "number") schema.minimum = min;
+  } else {
+    if (schema.type === "array" && !optional) schema.minItems = 1;
   }
 
   if (max !== undefined) {
@@ -408,7 +411,7 @@ export function generateJsonSchema(form: FormType): OptionalSchema {
 
   for (const formQuestion of form.questions) {
     const { question, optional, ...rest } = formQuestion;
-    const convert = createJsonSchemaValidator(rest);
+    const convert = createJsonSchemaValidator({ optional, ...rest });
     if (convert.success) properties[question] = convert.schema;
     else return convert;
 
