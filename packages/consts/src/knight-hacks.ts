@@ -1,3 +1,5 @@
+import * as z from "zod";
+
 import type { HackerClass } from "../../db/src/schemas/knight-hacks";
 
 export const LEVELS_OF_STUDY = [
@@ -6645,3 +6647,38 @@ export const OFFICER_ROLE_ID =
     : "1246637685011906560";
 
 export const DEVPOST_TEAM_MEMBER_EMAIL_OFFSET = 3;
+
+export const QuestionValidator = z.object({
+  question: z.string().max(200),
+  type: z.enum([
+    "SHORT_ANSWER",
+    "PARAGRAPH",
+    "MULTIPLE_CHOICE",
+    "CHECKBOXES",
+    "DROPDOWN",
+    "LINEAR_SCALE",
+    "DATE",
+    "TIME",
+    "EMAIL",
+    "NUMBER",
+    "PHONE",
+  ]),
+  options: z.array(z.string()).optional(),
+  optional: z.boolean().optional(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+});
+
+export const FormSchemaValidator = z.object({
+  image: z.string().url().optional(),
+  name: z.string().max(200),
+  description: z.string().max(500),
+  questions: z.array(QuestionValidator),
+});
+
+export type FormType = z.infer<typeof FormSchemaValidator>;
+
+type QuestionValidatorType = z.infer<typeof QuestionValidator>;
+export type ValidatorOptions = Omit<QuestionValidatorType, "question">;
+
+export type QuestionsType = z.infer<typeof QuestionValidator>["type"];
