@@ -6650,6 +6650,7 @@ export const DEVPOST_TEAM_MEMBER_EMAIL_OFFSET = 3;
 
 export const QuestionValidator = z.object({
   question: z.string().max(200),
+  image: z.string().url().optional(),
   type: z.enum([
     "SHORT_ANSWER",
     "PARAGRAPH",
@@ -6670,7 +6671,7 @@ export const QuestionValidator = z.object({
 });
 
 export const FormSchemaValidator = z.object({
-  image: z.string().url().optional(),
+  banner: z.string().url().optional(),
   name: z.string().max(200),
   description: z.string().max(500),
   questions: z.array(QuestionValidator),
