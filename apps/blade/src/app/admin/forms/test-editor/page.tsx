@@ -1,9 +1,9 @@
 "use client";
 
+import type { DragEndEvent } from "@dnd-kit/core";
 import type { CSSProperties } from "react";
+import type { z } from "zod";
 import { useState } from "react";
-import type {
-  DragEndEvent} from "@dnd-kit/core";
 import {
   closestCenter,
   DndContext,
@@ -21,7 +21,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Plus } from "lucide-react";
-import type { z } from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
