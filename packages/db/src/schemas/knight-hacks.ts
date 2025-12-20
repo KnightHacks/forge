@@ -541,15 +541,13 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
 
 export const FormResponse = createTable("form_response", (t) => ({
   form: t
-    .uuid()
+    .varchar({ length: 255 })
     .notNull()
     .references(() => FormsSchemas.name),
-  memberId: t
+  userId: t
     .uuid()
     .notNull()
-    .references(() => Member.id, {
-      onDelete: "cascade",
-    }),
+    .references(() => User.id, { onDelete: "cascade" }),
   responseData: t.jsonb().notNull(),
   createdAt: t.timestamp().notNull().defaultNow(),
   updated_at: t.timestamp().notNull().defaultNow(),
