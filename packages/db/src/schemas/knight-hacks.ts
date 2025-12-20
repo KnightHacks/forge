@@ -540,6 +540,7 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
 }));
 
 export const FormResponse = createTable("form_response", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
   form: t
     .varchar({ length: 255 })
     .notNull()
