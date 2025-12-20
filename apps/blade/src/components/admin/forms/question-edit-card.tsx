@@ -1,6 +1,7 @@
 "use client";
 
 import type { DraggableSyntheticListeners } from "@dnd-kit/core";
+import type { z } from "zod";
 import * as React from "react";
 import {
   AlignLeft,
@@ -17,7 +18,6 @@ import {
   Trash,
   X,
 } from "lucide-react";
-import type { z } from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { cn } from "@forge/ui";
