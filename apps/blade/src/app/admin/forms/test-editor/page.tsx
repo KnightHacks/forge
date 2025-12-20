@@ -2,10 +2,11 @@
 
 import type { CSSProperties } from "react";
 import { useState } from "react";
+import type {
+  DragEndEvent} from "@dnd-kit/core";
 import {
   closestCenter,
   DndContext,
-  DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -20,7 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Plus } from "lucide-react";
-import { z } from "zod";
+import type { z } from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
