@@ -1,67 +1,197 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useState } from "react";
+import {
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Plus } from "lucide-react";
+import { z } from "zod";
 
-import type { FormQuestion } from "~/lib/types/form";
+import type { QuestionValidator } from "@forge/consts/knight-hacks";
+import { Button } from "@forge/ui/button";
+import { Card } from "@forge/ui/card";
+import { Input } from "@forge/ui/input";
+import { Textarea } from "@forge/ui/textarea";
+
 import { QuestionEditCard } from "~/components/admin/forms/question-edit-card";
 
-// Replaced uuid import with native crypto.randomUUID for simplicity and to avoid adding dependencies
-// import { v4 as uuidv4 } from "uuid";
-const uuidv4 = () => crypto.randomUUID();
+type FormQuestion = z.infer<typeof QuestionValidator>;
+type UIQuestion = FormQuestion & { id: string };
 
-export default function TestEditorPage() {
-  const [question, setQuestion] = useState<FormQuestion>({
-    id: uuidv4(),
-    title: "Untitled Question",
-    type: "multiple_choice",
-    required: false,
-    options: [{ id: uuidv4(), value: "Option 1", isOther: false }],
-  });
+// Wrapper for Sortable item
+function SortableQuestion({
+  question,
+  isActive,
+  onUpdate,
+  onDelete,
+  onDuplicate,
+  onClick,
+}: {
+  question: UIQuestion;
+  isActive: boolean;
+  onUpdate: (q: UIQuestion) => void;
+  onDelete: (id: string) => void;
+  onDuplicate: (q: FormQuestion) => void;
+  onClick: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: question.id });
 
-  const handleUpdate = (updatedQuestion: FormQuestion) => {
-    console.log("Updated Question:", updatedQuestion);
-    setQuestion(updatedQuestion);
-  };
-
-  const handleDelete = (id: string) => {
-    console.log("Delete Question:", id);
-    alert("Delete clicked for id: " + id);
-  };
-
-  const handleDuplicate = (q: FormQuestion) => {
-    console.log("Duplicate Question:", q);
-    alert("Duplicate clicked");
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
   };
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-muted/30 p-8">
-      <div className="w-full max-w-3xl space-y-6">
-        <div className="rounded-t-lg border-t-8 border-primary bg-card p-6 shadow-sm">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Ripoff Google Form by KH test
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Welcome to the awesome bootleg google form by KH mindblown emoji*
-          </p>
-        </div>
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <div onClick={onClick}>
+        <QuestionEditCard
+          question={question}
+          isActive={isActive}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          onDuplicate={onDuplicate}
+          dragHandleProps={listeners}
+        />
+      </div>
+    </div>
+  );
+}
 
-        <div className="bg-transparent">
-          <QuestionEditCard
-            question={question}
-            isActive={true}
-            onUpdate={handleUpdate}
-            onDelete={handleDelete}
-            onDuplicate={handleDuplicate}
-          />
+export default function FormEditorPage() {
+  const [questions, setQuestions] = useState<UIQuestion[]>([
+    {
+      id: crypto.randomUUID(),
+      question: "Untitled Question",
+      type: "SHORT_ANSWER",
+      optional: true,
+    },
+  ]);
+
+  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setQuestions((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const addQuestion = () => {
+    const newId = crypto.randomUUID();
+    const newQuestion: UIQuestion = {
+      id: newId,
+      question: "Untitled Question",
+      type: "SHORT_ANSWER",
+      optional: true,
+    };
+    setQuestions([...questions, newQuestion]);
+    setActiveQuestionId(newId);
+  };
+
+  const updateQuestion = (updatedQ: UIQuestion) => {
+    setQuestions((prev) =>
+      prev.map((q) => (q.id === updatedQ.id ? updatedQ : q)),
+    );
+  };
+
+  const deleteQuestion = (id: string) => {
+    setQuestions((prev) => prev.filter((q) => q.id !== id));
+    if (activeQuestionId === id) {
+      setActiveQuestionId(null);
+    }
+  };
+
+  const duplicateQuestion = (q: FormQuestion) => {
+    const newId = crypto.randomUUID();
+    const newQ = { ...q, id: newId };
+    setQuestions((prev) => [...prev, newQ]);
+    setActiveQuestionId(newId);
+  };
+
+  return (
+    <div className="min-h-screen bg-primary/5 p-8 pb-32">
+      <div className="mx-auto max-w-3xl space-y-6">
+        {/* Form Title Card */}
+        <Card className="border-t-[10px] border-t-primary bg-card shadow-sm">
+          <div className="flex flex-col gap-4 p-6">
+            <Input
+              className="border-none px-0 text-3xl font-bold focus-visible:ring-0 md:text-4xl"
+              placeholder="Form Title"
+              defaultValue="Untitled Form"
+            />
+            <Textarea
+              className="resize-none border-none px-0 text-base text-muted-foreground focus-visible:ring-0"
+              placeholder="Form description"
+              defaultValue="Form description goes here"
+            />
+          </div>
+        </Card>
+
+        {/* Questions List */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={questions}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-4">
+              {questions.map((q) => (
+                <SortableQuestion
+                  key={q.id}
+                  question={q}
+                  isActive={activeQuestionId === q.id}
+                  onUpdate={updateQuestion}
+                  onDelete={deleteQuestion}
+                  onDuplicate={duplicateQuestion}
+                  onClick={() => setActiveQuestionId(q.id)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+
+        <div className="flex justify-center pt-4">
+          <Button
+            onClick={addQuestion}
+            size="lg"
+            className="gap-2 rounded-full shadow-lg transition-all hover:-translate-y-0.5"
+          >
+            <Plus className="h-5 w-5" />
+            Add Question
+          </Button>
         </div>
       </div>
-
-      {/* <div className="p-4 bg-card rounded-md border shadow-sm">
-                <h2 className="text-lg font-semibold mb-2">Current State (Debug)</h2>
-                <pre className="text-xs overflow-auto max-h-96 text-muted-foreground font-mono bg-muted p-4 rounded">
-                    {JSON.stringify(question, null, 2)}
-                </pre>
-            </div> */}
     </div>
   );
 }
