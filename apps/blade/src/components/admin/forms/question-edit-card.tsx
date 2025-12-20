@@ -1,5 +1,6 @@
 "use client";
 
+import type { DraggableSyntheticListeners } from "@dnd-kit/core";
 import * as React from "react";
 import {
   AlignLeft,
@@ -16,11 +17,14 @@ import {
   Trash,
   X,
 } from "lucide-react";
+import type { z } from "zod";
 
+import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 import { Checkbox } from "@forge/ui/checkbox";
+import { DatePicker } from "@forge/ui/date-picker";
 import { Input } from "@forge/ui/input";
 import {
   Select,
@@ -30,17 +34,18 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 import { Textarea } from "@forge/ui/textarea";
+import { TimePicker } from "@forge/ui/time-picker";
 
-import { FormQuestion, QuestionOption, QuestionType } from "~/lib/types/form";
-
-const uuidv4 = () => crypto.randomUUID();
+type FormQuestion = z.infer<typeof QuestionValidator>;
+type QuestionType = FormQuestion["type"];
 
 interface QuestionEditCardProps {
-  question: FormQuestion;
+  question: FormQuestion & { id: string };
   isActive: boolean;
-  onUpdate: (updatedQuestion: FormQuestion) => void;
+  onUpdate: (updatedQuestion: FormQuestion & { id: string }) => void;
   onDelete: (id: string) => void;
-  onDuplicate: (question: FormQuestion) => void;
+  onDuplicate: (question: FormQuestion & { id: string }) => void;
+  dragHandleProps?: DraggableSyntheticListeners;
 }
 
 const QUESTION_TYPES: {
@@ -48,13 +53,13 @@ const QUESTION_TYPES: {
   label: string;
   icon: React.ElementType;
 }[] = [
-  { value: "short_answer", label: "Short answer", icon: AlignLeft },
-  { value: "paragraph", label: "Paragraph", icon: Pilcrow },
-  { value: "multiple_choice", label: "Multiple choice", icon: CircleDot },
-  { value: "checkboxes", label: "Checkboxes", icon: CheckSquare },
-  { value: "dropdown", label: "Dropdown", icon: ChevronDown },
-  { value: "date", label: "Date", icon: Calendar },
-  { value: "time", label: "Time", icon: Clock },
+  { value: "SHORT_ANSWER", label: "Short answer", icon: AlignLeft },
+  { value: "PARAGRAPH", label: "Paragraph", icon: Pilcrow },
+  { value: "MULTIPLE_CHOICE", label: "Multiple choice", icon: CircleDot },
+  { value: "CHECKBOXES", label: "Checkboxes", icon: CheckSquare },
+  { value: "DROPDOWN", label: "Dropdown", icon: ChevronDown },
+  { value: "DATE", label: "Date", icon: Calendar },
+  { value: "TIME", label: "Time", icon: Clock },
 ];
 
 export function QuestionEditCard({
@@ -63,26 +68,25 @@ export function QuestionEditCard({
   onUpdate,
   onDelete,
   onDuplicate,
+  dragHandleProps,
 }: QuestionEditCardProps) {
   // -- Handlers --
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onUpdate({ ...question, title: e.target.value });
+    onUpdate({ ...question, question: e.target.value });
   };
 
   const handleTypeChange = (newType: QuestionType) => {
     const updatedQuestion = { ...question, type: newType };
 
     if (
-      ["multiple_choice", "checkboxes", "dropdown"].includes(newType) &&
+      ["MULTIPLE_CHOICE", "CHECKBOXES", "DROPDOWN"].includes(newType) &&
       (!question.options || question.options.length === 0)
     ) {
-      updatedQuestion.options = [
-        { id: uuidv4(), value: "Option 1", isOther: false },
-      ];
+      updatedQuestion.options = ["Option 1"];
     }
 
-    if (["short_answer", "paragraph", "date", "time"].includes(newType)) {
+    if (["SHORT_ANSWER", "PARAGRAPH", "DATE", "TIME"].includes(newType)) {
       updatedQuestion.options = undefined;
     }
 
@@ -90,8 +94,10 @@ export function QuestionEditCard({
   };
 
   const handleRequiredChange = (checked: boolean) => {
-    onUpdate({ ...question, required: checked });
+    onUpdate({ ...question, optional: !checked });
   };
+
+  // The 'question' prop now includes 'id' via the extended type.
 
   return (
     <Card
@@ -101,15 +107,15 @@ export function QuestionEditCard({
           ? "border-l-primary shadow-md ring-1 ring-black/5"
           : "border-l-transparent hover:bg-muted/50",
       )}
-      onClick={(e) => {
-        e.stopPropagation();
+      onClick={() => {
+        // Allow propagation so parent can set active state
       }}
     >
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
         <div className="flex-1 rounded-md bg-muted/50 p-2 transition-colors focus-within:bg-muted focus-within:ring-1 focus-within:ring-primary/20">
           <Textarea
-            value={question.title}
+            value={question.question}
             onChange={handleTitleChange}
             placeholder="Question"
             className="min-h-[3rem] resize-none overflow-hidden border-none bg-transparent px-0 py-0 text-lg font-medium placeholder:text-muted-foreground focus-visible:ring-0"
@@ -152,7 +158,10 @@ export function QuestionEditCard({
 
       {/* Footer */}
       <div className="mt-4 flex items-center justify-between gap-2 border-t pt-4">
-        <div className="cursor-move text-gray-300 hover:text-gray-500">
+        <div
+          className="cursor-move text-gray-300 hover:text-gray-500"
+          {...dragHandleProps}
+        >
           <GripHorizontal className="h-5 w-5 rotate-90" />
         </div>
         <div className="flex items-center justify-end gap-2">
@@ -170,7 +179,7 @@ export function QuestionEditCard({
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Required</span>
             <Checkbox
-              checked={question.required}
+              checked={!question.optional}
               onCheckedChange={handleRequiredChange}
             />
           </div>
@@ -192,38 +201,44 @@ function QuestionBody({
   question,
   onUpdate,
 }: {
-  question: FormQuestion;
-  onUpdate: (q: FormQuestion) => void;
+  question: FormQuestion & { id: string };
+  onUpdate: (q: FormQuestion & { id: string }) => void;
 }) {
   switch (question.type) {
-    case "short_answer":
+    case "SHORT_ANSWER":
       return (
-        <div className="w-1/2 border-b border-dotted border-gray-300 py-2 text-sm text-gray-400">
-          Short answer text
+        <div className="w-1/2">
+          <Input
+            placeholder="Short answer text"
+            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+            disabled={false}
+          />
         </div>
       );
-    case "paragraph":
+    case "PARAGRAPH":
       return (
-        <div className="w-3/4 border-b border-dotted border-gray-300 py-2 text-sm text-gray-400">
-          Long answer text
+        <div className="w-full">
+          <Textarea
+            placeholder="Long answer text"
+            className="resize-none rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+            disabled={false}
+          />
         </div>
       );
-    case "multiple_choice":
-    case "checkboxes":
-    case "dropdown":
+    case "MULTIPLE_CHOICE":
+    case "CHECKBOXES":
+    case "DROPDOWN":
       return <OptionList question={question} onUpdate={onUpdate} />;
-    case "date":
+    case "DATE":
       return (
-        <div className="flex items-center gap-2 text-gray-400">
-          <Calendar className="h-5 w-5" />
-          <span>Month, day, year</span>
+        <div className="flex items-center gap-2">
+          <DatePicker />
         </div>
       );
-    case "time":
+    case "TIME":
       return (
-        <div className="flex items-center gap-2 text-gray-400">
-          <Clock className="h-5 w-5" />
-          <span>Time</span>
+        <div className="flex items-center gap-2">
+          <TimePicker />
         </div>
       );
     default:
@@ -235,52 +250,49 @@ function OptionList({
   question,
   onUpdate,
 }: {
-  question: FormQuestion;
-  onUpdate: (q: FormQuestion) => void;
+  question: FormQuestion & { id: string };
+  onUpdate: (q: FormQuestion & { id: string }) => void;
 }) {
   const options = question.options || [];
 
-  const handleOptionChange = (id: string, newValue: string) => {
-    const newOptions = options.map((opt) =>
-      opt.id === id ? { ...opt, value: newValue } : opt,
-    );
+  const handleOptionChange = (index: number, newValue: string) => {
+    const newOptions = [...options];
+    newOptions[index] = newValue;
     onUpdate({ ...question, options: newOptions });
   };
 
   const addOption = () => {
-    const newOption: QuestionOption = {
-      id: uuidv4(),
-      value: `Option ${options.length + 1}`,
-      isOther: false,
-    };
-    onUpdate({ ...question, options: [...options, newOption] });
+    onUpdate({
+      ...question,
+      options: [...options, `Option ${options.length + 1}`],
+    });
   };
 
-  const removeOption = (id: string) => {
-    const newOptions = options.filter((opt) => opt.id !== id);
+  const removeOption = (index: number) => {
+    const newOptions = options.filter((_, i) => i !== index);
     onUpdate({ ...question, options: newOptions });
   };
 
   const Icon =
-    question.type === "multiple_choice"
+    question.type === "MULTIPLE_CHOICE"
       ? Circle
-      : question.type === "checkboxes"
+      : question.type === "CHECKBOXES"
         ? CheckSquare
         : Circle;
 
   return (
     <div className="flex flex-col gap-2">
-      {options.map((option, idx) => (
-        <div key={option.id} className="group flex items-center gap-2">
-          {question.type === "dropdown" ? (
+      {options.map((optionValue, idx) => (
+        <div key={idx} className="group flex items-center gap-2">
+          {question.type === "DROPDOWN" ? (
             <span className="w-6 text-center text-sm">{idx + 1}.</span>
           ) : (
             <Icon className="h-5 w-5 text-gray-300" />
           )}
 
           <Input
-            value={option.value}
-            onChange={(e) => handleOptionChange(option.id, e.target.value)}
+            value={optionValue}
+            onChange={(e) => handleOptionChange(idx, e.target.value)}
             className="flex-1 rounded-none border-none px-0 hover:border-b hover:border-gray-200 focus:border-b-2 focus:border-blue-500 focus:ring-0"
             placeholder={`Option ${idx + 1}`}
             onKeyDown={(e) => {
@@ -288,9 +300,9 @@ function OptionList({
                 e.preventDefault();
                 addOption();
               }
-              if (e.key === "Backspace" && option.value === "") {
+              if (e.key === "Backspace" && optionValue === "") {
                 e.preventDefault();
-                removeOption(option.id);
+                removeOption(idx);
               }
             }}
             autoFocus={idx === options.length - 1 && options.length > 1}
@@ -300,7 +312,7 @@ function OptionList({
             variant="ghost"
             size="icon"
             className="opacity-0 transition-opacity group-hover:opacity-100"
-            onClick={() => removeOption(option.id)}
+            onClick={() => removeOption(idx)}
             tabIndex={-1}
           >
             <X className="h-5 w-5 text-gray-500" />
@@ -310,7 +322,7 @@ function OptionList({
 
       {/* Add Option Button */}
       <div className="mt-1 flex items-center gap-2">
-        {question.type === "dropdown" ? (
+        {question.type === "DROPDOWN" ? (
           <span className="w-6 text-center text-sm">{options.length + 1}.</span>
         ) : (
           <Icon className="h-5 w-5 text-transparent" />
