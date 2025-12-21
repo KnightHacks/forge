@@ -2,8 +2,7 @@
 
 import type { DragEndEvent } from "@dnd-kit/core";
 import type { CSSProperties } from "react";
-import type { z } from "zod";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   closestCenter,
   DndContext,
@@ -21,6 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Plus } from "lucide-react";
+import * as z from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
@@ -29,8 +29,7 @@ import { Input } from "@forge/ui/input";
 import { Textarea } from "@forge/ui/textarea";
 
 import { QuestionEditCard } from "~/components/admin/forms/question-edit-card";
-
-// import { api } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 type FormQuestion = z.infer<typeof QuestionValidator>;
 type UIQuestion = FormQuestion & { id: string };
@@ -90,23 +89,35 @@ export default function FormEditorPage() {
     },
   ]);
 
-  /*
+  const [saveStatus, setSaveStatus] = useState<string>("");
+
   const createFormMutation = api.forms.createForm.useMutation({
+    onMutate: () => {
+      setSaveStatus("Saving...");
+    },
     onSuccess: () => {
-      alert("Form saved successfully!");
+      // eslint-disable-next-line no-console
+      console.log("Form saved successfully!");
+      setSaveStatus(`All changes saved at ${new Date().toLocaleTimeString()}`);
     },
     onError: (error) => {
       // eslint-disable-next-line no-console
       console.error("Failed to save form:", error);
-      alert("Failed to save form. Check console for why");
+      setSaveStatus("Failed to save. Check console for details.");
     },
   });
 
   const handleSaveForm = () => {
+    // Validate banner - strictly ensure it's a URL or empty
+    const bannerUrl =
+      formBanner && z.string().url().safeParse(formBanner).success
+        ? formBanner
+        : undefined;
+
     createFormMutation.mutate({
       name: formTitle,
       description: formDescription,
-      banner: formBanner || undefined,
+      banner: bannerUrl,
       questions: questions.map((q) => {
         // Remove local 'id' before sending to backend
         const { id: _id, ...rest } = q;
@@ -114,7 +125,6 @@ export default function FormEditorPage() {
       }),
     });
   };
-  */
 
   //Printing from page.tsx
   useEffect(() => {
@@ -128,6 +138,16 @@ export default function FormEditorPage() {
   }, [questions, formTitle, formDescription, formBanner]);
 
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+
+  // Auto-save when clicking off a card (active question changes)
+  const prevActiveQuestionId = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevActiveQuestionId.current !== activeQuestionId) {
+      handleSaveForm();
+    }
+    prevActiveQuestionId.current = activeQuestionId;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeQuestionId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -181,8 +201,19 @@ export default function FormEditorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-primary/5 p-8 pb-32">
+    <div
+      className="min-h-screen bg-primary/5 p-8 pb-32"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          setActiveQuestionId(null);
+        }
+      }}
+    >
       <div className="mx-auto max-w-3xl space-y-6">
+        <div className="min-h-[1.5rem] text-center text-xs text-muted-foreground">
+          {saveStatus}
+        </div>
+
         {/* <div className="flex justify-end">
           <Button
             onClick={handleSaveForm}
@@ -200,18 +231,21 @@ export default function FormEditorPage() {
               placeholder="Form Title"
               value={formTitle}
               onChange={(e) => setFormTitle(e.target.value)}
+              onBlur={handleSaveForm}
             />
             <Input
               className="resize-none border-none px-0 text-base text-muted-foreground focus-visible:ring-0"
-              placeholder="Banner Image URL (optional)"
+              placeholder="Banner Image URL"
               value={formBanner}
               onChange={(e) => setFormBanner(e.target.value)}
+              onBlur={handleSaveForm}
             />
             <Textarea
               className="resize-none border-none px-0 text-base text-muted-foreground focus-visible:ring-0"
               placeholder="Form description"
               value={formDescription}
               onChange={(e) => setFormDescription(e.target.value)}
+              onBlur={handleSaveForm}
             />
           </div>
         </Card>
