@@ -13,7 +13,6 @@ import {
   Clock,
   Copy,
   GripHorizontal,
-  MoreVertical,
   Pilcrow,
   Trash,
   X,
@@ -184,11 +183,11 @@ export function QuestionEditCard({
             />
           </div>
 
-          <div className="ml-2">
+          {/* <div className="ml-2">
             <Button variant="ghost" size="icon">
               <MoreVertical className="h-5 w-5 text-gray-500" />
             </Button>
-          </div>
+          </div> */}
         </div>
       </div>
     </Card>
@@ -211,7 +210,7 @@ function QuestionBody({
           <Input
             placeholder="Short answer text"
             className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
-            disabled={false}
+            disabled
           />
         </div>
       );
@@ -221,7 +220,7 @@ function QuestionBody({
           <Textarea
             placeholder="Long answer text"
             className="resize-none rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
-            disabled={false}
+            disabled
           />
         </div>
       );
@@ -231,13 +230,13 @@ function QuestionBody({
       return <OptionList question={question} onUpdate={onUpdate} />;
     case "DATE":
       return (
-        <div className="flex items-center gap-2">
+        <div className="pointer-events-none flex items-center gap-2 opacity-50">
           <DatePicker />
         </div>
       );
     case "TIME":
       return (
-        <div className="flex items-center gap-2">
+        <div className="pointer-events-none flex items-center gap-2 opacity-50">
           <TimePicker />
         </div>
       );
