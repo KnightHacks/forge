@@ -22,18 +22,29 @@ export const formsRouter = {
     .input(FormSchemaValidator)
     .mutation(async ({ input }) => {
       const jsonSchema = generateJsonSchema(input);
-      if (jsonSchema.success) {
-        await db.insert(FormsSchemas).values({
-          name: input.name,
-          formData: input,
-          formValidatorJson: jsonSchema.schema,
-        });
-      } else {
+
+      if (!jsonSchema.success) {
         throw new TRPCError({
           message: jsonSchema.msg,
           code: "BAD_REQUEST",
         });
       }
+
+      await db
+        .insert(FormsSchemas)
+        .values({
+          name: input.name,
+          formData: input,
+          formValidatorJson: jsonSchema.schema,
+        })
+        .onConflictDoUpdate({
+          //If it already exists upsert it
+          target: FormsSchemas.name,
+          set: {
+            formData: input,
+            formValidatorJson: jsonSchema.schema,
+          },
+        });
     }),
 
   getForm: publicProcedure
