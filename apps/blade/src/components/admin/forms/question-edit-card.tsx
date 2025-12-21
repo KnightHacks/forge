@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
+import { FORM_QUESTION_TYPES } from "@forge/consts/knight-hacks";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
@@ -48,19 +49,15 @@ interface QuestionEditCardProps {
   dragHandleProps?: DraggableSyntheticListeners;
 }
 
-const QUESTION_TYPES: {
-  value: QuestionType;
-  label: string;
-  icon: React.ElementType;
-}[] = [
-  { value: "SHORT_ANSWER", label: "Short answer", icon: AlignLeft },
-  { value: "PARAGRAPH", label: "Paragraph", icon: Pilcrow },
-  { value: "MULTIPLE_CHOICE", label: "Multiple choice", icon: CircleDot },
-  { value: "CHECKBOXES", label: "Checkboxes", icon: CheckSquare },
-  { value: "DROPDOWN", label: "Dropdown", icon: ChevronDown },
-  { value: "DATE", label: "Date", icon: Calendar },
-  { value: "TIME", label: "Time", icon: Clock },
-];
+const QUESTION_ICONS: Record<string, React.ElementType> = {
+  SHORT_ANSWER: AlignLeft,
+  PARAGRAPH: Pilcrow,
+  MULTIPLE_CHOICE: CircleDot,
+  CHECKBOXES: CheckSquare,
+  DROPDOWN: ChevronDown,
+  DATE: Calendar,
+  TIME: Clock,
+};
 
 export function QuestionEditCard({
   question,
@@ -138,14 +135,17 @@ export function QuestionEditCard({
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
-              {QUESTION_TYPES.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  <div className="flex items-center gap-3">
-                    <type.icon className="h-4 w-4" />
-                    <span>{type.label}</span>
-                  </div>
-                </SelectItem>
-              ))}
+              {FORM_QUESTION_TYPES.map((type) => {
+                const Icon = QUESTION_ICONS[type.value];
+                return (
+                  <SelectItem key={type.value} value={type.value}>
+                    <div className="flex items-center gap-3">
+                      {Icon && <Icon className="h-4 w-4" />}
+                      <span>{type.label}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
