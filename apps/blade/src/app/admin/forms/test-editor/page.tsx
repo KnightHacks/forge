@@ -30,6 +30,8 @@ import { Textarea } from "@forge/ui/textarea";
 
 import { QuestionEditCard } from "~/components/admin/forms/question-edit-card";
 
+// import { api } from "~/trpc/react";
+
 type FormQuestion = z.infer<typeof QuestionValidator>;
 type UIQuestion = FormQuestion & { id: string };
 
@@ -78,6 +80,7 @@ export default function FormEditorPage() {
   const [formDescription, setFormDescription] = useState(
     "Form description goes here",
   );
+  const [formBanner, setFormBanner] = useState("");
   const [questions, setQuestions] = useState<UIQuestion[]>([
     {
       id: crypto.randomUUID(),
@@ -86,15 +89,43 @@ export default function FormEditorPage() {
       optional: true,
     },
   ]);
+
+  /*
+  const createFormMutation = api.forms.createForm.useMutation({
+    onSuccess: () => {
+      alert("Form saved successfully!");
+    },
+    onError: (error) => {
+      // eslint-disable-next-line no-console
+      console.error("Failed to save form:", error);
+      alert("Failed to save form. Check console for why");
+    },
+  });
+
+  const handleSaveForm = () => {
+    createFormMutation.mutate({
+      name: formTitle,
+      description: formDescription,
+      banner: formBanner || undefined,
+      questions: questions.map((q) => {
+        // Remove local 'id' before sending to backend
+        const { id: _id, ...rest } = q;
+        return rest;
+      }),
+    });
+  };
+  */
+
   //Printing from page.tsx
   useEffect(() => {
     // eslint-disable-next-line no-console
     console.log("UPDATED FORM STATE (Page Level):", {
-      title: formTitle,
+      name: formTitle,
       description: formDescription,
+      banner: formBanner,
       questions,
     });
-  }, [questions, formTitle, formDescription]);
+  }, [questions, formTitle, formDescription, formBanner]);
 
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
@@ -152,6 +183,15 @@ export default function FormEditorPage() {
   return (
     <div className="min-h-screen bg-primary/5 p-8 pb-32">
       <div className="mx-auto max-w-3xl space-y-6">
+        {/* <div className="flex justify-end">
+          <Button
+            onClick={handleSaveForm}
+            disabled={createFormMutation.isPending}
+          >
+            {createFormMutation.isPending ? "Saving..." : "Save Form"}
+          </Button>
+        </div> */}
+
         {/* Form Title Card */}
         <Card className="border-t-[10px] border-t-primary bg-card shadow-sm">
           <div className="flex flex-col gap-4 p-6">
@@ -160,6 +200,12 @@ export default function FormEditorPage() {
               placeholder="Form Title"
               value={formTitle}
               onChange={(e) => setFormTitle(e.target.value)}
+            />
+            <Input
+              className="resize-none border-none px-0 text-base text-muted-foreground focus-visible:ring-0"
+              placeholder="Banner Image URL (optional)"
+              value={formBanner}
+              onChange={(e) => setFormBanner(e.target.value)}
             />
             <Textarea
               className="resize-none border-none px-0 text-base text-muted-foreground focus-visible:ring-0"
