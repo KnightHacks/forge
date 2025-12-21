@@ -6683,3 +6683,13 @@ type QuestionValidatorType = z.infer<typeof QuestionValidator>;
 export type ValidatorOptions = Omit<QuestionValidatorType, "question">;
 
 export type QuestionsType = z.infer<typeof QuestionValidator>["type"];
+
+export const FORM_QUESTION_TYPES = [
+  { value: "SHORT_ANSWER", label: "Short answer" },
+  { value: "PARAGRAPH", label: "Paragraph" },
+  { value: "MULTIPLE_CHOICE", label: "Multiple choice" },
+  { value: "CHECKBOXES", label: "Checkboxes" },
+  { value: "DROPDOWN", label: "Dropdown" },
+  { value: "DATE", label: "Date" },
+  { value: "TIME", label: "Time" },
+] as const;
