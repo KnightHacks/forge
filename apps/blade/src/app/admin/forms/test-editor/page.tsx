@@ -3,7 +3,7 @@
 import type { DragEndEvent } from "@dnd-kit/core";
 import type { CSSProperties } from "react";
 import type { z } from "zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   closestCenter,
   DndContext,
@@ -74,6 +74,10 @@ function SortableQuestion({
 }
 
 export default function FormEditorPage() {
+  const [formTitle, setFormTitle] = useState("Untitled Form");
+  const [formDescription, setFormDescription] = useState(
+    "Form description goes here",
+  );
   const [questions, setQuestions] = useState<UIQuestion[]>([
     {
       id: crypto.randomUUID(),
@@ -82,6 +86,15 @@ export default function FormEditorPage() {
       optional: true,
     },
   ]);
+  //Printing from page.tsx
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log("UPDATED FORM STATE (Page Level):", {
+      title: formTitle,
+      description: formDescription,
+      questions,
+    });
+  }, [questions, formTitle, formDescription]);
 
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
@@ -145,12 +158,14 @@ export default function FormEditorPage() {
             <Input
               className="border-none px-0 text-3xl font-bold focus-visible:ring-0 md:text-4xl"
               placeholder="Form Title"
-              defaultValue="Untitled Form"
+              value={formTitle}
+              onChange={(e) => setFormTitle(e.target.value)}
             />
             <Textarea
               className="resize-none border-none px-0 text-base text-muted-foreground focus-visible:ring-0"
               placeholder="Form description"
-              defaultValue="Form description goes here"
+              value={formDescription}
+              onChange={(e) => setFormDescription(e.target.value)}
             />
           </div>
         </Card>
