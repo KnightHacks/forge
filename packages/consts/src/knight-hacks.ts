@@ -6679,7 +6679,6 @@ export const FormSchemaValidator = z.object({
 
 export type FormType = z.infer<typeof FormSchemaValidator>;
 
-
 type QuestionValidatorType = z.infer<typeof QuestionValidator>;
 export type ValidatorOptions = Omit<QuestionValidatorType, "question">;
 
@@ -6694,4 +6693,3 @@ export const FORM_QUESTION_TYPES = [
   { value: "DATE", label: "Date" },
   { value: "TIME", label: "Time" },
 ] as const;
-
