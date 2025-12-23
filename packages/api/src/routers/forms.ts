@@ -3,7 +3,6 @@ import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
-import { desc, eq } from "drizzle-orm";
 
 import { FormSchemaValidator } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
@@ -16,7 +15,6 @@ import {
 
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { generateJsonSchema } from "../utils";
-import { FormResponse, Member } from "@forge/db/schemas/knight-hacks";
 
 interface FormSchemaRow {
   name: string;
@@ -67,7 +65,6 @@ export const formsRouter = {
       };
     }),
 
-    
   createResponse: protectedProcedure
     .input(InsertFormResponseSchema.omit({ userId: true }))
     .mutation(async ({ input, ctx }) => {
