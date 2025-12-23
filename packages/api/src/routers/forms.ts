@@ -1,6 +1,6 @@
 import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, and } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -115,7 +115,7 @@ export const formsRouter = {
     }),
 
   getResponses: adminProcedure
-    .input(z.object({ name: z.string() }))
+    .input(z.object({ form: z.string() }))
     .query(async ({ input }) => {
       return await db
         .select({
@@ -125,11 +125,12 @@ export const formsRouter = {
             firstName: Member.firstName,
             lastName: Member.lastName,
             email: Member.email,
+            id: Member.userId
           },
         })
         .from(FormResponse)
-        .leftJoin(Member, eq(FormResponse.userId, Member.id))
-        .where(eq(FormResponse.form, input.name))
+        .leftJoin(Member, eq(FormResponse.userId, Member.userId))
+        .where(eq(FormResponse.form, input.form))
         .orderBy(desc(FormResponse.createdAt));
     }),
 };
