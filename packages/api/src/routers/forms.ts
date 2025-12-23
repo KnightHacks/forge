@@ -59,19 +59,6 @@ export const formsRouter = {
     .mutation(async ({ input, ctx }) => {
       const userId = ctx.session.user.id;
 
-      // see if response already exists
-      const result = await db.query.FormResponse.findFirst({
-        where: (t, { eq, and }) =>
-          and(eq(t.userId, userId), eq(t.form, input.form)),
-      });
-
-      if (result) {
-        throw new TRPCError({
-          message: "Response already exists for this form and user",
-          code: "BAD_REQUEST",
-        });
-      }
-
       // validate response
       const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) => eq(t.name, input.form),
@@ -101,10 +88,18 @@ export const formsRouter = {
           code: "BAD_REQUEST",
         });
       } else {
-        await db.insert(FormResponse).values({
-          userId,
-          ...input,
-        });
+        await db
+          .insert(FormResponse)
+          .values({
+            userId,
+            ...input,
+          })
+          .onConflictDoUpdate({
+            target: [FormResponse.form, FormResponse.userId],
+            set: {
+              responseData: input.responseData,
+            },
+          });
       }
     }),
 
