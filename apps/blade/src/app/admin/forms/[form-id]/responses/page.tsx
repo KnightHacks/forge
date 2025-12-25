@@ -3,6 +3,7 @@ import { auth } from "@forge/auth";
 import { SIGN_IN_PATH } from "~/consts";
 import { redirect } from "next/navigation";
 import { api, HydrateClient } from "~/trpc/server";
+import { ResponsePieChart } from "./_components/ResponsePieChart";
 
 export const metadata: Metadata = {
     title: "Blade | Form Responses",
@@ -67,7 +68,7 @@ export default async function FormResponsesPage({
         {
             submittedAt: new Date("2024-01-17"),
             responseData: {
-                "What is your favorite programming language?": "JavaScript",
+                "What is your favorite programming language?": "Python",
                 "How many years of experience do you have?": 2,
                 "What do you like about Knight Hacks?": ""
             },
@@ -86,9 +87,10 @@ export default async function FormResponsesPage({
                 <h1>Form Responses for: {formId} </h1>
                 <p>{responses.length} responses</p>
 
-                <pre>
-                    {JSON.stringify(responses, null, 2)}
-                </pre>
+                <ResponsePieChart
+                    question = "What is your favorite programming language?"
+                    responses = {responses}
+                />
             </main>
         </HydrateClient>
     )
