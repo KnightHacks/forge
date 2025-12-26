@@ -112,7 +112,8 @@ export function execute(client: Client) {
             name: "Topics",
             value: `${problem.topicTags
               .map((top) => {
-                return `${top.name}  -  *https://leetcode.com/tag/${top.slug}*`;
+                const topic = `${top.name}  -  *https://leetcode.com/tag/${top.slug}*`;
+                return `||${topic}||`;
               })
               .join("\n")}`,
           },
