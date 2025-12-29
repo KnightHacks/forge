@@ -539,21 +539,18 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
   formValidatorJson: t.jsonb().notNull(),
 }));
 
-export const FormResponse = createTable(
-  "form_response",
-  (t) => ({
-    id: t.uuid().notNull().primaryKey().defaultRandom(),
-    form: t
-      .varchar({ length: 255 })
-      .notNull()
-      .references(() => FormsSchemas.name),
-    userId: t
-      .uuid()
-      .notNull()
-      .references(() => User.id, { onDelete: "cascade" }),
-    responseData: t.jsonb().notNull(),
-    createdAt: t.timestamp().notNull().defaultNow(),
-  }),
-);
+export const FormResponse = createTable("form_response", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  form: t
+    .varchar({ length: 255 })
+    .notNull()
+    .references(() => FormsSchemas.name),
+  userId: t
+    .uuid()
+    .notNull()
+    .references(() => User.id, { onDelete: "cascade" }),
+  responseData: t.jsonb().notNull(),
+  createdAt: t.timestamp().notNull().defaultNow(),
+}));
 
 export const InsertFormResponseSchema = createInsertSchema(FormResponse);
