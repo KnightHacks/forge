@@ -72,6 +72,7 @@ export const formsRouter = {
         where: (t, { eq }) => eq(t.name, input.newName),
       });
 
+      //im not sure if we are going to be expecting duplicate names so i just added this
       if (duplicateForm){
         throw new TRPCError({
           message: "Form with this name already exists",
@@ -127,7 +128,7 @@ export const formsRouter = {
         limit: limit + 1,
        
         where: cursor ? lt(FormsSchemas.createdAt, new Date(cursor)) : undefined,
-        orderBy: [desc(FormsSchemas.name)],
+        orderBy: [desc(FormsSchemas.createdAt)],
         columns: {
           name: true,
           createdAt: true,
@@ -138,7 +139,7 @@ export const formsRouter = {
 
       if (forms.length > limit) {
         const nextItem = forms.pop();
-        nextCursor = nextItem?.name;
+        nextCursor = nextItem?.createdAt.toISOString();
       }
 
       return {
