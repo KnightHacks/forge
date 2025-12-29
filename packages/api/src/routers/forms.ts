@@ -17,6 +17,7 @@ import {
 
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { generateJsonSchema } from "../utils";
+import { desc, eq, lt } from "drizzle-orm";
 
 export const formsRouter = {
   createForm: adminProcedure
@@ -212,4 +213,93 @@ export const formsRouter = {
         submittedAt: existing?.createdAt ?? null,
       };
     }),
+
+  updateForm: adminProcedure
+    .input(z.object({
+      oldName: z.string(),
+      newName: z.string().min(1)
+    })
+  )
+    .mutation(async ({ input }) => {
+
+      const duplicateForm = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) => eq(t.name, input.newName),
+      });
+
+      if (duplicateForm){
+        throw new TRPCError({
+          message: "Form with this name already exists",
+          code: "CONFLICT",
+        });
+      }
+
+      const newFormName = await db.update(FormsSchemas)
+        .set({name: input.newName})
+        .where(eq(FormsSchemas.name, input.oldName))
+        .returning({ name: FormsSchemas.name });
+
+        if (newFormName.length === 0) {
+          throw new TRPCError({
+            message: "Form not found",
+            code: "NOT_FOUND",
+          });
+        }
+
+        return { success: true}
+
+    }),
+
+
+
+  deleteForm: adminProcedure
+    .input(z.object({ name: z.string() }))
+    .mutation(async ({ input }) => {
+      const deletion = await db.delete(FormsSchemas)
+        .where(eq(FormsSchemas.name, input.name))
+        .returning({ name: FormsSchemas.name });
+
+        if (deletion.length === 0) {
+          throw new TRPCError({
+            message: "Form not found",
+            code: "NOT_FOUND",
+          });
+        }
+    }),
+
+  getForms: publicProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(10),
+        cursor: z.string().nullish(), 
+      })
+    )
+    .query(async ({ input }) => {
+      const { cursor } = input;
+      const limit = input.limit;
+
+      const forms = await db.query.FormsSchemas.findMany({
+        limit: limit + 1,
+       
+        where: cursor ? lt(FormsSchemas.createdAt, new Date(cursor)) : undefined,
+        orderBy: [desc(FormsSchemas.name)],
+        columns: {
+          name: true,
+          createdAt: true,
+        },
+      });
+
+      let nextCursor: string | undefined = undefined;
+
+      if (forms.length > limit) {
+        const nextItem = forms.pop();
+        nextCursor = nextItem?.name;
+      }
+
+      return {
+        forms,
+        nextCursor,
+      };
+    }),
+
+
 };
