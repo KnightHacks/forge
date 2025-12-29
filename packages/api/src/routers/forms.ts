@@ -1,6 +1,6 @@
 import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
-import { desc, eq, and } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -87,6 +87,8 @@ export const formsRouter = {
       );
 
       // create js function at runtime to create a zod object
+      // input is trusted and generated internally
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-call
       const zodSchema = new Function("z", `return ${zodSchemaString}`)(
         z,
       ) as z.ZodSchema;
@@ -125,7 +127,7 @@ export const formsRouter = {
             firstName: Member.firstName,
             lastName: Member.lastName,
             email: Member.email,
-            id: Member.userId
+            id: Member.userId,
           },
         })
         .from(FormResponse)
