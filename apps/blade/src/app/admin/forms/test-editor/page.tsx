@@ -125,8 +125,6 @@ export default function FormEditorPage() {
       }),
     });
   };
-
-  //Printing from page.tsx
   useEffect(() => {
     // eslint-disable-next-line no-console
     console.log("UPDATED FORM STATE (Page Level):", {
