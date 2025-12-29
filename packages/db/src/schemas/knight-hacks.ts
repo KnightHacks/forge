@@ -554,9 +554,6 @@ export const FormResponse = createTable(
     responseData: t.jsonb().notNull(),
     createdAt: t.timestamp().notNull().defaultNow(),
   }),
-  (table) => ({
-    uniqueResponsePerUser: unique().on(table.form, table.userId),
-  }),
 );
 
 export const InsertFormResponseSchema = createInsertSchema(FormResponse);

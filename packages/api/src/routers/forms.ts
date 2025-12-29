@@ -100,20 +100,12 @@ export const formsRouter = {
           message: "Form response failed form validation",
           code: "BAD_REQUEST",
         });
-      } else {
-        await db
-          .insert(FormResponse)
-          .values({
-            userId,
-            ...input,
-          })
-          .onConflictDoUpdate({
-            target: [FormResponse.form, FormResponse.userId],
-            set: {
-              responseData: input.responseData,
-            },
-          });
       }
+
+      await db.insert(FormResponse).values({
+        userId,
+        ...input,
+      });
     }),
 
   getResponses: adminProcedure
