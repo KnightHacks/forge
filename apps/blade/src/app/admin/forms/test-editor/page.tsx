@@ -125,15 +125,7 @@ export default function FormEditorPage() {
       }),
     });
   };
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log("UPDATED FORM STATE (Page Level):", {
-      name: formTitle,
-      description: formDescription,
-      banner: formBanner,
-      questions,
-    });
-  }, [questions, formTitle, formDescription, formBanner]);
+  
 
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
