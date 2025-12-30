@@ -115,14 +115,18 @@ export default function FormEditorPage() {
         : undefined;
 
     createFormMutation.mutate({
-      name: formTitle,
-      description: formDescription,
-      banner: bannerUrl,
-      questions: questions.map((q) => {
-        // Remove local 'id' before sending to backend
-        const { id: _id, ...rest } = q;
-        return rest;
-      }),
+      formData: {
+        name: formTitle,
+        description: formDescription,
+        banner: bannerUrl,
+        questions: questions.map((q) => {
+          // Remove local 'id' before sending to backend
+          const { id: _id, ...rest } = q;
+          return rest;
+        }),
+      },
+      duesOnly: true,
+      allowResubmission: true,
     });
   };
 

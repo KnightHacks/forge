@@ -8,6 +8,7 @@ import { FormSchemaValidator } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
 import {
   FormResponse,
+  FormSchemaSchema,
   FormsSchemas,
   InsertFormResponseSchema,
   Member,
@@ -16,18 +17,18 @@ import {
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { generateJsonSchema } from "../utils";
 
-interface FormSchemaRow {
-  name: string;
-  createdAt: Date;
-  formData: FormData;
-  formValidatorJson: JSONSchema7;
-}
-
 export const formsRouter = {
   createForm: adminProcedure
-    .input(FormSchemaValidator)
+    .input(
+      FormSchemaSchema.omit({
+        name: true,
+        createdAt: true,
+        formData: true,
+        formValidatorJson: true,
+      }).extend({ formData: FormSchemaValidator }),
+    )
     .mutation(async ({ input }) => {
-      const jsonSchema = generateJsonSchema(input);
+      const jsonSchema = generateJsonSchema(input.formData);
 
       if (!jsonSchema.success) {
         throw new TRPCError({
@@ -39,15 +40,15 @@ export const formsRouter = {
       await db
         .insert(FormsSchemas)
         .values({
-          name: input.name,
-          formData: input,
+          ...input,
+          name: input.formData.name,
           formValidatorJson: jsonSchema.schema,
         })
         .onConflictDoUpdate({
           //If it already exists upsert it
           target: FormsSchemas.name,
           set: {
-            formData: input,
+            ...input,
             formValidatorJson: jsonSchema.schema,
           },
         });
@@ -56,12 +57,23 @@ export const formsRouter = {
   getForm: publicProcedure
     .input(z.object({ name: z.string() }))
     .query(async ({ input }) => {
-      const form = (await db.query.FormsSchemas.findFirst({
+      const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) => eq(t.name, input.name),
-      })) as FormSchemaRow;
+      });
+
+      if (form === undefined) {
+        throw new TRPCError({
+          message: "Form not found",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      const { formValidatorJson: _JSONValidator, ...retForm } = form;
+
       return {
-        formData: form.formData,
-        zodValidator: jsonSchemaToZod(form.formValidatorJson),
+        ...retForm,
+        formData: form.formData as FormData,
+        zodValidator: jsonSchemaToZod(form.formValidatorJson as JSONSchema7),
       };
     }),
 
