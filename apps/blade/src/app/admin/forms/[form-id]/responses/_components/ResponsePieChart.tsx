@@ -33,12 +33,15 @@ export function ResponsePieChart ({ question, responses }: ResponsePieChartProps
         }
     });
 
+    const totalResponses = Object.values(answerCounts).reduce((sum,count) => sum + count, 0);
     // convert answer counts to format recharts expects
     // [{ name: "javascript", amount: 3 }, { name: "python", amount: 2 }]
     const chartData = Object.entries(answerCounts).map(([answer, count]) => ({
         name: answer,
         amount: count,
-    }));
+        percentage: ((count / totalResponses ) * 100).toFixed(1), 
+    }))
+    .sort((a,b) => b.amount - a.amount); 
 
     // assign colors to each answer option
     // uses color palette from consts, cycles through if more options than colors
@@ -49,6 +52,8 @@ export function ResponsePieChart ({ question, responses }: ResponsePieChartProps
             color: ADMIN_PIE_CHART_COLORS[index % ADMIN_PIE_CHART_COLORS.length] ?? "#000000",
         }
     });
+
+    
 
     return (
         <Card>
@@ -73,14 +78,14 @@ export function ResponsePieChart ({ question, responses }: ResponsePieChartProps
                         if (!payload?.length) return null;
 
                         return (
-                          <div className="flex flex-col gap-2 justify-center">
+                          <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto pr-2">
                             {payload.map((item, index) => (
                               <div key={index} className="flex items-center gap-2">
                                 <div
-                                  className="h-3 w-3 rounded-sm"
+                                  className="h-3 w-3 rounded-sm flex-shrink-0"
                                   style={{ backgroundColor: item.color }}
                                 />
-                                <span className="text-sm">{item.value}</span>
+                                 <span className="text-sm">{item.value} ({item.payload.percentage}%)</span>
                               </div>
                             ))}
                           </div>
