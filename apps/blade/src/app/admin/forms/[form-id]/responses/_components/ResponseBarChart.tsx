@@ -34,16 +34,19 @@ export function ResponseBarChart({ question, responses }: ResponseBarChartProps)
         }
     });
 
-    // convert to format recharts expects
-    // [{ value: 1, count: 2 }, { value: 2, count: 1 }, ...]
-    const chartData = Object.entries(answerCounts).map(([value,count]) => ({
+    // calculate total responses for percentage calculations
+    const totalResponses = Object.values(answerCounts).reduce((sum, count) => sum + count, 0);
+
+    // convert to format recharts expects and add percentage field
+    // [{ value: 1, count: 2, percentage: "33.3" }, { value: 2, count: 1, percentage: "16.7" }, ...]
+    const chartData = Object.entries(answerCounts).map(([value, count]) => ({
         value: Number(value),
         count: count,
+        percentage: ((count / totalResponses) * 100).toFixed(1),
     }));
 
     // calculate average of all numeric responses
     const totalValues = chartData.reduce((sum, item) => sum + (item.value * item.count), 0);
-    const totalResponses = chartData.reduce((sum, item) => sum + item.count, 0);
     const average = totalResponses > 0 ? (totalValues / totalResponses).toFixed(1) : 0;
 
     // configure bar color
@@ -64,8 +67,8 @@ export function ResponseBarChart({ question, responses }: ResponseBarChartProps)
                     {responses.length} {responses.length === 1 ? 'response' : 'responses'}
                 </p>
             </CardHeader>
-            {/* center the chart horizontally */}
-            <CardContent className="flex flex-col items-center justify-center">
+            {/* center the chart horizontally and add legend on the right */}
+            <CardContent className="flex items-center justify-center">
                 <ChartContainer config={chartConfig} className="h-[300px]">
                     <BarChart data = {chartData} margin={{ top: 30 }}>
                         {/* horizontal grid lines only */}
@@ -89,10 +92,29 @@ export function ResponseBarChart({ question, responses }: ResponseBarChartProps)
                         </Bar>
                     </BarChart>
                 </ChartContainer>
-                {/* show average value below the chart */}
-                <p className="text-md font-medium mt-4">
-                    average: {average}
-                </p>
+                {/* legend container with scrollable items and fixed average */}
+                <div className="flex flex-col ml-6">
+                    {/* scrollable legend items */}
+                    <div className="flex flex-col gap-2 max-h-[240px] overflow-y-auto pr-2">
+                        {chartData.map((item, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                                <div
+                                    className="h-3 w-3 rounded-sm flex-shrink-0"
+                                    style={{ backgroundColor: "#4361ee" }}
+                                />
+                                <span className="text-sm">
+                                    {item.value}: {item.count} ({item.percentage}%)
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                    {/* fixed average value below scrollable area */}
+                    <div className="mt-2 pt-2 border-t">
+                        <p className="text-sm font-medium">
+                            avg: {average}
+                        </p>
+                    </div>
+                </div>
             </CardContent>
         </Card>
     );
