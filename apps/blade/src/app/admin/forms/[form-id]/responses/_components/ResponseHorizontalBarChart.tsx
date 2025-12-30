@@ -36,11 +36,16 @@
         }
     });
 
+    // calculate total responses for percentage calculations
+    const totalResponses = Object.values(optionCounts).reduce((sum,count) => sum + count, 0);
+    
+
     // convert to recharts format and sort by count (highest first)
     const chartData = Object.entries(optionCounts)
         .map(([option,count]) => ({
             option: option,
             count: count,
+            percentage: ((count / totalResponses) * 100).toFixed(1),
         }))
         .sort((a,b) => b.count - a.count);
 
@@ -51,8 +56,11 @@
             },
         } satisfies ChartConfig;
 
+        // calculate dynamic height based on number of items (40px per bar)
+        const chartHeight = Math.max(300, chartData.length * 40);
+
         return (
-            
+
             <Card>
             <CardHeader>
                 {/* question text as card title */}
@@ -62,9 +70,10 @@
                     {responses.length} {responses.length === 1 ? 'response' : 'responses'}
                 </p>
             </CardHeader>
-            {/* center the chart horizontally */}
+            {/* center the chart horizontally and make scrollable */}
             <CardContent className="flex flex-col items-center justify-center">
-                <ChartContainer config={chartConfig} className="h-[400px] w-full">
+                <div className="w-full max-h-[500px] overflow-y-auto">
+                    <ChartContainer config={chartConfig} className="w-full" style={{ height: `${chartHeight}px` }}>
                     <BarChart
                         data={chartData}
                         layout="vertical"
@@ -72,14 +81,18 @@
                     >
                         {/* horizontal grid lines only */}
                         <CartesianGrid horizontal={false} />
-                        {/* y-axis shows the option names */}
+                        {/* y-axis shows the option names with percentages */}
                         <YAxis
                             dataKey="option"
                             type="category"
                             tickLine={false}
                             tickMargin={10}
                             axisLine={false}
-                            width={150}
+                            width={200}
+                            tickFormatter={(value: string, index: number) => {
+                                const data = chartData[index];
+                                return `(${data?.percentage}%) ${value}`;
+                            }}
                         />
                         {/* x-axis shows the count numbers */}
                         <XAxis
@@ -99,9 +112,9 @@
                             fill="var(--color-count)"
                             radius={4}
                             layout="vertical"
-                            barSize={100}
+                            barSize={30}
                         >
-                            {/* show count number on right of bar */}
+                            {/* show count on right of bar */}
                             <LabelList
                                 dataKey="count"
                                 position="right"
@@ -112,6 +125,7 @@
                         </Bar>
                     </BarChart>
                 </ChartContainer>
+                </div>
             </CardContent>
         </Card>
         );
