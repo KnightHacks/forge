@@ -1,9 +1,10 @@
-import type { TRPCRouterRecord } from "@trpc/server";
+import type { TRPCError, TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
-
-import type { PermissionIndex } from "@forge/consts/knight-hacks";
+import { env } from "../env";
+import { DEV_KNIGHTHACKS_GUILD_ID, PROD_KNIGHTHACKS_GUILD_ID, type PermissionIndex } from "@forge/consts/knight-hacks";
 import { invalidateSessionToken } from "@forge/auth/server";
-
+import { Routes } from "discord-api-types/v10";
+import type { APIRole } from "discord-api-types/v10";
 import { protectedProcedure, publicProcedure } from "../trpc";
 import {
   getUserPermissions,
@@ -14,7 +15,13 @@ import {
   userHasFullAdmin,
   userHasPermission,
   userIsOfficer,
+  discord
 } from "../utils";
+
+const KNIGHTHACKS_GUILD_ID =
+  env.NODE_ENV === "production"
+    ? (PROD_KNIGHTHACKS_GUILD_ID as string)
+    : (DEV_KNIGHTHACKS_GUILD_ID as string);
 
 export const authRouter = {
   getSession: publicProcedure.query(({ ctx }) => {
@@ -96,4 +103,27 @@ export const authRouter = {
     await invalidateSessionToken(opts.ctx.token);
     return { success: true };
   }),
+
+  getDiscordRole: publicProcedure
+    .input(z.object({ roleId: z.string() }))
+    .query(async ({ctx, input}): Promise<APIRole|null> =>{
+      if (!ctx.session) {
+        return Promise.resolve(null);
+      }
+      
+      try {
+        return (await discord.get(Routes.guildRole(KNIGHTHACKS_GUILD_ID, input.roleId)) as APIRole | null)
+      } catch {
+        return null
+      }
+  }),
+
+  getDiscordRoleCounts: publicProcedure
+    .query(async ({ctx}): Promise<Record<string, number>|null> =>{
+      if (!ctx.session) {
+        return Promise.resolve(null);
+      }
+
+      return (await discord.get(`/guilds/${KNIGHTHACKS_GUILD_ID}/roles/member-counts`) as Record<string, number>)
+  })
 } satisfies TRPCRouterRecord;

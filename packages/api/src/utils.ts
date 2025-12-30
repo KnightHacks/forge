@@ -143,7 +143,7 @@ export const userHasPermission = async (
 ): Promise<boolean> => {
   const userPermissions = await getUserPermissions(user);
 
-  if (hasPermission(userPermissions, PERMISSIONS.FULL_ADMIN)) {
+  if (hasPermission(userPermissions, PERMISSIONS.IS_OFFICER)) {
     return true;
   }
 
@@ -153,7 +153,7 @@ export const userHasPermission = async (
 export const userHasFullAdmin = async (
   user: Session["user"],
 ): Promise<boolean> => {
-  return userHasPermission(user, PERMISSIONS.FULL_ADMIN);
+  return userHasPermission(user, PERMISSIONS.IS_OFFICER);
 };
 
 export const userHasCheckIn = async (
