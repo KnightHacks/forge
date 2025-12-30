@@ -111,7 +111,7 @@ export default function RoleEdit()
                         </div>
                     </div>
                     <div className="my-auto text-sm font-medium w-full justify-end flex flex-row">
-                        <div className="flex flex-row rounded-lg border p-1 gap-1">
+                        <div className="flex flex-row p-1 gap-1">
                             <User className="size-5"/>
                             {roleCounts ? <div>{roleCounts[role.id] ?? 0}</div> : <Loader2 className="animate-spin"/>}
                         </div>
