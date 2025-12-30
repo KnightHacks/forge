@@ -24,7 +24,7 @@ export default function RoleTable()
         },
         {
             roleID: "1246637685011906561",
-            permissions: "000011000000"
+            permissions: "111111111111"
         }
     ]
 
@@ -63,7 +63,7 @@ export default function RoleTable()
                                     : role ? 
                                     <div className="border rounded-full py-2 px-4 w-fit flex flex-row gap-1" style={{borderColor: `#${role.color.toString(16)}`}}>
                                         <div className="size-3 mr-1 rounded-full my-auto" style={{backgroundColor: `#${role.color.toString(16)}`}}/>
-                                        <div className="truncate">{role.name}</div>
+                                        <div className="truncate font-medium">{role.name}</div>
                                     </div>
                                     :
                                     <div className="flex flex-row gap-1 text-red-700 ">
@@ -75,7 +75,7 @@ export default function RoleTable()
                             <TableCell>
                                 <div tabIndex={0} onClick={()=>{navigator.clipboard.writeText(v.roleID);toast(`Copied "${v.roleID}" to clipboard!`)}} className="text-muted-foreground hover:bg-muted hover:text-white hover:border-white border rounded-full cursor-pointer py-2 px-4 w-fit flex flex-row gap-1">
                                     <Copy className="size-4 my-auto"/>
-                                    <div className="ml-1 truncate">{`${v.roleID}`}</div>
+                                    <div className="ml-1 truncate font-mono">{`${v.roleID}`}</div>
                                 </div>
                             </TableCell>
                             <TableCell>
@@ -87,12 +87,15 @@ export default function RoleTable()
                                         </div>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="p-2">
-                                        {v.permissions.split("").map((e) => {
+                                        <h3 className="text-sm font-medium border-b p-1 pb-2">This role has the following permissions:</h3>
+                                        <ul className="list-disc px-4 max-h-48 overflow-y-auto mt-1">
+                                        {v.permissions.split("").map((e,i) => {
                                             if(e == "1")
-                                                return<div className={`border-b p-1`}>Read Members</div>
+                                                return<li className={`p-1 text-sm text-muted-foreground`}>{"Read Members " + "dd".repeat(i)}</li>
                                             else
                                                 return <div/>
                                         })}
+                                        </ul>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>

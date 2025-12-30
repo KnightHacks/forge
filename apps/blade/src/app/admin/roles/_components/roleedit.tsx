@@ -93,7 +93,7 @@ export default function RoleEdit()
             <h2 className="text-xl font-bold mb-2">Link/Edit Role</h2>
             <div className="flex flex-col gap-2">
                 <Label htmlFor="roleId">Discord Role ID</Label>
-                <Input value={roleID} onChange={(e)=>setRoleID(e.target.value)} id="roleId" placeholder="ex. 1151884200069320805" className="col-span-2"/>
+                <Input value={roleID} onChange={(e)=>setRoleID(e.target.value)} id="roleId" placeholder="ex. 1151884200069320805" className="col-span-2 font-mono"/>
             </div>
             {loadingRole ? 
             <div className="flex flex-col gap-2">
