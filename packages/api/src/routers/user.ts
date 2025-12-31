@@ -6,7 +6,10 @@ import { discord, KNIGHTHACKS_GUILD_ID } from "../utils";
 import type { APIGuildMember} from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 import type { PermissionIndex, PermissionKey} from "@forge/consts/knight-hacks";
-import { PERMISSIONS, ROLE_PERMISSIONS } from "@forge/consts/knight-hacks";
+import { PERMISSIONS } from "@forge/consts/knight-hacks";
+import { Roles } from "@forge/db/schemas/knight-hacks";
+import { inArray } from "@forge/db";
+import { db } from "@forge/db/client";
 
 // helper schema to check if a value is either of type PermissionKey or PermissionIndex
 // z.custom doesn't perform any validation by itself, so it will let any type at runtime
@@ -49,16 +52,26 @@ export const userRouter = {
       Routes.guildMember(KNIGHTHACKS_GUILD_ID, ctx.session.user.discordUserId),
     )) as APIGuildMember;
 
+    const permissionsLength = Object.keys(PERMISSIONS).length;
+
     // array of booleans. the boolean value at the index indicates if the user has that permission.
     // true means the user has the permission, false means the user doesn't have the permission.
-    const permissionsBits = new Array(Object.keys(PERMISSIONS).length).fill(false) as boolean[];
+    const permissionsBits = new Array(permissionsLength).fill(false) as boolean[];
 
-    for (const roleId of guildMember.roles) {
-      if (roleId in ROLE_PERMISSIONS) {
-        const permissionIndex = ROLE_PERMISSIONS[roleId];
-        
-        if (permissionIndex !== undefined) {
-          permissionsBits[permissionIndex] = true;
+    if (guildMember.roles.length > 0) {
+      // get only roles the user has
+      const userDbRoles = await db
+        .select()
+        .from(Roles)
+        .where(inArray(Roles.discordRoleId, guildMember.roles));
+
+      for (const role of userDbRoles) {
+        if (role.permissions === null) continue;
+
+        for (let i = 0; i < role.permissions.length && i < permissionsLength; ++i) {
+          if (role.permissions[i] === "1") {
+            permissionsBits[i] = true;
+          }
         }
       }
     }
@@ -82,6 +95,16 @@ export const userRouter = {
         Routes.guildMember(KNIGHTHACKS_GUILD_ID, ctx.session.user.discordUserId),
       )) as APIGuildMember;
 
+      if (guildMember.roles.length === 0) {
+        return false;
+      }
+
+      // get only roles the user has
+      const userDbRoles = await db
+        .select()
+        .from(Roles)
+        .where(inArray(Roles.discordRoleId, guildMember.roles));
+
       const permissionIndex = (() => {
         if (typeof input === 'string') {
           return PERMISSIONS[input];
@@ -90,12 +113,6 @@ export const userRouter = {
         return input;
       })();
 
-      for (const roleId of guildMember.roles) {
-        if (roleId in ROLE_PERMISSIONS && ROLE_PERMISSIONS[roleId] === permissionIndex) {
-          return true;
-        }
-      }
-
-      return false;
+      return userDbRoles.some(role => role.permissions?.[permissionIndex] === "1");
     }),
 } satisfies TRPCRouterRecord;
