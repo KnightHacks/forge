@@ -28,8 +28,7 @@
     "push": "pnpm with-env drizzle-kit push",
     "studio": "pnpm with-env drizzle-kit studio",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "with-env": "dotenv -e ../../.env --",
-    "seed:test-form": "pnpm with-env tsx src/seed-test-form.ts"
+    "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
     "@forge/consts": "workspace:*",
