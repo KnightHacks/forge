@@ -10,13 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 // props - expects a question string and array of responses
 interface ResponsePieChartProps {
     question: string;
-    responses: Array <{
-        responseData: Array<{
-            question: string;
-            type: string;
-            answer: any;
-        }>;
-    }>;
+    responses: {
+        responseData: Record<string, unknown>;
+    }[];
 }
 
 export function ResponsePieChart ({ question, responses }: ResponsePieChartProps ){
@@ -24,12 +20,21 @@ export function ResponsePieChart ({ question, responses }: ResponsePieChartProps
     // creates object like { "javascript": 3, "python": 2, "typescript": 1 }
     const answerCounts: Record<string, number> = {};
     responses.forEach((response) => {
-        // find this question in the response data
-        const questionData = response.responseData.find(q => q.question === question);
-        const answer = questionData?.answer;
-        if ( answer ){
+        // get answer directly from responseData object
+        const answer = response.responseData[question];
+        if (answer !== undefined && answer !== null) {
             // increment count for this answer
-            answerCounts[answer] = (answerCounts[answer] ?? 0) + 1;
+            let answerStr: string;
+            if (typeof answer === "string") {
+                answerStr = answer;
+            } else if (typeof answer === "object") {
+                answerStr = JSON.stringify(answer);
+            } else {
+                // for primitive types (number, boolean, etc.) - safe to stringify
+                // eslint-disable-next-line @typescript-eslint/no-base-to-string
+                answerStr = String(answer);
+            }
+            answerCounts[answerStr] = (answerCounts[answerStr] ?? 0) + 1;
         }
     });
 

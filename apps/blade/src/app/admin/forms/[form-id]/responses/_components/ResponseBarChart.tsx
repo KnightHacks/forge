@@ -10,13 +10,9 @@ import type { ChartConfig } from "@forge/ui/chart";
 // props - expects a question string and array of responses
 interface ResponseBarChartProps {
     question: string;
-    responses: Array <{
-        responseData: Array <{
-            question: string;
-            type: string;
-            answer: any;
-        }>
-    }>;
+    responses: {
+        responseData: Record<string, unknown>;
+    }[];
 }
 
 export function ResponseBarChart({ question, responses }: ResponseBarChartProps) {
@@ -25,12 +21,14 @@ export function ResponseBarChart({ question, responses }: ResponseBarChartProps)
     // creates object like { 1: 2, 2: 1, 3: 3, 4: 2, 5: 1 }
     const answerCounts: Record<number, number> = {};
     responses.forEach((response) => {
-        // find this question in the response data
-        const questionData = response.responseData.find(q => q.question === question);
-        const answer = questionData?.answer;
-        if ( answer !== undefined && answer !== null){
+        // get answer directly from responseData object
+        const answer = response.responseData[question];
+        if (answer !== undefined && answer !== null) {
             // increment count for this numeric value
-            answerCounts[answer] = (answerCounts[answer] ?? 0) + 1;
+            const numericAnswer = Number(answer);
+            if (!Number.isNaN(numericAnswer)) {
+                answerCounts[numericAnswer] = (answerCounts[numericAnswer] ?? 0) + 1;
+            }
         }
     });
 
