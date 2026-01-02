@@ -21,19 +21,17 @@ export default async function FormResponsesPage({
 }: {
   params: { "form-id": string };
 }) {
-  // auth check - currently disabled for development
-  // re-enable this when discord oauth is set up in production
-  // const session = await auth();
-  // if (!session) {
-  //     redirect(SIGN_IN_PATH);
-  // }
 
-  // admin check - currently disabled for development
-  // re-enable this when discord oauth is set up in production
-  // const isAdmin = await api.auth.getAdminStatus();
-  // if (!isAdmin) {
-  //     redirect("/");
-  // }
+  const session = await auth();
+  if (!session) {
+      redirect(SIGN_IN_PATH);
+  }
+
+
+  const isAdmin = await api.auth.getAdminStatus();
+  if (!isAdmin) {
+      redirect("/");
+  }
 
   // get the form id from the url parameter
   const formId = decodeURIComponent(params["form-id"]);
