@@ -54,6 +54,46 @@ export const formsRouter = {
         });
     }),
 
+  updateForm: adminProcedure
+    .input(
+      FormSchemaSchema.omit({
+        name: true,
+        createdAt: true,
+        formData: true,
+        formValidatorJson: true,
+      }).extend({ formData: FormSchemaValidator }),
+    )
+    .mutation(async ({ input }) => {
+      const jsonSchema = generateJsonSchema(input.formData);
+
+      if (!jsonSchema.success) {
+        throw new TRPCError({
+          message: jsonSchema.msg,
+          code: "BAD_REQUEST",
+        });
+      }
+
+      await db
+        .insert(FormsSchemas)
+        .values({
+          ...input,
+          name: input.formData.name,
+          duesOnly: input.duesOnly ?? false,
+          allowResubmission: input.allowResubmission ?? false,
+          formValidatorJson: jsonSchema.schema,
+        })
+        .onConflictDoUpdate({
+          //If it already exists upsert it
+          target: FormsSchemas.name,
+          set: {
+            ...input,
+            duesOnly: input.duesOnly ?? false,
+            allowResubmission: input.allowResubmission ?? false,
+            formValidatorJson: jsonSchema.schema,
+          },
+        });
+    }),
+
   getForm: publicProcedure
     .input(z.object({ name: z.string() }))
     .query(async ({ input }) => {
