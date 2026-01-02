@@ -21,16 +21,14 @@ export default async function FormResponsesPage({
 }: {
   params: { "form-id": string };
 }) {
-
   const session = await auth();
   if (!session) {
-      redirect(SIGN_IN_PATH);
+    redirect(SIGN_IN_PATH);
   }
-
 
   const isAdmin = await api.auth.getAdminStatus();
   if (!isAdmin) {
-      redirect("/");
+    redirect("/");
   }
 
   // get the form id from the url parameter
