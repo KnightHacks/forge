@@ -7,13 +7,9 @@
 
   interface ResponseHorizontalBarChartProps {
     question: string;
-    responses: Array <{
-        responseData: Array<{
-            question: string;
-            type: string;
-            answer: any;
-        }>;
-    }>;
+    responses: {
+        responseData: Record<string, unknown>;
+    }[];
   }
 
   export function ResponseHorizontalBarChart({question, responses}: ResponseHorizontalBarChartProps) {
@@ -21,18 +17,29 @@
     const optionCounts: Record<string, number> = {};
 
     responses.forEach((response) => {
-        // find this question in the response data
-        const questionData = response.responseData.find(q=> q.question === question);
-        const answer = questionData?.answer;
+        // get answer directly from responseData object
+        const answer = response.responseData[question];
 
         // handle array answers for checkbox questions
-        if ( Array.isArray(answer)) {
-            answer.forEach((option: string) => {
-                optionCounts[option] = (optionCounts[option] ?? 0) + 1;
+        if (Array.isArray(answer)) {
+            answer.forEach((option) => {
+                const optionStr =
+                    typeof option === "string" ? option : JSON.stringify(option);
+                optionCounts[optionStr] = (optionCounts[optionStr] ?? 0) + 1;
             });
         } else if (answer) {
             // handle single value answers
-            optionCounts[answer] = (optionCounts[answer] ?? 0) + 1;
+            let answerStr: string;
+            if (typeof answer === "string") {
+                answerStr = answer;
+            } else if (typeof answer === "object") {
+                answerStr = JSON.stringify(answer);
+            } else {
+                // for primitive types (number, boolean, etc.) - safe to stringify
+                // eslint-disable-next-line @typescript-eslint/no-base-to-string
+                answerStr = String(answer);
+            }
+            optionCounts[answerStr] = (optionCounts[answerStr] ?? 0) + 1;
         }
     });
 
