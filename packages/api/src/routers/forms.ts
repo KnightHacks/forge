@@ -4,6 +4,7 @@ import { desc, eq } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
+import type { FormType } from "@forge/consts/knight-hacks";
 import { FormSchemaValidator } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
 import {
@@ -112,7 +113,7 @@ export const formsRouter = {
 
       return {
         ...retForm,
-        formData: form.formData as FormData,
+        formData: form.formData as FormType,
         zodValidator: jsonSchemaToZod(form.formValidatorJson as JSONSchema7),
       };
     }),
