@@ -176,7 +176,7 @@ export default function FormEditorPage({
         setDuesOnly(formData.duesOnly);
         setAllowResubmission(formData.allowResubmission);
 
-        const loadedQuestions = (formData.formData.questions ?? []).map(
+        const loadedQuestions = formData.formData.questions.map(
           (q: FormQuestion) => ({
             ...q,
             id: crypto.randomUUID(),
