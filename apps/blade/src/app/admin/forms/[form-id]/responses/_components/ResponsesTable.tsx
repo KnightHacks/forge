@@ -14,24 +14,21 @@ import {
 
   // props - expects array of responses with member info and answer data
   interface ResponsesTableProps {
-    responses: Array <{
+    responses: {
         submittedAt: Date;
-        responseData: Array <{
-            question: string;
-            type: string;
-            answer: any;
-        }>;
+        responseData: Record<string, unknown>;
         member: {
             firstName: string;
             lastName: string;
             email: string;
             id: string;
         } | null;  // null if member data is missing
-    }>;
+    }[];
     filterQuestionTypes?: string[];  // optional filter to only show specific question types
+    questions?: { question: string; type: string }[];  // optional: provide questions to filter
   }
 
-  export function ResponsesTable({ responses, filterQuestionTypes }: ResponsesTableProps){
+  export function ResponsesTable({ responses, filterQuestionTypes, questions: providedQuestions }: ResponsesTableProps){
     // show empty state if no responses
     if ( responses.length === 0 ){
         return (
@@ -48,13 +45,18 @@ import {
         )
     }
 
-    // extract all question texts from first response to use as column headers
-    // assumes all responses have same questions
-    // filter by question type if filterQuestionTypes is provided
-    const allQuestions = responses[0]?.responseData ?? [];
-    const questions = filterQuestionTypes
-        ? allQuestions.filter((q) => filterQuestionTypes.includes(q.type)).map((q) => q.question)
-        : allQuestions.map((q) => q.question);
+    // get questions from providedQuestions or extract from responseData keys
+    // note: with record format, we can't get question types from responseData alone
+    // so we rely on providedQuestions when filtering
+    let questions: string[] = [];
+    if (providedQuestions) {
+        questions = filterQuestionTypes
+            ? providedQuestions.filter((q) => filterQuestionTypes.includes(q.type)).map((q) => q.question)
+            : providedQuestions.map((q) => q.question);
+    } else if (responses.length > 0) {
+        // fallback: get all keys from first response's responseData
+        questions = Object.keys(responses[0]?.responseData ?? {});
+    }
 
     // if filtering and no questions match, show empty state
     if (filterQuestionTypes && questions.length === 0) {
@@ -96,9 +98,25 @@ import {
                         <TableBody>
                             {responses.map((response, responseIndex) => {
                                 // get the first filtered question's answer as the main response
-                                const mainAnswer = questions.length > 0
-                                    ? response.responseData.find((q) => q.question === questions[0])?.answer
+                                const firstQuestion = questions.length > 0 ? questions[0] : null;
+                                const mainAnswer = firstQuestion
+                                    ? response.responseData[firstQuestion]
                                     : null;
+
+                                let displayValue: string;
+                                if (mainAnswer === undefined || mainAnswer === null) {
+                                    displayValue = "—";
+                                } else if (Array.isArray(mainAnswer)) {
+                                    displayValue = mainAnswer.join(", ");
+                                } else if (typeof mainAnswer === "string") {
+                                    displayValue = mainAnswer;
+                                } else if (typeof mainAnswer === "object") {
+                                    displayValue = JSON.stringify(mainAnswer);
+                                } else {
+                                    // for primitive types (number, boolean, etc.) - safe to stringify
+                                    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+                                    displayValue = String(mainAnswer);
+                                }
 
                                 return (
                                     <TableRow key={responseIndex}>
@@ -110,13 +128,11 @@ import {
                                         </TableCell>
                                         {/* Discord column - using email username as placeholder */}
                                         <TableCell>
-                                            {response.member?.email?.split("@")[0] ?? "N/A"}
+                                            {response.member?.email ? response.member.email.split("@")[0] : "N/A"}
                                         </TableCell>
                                         {/* Response column - shows answer to the filtered question */}
                                         <TableCell className="max-w-[500px]">
-                                            {mainAnswer !== undefined && mainAnswer !== null
-                                                ? String(mainAnswer)
-                                                : "—"}
+                                            {displayValue}
                                         </TableCell>
                                     </TableRow>
                                 );
