@@ -3,7 +3,6 @@ import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
-
 import {
   COUNTRIES,
   DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
@@ -21,8 +20,6 @@ import {
 } from "@forge/consts/knight-hacks";
 
 import { User } from "./auth";
-
-
 
 const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
