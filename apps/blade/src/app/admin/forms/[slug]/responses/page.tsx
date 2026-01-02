@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export default async function FormResponsesPage({
   params,
 }: {
-  params: { "form-id": string };
+  params: { slug: string };
 }) {
   const session = await auth();
   if (!session) {
@@ -32,7 +32,7 @@ export default async function FormResponsesPage({
   }
 
   // get the form id from the url parameter
-  const formId = decodeURIComponent(params["form-id"]);
+  const formId = decodeURIComponent(params.slug);
 
   // first verify form exists
   let form;
