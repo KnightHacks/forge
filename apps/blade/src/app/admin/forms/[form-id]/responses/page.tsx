@@ -149,13 +149,25 @@ export default async function FormResponsesPage({
             </div>
 
             {/* text responses section - for SHORT_ANSWER and PARAGRAPH questions */}
-            {/* filters responses to only show text-based questions that can't be visualized in charts */}
-            <div className="mx-auto mt-8 max-w-4xl">
-              <ResponsesTable
-                responses={responses}
-                filterQuestionTypes={["SHORT_ANSWER", "PARAGRAPH"]}
-                questions={formData.questions}
-              />
+            {/* renders a separate table for each text-based question */}
+            <div className="mx-auto mt-8 max-w-4xl space-y-6">
+              {formData.questions.map((question) => {
+                // render table for SHORT_ANSWER or PARAGRAPH questions
+                if (
+                  question.type === "SHORT_ANSWER" ||
+                  question.type === "PARAGRAPH"
+                ) {
+                  return (
+                    <ResponsesTable
+                      key={question.question}
+                      question={question.question}
+                      responses={responses}
+                    />
+                  );
+                }
+
+                return null;
+              })}
             </div>
           </>
         )}
