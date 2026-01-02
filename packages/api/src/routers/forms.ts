@@ -161,7 +161,6 @@ export const formsRouter = {
       });
     }),
 
-  // TODO: Change back to adminProcedure when Discord OAuth is configured
   getResponses: adminProcedure
     .input(z.object({ form: z.string() }))
     .query(async ({ input }) => {
