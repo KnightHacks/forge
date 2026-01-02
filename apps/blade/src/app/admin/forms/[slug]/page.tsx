@@ -159,7 +159,9 @@ export default function FormEditorPage({
         if (slug === "test-form") {
           console.log("Entering mock mode for test-form");
           setFormTitle("Test Form (Mock)");
-          setFormDescription("This is a mock form description for testing UI components.");
+          setFormDescription(
+            "This is a mock form description for testing UI components.",
+          );
           setIsLoading(false);
           return;
         }
@@ -167,12 +169,9 @@ export default function FormEditorPage({
         // redirect logic if the form endpoint returns null or error
         console.warn("Form not found. Redirecting to admin forms...");
 
-
         //COMMENT THIS LINE BELOW IF U WANNA TEST THE SITE THIS REDIRECTS IT BACK
-        router.push("/admin/forms"); 
-        console.log("Redirect blocked for debugging. Slug is:", slug); 
-
-
+        router.push("/admin/forms");
+        console.log("Redirect blocked for debugging. Slug is:", slug);
 
         // mock fallback for testing purposes locally
         setFormTitle(slug);
