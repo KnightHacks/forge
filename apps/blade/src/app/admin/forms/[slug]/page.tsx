@@ -171,10 +171,10 @@ export default function FormEditorPage({
         setIsLoading(false);
       } else {
         setFormTitle(formData.name);
-        setFormDescription(formData.formData.description ?? "");
-        setFormBanner(formData.formData.banner ?? "");
-        setDuesOnly(formData.duesOnly ?? false);
-        setAllowResubmission(formData.allowResubmission ?? false);
+        setFormDescription(formData.formData.description);
+        setFormBanner(formData.formData.banner || ""); // Keeping fallback for banner if it's optional in schema, but switch to || or just leave if it's surely defined
+        setDuesOnly(formData.duesOnly);
+        setAllowResubmission(formData.allowResubmission);
 
         const loadedQuestions = (formData.formData.questions ?? []).map(
           (q: FormQuestion) => ({
