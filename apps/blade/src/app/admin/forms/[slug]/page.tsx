@@ -2,8 +2,9 @@
 
 import type { DragEndEvent } from "@dnd-kit/core";
 import type { CSSProperties } from "react";
+import type * as z from "zod";
 import * as React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   closestCenter,
@@ -22,7 +23,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Loader2, Plus, Save } from "lucide-react";
-import * as z from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
@@ -93,7 +93,6 @@ export default function FormEditorPage({
 }) {
   const router = useRouter();
   const slug = decodeURIComponent(params.slug);
-  console.log("Current page slug:", slug); // debug log to check what url parameter we are getting
 
   // state management for local form data
   const [formTitle, setFormTitle] = useState("");
@@ -134,9 +133,9 @@ export default function FormEditorPage({
         description: formDescription,
         banner: formBanner || undefined,
         questions: questions.map(({ id: _, ...rest }) => rest),
-        duesOnly,
-        allowResubmission,
       },
+      duesOnly,
+      allowResubmission,
     });
   }, [
     isLoading,
@@ -147,7 +146,6 @@ export default function FormEditorPage({
     questions,
     duesOnly,
     allowResubmission,
-    slug,
     updateFormMutation,
   ]);
 
@@ -157,7 +155,6 @@ export default function FormEditorPage({
       if (fetchError || !formData) {
         // allow "test-form" to bypass redirect for ui testing (jus get rid of this if u dont wanna bypass)
         if (slug === "test-form") {
-          console.log("Entering mock mode for test-form");
           setFormTitle("Test Form (Mock)");
           setFormDescription(
             "This is a mock form description for testing UI components.",
@@ -167,11 +164,7 @@ export default function FormEditorPage({
         }
 
         // redirect logic if the form endpoint returns null or error
-        console.warn("Form not found. Redirecting to admin forms...");
-
-        //COMMENT THIS LINE BELOW IF U WANNA TEST THE SITE THIS REDIRECTS IT BACK
         router.push("/admin/forms");
-        console.log("Redirect blocked for debugging. Slug is:", slug);
 
         // mock fallback for testing purposes locally
         setFormTitle(slug);
@@ -183,11 +176,12 @@ export default function FormEditorPage({
         setDuesOnly(formData.duesOnly ?? false);
         setAllowResubmission(formData.allowResubmission ?? false);
 
-        const loadedQuestions =
-          formData.formData.questions?.map((q: FormQuestion) => ({
+        const loadedQuestions = (formData.formData.questions ?? []).map(
+          (q: FormQuestion) => ({
             ...q,
             id: crypto.randomUUID(),
-          })) ?? [];
+          }),
+        );
 
         setQuestions(loadedQuestions as UIQuestion[]);
         setIsLoading(false);
@@ -198,7 +192,7 @@ export default function FormEditorPage({
   // auto save trigger when toggle switches are changed
   useEffect(() => {
     if (!isLoading) handleSaveForm();
-  }, [duesOnly, allowResubmission]);
+  }, [duesOnly, allowResubmission, isLoading, handleSaveForm]);
 
   // helper functions for updating questions in state
   const updateQuestion = React.useCallback((updatedQ: UIQuestion) => {
