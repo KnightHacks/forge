@@ -76,7 +76,9 @@ export default async function FormResponsesPage({
       <main className="container py-8">
         {/* page header with title and response count */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Form Responses for: {form.name}</h1>
+          <h1 className="text-3xl font-bold">
+            Form Responses for: {form.name}
+          </h1>
           <p className="mt-2 text-muted-foreground">
             {responses.length}{" "}
             {responses.length === 1 ? "response" : "responses"}
