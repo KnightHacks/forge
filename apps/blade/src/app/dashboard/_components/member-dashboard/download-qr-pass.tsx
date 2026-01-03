@@ -73,7 +73,7 @@ export function DownloadQRPass() {
   return (
     <Button
       size="sm"
-      className="transition-none w-full gap-2 border bg-card"
+      className="w-full gap-2 border bg-card transition-none"
       onClick={handleDownload}
       disabled={!canDownload || isDownloading}
     >
@@ -84,7 +84,7 @@ export function DownloadQRPass() {
         </>
       ) : canDownload ? (
         <>
-          <WalletCards className="h-4 w-4 group-hover:text-primary text-card-foreground" />
+          <WalletCards className="h-4 w-4 text-card-foreground group-hover:text-primary" />
           <p className="text-card-foreground">Apple Wallet</p>
         </>
       ) : (
