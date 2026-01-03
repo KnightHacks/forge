@@ -70,11 +70,11 @@ export default function DuesToggleButton({
       }
     >
       {isLoading ? (
-        <Loader2 className="text-white animate-spin" />
+        <Loader2 className="animate-spin text-white" />
       ) : status ? (
-        <X className="text-white"/>
+        <X className="text-white" />
       ) : (
-        <Check className="text-white"/>
+        <Check className="text-white" />
       )}
     </Button>
   );
