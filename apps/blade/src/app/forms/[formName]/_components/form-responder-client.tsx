@@ -65,11 +65,7 @@ export function FormResponderClient({
   if (!formQuery.data) return;
 
   // wait for all queries to load
-  if (
-    formQuery.isLoading ||
-    duesQuery.isLoading ||
-    existingResponseQuery.isLoading
-  )
+  if (duesQuery.isLoading || existingResponseQuery.isLoading)
     return (
       <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -89,17 +85,10 @@ export function FormResponderClient({
     ? true
     : (duesQuery.data?.duesPaid ?? false);
 
-  const form = formQuery.data?.formData;
-  const isDuesOnly = formQuery.data?.duesOnly ?? false;
-  const allowResubmission = formQuery.data?.allowResubmission ?? false;
+  const form = formQuery.data.formData;
+  const isDuesOnly = formQuery.data.duesOnly;
+  const allowResubmission = formQuery.data.allowResubmission;
   const hasAlreadySubmitted = existingResponseQuery.data?.hasSubmitted ?? false;
-
-  if (!form)
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
-        Form not found
-      </div>
-    );
 
   // BRO DID NOT PAY DUES!!!
   if (isDuesOnly && !hasPaidDues) {
@@ -192,8 +181,6 @@ export function FormResponderClient({
         }
       }
     });
-
-    if (!formQuery.data) return;
 
     submitResponse.mutate({
       form: formQuery.data.id,
