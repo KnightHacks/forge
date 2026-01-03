@@ -118,6 +118,59 @@ export const formsRouter = {
       };
     }),
 
+  deleteForm: adminProcedure
+    .input(z.object({ name: z.string() }))
+    .mutation(async ({ input }) => {
+      const deletion = await db
+        .delete(FormsSchemas)
+        .where(eq(FormsSchemas.name, input.name))
+        .returning({ name: FormsSchemas.name });
+
+      if (deletion.length === 0) {
+        throw new TRPCError({
+          message: "Form not found",
+          code: "NOT_FOUND",
+        });
+      }
+    }),
+
+  getForms: publicProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(10),
+        cursor: z.string().nullish(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { cursor } = input;
+      const limit = input.limit;
+
+      const forms = await db.query.FormsSchemas.findMany({
+        limit: limit + 1,
+
+        where: cursor
+          ? lt(FormsSchemas.createdAt, new Date(cursor))
+          : undefined,
+        orderBy: [desc(FormsSchemas.createdAt)],
+        columns: {
+          name: true,
+          createdAt: true,
+        },
+      });
+
+      let nextCursor: string | undefined = undefined;
+
+      if (forms.length > limit) {
+        const nextItem = forms.pop();
+        nextCursor = nextItem?.createdAt.toISOString();
+      }
+
+      return {
+        forms,
+        nextCursor,
+      };
+    }),
+
   createResponse: protectedProcedure
     .input(InsertFormResponseSchema.omit({ userId: true }))
     .mutation(async ({ input, ctx }) => {
