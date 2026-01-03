@@ -6,13 +6,19 @@ import Image from "next/image";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { Card } from "@forge/ui/card";
+import { Checkbox } from "@forge/ui/checkbox";
 import { DatePicker } from "@forge/ui/date-picker";
 import { Input } from "@forge/ui/input";
-import { TimePicker } from "@forge/ui/time-picker";
-import { RadioGroup, RadioGroupItem } from "@forge/ui/radio-group";
-import { Checkbox } from "@forge/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@forge/ui/select";
 import { Label } from "@forge/ui/label";
+import { RadioGroup, RadioGroupItem } from "@forge/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@forge/ui/select";
+import { TimePicker } from "@forge/ui/time-picker";
 
 type FormQuestion = z.infer<typeof QuestionValidator>;
 
@@ -36,9 +42,7 @@ export function QuestionResponseCard({
         <div className="flex items-start gap-2">
           <h3 className="text-base font-medium">
             {question.question}
-            {isRequired && (
-              <span className="ml-1 text-red-500">*</span>
-            )}
+            {isRequired && <span className="ml-1 text-red-500">*</span>}
           </h3>
         </div>
         {question.image && (
@@ -61,7 +65,7 @@ export function QuestionResponseCard({
   );
 }
 
-// Sub-Components 
+// Sub-Components
 
 function QuestionBody({
   question,
@@ -86,16 +90,40 @@ function QuestionBody({
         </div>
       );
     case "MULTIPLE_CHOICE":
-      return <MultipleChoiceInput question={question} value={value as string | undefined} onChange={onChange} />;
+      return (
+        <MultipleChoiceInput
+          question={question}
+          value={value as string | undefined}
+          onChange={onChange}
+        />
+      );
     case "CHECKBOXES":
-      return <CheckboxesInput question={question} value={value as string[] | undefined} onChange={onChange} />;
+      return (
+        <CheckboxesInput
+          question={question}
+          value={value as string[] | undefined}
+          onChange={onChange}
+        />
+      );
     case "DROPDOWN":
-      return <DropdownInput question={question} value={value as string | undefined} onChange={onChange} />;
+      return (
+        <DropdownInput
+          question={question}
+          value={value as string | undefined}
+          onChange={onChange}
+        />
+      );
     case "DATE":
       return (
         <div className="w-full md:w-1/3">
           <DatePicker
-            value={value instanceof Date ? value : value ? new Date(value as string) : undefined}
+            value={
+              value instanceof Date
+                ? value
+                : value
+                  ? new Date(value as string)
+                  : undefined
+            }
             onChange={(date) => onChange(date || null)}
           />
         </div>
@@ -104,7 +132,13 @@ function QuestionBody({
       return (
         <div className="w-full md:w-1/3">
           <TimePicker
-            value={value instanceof Date ? value : value ? new Date(`1970-01-01T${value as string}`) : undefined}
+            value={
+              value instanceof Date
+                ? value
+                : value
+                  ? new Date(`1970-01-01T${value as string}`)
+                  : undefined
+            }
             onChange={(date) => onChange(date || null)}
           />
         </div>
@@ -127,9 +161,16 @@ function QuestionBody({
           <Input
             type="number"
             placeholder="Enter a number"
-            value={typeof value === "number" ? String(value) : value && typeof value === "string" ? value : ""}
+            value={
+              typeof value === "number"
+                ? String(value)
+                : value && typeof value === "string"
+                  ? value
+                  : ""
+            }
             onChange={(e) => {
-              const numValue = e.target.value === "" ? null : Number(e.target.value);
+              const numValue =
+                e.target.value === "" ? null : Number(e.target.value);
               onChange(numValue);
             }}
             min={question.min}
@@ -216,7 +257,9 @@ function CheckboxesInput({
           <Checkbox
             id={`${questionKey}-${idx}`}
             checked={selectedValues.includes(option)}
-            onCheckedChange={(checked) => handleCheckboxChange(option, checked === true)}
+            onCheckedChange={(checked) =>
+              handleCheckboxChange(option, checked === true)
+            }
           />
           <Label
             htmlFor={`${questionKey}-${idx}`}
