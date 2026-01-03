@@ -23,7 +23,7 @@ export default async function FormResponderPage({
   // handle url encode form names to allow spacing and special characters
   const formName = decodeURIComponent(params.formName);
 
-  const userName = session.user.name ?? "Member";
+  const userName = session.user.name || "Member";
 
   return (
     <HydrateClient>
