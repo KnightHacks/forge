@@ -112,7 +112,7 @@ export default function FormEditorPage({
     error: fetchError,
     isLoading: isFetching,
   } = api.forms.getForm.useQuery(
-    { name: slug },
+    { slug_name: slug },
     { retry: false, refetchOnWindowFocus: false },
   );
 
@@ -127,7 +127,10 @@ export default function FormEditorPage({
   const handleSaveForm = React.useCallback(() => {
     if (isLoading || isFetching || !formTitle) return;
 
+    if (!formData) return;
+
     updateFormMutation.mutate({
+      id: formData.id,
       formData: {
         name: formTitle,
         description: formDescription,
@@ -138,15 +141,13 @@ export default function FormEditorPage({
       allowResubmission,
     });
   }, [
-    isLoading,
-    isFetching,
     formTitle,
     formDescription,
     formBanner,
     questions,
     duesOnly,
     allowResubmission,
-    updateFormMutation,
+    formData,
   ]);
 
   // initialize form state when data is successfully fetched

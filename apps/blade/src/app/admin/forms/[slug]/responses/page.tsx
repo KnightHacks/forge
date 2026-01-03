@@ -31,13 +31,10 @@ export default async function FormResponsesPage({
     redirect("/");
   }
 
-  // get the form id from the url parameter
-  const formId = decodeURIComponent(params.slug);
-
   // first verify form exists
   let form;
   try {
-    form = await api.forms.getForm({ name: formId });
+    form = await api.forms.getForm({ slug_name: params.slug });
   } catch {
     return (
       <HydrateClient>
@@ -45,7 +42,7 @@ export default async function FormResponsesPage({
           <div className="py-12 text-center">
             <h1 className="mb-4 text-2xl font-bold">Form Not Found</h1>
             <p className="text-muted-foreground">
-              The form &quot;{formId}&quot; does not exist.
+              The form &quot;{params.slug}&quot; does not exist.
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
               Make sure you&apos;re using the correct form name. The form name
@@ -60,7 +57,7 @@ export default async function FormResponsesPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const formData = form.formData as any as FormType;
 
-  const apiResponses = await api.forms.getResponses({ form: formId });
+  const apiResponses = await api.forms.getResponses({ form: form.id });
 
   // type assertion to the correct format
   const responses = apiResponses as {
@@ -79,7 +76,7 @@ export default async function FormResponsesPage({
       <main className="container py-8">
         {/* page header with title and response count */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Form Responses for: {formId}</h1>
+          <h1 className="text-3xl font-bold">Form Responses for: {form.name}</h1>
           <p className="mt-2 text-muted-foreground">
             {responses.length}{" "}
             {responses.length === 1 ? "response" : "responses"}

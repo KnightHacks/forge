@@ -1,6 +1,6 @@
 import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, lt } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -22,7 +22,9 @@ export const formsRouter = {
   createForm: adminProcedure
     .input(
       FormSchemaSchema.omit({
+        id: true,
         name: true,
+        slugName: true,
         createdAt: true,
         formData: true,
         formValidatorJson: true,
@@ -30,6 +32,8 @@ export const formsRouter = {
     )
     .mutation(async ({ input }) => {
       const jsonSchema = generateJsonSchema(input.formData);
+
+      const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
 
       if (!jsonSchema.success) {
         throw new TRPCError({
@@ -43,13 +47,16 @@ export const formsRouter = {
         .values({
           ...input,
           name: input.formData.name,
+          slugName: slug_name,
           formValidatorJson: jsonSchema.schema,
         })
         .onConflictDoUpdate({
           //If it already exists upsert it
-          target: FormsSchemas.name,
+          target: FormsSchemas.id,
           set: {
             ...input,
+            name: input.formData.name,
+            slugName: slug_name,
             formValidatorJson: jsonSchema.schema,
           },
         });
@@ -59,6 +66,7 @@ export const formsRouter = {
     .input(
       FormSchemaSchema.omit({
         name: true,
+        slugName: true,
         createdAt: true,
         formData: true,
         formValidatorJson: true,
@@ -66,6 +74,9 @@ export const formsRouter = {
     )
     .mutation(async ({ input }) => {
       const jsonSchema = generateJsonSchema(input.formData);
+      console.log(input);
+
+      const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
 
       if (!jsonSchema.success) {
         throw new TRPCError({
@@ -79,27 +90,27 @@ export const formsRouter = {
         .values({
           ...input,
           name: input.formData.name,
-          duesOnly: input.duesOnly ?? false,
-          allowResubmission: input.allowResubmission ?? false,
+          slugName: slug_name,
           formValidatorJson: jsonSchema.schema,
         })
         .onConflictDoUpdate({
           //If it already exists upsert it
-          target: FormsSchemas.name,
+          target: FormsSchemas.id,
           set: {
             ...input,
-            duesOnly: input.duesOnly ?? false,
-            allowResubmission: input.allowResubmission ?? false,
+            name: input.formData.name,
+            slugName: slug_name,
             formValidatorJson: jsonSchema.schema,
           },
         });
     }),
 
   getForm: publicProcedure
-    .input(z.object({ name: z.string() }))
+    .input(z.object({ slug_name: z.string() }))
     .query(async ({ input }) => {
+      console.log(input);
       const form = await db.query.FormsSchemas.findFirst({
-        where: (t, { eq }) => eq(t.name, input.name),
+        where: (t, { eq }) => eq(t.slugName, input.slug_name),
       });
 
       if (form === undefined) {
@@ -118,6 +129,59 @@ export const formsRouter = {
       };
     }),
 
+  deleteForm: adminProcedure
+    .input(z.object({ slug_name: z.string() }))
+    .mutation(async ({ input }) => {
+      const deletion = await db
+        .delete(FormsSchemas)
+        .where(eq(FormsSchemas.slugName, input.slug_name))
+        .returning({ slugName: FormsSchemas.slugName });
+
+      if (deletion.length === 0) {
+        throw new TRPCError({
+          message: "Form not found",
+          code: "NOT_FOUND",
+        });
+      }
+    }),
+
+  getForms: publicProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(10),
+        cursor: z.string().nullish(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { cursor } = input;
+      const limit = input.limit;
+
+      const forms = await db.query.FormsSchemas.findMany({
+        limit: limit + 1,
+
+        where: cursor
+          ? lt(FormsSchemas.createdAt, new Date(cursor))
+          : undefined,
+        orderBy: [desc(FormsSchemas.createdAt)],
+        columns: {
+          slugName: true,
+          createdAt: true,
+        },
+      });
+
+      let nextCursor: string | undefined = undefined;
+
+      if (forms.length > limit) {
+        const nextItem = forms.pop();
+        nextCursor = nextItem?.createdAt.toISOString();
+      }
+
+      return {
+        forms,
+        nextCursor,
+      };
+    }),
+
   createResponse: protectedProcedure
     .input(InsertFormResponseSchema.omit({ userId: true }))
     .mutation(async ({ input, ctx }) => {
@@ -125,7 +189,7 @@ export const formsRouter = {
 
       // validate response
       const form = await db.query.FormsSchemas.findFirst({
-        where: (t, { eq }) => eq(t.name, input.form),
+        where: (t, { eq }) => eq(t.id, input.form),
       });
 
       if (!form) {

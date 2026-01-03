@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   ChartPie,
+  FormInput,
   Hotel,
   Settings,
   ShieldCheck,
@@ -35,6 +36,16 @@ export const adminItems: roleItems[] = [
       />
     ),
     route: "/admin",
+  },
+  {
+    name: "Forms",
+    component: (
+      <FormInput
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/forms",
   },
 ];
 
