@@ -37,11 +37,10 @@ export default async function Roles() {
                             Link Discord Role
                         </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="overflow-y-clip">
                         <RoleEdit/>
                     </DialogContent>
                 </Dialog>
-                
             </header>
             <RoleTable/>
         </main>

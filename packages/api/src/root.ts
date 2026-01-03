@@ -16,6 +16,7 @@ import { memberRouter } from "./routers/member";
 import { passkitRouter } from "./routers/passkit";
 import { qrRouter } from "./routers/qr";
 import { resumeRouter } from "./routers/resume";
+import { rolesRouter } from "./routers/roles";
 import { userRouter } from "./routers/user";
 import { createTRPCRouter } from "./trpc";
 
@@ -39,6 +40,7 @@ export const appRouter = createTRPCRouter<{
   csvImporter: typeof csvImporterRouter;
   companies: typeof companiesRouter;
   forms: typeof formsRouter;
+  roles: typeof rolesRouter;
 }>({
   auth: authRouter,
   duesPayment: duesPaymentRouter,
@@ -59,6 +61,7 @@ export const appRouter = createTRPCRouter<{
   csvImporter: csvImporterRouter,
   companies: companiesRouter,
   forms: formsRouter,
+  roles: rolesRouter
 });
 
 // export type definition of API

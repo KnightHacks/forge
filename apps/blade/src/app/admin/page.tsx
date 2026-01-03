@@ -103,18 +103,32 @@ export default async function Admin() {
                 </Card>
               )}
             </div>
-            {hasFullAdmin && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-center">Email Dashboard</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-wrap items-center justify-center gap-4">
-                  <Link href="/admin/email">
-                    <Button>Let's send some emails!</Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            )}
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {hasFullAdmin && (
+                <Card className="w-full">
+                  <CardHeader>
+                    <CardTitle className="text-center">Email Dashboard</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-wrap items-center justify-center gap-4">
+                    <Link href="/admin/email">
+                      <Button>Let's send some emails!</Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
+              {hasFullAdmin && (
+                <Card className="w-full">
+                  <CardHeader>
+                    <CardTitle className="text-center">Role Manager</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-wrap items-center justify-center gap-4">
+                    <Link href="/admin/roles">
+                      <Button>Configure Roles</Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
           {isOfficer && (
             <Card>
