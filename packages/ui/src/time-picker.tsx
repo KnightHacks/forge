@@ -67,8 +67,10 @@ export function TimePicker({
       let hour24 = parseInt(newHours) || 0;
       const minute = parseInt(newMinutes) || 0;
 
-      if (use12Hour && newAmpm) {
-        const isAM = newAmpm.toUpperCase() === "AM";
+      if (use12Hour) {
+        // default to AM if not set
+        const currentAmpm = newAmpm || "AM";
+        const isAM = currentAmpm.toUpperCase() === "AM";
         if (isAM && hour24 === 12) hour24 = 0;
         if (!isAM && hour24 !== 12) hour24 = hour24 + 12;
       }
@@ -84,8 +86,10 @@ export function TimePicker({
       let hour24 = parseInt(newHours) || 0;
       const minute = parseInt(minutes) || 0;
 
-      if (use12Hour && ampm) {
-        const isAM = ampm.toUpperCase() === "AM";
+      if (use12Hour) {
+        // default to AM if not set
+        const currentAmpm = ampm || "AM";
+        const isAM = currentAmpm.toUpperCase() === "AM";
         if (isAM && hour24 === 12) hour24 = 0;
         if (!isAM && hour24 !== 12) hour24 = hour24 + 12;
       }
@@ -101,8 +105,10 @@ export function TimePicker({
       let hour24 = parseInt(hours) || 0;
       const minute = parseInt(newMinutes) || 0;
 
-      if (use12Hour && ampm) {
-        const isAM = ampm.toUpperCase() === "AM";
+      if (use12Hour) {
+        // default to AM if not set
+        const currentAmpm = ampm || "AM";
+        const isAM = currentAmpm.toUpperCase() === "AM";
         if (isAM && hour24 === 12) hour24 = 0;
         if (!isAM && hour24 !== 12) hour24 = hour24 + 12;
       }
@@ -122,19 +128,26 @@ export function TimePicker({
 
   const handleHoursBlur = () => {
     const hoursNum = parseInt(hours);
+    let finalHours = hours;
+
     if (use12Hour) {
       if (hoursNum > 12) {
+        finalHours = "12";
         setHours("12");
-        updateHours("12");
       } else if (hoursNum < 1 && hours !== "") {
+        finalHours = "1";
         setHours("1");
-        updateHours("1");
       }
     } else {
       if (hoursNum > 23) {
+        finalHours = "23";
         setHours("23");
-        updateHours("23");
       }
+    }
+
+    // always trigger update when we have valid hours
+    if (finalHours) {
+      updateHours(finalHours);
     }
   };
 
@@ -147,12 +160,19 @@ export function TimePicker({
 
   const handleMinutesBlur = () => {
     const minutesNum = parseInt(minutes);
+    let finalMinutes = minutes;
+
     if (minutesNum > 59) {
+      finalMinutes = "59";
       setMinutes("59");
-      updateMinutes("59");
     } else if (minutesNum < 0 && minutes !== "") {
+      finalMinutes = "00";
       setMinutes("00");
-      updateMinutes("00");
+    }
+
+    // always trigger update when we have valid minutes
+    if (finalMinutes) {
+      updateMinutes(finalMinutes);
     }
   };
 
@@ -199,7 +219,7 @@ export function TimePicker({
         {use12Hour && (
           <Select value={ampm} onValueChange={handleAmpmChange}>
             <SelectTrigger className="w-20">
-              <SelectValue />
+              <SelectValue placeholder="AM" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
@@ -18,6 +19,7 @@ export function FormResponderClient({
   formName,
   userName,
 }: FormResponderClientProps) {
+  const router = useRouter();
   const [responses, setResponses] = useState<
     Record<string, string | string[] | number | Date | null>
   >({});
@@ -25,6 +27,7 @@ export function FormResponderClient({
   const [showCheckmark, setShowCheckmark] = useState(false);
   const [showText, setShowText] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [redirectCountdown, setRedirectCountdown] = useState(5);
 
   const formQuery = api.forms.getForm.useQuery({
     slug_name: formName,
@@ -55,17 +58,31 @@ export function FormResponderClient({
     if (isSubmitted) {
       const checkTimer = setTimeout(() => setShowCheckmark(true), 100);
       const textTimer = setTimeout(() => setShowText(true), 400);
+
+      // countdown
+      const countdownInterval = setInterval(() => {
+        setRedirectCountdown((prev) => prev - 1);
+      }, 1000);
+
+      const redirectTimer = setTimeout(() => {
+        router.push("/");
+      }, 5000);
+
       return () => {
         clearTimeout(checkTimer);
         clearTimeout(textTimer);
+        clearInterval(countdownInterval);
+        clearTimeout(redirectTimer);
       };
     }
-  }, [isSubmitted]);
-
-  if (!formQuery.data) return;
+  }, [isSubmitted, router]);
 
   // wait for all queries to load
-  if (duesQuery.isLoading || existingResponseQuery.isLoading)
+  if (
+    formQuery.isLoading ||
+    duesQuery.isLoading ||
+    existingResponseQuery.isLoading
+  )
     return (
       <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -73,12 +90,9 @@ export function FormResponderClient({
     );
 
   // if form fails to load show error
-  if (formQuery.error)
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
-        Error loading form
-      </div>
-    );
+  if (formQuery.error || !formQuery.data) {
+    return <FormNotFound />;
+  }
 
   const duesCheckFailed = !!duesQuery.error;
   const hasPaidDues = duesCheckFailed
@@ -136,6 +150,9 @@ export function FormResponderClient({
             <h1 className="mb-2 text-2xl font-bold">Thanks, {userName}!</h1>
             <p className="text-muted-foreground">
               Your response to &quot;{form.name}&quot; has been recorded.
+            </p>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Redirecting in {redirectCountdown}...
             </p>
           </div>
         </Card>
@@ -202,7 +219,7 @@ export function FormResponderClient({
   };
 
   return (
-    <div className="min-h-screen bg-primary/5 p-6">
+    <div className="min-h-screen overflow-x-visible bg-primary/5 p-6">
       <div className="mx-auto max-w-3xl space-y-6">
         {/* Banner */}
         {form.banner && <div className="overflow-hidden rounded-lg"></div>}
@@ -219,7 +236,7 @@ export function FormResponderClient({
         </Card>
 
         {/* Questions */}
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-visible">
           {form.questions.map((q, index) => {
             const questionText = q.question;
             const responseValue:
@@ -269,6 +286,23 @@ export function FormResponderClient({
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function FormNotFound() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
+      <Card className="max-w-md p-8 text-center">
+        <XCircle className="mx-auto mb-4 h-16 w-16 text-destructive" />
+        <h1 className="mb-2 text-2xl font-bold">Form Not Found</h1>
+        <p className="text-muted-foreground">
+          This form doesn&apos;t exist or may have been removed.
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Please let a team member know if you think this is an error.
+        </p>
+      </Card>
     </div>
   );
 }
