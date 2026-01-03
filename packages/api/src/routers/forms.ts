@@ -1,6 +1,6 @@
 import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, lt } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -17,7 +17,6 @@ import {
 
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { generateJsonSchema } from "../utils";
-import { desc, eq, lt } from "drizzle-orm";
 
 export const formsRouter = {
   createForm: adminProcedure
@@ -118,44 +117,6 @@ export const formsRouter = {
         zodValidator: jsonSchemaToZod(form.formValidatorJson as JSONSchema7),
       };
     }),
-
-  updateForm: adminProcedure
-    .input(z.object({
-      oldName: z.string(),
-      newName: z.string().min(1)
-    })
-  )
-    .mutation(async ({ input }) => {
-
-      const duplicateForm = await db.query.FormsSchemas.findFirst({
-        where: (t, { eq }) => eq(t.name, input.newName),
-      });
-
-      //im not sure if we are going to be expecting duplicate names so i just added this
-      if (duplicateForm){
-        throw new TRPCError({
-          message: "Form with this name already exists",
-          code: "CONFLICT",
-        });
-      }
-
-      const newFormName = await db.update(FormsSchemas)
-        .set({name: input.newName})
-        .where(eq(FormsSchemas.name, input.oldName))
-        .returning({ name: FormsSchemas.name });
-
-        if (newFormName.length === 0) {
-          throw new TRPCError({
-            message: "Form not found",
-            code: "NOT_FOUND",
-          });
-        }
-
-        return { success: true}
-
-    }),
-
-
 
   deleteForm: adminProcedure
     .input(z.object({ name: z.string() }))

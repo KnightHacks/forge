@@ -8,7 +8,6 @@ import { Button } from "@forge/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -20,7 +19,7 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@forge/ui/card";
+import { Card, CardHeader, CardTitle } from "@forge/ui/card";
 
 const schema = z.object({
   name: z.string().min(1, "Please enter a name"),
@@ -34,7 +33,7 @@ export function CreateFormCard() {
   const [isLoading, setIsLoading] = useState(false);
   const utils = api.useUtils();
 
-  const form = useForm< FormValues >({
+  const form = useForm<FormValues>({
     schema,
     defaultValues: { name: "", description: "" },
   });
@@ -68,22 +67,22 @@ export function CreateFormCard() {
               onSubmit={form.handleSubmit((values) => {
                 setIsLoading(true);
 
-                // Minimal form data
                 const payload = {
-                  name: values.name,
-                  description: values.description ?? "",
-                  questions: [],
-                } as const;
+                  formData: {
+                    name: values.name,
+                    description: values.description ?? "",
+                    questions: [],
+                  },
+                  duesOnly: false,
+                  allowResubmission: false,
+                };
 
-                createForm.mutate(payload as unknown as any);
+                createForm.mutate(payload);
               })}
               noValidate
             >
               <DialogHeader>
                 <DialogTitle>Create New Form</DialogTitle>
-                <DialogDescription>
-                  Create a new form. You can add questions later.
-                </DialogDescription>
               </DialogHeader>
 
               <div className="grid gap-4 py-4">
@@ -93,9 +92,7 @@ export function CreateFormCard() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="grid grid-cols-4 items-center gap-4">
-                        <FormLabel htmlFor="name" className="text-right">
-                          Name
-                        </FormLabel>
+                        <FormLabel htmlFor="name" className="text-right">Name</FormLabel>
                         <FormControl>
                           <Input id="name" placeholder="Form name" {...field} className="col-span-3" />
                         </FormControl>
@@ -103,16 +100,13 @@ export function CreateFormCard() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
                       <div className="grid grid-cols-4 items-start gap-4">
-                        <FormLabel htmlFor="description" className="text-right">
-                          Description
-                        </FormLabel>
+                        <FormLabel htmlFor="description" className="text-right">Description</FormLabel>
                         <FormControl>
                           <Textarea id="description" placeholder="Short description" {...field} className="col-span-3" />
                         </FormControl>
@@ -123,9 +117,7 @@ export function CreateFormCard() {
               </div>
 
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsOpen(false)}>
-                  Cancel
-                </Button>
+                <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
                 <Button type="submit" className="ml-2">
                   {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : "Create"}
                 </Button>
@@ -137,14 +129,7 @@ export function CreateFormCard() {
 
       <CardHeader>
         <CardTitle>Create a new form</CardTitle>
-        <CardDescription className="mt-2 text-sm text-muted-foreground">
-          Build a Google Forms-like form to collect responses.
-        </CardDescription>
       </CardHeader>
-
-      <CardContent>
-        <p className="text-sm text-muted-foreground">Click create to start.</p>
-      </CardContent>
     </Card>
   );
 }
