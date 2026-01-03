@@ -138,10 +138,8 @@ export const formsRouter = {
       // check if user already submitted and form doesnt allow resubmission
       if (!form.allowResubmission) {
         const existing = await db.query.FormResponse.findFirst({
-          where: (t, { eq, and }) => and(
-            eq(t.form, input.form),
-            eq(t.userId, userId)
-          ),
+          where: (t, { eq, and }) =>
+            and(eq(t.form, input.form), eq(t.userId, userId)),
         });
 
         if (existing) {
@@ -203,12 +201,10 @@ export const formsRouter = {
     .input(z.object({ form: z.string() }))
     .query(async ({ input, ctx }) => {
       const userId = ctx.session.user.id;
-      
+
       const existing = await db.query.FormResponse.findFirst({
-        where: (t, { eq, and }) => and(
-          eq(t.form, input.form),
-          eq(t.userId, userId)
-        ),
+        where: (t, { eq, and }) =>
+          and(eq(t.form, input.form), eq(t.userId, userId)),
       });
 
       return {
