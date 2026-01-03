@@ -254,24 +254,25 @@ export const formsRouter = {
   deleteForm: adminProcedure
     .input(z.object({ name: z.string() }))
     .mutation(async ({ input }) => {
-      const deletion = await db.delete(FormsSchemas)
+      const deletion = await db
+        .delete(FormsSchemas)
         .where(eq(FormsSchemas.name, input.name))
         .returning({ name: FormsSchemas.name });
 
-        if (deletion.length === 0) {
-          throw new TRPCError({
-            message: "Form not found",
-            code: "NOT_FOUND",
-          });
-        }
+      if (deletion.length === 0) {
+        throw new TRPCError({
+          message: "Form not found",
+          code: "NOT_FOUND",
+        });
+      }
     }),
 
   getForms: publicProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(100).default(10),
-        cursor: z.string().nullish(), 
-      })
+        cursor: z.string().nullish(),
+      }),
     )
     .query(async ({ input }) => {
       const { cursor } = input;
@@ -279,8 +280,10 @@ export const formsRouter = {
 
       const forms = await db.query.FormsSchemas.findMany({
         limit: limit + 1,
-       
-        where: cursor ? lt(FormsSchemas.createdAt, new Date(cursor)) : undefined,
+
+        where: cursor
+          ? lt(FormsSchemas.createdAt, new Date(cursor))
+          : undefined,
         orderBy: [desc(FormsSchemas.createdAt)],
         columns: {
           name: true,
@@ -301,5 +304,66 @@ export const formsRouter = {
       };
     }),
 
+  createResponse: protectedProcedure
+    .input(InsertFormResponseSchema.omit({ userId: true }))
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.session.user.id;
 
+      // validate response
+      const form = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) => eq(t.name, input.form),
+      });
+
+      if (!form) {
+        throw new TRPCError({
+          message: "Form doesn't exist for response",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      const zodSchemaString = jsonSchemaToZod(
+        form.formValidatorJson as JSONSchema7,
+      );
+
+      // create js function at runtime to create a zod object
+      // input is trusted and generated internally
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-call
+      const zodSchema = new Function("z", `return ${zodSchemaString}`)(
+        z,
+      ) as z.ZodSchema;
+
+      const response = zodSchema.safeParse(input.responseData);
+
+      if (!response.success) {
+        throw new TRPCError({
+          message: "Form response failed form validation",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      await db.insert(FormResponse).values({
+        userId,
+        ...input,
+      });
+    }),
+
+  getResponses: adminProcedure
+    .input(z.object({ form: z.string() }))
+    .query(async ({ input }) => {
+      return await db
+        .select({
+          submittedAt: FormResponse.createdAt,
+          responseData: FormResponse.responseData,
+          member: {
+            firstName: Member.firstName,
+            lastName: Member.lastName,
+            email: Member.email,
+            id: Member.userId,
+          },
+        })
+        .from(FormResponse)
+        .leftJoin(Member, eq(FormResponse.userId, Member.userId))
+        .where(eq(FormResponse.form, input.form))
+        .orderBy(desc(FormResponse.createdAt));
+    }),
 };
