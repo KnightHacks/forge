@@ -533,7 +533,9 @@ export const OtherCompanies = createTable("companies", (t) => ({
 export const InsertOtherCompaniesSchema = createInsertSchema(OtherCompanies);
 
 export const FormsSchemas = createTable("form_schemas", (t) => ({
-  name: t.varchar({ length: 255 }).notNull().primaryKey(),
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.varchar({ length: 255 }).notNull(),
+  slugName: t.varchar({ length: 255 }).notNull(),
   createdAt: t.timestamp().notNull().defaultNow(),
   duesOnly: t.boolean().notNull().default(false),
   allowResubmission: t.boolean().notNull().default(false),

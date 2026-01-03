@@ -24,9 +24,10 @@ export function FormResponderClient({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
   const [showText, setShowText] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const formQuery = api.forms.getForm.useQuery({
-    name: formName,
+    slug_name: formName,
   });
 
   // is bro a dues paying member?
@@ -34,10 +35,8 @@ export function FormResponderClient({
 
   // did bro submit alr?
   const existingResponseQuery = api.forms.getUserResponse.useQuery({
-    form: formName,
+    form: formQuery.data?.id ?? "",
   });
-
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const submitResponse = api.forms.createResponse.useMutation({
     onSuccess: () => {
@@ -62,6 +61,8 @@ export function FormResponderClient({
       };
     }
   }, [isSubmitted]);
+
+  if (!formQuery.data) return;
 
   // wait for all queries to load
   if (
@@ -192,8 +193,10 @@ export function FormResponderClient({
       }
     });
 
+    if (!formQuery.data) return;
+
     submitResponse.mutate({
-      form: formName,
+      form: formQuery.data.id,
       responseData,
     });
   };
