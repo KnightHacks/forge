@@ -267,42 +267,40 @@ export const formsRouter = {
     }),
 
   updateForm: adminProcedure
-    .input(z.object({
-      oldName: z.string(),
-      newName: z.string().min(1)
-    })
-  )
+    .input(
+      z.object({
+        oldName: z.string(),
+        newName: z.string().min(1),
+      }),
+    )
     .mutation(async ({ input }) => {
-
       const duplicateForm = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) => eq(t.name, input.newName),
       });
 
       //im not sure if we are going to be expecting duplicate names so i just added this
-      if (duplicateForm){
+      if (duplicateForm) {
         throw new TRPCError({
           message: "Form with this name already exists",
           code: "CONFLICT",
         });
       }
 
-      const newFormName = await db.update(FormsSchemas)
-        .set({name: input.newName})
+      const newFormName = await db
+        .update(FormsSchemas)
+        .set({ name: input.newName })
         .where(eq(FormsSchemas.name, input.oldName))
         .returning({ name: FormsSchemas.name });
 
-        if (newFormName.length === 0) {
-          throw new TRPCError({
-            message: "Form not found",
-            code: "NOT_FOUND",
-          });
-        }
+      if (newFormName.length === 0) {
+        throw new TRPCError({
+          message: "Form not found",
+          code: "NOT_FOUND",
+        });
+      }
 
-        return { success: true}
-
+      return { success: true };
     }),
-
-
 
   deleteForm: adminProcedure
     .input(z.object({ name: z.string() }))
