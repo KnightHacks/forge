@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@forge/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@forge/ui/dropdown-menu"
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@forge/ui/table"
 import { toast } from "@forge/ui/toast"
-import { Copy, User, ChevronDown, Edit, Trash, X, Loader2 } from "lucide-react"
+import { Copy, User, ChevronDown, Edit, Trash, X, Loader2, Check } from "lucide-react"
 import { api } from "~/trpc/react";
 import type { APIRole } from "discord-api-types/v10";
 import RoleEdit from "./roleedit";
@@ -21,6 +21,7 @@ export default function RoleTable()
     const deleteLinkMutation = api.roles.deleteRoleLink.useMutation()
 
     const [discordRoles, setDiscordRoles] = useState<(APIRole | null)[] | undefined>()
+    const [copyConfirm, setCopyConfirm] = useState(-1)
 
     useEffect(()=>{
         async function fetchDiscordRoles() {
@@ -80,8 +81,9 @@ export default function RoleTable()
                                 }
                             </TableCell>
                             <TableCell>
-                                <div tabIndex={0} onClick={()=>{void navigator.clipboard.writeText(v.discordRoleId); toast(`Copied "${v.discordRoleId}" to clipboard!`)}} className="text-muted-foreground hover:bg-muted hover:text-white hover:border-white border rounded-full cursor-pointer py-1 px-2 w-fit flex flex-row gap-1">
-                                    <Copy className="size-4 my-auto"/>
+                                <div tabIndex={0} onClick={()=>{void navigator.clipboard.writeText(v.discordRoleId); setCopyConfirm(i); toast(`Copied "${v.discordRoleId}" to clipboard!`)}} 
+                                className={`text-muted-foreground ${copyConfirm == i && "bg-muted text-white border-white"} hover:bg-muted hover:text-white hover:border-white border rounded-full cursor-pointer py-1 px-2 w-fit flex flex-row gap-1`}>
+                                    {copyConfirm == i ? <Check className="size-4 my-auto"/> : <Copy className="size-4 my-auto"/>}
                                     <div className="ml-1 truncate font-mono">{`${v.discordRoleId}`}</div>
                                 </div>
                             </TableCell>
