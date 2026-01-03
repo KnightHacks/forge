@@ -1,6 +1,6 @@
 import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, lt } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -115,6 +115,59 @@ export const formsRouter = {
         ...retForm,
         formData: form.formData as FormType,
         zodValidator: jsonSchemaToZod(form.formValidatorJson as JSONSchema7),
+      };
+    }),
+
+  deleteForm: adminProcedure
+    .input(z.object({ name: z.string() }))
+    .mutation(async ({ input }) => {
+      const deletion = await db
+        .delete(FormsSchemas)
+        .where(eq(FormsSchemas.name, input.name))
+        .returning({ name: FormsSchemas.name });
+
+      if (deletion.length === 0) {
+        throw new TRPCError({
+          message: "Form not found",
+          code: "NOT_FOUND",
+        });
+      }
+    }),
+
+  getForms: publicProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(10),
+        cursor: z.string().nullish(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { cursor } = input;
+      const limit = input.limit;
+
+      const forms = await db.query.FormsSchemas.findMany({
+        limit: limit + 1,
+
+        where: cursor
+          ? lt(FormsSchemas.createdAt, new Date(cursor))
+          : undefined,
+        orderBy: [desc(FormsSchemas.createdAt)],
+        columns: {
+          name: true,
+          createdAt: true,
+        },
+      });
+
+      let nextCursor: string | undefined = undefined;
+
+      if (forms.length > limit) {
+        const nextItem = forms.pop();
+        nextCursor = nextItem?.createdAt.toISOString();
+      }
+
+      return {
+        forms,
+        nextCursor,
       };
     }),
 
