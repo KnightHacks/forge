@@ -121,24 +121,25 @@ export const formsRouter = {
   deleteForm: adminProcedure
     .input(z.object({ name: z.string() }))
     .mutation(async ({ input }) => {
-      const deletion = await db.delete(FormsSchemas)
+      const deletion = await db
+        .delete(FormsSchemas)
         .where(eq(FormsSchemas.name, input.name))
         .returning({ name: FormsSchemas.name });
 
-        if (deletion.length === 0) {
-          throw new TRPCError({
-            message: "Form not found",
-            code: "NOT_FOUND",
-          });
-        }
+      if (deletion.length === 0) {
+        throw new TRPCError({
+          message: "Form not found",
+          code: "NOT_FOUND",
+        });
+      }
     }),
 
   getForms: publicProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(100).default(10),
-        cursor: z.string().nullish(), 
-      })
+        cursor: z.string().nullish(),
+      }),
     )
     .query(async ({ input }) => {
       const { cursor } = input;
@@ -146,8 +147,10 @@ export const formsRouter = {
 
       const forms = await db.query.FormsSchemas.findMany({
         limit: limit + 1,
-       
-        where: cursor ? lt(FormsSchemas.createdAt, new Date(cursor)) : undefined,
+
+        where: cursor
+          ? lt(FormsSchemas.createdAt, new Date(cursor))
+          : undefined,
         orderBy: [desc(FormsSchemas.createdAt)],
         columns: {
           name: true,
@@ -167,7 +170,6 @@ export const formsRouter = {
         nextCursor,
       };
     }),
-
 
   createResponse: protectedProcedure
     .input(InsertFormResponseSchema.omit({ userId: true }))
