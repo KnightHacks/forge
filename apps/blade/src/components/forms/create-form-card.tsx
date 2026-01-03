@@ -1,0 +1,150 @@
+"use client";
+
+import { useState } from "react";
+import { Plus, Loader2 } from "lucide-react";
+import * as z from "zod";
+
+import { Button } from "@forge/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@forge/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, useForm } from "@forge/ui/form";
+import { Input } from "@forge/ui/input";
+import { Textarea } from "@forge/ui/textarea";
+import { toast } from "@forge/ui/toast";
+
+import { api } from "~/trpc/react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@forge/ui/card";
+
+const schema = z.object({
+  name: z.string().min(1, "Please enter a name"),
+  description: z.string().max(500).optional(),
+});
+
+type FormValues = z.infer<typeof schema>;
+
+export function CreateFormCard() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const utils = api.useUtils();
+
+  const form = useForm< FormValues >({
+    schema,
+    defaultValues: { name: "", description: "" },
+  });
+
+  const createForm = api.forms.createForm.useMutation({
+    onSuccess() {
+      toast.success("Form created");
+      setIsOpen(false);
+    },
+    onError(err) {
+      toast.error(err.message ?? "Failed to create form");
+    },
+    async onSettled() {
+      await utils.forms.getForms.invalidate();
+      setIsLoading(false);
+    },
+  });
+
+  return (
+    <Card className="items-center justify-center p-6 text-center">
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button variant="ghost" className="border-dashed border">
+            <Plus className="mr-2 h-4 w-4" /> Create Form
+          </Button>
+        </DialogTrigger>
+
+        <DialogContent className="max-w-lg">
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit((values) => {
+                setIsLoading(true);
+
+                // Minimal form data
+                const payload = {
+                  name: values.name,
+                  description: values.description ?? "",
+                  questions: [],
+                } as const;
+
+                createForm.mutate(payload as unknown as any);
+              })}
+              noValidate
+            >
+              <DialogHeader>
+                <DialogTitle>Create New Form</DialogTitle>
+                <DialogDescription>
+                  Create a new form. You can add questions later.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-4 py-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel htmlFor="name" className="text-right">
+                          Name
+                        </FormLabel>
+                        <FormControl>
+                          <Input id="name" placeholder="Form name" {...field} className="col-span-3" />
+                        </FormControl>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="grid grid-cols-4 items-start gap-4">
+                        <FormLabel htmlFor="description" className="text-right">
+                          Description
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea id="description" placeholder="Short description" {...field} className="col-span-3" />
+                        </FormControl>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="ml-2">
+                  {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : "Create"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <CardHeader>
+        <CardTitle>Create a new form</CardTitle>
+        <CardDescription className="mt-2 text-sm text-muted-foreground">
+          Build a Google Forms-like form to collect responses.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <p className="text-sm text-muted-foreground">Click create to start.</p>
+      </CardContent>
+    </Card>
+  );
+}
