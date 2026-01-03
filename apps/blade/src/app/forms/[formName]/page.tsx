@@ -2,13 +2,15 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 
-import { HydrateClient } from "~/trpc/server";
 import { SIGN_IN_PATH } from "~/consts";
+import { HydrateClient } from "~/trpc/server";
 import { FormResponderClient } from "./_components/form-responder-client";
 
-export default async function FormResponderPage({ params }: {
-    params: { formName: string };  
-}) { 
+export default async function FormResponderPage({
+  params,
+}: {
+  params: { formName: string };
+}) {
   const session = await auth();
   if (!session) {
     redirect(SIGN_IN_PATH);
@@ -28,4 +30,4 @@ export default async function FormResponderPage({ params }: {
       <FormResponderClient formName={formName} userName={userName} />
     </HydrateClient>
   );
-}   
+}
