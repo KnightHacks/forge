@@ -89,7 +89,7 @@ export function FormResponderClient({
     ? true
     : (duesQuery.data?.duesPaid ?? false);
 
-  const form = formQuery.data?.formData as FormType | undefined;
+  const form = formQuery.data?.formData;
   const isDuesOnly = formQuery.data?.duesOnly ?? false;
   const allowResubmission = formQuery.data?.allowResubmission ?? false;
   const hasAlreadySubmitted = existingResponseQuery.data?.hasSubmitted ?? false;
