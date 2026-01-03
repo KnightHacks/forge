@@ -135,6 +135,23 @@ export const formsRouter = {
         });
       }
 
+      // check if user already submitted and form doesnt allow resubmission
+      if (!form.allowResubmission) {
+        const existing = await db.query.FormResponse.findFirst({
+          where: (t, { eq, and }) => and(
+            eq(t.form, input.form),
+            eq(t.userId, userId)
+          ),
+        });
+
+        if (existing) {
+          throw new TRPCError({
+            message: "You have already submitted a response to this form",
+            code: "BAD_REQUEST",
+          });
+        }
+      }
+
       const zodSchemaString = jsonSchemaToZod(
         form.formValidatorJson as JSONSchema7,
       );
@@ -179,5 +196,24 @@ export const formsRouter = {
         .leftJoin(Member, eq(FormResponse.userId, Member.userId))
         .where(eq(FormResponse.form, input.form))
         .orderBy(desc(FormResponse.createdAt));
+    }),
+
+  // check if current user already submitted to this form
+  getUserResponse: protectedProcedure
+    .input(z.object({ form: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const userId = ctx.session.user.id;
+      
+      const existing = await db.query.FormResponse.findFirst({
+        where: (t, { eq, and }) => and(
+          eq(t.form, input.form),
+          eq(t.userId, userId)
+        ),
+      });
+
+      return {
+        hasSubmitted: !!existing,
+        submittedAt: existing?.createdAt ?? null,
+      };
     }),
 };

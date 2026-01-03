@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { api } from "~/trpc/react";
 import { Card } from "@forge/ui/card"; 
 import { Button } from "@forge/ui/button";
@@ -9,23 +10,119 @@ import type { FormType } from "@forge/consts/knight-hacks";
 
 interface FormResponderClientProps {
   formName: string;
+  userName: string;
 }
 
-export function FormResponderClient({ formName }: FormResponderClientProps) {
+export function FormResponderClient({ formName, userName }: FormResponderClientProps) {
   const [responses, setResponses] = useState<Record<string, string | string[] | number | Date | null>>({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showCheckmark, setShowCheckmark] = useState(false);
+  const [showText, setShowText] = useState(false);
 
   const formQuery = api.forms.getForm.useQuery({ 
     name: formName,
   });  
 
-  const submitResponse = api.forms.createResponse.useMutation({});
+  // is bro a dues paying member?
+  const duesQuery = api.duesPayment.validatePaidDues.useQuery();
 
-  if (formQuery.isLoading) return <div className="min-h-screen bg-primary/5 p-6 flex items-center justify-center">Loading</div>;
+  // did bro submit alr?
+  const existingResponseQuery = api.forms.getUserResponse.useQuery({ 
+    form: formName 
+  });
+
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const submitResponse = api.forms.createResponse.useMutation({
+    onSuccess: () => {
+      setSubmitError(null);
+      setIsSubmitted(true);
+    },
+    onError: (error) => {
+      setSubmitError(error.message || "Failed to submit response. Please try again.");
+    },
+  });
+
+  // Staggered animation for success screen
+  useEffect(() => {
+    if (isSubmitted) {
+      const checkTimer = setTimeout(() => setShowCheckmark(true), 100);
+      const textTimer = setTimeout(() => setShowText(true), 400);
+      return () => {
+        clearTimeout(checkTimer);
+        clearTimeout(textTimer);
+      };
+    }
+  }, [isSubmitted]);
+
+  // wait for all queries to load
+  if (formQuery.isLoading || duesQuery.isLoading || existingResponseQuery.isLoading) return (
+    <div className="min-h-screen bg-primary/5 p-6 flex items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+
+  // if form fails to load show error
   if (formQuery.error) return <div className="min-h-screen bg-primary/5 p-6 flex items-center justify-center">Error loading form</div>;
 
+  const duesCheckFailed = !!duesQuery.error;
+  const hasPaidDues = duesCheckFailed ? true : (duesQuery.data?.duesPaid ?? false);
+
   const form = formQuery.data?.formData as FormType | undefined;
+  const isDuesOnly = formQuery.data?.duesOnly ?? false;
+  const allowResubmission = formQuery.data?.allowResubmission ?? false;
+  const hasAlreadySubmitted = existingResponseQuery.data?.hasSubmitted ?? false;
 
   if (!form) return <div className="min-h-screen bg-primary/5 p-6 flex items-center justify-center">Form not found</div>;
+
+  // BRO DID NOT PAY DUES!!!
+  if (isDuesOnly && !hasPaidDues) {
+    return (
+      <div className="min-h-screen bg-primary/5 p-6 flex items-center justify-center">
+        <Card className="max-w-md p-8 text-center">
+          <XCircle className="mx-auto h-16 w-16 text-destructive mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Dues Required</h1>
+          <p className="text-muted-foreground">
+            This form is only available to members who have paid their dues.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
+  // dude they're trying to over throw the elections with multiple submissions
+  if (hasAlreadySubmitted && !allowResubmission) {
+    return (
+      <div className="min-h-screen bg-primary/5 p-6 flex items-center justify-center">
+        <Card className="max-w-md p-8 text-center">
+          <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Already Submitted</h1>
+          <p className="text-muted-foreground">
+            You have already submitted a response to this form.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
+  // SUCESSSSS
+  if (isSubmitted) {
+    return (
+      <div className="min-h-screen bg-primary/5 p-6 flex items-center justify-center">
+        <Card className="max-w-md p-8 text-center">
+          <div className={`transition-all duration-500 ease-out ${showCheckmark ? "opacity-100 scale-100" : "opacity-0 scale-50"}`}>
+            <CheckCircle2 className="mx-auto h-16 w-16 text-green-500" />
+          </div>
+          <div className={`mt-4 transition-all duration-500 ease-out ${showText ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+            <h1 className="text-2xl font-bold mb-2">Thanks, {userName}!</h1>
+            <p className="text-muted-foreground">
+              Your response to &quot;{form.name}&quot; has been recorded.
+            </p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   const handleResponseChange = (questionText: string, value: string | string[] | number | Date | null) => {
     setResponses((prev) => ({
@@ -89,7 +186,7 @@ export function FormResponderClient({ formName }: FormResponderClientProps) {
         )}
 
         {/* Header */}
-        <Card className="border-t-8 border-t-primary">
+        <Card className="border-t-8 border-t-primary animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="space-y-2 p-6">
             <h1 className="text-3xl font-bold">
               {form.name}
@@ -109,17 +206,28 @@ export function FormResponderClient({ formName }: FormResponderClientProps) {
             const questionText = q.question;
             const responseValue: string | string[] | number | Date | null | undefined = responses[questionText];
             return (
-              <QuestionResponseCard
+              <div 
                 key={`${questionText}-${index}`}
-                question={q}
-                value={responseValue ?? null}
-                onChange={(value: string | string[] | number | Date | null) => {
-                  handleResponseChange(questionText, value);
-                }}
-              />
+                className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+                style={{ animationDelay: `${(index + 1) * 100}ms`, animationFillMode: "backwards" }}
+              >
+                <QuestionResponseCard
+                  question={q}
+                  value={responseValue ?? null}
+                  onChange={(value: string | string[] | number | Date | null) => {
+                    handleResponseChange(questionText, value);
+                  }}
+                />
+              </div>
             );
           })}
         </div>
+        
+        {submitError && (
+          <div className="rounded-md bg-destructive/10 border border-destructive p-4 text-destructive">
+            {submitError}
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex justify-between pt-4">

@@ -18,9 +18,14 @@ export default async function FormResponderPage({ params }: {
     return <div>Form not found</div>;
   }
 
+  // handle url encode form names to allow spacing and special characters
+  const formName = decodeURIComponent(params.formName);
+
+  const userName = session.user.name ?? "Member";
+
   return (
     <HydrateClient>
-      <FormResponderClient formName={params.formName} />
+      <FormResponderClient formName={formName} userName={userName} />
     </HydrateClient>
   );
 }   
