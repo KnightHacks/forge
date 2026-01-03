@@ -36,7 +36,7 @@ export function QuestionResponseCard({
   const isRequired = !question.optional;
 
   return (
-    <Card className="relative flex flex-col gap-4 border-l-4 border-l-transparent bg-card p-6 text-card-foreground transition-all">
+    <Card className="relative flex flex-col gap-4 bg-card p-6 text-card-foreground transition-all">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-start gap-2">
