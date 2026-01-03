@@ -72,8 +72,8 @@ export function DownloadQRPass() {
 
   return (
     <Button
-      size="lg"
-      className="animate-fade-in group w-full gap-2 rounded-lg border border-[#1F2937] bg-card px-5 py-3 shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:bg-card hover:shadow-md sm:w-auto sm:px-8"
+      size="sm"
+      className="transition-none w-full gap-2 border bg-card"
       onClick={handleDownload}
       disabled={!canDownload || isDownloading}
     >
@@ -84,8 +84,8 @@ export function DownloadQRPass() {
         </>
       ) : canDownload ? (
         <>
-          <WalletCards className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
-          Apple Wallet
+          <WalletCards className="h-4 w-4 group-hover:text-primary text-card-foreground" />
+          <p className="text-card-foreground">Apple Wallet</p>
         </>
       ) : (
         "No member information found"
