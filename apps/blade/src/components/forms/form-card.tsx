@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { QrCode } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import {
@@ -15,6 +16,7 @@ import {
 
 import { api } from "~/trpc/react";
 import { DeleteFormDialog } from "./delete-form-dialog";
+import { FormQRCodeDialog } from "./form-qr-code";
 
 export function FormCard({
   slug_name,
@@ -45,25 +47,41 @@ export function FormCard({
       }}
       className="cursor-pointer rounded-lg transition hover:bg-card/60 hover:shadow-md hover:ring-2 hover:ring-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
-      <CardHeader className="flex items-start justify-between gap-4">
+      <CardHeader className="flex items-start justify-between">
         <div className="min-w-0">
           <CardTitle className="truncate text-base font-medium">
             {slug_name}
           </CardTitle>
         </div>
-        <CardAction>
+        <div className="flex items-right gap-3">
+        <CardAction
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <FormQRCodeDialog
+            formSlug={slug_name}
+            trigger={
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="View form QR code"
+              >
+                <QrCode className="h-4 w-4" />
+              </Button>
+            }
+          />
+        </CardAction>
           <CardAction>
             <DeleteFormDialog
               slug_name={slug_name}
               onOpenChange={setDeleteDialogOpen}
             />
           </CardAction>
-        </CardAction>
+          </div>
       </CardHeader>
 
       <CardContent>
         <p className="max-h-12 overflow-hidden text-sm text-muted-foreground">
-          {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
           {fullForm?.formData.description || "No description"}
         </p>
       </CardContent>

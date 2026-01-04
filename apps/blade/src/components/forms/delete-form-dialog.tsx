@@ -50,7 +50,7 @@ export function DeleteFormDialog({
       <DialogTrigger asChild>
         <Button
           variant="destructive"
-          size="sm"
+          size="icon"
           onClick={(e) => e.stopPropagation()}
         >
           <Trash2 className="h-4 w-4" />
