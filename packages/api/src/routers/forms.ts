@@ -132,18 +132,30 @@ export const formsRouter = {
   deleteForm: adminProcedure
     .input(z.object({ slug_name: z.string() }))
     .mutation(async ({ input }) => {
-      const deletion = await db
-        .delete(FormsSchemas)
-        .where(eq(FormsSchemas.slugName, input.slug_name))
-        .returning({ slugName: FormsSchemas.slugName });
+      // find the form to delete duh
+      const form = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) => eq(t.slugName, input.slug_name),
+      });
 
-      if (deletion.length === 0) {
+      if (!form) {
         throw new TRPCError({
           message: "Form not found",
           code: "NOT_FOUND",
         });
       }
-    }),
+      // below is new cascading logic!
+      // del all responses linked to that form
+      await db
+        .delete(FormResponse)
+        .where(eq(FormResponse.form, form.id));
+
+      // del the form itself
+      await db
+        .delete(FormsSchemas)
+        .where(eq(FormsSchemas.id, form.id))
+        .returning({ slugName: FormsSchemas.slugName });
+  }),
+
 
   getForms: publicProcedure
     .input(
