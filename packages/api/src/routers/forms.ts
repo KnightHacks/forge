@@ -145,17 +145,14 @@ export const formsRouter = {
       }
       // below is new cascading logic!
       // del all responses linked to that form
-      await db
-        .delete(FormResponse)
-        .where(eq(FormResponse.form, form.id));
+      await db.delete(FormResponse).where(eq(FormResponse.form, form.id));
 
       // del the form itself
       await db
         .delete(FormsSchemas)
         .where(eq(FormsSchemas.id, form.id))
         .returning({ slugName: FormsSchemas.slugName });
-  }),
-
+    }),
 
   getForms: publicProcedure
     .input(

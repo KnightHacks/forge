@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { DeleteFormDialog } from "./delete-form-dialog";
 
 import { Button } from "@forge/ui/button";
 import {
@@ -15,6 +14,7 @@ import {
 } from "@forge/ui/card";
 
 import { api } from "~/trpc/react";
+import { DeleteFormDialog } from "./delete-form-dialog";
 
 export function FormCard({
   slug_name,
@@ -25,7 +25,6 @@ export function FormCard({
   createdAt: string | Date;
   onOpen?: () => void;
 }) {
-
   const createdDate = new Date(createdAt).toLocaleString();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -46,7 +45,6 @@ export function FormCard({
       }}
       className="cursor-pointer rounded-lg transition hover:bg-card/60 hover:shadow-md hover:ring-2 hover:ring-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
-
       <CardHeader className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <CardTitle className="truncate text-base font-medium">
@@ -60,7 +58,6 @@ export function FormCard({
               onOpenChange={setDeleteDialogOpen}
             />
           </CardAction>
-
         </CardAction>
       </CardHeader>
 
