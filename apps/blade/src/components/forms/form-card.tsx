@@ -53,31 +53,31 @@ export function FormCard({
             {slug_name}
           </CardTitle>
         </div>
-        <div className="flex items-right gap-3">
-        <CardAction
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
-          <FormQRCodeDialog
-            formSlug={slug_name}
-            trigger={
-              <Button
-                size="icon"
-                variant="ghost"
-                aria-label="View form QR code"
-              >
-                <QrCode className="h-4 w-4" />
-              </Button>
-            }
-          />
-        </CardAction>
+        <div className="items-right flex gap-3">
+          <CardAction
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <FormQRCodeDialog
+              formSlug={slug_name}
+              trigger={
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label="View form QR code"
+                >
+                  <QrCode className="h-4 w-4" />
+                </Button>
+              }
+            />
+          </CardAction>
           <CardAction>
             <DeleteFormDialog
               slug_name={slug_name}
               onOpenChange={setDeleteDialogOpen}
             />
           </CardAction>
-          </div>
+        </div>
       </CardHeader>
 
       <CardContent>
