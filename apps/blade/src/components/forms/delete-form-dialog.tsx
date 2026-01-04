@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import {
@@ -24,7 +24,7 @@ export function DeleteFormDialog({
   onOpenChange?: (open: boolean) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const setOpen = (open: boolean) => {
     setIsOpen(open);
     onOpenChange?.(open);
@@ -64,10 +64,8 @@ export function DeleteFormDialog({
 
         <p className="text-sm text-muted-foreground">
           Are you sure you want to delete{" "}
-          <span className="font-medium text-foreground">
-            {slug_name}
-          </span>
-          ? This action cannot be undone.
+          <span className="font-medium text-foreground">{slug_name}</span>? This
+          action cannot be undone.
         </p>
 
         <DialogFooter className="mt-4">
