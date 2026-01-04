@@ -139,7 +139,7 @@ export function CreateFormCard() {
               </div>
 
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit" className="ml-2">
