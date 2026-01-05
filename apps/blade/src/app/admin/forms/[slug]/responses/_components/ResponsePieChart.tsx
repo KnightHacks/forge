@@ -75,22 +75,83 @@ export function ResponsePieChart({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-2 pt-3 md:pb-6 md:pt-6">
         {/* question text as card title */}
-        <CardTitle>{question}</CardTitle>
+        <CardTitle className="text-sm md:text-lg">{question}</CardTitle>
         {/* show total number of responses */}
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-0.5 text-[10px] text-muted-foreground md:mt-1 md:text-sm">
           {responses.length} {responses.length === 1 ? "response" : "responses"}
         </p>
       </CardHeader>
-      {/* center the chart horizontally using flexbox */}
-      <CardContent className="flex items-center justify-center">
-        <ChartContainer config={chartConfig} className="h-[300px]">
+      {/* center the chart horizontally using flexbox, stack vertically on mobile */}
+      <CardContent className="flex flex-col items-center justify-center px-3 pb-3 pt-0 md:flex-row md:px-6 md:pb-6 md:pt-6">
+        {/* Mobile view - smaller pie chart */}
+        <div className="flex w-full items-center overflow-hidden md:hidden">
+          <ChartContainer config={chartConfig} className="h-[140px] w-full">
+            <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartLegend
+                content={({ payload }) => {
+                  if (!payload?.length) return null;
+
+                  return (
+                    <div className="flex max-h-[130px] flex-col gap-1 overflow-y-auto pr-0.5">
+                      {payload.map((item, index) => {
+                        const chartItem = chartData.find(
+                          (d) => d.name === item.value,
+                        );
+                        const percentage = chartItem?.percentage ?? "0.0";
+
+                        return (
+                          <div key={index} className="flex items-center gap-1">
+                            <div
+                              className="h-2 w-2 flex-shrink-0 rounded-sm"
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <span className="text-[10px] leading-tight">
+                              {item.value} ({percentage}%)
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }}
+                verticalAlign="middle"
+                align="right"
+                layout="vertical"
+              />
+              <Pie
+                data={chartData}
+                dataKey="amount"
+                nameKey="name"
+                cx="32%"
+                cy="50%"
+                innerRadius={0}
+                outerRadius={55}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={
+                      ADMIN_PIE_CHART_COLORS[
+                        index % ADMIN_PIE_CHART_COLORS.length
+                      ]
+                    }
+                  />
+                ))}
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+        </div>
+
+        {/* Desktop view - original size pie chart */}
+        <ChartContainer
+          config={chartConfig}
+          className="hidden h-[300px] md:block"
+        >
           <PieChart>
-            {/* tooltip shown on hover */}
             <ChartTooltip content={<ChartTooltipContent />} />
-            {/* custom vertical legend on the right side */}
-            {/* shows colored box + label for each answer option */}
             <ChartLegend
               content={({ payload }) => {
                 if (!payload?.length) return null;
@@ -98,7 +159,6 @@ export function ResponsePieChart({
                 return (
                   <div className="flex max-h-[280px] flex-col gap-2 overflow-y-auto pr-2">
                     {payload.map((item, index) => {
-                      // find matching chartData item to get percentage
                       const chartItem = chartData.find(
                         (d) => d.name === item.value,
                       );
@@ -123,8 +183,11 @@ export function ResponsePieChart({
               align="right"
               layout="vertical"
             />
-            {/* render the actual pie chart */}
-            <Pie data={chartData} dataKey="amount" nameKey="name">
+            <Pie
+              data={chartData}
+              dataKey="amount"
+              nameKey="name"
+            >
               {/* apply colors to each slice */}
               {chartData.map((entry, index) => (
                 <Cell
