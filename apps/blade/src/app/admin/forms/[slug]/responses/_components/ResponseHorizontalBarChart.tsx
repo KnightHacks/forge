@@ -80,31 +80,89 @@ export function ResponseHorizontalBarChart({
     },
   } satisfies ChartConfig;
 
-  // calculate dynamic height based on number of items (40px per bar)
-  const chartHeight = Math.max(300, chartData.length * 40);
+  // calculate dynamic height based on number of items (28px per bar on mobile, 40px on desktop)
+  const mobileChartHeight = Math.max(180, chartData.length * 28);
+  const desktopChartHeight = Math.max(250, chartData.length * 40);
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-2 pt-3 md:pb-6 md:pt-6">
         {/* question text as card title */}
-        <CardTitle>{question}</CardTitle>
+        <CardTitle className="text-sm md:text-lg">{question}</CardTitle>
         {/* show total number of responses */}
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-0.5 text-[10px] text-muted-foreground md:mt-1 md:text-sm">
           {responses.length} {responses.length === 1 ? "response" : "responses"}
         </p>
       </CardHeader>
       {/* center the chart horizontally and make scrollable */}
-      <CardContent className="flex flex-col items-center justify-center">
-        <div className="max-h-[500px] w-full overflow-y-auto">
+      <CardContent className="flex flex-col items-center justify-center px-3 pb-3 pt-0 md:px-6 md:pb-6 md:pt-6">
+        {/* Mobile view - compact horizontal bar chart */}
+        <div className="max-h-[300px] w-full overflow-y-auto overflow-x-hidden md:hidden">
           <ChartContainer
             config={chartConfig}
             className="w-full"
-            style={{ height: `${chartHeight}px` }}
+            style={{ height: `${mobileChartHeight}px` }}
           >
-            <BarChart data={chartData} layout="vertical" margin={{ right: 25 }}>
-              {/* horizontal grid lines only */}
+            <BarChart
+              data={chartData}
+              layout="vertical"
+              margin={{ right: 25, left: 5, top: 5, bottom: 5 }}
+            >
               <CartesianGrid horizontal={false} />
-              {/* y-axis shows the option names with percentages */}
+              <YAxis
+                dataKey="option"
+                type="category"
+                tickLine={false}
+                tickMargin={4}
+                axisLine={false}
+                width={100}
+                className="text-[10px] leading-tight"
+                tickFormatter={(value: string, index: number) => {
+                  const data = chartData[index];
+                  return `(${data?.percentage}%) ${value}`;
+                }}
+              />
+              <XAxis
+                dataKey="count"
+                type="number"
+                domain={[0, "dataMax"]}
+                hide
+              />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent indicator="line" />}
+              />
+              <Bar
+                dataKey="count"
+                fill="var(--color-count)"
+                radius={4}
+                layout="vertical"
+                barSize={22}
+              >
+                <LabelList
+                  dataKey="count"
+                  position="right"
+                  offset={4}
+                  className="fill-foreground text-[10px]"
+                />
+              </Bar>
+            </BarChart>
+          </ChartContainer>
+        </div>
+
+        {/* Desktop view - original horizontal bar chart */}
+        <div className="hidden max-h-[500px] w-full overflow-y-auto md:block">
+          <ChartContainer
+            config={chartConfig}
+            className="w-full"
+            style={{ height: `${desktopChartHeight}px` }}
+          >
+            <BarChart
+              data={chartData}
+              layout="vertical"
+              margin={{ right: 25, left: 0, top: 5, bottom: 5 }}
+            >
+              <CartesianGrid horizontal={false} />
               <YAxis
                 dataKey="option"
                 type="category"
@@ -112,24 +170,22 @@ export function ResponseHorizontalBarChart({
                 tickMargin={10}
                 axisLine={false}
                 width={200}
+                className="text-sm"
                 tickFormatter={(value: string, index: number) => {
                   const data = chartData[index];
                   return `(${data?.percentage}%) ${value}`;
                 }}
               />
-              {/* x-axis shows the count numbers */}
               <XAxis
                 dataKey="count"
                 type="number"
                 domain={[0, "dataMax"]}
                 hide
               />
-              {/* tooltip shown on hover */}
               <ChartTooltip
                 cursor={false}
                 content={<ChartTooltipContent indicator="line" />}
               />
-              {/* render horizontal bars */}
               <Bar
                 dataKey="count"
                 fill="var(--color-count)"
@@ -137,13 +193,12 @@ export function ResponseHorizontalBarChart({
                 layout="vertical"
                 barSize={30}
               >
-                {/* show count on right of bar */}
                 <LabelList
                   dataKey="count"
                   position="right"
                   offset={8}
-                  fontSize={12}
                   className="fill-foreground"
+                  fontSize={12}
                 />
               </Bar>
             </BarChart>

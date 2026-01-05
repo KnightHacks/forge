@@ -100,9 +100,9 @@ export default async function FormResponsesPage({
         ) : (
           <>
             {/* charts section , shows aggregated data visualization */}
-            {/* space-y-6 adds vertical spacing between charts */}
+            {/* space-y-2 on mobile, space-y-6 on desktop adds vertical spacing between charts */}
             {/* max-w-4xl mx-auto centers the charts and limits width */}
-            <div className="mx-auto max-w-4xl space-y-6">
+            <div className="mx-auto max-w-4xl space-y-2 md:space-y-6">
               {formData.questions.map((question) => {
                 // render pie chart for MULTIPLE_CHOICE or DROPDOWN questions
                 if (
@@ -149,13 +149,31 @@ export default async function FormResponsesPage({
 
             {/* text responses section - for SHORT_ANSWER and PARAGRAPH questions */}
             {/* renders a separate table for each text-based question */}
-            <div className="mx-auto mt-8 max-w-4xl space-y-6">
+            <div className="mx-auto mt-3 max-w-4xl space-y-2 md:mt-8 md:space-y-6">
               {formData.questions.map((question) => {
                 // render table for SHORT_ANSWER or PARAGRAPH questions
                 if (
                   question.type === "SHORT_ANSWER" ||
                   question.type === "PARAGRAPH"
                 ) {
+                  return (
+                    <ResponsesTable
+                      key={question.question}
+                      question={question.question}
+                      responses={responses}
+                    />
+                  );
+                }
+
+                return null;
+              })}
+            </div>
+            {/* date and time responses section - for DATE and TIME questions */}
+            {/* renders a separate table for each date/time question */}
+            <div className="mx-auto mt-3 max-w-4xl space-y-2 md:mt-8 md:space-y-6">
+              {formData.questions.map((question) => {
+                // render table for DATE or TIME questions
+                if (question.type === "DATE" || question.type === "TIME") {
                   return (
                     <ResponsesTable
                       key={question.question}
