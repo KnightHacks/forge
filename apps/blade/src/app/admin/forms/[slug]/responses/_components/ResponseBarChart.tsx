@@ -71,26 +71,30 @@ export function ResponseBarChart({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-2 pt-3 md:pb-6 md:pt-6">
         {/* question text as card title */}
-        <CardTitle>{question}</CardTitle>
+        <CardTitle className="text-sm md:text-lg">{question}</CardTitle>
         {/* show total number of responses */}
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-0.5 text-[10px] text-muted-foreground md:mt-1 md:text-sm">
           {responses.length} {responses.length === 1 ? "response" : "responses"}
         </p>
       </CardHeader>
-      {/* center the chart horizontally and add legend on the right */}
-      <CardContent className="flex items-center justify-center">
-        <ChartContainer config={chartConfig} className="h-[300px]">
-          <BarChart data={chartData} margin={{ top: 30 }}>
+      {/* center the chart horizontally and add legend on the right, stack vertically on mobile */}
+      <CardContent className="flex flex-col items-center justify-center px-3 pb-3 pt-0 md:flex-row md:px-6 md:pb-6 md:pt-6">
+        <ChartContainer
+          config={chartConfig}
+          className="h-[130px] md:h-[300px]"
+        >
+          <BarChart data={chartData} margin={{ top: 20, bottom: 0 }}>
             {/* horizontal grid lines only */}
             <CartesianGrid vertical={false} />
             {/* x-axis shows the numeric values (1, 2, 3, etc) */}
             <XAxis
               dataKey="value"
               tickLine={false}
-              tickMargin={10}
+              tickMargin={8}
               axisLine={false}
+              className="text-xs md:text-sm"
             />
             {/* tooltip shown on hover */}
             <ChartTooltip
@@ -100,21 +104,21 @@ export function ResponseBarChart({
             {/* render the bars with rounded corners */}
             <Bar dataKey="count" fill="var(--color-count)" radius={8}>
               {/* show count number on top of each bar */}
-              <LabelList position="top" offset={12} fontSize={12} />
+              <LabelList position="top" offset={8} className="text-xs" />
             </Bar>
           </BarChart>
         </ChartContainer>
         {/* legend container with scrollable items and fixed average */}
-        <div className="ml-6 flex flex-col">
+        <div className="mt-3 flex w-full flex-col md:ml-6 md:mt-0 md:w-auto">
           {/* scrollable legend items */}
-          <div className="flex max-h-[240px] flex-col gap-2 overflow-y-auto pr-2">
+          <div className="flex max-h-[160px] flex-col gap-1.5 overflow-y-auto pr-2 md:max-h-[240px] md:gap-2">
             {chartData.map((item, index) => (
               <div key={index} className="flex items-center gap-2">
                 <div
                   className="h-3 w-3 flex-shrink-0 rounded-sm"
                   style={{ backgroundColor: "#4361ee" }}
                 />
-                <span className="text-sm">
+                <span className="text-xs md:text-sm">
                   {item.value}: {item.count} ({item.percentage}%)
                 </span>
               </div>
@@ -122,7 +126,7 @@ export function ResponseBarChart({
           </div>
           {/* fixed average value below scrollable area */}
           <div className="mt-2 border-t pt-2">
-            <p className="text-sm font-medium">avg: {average}</p>
+            <p className="text-xs font-medium md:text-sm">avg: {average}</p>
           </div>
         </div>
       </CardContent>
