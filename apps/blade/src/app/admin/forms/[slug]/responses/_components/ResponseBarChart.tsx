@@ -81,10 +81,7 @@ export function ResponseBarChart({
       </CardHeader>
       {/* center the chart horizontally and add legend on the right, stack vertically on mobile */}
       <CardContent className="flex flex-col items-center justify-center px-3 pb-3 pt-0 md:flex-row md:px-6 md:pb-6 md:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="h-[130px] md:h-[300px]"
-        >
+        <ChartContainer config={chartConfig} className="h-[130px] md:h-[300px]">
           <BarChart data={chartData} margin={{ top: 20, bottom: 0 }}>
             {/* horizontal grid lines only */}
             <CartesianGrid vertical={false} />
