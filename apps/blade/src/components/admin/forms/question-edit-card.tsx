@@ -45,6 +45,8 @@ interface QuestionEditCardProps {
   onUpdate: (updatedQuestion: FormQuestion & { id: string }) => void;
   onDelete: (id: string) => void;
   onDuplicate: (question: FormQuestion & { id: string }) => void;
+  onForceSave?: () => void;
+  error?: string;
   dragHandleProps?: DraggableSyntheticListeners;
 }
 
@@ -64,6 +66,8 @@ export function QuestionEditCard({
   onUpdate,
   onDelete,
   onDuplicate,
+  onForceSave,
+  error,
   dragHandleProps,
 }: QuestionEditCardProps) {
   // -- Handlers --
@@ -87,6 +91,8 @@ export function QuestionEditCard({
     }
 
     onUpdate(updatedQuestion);
+    // Trigger auto-save immediately on type change as requested
+    onForceSave?.();
   };
 
   const handleRequiredChange = (checked: boolean) => {
@@ -102,6 +108,7 @@ export function QuestionEditCard({
         isActive
           ? "border-l-primary shadow-md ring-1 ring-black/5"
           : "border-l-transparent hover:bg-muted/50",
+        error && "border-l-destructive ring-destructive/20",
       )}
       onClick={() => {
         // Allow propagation so parent can set active state
@@ -149,6 +156,12 @@ export function QuestionEditCard({
           </Select>
         </div>
       </div>
+
+      {error && (
+        <div className="animate-pulse text-sm font-medium text-destructive">
+          Please fix: {error}
+        </div>
+      )}
 
       {/* Body */}
       <div className="pt-2">
