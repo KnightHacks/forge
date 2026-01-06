@@ -1,8 +1,10 @@
-import { auth } from "@forge/auth";
-import FormsClient from "../../_components/admin/forms/homepage";
-import { SIGN_IN_PATH } from "~/consts";
 import { redirect } from "next/navigation";
+
+import { auth } from "@forge/auth";
+
+import { SIGN_IN_PATH } from "~/consts";
 import { api } from "~/trpc/server";
+import FormsClient from "../../_components/admin/forms/homepage";
 
 export const metadata = {
   title: "Forms",
