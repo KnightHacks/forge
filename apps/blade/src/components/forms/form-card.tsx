@@ -14,11 +14,11 @@ import {
   CardTitle,
 } from "@forge/ui/card";
 
+import type { ResponseForCsv } from "./export-csv";
 import { api } from "~/trpc/react";
 import { DeleteFormDialog } from "./delete-form-dialog";
-import { FormQRCodeDialog } from "./form-qr-code";
 import { ExportResponsesButton } from "./export-csv";
-import type { ResponseForCsv } from "./export-csv";
+import { FormQRCodeDialog } from "./form-qr-code";
 
 export function FormCard({
   slug_name,
@@ -39,11 +39,15 @@ export function FormCard({
     {
       enabled: !!fullForm?.id,
       refetchOnWindowFocus: true,
-    }
+    },
   );
 
-  const _questions = (fullForm?.formData as { questions?: { question: string }[] } | undefined)?.questions;
-  const questionsList = _questions ? _questions.map((q) => q.question) : undefined;
+  const _questions = (
+    fullForm?.formData as { questions?: { question: string }[] } | undefined
+  )?.questions;
+  const questionsList = _questions
+    ? _questions.map((q) => q.question)
+    : undefined;
 
   return (
     <Card
@@ -67,15 +71,21 @@ export function FormCard({
           </CardTitle>
 
           <div className="mt-1 text-sm text-muted-foreground">
-            {responses.length} {responses.length === 1 ? "response" : "responses"}
+            {responses.length}{" "}
+            {responses.length === 1 ? "response" : "responses"}
           </div>
         </div>
 
         <div className="items-right flex gap-3">
-          <CardAction onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+          <CardAction
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             <div onClick={(e) => e.stopPropagation()}>
               <ExportResponsesButton
-                formId={fullForm?.id ?? slug_name} formName={fullForm?.name ?? slug_name} responses={responses as ResponseForCsv[]}
+                formId={fullForm?.id ?? slug_name}
+                formName={fullForm?.name ?? slug_name}
+                responses={responses as ResponseForCsv[]}
                 questions={questionsList}
               />
             </div>

@@ -2,17 +2,29 @@ export function responsesToCsv(
   responses: {
     submittedAt: Date | string;
     responseData: Record<string, unknown>;
-    member?: { firstName?: string | null; lastName?: string | null; email?: string | null } | null;
+    member?: {
+      firstName?: string | null;
+      lastName?: string | null;
+      email?: string | null;
+    } | null;
   }[],
-  questionOrder?: string[]
+  questionOrder?: string[],
 ) {
   if (!responses.length) return "";
 
   const allQuestions = questionOrder?.length
     ? questionOrder
-    : Array.from(new Set(responses.flatMap((r) => Object.keys(r.responseData))));
+    : Array.from(
+        new Set(responses.flatMap((r) => Object.keys(r.responseData))),
+      );
 
-  const headers = ["First Name", "Last Name", "Email", "Submitted At", ...allQuestions];
+  const headers = [
+    "First Name",
+    "Last Name",
+    "Email",
+    "Submitted At",
+    ...allQuestions,
+  ];
 
   const quote = (v: string) => `"${v.replace(/"/g, '""')}"`;
 
