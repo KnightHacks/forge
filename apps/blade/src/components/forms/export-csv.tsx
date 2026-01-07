@@ -22,14 +22,15 @@ export interface ResponseForCsv {
 
 interface ExportResponsesButtonProps {
   formId: string;
+  formName?: string;
   responses: ResponseForCsv[];
   questions?: string[];
-  /** Render as a compact icon button when true */
   iconOnly?: boolean;
 }
 
 export const ExportResponsesButton: React.FC<ExportResponsesButtonProps> = ({
   formId,
+  formName,
   responses,
   questions,
   iconOnly = false,
@@ -49,22 +50,32 @@ export const ExportResponsesButton: React.FC<ExportResponsesButtonProps> = ({
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
 
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+        now.getDate()
+      )}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+
+      const rawName = formName?.trim() ? formName : formId;
+      const safeName = String(rawName)
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .slice(0, 200);
+
       const a = document.createElement("a");
       a.href = url;
-      a.download = `responses-${formId}.csv`;
+      a.download = `${safeName}-responses-${timestamp}.csv`;
       a.click();
 
       URL.revokeObjectURL(url);
       toast.success("CSV download started");
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : JSON.stringify(err);
+      const message = err instanceof Error ? err.message : JSON.stringify(err);
       toast.error(`Failed to export CSV: ${message}`);
     } finally {
       setLoading(false);
     }
   };
-
   const isEmpty = responses.length === 0;
   const disabled = loading || isEmpty;
   const title = isEmpty ? "No responses to export" : undefined;

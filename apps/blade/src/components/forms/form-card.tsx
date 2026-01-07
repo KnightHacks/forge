@@ -38,7 +38,6 @@ export function FormCard({
     { form: fullForm?.id ?? "" },
     {
       enabled: !!fullForm?.id,
-      refetchInterval: 10000, 
       refetchOnWindowFocus: true,
     }
   );
@@ -76,8 +75,7 @@ export function FormCard({
           <CardAction onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
             <div onClick={(e) => e.stopPropagation()}>
               <ExportResponsesButton
-                formId={fullForm?.id ?? slug_name}
-                responses={responses as ResponseForCsv[]}
+                formId={fullForm?.id ?? slug_name} formName={fullForm?.name ?? slug_name} responses={responses as ResponseForCsv[]}
                 questions={questionsList}
               />
             </div>

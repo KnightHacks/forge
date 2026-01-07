@@ -21,10 +21,31 @@ export function responsesToCsv(
     row.push(quote(String(r.member?.firstName ?? "")));
     row.push(quote(String(r.member?.lastName ?? "")));
     row.push(quote(String(r.member?.email ?? "")));
-    row.push(quote(new Date(r.submittedAt).toISOString()));
+
+    const submittedAt = new Date(r.submittedAt);
+    const submittedAtStr = submittedAt.toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    row.push(quote(submittedAtStr));
 
     for (const q of allQuestions) {
       let val = r.responseData[q];
+
+      if (val == null || (typeof val === "string" && val === "")) {
+        const nq = q.trim().toLowerCase();
+        if (nq === "first name" || nq === "firstname" || nq === "first") {
+          val = r.member?.firstName ?? "";
+        } else if (nq === "last name" || nq === "lastname" || nq === "last") {
+          val = r.member?.lastName ?? "";
+        } else if (nq === "email" || nq.includes("email")) {
+          val = r.member?.email ?? "";
+        }
+      }
+
       if (Array.isArray(val)) val = val.join(", ");
       row.push(quote(val?.toString() ?? ""));
     }
