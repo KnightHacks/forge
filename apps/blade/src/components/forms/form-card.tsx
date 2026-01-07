@@ -17,6 +17,8 @@ import {
 import { api } from "~/trpc/react";
 import { DeleteFormDialog } from "./delete-form-dialog";
 import { FormQRCodeDialog } from "./form-qr-code";
+import { ExportResponsesButton } from "./export-csv";
+import type { ResponseForCsv } from "./export-csv";
 
 export function FormCard({
   slug_name,
@@ -31,6 +33,18 @@ export function FormCard({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data: fullForm } = api.forms.getForm.useQuery({ slug_name });
+
+  const { data: responses = [] } = api.forms.getResponses.useQuery(
+    { form: fullForm?.id ?? "" },
+    {
+      enabled: !!fullForm?.id,
+      refetchInterval: 10000, 
+      refetchOnWindowFocus: true,
+    }
+  );
+
+  const _questions = (fullForm?.formData as { questions?: { question: string }[] } | undefined)?.questions;
+  const questionsList = _questions ? _questions.map((q) => q.question) : undefined;
 
   return (
     <Card
@@ -52,8 +66,23 @@ export function FormCard({
           <CardTitle className="truncate text-base font-medium">
             {slug_name}
           </CardTitle>
+
+          <div className="mt-1 text-sm text-muted-foreground">
+            {responses.length} {responses.length === 1 ? "response" : "responses"}
+          </div>
         </div>
+
         <div className="items-right flex gap-3">
+          <CardAction onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+            <div onClick={(e) => e.stopPropagation()}>
+              <ExportResponsesButton
+                formId={fullForm?.id ?? slug_name}
+                responses={responses as ResponseForCsv[]}
+                questions={questionsList}
+              />
+            </div>
+          </CardAction>
+
           <CardAction
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
