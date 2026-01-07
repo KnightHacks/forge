@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
+
 import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
 
@@ -53,7 +54,7 @@ export const ExportResponsesButton: React.FC<ExportResponsesButtonProps> = ({
       const now = new Date();
       const pad = (n: number) => n.toString().padStart(2, "0");
       const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
-        now.getDate()
+        now.getDate(),
       )}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
 
       const rawName = formName?.trim() ? formName : formId;
@@ -81,13 +82,18 @@ export const ExportResponsesButton: React.FC<ExportResponsesButtonProps> = ({
   const title = isEmpty ? "No responses to export" : undefined;
 
   const buttonProps = iconOnly
-    ? { size: "icon" as const, variant: "ghost" as const, 'aria-label': 'Export CSV', title }
+    ? {
+        size: "icon" as const,
+        variant: "ghost" as const,
+        "aria-label": "Export CSV",
+        title,
+      }
     : { variant: "outline" as const, title };
 
   return (
     <Button onClick={handleExport} disabled={disabled} {...buttonProps}>
       {loading ? (
-        <Loader2 className={iconOnly ? "animate-spin" : "animate-spin mr-2"} />
+        <Loader2 className={iconOnly ? "animate-spin" : "mr-2 animate-spin"} />
       ) : (
         <Download className={iconOnly ? "" : "mr-2"} />
       )}
