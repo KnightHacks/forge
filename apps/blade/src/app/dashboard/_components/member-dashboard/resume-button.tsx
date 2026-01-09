@@ -10,7 +10,7 @@ export async function ResumeButton() {
 
   if (resume.url == null) {
     return (
-      <Button size="sm" className="w-full gap-1" disabled>
+      <Button size="sm" className="w-full gap-2" disabled>
         <Download className="h-4 w-4" /> <span>Download Resume</span>
       </Button>
     );
