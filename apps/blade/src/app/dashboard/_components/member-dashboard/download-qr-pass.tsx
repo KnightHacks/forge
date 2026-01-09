@@ -73,13 +73,13 @@ export function DownloadQRPass() {
   return (
     <Button
       size="sm"
-      className="w-full gap-2 border bg-card transition-all hover:scale-[1.02] hover:border-primary/50 hover:bg-card hover:shadow-md text-card-foreground group-hover:text-primary"
+      className="w-full gap-2 border bg-card text-card-foreground transition-all hover:scale-[1.02] hover:border-primary/50 hover:bg-card hover:shadow-md group-hover:text-primary"
       onClick={handleDownload}
       disabled={!canDownload || isDownloading}
     >
       {isDownloading ? (
         <>
-          <Loader2 className="h-4 w-4 animate-spin"/>
+          <Loader2 className="h-4 w-4 animate-spin" />
           Generating Pass...
         </>
       ) : canDownload ? (
