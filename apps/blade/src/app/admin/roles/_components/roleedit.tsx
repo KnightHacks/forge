@@ -1,6 +1,6 @@
 "use client"
 
-import { getPermsAsList, PERMISSIONS, PERMISSION_DATA } from "../../../../lib/utils";
+import { PERMISSIONS, PERMISSION_DATA, PermissionKey } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, useForm } from "@forge/ui/form";
@@ -11,6 +11,7 @@ import type { APIRole } from "discord-api-types/v10";
 import { Link, Loader2, Pencil, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { z, ZodBoolean } from "zod";
+import { getPermsAsList } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
 export default function RoleEdit({oldRole}:{oldRole?:{id:string, permissions:string|null, discordRoleId: string}})
@@ -72,7 +73,7 @@ export default function RoleEdit({oldRole}:{oldRole?:{id:string, permissions:str
         console.log(perms)
         let newString = ""
         perms.forEach((v)=>{
-            const i = PERMISSIONS[v[0]]
+            const i = PERMISSIONS[v[0] as PermissionKey]
             if(v[1])
                 newString += "1"
             else

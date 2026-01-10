@@ -4,11 +4,12 @@ import { env } from "../env";
 import { DEV_KNIGHTHACKS_GUILD_ID, PROD_KNIGHTHACKS_GUILD_ID } from "@forge/consts/knight-hacks";
 import { Routes } from "discord-api-types/v10";
 import type { APIRole } from "discord-api-types/v10";
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { adminProcedure, protectedProcedure } from "../trpc";
 import {
   discord,
   log,
-  getPermsAsList
+  getPermsAsList,
+  controlPerms
 } from "../utils";
 import { db } from "@forge/db/client";
 import { Roles } from "@forge/db/schemas/knight-hacks";
@@ -20,7 +21,7 @@ const KNIGHTHACKS_GUILD_ID =
     : (DEV_KNIGHTHACKS_GUILD_ID as string);
 
 export const rolesRouter = {
-    createRoleLink: protectedProcedure
+    createRoleLink: adminProcedure
         .input(z.object({ roleId: z.string(), permissions: z.string()}))
         .mutation(async ({ctx, input}) => {
             // check for duplicate discord role
@@ -41,7 +42,7 @@ export const rolesRouter = {
             });
     }),
 
-    updateRoleLink: protectedProcedure
+    updateRoleLink: adminProcedure
         .input(z.object({ id: z.string(), roleId: z.string(), permissions: z.string()}))
         .mutation(async ({ctx, input}) => {
             // check for existing role
@@ -64,7 +65,7 @@ export const rolesRouter = {
             });
     }),
 
-    deleteRoleLink: protectedProcedure
+    deleteRoleLink: adminProcedure
         .input(z.object({id: z.string()}))
         .mutation(async ({ctx, input}) => {
             // check for existing role
@@ -81,7 +82,7 @@ export const rolesRouter = {
             });
         }),
 
-    getRoleLink: publicProcedure
+    getRoleLink: protectedProcedure
         .input(z.object({id: z.string()}))
         .query(async ({ctx, input})=>{
             if (!ctx.session) {
@@ -91,7 +92,7 @@ export const rolesRouter = {
             return await db.query.Roles.findFirst({where: (t, {eq})=>eq(t.id, input.id)})
     }),
 
-    getAllLinks: publicProcedure
+    getAllLinks: protectedProcedure
         .query(async ({ctx})=>{
             if (!ctx.session) {
                 return Promise.resolve([]);
@@ -100,7 +101,7 @@ export const rolesRouter = {
             return await db.select().from(Roles)
     }),
 
-    getDiscordRole: publicProcedure
+    getDiscordRole: protectedProcedure
         .input(z.object({ roleId: z.string() }))
         .query(async ({ctx, input}): Promise<APIRole|null> =>{
             if (!ctx.session) {
@@ -114,7 +115,7 @@ export const rolesRouter = {
             }
     }),
 
-    getDiscordRoles: publicProcedure
+    getDiscordRoles: protectedProcedure
         .input(z.object({ roles: z.array(z.object({discordRoleId: z.string()})) }))
         .query(async ({ctx, input}): Promise<(APIRole|null)[]> =>{
             if (!ctx.session) {
@@ -134,12 +135,19 @@ export const rolesRouter = {
             return ret
         }),
             
-    getDiscordRoleCounts: publicProcedure
+    getDiscordRoleCounts: protectedProcedure
         .query(async ({ctx}): Promise<Record<string, number>|null> =>{
             if (!ctx.session) {
                 return Promise.resolve(null);
             }
 
             return (await discord.get(`/guilds/${KNIGHTHACKS_GUILD_ID}/roles/member-counts`) as Record<string, number>)
-    })
+    }),
+
+    testPermRole: protectedProcedure
+        .query(async ({ctx}) => {
+            await controlPerms(["READ_MEMBERS", "EDIT_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx.session.user.discordUserId)
+
+            return "Successful test!"
+        })
 } satisfies TRPCRouterRecord

@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 
 import { protectedProcedure } from "../trpc";
 import z from "zod";
-import { discord, KNIGHTHACKS_GUILD_ID } from "../utils";
+import { discord, KNIGHTHACKS_GUILD_ID, parsePermissions } from "../utils";
 import type { APIGuildMember} from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 import type { PermissionIndex, PermissionKey} from "@forge/consts/knight-hacks";
@@ -48,44 +48,7 @@ export const userRouter = {
   //   "MODIFY_MEMBERS": true
   // }
   getPermissions: protectedProcedure.query(async ({ ctx }) => {
-    const guildMember = (await discord.get(
-      Routes.guildMember(KNIGHTHACKS_GUILD_ID, ctx.session.user.discordUserId),
-    )) as APIGuildMember;
-
-    const permissionsLength = Object.keys(PERMISSIONS).length;
-
-    // array of booleans. the boolean value at the index indicates if the user has that permission.
-    // true means the user has the permission, false means the user doesn't have the permission.
-    const permissionsBits = new Array(permissionsLength).fill(false) as boolean[];
-
-    if (guildMember.roles.length > 0) {
-      // get only roles the user has
-      const userDbRoles = await db
-        .select()
-        .from(Roles)
-        .where(inArray(Roles.discordRoleId, guildMember.roles));
-
-      for (const role of userDbRoles) {
-        if (role.permissions === null) continue;
-
-        for (let i = 0; i < role.permissions.length && i < permissionsLength; ++i) {
-          if (role.permissions[i] === "1") {
-            permissionsBits[i] = true;
-          }
-        }
-      }
-    }
-
-    // creates the map of permissions to their boolean values
-    const permissionsMap = Object.keys(PERMISSIONS).reduce((accumulator, key) => {  
-      const index = PERMISSIONS[key as PermissionKey];
-
-      accumulator[key as PermissionKey] = permissionsBits[index] ?? false;
-
-      return accumulator;
-    }, {} as Record<PermissionKey, boolean>);
-
-    return permissionsMap;
+    return parsePermissions(ctx.session?.user.discordUserId || "");
   }),
   // accepts both the string with the name of the permission (the key), or the index of the permission (the value)
   hasPermission: protectedProcedure

@@ -81,16 +81,16 @@ export default function RoleTable()
                                 }
                             </TableCell>
                             <TableCell>
-                                <div tabIndex={0} onClick={()=>{void navigator.clipboard.writeText(v.discordRoleId); setCopyConfirm(i); toast(`Copied "${v.discordRoleId}" to clipboard!`)}} 
+                                <button type="button" tabIndex={0} onClick={()=>{void navigator.clipboard.writeText(v.discordRoleId); setCopyConfirm(i); toast(`Copied "${v.discordRoleId}" to clipboard!`)}} 
                                 className={`text-muted-foreground ${copyConfirm == i && "bg-muted border-muted-foreground"} hover:bg-muted hover:text-white hover:border-white border rounded-full cursor-pointer py-1 px-2 w-fit flex flex-row gap-1`}>
                                     {copyConfirm == i ? <Check className="size-4 my-auto"/> : <Copy className="size-4 my-auto"/>}
                                     <div className="ml-1 truncate font-mono">{`${v.discordRoleId}`}</div>
-                                </div>
+                                </button>
                             </TableCell>
                             <TableCell>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger>
-                                        <div className="border rounded-lg hover:bg-muted flex flex-row gap-1 w-fit px-2 py-1">
+                                        <div tabIndex={0} className="border rounded-lg hover:bg-muted flex flex-row gap-1 w-fit px-2 py-1">
                                             {getPermsAsList(v.permissions).length}
                                             <ChevronDown className="size-4 my-auto"/>
                                         </div>
