@@ -6663,11 +6663,14 @@ export const QuestionValidator = z.object({
     "EMAIL",
     "NUMBER",
     "PHONE",
+    "INSTRUCTION",
   ]),
   options: z.array(z.string()).optional(),
   optional: z.boolean().optional(),
   min: z.number().optional(),
   max: z.number().optional(),
+  content: z.string().max(2000).optional(),
+  videoUrl: z.string().url().optional(),
 });
 
 export const FormSchemaValidator = z.object({

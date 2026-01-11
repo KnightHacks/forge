@@ -175,6 +175,9 @@ export function FormResponderClient({
     const responseData: Record<string, unknown> = {};
 
     form.questions.forEach((question) => {
+      // Skip instructions - they don't need responses
+      if (question.type === "INSTRUCTION") return;
+
       const response = responses[question.question];
 
       // Only include non-empty responses
@@ -206,8 +209,9 @@ export function FormResponderClient({
   };
 
   const isFormValid = () => {
-    // Check if all required questions have responses
+    // Check if all required questions have responses (skip instructions)
     return form.questions.every((question) => {
+      if (question.type === "INSTRUCTION") return true; // Instructions don't need responses
       if (question.optional) return true; // Optional questions don't need validation
 
       const response = responses[question.question];
@@ -220,7 +224,7 @@ export function FormResponderClient({
 
   return (
     <div className="min-h-screen overflow-x-visible bg-primary/5 p-6">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto max-w-3xl space-y-4">
         {/* Banner */}
         {form.banner && <div className="overflow-hidden rounded-lg"></div>}
 
@@ -238,6 +242,7 @@ export function FormResponderClient({
         {/* Questions */}
         <div className="space-y-4 overflow-visible">
           {form.questions.map((q, index) => {
+            const isInstruction = q.type === "INSTRUCTION";
             const questionText = q.question;
             const responseValue:
               | string
@@ -249,21 +254,45 @@ export function FormResponderClient({
             return (
               <div
                 key={`${questionText}-${index}`}
-                className="duration-500 animate-in fade-in slide-in-from-bottom-4"
+                className={`duration-500 animate-in fade-in slide-in-from-bottom-4 ${isInstruction ? "mt-8" : ""}`}
                 style={{
                   animationDelay: `${(index + 1) * 100}ms`,
                   animationFillMode: "backwards",
                 }}
               >
-                <QuestionResponseCard
-                  question={q}
-                  value={responseValue ?? null}
-                  onChange={(
-                    value: string | string[] | number | Date | null,
-                  ) => {
-                    handleResponseChange(questionText, value);
-                  }}
-                />
+                {isInstruction ? (
+                  <Card className="relative mt-12 flex flex-col gap-4 bg-card p-6 text-card-foreground transition-all">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-start gap-2">
+                        <h3 className="text-xl font-bold">{q.question}</h3>
+                      </div>
+                    </div>
+                    {(() => {
+                      if (
+                        "content" in q &&
+                        q.content &&
+                        typeof q.content === "string"
+                      ) {
+                        return (
+                          <div className="whitespace-pre-wrap pt-2 text-sm text-muted-foreground">
+                            {q.content}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </Card>
+                ) : (
+                  <QuestionResponseCard
+                    question={q}
+                    value={responseValue ?? null}
+                    onChange={(
+                      value: string | string[] | number | Date | null,
+                    ) => {
+                      handleResponseChange(questionText, value);
+                    }}
+                  />
+                )}
               </div>
             );
           })}
