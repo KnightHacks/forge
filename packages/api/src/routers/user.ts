@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 
 import { protectedProcedure } from "../trpc";
 import z from "zod";
-import { discord, KNIGHTHACKS_GUILD_ID, parsePermissions } from "../utils";
+import { controlPerms, discord, KNIGHTHACKS_GUILD_ID, parsePermissions } from "../utils";
 import type { APIGuildMember} from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 import type { PermissionIndex, PermissionKey} from "@forge/consts/knight-hacks";
@@ -48,34 +48,17 @@ export const userRouter = {
   //   "MODIFY_MEMBERS": true
   // }
   getPermissions: protectedProcedure.query(async ({ ctx }) => {
-    return parsePermissions(ctx.session?.user.discordUserId || "");
+    return parsePermissions(ctx.session.user.discordUserId || "");
   }),
-  // accepts both the string with the name of the permission (the key), or the index of the permission (the value)
-  hasPermission: protectedProcedure
-    .input(PermissionInputSchema)
+
+  // takes string values of permissions
+  controlPerms: protectedProcedure
+    .input(z.array(z.string()))
     .query(async ({ input, ctx }) => {
-      const guildMember = (await discord.get(
-        Routes.guildMember(KNIGHTHACKS_GUILD_ID, ctx.session.user.discordUserId),
-      )) as APIGuildMember;
-
-      if (guildMember.roles.length === 0) {
-        return false;
+      try {
+        return await controlPerms((input as PermissionKey[]), ctx.session.user.discordUserId)
+      } catch {
+        return false
       }
-
-      // get only roles the user has
-      const userDbRoles = await db
-        .select()
-        .from(Roles)
-        .where(inArray(Roles.discordRoleId, guildMember.roles));
-
-      const permissionIndex = (() => {
-        if (typeof input === 'string') {
-          return PERMISSIONS[input];
-        }
-
-        return input;
-      })();
-
-      return userDbRoles.some(role => role.permissions?.[permissionIndex] === "1");
     }),
 } satisfies TRPCRouterRecord;

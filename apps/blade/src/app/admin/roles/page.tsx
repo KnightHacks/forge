@@ -16,13 +16,8 @@ export default async function Roles() {
         redirect(SIGN_IN_PATH);
     }
 
-    const isAdmin = await api.auth.getAdminStatus();
-    if (!isAdmin) {
-        redirect("/");
-    }
-
-    const user = await api.member.getMember();
-    if (!user) {
+    const isOfficer = await api.user.controlPerms(["IS_OFFICER"]);
+    if (!isOfficer) {
         redirect("/");
     }
 

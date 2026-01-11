@@ -184,10 +184,12 @@ export const controlPerms = async (perms: PermissionKey[], discordUserId: string
   const userPerms = await parsePermissions(discordUserId)
 
   perms.forEach((v) => {
-    if(!userPerms[(v as PermissionKey)]) {
+    if(!userPerms[v]) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
   })
+
+  return true
 }
 
 

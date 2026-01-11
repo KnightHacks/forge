@@ -1,4 +1,5 @@
-import { TRPCError, type TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
+import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 import { env } from "../env";
 import { DEV_KNIGHTHACKS_GUILD_ID, PROD_KNIGHTHACKS_GUILD_ID } from "@forge/consts/knight-hacks";
@@ -84,30 +85,18 @@ export const rolesRouter = {
 
     getRoleLink: protectedProcedure
         .input(z.object({id: z.string()}))
-        .query(async ({ctx, input})=>{
-            if (!ctx.session) {
-                return Promise.resolve(null);
-            }
-            
+        .query(async ({input})=>{
             return await db.query.Roles.findFirst({where: (t, {eq})=>eq(t.id, input.id)})
     }),
 
     getAllLinks: protectedProcedure
-        .query(async ({ctx})=>{
-            if (!ctx.session) {
-                return Promise.resolve([]);
-            }
-
+        .query(async ()=>{
             return await db.select().from(Roles)
     }),
 
     getDiscordRole: protectedProcedure
         .input(z.object({ roleId: z.string() }))
-        .query(async ({ctx, input}): Promise<APIRole|null> =>{
-            if (!ctx.session) {
-                return Promise.resolve(null);
-            }
-            
+        .query(async ({input}): Promise<APIRole|null> =>{
             try {
                 return (await discord.get(Routes.guildRole(KNIGHTHACKS_GUILD_ID, input.roleId)) as APIRole | null)
             } catch {
@@ -117,11 +106,7 @@ export const rolesRouter = {
 
     getDiscordRoles: protectedProcedure
         .input(z.object({ roles: z.array(z.object({discordRoleId: z.string()})) }))
-        .query(async ({ctx, input}): Promise<(APIRole|null)[]> =>{
-            if (!ctx.session) {
-                return Promise.resolve([]);
-            }
-            
+        .query(async ({input}): Promise<(APIRole|null)[]> =>{
             const ret = []
 
             for(const r of input.roles) {
@@ -136,11 +121,7 @@ export const rolesRouter = {
         }),
             
     getDiscordRoleCounts: protectedProcedure
-        .query(async ({ctx}): Promise<Record<string, number>|null> =>{
-            if (!ctx.session) {
-                return Promise.resolve(null);
-            }
-
+        .query(async (): Promise<Record<string, number>|null> =>{
             return (await discord.get(`/guilds/${KNIGHTHACKS_GUILD_ID}/roles/member-counts`) as Record<string, number>)
     }),
 
