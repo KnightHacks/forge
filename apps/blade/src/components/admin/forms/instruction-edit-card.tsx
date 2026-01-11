@@ -19,6 +19,7 @@ import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 import { Textarea } from "@forge/ui/textarea";
+import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
@@ -55,12 +56,12 @@ export function InstructionEditCard({
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file");
+      toast.error("Please select an image file");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image must be less than 5MB");
+      toast.error("Image must be less than 5MB");
       return;
     }
 
@@ -90,10 +91,11 @@ export function InstructionEditCard({
         imageObjectName: result.objectName,
         imageUrl: result.viewUrl,
       });
+      toast.success("Image uploaded successfully!");
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Upload failed:", error);
-      alert("Failed to upload image");
+      toast.error("Failed to upload image. Please try again.");
     } finally {
       setIsUploadingImage(false);
       if (imageInputRef.current) imageInputRef.current.value = "";
@@ -105,12 +107,12 @@ export function InstructionEditCard({
     if (!file) return;
 
     if (!file.type.startsWith("video/")) {
-      alert("Please select a video file");
+      toast.error("Please select a video file");
       return;
     }
 
     if (file.size > 100 * 1024 * 1024) {
-      alert("Video must be less than 100MB");
+      toast.error("Video must be less than 100MB");
       return;
     }
 
@@ -140,10 +142,11 @@ export function InstructionEditCard({
         videoObjectName: result.objectName,
         videoUrl: result.viewUrl,
       });
+      toast.success("Video uploaded successfully!");
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Upload failed:", error);
-      alert("Failed to upload video. Please try again.");
+      toast.error("Failed to upload video. Please try again.");
     } finally {
       setIsUploadingVideo(false);
       if (videoInputRef.current) videoInputRef.current.value = "";
