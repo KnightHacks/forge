@@ -17,9 +17,11 @@ import {
   DEV_DISCORD_ADMIN_ROLE_ID,
   DEV_KNIGHTHACKS_GUILD_ID,
   DEV_KNIGHTHACKS_LOG_CHANNEL,
+  FORM_ASSETS_BUCKET,
   IS_PROD,
   OFFICER_ROLE_ID,
   PERMISSIONS,
+  PRESIGNED_URL_EXPIRY,
   PROD_DISCORD_ADMIN_ROLE_ID,
   PROD_KNIGHTHACKS_GUILD_ID,
   PROD_KNIGHTHACKS_LOG_CHANNEL,
@@ -29,6 +31,7 @@ import { db } from "@forge/db/client";
 import { JudgeSession } from "@forge/db/schemas/auth";
 
 import { env } from "./env";
+import { minioClient } from "./minio/minio-client";
 
 const DISCORD_ADMIN_ROLE_ID = IS_PROD
   ? (PROD_DISCORD_ADMIN_ROLE_ID as string)
@@ -429,4 +432,43 @@ export function generateJsonSchema(form: FormType): OptionalSchema {
   }
 
   return { success: true, schema };
+}
+
+// Helper to regenerate presigned URLs for media
+export async function regenerateMediaUrls(questions: FormType["questions"]) {
+  const updatedQuestions = await Promise.all(
+    questions.map(async (q) => {
+      const updated = { ...q };
+
+      // Regenerate image URL if objectName exists
+      if ("imageObjectName" in q && q.imageObjectName) {
+        try {
+          updated.imageUrl = await minioClient.presignedGetObject(
+            FORM_ASSETS_BUCKET,
+            q.imageObjectName,
+            PRESIGNED_URL_EXPIRY,
+          );
+        } catch (e) {
+          console.error("Failed to regenerate image URL:", e);
+        }
+      }
+
+      // Regenerate video URL if objectName exists
+      if ("videoObjectName" in q && q.videoObjectName) {
+        try {
+          updated.videoUrl = await minioClient.presignedGetObject(
+            FORM_ASSETS_BUCKET,
+            q.videoObjectName,
+            PRESIGNED_URL_EXPIRY,
+          );
+        } catch (e) {
+          console.error("Failed to regenerate video URL:", e);
+        }
+      }
+
+      return updated;
+    }),
+  );
+
+  return updatedQuestions;
 }
