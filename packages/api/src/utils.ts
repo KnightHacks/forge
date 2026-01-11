@@ -410,6 +410,9 @@ export function generateJsonSchema(form: FormType): OptionalSchema {
   const required: string[] = [];
 
   for (const formQuestion of form.questions) {
+    // Skip INSTRUCTION type - they don't need validation
+    if (formQuestion.type === "INSTRUCTION") continue;
+
     const { question, optional, ...rest } = formQuestion;
     const convert = createJsonSchemaValidator({ optional, ...rest });
     if (convert.success) properties[question] = convert.schema;

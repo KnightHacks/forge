@@ -126,9 +126,12 @@ export function EditorClient({ slug }: { slug: string }) {
     // Allow mock mode to proceed without real formData
     if (!formData && slug !== "test-form") return;
 
-    // Check for duplicate question names/titles to prevent backend/frontend collisions
+    // Check for duplicate question names/titles to prevent backend/frontend collisions (skip instructions)
     const questionNames = new Set<string>();
     const hasDuplicates = questions.some((q) => {
+      // Skip instructions - they don't need unique titles
+      if (q.type === "INSTRUCTION") return false;
+
       // Logic handled in render now for visualization, but check here for save block
       if (questionNames.has(q.question)) return true;
       questionNames.add(q.question);
@@ -232,16 +235,19 @@ export function EditorClient({ slug }: { slug: string }) {
     return () => clearInterval(interval);
   }, [isLoading, handleSaveForm]);
 
-  // Memoize duplicate detection for UI feedback
+  // Memoize duplicate detection for UI feedback (skip instructions)
   const duplicateIds = React.useMemo(() => {
     const counts = new Map<string, number>();
     questions.forEach((q) => {
-      counts.set(q.question, (counts.get(q.question) || 0) + 1);
+      // Skip instructions - they can have duplicate titles
+      if (q.type !== "INSTRUCTION") {
+        counts.set(q.question, (counts.get(q.question) || 0) + 1);
+      }
     });
 
     const duplicates = new Set<string>();
     questions.forEach((q) => {
-      if ((counts.get(q.question) || 0) > 1) {
+      if (q.type !== "INSTRUCTION" && (counts.get(q.question) || 0) > 1) {
         duplicates.add(q.id);
       }
     });
@@ -282,6 +288,21 @@ export function EditorClient({ slug }: { slug: string }) {
     setActiveQuestionId(newId);
   };
 
+  const addInstruction = () => {
+    const newId = crypto.randomUUID();
+    setQuestions((prev) => [
+      ...prev,
+      {
+        id: newId,
+        question: "Instruction Title",
+        type: "INSTRUCTION",
+        content: "",
+        optional: true,
+      },
+    ]);
+    setActiveQuestionId(newId);
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -315,7 +336,7 @@ export function EditorClient({ slug }: { slug: string }) {
       className="min-h-screen bg-primary/5 p-8 pb-32"
       onClick={() => setActiveQuestionId(null)}
     >
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto max-w-3xl space-y-4">
         <div className="flex flex-col items-center justify-between gap-4 rounded-xl border bg-card/50 p-4 shadow-sm backdrop-blur-sm md:flex-row">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             <Save className="h-3 w-3" />
@@ -353,7 +374,7 @@ export function EditorClient({ slug }: { slug: string }) {
         </div>
 
         <Card className="overflow-hidden border-t-[12px] border-t-primary bg-card shadow-lg transition-all">
-          <div className="flex flex-col gap-4 p-8">
+          <div className="flex flex-col gap-2 p-8">
             <Input
               className="h-auto border-none p-0 text-4xl font-extrabold focus-visible:ring-0"
               placeholder="Form Title"
@@ -388,28 +409,32 @@ export function EditorClient({ slug }: { slug: string }) {
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-4">
-              {questions.map((q) => (
-                <SortableQuestion
-                  key={q.id}
-                  question={q}
-                  isActive={activeQuestionId === q.id}
-                  onUpdate={updateQuestion}
-                  onDelete={deleteQuestion}
-                  onDuplicate={duplicateQuestion}
-                  onClick={() => setActiveQuestionId(q.id)}
-                  onForceSave={handleSaveForm}
-                  error={
-                    duplicateIds.has(q.id)
-                      ? "Duplicate question title"
-                      : undefined
-                  }
-                />
-              ))}
+              {questions.map((q) => {
+                const isInstruction = q.type === "INSTRUCTION";
+                return (
+                  <div key={q.id} className={isInstruction ? "mt-8" : ""}>
+                    <SortableQuestion
+                      question={q}
+                      isActive={activeQuestionId === q.id}
+                      onUpdate={updateQuestion}
+                      onDelete={deleteQuestion}
+                      onDuplicate={duplicateQuestion}
+                      onClick={() => setActiveQuestionId(q.id)}
+                      onForceSave={handleSaveForm}
+                      error={
+                        !isInstruction && duplicateIds.has(q.id)
+                          ? "Duplicate question title"
+                          : undefined
+                      }
+                    />
+                  </div>
+                );
+              })}
             </div>
           </SortableContext>
         </DndContext>
 
-        <div className="flex justify-center pt-8">
+        <div className="flex justify-center gap-4 pt-8">
           <Button
             onClick={(e) => {
               e.stopPropagation();
@@ -418,7 +443,18 @@ export function EditorClient({ slug }: { slug: string }) {
             size="lg"
             className="h-14 rounded-full px-10 text-lg font-bold shadow-2xl transition-all hover:scale-105 active:scale-95"
           >
-            <Plus className="mr-3 h-6 w-6" /> Add New Question
+            <Plus className="mr-3 h-6 w-6" /> Add Question
+          </Button>
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              addInstruction();
+            }}
+            size="lg"
+            variant="secondary"
+            className="h-14 rounded-full px-10 text-lg font-bold shadow-2xl transition-all hover:scale-105 active:scale-95"
+          >
+            <Plus className="mr-3 h-6 w-6" /> Add Instruction
           </Button>
         </div>
       </div>
