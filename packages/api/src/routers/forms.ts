@@ -6,8 +6,10 @@ import * as z from "zod";
 
 import type { FormType } from "@forge/consts/knight-hacks";
 import {
+  FORM_ASSETS_BUCKET,
   FormSchemaValidator,
   KNIGHTHACKS_S3_BUCKET_REGION,
+  PRESIGNED_URL_EXPIRY,
 } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
 import {
@@ -20,49 +22,7 @@ import {
 
 import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
-import { generateJsonSchema } from "../utils";
-
-const FORM_ASSETS_BUCKET = "form-assets";
-const PRESIGNED_URL_EXPIRY = 7 * 24 * 60 * 60; // 7 days
-
-// Helper to regenerate presigned URLs for media
-async function regenerateMediaUrls(questions: FormType["questions"]) {
-  const updatedQuestions = await Promise.all(
-    questions.map(async (q) => {
-      const updated = { ...q };
-
-      // Regenerate image URL if objectName exists
-      if ("imageObjectName" in q && q.imageObjectName) {
-        try {
-          updated.imageUrl = await minioClient.presignedGetObject(
-            FORM_ASSETS_BUCKET,
-            q.imageObjectName,
-            PRESIGNED_URL_EXPIRY,
-          );
-        } catch (e) {
-          console.error("Failed to regenerate image URL:", e);
-        }
-      }
-
-      // Regenerate video URL if objectName exists
-      if ("videoObjectName" in q && q.videoObjectName) {
-        try {
-          updated.videoUrl = await minioClient.presignedGetObject(
-            FORM_ASSETS_BUCKET,
-            q.videoObjectName,
-            PRESIGNED_URL_EXPIRY,
-          );
-        } catch (e) {
-          console.error("Failed to regenerate video URL:", e);
-        }
-      }
-
-      return updated;
-    }),
-  );
-
-  return updatedQuestions;
-}
+import { generateJsonSchema, regenerateMediaUrls } from "../utils";
 
 export const formsRouter = {
   createForm: adminProcedure
