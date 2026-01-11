@@ -32,6 +32,7 @@ import { Label } from "@forge/ui/label";
 import { Switch } from "@forge/ui/switch";
 import { Textarea } from "@forge/ui/textarea";
 
+import { InstructionEditCard } from "~/components/admin/forms/instruction-edit-card";
 import { QuestionEditCard } from "~/components/admin/forms/question-edit-card";
 import { api } from "~/trpc/react";
 
@@ -66,6 +67,8 @@ function SortableQuestion({
     zIndex: isActive ? 10 : 1,
   };
 
+  const isInstruction = question.type === "INSTRUCTION";
+
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       <div
@@ -74,16 +77,26 @@ function SortableQuestion({
           onClick();
         }}
       >
-        <QuestionEditCard
-          question={question}
-          isActive={isActive}
-          onUpdate={onUpdate}
-          onDelete={onDelete}
-          onDuplicate={onDuplicate}
-          onForceSave={onForceSave}
-          error={error}
-          dragHandleProps={listeners}
-        />
+        {isInstruction ? (
+          <InstructionEditCard
+            instruction={question}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+            onDuplicate={onDuplicate}
+            dragHandleProps={listeners}
+          />
+        ) : (
+          <QuestionEditCard
+            question={question}
+            isActive={isActive}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+            onDuplicate={onDuplicate}
+            onForceSave={onForceSave}
+            error={error}
+            dragHandleProps={listeners}
+          />
+        )}
       </div>
     </div>
   );
@@ -159,7 +172,10 @@ export function EditorClient({ slug }: { slug: string }) {
         name: formTitle,
         description: formDescription,
         banner: formBanner || undefined,
-        questions: questions.map(({ id: _, ...rest }) => rest),
+        questions: questions.map(
+          ({ id: _, imageUrl: _imageUrl, videoUrl: _videoUrl, ...rest }) =>
+            rest,
+        ),
       },
       duesOnly,
       allowResubmission,

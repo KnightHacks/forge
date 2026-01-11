@@ -110,18 +110,13 @@ export function QuestionEditCard({
 
   // The 'question' prop now includes 'id' via the extended type.
 
-  const isInstruction = question.type === "INSTRUCTION";
-
   return (
     <Card
       className={cn(
-        "relative flex flex-col gap-4 bg-card p-6 text-card-foreground transition-all",
-        isInstruction
-          ? "mt-20 border-t-4 border-t-primary shadow-lg"
-          : "border-l-4",
-        !isInstruction && isActive
+        "relative flex flex-col gap-4 border-l-4 bg-card p-6 text-card-foreground transition-all",
+        isActive
           ? "border-l-primary shadow-md ring-1 ring-black/5"
-          : !isInstruction && "border-l-1 hover:bg-muted/50",
+          : "border-l-transparent hover:bg-muted/50",
         error && "border-l-destructive ring-destructive/20",
       )}
       onClick={() => {
@@ -134,7 +129,7 @@ export function QuestionEditCard({
           <Textarea
             value={question.question}
             onChange={handleTitleChange}
-            placeholder={isInstruction ? "Instruction Title" : "Question"}
+            placeholder="Question"
             className="min-h-[3rem] resize-none overflow-hidden border-none bg-transparent px-0 py-0 text-lg font-medium placeholder:text-muted-foreground focus-visible:ring-0"
             rows={1}
             onInput={(e) => {
@@ -146,31 +141,29 @@ export function QuestionEditCard({
           />
         </div>
 
-        {!isInstruction && (
-          <div className="w-full md:w-[220px]">
-            <Select
-              value={question.type}
-              onValueChange={(val: QuestionType) => handleTypeChange(val)}
-            >
-              <SelectTrigger className="h-12 w-full">
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                {FORM_QUESTION_TYPES.map((type) => {
-                  const Icon = QUESTION_ICONS[type.value];
-                  return (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex items-center gap-3">
-                        {Icon && <Icon className="h-4 w-4" />}
-                        <span>{type.label}</span>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+        <div className="w-full md:w-[220px]">
+          <Select
+            value={question.type}
+            onValueChange={(val: QuestionType) => handleTypeChange(val)}
+          >
+            <SelectTrigger className="h-12 w-full">
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent>
+              {FORM_QUESTION_TYPES.map((type) => {
+                const Icon = QUESTION_ICONS[type.value];
+                return (
+                  <SelectItem key={type.value} value={type.value}>
+                    <div className="flex items-center gap-3">
+                      {Icon && <Icon className="h-4 w-4" />}
+                      <span>{type.label}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {error && (
@@ -204,15 +197,13 @@ export function QuestionEditCard({
             />
           </div>
 
-          {question.type !== "INSTRUCTION" && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Required</span>
-              <Checkbox
-                checked={!question.optional}
-                onCheckedChange={handleRequiredChange}
-              />
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Required</span>
+            <Checkbox
+              checked={!question.optional}
+              onCheckedChange={handleRequiredChange}
+            />
+          </div>
 
           {/* <div className="ml-2">
             <Button variant="ghost" size="icon">
@@ -236,16 +227,8 @@ function QuestionBody({
 }) {
   switch (question.type) {
     case "INSTRUCTION":
-      return (
-        <div className="w-full">
-          <Textarea
-            value={question.content || ""}
-            onChange={(e) => onUpdate({ ...question, content: e.target.value })}
-            placeholder="Instruction content (optional)"
-            className="min-h-[80px] resize-none rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary"
-          />
-        </div>
-      );
+      // Instructions are handled by InstructionEditCard
+      return null;
     case "SHORT_ANSWER":
       return (
         <div className="w-1/2">

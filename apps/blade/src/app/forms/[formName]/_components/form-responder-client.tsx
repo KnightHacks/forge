@@ -9,6 +9,7 @@ import { Card } from "@forge/ui/card";
 
 import { QuestionResponseCard } from "~/app/forms/[formName]/_components/question-response-card";
 import { api } from "~/trpc/react";
+import { InstructionResponseCard } from "./instruction-response-card";
 
 interface FormResponderClientProps {
   formName: string;
@@ -261,27 +262,7 @@ export function FormResponderClient({
                 }}
               >
                 {isInstruction ? (
-                  <Card className="relative mt-12 flex flex-col gap-4 bg-card p-6 text-card-foreground transition-all">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-start gap-2">
-                        <h3 className="text-xl font-bold">{q.question}</h3>
-                      </div>
-                    </div>
-                    {(() => {
-                      if (
-                        "content" in q &&
-                        q.content &&
-                        typeof q.content === "string"
-                      ) {
-                        return (
-                          <div className="whitespace-pre-wrap pt-2 text-sm text-muted-foreground">
-                            {q.content}
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                  </Card>
+                  <InstructionResponseCard instruction={q} />
                 ) : (
                   <QuestionResponseCard
                     question={q}
