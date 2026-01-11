@@ -92,9 +92,7 @@ export function InstructionEditCard({
         imageUrl: result.viewUrl,
       });
       toast.success("Image uploaded successfully!");
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Upload failed:", error);
+    } catch {
       toast.error("Failed to upload image. Please try again.");
     } finally {
       setIsUploadingImage(false);
@@ -143,9 +141,7 @@ export function InstructionEditCard({
         videoUrl: result.viewUrl,
       });
       toast.success("Video uploaded successfully!");
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Upload failed:", error);
+    } catch {
       toast.error("Failed to upload video. Please try again.");
     } finally {
       setIsUploadingVideo(false);
