@@ -6670,7 +6670,10 @@ export const QuestionValidator = z.object({
   min: z.number().optional(),
   max: z.number().optional(),
   content: z.string().max(2000).optional(),
+  imageUrl: z.string().url().optional(),
   videoUrl: z.string().url().optional(),
+  imageObjectName: z.string().optional(),
+  videoObjectName: z.string().optional(),
 });
 
 export const FormSchemaValidator = z.object({

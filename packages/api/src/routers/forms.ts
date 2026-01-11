@@ -5,7 +5,10 @@ import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
 import type { FormType } from "@forge/consts/knight-hacks";
-import { FormSchemaValidator } from "@forge/consts/knight-hacks";
+import {
+  FormSchemaValidator,
+  KNIGHTHACKS_S3_BUCKET_REGION,
+} from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
 import {
   FormResponse,
@@ -15,8 +18,51 @@ import {
   Member,
 } from "@forge/db/schemas/knight-hacks";
 
+import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { generateJsonSchema } from "../utils";
+
+const FORM_ASSETS_BUCKET = "form-assets";
+const PRESIGNED_URL_EXPIRY = 7 * 24 * 60 * 60; // 7 days
+
+// Helper to regenerate presigned URLs for media
+async function regenerateMediaUrls(questions: FormType["questions"]) {
+  const updatedQuestions = await Promise.all(
+    questions.map(async (q) => {
+      const updated = { ...q };
+
+      // Regenerate image URL if objectName exists
+      if ("imageObjectName" in q && q.imageObjectName) {
+        try {
+          updated.imageUrl = await minioClient.presignedGetObject(
+            FORM_ASSETS_BUCKET,
+            q.imageObjectName,
+            PRESIGNED_URL_EXPIRY,
+          );
+        } catch (e) {
+          console.error("Failed to regenerate image URL:", e);
+        }
+      }
+
+      // Regenerate video URL if objectName exists
+      if ("videoObjectName" in q && q.videoObjectName) {
+        try {
+          updated.videoUrl = await minioClient.presignedGetObject(
+            FORM_ASSETS_BUCKET,
+            q.videoObjectName,
+            PRESIGNED_URL_EXPIRY,
+          );
+        } catch (e) {
+          console.error("Failed to regenerate video URL:", e);
+        }
+      }
+
+      return updated;
+    }),
+  );
+
+  return updatedQuestions;
+}
 
 export const formsRouter = {
   createForm: adminProcedure
@@ -121,10 +167,19 @@ export const formsRouter = {
       }
 
       const { formValidatorJson: _JSONValidator, ...retForm } = form;
+      const formData = form.formData as FormType;
+
+      // Regenerate presigned URLs for any media that has objectNames
+      const questionsWithFreshUrls = await regenerateMediaUrls(
+        formData.questions,
+      );
 
       return {
         ...retForm,
-        formData: form.formData as FormType,
+        formData: {
+          ...formData,
+          questions: questionsWithFreshUrls,
+        },
         zodValidator: jsonSchemaToZod(form.formValidatorJson as JSONSchema7),
       };
     }),
@@ -284,5 +339,76 @@ export const formsRouter = {
         hasSubmitted: !!existing,
         submittedAt: existing?.createdAt ?? null,
       };
+    }),
+
+  // Generate presigned upload URL for direct MinIO upload
+  getUploadUrl: adminProcedure
+    .input(
+      z.object({
+        fileName: z.string(),
+        formId: z.string(),
+        mediaType: z.enum(["image", "video"]),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { fileName, formId, mediaType } = input;
+
+      const safeFileName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const folder = mediaType === "image" ? "images" : "videos";
+      const objectName = `${formId}/${folder}/${Date.now()}-${safeFileName}`;
+
+      try {
+        // Ensure bucket exists
+        const bucketExists = await minioClient.bucketExists(FORM_ASSETS_BUCKET);
+        if (!bucketExists) {
+          await minioClient.makeBucket(
+            FORM_ASSETS_BUCKET,
+            KNIGHTHACKS_S3_BUCKET_REGION,
+          );
+        }
+
+        // Generate presigned PUT URL for upload (15 minutes to complete upload)
+        const uploadUrl = await minioClient.presignedPutObject(
+          FORM_ASSETS_BUCKET,
+          objectName,
+          15 * 60, // 15 minutes
+        );
+
+        // Generate presigned GET URL for immediate preview
+        const viewUrl = await minioClient.presignedGetObject(
+          FORM_ASSETS_BUCKET,
+          objectName,
+          PRESIGNED_URL_EXPIRY,
+        );
+
+        return { uploadUrl, objectName, viewUrl };
+      } catch (e) {
+        console.error("getUploadUrl error:", e);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to generate upload URL",
+        });
+      }
+    }),
+
+  deleteMedia: adminProcedure
+    .input(
+      z.object({
+        objectName: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { objectName } = input;
+
+      try {
+        await minioClient.removeObject(FORM_ASSETS_BUCKET, objectName);
+        return { success: true };
+      } catch (e) {
+        console.error("deleteMedia error:", e);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete media",
+        });
+      }
     }),
 };
