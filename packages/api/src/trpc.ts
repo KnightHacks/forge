@@ -145,20 +145,6 @@ export const protectedProcedure = t.procedure
     });
   });
 
-export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  const isValidAdmin = await isDiscordAdmin(ctx.session.user);
-  if (!isValidAdmin) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
-  }
-
-  return next({
-    ctx: {
-      // infers the `session` as non-nullable
-      session: { ...ctx.session, user: ctx.session.user },
-    },
-  });
-});
-
 export const permProcedure = protectedProcedure.use(
   async ({ctx, next}) => {
     const permRows = await db.select({
