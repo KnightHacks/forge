@@ -37,7 +37,7 @@ export async function FormResponses() {
 
                   <ViewFormResponseButton
                     formNameSlug={formResponse.formSlug ?? ""}
-                    responseIdSlug={formResponse.id ?? ""}
+                    responseIdSlug={formResponse.id}
                   />
                 </div>
               </div>

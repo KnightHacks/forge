@@ -286,31 +286,58 @@ export const formsRouter = {
 
   // check if current user already submitted to this form
   getUserResponse: protectedProcedure
-    .input(z.object({ form: z.string().optional(), responseId: z.string().optional() }))
+    .input(
+      z.object({
+        form: z.string().optional(),
+        responseId: z.string().optional(),
+      }),
+    )
     .query(async ({ input, ctx }) => {
       const userId = ctx.session.user.id;
 
       // return response by id
-      const responseId = input.responseId
-      if (responseId){
-        return await db.select({
-          submittedAt: FormResponse.createdAt,
-          responseData: FormResponse.responseData,
-          formName: FormsSchemas.name,
-          formSlug: FormsSchemas.slugName,
-          id: FormResponse.id,
-          hasSubmitted: sql<boolean>`true`,
-        })
-        .from(FormResponse)
-        .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
-        .where(and(eq(FormResponse.id, responseId), eq(FormResponse.userId, userId)));
+      const responseId = input.responseId;
+      if (responseId) {
+        return await db
+          .select({
+            submittedAt: FormResponse.createdAt,
+            responseData: FormResponse.responseData,
+            formName: FormsSchemas.name,
+            formSlug: FormsSchemas.slugName,
+            id: FormResponse.id,
+            hasSubmitted: sql<boolean>`true`,
+          })
+          .from(FormResponse)
+          .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
+          .where(
+            and(
+              eq(FormResponse.id, responseId),
+              eq(FormResponse.userId, userId),
+            ),
+          );
       }
 
       // return all responses all forms
       const form = input.form;
-      if (!form)
-      {
-        return await db.select({
+      if (!form) {
+        return await db
+          .select({
+            submittedAt: FormResponse.createdAt,
+            responseData: FormResponse.responseData,
+            formName: FormsSchemas.name,
+            formSlug: FormsSchemas.slugName,
+            id: FormResponse.id,
+            hasSubmitted: sql<boolean>`true`,
+          })
+          .from(FormResponse)
+          .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
+          .where(eq(FormResponse.userId, userId))
+          .orderBy(desc(FormResponse.createdAt));
+      }
+
+      // return all responses of form
+      return await db
+        .select({
           submittedAt: FormResponse.createdAt,
           responseData: FormResponse.responseData,
           formName: FormsSchemas.name,
@@ -320,23 +347,10 @@ export const formsRouter = {
         })
         .from(FormResponse)
         .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
-        .where(eq(FormResponse.userId, userId))
+        .where(
+          and(eq(FormResponse.userId, userId), eq(FormsSchemas.name, form)),
+        )
         .orderBy(desc(FormResponse.createdAt));
-      }
-
-      // return all responses of form
-      return await db.select({
-        submittedAt: FormResponse.createdAt,
-        responseData: FormResponse.responseData,
-        formName: FormsSchemas.name,
-        formSlug: FormsSchemas.slugName,
-        id: FormResponse.id,
-        hasSubmitted: sql<boolean>`true`,
-      })
-      .from(FormResponse)
-      .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
-      .where(and(eq(FormResponse.userId, userId), eq(FormsSchemas.name, form)))
-      .orderBy(desc(FormResponse.createdAt));
     }),
 
   // Generate presigned upload URL for direct MinIO upload
