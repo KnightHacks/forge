@@ -29,13 +29,13 @@ type FormResponseCallBack = (userId: string, response: any) => undefined;
 
 /**
  Example form call back handler, please reference :pray:
- *const handle_goated_form_response = ((userId: string, response: { answer: string }) => {
+ *const handle_sample_form_response = ((userId: string, response: { answer: string }) => {
  *	console.log(userId, response);
  *}) satisfies FormResponseCallBack;
 */
 
 const handleCallbacks: Record<string, FormResponseCallBack> = {
-  //"goated-form": handle_goated_form_response,
+  //"sample-form": handle_sample_form_response,
 };
 
 export const formsRouter = {
