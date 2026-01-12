@@ -221,7 +221,11 @@ export function TimePicker({
         </InputGroup>
 
         {use12Hour && (
-          <Select value={ampm} onValueChange={handleAmpmChange} disabled={disabled}>
+          <Select
+            value={ampm}
+            onValueChange={handleAmpmChange}
+            disabled={disabled}
+          >
             <SelectTrigger className="w-20">
               <SelectValue placeholder="AM" />
             </SelectTrigger>

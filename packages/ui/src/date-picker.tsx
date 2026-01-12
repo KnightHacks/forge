@@ -11,10 +11,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 interface DatePickerProps {
   value?: Date;
   onChange?: (date: Date | undefined) => void;
-  disabled?: boolean
+  disabled?: boolean;
 }
 
-export function DatePicker({ value, onChange, disabled = false }: DatePickerProps) {
+export function DatePicker({
+  value,
+  onChange,
+  disabled = false,
+}: DatePickerProps) {
   const [date, setDate] = React.useState<Date | undefined>(value);
 
   React.useEffect(() => {
