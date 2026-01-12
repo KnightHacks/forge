@@ -5,7 +5,7 @@ import { env } from "../env";
 import { DEV_KNIGHTHACKS_GUILD_ID, PermissionKey, PERMISSIONS, PROD_KNIGHTHACKS_GUILD_ID } from "@forge/consts/knight-hacks";
 import { Routes } from "discord-api-types/v10";
 import type { APIRole } from "discord-api-types/v10";
-import { adminProcedure, permProcedure, protectedProcedure } from "../trpc";
+import { permProcedure, protectedProcedure } from "../trpc";
 import {
   discord,
   log,
@@ -26,9 +26,11 @@ const KNIGHTHACKS_GUILD_ID =
 export const rolesRouter = {
     // ROLES
 
-    createRoleLink: adminProcedure
+    createRoleLink: permProcedure
         .input(z.object({ name: z.string(), roleId: z.string(), permissions: z.string()}))
         .mutation(async ({ctx, input}) => {
+            controlPerms.and(["CONFIGURE_ROLES"], ctx);
+
             // check for duplicate discord role
             const dupe = await db.query.Roles.findFirst({where: (t, {eq}) => eq(t.discordRoleId, input.roleId)})
             if(dupe) throw new TRPCError({message: "This role is already linked.", code: "CONFLICT"})
@@ -48,9 +50,11 @@ export const rolesRouter = {
             });
     }),
 
-    updateRoleLink: adminProcedure
+    updateRoleLink: permProcedure
         .input(z.object({ name: z.string(), id: z.string(), roleId: z.string(), permissions: z.string()}))
         .mutation(async ({ctx, input}) => {
+            controlPerms.and(["CONFIGURE_ROLES"], ctx);
+
             // check for existing role
             const exist = await db.query.Roles.findFirst({where: (t, {eq}) => eq(t.id, input.id)})
             if(!exist) throw new TRPCError({message: "Tried to edit a role link that does not exist.", code: "BAD_REQUEST"})
@@ -72,9 +76,11 @@ export const rolesRouter = {
             });
     }),
 
-    deleteRoleLink: adminProcedure
+    deleteRoleLink: permProcedure
         .input(z.object({id: z.string()}))
         .mutation(async ({ctx, input}) => {
+            controlPerms.and(["CONFIGURE_ROLES"], ctx);
+
             // check for existing role
             const exist = await db.query.Roles.findFirst({where: (t, {eq}) => eq(t.id, input.id)})
             if(!exist) throw new TRPCError({message: "Tried to delete a role link that does not exist.", code: "BAD_REQUEST"})
