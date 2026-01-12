@@ -33,11 +33,11 @@ import {
 import { minioClient } from "../minio/minio-client";
 import {
   adminProcedure,
-  checkInProcedure,
+  permProcedure,
   protectedProcedure,
   publicProcedure,
 } from "../trpc";
-import { log } from "../utils";
+import { controlPerms, log } from "../utils";
 
 export const memberRouter = {
   createMember: protectedProcedure
@@ -462,7 +462,7 @@ export const memberRouter = {
     });
   }),
 
-  eventCheckIn: checkInProcedure
+  eventCheckIn: permProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -471,6 +471,8 @@ export const memberRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"], ctx);
+
       const member = await db.query.Member.findFirst({
         where: eq(Member.userId, input.userId),
       });
