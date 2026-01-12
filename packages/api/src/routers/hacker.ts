@@ -26,9 +26,10 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import { adminProcedure, checkInProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, permProcedure, protectedProcedure } from "../trpc";
 import {
   addRoleToMember,
+  controlPerms,
   isDiscordVIP,
   log,
   resolveDiscordUserId,
@@ -997,7 +998,7 @@ export const hackerRouter = {
       return counts;
     }),
 
-  eventCheckIn: checkInProcedure
+  eventCheckIn: permProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -1009,6 +1010,8 @@ export const hackerRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"], ctx);
+
       const event = await db.query.Event.findFirst({
         where: eq(Event.id, input.eventId),
       });

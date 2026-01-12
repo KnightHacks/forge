@@ -174,21 +174,6 @@ export const fullAdminProcedure = protectedProcedure.use(
   },
 );
 
-export const checkInProcedure = protectedProcedure.use(
-  async ({ ctx, next }) => {
-    const hasCheckIn = await userHasCheckIn(ctx.session.user);
-    if (!hasCheckIn) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-    return next({
-      ctx: {
-        // infers the `session` as non-nullable
-        session: { ...ctx.session, user: ctx.session.user },
-      },
-    });
-  },
-);
-
 export const officerProcedure = protectedProcedure.use(
   async ({ ctx, next }) => {
     const isOfficer = await userIsOfficer(ctx.session.user);
