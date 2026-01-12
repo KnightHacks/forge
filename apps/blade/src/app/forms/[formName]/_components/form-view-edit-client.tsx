@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 
@@ -40,6 +40,7 @@ export function FormReviewClient({
     responseId,
   });
 
+  // TODO: WILL USE FOR EDIT
   const submitResponse = api.forms.createResponse.useMutation({
     onSuccess: () => {
       setSubmitError(null);
@@ -52,9 +53,7 @@ export function FormReviewClient({
     },
   });
 
-
   useEffect(() => {
-
     const data = responseQuery.data ? responseQuery.data[0] : null;
     if (!data?.responseData) return;
 
@@ -107,7 +106,11 @@ export function FormReviewClient({
   }, [isSubmitted, router]);
 
   // wait for all queries to load
-  if (formQuery.isLoading || responseQuery.isLoading || Object.keys(responses).length === 0)
+  if (
+    formQuery.isLoading ||
+    responseQuery.isLoading ||
+    Object.keys(responses).length === 0
+  )
     return (
       <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -126,11 +129,9 @@ export function FormReviewClient({
   const form = formQuery.data.formData;
 
   // TODO: Implement editing
-  const allowEdit = false 
+  const allowEdit = false;
 
   const formDisabled = !allowEdit;
-  
-
 
   // SUCESSSSS
   if (isSubmitted) {
@@ -168,6 +169,8 @@ export function FormReviewClient({
     }));
   };
 
+  // TODO: WILL USE FOR EDIT
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleSubmit = () => {
     // Build response data object
     const responseData: Record<string, unknown> = {};
@@ -203,6 +206,8 @@ export function FormReviewClient({
     });
   };
 
+  // TODO: WILL USE FOR EDIT
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isFormValid = () => {
     // Check if all required questions have responses
     return form.questions.every((question) => {
@@ -225,7 +230,9 @@ export function FormReviewClient({
         {/* Header */}
         <Card className="border-t-8 border-t-primary duration-500 animate-in fade-in slide-in-from-top-4">
           <div className="space-y-2 p-6">
-            <h1 className="text-3xl font-bold">{`${allowEdit ? "Edit" : "View"} - ${form.name}`}</h1>
+            {/* Implement View/Edit Title */}
+            {/* <h1 className="text-3xl font-bold">{`${allowEdit ? "Edit" : "View"} - ${form.name}`}</h1> */}
+            <h1 className="text-3xl font-bold">{`${"View"} - ${form.name}`}</h1>
 
             {form.description && (
               <p className="text-muted-foreground">{form.description}</p>
@@ -276,7 +283,8 @@ export function FormReviewClient({
 
         {/* Action Buttons */}
         <div className="flex justify-between pt-4">
-          {!formDisabled && (
+          {/* Implement disabling form */}
+          {/* {!formDisabled && (
             <Button
               onClick={handleSubmit}
               disabled={!isFormValid() || submitResponse.isPending}
@@ -284,7 +292,7 @@ export function FormReviewClient({
             >
               {submitResponse.isPending ? "Submitting..." : "Submit"}
             </Button>
-          )}
+          )} */}
           <Button
             onClick={() => router.push("/")}
             size="lg"

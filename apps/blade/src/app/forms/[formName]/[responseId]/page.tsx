@@ -9,7 +9,7 @@ import { FormReviewClient } from "../_components/form-view-edit-client";
 export default async function FormResponderPage({
   params,
 }: {
-  params: { responseId: string, formName: string };
+  params: { responseId: string; formName: string };
 }) {
   const session = await auth();
   if (!session) {
@@ -37,7 +37,11 @@ export default async function FormResponderPage({
 
   return (
     <HydrateClient>
-      <FormReviewClient formName={formName} userName={userName} responseId={responseId} />
+      <FormReviewClient
+        formName={formName}
+        userName={userName}
+        responseId={responseId}
+      />
     </HydrateClient>
   );
-} 
+}
