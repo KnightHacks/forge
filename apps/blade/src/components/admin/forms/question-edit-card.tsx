@@ -86,11 +86,7 @@ export function QuestionEditCard({
       updatedQuestion.options = ["Option 1"];
     }
 
-    if (
-      ["SHORT_ANSWER", "PARAGRAPH", "DATE", "TIME", "INSTRUCTION"].includes(
-        newType,
-      )
-    ) {
+    if (["SHORT_ANSWER", "PARAGRAPH", "DATE", "TIME"].includes(newType)) {
       updatedQuestion.options = undefined;
     }
 
