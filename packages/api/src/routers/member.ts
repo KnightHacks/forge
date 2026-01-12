@@ -326,7 +326,9 @@ export const memberRouter = {
 
   getMembers: permProcedure.query(
     async ({ ctx }) => {
-      controlPerms.and(["READ_MEMBERS"], ctx);
+      // CHECKIN_CLUB_EVENT is here because people trying to check-in
+      // need to retrieve the member list for manual entry
+      controlPerms.or(["READ_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx);
 
       return await db.query.Member.findMany();
     }

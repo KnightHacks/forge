@@ -102,7 +102,9 @@ export const hackerRouter = {
     }),
 
   getHackers: permProcedure.input(z.string()).query(async ({ ctx, input }) => {
-    controlPerms.and(["READ_HACKERS"], ctx);
+    // CHECKIN_HACK_EVENT is here because people trying to check-in
+    // need to retrieve the member list for manual entry
+    controlPerms.and(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
 
     const hackers = await db
       .select({
