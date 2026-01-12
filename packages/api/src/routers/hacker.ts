@@ -26,7 +26,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import { adminProcedure, permProcedure, protectedProcedure } from "../trpc";
+import { permProcedure, protectedProcedure } from "../trpc";
 import {
   addRoleToMember,
   controlPerms,
@@ -101,7 +101,9 @@ export const hackerRouter = {
       };
     }),
 
-  getHackers: adminProcedure.input(z.string()).query(async ({ input }) => {
+  getHackers: permProcedure.input(z.string()).query(async ({ ctx, input }) => {
+    controlPerms.and(["READ_HACKERS"], ctx);
+
     const hackers = await db
       .select({
         id: Hacker.id,
@@ -146,9 +148,11 @@ export const hackerRouter = {
     return hackers;
   }),
 
-  getAllHackers: adminProcedure
+  getAllHackers: permProcedure
     .input(z.object({ hackathonName: z.string().optional() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      controlPerms.and(["READ_HACKERS"], ctx);
+
       let hackathon;
 
       if (input.hackathonName) {
@@ -618,7 +622,7 @@ export const hackerRouter = {
       });
     }),
 
-  giveHackerPoints: adminProcedure
+  giveHackerPoints: permProcedure
     .input(
       z.object({
         id: z.string(),
@@ -627,6 +631,8 @@ export const hackerRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["EDIT_HACKERS"], ctx);
+
       if (!input.id) {
         throw new TRPCError({
           message: "Hacker ID is required to update a member's status!",
@@ -687,7 +693,7 @@ export const hackerRouter = {
       });
     }),
 
-  updateHackerStatus: adminProcedure
+  updateHackerStatus: permProcedure
     .input(
       z.object({
         id: z.string(), // This is the hacker ID
@@ -703,6 +709,8 @@ export const hackerRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["EDIT_HACKERS"], ctx);
+
       if (!input.id) {
         throw new TRPCError({
           message: "Hacker ID is required to update a member's status!",
@@ -751,7 +759,7 @@ export const hackerRouter = {
         userId: ctx.session.user.discordUserId,
       });
     }),
-  deleteHacker: adminProcedure
+  deleteHacker: permProcedure
     .input(
       InsertHackerSchema.pick({
         id: true,
@@ -762,6 +770,8 @@ export const hackerRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["EDIT_HACKERS"], ctx);
+
       if (!input.id) {
         throw new TRPCError({
           message: "Hacker ID is required to delete a member!",
@@ -948,9 +958,11 @@ export const hackerRouter = {
           ),
         );
     }),
-  statusCountByHackathonId: adminProcedure
+  statusCountByHackathonId: permProcedure
     .input(z.string())
-    .query(async ({ input: hackathonId }) => {
+    .query(async ({ ctx, input: hackathonId }) => {
+      controlPerms.and(["READ_HACK_DATA"], ctx);
+
       const results = await Promise.all(
         HACKATHON_APPLICATION_STATES.map(async (s) => {
           const rows = await db
