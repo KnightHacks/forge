@@ -6,6 +6,7 @@ import { api } from "~/trpc/server";
 import { AlumniDiscord } from "./AlumniDiscord";
 import { EventNumber } from "./event/event-number";
 import { EventShowcase } from "./event/event-showcase";
+import { FormResponses } from "./forms/form-responses";
 import { MemberInfo } from "./info";
 import { Donate } from "./payment/donate";
 import { Payment } from "./payment/payment-dues";
@@ -121,12 +122,20 @@ export default async function MemberDashboard({
             ) : (
               <Payment status={dues.value.duesPaid} member={member} />
             )}
+
             <MemberInfo />
+
             {isAlumni ? <AlumniDiscord /> : <Points size={member.points} />}
+
             <EventNumber size={events.value.length} />
-          </div>
-          <div className="animate-fade-in">
-            <EventShowcase events={events.value} member={member} />
+
+            <div className="lg:col-span-1">
+              <FormResponses />
+            </div>
+
+            <div className="lg:col-span-3">
+              <EventShowcase events={events.value} member={member} />
+            </div>
           </div>
         </div>
       </div>
