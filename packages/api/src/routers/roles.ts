@@ -176,6 +176,70 @@ export const rolesRouter = {
             }
 
             return true
+        }),
+
+    grantPermission: permProcedure
+        .input(z.object({roleId: z.string(), userId: z.string()}))
+        .mutation(async ({input, ctx}) => {
+            controlPerms.or(["ASSIGN_ROLES"], ctx)
+
+            const exists = await db.query.Permissions.findFirst({
+                where: (t, {eq, and}) => and(eq(t.userId, input.userId), eq(t.roleId, input.roleId))
+            })
+
+            if(exists) throw new TRPCError({code: "CONFLICT", message: "This permission relation already exists."})
+
+            await db.insert(Permissions).values({
+                roleId: input.roleId,
+                userId: input.userId
+            })
+
+            const user = await db.query.User.findFirst({
+                where: (t, {eq}) => eq(t.id, input.userId)
+            })
+
+            const role = await db.query.Roles.findFirst({
+                where: (t, {eq}) => eq(t.id, input.roleId)
+            })
+
+            if(role && user)
+            await log({
+                title: `Granted Role`,
+                message: `The **${role.name}** role (<@&${role.discordRoleId}>) has granted to <@${user.discordUserId}>.`,
+                color: "success_green",
+                userId: ctx.session.user.discordUserId,
+            });
+        }),
+
+    revokePermission: permProcedure
+        .input(z.object({roleId: z.string(), userId: z.string()}))
+        .mutation(async ({input, ctx}) => {
+            controlPerms.or(["ASSIGN_ROLES"], ctx)
+
+            const perm = await db.query.Permissions.findFirst({
+                where: (t, {eq, and}) => and(eq(t.userId, input.userId), eq(t.roleId, input.roleId))
+            })
+
+            if(!perm) throw new TRPCError({code: "BAD_REQUEST", message: "The permission relation you are trying to revoke does not exist."})
+
+            await db.delete(Permissions).where(eq(Permissions.id, perm.id))
+
+            const user = await db.query.User.findFirst({
+                where: (t, {eq}) => eq(t.id, input.userId)
+            })
+
+            const role = await db.query.Roles.findFirst({
+                where: (t, {eq}) => eq(t.id, input.roleId)
+            })
+
+            if(role && user)
+            await log({
+                title: `Revoked Role`,
+                message: `The **${role.name}** role (<@&${role.discordRoleId}>) has revoked from <@${user.discordUserId}>.`,
+                color: "uhoh_red",
+                userId: ctx.session.user.discordUserId,
+            });
         })
+        
 
 } satisfies TRPCRouterRecord
