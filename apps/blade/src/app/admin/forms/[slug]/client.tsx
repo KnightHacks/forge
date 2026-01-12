@@ -24,7 +24,10 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Loader2, Plus, Save } from "lucide-react";
 
-import type { QuestionValidator } from "@forge/consts/knight-hacks";
+import type {
+  InstructionValidator,
+  QuestionValidator,
+} from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
@@ -37,29 +40,35 @@ import { QuestionEditCard } from "~/components/admin/forms/question-edit-card";
 import { api } from "~/trpc/react";
 
 type FormQuestion = z.infer<typeof QuestionValidator>;
+type FormInstruction = z.infer<typeof InstructionValidator>;
 type UIQuestion = FormQuestion & { id: string };
+type UIInstruction = FormInstruction & { id: string };
 
-function SortableQuestion({
-  question,
+function SortableItem({
+  item,
   isActive,
-  onUpdate,
+  onUpdateQuestion,
+  onUpdateInstruction,
   onDelete,
-  onDuplicate,
+  onDuplicateQuestion,
+  onDuplicateInstruction,
   onClick,
   onForceSave,
   error,
 }: {
-  question: UIQuestion;
+  item: UIQuestion | UIInstruction;
   isActive: boolean;
-  onUpdate: (q: UIQuestion) => void;
+  onUpdateQuestion: (q: UIQuestion) => void;
+  onUpdateInstruction: (i: UIInstruction) => void;
   onDelete: (id: string) => void;
-  onDuplicate: (q: FormQuestion) => void;
+  onDuplicateQuestion: (q: UIQuestion) => void;
+  onDuplicateInstruction: (i: UIInstruction) => void;
   onClick: () => void;
   onForceSave: () => void;
   error?: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: question.id });
+    useSortable({ id: item.id });
 
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -67,7 +76,7 @@ function SortableQuestion({
     zIndex: isActive ? 10 : 1,
   };
 
-  const isInstruction = question.type === "INSTRUCTION";
+  const isInstruction = "title" in item;
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
@@ -79,19 +88,19 @@ function SortableQuestion({
       >
         {isInstruction ? (
           <InstructionEditCard
-            instruction={question}
-            onUpdate={onUpdate}
+            instruction={item}
+            onUpdate={onUpdateInstruction}
             onDelete={onDelete}
-            onDuplicate={onDuplicate}
+            onDuplicate={onDuplicateInstruction}
             dragHandleProps={listeners}
           />
         ) : (
           <QuestionEditCard
-            question={question}
+            question={item}
             isActive={isActive}
-            onUpdate={onUpdate}
+            onUpdate={onUpdateQuestion}
             onDelete={onDelete}
-            onDuplicate={onDuplicate}
+            onDuplicate={onDuplicateQuestion}
             onForceSave={onForceSave}
             error={error}
             dragHandleProps={listeners}
@@ -109,9 +118,10 @@ export function EditorClient({ slug }: { slug: string }) {
   const [formDescription, setFormDescription] = useState("");
   const [formBanner, setFormBanner] = useState("");
   const [questions, setQuestions] = useState<UIQuestion[]>([]);
+  const [instructions, setInstructions] = useState<UIInstruction[]>([]);
   const [duesOnly, setDuesOnly] = useState(false);
   const [allowResubmission, setAllowResubmission] = useState(true);
-  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<string>("");
@@ -139,13 +149,9 @@ export function EditorClient({ slug }: { slug: string }) {
     // Allow mock mode to proceed without real formData
     if (!formData && slug !== "test-form") return;
 
-    // Check for duplicate question names/titles to prevent backend/frontend collisions (skip instructions)
+    // Check for duplicate question names
     const questionNames = new Set<string>();
     const hasDuplicates = questions.some((q) => {
-      // Skip instructions - they don't need unique titles
-      if (q.type === "INSTRUCTION") return false;
-
-      // Logic handled in render now for visualization, but check here for save block
       if (questionNames.has(q.question)) return true;
       questionNames.add(q.question);
       return false;
@@ -172,7 +178,8 @@ export function EditorClient({ slug }: { slug: string }) {
         name: formTitle,
         description: formDescription,
         banner: formBanner || undefined,
-        questions: questions.map(
+        questions: questions.map(({ id: _, ...rest }) => rest),
+        instructions: instructions.map(
           ({ id: _, imageUrl: _imageUrl, videoUrl: _videoUrl, ...rest }) =>
             rest,
         ),
@@ -185,6 +192,7 @@ export function EditorClient({ slug }: { slug: string }) {
     formDescription,
     formBanner,
     questions,
+    instructions,
     duesOnly,
     allowResubmission,
     formData,
@@ -217,14 +225,24 @@ export function EditorClient({ slug }: { slug: string }) {
         setDuesOnly(formData.duesOnly);
         setAllowResubmission(formData.allowResubmission);
 
-        const loadedQuestions = formData.formData.questions.map(
-          (q: FormQuestion) => ({
+        const loadedQuestions: UIQuestion[] = formData.formData.questions.map(
+          (q: FormQuestion & { order?: number }) => ({
             ...q,
             id: crypto.randomUUID(),
           }),
         );
 
-        setQuestions(loadedQuestions as UIQuestion[]);
+        /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+        const loadedInstructions: UIInstruction[] = (
+          (formData.formData as any).instructions || []
+        ).map((inst: FormInstruction & { order?: number }) => ({
+          ...inst,
+          id: crypto.randomUUID(),
+        }));
+        /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+
+        setQuestions(loadedQuestions);
+        setInstructions(loadedInstructions);
         setIsLoading(false);
       }
     }
@@ -235,10 +253,10 @@ export function EditorClient({ slug }: { slug: string }) {
     if (!isLoading) handleSaveForm();
   }, [duesOnly, allowResubmission, isLoading]); // removed handleSaveForm to prevent save-on-every-render
 
-  // auto save when finishing editing a question (changing active card)
+  // auto save when finishing editing an item (changing active card)
   useEffect(() => {
     if (!isLoading) handleSaveForm();
-  }, [activeQuestionId, isLoading]); // triggers when switching questions or clicking off
+  }, [activeItemId, isLoading]); // triggers when switching items or clicking off
 
   // Periodic auto-save every 40 seconds
   useEffect(() => {
@@ -251,47 +269,66 @@ export function EditorClient({ slug }: { slug: string }) {
     return () => clearInterval(interval);
   }, [isLoading, handleSaveForm]);
 
-  // Memoize duplicate detection for UI feedback (skip instructions)
+  // Memoize duplicate detection for UI feedback
   const duplicateIds = React.useMemo(() => {
     const counts = new Map<string, number>();
     questions.forEach((q) => {
-      // Skip instructions - they can have duplicate titles
-      if (q.type !== "INSTRUCTION") {
-        counts.set(q.question, (counts.get(q.question) || 0) + 1);
-      }
+      counts.set(q.question, (counts.get(q.question) || 0) + 1);
     });
 
     const duplicates = new Set<string>();
     questions.forEach((q) => {
-      if (q.type !== "INSTRUCTION" && (counts.get(q.question) || 0) > 1) {
+      if ((counts.get(q.question) || 0) > 1) {
         duplicates.add(q.id);
       }
     });
     return duplicates;
   }, [questions]);
 
-  const updateQuestion = React.useCallback((updatedQ: UIQuestion) => {
+  const updateQuestion = React.useCallback((updated: UIQuestion) => {
     setQuestions((prev) =>
-      prev.map((q) => (q.id === updatedQ.id ? updatedQ : q)),
+      prev.map((q) => (q.id === updated.id ? updated : q)),
     );
   }, []);
 
-  const deleteQuestion = React.useCallback(
+  const updateInstruction = React.useCallback((updated: UIInstruction) => {
+    setInstructions((prev) =>
+      prev.map((i) => (i.id === updated.id ? updated : i)),
+    );
+  }, []);
+
+  const deleteItem = React.useCallback(
     (id: string) => {
       setQuestions((prev) => prev.filter((q) => q.id !== id));
-      if (activeQuestionId === id) setActiveQuestionId(null);
+      setInstructions((prev) => prev.filter((i) => i.id !== id));
+      if (activeItemId === id) setActiveItemId(null);
     },
-    [activeQuestionId],
+    [activeItemId],
   );
 
-  const duplicateQuestion = React.useCallback((q: FormQuestion) => {
-    const newId = crypto.randomUUID();
-    setQuestions((prev) => [...prev, { ...q, id: newId }]);
-    setActiveQuestionId(newId);
-  }, []);
+  const duplicateQuestion = React.useCallback(
+    (q: UIQuestion) => {
+      const newId = crypto.randomUUID();
+      const order = questions.length + instructions.length;
+      setQuestions((prev) => [...prev, { ...q, id: newId, order }]);
+      setActiveItemId(newId);
+    },
+    [questions.length, instructions.length],
+  );
+
+  const duplicateInstruction = React.useCallback(
+    (inst: UIInstruction) => {
+      const newId = crypto.randomUUID();
+      const order = questions.length + instructions.length;
+      setInstructions((prev) => [...prev, { ...inst, id: newId, order }]);
+      setActiveItemId(newId);
+    },
+    [questions.length, instructions.length],
+  );
 
   const addQuestion = () => {
     const newId = crypto.randomUUID();
+    const order = questions.length + instructions.length;
     setQuestions((prev) => [
       ...prev,
       {
@@ -299,24 +336,25 @@ export function EditorClient({ slug }: { slug: string }) {
         question: "New Question",
         type: "SHORT_ANSWER",
         optional: true,
+        order,
       },
     ]);
-    setActiveQuestionId(newId);
+    setActiveItemId(newId);
   };
 
   const addInstruction = () => {
     const newId = crypto.randomUUID();
-    setQuestions((prev) => [
+    const order = questions.length + instructions.length;
+    setInstructions((prev) => [
       ...prev,
       {
         id: newId,
-        question: "Instruction Title",
-        type: "INSTRUCTION",
+        title: "Instruction Title",
         content: "",
-        optional: true,
+        order,
       },
     ]);
-    setActiveQuestionId(newId);
+    setActiveItemId(newId);
   };
 
   const sensors = useSensors(
@@ -329,11 +367,30 @@ export function EditorClient({ slug }: { slug: string }) {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      setQuestions((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+      // Combine for reordering
+      const combined = [...questions, ...instructions];
+      const oldIndex = combined.findIndex((item) => item.id === active.id);
+      const newIndex = combined.findIndex((item) => item.id === over.id);
+      const reordered = arrayMove(combined, oldIndex, newIndex);
+
+      // Update order and split back into separate arrays
+      const updatedItems = reordered.map((item, idx) => ({
+        ...item,
+        order: idx,
+      }));
+      const newQuestions: UIQuestion[] = [];
+      const newInstructions: UIInstruction[] = [];
+
+      updatedItems.forEach((item) => {
+        if ("question" in item) {
+          newQuestions.push(item as UIQuestion);
+        } else {
+          newInstructions.push(item as UIInstruction);
+        }
       });
+
+      setQuestions(newQuestions);
+      setInstructions(newInstructions);
       setTimeout(() => handleSaveForm(), 100);
     }
   };
@@ -350,7 +407,7 @@ export function EditorClient({ slug }: { slug: string }) {
   return (
     <div
       className="min-h-screen bg-primary/5 p-8 pb-32"
-      onClick={() => setActiveQuestionId(null)}
+      onClick={() => setActiveItemId(null)}
     >
       <div className="mx-auto max-w-3xl space-y-4">
         <div className="flex flex-col items-center justify-between gap-4 rounded-xl border bg-card/50 p-4 shadow-sm backdrop-blur-sm md:flex-row">
@@ -421,31 +478,35 @@ export function EditorClient({ slug }: { slug: string }) {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={questions}
+            items={[...questions, ...instructions]}
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-4">
-              {questions.map((q) => {
-                const isInstruction = q.type === "INSTRUCTION";
-                return (
-                  <div key={q.id} className={isInstruction ? "mt-8" : ""}>
-                    <SortableQuestion
-                      question={q}
-                      isActive={activeQuestionId === q.id}
-                      onUpdate={updateQuestion}
-                      onDelete={deleteQuestion}
-                      onDuplicate={duplicateQuestion}
-                      onClick={() => setActiveQuestionId(q.id)}
-                      onForceSave={handleSaveForm}
-                      error={
-                        !isInstruction && duplicateIds.has(q.id)
-                          ? "Duplicate question title"
-                          : undefined
-                      }
-                    />
-                  </div>
-                );
-              })}
+              {[...questions, ...instructions]
+                .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+                .map((item) => {
+                  const isInstruction = "title" in item;
+                  return (
+                    <div key={item.id} className={isInstruction ? "mt-8" : ""}>
+                      <SortableItem
+                        item={item}
+                        isActive={activeItemId === item.id}
+                        onUpdateQuestion={updateQuestion}
+                        onUpdateInstruction={updateInstruction}
+                        onDelete={deleteItem}
+                        onDuplicateQuestion={duplicateQuestion}
+                        onDuplicateInstruction={duplicateInstruction}
+                        onClick={() => setActiveItemId(item.id)}
+                        onForceSave={handleSaveForm}
+                        error={
+                          !isInstruction && duplicateIds.has(item.id)
+                            ? "Duplicate question title"
+                            : undefined
+                        }
+                      />
+                    </div>
+                  );
+                })}
             </div>
           </SortableContext>
         </DndContext>

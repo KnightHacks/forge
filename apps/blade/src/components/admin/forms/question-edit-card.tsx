@@ -94,11 +94,6 @@ export function QuestionEditCard({
       updatedQuestion.options = undefined;
     }
 
-    // Initialize content for INSTRUCTION type
-    if (newType === "INSTRUCTION" && !updatedQuestion.content) {
-      updatedQuestion.content = "";
-    }
-
     onUpdate(updatedQuestion);
     // Trigger auto-save immediately on type change as requested
     onForceSave?.();
@@ -226,9 +221,6 @@ function QuestionBody({
   onUpdate: (q: FormQuestion & { id: string }) => void;
 }) {
   switch (question.type) {
-    case "INSTRUCTION":
-      // Instructions are handled by InstructionEditCard
-      return null;
     case "SHORT_ANSWER":
       return (
         <div className="w-1/2">

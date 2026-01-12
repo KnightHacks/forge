@@ -413,9 +413,6 @@ export function generateJsonSchema(form: FormType): OptionalSchema {
   const required: string[] = [];
 
   for (const formQuestion of form.questions) {
-    // Skip INSTRUCTION type - they don't need validation
-    if (formQuestion.type === "INSTRUCTION") continue;
-
     const { question, optional, ...rest } = formQuestion;
     const convert = createJsonSchemaValidator({ optional, ...rest });
     if (convert.success) properties[question] = convert.schema;
@@ -435,17 +432,20 @@ export function generateJsonSchema(form: FormType): OptionalSchema {
 }
 
 // Helper to regenerate presigned URLs for media
-export async function regenerateMediaUrls(questions: FormType["questions"]) {
+export async function regenerateMediaUrls(
+  instructions: FormType["instructions"],
+) {
+  if (!instructions) return [];
   const updatedQuestions = await Promise.all(
-    questions.map(async (q) => {
-      const updated = { ...q };
+    instructions.map(async (i) => {
+      const updated = { ...i };
 
       // Regenerate image URL if objectName exists
-      if ("imageObjectName" in q && q.imageObjectName) {
+      if ("imageObjectName" in i && i.imageObjectName) {
         try {
           updated.imageUrl = await minioClient.presignedGetObject(
             FORM_ASSETS_BUCKET,
-            q.imageObjectName,
+            i.imageObjectName,
             PRESIGNED_URL_EXPIRY,
           );
         } catch (e) {
@@ -454,11 +454,11 @@ export async function regenerateMediaUrls(questions: FormType["questions"]) {
       }
 
       // Regenerate video URL if objectName exists
-      if ("videoObjectName" in q && q.videoObjectName) {
+      if ("videoObjectName" in i && i.videoObjectName) {
         try {
           updated.videoUrl = await minioClient.presignedGetObject(
             FORM_ASSETS_BUCKET,
-            q.videoObjectName,
+            i.videoObjectName,
             PRESIGNED_URL_EXPIRY,
           );
         } catch (e) {
