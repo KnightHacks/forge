@@ -26,12 +26,14 @@ interface QuestionResponseCardProps {
   question: FormQuestion;
   value?: string | string[] | number | Date | null;
   onChange: (value: string | string[] | number | Date | null) => void;
+  disabled?: boolean;
 }
 
 export function QuestionResponseCard({
   question,
   value,
   onChange,
+  disabled = false,
 }: QuestionResponseCardProps) {
   const isRequired = !question.optional;
 
@@ -59,7 +61,7 @@ export function QuestionResponseCard({
 
       {/* Body */}
       <div className="pt-2">
-        <QuestionBody question={question} value={value} onChange={onChange} />
+        <QuestionBody question={question} value={value} onChange={onChange} disabled={disabled} />
       </div>
     </Card>
   );
@@ -71,139 +73,167 @@ function QuestionBody({
   question,
   value,
   onChange,
+  disabled = false
 }: {
   question: FormQuestion;
   value?: string | string[] | number | Date | null;
   onChange: (value: string | string[] | number | Date | null) => void;
+  disabled?: boolean;
 }) {
   switch (question.type) {
-    case "SHORT_ANSWER":
-    case "PARAGRAPH":
-      return (
-        <div className="w-full md:w-2/3">
-          <Input
-            placeholder="Your answer"
-            value={(value as string) || ""}
-            onChange={(e) => onChange(e.target.value)}
-            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
-          />
-        </div>
-      );
-    case "MULTIPLE_CHOICE":
-      return (
-        <MultipleChoiceInput
-          question={question}
-          value={value as string | undefined}
-          onChange={onChange}
+  case "SHORT_ANSWER":
+  case "PARAGRAPH":
+    return (
+      <div className="w-full md:w-2/3">
+        <Input
+          placeholder="Your answer"
+          value={(value as string) || ""}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
         />
-      );
-    case "CHECKBOXES":
-      return (
-        <CheckboxesInput
-          question={question}
-          value={value as string[] | undefined}
-          onChange={onChange}
+      </div>
+    );
+
+  case "MULTIPLE_CHOICE":
+    return (
+      <MultipleChoiceInput
+        question={question}
+        value={value as string | undefined}
+        onChange={onChange}
+        disabled={disabled}
+      />
+    );
+
+  case "CHECKBOXES":
+    return (
+      <CheckboxesInput
+        question={question}
+        value={value as string[] | undefined}
+        onChange={onChange}
+        disabled={disabled}
+      />
+    );
+
+  case "DROPDOWN":
+    return (
+      <DropdownInput
+        question={question}
+        value={value as string | undefined}
+        onChange={onChange}
+        disabled={disabled}
+      />
+    );
+
+  case "DATE":
+    return (
+      <div
+        className={`w-full md:w-1/3`}
+      >
+        <DatePicker
+          value={
+            value instanceof Date
+              ? value
+              : value
+                ? new Date(value as string)
+                : undefined
+          }
+          onChange={(date) => onChange(date || null)}
+          disabled={disabled}
         />
-      );
-    case "DROPDOWN":
-      return (
-        <DropdownInput
-          question={question}
-          value={value as string | undefined}
-          onChange={onChange}
+      </div>
+    );
+
+  case "TIME":
+    return (
+      <div
+        className={`w-full md:w-1/3`}
+      >
+        <TimePicker
+          value={
+            value instanceof Date
+              ? value
+              : value
+                ? new Date(`1970-01-01T${value as string}`)
+                : undefined
+          }
+          onChange={(date) => onChange(date || null)}
+          disabled={disabled}
+
         />
-      );
-    case "DATE":
-      return (
-        <div className="w-full md:w-1/3">
-          <DatePicker
-            value={
-              value instanceof Date
+      </div>
+    );
+
+  case "EMAIL":
+    return (
+      <div className="w-full md:w-2/3">
+        <Input
+          type="email"
+          placeholder="your.email@example.com"
+          value={(value as string) || ""}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+        />
+      </div>
+    );
+
+  case "NUMBER":
+    return (
+      <div className="w-full md:w-1/3">
+        <Input
+          type="number"
+          placeholder="Enter a number"
+          value={
+            typeof value === "number"
+              ? String(value)
+              : value && typeof value === "string"
                 ? value
-                : value
-                  ? new Date(value as string)
-                  : undefined
-            }
-            onChange={(date) => onChange(date || null)}
-          />
-        </div>
-      );
-    case "TIME":
-      return (
-        <div className="w-full md:w-1/3">
-          <TimePicker
-            value={
-              value instanceof Date
-                ? value
-                : value
-                  ? new Date(`1970-01-01T${value as string}`)
-                  : undefined
-            }
-            onChange={(date) => onChange(date || null)}
-          />
-        </div>
-      );
-    case "EMAIL":
-      return (
-        <div className="w-full md:w-2/3">
-          <Input
-            type="email"
-            placeholder="your.email@example.com"
-            value={(value as string) || ""}
-            onChange={(e) => onChange(e.target.value)}
-            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
-          />
-        </div>
-      );
-    case "NUMBER":
-      return (
-        <div className="w-full md:w-1/3">
-          <Input
-            type="number"
-            placeholder="Enter a number"
-            value={
-              typeof value === "number"
-                ? String(value)
-                : value && typeof value === "string"
-                  ? value
-                  : ""
-            }
-            onChange={(e) => {
-              const numValue =
-                e.target.value === "" ? null : Number(e.target.value);
-              onChange(numValue);
-            }}
-            min={question.min}
-            max={question.max}
-            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
-          />
-        </div>
-      );
-    case "PHONE":
-      return (
-        <div className="w-full md:w-2/3">
-          <Input
-            type="tel"
-            placeholder="(123) 456-7890"
-            value={(value as string) || ""}
-            onChange={(e) => onChange(e.target.value)}
-            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
-          />
-        </div>
-      );
-    default:
-      return null;
-  }
+                : ""
+          }
+          onChange={(e) => {
+            const numValue =
+              e.target.value === "" ? null : Number(e.target.value);
+            onChange(numValue);
+          }}
+          min={question.min}
+          max={question.max}
+          disabled={disabled}
+          className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+        />
+      </div>
+    );
+
+  case "PHONE":
+    return (
+      <div className="w-full md:w-2/3">
+        <Input
+          type="tel"
+          placeholder="(123) 456-7890"
+          value={(value as string) || ""}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+        />
+      </div>
+    );
+
+  default:
+    return null;
+}
+
 }
 
 function MultipleChoiceInput({
   question,
   value,
   onChange,
+  disabled = false
 }: {
   question: FormQuestion;
   value?: string;
   onChange: (value: string | string[] | number | Date | null) => void;
+  disabled: boolean;
 }) {
   const options = question.options || [];
   const questionKey = question.question.replace(/\s+/g, "-").toLowerCase();
@@ -213,6 +243,7 @@ function MultipleChoiceInput({
       value={value || ""}
       onValueChange={(newValue) => onChange(newValue || null)}
       className="flex flex-col gap-3"
+      disabled={disabled}
     >
       {options.map((option, idx) => (
         <div key={idx} className="flex items-center gap-3">
@@ -233,10 +264,12 @@ function CheckboxesInput({
   question,
   value,
   onChange,
+  disabled,
 }: {
   question: FormQuestion;
   value?: string[];
   onChange: (value: string | string[] | number | Date | null) => void;
+  disabled?: boolean
 }) {
   const options = question.options || [];
   const selectedValues = value || [];
@@ -260,6 +293,7 @@ function CheckboxesInput({
             onCheckedChange={(checked) =>
               handleCheckboxChange(option, checked === true)
             }
+            disabled={disabled}
           />
           <Label
             htmlFor={`${questionKey}-${idx}`}
@@ -277,10 +311,12 @@ function DropdownInput({
   question,
   value,
   onChange,
+  disabled = false
 }: {
   question: FormQuestion;
   value?: string;
   onChange: (value: string | string[] | number | Date | null) => void;
+  disabled: boolean
 }) {
   const options = question.options || [];
 
@@ -288,6 +324,7 @@ function DropdownInput({
     <Select
       value={value || ""}
       onValueChange={(newValue) => onChange(newValue || null)}
+      disabled={disabled}
     >
       <SelectTrigger className="w-full md:w-1/2">
         <SelectValue placeholder="Select an option" />
