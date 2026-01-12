@@ -168,8 +168,12 @@ export const rolesRouter = {
     hasPermission: permProcedure
         .input(z.object({and: z.optional(z.array(z.string())), or: z.optional(z.array(z.string()))}))
         .query(({input, ctx}) => {
-            if(input.or) controlPerms.or(input.or as PermissionKey[], ctx)
-            if(input.and) controlPerms.and(input.and as PermissionKey[], ctx)
+            try {
+                if(input.or) controlPerms.or(input.or as PermissionKey[], ctx)
+                if(input.and) controlPerms.and(input.and as PermissionKey[], ctx)
+            } catch {
+                return false
+            }
 
             return true
         })

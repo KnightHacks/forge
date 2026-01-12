@@ -16,8 +16,7 @@ export default async function Roles() {
         redirect(SIGN_IN_PATH);
     }
 
-    // const isOfficer = await api.roles.hasPermission({and:["IS_OFFICER"]})
-    const isOfficer = true
+    const isOfficer = await api.roles.hasPermission({and:["IS_OFFICER"]})
     if (!isOfficer) {
         redirect("/");
     }
