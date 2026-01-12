@@ -6665,17 +6665,22 @@ export const QuestionValidator = z.object({
     "EMAIL",
     "NUMBER",
     "PHONE",
-    "INSTRUCTION",
   ]),
   options: z.array(z.string()).optional(),
   optional: z.boolean().optional(),
   min: z.number().optional(),
   max: z.number().optional(),
+  order: z.number().optional(),
+});
+
+export const InstructionValidator = z.object({
+  title: z.string().max(200),
   content: z.string().max(2000).optional(),
   imageUrl: z.string().url().optional(),
   videoUrl: z.string().url().optional(),
   imageObjectName: z.string().optional(),
   videoObjectName: z.string().optional(),
+  order: z.number().optional(),
 });
 
 export const FormSchemaValidator = z.object({
@@ -6683,9 +6688,11 @@ export const FormSchemaValidator = z.object({
   name: z.string().max(200),
   description: z.string().max(500),
   questions: z.array(QuestionValidator),
+  instructions: z.array(InstructionValidator).optional(),
 });
 
 export type FormType = z.infer<typeof FormSchemaValidator>;
+export type InstructionValidatorType = z.infer<typeof InstructionValidator>;
 
 type QuestionValidatorType = z.infer<typeof QuestionValidator>;
 export type ValidatorOptions = Omit<QuestionValidatorType, "question">;

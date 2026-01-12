@@ -3,13 +3,13 @@
 import type { z } from "zod";
 import Image from "next/image";
 
-import type { QuestionValidator } from "@forge/consts/knight-hacks";
+import type { InstructionValidator } from "@forge/consts/knight-hacks";
 import { Card } from "@forge/ui/card";
 
-type FormQuestion = z.infer<typeof QuestionValidator>;
+type FormInstruction = z.infer<typeof InstructionValidator>;
 
 interface InstructionResponseCardProps {
-  instruction: FormQuestion;
+  instruction: FormInstruction;
 }
 
 export function InstructionResponseCard({
@@ -19,7 +19,7 @@ export function InstructionResponseCard({
     <Card className="relative mt-12 flex flex-col gap-1 bg-card p-6 text-card-foreground transition-all">
       <div className="flex flex-col gap-4">
         <div className="flex items-start gap-2">
-          <h3 className="text-xl font-bold">{instruction.question}</h3>
+          <h3 className="text-xl font-bold">{instruction.title}</h3>
         </div>
       </div>
 
@@ -33,7 +33,7 @@ export function InstructionResponseCard({
         <div className="relative h-64 w-full overflow-hidden rounded-md">
           <Image
             src={instruction.imageUrl}
-            alt={instruction.question}
+            alt={instruction.title}
             fill
             className="object-contain"
           />

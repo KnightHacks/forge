@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 
-import type { QuestionValidator } from "@forge/consts/knight-hacks";
+import type { InstructionValidator } from "@forge/consts/knight-hacks";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
@@ -23,13 +23,13 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
-type FormQuestion = z.infer<typeof QuestionValidator>;
+type FormInstruction = z.infer<typeof InstructionValidator>;
 
 interface InstructionEditCardProps {
-  instruction: FormQuestion & { id: string };
-  onUpdate: (updatedInstruction: FormQuestion & { id: string }) => void;
+  instruction: FormInstruction & { id: string };
+  onUpdate: (updatedInstruction: FormInstruction & { id: string }) => void;
   onDelete: (id: string) => void;
-  onDuplicate: (instruction: FormQuestion & { id: string }) => void;
+  onDuplicate: (instruction: FormInstruction & { id: string }) => void;
   dragHandleProps?: DraggableSyntheticListeners;
 }
 
@@ -48,7 +48,7 @@ export function InstructionEditCard({
   const getUploadUrlMutation = api.forms.getUploadUrl.useMutation();
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onUpdate({ ...instruction, question: e.target.value });
+    onUpdate({ ...instruction, title: e.target.value });
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,13 +153,13 @@ export function InstructionEditCard({
     <Card
       className={cn(
         "relative flex flex-col gap-4 bg-card p-6 text-card-foreground transition-all",
-        "mt-20 border-t-4 border-t-primary shadow-lg",
+        "mt-12 border-t-4 border-t-primary shadow-lg",
       )}
     >
       {/* Title */}
       <div className="flex-1 rounded-md bg-muted/50 p-2 transition-colors focus-within:bg-muted focus-within:ring-1 focus-within:ring-primary/20">
         <Textarea
-          value={instruction.question}
+          value={instruction.title}
           onChange={handleTitleChange}
           placeholder="Instruction Title"
           className="min-h-[3rem] resize-none overflow-hidden border-none bg-transparent px-0 py-0 text-lg font-medium placeholder:text-muted-foreground focus-visible:ring-0"

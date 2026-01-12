@@ -7,9 +7,9 @@ import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 
+import { InstructionResponseCard } from "~/app/forms/[formName]/_components/instruction-response-card";
 import { QuestionResponseCard } from "~/app/forms/[formName]/_components/question-response-card";
 import { api } from "~/trpc/react";
-import { InstructionResponseCard } from "./instruction-response-card";
 
 interface FormResponderClientProps {
   formName: string;
@@ -176,9 +176,6 @@ export function FormResponderClient({
     const responseData: Record<string, unknown> = {};
 
     form.questions.forEach((question) => {
-      // Skip instructions - they don't need responses
-      if (question.type === "INSTRUCTION") return;
-
       const response = responses[question.question];
 
       // Only include non-empty responses
@@ -210,9 +207,8 @@ export function FormResponderClient({
   };
 
   const isFormValid = () => {
-    // Check if all required questions have responses (skip instructions)
+    // Check if all required questions have responses
     return form.questions.every((question) => {
-      if (question.type === "INSTRUCTION") return true; // Instructions don't need responses
       if (question.optional) return true; // Optional questions don't need validation
 
       const response = responses[question.question];
@@ -240,43 +236,72 @@ export function FormResponderClient({
           </div>
         </Card>
 
-        {/* Questions */}
+        {/* Questions and Instructions */}
         <div className="space-y-4 overflow-visible">
-          {form.questions.map((q, index) => {
-            const isInstruction = q.type === "INSTRUCTION";
-            const questionText = q.question;
-            const responseValue:
-              | string
-              | string[]
-              | number
-              | Date
-              | null
-              | undefined = responses[questionText];
-            return (
-              <div
-                key={`${questionText}-${index}`}
-                className={`duration-500 animate-in fade-in slide-in-from-bottom-4 ${isInstruction ? "mt-8" : ""}`}
-                style={{
-                  animationDelay: `${(index + 1) * 100}ms`,
-                  animationFillMode: "backwards",
-                }}
-              >
-                {isInstruction ? (
-                  <InstructionResponseCard instruction={q} />
-                ) : (
-                  <QuestionResponseCard
-                    question={q}
-                    value={responseValue ?? null}
-                    onChange={(
-                      value: string | string[] | number | Date | null,
-                    ) => {
-                      handleResponseChange(questionText, value);
-                    }}
-                  />
-                )}
-              </div>
+          {(() => {
+            /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
+            // Combine questions and instructions, sort by order
+            type QuestionWithOrder = (typeof form.questions)[number] & {
+              itemType: "question";
+            };
+            interface InstructionWithOrder {
+              itemType: "instruction";
+              title: string;
+              content?: string;
+              imageUrl?: string;
+              videoUrl?: string;
+              order?: number;
+            }
+
+            const questionsWithType: QuestionWithOrder[] = form.questions.map(
+              (q) => ({
+                ...q,
+                itemType: "question" as const,
+              }),
             );
-          })}
+
+            const instructionsWithType: InstructionWithOrder[] = (
+              (form as any).instructions || []
+            ).map((inst: any) => ({
+              ...inst,
+              itemType: "instruction" as const,
+            }));
+
+            const allItems = [
+              ...questionsWithType,
+              ...instructionsWithType,
+            ].sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+
+            return allItems.map((item, index) => {
+              const isInstruction = item.itemType === "instruction";
+
+              return (
+                <div
+                  key={`${isInstruction ? "inst" : "q"}-${index}`}
+                  className={`duration-500 animate-in fade-in slide-in-from-bottom-4 ${isInstruction ? "mt-8" : ""}`}
+                  style={{
+                    animationDelay: `${(index + 1) * 100}ms`,
+                    animationFillMode: "backwards",
+                  }}
+                >
+                  {isInstruction ? (
+                    <InstructionResponseCard instruction={item as any} />
+                  ) : (
+                    <QuestionResponseCard
+                      question={item}
+                      value={responses[item.question] ?? null}
+                      onChange={(
+                        value: string | string[] | number | Date | null,
+                      ) => {
+                        handleResponseChange(item.question, value);
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            });
+            /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
+          })()}
         </div>
 
         {submitError && (

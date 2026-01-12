@@ -130,15 +130,15 @@ export const formsRouter = {
       const formData = form.formData as FormType;
 
       // Regenerate presigned URLs for any media that has objectNames
-      const questionsWithFreshUrls = await regenerateMediaUrls(
-        formData.questions,
+      const instructionsWithFreshUrls = await regenerateMediaUrls(
+        formData.instructions,
       );
 
       return {
         ...retForm,
         formData: {
           ...formData,
-          questions: questionsWithFreshUrls,
+          instructions: instructionsWithFreshUrls,
         },
         zodValidator: jsonSchemaToZod(form.formValidatorJson as JSONSchema7),
       };
