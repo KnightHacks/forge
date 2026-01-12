@@ -32,7 +32,7 @@ import { JudgeSession } from "@forge/db/schemas/auth";
 import { env } from "./env";
 import { minioClient } from "./minio/minio-client";
 import { TRPCError } from "@trpc/server";
-import { Roles } from "@forge/db/schemas/knight-hacks";
+import { Roles } from "@forge/db/schemas/auth";
 
 const DISCORD_ADMIN_ROLE_ID = IS_PROD
   ? (PROD_DISCORD_ADMIN_ROLE_ID as string)

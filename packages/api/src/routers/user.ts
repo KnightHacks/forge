@@ -7,7 +7,7 @@ import type { APIGuildMember} from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 import type { PermissionIndex, PermissionKey} from "@forge/consts/knight-hacks";
 import { PERMISSIONS } from "@forge/consts/knight-hacks";
-import { Permissions, Roles } from "@forge/db/schemas/knight-hacks";
+import { Permissions, Roles } from "@forge/db/schemas/auth";
 import { inArray } from "@forge/db";
 import { db } from "@forge/db/client";
 import { eq, sql } from "@forge/db";

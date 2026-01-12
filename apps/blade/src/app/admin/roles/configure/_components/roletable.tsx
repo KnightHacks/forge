@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 "use client"
 
-import { getPermsAsList } from "../../../../lib/utils";
 import { Button } from "@forge/ui/button"
 import { Dialog, DialogContent, DialogTrigger } from "@forge/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@forge/ui/dropdown-menu"
@@ -12,6 +11,7 @@ import { api } from "~/trpc/react";
 import type { APIRole } from "discord-api-types/v10";
 import RoleEdit from "./roleedit";
 import { useEffect, useState } from "react";
+import { getPermsAsList } from "~/lib/utils";
 
 export default function RoleTable()
 {

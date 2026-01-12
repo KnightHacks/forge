@@ -23,7 +23,7 @@ import {
 } from "./utils";
 import { PermissionKey, PERMISSIONS } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
-import { Permissions, Roles } from "@forge/db/schemas/knight-hacks";
+import { Permissions, Roles } from "@forge/db/schemas/auth";
 import { eq, sql } from "@forge/db";
 
 /**
