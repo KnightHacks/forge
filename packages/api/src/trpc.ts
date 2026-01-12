@@ -159,21 +159,6 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   });
 });
 
-export const officerProcedure = protectedProcedure.use(
-  async ({ ctx, next }) => {
-    const isOfficer = await userIsOfficer(ctx.session.user);
-    if (!isOfficer) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-    return next({
-      ctx: {
-        // infers the `session` as non-nullable
-        session: { ...ctx.session, user: ctx.session.user },
-      },
-    });
-  },
-);
-
 export const permProcedure = protectedProcedure.use(
   async ({ctx, next}) => {
     const permRows = await db.select({

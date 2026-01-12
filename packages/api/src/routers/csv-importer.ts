@@ -6,7 +6,8 @@ import { eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Challenges, Submissions, Teams } from "@forge/db/schemas/knight-hacks";
 
-import { officerProcedure } from "../trpc";
+import { permProcedure } from "../trpc";
+import { controlPerms } from "../utils";
 
 interface CsvImporterRecord {
   "Opt-In Prize": string | null;
@@ -23,14 +24,16 @@ interface CsvImporterRecord {
 }
 
 export const csvImporterRouter = {
-  import: officerProcedure
+  import: permProcedure
     .input(
       z.object({
         hackathon_id: z.string(),
         csvContent: z.string(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      controlPerms.and(["IS_OFFICER"], ctx);
+
       try {
         // Get raw records
         const rawRecords = parse(input.csvContent, {

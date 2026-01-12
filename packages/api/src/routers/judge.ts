@@ -17,7 +17,8 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
-import { judgeProcedure, officerProcedure, publicProcedure } from "../trpc";
+import { judgeProcedure, permProcedure, publicProcedure } from "../trpc";
+import { controlPerms } from "../utils";
 
 const SESSION_TTL_HOURS = 8;
 
@@ -554,7 +555,9 @@ export const judgeRouter = {
     }),
 
   // Admin: Get all unique rooms with session counts
-  getRoomsWithSessionCounts: officerProcedure.query(async () => {
+  getRoomsWithSessionCounts: permProcedure.query(async ({ ctx }) => {
+    controlPerms.and(["IS_OFFICER"], ctx);
+
     const now = new Date();
     const rooms = await db
       .select({
@@ -570,9 +573,11 @@ export const judgeRouter = {
   }),
 
   // Admin: Delete all sessions for a specific room
-  deleteSessionsByRoom: officerProcedure
+  deleteSessionsByRoom: permProcedure
     .input(z.object({ roomName: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      controlPerms.and(["IS_OFFICER"], ctx);
+
       const result = await db
         .delete(JudgeSession)
         .where(eq(JudgeSession.roomName, input.roomName));
