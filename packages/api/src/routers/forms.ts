@@ -1,6 +1,6 @@
 import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
-import { desc, eq, lt } from "drizzle-orm";
+import { and, desc, eq, lt, sql } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -286,19 +286,57 @@ export const formsRouter = {
 
   // check if current user already submitted to this form
   getUserResponse: protectedProcedure
-    .input(z.object({ form: z.string() }))
+    .input(z.object({ form: z.string().optional(), responseId: z.string().optional() }))
     .query(async ({ input, ctx }) => {
       const userId = ctx.session.user.id;
 
-      const existing = await db.query.FormResponse.findFirst({
-        where: (t, { eq, and }) =>
-          and(eq(t.form, input.form), eq(t.userId, userId)),
-      });
+      // return response by id
+      const responseId = input.responseId
+      if (responseId){
+        return await db.select({
+          submittedAt: FormResponse.createdAt,
+          responseData: FormResponse.responseData,
+          formName: FormsSchemas.name,
+          formSlug: FormsSchemas.slugName,
+          id: FormResponse.id,
+          hasSubmitted: sql<boolean>`true`,
+        })
+        .from(FormResponse)
+        .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
+        .where(and(eq(FormResponse.id, responseId), eq(FormResponse.userId, userId)));
+      }
 
-      return {
-        hasSubmitted: !!existing,
-        submittedAt: existing?.createdAt ?? null,
-      };
+      // return all responses all forms
+      const form = input.form;
+      if (!form)
+      {
+        return await db.select({
+          submittedAt: FormResponse.createdAt,
+          responseData: FormResponse.responseData,
+          formName: FormsSchemas.name,
+          formSlug: FormsSchemas.slugName,
+          id: FormResponse.id,
+          hasSubmitted: sql<boolean>`true`,
+        })
+        .from(FormResponse)
+        .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
+        .where(eq(FormResponse.userId, userId))
+        .orderBy(desc(FormResponse.createdAt));
+      }
+
+      // return all responses of form
+      return await db.select({
+        submittedAt: FormResponse.createdAt,
+        responseData: FormResponse.responseData,
+        formName: FormsSchemas.name,
+        formSlug: FormsSchemas.slugName,
+        id: FormResponse.id,
+        hasSubmitted: sql<boolean>`true`,
+      })
+      .from(FormResponse)
+      .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
+      .where(and(eq(FormResponse.userId, userId), eq(FormsSchemas.name, form)))
+      .orderBy(desc(FormResponse.createdAt));
     }),
 
   // Generate presigned upload URL for direct MinIO upload
