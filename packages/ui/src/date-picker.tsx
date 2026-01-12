@@ -11,9 +11,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 interface DatePickerProps {
   value?: Date;
   onChange?: (date: Date | undefined) => void;
+  disabled?: boolean
 }
 
-export function DatePicker({ value, onChange }: DatePickerProps) {
+export function DatePicker({ value, onChange, disabled = false }: DatePickerProps) {
   const [date, setDate] = React.useState<Date | undefined>(value);
 
   React.useEffect(() => {
@@ -32,6 +33,7 @@ export function DatePicker({ value, onChange }: DatePickerProps) {
           variant="outline"
           data-empty={!date}
           className="w-[280px] justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
+          disabled={disabled}
         >
           <CalendarIcon />
           <span className="px-4">

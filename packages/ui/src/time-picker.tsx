@@ -21,6 +21,7 @@ interface TimePickerProps {
   className?: string;
   use12Hour?: boolean;
   label?: string;
+  disabled?: boolean;
 }
 
 export function TimePicker({
@@ -30,6 +31,7 @@ export function TimePicker({
   className,
   use12Hour = true,
   label,
+  disabled = false,
 }: TimePickerProps) {
   const [hours, setHours] = React.useState<string>("");
   const [minutes, setMinutes] = React.useState<string>("");
@@ -199,6 +201,7 @@ export function TimePicker({
             placeholder="HH"
             className="text-center"
             maxLength={2}
+            disabled={disabled}
           />
         </InputGroup>
 
@@ -213,11 +216,12 @@ export function TimePicker({
             placeholder="MM"
             className="text-center"
             maxLength={2}
+            disabled={disabled}
           />
         </InputGroup>
 
         {use12Hour && (
-          <Select value={ampm} onValueChange={handleAmpmChange}>
+          <Select value={ampm} onValueChange={handleAmpmChange} disabled={disabled}>
             <SelectTrigger className="w-20">
               <SelectValue placeholder="AM" />
             </SelectTrigger>
