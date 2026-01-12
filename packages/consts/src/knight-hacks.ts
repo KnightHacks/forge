@@ -272,7 +272,9 @@ export const PERMISSIONS = {
   EMAIL_PORTAL: 14,
   READ_FORMS: 15,
   READ_FORM_RESPONSES: 16,
-  EDIT_FORMS: 17
+  EDIT_FORMS: 17,
+  ASSIGN_ROLES: 18,
+  CONFIGURE_ROLES: 19
 } as const;
 
 export const PERMISSION_DATA:Record<PermissionKey,PermissionDataObj> = {
@@ -321,15 +323,15 @@ export const PERMISSION_DATA:Record<PermissionKey,PermissionDataObj> = {
     desc: "Allows the user to check members into club events."
   },
   READ_HACK_EVENT: {
-    name: "Read Club Events",
+    name: "Read Hackathon Events",
     desc: "Grants access to hackathon event data, such as attendance."
   },
   EDIT_HACK_EVENT: {
-    name: "Edit Club Events",
+    name: "Edit Hackathon Events",
     desc: "Allows creating, editing, or deleting hackathon events."
   },
   CHECKIN_HACK_EVENT: {
-    name: "Club Event Check-in",
+    name: "Hackathon Event Check-in",
     desc: "Allows the user to check hackers into hackathon events, including the primary check-in."
   },
   EMAIL_PORTAL: {
@@ -347,6 +349,14 @@ export const PERMISSION_DATA:Record<PermissionKey,PermissionDataObj> = {
   EDIT_FORMS: {
     name: "Edit Forms",
     desc: "Allows creating, editing, or deleting forms."
+  },
+  ASSIGN_ROLES: {
+    name: "Assign Roles",
+    desc: "Allows assigning or removing roles to Blade users."
+  },
+  CONFIGURE_ROLES: {
+    name: "Edit Forms",
+    desc: "Allows creating, editing, or deleting roles."
   }
 } as const satisfies Record<PermissionKey,PermissionDataObj>;
 

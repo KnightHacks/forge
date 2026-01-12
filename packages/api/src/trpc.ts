@@ -21,6 +21,10 @@ import {
   userHasFullAdmin,
   userIsOfficer,
 } from "./utils";
+import { PermissionKey, PERMISSIONS } from "@forge/consts/knight-hacks";
+import { db } from "@forge/db/client";
+import { Permissions, Roles } from "@forge/db/schemas/knight-hacks";
+import { eq, sql } from "@forge/db";
 
 /**
  * 1. CONTEXT
@@ -199,6 +203,41 @@ export const officerProcedure = protectedProcedure.use(
     });
   },
 );
+
+export const permProcedure = protectedProcedure.use(
+  async ({ctx, next}) => {
+    const permRows = await db.select({
+        permissions: Roles.permissions
+    })
+    .from(Roles)
+    .innerJoin(Permissions, eq(Roles.id, Permissions.roleId))
+    .where(sql`cast(${Permissions.userId} as text) = ${ctx.session.user.id}`)
+    
+    const permissionsBits = new Array(Object.keys(PERMISSIONS).length).fill(false) as boolean[];
+
+    permRows.forEach((v) => {
+        for (let i = 0; i < v.permissions.length; i++) {
+            if(v.permissions.at(i) == "1")
+                permissionsBits[i] = true
+        }
+    })
+
+    const permissionsMap = Object.keys(PERMISSIONS).reduce((accumulator, key) => {  
+        const index = PERMISSIONS[key as PermissionKey];
+
+        accumulator[key as PermissionKey] = permissionsBits[index] ?? false;
+
+        return accumulator;
+    }, {} as Record<PermissionKey, boolean>)
+
+    return next({
+      ctx: {
+        // infers the `session` as non-nullable
+        session: { ...ctx.session, permissions: permissionsMap },
+      },
+    });
+  }
+)
 
 export const judgeProcedure = publicProcedure.use(async ({ ctx, next }) => {
   let isAdmin;

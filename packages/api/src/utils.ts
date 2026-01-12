@@ -138,7 +138,6 @@ export const getUserPermissions = async (
   }
 };
 
-
 export const parsePermissions = async (discordUserId: string) => {
     const guildMember = (await discord.get(
       Routes.guildMember(KNIGHTHACKS_GUILD_ID, discordUserId),
@@ -180,16 +179,33 @@ export const parsePermissions = async (discordUserId: string) => {
     return permissionsMap;
   }
 
-export const controlPerms = async (perms: PermissionKey[], discordUserId: string) => {
-  const userPerms = await parsePermissions(discordUserId)
+// Mock tRPC context for type-safety
+interface Context {
+  session: {
+    permissions: Record<PermissionKey, boolean>
+  }
+}
 
-  perms.forEach((v) => {
-    if(!userPerms[v]) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-  })
+export const controlPerms = {
+  // Returns true if the user has any required permission
+  or: (perms: PermissionKey[], ctx:Context) => {
+    let flag = false
+    for(const p of perms)
+        if(ctx.session.permissions[p])
+            flag = true
 
-  return true
+    if(!flag) throw new TRPCError({code: "UNAUTHORIZED"})
+    return true
+  },
+
+  // Returns true only if the user has ALL required permissions
+  and: (perms: PermissionKey[], ctx:Context) => {
+    for(const p of perms)
+        if(!ctx.session.permissions[p])
+            throw new TRPCError({code: "UNAUTHORIZED"})
+
+    return true
+  }
 }
 
 

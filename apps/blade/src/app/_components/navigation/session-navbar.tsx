@@ -18,7 +18,8 @@ export async function SessionNavbar() {
   const hasCheckIn = await api.auth.hasCheckIn();
   const hasFullAdmin = await api.auth.hasFullAdmin();
 
-  const perms = await api.user.getPermissions();
+  const perms = await api.roles.getPermissions();
+  console.log(perms)
 
   let permString = ""
   Object.values(perms).forEach((v)=>{

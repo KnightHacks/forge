@@ -14,12 +14,15 @@ import { z, ZodBoolean } from "zod";
 import { getPermsAsList } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
-export default function RoleEdit({oldRole}:{oldRole?:{id:string, permissions:string|null, discordRoleId: string}})
+export default function RoleEdit({oldRole}:{oldRole?:{id:string, name:string, permissions:string|null, discordRoleId: string}})
 {
+    const [name, setName] = useState(oldRole?.name || "")
     const [roleID, setRoleID] = useState(oldRole?.discordRoleId || "")
+
     const [role, setRole] = useState<APIRole | null>()
     const [loadingRole, setLoadingRole] = useState(false)
-    const [isDupe, setIsDupe] = useState(false)
+    const [isDupeID, setIsDupeID] = useState(false)
+    const [isDupeName, setIsDupeName] = useState(false)
 
     const [permString, setPermString] = useState("0".repeat(Object.keys(PERMISSIONS).length))
 
@@ -57,7 +60,7 @@ export default function RoleEdit({oldRole}:{oldRole?:{id:string, permissions:str
     }, [])
     
     useEffect(()=>{
-        if(roles) setIsDupe(oldRole ? false : roles.find((v)=>(v.discordRoleId == roleID)) != undefined)
+        if(roles) setIsDupeID(oldRole ? false : roles.find((v)=>(v.discordRoleId == roleID)) != undefined)
 
         async function doGetRole() {
             setLoadingRole(true)
@@ -66,14 +69,17 @@ export default function RoleEdit({oldRole}:{oldRole?:{id:string, permissions:str
         }
 
         void doGetRole()
-    },[roleID, roles])
+    },[roleID])
+
+    useEffect(()=>{
+        if(roles) setIsDupeName(oldRole && oldRole.name == name ? false : roles.find((v)=>(v.name == name)) != undefined)
+    },[name])
 
     function updateString(values: z.infer<typeof roleSchema>) {
         const perms = Object.entries(values)
         console.log(perms)
         let newString = ""
         perms.forEach((v)=>{
-            const i = PERMISSIONS[v[0] as PermissionKey]
             if(v[1])
                 newString += "1"
             else
@@ -86,9 +92,9 @@ export default function RoleEdit({oldRole}:{oldRole?:{id:string, permissions:str
     function sendRole(str: string) {
         try {
             if(oldRole)
-                updateLinkMutation.mutate({id: oldRole.id, roleId: roleID, permissions: str})
+                updateLinkMutation.mutate({name: name, id: oldRole.id, roleId: roleID, permissions: str})
             else
-                createLinkMutation.mutate({roleId: roleID, permissions: str})
+                createLinkMutation.mutate({name: name, roleId: roleID, permissions: str})
             location.reload()
         } catch (error) {
             toast((error as Error).message)
@@ -98,10 +104,19 @@ export default function RoleEdit({oldRole}:{oldRole?:{id:string, permissions:str
 
     return(
         <div className="flex flex-col gap-4">
-            <h2 className="text-xl font-bold mb-2">{`${oldRole ? "Edit" : "Link"} Role`}</h2>
+            <h2 className="text-xl font-bold mb-2">{`${oldRole ? "Edit" : "Create"} Role`}</h2>
+            <div className={`flex flex-col gap-2`}>
+                <Label htmlFor="name">Role Name <span className="text-red-700">*</span></Label>
+                <Input value={name} onChange={(e)=>setName(e.target.value)} id="name" placeholder="ex. Officer" className={`col-span-2 ${isDupeName && "bg-red-900/25"}`}/>
+                {isDupeName &&
+                    <div className="flex flex-row gap-1">
+                        <X className="text-red-700 size-4 my-auto"/>
+                        <div className="text-red-700 text-sm font-medium my-auto">There is already a role with this name.</div>
+                    </div>}
+            </div>
             <div className={`flex flex-col gap-2 ${oldRole && "hidden"}`}>
-                <Label htmlFor="roleId">Discord Role ID</Label>
-                <Input disabled={oldRole != undefined} value={roleID} onChange={(e)=>setRoleID(e.target.value)} id="roleId" placeholder="ex. 1151884200069320805" className="col-span-2 font-mono"/>
+                <Label htmlFor="roleId">Discord Role ID <span className="text-red-700">*</span></Label>
+                <Input value={roleID} disabled={oldRole != undefined} onChange={(e)=>setRoleID(e.target.value)} id="roleId" placeholder="ex. 1151884200069320805" className="col-span-2 font-mono"/>
             </div>
             {loadingRole || !roles ? 
             <div className="flex flex-col gap-2">
@@ -111,13 +126,13 @@ export default function RoleEdit({oldRole}:{oldRole?:{id:string, permissions:str
             role ? 
             <div className="flex flex-col gap-2">
                 <div className={`text-sm font-medium text-muted-foreground ${oldRole && "hidden"}`}>
-                    {isDupe ? 
+                    {isDupeID ? 
                     <div className="flex flex-row gap-1">
                         <X className="text-red-700 size-4 my-auto"/>
                         <div className="text-red-700 text-sm font-medium my-auto">This role is already linked.</div>
                     </div> : "The following role will be linked:"}
                 </div>
-                <div className={`grid grid-cols-4 border-y p-2 rounded-lg ${isDupe && "bg-red-900/25"}`}>
+                <div className={`grid grid-cols-4 border-y p-2 rounded-lg ${isDupeID && "bg-red-900/25"}`}>
                     <div className="col-span-3">
                         <div className="border rounded-full py-1 px-2 w-fit max-w-full flex flex-row gap-1 my-auto" style={{borderColor: `#${role.color.toString(16)}`}}>
                             <div className="size-3 mr-1 rounded-full my-auto" style={{backgroundColor: `#${role.color.toString(16)}`}}/>
@@ -163,7 +178,7 @@ export default function RoleEdit({oldRole}:{oldRole?:{id:string, permissions:str
             </div>
             <div className="flex flex-row justify-between">
                 <div className="my-auto text-sm font-medium">{`${getPermsAsList(permString).length} permission(s) applied`}</div>
-                <Button disabled={(!role) || loadingRole || isDupe} onClick={()=>sendRole(permString)} className="my-auto flex flex-row gap-1">
+                <Button disabled={!role || name == "" || loadingRole || isDupeID || isDupeName} onClick={()=>sendRole(permString)} className="my-auto flex flex-row gap-1">
                     {oldRole ? <Pencil className="size-4 my-auto"/> : <Link className="size-4 my-auto"/>}
                     {`${oldRole ? "Update" : "Create"} Link`}
                 </Button>

@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
-import { pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, pgTableCreator, primaryKey, uuid } from "drizzle-orm/pg-core";
 
-import { Member } from "./knight-hacks";
+import { Member, Permissions, Roles } from "./knight-hacks";
 
 const createTable = pgTableCreator((name) => `auth_${name}`);
 
@@ -25,7 +25,27 @@ export const User = createTable("user", (t) => ({
 export const UserRelations = relations(User, ({ many, one }) => ({
   accounts: many(Account),
   member: one(Member),
+  permissions: many(Permissions, {
+    relationName: "permissionRel"
+  })
 }));
+
+export const RoleRelations = relations(Roles, ({ many }) => ({
+  permissions: many(Permissions, {
+    relationName: "permissionRel"
+  })
+}));
+
+export const PermissionRelations = relations(Permissions, ({one}) => ({
+  role: one(Roles, {
+    fields: [Permissions.roleId],
+    references: [Roles.id]
+  }),
+  user: one(User, {
+    fields: [Permissions.userId],
+    references: [User.id]
+  })
+}))
 
 export const Account = createTable(
   "account",

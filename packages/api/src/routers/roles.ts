@@ -2,19 +2,21 @@ import { TRPCError } from "@trpc/server";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 import { env } from "../env";
-import { DEV_KNIGHTHACKS_GUILD_ID, PROD_KNIGHTHACKS_GUILD_ID } from "@forge/consts/knight-hacks";
+import { DEV_KNIGHTHACKS_GUILD_ID, PermissionKey, PERMISSIONS, PROD_KNIGHTHACKS_GUILD_ID } from "@forge/consts/knight-hacks";
 import { Routes } from "discord-api-types/v10";
 import type { APIRole } from "discord-api-types/v10";
-import { adminProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, permProcedure, protectedProcedure } from "../trpc";
 import {
   discord,
   log,
   getPermsAsList,
-  controlPerms
+  hasPermission,
+  controlPerms,
 } from "../utils";
 import { db } from "@forge/db/client";
-import { Roles } from "@forge/db/schemas/knight-hacks";
-import { eq } from "@forge/db";
+import { Permissions, Roles } from "@forge/db/schemas/knight-hacks";
+import { eq, sql } from "@forge/db";
+import { User } from "@forge/db/schemas/auth";
 
 const KNIGHTHACKS_GUILD_ID =
   env.NODE_ENV === "production"
@@ -22,21 +24,24 @@ const KNIGHTHACKS_GUILD_ID =
     : (DEV_KNIGHTHACKS_GUILD_ID as string);
 
 export const rolesRouter = {
+    // ROLES
+
     createRoleLink: adminProcedure
-        .input(z.object({ roleId: z.string(), permissions: z.string()}))
+        .input(z.object({ name: z.string(), roleId: z.string(), permissions: z.string()}))
         .mutation(async ({ctx, input}) => {
             // check for duplicate discord role
             const dupe = await db.query.Roles.findFirst({where: (t, {eq}) => eq(t.discordRoleId, input.roleId)})
             if(dupe) throw new TRPCError({message: "This role is already linked.", code: "CONFLICT"})
 
             await db.insert(Roles).values({
+                name: input.name,
                 discordRoleId: input.roleId,
                 permissions: input.permissions
             })
 
             await log({
-                title: `Created Role Link`,
-                message: `A Role Link for the <@&${input.roleId}> role has been created.
+                title: `Created Role`,
+                message: `The **${input.name}** role has been created, linked to <@&${input.roleId}>.
                 \n**Permissions:**\n${getPermsAsList(input.permissions).join("\n")}`,
                 color: "blade_purple",
                 userId: ctx.session.user.discordUserId,
@@ -44,7 +49,7 @@ export const rolesRouter = {
     }),
 
     updateRoleLink: adminProcedure
-        .input(z.object({ id: z.string(), roleId: z.string(), permissions: z.string()}))
+        .input(z.object({ name: z.string(), id: z.string(), roleId: z.string(), permissions: z.string()}))
         .mutation(async ({ctx, input}) => {
             // check for existing role
             const exist = await db.query.Roles.findFirst({where: (t, {eq}) => eq(t.id, input.id)})
@@ -54,11 +59,12 @@ export const rolesRouter = {
             const dupe = await db.query.Roles.findFirst({where: (t, {and, eq, not}) => and(not(eq(t.id, input.id)), eq(t.discordRoleId, input.roleId))})
             if(dupe) throw new TRPCError({message: "This role is already linked.", code: "CONFLICT"})
 
-            await db.update(Roles).set({discordRoleId: input.roleId, permissions: input.permissions}).where(eq(Roles.id, input.id))
+            await db.update(Roles).set({name: input.name, discordRoleId: input.roleId, permissions: input.permissions}).where(eq(Roles.id, input.id))
 
             await log({
-                title: `Updated Role Link`,
-                message: `The Role Link for the <@&${input.roleId}> role has been updated.
+                title: `Updated Role`,
+                message: `The **${exist.name}** Role (<@&${input.roleId}>) role has been updated.
+                \n**Name:** ${exist.name} -> ${input.name}
                 \n**Original Perms:**\n${getPermsAsList(exist.permissions).join("\n")}
                 \n**New Perms:**\n${getPermsAsList(input.permissions).join("\n")}`,
                 color: "blade_purple",
@@ -76,8 +82,8 @@ export const rolesRouter = {
             await db.delete(Roles).where(eq(Roles.id, input.id))
 
             await log({
-                title: `Deleted Role Link`,
-                message: `The Role Link for the <@&${exist.discordRoleId}> role has been deleted.`,
+                title: `Deleted Role`,
+                message: `The **${exist.name}** Role (<@&${exist.discordRoleId}>) role has been deleted.`,
                 color: "uhoh_red",
                 userId: ctx.session.user.discordUserId,
             });
@@ -125,10 +131,47 @@ export const rolesRouter = {
             return (await discord.get(`/guilds/${KNIGHTHACKS_GUILD_ID}/roles/member-counts`) as Record<string, number>)
     }),
 
-    testPermRole: protectedProcedure
-        .query(async ({ctx}) => {
-            await controlPerms(["READ_MEMBERS", "EDIT_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx.session.user.discordUserId)
+    // PERMS
 
-            return "Successful test!"
+    // returnes the bitwise OR'd permissions for the given user
+    // if no user is passed, get the current context user
+    getPermissions: protectedProcedure
+        .input(z.optional(z.object({userId: z.string()})))
+        .query(async ({ctx, input}) => {
+            const permRows = await db.select({
+                permissions: Roles.permissions
+            })
+            .from(Roles)
+            .innerJoin(Permissions, eq(Roles.id, Permissions.roleId))
+            .where(sql`cast(${Permissions.userId} as text) = ${input ? input.userId : ctx.session.user.id}`)
+            
+            const permissionsBits = new Array(Object.keys(PERMISSIONS).length).fill(false) as boolean[];
+
+            permRows.forEach((v) => {
+                for (let i = 0; i < v.permissions.length; i++) {
+                    if(v.permissions.at(i) == "1")
+                        permissionsBits[i] = true
+                }
+            })
+
+            const permissionsMap = Object.keys(PERMISSIONS).reduce((accumulator, key) => {  
+                const index = PERMISSIONS[key as PermissionKey];
+        
+                accumulator[key as PermissionKey] = permissionsBits[index] ?? false;
+        
+                return accumulator;
+            }, {} as Record<PermissionKey, boolean>)
+
+            return permissionsMap
+        }),
+
+    hasPermission: permProcedure
+        .input(z.object({and: z.optional(z.array(z.string())), or: z.optional(z.array(z.string()))}))
+        .query(({input, ctx}) => {
+            if(input.or) controlPerms.or(input.or as PermissionKey[], ctx)
+            if(input.and) controlPerms.and(input.and as PermissionKey[], ctx)
+
+            return true
         })
+
 } satisfies TRPCRouterRecord

@@ -51,7 +51,7 @@ export default function RoleTable()
             <TableHeader className="w-full text-left">
                 <TableRow>
                     <TableHead>Role Name</TableHead>
-                    <TableHead>Discord ID</TableHead>
+                    <TableHead>Discord Role</TableHead>
                     <TableHead>Permissions</TableHead>
                     <TableHead>Members</TableHead>
                     <TableHead className="text-center">Edit</TableHead>
@@ -64,14 +64,24 @@ export default function RoleTable()
                         return (
                         <TableRow id={"role"+i} className="">
                             <TableCell>
+                                <div className="font-medium text-base">{v.name}</div>
+                            </TableCell>
+                            <TableCell>
                                 {
                                     // the linter is just wrong, this value can absolutely be pending
                                     discordRolesQ.status as ("error" | "success" | "pending") == "pending" ?
                                     <Loader2 className="animate-spin my-auto"/>
-                                    : role ? 
-                                    <div className="border rounded-full py-1 px-2 w-fit flex flex-row gap-1" style={{borderColor: `#${role.color.toString(16)}`}}>
-                                        <div className="size-3 mr-1 rounded-full my-auto" style={{backgroundColor: `#${role.color.toString(16)}`}}/>
-                                        <div className="truncate font-medium">{role.name}</div>
+                                    : role ?
+                                    <div className="flex flex-row gap-2">
+                                        <button type="button" tabIndex={0} onClick={()=>{void navigator.clipboard.writeText(v.discordRoleId); setCopyConfirm(i); toast(`Copied "${v.discordRoleId}" to clipboard!`)}} 
+                                        className={`text-muted-foreground cursor-pointer`}>
+                                            {copyConfirm == i ? <Check className="size-4 my-auto"/> : <Copy className="size-4 my-auto"/>}
+                                        </button>
+                                        <div className="border rounded-full py-1 px-2 w-fit flex flex-row gap-1" style={{borderColor: `#${role.color.toString(16)}`}}>
+                                            <div className="size-3 mr-1 rounded-full my-auto" style={{backgroundColor: `#${role.color.toString(16)}`}}/>
+                                            <div className="truncate font-medium">{role.name}</div>
+                                        </div>
+                                        
                                     </div>
                                     :
                                     <div className="flex flex-row gap-1 text-red-700 ">
@@ -79,13 +89,6 @@ export default function RoleTable()
                                         <div className="font-medium my-auto">Not Found</div>
                                     </div>
                                 }
-                            </TableCell>
-                            <TableCell>
-                                <button type="button" tabIndex={0} onClick={()=>{void navigator.clipboard.writeText(v.discordRoleId); setCopyConfirm(i); toast(`Copied "${v.discordRoleId}" to clipboard!`)}} 
-                                className={`text-muted-foreground ${copyConfirm == i && "bg-muted border-muted-foreground"} hover:bg-muted hover:text-white hover:border-white border rounded-full cursor-pointer py-1 px-2 w-fit flex flex-row gap-1`}>
-                                    {copyConfirm == i ? <Check className="size-4 my-auto"/> : <Copy className="size-4 my-auto"/>}
-                                    <div className="ml-1 truncate font-mono">{`${v.discordRoleId}`}</div>
-                                </button>
                             </TableCell>
                             <TableCell>
                                 <DropdownMenu>

@@ -122,8 +122,11 @@ export default async function Admin() {
                     <CardTitle className="text-center">Role Manager</CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-wrap items-center justify-center gap-4">
-                    <Link href="/admin/roles">
+                    <Link href="/admin/roles/configure">
                       <Button>Configure Roles</Button>
+                    </Link>
+                    <Link href="/admin/roles/manage">
+                      <Button>Manage Role Ownership</Button>
                     </Link>
                   </CardContent>
                 </Card>
