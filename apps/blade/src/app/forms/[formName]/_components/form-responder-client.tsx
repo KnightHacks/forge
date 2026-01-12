@@ -103,7 +103,7 @@ export function FormResponderClient({
   const form = formQuery.data.formData;
   const isDuesOnly = formQuery.data.duesOnly;
   const allowResubmission = formQuery.data.allowResubmission;
-  const hasAlreadySubmitted = existingResponseQuery.data?.hasSubmitted ?? false;
+  const hasAlreadySubmitted = existingResponseQuery.data?.length !== 0;
 
   // BRO DID NOT PAY DUES!!!
   if (isDuesOnly && !hasPaidDues) {
