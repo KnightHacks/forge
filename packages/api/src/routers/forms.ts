@@ -24,7 +24,19 @@ import {
 
 import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
-import { generateJsonSchema, log, regenerateMediaUrls } from "../utils";
+import {
+  controlPerms,
+  generateJsonSchema,
+  log,
+  regenerateMediaUrls,
+} from "../utils";
+
+interface FormSchemaRow {
+  name: string;
+  createdAt: Date;
+  formData: FormData;
+  formValidatorJson: JSONSchema7;
+}
 
 export const formsRouter = {
   createForm: adminProcedure
@@ -38,7 +50,9 @@ export const formsRouter = {
         formValidatorJson: true,
       }).extend({ formData: FormSchemaValidator }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["EDIT_FORMS"], ctx);
+
       const jsonSchema = generateJsonSchema(input.formData);
 
       const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
