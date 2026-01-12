@@ -549,9 +549,9 @@ export const FormSchemaSchema = createInsertSchema(FormsSchemas);
 export const FormResponse = createTable("form_response", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   form: t
-    .varchar({ length: 255 })
+    .uuid()
     .notNull()
-    .references(() => FormsSchemas.name),
+    .references(() => FormsSchemas.id),
   userId: t
     .uuid()
     .notNull()
