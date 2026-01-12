@@ -24,6 +24,20 @@ import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { generateJsonSchema, regenerateMediaUrls } from "../utils";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormResponseCallBack = (userId: string, response: any) => undefined;
+
+/**
+ Example form call back handler, please reference :pray:
+ *const handle_goated_form_response = ((userId: string, response: { answer: string }) => {
+ *	console.log(userId, response);
+ *}) satisfies FormResponseCallBack;
+*/
+
+const handleCallbacks: Record<string, FormResponseCallBack> = {
+  //"goated-form": handle_goated_form_response,
+};
+
 export const formsRouter = {
   createForm: adminProcedure
     .input(
@@ -256,6 +270,18 @@ export const formsRouter = {
           message: "Form response failed form validation",
           code: "BAD_REQUEST",
         });
+      }
+
+      const handler = handleCallbacks[form.slugName];
+      if (handler) {
+        try {
+          handler(userId, input.responseData);
+        } catch {
+          throw new TRPCError({
+            message: "Form response failed form validation",
+            code: "BAD_REQUEST",
+          });
+        }
       }
 
       await db.insert(FormResponse).values({
