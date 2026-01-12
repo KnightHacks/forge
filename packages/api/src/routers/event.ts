@@ -28,8 +28,8 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
-import { adminProcedure, publicProcedure } from "../trpc";
-import { calendar, discord, log } from "../utils";
+import { permProcedure, publicProcedure } from "../trpc";
+import { calendar, controlPerms, discord, log } from "../utils";
 
 const GOOGLE_CALENDAR_ID =
   env.NODE_ENV === "production"
@@ -55,7 +55,9 @@ export const eventRouter = {
       .orderBy(desc(Event.start_datetime));
     return events;
   }),
-  getAttendees: adminProcedure.input(z.string()).query(async ({ input }) => {
+  getAttendees: permProcedure.input(z.string()).query(async ({ ctx, input }) => {
+    controlPerms.and(["READ_CLUB_EVENT"], ctx);
+    
     const attendees = await db
       .select({
         ...getTableColumns(Member),
@@ -67,9 +69,11 @@ export const eventRouter = {
       .orderBy(Member.firstName);
     return attendees;
   }),
-  getHackerAttendees: adminProcedure
+  getHackerAttendees: permProcedure
     .input(z.string())
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      controlPerms.and(["READ_HACK_EVENT"], ctx);
+
       const attendees = await db
         .select({
           ...getTableColumns(Hacker),
@@ -88,11 +92,13 @@ export const eventRouter = {
         .orderBy(Hacker.firstName);
       return attendees;
     }),
-  createEvent: adminProcedure
+  createEvent: permProcedure
     .input(
       InsertEventSchema.omit({ id: true, discordId: true, googleId: true }),
     )
     .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+
       // Step 0: Convert provided start/end datetimes into Local Date objects
       const startDatetime = new Date(input.start_datetime);
       const endDatetime = new Date(input.end_datetime);
@@ -260,9 +266,11 @@ export const eventRouter = {
       });
     }),
 
-  updateEvent: adminProcedure
+  updateEvent: permProcedure
     .input(InsertEventSchema)
     .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+
       if (!input.id) {
         throw new TRPCError({
           message: "Event ID is required to update an Event.",
@@ -454,7 +462,7 @@ export const eventRouter = {
         })
         .where(eq(Event.id, input.id));
     }),
-  deleteEvent: adminProcedure
+  deleteEvent: permProcedure
     .input(
       InsertEventSchema.pick({
         id: true,
@@ -465,6 +473,8 @@ export const eventRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      controlPerms.and(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+
       if (!input.id) {
         throw new TRPCError({
           message: "Event ID is required to delete an Event.",
