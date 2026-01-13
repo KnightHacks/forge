@@ -282,7 +282,7 @@ export function FormReviewClient({
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-between pt-4">
+        <div className="flex justify-between">
           {/* Implement disabling form */}
           {/* {!formDisabled && (
             <Button
