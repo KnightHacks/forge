@@ -315,7 +315,7 @@ export function FormResponderClient({
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-between pt-4">
+        <div className="flex justify-between">
           <Button
             onClick={handleSubmit}
             disabled={!isFormValid() || submitResponse.isPending}
