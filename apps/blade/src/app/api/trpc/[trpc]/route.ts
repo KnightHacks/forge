@@ -61,7 +61,7 @@ const handler = async (req: Request) => {
       }),
     onError({ error, path }) {
       // eslint-disable-next-line no-console
-      console.error(`>>> tRPC Error on '${path}'`, error);
+      console.error(`>>> tRPC Error on '${path}'`, error.message);
     },
   });
   setCorsHeaders(response);
