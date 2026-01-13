@@ -23,7 +23,6 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import { appRouter } from "../root";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { generateJsonSchema, regenerateMediaUrls } from "../utils";
 

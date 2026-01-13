@@ -1,7 +1,8 @@
+import type { AnyTRPCProcedure, AnyTRPCRouter } from "@trpc/server";
+import type { z } from "zod";
+
 import type { EventTagsColor } from "@forge/consts/knight-hacks";
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
-import type { AnyTRPCRouter, AnyTRPCProcedure } from "@trpc/server";
-import { z, ZodTypeAny } from "zod";
 
 export const formatDateTime = (date: Date) => {
   // Create a new Date object 5 hours behind the original
@@ -84,12 +85,10 @@ export interface ProcedureMeta {
 interface ProcedureMetaOriginal {
   id: string;
   /* eslint-disable  @typescript-eslint/no-explicit-any */
-  inputSchema: z.ZodObject<any>; 
-};
+  inputSchema: z.ZodObject<any>;
+}
 
-function hasSchemaMeta(
-  meta: unknown
-): meta is ProcedureMetaOriginal {
+function hasSchemaMeta(meta: unknown): meta is ProcedureMetaOriginal {
   return (
     typeof meta === "object" &&
     meta !== null &&
@@ -101,12 +100,12 @@ function hasSchemaMeta(
 export function extractProcedures(router: AnyTRPCRouter) {
   const procedures: Record<string, ProcedureMeta> = {};
 
-  	/* eslint-disable  @typescript-eslint/no-unsafe-argument */
-		for (const [procKey, proc] of Object.entries(router._def.procedures)) {
+  /* eslint-disable  @typescript-eslint/no-unsafe-argument */
+  for (const [procKey, proc] of Object.entries(router._def.procedures)) {
     const procTyped = proc as AnyTRPCProcedure;
 
-		const meta = procTyped._def.meta;
-		if(!hasSchemaMeta(meta)) continue;
+    const meta = procTyped._def.meta;
+    if (!hasSchemaMeta(meta)) continue;
 
     procedures[meta.id] = {
       inputSchema: Object.keys(meta.inputSchema.shape),

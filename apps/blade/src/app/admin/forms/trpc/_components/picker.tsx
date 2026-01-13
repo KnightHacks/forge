@@ -16,7 +16,7 @@ import {
 } from "@forge/ui/select";
 import { toast } from "@forge/ui/toast";
 
-import type { ProcedureMeta } from "../page";
+import type { ProcedureMeta } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
 const matchingSchema = z.object({
@@ -105,8 +105,8 @@ export default function ListMatcher({
     try {
       matchingSchema.parse(data);
       addConnection.mutate(data);
-    } catch (error) {
-      console.error("Validation error:", error);
+    } catch {
+      toast.error("Could not parse connections");
     }
   };
 
