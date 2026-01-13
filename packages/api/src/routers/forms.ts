@@ -23,6 +23,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
+import { appRouter } from "../root";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { generateJsonSchema, regenerateMediaUrls } from "../utils";
 
@@ -213,18 +214,34 @@ export const formsRouter = {
     return forms;
   }),
 
-	addConnection: adminProcedure
-		.input(TrpcFormConnectionSchema)
-		.mutation(async ({ input }) => {
-			try {
-				await db.insert(TrpcFormConnection).values({ ...input });
-			} catch {
+  addConnection: adminProcedure
+    .input(TrpcFormConnectionSchema)
+    .mutation(async ({ input }) => {
+      try {
+        await db.insert(TrpcFormConnection).values({ ...input });
+      } catch {
         throw new TRPCError({
           message: "Could not insert connection into database",
           code: "BAD_REQUEST",
         });
-			}
-		}),
+      }
+    }),
+
+  getConnections: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      try {
+        const connections = db.query.TrpcFormConnection.findMany({
+          where: (t, { eq }) => eq(t.form, input.id),
+        });
+        return connections;
+      } catch {
+        throw new TRPCError({
+          message: "Could not get connections from the database",
+          code: "BAD_REQUEST",
+        });
+      }
+    }),
 
   createResponse: protectedProcedure
     .input(InsertFormResponseSchema.omit({ userId: true }))

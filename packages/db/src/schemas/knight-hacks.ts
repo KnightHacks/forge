@@ -1,6 +1,7 @@
 import { createTableRelationsHelpers, relations } from "drizzle-orm";
 import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import { Connection } from "pg";
 import z from "zod";
 
 import {
@@ -20,7 +21,6 @@ import {
 } from "@forge/consts/knight-hacks";
 
 import { User } from "./auth";
-import { Connection } from "pg";
 
 const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
@@ -564,9 +564,13 @@ export const FormResponse = createTable("form_response", (t) => ({
 export const InsertFormResponseSchema = createInsertSchema(FormResponse);
 
 export const TrpcFormConnection = createTable("trpc_form_connection", (t) => ({
-	form: t.uuid().notNull().references(() => FormsSchemas.id),
-	proc: t.varchar().notNull(),
-	connections: t.jsonb().notNull()
-}))
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  form: t
+    .uuid()
+    .notNull()
+    .references(() => FormsSchemas.id),
+  proc: t.varchar().notNull(),
+  connections: t.jsonb().notNull(),
+}));
 
 export const TrpcFormConnectionSchema = createInsertSchema(TrpcFormConnection);
