@@ -18,25 +18,13 @@ import {
   FormsSchemas,
   InsertFormResponseSchema,
   Member,
+  TrpcFormConnection,
+  TrpcFormConnectionSchema,
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { generateJsonSchema, regenerateMediaUrls } from "../utils";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type FormResponseCallBack = (userId: string, response: any) => undefined;
-
-/**
- Example form call back handler, please reference :pray:
- *const handle_sample_form_response = ((userId: string, response: { answer: string }) => {
- *	console.log(userId, response);
- *}) satisfies FormResponseCallBack;
-*/
-
-const handleCallbacks: Record<string, FormResponseCallBack> = {
-  //"sample-form": handle_sample_form_response,
-};
 
 export const formsRouter = {
   createForm: adminProcedure
@@ -220,6 +208,24 @@ export const formsRouter = {
       };
     }),
 
+  getAllForms: protectedProcedure.query(async () => {
+    const forms = await db.query.FormsSchemas.findMany();
+    return forms;
+  }),
+
+	addConnection: adminProcedure
+		.input(TrpcFormConnectionSchema)
+		.mutation(async ({ input }) => {
+			try {
+				await db.insert(TrpcFormConnection).values({ ...input });
+			} catch {
+        throw new TRPCError({
+          message: "Could not insert connection into database",
+          code: "BAD_REQUEST",
+        });
+			}
+		}),
+
   createResponse: protectedProcedure
     .input(InsertFormResponseSchema.omit({ userId: true }))
     .mutation(async ({ input, ctx }) => {
@@ -270,18 +276,6 @@ export const formsRouter = {
           message: "Form response failed form validation",
           code: "BAD_REQUEST",
         });
-      }
-
-      const handler = handleCallbacks[form.slugName];
-      if (handler) {
-        try {
-          handler(userId, input.responseData);
-        } catch {
-          throw new TRPCError({
-            message: "Form response failed form validation",
-            code: "BAD_REQUEST",
-          });
-        }
       }
 
       await db.insert(FormResponse).values({
