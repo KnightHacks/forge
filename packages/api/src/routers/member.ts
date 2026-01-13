@@ -41,18 +41,6 @@ import { log } from "../utils";
 
 export const memberRouter = {
   createMember: protectedProcedure
-    .meta({
-      inputSchema: InsertMemberSchema.omit({
-        id: true,
-        userId: true,
-        age: true,
-        discordUser: true,
-        points: true,
-        dateCreated: true,
-        timeCreated: true,
-      }),
-      id: "create-member",
-    })
     .input(
       InsertMemberSchema.omit({
         id: true,
