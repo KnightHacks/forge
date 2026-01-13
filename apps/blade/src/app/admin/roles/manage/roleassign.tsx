@@ -1,14 +1,15 @@
 "use client"
 
 import { Roles } from "@forge/db/schemas/auth"
+import { Button } from "@forge/ui/button"
 import { Checkbox } from "@forge/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@forge/ui/dropdown-menu"
 import { Input } from "@forge/ui/input"
+import { Label } from "@forge/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@forge/ui/table"
 import { toast } from "@forge/ui/toast"
-import { QueryCache } from "@tanstack/react-query"
-import { Check, ChevronDown, Copy, Loader2, Search } from "lucide-react"
-import { useState } from "react"
+import { Check, ChevronDown, Copy, Filter, Loader2, Search, ShieldOff, ShieldPlus, User } from "lucide-react"
+import { useEffect, useState } from "react"
 import { getPermsAsList } from "~/lib/utils"
 import { api } from "~/trpc/react"
 
@@ -25,6 +26,25 @@ export default function RoleAssign() {
     const [copyConfirm, setCopyConfirm] = useState(-1)
     const [searchTerm, setSearchTerm] = useState("")
 
+    // weird hack to force the DOM to update
+    const [upd, sUpd] = useState(false)
+
+    const [checkedUsers, _setCheckedUsers] = useState<Record<string, boolean>>({}); // stores userIds
+    const [checkedRoles, _setCheckedRoles] = useState<Record<string, boolean>>({}); // stores roleIds
+    // all checked roles will be applied to all checked users
+
+    const [filterRoles, _setFilterRoles] = useState<Record<string, boolean>>({});
+
+    const [countedUsers, setCountedUsers] = useState(0)
+
+    useEffect(() => {
+        let sum = 0
+        Object.entries(checkedUsers).forEach((v)=>{
+            if(v[1]) sum++
+        })
+        setCountedUsers(sum)
+    },[checkedUsers, upd])
+    
     const filteredUsers = (users ?? []).filter((user) =>
         Object.values(user).some((value) => {
         if (value === null) return false;
@@ -34,15 +54,28 @@ export default function RoleAssign() {
 
     return(
         <div className="mt-8 w-full flex flex-col gap-4 md:grid md:grid-cols-4">
-            <div className="flex flex-col gap-2 w-full col-span-3">
-                <div className="relative w-full">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                    placeholder="Search users..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8"
-                    />
+            <div className="flex flex-col gap-4 w-full col-span-3">
+                <div className="flex flex-row gap-2">
+                    <div className="relative w-full">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                        placeholder="Search users..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-8"
+                        />
+                    </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger>
+                           <div tabIndex={0} className="border rounded-lg hover:bg-muted flex flex-row gap-1 w-fit h-full px-2 py-1">
+                            <Filter className="size-5 my-auto"/>
+                            <ChevronDown className="size-4 my-auto"/>
+                            </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            Test
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
                 {status == "pending" ?
                 <Loader2 className="mx-auto mt-4 animate-spin"/>
@@ -58,11 +91,12 @@ export default function RoleAssign() {
                             <TableHead>Roles</TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <TableBody className="overflow-y-scroll max-h-[50vh]">
                         {filteredUsers.map((v, i)=>{
                             return(<TableRow className={`${i%2 == 1 && "bg-muted/20"}`}>
                                 <TableCell className="text-base font-semibold flex flex-row gap-4">
-                                    {v.name}
+                                    <Checkbox id={"user_"+i} checked={checkedUsers[v.id] ?? false} onCheckedChange={(c)=>{checkedUsers[v.id] = (c == true); sUpd(!upd)}}/>
+                                    <Label htmlFor={"user_"+i} className="my-auto cursor-pointer py-2">{v.name}</Label>
                                 </TableCell>
                                 <TableCell>
                                     <div tabIndex={0} onClick={()=>{void navigator.clipboard.writeText(v.discordUserId); setCopyConfirm(i); toast(`Copied "${v.discordUserId}" to clipboard!`)}} 
@@ -96,19 +130,31 @@ export default function RoleAssign() {
                     </TableBody>
                 </Table>}
             </div>
-            <div className="flex flex-col gap-2 rounded-lg border-l border-primary pl-2">
-                <h2 className="text-lg font-bold py-1 px-2 border-b">Roles</h2>
-                <ul className="flex flex-col gap-2 px-2 font-medium">
-                {
-                    !roles ?
-                    <Loader2 className="mx-auto mt-4 animate-spin"/> :
-                    roles.map((v)=>{
-                        return(<li>
-                            {v.name}
-                        </li>)
-                    })
-                }
-                </ul>
+            <div className="flex flex-col gap-4 rounded-lg border-l border-primary h-fit py-2 pl-2">
+                <div className="flex flex-row gap-2 w-full">
+                    <div className="w-full font-bold text-xl pl-2 mt-auto">Controls</div>
+                    <div className="flex flex-row gap-1 my-auto mr-1">
+                        <User className="size-5 my-auto"/>
+                        <div className="my-auto">{countedUsers}</div>
+                    </div>
+                    <Button className="p-1 px-2 size-8" title="Grant Selected Roles to Users"><ShieldPlus className="size-4"/></Button>
+                    <Button className="p-1 px-2 size-8 bg-red-700" title="Revoke Selected Roles from Users"><ShieldOff className="size-4"/></Button>
+                </div>
+                
+                <div className="flex flex-col gap-2 h-fit">
+                    <ul className="flex flex-col gap-4 p-2 font-medium border-t pt-4">
+                    {
+                        !roles ?
+                        <Loader2 className="mx-auto mt-4 animate-spin"/> :
+                        roles.map((v, i)=>{
+                            return(<li className="flex flex-row gap-3">
+                                <Checkbox id={"role_"+i} checked={checkedRoles[v.id] ?? false} onCheckedChange={(c)=>{checkedRoles[v.id] = (c == true); sUpd(!upd)}}/>
+                                <Label htmlFor={"role_"+i} className="my-auto text-base cursor-pointer">{v.name}</Label>
+                            </li>)
+                        })
+                    }
+                    </ul>
+                </div>
             </div>
         </div>)
 }
