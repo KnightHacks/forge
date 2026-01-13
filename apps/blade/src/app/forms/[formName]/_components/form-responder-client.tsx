@@ -14,11 +14,13 @@ import { api } from "~/trpc/react";
 interface FormResponderClientProps {
   formName: string;
   userName: string;
+  handleCallbacks: (response: Record<string, unknown>) => void;
 }
 
 export function FormResponderClient({
   formName,
   userName,
+  handleCallbacks,
 }: FormResponderClientProps) {
   const router = useRouter();
   const [responses, setResponses] = useState<
@@ -204,6 +206,8 @@ export function FormResponderClient({
       form: formQuery.data.id,
       responseData,
     });
+
+    handleCallbacks(responseData);
   };
 
   const isFormValid = () => {
