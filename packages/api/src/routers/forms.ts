@@ -208,11 +208,6 @@ export const formsRouter = {
       };
     }),
 
-  getAllForms: protectedProcedure.query(async () => {
-    const forms = await db.query.FormsSchemas.findMany();
-    return forms;
-  }),
-
   addConnection: adminProcedure
     .input(TrpcFormConnectionSchema)
     .mutation(async ({ input }) => {
