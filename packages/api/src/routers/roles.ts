@@ -245,7 +245,64 @@ export const rolesRouter = {
                 color: "uhoh_red",
                 userId: ctx.session.user.discordUserId,
             });
-        })
+        }),
+
+    batchManagePermission: permProcedure
+        .input(z.object({roleIds: z.array(z.string()), userIds: z.array(z.string()), revoking: z.boolean()}))
+        .mutation(async ({input, ctx})=> {
+            controlPerms.or(["ASSIGN_ROLES"], ctx)
+
+            type Return = {
+                roleName:string,
+                userName:string
+            }
+            const failed:Return[] = []
+            const succeeded:Return[] = []
+
+            for(const r of input.roleIds) {
+                for(const u of input.userIds) {
+                    const perm = await db.query.Permissions.findFirst({
+                        where: (t, {eq, and}) => and(eq(t.userId, u), eq(t.roleId, r))
+                    })
+
+                    const user = await db.query.User.findFirst({
+                        where: (t, {eq}) => eq(t.id, u)
+                    })
+
+                    const role = await db.query.Roles.findFirst({
+                        where: (t, {eq}) => eq(t.id, r)
+                    })
+
+                    if(!user || !role) throw new TRPCError({code: "BAD_REQUEST", message: "One of the selected users or roles does not exist."})
+                     
+                    const ret = ({roleName: role.name, userName: user.name ?? ""})
+
+                    if(!perm == input.revoking) failed.push(ret)
+                    else {
+                        if(!input.revoking) {
+                            await db.insert(Permissions).values({
+                                roleId: r,
+                                userId: u
+                            })
+                            succeeded.push(ret)
+                        } else if(perm) {
+                            await db.delete(Permissions).where(eq(Permissions.id, perm.id))
+                            succeeded.push(ret)
+                        } else failed.push(ret)
+                    }
+                } 
+            }
+
+            await log({
+                title: `${input.revoking ? "Revoked" : "Granted"} Batch Roles`,
+                message: `The following roles have been ${input.revoking ? "revoked from" : "granted to"} the following users:\n\n` 
+                + succeeded.map((v)=>`${v.userName} -> ${v.roleName}`).join("\n")
+                + "\n**Failed:**\n" + failed.map((v)=>`${v.userName} -> ${v.roleName}`).join("\n"),
+                color: input.revoking ? "uhoh_red" : "success_green",
+                userId: ctx.session.user.discordUserId,
+            });
+                
+        }),
         
 
 } satisfies TRPCRouterRecord

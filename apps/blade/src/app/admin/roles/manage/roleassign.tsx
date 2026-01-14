@@ -1,6 +1,7 @@
 "use client"
 
 import { Roles } from "@forge/db/schemas/auth"
+import { ResetIcon } from "@forge/ui"
 import { Button } from "@forge/ui/button"
 import { Checkbox } from "@forge/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@forge/ui/dropdown-menu"
@@ -17,6 +18,9 @@ export default function RoleAssign() {
 
     const {data: users, status} = api.user.getUsers.useQuery()
     const {data: roles} = api.roles.getAllLinks.useQuery()
+
+    const batchQ = api.roles.batchManagePermission.useMutation()
+
     const mappedRoles:Record<string, {name: string, permissions: string, discordRoleId: string}> = {}
 
     roles?.forEach((v) => {
@@ -30,7 +34,7 @@ export default function RoleAssign() {
     const [upd, sUpd] = useState(false)
     const [updF, sUpdF] = useState(false)
 
-    const [checkedUsers, _setCheckedUsers] = useState<Record<string, boolean>>({}); // stores userIds
+    const [checkedUsers, setCheckedUsers] = useState<Record<string, boolean>>({}); // stores userIds
     const [checkedRoles, _setCheckedRoles] = useState<Record<string, boolean>>({}); // stores roleIds
     // all checked roles will be applied to all checked users
 
@@ -52,7 +56,15 @@ export default function RoleAssign() {
         if (value === null) return false;
         return value.toString().toLowerCase().includes(searchTerm.toLowerCase());
         }),
-    );
+    )
+
+    const sendBatchRequest = async (users:typeof checkedUsers, roles:typeof checkedRoles, revoking: boolean) => {
+        const finalUsers = Object.entries(users).map((v)=>{if(v[1]) return v[0]}).filter((v)=>v!=undefined)
+        const finalRoles = Object.entries(roles).map((v)=>{if(v[1]) return v[0]}).filter((v)=>v!=undefined)
+
+        await batchQ.mutate({roleIds: finalRoles, userIds: finalUsers, revoking})
+        location.reload()
+    }
 
     return(
         <div className="mt-8 w-full flex flex-col gap-4 md:grid md:grid-cols-4">
@@ -146,13 +158,17 @@ export default function RoleAssign() {
             </div>
             <div className="flex flex-col gap-4 rounded-lg border-l border-primary h-fit py-2 pl-2">
                 <div className="flex flex-row gap-2 w-full">
-                    <div className="w-full font-bold text-xl pl-2 mt-auto">Controls</div>
-                    <div className="flex flex-row gap-1 my-auto mr-1">
+                    <div className="w-full font-medium text-base pl-2 mt-auto">Controls</div>
+                    <div tabIndex={0} title="Reset Checked Users" onClick={()=>setCheckedUsers({})} className="flex hover:bg-muted flex-row gap-1 px-2 py-1 border rounded-lg my-auto cursor-pointer">
                         <User className="size-5 my-auto"/>
                         <div className="my-auto">{countedUsers}</div>
+                        <ResetIcon className="size-4 my-auto"/>
                     </div>
-                    <Button className="p-1 px-2 size-8" title="Grant Selected Roles to Users"><ShieldPlus className="size-4"/></Button>
-                    <Button className="p-1 px-2 size-8 bg-red-700" title="Revoke Selected Roles from Users"><ShieldOff className="size-4"/></Button>
+                
+                    <Button className="ml-1 p-1 px-2 size-8" title="Grant Selected Roles to Users"
+                    onClick={()=>sendBatchRequest(checkedUsers, checkedRoles, false)}><ShieldPlus className="size-4"/></Button>
+                    <Button className="p-1 px-2 size-8 bg-red-700" title="Revoke Selected Roles from Users"
+                    onClick={()=>sendBatchRequest(checkedUsers, checkedRoles, true)}><ShieldOff className="size-4"/></Button>
                 </div>
                 
                 <div className="flex flex-col gap-2 h-fit">
