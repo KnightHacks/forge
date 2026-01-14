@@ -28,6 +28,7 @@ export default function RoleAssign() {
 
     // weird hack to force the DOM to update
     const [upd, sUpd] = useState(false)
+    const [updF, sUpdF] = useState(false)
 
     const [checkedUsers, _setCheckedUsers] = useState<Record<string, boolean>>({}); // stores userIds
     const [checkedRoles, _setCheckedRoles] = useState<Record<string, boolean>>({}); // stores roleIds
@@ -46,6 +47,7 @@ export default function RoleAssign() {
     },[checkedUsers, upd])
     
     const filteredUsers = (users ?? []).filter((user) =>
+        Object.values(filterRoles).includes(true) && !user.permissions.find((v)=>filterRoles[v.roleId]) ? false :
         Object.values(user).some((value) => {
         if (value === null) return false;
         return value.toString().toLowerCase().includes(searchTerm.toLowerCase());
@@ -72,8 +74,20 @@ export default function RoleAssign() {
                             <ChevronDown className="size-4 my-auto"/>
                             </div>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            Test
+                        <DropdownMenuContent className="p-4">
+                            <div className="border-b text-muted-foreground text-small pb-2">Select roles to filter by:</div>
+                            <ul className="flex flex-col gap-4 p-2 pl-0 font-medium pt-4">
+                            {
+                                !roles ?
+                                <Loader2 className="mx-auto mt-4 animate-spin"/> :
+                                roles.map((v, i)=>{
+                                    return(<li className="flex flex-row gap-3">
+                                        <Checkbox id={"role-f_"+i} checked={filterRoles[v.id] ?? false} onCheckedChange={(c)=>{filterRoles[v.id] = (c == true); sUpd(!upd)}}/>
+                                        <Label htmlFor={"role-f_"+i} className="my-auto text-base cursor-pointer">{v.name}</Label>
+                                    </li>)
+                                })
+                            }
+                            </ul>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
