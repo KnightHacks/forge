@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import { stringify } from "superjson";
 
 import { appRouter } from "@forge/api";
+import { log } from "@forge/api/utils";
 import { auth } from "@forge/auth";
 
 import { SIGN_IN_PATH } from "~/consts";
@@ -61,7 +63,22 @@ export default async function FormResponderPage({
       )[procName];
       if (!proc) continue;
 
-      await proc(data);
+      try {
+        await proc(data);
+        await log({
+          title: `Successfully automatically fired procedure`,
+          message: `**Successfully fired procedure**\n\`${con.proc}\`\n\nTriggered after **${form.name}** submission from **${session.user.name}**`,
+          color: "success_green",
+          userId: session.user.discordUserId,
+        });
+      } catch {
+        await log({
+          title: `Failed to automatically fire procedure`,
+          message: `**Failed to fire procedure**\n\`${con.proc}\`\n\nTriggered after **${form.name}** submission from **${session.user.name}**\n\n**Data:**\n\`\`\`json\n${stringify(data)}\`\`\``,
+          color: "uhoh_red",
+          userId: session.user.discordUserId,
+        });
+      }
     }
   };
 
