@@ -8,7 +8,7 @@ import { Input } from "@forge/ui/input"
 import { Label } from "@forge/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@forge/ui/table"
 import { toast } from "@forge/ui/toast"
-import { Check, ChevronDown, Copy, Filter, Loader2, Search, ShieldOff, ShieldPlus, User } from "lucide-react"
+import { Check, ChevronDown, Copy, Filter, Loader2, Search, ShieldOff, ShieldPlus, User, UserCheck } from "lucide-react"
 import { useEffect, useState } from "react"
 import { api } from "~/trpc/react"
 
@@ -76,11 +76,16 @@ export default function RoleAssign() {
                         className="pl-8"
                         />
                     </div>
+                    <div tabIndex={0} title="Reset Checked Users" onClick={()=>setCheckedUsers({})} className="flex hover:bg-muted h-full flex-row gap-1 px-2 py-1 border rounded-lg my-auto cursor-pointer">
+                        <UserCheck className="size-5 my-auto"/>
+                        <div className="my-auto">{countedUsers}</div>
+                        <ResetIcon className="size-4 my-auto"/>
+                    </div>
                     <DropdownMenu>
                         <DropdownMenuTrigger>
-                           <div tabIndex={0} className="border rounded-lg hover:bg-muted flex flex-row gap-1 w-fit h-full px-2 py-1">
-                            <Filter className="size-5 my-auto"/>
-                            <ChevronDown className="size-4 my-auto"/>
+                            <div tabIndex={0} title="Filter by Role" className="border rounded-lg hover:bg-muted flex flex-row gap-1 w-fit h-full px-2 py-1">
+                                <Filter className="size-5 my-auto"/>
+                                <ChevronDown className="size-4 my-auto"/>
                             </div>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="p-4">
@@ -153,15 +158,9 @@ export default function RoleAssign() {
                     </TableBody>
                 </Table>}
             </div>
-            <div className="flex flex-col gap-4 rounded-lg border-l border-primary h-fit py-2 pl-2">
+            <div className="flex flex-col gap-4 rounded-lg border-primary h-fit py-2 pl-0 border-t pt-4 sm:pl-2 sm:pt-2 sm:border-l sm:border-t-0">
                 <div className="flex flex-row gap-2 w-full">
-                    <div className="w-full font-medium text-base pl-2 mt-auto">Controls</div>
-                    <div tabIndex={0} title="Reset Checked Users" onClick={()=>setCheckedUsers({})} className="flex hover:bg-muted flex-row gap-1 px-2 py-1 border rounded-lg my-auto cursor-pointer">
-                        <User className="size-5 my-auto"/>
-                        <div className="my-auto">{countedUsers}</div>
-                        <ResetIcon className="size-4 my-auto"/>
-                    </div>
-                
+                    <div className="w-full font-semibold text-xl pl-2 mt-auto w-full">Controls</div>
                     <Button className="ml-1 p-1 px-2 size-8" title="Grant Selected Roles to Users"
                     onClick={()=>sendBatchRequest(checkedUsers, checkedRoles, false)}><ShieldPlus className="size-4"/></Button>
                     <Button className="p-1 px-2 size-8 bg-red-700" title="Revoke Selected Roles from Users"

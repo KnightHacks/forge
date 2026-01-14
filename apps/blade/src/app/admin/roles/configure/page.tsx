@@ -24,12 +24,12 @@ export default async function Roles() {
     return (
         <main className="container py-8">
             <header className="flex flex-row justify-between w-full border-b border-primary rounded-lg p-4">
-                <h1 className="text-3xl font-bold my-auto">Role Configuration</h1>
+                <h1 className="text-xl sm:text-3xl font-bold my-auto">Role Configuration</h1>
                 <Dialog>
                     <DialogTrigger asChild>
                         <Button className="my-auto flex flex-row gap-1">
                             <ShieldPlus className="size-4 my-auto"/>
-                            Create New Role
+                            <div className="hidden sm:block my-auto">Create New Role</div>
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="overflow-y-clip">
