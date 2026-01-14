@@ -30,21 +30,24 @@ const matchingSchema = z.object({
   ),
 });
 
+export type MatchingType = z.infer<typeof matchingSchema>;
+
 export default function ListMatcher({
   procs,
-  forms,
+  form,
 }: {
   procs: Record<string, ProcedureMeta>;
-  forms: Record<string, { questions: string[]; id: string }>;
+  form: { questions: string[]; id: string };
 }) {
+  const utils = api.useUtils();
   const [procSelection, setProcSelection] = useState("");
-  const [formSelection, setFormSelection] = useState("");
   const [procFields, setProcFields] = useState<string[]>([]);
-  const [formFields, setFormFields] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [connections, setConnections] = useState<
     { procField: string; formField: string }[]
   >([]);
+
+  const formFields = form.questions;
 
   const addConnection = api.forms.addConnection.useMutation({
     onSuccess() {
@@ -53,8 +56,9 @@ export default function ListMatcher({
     onError() {
       toast.error("Failed to add connections");
     },
-    onSettled() {
+    async onSettled() {
       setIsLoading(false);
+      await utils.forms.getConnections.invalidate();
     },
   });
 
@@ -66,13 +70,6 @@ export default function ListMatcher({
     setConnections(
       newProcFields.map((item) => ({ procField: item, formField: "" })),
     );
-  };
-
-  const handleFormChange = (value: string) => {
-    if (!forms[value]) return;
-    setFormSelection(value);
-    setFormFields(forms[value].questions);
-    setConnections((prev) => prev.map((conn) => ({ ...conn, formField: "" })));
   };
 
   const updateConnection = (index: number, value: string) => {
@@ -94,10 +91,9 @@ export default function ListMatcher({
 
   const handleSubmit = () => {
     setIsLoading(true);
-    if (!forms[formSelection]) return;
 
     const data = {
-      form: forms[formSelection].id,
+      form: form.id,
       proc: procSelection,
       connections: connections,
     };
@@ -111,7 +107,7 @@ export default function ListMatcher({
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 p-6">
+    <div className="mx-auto mb-10 w-full max-w-4xl space-y-6 rounded-xl bg-card p-6">
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="procs">Select tRPC procedure</Label>
@@ -121,22 +117,6 @@ export default function ListMatcher({
             </SelectTrigger>
             <SelectContent>
               {Object.keys(procs).map((item) => (
-                <SelectItem key={item} value={item}>
-                  {item}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="forms">Select form</Label>
-          <Select value={formSelection} onValueChange={handleFormChange}>
-            <SelectTrigger id="forms">
-              <SelectValue placeholder="Choose an item" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.keys(forms).map((item) => (
                 <SelectItem key={item} value={item}>
                   {item}
                 </SelectItem>

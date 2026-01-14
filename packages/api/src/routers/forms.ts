@@ -228,7 +228,7 @@ export const formsRouter = {
 
   getConnections: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ input }) => {
+    .query(async ({ input }) => {
       try {
         const connections = db.query.TrpcFormConnection.findMany({
           where: (t, { eq }) => eq(t.form, input.id),
@@ -237,6 +237,21 @@ export const formsRouter = {
       } catch {
         throw new TRPCError({
           message: "Could not get connections from the database",
+          code: "BAD_REQUEST",
+        });
+      }
+    }),
+
+  deleteConnection: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      try {
+        await db
+          .delete(TrpcFormConnection)
+          .where(eq(TrpcFormConnection.id, input.id));
+      } catch {
+        throw new TRPCError({
+          message: "Could not delete connection",
           code: "BAD_REQUEST",
         });
       }

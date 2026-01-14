@@ -25,6 +25,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Loader2, Plus, Save } from "lucide-react";
 
 import type {
+  FormType,
   InstructionValidator,
   QuestionValidator,
 } from "@forge/consts/knight-hacks";
@@ -33,11 +34,16 @@ import { Card } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Switch } from "@forge/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { Textarea } from "@forge/ui/textarea";
 
+import type { MatchingType } from "./linker";
+import type { ProcedureMeta } from "~/lib/utils";
 import { InstructionEditCard } from "~/components/admin/forms/instruction-edit-card";
 import { QuestionEditCard } from "~/components/admin/forms/question-edit-card";
 import { api } from "~/trpc/react";
+import { ConnectionViewer } from "./con-viewer";
+import ListMatcher from "./linker";
 
 type FormQuestion = z.infer<typeof QuestionValidator>;
 type FormInstruction = z.infer<typeof InstructionValidator>;
@@ -111,7 +117,39 @@ function SortableItem({
   );
 }
 
-export function EditorClient({ slug }: { slug: string }) {
+function ConnectionsTab(props: {
+  procs: Record<string, ProcedureMeta>;
+  slug: string;
+  id: string;
+  formData: FormType;
+}) {
+  const questions = props.formData.questions.map((q) => q.question);
+  const { data: connections } = api.forms.getConnections.useQuery({
+    id: props.id,
+  });
+  return (
+    <>
+      <ListMatcher procs={props.procs} form={{ questions, id: props.id }} />
+      {connections?.map((con) => {
+        return (
+          <ConnectionViewer
+            key={con.id}
+            form_slug={props.slug}
+            matching={con as MatchingType & { id: string }}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+export function EditorClient({
+  procs,
+  slug,
+}: {
+  procs: Record<string, ProcedureMeta>;
+  slug: string;
+}) {
   const router = useRouter();
 
   const [formTitle, setFormTitle] = useState("");
@@ -472,68 +510,91 @@ export function EditorClient({ slug }: { slug: string }) {
           </div>
         </Card>
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={[...questions, ...instructions]}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-4">
-              {[...questions, ...instructions]
-                .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
-                .map((item) => {
-                  const isInstruction = "title" in item;
-                  return (
-                    <div key={item.id} className={isInstruction ? "mt-8" : ""}>
-                      <SortableItem
-                        item={item}
-                        isActive={activeItemId === item.id}
-                        onUpdateQuestion={updateQuestion}
-                        onUpdateInstruction={updateInstruction}
-                        onDelete={deleteItem}
-                        onDuplicateQuestion={duplicateQuestion}
-                        onDuplicateInstruction={duplicateInstruction}
-                        onClick={() => setActiveItemId(item.id)}
-                        onForceSave={handleSaveForm}
-                        error={
-                          !isInstruction && duplicateIds.has(item.id)
-                            ? "Duplicate question title"
-                            : undefined
-                        }
-                      />
-                    </div>
-                  );
-                })}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <Tabs defaultValue="questions" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="questions">Questions</TabsTrigger>
+            <TabsTrigger value="connections">Connections</TabsTrigger>
+          </TabsList>
 
-        <div className="flex justify-center gap-4 pt-8">
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              addQuestion();
-            }}
-            size="lg"
-            className="h-14 rounded-full px-10 text-lg font-bold shadow-2xl transition-all hover:scale-105 active:scale-95"
-          >
-            <Plus className="mr-3 h-6 w-6" /> Add Question
-          </Button>
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              addInstruction();
-            }}
-            size="lg"
-            variant="secondary"
-            className="h-14 rounded-full px-10 text-lg font-bold shadow-2xl transition-all hover:scale-105 active:scale-95"
-          >
-            <Plus className="mr-3 h-6 w-6" /> Add Instruction
-          </Button>
-        </div>
+          <TabsContent value="questions" className="mt-4">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={[...questions, ...instructions]}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-4">
+                  {[...questions, ...instructions]
+                    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+                    .map((item) => {
+                      const isInstruction = "title" in item;
+                      return (
+                        <div
+                          key={item.id}
+                          className={isInstruction ? "mt-8" : ""}
+                        >
+                          <SortableItem
+                            item={item}
+                            isActive={activeItemId === item.id}
+                            onUpdateQuestion={updateQuestion}
+                            onUpdateInstruction={updateInstruction}
+                            onDelete={deleteItem}
+                            onDuplicateQuestion={duplicateQuestion}
+                            onDuplicateInstruction={duplicateInstruction}
+                            onClick={() => setActiveItemId(item.id)}
+                            onForceSave={handleSaveForm}
+                            error={
+                              !isInstruction && duplicateIds.has(item.id)
+                                ? "Duplicate question title"
+                                : undefined
+                            }
+                          />
+                        </div>
+                      );
+                    })}
+                </div>
+              </SortableContext>
+            </DndContext>
+
+            <div className="flex justify-center gap-4 pt-8">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addQuestion();
+                }}
+                size="lg"
+                className="h-14 rounded-full px-10 text-lg font-bold shadow-2xl transition-all hover:scale-105 active:scale-95"
+              >
+                <Plus className="mr-3 h-6 w-6" /> Add Question
+              </Button>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addInstruction();
+                }}
+                size="lg"
+                variant="secondary"
+                className="h-14 rounded-full px-10 text-lg font-bold shadow-2xl transition-all hover:scale-105 active:scale-95"
+              >
+                <Plus className="mr-3 h-6 w-6" /> Add Instruction
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="connections" className="mt-4">
+            {formData && (
+              <ConnectionsTab
+                slug={formData.slugName}
+                procs={procs}
+                id={formData.id}
+                formData={formData.formData}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
