@@ -24,7 +24,7 @@ import {
 
 import { minioClient } from "../minio/minio-client";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
-import { generateJsonSchema, regenerateMediaUrls } from "../utils";
+import { generateJsonSchema, log, regenerateMediaUrls } from "../utils";
 
 export const formsRouter = {
   createForm: adminProcedure
@@ -307,6 +307,13 @@ export const formsRouter = {
       await db.insert(FormResponse).values({
         userId,
         ...input,
+      });
+
+      await log({
+        title: `Form submitted to blade forms`,
+        message: `**Form submitted:** ${form.name}\n**User:** ${ctx.session.user.name}`,
+        color: "success_green",
+        userId: ctx.session.user.discordUserId,
       });
     }),
 
