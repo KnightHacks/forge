@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 
+import { appRouter } from "@forge/api";
 import { auth } from "@forge/auth/server";
 
+import { extractProcedures } from "~/lib/utils";
 import { api } from "~/trpc/server";
 import { EditorClient } from "./client";
 
@@ -24,5 +26,7 @@ export default async function FormEditorPage({
     }
   }
 
-  return <EditorClient slug={params.slug} />;
+  return (
+    <EditorClient procs={extractProcedures(appRouter)} slug={params.slug} />
+  );
 }

@@ -48,7 +48,8 @@ export default async function FormResponderPage({
         procField: string;
         formField: string;
       }[]) {
-        data[map.procField] = response[map.formField];
+        if (map.formField in response)
+          data[map.procField] = response[map.formField];
       }
 
       const route = procs[con.proc]?.route.split(".");
