@@ -1,6 +1,5 @@
 "use client"
 
-import { Roles } from "@forge/db/schemas/auth"
 import { ResetIcon } from "@forge/ui"
 import { Button } from "@forge/ui/button"
 import { Checkbox } from "@forge/ui/checkbox"
@@ -11,7 +10,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@forge/ui/toast"
 import { Check, ChevronDown, Copy, Filter, Loader2, Search, ShieldOff, ShieldPlus, User } from "lucide-react"
 import { useEffect, useState } from "react"
-import { getPermsAsList } from "~/lib/utils"
 import { api } from "~/trpc/react"
 
 export default function RoleAssign() {
@@ -32,7 +30,6 @@ export default function RoleAssign() {
 
     // weird hack to force the DOM to update
     const [upd, sUpd] = useState(false)
-    const [updF, sUpdF] = useState(false)
 
     const [checkedUsers, setCheckedUsers] = useState<Record<string, boolean>>({}); // stores userIds
     const [checkedRoles, _setCheckedRoles] = useState<Record<string, boolean>>({}); // stores roleIds

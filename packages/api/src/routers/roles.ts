@@ -15,7 +15,7 @@ import {
 } from "../utils";
 import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";
-import { eq, sql } from "@forge/db";
+import { eq, inArray, sql } from "@forge/db";
 import { User } from "@forge/db/schemas/auth";
 
 const KNIGHTHACKS_GUILD_ID =
@@ -259,30 +259,28 @@ export const rolesRouter = {
             const failed:Return[] = []
             const succeeded:Return[] = []
 
-            for(const r of input.roleIds) {
-                for(const u of input.userIds) {
+            const cachedUsers:Record<string,string> = {}
+            const dbUsers = await db.select().from(User).where(inArray(User.id, input.userIds));
+            dbUsers.forEach((v)=>{cachedUsers[v.id] = v.name ?? ""})
+
+            const cachedRoles:Record<string,string> = {}
+            const dbRoles = await db.select().from(Roles).where(inArray(Roles.id, input.roleIds));
+            dbRoles.forEach((v)=>{cachedRoles[v.id] = v.name ?? ""})
+
+            for(const r of Object.entries(cachedRoles)) {
+                for(const u of Object.entries(cachedUsers)) {
                     const perm = await db.query.Permissions.findFirst({
-                        where: (t, {eq, and}) => and(eq(t.userId, u), eq(t.roleId, r))
+                        where: (t, {eq, and}) => and(eq(t.userId, u[0]), eq(t.roleId, r[0]))
                     })
-
-                    const user = await db.query.User.findFirst({
-                        where: (t, {eq}) => eq(t.id, u)
-                    })
-
-                    const role = await db.query.Roles.findFirst({
-                        where: (t, {eq}) => eq(t.id, r)
-                    })
-
-                    if(!user || !role) throw new TRPCError({code: "BAD_REQUEST", message: "One of the selected users or roles does not exist."})
                      
-                    const ret = ({roleName: role.name, userName: user.name ?? ""})
+                    const ret = ({roleName: r[1], userName: u[1]})
 
                     if(!perm == input.revoking) failed.push(ret)
                     else {
                         if(!input.revoking) {
                             await db.insert(Permissions).values({
-                                roleId: r,
-                                userId: u
+                                roleId: r[0],
+                                userId: u[0]
                             })
                             succeeded.push(ret)
                         } else if(perm) {
@@ -293,11 +291,13 @@ export const rolesRouter = {
                 } 
             }
 
+            const failText = failed.length > 0 ? "\n**Failed:**\n" + failed.map((v)=>`${v.userName} -> ${v.roleName}`).join("\n") : ""
+
             await log({
                 title: `${input.revoking ? "Revoked" : "Granted"} Batch Roles`,
                 message: `The following roles have been ${input.revoking ? "revoked from" : "granted to"} the following users:\n\n` 
                 + succeeded.map((v)=>`${v.userName} -> ${v.roleName}`).join("\n")
-                + "\n**Failed:**\n" + failed.map((v)=>`${v.userName} -> ${v.roleName}`).join("\n"),
+                + failText,
                 color: input.revoking ? "uhoh_red" : "success_green",
                 userId: ctx.session.user.discordUserId,
             });
