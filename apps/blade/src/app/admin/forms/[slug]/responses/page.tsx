@@ -26,8 +26,10 @@ export default async function FormResponsesPage({
     redirect(SIGN_IN_PATH);
   }
 
-  const isAdmin = await api.auth.getAdminStatus();
-  if (!isAdmin) {
+  const hasAccess = await api.roles.hasPermission({
+    or: ["READ_FORMS", "EDIT_FORMS"],
+  });
+  if (!hasAccess) {
     redirect("/");
   }
 

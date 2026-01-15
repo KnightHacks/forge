@@ -6,6 +6,7 @@ import { Button } from "@forge/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@forge/ui/dialog";
 
 import { SIGN_IN_PATH } from "~/consts";
+import { api } from "~/trpc/server";
 import RoleEdit from "./_components/roleedit";
 import RoleTable from "./_components/roletable";
 
@@ -15,10 +16,13 @@ export default async function Roles() {
     redirect(SIGN_IN_PATH);
   }
 
-  // const isOfficer = await api.roles.hasPermission({and:["IS_OFFICER"]})
-  // if (!isOfficer) {
-  //     redirect("/");
-  // }
+  const hasAccess = await api.roles.hasPermission({
+    or: ["CONFIGURE_ROLES"],
+  });
+
+  if (!hasAccess) {
+    redirect("/");
+  }
 
   return (
     <main className="container py-8">

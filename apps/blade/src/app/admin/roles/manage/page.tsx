@@ -4,10 +4,10 @@ import { api } from "~/trpc/server";
 import RoleAssign from "./roleassign";
 
 export default async function ManageRoles() {
-  const hasManageRoles = await api.roles.hasPermission({
+  const hasAccess = await api.roles.hasPermission({
     and: ["ASSIGN_ROLES"],
   });
-  if (!hasManageRoles) {
+  if (!hasAccess) {
     redirect("/");
   }
   return (

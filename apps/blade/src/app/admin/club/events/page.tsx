@@ -15,15 +15,16 @@ export const metadata: Metadata = {
 };
 
 export default async function Events() {
-  // Check if the user is authenticated
   const session = await auth();
   if (!session) {
     redirect(SIGN_IN_PATH);
   }
 
-  const hasFullAdmin = await api.roles.hasPermission({ and: ["IS_OFFICER"] });
+  const hasAccess = await api.roles.hasPermission({
+    or: ["EDIT_EVENTS", "READ_EVENTS"],
+  });
 
-  if (!hasFullAdmin) {
+  if (!hasAccess) {
     redirect("/");
   }
 

@@ -57,7 +57,10 @@ export async function SessionNavbar() {
                 <ul className="mt-1 max-h-48 list-disc overflow-y-auto px-4">
                   {permList.map((p, index) => {
                     return (
-                      <li key={index} className={`p-1 text-sm text-muted-foreground`}>
+                      <li
+                        key={index}
+                        className={`p-1 text-sm text-muted-foreground`}
+                      >
                         {p}
                       </li>
                     );

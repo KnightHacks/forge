@@ -12,11 +12,11 @@ export default async function AdminEmail() {
     redirect(SIGN_IN_PATH);
   }
 
-  const hasEmailConfig = await api.roles.hasPermission({
-    and: ["EMAIL_PORTAL"],
+  const hasAccess = await api.roles.hasPermission({
+    or: ["EMAIL_PORTAL"],
   });
 
-  if (!hasEmailConfig) {
+  if (!hasAccess) {
     redirect("/");
   }
 

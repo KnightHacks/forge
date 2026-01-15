@@ -11,8 +11,8 @@ export default async function ControlRoom() {
     redirect("/");
   }
 
-  const isOfficer = await api.roles.hasPermission({ and: ["IS_OFFICER"] });
-  if (!isOfficer) {
+  const hasAccess = await api.roles.hasPermission({ and: ["IS_OFFICER"] });
+  if (!hasAccess) {
     redirect("/");
   }
 
