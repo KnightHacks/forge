@@ -40,6 +40,8 @@ export default function RoleEdit({
   const [loadingRole, setLoadingRole] = useState(false);
   const [isDupeID, setIsDupeID] = useState(false);
   const [isDupeName, setIsDupeName] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const [permString, setPermString] = useState(
     "0".repeat(Object.keys(PERMISSIONS).length),
@@ -121,19 +123,42 @@ export default function RoleEdit({
 
   function sendRole(str: string) {
     try {
-      if (oldRole)
-        updateLinkMutation.mutate({
-          name: name,
-          id: oldRole.id,
-          roleId: roleID,
-          permissions: str,
-        });
-      else
-        createLinkMutation.mutate({
-          name: name,
-          roleId: roleID,
-          permissions: str,
-        });
+      if (oldRole) {
+        setIsUpdating(true);
+        updateLinkMutation.mutate(
+          {
+            name: name,
+            id: oldRole.id,
+            roleId: roleID,
+            permissions: str,
+          },
+          {
+            onSettled: () => {
+              setIsUpdating(false);
+            },
+            onError: (opts) => {
+              toast.error(opts.message);
+            },
+          },
+        );
+      } else {
+        setIsCreating(true);
+        createLinkMutation.mutate(
+          {
+            name: name,
+            roleId: roleID,
+            permissions: str,
+          },
+          {
+            onSettled: () => {
+              setIsCreating(false);
+            },
+            onError: (opts) => {
+              toast.error(opts.message);
+            },
+          },
+        );
+      }
       void utils.roles.getAllLinks.invalidate();
     } catch (error) {
       toast((error as Error).message);
@@ -274,7 +299,13 @@ export default function RoleEdit({
         <div className="my-auto text-sm font-medium">{`${getPermsAsList(permString).length} permission(s) applied`}</div>
         <Button
           disabled={
-            !role || name == "" || loadingRole || isDupeID || isDupeName
+            !role ||
+            name == "" ||
+            loadingRole ||
+            isDupeID ||
+            isDupeName ||
+            isCreating ||
+            isUpdating
           }
           onClick={() => sendRole(permString)}
           className="my-auto flex flex-row gap-1"
@@ -284,7 +315,11 @@ export default function RoleEdit({
           ) : (
             <Link className="my-auto size-4" />
           )}
-          {`${oldRole ? "Update" : "Create"} Link`}
+          {isCreating || isUpdating ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            `${oldRole ? "Update" : "Create"} Link`
+          )}{" "}
         </Button>
       </div>
     </div>
