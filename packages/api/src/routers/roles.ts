@@ -4,9 +4,9 @@ import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
+import type { PermissionKey } from "@forge/consts/knight-hacks";
 import {
   DEV_KNIGHTHACKS_GUILD_ID,
-  PermissionKey,
   PERMISSIONS,
   PROD_KNIGHTHACKS_GUILD_ID,
 } from "@forge/consts/knight-hacks";
@@ -338,10 +338,10 @@ export const rolesRouter = {
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["ASSIGN_ROLES"], ctx);
 
-      type Return = {
+      interface Return {
         roleName: string;
         userName: string;
-      };
+      }
       const failed: Return[] = [];
       const succeeded: Return[] = [];
 
@@ -360,7 +360,7 @@ export const rolesRouter = {
         .from(Roles)
         .where(inArray(Roles.id, input.roleIds));
       dbRoles.forEach((v) => {
-        cachedRoles[v.id] = v.name ?? "";
+        cachedRoles[v.id] = v.name;
       });
 
       for (const r of Object.entries(cachedRoles)) {

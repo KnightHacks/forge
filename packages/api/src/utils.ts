@@ -151,17 +151,22 @@ interface Context {
 }
 
 export const controlPerms = {
-  // Returns true if the user has any required permission
+  // Returns true if the user has any required permission OR has isOfficer role
   or: (perms: PermissionKey[], ctx: Context) => {
+    // first check if user has IS_OFFICER
+    if (ctx.session.permissions.IS_OFFICER) return true;
+
     let flag = false;
     for (const p of perms) if (ctx.session.permissions[p]) flag = true;
-
     if (!flag) throw new TRPCError({ code: "UNAUTHORIZED" });
     return true;
   },
 
   // Returns true only if the user has ALL required permissions
   and: (perms: PermissionKey[], ctx: Context) => {
+    // first check if user has IS_OFFICER
+    if (ctx.session.permissions.IS_OFFICER) return true;
+
     for (const p of perms)
       if (!ctx.session.permissions[p])
         throw new TRPCError({ code: "UNAUTHORIZED" });
