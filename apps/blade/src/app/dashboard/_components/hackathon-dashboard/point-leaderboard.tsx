@@ -46,7 +46,7 @@ export function PointLeaderboard({
   const [activeInd, setInd] = useState(-1);
   const [activeTop, setTop] = useState(overall);
 
-  const { data: isAdmin } = api.auth.getAdminStatus.useQuery();
+  const { data: isAdmin } = api.roles.hasPermission({or: ["READ_CLUB_DATA"]}).useQuery();
 
   const targetDate = new Date("2025-10-25T23:00:00").getTime();
 

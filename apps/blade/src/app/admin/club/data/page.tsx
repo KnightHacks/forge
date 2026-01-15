@@ -21,7 +21,7 @@ export default async function Data() {
     redirect(SIGN_IN_PATH);
   }
 
-  const isAdmin = await api.auth.getAdminStatus();
+  const isAdmin = await api.roles.hasPermission({or: ["READ_CLUB_DATA"]});
   if (!isAdmin) {
     redirect("/");
   }

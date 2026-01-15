@@ -20,7 +20,7 @@ export default async function Members() {
     redirect(SIGN_IN_PATH);
   }
 
-  const isAdmin = await api.auth.getAdminStatus();
+  const isAdmin = await api.roles.hasPermission({and: ["EDIT_MEMBERS"]});
   if (!isAdmin) {
     redirect("/");
   }

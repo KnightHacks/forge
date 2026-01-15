@@ -21,7 +21,7 @@ export default async function HackathonData() {
     redirect(SIGN_IN_PATH);
   }
 
-  const isAdmin = await api.auth.getAdminStatus();
+  const isAdmin = await api.roles.hasPermission({and: ["READ_HACKERS"]});
   if (!isAdmin) {
     redirect("/");
   }
