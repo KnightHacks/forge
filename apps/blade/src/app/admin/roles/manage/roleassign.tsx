@@ -41,6 +41,8 @@ export default function RoleAssign() {
 
   const batchQ = api.roles.batchManagePermission.useMutation();
 
+  const utils = api.useUtils();
+
   const mappedRoles: Record<
     string,
     { name: string; permissions: string; discordRoleId: string }
@@ -108,8 +110,18 @@ export default function RoleAssign() {
       })
       .filter((v) => v != undefined);
 
-    void batchQ.mutate({ roleIds: finalRoles, userIds: finalUsers, revoking });
-    location.reload();
+    void batchQ.mutate(
+      { roleIds: finalRoles, userIds: finalUsers, revoking },
+      {
+        onSuccess() {
+          void utils.roles.getAllLinks.invalidate();
+          location.reload();
+        },
+        onError(opts) {
+          toast.error(opts.message);
+        },
+      },
+    );
   };
 
   return (

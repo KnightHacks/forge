@@ -16,7 +16,14 @@ import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 
 import { env } from "../env";
 import { permProcedure, protectedProcedure } from "../trpc";
-import { controlPerms, discord, getPermsAsList, log } from "../utils";
+import {
+  addRoleToMember,
+  controlPerms,
+  discord,
+  getPermsAsList,
+  log,
+  removeRoleFromMember,
+} from "../utils";
 
 const KNIGHTHACKS_GUILD_ID =
   env.NODE_ENV === "production"
@@ -269,11 +276,6 @@ export const rolesRouter = {
           message: "This permission relation already exists.",
         });
 
-      await db.insert(Permissions).values({
-        roleId: input.roleId,
-        userId: input.userId,
-      });
-
       const user = await db.query.User.findFirst({
         where: (t, { eq }) => eq(t.id, input.userId),
       });
@@ -282,13 +284,41 @@ export const rolesRouter = {
         where: (t, { eq }) => eq(t.id, input.roleId),
       });
 
-      if (role && user)
-        await log({
-          title: `Granted Role`,
-          message: `The **${role.name}** role (<@&${role.discordRoleId}>) has granted to <@${user.discordUserId}>.`,
-          color: "success_green",
-          userId: ctx.session.user.discordUserId,
+      if (!user || !role) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "User or role not found.",
         });
+      }
+
+      // Add the role to the user on Discord
+      try {
+        await addRoleToMember(user.discordUserId, role.discordRoleId);
+        console.log(
+          `Successfully added Discord role ${role.discordRoleId} to user ${user.discordUserId}`,
+        );
+      } catch (error) {
+        console.error(
+          `Failed to add Discord role ${role.discordRoleId} to user ${user.discordUserId}:`,
+          error,
+        );
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to add role on Discord: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
+      }
+
+      await db.insert(Permissions).values({
+        roleId: input.roleId,
+        userId: input.userId,
+      });
+
+      await log({
+        title: `Granted Role`,
+        message: `The **${role.name}** role (<@&${role.discordRoleId}>) has been granted to <@${user.discordUserId}>.`,
+        color: "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
     }),
 
   revokePermission: permProcedure
@@ -308,8 +338,6 @@ export const rolesRouter = {
             "The permission relation you are trying to revoke does not exist.",
         });
 
-      await db.delete(Permissions).where(eq(Permissions.id, perm.id));
-
       const user = await db.query.User.findFirst({
         where: (t, { eq }) => eq(t.id, input.userId),
       });
@@ -318,13 +346,38 @@ export const rolesRouter = {
         where: (t, { eq }) => eq(t.id, input.roleId),
       });
 
-      if (role && user)
-        await log({
-          title: `Revoked Role`,
-          message: `The **${role.name}** role (<@&${role.discordRoleId}>) has revoked from <@${user.discordUserId}>.`,
-          color: "uhoh_red",
-          userId: ctx.session.user.discordUserId,
+      if (!user || !role) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "User or role not found.",
         });
+      }
+
+      // Remove the role from the user on Discord
+      try {
+        await removeRoleFromMember(user.discordUserId, role.discordRoleId);
+        console.log(
+          `Successfully removed Discord role ${role.discordRoleId} from user ${user.discordUserId}`,
+        );
+      } catch (error) {
+        console.error(
+          `Failed to remove Discord role ${role.discordRoleId} from user ${user.discordUserId}:`,
+          error,
+        );
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to remove role on Discord: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
+      }
+
+      await db.delete(Permissions).where(eq(Permissions.id, perm.id));
+
+      await log({
+        title: `Revoked Role`,
+        message: `The **${role.name}** role (<@&${role.discordRoleId}>) has been revoked from <@${user.discordUserId}>.`,
+        color: "uhoh_red",
+        userId: ctx.session.user.discordUserId,
+      });
     }),
 
   batchManagePermission: permProcedure
@@ -345,45 +398,77 @@ export const rolesRouter = {
       const failed: Return[] = [];
       const succeeded: Return[] = [];
 
-      const cachedUsers: Record<string, string> = {};
+      // Cache users with full data for Discord operations
+      const cachedUsers: Record<
+        string,
+        { name: string; discordUserId: string }
+      > = {};
       const dbUsers = await db
         .select()
         .from(User)
         .where(inArray(User.id, input.userIds));
       dbUsers.forEach((v) => {
-        cachedUsers[v.id] = v.name ?? "";
+        cachedUsers[v.id] = {
+          name: v.name ?? "",
+          discordUserId: v.discordUserId,
+        };
       });
 
-      const cachedRoles: Record<string, string> = {};
+      // Cache roles with full data for Discord operations
+      const cachedRoles: Record<
+        string,
+        { name: string; discordRoleId: string }
+      > = {};
       const dbRoles = await db
         .select()
         .from(Roles)
         .where(inArray(Roles.id, input.roleIds));
       dbRoles.forEach((v) => {
-        cachedRoles[v.id] = v.name;
+        cachedRoles[v.id] = { name: v.name, discordRoleId: v.discordRoleId };
       });
 
-      for (const r of Object.entries(cachedRoles)) {
-        for (const u of Object.entries(cachedUsers)) {
+      for (const [roleId, roleData] of Object.entries(cachedRoles)) {
+        for (const [userId, userData] of Object.entries(cachedUsers)) {
           const perm = await db.query.Permissions.findFirst({
             where: (t, { eq, and }) =>
-              and(eq(t.userId, u[0]), eq(t.roleId, r[0])),
+              and(eq(t.userId, userId), eq(t.roleId, roleId)),
           });
 
-          const ret = { roleName: r[1], userName: u[1] };
+          const ret = { roleName: roleData.name, userName: userData.name };
 
-          if (!perm == input.revoking) failed.push(ret);
-          else {
-            if (!input.revoking) {
-              await db.insert(Permissions).values({
-                roleId: r[0],
-                userId: u[0],
-              });
-              succeeded.push(ret);
-            } else if (perm) {
-              await db.delete(Permissions).where(eq(Permissions.id, perm.id));
-              succeeded.push(ret);
-            } else failed.push(ret);
+          if (!perm == input.revoking) {
+            failed.push(ret);
+          } else {
+            try {
+              if (!input.revoking) {
+                // Granting role
+                await addRoleToMember(
+                  userData.discordUserId,
+                  roleData.discordRoleId,
+                );
+                await db.insert(Permissions).values({
+                  roleId: roleId,
+                  userId: userId,
+                });
+                succeeded.push(ret);
+              } else if (perm) {
+                // Revoking role
+                await removeRoleFromMember(
+                  userData.discordUserId,
+                  roleData.discordRoleId,
+                );
+                await db.delete(Permissions).where(eq(Permissions.id, perm.id));
+                succeeded.push(ret);
+              } else {
+                failed.push(ret);
+              }
+            } catch (error) {
+              console.error(
+                `Failed to ${input.revoking ? "revoke" : "grant"} role ${roleData.name} ${input.revoking ? "from" : "to"} ${userData.name}:`,
+                error,
+              );
+              failed.push(ret);
+            }
           }
         }
       }
@@ -398,10 +483,19 @@ export const rolesRouter = {
         title: `${input.revoking ? "Revoked" : "Granted"} Batch Roles`,
         message:
           `The following roles have been ${input.revoking ? "revoked from" : "granted to"} the following users:\n\n` +
-          succeeded.map((v) => `${v.userName} -> ${v.roleName}`).join("\n") +
+          (succeeded.length > 0
+            ? succeeded.map((v) => `${v.userName} -> ${v.roleName}`).join("\n")
+            : "None") +
           failText,
         color: input.revoking ? "uhoh_red" : "success_green",
         userId: ctx.session.user.discordUserId,
       });
+
+      if (failed.length > 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to ${input.revoking ? "revoke" : "grant"} ${failed.length} role(s): ${failed.map((v) => `${v.roleName}`).join(", ")}`,
+        });
+      }
     }),
 } satisfies TRPCRouterRecord;

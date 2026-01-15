@@ -51,9 +51,7 @@ export const discord = new REST({ version: "10" }).setToken(
 const GUILD_ID = IS_PROD ? PROD_KNIGHTHACKS_GUILD_ID : DEV_KNIGHTHACKS_GUILD_ID;
 
 export async function addRoleToMember(discordUserId: string, roleId: string) {
-  await discord.put(Routes.guildMemberRole(GUILD_ID, discordUserId, roleId), {
-    body: {},
-  });
+  await discord.put(Routes.guildMemberRole(GUILD_ID, discordUserId, roleId));
 }
 
 export async function removeRoleFromMember(
