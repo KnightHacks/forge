@@ -274,97 +274,97 @@ export const PERMISSIONS = {
   READ_FORM_RESPONSES: 16,
   EDIT_FORMS: 17,
   ASSIGN_ROLES: 18,
-  CONFIGURE_ROLES: 19
+  CONFIGURE_ROLES: 19,
 } as const;
 
-export const PERMISSION_DATA:Record<PermissionKey,PermissionDataObj> = {
+export const PERMISSION_DATA: Record<PermissionKey, PermissionDataObj> = {
   IS_OFFICER: {
     name: "Is Officer",
-    desc: "Grants access to sensitive club officer pages."
+    desc: "Grants access to sensitive club officer pages.",
   },
   IS_JUDGE: {
     name: "Is Judge",
-    desc: "Grants access to the judging system."
+    desc: "Grants access to the judging system.",
   },
   READ_MEMBERS: {
     name: "Read Members",
-    desc: "Grants access to the list of club members."
+    desc: "Grants access to the list of club members.",
   },
   EDIT_MEMBERS: {
     name: "Edit Members",
-    desc: "Allows editing member data, including deletion."
+    desc: "Allows editing member data, including deletion.",
   },
   READ_HACKERS: {
     name: "Read Hackers",
-    desc: "Grants access to the list of hackers, and their hackathons."
+    desc: "Grants access to the list of hackers, and their hackathons.",
   },
   EDIT_HACKERS: {
     name: "Edit Hackers",
-    desc: "Allows editing hacker data, including approval, rejection, deletion, etc."
+    desc: "Allows editing hacker data, including approval, rejection, deletion, etc.",
   },
   READ_CLUB_DATA: {
     name: "Read Club Data",
-    desc: "Grants access to club statistics, such as demographics."
+    desc: "Grants access to club statistics, such as demographics.",
   },
   READ_HACK_DATA: {
     name: "Read Hackathon Data",
-    desc: "Grants access to hackathon statistics, such as demographics."
+    desc: "Grants access to hackathon statistics, such as demographics.",
   },
   READ_CLUB_EVENT: {
     name: "Read Club Events",
-    desc: "Grants access to club event data, such as attendance."
+    desc: "Grants access to club event data, such as attendance.",
   },
   EDIT_CLUB_EVENT: {
     name: "Edit Club Events",
-    desc: "Allows creating, editing, or deleting club events."
+    desc: "Allows creating, editing, or deleting club events.",
   },
   CHECKIN_CLUB_EVENT: {
     name: "Club Event Check-in",
-    desc: "Allows the user to check members into club events."
+    desc: "Allows the user to check members into club events.",
   },
   READ_HACK_EVENT: {
     name: "Read Hackathon Events",
-    desc: "Grants access to hackathon event data, such as attendance."
+    desc: "Grants access to hackathon event data, such as attendance.",
   },
   EDIT_HACK_EVENT: {
     name: "Edit Hackathon Events",
-    desc: "Allows creating, editing, or deleting hackathon events."
+    desc: "Allows creating, editing, or deleting hackathon events.",
   },
   CHECKIN_HACK_EVENT: {
     name: "Hackathon Event Check-in",
-    desc: "Allows the user to check hackers into hackathon events, including the primary check-in."
+    desc: "Allows the user to check hackers into hackathon events, including the primary check-in.",
   },
   EMAIL_PORTAL: {
     name: "Email Portal",
-    desc: "Grants access to the email queue portal."
+    desc: "Grants access to the email queue portal.",
   },
   READ_FORMS: {
     name: "Read Forms",
-    desc: "Grants access to created forms, but not their responses."
+    desc: "Grants access to created forms, but not their responses.",
   },
   READ_FORM_RESPONSES: {
     name: "Read Form Responses",
-    desc: "Grants access to form responses."
+    desc: "Grants access to form responses.",
   },
   EDIT_FORMS: {
     name: "Edit Forms",
-    desc: "Allows creating, editing, or deleting forms."
+    desc: "Allows creating, editing, or deleting forms.",
   },
   ASSIGN_ROLES: {
     name: "Assign Roles",
-    desc: "Allows assigning or removing roles to Blade users."
+    desc: "Allows assigning or removing roles to Blade users.",
   },
   CONFIGURE_ROLES: {
     name: "Edit Forms",
-    desc: "Allows creating, editing, or deleting roles."
-  }
-} as const satisfies Record<PermissionKey,PermissionDataObj>;
+    desc: "Allows creating, editing, or deleting roles.",
+  },
+} as const satisfies Record<PermissionKey, PermissionDataObj>;
 
 export type PermissionKey = keyof typeof PERMISSIONS;
 export type PermissionIndex = (typeof PERMISSIONS)[PermissionKey];
 export interface PermissionDataObj {
-  name: string,
-  desc: string
+  name: string;
+  desc: string;
 }
 
 export const PROD_KNIGHTHACKS_GUILD_ID = "486628710443778071";
@@ -393,6 +393,9 @@ export const DEV_DISCORD_ROLE_MONSTOLOGIST = "1420819295759237222";
 
 export const PROD_DISCORD_ROLE_ALCHEMIST = "1415702383274491934";
 export const DEV_DISCORD_ROLE_ALCHEMIST = "1420819309965611140";
+
+export const PROD_DISCORD_SUPERADMIN = "486629374758748180";
+export const DEV_DISCORD_SUPERADMIN = "1246637685011906560";
 
 export const IS_PROD = process.env.NODE_ENV === "production";
 

@@ -1,9 +1,10 @@
-import type { APIGuildMember } from "discord-api-types/v10";
-import type { JSONSchema7 } from "json-schema";
-import { cookies } from "next/headers";
 import { REST } from "@discordjs/rest";
+import { TRPCError } from "@trpc/server";
+import type { APIGuildMember } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 import { and, eq, gt, inArray } from "drizzle-orm";
+import type { JSONSchema7 } from "json-schema";
+import { cookies } from "next/headers";
 import { Resend } from "resend";
 import Stripe from "stripe";
 
@@ -19,20 +20,16 @@ import {
   DEV_KNIGHTHACKS_LOG_CHANNEL,
   FORM_ASSETS_BUCKET,
   IS_PROD,
-  OFFICER_ROLE_ID,
   PRESIGNED_URL_EXPIRY,
   PROD_DISCORD_ADMIN_ROLE_ID,
   PROD_KNIGHTHACKS_GUILD_ID,
-  PROD_KNIGHTHACKS_LOG_CHANNEL,
-  ROLE_PERMISSIONS,
+  PROD_KNIGHTHACKS_LOG_CHANNEL
 } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
-import { JudgeSession } from "@forge/db/schemas/auth";
+import { JudgeSession, Roles } from "@forge/db/schemas/auth";
 
 import { env } from "./env";
 import { minioClient } from "./minio/minio-client";
-import { TRPCError } from "@trpc/server";
-import { Roles } from "@forge/db/schemas/auth";
 
 const DISCORD_ADMIN_ROLE_ID = IS_PROD
   ? (PROD_DISCORD_ADMIN_ROLE_ID as string)
@@ -99,74 +96,79 @@ export const hasPermission = (
 };
 
 export const parsePermissions = async (discordUserId: string) => {
-    const guildMember = (await discord.get(
-      Routes.guildMember(KNIGHTHACKS_GUILD_ID, discordUserId),
-    )) as APIGuildMember;
+  const guildMember = (await discord.get(
+    Routes.guildMember(KNIGHTHACKS_GUILD_ID, discordUserId),
+  )) as APIGuildMember;
 
-    const permissionsLength = Object.keys(PERMISSIONS).length;
+  const permissionsLength = Object.keys(PERMISSIONS).length;
 
-    // array of booleans. the boolean value at the index indicates if the user has that permission.
-    // true means the user has the permission, false means the user doesn't have the permission.
-    const permissionsBits = new Array(permissionsLength).fill(false) as boolean[];
+  // array of booleans. the boolean value at the index indicates if the user has that permission.
+  // true means the user has the permission, false means the user doesn't have the permission.
+  const permissionsBits = new Array(permissionsLength).fill(false) as boolean[];
 
-    if (guildMember.roles.length > 0) {
-      // get only roles the user has
-      const userDbRoles = await db
-        .select()
-        .from(Roles)
-        .where(inArray(Roles.discordRoleId, guildMember.roles));
+  if (guildMember.roles.length > 0) {
+    // get only roles the user has
+    const userDbRoles = await db
+      .select()
+      .from(Roles)
+      .where(inArray(Roles.discordRoleId, guildMember.roles));
 
-      for (const role of userDbRoles) {
-        if (role.permissions === null) continue;
+    for (const role of userDbRoles) {
+      if (role.permissions === null) continue;
 
-        for (let i = 0; i < role.permissions.length && i < permissionsLength; ++i) {
-          if (role.permissions[i] === "1") {
-            permissionsBits[i] = true;
-          }
+      for (
+        let i = 0;
+        i < role.permissions.length && i < permissionsLength;
+        ++i
+      ) {
+        if (role.permissions[i] === "1") {
+          permissionsBits[i] = true;
         }
       }
     }
+  }
 
-    // creates the map of permissions to their boolean values
-    const permissionsMap = Object.keys(PERMISSIONS).reduce((accumulator, key) => {  
+  // creates the map of permissions to their boolean values
+  const permissionsMap = Object.keys(PERMISSIONS).reduce(
+    (accumulator, key) => {
       const index = PERMISSIONS[key as PermissionKey];
 
       accumulator[key as PermissionKey] = permissionsBits[index] ?? false;
 
       return accumulator;
-    }, {} as Record<PermissionKey, boolean>);
+    },
+    {} as Record<PermissionKey, boolean>,
+  );
 
-    return permissionsMap;
-  }
+  return permissionsMap;
+};
 
 // Mock tRPC context for type-safety
 interface Context {
   session: {
-    permissions: Record<PermissionKey, boolean>
-  }
+    permissions: Record<PermissionKey, boolean>;
+  };
 }
 
 export const controlPerms = {
   // Returns true if the user has any required permission
-  or: (perms: PermissionKey[], ctx:Context) => {
-    let flag = false
-    for(const p of perms)
-        if(ctx.session.permissions[p])
-            flag = true
+  or: (perms: PermissionKey[], ctx: Context) => {
+    let flag = false;
+    for (const p of perms) if (ctx.session.permissions[p]) flag = true;
 
-    if(!flag) throw new TRPCError({code: "UNAUTHORIZED"})
-    return true
+    if (!flag) throw new TRPCError({ code: "UNAUTHORIZED" });
+    return true;
   },
 
   // Returns true only if the user has ALL required permissions
-  and: (perms: PermissionKey[], ctx:Context) => {
-    for(const p of perms)
-        if(!ctx.session.permissions[p])
-            throw new TRPCError({code: "UNAUTHORIZED"})
+  and: (perms: PermissionKey[], ctx: Context) => {
+    for (const p of perms)
+      if (!ctx.session.permissions[p])
+        throw new TRPCError({ code: "UNAUTHORIZED" });
 
-    return true
-  }
-}
+    return true;
+  },
+};
 
 export const isDiscordMember = async (user: Session["user"]) => {
   try {
@@ -585,6 +587,13 @@ export function getPermsAsList(perms:string) {
         if (perms[i] == "1" && permKey)
             list.push(PERMISSION_DATA[permKey].name)
     }
+export function getPermsAsList(perms: string) {
+  const list = [];
+  const permKeys = Object.keys(PERMISSIONS) as PermissionKey[];
+  for (let i = 0; i < perms.length; i++) {
+    const permKey = permKeys.at(i);
+    if (perms[i] == "1" && permKey) list.push(PERMISSION_DATA[permKey].name);
+  }
 
-    return list
-}
+  return list;
+}}

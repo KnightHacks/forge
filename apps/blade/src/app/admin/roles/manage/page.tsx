@@ -1,10 +1,14 @@
 import RoleAssign from "./roleassign";
 
-export default async function ManageRoles() {
-    return(<main className="container py-8">
-        <header className="flex flex-row justify-between w-full border-b border-primary rounded-lg p-4">
-            <h1 className="text-xl sm:text-3xl font-bold my-auto">Role Management</h1>
-        </header>
-        <RoleAssign/>
-    </main>)
+export default function ManageRoles() {
+  return (
+    <main className="container py-8">
+      <header className="flex w-full flex-row justify-between rounded-lg border-b border-primary p-4">
+        <h1 className="my-auto text-xl font-bold sm:text-3xl">
+          Role Management
+        </h1>
+      </header>
+      <RoleAssign />
+    </main>
+  );
 }

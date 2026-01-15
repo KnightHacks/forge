@@ -1,21 +1,22 @@
-import { TRPCError } from "@trpc/server";
 import type { TRPCRouterRecord } from "@trpc/server";
-import { z } from "zod";
-import { env } from "../env";
-import { DEV_KNIGHTHACKS_GUILD_ID, PermissionKey, PERMISSIONS, PROD_KNIGHTHACKS_GUILD_ID } from "@forge/consts/knight-hacks";
-import { Routes } from "discord-api-types/v10";
 import type { APIRole } from "discord-api-types/v10";
-import { permProcedure, protectedProcedure } from "../trpc";
+import { TRPCError } from "@trpc/server";
+import { Routes } from "discord-api-types/v10";
+import { z } from "zod";
+
 import {
-  discord,
-  log,
-  getPermsAsList,
-  controlPerms,
-} from "../utils";
-import { db } from "@forge/db/client";
-import { Permissions, Roles } from "@forge/db/schemas/auth";
+  DEV_KNIGHTHACKS_GUILD_ID,
+  PermissionKey,
+  PERMISSIONS,
+  PROD_KNIGHTHACKS_GUILD_ID,
+} from "@forge/consts/knight-hacks";
 import { eq, inArray, sql } from "@forge/db";
-import { User } from "@forge/db/schemas/auth";
+import { db } from "@forge/db/client";
+import { Permissions, Roles, User } from "@forge/db/schemas/auth";
+
+import { env } from "../env";
+import { permProcedure, protectedProcedure } from "../trpc";
+import { controlPerms, discord, getPermsAsList, log } from "../utils";
 
 const KNIGHTHACKS_GUILD_ID =
   env.NODE_ENV === "production"
@@ -23,285 +24,384 @@ const KNIGHTHACKS_GUILD_ID =
     : (DEV_KNIGHTHACKS_GUILD_ID as string);
 
 export const rolesRouter = {
-    // ROLES
+  // ROLES
 
-    createRoleLink: permProcedure
-        .input(z.object({ name: z.string(), roleId: z.string(), permissions: z.string()}))
-        .mutation(async ({ctx, input}) => {
-            controlPerms.and(["CONFIGURE_ROLES"], ctx);
+  createRoleLink: permProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        roleId: z.string(),
+        permissions: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      controlPerms.and(["CONFIGURE_ROLES"], ctx);
 
-            // check for duplicate discord role
-            const dupe = await db.query.Roles.findFirst({where: (t, {eq}) => eq(t.discordRoleId, input.roleId)})
-            if(dupe) throw new TRPCError({message: "This role is already linked.", code: "CONFLICT"})
+      // check for duplicate discord role
+      const dupe = await db.query.Roles.findFirst({
+        where: (t, { eq }) => eq(t.discordRoleId, input.roleId),
+      });
+      if (dupe)
+        throw new TRPCError({
+          message: "This role is already linked.",
+          code: "CONFLICT",
+        });
 
-            await db.insert(Roles).values({
-                name: input.name,
-                discordRoleId: input.roleId,
-                permissions: input.permissions
-            })
+      await db.insert(Roles).values({
+        name: input.name,
+        discordRoleId: input.roleId,
+        permissions: input.permissions,
+      });
 
-            await log({
-                title: `Created Role`,
-                message: `The **${input.name}** role has been created, linked to <@&${input.roleId}>.
+      await log({
+        title: `Created Role`,
+        message: `The **${input.name}** role has been created, linked to <@&${input.roleId}>.
                 \n**Permissions:**\n${getPermsAsList(input.permissions).join("\n")}`,
-                color: "blade_purple",
-                userId: ctx.session.user.discordUserId,
-            });
+        color: "blade_purple",
+        userId: ctx.session.user.discordUserId,
+      });
     }),
 
-    updateRoleLink: permProcedure
-        .input(z.object({ name: z.string(), id: z.string(), roleId: z.string(), permissions: z.string()}))
-        .mutation(async ({ctx, input}) => {
-            controlPerms.and(["CONFIGURE_ROLES"], ctx);
+  updateRoleLink: permProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        id: z.string(),
+        roleId: z.string(),
+        permissions: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      controlPerms.and(["CONFIGURE_ROLES"], ctx);
 
-            // check for existing role
-            const exist = await db.query.Roles.findFirst({where: (t, {eq}) => eq(t.id, input.id)})
-            if(!exist) throw new TRPCError({message: "Tried to edit a role link that does not exist.", code: "BAD_REQUEST"})
+      // check for existing role
+      const exist = await db.query.Roles.findFirst({
+        where: (t, { eq }) => eq(t.id, input.id),
+      });
+      if (!exist)
+        throw new TRPCError({
+          message: "Tried to edit a role link that does not exist.",
+          code: "BAD_REQUEST",
+        });
 
-            // check for duplicate discord role
-            const dupe = await db.query.Roles.findFirst({where: (t, {and, eq, not}) => and(not(eq(t.id, input.id)), eq(t.discordRoleId, input.roleId))})
-            if(dupe) throw new TRPCError({message: "This role is already linked.", code: "CONFLICT"})
+      // check for duplicate discord role
+      const dupe = await db.query.Roles.findFirst({
+        where: (t, { and, eq, not }) =>
+          and(not(eq(t.id, input.id)), eq(t.discordRoleId, input.roleId)),
+      });
+      if (dupe)
+        throw new TRPCError({
+          message: "This role is already linked.",
+          code: "CONFLICT",
+        });
 
-            await db.update(Roles).set({name: input.name, discordRoleId: input.roleId, permissions: input.permissions}).where(eq(Roles.id, input.id))
+      await db
+        .update(Roles)
+        .set({
+          name: input.name,
+          discordRoleId: input.roleId,
+          permissions: input.permissions,
+        })
+        .where(eq(Roles.id, input.id));
 
-            await log({
-                title: `Updated Role`,
-                message: `The **${exist.name}** Role (<@&${input.roleId}>) role has been updated.
+      await log({
+        title: `Updated Role`,
+        message: `The **${exist.name}** Role (<@&${input.roleId}>) role has been updated.
                 \n**Name:** ${exist.name} -> ${input.name}
                 \n**Original Perms:**\n${getPermsAsList(exist.permissions).join("\n")}
                 \n**New Perms:**\n${getPermsAsList(input.permissions).join("\n")}`,
-                color: "blade_purple",
-                userId: ctx.session.user.discordUserId,
-            });
+        color: "blade_purple",
+        userId: ctx.session.user.discordUserId,
+      });
     }),
 
-    deleteRoleLink: permProcedure
-        .input(z.object({id: z.string()}))
-        .mutation(async ({ctx, input}) => {
-            controlPerms.and(["CONFIGURE_ROLES"], ctx);
+  deleteRoleLink: permProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      controlPerms.and(["CONFIGURE_ROLES"], ctx);
 
-            // check for existing role
-            const exist = await db.query.Roles.findFirst({where: (t, {eq}) => eq(t.id, input.id)})
-            if(!exist) throw new TRPCError({message: "Tried to delete a role link that does not exist.", code: "BAD_REQUEST"})
-            
-            await db.delete(Roles).where(eq(Roles.id, input.id))
+      // check for existing role
+      const exist = await db.query.Roles.findFirst({
+        where: (t, { eq }) => eq(t.id, input.id),
+      });
+      if (!exist)
+        throw new TRPCError({
+          message: "Tried to delete a role link that does not exist.",
+          code: "BAD_REQUEST",
+        });
 
-            await log({
-                title: `Deleted Role`,
-                message: `The **${exist.name}** Role (<@&${exist.discordRoleId}>) role has been deleted.`,
-                color: "uhoh_red",
-                userId: ctx.session.user.discordUserId,
-            });
-        }),
+      await db.delete(Roles).where(eq(Roles.id, input.id));
 
-    getRoleLink: protectedProcedure
-        .input(z.object({id: z.string()}))
-        .query(async ({input})=>{
-            return await db.query.Roles.findFirst({where: (t, {eq})=>eq(t.id, input.id)})
+      await log({
+        title: `Deleted Role`,
+        message: `The **${exist.name}** Role (<@&${exist.discordRoleId}>) role has been deleted.`,
+        color: "uhoh_red",
+        userId: ctx.session.user.discordUserId,
+      });
     }),
 
-    getAllLinks: protectedProcedure
-        .query(async ()=>{
-            return await db.select().from(Roles)
+  getRoleLink: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      return await db.query.Roles.findFirst({
+        where: (t, { eq }) => eq(t.id, input.id),
+      });
     }),
 
-    getDiscordRole: protectedProcedure
-        .input(z.object({ roleId: z.string() }))
-        .query(async ({input}): Promise<APIRole|null> =>{
-            try {
-                return (await discord.get(Routes.guildRole(KNIGHTHACKS_GUILD_ID, input.roleId)) as APIRole | null)
-            } catch {
-                return null
-            }
+  getAllLinks: protectedProcedure.query(async () => {
+    return await db.select().from(Roles);
+  }),
+
+  getDiscordRole: protectedProcedure
+    .input(z.object({ roleId: z.string() }))
+    .query(async ({ input }): Promise<APIRole | null> => {
+      try {
+        return (await discord.get(
+          Routes.guildRole(KNIGHTHACKS_GUILD_ID, input.roleId),
+        )) as APIRole | null;
+      } catch {
+        return null;
+      }
     }),
 
-    getDiscordRoles: protectedProcedure
-        .input(z.object({ roles: z.array(z.object({discordRoleId: z.string()})) }))
-        .query(async ({input}): Promise<(APIRole|null)[]> =>{
-            const ret = []
+  getDiscordRoles: protectedProcedure
+    .input(
+      z.object({ roles: z.array(z.object({ discordRoleId: z.string() })) }),
+    )
+    .query(async ({ input }): Promise<(APIRole | null)[]> => {
+      const ret = [];
 
-            for(const r of input.roles) {
-                try {
-                    ret.push(await discord.get(Routes.guildRole(KNIGHTHACKS_GUILD_ID, r.discordRoleId)) as APIRole | null)
-                } catch {
-                    ret.push(null)
-                }
-            }
+      for (const r of input.roles) {
+        try {
+          ret.push(
+            (await discord.get(
+              Routes.guildRole(KNIGHTHACKS_GUILD_ID, r.discordRoleId),
+            )) as APIRole | null,
+          );
+        } catch {
+          ret.push(null);
+        }
+      }
 
-            return ret
-        }),
-            
-    getDiscordRoleCounts: protectedProcedure
-        .query(async (): Promise<Record<string, number>|null> =>{
-            return (await discord.get(`/guilds/${KNIGHTHACKS_GUILD_ID}/roles/member-counts`) as Record<string, number>)
+      return ret;
     }),
 
-    // PERMS
+  getDiscordRoleCounts: protectedProcedure.query(
+    async (): Promise<Record<string, number> | null> => {
+      return (await discord.get(
+        `/guilds/${KNIGHTHACKS_GUILD_ID}/roles/member-counts`,
+      )) as Record<string, number>;
+    },
+  ),
 
-    // returnes the bitwise OR'd permissions for the given user
-    // if no user is passed, get the current context user
-    getPermissions: protectedProcedure
-        .input(z.optional(z.object({userId: z.string()})))
-        .query(async ({ctx, input}) => {
-            const permRows = await db.select({
-                permissions: Roles.permissions
-            })
-            .from(Roles)
-            .innerJoin(Permissions, eq(Roles.id, Permissions.roleId))
-            .where(sql`cast(${Permissions.userId} as text) = ${input ? input.userId : ctx.session.user.id}`)
-            
-            const permissionsBits = new Array(Object.keys(PERMISSIONS).length).fill(false) as boolean[];
+  // PERMS
 
-            permRows.forEach((v) => {
-                for (let i = 0; i < v.permissions.length; i++) {
-                    if(v.permissions.at(i) == "1")
-                        permissionsBits[i] = true
-                }
-            })
+  // returnes the bitwise OR'd permissions for the given user
+  // if no user is passed, get the current context user
+  getPermissions: protectedProcedure
+    .input(z.optional(z.object({ userId: z.string() })))
+    .query(async ({ ctx, input }) => {
+      const permRows = await db
+        .select({
+          permissions: Roles.permissions,
+        })
+        .from(Roles)
+        .innerJoin(Permissions, eq(Roles.id, Permissions.roleId))
+        .where(
+          sql`cast(${Permissions.userId} as text) = ${input ? input.userId : ctx.session.user.id}`,
+        );
 
-            const permissionsMap = Object.keys(PERMISSIONS).reduce((accumulator, key) => {  
-                const index = PERMISSIONS[key as PermissionKey];
-        
-                accumulator[key as PermissionKey] = permissionsBits[index] ?? false;
-        
-                return accumulator;
-            }, {} as Record<PermissionKey, boolean>)
+      const permissionsBits = new Array(Object.keys(PERMISSIONS).length).fill(
+        false,
+      ) as boolean[];
 
-            return permissionsMap
-        }),
+      permRows.forEach((v) => {
+        for (let i = 0; i < v.permissions.length; i++) {
+          if (v.permissions.at(i) == "1") permissionsBits[i] = true;
+        }
+      });
 
-    hasPermission: permProcedure
-        .input(z.object({and: z.optional(z.array(z.string())), or: z.optional(z.array(z.string()))}))
-        .query(({input, ctx}) => {
-            try {
-                if(input.or) controlPerms.or(input.or as PermissionKey[], ctx)
-                if(input.and) controlPerms.and(input.and as PermissionKey[], ctx)
-            } catch {
-                return false
-            }
+      const permissionsMap = Object.keys(PERMISSIONS).reduce(
+        (accumulator, key) => {
+          const index = PERMISSIONS[key as PermissionKey];
 
-            return true
-        }),
+          accumulator[key as PermissionKey] = permissionsBits[index] ?? false;
 
-    grantPermission: permProcedure
-        .input(z.object({roleId: z.string(), userId: z.string()}))
-        .mutation(async ({input, ctx}) => {
-            controlPerms.or(["ASSIGN_ROLES"], ctx)
+          return accumulator;
+        },
+        {} as Record<PermissionKey, boolean>,
+      );
 
-            const exists = await db.query.Permissions.findFirst({
-                where: (t, {eq, and}) => and(eq(t.userId, input.userId), eq(t.roleId, input.roleId))
-            })
+      return permissionsMap;
+    }),
 
-            if(exists) throw new TRPCError({code: "CONFLICT", message: "This permission relation already exists."})
+  hasPermission: permProcedure
+    .input(
+      z.object({
+        and: z.optional(z.array(z.string())),
+        or: z.optional(z.array(z.string())),
+      }),
+    )
+    .query(({ input, ctx }) => {
+      try {
+        if (input.or) controlPerms.or(input.or as PermissionKey[], ctx);
+        if (input.and) controlPerms.and(input.and as PermissionKey[], ctx);
+      } catch {
+        return false;
+      }
 
-            await db.insert(Permissions).values({
-                roleId: input.roleId,
-                userId: input.userId
-            })
+      return true;
+    }),
 
-            const user = await db.query.User.findFirst({
-                where: (t, {eq}) => eq(t.id, input.userId)
-            })
+  grantPermission: permProcedure
+    .input(z.object({ roleId: z.string(), userId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["ASSIGN_ROLES"], ctx);
 
-            const role = await db.query.Roles.findFirst({
-                where: (t, {eq}) => eq(t.id, input.roleId)
-            })
+      const exists = await db.query.Permissions.findFirst({
+        where: (t, { eq, and }) =>
+          and(eq(t.userId, input.userId), eq(t.roleId, input.roleId)),
+      });
 
-            if(role && user)
-            await log({
-                title: `Granted Role`,
-                message: `The **${role.name}** role (<@&${role.discordRoleId}>) has granted to <@${user.discordUserId}>.`,
-                color: "success_green",
-                userId: ctx.session.user.discordUserId,
-            });
-        }),
+      if (exists)
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "This permission relation already exists.",
+        });
 
-    revokePermission: permProcedure
-        .input(z.object({roleId: z.string(), userId: z.string()}))
-        .mutation(async ({input, ctx}) => {
-            controlPerms.or(["ASSIGN_ROLES"], ctx)
+      await db.insert(Permissions).values({
+        roleId: input.roleId,
+        userId: input.userId,
+      });
 
-            const perm = await db.query.Permissions.findFirst({
-                where: (t, {eq, and}) => and(eq(t.userId, input.userId), eq(t.roleId, input.roleId))
-            })
+      const user = await db.query.User.findFirst({
+        where: (t, { eq }) => eq(t.id, input.userId),
+      });
 
-            if(!perm) throw new TRPCError({code: "BAD_REQUEST", message: "The permission relation you are trying to revoke does not exist."})
+      const role = await db.query.Roles.findFirst({
+        where: (t, { eq }) => eq(t.id, input.roleId),
+      });
 
-            await db.delete(Permissions).where(eq(Permissions.id, perm.id))
+      if (role && user)
+        await log({
+          title: `Granted Role`,
+          message: `The **${role.name}** role (<@&${role.discordRoleId}>) has granted to <@${user.discordUserId}>.`,
+          color: "success_green",
+          userId: ctx.session.user.discordUserId,
+        });
+    }),
 
-            const user = await db.query.User.findFirst({
-                where: (t, {eq}) => eq(t.id, input.userId)
-            })
+  revokePermission: permProcedure
+    .input(z.object({ roleId: z.string(), userId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["ASSIGN_ROLES"], ctx);
 
-            const role = await db.query.Roles.findFirst({
-                where: (t, {eq}) => eq(t.id, input.roleId)
-            })
+      const perm = await db.query.Permissions.findFirst({
+        where: (t, { eq, and }) =>
+          and(eq(t.userId, input.userId), eq(t.roleId, input.roleId)),
+      });
 
-            if(role && user)
-            await log({
-                title: `Revoked Role`,
-                message: `The **${role.name}** role (<@&${role.discordRoleId}>) has revoked from <@${user.discordUserId}>.`,
-                color: "uhoh_red",
-                userId: ctx.session.user.discordUserId,
-            });
-        }),
+      if (!perm)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "The permission relation you are trying to revoke does not exist.",
+        });
 
-    batchManagePermission: permProcedure
-        .input(z.object({roleIds: z.array(z.string()), userIds: z.array(z.string()), revoking: z.boolean()}))
-        .mutation(async ({input, ctx})=> {
-            controlPerms.or(["ASSIGN_ROLES"], ctx)
+      await db.delete(Permissions).where(eq(Permissions.id, perm.id));
 
-            type Return = {
-                roleName:string,
-                userName:string
-            }
-            const failed:Return[] = []
-            const succeeded:Return[] = []
+      const user = await db.query.User.findFirst({
+        where: (t, { eq }) => eq(t.id, input.userId),
+      });
 
-            const cachedUsers:Record<string,string> = {}
-            const dbUsers = await db.select().from(User).where(inArray(User.id, input.userIds));
-            dbUsers.forEach((v)=>{cachedUsers[v.id] = v.name ?? ""})
+      const role = await db.query.Roles.findFirst({
+        where: (t, { eq }) => eq(t.id, input.roleId),
+      });
 
-            const cachedRoles:Record<string,string> = {}
-            const dbRoles = await db.select().from(Roles).where(inArray(Roles.id, input.roleIds));
-            dbRoles.forEach((v)=>{cachedRoles[v.id] = v.name ?? ""})
+      if (role && user)
+        await log({
+          title: `Revoked Role`,
+          message: `The **${role.name}** role (<@&${role.discordRoleId}>) has revoked from <@${user.discordUserId}>.`,
+          color: "uhoh_red",
+          userId: ctx.session.user.discordUserId,
+        });
+    }),
 
-            for(const r of Object.entries(cachedRoles)) {
-                for(const u of Object.entries(cachedUsers)) {
-                    const perm = await db.query.Permissions.findFirst({
-                        where: (t, {eq, and}) => and(eq(t.userId, u[0]), eq(t.roleId, r[0]))
-                    })
-                     
-                    const ret = ({roleName: r[1], userName: u[1]})
+  batchManagePermission: permProcedure
+    .input(
+      z.object({
+        roleIds: z.array(z.string()),
+        userIds: z.array(z.string()),
+        revoking: z.boolean(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["ASSIGN_ROLES"], ctx);
 
-                    if(!perm == input.revoking) failed.push(ret)
-                    else {
-                        if(!input.revoking) {
-                            await db.insert(Permissions).values({
-                                roleId: r[0],
-                                userId: u[0]
-                            })
-                            succeeded.push(ret)
-                        } else if(perm) {
-                            await db.delete(Permissions).where(eq(Permissions.id, perm.id))
-                            succeeded.push(ret)
-                        } else failed.push(ret)
-                    }
-                } 
-            }
+      type Return = {
+        roleName: string;
+        userName: string;
+      };
+      const failed: Return[] = [];
+      const succeeded: Return[] = [];
 
-            const failText = failed.length > 0 ? "\n**Failed:**\n" + failed.map((v)=>`${v.userName} -> ${v.roleName}`).join("\n") : ""
+      const cachedUsers: Record<string, string> = {};
+      const dbUsers = await db
+        .select()
+        .from(User)
+        .where(inArray(User.id, input.userIds));
+      dbUsers.forEach((v) => {
+        cachedUsers[v.id] = v.name ?? "";
+      });
 
-            await log({
-                title: `${input.revoking ? "Revoked" : "Granted"} Batch Roles`,
-                message: `The following roles have been ${input.revoking ? "revoked from" : "granted to"} the following users:\n\n` 
-                + succeeded.map((v)=>`${v.userName} -> ${v.roleName}`).join("\n")
-                + failText,
-                color: input.revoking ? "uhoh_red" : "success_green",
-                userId: ctx.session.user.discordUserId,
-            });
-                
-        }),
-        
+      const cachedRoles: Record<string, string> = {};
+      const dbRoles = await db
+        .select()
+        .from(Roles)
+        .where(inArray(Roles.id, input.roleIds));
+      dbRoles.forEach((v) => {
+        cachedRoles[v.id] = v.name ?? "";
+      });
 
-} satisfies TRPCRouterRecord
+      for (const r of Object.entries(cachedRoles)) {
+        for (const u of Object.entries(cachedUsers)) {
+          const perm = await db.query.Permissions.findFirst({
+            where: (t, { eq, and }) =>
+              and(eq(t.userId, u[0]), eq(t.roleId, r[0])),
+          });
+
+          const ret = { roleName: r[1], userName: u[1] };
+
+          if (!perm == input.revoking) failed.push(ret);
+          else {
+            if (!input.revoking) {
+              await db.insert(Permissions).values({
+                roleId: r[0],
+                userId: u[0],
+              });
+              succeeded.push(ret);
+            } else if (perm) {
+              await db.delete(Permissions).where(eq(Permissions.id, perm.id));
+              succeeded.push(ret);
+            } else failed.push(ret);
+          }
+        }
+      }
+
+      const failText =
+        failed.length > 0
+          ? "\n**Failed:**\n" +
+            failed.map((v) => `${v.userName} -> ${v.roleName}`).join("\n")
+          : "";
+
+      await log({
+        title: `${input.revoking ? "Revoked" : "Granted"} Batch Roles`,
+        message:
+          `The following roles have been ${input.revoking ? "revoked from" : "granted to"} the following users:\n\n` +
+          succeeded.map((v) => `${v.userName} -> ${v.roleName}`).join("\n") +
+          failText,
+        color: input.revoking ? "uhoh_red" : "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
+    }),
+} satisfies TRPCRouterRecord;
