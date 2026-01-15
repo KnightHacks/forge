@@ -355,7 +355,7 @@ export const PERMISSION_DATA: Record<PermissionKey, PermissionDataObj> = {
     desc: "Allows assigning or removing roles to Blade users.",
   },
   CONFIGURE_ROLES: {
-    name: "Edit Forms",
+    name: "Configure Roles",
     desc: "Allows creating, editing, or deleting roles.",
   },
 } as const satisfies Record<PermissionKey, PermissionDataObj>;
