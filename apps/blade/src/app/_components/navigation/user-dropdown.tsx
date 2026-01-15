@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { LayoutDashboard } from "lucide-react";
 
+import type { PermissionKey } from "@forge/consts/knight-hacks";
 import { signOut } from "@forge/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@forge/ui/avatar";
 import { Button } from "@forge/ui/button";
@@ -21,41 +22,61 @@ import type { roleItems } from "./reusable-user-dropdown";
 import { USER_DROPDOWN_ICON_COLOR, USER_DROPDOWN_ICON_SIZE } from "~/consts";
 import { api } from "~/trpc/react";
 import {
-  adminClubItems,
-  adminHackathonItems,
   adminItems,
-  scannerOnlyClubItems,
-  scannerOnlyHackathonItems,
+  clubItems,
+  hackathonItems,
+  rolesItems,
   userItems,
 } from "./reusable-user-dropdown";
 
 interface UserDropdownProps {
-  hasCheckIn: boolean;
-  hasFullAdmin: boolean;
+  permissions: Record<PermissionKey, boolean>;
 }
 
-export function UserDropdown({ hasCheckIn, hasFullAdmin }: UserDropdownProps) {
+/**
+ * Filters role items based on user permissions
+ */
+function filterItemsByPermissions(
+  items: roleItems[],
+  permissions: Record<PermissionKey, boolean>,
+): roleItems[] {
+  return items.filter((item) => {
+    // If no permissions required, show the item
+    if (!item.requiredPermissions) return true;
+
+    const { or, and } = item.requiredPermissions;
+
+    // Check OR permissions - user needs at least one
+    if (or && or.length > 0) {
+      const hasOrPermission = or.some((perm) => permissions[perm]);
+      if (!hasOrPermission) return false;
+    }
+
+    // Check AND permissions - user needs all of them
+    if (and && and.length > 0) {
+      const hasAllAndPermissions = and.every((perm) => permissions[perm]);
+      if (!hasAllAndPermissions) return false;
+    }
+
+    return true;
+  });
+}
+
+export function UserDropdown({ permissions }: UserDropdownProps) {
   const utils = api.useUtils();
   const router = useRouter();
   const { data } = api.user.getUserAvatar.useQuery();
 
   void utils.member.getMember.prefetch();
 
-  const canAccessClub = hasFullAdmin || hasCheckIn;
-  const canAccessHackathon = hasFullAdmin || hasCheckIn;
-  const canAccessAdmin = hasFullAdmin || hasCheckIn;
-
-  // Determine which items to show based on permissions
-  const clubItems = hasFullAdmin
-    ? adminClubItems
-    : hasCheckIn
-      ? scannerOnlyClubItems
-      : [];
-  const hackathonItems = hasFullAdmin
-    ? adminHackathonItems
-    : hasCheckIn
-      ? scannerOnlyHackathonItems
-      : [];
+  // Filter items based on user permissions
+  const filteredAdminItems = filterItemsByPermissions(adminItems, permissions);
+  const filteredClubItems = filterItemsByPermissions(clubItems, permissions);
+  const filteredHackathonItems = filterItemsByPermissions(
+    hackathonItems,
+    permissions,
+  );
+  const filteredRolesItems = filterItemsByPermissions(rolesItems, permissions);
 
   return (
     <DropdownMenu>
@@ -72,17 +93,25 @@ export function UserDropdown({ hasCheckIn, hasFullAdmin }: UserDropdownProps) {
         <DropdownMenuLabel>{data ? data.name : "My Account"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {canAccessAdmin && <DropdownMenuRoleItems items={adminItems} />}
-          {canAccessClub && clubItems.length > 0 && (
+          {filteredAdminItems.length > 0 && (
+            <DropdownMenuRoleItems items={filteredAdminItems} />
+          )}
+          {filteredClubItems.length > 0 && (
             <>
               <DropdownMenuLabel>Club</DropdownMenuLabel>
-              <DropdownMenuRoleItems items={clubItems} />
+              <DropdownMenuRoleItems items={filteredClubItems} />
             </>
           )}
-          {canAccessHackathon && hackathonItems.length > 0 && (
+          {filteredHackathonItems.length > 0 && (
             <>
               <DropdownMenuLabel>Hackathon</DropdownMenuLabel>
-              <DropdownMenuRoleItems items={hackathonItems} />
+              <DropdownMenuRoleItems items={filteredHackathonItems} />
+            </>
+          )}
+          {filteredRolesItems.length > 0 && (
+            <>
+              <DropdownMenuLabel>Roles</DropdownMenuLabel>
+              <DropdownMenuRoleItems items={filteredRolesItems} />
             </>
           )}
           <DropdownMenuItem

@@ -20,13 +20,15 @@ import {
   updateEmailInputSchema,
 } from "@forge/validators";
 
-import { publicProcedure } from "../trpc";
+import { permProcedure, publicProcedure } from "../trpc";
+import { controlPerms } from "../utils";
 
 export const emailQueueRouter = {
   // Queue a single email
-  queueEmail: publicProcedure
+  queueEmail: permProcedure
     .input(emailQueueInputSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EMAIL_PORTAL"], ctx);
       const result = await db
         .insert(EmailQueue)
         .values({
@@ -48,9 +50,10 @@ export const emailQueueRouter = {
     }),
 
   // Queue a batch of emails
-  queueBatchEmail: publicProcedure
+  queueBatchEmail: permProcedure
     .input(batchEmailInputSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EMAIL_PORTAL"], ctx);
       const batchId = crypto.randomUUID();
       const emails = input.recipients.map((to, index) => ({
         batch_id: batchId,
@@ -82,9 +85,10 @@ export const emailQueueRouter = {
     }),
 
   // Update a queued email
-  updateQueuedEmail: publicProcedure
+  updateQueuedEmail: permProcedure
     .input(updateEmailInputSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EMAIL_PORTAL"], ctx);
       const { id, ...updateData } = input;
 
       // Check if email is editable
@@ -124,9 +128,10 @@ export const emailQueueRouter = {
     }),
 
   // Delete a queued email
-  deleteQueuedEmail: publicProcedure
+  deleteQueuedEmail: permProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EMAIL_PORTAL"], ctx);
       const email = await db
         .select()
         .from(EmailQueue)
@@ -153,58 +158,61 @@ export const emailQueueRouter = {
     }),
 
   // Get queue status
-  getQueueStatus: publicProcedure.output(queueStatusSchema).query(async () => {
-    // Get queue length
-    const queueResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(EmailQueue)
-      .where(sql`status IN ('pending', 'scheduled')`);
+  getQueueStatus: permProcedure
+    .output(queueStatusSchema)
+    .query(async ({ ctx }) => {
+      controlPerms.or(["EMAIL_PORTAL"], ctx);
+      // Get queue length
+      const queueResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(EmailQueue)
+        .where(sql`status IN ('pending', 'scheduled')`);
 
-    const queueLength = Number(queueResult[0]?.count ?? 0);
+      const queueLength = Number(queueResult[0]?.count ?? 0);
 
-    // Get daily count and limit
-    const todayParts = new Date().toISOString().split("T");
-    const today = todayParts[0];
-    if (!today) {
-      throw new Error("Failed to get today's date");
-    }
-    const dailyCountResult = await db
-      .select()
-      .from(EmailDailyCount)
-      .where(eq(EmailDailyCount.date, today))
-      .limit(1);
+      // Get daily count and limit
+      const todayParts = new Date().toISOString().split("T");
+      const today = todayParts[0];
+      if (!today) {
+        throw new Error("Failed to get today's date");
+      }
+      const dailyCountResult = await db
+        .select()
+        .from(EmailDailyCount)
+        .where(eq(EmailDailyCount.date, today))
+        .limit(1);
 
-    const dailyCount = dailyCountResult[0]?.count ?? 0;
-    const dailyLimit = dailyCountResult[0]?.limit ?? 100;
-    const remainingCapacity = Math.max(0, dailyLimit - dailyCount);
+      const dailyCount = dailyCountResult[0]?.count ?? 0;
+      const dailyLimit = dailyCountResult[0]?.limit ?? 100;
+      const remainingCapacity = Math.max(0, dailyLimit - dailyCount);
 
-    // Get next scheduled email time
-    const nextEmailResult = await db
-      .select({ scheduled_for: EmailQueue.scheduled_for })
-      .from(EmailQueue)
-      .where(sql`status = 'scheduled' AND scheduled_for IS NOT NULL`)
-      .orderBy(asc(EmailQueue.scheduled_for))
-      .limit(1);
+      // Get next scheduled email time
+      const nextEmailResult = await db
+        .select({ scheduled_for: EmailQueue.scheduled_for })
+        .from(EmailQueue)
+        .where(sql`status = 'scheduled' AND scheduled_for IS NOT NULL`)
+        .orderBy(asc(EmailQueue.scheduled_for))
+        .limit(1);
 
-    const nextSendTime = nextEmailResult[0]?.scheduled_for;
+      const nextSendTime = nextEmailResult[0]?.scheduled_for;
 
-    // Get config
-    const configResult = await db.select().from(EmailConfig).limit(1);
+      // Get config
+      const configResult = await db.select().from(EmailConfig).limit(1);
 
-    const isEnabled = configResult[0]?.enabled ?? true;
+      const isEnabled = configResult[0]?.enabled ?? true;
 
-    return {
-      queueLength,
-      dailyCount,
-      dailyLimit,
-      remainingCapacity,
-      nextSendTime: nextSendTime?.toISOString(),
-      isEnabled,
-    };
-  }),
+      return {
+        queueLength,
+        dailyCount,
+        dailyLimit,
+        remainingCapacity,
+        nextSendTime: nextSendTime?.toISOString(),
+        isEnabled,
+      };
+    }),
 
   // Get queued emails with pagination
-  getQueuedEmails: publicProcedure
+  getQueuedEmails: permProcedure
     .input(
       z.object({
         page: z.number().min(1).default(1),
@@ -216,7 +224,8 @@ export const emailQueueRouter = {
       }),
     )
     .output(paginatedEmailsSchema)
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      controlPerms.or(["EMAIL_PORTAL"], ctx);
       const { page, pageSize, status, priority } = input;
       const offset = (page - 1) * pageSize;
 
@@ -271,9 +280,10 @@ export const emailQueueRouter = {
     }),
 
   // Update email configuration
-  updateEmailConfig: publicProcedure
+  updateEmailConfig: permProcedure
     .input(emailConfigInputSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EMAIL_PORTAL"], ctx);
       const configResult = await db.select().from(EmailConfig).limit(1);
 
       if (configResult.length === 0) {
@@ -305,7 +315,8 @@ export const emailQueueRouter = {
     }),
 
   // Get email configuration
-  getEmailConfig: publicProcedure.query(async () => {
+  getEmailConfig: permProcedure.query(async ({ ctx }) => {
+    controlPerms.or(["EMAIL_PORTAL"], ctx);
     try {
       const configResult = await db.select().from(EmailConfig).limit(1);
 
@@ -347,7 +358,7 @@ export const emailQueueRouter = {
   }),
 
   // Schedule an email for future delivery
-  scheduleEmail: publicProcedure
+  scheduleEmail: permProcedure
     .input(
       z.object({
         to: z.string().email(),
@@ -361,7 +372,8 @@ export const emailQueueRouter = {
         maxAttempts: z.number().min(1).max(10).default(3),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EMAIL_PORTAL"], ctx);
       const result = await db
         .insert(EmailQueue)
         .values({
@@ -392,7 +404,7 @@ export const emailQueueRouter = {
     }),
 
   // Queue emails with blacklist rules
-  queueEmailWithBlacklist: publicProcedure
+  queueEmailWithBlacklist: permProcedure
     .input(
       z.object({
         to: z.string().email(),
@@ -406,7 +418,8 @@ export const emailQueueRouter = {
         maxAttempts: z.number().min(1).max(10).default(3),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EMAIL_PORTAL"], ctx);
       const result = await db
         .insert(EmailQueue)
         .values({

@@ -1024,7 +1024,7 @@ export const hackerRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"], ctx);
+      controlPerms.and(["CHECKIN_HACK_EVENT"], ctx);
 
       const event = await db.query.Event.findFirst({
         where: eq(Event.id, input.eventId),

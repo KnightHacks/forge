@@ -160,6 +160,7 @@ export default function RoleEdit({
         );
       }
       void utils.roles.getAllLinks.invalidate();
+      void utils.roles.getPermissions.invalidate();
     } catch (error) {
       toast((error as Error).message);
     }

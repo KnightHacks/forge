@@ -12,17 +12,11 @@ export default async function AdminEmail() {
     redirect(SIGN_IN_PATH);
   }
 
-  const hasCheckIn = await api.roles.hasPermission({
-    and: ["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"],
+  const hasEmailConfig = await api.roles.hasPermission({
+    and: ["EMAIL_PORTAL"],
   });
-  const hasFullAdmin = await api.roles.hasPermission({ and: ["IS_OFFICER"] });
 
-  if (!hasCheckIn && !hasFullAdmin) {
-    redirect("/");
-  }
-
-  const user = await api.member.getMember();
-  if (!user) {
+  if (!hasEmailConfig) {
     redirect("/");
   }
 

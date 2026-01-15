@@ -19,13 +19,7 @@ import ClubLogo from "./club-logo";
 import { UserDropdown } from "./user-dropdown";
 
 export async function SessionNavbar() {
-  const hasCheckIn = await api.roles.hasPermission({
-    and: ["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"],
-  });
-  const hasFullAdmin = await api.roles.hasPermission({ and: ["IS_OFFICER"] });
-
   const perms = await api.roles.getPermissions();
-  console.log(perms);
 
   let permString = "";
   Object.values(perms).forEach((v) => {
@@ -61,9 +55,9 @@ export async function SessionNavbar() {
                   You have the following permissions:
                 </h3>
                 <ul className="mt-1 max-h-48 list-disc overflow-y-auto px-4">
-                  {permList.map((p) => {
+                  {permList.map((p, index) => {
                     return (
-                      <li className={`p-1 text-sm text-muted-foreground`}>
+                      <li key={index} className={`p-1 text-sm text-muted-foreground`}>
                         {p}
                       </li>
                     );
@@ -73,7 +67,7 @@ export async function SessionNavbar() {
             </DropdownMenu>
           )}
           <NavigationMenuItem className="flex items-center justify-center">
-            <UserDropdown hasCheckIn={hasCheckIn} hasFullAdmin={hasFullAdmin} />
+            <UserDropdown permissions={perms} />
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
