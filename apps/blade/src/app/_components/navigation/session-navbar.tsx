@@ -15,8 +15,8 @@ import { ChevronDown, Shield } from "lucide-react";
 import { getPermsAsList } from "~/lib/utils";
 
 export async function SessionNavbar() {
-  const hasCheckIn = await api.auth.hasCheckIn();
-  const hasFullAdmin = await api.auth.hasFullAdmin();
+  const hasCheckIn = await api.roles.hasPermission({and: ["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"]});
+  const hasFullAdmin = await api.roles.hasPermission({and: ["IS_OFFICER"]});
 
   const perms = await api.roles.getPermissions();
   console.log(perms)

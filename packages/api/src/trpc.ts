@@ -17,9 +17,6 @@ import {
   getJudgeSessionFromCookie,
   isDiscordAdmin,
   isJudgeAdmin,
-  userHasCheckIn,
-  userHasFullAdmin,
-  userIsOfficer,
 } from "./utils";
 import { PermissionKey, PERMISSIONS } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";

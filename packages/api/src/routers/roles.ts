@@ -10,7 +10,6 @@ import {
   discord,
   log,
   getPermsAsList,
-  hasPermission,
   controlPerms,
 } from "../utils";
 import { db } from "@forge/db/client";

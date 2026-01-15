@@ -90,52 +90,12 @@ export const isDiscordAdmin = async (user: Session["user"]) => {
   }
 };
 
-export const userIsOfficer = async (user: Session["user"]) => {
-  try {
-    const guildMember = (await discord.get(
-      Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
-    )) as APIGuildMember;
-    return guildMember.roles.includes(OFFICER_ROLE_ID);
-  } catch (err) {
-    console.error("Error: ", err);
-    return false;
-  }
-};
-
 export const hasPermission = (
   userPermissions: string,
   permission: PermissionIndex,
 ): boolean => {
   const permissionBit = userPermissions[permission];
   return permissionBit === "1";
-};
-
-export const getUserPermissions = async (
-  user: Session["user"],
-): Promise<string> => {
-  try {
-    const guildMember = (await discord.get(
-      Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
-    )) as APIGuildMember;
-
-    const userPermissionArray = new Array(Object.keys(PERMISSIONS).length).fill(
-      "0",
-    );
-
-    for (const roleId of guildMember.roles) {
-      if (roleId in ROLE_PERMISSIONS) {
-        const permissionIndex = ROLE_PERMISSIONS[roleId];
-        if (permissionIndex !== undefined) {
-          userPermissionArray[permissionIndex] = "1";
-        }
-      }
-    }
-
-    return userPermissionArray.join("");
-  } catch (err) {
-    console.error("Error getting user permissions: ", err);
-    return "0".repeat(Object.keys(PERMISSIONS).length);
-  }
 };
 
 export const parsePermissions = async (discordUserId: string) => {
@@ -207,32 +167,6 @@ export const controlPerms = {
     return true
   }
 }
-
-
-export const userHasPermission = async (
-  user: Session["user"],
-  permission: PermissionIndex,
-): Promise<boolean> => {
-  const userPermissions = await getUserPermissions(user);
-
-  if (hasPermission(userPermissions, PERMISSIONS.IS_OFFICER)) {
-    return true;
-  }
-
-  return hasPermission(userPermissions, permission);
-};
-
-export const userHasFullAdmin = async (
-  user: Session["user"],
-): Promise<boolean> => {
-  return userHasPermission(user, PERMISSIONS.IS_OFFICER);
-};
-
-export const userHasCheckIn = async (
-  user: Session["user"],
-): Promise<boolean> => {
-  return userHasPermission(user, PERMISSIONS.CHECK_IN);
-};
 
 export const isDiscordMember = async (user: Session["user"]) => {
   try {

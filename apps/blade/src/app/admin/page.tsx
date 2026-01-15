@@ -20,9 +20,9 @@ export default async function Admin() {
     redirect(SIGN_IN_PATH);
   }
 
-  const hasCheckIn = await api.auth.hasCheckIn();
-  const hasFullAdmin = await api.auth.hasFullAdmin();
-  const isOfficer = await api.auth.getOfficerStatus();
+  const hasCheckIn = await api.roles.hasPermission({and: ["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"]});;
+  const hasFullAdmin = await api.roles.hasPermission({and: ["IS_OFFICER"]});
+  const isOfficer = await api.roles.hasPermission({and: ["IS_OFFICER"]});
 
   if (!hasCheckIn && !hasFullAdmin) {
     redirect("/");
