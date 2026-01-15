@@ -24,7 +24,7 @@ import {
   adminItems,
   clubItems,
   hackathonItems,
-  rolesItems,
+  systemItems,
   userItems,
 } from "./reusable-user-dropdown";
 
@@ -70,12 +70,12 @@ export function UserDropdown({ permissions }: UserDropdownProps) {
 
   // Filter items based on user permissions
   const filteredAdminItems = filterItemsByPermissions(adminItems, permissions);
+  const filteredSystemItems = filterItemsByPermissions(systemItems, permissions);
   const filteredClubItems = filterItemsByPermissions(clubItems, permissions);
   const filteredHackathonItems = filterItemsByPermissions(
     hackathonItems,
     permissions,
   );
-  const filteredRolesItems = filterItemsByPermissions(rolesItems, permissions);
 
   return (
     <DropdownMenu>
@@ -95,6 +95,12 @@ export function UserDropdown({ permissions }: UserDropdownProps) {
           {filteredAdminItems.length > 0 && (
             <DropdownMenuRoleItems items={filteredAdminItems} />
           )}
+          {filteredSystemItems.length > 0 && (
+            <>
+              <DropdownMenuLabel>System</DropdownMenuLabel>
+              <DropdownMenuRoleItems items={filteredSystemItems} />
+            </>
+          )}
           {filteredClubItems.length > 0 && (
             <>
               <DropdownMenuLabel>Club</DropdownMenuLabel>
@@ -105,12 +111,6 @@ export function UserDropdown({ permissions }: UserDropdownProps) {
             <>
               <DropdownMenuLabel>Hackathon</DropdownMenuLabel>
               <DropdownMenuRoleItems items={filteredHackathonItems} />
-            </>
-          )}
-          {filteredRolesItems.length > 0 && (
-            <>
-              <DropdownMenuLabel>Roles</DropdownMenuLabel>
-              <DropdownMenuRoleItems items={filteredRolesItems} />
             </>
           )}
           <DropdownMenuItem

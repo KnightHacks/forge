@@ -50,6 +50,9 @@ export const adminItems: roleItems[] = [
       or: ["IS_OFFICER"],
     },
   },
+];
+
+export const systemItems: roleItems[] = [
   {
     name: "Forms",
     component: (
@@ -71,6 +74,29 @@ export const adminItems: roleItems[] = [
     route: "/admin/email",
     requiredPermissions: {
       or: ["EMAIL_PORTAL", "IS_OFFICER"],
+    },
+  },
+  {
+    name: "Assign Roles",
+    component: (
+      <Users color={USER_DROPDOWN_ICON_COLOR} size={USER_DROPDOWN_ICON_SIZE} />
+    ),
+    route: "/admin/roles/manage",
+    requiredPermissions: {
+      or: ["ASSIGN_ROLES", "IS_OFFICER"],
+    },
+  },
+  {
+    name: "Configure Roles",
+    component: (
+      <Settings
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/roles/configure",
+    requiredPermissions: {
+      or: ["CONFIGURE_ROLES", "IS_OFFICER"],
     },
   },
 ];
@@ -195,32 +221,6 @@ export const hackathonItems: roleItems[] = [
     route: "/admin/hackathon/judge-assignment",
     requiredPermissions: {
       or: ["IS_JUDGE", "IS_OFFICER"],
-    },
-  },
-];
-
-export const rolesItems: roleItems[] = [
-  {
-    name: "Assign Roles",
-    component: (
-      <Users color={USER_DROPDOWN_ICON_COLOR} size={USER_DROPDOWN_ICON_SIZE} />
-    ),
-    route: "/admin/roles/manage",
-    requiredPermissions: {
-      or: ["ASSIGN_ROLES", "IS_OFFICER"],
-    },
-  },
-  {
-    name: "Configure Roles",
-    component: (
-      <Settings
-        color={USER_DROPDOWN_ICON_COLOR}
-        size={USER_DROPDOWN_ICON_SIZE}
-      />
-    ),
-    route: "/admin/roles/configure",
-    requiredPermissions: {
-      or: ["CONFIGURE_ROLES", "IS_OFFICER"],
     },
   },
 ];

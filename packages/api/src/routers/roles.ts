@@ -292,20 +292,21 @@ export const rolesRouter = {
       }
 
       // Add the role to the user on Discord
+      // Note: This may fail due to role hierarchy or bot permissions
+      // We log the error but don't break the flow - Blade permission is still granted
       try {
         await addRoleToMember(user.discordUserId, role.discordRoleId);
         console.log(
-          `Successfully added Discord role ${role.discordRoleId} to user ${user.discordUserId}`,
+          `✅ Successfully added Discord role ${role.discordRoleId} to user ${user.discordUserId}`,
         );
       } catch (error) {
         console.error(
-          `Failed to add Discord role ${role.discordRoleId} to user ${user.discordUserId}:`,
+          `⚠️  Failed to add Discord role ${role.discordRoleId} to user ${user.discordUserId}:`,
           error,
         );
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to add role on Discord: ${error instanceof Error ? error.message : "Unknown error"}`,
-        });
+        console.error(
+          `   This may be due to role hierarchy or bot permissions. Blade permission will still be granted.`,
+        );
       }
 
       await db.insert(Permissions).values({
@@ -354,20 +355,21 @@ export const rolesRouter = {
       }
 
       // Remove the role from the user on Discord
+      // Note: This may fail due to role hierarchy or bot permissions
+      // We log the error but don't break the flow - Blade permission is still revoked
       try {
         await removeRoleFromMember(user.discordUserId, role.discordRoleId);
         console.log(
-          `Successfully removed Discord role ${role.discordRoleId} from user ${user.discordUserId}`,
+          `✅ Successfully removed Discord role ${role.discordRoleId} from user ${user.discordUserId}`,
         );
       } catch (error) {
         console.error(
-          `Failed to remove Discord role ${role.discordRoleId} from user ${user.discordUserId}:`,
+          `⚠️  Failed to remove Discord role ${role.discordRoleId} from user ${user.discordUserId}:`,
           error,
         );
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to remove role on Discord: ${error instanceof Error ? error.message : "Unknown error"}`,
-        });
+        console.error(
+          `   This may be due to role hierarchy or bot permissions. Blade permission will still be revoked.`,
+        );
       }
 
       await db.delete(Permissions).where(eq(Permissions.id, perm.id));
@@ -441,30 +443,45 @@ export const rolesRouter = {
           } else {
             try {
               if (!input.revoking) {
-                // Granting role
-                await addRoleToMember(
-                  userData.discordUserId,
-                  roleData.discordRoleId,
-                );
+                // Granting role - Discord may fail due to hierarchy/perms
+                try {
+                  await addRoleToMember(
+                    userData.discordUserId,
+                    roleData.discordRoleId,
+                  );
+                } catch (discordError) {
+                  console.error(
+                    `⚠️  Discord role grant failed for ${userData.name} -> ${roleData.name}:`,
+                    discordError,
+                  );
+                }
                 await db.insert(Permissions).values({
                   roleId: roleId,
                   userId: userId,
                 });
                 succeeded.push(ret);
               } else if (perm) {
-                // Revoking role
-                await removeRoleFromMember(
-                  userData.discordUserId,
-                  roleData.discordRoleId,
-                );
+                // Revoking role - Discord may fail due to hierarchy/perms
+                try {
+                  await removeRoleFromMember(
+                    userData.discordUserId,
+                    roleData.discordRoleId,
+                  );
+                } catch (discordError) {
+                  console.error(
+                    `⚠️  Discord role revoke failed for ${userData.name} -> ${roleData.name}:`,
+                    discordError,
+                  );
+                }
                 await db.delete(Permissions).where(eq(Permissions.id, perm.id));
                 succeeded.push(ret);
               } else {
                 failed.push(ret);
               }
             } catch (error) {
+              // This catches DB errors only (Discord errors are caught above)
               console.error(
-                `Failed to ${input.revoking ? "revoke" : "grant"} role ${roleData.name} ${input.revoking ? "from" : "to"} ${userData.name}:`,
+                `❌ Database error for ${input.revoking ? "revoke" : "grant"} role ${roleData.name} ${input.revoking ? "from" : "to"} ${userData.name}:`,
                 error,
               );
               failed.push(ret);
@@ -491,10 +508,11 @@ export const rolesRouter = {
         userId: ctx.session.user.discordUserId,
       });
 
+      // Only throw error for database failures (Discord failures are logged but don't break)
       if (failed.length > 0) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to ${input.revoking ? "revoke" : "grant"} ${failed.length} role(s): ${failed.map((v) => `${v.roleName}`).join(", ")}`,
+          message: `Database error: Failed to ${input.revoking ? "revoke" : "grant"} ${failed.length} role(s): ${failed.map((v) => `${v.roleName}`).join(", ")}`,
         });
       }
     }),
