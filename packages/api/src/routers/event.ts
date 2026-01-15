@@ -55,20 +55,22 @@ export const eventRouter = {
       .orderBy(desc(Event.start_datetime));
     return events;
   }),
-  getAttendees: permProcedure.input(z.string()).query(async ({ ctx, input }) => {
-    controlPerms.and(["READ_CLUB_EVENT"], ctx);
-    
-    const attendees = await db
-      .select({
-        ...getTableColumns(Member),
-      })
-      .from(Event)
-      .innerJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
-      .innerJoin(Member, eq(EventAttendee.memberId, Member.id))
-      .where(eq(Event.id, input))
-      .orderBy(Member.firstName);
-    return attendees;
-  }),
+  getAttendees: permProcedure
+    .input(z.string())
+    .query(async ({ ctx, input }) => {
+      controlPerms.and(["READ_CLUB_EVENT"], ctx);
+
+      const attendees = await db
+        .select({
+          ...getTableColumns(Member),
+        })
+        .from(Event)
+        .innerJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
+        .innerJoin(Member, eq(EventAttendee.memberId, Member.id))
+        .where(eq(Event.id, input))
+        .orderBy(Member.firstName);
+      return attendees;
+    }),
   getHackerAttendees: permProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {

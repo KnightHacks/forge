@@ -12,16 +12,16 @@ import { ZodError } from "zod";
 
 import type { Session } from "@forge/auth/server";
 import { validateToken } from "@forge/auth/server";
+import { PermissionKey, PERMISSIONS } from "@forge/consts/knight-hacks";
+import { eq, sql } from "@forge/db";
+import { db } from "@forge/db/client";
+import { Permissions, Roles } from "@forge/db/schemas/auth";
 
 import {
   getJudgeSessionFromCookie,
   isDiscordAdmin,
   isJudgeAdmin,
 } from "./utils";
-import { PermissionKey, PERMISSIONS } from "@forge/consts/knight-hacks";
-import { db } from "@forge/db/client";
-import { Permissions, Roles } from "@forge/db/schemas/auth";
-import { eq, sql } from "@forge/db";
 
 /**
  * 1. CONTEXT
@@ -142,40 +142,43 @@ export const protectedProcedure = t.procedure
     });
   });
 
-export const permProcedure = protectedProcedure.use(
-  async ({ctx, next}) => {
-    const permRows = await db.select({
-        permissions: Roles.permissions
+export const permProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const permRows = await db
+    .select({
+      permissions: Roles.permissions,
     })
     .from(Roles)
     .innerJoin(Permissions, eq(Roles.id, Permissions.roleId))
-    .where(sql`cast(${Permissions.userId} as text) = ${ctx.session.user.id}`)
-    
-    const permissionsBits = new Array(Object.keys(PERMISSIONS).length).fill(false) as boolean[];
+    .where(sql`cast(${Permissions.userId} as text) = ${ctx.session.user.id}`);
 
-    permRows.forEach((v) => {
-        for (let i = 0; i < v.permissions.length; i++) {
-            if(v.permissions.at(i) == "1")
-                permissionsBits[i] = true
-        }
-    })
+  const permissionsBits = new Array(Object.keys(PERMISSIONS).length).fill(
+    false,
+  ) as boolean[];
 
-    const permissionsMap = Object.keys(PERMISSIONS).reduce((accumulator, key) => {  
-        const index = PERMISSIONS[key as PermissionKey];
+  permRows.forEach((v) => {
+    for (let i = 0; i < v.permissions.length; i++) {
+      if (v.permissions.at(i) == "1") permissionsBits[i] = true;
+    }
+  });
 
-        accumulator[key as PermissionKey] = permissionsBits[index] ?? false;
+  const permissionsMap = Object.keys(PERMISSIONS).reduce(
+    (accumulator, key) => {
+      const index = PERMISSIONS[key as PermissionKey];
 
-        return accumulator;
-    }, {} as Record<PermissionKey, boolean>)
+      accumulator[key as PermissionKey] = permissionsBits[index] ?? false;
 
-    return next({
-      ctx: {
-        // infers the `session` as non-nullable
-        session: { ...ctx.session, permissions: permissionsMap },
-      },
-    });
-  }
-)
+      return accumulator;
+    },
+    {} as Record<PermissionKey, boolean>,
+  );
+
+  return next({
+    ctx: {
+      // infers the `session` as non-nullable
+      session: { ...ctx.session, permissions: permissionsMap },
+    },
+  });
+});
 
 export const judgeProcedure = publicProcedure.use(async ({ ctx, next }) => {
   let isAdmin;

@@ -25,8 +25,14 @@ export const User = createTable("user", (t) => ({
 
 export const Permissions = createTable("permissions", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
-  roleId: t.uuid().notNull().references(() => Roles.id),
-  userId: t.uuid().notNull().references(() => User.id)
+  roleId: t
+    .uuid()
+    .notNull()
+    .references(() => Roles.id),
+  userId: t
+    .uuid()
+    .notNull()
+    .references(() => User.id),
 }));
 
 export const Roles = createTable("roles", (t) => ({
@@ -42,28 +48,28 @@ export const UserRelations = relations(User, ({ many, one }) => ({
   accounts: many(Account),
   member: one(Member),
   permissions: many(Permissions, {
-    relationName: "userPermissionRel"
-  })
+    relationName: "userPermissionRel",
+  }),
 }));
 
 export const RoleRelations = relations(Roles, ({ many }) => ({
   permissions: many(Permissions, {
-    relationName: "rolePermissionRel"
-  })
+    relationName: "rolePermissionRel",
+  }),
 }));
 
-export const PermissionRelations = relations(Permissions, ({one}) => ({
+export const PermissionRelations = relations(Permissions, ({ one }) => ({
   role: one(Roles, {
     fields: [Permissions.roleId],
     references: [Roles.id],
-    relationName: "rolePermissionRel"
+    relationName: "rolePermissionRel",
   }),
   user: one(User, {
     fields: [Permissions.userId],
     references: [User.id],
-    relationName: "userPermissionRel"
-  })
-}))
+    relationName: "userPermissionRel",
+  }),
+}));
 
 export const Account = createTable(
   "account",

@@ -114,7 +114,7 @@ export const parsePermissions = async (discordUserId: string) => {
       .where(inArray(Roles.discordRoleId, guildMember.roles));
 
     for (const role of userDbRoles) {
-      if (role.permissions === null) continue;
+      if (!role.permissions) continue;
 
       for (
         let i = 0;

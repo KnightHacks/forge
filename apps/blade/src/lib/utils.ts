@@ -1,8 +1,8 @@
 import type { AnyTRPCProcedure, AnyTRPCRouter } from "@trpc/server";
 import type { z } from "zod";
 
-import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import { type EventTagsColor } from "@forge/consts/knight-hacks";
+import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 
 export const formatDateTime = (date: Date) => {
   // Create a new Date object 5 hours behind the original
@@ -213,6 +213,14 @@ export const PERMISSION_DATA = {
 } as const;
 
 type PermissionKey = keyof typeof PERMISSIONS;
+export function getPermsAsList(perms: string) {
+  const list = [];
+  const permKeys = Object.keys(PERMISSIONS) as PermissionKey[];
+  for (let i = 0; i < perms.length; i++) {
+    const permKey = permKeys.at(i);
+    if (perms[i] == "1" && permKey) list.push(PERMISSION_DATA[permKey].name);
+  }
+
 export function getPermsAsList(perms: string) {
   const list = [];
   const permKeys = Object.keys(PERMISSIONS) as PermissionKey[];

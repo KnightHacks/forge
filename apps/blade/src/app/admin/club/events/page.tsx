@@ -21,7 +21,7 @@ export default async function Events() {
     redirect(SIGN_IN_PATH);
   }
 
-  const hasFullAdmin = await api.roles.hasPermission({and: ["IS_OFFICER"]});
+  const hasFullAdmin = await api.roles.hasPermission({ and: ["IS_OFFICER"] });
 
   if (!hasFullAdmin) {
     redirect("/");

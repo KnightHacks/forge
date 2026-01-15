@@ -31,11 +31,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import {
-  permProcedure,
-  protectedProcedure,
-  publicProcedure,
-} from "../trpc";
+import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { controlPerms, log } from "../utils";
 
 export const memberRouter = {
@@ -324,15 +320,13 @@ export const memberRouter = {
     return events;
   }),
 
-  getMembers: permProcedure.query(
-    async ({ ctx }) => {
-      // CHECKIN_CLUB_EVENT is here because people trying to check-in
-      // need to retrieve the member list for manual entry
-      controlPerms.or(["READ_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx);
+  getMembers: permProcedure.query(async ({ ctx }) => {
+    // CHECKIN_CLUB_EVENT is here because people trying to check-in
+    // need to retrieve the member list for manual entry
+    controlPerms.or(["READ_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx);
 
-      return await db.query.Member.findMany();
-    }
-  ),
+    return await db.query.Member.findMany();
+  }),
   getMemberCount: publicProcedure.query(
     async () =>
       (await db.select({ count: count() }).from(Member))[0]?.count ?? 0,
@@ -372,23 +366,21 @@ export const memberRouter = {
       });
     }),
 
-  getDuesPayingMembers: permProcedure.query(
-    async ({ ctx }) => {
-      controlPerms.and(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+  getDuesPayingMembers: permProcedure.query(async ({ ctx }) => {
+    controlPerms.and(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
-      return await db
-        .select()
-        .from(Member)
-        .where(
-          exists(
-            db
-              .select()
-              .from(DuesPayment)
-              .where(eq(DuesPayment.memberId, Member.id)),
-          ),
-        );
-      }
-  ),
+    return await db
+      .select()
+      .from(Member)
+      .where(
+        exists(
+          db
+            .select()
+            .from(DuesPayment)
+            .where(eq(DuesPayment.memberId, Member.id)),
+        ),
+      );
+  }),
 
   getMemberAttendanceCounts: permProcedure.query(async ({ ctx }) => {
     controlPerms.and(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);

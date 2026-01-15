@@ -61,7 +61,7 @@ export const appRouter = createTRPCRouter<{
   csvImporter: csvImporterRouter,
   companies: companiesRouter,
   forms: formsRouter,
-  roles: rolesRouter
+  roles: rolesRouter,
 });
 
 // export type definition of API

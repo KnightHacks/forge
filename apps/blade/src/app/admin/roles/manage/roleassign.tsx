@@ -84,14 +84,15 @@ export default function RoleAssign() {
       ? false
       : Object.values(user).some((value) => {
           if (value === null) return false;
-          return value
-            .toString()
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase());
+          return typeof value === "string" ||
+            typeof value === "number" ||
+            typeof value === "boolean"
+            ? value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+            : false;
         }),
   );
 
-  const sendBatchRequest = async (
+  const sendBatchRequest = (
     users: typeof checkedUsers,
     roles: typeof checkedRoles,
     revoking: boolean,
@@ -107,7 +108,7 @@ export default function RoleAssign() {
       })
       .filter((v) => v != undefined);
 
-    await batchQ.mutate({ roleIds: finalRoles, userIds: finalUsers, revoking });
+    void batchQ.mutate({ roleIds: finalRoles, userIds: finalUsers, revoking });
     location.reload();
   };
 

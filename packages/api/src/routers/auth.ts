@@ -1,11 +1,9 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+
 import { invalidateSessionToken } from "@forge/auth/server";
+
 import { protectedProcedure, publicProcedure } from "../trpc";
-import {
-  isDiscordAdmin,
-  isDiscordMember,
-  isJudgeAdmin,
-} from "../utils";
+import { isDiscordAdmin, isDiscordMember, isJudgeAdmin } from "../utils";
 
 export const authRouter = {
   getSession: publicProcedure.query(({ ctx }) => {
@@ -48,5 +46,4 @@ export const authRouter = {
     await invalidateSessionToken(opts.ctx.token);
     return { success: true };
   }),
-
 } satisfies TRPCRouterRecord;

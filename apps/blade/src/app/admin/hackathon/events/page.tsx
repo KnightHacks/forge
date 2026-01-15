@@ -22,7 +22,7 @@ export default async function HackathonEvents() {
   }
 
   // Check if the user has access to Events
-  const hasFullAdmin = await api.roles.hasPermission({and: ["IS_OFFICER"]});
+  const hasFullAdmin = await api.roles.hasPermission({ and: ["IS_OFFICER"] });
 
   if (!hasFullAdmin) {
     redirect("/");

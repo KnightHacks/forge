@@ -20,9 +20,11 @@ export default async function Admin() {
     redirect(SIGN_IN_PATH);
   }
 
-  const hasCheckIn = await api.roles.hasPermission({and: ["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"]});;
-  const hasFullAdmin = await api.roles.hasPermission({and: ["IS_OFFICER"]});
-  const isOfficer = await api.roles.hasPermission({and: ["IS_OFFICER"]});
+  const hasCheckIn = await api.roles.hasPermission({
+    and: ["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"],
+  });
+  const hasFullAdmin = await api.roles.hasPermission({ and: ["IS_OFFICER"] });
+  const isOfficer = await api.roles.hasPermission({ and: ["IS_OFFICER"] });
 
   if (!hasCheckIn && !hasFullAdmin) {
     redirect("/");
@@ -107,7 +109,9 @@ export default async function Admin() {
               {hasFullAdmin && (
                 <Card className="w-full">
                   <CardHeader>
-                    <CardTitle className="text-center">Email Dashboard</CardTitle>
+                    <CardTitle className="text-center">
+                      Email Dashboard
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-wrap items-center justify-center gap-4">
                     <Link href="/admin/email">
