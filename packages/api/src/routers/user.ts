@@ -1,33 +1,27 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import z from "zod";
 
-import type {
-  PermissionIndex,
-  PermissionKey,
-} from "@forge/consts/knight-hacks";
-import { PERMISSIONS } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
 
 import { permProcedure, protectedProcedure } from "../trpc";
 
-// helper schema to check if a value is either of type PermissionKey or PermissionIndex
-// z.custom doesn't perform any validation by itself, so it will let any type at runtime
-const PermissionInputSchema = z.custom<PermissionKey | PermissionIndex>(
-  (value) => {
-    // check if it's a valid number index
-    if (typeof value === "number") {
-      // check if the number exists as a value in PERMISSIONS object
-      return (Object.values(PERMISSIONS) as number[]).includes(value);
-    }
+// // helper schema to check if a value is either of type PermissionKey or PermissionIndex
+// // z.custom doesn't perform any validation by itself, so it will let any type at runtime
+// const PermissionInputSchema = z.custom<PermissionKey | PermissionIndex>(
+//   (value) => {
+//     // check if it's a valid number index
+//     if (typeof value === "number") {
+//       // check if the number exists as a value in PERMISSIONS object
+//       return (Object.values(PERMISSIONS) as number[]).includes(value);
+//     }
 
-    // check if it's a valid string key
-    if (typeof value === "string") {
-      return value in PERMISSIONS;
-    }
+//     // check if it's a valid string key
+//     if (typeof value === "string") {
+//       return value in PERMISSIONS;
+//     }
 
-    return false;
-  },
-);
+//     return false;
+//   },
+// );
 
 export const userRouter = {
   getUserAvatar: protectedProcedure.query(({ ctx }) => {
