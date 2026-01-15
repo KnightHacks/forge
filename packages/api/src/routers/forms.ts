@@ -23,7 +23,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
+import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import {
   controlPerms,
   generateJsonSchema,
@@ -31,15 +31,8 @@ import {
   regenerateMediaUrls,
 } from "../utils";
 
-interface FormSchemaRow {
-  name: string;
-  createdAt: Date;
-  formData: FormData;
-  formValidatorJson: JSONSchema7;
-}
-
 export const formsRouter = {
-  createForm: adminProcedure
+  createForm: permProcedure
     .input(
       FormSchemaSchema.omit({
         id: true,
@@ -84,7 +77,7 @@ export const formsRouter = {
         });
     }),
 
-  updateForm: adminProcedure
+  updateForm: permProcedure
     .input(
       FormSchemaSchema.omit({
         name: true,
@@ -160,7 +153,7 @@ export const formsRouter = {
       };
     }),
 
-  deleteForm: adminProcedure
+  deleteForm: permProcedure
     .input(z.object({ slug_name: z.string() }))
     .mutation(async ({ input }) => {
       // find the form to delete duh
@@ -222,7 +215,7 @@ export const formsRouter = {
       };
     }),
 
-  addConnection: adminProcedure
+  addConnection: permProcedure
     .input(TrpcFormConnectionSchema)
     .mutation(async ({ input }) => {
       try {
@@ -251,7 +244,7 @@ export const formsRouter = {
       }
     }),
 
-  deleteConnection: adminProcedure
+  deleteConnection: permProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
       try {
@@ -331,7 +324,7 @@ export const formsRouter = {
       });
     }),
 
-  getResponses: adminProcedure
+  getResponses: permProcedure
     .input(z.object({ form: z.string() }))
     .query(async ({ input }) => {
       return await db
@@ -421,7 +414,7 @@ export const formsRouter = {
     }),
 
   // Generate presigned upload URL for direct MinIO upload
-  getUploadUrl: adminProcedure
+  getUploadUrl: permProcedure
     .input(
       z.object({
         fileName: z.string(),
@@ -470,7 +463,7 @@ export const formsRouter = {
       }
     }),
 
-  deleteMedia: adminProcedure
+  deleteMedia: permProcedure
     .input(
       z.object({
         objectName: z.string(),

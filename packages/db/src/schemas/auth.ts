@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, pgTableCreator, primaryKey, uuid } from "drizzle-orm/pg-core";
+import { pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 import { Member } from "./knight-hacks";

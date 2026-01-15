@@ -1,20 +1,16 @@
+/* eslint-disable no-console */
 /**
  * ONE-TIME BOOTSTRAP SCRIPT
- *
- * This script creates a superadmin role with all permissions and assigns it to a user.
- * Use this to bootstrap the first admin user who can then manage roles through the UI.
- *
- * Usage:
- *   pnpm --filter @forge/db with-env tsx scripts/bootstrap-superadmin.ts <role-id> <user-id>
- *
- * Example:
- *   pnpm --filter @forge/db with-env tsx scripts/bootstrap-superadmin.ts 1321955700540309645 238081392481665025
- *
- * Arguments:
- *   discord-role-id: The Discord role ID to link to (e.g., an Admin role in your Discord server)
- *   discord-user-id: The Discord user ID of the person to grant superadmin access
- */
-
+// This script creates a superadmin role with all permissions and assigns it to a user.
+// Use this to bootstrap the first admin user who can then manage roles through the UI.
+// Usage:
+//   pnpm --filter @forge/db with-env tsx scripts/bootstrap-superadmin.ts <role-id> <user-id>
+// Example:
+//   pnpm --filter @forge/db with-env tsx scripts/bootstrap-superadmin.ts 1321955700540309645 238081392481665025
+// Arguments:
+//   discord-role-id: The Discord role ID to link to (e.g., an Admin role in your Discord server)
+//   discord-user-id: The Discord user ID of the person to grant superadmin access
+*/
 import { eq } from "drizzle-orm";
 
 import { PERMISSIONS } from "@forge/consts/knight-hacks";
@@ -57,6 +53,11 @@ async function bootstrapSuperadmin() {
 
   try {
     // Check if the Discord role is already linked
+    if (!discordRoleId) {
+      console.error("Error: Discord role ID is required");
+      process.exit(1);
+    }
+
     const existingRole = await db.query.Roles.findFirst({
       where: (t, { eq }) => eq(t.discordRoleId, discordRoleId),
     });
@@ -104,6 +105,11 @@ async function bootstrapSuperadmin() {
     }
 
     // Find the user by Discord user ID
+    if (!discordUserId) {
+      console.error("Error: Discord user ID is required");
+      process.exit(1);
+    }
+
     const user = await db.query.User.findFirst({
       where: (t, { eq }) => eq(t.discordUserId, discordUserId),
     });
@@ -150,4 +156,4 @@ async function bootstrapSuperadmin() {
   process.exit(0);
 }
 
-bootstrapSuperadmin();
+await bootstrapSuperadmin();

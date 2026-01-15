@@ -574,6 +574,15 @@ export const TrpcFormConnection = createTable("trpc_form_connection", (t) => ({
 
 export const TrpcFormConnectionSchema = createInsertSchema(TrpcFormConnection);
 
+export const Roles = createTable("roles", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.varchar().notNull().default(""),
+  discordRoleId: t.varchar().unique().notNull(),
+  permissions: t.varchar().notNull(),
+}));
+
+export const InsertDiscordRolesSchema = createInsertSchema(Roles);
+
 export const Permissions = createTable("permissions", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   roleId: t
@@ -585,12 +594,3 @@ export const Permissions = createTable("permissions", (t) => ({
     .notNull()
     .references(() => User.id),
 }));
-
-export const Roles = createTable("roles", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  name: t.varchar().notNull().default(""),
-  discordRoleId: t.varchar().unique().notNull(),
-  permissions: t.varchar().notNull(),
-}));
-
-export const InsertRolesSchema = createInsertSchema(Roles);
