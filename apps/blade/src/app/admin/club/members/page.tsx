@@ -20,13 +20,12 @@ export default async function Members() {
     redirect(SIGN_IN_PATH);
   }
 
-  const isAdmin = await api.auth.getAdminStatus();
-  if (!isAdmin) {
+  const hasAccess = await api.roles.hasPermission({
+    or: ["EDIT_MEMBERS", "READ_MEMBERS"],
+  });
+  if (!hasAccess) {
     redirect("/");
   }
-
-  // if (isPending) return <div>Loading...</div>;
-  // if (error) return <div>Error: {error?.message}</div>
   return (
     <HydrateClient>
       <main className="container h-screen">

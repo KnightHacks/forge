@@ -4,6 +4,7 @@ import { execute as animals } from "./animals";
 import { execute as daily } from "./daily";
 import { execute as emailQueue } from "./email-queue";
 import { execute as reminder } from "./reminder";
+import { execute as roleSync } from "./role-sync";
 
 // Export all commands
 export const hooks = {
@@ -13,4 +14,5 @@ export const hooks = {
   reminder,
   emailQueue,
   alumniSync,
+  roleSync,
 };

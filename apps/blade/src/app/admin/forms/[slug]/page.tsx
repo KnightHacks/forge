@@ -20,8 +20,10 @@ export default async function FormEditorPage({
       redirect("/");
     }
 
-    const isAdmin = await api.auth.getAdminStatus();
-    if (!isAdmin) {
+    const hasAccess = await api.roles.hasPermission({
+      or: ["EDIT_FORMS"],
+    });
+    if (!hasAccess) {
       redirect("/");
     }
   }

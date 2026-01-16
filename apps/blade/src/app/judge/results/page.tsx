@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { HydrateClient } from "~/trpc/server";
+import { api, HydrateClient } from "~/trpc/server";
 import ResultsTable from "./_components/results-table";
 
 export const metadata: Metadata = {
@@ -8,7 +9,13 @@ export const metadata: Metadata = {
   description: "Display hackathon results",
 };
 
-export default function ResultsDashboard() {
+export default async function ResultsDashboard() {
+  const hasAccess = await api.roles.hasPermission({
+    or: ["IS_JUDGE"],
+  });
+  if (!hasAccess) {
+    redirect("/");
+  }
   return (
     <HydrateClient>
       <ResultsTable />

@@ -16,8 +16,10 @@ export default async function Hackers() {
   const session = await auth();
   if (!session) redirect(SIGN_IN_PATH);
 
-  const isAdmin = await api.auth.getAdminStatus();
-  if (!isAdmin) redirect("/");
+  const hasAccess = await api.roles.hasPermission({
+    or: ["IS_JUDGE"],
+  });
+  if (!hasAccess) redirect("/");
 
   const currentHackathon = await api.hackathon.getCurrentHackathon();
   if (!currentHackathon) return <p> Hackathon Not Found </p>;

@@ -16,13 +16,10 @@ export default async function Raffle() {
     redirect(SIGN_IN_PATH);
   }
 
-  const isAdmin = await api.auth.getAdminStatus();
-  if (!isAdmin) {
-    redirect("/");
-  }
-
-  const user = await api.member.getMember();
-  if (!user) {
+  const hasAccess = await api.roles.hasPermission({
+    or: ["ADMIN_BANQUET_RAFFLE"],
+  });
+  if (!hasAccess) {
     redirect("/");
   }
 
