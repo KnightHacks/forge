@@ -79,7 +79,6 @@ export const formsRouter = {
           name: input.formData.name,
           slugName: slug_name,
           formValidatorJson: jsonSchema.schema,
-          section: sectionName,
           sectionId,
         })
         .onConflictDoUpdate({
@@ -90,7 +89,6 @@ export const formsRouter = {
             name: input.formData.name,
             slugName: slug_name,
             formValidatorJson: jsonSchema.schema,
-            section: sectionName,
             sectionId,
           },
         });
@@ -707,24 +705,9 @@ export const formsRouter = {
         .set({ section: "General", sectionId: null })
         .where(eq(FormsSchemas.section, input.section));
 
-      const sectionToDelete = await db.query.FormSections.findFirst({
+      await db.query.FormSections.findFirst({
         where: (t, { eq }) => eq(t.name, input.section),
       });
-      if (sectionToDelete) {
-        await db
-          .delete(FormSectionRoles)
-          .where(eq(FormSectionRoles.sectionId, sectionToDelete.id));
-        await db
-          .delete(FormSections)
-          .where(eq(FormSections.id, sectionToDelete.id));
-
-        await log({
-          title: `Form section deleted`,
-          message: `**Form section:** ${input.section}. All forms in this section have been moved to the "General" section.`,
-          color: "uhoh_red",
-          userId: ctx.session.user.discordUserId,
-        });
-      }
     }),
 
   createSection: permProcedure
