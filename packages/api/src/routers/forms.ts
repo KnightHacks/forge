@@ -121,11 +121,9 @@ export const formsRouter = {
         });
     }),
 
-  getForm: permProcedure
+  getForm: protectedProcedure
     .input(z.object({ slug_name: z.string() }))
-    .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
-      console.log(input);
+    .query(async ({ input }) => {
       const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) => eq(t.slugName, input.slug_name),
       });
@@ -233,10 +231,9 @@ export const formsRouter = {
       }
     }),
 
-  getConnections: permProcedure
+  getConnections: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .query(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS", "READ_FORMS"], ctx);
+    .query(async ({ input }) => {
       try {
         const connections = db.query.TrpcFormConnection.findMany({
           where: (t, { eq }) => eq(t.form, input.id),
@@ -352,7 +349,6 @@ export const formsRouter = {
         .orderBy(desc(FormResponse.createdAt));
     }),
 
-  // check if current user already submitted to this form
   getUserResponse: protectedProcedure
     .input(
       z.object({
