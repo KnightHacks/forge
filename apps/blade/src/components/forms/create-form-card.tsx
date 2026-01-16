@@ -33,7 +33,7 @@ const schema = z.object({
   description: z.string().max(500).optional(),
 });
 
-export function CreateFormCard() {
+export function CreateFormCard({ section }: { section?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const utils = api.useUtils();
@@ -56,6 +56,8 @@ export function CreateFormCard() {
     },
     async onSettled() {
       await utils.forms.getForms.invalidate();
+      await utils.forms.getSections.invalidate();
+      await utils.forms.invalidate();
       setIsLoading(false);
     },
   });
@@ -72,7 +74,7 @@ export function CreateFormCard() {
         <DialogContent className="max-w-lg">
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit((values) => {
+              onSubmit={form.handleSubmit(async (values) => {
                 setIsLoading(true);
 
                 const payload = {
@@ -83,9 +85,10 @@ export function CreateFormCard() {
                   },
                   duesOnly: false,
                   allowResubmission: false,
+                  section: section, // Pass section during creation
                 };
 
-                createForm.mutate(payload);
+                await createForm.mutateAsync(payload);
               })}
               noValidate
             >

@@ -1,6 +1,6 @@
 import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, lt, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -12,9 +12,12 @@ import {
   PRESIGNED_URL_EXPIRY,
 } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
+import { Permissions, Roles } from "@forge/db/schemas/auth";
 import {
   FormResponse,
   FormSchemaSchema,
+  FormSectionRoles,
+  FormSections,
   FormsSchemas,
   InsertFormResponseSchema,
   Member,
@@ -41,7 +44,9 @@ export const formsRouter = {
         createdAt: true,
         formData: true,
         formValidatorJson: true,
-      }).extend({ formData: FormSchemaValidator }),
+      })
+        .extend({ formData: FormSchemaValidator })
+        .extend({ section: z.string().optional() }),
     )
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EDIT_FORMS"], ctx);
@@ -57,6 +62,16 @@ export const formsRouter = {
         });
       }
 
+      let sectionId: string | null = null;
+      const sectionName = input.section ?? "General";
+
+      if (sectionName !== "General") {
+        const section = await db.query.FormSections.findFirst({
+          where: (t, { eq }) => eq(t.name, sectionName),
+        });
+        sectionId = section?.id ?? null;
+      }
+
       await db
         .insert(FormsSchemas)
         .values({
@@ -64,6 +79,8 @@ export const formsRouter = {
           name: input.formData.name,
           slugName: slug_name,
           formValidatorJson: jsonSchema.schema,
+          section: sectionName,
+          sectionId,
         })
         .onConflictDoUpdate({
           //If it already exists upsert it
@@ -73,6 +90,8 @@ export const formsRouter = {
             name: input.formData.name,
             slugName: slug_name,
             formValidatorJson: jsonSchema.schema,
+            section: sectionName,
+            sectionId,
           },
         });
     }),
@@ -184,23 +203,32 @@ export const formsRouter = {
       z.object({
         limit: z.number().min(1).max(100).default(10),
         cursor: z.string().nullish(),
+        section: z.string().optional(),
       }),
     )
     .query(async ({ input, ctx }) => {
       controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
-      const { cursor } = input;
+      const { cursor, section } = input;
       const limit = input.limit;
 
       const forms = await db.query.FormsSchemas.findMany({
         limit: limit + 1,
 
         where: cursor
-          ? lt(FormsSchemas.createdAt, new Date(cursor))
-          : undefined,
+          ? section
+            ? and(
+                lt(FormsSchemas.createdAt, new Date(cursor)),
+                eq(FormsSchemas.section, section),
+              )
+            : lt(FormsSchemas.createdAt, new Date(cursor))
+          : section
+            ? eq(FormsSchemas.section, section)
+            : undefined,
         orderBy: [desc(FormsSchemas.createdAt)],
         columns: {
           slugName: true,
           createdAt: true,
+          section: true,
         },
       });
 
@@ -488,5 +516,379 @@ export const formsRouter = {
           message: "Failed to delete media",
         });
       }
+    }),
+
+  getSections: permProcedure.query(async ({ ctx }) => {
+    controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+
+    const isOfficer = ctx.session.permissions.IS_OFFICER;
+
+    const userRoleIds = isOfficer
+      ? []
+      : (
+          await db
+            .select({ roleId: Permissions.roleId })
+            .from(Permissions)
+            .where(
+              sql`cast(${Permissions.userId} as text) = ${ctx.session.user.id}`,
+            )
+        ).map((r) => r.roleId);
+
+    const sectionRoles = await db
+      .select({
+        sectionId: FormSectionRoles.sectionId,
+        roleId: FormSectionRoles.roleId,
+      })
+      .from(FormSectionRoles);
+
+    const sectionToRolesMap = new Map<string, string[]>();
+    for (const sr of sectionRoles) {
+      const existing = sectionToRolesMap.get(sr.sectionId) ?? [];
+      existing.push(sr.roleId);
+      sectionToRolesMap.set(sr.sectionId, existing);
+    }
+
+    const allDbSections = await db
+      .select({ id: FormSections.id, name: FormSections.name })
+      .from(FormSections);
+
+    const sectionIdToName = new Map<string, string>();
+    for (const section of allDbSections) {
+      sectionIdToName.set(section.id, section.name);
+    }
+
+    const accessibleSectionIds = new Set<string>();
+    if (isOfficer) {
+      for (const section of allDbSections) {
+        accessibleSectionIds.add(section.id);
+      }
+    } else {
+      for (const section of allDbSections) {
+        const sectionRoleIds = sectionToRolesMap.get(section.id) ?? [];
+        if (sectionRoleIds.length === 0) {
+          accessibleSectionIds.add(section.id);
+        } else if (
+          sectionRoleIds.some((roleId) => userRoleIds.includes(roleId))
+        ) {
+          accessibleSectionIds.add(section.id);
+        }
+      }
+    }
+
+    const formSections = await db
+      .selectDistinct({
+        section: FormsSchemas.section,
+        sectionId: FormsSchemas.sectionId,
+      })
+      .from(FormsSchemas);
+
+    const allSections = new Set<string>();
+
+    const hasGeneralForms = formSections.some((f) => f.sectionId === null);
+    if (hasGeneralForms) {
+      allSections.add("General");
+    }
+
+    for (const sectionId of accessibleSectionIds) {
+      const sectionName = sectionIdToName.get(sectionId);
+      if (sectionName) {
+        allSections.add(sectionName);
+      }
+    }
+
+    for (const formSection of formSections) {
+      if (
+        formSection.sectionId &&
+        accessibleSectionIds.has(formSection.sectionId)
+      ) {
+        const sectionName = sectionIdToName.get(formSection.sectionId);
+        if (sectionName) {
+          allSections.add(sectionName);
+        }
+      }
+    }
+
+    return Array.from(allSections).sort();
+  }),
+
+  getSectionCounts: permProcedure.query(async ({ ctx }) => {
+    controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+    const counts = await db
+      .select({
+        section: FormsSchemas.section,
+        count: count(),
+      })
+      .from(FormsSchemas)
+      .groupBy(FormsSchemas.section)
+      .orderBy(FormsSchemas.section);
+    return counts.map((c) => ({
+      section: c.section,
+      count: Number(c.count),
+    }));
+  }),
+
+  updateFormSection: permProcedure
+    .input(
+      z.object({
+        slug_name: z.string(),
+        section: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
+      const form = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) => eq(t.slugName, input.slug_name),
+      });
+
+      if (!form) {
+        throw new TRPCError({
+          message: "Form not found",
+          code: "NOT_FOUND",
+        });
+      }
+      const oldSection = form.section;
+
+      // Look up the section by name to get its ID
+      let sectionId: string | null = null;
+      if (input.section !== "General") {
+        const section = await db.query.FormSections.findFirst({
+          where: (t, { eq }) => eq(t.name, input.section),
+        });
+        sectionId = section?.id ?? null;
+      }
+
+      await db
+        .update(FormsSchemas)
+        .set({ section: input.section, sectionId })
+        .where(eq(FormsSchemas.id, form.id));
+
+      await log({
+        title: `Form section updated`,
+        message: `**Form:** ${form.name}\n**Section:** ${oldSection} -> ${input.section}`,
+        color: "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
+    }),
+
+  renameSection: permProcedure
+    .input(
+      z.object({
+        oldName: z.string(),
+        newName: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
+
+      await db
+        .update(FormSections)
+        .set({ name: input.newName })
+        .where(eq(FormSections.name, input.oldName));
+
+      await db
+        .update(FormsSchemas)
+        .set({ section: input.newName })
+        .where(eq(FormsSchemas.section, input.oldName));
+
+      await log({
+        title: `Form section renamed`,
+        message: `**Form section:** ${input.oldName} -> ${input.newName}`,
+        color: "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
+    }),
+
+  deleteSection: permProcedure
+    .input(z.object({ section: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
+      await db
+        .update(FormsSchemas)
+        .set({ section: "General", sectionId: null })
+        .where(eq(FormsSchemas.section, input.section));
+
+      const sectionToDelete = await db.query.FormSections.findFirst({
+        where: (t, { eq }) => eq(t.name, input.section),
+      });
+      if (sectionToDelete) {
+        await db
+          .delete(FormSectionRoles)
+          .where(eq(FormSectionRoles.sectionId, sectionToDelete.id));
+        await db
+          .delete(FormSections)
+          .where(eq(FormSections.id, sectionToDelete.id));
+
+        await log({
+          title: `Form section deleted`,
+          message: `**Form section:** ${input.section}. All forms in this section have been moved to the "General" section.`,
+          color: "uhoh_red",
+          userId: ctx.session.user.discordUserId,
+        });
+      }
+    }),
+
+  createSection: permProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+        roleIds: z.array(z.string().uuid()).optional().default([]),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
+
+      const existing = await db.query.FormSections.findFirst({
+        where: (t, { eq }) => eq(t.name, input.name),
+      });
+
+      if (existing) {
+        throw new TRPCError({
+          message: "Section already exists",
+          code: "CONFLICT",
+        });
+      }
+
+      const isOfficer = ctx.session.permissions.IS_OFFICER;
+
+      if (input.roleIds.length && !isOfficer) {
+        const userRoles = await db
+          .select({ roleId: Permissions.roleId })
+          .from(Permissions)
+          .where(
+            sql`cast(${Permissions.userId} as text) = ${ctx.session.user.id}`,
+          );
+
+        const userRoleIds = new Set(userRoles.map((r) => r.roleId));
+
+        const hasAllRoles = input.roleIds.every((roleId) =>
+          userRoleIds.has(roleId),
+        );
+
+        if (!hasAllRoles) {
+          throw new TRPCError({
+            message:
+              "You don't have permission to create sections for one or more of the selected roles",
+            code: "UNAUTHORIZED",
+          });
+        }
+      }
+
+      const [newSection] = await db
+        .insert(FormSections)
+        .values({
+          name: input.name,
+        })
+        .returning();
+
+      if (!newSection) {
+        throw new TRPCError({
+          message: "Failed to create section",
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
+
+      if (input.roleIds.length) {
+        await db.insert(FormSectionRoles).values(
+          input.roleIds.map((roleId) => ({
+            sectionId: newSection.id,
+            roleId,
+          })),
+        );
+      }
+
+      const roleNames = await db
+        .select({ name: Roles.name })
+        .from(Roles)
+        .where(inArray(Roles.id, input.roleIds));
+
+      await log({
+        title: `Form section created`,
+        message: `**Form section:** ${input.name}. Roles: ${roleNames.map((r) => r.name).join(", ")}`,
+        color: "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
+    }),
+
+  checkFormEditAccess: permProcedure
+    .input(z.object({ slug_name: z.string() }))
+    .query(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
+
+      const isOfficer = ctx.session.permissions.IS_OFFICER;
+
+      if (isOfficer) {
+        return { canEdit: true };
+      }
+
+      const form = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) => eq(t.slugName, input.slug_name),
+        columns: { sectionId: true, section: true },
+      });
+
+      if (!form) {
+        return { canEdit: false };
+      }
+
+      let formSectionId = form.sectionId;
+      if (!formSectionId && form.section) {
+        if (form.section === "General") {
+          return { canEdit: true };
+        }
+        const section = await db.query.FormSections.findFirst({
+          where: (t, { eq }) => eq(t.name, form.section),
+        });
+        formSectionId = section?.id ?? null;
+      }
+
+      if (!formSectionId) {
+        return { canEdit: true };
+      }
+
+      const userRoleIds = (
+        await db
+          .select({ roleId: Permissions.roleId })
+          .from(Permissions)
+          .where(
+            sql`cast(${Permissions.userId} as text) = ${ctx.session.user.id}`,
+          )
+      ).map((r) => r.roleId);
+
+      const sectionRoles = await db
+        .select({
+          sectionId: FormSectionRoles.sectionId,
+          roleId: FormSectionRoles.roleId,
+        })
+        .from(FormSectionRoles);
+
+      const sectionToRolesMap = new Map<string, string[]>();
+      for (const sr of sectionRoles) {
+        const existing = sectionToRolesMap.get(sr.sectionId) ?? [];
+        existing.push(sr.roleId);
+        sectionToRolesMap.set(sr.sectionId, existing);
+      }
+
+      const allDbSections = await db
+        .select({ id: FormSections.id, name: FormSections.name })
+        .from(FormSections);
+
+      const sectionExists = allDbSections.some(
+        (section) => section.id === formSectionId,
+      );
+
+      if (!sectionExists) {
+        return { canEdit: false };
+      }
+
+      const sectionRoleIds = sectionToRolesMap.get(formSectionId) ?? [];
+
+      if (sectionRoleIds.length === 0) {
+        return { canEdit: true };
+      }
+
+      const hasSectionRole = sectionRoleIds.some((roleId) =>
+        userRoleIds.includes(roleId),
+      );
+
+      return { canEdit: hasSectionRole };
     }),
 };

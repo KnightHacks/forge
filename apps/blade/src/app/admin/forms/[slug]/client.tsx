@@ -22,7 +22,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Loader2, Plus, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Save } from "lucide-react";
 
 import type {
   FormType,
@@ -449,9 +449,19 @@ export function EditorClient({
     >
       <div className="mx-auto max-w-3xl space-y-4">
         <div className="flex flex-col items-center justify-between gap-4 rounded-xl border bg-card/50 p-4 shadow-sm backdrop-blur-sm md:flex-row">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            <Save className="h-3 w-3" />
-            {saveStatus || "Synced with Database"}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push("/admin/forms")}
+              aria-label="Back to forms"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              <Save className="h-3 w-3" />
+              {saveStatus || "Synced with Database"}
+            </div>
           </div>
 
           <div className="flex items-center gap-8">

@@ -19,14 +19,17 @@ import { api } from "~/trpc/react";
 import { DeleteFormDialog } from "./delete-form-dialog";
 import { ExportResponsesButton } from "./export-csv";
 import { FormQRCodeDialog } from "./form-qr-code";
+import { MoveFormSectionDialog } from "./move-form-section-dialog";
 
 export function FormCard({
   slug_name,
   createdAt,
+  section,
   onOpen,
 }: {
   slug_name: string;
   createdAt: string | Date;
+  section?: string;
   onOpen?: () => void;
 }) {
   const createdDate = new Date(createdAt).toLocaleString();
@@ -64,10 +67,13 @@ export function FormCard({
       }}
       className="cursor-pointer rounded-lg transition hover:bg-card/60 hover:shadow-md hover:ring-2 hover:ring-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
-      <CardHeader className="flex items-start justify-between">
-        <div className="min-w-0">
+      <CardHeader className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <CardTitle className="truncate text-base font-medium">
-            {slug_name}
+            {slug_name
+              .split("-")
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" ")}
           </CardTitle>
 
           <div className="mt-1 text-sm text-muted-foreground">
@@ -76,7 +82,19 @@ export function FormCard({
           </div>
         </div>
 
-        <div className="items-right flex gap-3">
+        <div className="flex shrink-0 items-center gap-1">
+          <CardAction
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <div onClick={(e) => e.stopPropagation()}>
+              <MoveFormSectionDialog
+                slug_name={slug_name}
+                currentSection={section}
+              />
+            </div>
+          </CardAction>
+
           <CardAction
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
@@ -87,6 +105,7 @@ export function FormCard({
                 formName={fullForm?.name ?? slug_name}
                 responses={responses as ResponseForCsv[]}
                 questions={questionsList}
+                iconOnly
               />
             </div>
           </CardAction>
@@ -102,6 +121,7 @@ export function FormCard({
                   size="icon"
                   variant="ghost"
                   aria-label="View form QR code"
+                  className="h-8 w-8"
                 >
                   <QrCode className="h-4 w-4" />
                 </Button>
@@ -123,25 +143,27 @@ export function FormCard({
         </p>
       </CardContent>
 
-      <CardFooter className="flex items-center justify-between">
+      <CardFooter className="flex flex-col gap-4">
         <div className="text-sm text-muted-foreground">
           Created {createdDate}
         </div>
+        <div className="flex w-full gap-3">
+          <Button
+            asChild
+            className="flex-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Link href={`/admin/forms/${slug_name}/responses`}>Responses</Link>
+          </Button>
+          <Button
+            asChild
+            className="flex-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Link href={`/admin/forms/${slug_name}`}>Edit Form</Link>
+          </Button>
+        </div>
       </CardFooter>
-
-      <div className="flex w-full justify-center gap-4">
-        <Button className="w-[40%]" onClick={(e) => e.stopPropagation()}>
-          {" "}
-          <Link href={`/admin/forms/${slug_name}/responses`}>
-            {" "}
-            Responses{" "}
-          </Link>{" "}
-        </Button>
-        <Button className="w-[40%]" onClick={(e) => e.stopPropagation()}>
-          {" "}
-          <Link href={`/admin/forms/${slug_name}`}> Edit Form </Link>{" "}
-        </Button>
-      </div>
     </Card>
   );
 }
