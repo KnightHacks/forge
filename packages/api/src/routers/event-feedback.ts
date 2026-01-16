@@ -14,13 +14,14 @@ import {
   Member,
 } from "@forge/db/schemas/knight-hacks";
 
-import { protectedProcedure } from "../trpc";
-import { log } from "../utils";
+import { permProcedure } from "../trpc";
+import { controlPerms, log } from "../utils";
 
 export const eventFeedbackRouter = {
-  createEventFeedback: protectedProcedure
+  createEventFeedback: permProcedure
     .input(InsertEventFeedbackSchema)
     .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["IS_JUDGE"], ctx);
       const existingFeedback = await db.query.EventFeedback.findFirst({
         where: (t, { eq }) =>
           and(eq(t.memberId, input.memberId), eq(t.eventId, input.eventId)),
@@ -72,14 +73,15 @@ export const eventFeedbackRouter = {
       });
     }),
 
-  hasGivenFeedback: protectedProcedure
+  hasGivenFeedback: permProcedure
     .input(
       z.object({
         eventId: z.string(),
         memberId: z.string(),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      controlPerms.or(["IS_JUDGE"], ctx);
       const givenFeedback = await db.query.EventFeedback.findFirst({
         where: (t, { eq }) =>
           and(eq(t.memberId, input.memberId), eq(t.eventId, input.eventId)),
@@ -88,7 +90,7 @@ export const eventFeedbackRouter = {
       return !!givenFeedback;
     }),
 
-  logHackathonFeedback: protectedProcedure
+  logHackathonFeedback: permProcedure
     .input(
       z.object({
         description: z.string(),

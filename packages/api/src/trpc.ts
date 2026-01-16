@@ -12,14 +12,15 @@ import { ZodError } from "zod";
 
 import type { Session } from "@forge/auth/server";
 import { validateToken } from "@forge/auth/server";
+import { PermissionKey, PERMISSIONS } from "@forge/consts/knight-hacks";
+import { eq, sql } from "@forge/db";
+import { db } from "@forge/db/client";
+import { Permissions, Roles } from "@forge/db/schemas/auth";
 
 import {
   getJudgeSessionFromCookie,
   isDiscordAdmin,
   isJudgeAdmin,
-  userHasCheckIn,
-  userHasFullAdmin,
-  userIsOfficer,
 } from "./utils";
 
 /**
@@ -141,64 +142,43 @@ export const protectedProcedure = t.procedure
     });
   });
 
-export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  const isValidAdmin = await isDiscordAdmin(ctx.session.user);
-  if (!isValidAdmin) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
-  }
+export const permProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const permRows = await db
+    .select({
+      permissions: Roles.permissions,
+    })
+    .from(Roles)
+    .innerJoin(Permissions, eq(Roles.id, Permissions.roleId))
+    .where(sql`cast(${Permissions.userId} as text) = ${ctx.session.user.id}`);
+
+  const permissionsBits = new Array(Object.keys(PERMISSIONS).length).fill(
+    false,
+  ) as boolean[];
+
+  permRows.forEach((v) => {
+    for (let i = 0; i < v.permissions.length; i++) {
+      if (v.permissions.at(i) == "1") permissionsBits[i] = true;
+    }
+  });
+
+  const permissionsMap = Object.keys(PERMISSIONS).reduce(
+    (accumulator, key) => {
+      const index = PERMISSIONS[key];
+      if (index === undefined) return accumulator;
+      accumulator[key] = permissionsBits[index] ?? false;
+
+      return accumulator;
+    },
+    {} as Record<PermissionKey, boolean>,
+  );
 
   return next({
     ctx: {
       // infers the `session` as non-nullable
-      session: { ...ctx.session, user: ctx.session.user },
+      session: { ...ctx.session, permissions: permissionsMap },
     },
   });
 });
-
-export const fullAdminProcedure = protectedProcedure.use(
-  async ({ ctx, next }) => {
-    const hasFullAdmin = await userHasFullAdmin(ctx.session.user);
-    if (!hasFullAdmin) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-    return next({
-      ctx: {
-        // infers the `session` as non-nullable
-        session: { ...ctx.session, user: ctx.session.user },
-      },
-    });
-  },
-);
-
-export const checkInProcedure = protectedProcedure.use(
-  async ({ ctx, next }) => {
-    const hasCheckIn = await userHasCheckIn(ctx.session.user);
-    if (!hasCheckIn) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-    return next({
-      ctx: {
-        // infers the `session` as non-nullable
-        session: { ...ctx.session, user: ctx.session.user },
-      },
-    });
-  },
-);
-
-export const officerProcedure = protectedProcedure.use(
-  async ({ ctx, next }) => {
-    const isOfficer = await userIsOfficer(ctx.session.user);
-    if (!isOfficer) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-    return next({
-      ctx: {
-        // infers the `session` as non-nullable
-        session: { ...ctx.session, user: ctx.session.user },
-      },
-    });
-  },
-);
 
 export const judgeProcedure = publicProcedure.use(async ({ ctx, next }) => {
   let isAdmin;
