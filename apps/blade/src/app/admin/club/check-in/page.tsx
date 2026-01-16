@@ -19,8 +19,9 @@ export default async function HackathonCheckIn() {
     redirect(SIGN_IN_PATH);
   }
 
-  // Check if the user has access to the scanner
-  const hasAccess = await api.auth.hasCheckIn();
+  const hasAccess = await api.roles.hasPermission({
+    or: ["CHECKIN_CLUB_EVENT"],
+  });
   if (!hasAccess) {
     redirect("/");
   }

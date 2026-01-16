@@ -21,10 +21,11 @@ export default async function HackathonEvents() {
     redirect(SIGN_IN_PATH);
   }
 
-  // Check if the user has access to Events
-  const hasFullAdmin = await api.auth.hasFullAdmin();
+  const hasAccess = await api.roles.hasPermission({
+    or: ["READ_HACK_EVENT", "EDIT_HACK_EVENT"],
+  });
 
-  if (!hasFullAdmin) {
+  if (!hasAccess) {
     redirect("/");
   }
 

@@ -15,14 +15,15 @@ export const metadata: Metadata = {
 };
 
 export default async function HackathonData() {
-  // authentication
   const session = await auth();
   if (!session) {
     redirect(SIGN_IN_PATH);
   }
 
-  const isAdmin = await api.auth.getAdminStatus();
-  if (!isAdmin) {
+  const hasAccess = await api.roles.hasPermission({
+    or: ["READ_HACK_DATA"],
+  });
+  if (!hasAccess) {
     redirect("/");
   }
 
