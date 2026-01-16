@@ -59,7 +59,6 @@ export default function RoleEdit({
   const { data: roleCounts } = api.roles.getDiscordRoleCounts.useQuery();
   const createLinkMutation = api.roles.createRoleLink.useMutation();
   const updateLinkMutation = api.roles.updateRoleLink.useMutation();
-  const utils = api.useUtils();
   // Create base form schema dynamically from consts
   const roleObj: Record<string, ZodBoolean> = {};
   const defaults: Record<string, boolean> = {};
@@ -135,6 +134,7 @@ export default function RoleEdit({
           {
             onSettled: () => {
               setIsUpdating(false);
+              location.reload();
             },
             onError: (opts) => {
               toast.error(opts.message);
@@ -152,6 +152,7 @@ export default function RoleEdit({
           {
             onSettled: () => {
               setIsCreating(false);
+              location.reload();
             },
             onError: (opts) => {
               toast.error(opts.message);
@@ -159,8 +160,6 @@ export default function RoleEdit({
           },
         );
       }
-      void utils.roles.getAllLinks.invalidate();
-      void utils.roles.getPermissions.invalidate();
     } catch (error) {
       toast((error as Error).message);
     }

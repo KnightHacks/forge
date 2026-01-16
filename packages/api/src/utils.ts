@@ -132,9 +132,10 @@ export const parsePermissions = async (discordUserId: string) => {
   // creates the map of permissions to their boolean values
   const permissionsMap = Object.keys(PERMISSIONS).reduce(
     (accumulator, key) => {
-      const index = PERMISSIONS[key as PermissionKey];
+      const index = PERMISSIONS[key];
+      if (index === undefined) return accumulator;
 
-      accumulator[key as PermissionKey] = permissionsBits[index] ?? false;
+      accumulator[key] = permissionsBits[index] ?? false;
 
       return accumulator;
     },
@@ -489,10 +490,13 @@ export async function regenerateMediaUrls(
 
 export function getPermsAsList(perms: string) {
   const list = [];
-  const permKeys = Object.keys(PERMISSIONS) as PermissionKey[];
+  const permKeys = Object.keys(PERMISSIONS);
   for (let i = 0; i < perms.length; i++) {
     const permKey = permKeys.at(i);
-    if (perms[i] == "1" && permKey) list.push(PERMISSION_DATA[permKey].name);
+    if (perms[i] == "1" && permKey) {
+      const permissionData = PERMISSION_DATA[permKey];
+      if (permissionData) list.push(permissionData.name);
+    }
   }
   return list;
 }

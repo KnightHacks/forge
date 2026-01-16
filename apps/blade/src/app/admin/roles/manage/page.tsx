@@ -5,7 +5,7 @@ import RoleAssign from "./roleassign";
 
 export default async function ManageRoles() {
   const hasAccess = await api.roles.hasPermission({
-    and: ["ASSIGN_ROLES"],
+    or: ["ASSIGN_ROLES"],
   });
   if (!hasAccess) {
     redirect("/");

@@ -556,7 +556,7 @@ export const judgeRouter = {
 
   // Admin: Get all unique rooms with session counts
   getRoomsWithSessionCounts: permProcedure.query(async ({ ctx }) => {
-    controlPerms.and(["IS_OFFICER"], ctx);
+    controlPerms.or(["IS_OFFICER"], ctx);
 
     const now = new Date();
     const rooms = await db
@@ -576,7 +576,7 @@ export const judgeRouter = {
   deleteSessionsByRoom: permProcedure
     .input(z.object({ roomName: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      controlPerms.and(["IS_OFFICER"], ctx);
+      controlPerms.or(["IS_OFFICER"], ctx);
 
       const result = await db
         .delete(JudgeSession)

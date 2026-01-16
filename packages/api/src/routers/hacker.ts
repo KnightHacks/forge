@@ -104,7 +104,7 @@ export const hackerRouter = {
   getHackers: permProcedure.input(z.string()).query(async ({ ctx, input }) => {
     // CHECKIN_HACK_EVENT is here because people trying to check-in
     // need to retrieve the member list for manual entry
-    controlPerms.and(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
+    controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
 
     const hackers = await db
       .select({
@@ -153,7 +153,7 @@ export const hackerRouter = {
   getAllHackers: permProcedure
     .input(z.object({ hackathonName: z.string().optional() }))
     .query(async ({ ctx, input }) => {
-      controlPerms.and(["READ_HACKERS"], ctx);
+      controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
 
       let hackathon;
 
@@ -633,7 +633,7 @@ export const hackerRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["EDIT_HACKERS"], ctx);
+      controlPerms.or(["EDIT_HACKERS"], ctx);
 
       if (!input.id) {
         throw new TRPCError({
@@ -711,7 +711,7 @@ export const hackerRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["EDIT_HACKERS"], ctx);
+      controlPerms.or(["EDIT_HACKERS"], ctx);
 
       if (!input.id) {
         throw new TRPCError({
@@ -772,7 +772,7 @@ export const hackerRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["EDIT_HACKERS"], ctx);
+      controlPerms.or(["EDIT_HACKERS"], ctx);
 
       if (!input.id) {
         throw new TRPCError({
@@ -963,7 +963,7 @@ export const hackerRouter = {
   statusCountByHackathonId: permProcedure
     .input(z.string())
     .query(async ({ ctx, input: hackathonId }) => {
-      controlPerms.and(["READ_HACK_DATA"], ctx);
+      controlPerms.or(["READ_HACK_DATA"], ctx);
 
       const results = await Promise.all(
         HACKATHON_APPLICATION_STATES.map(async (s) => {
@@ -1024,7 +1024,7 @@ export const hackerRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["CHECKIN_HACK_EVENT"], ctx);
+      controlPerms.or(["CHECKIN_HACK_EVENT", "EDIT_HACKERS"], ctx);
 
       const event = await db.query.Event.findFirst({
         where: eq(Event.id, input.eventId),

@@ -5,7 +5,8 @@ import { PERMISSION_DATA, PermissionKey } from "@forge/consts/knight-hacks";
 export function BadPerms({ perms }: { perms: PermissionKey[] }) {
   const permNames: string[] = [];
   perms.forEach((v) => {
-    permNames.push(PERMISSION_DATA[v].name);
+    const permissionData = PERMISSION_DATA[v];
+    if (permissionData) permNames.push(permissionData.name);
   });
 
   return (

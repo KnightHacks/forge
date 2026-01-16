@@ -1,5 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import type { APIRole } from "discord-api-types/v10";
+import type { APIGuildMember, APIRole } from "discord-api-types/v10";
 import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
@@ -42,7 +42,7 @@ export const rolesRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      controlPerms.and(["CONFIGURE_ROLES"], ctx);
+      controlPerms.or(["CONFIGURE_ROLES"], ctx);
 
       // check for duplicate discord role
       const dupe = await db.query.Roles.findFirst({
@@ -54,19 +54,76 @@ export const rolesRouter = {
           code: "CONFLICT",
         });
 
-      await db.insert(Roles).values({
-        name: input.name,
-        discordRoleId: input.roleId,
-        permissions: input.permissions,
-      });
+      // Create the role link first
+      const insertedRoles = await db
+        .insert(Roles)
+        .values({
+          name: input.name,
+          discordRoleId: input.roleId,
+          permissions: input.permissions,
+        })
+        .returning();
 
-      await log({
-        title: `Created Role`,
-        message: `The **${input.name}** role has been created, linked to <@&${input.roleId}>.
-                \n**Permissions:**\n${getPermsAsList(input.permissions).join("\n")}`,
-        color: "blade_purple",
-        userId: ctx.session.user.discordUserId,
-      });
+      const newRole = insertedRoles[0];
+      if (!newRole) {
+        throw new TRPCError({
+          message: "Failed to create role link.",
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
+
+      // Sync existing Blade users who have this Discord role
+      let syncedCount = 0;
+      let checkedCount = 0;
+
+      try {
+        const bladeUsers = await db.select().from(User);
+
+        for (const bladeUser of bladeUsers) {
+          try {
+            const guildMember = (await discord.get(
+              Routes.guildMember(KNIGHTHACKS_GUILD_ID, bladeUser.discordUserId),
+            )) as APIGuildMember;
+
+            checkedCount++;
+
+            if (guildMember.roles.includes(input.roleId)) {
+              const existingPerm = await db.query.Permissions.findFirst({
+                where: (t, { eq, and }) =>
+                  and(eq(t.userId, bladeUser.id), eq(t.roleId, newRole.id)),
+              });
+
+              if (!existingPerm) {
+                await db.insert(Permissions).values({
+                  roleId: newRole.id,
+                  userId: bladeUser.id,
+                });
+                syncedCount++;
+              }
+            }
+          } catch {
+            continue;
+          }
+        }
+
+        await log({
+          title: `Created Role: ${input.name}`,
+          message: `Role linked to <@&${input.roleId}>
+                  \n**Permissions:** ${getPermsAsList(input.permissions).join(", ")}
+                  \n**Auto-synced:** ${syncedCount} user(s) granted (checked ${checkedCount} Blade users)`,
+          color: "blade_purple",
+          userId: ctx.session.user.discordUserId,
+        });
+      } catch {
+        await log({
+          title: `Created Role: ${input.name}`,
+          message: `Role linked to <@&${input.roleId}>
+                  \n**Permissions:** ${getPermsAsList(input.permissions).join(", ")}
+                  \n**Note:** Auto-sync unavailable. Checked ${checkedCount} users, synced ${syncedCount}.`,
+          color: "blade_purple",
+          userId: ctx.session.user.discordUserId,
+        });
+      }
     }),
 
   updateRoleLink: permProcedure
@@ -79,7 +136,7 @@ export const rolesRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      controlPerms.and(["CONFIGURE_ROLES"], ctx);
+      controlPerms.or(["CONFIGURE_ROLES"], ctx);
 
       // check for existing role
       const exist = await db.query.Roles.findFirst({
@@ -125,7 +182,7 @@ export const rolesRouter = {
   deleteRoleLink: permProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      controlPerms.and(["CONFIGURE_ROLES"], ctx);
+      controlPerms.or(["CONFIGURE_ROLES"], ctx);
 
       // check for existing role
       const exist = await db.query.Roles.findFirst({
@@ -230,9 +287,9 @@ export const rolesRouter = {
 
       const permissionsMap = Object.keys(PERMISSIONS).reduce(
         (accumulator, key) => {
-          const index = PERMISSIONS[key as PermissionKey];
-
-          accumulator[key as PermissionKey] = permissionsBits[index] ?? false;
+          const index = PERMISSIONS[key];
+          if (index === undefined) return accumulator;
+          accumulator[key] = permissionsBits[index] ?? false;
 
           return accumulator;
         },
@@ -251,8 +308,8 @@ export const rolesRouter = {
     )
     .query(({ input, ctx }) => {
       try {
-        if (input.or) controlPerms.or(input.or as PermissionKey[], ctx);
-        if (input.and) controlPerms.and(input.and as PermissionKey[], ctx);
+        if (input.or) controlPerms.or(input.or, ctx);
+        if (input.and) controlPerms.and(input.and, ctx);
       } catch {
         return false;
       }
@@ -297,11 +354,11 @@ export const rolesRouter = {
       try {
         await addRoleToMember(user.discordUserId, role.discordRoleId);
         console.log(
-          `✅ Successfully added Discord role ${role.discordRoleId} to user ${user.discordUserId}`,
+          `Successfully added Discord role ${role.discordRoleId} to user ${user.discordUserId}`,
         );
       } catch (error) {
         console.error(
-          `⚠️  Failed to add Discord role ${role.discordRoleId} to user ${user.discordUserId}:`,
+          `Failed to add Discord role ${role.discordRoleId} to user ${user.discordUserId}:`,
           error,
         );
         console.error(
@@ -364,7 +421,7 @@ export const rolesRouter = {
         );
       } catch (error) {
         console.error(
-          `⚠️  Failed to remove Discord role ${role.discordRoleId} from user ${user.discordUserId}:`,
+          `Failed to remove Discord role ${role.discordRoleId} from user ${user.discordUserId}:`,
           error,
         );
         console.error(
@@ -451,7 +508,7 @@ export const rolesRouter = {
                   );
                 } catch (discordError) {
                   console.error(
-                    `⚠️  Discord role grant failed for ${userData.name} -> ${roleData.name}:`,
+                    `Discord role grant failed for ${userData.name} -> ${roleData.name}:`,
                     discordError,
                   );
                 }
@@ -469,7 +526,7 @@ export const rolesRouter = {
                   );
                 } catch (discordError) {
                   console.error(
-                    `⚠️  Discord role revoke failed for ${userData.name} -> ${roleData.name}:`,
+                    `Discord role revoke failed for ${userData.name} -> ${roleData.name}:`,
                     discordError,
                   );
                 }
@@ -481,7 +538,7 @@ export const rolesRouter = {
             } catch (error) {
               // This catches DB errors only (Discord errors are caught above)
               console.error(
-                `❌ Database error for ${input.revoking ? "revoke" : "grant"} role ${roleData.name} ${input.revoking ? "from" : "to"} ${userData.name}:`,
+                `Database error for ${input.revoking ? "revoke" : "grant"} role ${roleData.name} ${input.revoking ? "from" : "to"} ${userData.name}:`,
                 error,
               );
               failed.push(ret);

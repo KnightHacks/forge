@@ -58,7 +58,7 @@ export const eventRouter = {
   getAttendees: permProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      controlPerms.and(["READ_CLUB_EVENT"], ctx);
+      controlPerms.or(["READ_CLUB_EVENT"], ctx);
 
       const attendees = await db
         .select({
@@ -74,7 +74,7 @@ export const eventRouter = {
   getHackerAttendees: permProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      controlPerms.and(["READ_HACK_EVENT"], ctx);
+      controlPerms.or(["READ_HACK_EVENT"], ctx);
 
       const attendees = await db
         .select({
@@ -99,7 +99,7 @@ export const eventRouter = {
       InsertEventSchema.omit({ id: true, discordId: true, googleId: true }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+      controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
 
       // Step 0: Convert provided start/end datetimes into Local Date objects
       const startDatetime = new Date(input.start_datetime);
@@ -271,7 +271,7 @@ export const eventRouter = {
   updateEvent: permProcedure
     .input(InsertEventSchema)
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+      controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
 
       if (!input.id) {
         throw new TRPCError({
@@ -475,7 +475,7 @@ export const eventRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+      controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
 
       if (!input.id) {
         throw new TRPCError({

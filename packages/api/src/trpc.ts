@@ -163,9 +163,9 @@ export const permProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 
   const permissionsMap = Object.keys(PERMISSIONS).reduce(
     (accumulator, key) => {
-      const index = PERMISSIONS[key as PermissionKey];
-
-      accumulator[key as PermissionKey] = permissionsBits[index] ?? false;
+      const index = PERMISSIONS[key];
+      if (index === undefined) return accumulator;
+      accumulator[key] = permissionsBits[index] ?? false;
 
       return accumulator;
     },

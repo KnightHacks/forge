@@ -38,7 +38,7 @@ import RoleEdit from "./roleedit";
 export default function RoleTable() {
   const { data: roles } = api.roles.getAllLinks.useQuery();
   const discordRolesQ = api.roles.getDiscordRoles.useQuery(
-    { roles: roles },
+    { roles: roles ?? [] },
     { enabled: false, retry: false },
   );
   const { data: roleCounts } = api.roles.getDiscordRoleCounts.useQuery();
@@ -92,49 +92,45 @@ export default function RoleTable() {
                 <div className="text-base font-medium">{v.name}</div>
               </TableCell>
               <TableCell>
-                {
-                  // the linter is just wrong, this value can absolutely be pending
-                  (discordRolesQ.status as "error" | "success" | "pending") ==
-                  "pending" ? (
-                    <Loader2 className="my-auto animate-spin" />
-                  ) : role ? (
-                    <div className="flex flex-row gap-2">
-                      <button
-                        type="button"
-                        tabIndex={0}
-                        onClick={() => {
-                          void navigator.clipboard.writeText(v.discordRoleId);
-                          setCopyConfirm(i);
-                          toast(`Copied "${v.discordRoleId}" to clipboard!`);
-                        }}
-                        className={`cursor-pointer text-muted-foreground`}
-                      >
-                        {copyConfirm == i ? (
-                          <Check className="my-auto size-4" />
-                        ) : (
-                          <Copy className="my-auto size-4" />
-                        )}
-                      </button>
+                {discordRolesQ.status == "pending" ? (
+                  <Loader2 className="my-auto animate-spin" />
+                ) : role ? (
+                  <div className="flex flex-row gap-2">
+                    <button
+                      type="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        void navigator.clipboard.writeText(v.discordRoleId);
+                        setCopyConfirm(i);
+                        toast(`Copied "${v.discordRoleId}" to clipboard!`);
+                      }}
+                      className={`cursor-pointer text-muted-foreground`}
+                    >
+                      {copyConfirm == i ? (
+                        <Check className="my-auto size-4" />
+                      ) : (
+                        <Copy className="my-auto size-4" />
+                      )}
+                    </button>
+                    <div
+                      className="flex w-fit flex-row gap-1 rounded-full border px-2 py-1"
+                      style={{ borderColor: `#${role.color.toString(16)}` }}
+                    >
                       <div
-                        className="flex w-fit flex-row gap-1 rounded-full border px-2 py-1"
-                        style={{ borderColor: `#${role.color.toString(16)}` }}
-                      >
-                        <div
-                          className="my-auto mr-1 size-3 rounded-full"
-                          style={{
-                            backgroundColor: `#${role.color.toString(16)}`,
-                          }}
-                        />
-                        <div className="truncate font-medium">{role.name}</div>
-                      </div>
+                        className="my-auto mr-1 size-3 rounded-full"
+                        style={{
+                          backgroundColor: `#${role.color.toString(16)}`,
+                        }}
+                      />
+                      <div className="truncate font-medium">{role.name}</div>
                     </div>
-                  ) : (
-                    <div className="flex flex-row gap-1 text-red-700">
-                      <X className="my-auto" />
-                      <div className="my-auto font-medium">Not Found</div>
-                    </div>
-                  )
-                }
+                  </div>
+                ) : (
+                  <div className="flex flex-row gap-1 text-red-700">
+                    <X className="my-auto" />
+                    <div className="my-auto font-medium">Not Found</div>
+                  </div>
+                )}
               </TableCell>
               <TableCell>
                 <DropdownMenu>

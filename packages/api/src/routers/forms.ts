@@ -44,7 +44,7 @@ export const formsRouter = {
       }).extend({ formData: FormSchemaValidator }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["EDIT_FORMS"], ctx);
+      controlPerms.or(["EDIT_FORMS"], ctx);
 
       const jsonSchema = generateJsonSchema(input.formData);
 
@@ -124,7 +124,7 @@ export const formsRouter = {
   getForm: permProcedure
     .input(z.object({ slug_name: z.string() }))
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_FORMS"], ctx);
+      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       console.log(input);
       const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) => eq(t.slugName, input.slug_name),
@@ -189,7 +189,7 @@ export const formsRouter = {
       }),
     )
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_FORMS"], ctx);
+      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       const { cursor } = input;
       const limit = input.limit;
 
@@ -236,7 +236,7 @@ export const formsRouter = {
   getConnections: permProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      controlPerms.or(["EDIT_FORMS", "READ_FORMS"], ctx);
       try {
         const connections = db.query.TrpcFormConnection.findMany({
           where: (t, { eq }) => eq(t.form, input.id),
@@ -334,7 +334,7 @@ export const formsRouter = {
   getResponses: permProcedure
     .input(z.object({ form: z.string() }))
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_FORMS"], ctx);
+      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       return await db
         .select({
           submittedAt: FormResponse.createdAt,

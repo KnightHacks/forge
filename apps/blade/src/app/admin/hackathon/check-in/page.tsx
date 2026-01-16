@@ -20,7 +20,7 @@ export default async function HackathonCheckIn() {
   }
 
   const hasAccess = await api.roles.hasPermission({
-    and: ["CHECKIN_HACK_EVENT"],
+    or: ["CHECKIN_HACK_EVENT"],
   });
   if (!hasAccess) {
     redirect("/");

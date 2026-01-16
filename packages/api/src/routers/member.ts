@@ -340,7 +340,7 @@ export const memberRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["EDIT_MEMBERS"], ctx);
+      controlPerms.or(["EDIT_MEMBERS"], ctx);
 
       const member = await db.query.Member.findFirst({
         where: eq(Member.id, input.id),
@@ -367,7 +367,7 @@ export const memberRouter = {
     }),
 
   getDuesPayingMembers: permProcedure.query(async ({ ctx }) => {
-    controlPerms.and(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
     return await db
       .select()
@@ -383,7 +383,7 @@ export const memberRouter = {
   }),
 
   getMemberAttendanceCounts: permProcedure.query(async ({ ctx }) => {
-    controlPerms.and(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
     // Get attendance count for each member
     const memberAttendance = await db
@@ -411,7 +411,7 @@ export const memberRouter = {
   createDuesPayingMember: permProcedure
     .input(InsertMemberSchema.pick({ id: true }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["EDIT_MEMBERS", "IS_OFFICER"], ctx);
+      controlPerms.or(["EDIT_MEMBERS", "IS_OFFICER"], ctx);
 
       if (!input.id)
         throw new TRPCError({
@@ -439,7 +439,7 @@ export const memberRouter = {
   deleteDuesPayingMember: permProcedure
     .input(InsertMemberSchema.pick({ id: true }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["EDIT_MEMBERS", "IS_OFFICER"], ctx);
+      controlPerms.or(["EDIT_MEMBERS", "IS_OFFICER"], ctx);
 
       if (!input.id)
         throw new TRPCError({
@@ -460,7 +460,7 @@ export const memberRouter = {
     }),
 
   clearAllDues: permProcedure.mutation(async ({ ctx }) => {
-    controlPerms.and(["EDIT_MEMBERS", "IS_OFFICER"], ctx);
+    controlPerms.or(["IS_OFFICER"], ctx);
 
     await db.delete(DuesPayment);
     await log({
@@ -481,7 +481,7 @@ export const memberRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.and(["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"], ctx);
+      controlPerms.or(["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"], ctx);
 
       const member = await db.query.Member.findFirst({
         where: eq(Member.userId, input.userId),

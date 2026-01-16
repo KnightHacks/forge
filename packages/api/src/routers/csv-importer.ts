@@ -32,7 +32,7 @@ export const csvImporterRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      controlPerms.and(["IS_OFFICER"], ctx);
+      controlPerms.or(["IS_OFFICER"], ctx);
 
       try {
         // Get raw records
