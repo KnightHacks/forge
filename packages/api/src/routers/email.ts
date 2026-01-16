@@ -1,11 +1,11 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
-import { publicProcedure } from "../trpc";
-import { sendEmail } from "../utils";
+import { permProcedure } from "../trpc";
+import { controlPerms, sendEmail } from "../utils";
 
 export const emailRouter = {
-  sendEmail: publicProcedure
+  sendEmail: permProcedure
     .input(
       z.object({
         to: z.string().email(),
@@ -14,7 +14,8 @@ export const emailRouter = {
         from: z.string().min(1),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EMAIL_PORTAL"], ctx);
       try {
         const response = await sendEmail({
           to: input.to,

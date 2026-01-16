@@ -23,11 +23,16 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import { adminProcedure, protectedProcedure, publicProcedure } from "../trpc";
-import { generateJsonSchema, log, regenerateMediaUrls } from "../utils";
+import { permProcedure, protectedProcedure } from "../trpc";
+import {
+  controlPerms,
+  generateJsonSchema,
+  log,
+  regenerateMediaUrls,
+} from "../utils";
 
 export const formsRouter = {
-  createForm: adminProcedure
+  createForm: permProcedure
     .input(
       FormSchemaSchema.omit({
         id: true,
@@ -38,7 +43,9 @@ export const formsRouter = {
         formValidatorJson: true,
       }).extend({ formData: FormSchemaValidator }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
+
       const jsonSchema = generateJsonSchema(input.formData);
 
       const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
@@ -70,7 +77,7 @@ export const formsRouter = {
         });
     }),
 
-  updateForm: adminProcedure
+  updateForm: permProcedure
     .input(
       FormSchemaSchema.omit({
         name: true,
@@ -80,7 +87,8 @@ export const formsRouter = {
         formValidatorJson: true,
       }).extend({ formData: FormSchemaValidator }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
       const jsonSchema = generateJsonSchema(input.formData);
       console.log(input);
 
@@ -113,9 +121,10 @@ export const formsRouter = {
         });
     }),
 
-  getForm: publicProcedure
+  getForm: permProcedure
     .input(z.object({ slug_name: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       console.log(input);
       const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) => eq(t.slugName, input.slug_name),
@@ -146,9 +155,10 @@ export const formsRouter = {
       };
     }),
 
-  deleteForm: adminProcedure
+  deleteForm: permProcedure
     .input(z.object({ slug_name: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
       // find the form to delete duh
       const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) => eq(t.slugName, input.slug_name),
@@ -171,14 +181,15 @@ export const formsRouter = {
         .returning({ slugName: FormsSchemas.slugName });
     }),
 
-  getForms: publicProcedure
+  getForms: permProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(100).default(10),
         cursor: z.string().nullish(),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       const { cursor } = input;
       const limit = input.limit;
 
@@ -208,9 +219,10 @@ export const formsRouter = {
       };
     }),
 
-  addConnection: adminProcedure
+  addConnection: permProcedure
     .input(TrpcFormConnectionSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
       try {
         await db.insert(TrpcFormConnection).values({ ...input });
       } catch {
@@ -221,9 +233,10 @@ export const formsRouter = {
       }
     }),
 
-  getConnections: protectedProcedure
+  getConnections: permProcedure
     .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS", "READ_FORMS"], ctx);
       try {
         const connections = db.query.TrpcFormConnection.findMany({
           where: (t, { eq }) => eq(t.form, input.id),
@@ -237,9 +250,10 @@ export const formsRouter = {
       }
     }),
 
-  deleteConnection: adminProcedure
+  deleteConnection: permProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
       try {
         await db
           .delete(TrpcFormConnection)
@@ -317,9 +331,10 @@ export const formsRouter = {
       });
     }),
 
-  getResponses: adminProcedure
+  getResponses: permProcedure
     .input(z.object({ form: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       return await db
         .select({
           submittedAt: FormResponse.createdAt,
@@ -407,7 +422,7 @@ export const formsRouter = {
     }),
 
   // Generate presigned upload URL for direct MinIO upload
-  getUploadUrl: adminProcedure
+  getUploadUrl: permProcedure
     .input(
       z.object({
         fileName: z.string(),
@@ -415,7 +430,8 @@ export const formsRouter = {
         mediaType: z.enum(["image", "video"]),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
       const { fileName, formId, mediaType } = input;
 
       const safeFileName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
@@ -456,13 +472,14 @@ export const formsRouter = {
       }
     }),
 
-  deleteMedia: adminProcedure
+  deleteMedia: permProcedure
     .input(
       z.object({
         objectName: z.string(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
       const { objectName } = input;
 
       try {

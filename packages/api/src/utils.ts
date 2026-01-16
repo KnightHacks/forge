@@ -2,8 +2,9 @@ import type { APIGuildMember } from "discord-api-types/v10";
 import type { JSONSchema7 } from "json-schema";
 import { cookies } from "next/headers";
 import { REST } from "@discordjs/rest";
+import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, inArray } from "drizzle-orm";
 import { Resend } from "resend";
 import Stripe from "stripe";
 
@@ -11,6 +12,7 @@ import type { Session } from "@forge/auth/server";
 import type {
   FormType,
   PermissionIndex,
+  PermissionKey,
   ValidatorOptions,
 } from "@forge/consts/knight-hacks";
 import {
@@ -19,16 +21,15 @@ import {
   DEV_KNIGHTHACKS_LOG_CHANNEL,
   FORM_ASSETS_BUCKET,
   IS_PROD,
-  OFFICER_ROLE_ID,
+  PERMISSION_DATA,
   PERMISSIONS,
   PRESIGNED_URL_EXPIRY,
   PROD_DISCORD_ADMIN_ROLE_ID,
   PROD_KNIGHTHACKS_GUILD_ID,
   PROD_KNIGHTHACKS_LOG_CHANNEL,
-  ROLE_PERMISSIONS,
 } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
-import { JudgeSession } from "@forge/db/schemas/auth";
+import { JudgeSession, Roles } from "@forge/db/schemas/auth";
 
 import { env } from "./env";
 import { minioClient } from "./minio/minio-client";
@@ -37,7 +38,7 @@ const DISCORD_ADMIN_ROLE_ID = IS_PROD
   ? (PROD_DISCORD_ADMIN_ROLE_ID as string)
   : (DEV_DISCORD_ADMIN_ROLE_ID as string);
 
-const KNIGHTHACKS_GUILD_ID = IS_PROD
+export const KNIGHTHACKS_GUILD_ID = IS_PROD
   ? (PROD_KNIGHTHACKS_GUILD_ID as string)
   : (DEV_KNIGHTHACKS_GUILD_ID as string);
 
@@ -50,9 +51,7 @@ export const discord = new REST({ version: "10" }).setToken(
 const GUILD_ID = IS_PROD ? PROD_KNIGHTHACKS_GUILD_ID : DEV_KNIGHTHACKS_GUILD_ID;
 
 export async function addRoleToMember(discordUserId: string, roleId: string) {
-  await discord.put(Routes.guildMemberRole(GUILD_ID, discordUserId, roleId), {
-    body: {},
-  });
+  await discord.put(Routes.guildMemberRole(GUILD_ID, discordUserId, roleId));
 }
 
 export async function removeRoleFromMember(
@@ -89,18 +88,6 @@ export const isDiscordAdmin = async (user: Session["user"]) => {
   }
 };
 
-export const userIsOfficer = async (user: Session["user"]) => {
-  try {
-    const guildMember = (await discord.get(
-      Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
-    )) as APIGuildMember;
-    return guildMember.roles.includes(OFFICER_ROLE_ID);
-  } catch (err) {
-    console.error("Error: ", err);
-    return false;
-  }
-};
-
 export const hasPermission = (
   userPermissions: string,
   permission: PermissionIndex,
@@ -109,57 +96,85 @@ export const hasPermission = (
   return permissionBit === "1";
 };
 
-export const getUserPermissions = async (
-  user: Session["user"],
-): Promise<string> => {
-  try {
-    const guildMember = (await discord.get(
-      Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
-    )) as APIGuildMember;
+export const parsePermissions = async (discordUserId: string) => {
+  const guildMember = (await discord.get(
+    Routes.guildMember(KNIGHTHACKS_GUILD_ID, discordUserId),
+  )) as APIGuildMember;
 
-    const userPermissionArray = new Array(Object.keys(PERMISSIONS).length).fill(
-      "0",
-    );
+  const permissionsLength = Object.keys(PERMISSIONS).length;
 
-    for (const roleId of guildMember.roles) {
-      if (roleId in ROLE_PERMISSIONS) {
-        const permissionIndex = ROLE_PERMISSIONS[roleId];
-        if (permissionIndex !== undefined) {
-          userPermissionArray[permissionIndex] = "1";
+  // array of booleans. the boolean value at the index indicates if the user has that permission.
+  // true means the user has the permission, false means the user doesn't have the permission.
+  const permissionsBits = new Array(permissionsLength).fill(false) as boolean[];
+
+  if (guildMember.roles.length > 0) {
+    // get only roles the user has
+    const userDbRoles = await db
+      .select()
+      .from(Roles)
+      .where(inArray(Roles.discordRoleId, guildMember.roles));
+
+    for (const role of userDbRoles) {
+      if (!role.permissions) continue;
+
+      for (
+        let i = 0;
+        i < role.permissions.length && i < permissionsLength;
+        ++i
+      ) {
+        if (role.permissions[i] === "1") {
+          permissionsBits[i] = true;
         }
       }
     }
-
-    return userPermissionArray.join("");
-  } catch (err) {
-    console.error("Error getting user permissions: ", err);
-    return "0".repeat(Object.keys(PERMISSIONS).length);
   }
+
+  // creates the map of permissions to their boolean values
+  const permissionsMap = Object.keys(PERMISSIONS).reduce(
+    (accumulator, key) => {
+      const index = PERMISSIONS[key];
+      if (index === undefined) return accumulator;
+
+      accumulator[key] = permissionsBits[index] ?? false;
+
+      return accumulator;
+    },
+    {} as Record<PermissionKey, boolean>,
+  );
+
+  return permissionsMap;
 };
 
-export const userHasPermission = async (
-  user: Session["user"],
-  permission: PermissionIndex,
-): Promise<boolean> => {
-  const userPermissions = await getUserPermissions(user);
+// Mock tRPC context for type-safety
+interface Context {
+  session: {
+    permissions: Record<PermissionKey, boolean>;
+  };
+}
 
-  if (hasPermission(userPermissions, PERMISSIONS.FULL_ADMIN)) {
+export const controlPerms = {
+  // Returns true if the user has any required permission OR has isOfficer role
+  or: (perms: PermissionKey[], ctx: Context) => {
+    // first check if user has IS_OFFICER
+    if (ctx.session.permissions.IS_OFFICER) return true;
+
+    let flag = false;
+    for (const p of perms) if (ctx.session.permissions[p]) flag = true;
+    if (!flag) throw new TRPCError({ code: "UNAUTHORIZED" });
     return true;
-  }
+  },
 
-  return hasPermission(userPermissions, permission);
-};
+  // Returns true only if the user has ALL required permissions
+  and: (perms: PermissionKey[], ctx: Context) => {
+    // first check if user has IS_OFFICER
+    if (ctx.session.permissions.IS_OFFICER) return true;
 
-export const userHasFullAdmin = async (
-  user: Session["user"],
-): Promise<boolean> => {
-  return userHasPermission(user, PERMISSIONS.FULL_ADMIN);
-};
+    for (const p of perms)
+      if (!ctx.session.permissions[p])
+        throw new TRPCError({ code: "UNAUTHORIZED" });
 
-export const userHasCheckIn = async (
-  user: Session["user"],
-): Promise<boolean> => {
-  return userHasPermission(user, PERMISSIONS.CHECK_IN);
+    return true;
+  },
 };
 
 export const isDiscordMember = async (user: Session["user"]) => {
@@ -471,4 +486,17 @@ export async function regenerateMediaUrls(
   );
 
   return updatedQuestions;
+}
+
+export function getPermsAsList(perms: string) {
+  const list = [];
+  const permKeys = Object.keys(PERMISSIONS);
+  for (let i = 0; i < perms.length; i++) {
+    const permKey = permKeys.at(i);
+    if (perms[i] == "1" && permKey) {
+      const permissionData = PERMISSION_DATA[permKey];
+      if (permissionData) list.push(permissionData.name);
+    }
+  }
+  return list;
 }

@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import { pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
 
 import { Member } from "./knight-hacks";
 
@@ -22,9 +23,52 @@ export const User = createTable("user", (t) => ({
     .notNull(),
 }));
 
+export const Permissions = createTable("permissions", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  roleId: t
+    .uuid()
+    .notNull()
+    .references(() => Roles.id),
+  userId: t
+    .uuid()
+    .notNull()
+    .references(() => User.id),
+}));
+
+export const Roles = createTable("roles", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.varchar().notNull().default(""),
+  discordRoleId: t.varchar().unique().notNull(),
+  permissions: t.varchar().notNull(),
+}));
+
+export const InsertRolesSchema = createInsertSchema(Roles);
+
 export const UserRelations = relations(User, ({ many, one }) => ({
   accounts: many(Account),
   member: one(Member),
+  permissions: many(Permissions, {
+    relationName: "userPermissionRel",
+  }),
+}));
+
+export const RoleRelations = relations(Roles, ({ many }) => ({
+  permissions: many(Permissions, {
+    relationName: "rolePermissionRel",
+  }),
+}));
+
+export const PermissionRelations = relations(Permissions, ({ one }) => ({
+  role: one(Roles, {
+    fields: [Permissions.roleId],
+    references: [Roles.id],
+    relationName: "rolePermissionRel",
+  }),
+  user: one(User, {
+    fields: [Permissions.userId],
+    references: [User.id],
+    relationName: "userPermissionRel",
+  }),
 }));
 
 export const Account = createTable(
