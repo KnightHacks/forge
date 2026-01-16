@@ -115,7 +115,6 @@ export function SectionManagerDialog({
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   const createSection = api.forms.createSection.useMutation({
     onSuccess() {
       toast.success("Section created");
