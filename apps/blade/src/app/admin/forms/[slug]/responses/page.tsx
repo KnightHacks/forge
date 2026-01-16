@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 import type { FormType } from "@forge/consts/knight-hacks";
 import { auth } from "@forge/auth";
+import { Button } from "@forge/ui/button";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
@@ -78,13 +81,22 @@ export default async function FormResponsesPage({
       <main className="container py-8">
         {/* page header with title and response count */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">
-            Form Responses for: {form.name}
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            {responses.length}{" "}
-            {responses.length === 1 ? "response" : "responses"}
-          </p>
+          <div className="mb-4 flex items-center gap-4">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/admin/forms" aria-label="Back to forms">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">
+                Form Responses for: {form.name}
+              </h1>
+              <p className="mt-2 text-muted-foreground">
+                {responses.length}{" "}
+                {responses.length === 1 ? "response" : "responses"}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* handle empty state when no responses */}

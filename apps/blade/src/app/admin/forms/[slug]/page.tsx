@@ -12,23 +12,31 @@ export default async function FormEditorPage({
 }: {
   params: { slug: string };
 }) {
-  // Temporary bypass for verification
-  if (params.slug !== "test-form") {
-    const session = await auth();
+  const session = await auth();
 
-    if (!session) {
-      redirect("/");
-    }
+  if (!session) {
+    redirect("/");
+  }
 
-    const hasAccess = await api.roles.hasPermission({
-      or: ["EDIT_FORMS"],
-    });
-    if (!hasAccess) {
-      redirect("/");
-    }
+  const hasBasicAccess = await api.roles.hasPermission({
+    or: ["EDIT_FORMS"],
+  });
+  if (!hasBasicAccess) {
+    redirect("/dashboard");
+  }
+
+  const accessCheck = await api.forms.checkFormEditAccess({
+    slug_name: params.slug,
+  });
+
+  if (accessCheck.canEdit === false) {
+    redirect("/admin/forms");
   }
 
   return (
-    <EditorClient procs={extractProcedures(appRouter)} slug={params.slug} />
+    <>
+      <div>{JSON.stringify(accessCheck)}</div>
+      <EditorClient procs={extractProcedures(appRouter)} slug={params.slug} />
+    </>
   );
 }

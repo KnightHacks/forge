@@ -87,15 +87,18 @@ export const ExportResponsesButton: React.FC<ExportResponsesButtonProps> = ({
         variant: "ghost" as const,
         "aria-label": "Export CSV",
         title,
+        className: "h-8 w-8",
       }
     : { variant: "outline" as const, title };
 
   return (
     <Button onClick={handleExport} disabled={disabled} {...buttonProps}>
       {loading ? (
-        <Loader2 className={iconOnly ? "animate-spin" : "mr-2 animate-spin"} />
+        <Loader2
+          className={iconOnly ? "h-4 w-4 animate-spin" : "mr-2 animate-spin"}
+        />
       ) : (
-        <Download className={iconOnly ? "" : "mr-2"} />
+        <Download className={iconOnly ? "h-4 w-4" : "mr-2"} />
       )}
       {!iconOnly && "Export CSV"}
     </Button>

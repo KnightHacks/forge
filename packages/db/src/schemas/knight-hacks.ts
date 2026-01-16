@@ -1,5 +1,10 @@
 import { relations } from "drizzle-orm";
-import { pgEnum, pgTableCreator, unique } from "drizzle-orm/pg-core";
+import {
+  pgEnum,
+  pgTableCreator,
+  primaryKey,
+  unique,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
@@ -19,7 +24,7 @@ import {
   SPONSOR_TIERS,
 } from "@forge/consts/knight-hacks";
 
-import { User } from "./auth";
+import { Roles, User } from "./auth";
 
 const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
@@ -532,6 +537,31 @@ export const OtherCompanies = createTable("companies", (t) => ({
 
 export const InsertOtherCompaniesSchema = createInsertSchema(OtherCompanies);
 
+export const FormSections = createTable("form_sections", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.varchar({ length: 255 }).notNull().unique(),
+  createdAt: t.timestamp().notNull().defaultNow(),
+}));
+
+export const FormSectionRoles = createTable(
+  "form_section_roles",
+  (t) => ({
+    sectionId: t
+      .uuid()
+      .notNull()
+      .references(() => FormSections.id, { onDelete: "cascade" }),
+    roleId: t
+      .uuid()
+      .notNull()
+      .references(() => Roles.id, { onDelete: "cascade" }),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.sectionId, t.roleId] }),
+  }),
+);
+
+export const InsertFormSectionSchema = createInsertSchema(FormSections);
+
 export const FormsSchemas = createTable("form_schemas", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   name: t.varchar({ length: 255 }).notNull(),
@@ -541,6 +571,10 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
   allowResubmission: t.boolean().notNull().default(false),
   formData: t.jsonb().notNull(),
   formValidatorJson: t.jsonb().notNull(),
+  section: t.varchar({ length: 255 }).notNull().default("General"),
+  sectionId: t
+    .uuid()
+    .references(() => FormSections.id, { onDelete: "set null" }),
 }));
 
 //Ts so dumb
