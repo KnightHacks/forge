@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@forge/ui/button";
@@ -296,13 +296,13 @@ export function FormResponderClient({
         if (question.type === "EMAIL" && typeof response === "string") {
           return emailSchema.safeParse(response).success;
         }
-      if (question.type === "PHONE" && typeof response === "string") {
-        return phoneSchema.safeParse(response).success;
-      }
-      if (question.type === "LINK" && typeof response === "string") {
-        return linkSchema.safeParse(response).success;
-      }
-      return true;
+        if (question.type === "PHONE" && typeof response === "string") {
+          return phoneSchema.safeParse(response).success;
+        }
+        if (question.type === "LINK" && typeof response === "string") {
+          return linkSchema.safeParse(response).success;
+        }
+        return true;
       }
 
       const response = responses[question.question];
