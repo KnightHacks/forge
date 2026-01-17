@@ -1,10 +1,10 @@
-import type { APIGuildMember } from "discord-api-types/v10";
-import type { JSONSchema7 } from "json-schema";
-import { cookies } from "next/headers";
 import { REST } from "@discordjs/rest";
 import { TRPCError } from "@trpc/server";
+import type { APIGuildMember } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 import { and, eq, gt, inArray } from "drizzle-orm";
+import type { JSONSchema7 } from "json-schema";
+import { cookies } from "next/headers";
 import { Resend } from "resend";
 import Stripe from "stripe";
 
@@ -397,6 +397,13 @@ function createJsonSchemaValidator({
       break;
     case "FILE_UPLOAD":
       schema.type = "string";
+      break;
+    case "BOOLEAN":
+      schema.type = "boolean";
+      break;
+    case "LINK":
+      schema.type = "string";
+      schema.format = "uri";
       break;
     default:
       schema.type = "string";

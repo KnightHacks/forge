@@ -2,6 +2,8 @@
 // shows each person's response with name, email, and their answer
 "use client";
 
+import * as React from "react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   Table,
@@ -70,17 +72,35 @@ export function ResponsesTable({ question, responses }: ResponsesTableProps) {
                 // get the answer for this specific question
                 const answer = response.responseData[question];
 
-                let displayValue: string;
+                let displayValue: React.ReactNode;
                 if (answer === undefined || answer === null) {
                   displayValue = "—";
                 } else if (Array.isArray(answer)) {
                   displayValue = answer.join(", ");
+                } else if (typeof answer === "boolean") {
+                  displayValue = answer ? "Yes" : "No";
                 } else if (typeof answer === "string") {
-                  displayValue = answer;
+                  // Check if it's a valid URL (for LINK type questions)
+                  try {
+                    const url = new URL(answer);
+                    displayValue = (
+                      <a
+                        href={url.toString()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        {answer}
+                      </a>
+                    );
+                  } catch {
+                    // Not a valid URL, just display as string
+                    displayValue = answer;
+                  }
                 } else if (typeof answer === "object") {
                   displayValue = JSON.stringify(answer);
                 } else {
-                  // for primitive types (number, boolean, etc.) - safe to stringify
+                  // for primitive types (number, etc.) - safe to stringify
                   // eslint-disable-next-line @typescript-eslint/no-base-to-string
                   displayValue = String(answer);
                 }

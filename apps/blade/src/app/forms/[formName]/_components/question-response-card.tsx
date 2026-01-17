@@ -260,6 +260,36 @@ function QuestionBody({
         />
       );
 
+    case "BOOLEAN":
+      return (
+        <BooleanInput
+          value={
+            typeof value === "string"
+              ? value === "true"
+              : typeof value === "boolean"
+                ? value
+                : undefined
+          }
+          onChange={onChange}
+          disabled={disabled}
+        />
+      );
+
+    case "LINK":
+      return (
+        <div className="w-full md:w-2/3">
+          <Input
+            type="url"
+            placeholder="https://example.com"
+            value={(value as string) || ""}
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlur}
+            disabled={disabled}
+            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+          />
+        </div>
+      );
+
     default:
       return null;
   }
@@ -429,6 +459,32 @@ function LinearScaleInput({
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+function BooleanInput({
+  value,
+  onChange,
+  disabled = false,
+}: {
+  value?: boolean;
+  onChange: (value: string | string[] | number | Date | null) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <Checkbox
+        checked={value ?? false}
+        onCheckedChange={(checked) => {
+          // Convert boolean to string for storage consistency
+          onChange(checked === true ? "true" : "false");
+        }}
+        disabled={disabled}
+      />
+      <Label className="cursor-pointer font-normal">
+        {value ? "Yes" : "No"}
+      </Label>
     </div>
   );
 }

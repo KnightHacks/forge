@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,6 +10,7 @@ import {
   FileText,
   Loader2,
 } from "lucide-react";
+import { useState } from "react";
 
 import type { FormType } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Separator } from "@forge/ui/separator";
 import { toast } from "@forge/ui/toast";
 
+import Link from "next/link";
 import { api } from "~/trpc/react";
 
 interface PerUserResponsesViewProps {
@@ -116,13 +117,27 @@ export function PerUserResponsesView({
     if (Array.isArray(value)) {
       return value.join(", ");
     }
+    if (typeof value === "boolean") {
+      return value ? "Yes" : "No";
+    }
     if (typeof value === "string") {
       return value;
     }
-    if (typeof value === "object") {
-      return JSON.stringify(value);
+    if (typeof value === "number") {
+      return String(value);
     }
-    return JSON.stringify(value, null, 2);
+    if (typeof value === "object") {
+      return JSON.stringify(value, null, 2);
+    }
+    return JSON.stringify(value);
+  };
+
+  const isLinkValue = (value: unknown, questionType: string): boolean => {
+    return (
+      questionType === "LINK" &&
+      typeof value === "string" &&
+      /^https?:\/\//.test(value)
+    );
   };
 
   return (
@@ -198,6 +213,15 @@ export function PerUserResponsesView({
                     typeof answer === "string" &&
                     answer ? (
                       <FileUploadDisplay objectName={answer} />
+                    ) : isLinkValue(answer, question.type) ? (
+                      <Link
+                        href={answer as string}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="break-words text-sm text-primary hover:underline"
+                      >
+                        {formatResponseValue(answer)}
+                      </Link>
                     ) : (
                       <p className="break-words text-sm text-muted-foreground">
                         {formatResponseValue(answer)}
