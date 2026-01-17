@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
+import { Slider } from "@forge/ui/slider";
 import { TimePicker } from "@forge/ui/time-picker";
 import { toast } from "@forge/ui/toast";
 
@@ -32,16 +33,20 @@ interface QuestionResponseCardProps {
   question: FormQuestion;
   value?: string | string[] | number | Date | null;
   onChange: (value: string | string[] | number | Date | null) => void;
+  onBlur?: () => void;
   disabled?: boolean;
   formId?: string;
+  error?: string | null;
 }
 
 export function QuestionResponseCard({
   question,
   value,
   onChange,
+  onBlur,
   disabled = false,
   formId,
+  error,
 }: QuestionResponseCardProps) {
   const isRequired = !question.optional;
 
@@ -55,6 +60,9 @@ export function QuestionResponseCard({
             {isRequired && <span className="ml-1 text-red-500">*</span>}
           </h3>
         </div>
+        {error && (
+          <p className="text-sm text-destructive">{error}</p>
+        )}
         {question.image && (
           <div className="relative h-48 w-full overflow-hidden rounded-md">
             <Image
@@ -73,6 +81,7 @@ export function QuestionResponseCard({
           question={question}
           value={value}
           onChange={onChange}
+          onBlur={onBlur}
           disabled={disabled}
           formId={formId}
         />
@@ -87,12 +96,14 @@ function QuestionBody({
   question,
   value,
   onChange,
+  onBlur,
   disabled = false,
   formId,
 }: {
   question: FormQuestion;
   value?: string | string[] | number | Date | null;
   onChange: (value: string | string[] | number | Date | null) => void;
+  onBlur?: () => void;
   disabled?: boolean;
   formId?: string;
 }) {
@@ -183,6 +194,7 @@ function QuestionBody({
             placeholder="your.email@example.com"
             value={(value as string) || ""}
             onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlur}
             disabled={disabled}
             className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
           />
@@ -223,10 +235,21 @@ function QuestionBody({
             placeholder="(123) 456-7890"
             value={(value as string) || ""}
             onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlur}
             disabled={disabled}
             className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
           />
         </div>
+      );
+
+    case "LINEAR_SCALE":
+      return (
+        <LinearScaleInput
+          question={question}
+          value={value as number | undefined}
+          onChange={onChange}
+          disabled={disabled}
+        />
       );
 
     case "FILE_UPLOAD":
@@ -357,6 +380,61 @@ function DropdownInput({
         ))}
       </SelectContent>
     </Select>
+  );
+}
+
+function LinearScaleInput({
+  question,
+  value,
+  onChange,
+  disabled = false,
+}: {
+  question: FormQuestion;
+  value?: number;
+  onChange: (value: string | string[] | number | Date | null) => void;
+  disabled?: boolean;
+}) {
+  const min = question.min ?? 0;
+  const max = question.max ?? 5;
+  
+  const defaultValue = Math.floor((min + max) / 2);
+  
+  const currentValue =
+    typeof value === "number"
+      ? Math.max(min, Math.min(max, value))
+      : defaultValue;
+
+  const handleValueChange = (values: number[]) => {
+    const newValue = values[0] ?? defaultValue;
+    onChange(newValue);
+  };
+
+  const scaleValues = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+
+  return (
+    <div className="w-full space-y-2">
+      <div className="flex-1">
+        <Slider
+          value={[currentValue]}
+          onValueChange={handleValueChange}
+          min={min}
+          max={max}
+          step={1}
+          disabled={disabled}
+          className="w-full"
+        />
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        {scaleValues.map((value) => (
+          <span
+            key={value}
+            className="text-xs text-muted-foreground"
+          >
+            {value}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 

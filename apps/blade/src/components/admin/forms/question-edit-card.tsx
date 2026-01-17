@@ -3,6 +3,7 @@
 import type { DraggableSyntheticListeners } from "@dnd-kit/core";
 import {
   AlignLeft,
+  AtSign,
   Calendar,
   CheckSquare,
   ChevronDown,
@@ -12,7 +13,10 @@ import {
   Copy,
   FileUp,
   GripHorizontal,
+  Hash,
+  Phone,
   Pilcrow,
+  SlidersHorizontal,
   Trash,
   X,
 } from "lucide-react";
@@ -27,6 +31,7 @@ import { Card } from "@forge/ui/card";
 import { Checkbox } from "@forge/ui/checkbox";
 import { DatePicker } from "@forge/ui/date-picker";
 import { Input } from "@forge/ui/input";
+import { Label } from "@forge/ui/label";
 import {
   Select,
   SelectContent,
@@ -34,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
+import { Slider } from "@forge/ui/slider";
 import { Textarea } from "@forge/ui/textarea";
 import { TimePicker } from "@forge/ui/time-picker";
 
@@ -57,8 +63,12 @@ const QUESTION_ICONS: Record<string, React.ElementType> = {
   MULTIPLE_CHOICE: CircleDot,
   CHECKBOXES: CheckSquare,
   DROPDOWN: ChevronDown,
+  LINEAR_SCALE: SlidersHorizontal,
   DATE: Calendar,
   TIME: Clock,
+  EMAIL: AtSign,
+  NUMBER: Hash,
+  PHONE: Phone,
   FILE_UPLOAD: FileUp,
 };
 
@@ -89,11 +99,25 @@ export function QuestionEditCard({
     }
 
     if (
-      ["SHORT_ANSWER", "PARAGRAPH", "DATE", "TIME", "FILE_UPLOAD"].includes(
-        newType,
-      )
+      [
+        "SHORT_ANSWER",
+        "PARAGRAPH",
+        "DATE",
+        "TIME",
+        "EMAIL",
+        "NUMBER",
+        "PHONE",
+        "LINEAR_SCALE",
+        "FILE_UPLOAD",
+      ].includes(newType)
     ) {
       updatedQuestion.options = undefined;
+    }
+
+    if (newType === "LINEAR_SCALE" || newType === "NUMBER") {
+      if (question.min === undefined) updatedQuestion.min = 0;
+      if (question.max === undefined && newType === "LINEAR_SCALE")
+        updatedQuestion.max = 5;
     }
 
     onUpdate(updatedQuestion);
@@ -259,6 +283,45 @@ function QuestionBody({
           <TimePicker />
         </div>
       );
+    case "EMAIL":
+      return (
+        <div className="w-1/2">
+          <Input
+            type="email"
+            placeholder="email@example.com"
+            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+            disabled
+          />
+        </div>
+      );
+    case "NUMBER":
+      return (
+        <div className="w-1/3">
+          <Input
+            type="number"
+            placeholder="Enter a number"
+            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+            disabled
+            min={question.min}
+            max={question.max}
+          />
+        </div>
+      );
+    case "PHONE":
+      return (
+        <div className="w-1/2">
+          <Input
+            type="tel"
+            placeholder="(123) 456-7890"
+            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+            disabled
+          />
+        </div>
+      );
+    case "LINEAR_SCALE":
+      return (
+        <LinearScaleEditor question={question} onUpdate={onUpdate} />
+      );
     case "FILE_UPLOAD":
       return (
         <div className="pointer-events-none flex items-center gap-2 opacity-50">
@@ -364,6 +427,81 @@ function OptionList({
             Add option
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function LinearScaleEditor({
+  question,
+  onUpdate,
+}: {
+  question: FormQuestion & { id: string };
+  onUpdate: (q: FormQuestion & { id: string }) => void;
+}) {
+  const min = question.min ?? 0;
+  const max = question.max ?? 5;
+
+  const handleMinChange = (newMin: number) => {
+    onUpdate({ ...question, min: newMin });
+  };
+
+  const handleMaxChange = (newMax: number) => {
+    onUpdate({ ...question, max: newMax });
+  };
+
+  const scaleValues = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+
+  return (
+    <div className="w-full space-y-4">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Label htmlFor="linear-scale-min" className="text-sm">
+            Min:
+          </Label>
+          <Input
+            id="linear-scale-min"
+            type="number"
+            value={min}
+            onChange={(e) => handleMinChange(Number(e.target.value))}
+            className="w-20"
+            min={0}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="linear-scale-max" className="text-sm">
+            Max:
+          </Label>
+          <Input
+            id="linear-scale-max"
+            type="number"
+            value={max}
+            onChange={(e) => handleMaxChange(Number(e.target.value))}
+            className="w-20"
+            min={min + 1}
+          />
+        </div>
+      </div>
+      <div className="pointer-events-none opacity-50">
+        <div className="flex items-center justify-between gap-2">
+          {scaleValues.map((value) => (
+            <div
+              key={value}
+              className="flex flex-col items-center gap-1 text-sm text-muted-foreground"
+            >
+              <Circle className="h-4 w-4" />
+              <span>{value}</span>
+            </div>
+          ))}
+        </div>
+        <Slider
+          value={[Math.floor((min + max) / 2)]}
+          min={min}
+          max={max}
+          step={1}
+          className="mt-2"
+          disabled
+        />
       </div>
     </div>
   );
