@@ -4,6 +4,12 @@ import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import Pool from "pg-pool";
 
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { unlink } from 'fs/promises';
+
+const execAsync = promisify(exec);
+
 import { isDiscordAdmin } from "../../api/src/utils";
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
@@ -112,6 +118,22 @@ async function shouldKeepId(userid: string): Promise<boolean> {
   return isAdmin[userid] ?? false;
 }
 
+async function copyDatabase(originalDb: string, newDb: string, password: string, user = 'root') {
+  const backupFile = 'backup.sql';
+  const envN = { ...process.env, PGPASSWORD: password };
+  
+	const host = "localhost";
+	const port = 5432;
+  try {
+    await execAsync(`pg_dump -h ${host} -p ${port} -U ${user} ${originalDb} > ${backupFile}`, { env: envN });
+    await execAsync(`createdb -h ${host} -p ${port} -U ${user} ${newDb}`, { env: envN });
+    await execAsync(`psql -h ${host} -p ${port} -U ${user} ${newDb} < ${backupFile}`, { env: envN });
+    
+  } finally {
+    await unlink(backupFile);
+  }
+}
+
 async function main() {
   try {
     const baseConnectionString = env.DATABASE_URL.substring(
@@ -123,10 +145,7 @@ async function main() {
     await adminPool.query(`DROP DATABASE IF EXISTS ${backupDbName}`);
 
     console.log(`Creating fresh database ${backupDbName}...`);
-
-    await adminPool.query(`
-      CREATE DATABASE ${backupDbName} WITH TEMPLATE ${env.DATABASE_URL.split("/").pop()}
-    `);
+		await copyDatabase("local", backupDbName, "mysecretpassword");
 
     backupPool = new Pool({
       connectionString: baseConnectionString + backupDbName,
