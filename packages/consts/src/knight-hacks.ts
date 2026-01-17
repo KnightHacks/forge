@@ -6809,7 +6809,11 @@ export const FORM_QUESTION_TYPES = [
   { value: "MULTIPLE_CHOICE", label: "Multiple choice" },
   { value: "CHECKBOXES", label: "Checkboxes" },
   { value: "DROPDOWN", label: "Dropdown" },
+  { value: "FILE_UPLOAD", label: "File upload" },
+  { value: "LINEAR_SCALE", label: "Linear scale" },
   { value: "DATE", label: "Date" },
   { value: "TIME", label: "Time" },
-  { value: "FILE_UPLOAD", label: "File upload" },
+  { value: "EMAIL", label: "Email" },
+  { value: "NUMBER", label: "Number" },
+  { value: "PHONE", label: "Phone" },
 ] as const;

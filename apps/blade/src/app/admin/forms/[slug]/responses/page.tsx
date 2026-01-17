@@ -162,14 +162,16 @@ export default async function FormResponsesPage({
               })}
             </div>
 
-            {/* text responses section - for SHORT_ANSWER and PARAGRAPH questions */}
+            {/* text responses section - for SHORT_ANSWER, PARAGRAPH, EMAIL, and PHONE questions */}
             {/* renders a separate table for each text-based question */}
             <div className="mx-auto mt-3 max-w-4xl space-y-2 md:mt-8 md:space-y-6">
               {formData.questions.map((question) => {
-                // render table for SHORT_ANSWER or PARAGRAPH questions
+                // render table for SHORT_ANSWER, PARAGRAPH, EMAIL, or PHONE questions
                 if (
                   question.type === "SHORT_ANSWER" ||
-                  question.type === "PARAGRAPH"
+                  question.type === "PARAGRAPH" ||
+                  question.type === "EMAIL" ||
+                  question.type === "PHONE"
                 ) {
                   return (
                     <ResponsesTable

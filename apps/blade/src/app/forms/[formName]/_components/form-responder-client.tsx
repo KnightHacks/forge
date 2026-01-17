@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { z } from "zod";
 
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
@@ -10,6 +11,9 @@ import { Card } from "@forge/ui/card";
 import { InstructionResponseCard } from "~/app/forms/[formName]/_components/instruction-response-card";
 import { QuestionResponseCard } from "~/app/forms/[formName]/_components/question-response-card";
 import { api } from "~/trpc/react";
+
+const emailSchema = z.string().email("Invalid email address");
+const phoneSchema = z.string().regex(/^\+?\d{7,15}$/, "Invalid phone number");
 
 interface FormResponderClientProps {
   formName: string;
@@ -26,6 +30,7 @@ export function FormResponderClient({
   const [responses, setResponses] = useState<
     Record<string, string | string[] | number | Date | null>
   >({});
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
   const [showText, setShowText] = useState(false);
@@ -173,6 +178,10 @@ export function FormResponderClient({
     }));
   };
 
+  const handleFieldBlur = (questionText: string) => {
+    setTouchedFields((prev) => new Set(prev).add(questionText));
+  };
+
   const handleSubmit = () => {
     // Build response data object
     const responseData: Record<string, unknown> = {};
@@ -210,15 +219,70 @@ export function FormResponderClient({
     handleCallbacks(responseData);
   };
 
+  const getValidationError = (question: (typeof form.questions)[number]) => {
+    if (!touchedFields.has(question.question)) {
+      return null;
+    }
+
+    const response = responses[question.question];
+    
+    if (question.optional) {
+      if (!response || response === "" || (Array.isArray(response) && response.length === 0)) {
+        return null;
+      }
+    } else {
+      if (response === null || response === undefined || response === "") {
+        return null;
+      }
+      if (Array.isArray(response) && response.length === 0) return null;
+    }
+
+    if (question.type === "EMAIL" && typeof response === "string") {
+      const result = emailSchema.safeParse(response);
+      if (!result.success) {
+        return "Please enter a valid email address";
+      }
+    }
+    if (question.type === "PHONE" && typeof response === "string") {
+      const result = phoneSchema.safeParse(response);
+      if (!result.success) {
+        return "Please enter a valid phone number (7-15 digits, optional + prefix)";
+      }
+    }
+
+    return null;
+  };
+
   const isFormValid = () => {
     // Check if all required questions have responses
     return form.questions.every((question) => {
-      if (question.optional) return true; // Optional questions don't need validation
+      if (question.optional) {
+        const response = responses[question.question];
+        if (!response || response === "" || (Array.isArray(response) && response.length === 0)) {
+          return true;
+        }
+
+        if (question.type === "EMAIL" && typeof response === "string") {
+          return emailSchema.safeParse(response).success;
+        }
+        if (question.type === "PHONE" && typeof response === "string") {
+          return phoneSchema.safeParse(response).success;
+        }
+        return true;
+      }
 
       const response = responses[question.question];
       if (response === null || response === undefined || response === "")
         return false;
       if (Array.isArray(response) && response.length === 0) return false;
+
+      if (question.type === "EMAIL" && typeof response === "string") {
+        return emailSchema.safeParse(response).success;
+      }
+      if (question.type === "PHONE" && typeof response === "string") {
+        return phoneSchema.safeParse(response).success;
+      }
+
       return true;
     });
   };
@@ -299,7 +363,9 @@ export function FormResponderClient({
                       ) => {
                         handleResponseChange(item.question, value);
                       }}
-                      formId={formQuery.data?.id ?? ""}
+                      onBlur={() => handleFieldBlur(item.question)}
+                      formId={formQuery.data.id}
+                      error={getValidationError(item)}
                     />
                   )}
                 </div>
