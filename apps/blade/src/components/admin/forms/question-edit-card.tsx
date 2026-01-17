@@ -363,6 +363,37 @@ function OptionList({
     onUpdate({ ...question, options: newOptions });
   };
 
+  const handlePaste = (
+    e: React.ClipboardEvent<HTMLInputElement>,
+    currentIndex: number,
+  ) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData("text");
+
+    const lines = pastedText
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    if (lines.length === 0) return;
+
+    if (lines.length === 1) {
+      handleOptionChange(currentIndex, lines[0] ?? "");
+      return;
+    }
+
+    const firstLine = lines[0];
+    const remainingLines = lines.slice(1);
+
+    const newOptions = [...options];
+
+    newOptions[currentIndex] = firstLine ?? "";
+
+    newOptions.splice(currentIndex + 1, 0, ...remainingLines);
+
+    onUpdate({ ...question, options: newOptions });
+  };
+
   const Icon =
     question.type === "MULTIPLE_CHOICE"
       ? Circle
@@ -383,6 +414,7 @@ function OptionList({
           <Input
             value={optionValue}
             onChange={(e) => handleOptionChange(idx, e.target.value)}
+            onPaste={(e) => handlePaste(e, idx)}
             className="flex-1 rounded-none border-none px-0 hover:border-b hover:border-gray-200 focus:border-b-2 focus:border-blue-500 focus:ring-0"
             placeholder={`Option ${idx + 1}`}
             onKeyDown={(e) => {
