@@ -1,14 +1,15 @@
+import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 
-import type { FormType } from "@forge/consts/knight-hacks";
 import { auth } from "@forge/auth";
+import type { FormType } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
+import { FileUploadResponsesTable } from "./_components/FileUploadResponsesTable";
 import { ResponseBarChart } from "./_components/ResponseBarChart";
 import { ResponseHorizontalBarChart } from "./_components/ResponseHorizontalBarChart";
 import { ResponsePieChart } from "./_components/ResponsePieChart";
@@ -190,6 +191,21 @@ export default async function FormResponsesPage({
                 if (question.type === "DATE" || question.type === "TIME") {
                   return (
                     <ResponsesTable
+                      key={question.question}
+                      question={question.question}
+                      responses={responses}
+                    />
+                  );
+                }
+
+                return null;
+              })}
+            </div>
+            <div className="mx-auto mt-3 max-w-4xl space-y-2 md:mt-8 md:space-y-6">
+              {formData.questions.map((question) => {
+                if (question.type === "FILE_UPLOAD") {
+                  return (
+                    <FileUploadResponsesTable
                       key={question.question}
                       question={question.question}
                       responses={responses}

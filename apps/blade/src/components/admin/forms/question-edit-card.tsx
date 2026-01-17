@@ -1,8 +1,6 @@
 "use client";
 
 import type { DraggableSyntheticListeners } from "@dnd-kit/core";
-import type { z } from "zod";
-import * as React from "react";
 import {
   AlignLeft,
   Calendar,
@@ -12,11 +10,14 @@ import {
   CircleDot,
   Clock,
   Copy,
+  FileUp,
   GripHorizontal,
   Pilcrow,
   Trash,
   X,
 } from "lucide-react";
+import * as React from "react";
+import type { z } from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { FORM_QUESTION_TYPES } from "@forge/consts/knight-hacks";
@@ -58,6 +59,7 @@ const QUESTION_ICONS: Record<string, React.ElementType> = {
   DROPDOWN: ChevronDown,
   DATE: Calendar,
   TIME: Clock,
+  FILE_UPLOAD: FileUp,
 };
 
 export function QuestionEditCard({
@@ -86,7 +88,11 @@ export function QuestionEditCard({
       updatedQuestion.options = ["Option 1"];
     }
 
-    if (["SHORT_ANSWER", "PARAGRAPH", "DATE", "TIME"].includes(newType)) {
+    if (
+      ["SHORT_ANSWER", "PARAGRAPH", "DATE", "TIME", "FILE_UPLOAD"].includes(
+        newType,
+      )
+    ) {
       updatedQuestion.options = undefined;
     }
 
@@ -251,6 +257,15 @@ function QuestionBody({
       return (
         <div className="pointer-events-none flex items-center gap-2 opacity-50">
           <TimePicker />
+        </div>
+      );
+    case "FILE_UPLOAD":
+      return (
+        <div className="pointer-events-none flex items-center gap-2 opacity-50">
+          <FileUp className="h-5 w-5" />
+          <span className="text-sm text-muted-foreground">
+            File upload (images, videos, audio, PDFs)
+          </span>
         </div>
       );
     default:

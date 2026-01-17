@@ -395,6 +395,9 @@ function createJsonSchemaValidator({
       schema.type = "array";
       schema.items = { type: "string", enum: options };
       break;
+    case "FILE_UPLOAD":
+      schema.type = "string";
+      break;
     default:
       schema.type = "string";
   }

@@ -299,6 +299,7 @@ export function FormResponderClient({
                       ) => {
                         handleResponseChange(item.question, value);
                       }}
+                      formId={formQuery.data?.id ?? ""}
                     />
                   )}
                 </div>

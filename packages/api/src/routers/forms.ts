@@ -1,6 +1,6 @@
-import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import type { JSONSchema7 } from "json-schema";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -444,20 +444,35 @@ export const formsRouter = {
     }),
 
   // Generate presigned upload URL for direct MinIO upload
-  getUploadUrl: permProcedure
+  getUploadUrl: protectedProcedure
     .input(
       z.object({
         fileName: z.string(),
         formId: z.string(),
-        mediaType: z.enum(["image", "video"]),
+        mediaType: z.enum(["image", "video", "file"]),
       }),
     )
-    .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+    .mutation(async ({ input }) => {
       const { fileName, formId, mediaType } = input;
 
+      const form = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) => eq(t.id, formId),
+      });
+
+      if (!form) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Form not found",
+        });
+      }
+
       const safeFileName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-      const folder = mediaType === "image" ? "images" : "videos";
+      const folder =
+        mediaType === "image"
+          ? "images"
+          : mediaType === "video"
+            ? "videos"
+            : "files";
       const objectName = `${formId}/${folder}/${Date.now()}-${safeFileName}`;
 
       try {
@@ -512,6 +527,32 @@ export const formsRouter = {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to delete media",
+        });
+      }
+    }),
+
+  getFileUrl: permProcedure
+    .input(
+      z.object({
+        objectName: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+      const { objectName } = input;
+
+      try {
+        const viewUrl = await minioClient.presignedGetObject(
+          FORM_ASSETS_BUCKET,
+          objectName,
+          PRESIGNED_URL_EXPIRY,
+        );
+        return { viewUrl };
+      } catch (e) {
+        console.error("getFileUrl error:", e);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to generate file URL",
         });
       }
     }),
