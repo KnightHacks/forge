@@ -6769,6 +6769,8 @@ export const QuestionValidator = z.object({
     "NUMBER",
     "PHONE",
     "FILE_UPLOAD",
+    "BOOLEAN",
+    "LINK",
   ]),
   options: z.array(z.string()).optional(),
   optional: z.boolean().optional(),
@@ -6816,4 +6818,6 @@ export const FORM_QUESTION_TYPES = [
   { value: "EMAIL", label: "Email" },
   { value: "NUMBER", label: "Number" },
   { value: "PHONE", label: "Phone" },
+  { value: "BOOLEAN", label: "Boolean (Yes/No)" },
+  { value: "LINK", label: "Link (URL)" },
 ] as const;

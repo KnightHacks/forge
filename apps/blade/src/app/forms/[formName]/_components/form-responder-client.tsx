@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 import { Button } from "@forge/ui/button";
@@ -14,6 +14,7 @@ import { api } from "~/trpc/react";
 
 const emailSchema = z.string().email("Invalid email address");
 const phoneSchema = z.string().regex(/^\+?\d{7,15}$/, "Invalid phone number");
+const linkSchema = z.string().url("Please enter a valid URL");
 
 interface FormResponderClientProps {
   formName: string;
@@ -206,7 +207,12 @@ export function FormResponderClient({
               .slice(0, 5);
           }
         } else {
-          responseData[question.question] = response;
+          // Convert boolean strings to actual booleans for BOOLEAN question type
+          if (question.type === "BOOLEAN" && typeof response === "string") {
+            responseData[question.question] = response === "true";
+          } else {
+            responseData[question.question] = response;
+          }
         }
       }
     });
@@ -236,9 +242,20 @@ export function FormResponderClient({
       }
     } else {
       if (response === null || response === undefined || response === "") {
-        return null;
+        return "This field is required.";
       }
-      if (Array.isArray(response) && response.length === 0) return null;
+      if (Array.isArray(response) && response.length === 0) {
+        return "This field is required.";
+      }
+      // For required BOOLEAN questions, must be checked (true)
+      if (question.type === "BOOLEAN") {
+        const isChecked =
+          (typeof response === "string" && response === "true") ||
+          (typeof response === "boolean" && response === true);
+        if (!isChecked) {
+          return "You must accept this to continue.";
+        }
+      }
     }
 
     if (question.type === "EMAIL" && typeof response === "string") {
@@ -251,6 +268,12 @@ export function FormResponderClient({
       const result = phoneSchema.safeParse(response);
       if (!result.success) {
         return "Please enter a valid phone number (7-15 digits, optional + prefix)";
+      }
+    }
+    if (question.type === "LINK" && typeof response === "string") {
+      const result = linkSchema.safeParse(response);
+      if (!result.success) {
+        return "Please enter a valid URL";
       }
     }
 
@@ -273,10 +296,13 @@ export function FormResponderClient({
         if (question.type === "EMAIL" && typeof response === "string") {
           return emailSchema.safeParse(response).success;
         }
-        if (question.type === "PHONE" && typeof response === "string") {
-          return phoneSchema.safeParse(response).success;
-        }
-        return true;
+      if (question.type === "PHONE" && typeof response === "string") {
+        return phoneSchema.safeParse(response).success;
+      }
+      if (question.type === "LINK" && typeof response === "string") {
+        return linkSchema.safeParse(response).success;
+      }
+      return true;
       }
 
       const response = responses[question.question];
@@ -284,11 +310,25 @@ export function FormResponderClient({
         return false;
       if (Array.isArray(response) && response.length === 0) return false;
 
+      // For required BOOLEAN questions, must be checked (true), not false
+      if (question.type === "BOOLEAN") {
+        if (typeof response === "string") {
+          return response === "true"; // Must be "true" string
+        }
+        if (typeof response === "boolean") {
+          return response === true; // Must be true boolean
+        }
+        return false; // Missing or invalid
+      }
+
       if (question.type === "EMAIL" && typeof response === "string") {
         return emailSchema.safeParse(response).success;
       }
       if (question.type === "PHONE" && typeof response === "string") {
         return phoneSchema.safeParse(response).success;
+      }
+      if (question.type === "LINK" && typeof response === "string") {
+        return linkSchema.safeParse(response).success;
       }
 
       return true;

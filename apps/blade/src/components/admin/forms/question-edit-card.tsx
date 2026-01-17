@@ -1,8 +1,6 @@
 "use client";
 
 import type { DraggableSyntheticListeners } from "@dnd-kit/core";
-import type { z } from "zod";
-import * as React from "react";
 import {
   AlignLeft,
   AtSign,
@@ -16,12 +14,16 @@ import {
   FileUp,
   GripHorizontal,
   Hash,
+  Link,
   Phone,
   Pilcrow,
   SlidersHorizontal,
+  ToggleLeft,
   Trash,
   X,
 } from "lucide-react";
+import * as React from "react";
+import type { z } from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { FORM_QUESTION_TYPES } from "@forge/consts/knight-hacks";
@@ -70,6 +72,8 @@ const QUESTION_ICONS: Record<string, React.ElementType> = {
   NUMBER: Hash,
   PHONE: Phone,
   FILE_UPLOAD: FileUp,
+  BOOLEAN: ToggleLeft,
+  LINK: Link,
 };
 
 export function QuestionEditCard({
@@ -109,6 +113,8 @@ export function QuestionEditCard({
         "PHONE",
         "LINEAR_SCALE",
         "FILE_UPLOAD",
+        "BOOLEAN",
+        "LINK",
       ].includes(newType)
     ) {
       updatedQuestion.options = undefined;
@@ -327,6 +333,24 @@ function QuestionBody({
           <span className="text-sm text-muted-foreground">
             File upload (images, videos, audio, PDFs)
           </span>
+        </div>
+      );
+    case "BOOLEAN":
+      return (
+        <div className="flex items-center gap-3">
+          <Checkbox disabled checked={false} />
+          <span className="text-sm text-muted-foreground">Yes / No</span>
+        </div>
+      );
+    case "LINK":
+      return (
+        <div className="w-1/2">
+          <Input
+            type="url"
+            placeholder="https://example.com"
+            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+            disabled
+          />
         </div>
       );
     default:

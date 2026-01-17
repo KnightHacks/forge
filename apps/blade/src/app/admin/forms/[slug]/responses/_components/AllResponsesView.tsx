@@ -71,16 +71,18 @@ export function AllResponsesView({
         })}
       </div>
 
-      {/* text responses section - for SHORT_ANSWER, PARAGRAPH, EMAIL, and PHONE questions */}
+      {/* text responses section - for SHORT_ANSWER, PARAGRAPH, EMAIL, PHONE, BOOLEAN, and LINK questions */}
       {/* renders a separate table for each text-based question */}
       <div className="mx-auto mt-3 max-w-4xl space-y-2 md:mt-8 md:space-y-6">
         {formData.questions.map((question) => {
-          // render table for SHORT_ANSWER, PARAGRAPH, EMAIL, or PHONE questions
+          // render table for SHORT_ANSWER, PARAGRAPH, EMAIL, PHONE, BOOLEAN, or LINK questions
           if (
             question.type === "SHORT_ANSWER" ||
             question.type === "PARAGRAPH" ||
             question.type === "EMAIL" ||
-            question.type === "PHONE"
+            question.type === "PHONE" ||
+            question.type === "BOOLEAN" ||
+            question.type === "LINK"
           ) {
             return (
               <ResponsesTable
