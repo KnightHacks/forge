@@ -1,10 +1,13 @@
 "use client";
 
-import type { z } from "zod";
-import * as React from "react";
+import { FileUp, Loader2, X } from "lucide-react";
 import Image from "next/image";
+import * as React from "react";
+import { useRef, useState } from "react";
+import type { z } from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
+import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 import { Checkbox } from "@forge/ui/checkbox";
 import { DatePicker } from "@forge/ui/date-picker";
@@ -19,6 +22,9 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 import { TimePicker } from "@forge/ui/time-picker";
+import { toast } from "@forge/ui/toast";
+
+import { api } from "~/trpc/react";
 
 type FormQuestion = z.infer<typeof QuestionValidator>;
 
@@ -27,6 +33,7 @@ interface QuestionResponseCardProps {
   value?: string | string[] | number | Date | null;
   onChange: (value: string | string[] | number | Date | null) => void;
   disabled?: boolean;
+  formId?: string;
 }
 
 export function QuestionResponseCard({
@@ -34,6 +41,7 @@ export function QuestionResponseCard({
   value,
   onChange,
   disabled = false,
+  formId,
 }: QuestionResponseCardProps) {
   const isRequired = !question.optional;
 
@@ -66,6 +74,7 @@ export function QuestionResponseCard({
           value={value}
           onChange={onChange}
           disabled={disabled}
+          formId={formId}
         />
       </div>
     </Card>
@@ -79,11 +88,13 @@ function QuestionBody({
   value,
   onChange,
   disabled = false,
+  formId,
 }: {
   question: FormQuestion;
   value?: string | string[] | number | Date | null;
   onChange: (value: string | string[] | number | Date | null) => void;
   disabled?: boolean;
+  formId?: string;
 }) {
   switch (question.type) {
     case "SHORT_ANSWER":
@@ -218,6 +229,16 @@ function QuestionBody({
         </div>
       );
 
+    case "FILE_UPLOAD":
+      return (
+        <FileUploadInput
+          value={value as string | null}
+          onChange={onChange}
+          disabled={disabled}
+          formId={formId}
+        />
+      );
+
     default:
       return null;
   }
@@ -336,5 +357,167 @@ function DropdownInput({
         ))}
       </SelectContent>
     </Select>
+  );
+}
+
+function FileUploadInput({
+  value,
+  onChange,
+  disabled = false,
+  formId,
+}: {
+  value?: string | null;
+  onChange: (value: string | string[] | number | Date | null) => void;
+  disabled?: boolean;
+  formId?: string;
+}) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(
+    value ? value.split("/").pop() || null : null,
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getUploadUrlMutation = api.forms.getUploadUrl.useMutation();
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = [
+      "image/",
+      "video/",
+      "audio/",
+      "application/pdf",
+      "text/",
+      "application/json",
+      "application/csv",
+      "text/csv",
+      "text/markdown",
+      "text/plain",
+    ];
+    const allowedExtensions = [
+      ".pdf",
+      ".csv",
+      ".json",
+      ".md",
+      ".markdown",
+      ".txt",
+    ];
+    
+    const isValidType =
+      allowedTypes.some((type) => file.type.startsWith(type)) ||
+      allowedExtensions.some((ext) =>
+        file.name.toLowerCase().endsWith(ext),
+      );
+
+    if (!isValidType) {
+      toast.error(
+        "Invalid file type. Please upload an image, video, audio, PDF, CSV, JSON, Markdown, or text file.",
+      );
+      return;
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error("File must be less than 100MB");
+      return;
+    }
+
+    if (!formId) {
+      toast.error("Form ID is required for file upload");
+      return;
+    }
+
+    let mediaType: "image" | "video" | "file" = "file";
+    if (file.type.startsWith("image/")) {
+      mediaType = "image";
+    } else if (file.type.startsWith("video/")) {
+      mediaType = "video";
+    }
+
+    setIsUploading(true);
+
+    try {
+      const result = await getUploadUrlMutation.mutateAsync({
+        fileName: file.name,
+        formId,
+        mediaType,
+      });
+
+      const uploadResponse = await fetch(result.uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+      }
+
+      onChange(result.objectName);
+      setFileName(file.name);
+      toast.success("File uploaded successfully!");
+    } catch {
+      toast.error("Failed to upload file. Please try again.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveFile = () => {
+    onChange(null);
+    setFileName(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  return (
+    <div className="w-full space-y-2">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*,audio/*,.pdf,.csv,.json,.md,.markdown,.txt"
+        onChange={handleFileUpload}
+        className="hidden"
+        disabled={disabled || isUploading}
+      />
+      {!fileName && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled || isUploading}
+          className="w-full"
+        >
+          {isUploading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Uploading...
+            </>
+          ) : (
+            <>
+              <FileUp className="mr-2 h-4 w-4" />
+              Choose File
+            </>
+          )}
+        </Button>
+      )}
+      {fileName && (
+        <div className="flex items-center justify-between rounded-md border bg-muted/50 p-2">
+          <span className="flex-1 truncate text-sm">{fileName}</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleRemoveFile}
+            disabled={disabled}
+            className="h-8 w-8"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

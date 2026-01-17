@@ -214,6 +214,7 @@ export const EVENT_POINTS: Record<EventTag, number> = {
 export const KNIGHTHACKS_S3_BUCKET_REGION = "us-east-1";
 export const KNIGHTHACKS_MAX_RESUME_SIZE = 5 * 1000000; // 5MB
 export const FORM_ASSETS_BUCKET = "form-assets";
+
 export const PRESIGNED_URL_EXPIRY = 7 * 24 * 60 * 60; // 7 days
 
 export const KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -6767,6 +6768,7 @@ export const QuestionValidator = z.object({
     "EMAIL",
     "NUMBER",
     "PHONE",
+    "FILE_UPLOAD",
   ]),
   options: z.array(z.string()).optional(),
   optional: z.boolean().optional(),
@@ -6809,4 +6811,5 @@ export const FORM_QUESTION_TYPES = [
   { value: "DROPDOWN", label: "Dropdown" },
   { value: "DATE", label: "Date" },
   { value: "TIME", label: "Time" },
+  { value: "FILE_UPLOAD", label: "File upload" },
 ] as const;

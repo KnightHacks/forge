@@ -35,7 +35,6 @@ export default async function FormEditorPage({
 
   return (
     <>
-      <div>{JSON.stringify(accessCheck)}</div>
       <EditorClient procs={extractProcedures(appRouter)} slug={params.slug} />
     </>
   );
