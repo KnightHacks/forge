@@ -3,14 +3,12 @@ import { unlink } from "fs/promises";
 import { promisify } from "util";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Client } from "pg";
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import Pool from "pg-pool";
 
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
-import { Roles } from "../src/schemas/auth";
-import { Permissions } from "../src/schemas/auth";
 import * as knightHacksSchema from "../src/schemas/knight-hacks";
 
 const execAsync = promisify(exec);
@@ -62,7 +60,7 @@ const TABLES_REMOVE_ALL: string[] = [
   "knight_hacks_judges",
 ];
 
-async function cleanTable(name: string, userIdsToDelete: string[]) {
+async function cleanTable(name: string, userIdsToKeep: string[]) {
   if (!backupDb) return;
 
   if (TABLES_REMOVE_ALL.includes(name)) {
@@ -72,8 +70,6 @@ async function cleanTable(name: string, userIdsToDelete: string[]) {
     );
     return;
   }
-
-  if (userIdsToDelete.length == 0) return;
 
   const relResult = await backupDb.execute(sql`
     SELECT kcu.column_name
@@ -94,34 +90,14 @@ async function cleanTable(name: string, userIdsToDelete: string[]) {
 
     await backupDb.execute(sql`
       DELETE FROM ${sql.identifier(name)}
-      WHERE ${sql.identifier(userFkColumn)} IN (${sql.join(
-        userIdsToDelete.map((id) => sql`${id}`),
+      WHERE ${sql.identifier(userFkColumn)} NOT IN (${sql.join(
+        userIdsToKeep.map((id) => sql`${id}`),
         sql`, `,
       )})
     `);
   } else {
     console.log(`Table ${name} will remain unaffected entirely`);
   }
-}
-
-const isAdmin: Record<string, boolean> = {};
-
-async function shouldKeepId(userid: string): Promise<boolean> {
-  if (!Object.keys(isAdmin).includes(userid)) {
-    if (!backupDb) return false;
-    const permRows = await backupDb
-      .select({
-        permissions: Roles.permissions,
-      })
-      .from(Roles)
-      .innerJoin(Permissions, eq(Roles.id, Permissions.roleId))
-      .where(sql`cast(${Permissions.userId} as text) = ${userid}`);
-
-    const admin = permRows.length > 0;
-    isAdmin[userid] = admin;
-  }
-  console.log(userid, isAdmin[userid]);
-  return isAdmin[userid] ?? false;
 }
 
 async function copyDatabase() {
@@ -182,42 +158,39 @@ async function main() {
     });
 
     const { rows: tablesJSON } = await backupDb.execute(sql`
-  SELECT table_name 
-  FROM information_schema.tables 
-  WHERE table_schema = 'public' 
-  AND table_type = 'BASE TABLE'
-`);
+		  SELECT table_name 
+		  FROM information_schema.tables 
+		  WHERE table_schema = 'public' 
+		  AND table_type = 'BASE TABLE'
+		`);
 
     let tables = tablesJSON.map((t) => t.table_name as string);
     tables = [...tables.filter((x) => x !== "auth_user"), "auth_user"];
 
-    const allUsers = await backupDb.execute(sql`SELECT id FROM auth_user`);
-
-    const userIdsToDelete: string[] = [];
-
-    for (const row of allUsers.rows) {
-      const userId = row.id as string;
-      const keep = await shouldKeepId(userId);
-      if (!keep) userIdsToDelete.push(userId);
-    }
+		console.log("Getting admins");
+    const userIdsToKeep: string[] = (
+      await backupDb.query.Permissions.findMany({
+        columns: {
+          userId: true,
+        },
+      })
+    ).map((t) => t.userId);
 
     for (const tableName of tables) {
-      await cleanTable(tableName, userIdsToDelete);
+      await cleanTable(tableName, userIdsToKeep);
     }
 
-    if (userIdsToDelete.length > 0) {
-      console.log(
-        `Deleting ${userIdsToDelete.length} non-admin users and cascading to whatever has cascade in the schema already`,
-      );
+    console.log(
+      `Keeping ${userIdsToKeep.length} non-admin users and cascading to whatever has cascade in the schema already`,
+    );
 
-      await backupDb.execute(sql`
+    await backupDb.execute(sql`
 	      DELETE FROM auth_user 
-	      WHERE id IN (${sql.join(
-          userIdsToDelete.map((id) => sql`${id}`),
+	      WHERE id NOT IN (${sql.join(
+          userIdsToKeep.map((id) => sql`${id}`),
           sql`, `,
         )})
 	    `);
-    }
 
     await cleanUp();
 
@@ -229,4 +202,4 @@ async function main() {
   }
 }
 
-main();
+await main();
