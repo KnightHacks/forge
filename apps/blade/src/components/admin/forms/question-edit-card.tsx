@@ -1,6 +1,8 @@
 "use client";
 
 import type { DraggableSyntheticListeners } from "@dnd-kit/core";
+import type { z } from "zod";
+import * as React from "react";
 import {
   AlignLeft,
   AtSign,
@@ -20,8 +22,6 @@ import {
   Trash,
   X,
 } from "lucide-react";
-import * as React from "react";
-import type { z } from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { FORM_QUESTION_TYPES } from "@forge/consts/knight-hacks";
@@ -319,9 +319,7 @@ function QuestionBody({
         </div>
       );
     case "LINEAR_SCALE":
-      return (
-        <LinearScaleEditor question={question} onUpdate={onUpdate} />
-      );
+      return <LinearScaleEditor question={question} onUpdate={onUpdate} />;
     case "FILE_UPLOAD":
       return (
         <div className="pointer-events-none flex items-center gap-2 opacity-50">

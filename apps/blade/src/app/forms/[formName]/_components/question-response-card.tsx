@@ -1,10 +1,10 @@
 "use client";
 
-import { FileUp, Loader2, X } from "lucide-react";
-import Image from "next/image";
+import type { z } from "zod";
 import * as React from "react";
 import { useRef, useState } from "react";
-import type { z } from "zod";
+import Image from "next/image";
+import { FileUp, Loader2, X } from "lucide-react";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
@@ -60,9 +60,7 @@ export function QuestionResponseCard({
             {isRequired && <span className="ml-1 text-red-500">*</span>}
           </h3>
         </div>
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
         {question.image && (
           <div className="relative h-48 w-full overflow-hidden rounded-md">
             <Image
@@ -396,9 +394,9 @@ function LinearScaleInput({
 }) {
   const min = question.min ?? 0;
   const max = question.max ?? 5;
-  
+
   const defaultValue = Math.floor((min + max) / 2);
-  
+
   const currentValue =
     typeof value === "number"
       ? Math.max(min, Math.min(max, value))
@@ -426,10 +424,7 @@ function LinearScaleInput({
       </div>
       <div className="flex items-center justify-between gap-2">
         {scaleValues.map((value) => (
-          <span
-            key={value}
-            className="text-xs text-muted-foreground"
-          >
+          <span key={value} className="text-xs text-muted-foreground">
             {value}
           </span>
         ))}
@@ -481,12 +476,10 @@ function FileUploadInput({
       ".markdown",
       ".txt",
     ];
-    
+
     const isValidType =
       allowedTypes.some((type) => file.type.startsWith(type)) ||
-      allowedExtensions.some((ext) =>
-        file.name.toLowerCase().endsWith(ext),
-      );
+      allowedExtensions.some((ext) => file.name.toLowerCase().endsWith(ext));
 
     if (!isValidType) {
       toast.error(

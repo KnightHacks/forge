@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@forge/ui/button";
@@ -225,9 +225,13 @@ export function FormResponderClient({
     }
 
     const response = responses[question.question];
-    
+
     if (question.optional) {
-      if (!response || response === "" || (Array.isArray(response) && response.length === 0)) {
+      if (
+        !response ||
+        response === "" ||
+        (Array.isArray(response) && response.length === 0)
+      ) {
         return null;
       }
     } else {
@@ -258,7 +262,11 @@ export function FormResponderClient({
     return form.questions.every((question) => {
       if (question.optional) {
         const response = responses[question.question];
-        if (!response || response === "" || (Array.isArray(response) && response.length === 0)) {
+        if (
+          !response ||
+          response === "" ||
+          (Array.isArray(response) && response.length === 0)
+        ) {
           return true;
         }
 

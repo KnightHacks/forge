@@ -1,7 +1,14 @@
 "use client";
 
-import { Code, Download, File, FileSpreadsheet, FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
+import {
+  Code,
+  Download,
+  File,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+} from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
@@ -13,8 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@forge/ui/table";
-
 import { toast } from "@forge/ui/toast";
+
 import { api } from "~/trpc/react";
 
 interface FileUploadResponsesTableProps {
@@ -55,8 +62,7 @@ export function FileUploadResponsesTable({
       <CardHeader>
         <CardTitle>{question}</CardTitle>
         <p className="mt-1 text-sm text-muted-foreground">
-          {responses.length}{" "}
-          {responses.length === 1 ? "response" : "responses"}
+          {responses.length} {responses.length === 1 ? "response" : "responses"}
         </p>
       </CardHeader>
       <CardContent>
@@ -163,9 +169,7 @@ function FileUploadRow({
   return (
     <TableRow>
       <TableCell>
-        {member
-          ? `${member.firstName} ${member.lastName}`
-          : "Anonymous"}
+        {member ? `${member.firstName} ${member.lastName}` : "Anonymous"}
       </TableCell>
       <TableCell>{member?.email ?? "N/A"}</TableCell>
       <TableCell className="max-w-[500px]">

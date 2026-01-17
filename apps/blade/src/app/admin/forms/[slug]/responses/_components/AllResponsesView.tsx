@@ -46,10 +46,7 @@ export function AllResponsesView({
           }
 
           // render bar chart for LINEAR_SCALE or NUMBER questions
-          if (
-            question.type === "LINEAR_SCALE" ||
-            question.type === "NUMBER"
-          ) {
+          if (question.type === "LINEAR_SCALE" || question.type === "NUMBER") {
             return (
               <ResponseBarChart
                 key={question.question}
