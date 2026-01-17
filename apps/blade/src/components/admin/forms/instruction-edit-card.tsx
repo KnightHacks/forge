@@ -27,6 +27,7 @@ type FormInstruction = z.infer<typeof InstructionValidator>;
 
 interface InstructionEditCardProps {
   instruction: FormInstruction & { id: string };
+  formId: string;
   onUpdate: (updatedInstruction: FormInstruction & { id: string }) => void;
   onDelete: (id: string) => void;
   onDuplicate: (instruction: FormInstruction & { id: string }) => void;
@@ -35,6 +36,7 @@ interface InstructionEditCardProps {
 
 export function InstructionEditCard({
   instruction,
+  formId,
   onUpdate,
   onDelete,
   onDuplicate,
@@ -70,7 +72,7 @@ export function InstructionEditCard({
     try {
       const result = await getUploadUrlMutation.mutateAsync({
         fileName: file.name,
-        formId: instruction.id,
+        formId,
         mediaType: "image",
       });
 
@@ -119,7 +121,7 @@ export function InstructionEditCard({
     try {
       const result = await getUploadUrlMutation.mutateAsync({
         fileName: file.name,
-        formId: instruction.id,
+        formId,
         mediaType: "video",
       });
 

@@ -53,6 +53,7 @@ type UIInstruction = FormInstruction & { id: string };
 function SortableItem({
   item,
   isActive,
+  formId,
   onUpdateQuestion,
   onUpdateInstruction,
   onDelete,
@@ -64,6 +65,7 @@ function SortableItem({
 }: {
   item: UIQuestion | UIInstruction;
   isActive: boolean;
+  formId: string;
   onUpdateQuestion: (q: UIQuestion) => void;
   onUpdateInstruction: (i: UIInstruction) => void;
   onDelete: (id: string) => void;
@@ -95,6 +97,7 @@ function SortableItem({
         {isInstruction ? (
           <InstructionEditCard
             instruction={item}
+            formId={formId}
             onUpdate={onUpdateInstruction}
             onDelete={onDelete}
             onDuplicate={onDuplicateInstruction}
@@ -549,6 +552,7 @@ export function EditorClient({
                           <SortableItem
                             item={item}
                             isActive={activeItemId === item.id}
+                            formId={formData?.id ?? ""}
                             onUpdateQuestion={updateQuestion}
                             onUpdateInstruction={updateInstruction}
                             onDelete={deleteItem}
