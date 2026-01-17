@@ -1,7 +1,7 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@forge/ui/button";
@@ -68,9 +68,7 @@ export default function ListMatcher({
     setProcSelection(value);
     const newProcFields = procs[value].inputSchema;
     setProcFields(newProcFields);
-    setConnections(
-      newProcFields.map((item) => ({ procField: item })),
-    );
+    setConnections(newProcFields.map((item) => ({ procField: item })));
   };
 
   const updateConnection = (index: number, value: string) => {
@@ -113,14 +111,18 @@ export default function ListMatcher({
 
   const isCustomValue = (index: number) => {
     const conn = connections[index];
-    return conn && !conn.formField && (conn.customValue !== undefined);
+    return conn && !conn.formField && conn.customValue !== undefined;
   };
 
   const handleSubmit = () => {
     setIsLoading(true);
 
     const cleanedConnections = connections.map((conn) => {
-      const cleaned: { procField: string; formField?: string; customValue?: string } = {
+      const cleaned: {
+        procField: string;
+        formField?: string;
+        customValue?: string;
+      } = {
         procField: conn.procField,
       };
       if (conn.formField) {
@@ -209,9 +211,7 @@ export default function ListMatcher({
                     id={`custom-${index}`}
                     placeholder="Enter custom value"
                     value={connection.customValue || ""}
-                    onChange={(e) =>
-                      updateCustomValue(index, e.target.value)
-                    }
+                    onChange={(e) => updateCustomValue(index, e.target.value)}
                     className="mt-2"
                   />
                 )}

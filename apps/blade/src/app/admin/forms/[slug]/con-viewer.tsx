@@ -1,5 +1,5 @@
-import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
@@ -14,8 +14,8 @@ import {
 } from "@forge/ui/dialog";
 import { toast } from "@forge/ui/toast";
 
-import { api } from "~/trpc/react";
 import type { MatchingType } from "./linker";
+import { api } from "~/trpc/react";
 
 export function ConnectionViewer({
   matching,

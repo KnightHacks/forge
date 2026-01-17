@@ -79,7 +79,9 @@ export default async function FormResponderPage({
         const errorMessage = JSON.stringify(error, null, 2);
         await log({
           title: `Failed to automatically fire procedure`,
-          message: `**Failed to fire procedure**\n\`${con.proc}\`\n\nTriggered after **${form.name}** submission from **${session.user.name}**\n\n**Data:**\n\`\`\`json\n${stringify(data)}\`\`\`` + `\n\n**Error:**\n\`\`\`json\n${errorMessage}\`\`\``,
+          message:
+            `**Failed to fire procedure**\n\`${con.proc}\`\n\nTriggered after **${form.name}** submission from **${session.user.name}**\n\n**Data:**\n\`\`\`json\n${stringify(data)}\`\`\`` +
+            `\n\n**Error:**\n\`\`\`json\n${errorMessage}\`\`\``,
           color: "uhoh_red",
           userId: session.user.discordUserId,
         });

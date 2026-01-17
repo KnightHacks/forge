@@ -1,25 +1,26 @@
-import { RECRUITING_CHANNEL, TEAM_MAP } from "@forge/consts/knight-hacks";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
+
+import { RECRUITING_CHANNEL, TEAM_MAP } from "@forge/consts/knight-hacks";
+
 import { protectedProcedure } from "../trpc";
 import { discord } from "../utils";
-
 
 // Miscellaneous routes (primarily for form integrations)
 export const miscRouter = {
   recruitingUpdate: protectedProcedure
-  .meta({
-    id: "recruitingUpdate",
-    inputSchema: z.object({
-      name: z.string().min(1),
-      email: z.string().email(),
-      major: z.string().min(1),
-      gradTerm: z.string().min(1),
-      gradYear: z.number().min(1),
-      team: z.string().min(1),
-    }),
-  })
+    .meta({
+      id: "recruitingUpdate",
+      inputSchema: z.object({
+        name: z.string().min(1),
+        email: z.string().email(),
+        major: z.string().min(1),
+        gradTerm: z.string().min(1),
+        gradYear: z.number().min(1),
+        team: z.string().min(1),
+      }),
+    })
     .input(
       z.object({
         name: z.string().min(1),
@@ -31,12 +32,11 @@ export const miscRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-
-      const team = TEAM_MAP.find(team => team.team === input.team);
+      const team = TEAM_MAP.find((team) => team.team === input.team);
       if (!team) {
         throw new Error("Team not found");
       }
-      
+
       const directorRole = team.director_role;
 
       // Convert hex color string to integer for Discord API
