@@ -1,10 +1,10 @@
-import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
-import { auth } from "@forge/auth";
 import type { FormType } from "@forge/consts/knight-hacks";
+import { auth } from "@forge/auth";
 import { Button } from "@forge/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
@@ -122,10 +122,7 @@ export default async function FormResponsesPage({
               <AllResponsesView formData={formData} responses={responses} />
             </TabsContent>
             <TabsContent value="per-user" className="mt-6">
-              <PerUserResponsesView
-                formData={formData}
-                responses={responses}
-              />
+              <PerUserResponsesView formData={formData} responses={responses} />
             </TabsContent>
           </Tabs>
         )}

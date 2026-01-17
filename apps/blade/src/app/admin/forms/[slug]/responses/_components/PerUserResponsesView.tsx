@@ -1,18 +1,18 @@
 "use client";
 
-import type { FormType } from "@forge/consts/knight-hacks";
-import {
-    ChevronLeft,
-    ChevronRight,
-    Code,
-    Download,
-    File,
-    FileSpreadsheet,
-    FileText,
-    Loader2,
-} from "lucide-react";
 import { useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Code,
+  Download,
+  File,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+} from "lucide-react";
 
+import type { FormType } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Separator } from "@forge/ui/separator";
@@ -199,7 +199,7 @@ export function PerUserResponsesView({
                     answer ? (
                       <FileUploadDisplay objectName={answer} />
                     ) : (
-                      <p className="text-sm text-muted-foreground break-words">
+                      <p className="break-words text-sm text-muted-foreground">
                         {formatResponseValue(answer)}
                       </p>
                     )}
