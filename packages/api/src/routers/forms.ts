@@ -1,6 +1,6 @@
-import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import type { JSONSchema7 } from "json-schema";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -118,6 +118,10 @@ export const formsRouter = {
         });
       }
 
+      const existingForm = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) => eq(t.id, input.id ?? ""),
+      });
+
       await db
         .insert(FormsSchemas)
         .values({
@@ -125,6 +129,7 @@ export const formsRouter = {
           name: input.formData.name,
           slugName: slug_name,
           formValidatorJson: jsonSchema.schema,
+          sectionId: existingForm?.sectionId ?? null,
         })
         .onConflictDoUpdate({
           //If it already exists upsert it
@@ -134,6 +139,7 @@ export const formsRouter = {
             name: input.formData.name,
             slugName: slug_name,
             formValidatorJson: jsonSchema.schema,
+            sectionId: existingForm?.sectionId ?? null,
           },
         });
     }),
@@ -244,7 +250,17 @@ export const formsRouter = {
     }),
 
   addConnection: permProcedure
-    .input(TrpcFormConnectionSchema)
+    .input(
+      TrpcFormConnectionSchema.extend({
+        connections: z.array(
+          z.object({
+            procField: z.string(),
+            formField: z.string().optional(),
+            customValue: z.string().optional(),
+          }),
+        ),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EDIT_FORMS"], ctx);
       try {
@@ -360,6 +376,7 @@ export const formsRouter = {
       controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       return await db
         .select({
+          id: FormResponse.id,
           submittedAt: FormResponse.createdAt,
           responseData: FormResponse.responseData,
           member: {
@@ -373,6 +390,26 @@ export const formsRouter = {
         .leftJoin(Member, eq(FormResponse.userId, Member.userId))
         .where(eq(FormResponse.form, input.form))
         .orderBy(desc(FormResponse.createdAt));
+    }),
+
+  deleteResponse: permProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
+      try {
+        await db.delete(FormResponse).where(eq(FormResponse.id, input.id));
+        await log({
+          title: `Form response deleted`,
+          message: `**Response deleted:** ${input.id}`,
+          color: "uhoh_red",
+          userId: ctx.session.user.discordUserId,
+        });
+      } catch {
+        throw new TRPCError({
+          message: "Could not delete response",
+          code: "BAD_REQUEST",
+        });
+      }
     }),
 
   getUserResponse: protectedProcedure
