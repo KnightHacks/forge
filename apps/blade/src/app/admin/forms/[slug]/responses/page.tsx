@@ -6,14 +6,12 @@ import { redirect } from "next/navigation";
 import { auth } from "@forge/auth";
 import type { FormType } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
-import { FileUploadResponsesTable } from "./_components/FileUploadResponsesTable";
-import { ResponseBarChart } from "./_components/ResponseBarChart";
-import { ResponseHorizontalBarChart } from "./_components/ResponseHorizontalBarChart";
-import { ResponsePieChart } from "./_components/ResponsePieChart";
-import { ResponsesTable } from "./_components/ResponsesTable";
+import { AllResponsesView } from "./_components/AllResponsesView";
+import { PerUserResponsesView } from "./_components/PerUserResponsesView";
 
 export const metadata: Metadata = {
   title: "Blade | Form Responses",
@@ -113,112 +111,23 @@ export default async function FormResponsesPage({
             </div>
           </div>
         ) : (
-          <>
-            {/* charts section , shows aggregated data visualization */}
-            {/* space-y-2 on mobile, space-y-6 on desktop adds vertical spacing between charts */}
-            {/* max-w-4xl mx-auto centers the charts and limits width */}
-            <div className="mx-auto max-w-4xl space-y-2 md:space-y-6">
-              {formData.questions.map((question) => {
-                // render pie chart for MULTIPLE_CHOICE or DROPDOWN questions
-                if (
-                  question.type === "MULTIPLE_CHOICE" ||
-                  question.type === "DROPDOWN"
-                ) {
-                  return (
-                    <ResponsePieChart
-                      key={question.question}
-                      question={question.question}
-                      responses={responses}
-                    />
-                  );
-                }
-
-                // render bar chart for LINEAR_SCALE or NUMBER questions
-                if (
-                  question.type === "LINEAR_SCALE" ||
-                  question.type === "NUMBER"
-                ) {
-                  return (
-                    <ResponseBarChart
-                      key={question.question}
-                      question={question.question}
-                      responses={responses}
-                    />
-                  );
-                }
-
-                // render horizontal bar chart for CHECKBOXES questions
-                if (question.type === "CHECKBOXES") {
-                  return (
-                    <ResponseHorizontalBarChart
-                      key={question.question}
-                      question={question.question}
-                      responses={responses}
-                    />
-                  );
-                }
-
-                return null;
-              })}
+          <Tabs defaultValue="all" className="w-full">
+            <div className="mx-auto max-w-4xl">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="all">All Responses</TabsTrigger>
+                <TabsTrigger value="per-user">Per User</TabsTrigger>
+              </TabsList>
             </div>
-
-            {/* text responses section - for SHORT_ANSWER, PARAGRAPH, EMAIL, and PHONE questions */}
-            {/* renders a separate table for each text-based question */}
-            <div className="mx-auto mt-3 max-w-4xl space-y-2 md:mt-8 md:space-y-6">
-              {formData.questions.map((question) => {
-                // render table for SHORT_ANSWER, PARAGRAPH, EMAIL, or PHONE questions
-                if (
-                  question.type === "SHORT_ANSWER" ||
-                  question.type === "PARAGRAPH" ||
-                  question.type === "EMAIL" ||
-                  question.type === "PHONE"
-                ) {
-                  return (
-                    <ResponsesTable
-                      key={question.question}
-                      question={question.question}
-                      responses={responses}
-                    />
-                  );
-                }
-
-                return null;
-              })}
-            </div>
-            {/* date and time responses section - for DATE and TIME questions */}
-            {/* renders a separate table for each date/time question */}
-            <div className="mx-auto mt-3 max-w-4xl space-y-2 md:mt-8 md:space-y-6">
-              {formData.questions.map((question) => {
-                // render table for DATE or TIME questions
-                if (question.type === "DATE" || question.type === "TIME") {
-                  return (
-                    <ResponsesTable
-                      key={question.question}
-                      question={question.question}
-                      responses={responses}
-                    />
-                  );
-                }
-
-                return null;
-              })}
-            </div>
-            <div className="mx-auto mt-3 max-w-4xl space-y-2 md:mt-8 md:space-y-6">
-              {formData.questions.map((question) => {
-                if (question.type === "FILE_UPLOAD") {
-                  return (
-                    <FileUploadResponsesTable
-                      key={question.question}
-                      question={question.question}
-                      responses={responses}
-                    />
-                  );
-                }
-
-                return null;
-              })}
-            </div>
-          </>
+            <TabsContent value="all" className="mt-6">
+              <AllResponsesView formData={formData} responses={responses} />
+            </TabsContent>
+            <TabsContent value="per-user" className="mt-6">
+              <PerUserResponsesView
+                formData={formData}
+                responses={responses}
+              />
+            </TabsContent>
+          </Tabs>
         )}
       </main>
     </HydrateClient>
