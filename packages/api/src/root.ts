@@ -13,6 +13,7 @@ import { hackathonRouter } from "./routers/hackathon";
 import { hackerRouter } from "./routers/hacker";
 import { judgeRouter } from "./routers/judge";
 import { memberRouter } from "./routers/member";
+import { miscRouter } from "./routers/misc";
 import { passkitRouter } from "./routers/passkit";
 import { qrRouter } from "./routers/qr";
 import { resumeRouter } from "./routers/resume";
@@ -21,6 +22,7 @@ import { userRouter } from "./routers/user";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter<{
+  misc: typeof miscRouter;
   auth: typeof authRouter;
   duesPayment: typeof duesPaymentRouter;
   member: typeof memberRouter;
@@ -42,6 +44,7 @@ export const appRouter = createTRPCRouter<{
   forms: typeof formsRouter;
   roles: typeof rolesRouter;
 }>({
+  misc: miscRouter,
   auth: authRouter,
   duesPayment: duesPaymentRouter,
   member: memberRouter,

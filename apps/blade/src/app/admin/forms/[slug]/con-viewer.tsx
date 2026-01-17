@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Trash2 } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
@@ -14,8 +14,8 @@ import {
 } from "@forge/ui/dialog";
 import { toast } from "@forge/ui/toast";
 
-import type { MatchingType } from "./linker";
 import { api } from "~/trpc/react";
+import type { MatchingType } from "./linker";
 
 export function ConnectionViewer({
   matching,
@@ -93,7 +93,9 @@ export function ConnectionViewer({
                         Form Field
                       </div>
                       <div className="font-mono text-sm font-semibold">
-                        {conn.formField || "Not Mapped"}
+                        {conn.customValue
+                          ? `Custom: "${conn.customValue}"`
+                          : conn.formField || "Not Mapped"}
                       </div>
                     </div>
                   </div>

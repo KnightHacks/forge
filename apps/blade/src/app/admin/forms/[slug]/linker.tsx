@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import { z } from "zod";
 
 import { Button } from "@forge/ui/button";
@@ -26,6 +26,7 @@ const matchingSchema = z.object({
     z.object({
       procField: z.string(),
       formField: z.string().optional(),
+      customValue: z.string().optional(),
     }),
   ),
 });
@@ -44,7 +45,7 @@ export default function ListMatcher({
   const [procFields, setProcFields] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [connections, setConnections] = useState<
-    { procField: string; formField: string }[]
+    { procField: string; formField?: string; customValue?: string }[]
   >([]);
 
   const formFields = form.questions;
@@ -68,7 +69,7 @@ export default function ListMatcher({
     const newProcFields = procs[value].inputSchema;
     setProcFields(newProcFields);
     setConnections(
-      newProcFields.map((item) => ({ procField: item, formField: "" })),
+      newProcFields.map((item) => ({ procField: item })),
     );
   };
 
@@ -76,7 +77,28 @@ export default function ListMatcher({
     setConnections((prev) => {
       const updated = [...prev];
       if (!updated[index]) return updated;
-      updated[index] = { ...updated[index], formField: value };
+      if (value === "__CUSTOM__") {
+        updated[index] = {
+          ...updated[index],
+          formField: undefined,
+          customValue: updated[index].customValue || "",
+        };
+      } else {
+        updated[index] = {
+          ...updated[index],
+          formField: value,
+          customValue: undefined,
+        };
+      }
+      return updated;
+    });
+  };
+
+  const updateCustomValue = (index: number, value: string) => {
+    setConnections((prev) => {
+      const updated = [...prev];
+      if (!updated[index]) return updated;
+      updated[index] = { ...updated[index], customValue: value };
       return updated;
     });
   };
@@ -89,13 +111,31 @@ export default function ListMatcher({
     return formFields.filter((item) => !usedItems.includes(item));
   };
 
+  const isCustomValue = (index: number) => {
+    const conn = connections[index];
+    return conn && !conn.formField && (conn.customValue !== undefined);
+  };
+
   const handleSubmit = () => {
     setIsLoading(true);
+
+    const cleanedConnections = connections.map((conn) => {
+      const cleaned: { procField: string; formField?: string; customValue?: string } = {
+        procField: conn.procField,
+      };
+      if (conn.formField) {
+        cleaned.formField = conn.formField;
+      }
+      if (conn.customValue !== undefined && conn.customValue !== "") {
+        cleaned.customValue = conn.customValue;
+      }
+      return cleaned;
+    });
 
     const data = {
       form: form.id,
       proc: procSelection,
-      connections: connections,
+      connections: cleanedConnections,
     };
 
     try {
@@ -126,7 +166,7 @@ export default function ListMatcher({
         </div>
       </div>
 
-      {procFields.length > 0 && formFields.length > 0 && (
+      {procFields.length > 0 && (
         <div className="space-y-4 border-t pt-4">
           <h3 className="text-lg font-semibold">Connect Items</h3>
 
@@ -145,7 +185,11 @@ export default function ListMatcher({
               <div className="flex-1 space-y-2">
                 <Label htmlFor={`form-${index}`}>Form field</Label>
                 <Select
-                  value={connection.formField}
+                  value={
+                    isCustomValue(index)
+                      ? "__CUSTOM__"
+                      : connection.formField || ""
+                  }
                   onValueChange={(value) => updateConnection(index, value)}
                 >
                   <SelectTrigger id={`form-${index}`}>
@@ -157,8 +201,20 @@ export default function ListMatcher({
                         {item}
                       </SelectItem>
                     ))}
+                    <SelectItem value="__CUSTOM__">Input Custom</SelectItem>
                   </SelectContent>
                 </Select>
+                {isCustomValue(index) && (
+                  <Input
+                    id={`custom-${index}`}
+                    placeholder="Enter custom value"
+                    value={connection.customValue || ""}
+                    onChange={(e) =>
+                      updateCustomValue(index, e.target.value)
+                    }
+                    className="mt-2"
+                  />
+                )}
               </div>
             </div>
           ))}

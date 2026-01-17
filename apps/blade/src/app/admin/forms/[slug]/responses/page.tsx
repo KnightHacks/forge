@@ -65,6 +65,7 @@ export default async function FormResponsesPage({
 
   // type assertion to the correct format
   const responses = apiResponses as {
+    id: string;
     submittedAt: Date;
     responseData: Record<string, unknown>;
     member: {

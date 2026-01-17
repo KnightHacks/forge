@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -11,6 +12,7 @@ import {
   FileSpreadsheet,
   FileText,
   Loader2,
+  X,
 } from "lucide-react";
 
 import type { FormType } from "@forge/consts/knight-hacks";
@@ -24,6 +26,7 @@ import { api } from "~/trpc/react";
 interface PerUserResponsesViewProps {
   formData: FormType;
   responses: {
+    id: string;
     submittedAt: Date;
     responseData: Record<string, unknown>;
     member: {
@@ -36,6 +39,7 @@ interface PerUserResponsesViewProps {
 }
 
 interface GroupedResponse {
+  id: string;
   member: {
     firstName: string;
     lastName: string;
@@ -58,6 +62,7 @@ export function PerUserResponsesView({
           acc[anonymousKey] = [];
         }
         acc[anonymousKey].push({
+          id: response.id,
           member: {
             firstName: "Anonymous",
             lastName: "",
@@ -75,6 +80,7 @@ export function PerUserResponsesView({
         acc[userId] = [];
       }
       acc[userId].push({
+        id: response.id,
         member: response.member,
         submittedAt: response.submittedAt,
         responseData: response.responseData,
@@ -191,10 +197,15 @@ export function PerUserResponsesView({
       {currentUserResponses.map((response, responseIndex) => (
         <Card key={responseIndex}>
           <CardHeader>
-            <CardTitle>Response #{responseIndex + 1}</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Submitted: {new Date(response.submittedAt).toLocaleString()}
-            </p>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle>Response #{responseIndex + 1}</CardTitle>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Submitted: {new Date(response.submittedAt).toLocaleString()}
+                </p>
+              </div>
+              <DeleteResponseButton responseId={response.id} />
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {formData.questions.map((question, questionIndex) => {
@@ -238,6 +249,38 @@ export function PerUserResponsesView({
         </Card>
       ))}
     </div>
+  );
+}
+
+function DeleteResponseButton({ responseId }: { responseId: string }) {
+  const router = useRouter();
+  const utils = api.useUtils();
+
+  const deleteResponse = api.forms.deleteResponse.useMutation({
+    async onSuccess() {
+      toast.success("Response deleted");
+      await utils.forms.getResponses.invalidate();
+      router.refresh();
+    },
+    onError() {
+      toast.error("Failed to delete response");
+    },
+  });
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => deleteResponse.mutate({ id: responseId })}
+      disabled={deleteResponse.isPending}
+      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+    >
+      {deleteResponse.isPending ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <X className="h-4 w-4" />
+      )}
+    </Button>
   );
 }
 

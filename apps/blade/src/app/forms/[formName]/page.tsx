@@ -48,10 +48,14 @@ export default async function FormResponderPage({
       const data: Record<string, unknown> = {};
       for (const map of con.connections as {
         procField: string;
-        formField: string;
+        formField?: string;
+        customValue?: string;
       }[]) {
-        if (map.formField in response)
+        if (map.customValue !== undefined) {
+          data[map.procField] = map.customValue;
+        } else if (map.formField && map.formField in response) {
           data[map.procField] = response[map.formField];
+        }
       }
 
       const route = procs[con.proc]?.route.split(".");
@@ -71,10 +75,11 @@ export default async function FormResponderPage({
           color: "success_green",
           userId: session.user.discordUserId,
         });
-      } catch {
+      } catch (error) {
+        const errorMessage = JSON.stringify(error, null, 2);
         await log({
           title: `Failed to automatically fire procedure`,
-          message: `**Failed to fire procedure**\n\`${con.proc}\`\n\nTriggered after **${form.name}** submission from **${session.user.name}**\n\n**Data:**\n\`\`\`json\n${stringify(data)}\`\`\``,
+          message: `**Failed to fire procedure**\n\`${con.proc}\`\n\nTriggered after **${form.name}** submission from **${session.user.name}**\n\n**Data:**\n\`\`\`json\n${stringify(data)}\`\`\`` + `\n\n**Error:**\n\`\`\`json\n${errorMessage}\`\`\``,
           color: "uhoh_red",
           userId: session.user.discordUserId,
         });
