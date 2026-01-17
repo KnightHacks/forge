@@ -1,20 +1,19 @@
+import { exec } from "child_process";
+import { unlink } from "fs/promises";
+import { promisify } from "util";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Client } from "pg";
 import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import Pool from "pg-pool";
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { unlink } from 'fs/promises';
-
-const execAsync = promisify(exec);
-
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
-import * as knightHacksSchema from "../src/schemas/knight-hacks";
 import { Roles } from "../src/schemas/auth";
 import { Permissions } from "../src/schemas/auth";
+import * as knightHacksSchema from "../src/schemas/knight-hacks";
+
+const execAsync = promisify(exec);
 
 /* eslint-disable no-console */
 // Usage:
@@ -58,7 +57,7 @@ async function cleanUp() {
 const TABLES_REMOVE_ALL: string[] = [
   "auth_verification",
   "auth_session",
-	"auth_judge_session",
+  "auth_judge_session",
   "knight_hacks_judged_submission",
   "knight_hacks_judges",
 ];
@@ -109,32 +108,40 @@ const isAdmin: Record<string, boolean> = {};
 
 async function shouldKeepId(userid: string): Promise<boolean> {
   if (!Object.keys(isAdmin).includes(userid)) {
-		if(!backupDb) return false;
-			const permRows = await backupDb
-			.select({
-				permissions: Roles.permissions,
-			})
-			.from(Roles)
-			.innerJoin(Permissions, eq(Roles.id, Permissions.roleId))
-			.where(sql`cast(${Permissions.userId} as text) = ${userid}`);
+    if (!backupDb) return false;
+    const permRows = await backupDb
+      .select({
+        permissions: Roles.permissions,
+      })
+      .from(Roles)
+      .innerJoin(Permissions, eq(Roles.id, Permissions.roleId))
+      .where(sql`cast(${Permissions.userId} as text) = ${userid}`);
 
-			const admin = permRows.length > 0;
-    	isAdmin[userid] = admin;
+    const admin = permRows.length > 0;
+    isAdmin[userid] = admin;
   }
   console.log(userid, isAdmin[userid]);
   return isAdmin[userid] ?? false;
 }
 
 async function copyDatabase() {
-  const backupFile = 'backup.sql';
-	const { originalDb, user, password, host, port } = parsePg();
+  const backupFile = "backup.sql";
+  const { originalDb, user, password, host, port } = parsePg();
   const envN = { ...process.env, PGPASSWORD: password };
-  
+
   try {
-    await execAsync(`pg_dump -h ${host} -p ${port} -U ${user} ${originalDb} > ${backupFile}`, { env: envN });
-    await execAsync(`createdb -h ${host} -p ${port} -U ${user} ${backupDbName}`, { env: envN });
-    await execAsync(`psql -h ${host} -p ${port} -U ${user} ${backupDbName} < ${backupFile}`, { env: envN });
-    
+    await execAsync(
+      `pg_dump -h ${host} -p ${port} -U ${user} ${originalDb} > ${backupFile}`,
+      { env: envN },
+    );
+    await execAsync(
+      `createdb -h ${host} -p ${port} -U ${user} ${backupDbName}`,
+      { env: envN },
+    );
+    await execAsync(
+      `psql -h ${host} -p ${port} -U ${user} ${backupDbName} < ${backupFile}`,
+      { env: envN },
+    );
   } finally {
     await unlink(backupFile);
   }
@@ -146,8 +153,8 @@ function parsePg() {
     originalDb: u.pathname.slice(1),
     user: u.username,
     password: u.password,
-		host: u.hostname,
-		port: u.port
+    host: u.hostname,
+    port: u.port,
   };
 }
 
@@ -162,7 +169,7 @@ async function main() {
     await adminPool.query(`DROP DATABASE IF EXISTS ${backupDbName}`);
 
     console.log(`Creating fresh database ${backupDbName}...`);
-		await copyDatabase();
+    await copyDatabase();
 
     backupPool = new Pool({
       connectionString: baseConnectionString + backupDbName,
@@ -223,4 +230,3 @@ async function main() {
 }
 
 main();
-
