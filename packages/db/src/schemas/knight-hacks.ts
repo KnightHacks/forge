@@ -1,27 +1,27 @@
 import { relations } from "drizzle-orm";
 import {
-    pgEnum,
-    pgTableCreator,
-    primaryKey,
-    unique,
+  pgEnum,
+  pgTableCreator,
+  primaryKey,
+  unique,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
 import {
-    COUNTRIES,
-    DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
-    EVENT_FEEDBACK_HEARD,
-    EVENT_FEEDBACK_SIMILAR_EVENT,
-    EVENT_TAGS,
-    GENDERS,
-    HACKATHON_APPLICATION_STATES,
-    LEVELS_OF_STUDY,
-    MAJORS,
-    RACES_OR_ETHNICITIES,
-    SCHOOLS,
-    SHIRT_SIZES,
-    SPONSOR_TIERS,
+  COUNTRIES,
+  DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
+  EVENT_FEEDBACK_HEARD,
+  EVENT_FEEDBACK_SIMILAR_EVENT,
+  EVENT_TAGS,
+  GENDERS,
+  HACKATHON_APPLICATION_STATES,
+  LEVELS_OF_STUDY,
+  MAJORS,
+  RACES_OR_ETHNICITIES,
+  SCHOOLS,
+  SHIRT_SIZES,
+  SPONSOR_TIERS,
 } from "@forge/consts/knight-hacks";
 
 import { Roles, User } from "./auth";
@@ -540,6 +540,7 @@ export const InsertOtherCompaniesSchema = createInsertSchema(OtherCompanies);
 export const FormSections = createTable("form_sections", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   name: t.varchar({ length: 255 }).notNull().unique(),
+  order: t.integer().notNull().default(0),
   createdAt: t.timestamp().notNull().defaultNow(),
 }));
 
