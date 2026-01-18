@@ -14,6 +14,7 @@ import { DatePicker } from "@forge/ui/date-picker";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { RadioGroup, RadioGroupItem } from "@forge/ui/radio-group";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import {
   Select,
   SelectContent,
@@ -351,26 +352,109 @@ function MultipleChoiceInput({
 }) {
   const options = question.options || [];
   const questionKey = question.question.replace(/\s+/g, "-").toLowerCase();
+  const [otherText, setOtherText] = useState<string>("");
+  const OTHER_VALUE = "__OTHER__";
+  const allowOther = Boolean(question.allowOther);
+
+  // Check if current value is an "Other" option (not in the predefined options)
+  const isOtherSelected =
+    value &&
+    typeof value === "string" &&
+    !options.includes(value) &&
+    value !== OTHER_VALUE;
+
+  // Extract other text from value if it's a custom value
+  React.useEffect(() => {
+    if (isOtherSelected && typeof value === "string") {
+      setOtherText(value);
+    }
+  }, [value, isOtherSelected]);
+
+  // Helper function to capitalize first letter of each word
+  const capitalizeWords = (text: string): string => {
+    return text
+      .split(" ")
+      .map((word) => {
+        if (word.length === 0) return word;
+        return word[0]?.toUpperCase() + word.slice(1).toLowerCase();
+      })
+      .join(" ");
+  };
+
+  const handleOtherTextChange = (text: string) => {
+    const capitalized = capitalizeWords(text);
+    setOtherText(capitalized);
+    onChange(capitalized || null);
+  };
+
+  const handleRadioChange = (newValue: string) => {
+    if (newValue === OTHER_VALUE) {
+      // When "Other" is selected, don't clear the text, just mark as other
+      onChange(otherText || OTHER_VALUE);
+    } else {
+      onChange(newValue || null);
+    }
+  };
 
   return (
-    <RadioGroup
-      value={value || ""}
-      onValueChange={(newValue) => onChange(newValue || null)}
-      className="flex flex-col gap-3"
-      disabled={disabled}
-    >
-      {options.map((option, idx) => (
-        <div key={idx} className="flex items-center gap-3">
-          <RadioGroupItem value={option} id={`${questionKey}-${idx}`} />
-          <Label
-            htmlFor={`${questionKey}-${idx}`}
-            className="cursor-pointer font-normal"
-          >
-            {option}
-          </Label>
+    <div className="flex flex-col gap-3">
+      <RadioGroup
+        value={
+          isOtherSelected
+            ? OTHER_VALUE
+            : typeof value === "string"
+              ? value
+              : ""
+        }
+        onValueChange={handleRadioChange}
+        className="flex flex-col gap-3"
+        disabled={disabled}
+      >
+        {options.map((option, idx) => (
+          <div key={idx} className="flex items-center gap-3">
+            <RadioGroupItem value={option} id={`${questionKey}-${idx}`} />
+            <Label
+              htmlFor={`${questionKey}-${idx}`}
+              className="cursor-pointer font-normal"
+            >
+              {option}
+            </Label>
+          </div>
+        ))}
+        {allowOther && (
+          <div className="flex items-center gap-3">
+            <RadioGroupItem
+              value={OTHER_VALUE}
+              id={`${questionKey}-other`}
+            />
+            <Label
+              htmlFor={`${questionKey}-other`}
+              className="cursor-pointer font-normal"
+            >
+              Other:
+            </Label>
+          </div>
+        )}
+      </RadioGroup>
+      {allowOther &&
+        (isOtherSelected ||
+          (typeof value === "string" && value === OTHER_VALUE)) && (
+        <div className="ml-7 w-full md:w-2/3">
+          <Input
+            placeholder="Please specify"
+            value={otherText}
+            onChange={(e) => handleOtherTextChange(e.target.value)}
+            onBlur={(e) => {
+              const capitalized = capitalizeWords(e.target.value);
+              setOtherText(capitalized);
+              onChange(capitalized || null);
+            }}
+            disabled={disabled}
+            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+          />
         </div>
-      ))}
-    </RadioGroup>
+      )}
+    </div>
   );
 }
 
@@ -388,12 +472,79 @@ function CheckboxesInput({
   const options = question.options || [];
   const selectedValues = value || [];
   const questionKey = question.question.replace(/\s+/g, "-").toLowerCase();
+  const [otherText, setOtherText] = useState<string>("");
+  const OTHER_VALUE = "__OTHER__";
+  const allowOther = Boolean(question.allowOther);
+
+  // Get all "Other" values (values not in predefined options)
+  const otherValues = selectedValues.filter(
+    (v) => !options.includes(v) && v !== OTHER_VALUE,
+  );
+
+  // If there's an other value, use it as the otherText
+  React.useEffect(() => {
+    if (otherValues.length > 0) {
+      setOtherText(otherValues[0] ?? "");
+    }
+  }, [otherValues]);
+
+  // Helper function to capitalize first letter of each word
+  const capitalizeWords = (text: string): string => {
+    return text
+      .split(" ")
+      .map((word) => {
+        if (word.length === 0) return word;
+        return word[0]?.toUpperCase() + word.slice(1).toLowerCase();
+      })
+      .join(" ");
+  };
 
   const handleCheckboxChange = (option: string, checked: boolean) => {
     if (checked) {
       onChange([...selectedValues, option]);
     } else {
       onChange(selectedValues.filter((v) => v !== option));
+    }
+  };
+
+  const isOtherChecked =
+    selectedValues.includes(OTHER_VALUE) || otherValues.length > 0;
+
+  const handleOtherCheckboxChange = (checked: boolean) => {
+    if (checked) {
+      // Add OTHER_VALUE marker and current otherText if it exists
+      const newValues = [...selectedValues.filter((v) => v !== OTHER_VALUE)];
+      if (otherText) {
+        newValues.push(otherText);
+      } else {
+        newValues.push(OTHER_VALUE);
+      }
+      onChange(newValues);
+    } else {
+      // Remove OTHER_VALUE and all other values
+      onChange(
+        selectedValues.filter(
+          (v) => v !== OTHER_VALUE && !otherValues.includes(v),
+        ),
+      );
+      setOtherText("");
+    }
+  };
+
+  const handleOtherTextChange = (text: string) => {
+    const capitalized = capitalizeWords(text);
+    setOtherText(capitalized);
+
+    // Update the selected values: remove old other values and add new one
+    const valuesWithoutOther = selectedValues.filter(
+      (v) => !otherValues.includes(v) && v !== OTHER_VALUE,
+    );
+    if (capitalized) {
+      onChange([...valuesWithoutOther, capitalized]);
+    } else {
+      onChange(
+        isOtherChecked ? [...valuesWithoutOther, OTHER_VALUE] : valuesWithoutOther,
+      );
     }
   };
 
@@ -417,6 +568,38 @@ function CheckboxesInput({
           </Label>
         </div>
       ))}
+      {allowOther && (
+        <div className="flex items-center gap-3">
+          <Checkbox
+            id={`${questionKey}-other`}
+            checked={isOtherChecked}
+            onCheckedChange={(checked) => handleOtherCheckboxChange(checked === true)}
+            disabled={disabled}
+          />
+          <Label
+            htmlFor={`${questionKey}-other`}
+            className="cursor-pointer font-normal"
+          >
+            Other:
+          </Label>
+        </div>
+      )}
+      {allowOther && isOtherChecked && (
+        <div className="ml-7 w-full md:w-2/3">
+          <Input
+            placeholder="Please specify"
+            value={otherText}
+            onChange={(e) => handleOtherTextChange(e.target.value)}
+            onBlur={(e) => {
+              const capitalized = capitalizeWords(e.target.value);
+              setOtherText(capitalized);
+              handleOtherTextChange(capitalized);
+            }}
+            disabled={disabled}
+            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -433,6 +616,24 @@ function DropdownInput({
   disabled: boolean;
 }) {
   const options = question.options || [];
+
+  // Use ResponsiveComboBox for dropdowns with more than 15 options
+  if (options.length > 15) {
+    return (
+      <div className="w-full md:w-1/2">
+        <ResponsiveComboBox
+          items={options}
+          renderItem={(option) => <div>{option}</div>}
+          getItemValue={(option) => option}
+          getItemLabel={(option) => option}
+          onItemSelect={(option) => onChange(option || null)}
+          buttonPlaceholder="Select an option"
+          inputPlaceholder="Search options..."
+          isDisabled={disabled}
+        />
+      </div>
+    );
+  }
 
   return (
     <Select

@@ -423,6 +423,12 @@ function OptionList({
         ? CheckSquare
         : Circle;
 
+  const handleAllowOtherChange = (checked: boolean) => {
+    onUpdate({ ...question, allowOther: checked });
+  };
+
+  const allowOther = question.allowOther ?? false;
+
   return (
     <div className="flex flex-col gap-2">
       {options.map((optionValue, idx) => (
@@ -482,6 +488,23 @@ function OptionList({
           </Button>
         </div>
       </div>
+
+      {/* Allow Other Option Toggle - Only for MULTIPLE_CHOICE and CHECKBOXES */}
+      {(question.type === "MULTIPLE_CHOICE" || question.type === "CHECKBOXES") && (
+        <div className="mt-3 flex items-center gap-2 border-t pt-3">
+          <Checkbox
+            checked={allowOther}
+            onCheckedChange={handleAllowOtherChange}
+            id={`${question.id}-allowOther`}
+          />
+          <Label
+            htmlFor={`${question.id}-allowOther`}
+            className="cursor-pointer text-sm font-normal"
+          >
+            Allow "Other" option with custom text input
+          </Label>
+        </div>
+      )}
     </div>
   );
 }
