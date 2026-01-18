@@ -6773,6 +6773,7 @@ export const QuestionValidator = z.object({
     "LINK",
   ]),
   options: z.array(z.string()).optional(),
+  optionsConst: z.string().optional(),
   optional: z.boolean().optional(),
   allowOther: z.boolean().optional(),
   min: z.number().optional(),
@@ -6805,6 +6806,56 @@ type QuestionValidatorType = z.infer<typeof QuestionValidator>;
 export type ValidatorOptions = Omit<QuestionValidatorType, "question">;
 
 export type QuestionsType = z.infer<typeof QuestionValidator>["type"];
+
+export const AVAILABLE_DROPDOWN_CONSTANTS = {
+  LEVELS_OF_STUDY: "Levels of Study",
+  ALLERGIES: "Allergies",
+  MAJORS: "Majors",
+  GENDERS: "Genders",
+  RACES_OR_ETHNICITIES: "Races or Ethnicities",
+  COUNTRIES: "Countries",
+  SCHOOLS: "Schools",
+  COMPANIES: "Companies",
+  SHIRT_SIZES: "Shirt Sizes",
+  EVENT_FEEDBACK_HEARD: "Event Feedback - How You Heard",
+  SHORT_LEVELS_OF_STUDY: "Short Levels of Study",
+  SHORT_RACES_AND_ETHNICITIES: "Short Races and Ethnicities",
+} as const;
+
+export type DropdownConstantKey = keyof typeof AVAILABLE_DROPDOWN_CONSTANTS;
+
+export function getDropdownOptionsFromConst(
+  constName: string,
+): readonly string[] {
+  switch (constName) {
+    case "LEVELS_OF_STUDY":
+      return LEVELS_OF_STUDY;
+    case "ALLERGIES":
+      return ALLERGIES;
+    case "MAJORS":
+      return MAJORS;
+    case "GENDERS":
+      return GENDERS;
+    case "RACES_OR_ETHNICITIES":
+      return RACES_OR_ETHNICITIES;
+    case "COUNTRIES":
+      return COUNTRIES;
+    case "SCHOOLS":
+      return SCHOOLS;
+    case "COMPANIES":
+      return COMPANIES;
+    case "SHIRT_SIZES":
+      return SHIRT_SIZES;
+    case "EVENT_FEEDBACK_HEARD":
+      return EVENT_FEEDBACK_HEARD;
+    case "SHORT_LEVELS_OF_STUDY":
+      return SHORT_LEVELS_OF_STUDY;
+    case "SHORT_RACES_AND_ETHNICITIES":
+      return SHORT_RACES_AND_ETHNICITIES;
+    default:
+      return [];
+  }
+}
 
 export const FORM_QUESTION_TYPES = [
   { value: "SHORT_ANSWER", label: "Short answer" },
