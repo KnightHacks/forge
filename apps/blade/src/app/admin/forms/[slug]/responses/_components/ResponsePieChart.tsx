@@ -34,12 +34,22 @@ export function ResponsePieChart({
     if (answer !== undefined && answer !== null) {
       // increment count for this answer
       let answerStr: string;
-      if (typeof answer === "string") {
-        answerStr = answer;
+      if (typeof answer === "boolean") {
+        // convert boolean to "Yes" or "No" for display
+        answerStr = answer ? "Yes" : "No";
+      } else if (typeof answer === "string") {
+        // convert "true"/"false" strings to "Yes"/"No" for boolean questions
+        if (answer === "true") {
+          answerStr = "Yes";
+        } else if (answer === "false") {
+          answerStr = "No";
+        } else {
+          answerStr = answer;
+        }
       } else if (typeof answer === "object") {
         answerStr = JSON.stringify(answer);
       } else {
-        // for primitive types (number, boolean, etc.) - safe to stringify
+        // for primitive types (number, etc.) - safe to stringify
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
         answerStr = String(answer);
       }
