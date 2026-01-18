@@ -2,15 +2,15 @@ import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 
+// @ts-ignore
+import "./globals.css";
+
 import { cn } from "@forge/ui";
 import { ThemeProvider, ThemeToggle } from "@forge/ui/theme";
 import { Toaster } from "@forge/ui/toast";
 
-import { TRPCReactProvider } from "~/trpc/react";
-
-import "./globals.css";
-
 import { env } from "~/env";
+import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
   metadataBase: new URL(

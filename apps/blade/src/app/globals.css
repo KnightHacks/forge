@@ -1,10 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 @layer base {
+
   :root {
-    --background: 0 0% 100%;
+    --background: 195 90% 80%;
     --foreground: 224 71.4% 4.1%;
     --card: 0 0% 100%;
     --card-foreground: 224 71.4% 4.1%;
@@ -33,7 +34,7 @@
   }
 
   .dark {
-    --background: 224 71.4% 4.1%;
+    --background: 244 45% 10%;
     --foreground: 210 20% 98%;
     --card: 224 71.4% 4.1%;
     --card-foreground: 210 20% 98%;
@@ -59,6 +60,10 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+}
+
+body {
+  overflow: hidden;
 }
 
 .moving-border {
@@ -100,5 +105,44 @@
   }
   100% {
     opacity: 1;
+  }
+}
+
+.title-animate {
+  animation: title 30s ease-in-out infinite alternate;
+}
+
+@keyframes title {
+    0% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.5) rotate(5deg);
+  }
+  50% {
+    transform: scale(1) rotate(0deg);
+  }
+  100% {
+   transform: scale(1.5) rotate(-5deg);
+  }
+}
+
+
+.box-pulse {
+  animation: box 30s ease-in-out infinite alternate
+}
+
+@keyframes box {
+     0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(1);
+  }
+  100% {
+   transform: scale(1.1);
   }
 }
