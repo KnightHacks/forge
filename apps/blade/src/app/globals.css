@@ -2,10 +2,23 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+@font-face {
+  font-family: "khfont";
+  src: url("/fonts/animeace2_reg.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.khfont{
+  font-family: "khfont", Arial, sans-serif;
+
+}
+
 @layer base {
 
   :root {
-    --background: 195 90% 80%;
+    --background: 244 45% 10%;
     --foreground: 224 71.4% 4.1%;
     --card: 0 0% 100%;
     --card-foreground: 224 71.4% 4.1%;
@@ -134,15 +147,199 @@ body {
 
 @keyframes box {
      0% {
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
   }
   25% {
-    transform: scale(1.1);
+    transform: scale(1.2) rotate(2.5deg);
   }
   50% {
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
   }
   100% {
-   transform: scale(1.1);
+   transform: scale(1.2) rotate(-2.5deg);
   }
 }
+
+
+.curtain1 {
+  animation: curtain1 10s ease-in forwards;
+}
+
+@keyframes curtain1 {
+  0% {
+    opacity: 1;
+  }
+  25%{
+    opacity: 0
+
+  }
+  50%{
+    opacity: 0
+  }
+  75%{
+    opacity: 1
+
+  }
+  100% {
+    opacity: 0;
+  }
+  
+}
+
+.curtain2 {
+  animation: curtain2 10s ease-in forwards;
+}
+
+@keyframes curtain2 {
+  0% {
+    opacity: 0;
+  }
+  25%{
+    opacity: 0
+
+  }
+  50%{
+    opacity: 0
+  }
+  75%{
+    opacity: 0
+
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.curtain3 {
+  animation: curtain3 10s ease-in forwards;
+}
+
+@keyframes curtain3 {
+
+0% {
+    opacity: 0;
+  }
+  25%{
+    opacity: 1
+
+  }
+  50%{
+    opacity: 1
+  }
+  75%{
+    opacity: 0
+
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+
+
+.piping{
+  background-image: url('/pipefactory.png');
+  background-repeat:repeat;
+  background-size: 20rem;
+}
+
+.pipingmove{
+  animation: pipemove 20s linear infinite
+}
+
+@keyframes pipemove {
+   0%{
+    background-position: 0;
+  }
+  100%{
+    background-position: 20rem;
+  }
+
+}
+
+
+
+.tkfactory {
+
+   
+    background-image: url('/tech-knight.png'), url('/sidewalk.svg');
+    
+    background-repeat: repeat-x, repeat-x;
+    background-size: 25rem, 25rem;
+    
+}
+
+.tkfactorymove {
+  animation: tkmove 20s linear infinite;
+}
+
+
+@keyframes tkmove {
+  0%{
+    background-position: 0 80%, 0 100%;
+  }
+  100%{
+    background-position: 25rem 80%, 25rem 100%;
+  }
+}
+
+
+.gearmoveright {
+  animation: gearmoveright 20s linear infinite
+}
+
+@keyframes gearmoveright {
+  0%{
+    transform: translate(50%, -50%) rotate(360deg);
+  }
+
+  100%{
+    transform: translate(50%, -50%) rotate(0deg);
+  }
+}
+
+.gearmoverightbottom {
+  animation: gearmoverightbottom 20s linear infinite
+}
+
+@keyframes gearmoverightbottom {
+  0%{
+    transform: translatex(65%) rotate(0deg);
+  }
+
+  100%{
+    transform: translatex(65%) rotate(360deg);
+  }
+}
+
+
+.gearmoveleftbottom {
+  animation: gearmoveleftbottom 20s linear infinite
+}
+
+@keyframes gearmoveleftbottom {
+  0%{
+    transform: translatex(-65%) rotate(360deg);
+  }
+
+  100%{
+    transform: translatex(-65%) rotate(0deg);
+  }
+}
+
+
+.gearmoveleft {
+  animation: gearmoveleft 20s linear infinite
+}
+
+@keyframes gearmoveleft {
+  0%{
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  100%{
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+

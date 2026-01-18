@@ -48,7 +48,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <TRPCReactProvider>{props.children}</TRPCReactProvider>
-          <div className="fixed bottom-4 right-4">
+          <div className="hidden">
             <ThemeToggle />
           </div>
           <Toaster />
@@ -57,3 +57,5 @@ export default function RootLayout(props: { children: React.ReactNode }) {
     </html>
   );
 }
+
+/* old class name */
