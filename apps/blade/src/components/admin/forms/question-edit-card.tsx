@@ -1,8 +1,6 @@
 "use client";
 
 import type { DraggableSyntheticListeners } from "@dnd-kit/core";
-import type { z } from "zod";
-import * as React from "react";
 import {
   AlignLeft,
   AtSign,
@@ -24,9 +22,15 @@ import {
   Trash,
   X,
 } from "lucide-react";
+import * as React from "react";
+import type { z } from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
-import { FORM_QUESTION_TYPES } from "@forge/consts/knight-hacks";
+import {
+  AVAILABLE_DROPDOWN_CONSTANTS,
+  FORM_QUESTION_TYPES,
+  getDropdownOptionsFromConst,
+} from "@forge/consts/knight-hacks";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
@@ -428,10 +432,72 @@ function OptionList({
   };
 
   const allowOther = question.allowOther ?? false;
+  const optionsConst = question.optionsConst;
+  const isUsingConst = Boolean(optionsConst);
+
+  const handleConstChange = (constName: string | null) => {
+    if (constName) {
+      onUpdate({ ...question, optionsConst: constName, options: [] });
+    } else {
+      onUpdate({ ...question, optionsConst: undefined });
+    }
+  };
+
+  const showConstSelector =
+    question.type === "DROPDOWN" ||
+    question.type === "MULTIPLE_CHOICE" ||
+    question.type === "CHECKBOXES";
+
+  const isRestrictedType =
+    question.type === "MULTIPLE_CHOICE" || question.type === "CHECKBOXES";
+
+  const availableConstants = Object.entries(AVAILABLE_DROPDOWN_CONSTANTS).map(
+    ([key, label]) => {
+      const constOptions = getDropdownOptionsFromConst(key);
+      const isDisabled =
+        isRestrictedType && constOptions.length >= 15;
+      return { key, label, isDisabled, length: constOptions.length };
+    },
+  );
 
   return (
     <div className="flex flex-col gap-2">
-      {options.map((optionValue, idx) => (
+      {showConstSelector && (
+        <div className="mb-3 flex flex-col gap-2 border-b pb-3">
+          <Label className="text-sm font-medium">Use Preset Options</Label>
+          <Select
+            value={optionsConst || "__MANUAL__"}
+            onValueChange={(value) =>
+              handleConstChange(value === "__MANUAL__" ? null : value)
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a constant (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__MANUAL__">Manual options</SelectItem>
+              {availableConstants.map(({ key, label, isDisabled }) => (
+                <SelectItem
+                  key={key}
+                  value={key}
+                  disabled={isDisabled}
+                  className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
+                >
+                  {label}
+                  {isDisabled && " (too long for this question type, max 15 options) Use Dropdown instead"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {isUsingConst && (
+            <p className="text-xs text-muted-foreground">
+              Using constant: {AVAILABLE_DROPDOWN_CONSTANTS[optionsConst as keyof typeof AVAILABLE_DROPDOWN_CONSTANTS]}
+            </p>
+          )}
+        </div>
+      )}
+
+      {!isUsingConst && options.map((optionValue, idx) => (
         <div key={idx} className="group flex items-center gap-2">
           {question.type === "DROPDOWN" ? (
             <span className="w-6 text-center text-sm">{idx + 1}.</span>
@@ -470,7 +536,8 @@ function OptionList({
         </div>
       ))}
 
-      {/* Add Option Button */}
+      {/* Add Option Button - Only show when not using a constant */}
+      {!isUsingConst && (
       <div className="mt-1 flex items-center gap-2">
         {question.type === "DROPDOWN" ? (
           <span className="w-6 text-center text-sm">{options.length + 1}.</span>
@@ -488,6 +555,7 @@ function OptionList({
           </Button>
         </div>
       </div>
+      )}
 
       {/* Allow Other Option Toggle - Only for MULTIPLE_CHOICE and CHECKBOXES */}
       {(question.type === "MULTIPLE_CHOICE" || question.type === "CHECKBOXES") && (

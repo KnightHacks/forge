@@ -7,6 +7,7 @@ import { useRef, useState } from "react";
 import type { z } from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
+import { getDropdownOptionsFromConst } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -350,27 +351,27 @@ function MultipleChoiceInput({
   onChange: (value: string | string[] | number | Date | null) => void;
   disabled: boolean;
 }) {
-  const options = question.options || [];
+  // If optionsConst is set, load options from constants instead of question.options
+  const options = question.optionsConst
+    ? getDropdownOptionsFromConst(question.optionsConst)
+    : question.options || [];
   const questionKey = question.question.replace(/\s+/g, "-").toLowerCase();
   const [otherText, setOtherText] = useState<string>("");
   const OTHER_VALUE = "__OTHER__";
   const allowOther = Boolean(question.allowOther);
 
-  // Check if current value is an "Other" option (not in the predefined options)
   const isOtherSelected =
     value &&
     typeof value === "string" &&
     !options.includes(value) &&
     value !== OTHER_VALUE;
 
-  // Extract other text from value if it's a custom value
   React.useEffect(() => {
     if (isOtherSelected && typeof value === "string") {
       setOtherText(value);
     }
   }, [value, isOtherSelected]);
 
-  // Helper function to capitalize first letter of each word
   const capitalizeWords = (text: string): string => {
     return text
       .split(" ")
@@ -469,7 +470,10 @@ function CheckboxesInput({
   onChange: (value: string | string[] | number | Date | null) => void;
   disabled?: boolean;
 }) {
-  const options = question.options || [];
+  // If optionsConst is set, load options from constants instead of question.options
+  const options = question.optionsConst
+    ? getDropdownOptionsFromConst(question.optionsConst)
+    : question.options || [];
   const selectedValues = value || [];
   const questionKey = question.question.replace(/\s+/g, "-").toLowerCase();
   const [otherText, setOtherText] = useState<string>("");
@@ -615,7 +619,10 @@ function DropdownInput({
   onChange: (value: string | string[] | number | Date | null) => void;
   disabled: boolean;
 }) {
-  const options = question.options || [];
+  // If optionsConst is set, load options from constants instead of question.options
+  const options = question.optionsConst
+    ? getDropdownOptionsFromConst(question.optionsConst)
+    : question.options || [];
 
   // Use ResponsiveComboBox for dropdowns with more than 15 options
   if (options.length > 15) {
