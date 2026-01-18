@@ -6754,7 +6754,7 @@ export const OFFICER_ROLE_ID =
 export const DEVPOST_TEAM_MEMBER_EMAIL_OFFSET = 3;
 
 export const QuestionValidator = z.object({
-  question: z.string().max(200),
+  question: z.string(),
   image: z.string().url().optional(),
   type: z.enum([
     "SHORT_ANSWER",

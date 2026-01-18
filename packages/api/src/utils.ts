@@ -1,10 +1,10 @@
-import type { APIGuildMember } from "discord-api-types/v10";
-import type { JSONSchema7 } from "json-schema";
-import { cookies } from "next/headers";
 import { REST } from "@discordjs/rest";
 import { TRPCError } from "@trpc/server";
+import type { APIGuildMember } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 import { and, eq, gt, inArray } from "drizzle-orm";
+import type { JSONSchema7 } from "json-schema";
+import { cookies } from "next/headers";
 import { Resend } from "resend";
 import Stripe from "stripe";
 
@@ -358,6 +358,9 @@ function createJsonSchemaValidator({
     case "SHORT_ANSWER":
     case "PARAGRAPH":
       schema.type = "string";
+      if (max === undefined) {
+        schema.maxLength = type === "SHORT_ANSWER" ? 150 : 750;
+      }
       break;
     case "EMAIL":
       schema.type = "string";
@@ -418,7 +421,10 @@ function createJsonSchemaValidator({
   }
 
   if (max !== undefined) {
-    if (schema.type === "string") schema.maxLength = max;
+    if (schema.type === "string") {
+      // Explicit max value overrides any defaults
+      schema.maxLength = max;
+    }
     if (schema.type === "array") schema.maxItems = max;
     if (schema.type === "number") schema.maximum = max;
   }

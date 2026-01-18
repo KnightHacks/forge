@@ -1,10 +1,10 @@
 "use client";
 
-import type { z } from "zod";
+import { FileUp, Loader2, X } from "lucide-react";
+import Image from "next/image";
 import * as React from "react";
 import { useRef, useState } from "react";
-import Image from "next/image";
-import { FileUp, Loader2, X } from "lucide-react";
+import type { z } from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 import { Slider } from "@forge/ui/slider";
+import { Textarea } from "@forge/ui/textarea";
 import { TimePicker } from "@forge/ui/time-picker";
 import { toast } from "@forge/ui/toast";
 
@@ -55,7 +56,7 @@ export function QuestionResponseCard({
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-start gap-2">
-          <h3 className="text-base font-medium">
+          <h3 className="whitespace-pre-line text-base font-medium">
             {question.question}
             {isRequired && <span className="ml-1 text-red-500">*</span>}
           </h3>
@@ -106,19 +107,61 @@ function QuestionBody({
   formId?: string;
 }) {
   switch (question.type) {
-    case "SHORT_ANSWER":
-    case "PARAGRAPH":
+    case "SHORT_ANSWER": {
+      const currentValue = (value as string) || "";
+      const maxLength = 150;
+      const charCount = currentValue.length;
+      const isOverLimit = charCount > maxLength;
+
       return (
-        <div className="w-full md:w-2/3">
+        <div className="w-full">
           <Input
             placeholder="Your answer"
-            value={(value as string) || ""}
+            value={currentValue}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
             className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
           />
+          <div className="mt-1 flex justify-end">
+            <span
+              className={`text-xs ${
+                isOverLimit ? "text-destructive" : "text-muted-foreground"
+              }`}
+            >
+              {charCount}/{maxLength}
+            </span>
+          </div>
         </div>
       );
+    }
+    case "PARAGRAPH": {
+      const currentValue = (value as string) || "";
+      const maxLength = 750;
+      const charCount = currentValue.length;
+      const isOverLimit = charCount > maxLength;
+
+      return (
+        <div className="w-full">
+          <Textarea
+            placeholder="Your answer"
+            value={currentValue}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={disabled}
+            rows={3}
+            className="overflow-y-auto whitespace-pre-wrap resize-none rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+          />
+          <div className="mt-1 flex justify-end">
+            <span
+              className={`text-xs ${
+                isOverLimit ? "text-destructive" : "text-muted-foreground"
+              }`}
+            >
+              {charCount}/{maxLength}
+            </span>
+          </div>
+        </div>
+      );
+    }
 
     case "MULTIPLE_CHOICE":
       return (

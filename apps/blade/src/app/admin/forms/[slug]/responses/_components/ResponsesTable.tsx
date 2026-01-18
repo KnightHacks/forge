@@ -35,7 +35,7 @@ export function ResponsesTable({ question, responses }: ResponsesTableProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{question}</CardTitle>
+          <CardTitle className="whitespace-pre-line">{question}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="py-8 text-center text-muted-foreground">
@@ -49,7 +49,7 @@ export function ResponsesTable({ question, responses }: ResponsesTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{question}</CardTitle>
+        <CardTitle className="whitespace-pre-line">{question}</CardTitle>
         {/* show total response count */}
         <p className="mt-1 text-sm text-muted-foreground">
           {responses.length} {responses.length === 1 ? "response" : "responses"}
@@ -94,8 +94,10 @@ export function ResponsesTable({ question, responses }: ResponsesTableProps) {
                       </a>
                     );
                   } catch {
-                    // Not a valid URL, just display as string
-                    displayValue = answer;
+                    // Not a valid URL, just display as string (preserve newlines)
+                    displayValue = (
+                      <span className="whitespace-pre-wrap">{answer}</span>
+                    );
                   }
                 } else if (typeof answer === "object") {
                   displayValue = JSON.stringify(answer);
