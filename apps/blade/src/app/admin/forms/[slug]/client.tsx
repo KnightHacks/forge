@@ -525,16 +525,25 @@ export function EditorClient({
         <div className="flex flex-col gap-3 rounded-xl border bg-card/50 p-3 shadow-sm backdrop-blur-sm md:flex-row md:items-center md:justify-between md:gap-4 md:p-4">
           <div className="flex items-center gap-3 md:gap-4">
             <Button
-              variant="ghost"
+              variant="primary"
               size="icon"
               onClick={() => router.push("/admin/forms")}
               aria-label="Back to forms"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              <Save className="h-3 w-3" />
-              {saveStatus || "Synced with Database"}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="icon"
+                onClick={handleSaveForm}
+                aria-label="Save form"
+              >
+                <Save className="h-3 w-3" />
+              </Button>
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                {saveStatus || "Synced with Database"}
+              </span>
             </div>
           </div>
 
