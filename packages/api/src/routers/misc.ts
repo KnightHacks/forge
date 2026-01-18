@@ -138,8 +138,7 @@ export const miscRouter = {
 
       const formattedDate = formatDate(input.dateNeeded);
 
-      const htmlContent = `
-        <!DOCTYPE html>
+      const htmlContent = `<!DOCTYPE html>
         <html lang="en">
         <head>
           <meta charset="UTF-8">
@@ -166,7 +165,7 @@ export const miscRouter = {
                   <!-- Content -->
                   <tr>
                     <td style="padding: 32px 40px;">
-                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0; padding: 0;">
                         <tr>
                           <td style="padding-bottom: 16px; vertical-align: top; width: 140px;">
                             <strong style="color: #1a1a1a; font-size: 14px;">Team:</strong>
@@ -209,23 +208,21 @@ export const miscRouter = {
                             ${input.deadlineType || "N/A"}
                           </td>
                         </tr>
-                        <tr>
-                          <td colspan="2" style="padding-bottom: 8px; padding-top: 8px; border-top: 1px solid #e5e5e5;">
-                            <strong style="color: #1a1a1a; font-size: 14px; display: block; margin-bottom: 8px;">Description:</strong>
-                            <div style="color: #333333; font-size: 14px; white-space: pre-wrap; text-align: left;">
-                              ${formatText(input.description)}
-                            </div>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td colspan="2" style="padding-bottom: 16px; padding-top: 16px;">
-                            <strong style="color: #1a1a1a; font-size: 14px; display: block; margin-bottom: 8px;">Itemization:</strong>
-                            <div style="color: #333333; font-size: 14px; white-space: pre-wrap; text-align: left;">
-                              ${formatText(input.itemization)}
-                            </div>
-                          </td>
-                        </tr>
                       </table>
+                      
+                      <div style="border-top: 1px solid #e5e5e5; margin-top: 16px; padding-top: 16px;">
+                        <strong style="color: #1a1a1a; font-size: 14px; display: block; margin-bottom: 8px;">Description:</strong>
+                        <div style="color: #333333; font-size: 14px; white-space: pre-wrap; margin: 0; padding: 0;">
+                          ${formatText(input.description)}
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 16px; padding-top: 16px;">
+                        <strong style="color: #1a1a1a; font-size: 14px; display: block; margin-bottom: 8px;">Itemization:</strong>
+                        <div style="color: #333333; font-size: 14px; white-space: pre-wrap; margin: 0; padding: 0;">
+                          ${formatText(input.itemization)}
+                        </div>
+                      </div>
                     </td>
                   </tr>
                   
@@ -249,8 +246,7 @@ export const miscRouter = {
             </tr>
           </table>
         </body>
-        </html>
-      `.trim();
+</html>`;
 
       await sendEmail({
         to: "treasurer@knighthacks.org",
