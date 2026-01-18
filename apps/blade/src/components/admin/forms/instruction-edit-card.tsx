@@ -1,6 +1,9 @@
 "use client";
 
 import type { DraggableSyntheticListeners } from "@dnd-kit/core";
+import type { z } from "zod";
+import { useRef, useState } from "react";
+import Image from "next/image";
 import {
   ArrowDown,
   ArrowUp,
@@ -12,9 +15,6 @@ import {
   Video,
   X,
 } from "lucide-react";
-import Image from "next/image";
-import { useRef, useState } from "react";
-import type { z } from "zod";
 
 import type { InstructionValidator } from "@forge/consts/knight-hacks";
 import { cn } from "@forge/ui";
@@ -317,7 +317,7 @@ export function InstructionEditCard({
                 onMoveUp?.();
               }}
               disabled={!canMoveUp}
-              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:cursor-not-allowed disabled:opacity-30"
               aria-label="Move up"
             >
               <ArrowUp className="h-5 w-5" />
@@ -329,7 +329,7 @@ export function InstructionEditCard({
                 onMoveDown?.();
               }}
               disabled={!canMoveDown}
-              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:cursor-not-allowed disabled:opacity-30"
               aria-label="Move down"
             >
               <ArrowDown className="h-5 w-5" />

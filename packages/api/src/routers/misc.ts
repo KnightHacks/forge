@@ -92,7 +92,7 @@ export const miscRouter = {
       });
     }),
 
-    fundingRequest: protectedProcedure
+  fundingRequest: protectedProcedure
     .meta({
       id: "fundingRequest",
       inputSchema: z.object({
@@ -236,7 +236,7 @@ export const miscRouter = {
                           day: "numeric",
                           hour: "numeric",
                           minute: "2-digit",
-                          hour12: true
+                          hour12: true,
                         })}
                       </p>
                     </td>

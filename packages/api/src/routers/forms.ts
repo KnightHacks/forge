@@ -1,6 +1,6 @@
+import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
-import type { JSONSchema7 } from "json-schema";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -783,10 +783,10 @@ export const formsRouter = {
     const sortedSections = Array.from(allSections).sort((a, b) => {
       if (a === "General") return -1;
       if (b === "General") return 1;
-      
+
       let aOrder = 999;
       let bOrder = 999;
-      
+
       for (const section of allDbSections) {
         if (section.name === a) {
           aOrder = section.order;
@@ -795,10 +795,10 @@ export const formsRouter = {
           bOrder = section.order;
         }
       }
-      
+
       return aOrder - bOrder;
     });
-    
+
     return sortedSections;
   }),
 
@@ -950,9 +950,11 @@ export const formsRouter = {
       }
 
       const maxOrderResult = await db
-        .select({ maxOrder: sql<number>`COALESCE(MAX(${FormSections.order}), 0)` })
+        .select({
+          maxOrder: sql<number>`COALESCE(MAX(${FormSections.order}), 0)`,
+        })
         .from(FormSections);
-      
+
       const maxOrder = maxOrderResult[0]?.maxOrder ?? 0;
 
       const [newSection] = await db

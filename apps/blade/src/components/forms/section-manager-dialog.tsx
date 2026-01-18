@@ -1,7 +1,15 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Pencil, Plus, Trash2, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Pencil,
+  Plus,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 import * as z from "zod";
 
 import { Button } from "@forge/ui/button";
@@ -77,7 +85,7 @@ export function SectionManagerDialog({
 
     const fetchSectionRoles = async () => {
       const newRolesMap = new Map<string, { id: string; name: string }[]>();
-      
+
       await Promise.all(
         sections
           .filter((s) => s !== "General")
@@ -370,217 +378,232 @@ export function SectionManagerDialog({
             const canMoveDown = index < sections.length - 1;
 
             return (
-              <div
-                key={section}
-                className="space-y-2 rounded-md border p-3"
-              >
+              <div key={section} className="space-y-2 rounded-md border p-3">
                 {editingSection === section ? (
-                <Form {...renameForm}>
-                  <form
-                    onSubmit={renameForm.handleSubmit(() =>
-                      handleRename(section),
-                    )}
-                    className="flex flex-1 items-center gap-2"
-                  >
-                    <FormField
-                      control={renameForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="Section name"
-                              autoFocus
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <Button type="submit" size="sm">
-                      Save
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setEditingSection(null);
-                        renameForm.reset();
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </form>
-                </Form>
-              ) : isEditingRoles ? (
-                <div className="space-y-3">
-                  <Form {...editRolesForm}>
+                  <Form {...renameForm}>
                     <form
-                      onSubmit={editRolesForm.handleSubmit((values) => {
-                        updateSectionRoles.mutate({
-                          sectionName: section,
-                          roleIds: values.roleIds,
-                        } as { sectionName: string; roleIds: string[] });
-                      })}
-                      className="space-y-3"
+                      onSubmit={renameForm.handleSubmit(() =>
+                        handleRename(section),
+                      )}
+                      className="flex flex-1 items-center gap-2"
                     >
                       <FormField
-                        control={editRolesForm.control}
-                        name="roleIds"
-                        render={() => (
-                          <FormItem>
-                            <div className="mb-2">
-                              <FormLabel>Restrict to Roles (Optional)</FormLabel>
-                              <FormDescription>
-                                Select one or more roles that can access this
-                                section. Leave empty to allow all users with form
-                                access.
-                              </FormDescription>
-                            </div>
-                            <div className="max-h-60 space-y-3 overflow-y-auto rounded-md border p-3">
-                              {allRoles.map((role) => (
-                                <FormField
-                                  key={role.id}
-                                  control={editRolesForm.control}
-                                  name="roleIds"
-                                  render={({ field }) => {
-                                    return (
-                                      <FormItem
-                                        key={role.id}
-                                        className="flex flex-row items-start space-x-3 space-y-0"
-                                      >
-                                        <FormControl>
-                                          <Checkbox
-                                            checked={field.value?.includes(role.id)}
-                                            onCheckedChange={(checked) => {
-                                              return checked
-                                                ? field.onChange([
-                                                    ...(field.value ?? []),
-                                                    role.id,
-                                                  ])
-                                                : field.onChange(
-                                                    field.value?.filter(
-                                                      (value) => value !== role.id,
-                                                    ) ?? [],
-                                                  );
-                                            }}
-                                          />
-                                        </FormControl>
-                                        <FormLabel className="cursor-pointer font-normal">
-                                          {role.name}
-                                        </FormLabel>
-                                      </FormItem>
-                                    );
-                                  }}
-                                />
-                              ))}
-                            </div>
+                        control={renameForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input
+                                {...field}
+                                placeholder="Section name"
+                                autoFocus
+                              />
+                            </FormControl>
                           </FormItem>
                         )}
                       />
-                      <div className="flex gap-2">
-                        <Button type="submit" size="sm">
-                          Save
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setEditingRolesFor(null);
-                            editRolesForm.reset();
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-1 items-center gap-2">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-medium">{section}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {countMap.get(section) ?? 0}{" "}
-                          {countMap.get(section) === 1 ? "form" : "forms"}
-                        </span>
-                        {section !== "General" && sectionRoles.length > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            Roles: {sectionRoles.map((r) => r.name).join(", ")}
-                          </span>
-                        )}
-                        {section !== "General" &&
-                          sectionRoles.length === 0 && (
-                            <span className="text-xs text-muted-foreground">
-                              All users with form access
-                            </span>
-                          )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {section !== "General" && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => reorderSection.mutate({ sectionName: section, direction: "up" })}
-                            disabled={!canMoveUp}
-                            className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
-                            aria-label="Move up"
-                          >
-                            <ArrowUp className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => reorderSection.mutate({ sectionName: section, direction: "down" })}
-                            disabled={!canMoveDown}
-                            className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
-                            aria-label="Move down"
-                          >
-                            <ArrowDown className="h-4 w-4" />
-                          </button>
-                        </>
-                      )}
-                      {section !== "General" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingRolesFor(section);
-                            const currentRoleIds = sectionRoles.map((r) => r.id);
-                            editRolesForm.setValue("roleIds", currentRoleIds);
-                          }}
-                          title="Edit roles"
-                        >
-                          <Users className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button type="submit" size="sm">
+                        Save
+                      </Button>
                       <Button
-                        variant="ghost"
+                        type="button"
                         size="sm"
+                        variant="ghost"
                         onClick={() => {
-                          setEditingSection(section);
-                          renameForm.setValue("name", section);
+                          setEditingSection(null);
+                          renameForm.reset();
                         }}
                       >
-                        <Pencil className="h-4 w-4" />
+                        <X className="h-4 w-4" />
                       </Button>
-                      {section !== "General" && (
+                    </form>
+                  </Form>
+                ) : isEditingRoles ? (
+                  <div className="space-y-3">
+                    <Form {...editRolesForm}>
+                      <form
+                        onSubmit={editRolesForm.handleSubmit((values) => {
+                          updateSectionRoles.mutate({
+                            sectionName: section,
+                            roleIds: values.roleIds,
+                          } as { sectionName: string; roleIds: string[] });
+                        })}
+                        className="space-y-3"
+                      >
+                        <FormField
+                          control={editRolesForm.control}
+                          name="roleIds"
+                          render={() => (
+                            <FormItem>
+                              <div className="mb-2">
+                                <FormLabel>
+                                  Restrict to Roles (Optional)
+                                </FormLabel>
+                                <FormDescription>
+                                  Select one or more roles that can access this
+                                  section. Leave empty to allow all users with
+                                  form access.
+                                </FormDescription>
+                              </div>
+                              <div className="max-h-60 space-y-3 overflow-y-auto rounded-md border p-3">
+                                {allRoles.map((role) => (
+                                  <FormField
+                                    key={role.id}
+                                    control={editRolesForm.control}
+                                    name="roleIds"
+                                    render={({ field }) => {
+                                      return (
+                                        <FormItem
+                                          key={role.id}
+                                          className="flex flex-row items-start space-x-3 space-y-0"
+                                        >
+                                          <FormControl>
+                                            <Checkbox
+                                              checked={field.value?.includes(
+                                                role.id,
+                                              )}
+                                              onCheckedChange={(checked) => {
+                                                return checked
+                                                  ? field.onChange([
+                                                      ...(field.value ?? []),
+                                                      role.id,
+                                                    ])
+                                                  : field.onChange(
+                                                      field.value?.filter(
+                                                        (value) =>
+                                                          value !== role.id,
+                                                      ) ?? [],
+                                                    );
+                                              }}
+                                            />
+                                          </FormControl>
+                                          <FormLabel className="cursor-pointer font-normal">
+                                            {role.name}
+                                          </FormLabel>
+                                        </FormItem>
+                                      );
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                        <div className="flex gap-2">
+                          <Button type="submit" size="sm">
+                            Save
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingRolesFor(null);
+                              editRolesForm.reset();
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-1 items-center gap-2">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-medium">{section}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {countMap.get(section) ?? 0}{" "}
+                            {countMap.get(section) === 1 ? "form" : "forms"}
+                          </span>
+                          {section !== "General" && sectionRoles.length > 0 && (
+                            <span className="text-xs text-muted-foreground">
+                              Roles:{" "}
+                              {sectionRoles.map((r) => r.name).join(", ")}
+                            </span>
+                          )}
+                          {section !== "General" &&
+                            sectionRoles.length === 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                All users with form access
+                              </span>
+                            )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {section !== "General" && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                reorderSection.mutate({
+                                  sectionName: section,
+                                  direction: "up",
+                                })
+                              }
+                              disabled={!canMoveUp}
+                              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:cursor-not-allowed disabled:opacity-30"
+                              aria-label="Move up"
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                reorderSection.mutate({
+                                  sectionName: section,
+                                  direction: "down",
+                                })
+                              }
+                              disabled={!canMoveDown}
+                              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:cursor-not-allowed disabled:opacity-30"
+                              aria-label="Move down"
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
+                        {section !== "General" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingRolesFor(section);
+                              const currentRoleIds = sectionRoles.map(
+                                (r) => r.id,
+                              );
+                              editRolesForm.setValue("roleIds", currentRoleIds);
+                            }}
+                            title="Edit roles"
+                          >
+                            <Users className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(section)}
+                          onClick={() => {
+                            setEditingSection(section);
+                            renameForm.setValue("name", section);
+                          }}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
-                      )}
+                        {section !== "General" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(section)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
               </div>
             );
           })}
