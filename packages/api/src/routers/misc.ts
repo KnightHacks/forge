@@ -3,9 +3,9 @@ import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
 import {
+  generateFundingRequestEmailHtml,
   RECRUITING_CHANNEL,
   TEAM_MAP,
-  generateFundingRequestEmailHtml,
 } from "@forge/consts/knight-hacks";
 
 import { protectedProcedure } from "../trpc";
@@ -121,7 +121,10 @@ export const miscRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      const dateObj = typeof input.dateNeeded === "string" ? new Date(input.dateNeeded) : input.dateNeeded;
+      const dateObj =
+        typeof input.dateNeeded === "string"
+          ? new Date(input.dateNeeded)
+          : input.dateNeeded;
       const formattedDate = `${String(dateObj.getMonth() + 1).padStart(2, "0")}/${String(dateObj.getDate()).padStart(2, "0")}`;
       const htmlContent = generateFundingRequestEmailHtml(input);
 
