@@ -714,12 +714,19 @@ export const formsRouter = {
     }
 
     const allDbSections = await db
-      .select({ id: FormSections.id, name: FormSections.name })
-      .from(FormSections);
+      .select({
+        id: FormSections.id,
+        name: FormSections.name,
+        order: FormSections.order,
+      })
+      .from(FormSections)
+      .orderBy(FormSections.order);
 
     const sectionIdToName = new Map<string, string>();
+    const sectionIdToOrder = new Map<string, number>();
     for (const section of allDbSections) {
       sectionIdToName.set(section.id, section.name);
+      sectionIdToOrder.set(section.id, section.order);
     }
 
     const accessibleSectionIds = new Set<string>();
@@ -773,7 +780,26 @@ export const formsRouter = {
       }
     }
 
-    return Array.from(allSections).sort();
+    const sortedSections = Array.from(allSections).sort((a, b) => {
+      if (a === "General") return -1;
+      if (b === "General") return 1;
+      
+      let aOrder = 999;
+      let bOrder = 999;
+      
+      for (const section of allDbSections) {
+        if (section.name === a) {
+          aOrder = section.order;
+        }
+        if (section.name === b) {
+          bOrder = section.order;
+        }
+      }
+      
+      return aOrder - bOrder;
+    });
+    
+    return sortedSections;
   }),
 
   getSectionCounts: permProcedure.query(async ({ ctx }) => {
@@ -923,10 +949,17 @@ export const formsRouter = {
         }
       }
 
+      const maxOrderResult = await db
+        .select({ maxOrder: sql<number>`COALESCE(MAX(${FormSections.order}), 0)` })
+        .from(FormSections);
+      
+      const maxOrder = maxOrderResult[0]?.maxOrder ?? 0;
+
       const [newSection] = await db
         .insert(FormSections)
         .values({
           name: input.name,
+          order: maxOrder + 1,
         })
         .returning();
 
@@ -954,6 +987,170 @@ export const formsRouter = {
       await log({
         title: `Form section created`,
         message: `**Form section:** ${input.name}. Roles: ${roleNames.map((r) => r.name).join(", ")}`,
+        color: "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
+    }),
+
+  getSectionRoles: permProcedure
+    .input(z.object({ sectionName: z.string() }))
+    .query(async ({ input, ctx }) => {
+      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+
+      const section = await db.query.FormSections.findFirst({
+        where: (t, { eq }) => eq(t.name, input.sectionName),
+      });
+
+      if (!section) {
+        return [];
+      }
+
+      const sectionRoles = await db
+        .select({
+          roleId: FormSectionRoles.roleId,
+        })
+        .from(FormSectionRoles)
+        .where(eq(FormSectionRoles.sectionId, section.id));
+
+      const roleIds = sectionRoles.map((sr) => sr.roleId);
+
+      if (roleIds.length === 0) {
+        return [];
+      }
+
+      const roles = await db
+        .select({ id: Roles.id, name: Roles.name })
+        .from(Roles)
+        .where(inArray(Roles.id, roleIds));
+
+      return roles;
+    }),
+
+  updateSectionRoles: permProcedure
+    .input(
+      z.object({
+        sectionName: z.string(),
+        roleIds: z.array(z.string().uuid()),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
+
+      const section = await db.query.FormSections.findFirst({
+        where: (t, { eq }) => eq(t.name, input.sectionName),
+      });
+
+      if (!section) {
+        throw new TRPCError({
+          message: "Section not found",
+          code: "NOT_FOUND",
+        });
+      }
+
+      const isOfficer = ctx.session.permissions.IS_OFFICER;
+
+      if (input.roleIds.length && !isOfficer) {
+        const userRoles = await db
+          .select({ roleId: Permissions.roleId })
+          .from(Permissions)
+          .where(
+            sql`cast(${Permissions.userId} as text) = ${ctx.session.user.id}`,
+          );
+
+        const userRoleIds = new Set(userRoles.map((r) => r.roleId));
+
+        const hasAllRoles = input.roleIds.every((roleId) =>
+          userRoleIds.has(roleId),
+        );
+
+        if (!hasAllRoles) {
+          throw new TRPCError({
+            message:
+              "You don't have permission to assign sections to one or more of the selected roles",
+            code: "UNAUTHORIZED",
+          });
+        }
+      }
+
+      await db
+        .delete(FormSectionRoles)
+        .where(eq(FormSectionRoles.sectionId, section.id));
+
+      if (input.roleIds.length > 0) {
+        await db.insert(FormSectionRoles).values(
+          input.roleIds.map((roleId) => ({
+            sectionId: section.id,
+            roleId,
+          })),
+        );
+      }
+
+      const roleNames = await db
+        .select({ name: Roles.name })
+        .from(Roles)
+        .where(inArray(Roles.id, input.roleIds));
+
+      await log({
+        title: `Form section roles updated`,
+        message: `**Form section:** ${input.sectionName}. Roles: ${roleNames.length > 0 ? roleNames.map((r) => r.name).join(", ") : "None (all users)"}`,
+        color: "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
+    }),
+
+  reorderSection: permProcedure
+    .input(
+      z.object({
+        sectionName: z.string(),
+        direction: z.enum(["up", "down"]),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
+
+      const allSections = await db
+        .select({
+          id: FormSections.id,
+          name: FormSections.name,
+          order: FormSections.order,
+        })
+        .from(FormSections)
+        .orderBy(FormSections.order);
+
+      const currentIndex = allSections.findIndex(
+        (s) => s.name === input.sectionName,
+      );
+
+      if (currentIndex === -1) {
+        throw new TRPCError({
+          message: "Section not found",
+          code: "NOT_FOUND",
+        });
+      }
+
+      const newIndex =
+        input.direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+      if (newIndex < 0 || newIndex >= allSections.length) {
+        return;
+      }
+
+      const currentSection = allSections[currentIndex];
+      const targetSection = allSections[newIndex];
+
+      await db
+        .update(FormSections)
+        .set({ order: targetSection?.order ?? newIndex })
+        .where(eq(FormSections.id, currentSection?.id ?? ""));
+
+      await db
+        .update(FormSections)
+        .set({ order: currentSection?.order ?? currentIndex })
+        .where(eq(FormSections.id, targetSection?.id ?? ""));
+
+      await log({
+        title: `Form section reordered`,
+        message: `**Form section:** ${input.sectionName} moved ${input.direction}`,
         color: "success_green",
         userId: ctx.session.user.discordUserId,
       });

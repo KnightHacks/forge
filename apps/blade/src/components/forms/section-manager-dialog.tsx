@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Plus, Trash2, Users, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import * as z from "zod";
 
 import { Button } from "@forge/ui/button";
@@ -38,6 +38,10 @@ const createSectionSchema = z.object({
   roleIds: z.array(z.string().uuid()).optional().default([]),
 });
 
+const editSectionRolesSchema = z.object({
+  roleIds: z.array(z.string().uuid()).optional().default([]),
+});
+
 export function SectionManagerDialog({
   trigger,
 }: {
@@ -45,8 +49,11 @@ export function SectionManagerDialog({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [editingRolesFor, setEditingRolesFor] = useState<string | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
-  const utils = api.useUtils();
+  const [sectionRolesMap, setSectionRolesMap] = useState<
+    Map<string, { id: string; name: string }[]>
+  >(new Map());
 
   const { data: sections = [] } = api.forms.getSections.useQuery(undefined, {
     enabled: isOpen,
@@ -59,9 +66,38 @@ export function SectionManagerDialog({
     },
   );
 
-  const { data: roles = [] } = api.roles.getAllLinks.useQuery(undefined, {
-    enabled: isOpen && isCreatingNew,
+  const { data: allRoles = [] } = api.roles.getAllLinks.useQuery(undefined, {
+    enabled: isOpen,
   });
+
+  const utils = api.useUtils();
+
+  useEffect(() => {
+    if (!isOpen || sections.length === 0) return;
+
+    const fetchSectionRoles = async () => {
+      const newRolesMap = new Map<string, { id: string; name: string }[]>();
+      
+      await Promise.all(
+        sections
+          .filter((s) => s !== "General")
+          .map(async (section) => {
+            try {
+              const roles = await utils.forms.getSectionRoles.fetch({
+                sectionName: section,
+              });
+              newRolesMap.set(section, roles);
+            } catch {
+              newRolesMap.set(section, []);
+            }
+          }),
+      );
+
+      setSectionRolesMap(newRolesMap);
+    };
+
+    void fetchSectionRoles();
+  }, [isOpen, sections, utils.forms.getSectionRoles]);
 
   const countMap = new Map<string, number>();
   if (Array.isArray(sectionCounts)) {
@@ -83,6 +119,13 @@ export function SectionManagerDialog({
     schema: createSectionSchema,
     defaultValues: {
       name: "",
+      roleIds: [],
+    },
+  });
+
+  const editRolesForm = useForm({
+    schema: editSectionRolesSchema,
+    defaultValues: {
       roleIds: [],
     },
   });
@@ -134,6 +177,48 @@ export function SectionManagerDialog({
     },
   });
 
+  const updateSectionRoles = api.forms.updateSectionRoles.useMutation({
+    onSuccess(_, variables) {
+      toast.success("Section roles updated");
+      setEditingRolesFor(null);
+      editRolesForm.reset();
+      void utils.forms.getSectionRoles
+        .fetch({ sectionName: variables.sectionName })
+        .then((roles) => {
+          setSectionRolesMap((prev) => {
+            const newMap = new Map(prev);
+            newMap.set(variables.sectionName, roles);
+            return newMap;
+          });
+        })
+        .catch(() => {
+          setSectionRolesMap((prev) => {
+            const newMap = new Map(prev);
+            newMap.set(variables.sectionName, []);
+            return newMap;
+          });
+        });
+    },
+    onError(error: unknown) {
+      const message =
+        error && typeof error === "object" && "message" in error
+          ? String(error.message)
+          : "Failed to update section roles";
+      toast.error(message);
+    },
+    async onSettled() {
+      await utils.forms.getSectionRoles.invalidate();
+      await utils.forms.getSections.invalidate();
+    },
+  });
+
+  const reorderSection = api.forms.reorderSection.useMutation({
+    async onSettled() {
+      await utils.forms.getSections.invalidate();
+      await utils.forms.getForms.invalidate();
+    },
+  });
+
   const handleRename = (oldName: string) => {
     const newName = renameForm.getValues().name;
     if (!newName || newName === oldName) {
@@ -175,7 +260,6 @@ export function SectionManagerDialog({
               <Form {...createSectionForm}>
                 <form
                   onSubmit={createSectionForm.handleSubmit((values) => {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                     createSection.mutate({
                       name: values.name,
                       roleIds: values.roleIds,
@@ -213,7 +297,7 @@ export function SectionManagerDialog({
                           </FormDescription>
                         </div>
                         <div className="max-h-60 space-y-3 overflow-y-auto rounded-md border p-3">
-                          {roles.map((role) => (
+                          {allRoles.map((role) => (
                             <FormField
                               key={role.id}
                               control={createSectionForm.control}
@@ -249,7 +333,7 @@ export function SectionManagerDialog({
                               }}
                             />
                           ))}
-                          {roles.length === 0 && (
+                          {allRoles.length === 0 && (
                             <p className="text-sm text-muted-foreground">
                               No roles available. All users will have access.
                             </p>
@@ -279,12 +363,18 @@ export function SectionManagerDialog({
             </div>
           )}
 
-          {sections.map((section: string) => (
-            <div
-              key={section}
-              className="flex items-center justify-between rounded-md border p-3"
-            >
-              {editingSection === section ? (
+          {sections.map((section: string, index) => {
+            const sectionRoles = sectionRolesMap.get(section) ?? [];
+            const isEditingRoles = editingRolesFor === section;
+            const canMoveUp = index > 0;
+            const canMoveDown = index < sections.length - 1;
+
+            return (
+              <div
+                key={section}
+                className="space-y-2 rounded-md border p-3"
+              >
+                {editingSection === section ? (
                 <Form {...renameForm}>
                   <form
                     onSubmit={renameForm.handleSubmit(() =>
@@ -323,40 +413,177 @@ export function SectionManagerDialog({
                     </Button>
                   </form>
                 </Form>
+              ) : isEditingRoles ? (
+                <div className="space-y-3">
+                  <Form {...editRolesForm}>
+                    <form
+                      onSubmit={editRolesForm.handleSubmit((values) => {
+                        updateSectionRoles.mutate({
+                          sectionName: section,
+                          roleIds: values.roleIds,
+                        } as { sectionName: string; roleIds: string[] });
+                      })}
+                      className="space-y-3"
+                    >
+                      <FormField
+                        control={editRolesForm.control}
+                        name="roleIds"
+                        render={() => (
+                          <FormItem>
+                            <div className="mb-2">
+                              <FormLabel>Restrict to Roles (Optional)</FormLabel>
+                              <FormDescription>
+                                Select one or more roles that can access this
+                                section. Leave empty to allow all users with form
+                                access.
+                              </FormDescription>
+                            </div>
+                            <div className="max-h-60 space-y-3 overflow-y-auto rounded-md border p-3">
+                              {allRoles.map((role) => (
+                                <FormField
+                                  key={role.id}
+                                  control={editRolesForm.control}
+                                  name="roleIds"
+                                  render={({ field }) => {
+                                    return (
+                                      <FormItem
+                                        key={role.id}
+                                        className="flex flex-row items-start space-x-3 space-y-0"
+                                      >
+                                        <FormControl>
+                                          <Checkbox
+                                            checked={field.value?.includes(role.id)}
+                                            onCheckedChange={(checked) => {
+                                              return checked
+                                                ? field.onChange([
+                                                    ...(field.value ?? []),
+                                                    role.id,
+                                                  ])
+                                                : field.onChange(
+                                                    field.value?.filter(
+                                                      (value) => value !== role.id,
+                                                    ) ?? [],
+                                                  );
+                                            }}
+                                          />
+                                        </FormControl>
+                                        <FormLabel className="cursor-pointer font-normal">
+                                          {role.name}
+                                        </FormLabel>
+                                      </FormItem>
+                                    );
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      <div className="flex gap-2">
+                        <Button type="submit" size="sm">
+                          Save
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingRolesFor(null);
+                            editRolesForm.reset();
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </div>
               ) : (
                 <>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-medium">{section}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {countMap.get(section) ?? 0}{" "}
-                      {countMap.get(section) === 1 ? "form" : "forms"}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditingSection(section);
-                        renameForm.setValue("name", section);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    {section !== "General" && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-1 items-center gap-2">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-medium">{section}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {countMap.get(section) ?? 0}{" "}
+                          {countMap.get(section) === 1 ? "form" : "forms"}
+                        </span>
+                        {section !== "General" && sectionRoles.length > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            Roles: {sectionRoles.map((r) => r.name).join(", ")}
+                          </span>
+                        )}
+                        {section !== "General" &&
+                          sectionRoles.length === 0 && (
+                            <span className="text-xs text-muted-foreground">
+                              All users with form access
+                            </span>
+                          )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {section !== "General" && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => reorderSection.mutate({ sectionName: section, direction: "up" })}
+                            disabled={!canMoveUp}
+                            className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                            aria-label="Move up"
+                          >
+                            <ArrowUp className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => reorderSection.mutate({ sectionName: section, direction: "down" })}
+                            disabled={!canMoveDown}
+                            className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                            aria-label="Move down"
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
+                      {section !== "General" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingRolesFor(section);
+                            const currentRoleIds = sectionRoles.map((r) => r.id);
+                            editRolesForm.setValue("roleIds", currentRoleIds);
+                          }}
+                          title="Edit roles"
+                        >
+                          <Users className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(section)}
+                        onClick={() => {
+                          setEditingSection(section);
+                          renameForm.setValue("name", section);
+                        }}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" />
                       </Button>
-                    )}
+                      {section !== "General" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(section)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </>
               )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
         <DialogFooter className="flex items-center justify-between">
