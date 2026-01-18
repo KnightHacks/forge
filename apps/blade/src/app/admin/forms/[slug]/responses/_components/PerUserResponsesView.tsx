@@ -214,7 +214,7 @@ export function PerUserResponsesView({
               return (
                 <div key={question.question}>
                   <div className="space-y-2">
-                    <h4 className="font-medium text-foreground">
+                    <h4 className="whitespace-pre-line font-medium text-foreground">
                       {question.question}
                       {!question.optional && (
                         <span className="ml-1 text-red-500">*</span>
@@ -234,7 +234,13 @@ export function PerUserResponsesView({
                         {formatResponseValue(answer)}
                       </Link>
                     ) : (
-                      <p className="break-words text-sm text-muted-foreground">
+                      <p
+                        className={`break-words text-sm text-muted-foreground ${
+                          question.type === "PARAGRAPH"
+                            ? "whitespace-pre-wrap"
+                            : ""
+                        }`}
+                      >
                         {formatResponseValue(answer)}
                       </p>
                     )}

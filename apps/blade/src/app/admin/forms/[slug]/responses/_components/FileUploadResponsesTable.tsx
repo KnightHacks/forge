@@ -46,7 +46,7 @@ export function FileUploadResponsesTable({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{question}</CardTitle>
+          <CardTitle className="whitespace-pre-line">{question}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="py-8 text-center text-muted-foreground">
@@ -60,7 +60,7 @@ export function FileUploadResponsesTable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{question}</CardTitle>
+        <CardTitle className="whitespace-pre-line">{question}</CardTitle>
         <p className="mt-1 text-sm text-muted-foreground">
           {responses.length} {responses.length === 1 ? "response" : "responses"}
         </p>
