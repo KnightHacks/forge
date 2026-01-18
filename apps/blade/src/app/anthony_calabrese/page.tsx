@@ -38,7 +38,7 @@ export default function Application() {
         />
 
         <div className="flex h-[10dvh] w-[100dvw] flex-col items-center justify-center md:h-[20dvh]">
-          <p className="title-animate khfont z-20 rounded-full bg-gray-400 bg-opacity-80 p-3 text-2xl text-blue-800 md:text-5xl">
+          <p className="title-animate khfont z-20 rounded-full bg-gray-400 bg-opacity-80 p-3 text-2xl text-blue-800 md:text-4xl">
             Anthony Calabrese
           </p>
         </div>
@@ -46,7 +46,7 @@ export default function Application() {
           <a
             href="/resume.pdf"
             target="_blank"
-            className="khfont mb-10 scale-100 transform rounded-full bg-gray-400 bg-opacity-80 p-3 text-xl text-blue-600 transition duration-150 hover:scale-[1.2] hover:text-yellow-500 md:text-2xl"
+            className="khfont mb-10 scale-100 transform rounded-full bg-gray-400 bg-opacity-80 p-3 text-lg text-blue-600 transition duration-150 hover:scale-[1.2] hover:text-yellow-500 md:text-xl"
           >
             Resume
           </a>
@@ -54,21 +54,21 @@ export default function Application() {
           <a
             href="https://www.linkedin.com/in/anthony-calabrese-b4453930b/"
             target="_blank"
-            className="khfont mb-10 scale-100 transform rounded-full bg-gray-400 bg-opacity-80 p-3 text-xl text-blue-600 transition duration-150 hover:scale-[1.2] hover:text-yellow-500 md:text-2xl"
+            className="khfont mb-10 scale-100 transform rounded-full bg-gray-400 bg-opacity-80 p-3 text-lg text-blue-600 transition duration-150 hover:scale-[1.2] hover:text-yellow-500 md:text-xl"
           >
             Linkedin
           </a>
           <a
-            href="https://www.linkedin.com/in/anthony-calabrese-b4453930b/"
+            href="https://github.com/cala28124-sketch"
             target="_blank"
-            className="khfont mb-10 scale-100 transform rounded-full bg-gray-400 bg-opacity-80 p-3 text-xl text-blue-600 transition duration-150 hover:scale-[1.2] hover:text-yellow-500 md:text-2xl"
+            className="khfont mb-10 scale-100 transform rounded-full bg-gray-400 bg-opacity-80 p-3 text-lg text-blue-600 transition duration-150 hover:scale-[1.2] hover:text-yellow-500 md:text-xl"
           >
             Github
           </a>
           <a
             href="https://anthonycalabrese.dev/"
             target="_blank"
-            className="khfont mb-10 scale-100 transform rounded-full bg-gray-400 bg-opacity-80 p-3 text-xl text-blue-600 transition duration-150 hover:scale-[1.2] hover:text-yellow-500 md:text-2xl"
+            className="khfont mb-10 scale-100 transform rounded-full bg-gray-400 bg-opacity-80 p-3 text-lg text-blue-600 transition duration-150 hover:scale-[1.2] hover:text-yellow-500 md:text-xl"
           >
             Portfolio
           </a>
