@@ -6774,6 +6774,7 @@ export const QuestionValidator = z.object({
   ]),
   options: z.array(z.string()).optional(),
   optional: z.boolean().optional(),
+  allowOther: z.boolean().optional(),
   min: z.number().optional(),
   max: z.number().optional(),
   order: z.number().optional(),
