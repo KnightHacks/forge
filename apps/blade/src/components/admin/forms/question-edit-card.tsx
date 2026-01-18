@@ -1,6 +1,8 @@
 "use client";
 
 import type { DraggableSyntheticListeners } from "@dnd-kit/core";
+import type { z } from "zod";
+import * as React from "react";
 import {
   AlignLeft,
   ArrowDown,
@@ -24,8 +26,6 @@ import {
   Trash,
   X,
 } from "lucide-react";
-import * as React from "react";
-import type { z } from "zod";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import {
@@ -231,7 +231,7 @@ export function QuestionEditCard({
                 onMoveUp?.();
               }}
               disabled={!canMoveUp}
-              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:cursor-not-allowed disabled:opacity-30"
               aria-label="Move up"
             >
               <ArrowUp className="h-5 w-5" />
@@ -243,7 +243,7 @@ export function QuestionEditCard({
                 onMoveDown?.();
               }}
               disabled={!canMoveDown}
-              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:cursor-not-allowed disabled:opacity-30"
               aria-label="Move down"
             >
               <ArrowDown className="h-5 w-5" />
@@ -495,8 +495,7 @@ function OptionList({
   const availableConstants = Object.entries(AVAILABLE_DROPDOWN_CONSTANTS).map(
     ([key, label]) => {
       const constOptions = getDropdownOptionsFromConst(key);
-      const isDisabled =
-        isRestrictedType && constOptions.length >= 15;
+      const isDisabled = isRestrictedType && constOptions.length >= 15;
       return { key, label, isDisabled, length: constOptions.length };
     },
   );
@@ -522,84 +521,94 @@ function OptionList({
                   key={key}
                   value={key}
                   disabled={isDisabled}
-                  className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
+                  className={isDisabled ? "cursor-not-allowed opacity-50" : ""}
                 >
                   {label}
-                  {isDisabled && " (too long for this question type, max 15 options) Use Dropdown instead"}
+                  {isDisabled &&
+                    " (too long for this question type, max 15 options) Use Dropdown instead"}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           {isUsingConst && (
             <p className="text-xs text-muted-foreground">
-              Using constant: {AVAILABLE_DROPDOWN_CONSTANTS[optionsConst as keyof typeof AVAILABLE_DROPDOWN_CONSTANTS]}
+              Using constant:{" "}
+              {
+                AVAILABLE_DROPDOWN_CONSTANTS[
+                  optionsConst as keyof typeof AVAILABLE_DROPDOWN_CONSTANTS
+                ]
+              }
             </p>
           )}
         </div>
       )}
 
-      {!isUsingConst && options.map((optionValue, idx) => (
-        <div key={idx} className="group flex items-center gap-2">
-          {question.type === "DROPDOWN" ? (
-            <span className="w-6 text-center text-sm">{idx + 1}.</span>
-          ) : (
-            <Icon className="h-5 w-5 text-gray-300" />
-          )}
+      {!isUsingConst &&
+        options.map((optionValue, idx) => (
+          <div key={idx} className="group flex items-center gap-2">
+            {question.type === "DROPDOWN" ? (
+              <span className="w-6 text-center text-sm">{idx + 1}.</span>
+            ) : (
+              <Icon className="h-5 w-5 text-gray-300" />
+            )}
 
-          <Input
-            value={optionValue}
-            onChange={(e) => handleOptionChange(idx, e.target.value)}
-            onPaste={(e) => handlePaste(e, idx)}
-            className="flex-1 rounded-none border-none px-0 hover:border-b hover:border-gray-200 focus:border-b-2 focus:border-blue-500 focus:ring-0"
-            placeholder={`Option ${idx + 1}`}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addOption();
-              }
-              if (e.key === "Backspace" && optionValue === "") {
-                e.preventDefault();
-                removeOption(idx);
-              }
-            }}
-            autoFocus={idx === options.length - 1 && options.length > 1}
-          />
+            <Input
+              value={optionValue}
+              onChange={(e) => handleOptionChange(idx, e.target.value)}
+              onPaste={(e) => handlePaste(e, idx)}
+              className="flex-1 rounded-none border-none px-0 hover:border-b hover:border-gray-200 focus:border-b-2 focus:border-blue-500 focus:ring-0"
+              placeholder={`Option ${idx + 1}`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addOption();
+                }
+                if (e.key === "Backspace" && optionValue === "") {
+                  e.preventDefault();
+                  removeOption(idx);
+                }
+              }}
+              autoFocus={idx === options.length - 1 && options.length > 1}
+            />
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="opacity-0 transition-opacity group-hover:opacity-100"
-            onClick={() => removeOption(idx)}
-            tabIndex={-1}
-          >
-            <X className="h-5 w-5 text-gray-500" />
-          </Button>
-        </div>
-      ))}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="opacity-0 transition-opacity group-hover:opacity-100"
+              onClick={() => removeOption(idx)}
+              tabIndex={-1}
+            >
+              <X className="h-5 w-5 text-gray-500" />
+            </Button>
+          </div>
+        ))}
 
       {/* Add Option Button - Only show when not using a constant */}
       {!isUsingConst && (
-      <div className="mt-1 flex items-center gap-2">
-        {question.type === "DROPDOWN" ? (
-          <span className="w-6 text-center text-sm">{options.length + 1}.</span>
-        ) : (
-          <Icon className="h-5 w-5 text-transparent" />
-        )}
+        <div className="mt-1 flex items-center gap-2">
+          {question.type === "DROPDOWN" ? (
+            <span className="w-6 text-center text-sm">
+              {options.length + 1}.
+            </span>
+          ) : (
+            <Icon className="h-5 w-5 text-transparent" />
+          )}
 
-        <div className="flex items-center gap-1 text-sm text-gray-500">
-          <Button
-            variant="ghost"
-            className="h-auto px-0 py-1 text-gray-500 hover:bg-transparent hover:text-gray-800"
-            onClick={addOption}
-          >
-            Add option
-          </Button>
+          <div className="flex items-center gap-1 text-sm text-gray-500">
+            <Button
+              variant="ghost"
+              className="h-auto px-0 py-1 text-gray-500 hover:bg-transparent hover:text-gray-800"
+              onClick={addOption}
+            >
+              Add option
+            </Button>
+          </div>
         </div>
-      </div>
       )}
 
       {/* Allow Other Option Toggle - Only for MULTIPLE_CHOICE and CHECKBOXES */}
-      {(question.type === "MULTIPLE_CHOICE" || question.type === "CHECKBOXES") && (
+      {(question.type === "MULTIPLE_CHOICE" ||
+        question.type === "CHECKBOXES") && (
         <div className="mt-3 flex items-center gap-2 border-t pt-3">
           <Checkbox
             checked={allowOther}

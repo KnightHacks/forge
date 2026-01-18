@@ -73,7 +73,9 @@ export function ResponseBarChart({
     <Card>
       <CardHeader className="pb-2 pt-3 md:pb-6 md:pt-6">
         {/* question text as card title */}
-        <CardTitle className="whitespace-pre-line text-sm md:text-lg">{question}</CardTitle>
+        <CardTitle className="whitespace-pre-line text-sm md:text-lg">
+          {question}
+        </CardTitle>
         {/* show total number of responses */}
         <p className="mt-0.5 text-[10px] text-muted-foreground md:mt-1 md:text-sm">
           {responses.length} {responses.length === 1 ? "response" : "responses"}

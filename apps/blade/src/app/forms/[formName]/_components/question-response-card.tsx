@@ -1,10 +1,10 @@
 "use client";
 
-import { FileUp, Loader2, X } from "lucide-react";
-import Image from "next/image";
+import type { z } from "zod";
 import * as React from "react";
 import { useRef, useState } from "react";
-import type { z } from "zod";
+import Image from "next/image";
+import { FileUp, Loader2, X } from "lucide-react";
 
 import type { QuestionValidator } from "@forge/consts/knight-hacks";
 import { getDropdownOptionsFromConst } from "@forge/consts/knight-hacks";
@@ -150,7 +150,7 @@ function QuestionBody({
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
             rows={3}
-            className="overflow-y-auto whitespace-pre-wrap resize-none rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+            className="resize-none overflow-y-auto whitespace-pre-wrap rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
           />
           <div className="mt-1 flex justify-end">
             <span
@@ -401,11 +401,7 @@ function MultipleChoiceInput({
     <div className="flex flex-col gap-3">
       <RadioGroup
         value={
-          isOtherSelected
-            ? OTHER_VALUE
-            : typeof value === "string"
-              ? value
-              : ""
+          isOtherSelected ? OTHER_VALUE : typeof value === "string" ? value : ""
         }
         onValueChange={handleRadioChange}
         className="flex flex-col gap-3"
@@ -424,10 +420,7 @@ function MultipleChoiceInput({
         ))}
         {allowOther && (
           <div className="flex items-center gap-3">
-            <RadioGroupItem
-              value={OTHER_VALUE}
-              id={`${questionKey}-other`}
-            />
+            <RadioGroupItem value={OTHER_VALUE} id={`${questionKey}-other`} />
             <Label
               htmlFor={`${questionKey}-other`}
               className="cursor-pointer font-normal"
@@ -440,21 +433,21 @@ function MultipleChoiceInput({
       {allowOther &&
         (isOtherSelected ||
           (typeof value === "string" && value === OTHER_VALUE)) && (
-        <div className="ml-7 w-full">
-          <Input
-            placeholder="Please specify"
-            value={otherText}
-            onChange={(e) => handleOtherTextChange(e.target.value)}
-            onBlur={(e) => {
-              const capitalized = capitalizeWords(e.target.value);
-              setOtherText(capitalized);
-              onChange(capitalized || null);
-            }}
-            disabled={disabled}
-            className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
-          />
-        </div>
-      )}
+          <div className="ml-7 w-full">
+            <Input
+              placeholder="Please specify"
+              value={otherText}
+              onChange={(e) => handleOtherTextChange(e.target.value)}
+              onBlur={(e) => {
+                const capitalized = capitalizeWords(e.target.value);
+                setOtherText(capitalized);
+                onChange(capitalized || null);
+              }}
+              disabled={disabled}
+              className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
+            />
+          </div>
+        )}
     </div>
   );
 }
@@ -547,7 +540,9 @@ function CheckboxesInput({
       onChange([...valuesWithoutOther, capitalized]);
     } else {
       onChange(
-        isOtherChecked ? [...valuesWithoutOther, OTHER_VALUE] : valuesWithoutOther,
+        isOtherChecked
+          ? [...valuesWithoutOther, OTHER_VALUE]
+          : valuesWithoutOther,
       );
     }
   };
@@ -577,7 +572,9 @@ function CheckboxesInput({
           <Checkbox
             id={`${questionKey}-other`}
             checked={isOtherChecked}
-            onCheckedChange={(checked) => handleOtherCheckboxChange(checked === true)}
+            onCheckedChange={(checked) =>
+              handleOtherCheckboxChange(checked === true)
+            }
             disabled={disabled}
           />
           <Label
