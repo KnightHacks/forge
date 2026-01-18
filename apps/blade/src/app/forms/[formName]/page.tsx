@@ -5,6 +5,8 @@ import { appRouter } from "@forge/api";
 import { log } from "@forge/api/utils";
 import { auth } from "@forge/auth";
 
+import { Card } from "@forge/ui/card";
+import { XCircle } from "lucide-react";
 import { SIGN_IN_PATH } from "~/consts";
 import { extractProcedures } from "~/lib/utils";
 import { api, HydrateClient } from "~/trpc/server";
@@ -21,7 +23,14 @@ export default async function FormResponderPage({
   }
 
   if (!params.formName) {
-    return <div>Form not found</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
+      <Card className="max-w-md p-8 text-center">
+        <XCircle className="mx-auto mb-4 h-16 w-16 text-destructive" />
+        <h1 className="mb-2 text-2xl font-bold">Form not found</h1>
+      </Card>
+      </div>
+    );
   }
 
   // handle url encode form names to allow spacing and special characters
@@ -39,6 +48,22 @@ export default async function FormResponderPage({
   }
 
   const form = await api.forms.getForm({ slug_name: formName });
+
+  const { canRespond } = await api.forms.checkResponseAccess({
+    formId: form.id,
+  });
+
+  if (!canRespond) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
+        <Card className="max-w-md p-8 text-center">
+          <XCircle className="mx-auto mb-4 h-16 w-16 text-destructive" />
+          <h1 className="mb-2 text-2xl font-bold">You do not have permission to respond to this form</h1>
+        </Card>
+      </div>
+    );
+  }
+
   const connections = await api.forms.getConnections({ id: form.id });
   const procs = extractProcedures(appRouter);
 
