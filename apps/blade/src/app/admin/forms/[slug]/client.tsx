@@ -71,6 +71,10 @@ function SortableItem({
   onDuplicateInstruction,
   onClick,
   onForceSave,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
   error,
 }: {
   item: UIQuestion | UIInstruction;
@@ -83,6 +87,10 @@ function SortableItem({
   onDuplicateInstruction: (i: UIInstruction) => void;
   onClick: () => void;
   onForceSave: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   error?: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -112,6 +120,10 @@ function SortableItem({
             onDelete={onDelete}
             onDuplicate={onDuplicateInstruction}
             dragHandleProps={listeners}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            canMoveUp={canMoveUp}
+            canMoveDown={canMoveDown}
           />
         ) : (
           <QuestionEditCard
@@ -123,6 +135,10 @@ function SortableItem({
             onForceSave={onForceSave}
             error={error}
             dragHandleProps={listeners}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            canMoveUp={canMoveUp}
+            canMoveDown={canMoveDown}
           />
         )}
       </div>
@@ -421,6 +437,45 @@ export function EditorClient({
     }),
   );
 
+  const reorderItems = React.useCallback(
+    (itemId: string, direction: "up" | "down") => {
+      const combined = [...questions, ...instructions].sort(
+        (a, b) => (a.order ?? 999) - (b.order ?? 999),
+      );
+      const currentIndex = combined.findIndex((item) => item.id === itemId);
+
+      if (currentIndex === -1) return;
+
+      const newIndex =
+        direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+      if (newIndex < 0 || newIndex >= combined.length) return;
+
+      const reordered = arrayMove(combined, currentIndex, newIndex);
+
+      // Update order and split back into separate arrays
+      const updatedItems = reordered.map((item, idx) => ({
+        ...item,
+        order: idx,
+      }));
+      const newQuestions: UIQuestion[] = [];
+      const newInstructions: UIInstruction[] = [];
+
+      updatedItems.forEach((item) => {
+        if ("question" in item) {
+          newQuestions.push(item as UIQuestion);
+        } else {
+          newInstructions.push(item as UIInstruction);
+        }
+      });
+
+      setQuestions(newQuestions);
+      setInstructions(newInstructions);
+      setTimeout(() => handleSaveForm(), 100);
+    },
+    [questions, instructions, handleSaveForm],
+  );
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
@@ -463,12 +518,12 @@ export function EditorClient({
 
   return (
     <div
-      className="min-h-screen bg-primary/5 p-8 pb-32"
+      className="min-h-screen bg-primary/5 px-3 py-8 pb-32 md:px-8"
       onClick={() => setActiveItemId(null)}
     >
       <div className="mx-auto max-w-3xl space-y-4">
-        <div className="flex flex-col items-center justify-between gap-4 rounded-xl border bg-card/50 p-4 shadow-sm backdrop-blur-sm md:flex-row">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-3 rounded-xl border bg-card/50 p-3 shadow-sm backdrop-blur-sm md:flex-row md:items-center md:justify-between md:gap-4 md:p-4">
+          <div className="flex items-center gap-3 md:gap-4">
             <Button
               variant="ghost"
               size="icon"
@@ -483,7 +538,7 @@ export function EditorClient({
             </div>
           </div>
 
-          <div className="flex items-center gap-8">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6 lg:gap-8">
             <div className="flex items-center gap-3">
               <Switch
                 id="dues-only"
@@ -588,7 +643,7 @@ export function EditorClient({
         </div>
 
         <Card className="overflow-hidden border-t-[12px] border-t-primary bg-card shadow-lg transition-all">
-          <div className="flex flex-col gap-2 p-8">
+          <div className="flex flex-col gap-2 px-4 py-8 md:px-8">
             <Input
               className="h-auto border-none p-0 text-4xl font-extrabold focus-visible:ring-0"
               placeholder="Form Title"
@@ -632,8 +687,10 @@ export function EditorClient({
                 <div className="space-y-4">
                   {[...questions, ...instructions]
                     .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
-                    .map((item) => {
+                    .map((item, index, sortedArray) => {
                       const isInstruction = "title" in item;
+                      const canMoveUp = index > 0;
+                      const canMoveDown = index < sortedArray.length - 1;
                       return (
                         <div
                           key={item.id}
@@ -650,6 +707,10 @@ export function EditorClient({
                             onDuplicateInstruction={duplicateInstruction}
                             onClick={() => setActiveItemId(item.id)}
                             onForceSave={handleSaveForm}
+                            onMoveUp={() => reorderItems(item.id, "up")}
+                            onMoveDown={() => reorderItems(item.id, "down")}
+                            canMoveUp={canMoveUp}
+                            canMoveDown={canMoveDown}
                             error={
                               !isInstruction && duplicateIds.has(item.id)
                                 ? "Duplicate question title"
@@ -663,14 +724,14 @@ export function EditorClient({
               </SortableContext>
             </DndContext>
 
-            <div className="flex justify-center gap-4 pt-8">
+            <div className="flex flex-col justify-center gap-3 pt-8 md:flex-row md:gap-4">
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
                   addQuestion();
                 }}
                 size="lg"
-                className="h-14 rounded-full px-10 text-lg font-bold shadow-2xl transition-all hover:scale-105 active:scale-95"
+                className="h-14 rounded-full px-6 text-lg font-bold shadow-2xl transition-all hover:scale-105 active:scale-95 md:px-10"
               >
                 <Plus className="mr-3 h-6 w-6" /> Add Question
               </Button>
@@ -681,7 +742,7 @@ export function EditorClient({
                 }}
                 size="lg"
                 variant="secondary"
-                className="h-14 rounded-full px-10 text-lg font-bold shadow-2xl transition-all hover:scale-105 active:scale-95"
+                className="h-14 rounded-full px-6 text-lg font-bold shadow-2xl transition-all hover:scale-105 active:scale-95 md:px-10"
               >
                 <Plus className="mr-3 h-6 w-6" /> Add Instruction
               </Button>

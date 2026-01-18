@@ -1,10 +1,9 @@
 "use client";
 
 import type { DraggableSyntheticListeners } from "@dnd-kit/core";
-import type { z } from "zod";
-import { useRef, useState } from "react";
-import Image from "next/image";
 import {
+  ArrowDown,
+  ArrowUp,
   Copy,
   GripHorizontal,
   Image as ImageIcon,
@@ -13,6 +12,9 @@ import {
   Video,
   X,
 } from "lucide-react";
+import Image from "next/image";
+import { useRef, useState } from "react";
+import type { z } from "zod";
 
 import type { InstructionValidator } from "@forge/consts/knight-hacks";
 import { cn } from "@forge/ui";
@@ -20,6 +22,7 @@ import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
+import { useMediaQuery } from "@forge/ui/use-media-query";
 
 import { api } from "~/trpc/react";
 
@@ -31,6 +34,10 @@ interface InstructionEditCardProps {
   onUpdate: (updatedInstruction: FormInstruction & { id: string }) => void;
   onDelete: (id: string) => void;
   onDuplicate: (instruction: FormInstruction & { id: string }) => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   dragHandleProps?: DraggableSyntheticListeners;
 }
 
@@ -41,7 +48,12 @@ export function InstructionEditCard({
   onDelete,
   onDuplicate,
   dragHandleProps,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = false,
+  canMoveDown = false,
 }: InstructionEditCardProps) {
+  const isMobile = !useMediaQuery("(min-width: 768px)");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -154,7 +166,7 @@ export function InstructionEditCard({
   return (
     <Card
       className={cn(
-        "relative flex flex-col gap-4 bg-card p-6 text-card-foreground transition-all",
+        "relative flex flex-col gap-4 bg-card px-4 py-6 text-card-foreground transition-all md:p-6",
         "mt-12 border-t-4 border-t-primary shadow-lg",
       )}
     >
@@ -296,12 +308,41 @@ export function InstructionEditCard({
 
       {/* Footer */}
       <div className="mt-4 flex items-center justify-between gap-2 border-t pt-4">
-        <div
-          className="cursor-move text-gray-300 hover:text-gray-500"
-          {...dragHandleProps}
-        >
-          <GripHorizontal className="h-5 w-5 rotate-90" />
-        </div>
+        {isMobile ? (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveUp?.();
+              }}
+              disabled={!canMoveUp}
+              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Move up"
+            >
+              <ArrowUp className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveDown?.();
+              }}
+              disabled={!canMoveDown}
+              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Move down"
+            >
+              <ArrowDown className="h-5 w-5" />
+            </button>
+          </div>
+        ) : (
+          <div
+            className="cursor-move text-gray-300 hover:text-gray-500"
+            {...dragHandleProps}
+          >
+            <GripHorizontal className="h-5 w-5 rotate-90" />
+          </div>
+        )}
         <div className="flex items-center justify-end gap-2">
           <Copy
             className="h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700"

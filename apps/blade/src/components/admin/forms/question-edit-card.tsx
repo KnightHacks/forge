@@ -3,6 +3,8 @@
 import type { DraggableSyntheticListeners } from "@dnd-kit/core";
 import {
   AlignLeft,
+  ArrowDown,
+  ArrowUp,
   AtSign,
   Calendar,
   CheckSquare,
@@ -48,6 +50,7 @@ import {
 import { Slider } from "@forge/ui/slider";
 import { Textarea } from "@forge/ui/textarea";
 import { TimePicker } from "@forge/ui/time-picker";
+import { useMediaQuery } from "@forge/ui/use-media-query";
 
 type FormQuestion = z.infer<typeof QuestionValidator>;
 type QuestionType = FormQuestion["type"];
@@ -59,6 +62,10 @@ interface QuestionEditCardProps {
   onDelete: (id: string) => void;
   onDuplicate: (question: FormQuestion & { id: string }) => void;
   onForceSave?: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   error?: string;
   dragHandleProps?: DraggableSyntheticListeners;
 }
@@ -89,7 +96,12 @@ export function QuestionEditCard({
   onForceSave,
   error,
   dragHandleProps,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = false,
+  canMoveDown = false,
 }: QuestionEditCardProps) {
+  const isMobile = !useMediaQuery("(min-width: 768px)");
   // -- Handlers --
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -144,7 +156,7 @@ export function QuestionEditCard({
   return (
     <Card
       className={cn(
-        "relative flex flex-col gap-4 border-l-4 bg-card p-6 text-card-foreground transition-all",
+        "relative flex flex-col gap-4 border-l-4 bg-card px-4 py-6 text-card-foreground transition-all md:p-6",
         isActive
           ? "border-l-primary shadow-md ring-1 ring-black/5"
           : "border-l-transparent hover:bg-muted/50",
@@ -210,12 +222,41 @@ export function QuestionEditCard({
 
       {/* Footer */}
       <div className="mt-4 flex items-center justify-between gap-2 border-t pt-4">
-        <div
-          className="cursor-move text-gray-300 hover:text-gray-500"
-          {...dragHandleProps}
-        >
-          <GripHorizontal className="h-5 w-5 rotate-90" />
-        </div>
+        {isMobile ? (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveUp?.();
+              }}
+              disabled={!canMoveUp}
+              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Move up"
+            >
+              <ArrowUp className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveDown?.();
+              }}
+              disabled={!canMoveDown}
+              className="rounded p-1 text-gray-300 hover:text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Move down"
+            >
+              <ArrowDown className="h-5 w-5" />
+            </button>
+          </div>
+        ) : (
+          <div
+            className="cursor-move text-gray-300 hover:text-gray-500"
+            {...dragHandleProps}
+          >
+            <GripHorizontal className="h-5 w-5 rotate-90" />
+          </div>
+        )}
         <div className="flex items-center justify-end gap-2">
           <div className="mr-4 flex items-center gap-2 border-r pr-4">
             <Copy
