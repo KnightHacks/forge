@@ -525,9 +525,6 @@ function BooleanInput({
         }}
         disabled={disabled}
       />
-      <Label className="cursor-pointer font-normal">
-        {value ? "Yes" : "No"}
-      </Label>
     </div>
   );
 }
