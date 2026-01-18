@@ -231,7 +231,7 @@ function QuestionBody({
 
     case "EMAIL":
       return (
-        <div className="w-full md:w-2/3">
+        <div className="w-full">
           <Input
             type="email"
             placeholder="your.email@example.com"
@@ -246,7 +246,7 @@ function QuestionBody({
 
     case "NUMBER":
       return (
-        <div className="w-full md:w-1/3">
+        <div className="w-full">
           <Input
             type="number"
             placeholder="Enter a number"
@@ -272,7 +272,7 @@ function QuestionBody({
 
     case "PHONE":
       return (
-        <div className="w-full md:w-2/3">
+        <div className="w-full">
           <Input
             type="tel"
             placeholder="(123) 456-7890"
@@ -322,7 +322,7 @@ function QuestionBody({
 
     case "LINK":
       return (
-        <div className="w-full md:w-2/3">
+        <div className="w-full">
           <Input
             type="url"
             placeholder="https://example.com"
@@ -440,7 +440,7 @@ function MultipleChoiceInput({
       {allowOther &&
         (isOtherSelected ||
           (typeof value === "string" && value === OTHER_VALUE)) && (
-        <div className="ml-7 w-full md:w-2/3">
+        <div className="ml-7 w-full">
           <Input
             placeholder="Please specify"
             value={otherText}
@@ -589,7 +589,7 @@ function CheckboxesInput({
         </div>
       )}
       {allowOther && isOtherChecked && (
-        <div className="ml-7 w-full md:w-2/3">
+        <div className="ml-7 w-full">
           <Input
             placeholder="Please specify"
             value={otherText}
