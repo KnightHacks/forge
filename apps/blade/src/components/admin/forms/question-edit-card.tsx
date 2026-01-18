@@ -300,7 +300,7 @@ function QuestionBody({
   switch (question.type) {
     case "SHORT_ANSWER":
       return (
-        <div className="w-1/2">
+        <div className="w-full">
           <Input
             placeholder="Short answer text"
             className="rounded-none border-x-0 border-b border-t-0 border-gray-300 bg-transparent px-0 shadow-none outline-none focus-visible:border-b-2 focus-visible:border-primary focus-visible:ring-0"
@@ -336,7 +336,7 @@ function QuestionBody({
       );
     case "EMAIL":
       return (
-        <div className="w-1/2">
+        <div className="w-full">
           <Input
             type="email"
             placeholder="email@example.com"
@@ -347,7 +347,7 @@ function QuestionBody({
       );
     case "NUMBER":
       return (
-        <div className="w-1/3">
+        <div className="w-full">
           <Input
             type="number"
             placeholder="Enter a number"
@@ -360,7 +360,7 @@ function QuestionBody({
       );
     case "PHONE":
       return (
-        <div className="w-1/2">
+        <div className="w-full">
           <Input
             type="tel"
             placeholder="(123) 456-7890"
@@ -389,7 +389,7 @@ function QuestionBody({
       );
     case "LINK":
       return (
-        <div className="w-1/2">
+        <div className="w-full">
           <Input
             type="url"
             placeholder="https://example.com"

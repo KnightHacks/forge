@@ -201,19 +201,40 @@ export const sendEmail = async ({
   subject,
   html,
   from,
+  cc,
+  bcc,
 }: {
-  to: string;
+  to: string | string[];
   subject: string;
   html: string;
   from?: string;
+  cc?: string | string[];
+  bcc?: string | string[];
 }): Promise<{ success: true; messageId: string }> => {
   try {
-    const { data, error } = await resend.emails.send({
+    const emailPayload: {
+      from: string;
+      to: string | string[];
+      subject: string;
+      html: string;
+      cc?: string | string[];
+      bcc?: string | string[];
+    } = {
       from: from ?? env.RESEND_FROM_EMAIL,
       to,
       subject,
       html,
-    });
+    };
+
+    if (cc) {
+      emailPayload.cc = cc;
+    }
+
+    if (bcc) {
+      emailPayload.bcc = bcc;
+    }
+
+    const { data, error } = await resend.emails.send(emailPayload);
 
     if (error) {
       console.error("Resend error:", error);

@@ -101,7 +101,7 @@ export const miscRouter = {
         amount: z.number(),
         itemization: z.string(),
         importance: z.number(),
-        dateNeeded: z.date(),
+        dateNeeded: z.string(),
         deadlineType: z.string(),
       }),
     })
@@ -112,12 +112,11 @@ export const miscRouter = {
         amount: z.number(),
         itemization: z.string(),
         importance: z.number(),
-        dateNeeded: z.date(),
+        dateNeeded: z.string(),
         deadlineType: z.string(),
       }),
     )
     .mutation(async ({ input }) => {
-      // Helper function to escape HTML and preserve newlines
       const formatText = (text: string | null | undefined): string => {
         if (!text) return "N/A";
         return text
@@ -128,6 +127,16 @@ export const miscRouter = {
           .replace(/'/g, "&#039;")
           .replace(/\n/g, "<br>");
       };
+
+      // Format date as MM/DD
+      const formatDate = (date: Date | string): string => {
+        const dateObj = typeof date === "string" ? new Date(date) : date;
+        const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const day = String(dateObj.getDate()).padStart(2, "0");
+        return `${month}/${day}`;
+      };
+
+      const formattedDate = formatDate(input.dateNeeded);
 
       const htmlContent = `
         <!DOCTYPE html>
@@ -179,11 +188,7 @@ export const miscRouter = {
                             <strong style="color: #1a1a1a; font-size: 14px;">Date Needed:</strong>
                           </td>
                           <td style="padding-bottom: 16px; color: #333333; font-size: 14px;">
-                            ${input.dateNeeded.toLocaleDateString("en-US", { 
-                              year: "numeric", 
-                              month: "long", 
-                              day: "numeric" 
-                            })}
+                            ${formattedDate}
                           </td>
                         </tr>
                         <tr>
@@ -205,19 +210,19 @@ export const miscRouter = {
                           </td>
                         </tr>
                         <tr>
-                          <td style="padding-bottom: 8px; vertical-align: top; padding-top: 8px; border-top: 1px solid #e5e5e5;">
-                            <strong style="color: #1a1a1a; font-size: 14px;">Description:</strong>
-                          </td>
-                          <td style="padding-bottom: 8px; padding-top: 8px; border-top: 1px solid #e5e5e5; color: #333333; font-size: 14px; white-space: pre-wrap;">
-                            ${formatText(input.description)}
+                          <td colspan="2" style="padding-bottom: 8px; padding-top: 8px; border-top: 1px solid #e5e5e5;">
+                            <strong style="color: #1a1a1a; font-size: 14px; display: block; margin-bottom: 8px;">Description:</strong>
+                            <div style="color: #333333; font-size: 14px; white-space: pre-wrap; text-align: left;">
+                              ${formatText(input.description)}
+                            </div>
                           </td>
                         </tr>
                         <tr>
-                          <td style="padding-bottom: 16px; vertical-align: top; padding-top: 16px;">
-                            <strong style="color: #1a1a1a; font-size: 14px;">Itemization:</strong>
-                          </td>
-                          <td style="padding-bottom: 16px; padding-top: 16px; color: #333333; font-size: 14px; white-space: pre-wrap;">
-                            ${formatText(input.itemization)}
+                          <td colspan="2" style="padding-bottom: 16px; padding-top: 16px;">
+                            <strong style="color: #1a1a1a; font-size: 14px; display: block; margin-bottom: 8px;">Itemization:</strong>
+                            <div style="color: #333333; font-size: 14px; white-space: pre-wrap; text-align: left;">
+                              ${formatText(input.itemization)}
+                            </div>
                           </td>
                         </tr>
                       </table>
@@ -249,9 +254,10 @@ export const miscRouter = {
 
       await sendEmail({
         to: "treasurer@knighthacks.org",
-        subject: `KHFR - $${input.amount.toLocaleString()} | ${input.dateNeeded.toLocaleDateString()} | ${input.team}`,
+        cc: "exec@knighthacks.org",
+        subject: `KHFR - $${input.amount.toLocaleString()} | ${formattedDate} | ${input.team}`,
         html: htmlContent,
-        from: "funding-requests@knighthacks.org",
+        from: "Funding Requests <funding-requests@knighthacks.org>",
       });
     }),
 } satisfies TRPCRouterRecord;
