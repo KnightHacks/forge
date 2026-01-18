@@ -1,27 +1,27 @@
 import { relations } from "drizzle-orm";
 import {
-  pgEnum,
-  pgTableCreator,
-  primaryKey,
-  unique,
+    pgEnum,
+    pgTableCreator,
+    primaryKey,
+    unique,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
 import {
-  COUNTRIES,
-  DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
-  EVENT_FEEDBACK_HEARD,
-  EVENT_FEEDBACK_SIMILAR_EVENT,
-  EVENT_TAGS,
-  GENDERS,
-  HACKATHON_APPLICATION_STATES,
-  LEVELS_OF_STUDY,
-  MAJORS,
-  RACES_OR_ETHNICITIES,
-  SCHOOLS,
-  SHIRT_SIZES,
-  SPONSOR_TIERS,
+    COUNTRIES,
+    DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
+    EVENT_FEEDBACK_HEARD,
+    EVENT_FEEDBACK_SIMILAR_EVENT,
+    EVENT_TAGS,
+    GENDERS,
+    HACKATHON_APPLICATION_STATES,
+    LEVELS_OF_STUDY,
+    MAJORS,
+    RACES_OR_ETHNICITIES,
+    SCHOOLS,
+    SHIRT_SIZES,
+    SPONSOR_TIERS,
 } from "@forge/consts/knight-hacks";
 
 import { Roles, User } from "./auth";
@@ -579,6 +579,23 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
 
 //Ts so dumb
 export const FormSchemaSchema = createInsertSchema(FormsSchemas);
+
+export const FormResponseRoles = createTable(
+  "form_response_roles",
+  (t) => ({
+    formId: t
+      .uuid()
+      .notNull()
+      .references(() => FormsSchemas.id, { onDelete: "cascade" }),
+    roleId: t
+      .uuid()
+      .notNull()
+      .references(() => Roles.id, { onDelete: "cascade" }),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.formId, t.roleId] }),
+  }),
+);
 
 export const FormResponse = createTable("form_response", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),

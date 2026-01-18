@@ -1,6 +1,6 @@
-import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import type { JSONSchema7 } from "json-schema";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -15,6 +15,7 @@ import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";
 import {
   FormResponse,
+  FormResponseRoles,
   FormSchemaSchema,
   FormSectionRoles,
   FormSections,
@@ -102,7 +103,9 @@ export const formsRouter = {
         createdAt: true,
         formData: true,
         formValidatorJson: true,
-      }).extend({ formData: FormSchemaValidator }),
+      })
+        .extend({ formData: FormSchemaValidator })
+        .extend({ responseRoleIds: z.array(z.string().uuid()).optional() }),
     )
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EDIT_FORMS"], ctx);
@@ -122,6 +125,15 @@ export const formsRouter = {
         where: (t, { eq }) => eq(t.id, input.id ?? ""),
       });
 
+      if (!existingForm) {
+        throw new TRPCError({
+          message: "Form not found",
+          code: "NOT_FOUND",
+        });
+      }
+
+      const formId = existingForm.id;
+
       await db
         .insert(FormsSchemas)
         .values({
@@ -129,7 +141,7 @@ export const formsRouter = {
           name: input.formData.name,
           slugName: slug_name,
           formValidatorJson: jsonSchema.schema,
-          sectionId: existingForm?.sectionId ?? null,
+          sectionId: existingForm.sectionId,
         })
         .onConflictDoUpdate({
           //If it already exists upsert it
@@ -139,9 +151,25 @@ export const formsRouter = {
             name: input.formData.name,
             slugName: slug_name,
             formValidatorJson: jsonSchema.schema,
-            sectionId: existingForm?.sectionId ?? null,
+            sectionId: existingForm.sectionId,
           },
         });
+
+      const { responseRoleIds } = input;
+      if (responseRoleIds !== undefined) {
+        await db
+          .delete(FormResponseRoles)
+          .where(eq(FormResponseRoles.formId, formId));
+
+        if (responseRoleIds.length > 0) {
+          await db.insert(FormResponseRoles).values(
+            responseRoleIds.map((roleId) => ({
+              formId,
+              roleId,
+            })),
+          );
+        }
+      }
     }),
 
   getForm: protectedProcedure
@@ -161,6 +189,11 @@ export const formsRouter = {
       const { formValidatorJson: _JSONValidator, ...retForm } = form;
       const formData = form.formData as FormType;
 
+      const responseRoles = await db
+        .select({ roleId: FormResponseRoles.roleId })
+        .from(FormResponseRoles)
+        .where(eq(FormResponseRoles.formId, form.id));
+
       // Regenerate presigned URLs for any media that has objectNames
       const instructionsWithFreshUrls = await regenerateMediaUrls(
         formData.instructions,
@@ -168,12 +201,42 @@ export const formsRouter = {
 
       return {
         ...retForm,
+        responseRoleIds: responseRoles.map((r) => r.roleId),
         formData: {
           ...formData,
           instructions: instructionsWithFreshUrls,
         },
         zodValidator: jsonSchemaToZod(form.formValidatorJson as JSONSchema7),
       };
+    }),
+
+  checkResponseAccess: protectedProcedure
+    .input(z.object({ formId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const userId = ctx.session.user.id;
+
+      const responseRoles = await db
+        .select({ roleId: FormResponseRoles.roleId })
+        .from(FormResponseRoles)
+        .where(eq(FormResponseRoles.formId, input.formId));
+
+      if (responseRoles.length === 0) {
+        return { canRespond: true };
+      }
+
+      const userRoleIds = await db
+        .select({ roleId: Permissions.roleId })
+        .from(Permissions)
+        .where(sql`cast(${Permissions.userId} as text) = ${userId}`);
+
+      const userRoleIdSet = new Set(userRoleIds.map((r) => r.roleId));
+      const formRoleIdSet = new Set(responseRoles.map((r) => r.roleId));
+
+      const hasRequiredRole = Array.from(formRoleIdSet).some((roleId) =>
+        userRoleIdSet.has(roleId),
+      );
+
+      return { canRespond: hasRequiredRole };
     }),
 
   deleteForm: permProcedure
@@ -320,6 +383,32 @@ export const formsRouter = {
           message: "Form doesn't exist for response",
           code: "BAD_REQUEST",
         });
+      }
+
+      const responseRoles = await db
+        .select({ roleId: FormResponseRoles.roleId })
+        .from(FormResponseRoles)
+        .where(eq(FormResponseRoles.formId, input.form));
+
+      if (responseRoles.length > 0) {
+        const userRoleIds = await db
+          .select({ roleId: Permissions.roleId })
+          .from(Permissions)
+          .where(sql`cast(${Permissions.userId} as text) = ${userId}`);
+
+        const userRoleIdSet = new Set(userRoleIds.map((r) => r.roleId));
+        const formRoleIdSet = new Set(responseRoles.map((r) => r.roleId));
+
+        const hasRequiredRole = Array.from(formRoleIdSet).some((roleId) =>
+          userRoleIdSet.has(roleId),
+        );
+
+        if (!hasRequiredRole) {
+          throw new TRPCError({
+            message: "You don't have permission to respond to this form",
+            code: "FORBIDDEN",
+          });
+        }
       }
 
       // check if user already submitted and form doesnt allow resubmission

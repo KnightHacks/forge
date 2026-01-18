@@ -1,11 +1,6 @@
 "use client";
 
 import type { DragEndEvent } from "@dnd-kit/core";
-import type { CSSProperties } from "react";
-import type * as z from "zod";
-import * as React from "react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   closestCenter,
   DndContext,
@@ -22,7 +17,12 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeft, Loader2, Plus, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Save, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import type { CSSProperties } from "react";
+import * as React from "react";
+import { useEffect, useState } from "react";
+import type * as z from "zod";
 
 import type {
   FormType,
@@ -31,18 +31,28 @@ import type {
 } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
+import { Checkbox } from "@forge/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Switch } from "@forge/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { Textarea } from "@forge/ui/textarea";
 
-import type { MatchingType } from "./linker";
-import type { ProcedureMeta } from "~/lib/utils";
 import { InstructionEditCard } from "~/components/admin/forms/instruction-edit-card";
 import { QuestionEditCard } from "~/components/admin/forms/question-edit-card";
+import type { ProcedureMeta } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { ConnectionViewer } from "./con-viewer";
+import type { MatchingType } from "./linker";
 import ListMatcher from "./linker";
 
 type FormQuestion = z.infer<typeof QuestionValidator>;
@@ -162,6 +172,8 @@ export function EditorClient({
   const [instructions, setInstructions] = useState<UIInstruction[]>([]);
   const [duesOnly, setDuesOnly] = useState(false);
   const [allowResubmission, setAllowResubmission] = useState(true);
+  const [responseRoleIds, setResponseRoleIds] = useState<string[]>([]);
+  const [responseRolesDialogOpen, setResponseRolesDialogOpen] = useState(false);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -176,6 +188,8 @@ export function EditorClient({
     { slug_name: slug } as any,
     { retry: false, refetchOnWindowFocus: false },
   );
+
+  const { data: allRoles = [] } = api.roles.getAllLinks.useQuery();
 
   const updateFormMutation = api.forms.updateForm.useMutation({
     onMutate: () => setSaveStatus("Saving..."),
@@ -227,6 +241,7 @@ export function EditorClient({
       },
       duesOnly,
       allowResubmission,
+      responseRoleIds,
     } as any);
   }, [
     formTitle,
@@ -265,6 +280,7 @@ export function EditorClient({
         setFormBanner(formData.formData.banner || "");
         setDuesOnly(formData.duesOnly);
         setAllowResubmission(formData.allowResubmission);
+        setResponseRoleIds((formData as any).responseRoleIds || []);
 
         const loadedQuestions: UIQuestion[] = formData.formData.questions.map(
           (q: FormQuestion & { order?: number }) => ({
@@ -292,7 +308,7 @@ export function EditorClient({
   // auto save trigger when toggle switches are changed
   useEffect(() => {
     if (!isLoading) handleSaveForm();
-  }, [duesOnly, allowResubmission, isLoading]); // removed handleSaveForm to prevent save-on-every-render
+  }, [duesOnly, allowResubmission, responseRoleIds, isLoading]); // removed handleSaveForm to prevent save-on-every-render
 
   // auto save when finishing editing an item (changing active card)
   useEffect(() => {
@@ -494,6 +510,80 @@ export function EditorClient({
                 Allow Multiple Responses
               </Label>
             </div>
+            <Dialog
+              open={responseRolesDialogOpen}
+              onOpenChange={setResponseRolesDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Users className="h-4 w-4" />
+                  Response Roles
+                  {responseRoleIds.length > 0 && (
+                    <span className="ml-1 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                      {responseRoleIds.length}
+                    </span>
+                  )}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Configure Response Roles</DialogTitle>
+                  <DialogDescription>
+                    Select which roles can respond to this form. If no roles are
+                    selected, anyone can respond.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="max-h-[400px] overflow-y-auto py-4">
+                  <div className="space-y-3">
+                    {allRoles.map((role) => {
+                      const isSelected = responseRoleIds.includes(role.id);
+                      return (
+                        <div
+                          key={role.id}
+                          className="flex items-center gap-3 rounded-md border p-3 hover:bg-muted/50"
+                        >
+                          <Checkbox
+                            id={`role-${role.id}`}
+                            checked={isSelected}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setResponseRoleIds([...responseRoleIds, role.id]);
+                              } else {
+                                setResponseRoleIds(
+                                  responseRoleIds.filter((id) => id !== role.id),
+                                );
+                              }
+                            }}
+                          />
+                          <Label
+                            htmlFor={`role-${role.id}`}
+                            className="flex-1 cursor-pointer text-sm font-normal"
+                          >
+                            {role.name}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                    {allRoles.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No roles available. Create roles first.
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setResponseRoleIds([])}
+                  >
+                    Clear All
+                  </Button>
+                  <Button onClick={() => setResponseRolesDialogOpen(false)}>
+                    Done
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
