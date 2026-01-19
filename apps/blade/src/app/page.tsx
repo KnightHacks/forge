@@ -56,11 +56,54 @@ export default function HomePage() {
 
         <div>
           <div className="absolute bottom-5 flex w-full animate-pulse items-center justify-center font-bold italic text-yellow-300">
-            <div>SCROLL DOWN TO LEARN MORE</div>
+            <div>SCROLL DOWN TO SEE MORE</div>
           </div>
         </div>
       </div>
-      <div className="min-w-screen relative z-20 min-h-screen bg-black"></div>
+      <div className="min-w-screen relative z-20 flex h-screen flex-col overflow-clip bg-black md:flex-row">
+        <div className="relative w-full flex-[3] border-4 border-gray-900 bg-orange-900">
+          <div className="absolute h-full w-full">
+            <Image
+              src="/noah_img/wave.svg"
+              fill
+              style={{
+                objectFit: "cover",
+                objectPosition: "top",
+              }}
+              alt=""
+            ></Image>
+          </div>
+
+          <div className="absolute top-0 w-full py-2 text-lg font-bold italic text-yellow-500 md:mt-5 md:text-3xl">
+            VIBE CODERS SUMMONING AI AT THE SMALLEST INCONVENIENCE?
+          </div>
+
+          <div className="absolute -left-5 bottom-0 h-[40%] w-[50%] md:-left-10 md:h-[60%] md:w-[90%] xl:md:w-[70%] xl:h-[60%]">
+            <Image
+              src="/noah_img/megumi.png"
+              alt="Megumi"
+              fill
+              style={{ objectFit: "contain", objectPosition: "bottom" }}
+            ></Image>
+          </div>
+          <div className="animate-mahoraga absolute -bottom-12 right-2 h-[110%] w-[70%] md:-right-[40%] md:bottom-[15%] md:h-[160%] md:w-[160%] lg:h-[120%] lg:w-[120%] xl:-right-[15%] xl:h-[100%] xl:w-[100%]">
+            <Image
+              src="/noah_img/mahoraga.png"
+              alt="MahoGPT"
+              fill
+              style={{ objectFit: "contain", objectPosition: "bottom" }}
+            ></Image>
+          </div>
+        </div>
+        <div className="relative z-20 flex w-full flex-[5] flex-col justify-center gap-1 border-4 border-gray-900 bg-gray-950 px-2 pt-1">
+          <div className="relative z-20 h-[5rem] w-full bg-gray-800"></div>
+          <div className="relative z-20 h-[5rem] w-full bg-gray-800"></div>
+          <div className="relative z-20 h-[5rem] w-full bg-gray-800"></div>
+          <div className="relative z-20 h-[5rem] w-full bg-gray-800"></div>
+          <div className="relative z-20 h-[5rem] w-full bg-gray-800"></div>
+          <div className="relative z-20 h-[5rem] w-full bg-gray-800"></div>
+        </div>
+      </div>
     </main>
   );
 }

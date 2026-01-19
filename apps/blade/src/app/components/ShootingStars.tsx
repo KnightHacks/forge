@@ -7,22 +7,32 @@ const ShootingStars = () => {
   const [positionY, setPositionY] = useState(50);
   const [starKey, setStarKey] = useState(0);
   const [animationDelay, setAnimationDelay] = useState(1);
+  const [duration, setDuration] = useState(0);
+
+  const [windowWidth, setWindowWidth] = useState(0);
+  const [windowHeight, setWindowHeight] = useState(0);
 
   useEffect(() => {
     const spawnsOnTop = Math.random() < 0.5;
+
+    const dx = window.innerWidth;
+    const dy = window.innerHeight;
+
+    setWindowWidth(dx);
+    setWindowHeight(dy);
+
+    const speed = 800;
+
+    const distance = Math.hypot(dx, dy);
+    const newDuration = distance / speed;
+
+    setDuration(newDuration);
 
     setPositionX(spawnsOnTop ? Math.random() * 100 : 110);
     setPositionY(spawnsOnTop ? -10 : Math.random() * 100);
 
     setAnimationDelay(Math.random() * 5 + 1);
   }, [starKey]);
-
-  const dx = window.innerWidth;
-  const dy = window.innerHeight;
-  const speed = 800;
-
-  const distance = Math.hypot(dx, dy);
-  const duration = distance / speed;
 
   return (
     <div
@@ -33,8 +43,8 @@ const ShootingStars = () => {
           left: `${positionX}%`,
           top: `${positionY}%`,
           animationDelay: `${animationDelay}s`,
-          "--dx": `${dx}px`,
-          "--dy": `${dy}px`,
+          "--dx": `${windowWidth}px`,
+          "--dy": `${windowHeight}px`,
           "--duration": `${duration}s`,
         } as React.CSSProperties
       }
