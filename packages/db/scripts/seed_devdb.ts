@@ -1,17 +1,26 @@
 import { exec } from "child_process";
 import { unlink } from "fs/promises";
 import { promisify } from "util";
+const execAsync = promisify(exec);
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Client } from "pg";
+import { Routes } from "discord-api-types/v10";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import Pool from "pg-pool";
 
+import {
+  DEV_KNIGHTHACKS_GUILD_ID,
+  KNIGHTHACKS_S3_BUCKET_REGION,
+  PROD_KNIGHTHACKS_GUILD_ID,
+} from "@forge/consts/knight-hacks";
+
+import { discord } from "../../api/src/utils";
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
 import * as knightHacksSchema from "../src/schemas/knight-hacks";
+import { minioClient } from "../../api/src/minio/minio-client";
 
-const execAsync = promisify(exec);
 
 /* eslint-disable no-console */
 // Usage:
@@ -60,6 +69,9 @@ const TABLES_REMOVE_ALL: string[] = [
   "knight_hacks_judges",
 ];
 
+const roleIdMappings: Record<string, string> = {};
+const eventIdMappings: Record<string, string> = {};
+
 async function cleanTable(name: string, userIdsToKeep: string[]) {
   if (!backupDb) return;
 
@@ -95,6 +107,29 @@ async function cleanTable(name: string, userIdsToKeep: string[]) {
         sql`, `,
       )})
     `);
+  } else if (name === "auth_roles") {
+    const all_rows = await backupDb.query.Roles.findMany();
+    for (const row of all_rows) {
+      const id = row.id;
+      await backupDb.execute(sql`
+				UPDATE "auth_roles" 
+  			SET discord_role_id = ${roleIdMappings[row.discordRoleId]} 
+  			WHERE id = ${id}
+			`);
+    }
+    console.log("Updated auth roles to use dev server discord ids");
+  } else if (name === "knight_hacks_event") {
+    const all_rows = await backupDb.query.Event.findMany();
+    for (const row of all_rows) {
+      if (!eventIdMappings[row.discordId]) continue;
+      const id = row.id;
+      await backupDb.execute(sql`
+				UPDATE "knight_hacks_event" 
+  			SET discord_id = ${eventIdMappings[row.discordId]} 
+  			WHERE id = ${id}
+			`);
+    }
+    console.log("Updated KH events to use dev server discord ids");
   } else {
     console.log(`Table ${name} will remain unaffected entirely`);
   }
@@ -103,6 +138,7 @@ async function cleanTable(name: string, userIdsToKeep: string[]) {
 async function copyDatabase() {
   const backupFile = "backup.sql";
   const { originalDb, user, password, host, port } = parsePg();
+  /* eslint-disable no-restricted-properties */
   const envN = { ...process.env, PGPASSWORD: password };
 
   try {
@@ -134,6 +170,174 @@ function parsePg() {
   };
 }
 
+interface RoleColors {
+  primary_color: number;
+  secondary_color: number | null;
+  tertiary_color: number | null;
+}
+
+interface DiscordRole {
+  id: string;
+  name: string;
+  description: string | null;
+  permissions: string;
+  position: number;
+  color: number;
+  colors: RoleColors;
+  hoist: boolean;
+  managed: boolean;
+  mentionable: boolean;
+  icon: string | null;
+  unicode_emoji: string | null;
+  flags: number;
+}
+
+async function syncRoles() {
+  if (!backupDb) return;
+
+  const prodRolesWithPerms = new Set(
+    (
+      await backupDb.query.Roles.findMany({ columns: { discordRoleId: true } })
+    ).map((row) => row.discordRoleId),
+  );
+  let prodRoles = (await discord.get(
+    Routes.guildRoles(PROD_KNIGHTHACKS_GUILD_ID),
+  )) as DiscordRole[];
+  prodRoles = prodRoles.filter((role) => prodRolesWithPerms.has(role.id));
+
+  const devRolesArr = (await discord.get(
+    Routes.guildRoles(DEV_KNIGHTHACKS_GUILD_ID),
+  )) as DiscordRole[];
+  const devRoles = Object.fromEntries(
+    devRolesArr.map((role) => [role.name + " " + role.permissions, role]),
+  );
+
+  for (const role of prodRoles) {
+    const hash = role.name + " " + role.permissions;
+    if (devRoles[hash]) {
+      roleIdMappings[role.id] = devRoles[hash].id;
+    } else {
+      const newRole = (await discord.post(
+        Routes.guildRoles(DEV_KNIGHTHACKS_GUILD_ID),
+        {
+          body: {
+            name: role.name,
+            permissions: role.permissions,
+            color: role.color,
+            hoist: role.hoist,
+            mentionable: role.mentionable,
+          },
+        },
+      )) as DiscordRole;
+      roleIdMappings[role.id] = newRole.id;
+    }
+  }
+
+  console.log(roleIdMappings);
+}
+
+interface DiscordGuildScheduledEvent {
+  id: string;
+  guild_id: string;
+  channel_id: string | null;
+  name: string;
+  description: string | null;
+  scheduled_start_time: string;
+  scheduled_end_time: string | null;
+  privacy_level: number;
+  status: number;
+  entity_type: number;
+  entity_id: string | null;
+  entity_metadata: {
+    location?: string;
+  } | null;
+  creator_id?: string;
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  creator?: any;
+  user_count?: number;
+  image?: string | null;
+}
+
+async function syncEvents() {
+  if (!backupDb) return;
+
+  const prodEvents = (await discord.get(
+    Routes.guildScheduledEvents(PROD_KNIGHTHACKS_GUILD_ID),
+  )) as DiscordGuildScheduledEvent[];
+
+  const devEventsArr = (await discord.get(
+    Routes.guildScheduledEvents(DEV_KNIGHTHACKS_GUILD_ID),
+  )) as DiscordGuildScheduledEvent[];
+  const devEvents = Object.fromEntries(
+    devEventsArr.map((ev) => [ev.name + " " + ev.scheduled_start_time, ev]),
+  );
+
+  for (const event of prodEvents) {
+    const hash = event.name + " " + event.scheduled_start_time;
+    if (devEvents[hash]) {
+      eventIdMappings[event.id] = devEvents[hash].id;
+    } else {
+      const newEvent = (await discord.post(
+        Routes.guildScheduledEvents(DEV_KNIGHTHACKS_GUILD_ID),
+        {
+          body: {
+            name: event.name,
+            description: event.description,
+            scheduled_start_time: event.scheduled_start_time,
+            scheduled_end_time: event.scheduled_end_time,
+            privacy_level: event.privacy_level,
+            entity_type: event.entity_type,
+            entity_metadata: event.entity_metadata,
+          },
+        },
+      )) as DiscordGuildScheduledEvent;
+      eventIdMappings[event.id] = newEvent.id;
+    }
+  }
+
+  console.log(eventIdMappings);
+}
+
+async function minio() {
+	const BUCKET_NAME = "dev-db-backups";
+	const filePath = "backup.sql";
+	const { originalDb: _originalDb, user, password, host, port } = parsePg();
+	/* eslint-disable no-restricted-properties */
+		const envN = { ...process.env, PGPASSWORD: password };
+
+	await execAsync(
+		`pg_dump -h ${host} -p ${port} -U ${user} --data-only --column-inserts --disable-triggers --no-owner --no-acl ${backupDbName} > ${filePath}`,
+		{ env: envN },
+	);
+
+	const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+	if (!bucketExists) {
+		await minioClient.makeBucket(
+			BUCKET_NAME,
+			KNIGHTHACKS_S3_BUCKET_REGION,
+		);
+	}
+
+	await minioClient.fPutObject(
+		BUCKET_NAME,
+		filePath,
+		filePath,
+		{
+			"Content-Type": "text/plain", 
+		}
+	);
+
+	const fileUrl = await minioClient.presignedGetObject(
+		BUCKET_NAME,
+		filePath,
+		60 * 60 * 24,
+	);
+
+	await unlink(filePath);
+
+	console.log(`Saved backup to ${fileUrl}`);
+}
+
 async function main() {
   try {
     const baseConnectionString = env.DATABASE_URL.substring(
@@ -157,6 +361,9 @@ async function main() {
       casing: "snake_case",
     });
 
+    await syncRoles();
+    await syncEvents();
+
     const { rows: tablesJSON } = await backupDb.execute(sql`
 		  SELECT table_name 
 		  FROM information_schema.tables 
@@ -167,7 +374,7 @@ async function main() {
     let tables = tablesJSON.map((t) => t.table_name as string);
     tables = [...tables.filter((x) => x !== "auth_user"), "auth_user"];
 
-		console.log("Getting admins");
+    console.log("Getting admins");
     const userIdsToKeep: string[] = (
       await backupDb.query.Permissions.findMany({
         columns: {
@@ -181,16 +388,18 @@ async function main() {
     }
 
     console.log(
-      `Keeping ${userIdsToKeep.length} non-admin users and cascading to whatever has cascade in the schema already`,
+      `Keeping ${userIdsToKeep.length} admin users and cascading to whatever has cascade in the schema already`,
     );
 
     await backupDb.execute(sql`
-	      DELETE FROM auth_user 
-	      WHERE id NOT IN (${sql.join(
-          userIdsToKeep.map((id) => sql`${id}`),
-          sql`, `,
-        )})
-	    `);
+	    DELETE FROM auth_user 
+	    WHERE id NOT IN (${sql.join(
+        userIdsToKeep.map((id) => sql`${id}`),
+        sql`, `,
+      )})
+	  `);
+
+		await minio();
 
     await cleanUp();
 
