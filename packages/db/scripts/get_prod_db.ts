@@ -3,12 +3,14 @@
 //   pnpm --filter @forge/db with-env tsx scripts/get_prod_db.tsx
 
 import { exec } from "child_process";
-import { unlink } from "fs/promises";
-import { promisify } from "util";
-import { minioClient } from "../../api/src/minio/minio-client";
 import fs from "fs";
+import { unlink } from "fs/promises";
 import { pipeline } from "stream/promises";
+import { promisify } from "util";
+
+import { minioClient } from "../../api/src/minio/minio-client";
 import { env } from "../src/env";
+
 const execAsync = promisify(exec);
 
 function parsePg() {
@@ -23,32 +25,29 @@ function parsePg() {
 }
 
 async function main() {
-	const BUCKET_NAME = "dev-db-backups";
-	const objectName = "backup.sql";
+  const BUCKET_NAME = "dev-db-backups";
+  const objectName = "backup.sql";
 
-	const fileUrl = await minioClient.presignedGetObject(
-		BUCKET_NAME,
-		objectName,
-		60 * 60 * 24,
-	);
+  const fileUrl = await minioClient.presignedGetObject(
+    BUCKET_NAME,
+    objectName,
+    60 * 60 * 24,
+  );
 
-	console.log("Pulling backup.sql from minio");
+  console.log("Pulling backup.sql from minio");
 
-	const res = await fetch(fileUrl);
-	if (!res.ok || !res.body) {
-		throw new Error(`Download failed: ${res.status}`);
-	}
+  const res = await fetch(fileUrl);
+  if (!res.ok || !res.body) {
+    throw new Error(`Download failed: ${res.status}`);
+  }
 
-	await pipeline(
-		res.body,
-		fs.createWriteStream(objectName),
-	);
+  await pipeline(res.body, fs.createWriteStream(objectName));
 
   const { originalDb: _, user, password, host: _host, port } = parsePg();
   /* eslint-disable no-restricted-properties */
   const envN = { ...process.env, PGPASSWORD: password };
 
-	console.log("Inserting prod rows into local DB");
+  console.log("Inserting prod rows into local DB");
   try {
     await execAsync(
       `psql -h localhost -p ${port} -U ${user} local < ${objectName}`,
