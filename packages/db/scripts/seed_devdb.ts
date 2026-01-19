@@ -1,7 +1,6 @@
 import { exec } from "child_process";
 import { unlink } from "fs/promises";
 import { promisify } from "util";
-const execAsync = promisify(exec);
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Client } from "pg";
 import { Routes } from "discord-api-types/v10";
@@ -15,12 +14,13 @@ import {
   PROD_KNIGHTHACKS_GUILD_ID,
 } from "@forge/consts/knight-hacks";
 
+import { minioClient } from "../../api/src/minio/minio-client";
 import { discord } from "../../api/src/utils";
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
 import * as knightHacksSchema from "../src/schemas/knight-hacks";
-import { minioClient } from "../../api/src/minio/minio-client";
 
+const execAsync = promisify(exec);
 
 /* eslint-disable no-console */
 // Usage:
@@ -60,13 +60,12 @@ async function cleanUp() {
     console.error("Error ending admin pool:", e);
   }
 
-	const { originalDb: _, user, password, host, port } = parsePg();
-	/* eslint-disable no-restricted-properties */
-		const envN = { ...process.env, PGPASSWORD: password };
-	await execAsync(
-		`dropdb -h ${host} -p ${port} -U ${user} backup`,
-		{ env: envN },
-	);
+  const { originalDb: _, user, password, host, port } = parsePg();
+  /* eslint-disable no-restricted-properties */
+  const envN = { ...process.env, PGPASSWORD: password };
+  await execAsync(`dropdb -h ${host} -p ${port} -U ${user} backup`, {
+    env: envN,
+  });
 }
 
 const TABLES_REMOVE_ALL: string[] = [
@@ -307,43 +306,35 @@ async function syncEvents() {
 }
 
 async function minio() {
-	const BUCKET_NAME = "dev-db-backups";
-	const filePath = "backup.sql";
-	const { originalDb: _originalDb, user, password, host, port } = parsePg();
-	/* eslint-disable no-restricted-properties */
-		const envN = { ...process.env, PGPASSWORD: password };
+  const BUCKET_NAME = "dev-db-backups";
+  const filePath = "backup.sql";
+  const { originalDb: _originalDb, user, password, host, port } = parsePg();
+  /* eslint-disable no-restricted-properties */
+  const envN = { ...process.env, PGPASSWORD: password };
 
-	await execAsync(
-		`pg_dump -h ${host} -p ${port} -U ${user} --data-only --column-inserts --disable-triggers --no-owner --no-acl ${backupDbName} > ${filePath}`,
-		{ env: envN },
-	);
+  await execAsync(
+    `pg_dump -h ${host} -p ${port} -U ${user} --data-only --column-inserts --disable-triggers --no-owner --no-acl ${backupDbName} > ${filePath}`,
+    { env: envN },
+  );
 
-	const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
-	if (!bucketExists) {
-		await minioClient.makeBucket(
-			BUCKET_NAME,
-			KNIGHTHACKS_S3_BUCKET_REGION,
-		);
-	}
+  const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+  if (!bucketExists) {
+    await minioClient.makeBucket(BUCKET_NAME, KNIGHTHACKS_S3_BUCKET_REGION);
+  }
 
-	await minioClient.fPutObject(
-		BUCKET_NAME,
-		filePath,
-		filePath,
-		{
-			"Content-Type": "text/plain", 
-		}
-	);
+  await minioClient.fPutObject(BUCKET_NAME, filePath, filePath, {
+    "Content-Type": "text/plain",
+  });
 
-	const fileUrl = await minioClient.presignedGetObject(
-		BUCKET_NAME,
-		filePath,
-		60 * 60 * 24,
-	);
+  const fileUrl = await minioClient.presignedGetObject(
+    BUCKET_NAME,
+    filePath,
+    60 * 60 * 24,
+  );
 
-	await unlink(filePath);
+  await unlink(filePath);
 
-	console.log(`Saved backup to ${fileUrl}`);
+  console.log(`Saved backup to ${fileUrl}`);
 }
 
 async function main() {
@@ -407,7 +398,7 @@ async function main() {
       )})
 	  `);
 
-		await minio();
+    await minio();
 
     await cleanUp();
 
