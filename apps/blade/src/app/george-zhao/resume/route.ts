@@ -20,7 +20,7 @@ export async function GET() {
       await fs.promises.access(p, fs.constants.R_OK);
       filePath = p;
       break;
-    } catch (_) {
+    } catch {
       // continue
     }
   }

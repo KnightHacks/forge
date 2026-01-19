@@ -170,7 +170,7 @@ export default function Page() {
           <div className="mt-6 rounded-2xl bg-white/5 p-6">
             <h3 className="text-sm text-slate-300 uppercase tracking-wide">Skills</h3>
               <div className="mt-3 flex flex-wrap gap-2">
-                {['TypeScript','React','Next.js','Tailwind CSS','Node.js','Postgres', 'MySQL','Python','Java','C#',"C++",'Dart'].map(skill => (
+                {['TypeScript','React','Next.js','Tailwind CSS','Node.js','Postgres', 'MySQL','Discord API','Python','Java','C#',"C++",'Dart'].map(skill => (
                   <span key={skill} className="rounded-full bg-white/6 px-3 py-1 text-xs text-slate-200">{skill}</span>
                 ))}
               </div>
