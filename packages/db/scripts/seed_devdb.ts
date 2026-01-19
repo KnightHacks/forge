@@ -44,7 +44,7 @@ let backupPool: Pool<Client> | null = null;
 let backupDb: NodePgDatabase<DatabaseSchema> | null = null;
 
 async function cleanUp() {
-  console.log("Cleaning up connections...");
+  console.log("Cleaning up connections");
 
   if (backupPool !== null) {
     try {
@@ -59,6 +59,14 @@ async function cleanUp() {
   } catch (e) {
     console.error("Error ending admin pool:", e);
   }
+
+	const { originalDb: _, user, password, host, port } = parsePg();
+	/* eslint-disable no-restricted-properties */
+		const envN = { ...process.env, PGPASSWORD: password };
+	await execAsync(
+		`dropdb -h ${host} -p ${port} -U ${user} backup`,
+		{ env: envN },
+	);
 }
 
 const TABLES_REMOVE_ALL: string[] = [
