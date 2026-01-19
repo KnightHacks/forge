@@ -1,4 +1,6 @@
 import Image from "../../../../node_modules/next/image";
+import AnimatedInfo from "./components/AnimatedInfo";
+import MotionDiv from "./components/MotionDiv";
 import ShootingStars from "./components/ShootingStars";
 import Stars from "./components/Stars";
 
@@ -75,33 +77,32 @@ export default function HomePage() {
           </div>
 
           <div className="absolute top-0 w-full py-2 text-lg font-bold italic text-yellow-500 md:mt-5 md:text-3xl">
-            VIBE CODERS SUMMONING AI AT THE SMALLEST INCONVENIENCE?
+            VIBE CODERS USING AI AT THE SMALLEST INCONVENIENCE?
           </div>
 
-          <div className="absolute -left-5 bottom-0 h-[40%] w-[50%] md:-left-10 md:h-[60%] md:w-[90%] xl:md:w-[70%] xl:h-[60%]">
-            <Image
-              src="/noah_img/megumi.png"
-              alt="Megumi"
-              fill
-              style={{ objectFit: "contain", objectPosition: "bottom" }}
-            ></Image>
-          </div>
-          <div className="animate-mahoraga absolute -bottom-12 right-2 h-[110%] w-[70%] md:-right-[40%] md:bottom-[15%] md:h-[160%] md:w-[160%] lg:h-[120%] lg:w-[120%] xl:-right-[15%] xl:h-[100%] xl:w-[100%]">
-            <Image
-              src="/noah_img/mahoraga.png"
-              alt="MahoGPT"
-              fill
-              style={{ objectFit: "contain", objectPosition: "bottom" }}
-            ></Image>
-          </div>
+          <MotionDiv>
+            <div>
+              <div className="absolute -left-5 bottom-0 h-[40%] w-[50%] md:-left-10 md:h-[60%] md:w-[90%] xl:md:w-[70%] xl:h-[60%]">
+                <Image
+                  src="/noah_img/megumi.png"
+                  alt="Megumi"
+                  fill
+                  style={{ objectFit: "contain", objectPosition: "bottom" }}
+                ></Image>
+              </div>
+              <div className="animate-mahoraga absolute -bottom-12 right-2 h-[110%] w-[70%] md:-right-[40%] md:bottom-[15%] md:h-[80%] md:w-[160%] lg:h-[60%] lg:w-[160%] xl:-right-[15%] xl:h-[75%] xl:w-[100%]">
+                <Image
+                  src="/noah_img/mahoraga.png"
+                  alt="MahoGPT"
+                  fill
+                  style={{ objectFit: "contain", objectPosition: "bottom" }}
+                ></Image>
+              </div>
+            </div>
+          </MotionDiv>
         </div>
         <div className="relative z-20 flex w-full flex-[5] flex-col justify-center gap-1 border-4 border-gray-900 bg-gray-950 px-2 pt-1">
-          <div className="relative z-20 h-[5rem] w-full bg-gray-800"></div>
-          <div className="relative z-20 h-[5rem] w-full bg-gray-800"></div>
-          <div className="relative z-20 h-[5rem] w-full bg-gray-800"></div>
-          <div className="relative z-20 h-[5rem] w-full bg-gray-800"></div>
-          <div className="relative z-20 h-[5rem] w-full bg-gray-800"></div>
-          <div className="relative z-20 h-[5rem] w-full bg-gray-800"></div>
+          <AnimatedInfo></AnimatedInfo>
         </div>
       </div>
     </main>
