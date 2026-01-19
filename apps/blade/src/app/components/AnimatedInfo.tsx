@@ -6,7 +6,7 @@ import { motion, useInView } from "framer-motion";
 
 const AnimatedInfo = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref);
+  const isInView = useInView(ref, { once: true });
 
   const outerDivVariants = {
     hidden: {},

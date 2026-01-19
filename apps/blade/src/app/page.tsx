@@ -77,7 +77,7 @@ export default function HomePage() {
           </div>
 
           <div className="absolute top-0 w-full py-2 text-lg font-bold italic text-yellow-500 md:mt-5 md:text-3xl">
-            VIBE CODERS USING AI AT THE SMALLEST INCONVENIENCE?
+            VIBE CODERS USING AI FOR EVERY SMALL INCONVENIENCE?
           </div>
 
           <MotionDiv>
