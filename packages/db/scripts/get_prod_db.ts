@@ -2,6 +2,8 @@
 // Usage:
 //   pnpm --filter @forge/db with-env tsx scripts/get_prod_db.tsx
 
+// Script to get prod db data into local db. Simply run the command above to get the rows and insert them automatically, this won't lose any data that you already have such as the superadmin from the bootstrap script. The bootstrap script can also be ran after running this command and it'll work fine.
+
 import { exec } from "child_process";
 import fs from "fs";
 import { unlink } from "fs/promises";
