@@ -225,6 +225,7 @@ async function syncRoles() {
     if (devRoles[hash]) {
       roleIdMappings[role.id] = devRoles[hash].id;
     } else {
+      await new Promise((resolve) => setTimeout(resolve, 100));
       const newRole = (await discord.post(
         Routes.guildRoles(DEV_KNIGHTHACKS_GUILD_ID),
         {
@@ -285,6 +286,7 @@ async function syncEvents() {
     if (devEvents[hash]) {
       eventIdMappings[event.id] = devEvents[hash].id;
     } else {
+      await new Promise((resolve) => setTimeout(resolve, 100));
       const newEvent = (await discord.post(
         Routes.guildScheduledEvents(DEV_KNIGHTHACKS_GUILD_ID),
         {
