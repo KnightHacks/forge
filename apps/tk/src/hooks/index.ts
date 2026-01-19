@@ -5,6 +5,7 @@ import { execute as daily } from "./daily";
 import { execute as emailQueue } from "./email-queue";
 import { execute as reminder } from "./reminder";
 import { execute as roleSync } from "./role-sync";
+import { execute as prodBackup } from "./backup-filtered-db";
 
 // Export all commands
 export const hooks = {
@@ -15,4 +16,5 @@ export const hooks = {
   emailQueue,
   alumniSync,
   roleSync,
+	prodBackup
 };
