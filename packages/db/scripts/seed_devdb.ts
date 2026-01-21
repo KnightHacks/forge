@@ -70,40 +70,40 @@ async function cleanUp() {
 }
 
 const TABLES_TO_KEEP: string[] = [
-	"auth_account",
-	//"auth_judge_session",
-	"auth_permissions",
-	"auth_roles",
-	//"auth_session",
-	"auth_user",
-	//"auth_verification",
-	"knight_hacks_challenges",
-	"knight_hacks_companies",
-	"knight_hacks_dues_payment",
-	"knight_hacks_email_config",
-	"knight_hacks_email_daily_count",
-	"knight_hacks_email_queue",
-	"knight_hacks_event",
-	"knight_hacks_event_attendee",
-	"knight_hacks_event_feedback",
-	"knight_hacks_form_response",
-	"knight_hacks_form_response_roles",
-	"knight_hacks_form_schemas",
-	"knight_hacks_form_section_roles",
-	"knight_hacks_form_sections",
-	"knight_hacks_hackathon",
-	"knight_hacks_hackathon_sponsor",
-	"knight_hacks_hacker",
-	"knight_hacks_hacker_attendee",
-	"knight_hacks_hacker_event_attendee",
-	//"knight_hacks_judged_submission",
-	//"knight_hacks_judges",
-	"knight_hacks_member",
-	"knight_hacks_sponsor",
-	"knight_hacks_submissions",
-	"knight_hacks_teams",
-	"knight_hacks_trpc_form_connection"
-]
+  "auth_account",
+  //"auth_judge_session",
+  "auth_permissions",
+  "auth_roles",
+  //"auth_session",
+  "auth_user",
+  //"auth_verification",
+  "knight_hacks_challenges",
+  "knight_hacks_companies",
+  "knight_hacks_dues_payment",
+  "knight_hacks_email_config",
+  "knight_hacks_email_daily_count",
+  "knight_hacks_email_queue",
+  "knight_hacks_event",
+  "knight_hacks_event_attendee",
+  "knight_hacks_event_feedback",
+  "knight_hacks_form_response",
+  "knight_hacks_form_response_roles",
+  "knight_hacks_form_schemas",
+  "knight_hacks_form_section_roles",
+  "knight_hacks_form_sections",
+  "knight_hacks_hackathon",
+  "knight_hacks_hackathon_sponsor",
+  "knight_hacks_hacker",
+  "knight_hacks_hacker_attendee",
+  "knight_hacks_hacker_event_attendee",
+  //"knight_hacks_judged_submission",
+  //"knight_hacks_judges",
+  "knight_hacks_member",
+  "knight_hacks_sponsor",
+  "knight_hacks_submissions",
+  "knight_hacks_teams",
+  "knight_hacks_trpc_form_connection",
+];
 
 const roleIdMappings: Record<string, string> = {};
 const eventIdMappings: Record<string, string> = {};
@@ -372,7 +372,7 @@ async function main() {
       casing: "snake_case",
     });
 
-		console.log("Syncing roles and events from prod server to dev server");
+    console.log("Syncing roles and events from prod server to dev server");
     await syncRoles();
     await syncEvents();
 
@@ -394,12 +394,12 @@ async function main() {
       })
     ).map((t) => t.userId);
 
-		console.log("Cleaning all tables");
+    console.log("Cleaning all tables");
     for (const tableName of tables) {
       await cleanTable(tableName, userIdsToKeep);
     }
 
-		console.log("Cleaning cascading user data");
+    console.log("Cleaning cascading user data");
     await backupDb.execute(sql`
 	    DELETE FROM auth_user 
 	    WHERE id NOT IN (${sql.join(
@@ -408,10 +408,10 @@ async function main() {
       )})
 	  `);
 
-		console.log("Uploading to minio");
+    console.log("Uploading to minio");
     await minio();
 
-		console.log("Cleaning up backup db");
+    console.log("Cleaning up backup db");
     await cleanUp();
 
     process.exit(0);
