@@ -183,6 +183,8 @@ async function copyDatabase() {
       `psql -h ${host} -p ${port} -U ${user} ${backupDbName} < ${backupFile}`,
       { env: envN },
     );
+  } catch (err) {
+    console.error(err);
   } finally {
     await unlink(backupFile);
   }
@@ -337,16 +339,18 @@ async function minio() {
     { env: envN },
   );
 
-  const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
-  if (!bucketExists) {
-    await minioClient.makeBucket(BUCKET_NAME, KNIGHTHACKS_S3_BUCKET_REGION);
+  try {
+    const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+    if (!bucketExists) {
+      await minioClient.makeBucket(BUCKET_NAME, KNIGHTHACKS_S3_BUCKET_REGION);
+    }
+
+    await minioClient.fPutObject(BUCKET_NAME, filePath, filePath, {
+      "Content-Type": "text/plain",
+    });
+  } finally {
+    await unlink(filePath);
   }
-
-  await minioClient.fPutObject(BUCKET_NAME, filePath, filePath, {
-    "Content-Type": "text/plain",
-  });
-
-  await unlink(filePath);
 }
 
 async function main() {
