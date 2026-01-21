@@ -45,8 +45,6 @@ const Footer = () => {
     },
   ];
 
-  const currentDate: Date = new Date();
-
   return (
     <footer className="flex justify-center bg-background p-5">
       <div className="flex max-w-fit items-center justify-between space-x-4 rounded-2xl border bg-card p-5 px-6 py-3">
@@ -55,7 +53,7 @@ const Footer = () => {
         <p>-</p>
         <Badge className="flex gap-1" variant='outline' >
           <ClockIcon />
-          <p>{currentDate.toLocaleDateString()}</p>
+          <p>01/07/2006</p>
         </Badge>
         <Separator orientation="vertical" />
 
