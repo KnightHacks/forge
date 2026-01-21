@@ -11,6 +11,7 @@ import {
   LinkedInLogoIcon,
 } from "@forge/ui";
 import { Separator } from "@forge/ui/separator";
+import TextScroll from "./TextScroll";
 
 interface SocialLink {
   social: string; // If I want to add it as text
@@ -42,30 +43,15 @@ const Footer = () => {
     },
   ];
 
-  const scrollText = [
-    "Have a wonderful day!",
-    "Flamingos are born green",
-    "Bananas are radioactive",
-  ];
-
   return (
     <footer className="flex justify-center bg-background p-5">
-      <div className="flex max-w-fit items-center justify-between space-x-4 rounded-2xl border bg-card p-5 px-6 py-3">
+      <div className="flex max-w-fit items-center justify-be  tween space-x-4 rounded-2xl border bg-card p-5 px-6 py-3">
         {/* Left Side */}
         <p>© Jesus Gonzalez</p>
         <Separator orientation="vertical" />
 
         {/* Middle */}
-        <div className="w-96">
-          <div className="animate-marquee flex whitespace-nowrap">
-            {[...scrollText, ...scrollText].map((text, index) => (
-              <span key={index} className='px-0'>
-								{text}
-							</span>
-							
-            ))}
-          </div>
-        </div>
+        <TextScroll />
 
         {/* Rights Side */}
         <Separator orientation="vertical" />
