@@ -69,13 +69,41 @@ async function cleanUp() {
   });
 }
 
-const TABLES_REMOVE_ALL: string[] = [
-  "auth_verification",
-  "auth_session",
-  "auth_judge_session",
-  "knight_hacks_judged_submission",
-  "knight_hacks_judges",
-];
+const TABLES_TO_KEEP: string[] = [
+	"auth_account",
+	//"auth_judge_session",
+	"auth_permissions",
+	"auth_roles",
+	//"auth_session",
+	"auth_user",
+	//"auth_verification",
+	"knight_hacks_challenges",
+	"knight_hacks_companies",
+	"knight_hacks_dues_payment",
+	"knight_hacks_email_config",
+	"knight_hacks_email_daily_count",
+	"knight_hacks_email_queue",
+	"knight_hacks_event",
+	"knight_hacks_event_attendee",
+	"knight_hacks_event_feedback",
+	"knight_hacks_form_response",
+	"knight_hacks_form_response_roles",
+	"knight_hacks_form_schemas",
+	"knight_hacks_form_section_roles",
+	"knight_hacks_form_sections",
+	"knight_hacks_hackathon",
+	"knight_hacks_hackathon_sponsor",
+	"knight_hacks_hacker",
+	"knight_hacks_hacker_attendee",
+	"knight_hacks_hacker_event_attendee",
+	//"knight_hacks_judged_submission",
+	//"knight_hacks_judges",
+	"knight_hacks_member",
+	"knight_hacks_sponsor",
+	"knight_hacks_submissions",
+	"knight_hacks_teams",
+	"knight_hacks_trpc_form_connection"
+]
 
 const roleIdMappings: Record<string, string> = {};
 const eventIdMappings: Record<string, string> = {};
@@ -83,8 +111,7 @@ const eventIdMappings: Record<string, string> = {};
 async function cleanTable(name: string, userIdsToKeep: string[]) {
   if (!backupDb) return;
 
-  if (TABLES_REMOVE_ALL.includes(name)) {
-    console.log("Removing all rows from ", name);
+  if (!TABLES_TO_KEEP.includes(name)) {
     await backupDb.execute(
       sql.raw(`TRUNCATE TABLE "${name}" RESTART IDENTITY CASCADE`),
     );
@@ -106,8 +133,6 @@ async function cleanTable(name: string, userIdsToKeep: string[]) {
   const userFkColumn = relResult.rows[0]?.column_name as string | undefined;
 
   if (userFkColumn) {
-    console.log(`Cascading removing user info in table ${name}`);
-
     await backupDb.execute(sql`
       DELETE FROM ${sql.identifier(name)}
       WHERE ${sql.identifier(userFkColumn)} NOT IN (${sql.join(
@@ -125,7 +150,6 @@ async function cleanTable(name: string, userIdsToKeep: string[]) {
   			WHERE id = ${id}
 			`);
     }
-    console.log("Updated auth roles to use dev server discord ids");
   } else if (name === "knight_hacks_event") {
     const all_rows = await backupDb.query.Event.findMany();
     for (const row of all_rows) {
@@ -137,9 +161,6 @@ async function cleanTable(name: string, userIdsToKeep: string[]) {
   			WHERE id = ${id}
 			`);
     }
-    console.log("Updated KH events to use dev server discord ids");
-  } else {
-    console.log(`Table ${name} will remain unaffected entirely`);
   }
 }
 
@@ -241,8 +262,6 @@ async function syncRoles() {
       roleIdMappings[role.id] = newRole.id;
     }
   }
-
-  console.log(roleIdMappings);
 }
 
 interface DiscordGuildScheduledEvent {
@@ -304,8 +323,6 @@ async function syncEvents() {
       eventIdMappings[event.id] = newEvent.id;
     }
   }
-
-  console.log(eventIdMappings);
 }
 
 async function minio() {
@@ -329,15 +346,7 @@ async function minio() {
     "Content-Type": "text/plain",
   });
 
-  const fileUrl = await minioClient.presignedGetObject(
-    BUCKET_NAME,
-    filePath,
-    60 * 60 * 24,
-  );
-
   await unlink(filePath);
-
-  console.log(`Saved backup to ${fileUrl}`);
 }
 
 async function main() {
@@ -350,7 +359,7 @@ async function main() {
     console.log(`Dropping database ${backupDbName} if it exists...`);
     await adminPool.query(`DROP DATABASE IF EXISTS ${backupDbName}`);
 
-    console.log(`Creating fresh database ${backupDbName}...`);
+    console.log(`Creating fresh database ${backupDbName}`);
     await copyDatabase();
 
     backupPool = new Pool({
@@ -363,6 +372,7 @@ async function main() {
       casing: "snake_case",
     });
 
+		console.log("Syncing roles and events from prod server to dev server");
     await syncRoles();
     await syncEvents();
 
@@ -376,7 +386,6 @@ async function main() {
     let tables = tablesJSON.map((t) => t.table_name as string);
     tables = [...tables.filter((x) => x !== "auth_user"), "auth_user"];
 
-    console.log("Getting admins");
     const userIdsToKeep: string[] = (
       await backupDb.query.Permissions.findMany({
         columns: {
@@ -385,14 +394,12 @@ async function main() {
       })
     ).map((t) => t.userId);
 
+		console.log("Cleaning all tables");
     for (const tableName of tables) {
       await cleanTable(tableName, userIdsToKeep);
     }
 
-    console.log(
-      `Keeping ${userIdsToKeep.length} admin users and cascading to whatever has cascade in the schema already`,
-    );
-
+		console.log("Cleaning cascading user data");
     await backupDb.execute(sql`
 	    DELETE FROM auth_user 
 	    WHERE id NOT IN (${sql.join(
@@ -401,8 +408,10 @@ async function main() {
       )})
 	  `);
 
+		console.log("Uploading to minio");
     await minio();
 
+		console.log("Cleaning up backup db");
     await cleanUp();
 
     process.exit(0);
