@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Mail } from "lucide-react";
 
 import { SPONSOR_VIDEO_LINK } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
@@ -7,66 +7,106 @@ import { Button } from "@forge/ui/button";
 export const metadata: Metadata = {
   title: "Sponsor Knight Hacks!",
   description: "Help us make dreams!",
-}; // doesn't follow the metadata convention to prevent confusion from sponsors
+};
+
+const SPONSOR_VIDEO_LINK_2 =
+  "https://www.youtube.com/embed/OzW_4QeCfM0?si=G8SUf8UbEo2W5MnL";
+
+const STATS = [
+  { value: "1,000+", label: "Students" },
+  { value: "36", label: "Hours" },
+  { value: "185+", label: "Projects" },
+  { value: "1", label: "Weekend" },
+];
+
+const VIDEOS = [SPONSOR_VIDEO_LINK, SPONSOR_VIDEO_LINK_2];
 
 export default function Sponsor() {
   return (
-    <main className="mx-auto mb-40 flex w-full flex-col justify-center pl-8 pr-8 md:w-[800px]">
-      <h1 className="mb-2 pt-10 text-center text-3xl font-bold tracking-tighter sm:mb-10 sm:pt-20 sm:text-5xl">
-        Want to sponsor{" "}
-        <span className="text-[hsl(var(--primary-lighter))]">
-          Knight Hacks?
-        </span>
-      </h1>
-      <p className="p-2 text-center text-sm tracking-tighter sm:text-base">
-        Every year,{" "}
-        <b className="text-[hsl(var(--primary-lighter))]">Knight Hacks</b> hosts
-        a 36-hour event at the University of Central Florida, where students
-        come together to create and learn, by developing a project over the
-        course of a weekend. We aim to create a
-        <b className="text-[hsl(var(--primary-lighter))]">
-          {" "}
-          diverse, welcoming, and inclusive community
-        </b>{" "}
-        for anyone interested in technology.
-      </p>
-      <p className="p-2 text-center text-sm tracking-tighter sm:text-base">
-        Companies who sponsor us are able to mentor, teach, and recruit{" "}
-        <b className="text-[hsl(var(--primary-lighter))]">around 600+</b>{" "}
-        brilliant students with a passion for building, and gain brand
-        recognition. See below to learn more about us!
-      </p>
-      <div className="mx-auto mt-2 flex flex-col justify-center">
-        <p className="p-2 text-center text-sm tracking-tighter sm:text-base">
-          <i>
-            View how{" "}
-            <b className="text-[hsl(var(--primary-lighter))]">Knight Hacks</b>{" "}
-            impacts those who attend:
-          </i>
-        </p>
-        <iframe
-          width="560"
-          height="315"
-          src={SPONSOR_VIDEO_LINK}
-          className="h-[200px] w-full sm:h-[315px] sm:w-[560px]"
-        ></iframe>
-      </div>
-      <div className="mx-auto mt-5 flex flex-col justify-center">
-        <p className="p-2 text-center text-sm tracking-tighter sm:text-base">
-          <i>
-            Want to make dreams? View how you can help make{" "}
-            <b className="text-[hsl(var(--primary-lighter))]">Knight Hacks</b>{" "}
-            possible:
-          </i>
-        </p>
-        <div className="mx-auto flex flex-col justify-center">
-          <Link href={"/prospectus.pdf"}>
-            <Button>
-              <h1 className="text-2xl font-bold">Sponsorship Package</h1>
-            </Button>
-          </Link>
-        </div>
-      </div>
+    <main className="container mx-auto px-4 py-16 md:px-6">
+      <Hero />
+      <Stats />
+      <Videos />
+      <Footer />
     </main>
+  );
+}
+
+function Hero() {
+  return (
+    <div className="text-center">
+      <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
+        Partner with{" "}
+        <span className="text-[hsl(var(--primary-lighter))]">Knight Hacks</span>
+      </h1>
+      <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
+        Join us in empowering the next generation of innovators. Every year, we
+        bring together{" "}
+        <span className="font-semibold text-foreground">1,000+</span> students
+        at UCF for a 36-hour hackathon where creativity meets technology.
+      </p>
+    </div>
+  );
+}
+
+function Stats() {
+  return (
+    <div className="mx-auto mt-12 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4">
+      {STATS.map((stat) => (
+        <div
+          key={stat.label}
+          className="rounded-lg border bg-card p-4 text-center"
+        >
+          <div className="text-2xl font-bold text-[hsl(var(--primary-lighter))] sm:text-3xl">
+            {stat.value}
+          </div>
+          <div className="mt-1 text-sm text-muted-foreground">{stat.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Videos() {
+  return (
+    <div className="mt-16">
+      <h2 className="mb-6 text-center text-2xl font-semibold tracking-tight">
+        See the Impact
+      </h2>
+      <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+        {VIDEOS.map((src) => (
+          <div key={src} className="overflow-hidden rounded-lg border bg-card">
+            <div className="aspect-video w-full">
+              <iframe
+                src={src}
+                className="h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Footer() {
+  return (
+    <div className="mx-auto mt-16 max-w-2xl text-center">
+      <h2 className="text-2xl font-bold tracking-tight">
+        Ready to make an impact?
+      </h2>
+      <p className="mt-3 text-muted-foreground">
+        Connect with passionate students, showcase your brand, and help shape
+        the future of tech!
+      </p>
+      <a href="mailto:sponsorship@knighthacks.org">
+        <Button size="lg" className="mt-6">
+          <Mail className="mr-2 h-5 w-5" />
+          sponsorship@knighthacks.org
+        </Button>
+      </a>
+    </div>
   );
 }
