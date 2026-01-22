@@ -5,20 +5,19 @@ export default function App() {
             const name = "Alejandro Jaimes";
 
     return (
-<div className="min-h-screen p-15 bg-green-800 bg-[radial-gradient(#000000_1px,transparent_2px)] [background-size:32px_32px] no-scrollbar">
-    <div className="max-w-4xl mx-auto flex flex-col items-center text-center">
-        <div className="flex flex-row items-center justify-center mb-12">
-            <div className="max-w-sm">
-                    <p className="hidden md:block text-2xl tracking-tighter font-bold text-black">
-                    Application page for 
-                </p>
-            </div>
-            
-                <Image src="/khlogo.png" alt="" width={30}
-  height={20} 
-  className="w-60 h-30 hover:saturate-200" 
-  priority/>
-  <div className="max-w-lg">
+        <div className="min-h-screen p-15 bg-green-800 bg-[radial-gradient(#000000_1px,transparent_2px)] [background-size:32px_32px] no-scrollbar">
+            <div className="max-w-4xl mx-auto flex flex-col items-center text-center">
+                <div className="flex flex-row items-center justify-center mb-12">
+                    <div className="max-w-sm">
+                            <p className="hidden md:block text-2xl tracking-tighter font-bold text-black">
+                                Application page for 
+                             </p>
+                     </div>
+             <Image src="/khlogo.png" alt="" width={30}
+                    height={20} 
+                    className="w-60 h-30 hover:saturate-200" 
+                    priority/>
+                    <div className="max-w-lg">
                     <p className="hidden md:block text-2xl tracking-tighter font-bold text-black ">
                     Development Team
                 </p>
@@ -31,12 +30,10 @@ export default function App() {
                     {name}
                 </p>
                 <Image src="/ale.jpg" alt="" width={55}
-  height={55} 
-  className="w-35 h-35 md:w-55 md:h-55 mb-10 rounded-full"  
-  priority/>
-                </div>
-                 
-                
+                    height={55} 
+                    className="w-35 h-35 md:w-55 md:h-55 mb-10 rounded-full"  
+                    priority/>
+                </div>    
                 <p className="md:text-xl text-sm tracking-tighter font-bold text-white md:text-black mb-3">
                     This is the perfect opportunity to look at forge's features and learn a bit more about Knight Hacks!
                 </p>
