@@ -2,6 +2,7 @@
 
 import type { MouseEvent } from "react";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function Page() {
   const handleNavClick = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -234,7 +235,7 @@ export default function Page() {
               <div className="flex flex-wrap gap-3">
                 <a
                   className="btn-secondary inline-flex h-11 items-center justify-center rounded-full border border-white/20 bg-white/5 px-6 text-sm font-semibold text-slate-100 transition hover:-translate-y-1 hover:border-cyan-200/60 hover:text-white hover:shadow-[0_10px_25px_rgba(34,211,238,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
-                  href="Resume2026.pdf"
+                  href="/azizAssets/Resume2026.pdf"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -259,16 +260,14 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="card rounded-2xl border border-white/10 bg-white/5 p-5 shadow-[0_0_60px_rgba(34,211,238,0.12)]">
-              <h2 className="font-heading text-xl uppercase tracking-[0.25em] text-cyan-200/80">
-                About Me
-              </h2>
-              <p className="mt-3 text-lg leading-relaxed text-slate-200">
-                I’m a CS student interested in full-stack development,
-                data-driven apps, and AI-powered tools. I enjoy working in
-                existing codebases, writing readable code, and learning from
-                code reviews.
-              </p>
+            <div className="card inline-block w-full max-w-sm rounded-2xl border border-white/10 bg-white/5 p-1 shadow-[0_0_60px_rgba(34,211,238,0.12)] md:ml-auto">
+              <Image
+                src="/azizAssets/azizHeadshot.jpeg"
+                alt="Abduaziz Umarov"
+                width={800}
+                height={450}
+                className="h-auto w-full rounded-[14px] object-contain"
+              />
             </div>
           </section>
 
@@ -383,7 +382,7 @@ export default function Page() {
               <div className="flex flex-wrap gap-3">
                 <a
                   className="btn-secondary inline-flex h-10 items-center justify-center rounded-full border border-white/20 bg-white/5 px-5 text-xs font-semibold text-slate-100 transition hover:-translate-y-1 hover:border-cyan-200/60 hover:text-white hover:shadow-[0_10px_25px_rgba(34,211,238,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
-                  href="Resume2026.pdf"
+                  href="/azizAssets/Resume2026.pdf"
                   target="_blank"
                   rel="noreferrer"
                 >
