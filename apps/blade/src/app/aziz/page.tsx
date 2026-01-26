@@ -1,6 +1,7 @@
 "use client";
 
 import type { MouseEvent } from "react";
+import { useState } from "react";
 
 export default function Page() {
   const handleNavClick = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -18,22 +19,122 @@ export default function Page() {
     });
   };
 
-  const project = {
-    name: "MacroMatch",
-    stack: [
-      "TypeScript",
-      "Next.js",
-      "Tailwind",
-      "PostgreSQL",
-      "Prisma",
-      "NextAuth",
-      "OpenAI API",
-    ],
-    time: "Nov 2025 – Present",
-    what: "Personalized macro planning for 200+ restaurant/fast-food items and custom targets.",
-    how: "Macro Fit Score algorithm + AI assistant returns top 3 optimized meal suggestions per query; Chart.js daily macro visualization.",
-    impact:
-      "Reduced manual food selection time by ~70% and kept users within 5–10% of targets.",
+  const timeline = [
+    {
+      id: "finbridge",
+      title: "FinBridge",
+      date: "Oct 2025",
+      hash: "a1b2c3d",
+      stack: [
+        "TypeScript",
+        "React",
+        "Express",
+        "Node.js",
+        "Tailwind",
+        "Firebase",
+        "Gemini",
+        "Plaid API",
+      ],
+      bullets: [
+        {
+          label: "What",
+          text: "Real-time transaction ingestion and spending insights with LLM-guided advice.",
+        },
+        {
+          label: "How",
+          text: "Prompt pipeline injects balances, categorized transactions, and monthly summaries into Gemini; Chart.js dashboards for live data in a secure multi-user Firebase model.",
+        },
+        {
+          label: "Impact",
+          text: "Turned raw bank data into context-aware guidance with actionable budgeting views.",
+        },
+      ],
+    },
+    {
+      id: "flipscript",
+      title: "FlipScript",
+      date: "Sep 2025",
+      hash: "b4c5d6e",
+      stack: [
+        "JavaScript",
+        "React",
+        "Express",
+        "Node.js",
+        "Tailwind",
+        "OpenAI Whisper",
+      ],
+      bullets: [
+        {
+          label: "What",
+          text: "Speech-to-study pipeline that turns lectures into learning assets.",
+        },
+        {
+          label: "How",
+          text: "Whisper creates punctuated, timestamped transcripts; AI structures notes and highlights key concepts; flashcards optimized for active recall and spaced repetition.",
+        },
+        {
+          label: "Impact",
+          text: "Accelerated study prep by converting raw audio into structured learning artifacts.",
+        },
+      ],
+    },
+    {
+      id: "isue-lab",
+      title: "ISUE Lab",
+      role: "Undergraduate Research Assistant",
+      date: "Oct 2025 – Present",
+      hash: "c7d8e9f",
+      bullets: [
+        "Built a custom speech-error dataset by comparing 15,000+ samples of control and dysarthric recordings; labeled error types and therapy advice using Pandas/NumPy.",
+        "Developed a therapist-oriented model in PyTorch to generate personalized speech feedback; ~80% consistency with verified therapy strategies.",
+        "Conducted pilot evaluations with dysarthric speakers to validate usability and refine feedback quality with clinician input.",
+        "Co-authored a research paper; contributed to dataset construction and evaluation sections.",
+      ],
+    },
+    {
+      id: "macromatch",
+      title: "MacroMatch",
+      date: "Nov 2025 – Jan 2026",
+      hash: "d0e1f2a",
+      stack: [
+        "TypeScript",
+        "Next.js",
+        "Tailwind",
+        "PostgreSQL",
+        "Prisma",
+        "NextAuth",
+        "OpenAI API",
+      ],
+      bullets: [
+        {
+          label: "What",
+          text: "Personalized macro planning for 200+ restaurant/fast-food items and custom targets.",
+        },
+        {
+          label: "How",
+          text: "Macro Fit Score algorithm + AI assistant returns top 3 optimized meal suggestions per query; Chart.js daily macro visualization.",
+        },
+        {
+          label: "Impact",
+          text: "Reduced manual food selection time by ~70% and kept users within 5–10% of targets.",
+        },
+      ],
+    },
+  ];
+
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const toggleEntry = (id: string) => {
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleCopyLink = async (id: string) => {
+    const url = `${window.location.origin}${window.location.pathname}#${id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      window.location.hash = id;
+    }
   };
 
   return (
@@ -67,24 +168,17 @@ export default function Page() {
             <div className="hidden flex-wrap items-center gap-4 text-sm text-slate-300 md:flex">
               <a
                 className="transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
-                href="#projects"
+                href="#about"
                 onClick={handleNavClick}
               >
-                Projects
+                About
               </a>
               <a
                 className="transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
-                href="#research"
+                href="#commit-log"
                 onClick={handleNavClick}
               >
-                Experience
-              </a>
-              <a
-                className="transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
-                href="#signal"
-                onClick={handleNavClick}
-              >
-                Signal
+                Commit Log
               </a>
               <a
                 className="transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
@@ -102,7 +196,10 @@ export default function Page() {
           id="top"
           className="mx-auto w-full max-w-6xl px-6 pb-24 pt-14 sm:pb-28"
         >
-          <section className="grid gap-12 md:grid-cols-[1.15fr_0.85fr]">
+          <section
+            id="about"
+            className="grid gap-12 md:grid-cols-[1.15fr_0.85fr]"
+          >
             <div className="space-y-8">
               <p className="text-sm uppercase tracking-[0.3em] text-cyan-200/80">
                 KnightHacks Forge Dev Team Application
@@ -113,9 +210,9 @@ export default function Page() {
                 </h1>
               </div>
               <p className="muted max-w-prose text-base leading-relaxed sm:text-lg">
-                I enjoy building clean systems with care and ship outcomes that
-                matter. I want to work in collaborative teams like Forge to grow
-                as a developer.
+                I njoy building clean systems with care and ship outcomes that
+                matter. I want to work in a collaborative team like Forge to
+                grow as a developer.
               </p>
               <div className="flex flex-wrap gap-3">
                 <a
@@ -160,190 +257,102 @@ export default function Page() {
 
           <div className="mt-16 h-px w-full bg-gradient-to-r from-transparent via-cyan-300/40 to-transparent" />
 
-          <section id="projects" className="mt-16 scroll-mt-24">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="font-heading text-3xl font-semibold">
-                  Projects
-                </h2>
-                <p className="muted mt-2 max-w-prose text-base leading-relaxed">
-                  Case studies tuned for real-world impact and iteration speed.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-8 max-w-3xl">
-              <article className="card group rounded-2xl border border-white/10 bg-white/5 p-7 transition duration-300 motion-safe:hover:-translate-y-1 motion-safe:hover:shadow-[0_18px_45px_rgba(15,23,42,0.35)]">
-                <div className="h-36 rounded-xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent" />
-                <div className="mt-6 flex items-center justify-between">
-                  <h3 className="font-heading text-xl font-semibold">
-                    {project.name}
-                  </h3>
-                  <span className="muted text-sm">{project.time}</span>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {project.stack.map((item) => (
-                    <span
-                      key={item}
-                      className="chip rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-200"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-5 space-y-5 text-base leading-relaxed text-slate-200">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-cyan-200/70">
-                      What
-                    </p>
-                    <p className="mt-2">{project.what}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-cyan-200/70">
-                      How
-                    </p>
-                    <p className="mt-2">{project.how}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-cyan-200/70">
-                      Impact
-                    </p>
-                    <p className="mt-2">{project.impact}</p>
-                  </div>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <section id="research" className="mt-16 scroll-mt-24">
+          <section id="commit-log" className="mt-16 scroll-mt-24">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-heading text-3xl font-semibold">
-                Experience
+                My Commit Log
               </h2>
-              <span className="text-xs uppercase tracking-[0.25em] text-cyan-200/70">
-                ISUE Lab
-              </span>
             </div>
-            <div className="mt-8 max-w-3xl">
-              <div className="card rounded-2xl border border-white/10 bg-white/5 p-7 transition duration-300 motion-safe:hover:-translate-y-1 motion-safe:hover:shadow-[0_18px_45px_rgba(15,23,42,0.35)]">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-heading text-xl font-semibold">
-                    Undergraduate Research Assistant
-                  </p>
-                  <span className="muted text-sm">Oct 2025 – Present</span>
-                </div>
-                <ul className="mt-5 space-y-4 text-base leading-relaxed text-slate-200">
-                  <li>
-                    Built a custom speech-error dataset by comparing 15,000+
-                    samples of control and dysarthric recordings; labeled error
-                    types and therapy advice using Pandas/NumPy.
-                  </li>
-                  <li>
-                    Developed a therapist-oriented model in PyTorch to generate
-                    personalized speech feedback; ~80% consistency with verified
-                    therapy strategies.
-                  </li>
-                  <li>
-                    Conducted pilot evaluations with dysarthric speakers to
-                    validate usability and refine feedback quality with
-                    clinician input.
-                  </li>
-                  <li>
-                    Co-authored a research paper; contributed to dataset
-                    construction and evaluation sections.
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </section>
 
-          <section className="mt-16">
-            <div className="flex items-center gap-3 text-xs uppercase tracking-[0.25em] text-slate-400">
-              <div className="h-px w-10 bg-cyan-300/60" />
-              Commit Log
-            </div>
-            <div className="mt-6 space-y-6 border-l border-white/10 pl-6 text-sm text-slate-200">
-              <div>
-                <p className="muted text-xs">Baseline</p>
-                <p className="mt-1">
-                  Map the smallest reliable scope, define the metrics that prove
-                  impact.
-                </p>
-              </div>
-              <div>
-                <p className="muted text-xs">Iteration</p>
-                <p className="mt-1">
-                  Compare two approaches, quantify the better path, and ship the
-                  cleaner interface.
-                </p>
-              </div>
-              <div>
-                <p className="muted text-xs">Impact</p>
-                <p className="mt-1">
-                  Close the loop with users, translate their feedback into
-                  focused refinements.
-                </p>
-              </div>
-            </div>
-          </section>
+            <div className="relative mt-10">
+              <div className="absolute left-4 top-0 h-full w-px bg-white/10" />
+              <div className="space-y-10">
+                {timeline.map((entry) => {
+                  const isExpanded = expanded[entry.id];
+                  const bullets = Array.isArray(entry.bullets)
+                    ? entry.bullets.slice(
+                        0,
+                        isExpanded ? entry.bullets.length : 3,
+                      )
+                    : [];
+                  const hasMore = entry.bullets.length > 3;
+                  return (
+                    <article
+                      key={entry.id}
+                      id={entry.id}
+                      className="relative pl-12"
+                    >
+                      <span className="absolute left-[9px] top-6 h-3 w-3 rounded-full bg-cyan-300 shadow-[0_0_0_6px_rgba(11,15,20,0.9)]" />
+                      <div className="card rounded-2xl border border-white/10 bg-white/5 p-7 transition duration-300 motion-safe:hover:-translate-y-1 motion-safe:hover:shadow-[0_18px_45px_rgba(15,23,42,0.35)]">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div>
+                            <h3 className="font-heading text-xl font-semibold">
+                              {entry.title}
+                            </h3>
+                            {"role" in entry && entry.role ? (
+                              <p className="muted mt-1 text-base">
+                                {entry.role}
+                              </p>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+                            <span className="font-mono uppercase tracking-[0.2em]">
+                              {entry.hash}
+                            </span>
+                            <span className="font-mono">{entry.date}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyLink(entry.id)}
+                              className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-300 transition hover:border-cyan-200/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
+                              aria-label={`Copy link to ${entry.title}`}
+                            >
+                              Copy link
+                            </button>
+                          </div>
+                        </div>
 
-          <section id="learning" className="mt-16 scroll-mt-24">
-            <h2 className="font-heading text-2xl font-semibold">
-              Learning Loop
-            </h2>
-            <div className="mt-6 grid gap-6 md:grid-cols-3">
-              {[
-                {
-                  title: "Ask Why Repeatedly",
-                  body: "Pressure test every requirement until the real problem is clear.",
-                },
-                {
-                  title: "Compare Approaches",
-                  body: "Prototype two solutions, measure impact, and ship the stronger one.",
-                },
-                {
-                  title: "Fundamentals Compound",
-                  body: "Data structures, systems thinking, and clarity in UI decisions compound over time.",
-                },
-              ].map((item) => (
-                <div
-                  key={item.title}
-                  className="card rounded-2xl border border-white/10 bg-white/5 p-6 transition duration-300 motion-safe:hover:-translate-y-1"
-                >
-                  <p className="text-xs uppercase tracking-[0.2em] text-cyan-200/70">
-                    {item.title}
-                  </p>
-                  <p className="mt-3 text-sm text-slate-200">{item.body}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+                        {"stack" in entry && entry.stack ? (
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {entry.stack.map((item) => (
+                              <span
+                                key={item}
+                                className="chip rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-200"
+                              >
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
 
-          <section id="signal" className="mt-16 scroll-mt-24">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-heading text-2xl font-semibold">Signal</h2>
-            </div>
-            <div className="mt-6 grid gap-6">
-              <div className="card rounded-2xl border border-white/10 bg-white/5 p-6">
-                <p className="text-sm text-slate-200">
-                  In the first month, I would focus on understanding Forge's
-                  architecture, auditing key flows, and shipping targeted
-                  improvements that remove friction for teammates and users.
-                </p>
-                <ul className="mt-4 space-y-3 text-sm text-slate-200">
-                  <li>
-                    Pair with a maintainer to map core workflows, identify the
-                    top 3 bottlenecks, and propose fixes with measurable impact.
-                  </li>
-                  <li>
-                    Build a small internal dashboard or health checklist for
-                    tracking deployment and data integrity signals.
-                  </li>
-                  <li>
-                    Ship one focused UI polish pass: clarity in forms,
-                    consistent error states, and stronger onboarding cues.
-                  </li>
-                </ul>
+                        <ul className="mt-5 space-y-4 text-base leading-relaxed text-slate-200">
+                          {bullets.map((bullet, index) => (
+                            <li key={index}>
+                              {typeof bullet === "string" ? (
+                                bullet
+                              ) : (
+                                <>
+                                  <span className="font-mono text-xs uppercase tracking-[0.2em] text-cyan-200/70">
+                                    {bullet.label}
+                                  </span>
+                                  <p className="mt-2">{bullet.text}</p>
+                                </>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                        {hasMore ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleEntry(entry.id)}
+                            className="mt-4 inline-flex items-center gap-2 text-sm text-cyan-200/80 transition hover:text-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
+                          >
+                            {isExpanded ? "Show less" : "Show more"}
+                          </button>
+                        ) : null}
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -354,7 +363,7 @@ export default function Page() {
           >
             <div className="flex flex-wrap items-center justify-between gap-4">
               <p>Built for the KnightHacks Forge Dev Team</p>
-              <div className="flex-wrap1 flex-3 gap-30">
+              <div className="flex flex-wrap gap-3">
                 <a
                   className="btn-secondary inline-flex h-10 items-center justify-center rounded-full border border-white/20 bg-white/5 px-5 text-xs font-semibold text-slate-100 transition hover:-translate-y-1 hover:border-cyan-200/60 hover:text-white hover:shadow-[0_10px_25px_rgba(34,211,238,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
                   href="/aziz/Resume2026.pdf"

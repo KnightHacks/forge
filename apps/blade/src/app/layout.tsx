@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 
 import { cn } from "@forge/ui";
 import { ThemeProvider, ThemeToggle } from "@forge/ui/theme";
@@ -49,6 +49,13 @@ const spaceGrotesk = Space_Grotesk({
   display: "swap",
 });
 
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  weight: ["400", "500"],
+  display: "swap",
+});
+
 export default function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -57,6 +64,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
           "min-h-screen bg-background font-sans text-foreground antialiased",
           inter.variable,
           spaceGrotesk.variable,
+          jetBrainsMono.variable,
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
