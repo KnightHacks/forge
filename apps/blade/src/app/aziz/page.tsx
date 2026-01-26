@@ -410,6 +410,40 @@ export default function Page() {
             </div>
           </div>
         </section>
+
+        <footer className="mt-16 border-t border-white/10 pt-8 text-sm text-slate-300">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p>
+              Built for the KnightHacks Forge Dev Team — craft, mastery, impact.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                className="rounded-full border border-white/20 px-4 py-2 text-xs text-slate-100 transition hover:border-cyan-200/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
+                href="/aziz/Resume2026.pdf"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Resume
+              </a>
+              <a
+                className="rounded-full border border-white/20 px-4 py-2 text-xs text-slate-100 transition hover:border-cyan-200/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
+                href="https://github.com/azizu06"
+                target="_blank"
+                rel="noreferrer"
+              >
+                GitHub
+              </a>
+              <a
+                className="rounded-full border border-white/20 px-4 py-2 text-xs text-slate-100 transition hover:border-cyan-200/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
+                href="https://www.linkedin.com/in/abduaziz-umarov/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                LinkedIn
+              </a>
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );
