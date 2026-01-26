@@ -47,8 +47,8 @@ export const auth = betterAuth({
       mapProfileToUser: (profile) => {
         return {
           id: randomUUID(),
-          name: profile.global_name ?? profile.username,
-          email: profile.email,
+          name: profile.username,
+          email: profile.id + "@blade.org",
           image: profile.avatar ?? "",
           emailVerified: profile.verified || false,
           discordUserId: profile.id,
