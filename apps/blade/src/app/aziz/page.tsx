@@ -23,7 +23,7 @@ export default function Page() {
     {
       id: "macromatch",
       title: "MacroMatch",
-      date: "Nov 2025 – Present",
+      date: "Nov 2025 – Jan 2026",
       hash: "d0e1f2a",
       stack: [
         "TypeScript",
@@ -62,7 +62,7 @@ export default function Page() {
         "PyTorch",
         "Matplotlib",
         "Seaborn",
-        "Hugging Face Transformers",
+        "Hugging Face",
       ],
       bullets: [
         {
