@@ -21,6 +21,65 @@ export default function Page() {
 
   const timeline = [
     {
+      id: "macromatch",
+      title: "MacroMatch",
+      date: "Nov 2025 – Present",
+      hash: "d0e1f2a",
+      stack: [
+        "TypeScript",
+        "Next.js",
+        "Tailwind",
+        "PostgreSQL",
+        "Prisma",
+        "NextAuth",
+        "OpenAI API",
+      ],
+      bullets: [
+        {
+          label: "What",
+          text: "Personalized macro planning for 200+ restaurant/fast-food items and custom targets.",
+        },
+        {
+          label: "How",
+          text: "Macro Fit Score algorithm + AI assistant returns top 3 optimized meal suggestions per query; Chart.js daily macro visualization.",
+        },
+        {
+          label: "Impact",
+          text: "Reduced manual food selection time by ~70% and kept users within 5–10% of targets.",
+        },
+      ],
+    },
+    {
+      id: "isue-lab",
+      title: "ISUE Lab",
+      role: "Undergraduate Research Assistant",
+      date: "Oct 2025 – Present",
+      hash: "c7d8e9f",
+      stack: [
+        "Python",
+        "Pandas",
+        "NumPy",
+        "PyTorch",
+        "Matplotlib",
+        "Seaborn",
+        "Hugging Face Transformers",
+      ],
+      bullets: [
+        {
+          label: "Dataset",
+          text: "Curated and labeled a speech-error dataset from 15,000+ control and dysarthric samples with error types and therapy cues using Python tooling.",
+        },
+        {
+          label: "Model",
+          text: "Built a therapist-facing model in PyTorch to generate personalized feedback, aligning with verified therapy strategies (~80% consistency).",
+        },
+        {
+          label: "Evaluation",
+          text: "Ran pilot evaluations with dysarthric speakers and clinician input to validate usability and refine feedback quality.",
+        },
+      ],
+    },
+    {
       id: "finbridge",
       title: "FinBridge",
       date: "Oct 2025",
@@ -75,48 +134,6 @@ export default function Page() {
         {
           label: "Impact",
           text: "Accelerated study prep by converting raw audio into structured learning artifacts.",
-        },
-      ],
-    },
-    {
-      id: "isue-lab",
-      title: "ISUE Lab",
-      role: "Undergraduate Research Assistant",
-      date: "Oct 2025 – Present",
-      hash: "c7d8e9f",
-      bullets: [
-        "Built a custom speech-error dataset by comparing 15,000+ samples of control and dysarthric recordings; labeled error types and therapy advice using Pandas/NumPy.",
-        "Developed a therapist-oriented model in PyTorch to generate personalized speech feedback; ~80% consistency with verified therapy strategies.",
-        "Conducted pilot evaluations with dysarthric speakers to validate usability and refine feedback quality with clinician input.",
-        "Co-authored a research paper; contributed to dataset construction and evaluation sections.",
-      ],
-    },
-    {
-      id: "macromatch",
-      title: "MacroMatch",
-      date: "Nov 2025 – Jan 2026",
-      hash: "d0e1f2a",
-      stack: [
-        "TypeScript",
-        "Next.js",
-        "Tailwind",
-        "PostgreSQL",
-        "Prisma",
-        "NextAuth",
-        "OpenAI API",
-      ],
-      bullets: [
-        {
-          label: "What",
-          text: "Personalized macro planning for 200+ restaurant/fast-food items and custom targets.",
-        },
-        {
-          label: "How",
-          text: "Macro Fit Score algorithm + AI assistant returns top 3 optimized meal suggestions per query; Chart.js daily macro visualization.",
-        },
-        {
-          label: "Impact",
-          text: "Reduced manual food selection time by ~70% and kept users within 5–10% of targets.",
         },
       ],
     },
@@ -217,7 +234,7 @@ export default function Page() {
               <div className="flex flex-wrap gap-3">
                 <a
                   className="btn-secondary inline-flex h-11 items-center justify-center rounded-full border border-white/20 bg-white/5 px-6 text-sm font-semibold text-slate-100 transition hover:-translate-y-1 hover:border-cyan-200/60 hover:text-white hover:shadow-[0_10px_25px_rgba(34,211,238,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
-                  href="/aziz/Resume2026.pdf"
+                  href="Resume2026.pdf"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -311,7 +328,7 @@ export default function Page() {
                           </div>
                         </div>
 
-                        {"stack" in entry && entry.stack ? (
+                        {"stack" in entry ? (
                           <div className="mt-4 flex flex-wrap gap-2">
                             {entry.stack.map((item) => (
                               <span
@@ -366,7 +383,7 @@ export default function Page() {
               <div className="flex flex-wrap gap-3">
                 <a
                   className="btn-secondary inline-flex h-10 items-center justify-center rounded-full border border-white/20 bg-white/5 px-5 text-xs font-semibold text-slate-100 transition hover:-translate-y-1 hover:border-cyan-200/60 hover:text-white hover:shadow-[0_10px_25px_rgba(34,211,238,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
-                  href="/aziz/Resume2026.pdf"
+                  href="Resume2026.pdf"
                   target="_blank"
                   rel="noreferrer"
                 >
