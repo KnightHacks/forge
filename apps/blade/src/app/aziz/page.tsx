@@ -1,13 +1,16 @@
 export default function Page() {
   return (
-    <div className="min-h-screen bg-[#0b0f14] text-white">
+    <div className="min-h-screen bg-[#0b0f14] text-white [scroll-behavior:smooth]">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.12),transparent_55%)]" />
         <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:48px_48px]" />
       </div>
 
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0b0f14]/80 backdrop-blur">
-        <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
+        <nav
+          aria-label="Primary"
+          className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4"
+        >
           <a
             href="#top"
             className="text-sm font-semibold tracking-[0.2em] text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
@@ -15,16 +18,28 @@ export default function Page() {
             AU
           </a>
           <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300">
-            <a className="hover:text-white" href="#projects">
+            <a
+              className="hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
+              href="#projects"
+            >
               Projects
             </a>
-            <a className="hover:text-white" href="#research">
+            <a
+              className="hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
+              href="#research"
+            >
               Research
             </a>
-            <a className="hover:text-white" href="#learning">
+            <a
+              className="hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
+              href="#learning"
+            >
               Learning Loop
             </a>
-            <a className="hover:text-white" href="#signal">
+            <a
+              className="hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
+              href="#signal"
+            >
               Signal
             </a>
           </div>
@@ -109,6 +124,7 @@ export default function Page() {
             </div>
           </div>
         </section>
+        <div className="mt-10 h-[2px] w-full bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent blur-[0.5px]" />
 
         {/* Education + Org */}
         <section className="mt-16 grid gap-8 md:grid-cols-[1.1fr_0.9fr]">
@@ -154,8 +170,7 @@ export default function Page() {
                 stack:
                   "TypeScript, Next.js, Tailwind, PostgreSQL, Prisma, NextAuth, OpenAI API",
                 time: "Nov 2025 – Jan 2026",
-                what:
-                  "Personalized macro planning for 200+ restaurant/fast-food items and custom targets.",
+                what: "Personalized macro planning for 200+ restaurant/fast-food items and custom targets.",
                 how: "Macro Fit Score algorithm + AI assistant returns top 3 optimized meal suggestions per query; Chart.js daily macro visualization.",
                 impact:
                   "Reduced manual food selection time by ~70% and kept users within 5–10% of targets.",
@@ -165,8 +180,7 @@ export default function Page() {
                 stack:
                   "TypeScript, React, Express, Node.js, Tailwind, Firebase, Gemini, Plaid API",
                 time: "Oct 2025",
-                what:
-                  "Real-time transaction ingestion and spending insights with LLM-guided advice.",
+                what: "Real-time transaction ingestion and spending insights with LLM-guided advice.",
                 how: "Prompt pipeline injects balances, categorized transactions, and monthly summaries into Gemini; Chart.js dashboards for live data in a secure multi-user Firebase model.",
                 impact:
                   "Turned raw bank data into context-aware guidance with actionable budgeting views.",
@@ -176,8 +190,7 @@ export default function Page() {
                 stack:
                   "JavaScript, React, Express, Node.js, Tailwind, OpenAI Whisper",
                 time: "Sep 2025",
-                what:
-                  "Speech-to-study pipeline that turns lectures into learning assets.",
+                what: "Speech-to-study pipeline that turns lectures into learning assets.",
                 how: "Whisper creates punctuated, timestamped transcripts; AI structures notes and highlights key concepts; flashcards optimized for active recall and spaced repetition.",
                 impact:
                   "Accelerated study prep by converting raw audio into structured learning artifacts.",
@@ -185,15 +198,13 @@ export default function Page() {
             ].map((project) => (
               <article
                 key={project.name}
-                className="group rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-white/0 p-6 transition hover:border-cyan-200/50"
+                className="group rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-white/0 p-6 transition hover:-translate-y-1 hover:border-cyan-200/50"
               >
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-white">
                     {project.name}
                   </h3>
-                  <span className="text-xs text-slate-400">
-                    {project.time}
-                  </span>
+                  <span className="text-xs text-slate-400">{project.time}</span>
                 </div>
                 <p className="mt-2 text-xs uppercase tracking-[0.2em] text-slate-400">
                   {project.stack}
@@ -219,12 +230,18 @@ export default function Page() {
                   </div>
                 </div>
                 <div className="mt-5 flex items-center gap-3 text-xs text-slate-400">
-                  <span className="rounded-full border border-white/10 px-3 py-1">
+                  <a
+                    href="#"
+                    className="rounded-full border border-white/10 px-3 py-1 transition hover:border-cyan-200/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
+                  >
                     Demo (placeholder)
-                  </span>
-                  <span className="rounded-full border border-white/10 px-3 py-1">
+                  </a>
+                  <a
+                    href="#"
+                    className="rounded-full border border-white/10 px-3 py-1 transition hover:border-cyan-200/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
+                  >
                     Repo (placeholder)
-                  </span>
+                  </a>
                 </div>
               </article>
             ))}
@@ -293,8 +310,8 @@ export default function Page() {
             <div>
               <p className="text-xs text-slate-400">Impact</p>
               <p className="mt-1">
-                Close the loop with users, translate their feedback into
-                focused refinements.
+                Close the loop with users, translate their feedback into focused
+                refinements.
               </p>
             </div>
           </div>
