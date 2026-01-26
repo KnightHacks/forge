@@ -146,15 +146,6 @@ export default function Page() {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleCopyLink = async (id: string) => {
-    const url = `${window.location.origin}${window.location.pathname}#${id}`;
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      window.location.hash = id;
-    }
-  };
-
   return (
     <div className="relative">
       <div className="min-h-screen bg-[#0b0f14] text-white [scroll-behavior:smooth]">
@@ -178,12 +169,12 @@ export default function Page() {
           >
             <a
               href="#top"
-              className="text-sm font-semibold tracking-[0.2em] text-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
+              className="text base text-sm font-semibold tracking-[0.2em] text-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
               onClick={handleNavClick}
             >
               AU
             </a>
-            <div className="hidden flex-wrap items-center gap-4 text-sm text-slate-300 md:flex">
+            <div className="hidden flex-wrap items-center gap-4 text-base text-slate-300 md:flex">
               <a
                 className="transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
                 href="#about"
@@ -311,19 +302,13 @@ export default function Page() {
                               </p>
                             ) : null}
                           </div>
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+                          <div className="flex flex-wrap items-center gap-8 text-xs text-slate-300">
                             <span className="font-mono uppercase tracking-[0.2em]">
-                              {entry.hash}
+                              commit {entry.hash}
                             </span>
-                            <span className="font-mono">{entry.date}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyLink(entry.id)}
-                              className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-300 transition hover:border-cyan-200/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
-                              aria-label={`Copy link to ${entry.title}`}
-                            >
-                              Copy link
-                            </button>
+                            <span className="font-mono text-sm">
+                              {entry.date}
+                            </span>
                           </div>
                         </div>
 
@@ -377,7 +362,7 @@ export default function Page() {
             id="contact"
             className="mt-16 border-t border-white/10 pt-8 text-sm text-slate-300"
           >
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 text-base">
               <p>Built for the KnightHacks Forge Dev Team</p>
               <div className="flex flex-wrap gap-3">
                 <a
