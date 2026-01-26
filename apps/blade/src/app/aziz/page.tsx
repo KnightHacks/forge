@@ -227,7 +227,7 @@ export default function Page() {
                 </h1>
               </div>
               <p className="muted max-w-prose text-base leading-relaxed sm:text-lg">
-                I njoy building clean systems with care and ship outcomes that
+                I enjoy building clean systems with care and ship outcomes that
                 matter. I want to work in a collaborative team like Forge to
                 grow as a developer.
               </p>
