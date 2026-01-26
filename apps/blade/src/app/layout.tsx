@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
+import { Inter, Space_Grotesk } from "next/font/google";
 
 import { cn } from "@forge/ui";
 import { ThemeProvider, ThemeToggle } from "@forge/ui/theme";
@@ -36,14 +35,28 @@ export const viewport: Viewport = {
   ],
 };
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  weight: ["400", "500"],
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  weight: ["600", "700"],
+  display: "swap",
+});
+
 export default function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
           "min-h-screen bg-background font-sans text-foreground antialiased",
-          GeistSans.variable,
-          GeistMono.variable,
+          inter.variable,
+          spaceGrotesk.variable,
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
