@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 
 import { cn } from "@forge/ui";
 import { ThemeProvider, ThemeToggle } from "@forge/ui/theme";
@@ -35,40 +36,22 @@ export const viewport: Viewport = {
   ],
 };
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  weight: ["400", "500"],
-  display: "swap",
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  weight: ["600", "700"],
-  display: "swap",
-});
-
-const jetBrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
-  weight: ["400", "500"],
-  display: "swap",
-});
-
 export default function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
           "min-h-screen bg-background font-sans text-foreground antialiased",
-          inter.variable,
-          spaceGrotesk.variable,
-          jetBrainsMono.variable,
+          GeistSans.variable,
+          GeistMono.variable,
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <TRPCReactProvider>{props.children}</TRPCReactProvider>          <Toaster />
+          <TRPCReactProvider>{props.children}</TRPCReactProvider>
+          <div className="fixed bottom-4 right-4">
+            <ThemeToggle />
+          </div>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
