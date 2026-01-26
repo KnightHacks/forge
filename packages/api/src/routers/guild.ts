@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import type { BucketItem } from "minio";
 import { TRPCError } from "@trpc/server";
+import type { BucketItem } from "minio";
 import { Client } from "minio";
 import { z } from "zod";
 
@@ -197,7 +197,7 @@ export const guildRouter = {
           ? await baseQuery
               .orderBy(
                 sql`(CASE WHEN ${Member.tagline}           IS NULL THEN 1 ELSE 0 END)`,
-                sql`(CASE WHEN ${Member.profilePictureUrl} IS NULL THEN 1 ELSE 0 END)`,
+                sql`(CASE WHEN ${Member.profilePictureUrl} IS NULL OR ${Member.profilePictureUrl} = '' OR TRIM(${Member.profilePictureUrl}) = '' THEN 1 ELSE 0 END)`,
                 sql`(CASE WHEN ${Member.about}             IS NULL THEN 1 ELSE 0 END)`,
                 sql`RANDOM()`,
               )
