@@ -6,6 +6,12 @@ export default function Page() {
         <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:48px_48px]" />
       </div>
 
+      <a
+        href="#top"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-6 focus:top-4 focus:z-50 focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-black"
+      >
+        Skip to content
+      </a>
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0b0f14]/80 backdrop-blur">
         <nav
           aria-label="Primary"
@@ -47,7 +53,10 @@ export default function Page() {
         <div className="h-[2px] w-full bg-gradient-to-r from-cyan-400/0 via-cyan-300/60 to-cyan-400/0" />
       </header>
 
-      <main id="top" className="mx-auto w-full max-w-6xl px-6 pb-20 pt-12">
+      <main
+        id="top"
+        className="mx-auto w-full max-w-6xl px-6 pb-20 pt-12 sm:pb-24"
+      >
         <section className="grid gap-10 md:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-6">
             <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/80">
@@ -156,7 +165,7 @@ export default function Page() {
         </section>
 
         {/* Projects */}
-        <section id="projects" className="mt-16">
+        <section id="projects" className="mt-16 scroll-mt-24">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold">Projects</h2>
             <span className="text-xs uppercase tracking-[0.25em] text-cyan-200/70">
@@ -249,7 +258,7 @@ export default function Page() {
         </section>
 
         {/* Research */}
-        <section id="research" className="mt-16">
+        <section id="research" className="mt-16 scroll-mt-24">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold">Research</h2>
             <span className="text-xs uppercase tracking-[0.25em] text-cyan-200/70">
@@ -318,7 +327,7 @@ export default function Page() {
         </section>
 
         {/* Learning loop */}
-        <section id="learning" className="mt-16">
+        <section id="learning" className="mt-16 scroll-mt-24">
           <h2 className="text-2xl font-semibold">Learning Loop</h2>
           <div className="mt-6 grid gap-6 md:grid-cols-3">
             {[
@@ -349,7 +358,7 @@ export default function Page() {
         </section>
 
         {/* Signal */}
-        <section id="signal" className="mt-16">
+        <section id="signal" className="mt-16 scroll-mt-24">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold">Signal</h2>
             <span className="text-xs uppercase tracking-[0.25em] text-cyan-200/70">
