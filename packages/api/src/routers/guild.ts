@@ -216,7 +216,7 @@ export const guildRouter = {
 
   getGuildResume: publicProcedure
     .input(z.object({ memberId: z.string().uuid() }))
-    .mutation(async ({ input }) => {
+    .query(async ({ input }) => {
       const member = await db.query.Member.findFirst({
         where: (t, { eq }) => eq(t.id, input.memberId),
         columns: {
