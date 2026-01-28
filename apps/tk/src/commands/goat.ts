@@ -1,11 +1,11 @@
 import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import natural from "natural";
-
-const { LevenshteinDistance, Metaphone } = natural;
+import sharp from "sharp";
 
 import { db } from "@forge/db/client";
-import sharp from 'sharp';
+
+const { LevenshteinDistance, Metaphone } = natural;
 
 // GOAT COMMAND
 // random G.O.A.T. image
@@ -112,8 +112,8 @@ function replaceName(name: string, word = "GOAT") {
       bestScore = rep.bestScore;
       bestIdx = idx;
     }
-		let name = rep.word;
-		name = name[0]?.toUpperCase() + name.slice(1);
+    let name = rep.word;
+    name = name[0]?.toUpperCase() + name.slice(1);
     return name;
   });
 
@@ -130,88 +130,88 @@ export const data = new SlashCommandBuilder()
   .setDescription("G.O.A.T...");
 
 export const getGoatEmbed = async () => {
-    const goat_ids: string[] = (
-      await db.query.Permissions.findMany({
-        columns: {
-          userId: true,
-        },
-      })
-    ).map((t) => t.userId);
+  const goat_ids: string[] = (
+    await db.query.Permissions.findMany({
+      columns: {
+        userId: true,
+      },
+    })
+  ).map((t) => t.userId);
 
-    let goat_id = "";
-    let goat:
-      | {
-          firstName: string;
-          lastName: string;
-					githubProfileUrl: string | null,
-					websiteUrl: string | null,
-          linkedinProfileUrl: string | null,
-          profilePictureUrl: string | null;
-        }
-      | undefined;
+  let goat_id = "";
+  let goat:
+    | {
+        firstName: string;
+        lastName: string;
+        githubProfileUrl: string | null;
+        websiteUrl: string | null;
+        linkedinProfileUrl: string | null;
+        profilePictureUrl: string | null;
+      }
+    | undefined;
 
-    while (!goat?.profilePictureUrl?.trim()) {
-      goat_id = goat_ids[Math.floor(Math.random() * goat_ids.length)] ?? "";
-      goat = await db.query.Member.findFirst({
-        where: (t, { eq }) => eq(t.userId, goat_id),
-        columns: {
-          firstName: true,
-          lastName: true,
-					githubProfileUrl: true,
-					websiteUrl: true,
-          linkedinProfileUrl: true,
-          profilePictureUrl: true,
-        },
-      });
-    }
+  while (!goat?.profilePictureUrl?.trim()) {
+    goat_id = goat_ids[Math.floor(Math.random() * goat_ids.length)] ?? "";
+    goat = await db.query.Member.findFirst({
+      where: (t, { eq }) => eq(t.userId, goat_id),
+      columns: {
+        firstName: true,
+        lastName: true,
+        githubProfileUrl: true,
+        websiteUrl: true,
+        linkedinProfileUrl: true,
+        profilePictureUrl: true,
+      },
+    });
+  }
 
-		console.log(goat);
+  console.log(goat);
 
-		const response = await fetch(goat.profilePictureUrl);
-		const buffer = await response.arrayBuffer();
+  const response = await fetch(goat.profilePictureUrl);
+  const buffer = await response.arrayBuffer();
 
-		const { data, info } = await sharp(Buffer.from(buffer))
-		.raw()
-		.toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(Buffer.from(buffer))
+    .raw()
+    .toBuffer({ resolveWithObject: true });
 
-		const width = info.width;
-		const height = info.height;
-		const pixelIndex = ((Math.floor(height / 2) * width) + Math.floor(width / 2)) * info.channels;
+  const width = info.width;
+  const height = info.height;
+  const pixelIndex =
+    (Math.floor(height / 2) * width + Math.floor(width / 2)) * info.channels;
 
-		const r = data[pixelIndex];
-		const g = data[pixelIndex + 1];
-		const b = data[pixelIndex + 2];
-		
-		if(!r || !g || !b) throw new Error("Couldn't find mid pixel");
+  const r = data[pixelIndex];
+  const g = data[pixelIndex + 1];
+  const b = data[pixelIndex + 2];
 
-		const hexString = `${((1 << 24) + (r << 16) + (g << 8) + b)
-			.toString(16)
-			.slice(1)
-			.toUpperCase()}`;
+  if (!r || !g || !b) throw new Error("Couldn't find mid pixel");
 
-		const url = [
-			goat.websiteUrl,
-			goat.linkedinProfileUrl,
-			goat.githubProfileUrl,
-		].find(u => typeof u === "string" && u.trim().length > 0);
+  const hexString = `${((1 << 24) + (r << 16) + (g << 8) + b)
+    .toString(16)
+    .slice(1)
+    .toUpperCase()}`;
 
-    const embed = new EmbedBuilder()
-      .setTitle(replaceName(goat.firstName + " " + goat.lastName))
-      .setImage(goat.profilePictureUrl)
-			.setColor(`#${hexString}`);
+  const url = [
+    goat.websiteUrl,
+    goat.linkedinProfileUrl,
+    goat.githubProfileUrl,
+  ].find((u) => typeof u === "string" && u.trim().length > 0);
 
-		if(url) embed.setURL(url);
+  const embed = new EmbedBuilder()
+    .setTitle(replaceName(goat.firstName + " " + goat.lastName))
+    .setImage(goat.profilePictureUrl)
+    .setColor(`#${hexString}`);
 
-		return embed;
-}
+  if (url) embed.setURL(url);
+
+  return embed;
+};
 
 export async function execute(interaction: CommandInteraction) {
   try {
-		const embed = await getGoatEmbed();
+    const embed = await getGoatEmbed();
     void interaction.reply({ embeds: [embed] });
   } catch (err: unknown) {
     if (err instanceof Error) console.error(err.message);
     else console.error("An unknown error occurred: ", err);
   }
 }
-

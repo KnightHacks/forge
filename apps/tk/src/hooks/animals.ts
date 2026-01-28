@@ -3,9 +3,9 @@ import { EmbedBuilder, WebhookClient } from "discord.js";
 import JIMP from "jimp";
 import cron from "node-cron";
 
-import { GOATS, TK_CAPYBARA_URL, TK_CAT_URL, TK_DUCK_URL } from "../consts";
-import { env } from "../env";
 import { getGoatEmbed } from "../commands/goat";
+import { TK_CAPYBARA_URL, TK_CAT_URL, TK_DUCK_URL } from "../consts";
+import { env } from "../env";
 
 // various hook props
 interface CatProps {
@@ -143,8 +143,9 @@ function duckHook(webhook: WebhookClient) {
 function goatHook(webhook: WebhookClient) {
   try {
     cron.schedule("30 14 * * *", async () => {
-			const embed = await getGoatEmbed();
-			void webhook.send({ embeds: [embed] });
+      const embed = await getGoatEmbed();
+      console.log(embed);
+      void webhook.send({ embeds: [embed] });
     });
   } catch (err: unknown) {
     if (err instanceof Error) {
