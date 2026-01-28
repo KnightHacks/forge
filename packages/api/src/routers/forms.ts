@@ -1,6 +1,6 @@
+import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
-import type { JSONSchema7 } from "json-schema";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -428,7 +428,7 @@ export const formsRouter = {
 
       const formData = form.formData as FormType;
       const jsonSchema = generateJsonSchema(formData);
-      
+
       if (!jsonSchema.success) {
         throw new TRPCError({
           message: jsonSchema.msg,
@@ -453,10 +453,11 @@ export const formsRouter = {
           const path = err.path.join(".");
           return path ? `${path}: ${err.message}` : err.message;
         });
-        const errorMessage = errorMessages.length > 0
-          ? `Form response failed form validation: ${errorMessages.join("; ")}`
-          : "Form response failed form validation";
-        
+        const errorMessage =
+          errorMessages.length > 0
+            ? `Form response failed form validation: ${errorMessages.join("; ")}`
+            : "Form response failed form validation";
+
         throw new TRPCError({
           message: errorMessage,
           code: "BAD_REQUEST",
