@@ -144,7 +144,6 @@ function goatHook(webhook: WebhookClient) {
   try {
     cron.schedule("30 14 * * *", async () => {
       const embed = await getGoatEmbed();
-      console.log(embed);
       void webhook.send({ embeds: [embed] });
     });
   } catch (err: unknown) {
