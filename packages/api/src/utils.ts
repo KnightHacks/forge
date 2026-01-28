@@ -1,10 +1,10 @@
-import type { APIGuildMember } from "discord-api-types/v10";
-import type { JSONSchema7 } from "json-schema";
-import { cookies } from "next/headers";
 import { REST } from "@discordjs/rest";
 import { TRPCError } from "@trpc/server";
+import type { APIGuildMember } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 import { and, eq, gt, inArray } from "drizzle-orm";
+import type { JSONSchema7 } from "json-schema";
+import { cookies } from "next/headers";
 import { Resend } from "resend";
 import Stripe from "stripe";
 
@@ -20,6 +20,7 @@ import {
   DEV_KNIGHTHACKS_GUILD_ID,
   DEV_KNIGHTHACKS_LOG_CHANNEL,
   FORM_ASSETS_BUCKET,
+  getDropdownOptionsFromConst,
   IS_PROD,
   PERMISSION_DATA,
   PERMISSIONS,
@@ -370,10 +371,16 @@ function createJsonSchemaValidator({
   optional,
   type,
   options,
+  optionsConst,
   min,
   max,
+  allowOther,
 }: ValidatorOptions): OptionalSchema {
   const schema: JSONSchema7 = {};
+
+  const resolvedOptions = optionsConst
+    ? [...getDropdownOptionsFromConst(optionsConst)]
+    : options;
 
   switch (type) {
     case "SHORT_ANSWER":
@@ -405,19 +412,25 @@ function createJsonSchemaValidator({
       break;
     case "MULTIPLE_CHOICE":
     case "DROPDOWN":
-      if (!options?.length)
+      if (!resolvedOptions?.length)
         return {
           success: false,
           msg: "Options are required for multiple choice / dropdown",
         };
       schema.type = "string";
-      schema.enum = options;
+      if (!allowOther) {
+        schema.enum = resolvedOptions;
+      }
       break;
     case "CHECKBOXES":
-      if (!options?.length)
+      if (!resolvedOptions?.length)
         return { success: false, msg: "Options required for checkboxes" };
       schema.type = "array";
-      schema.items = { type: "string", enum: options };
+      if (allowOther) {
+        schema.items = { type: "string" };
+      } else {
+        schema.items = { type: "string", enum: resolvedOptions };
+      }
       break;
     case "FILE_UPLOAD":
       schema.type = "string";
