@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 import { Button } from "@forge/ui/button";
@@ -51,9 +51,10 @@ export function FormResponderClient({
   });
 
   const submitResponse = api.forms.createResponse.useMutation({
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       setSubmitError(null);
       setIsSubmitted(true);
+      handleCallbacks(variables.responseData as Record<string, unknown>);
     },
     onError: (error) => {
       setSubmitError(
@@ -221,8 +222,6 @@ export function FormResponderClient({
       form: formQuery.data.id,
       responseData,
     });
-
-    handleCallbacks(responseData);
   };
 
   const getValidationError = (question: (typeof form.questions)[number]) => {
