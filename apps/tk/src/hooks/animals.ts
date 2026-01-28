@@ -5,6 +5,7 @@ import cron from "node-cron";
 
 import { GOATS, TK_CAPYBARA_URL, TK_CAT_URL, TK_DUCK_URL } from "../consts";
 import { env } from "../env";
+import { getGoatEmbed } from "../commands/goat";
 
 // various hook props
 interface CatProps {
@@ -142,34 +143,8 @@ function duckHook(webhook: WebhookClient) {
 function goatHook(webhook: WebhookClient) {
   try {
     cron.schedule("30 14 * * *", async () => {
-      const goat = GOATS[Math.floor(Math.random() * GOATS.length)];
-      if (goat) {
-        const img = JIMP.read(goat.image);
-        const width = (await img).getWidth(),
-          height = (await img).getHeight();
-        const color = (await img).getPixelColor(width / 2, height / 2);
-
-        // this code sets the color of the embed to the main color of the image
-        const r = (color >> 24) & 0xff;
-        const g = (color >> 16) & 0xff;
-        const b = (color >> 8) & 0xff;
-
-        const hexString = `${((1 << 24) + (r << 16) + (g << 8) + b)
-          .toString(16)
-          .slice(1)
-          .toUpperCase()}`;
-        const embed = new EmbedBuilder()
-          .setTitle(goat.name)
-          .setURL(goat.link)
-          .setAuthor({
-            name: "Daily G.O.A.T!",
-          })
-          .setImage(goat.image)
-          .setColor(`#${hexString}`);
-        void webhook.send({ embeds: [embed] });
-      } else {
-        console.error("Goat is undefined");
-      }
+			const embed = await getGoatEmbed();
+			void webhook.send({ embeds: [embed] });
     });
   } catch (err: unknown) {
     if (err instanceof Error) {

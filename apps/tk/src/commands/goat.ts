@@ -129,8 +129,7 @@ export const data = new SlashCommandBuilder()
   .setName("goat")
   .setDescription("G.O.A.T...");
 
-export async function execute(interaction: CommandInteraction) {
-  try {
+export const getGoatEmbed = async () => {
     const goat_ids: string[] = (
       await db.query.Permissions.findMany({
         columns: {
@@ -166,7 +165,7 @@ export async function execute(interaction: CommandInteraction) {
       });
     }
 
-    console.log(goat_id, goat);
+		console.log(goat);
 
 		const response = await fetch(goat.profilePictureUrl);
 		const buffer = await response.arrayBuffer();
@@ -203,6 +202,12 @@ export async function execute(interaction: CommandInteraction) {
 
 		if(url) embed.setURL(url);
 
+		return embed;
+}
+
+export async function execute(interaction: CommandInteraction) {
+  try {
+		const embed = await getGoatEmbed();
     void interaction.reply({ embeds: [embed] });
   } catch (err: unknown) {
     if (err instanceof Error) console.error(err.message);
