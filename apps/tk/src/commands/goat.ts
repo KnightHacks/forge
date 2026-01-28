@@ -91,7 +91,6 @@ function replaceSimilarSyllable(name: string, replacement: string) {
   syllables.forEach((syl: string, i: number) => {
     const sylPhonetic = metaphone.process(syl);
     const distance = LevenshteinDistance(sylPhonetic, replacementPhonetic);
-    console.log({ syl, sylPhonetic, replacementPhonetic, distance });
     if (distance < bestScore) {
       bestScore = distance;
       bestIndex = i;
@@ -152,7 +151,7 @@ export const getGoatEmbed = async () => {
 
   while (!goat?.profilePictureUrl?.trim()) {
     goat_id = goat_ids[Math.floor(Math.random() * goat_ids.length)] ?? "";
-    goat = await db.query.Member.findFirst({
+    const member = await db.query.Member.findFirst({
       where: (t, { eq }) => eq(t.userId, goat_id),
       columns: {
         firstName: true,
@@ -161,8 +160,13 @@ export const getGoatEmbed = async () => {
         websiteUrl: true,
         linkedinProfileUrl: true,
         profilePictureUrl: true,
+        guildProfileVisible: true,
       },
     });
+
+    if (!member) continue;
+    const { guildProfileVisible, ...rest } = member;
+    if (guildProfileVisible) goat = rest;
   }
 
   console.log(goat);
@@ -183,7 +187,8 @@ export const getGoatEmbed = async () => {
   const g = data[pixelIndex + 1];
   const b = data[pixelIndex + 2];
 
-  if (!r || !g || !b) throw new Error("Couldn't find mid pixel");
+  if (r === undefined || g === undefined || b === undefined)
+    throw new Error("Couldn't find mid pixel");
 
   const hexString = `${((1 << 24) + (r << 16) + (g << 8) + b)
     .toString(16)
