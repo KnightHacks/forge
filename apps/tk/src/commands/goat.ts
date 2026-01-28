@@ -139,8 +139,6 @@ export async function execute(interaction: CommandInteraction) {
       })
     ).map((t) => t.userId);
 
-    console.log(goat_ids);
-
     let goat_id = "";
     let goat:
       | {
@@ -154,7 +152,7 @@ export async function execute(interaction: CommandInteraction) {
       | undefined;
 
     while (!goat?.profilePictureUrl?.trim()) {
-      goat_id = goat_ids[Math.floor(Math.random() * goat_ids.length)];
+      goat_id = goat_ids[Math.floor(Math.random() * goat_ids.length)] ?? "";
       goat = await db.query.Member.findFirst({
         where: (t, { eq }) => eq(t.userId, goat_id),
         columns: {
@@ -166,7 +164,6 @@ export async function execute(interaction: CommandInteraction) {
           profilePictureUrl: true,
         },
       });
-      console.log(goat_id, goat);
     }
 
     console.log(goat_id, goat);
