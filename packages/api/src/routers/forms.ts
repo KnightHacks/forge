@@ -1,6 +1,6 @@
-import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import type { JSONSchema7 } from "json-schema";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -426,9 +426,17 @@ export const formsRouter = {
         }
       }
 
-      const zodSchemaString = jsonSchemaToZod(
-        form.formValidatorJson as JSONSchema7,
-      );
+      const formData = form.formData as FormType;
+      const jsonSchema = generateJsonSchema(formData);
+      
+      if (!jsonSchema.success) {
+        throw new TRPCError({
+          message: jsonSchema.msg,
+          code: "BAD_REQUEST",
+        });
+      }
+
+      const zodSchemaString = jsonSchemaToZod(jsonSchema.schema);
 
       // create js function at runtime to create a zod object
       // input is trusted and generated internally
@@ -440,8 +448,17 @@ export const formsRouter = {
       const response = zodSchema.safeParse(input.responseData);
 
       if (!response.success) {
+        // Format Zod errors into a readable message
+        const errorMessages = response.error.errors.map((err) => {
+          const path = err.path.join(".");
+          return path ? `${path}: ${err.message}` : err.message;
+        });
+        const errorMessage = errorMessages.length > 0
+          ? `Form response failed form validation: ${errorMessages.join("; ")}`
+          : "Form response failed form validation";
+        
         throw new TRPCError({
-          message: "Form response failed form validation",
+          message: errorMessage,
           code: "BAD_REQUEST",
         });
       }
