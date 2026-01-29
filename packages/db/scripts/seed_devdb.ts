@@ -21,10 +21,11 @@ import {
 } from "@forge/consts/knight-hacks";
 
 import { minioClient } from "../../api/src/minio/minio-client";
-import { discord } from "../../api/src/utils";
+import { discord, log } from "../../api/src/utils";
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
 import * as knightHacksSchema from "../src/schemas/knight-hacks";
+import { stringify } from "superjson";
 
 const execAsync = promisify(exec);
 console.log("Starting seeding script");
@@ -418,9 +419,22 @@ async function main() {
     console.log("Cleaning up backup db");
     await cleanUp();
 
+		await log({
+			title: `Successfully saved limited prod db to minio`,
+			message: `Successfully saved limited prod db to minio. Run the get_prod_db.ts script to get it into your local dev db.`,
+			color: "success_green",
+			userId: "Host",
+		});
+
     process.exit(0);
   } catch (error) {
     console.error("Error during database seeding:", error);
+		await log({
+			title: `Failed to save limited prod db to minio`,
+			message: `Failed to sav limited prod db to minio. Error: ${stringify(error)}`,
+			color: "uhoh_red",
+			userId: "Host",
+		});
     await cleanUp();
     process.exit(1);
   }
