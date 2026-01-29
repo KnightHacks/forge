@@ -1,8 +1,8 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import type { APIExternalGuildScheduledEvent } from "discord-api-types/v10";
-import type { calendar_v3 } from "googleapis";
 import { TRPCError } from "@trpc/server";
+import type { APIExternalGuildScheduledEvent } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
+import type { calendar_v3 } from "googleapis";
 import { z } from "zod";
 
 import {
@@ -181,7 +181,7 @@ export const eventRouter = {
             location: input.location,
           },
         } as calendar_v3.Params$Resource$Events$Insert);
-        googleEventId = response.data.id;
+        googleEventId = response.data.id ?? undefined;
       } catch (error) {
         console.error("ERROR MESSAGE:", JSON.stringify(error, null, 2));
 
