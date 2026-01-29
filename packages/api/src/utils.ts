@@ -340,10 +340,7 @@ export const getJudgeSessionFromCookie = async () => {
   return rows[0] ?? null;
 };
 
-const GOOGLE_PRIVATE_KEY = Buffer.from(
-  env.GOOGLE_PRIVATE_KEY_B64,
-  "base64",
-)
+const GOOGLE_PRIVATE_KEY = Buffer.from(env.GOOGLE_PRIVATE_KEY_B64, "base64")
   .toString("utf-8")
   .replace(/\\n/g, "\n");
 
