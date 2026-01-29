@@ -20,6 +20,8 @@ export const env = createEnv({
     TEAM_IDENTIFIER: z.string(),
     AUTH_SECRET: z.string(),
     BLADE_URL: z.string(),
+    GOOGLE_CLIENT_EMAIL: z.string(),
+    GOOGLE_PRIVATE_KEY_B64: z.string(),
   },
   experimental__runtimeEnv: {},
   skipValidation:
