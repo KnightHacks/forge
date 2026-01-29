@@ -341,7 +341,7 @@ export const getJudgeSessionFromCookie = async () => {
 };
 
 const GOOGLE_PRIVATE_KEY = Buffer.from(
-  env.GOOGLE_PRIVATE_KEY_B64 as string,
+  env.GOOGLE_PRIVATE_KEY_B64,
   "base64",
 )
   .toString("utf-8")
@@ -353,7 +353,7 @@ const gapiGmailSettingsSharing =
   "https://www.googleapis.com/auth/gmail.settings.sharing";
 
 const auth = new google.auth.JWT(
-  env.GOOGLE_CLIENT_EMAIL as string,
+  env.GOOGLE_CLIENT_EMAIL,
   undefined,
   GOOGLE_PRIVATE_KEY,
   [gapiCalendar, gapiGmailSend, gapiGmailSettingsSharing],

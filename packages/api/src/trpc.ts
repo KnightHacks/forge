@@ -12,7 +12,8 @@ import { ZodError } from "zod";
 
 import type { Session } from "@forge/auth/server";
 import { validateToken } from "@forge/auth/server";
-import { PermissionKey, PERMISSIONS } from "@forge/consts/knight-hacks";
+import type { PermissionKey} from "@forge/consts/knight-hacks";
+import { PERMISSIONS } from "@forge/consts/knight-hacks";
 import { eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";

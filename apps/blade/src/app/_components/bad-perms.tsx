@@ -1,6 +1,7 @@
 import { ShieldX } from "lucide-react";
 
-import { PERMISSION_DATA, PermissionKey } from "@forge/consts/knight-hacks";
+import type { PermissionKey } from "@forge/consts/knight-hacks";
+import { PERMISSION_DATA } from "@forge/consts/knight-hacks";
 
 export function BadPerms({ perms }: { perms: PermissionKey[] }) {
   const permNames: string[] = [];
