@@ -1,10 +1,11 @@
-import { REST } from "@discordjs/rest";
-import { TRPCError } from "@trpc/server";
 import type { APIGuildMember } from "discord-api-types/v10";
-import { Routes } from "discord-api-types/v10";
-import { and, eq, gt, inArray } from "drizzle-orm";
 import type { JSONSchema7 } from "json-schema";
 import { cookies } from "next/headers";
+import { REST } from "@discordjs/rest";
+import { TRPCError } from "@trpc/server";
+import { Routes } from "discord-api-types/v10";
+import { and, eq, gt, inArray } from "drizzle-orm";
+import { google } from "googleapis";
 import { Resend } from "resend";
 import Stripe from "stripe";
 
@@ -32,7 +33,6 @@ import {
 } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
 import { JudgeSession, Roles } from "@forge/db/schemas/auth";
-import { google } from "googleapis";
 
 import { env } from "./env";
 import { minioClient } from "./minio/minio-client";
@@ -340,7 +340,10 @@ export const getJudgeSessionFromCookie = async () => {
   return rows[0] ?? null;
 };
 
-const GOOGLE_PRIVATE_KEY = Buffer.from(env.GOOGLE_PRIVATE_KEY_B64 as string, "base64")
+const GOOGLE_PRIVATE_KEY = Buffer.from(
+  env.GOOGLE_PRIVATE_KEY_B64 as string,
+  "base64",
+)
   .toString("utf-8")
   .replace(/\\n/g, "\n");
 
