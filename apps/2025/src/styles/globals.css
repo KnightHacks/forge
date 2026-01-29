@@ -92,6 +92,21 @@ html {
   animation: moving-border 4s linear infinite;
 }
 
+@keyframes zoomOutInLikeATrampoline{
+  0% { transform: scale(1) translateY(0); }
+  25% { transform: scale(0.8) translateY(-10px); } /* Combined! */
+  30% { transform: scale(1.2) translateY(10px); }
+  40% { transform: scale(0.8) translateY(-10px); }
+  50% { transform: scale(1.2) translateY(10px); }
+  60% { transform: scale(1) translateY(-10px); }
+  75% { transform: scale(1.05) translateY(0); }
+  100% { transform: scale(1) translateY(0); }
+}
+.funny{
+  display: inline-block;
+  animation: zoomOutInLikeATrampoline 7s ease-in-out infinite;
+  transform-origin: bottom;
+}
 @keyframes popOut {
   0% {
     opacity: 0;
@@ -297,7 +312,14 @@ html {
     overflow-x: hidden;
     width: 100%;
   }
-
+/* no scrollbar*/
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  
+  scrollbar-width: none;  
+}
   body {
     overflow-x: hidden;
     width: 100%;

@@ -19,6 +19,8 @@
     "@forge/api": "^5.2.0",
     "@forge/consts": "workspace:^",
     "@forge/ui": "workspace:*",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
     "@t3-oss/env-nextjs": "^0.11.1",
     "@tanstack/react-query": "^5.69.0",
     "@trpc/client": "^11.0.0",
@@ -31,6 +33,7 @@
     "server-only": "^0.0.1",
     "superjson": "2.2.1",
     "tailwindcss-animate": "^1.0.7",
+    "three": "^0.182.0",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -11,7 +11,7 @@ export const env = createEnv({
   },
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-    BLADE_URL: process.env.BLADE_URL,
+    BLADE_URL: "http://localhost:3000/alejaimes",
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
