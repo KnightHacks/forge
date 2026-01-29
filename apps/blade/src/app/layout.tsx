@@ -2,15 +2,15 @@ import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 
+// @ts-ignore
+import "./globals.css";
+
 import { cn } from "@forge/ui";
 import { ThemeProvider, ThemeToggle } from "@forge/ui/theme";
 import { Toaster } from "@forge/ui/toast";
 
-import { TRPCReactProvider } from "~/trpc/react";
-
-import "./globals.css";
-
 import { env } from "~/env";
+import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -48,7 +48,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <TRPCReactProvider>{props.children}</TRPCReactProvider>
-          <div className="fixed bottom-4 right-4">
+          <div className="hidden">
             <ThemeToggle />
           </div>
           <Toaster />
@@ -57,3 +57,5 @@ export default function RootLayout(props: { children: React.ReactNode }) {
     </html>
   );
 }
+
+/* old class name */
