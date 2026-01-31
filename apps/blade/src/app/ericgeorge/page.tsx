@@ -7,7 +7,6 @@ import { FaLinkedin } from "react-icons/fa";
 import Link from "next/link";
 
 const PIPBOY_GREEN = "#1aff80";
-const PIPBOY_GREEN_GLOW = "rgba(26, 255, 128, 0.45)";
 
 const Page = () => {
     const [activeTab, setActiveTab] = useState("INTRO");
@@ -29,8 +28,7 @@ const Page = () => {
             style={{ color: PIPBOY_GREEN }}
         >
             {/* 
-          CURVATURE & SCANLINE OVERLAYS
-          These are fixed to the viewport to provide the global "monitor" feel
+          
       */}
             <div className="pointer-events-none absolute inset-0 z-50 overflow-hidden">
 
@@ -276,7 +274,7 @@ const TypewriterText = ({ text, delay = 50, startDelay = 0 }: { text: string; de
 
 const IntroContent = () => (
     <div className="grid h-full grid-cols-12 gap-8 lg:gap-16 py-12 items-center">
-        {/* Profile Image with CRT Filter */}
+        {/* Profile Image with CRT Filter - need to tone this down a little */}
         <div className="col-span-12 lg:col-span-4 flex justify-center lg:justify-start">
             <div className="relative group">
                 {/* Decorative Frame */}
