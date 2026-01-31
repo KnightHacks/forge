@@ -181,7 +181,7 @@ export const eventRouter = {
             location: input.location,
           },
         } as calendar_v3.Params$Resource$Events$Insert);
-        googleEventId = response.data.id;
+        googleEventId = response.data.id ?? undefined;
       } catch (error) {
         console.error("ERROR MESSAGE:", JSON.stringify(error, null, 2));
 

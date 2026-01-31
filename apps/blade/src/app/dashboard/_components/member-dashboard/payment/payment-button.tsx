@@ -20,7 +20,12 @@ export default function PaymentButton({ member }: { member: InsertMember }) {
 
     if (
       (member.school !== "University of Central Florida" &&
-        member.school !== "Valencia College") ||
+        member.school !== "Valencia College" &&
+        member.school !== "Seminole State College of Florida" &&
+        member.school !== "Rollins College" &&
+        member.school !== "DeVry University Orlando" &&
+        member.school !== "Johnson University Florida" &&
+        member.school !== "Full Sail University") ||
       (month > 3 && month < 7) // disable during summer months
     ) {
       setDisableButton(true);

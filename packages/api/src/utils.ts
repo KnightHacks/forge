@@ -5,6 +5,7 @@ import { REST } from "@discordjs/rest";
 import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { and, eq, gt, inArray } from "drizzle-orm";
+import { google } from "googleapis";
 import { Resend } from "resend";
 import Stripe from "stripe";
 
@@ -21,6 +22,7 @@ import {
   DEV_KNIGHTHACKS_LOG_CHANNEL,
   FORM_ASSETS_BUCKET,
   getDropdownOptionsFromConst,
+  GOOGLE_PERSONIFY_EMAIL,
   IS_PROD,
   PERMISSION_DATA,
   PERMISSIONS,
@@ -338,30 +340,32 @@ export const getJudgeSessionFromCookie = async () => {
   return rows[0] ?? null;
 };
 
-interface CalendarStub {
-  events: {
-    insert: (params: unknown) => Promise<{ data: { id: string } }>;
-    update: (params: unknown) => Promise<{ data: { id: string } }>;
-    delete: (params: unknown) => Promise<Record<string, never>>;
-  };
-}
+const GOOGLE_PRIVATE_KEY = Buffer.from(env.GOOGLE_PRIVATE_KEY_B64, "base64")
+  .toString("utf-8")
+  .replace(/\\n/g, "\n");
 
-export const calendar: CalendarStub = {
-  events: {
-    insert: (_params: unknown) => {
-      console.warn("Google Calendar integration not implemented - stub called");
-      return Promise.resolve({ data: { id: "stub-event-id" } });
-    },
-    update: (_params: unknown) => {
-      console.warn("Google Calendar integration not implemented - stub called");
-      return Promise.resolve({ data: { id: "stub-event-id" } });
-    },
-    delete: (_params: unknown) => {
-      console.warn("Google Calendar integration not implemented - stub called");
-      return Promise.resolve({});
-    },
-  },
-};
+const gapiCalendar = "https://www.googleapis.com/auth/calendar";
+const gapiGmailSend = "https://www.googleapis.com/auth/gmail.send";
+const gapiGmailSettingsSharing =
+  "https://www.googleapis.com/auth/gmail.settings.sharing";
+
+const auth = new google.auth.JWT(
+  env.GOOGLE_CLIENT_EMAIL,
+  undefined,
+  GOOGLE_PRIVATE_KEY,
+  [gapiCalendar, gapiGmailSend, gapiGmailSettingsSharing],
+  GOOGLE_PERSONIFY_EMAIL as string,
+);
+
+export const gmail = google.gmail({
+  version: "v1",
+  auth: auth,
+});
+
+export const calendar = google.calendar({
+  version: "v3",
+  auth: auth,
+});
 
 type OptionalSchema =
   | { success: true; schema: JSONSchema7 }

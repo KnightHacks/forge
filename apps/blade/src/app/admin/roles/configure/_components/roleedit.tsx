@@ -1,9 +1,10 @@
 "use client";
 
 import type { APIRole } from "discord-api-types/v10";
+import type { ZodBoolean } from "zod";
 import { useEffect, useState } from "react";
 import { Link, Loader2, Pencil, User, X } from "lucide-react";
-import { z, ZodBoolean } from "zod";
+import { z } from "zod";
 
 import { PERMISSION_DATA, PERMISSIONS } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
