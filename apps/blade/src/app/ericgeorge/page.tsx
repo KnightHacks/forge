@@ -328,7 +328,7 @@ const IntroContent = () => (
                     </p>
                     <p className="text-2xl lg:text-3xl font-black uppercase tracking-[0.15em] leading-relaxed opacity-60">
                         <TypewriterText
-                            text="I am currently an Software Engineer Intern at Siemens Energy and the Computer Science Technical chair for UCF SASE"
+                            text="I am currently a Software Engineer Intern at Siemens Energy and the Computer Science Technical chair for UCF SASE"
                             startDelay={4000}
                             delay={30}
                         />
