@@ -582,7 +582,7 @@ export const formsRouter = {
         .from(FormResponse)
         .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
         .where(
-          and(eq(FormResponse.userId, userId), eq(FormsSchemas.name, form)),
+          and(eq(FormResponse.userId, userId), eq(FormsSchemas.id, form)),
         )
         .orderBy(desc(FormResponse.createdAt));
     }),
