@@ -123,8 +123,8 @@ const Page = () => {
                     <main className="flex-1 overflow-y-auto custom-scrollbar pr-4">
                         <div className="mx-auto max-w-7xl animate-startup">
                             {activeTab === "INTRO" && <IntroContent />}
-                            {activeTab === "PROJECTS" && <IntroContent />}
-                            {activeTab === "CONTACT" && <IntroContent />}
+                            {activeTab === "PROJECTS" && <ProjectsContent />}
+                            {activeTab === "CONTACT" && <ContactContent />}
 
                         </div>
                     </main>
@@ -146,12 +146,7 @@ const Page = () => {
                             </div>
 
                             <div className="col-span-1 flex flex-col gap-5">
-                                <div className="flex justify-between text-lg lg:text-2xl">
-                                    <span>AP 90 / 90</span>
-                                </div>
-                                <div className="h-4 w-full border-4 border-current/20 bg-current/5 p-1">
-                                    <div className="h-full bg-current shadow-[0_0_30px_rgba(26,255,128,1)]" style={{ width: '100%' }} />
-                                </div>
+
                             </div>
 
                             <div className="col-span-1 flex flex-col justify-end text-right">
@@ -315,7 +310,7 @@ const IntroContent = () => (
         {/* Intro Text */}
         <div className="col-span-12 lg:col-span-8 flex flex-col justify-center gap-10">
             <div className="flex flex-col gap-6">
-                <h1 className="text-4xl lg:text-6xl font-black uppercase tracking-[0.25em] leading-[1.1]">
+                <h1 className="text-4xl lg:text-6xl font-black uppercase tracking-[0.25em] leading-[1.1] text-glow">
                     <TypewriterText text="Hello my name is Eric George" />
                 </h1>
                 <div className="space-y-6">
@@ -333,9 +328,133 @@ const IntroContent = () => (
                             delay={30}
                         />
                     </p>
+                    <p className="text-2xl lg:text-3xl font-black uppercase tracking-[0.15em] leading-relaxed opacity-60">
+                        <TypewriterText
+                            text="I love attending hackathons, I've been to 7 so far and have won 4 prizes with a 1st and 2nd place finish at Knighthacks and Swamphacks respectively"
+                            startDelay={4000}
+                            delay={30}
+                        />
+                    </p>
                 </div>
             </div>
         </div>
+    </div>
+);
+
+const ProjectsContent = () => (
+    <div className="grid h-full grid-cols-12 gap-8 lg:gap-16 py-12 items-center">
+        {/* Project Visual Placeholder / Icon */}
+        <div className="col-span-12 lg:col-span-4 flex justify-center lg:justify-start">
+            <div className="relative group">
+                <div className="absolute -inset-4 border-2 border-current opacity-20 group-hover:opacity-40 transition-opacity" />
+                <div className="relative aspect-video w-64 lg:w-full max-w-[400px] overflow-hidden border-4 border-current/20 bg-current/5 flex items-center justify-center">
+
+                </div>
+            </div>
+        </div>
+
+        {/* Project Details */}
+        <div className="col-span-12 lg:col-span-8 flex flex-col justify-center gap-10">
+            <div className="flex flex-col gap-6">
+                <h1 className="text-4xl lg:text-6xl font-black uppercase tracking-[0.25em] leading-[1.1] text-glow">
+                    <TypewriterText text="SIGNHERO" />
+                </h1>
+                <div className="space-y-6">
+                    <p className="text-2xl lg:text-3xl font-black uppercase tracking-[0.15em] leading-relaxed opacity-80">
+                        A really fun game that we designed at Swamphacks to help people learn ASL. It was basically a combo of Guitar Hero and DDR but with ASL. My favorite part about this project was that it ended up being a pretty solid game at the end of it. We had tons of people swarm our table to try it out!
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="border-l-4 border-current pl-4 py-2">
+                            <h3 className="text-lg font-bold opacity-40 uppercase">AWARDS</h3>
+                            <p className="text-xl font-black uppercase">2nd Place @ Swamphacks</p>
+                            <p className="text-xl font-black uppercase">Best Game Design @ Swamphacks</p>
+                        </div>
+                        <div className="border-l-4 border-current pl-4 py-2">
+                            <h3 className="text-lg font-bold opacity-40 uppercase">TECH STACK</h3>
+                            <p className="text-xl font-black uppercase text-xs">MobileNetV2 • MediaPipe • Real-time AI</p>
+                        </div>
+                    </div>
+                    <p className="text-xl font-bold uppercase tracking-[0.1em] leading-relaxed opacity-60">
+                        <TypewriterText
+                            text="Built with a custom machine learning pipeline achieving 30-50ms latency for seamless gameplay."
+                            startDelay={3000}
+                            delay={30}
+                        />
+                    </p>
+                    <Link
+                        href="https://devpost.com/software/signhero"
+                        target="_blank"
+                        className="inline-block w-fit border-2 border-current px-6 py-2 font-black uppercase hover:bg-current hover:text-black transition-all"
+                    >
+                        View Project on Devpost
+                    </Link>
+                </div>
+            </div>
+            <div className="flex flex-col gap-6">
+                <h1 className="text-4xl lg:text-6xl font-black uppercase tracking-[0.25em] leading-[1.1] text-glow">
+                    <TypewriterText text="Emergent" />
+                </h1>
+                <div className="space-y-6">
+                    <p className="text-2xl lg:text-3xl font-black uppercase tracking-[0.15em] leading-relaxed opacity-80">
+                        A really fun game that we designed at Swamphacks to help people learn ASL. It was basically a combo of Guitar Hero and DDR but with ASL. My favorite part about this project was that it ended up being a pretty solid game at the end of it. We had tons of people swarm our table to try it out!
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="border-l-4 border-current pl-4 py-2">
+                            <h3 className="text-lg font-bold opacity-40 uppercase">AWARDS</h3>
+                            <p className="text-xl font-black uppercase">1st Place @ Knighthacks</p>
+                            <p className="text-xl font-black uppercase">2nd Place in Google ADK Challenge @ Knighthacks</p>
+                        </div>
+                        <div className="border-l-4 border-current pl-4 py-2">
+                            <h3 className="text-lg font-bold opacity-40 uppercase">TECH STACK</h3>
+                            <p className="text-xl font-black uppercase text-xs">MobileNetV2 • MediaPipe • Real-time AI</p>
+                        </div>
+                    </div>
+                    <p className="text-xl font-bold uppercase tracking-[0.1em] leading-relaxed opacity-60">
+                        <TypewriterText
+                            text="Built with a custom machine learning pipeline achieving 30-50ms latency for seamless gameplay."
+                            startDelay={3000}
+                            delay={30}
+                        />
+                    </p>
+                    <Link
+                        href="https://devpost.com/software/signhero"
+                        target="_blank"
+                        className="inline-block w-fit border-2 border-current px-6 py-2 font-black uppercase hover:bg-current hover:text-black transition-all"
+                    >
+                        View Project on Devpost
+                    </Link>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+const ContactContent = () => (
+    <div className="flex h-full flex-col justify-center py-12 max-w-4xl">
+        <h1 className="text-5xl lg:text-7xl font-black uppercase tracking-[0.3em] mb-12 text-glow">
+            <TypewriterText text="CONNECT" />
+        </h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {[
+                { label: "LINKEDIN", value: "eric-george-90a26a278", href: "https://www.linkedin.com/in/eric-george-90a26a278/" },
+                { label: "GITHUB", value: "myr124", href: "https://github.com/myr124" },
+                { label: "EMAIL", value: "ericgeo324@gmail.com", href: "mailto:ericgeo324@gmail.com" },
+                { label: "LOCATION", value: "ORLANDO, FL", href: "#" },
+            ].map((contact, i) => (
+                <div key={contact.label} className="group flex flex-col gap-2">
+                    <span className="text-sm font-bold opacity-40 uppercase">{contact.label}</span>
+                    <Link
+                        href={contact.href}
+                        target={contact.href.startsWith("http") ? "_blank" : undefined}
+                        className="text-2xl lg:text-3xl font-black uppercase tracking-widest group-hover:text-glow transition-all"
+                    >
+                        <TypewriterText text={contact.value} startDelay={i * 500} />
+                    </Link>
+                </div>
+            ))}
+        </div>
+
     </div>
 );
 
