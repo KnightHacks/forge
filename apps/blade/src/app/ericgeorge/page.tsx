@@ -280,26 +280,60 @@ const TypewriterText = ({ text, delay = 50, startDelay = 0 }: { text: string; de
 };
 
 const IntroContent = () => (
-    <div className="grid h-full grid-cols-12 gap-12 lg:gap-24 py-12">
+    <div className="grid h-full grid-cols-12 gap-8 lg:gap-16 py-12 items-center">
+        {/* Profile Image with CRT Filter */}
+        <div className="col-span-12 lg:col-span-4 flex justify-center lg:justify-start">
+            <div className="relative group">
+                {/* Decorative Frame */}
+                <div className="absolute -inset-4 border-2 border-current opacity-20 group-hover:opacity-40 transition-opacity" />
+                <div className="absolute -inset-2 border border-current opacity-10" />
+
+                <div className="relative aspect-square w-64 lg:w-full max-w-[400px] overflow-hidden border-4 border-current/20 bg-current/5 shadow-[0_0_50px_rgba(26,255,128,0.15)]">
+                    <img
+                        src="/profile.jpg"
+                        alt="Eric George"
+                        className="h-full w-full object-cover opacity-70 mix-blend-screen"
+                        style={{
+                            filter: 'grayscale(100%) brightness(1.1) contrast(1.1) sepia(100%) hue-rotate(90deg) saturate(400%)'
+                        }}
+                    />
+                    {/* Image Scanline Overlay */}
+                    <div className="absolute inset-0 pointer-events-none opacity-15"
+                        style={{
+                            backgroundImage: `repeating-linear-gradient(0deg, transparent 0px, transparent 1px, rgba(0,0,0,0.5) 2px, rgba(0,0,0,0.5) 3px)`,
+                            backgroundSize: '100% 4px'
+                        }}
+                    />
+                    {/* Vignette on image */}
+                    <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.6)]" />
+                </div>
+
+
+            </div>
+        </div>
+
+        {/* Intro Text */}
         <div className="col-span-12 lg:col-span-8 flex flex-col justify-center gap-10">
-            <div className="flex flex-col gap-8">
-                <h1 className="text-5xl font-black uppercase tracking-[0.25em] leading-tight">
+            <div className="flex flex-col gap-6">
+                <h1 className="text-4xl lg:text-6xl font-black uppercase tracking-[0.25em] leading-[1.1]">
                     <TypewriterText text="Hello my name is Eric George" />
                 </h1>
-                <p className="text-3xl font-black uppercase tracking-[0.20em] leading-relaxed opacity-80">
-                    <TypewriterText
-                        text="I'm a developer passionate about building and engaging in new technologies"
-                        startDelay={2000}
-                        delay={40}
-                    />
-                </p>
-                <p className="text-3xl font-black uppercase tracking-[0.20em] leading-relaxed opacity-80">
-                    <TypewriterText
-                        text="I am currently an Software Engineer Intern at Siemens Energy and the Computer Science Technical chair for UCF SASE"
-                        startDelay={2000}
-                        delay={40}
-                    />
-                </p>
+                <div className="space-y-6">
+                    <p className="text-2xl lg:text-3xl font-black uppercase tracking-[0.15em] leading-relaxed opacity-80">
+                        <TypewriterText
+                            text="I'm a developer passionate about building and engaging in new technologies"
+                            startDelay={2000}
+                            delay={40}
+                        />
+                    </p>
+                    <p className="text-2xl lg:text-3xl font-black uppercase tracking-[0.15em] leading-relaxed opacity-60">
+                        <TypewriterText
+                            text="I am currently an Software Engineer Intern at Siemens Energy and the Computer Science Technical chair for UCF SASE"
+                            startDelay={4000}
+                            delay={30}
+                        />
+                    </p>
+                </div>
             </div>
         </div>
     </div>
