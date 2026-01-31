@@ -134,12 +134,12 @@ const Page = () => {
                                 <div className="flex justify-between text-lg lg:text-2xl">
                                     <span>STATUS: NGMI</span>
                                 </div>
-                                <div className="h-4 w-full border-4 border-current/20 bg-current/5 p-1">
-                                    <div className="h-full bg-current shadow-[0_0_30px_rgba(26,255,128,1)] transition-all duration-300" style={{ width: '100%' }} />
+                                <div className="h-4 w-full border-4 border-green-500/20 bg-green-500/5 p-1">
+                                    <div className="h-full bg-green-500 shadow-[0_0_30px_rgba(26,255,128,1)] transition-all duration-300" style={{ width: '100%' }} />
                                 </div>
                                 <div className="flex justify-between text-xs lg:text-sm tracking-widest opacity-40">
                                     <span>HP 320/320</span>
-                                    <span>99% EFFICIENCY</span>
+                                    <span>99% hahacoolnumber</span>
                                 </div>
                             </div>
 
@@ -148,8 +148,8 @@ const Page = () => {
                             </div>
 
                             <div className="col-span-1 flex flex-col justify-end text-right">
-                                <div className="text-4xl lg:text-6xl tracking-tighter drop-shadow-[0_0_10px_rgba(26,255,128,0.6)]">LVL 10</div>
-                                <div className="mt-3 h-2 w-full border-2 border-current/30 bg-current/5 lg:w-48 lg:ml-auto">
+                                <div className="text-4xl lg:text-6xl tracking-tighter drop-shadow-[0_0_10px_rgba(26,255,128,0.6)]">LVL 21</div>
+                                <div className="mt-3 h-2 w-full border-2 border-green-500/20 bg-green-500/5 lg:w-48 lg:ml-auto">
                                     <div className="h-full bg-current/60" style={{ width: '65%' }} />
                                 </div>
                             </div>
@@ -249,19 +249,26 @@ const IntroContent = () => (
                     </p>
                     <p className="text-2xl lg:text-3xl font-black uppercase tracking-[0.15em] leading-relaxed opacity-60">
                         <TypewriterText
-                            text="I am currently a Software Engineer Intern at Siemens Energy and the Computer Science Technical chair for UCF SASE"
-                            startDelay={4000}
+                            text="I am currently a student at the University of Central Florida studying Computer Science, a Software Engineer Intern at Siemens Energy and the Computer Science Technical chair for UCF SASE"
+                            startDelay={4500}
                             delay={30}
                         />
                     </p>
                     <p className="text-2xl lg:text-3xl font-black uppercase tracking-[0.15em] leading-relaxed opacity-60">
                         <TypewriterText
                             text="I love attending hackathons, I've been to 7 so far and have won 4 prizes with a 1st and 2nd place finish at Knighthacks and Swamphacks respectively"
-                            startDelay={4000}
+                            startDelay={6500}
                             delay={30}
                         />
                     </p>
                 </div>
+                <p className="text-2xl lg:text-3xl font-black uppercase tracking-[0.15em] leading-relaxed opacity-60">
+                    <TypewriterText
+                        text="I am also a huge fan of video games. This page is inspired by the pipboy from the Fallout series"
+                        startDelay={8500}
+                        delay={30}
+                    />
+                </p>
             </div>
         </div>
     </div>
