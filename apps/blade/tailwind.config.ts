@@ -14,6 +14,15 @@ export default {
         sans: ["var(--font-geist-sans)", ...fontFamily.sans],
         mono: ["var(--font-geist-mono)", ...fontFamily.mono],
       },
+      animation: {
+        marquee: 'marquee 60s linear infinite',
+      },  
+      keyframes: {
+        marquee: {
+          from : { transform: 'translateX(0%)' },
+          to : { transform: 'translateX(-100%)' }
+        },
+      },
     },
   },
 } satisfies Config;
