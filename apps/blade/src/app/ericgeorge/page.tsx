@@ -343,18 +343,10 @@ const IntroContent = () => (
 
 const ProjectsContent = () => (
     <div className="grid h-full grid-cols-12 gap-8 lg:gap-16 py-12 items-center">
-        {/* Project Visual Placeholder / Icon */}
-        <div className="col-span-12 lg:col-span-4 flex justify-center lg:justify-start">
-            <div className="relative group">
-                <div className="absolute -inset-4 border-2 border-current opacity-20 group-hover:opacity-40 transition-opacity" />
-                <div className="relative aspect-video w-64 lg:w-full max-w-[400px] overflow-hidden border-4 border-current/20 bg-current/5 flex items-center justify-center">
 
-                </div>
-            </div>
-        </div>
 
         {/* Project Details */}
-        <div className="col-span-12 lg:col-span-8 flex flex-col justify-center gap-10">
+        <div className="col-span-10 lg:col-span-8 flex flex-col justify-center gap-10">
             <div className="flex flex-col gap-6">
                 <h1 className="text-4xl lg:text-6xl font-black uppercase tracking-[0.25em] leading-[1.1] text-glow">
                     <TypewriterText text="SIGNHERO" />
@@ -396,7 +388,7 @@ const ProjectsContent = () => (
                 </h1>
                 <div className="space-y-6">
                     <p className="text-2xl lg:text-3xl font-black uppercase tracking-[0.15em] leading-relaxed opacity-80">
-                        A really fun game that we designed at Swamphacks to help people learn ASL. It was basically a combo of Guitar Hero and DDR but with ASL. My favorite part about this project was that it ended up being a pretty solid game at the end of it. We had tons of people swarm our table to try it out!
+                        Emergent was a cool project that me and my friends built at Knighthacks. Its essentially a crisis-management simulation software that aims to streamline and improve the way that organizations simulate disasters. It was a really engaging problem to delve into and also very fun to build.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="border-l-4 border-current pl-4 py-2">
@@ -406,18 +398,18 @@ const ProjectsContent = () => (
                         </div>
                         <div className="border-l-4 border-current pl-4 py-2">
                             <h3 className="text-lg font-bold opacity-40 uppercase">TECH STACK</h3>
-                            <p className="text-xl font-black uppercase text-xs">MobileNetV2 • MediaPipe • Real-time AI</p>
+                            <p className="text-xl font-black uppercase text-xs">Google ADK • NextJS • ElevenLabs</p>
                         </div>
                     </div>
                     <p className="text-xl font-bold uppercase tracking-[0.1em] leading-relaxed opacity-60">
                         <TypewriterText
-                            text="Built with a custom machine learning pipeline achieving 30-50ms latency for seamless gameplay."
+                            text="Generated simulations with over 100 personas in under 30 seconds"
                             startDelay={3000}
                             delay={30}
                         />
                     </p>
                     <Link
-                        href="https://devpost.com/software/signhero"
+                        href="https://devpost.com/software/emergent-b2t1fl"
                         target="_blank"
                         className="inline-block w-fit border-2 border-current px-6 py-2 font-black uppercase hover:bg-current hover:text-black transition-all"
                     >
