@@ -1,0 +1,77 @@
+.introPage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  gap: 2rem;
+  padding: 2rem;
+  min-height: 100vh;
+  min-width: 100vw;
+  text-align: center;
+  background-color: #018281;
+  overflow: hidden;
+  font-family: system-ui, sans-serif;
+}
+
+@font-face {
+  font-family: 'Chicago';
+  src: url('/Chicago.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.icon {
+  font-family: 'Chicago', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.icon p {
+  color: white;
+  margin: 0;
+  padding: 0;
+}
+
+.icon:hover {
+  outline: 0.05px solid white;
+  background-color: rgba(255, 255, 255, 0.728);
+  backdrop-filter: blur(1.5px);
+}
+
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modalContent {
+  font-family: 'Chicago', sans-serif;
+  color: black;
+  background-color: #ffffff;
+  padding: 2rem;
+  width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: start;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.closeBtn {
+  border: 2mm inset rgb(160, 160, 160);
+  background-color: rgb(187, 187, 187);
+  color: black;
+  position: absolute;
+  transform: scale(0.4);
+  top: -12px;
+  right: -15px;
+  font-size: 1rem;
+  cursor: pointer;
+}
