@@ -21,12 +21,12 @@ export default function DanielSchevisLayout({
       {/* Main content area */}
       <main className="mx-auto max-w-6xl px-6 py-12">{children}</main>
 
-      {/* Footer with social links */}
+      {/* Footer */}
       <footer className="border-t border-yellow-500/20 bg-black/60 dark:bg-black/60 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-6 py-8">
           <div className="flex flex-col items-center justify-center">
             <p className="font-mono text-sm text-gray-400 dark:text-gray-400 text-gray-700">
-              Protecting the web, one commit at a time
+              Protecting the campus, one commit at a time
             </p>
           </div>
         </div>
