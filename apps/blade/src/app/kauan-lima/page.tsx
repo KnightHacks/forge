@@ -7,7 +7,7 @@ interface GalleryItem {
   imageUrl: string;
   title: string;
 }
-
+//
 const initialArtwork: GalleryItem[] = [
   //{ id: "1", imageUrl: "https://i.imgur.com/placeholder1.jpg", title: "Bond Sketch" },
   //{ id: "1", imageUrl: "https://drive.google.com/uc?export=view&id=1C_kkvCLFNR9drlsyNs_y8WRGY_N_87g7", title: "Resume" },
