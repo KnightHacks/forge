@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from 'react'
 import { FaGithubSquare, FaLinkedin, FaRegFilePdf } from "react-icons/fa"
 import { IoDocumentTextOutline } from "react-icons/io5"
