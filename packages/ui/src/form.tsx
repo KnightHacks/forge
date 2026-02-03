@@ -31,7 +31,7 @@ const useForm = <
     schema: ZodType<TOut, TDef, TIn>;
   },
 ) => {
-  const form = __useForm<TIn, unknown, TOut>({
+  const form = __useForm<TIn>({
     ...props,
     resolver: zodResolver(props.schema, undefined),
   });
