@@ -34,6 +34,10 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: CommandInteraction) {
+	if(!interaction.isChatInputCommand()) {
+		throw new Error("Interaction is of the wrong type");
+	}
+
   const city = interaction.options.get("city")?.value;
   const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${env.DISCORD_WEATHER_API_KEY}&units=imperial`;
 
