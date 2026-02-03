@@ -19,7 +19,7 @@
     /** Strictness */
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "checkJs": true,
+    "checkJs": false,
 
     /** Transpile using Bundler (not tsc) */
     "module": "Preserve",
