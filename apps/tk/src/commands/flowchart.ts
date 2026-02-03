@@ -40,7 +40,11 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: CommandInteraction) {
-  const major = interaction.options.get("major")?.value; // this still works. idk why it shows an error
+	if (!interaction.isChatInputCommand()) {
+    throw new Error("Interaction is of the wrong type");
+  }
+
+	const major = interaction.options.get("major")?.value; // this still works. idk why it shows an error
   let flowchartState = "";
 
   if (!major) {

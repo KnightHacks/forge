@@ -103,7 +103,7 @@ export default function RoleEdit({
   useEffect(() => {
     if (roles)
       setIsDupeName(
-        oldRole && oldRole.name == name
+        oldRole?.name == name
           ? false
           : roles.find((v) => v.name == name) != undefined,
       );
