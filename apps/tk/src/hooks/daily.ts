@@ -130,7 +130,7 @@ export function execute(client: Client) {
       // We have 2 message types from 2 different packages
       // so we have to do this ..thing to convert it
       void client.channels.fetch(embed.channel_id).then((channel) => {
-        if (channel && channel.type === ChannelType.GuildText) {
+        if (channel?.type === ChannelType.GuildText) {
           void channel.messages.fetch(embed.id).then(async (msg) => {
             const thread = await msg.startThread({
               name: dateString,
