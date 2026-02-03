@@ -3,16 +3,48 @@ import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
 import {
+  ALLOWED_FORM_ASSIGNABLE_DISC_ROLES,
   generateFundingRequestEmailHtml,
   RECRUITING_CHANNEL,
   TEAM_MAP,
 } from "@forge/consts/knight-hacks";
 
 import { protectedProcedure } from "../trpc";
-import { discord, sendEmail } from "../utils";
+import { discord, KNIGHTHACKS_GUILD_ID, sendEmail } from "../utils";
 
 // Miscellaneous routes (primarily for form integrations)
 export const miscRouter = {
+  addRoleId: protectedProcedure
+    .meta({
+      id: "addRoleId",
+      inputSchema: z.object({
+        roleId: z.string(),
+      }),
+    })
+    .input(
+      z.object({
+        roleId: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!ALLOWED_FORM_ASSIGNABLE_DISC_ROLES.includes(input.roleId)) {
+        throw new Error(
+          `Roleid: ${input.roleId} is not assignable through forms for security purposes. Add to consts and make a PR if this is a mistake.`,
+        );
+      }
+
+      try {
+        const discId = ctx.session.user.discordUserId;
+        await discord.put(
+          Routes.guildMemberRole(KNIGHTHACKS_GUILD_ID, discId, input.roleId),
+        );
+      } catch {
+        throw new Error(
+          `Could not assign role ${input.roleId} to user ${ctx.session.user.name}`,
+        );
+      }
+    }),
+
   recruitingUpdate: protectedProcedure
     .meta({
       id: "recruitingUpdate",

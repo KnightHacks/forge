@@ -7055,3 +7055,5 @@ export const TEAM_MAP = [
     director_role: "1244790444626280550",
   },
 ];
+
+export const ALLOWED_FORM_ASSIGNABLE_DISC_ROLES = ["1467281189088788489"];
