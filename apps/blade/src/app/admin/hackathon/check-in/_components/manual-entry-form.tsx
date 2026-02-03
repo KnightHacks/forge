@@ -128,14 +128,7 @@ export function ManualEntryForm() {
     eventId: string;
     eventPoints: number;
     hackathonId: string;
-    assignedClassCheckin:
-      | "All"
-      | "Operator"
-      | "Mechanist"
-      | "Sentinel"
-      | "Harbinger"
-      | "Monstologist"
-      | "Alchemist";
+    assignedClassCheckin: string;
     repeatedCheckin: boolean;
   }) => {
     hackerEventCheckIn.mutate(data);
