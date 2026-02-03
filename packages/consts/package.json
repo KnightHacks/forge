@@ -22,9 +22,13 @@
     "@forge/eslint-config": "workspace:*",
     "@forge/prettier-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
+    "@types/minimatch": "^6.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@forge/prettier-config"
+  "prettier": "@forge/prettier-config",
+  "dependencies": {
+    "minimatch": "^10.1.2"
+  }
 }
