@@ -345,7 +345,7 @@ export function MemberApplicationForm() {
 
             const { month, day } = TERM_TO_DATE[values.gradTerm];
             const gradDateIso = new Date(
-              values.gradYear,
+              Number(values.gradYear),
               month,
               day,
             ).toISOString();

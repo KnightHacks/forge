@@ -1019,7 +1019,19 @@ export const hackerRouter = {
         eventId: z.string().uuid(),
         eventPoints: z.number(),
         hackathonId: z.string().uuid(),
-        assignedClassCheckin: AssignedClassCheckinSchema,
+        assignedClassCheckin: z.string().superRefine((v, ctx) => {
+          //Idk man leave me alone
+          if (
+            !(
+              AssignedClassCheckinSchema.options as unknown as string[]
+            ).includes(v)
+          ) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Invalid assignedClassCheckin",
+            });
+          }
+        }),
         repeatedCheckin: z.boolean(),
       }),
     )
