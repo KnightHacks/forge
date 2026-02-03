@@ -1,8 +1,7 @@
 import React from "react";
 import { ArrowRight } from "lucide-react";
 
-interface SlideArrowButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface SlideArrowButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   text?: string;
   primaryColor?: string;
 }

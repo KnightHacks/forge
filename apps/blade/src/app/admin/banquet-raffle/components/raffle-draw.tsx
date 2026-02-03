@@ -44,8 +44,9 @@ export default function RaffleDraw({ entries }: { entries: RaffleEntry[] }) {
         !audioContextRef.current ||
         audioContextRef.current.state === "closed"
       ) {
-        audioContextRef.current = new (window.AudioContext ||
-          (window as any).webkitAudioContext)();
+        audioContextRef.current = new (
+          window.AudioContext || (window as any).webkitAudioContext
+        )();
       }
     }
 
