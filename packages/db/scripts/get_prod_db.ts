@@ -49,6 +49,25 @@ async function main() {
   /* eslint-disable no-restricted-properties */
   const envN = { ...process.env, PGPASSWORD: password };
 
+  console.log("Truncating all tables in DB");
+  //Imma be real ts was GPT pls lmk if its cooked
+  await execAsync(
+    `psql -h localhost -p ${port} -U ${user} -d local << 'EOF'
+		SET session_replication_role = replica;
+		DO $$ 
+		DECLARE 
+		  r RECORD;
+		BEGIN
+		  FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') 
+		  LOOP
+		    EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE';
+		  END LOOP;
+		END $$;
+		SET session_replication_role = DEFAULT;
+		EOF`,
+    { env: envN },
+  );
+
   console.log("Inserting prod rows into local DB");
   try {
     await execAsync(
