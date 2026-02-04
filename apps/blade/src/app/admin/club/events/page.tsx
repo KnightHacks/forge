@@ -21,7 +21,7 @@ export default async function Events() {
   }
 
   const hasAccess = await api.roles.hasPermission({
-    or: ["EDIT_EVENTS", "READ_EVENTS"],
+    or: ["EDIT_CLUB_EVENT", "READ_CLUB_EVENT"],
   });
 
   if (!hasAccess) {
