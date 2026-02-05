@@ -3,7 +3,6 @@ import { Client } from "discord.js";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
 import { env } from "./env";
-import { hooks } from "./hooks";
 
 /*
     Discord Bot Logic
@@ -41,12 +40,3 @@ client.on("interactionCreate", (interaction) => {
 
 // Login to Discord
 void client.login(env.DISCORD_BOT_TOKEN);
-
-/*
-    Webhook Logic
-*/
-
-// Call all of the hooks (each hook will need a webhook client created in the hook)
-for (const hook of Object.values(hooks)) {
-  void hook(client);
-}
