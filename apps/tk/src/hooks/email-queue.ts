@@ -186,11 +186,6 @@ async function sendDiscordUpdate(
     // You can configure this channel ID in environment variables
     const channelId = env.DISCORD_EMAIL_QUEUE_CHANNEL_ID;
 
-    if (!channelId) {
-      console.log("No Discord channel configured for email queue updates");
-      return;
-    }
-
     const channel = await client.channels.fetch(channelId);
     if (channel?.isTextBased() && "send" in channel) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access

@@ -172,7 +172,7 @@ async function getEvents() {
   type EventRow = InferSelectModel<typeof DBEvent>;
   const prefixGroups: {
     prefix: string;
-    events: (EventRow & { prefix: string })[];
+    events: (EventRow & { prefix: string; })[];
   }[] = [];
 
   if (todayEvents.length > 0) {
@@ -454,45 +454,33 @@ async function hackathonWarnCron(webhook: WebhookClient) {
 // Event Reminders webhook
 export function execute() {
   // Create webhook clients only if URLs are provided
-  const pubWebhook = env.DISCORD_DAILY_REMINDERS_WEBHOOK_URL
-    ? new WebhookClient({
-        url: env.DISCORD_DAILY_REMINDERS_WEBHOOK_URL,
-      })
-    : null;
-  const preWebhook = env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL
-    ? new WebhookClient({
-        url: env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL,
-      })
-    : null;
-  const hackathonWebhook = env.DISCORD_HACKATHON_WEBHOOK_URL
-    ? new WebhookClient({
-        url: env.DISCORD_HACKATHON_WEBHOOK_URL,
-      })
-    : null;
+  const pubWebhook = new WebhookClient({
+    url: env.DISCORD_DAILY_REMINDERS_WEBHOOK_URL,
+  });
+  const preWebhook = new WebhookClient({
+    url: env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL,
+  });
+  const hackathonWebhook = new WebhookClient({
+    url: env.DISCORD_HACKATHON_WEBHOOK_URL,
+  });
 
   try {
     // PRE-REMINDERS for Testing: 8:00AM
-    if (preWebhook) {
-      cron.schedule("0 8 * * *", () => {
-        // Avoid returning a Promise from the cron callback
-        void cronLogic(preWebhook);
-      });
-    }
+    cron.schedule("0 8 * * *", () => {
+      // Avoid returning a Promise from the cron callback
+      void cronLogic(preWebhook);
+    });
 
     // PUBLIC-REMINDERS for Testing: 12:00PM
-    if (pubWebhook) {
-      cron.schedule("0 11 * * *", () => {
-        // Avoid returning a Promise from the cron callback
-        void cronLogic(pubWebhook);
-      });
-    }
+    cron.schedule("0 11 * * *", () => {
+      // Avoid returning a Promise from the cron callback
+      void cronLogic(pubWebhook);
+    });
 
     // During hackathon, check events every 5 minutes
-    if (hackathonWebhook) {
-      cron.schedule("*/5 * * * *", () => {
-        void hackathonWarnCron(hackathonWebhook);
-      });
-    }
+    cron.schedule("*/5 * * * *", () => {
+      void hackathonWarnCron(hackathonWebhook);
+    });
   } catch (err) {
     // silences eslint. type safety with our errors basically
     console.error("An unknown error occurred: ", err);
