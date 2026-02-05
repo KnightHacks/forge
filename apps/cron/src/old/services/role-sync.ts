@@ -1,14 +1,10 @@
 import type { APIGuildMember } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 
+import { discord, KNIGHTHACKS_GUILD_ID } from "@forge/api/utils";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
-
-import {
-  discord,
-  KNIGHTHACKS_GUILD_ID,
-} from "../../../../packages/api/src/utils";
 
 /**
  * Syncs Blade permissions with Discord roles

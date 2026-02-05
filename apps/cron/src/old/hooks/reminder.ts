@@ -7,6 +7,7 @@ import cron from "node-cron";
 import { db } from "@forge/db/client";
 import { Event as DBEvent } from "@forge/db/schemas/knight-hacks";
 
+import { env } from "../../env";
 import {
   DISCORD_HACKATHON_ROLE_ID,
   DISCORD_PROD_GUILD_ID,
@@ -14,7 +15,6 @@ import {
   EVENT_BANNER_IMAGE,
   HACK_BANNER_IMAGE,
 } from "../consts";
-import { env } from "../env";
 
 // Function to retrieve the appropriate events for the day
 async function getHackathonActive() {

@@ -7,8 +7,8 @@ import sharp from "sharp";
 
 import { db } from "@forge/db/client";
 
+import { env } from "../../env";
 import { TK_CAPYBARA_URL, TK_CAT_URL, TK_DUCK_URL } from "../consts";
-import { env } from "../env";
 
 // TODO: make this pretty...
 const { LevenshteinDistance, Metaphone } = natural;

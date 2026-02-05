@@ -12,7 +12,7 @@
       "types": "./dist/env.d.ts",
       "default": "./src/env.ts"
     },
-    "./utils":{
+    "./utils": {
       "types": "./dist/utils.d.ts",
       "default": "./src/utils.ts"
     }

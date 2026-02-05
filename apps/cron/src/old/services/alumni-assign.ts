@@ -1,13 +1,12 @@
 import { and, gt, isNotNull, isNull, lte, or } from "drizzle-orm";
 
-import { db } from "@forge/db/client";
-import { Member } from "@forge/db/schemas/knight-hacks";
-
 import {
   addRoleToMember,
   removeRoleFromMember,
   resolveDiscordUserId,
-} from "../../../../packages/api/src/utils";
+} from "@forge/api/utils";
+import { db } from "@forge/db/client";
+import { Member } from "@forge/db/schemas/knight-hacks";
 
 const ALUMNI_PROD_ROLE = "486629512101232661";
 
