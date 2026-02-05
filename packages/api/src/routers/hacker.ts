@@ -3,7 +3,6 @@ import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
 
-import type { AssignableHackerClass } from "@forge/consts/knight-hacks";
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import {
   BUCKET_NAME,
@@ -377,17 +376,17 @@ export const hackerRouter = {
         ind >= 3
           ? -1
           : await db.$count(
-              HackerAttendee,
-              and(
-                eq(HackerAttendee.hackathonId, hackathon.id),
-                gt(HackerAttendee.points, input.hPoints),
-                or(
-                  eq(HackerAttendee.class, HACKER_CLASSES[0]),
-                  eq(HackerAttendee.class, HACKER_CLASSES[1]),
-                  eq(HackerAttendee.class, HACKER_CLASSES[2]),
-                ),
+            HackerAttendee,
+            and(
+              eq(HackerAttendee.hackathonId, hackathon.id),
+              gt(HackerAttendee.points, input.hPoints),
+              or(
+                eq(HackerAttendee.class, HACKER_CLASSES[0]),
+                eq(HackerAttendee.class, HACKER_CLASSES[1]),
+                eq(HackerAttendee.class, HACKER_CLASSES[2]),
               ),
             ),
+          ),
         await db.$count(
           HackerAttendee,
           and(
@@ -398,17 +397,17 @@ export const hackerRouter = {
         ind < 3
           ? -1
           : await db.$count(
-              HackerAttendee,
-              and(
-                eq(HackerAttendee.hackathonId, hackathon.id),
-                gt(HackerAttendee.points, input.hPoints),
-                or(
-                  eq(HackerAttendee.class, HACKER_CLASSES[3]),
-                  eq(HackerAttendee.class, HACKER_CLASSES[4]),
-                  eq(HackerAttendee.class, HACKER_CLASSES[5]),
-                ),
+            HackerAttendee,
+            and(
+              eq(HackerAttendee.hackathonId, hackathon.id),
+              gt(HackerAttendee.points, input.hPoints),
+              or(
+                eq(HackerAttendee.class, HACKER_CLASSES[3]),
+                eq(HackerAttendee.class, HACKER_CLASSES[4]),
+                eq(HackerAttendee.class, HACKER_CLASSES[5]),
               ),
             ),
+          ),
       ];
 
       return { topA: topA, topB: topB, place: place };
@@ -1179,7 +1178,7 @@ export const hackerRouter = {
             if (assignedClass) {
               await addRoleToMember(
                 discordId,
-                CLASS_ROLE_ID[assignedClass as AssignableHackerClass],
+                CLASS_ROLE_ID[assignedClass] ?? "",
               );
             }
           } catch (e) {
@@ -1244,16 +1243,14 @@ export const hackerRouter = {
       if (eventTag === "Check-in") {
         await log({
           title: `Hacker Checked-In`,
-          message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon ${
-            assignedClass ? ` (Class: ${assignedClass}).` : ""
-          }`,
+          message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon ${assignedClass ? ` (Class: ${assignedClass}).` : ""
+            }`,
           color: "success_green",
           userId: ctx.session.user.discordUserId,
         });
         return {
-          message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!${
-            assignedClass ? ` Assigned class: ${assignedClass}.` : ""
-          }`,
+          message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!${assignedClass ? ` Assigned class: ${assignedClass}.` : ""
+            }`,
           firstName: hacker.firstName,
           lastName: hacker.lastName,
           class: assignedClass,
