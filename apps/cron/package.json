@@ -1,0 +1,45 @@
+{
+  "name": "@forge/cron",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.12.1",
+  "scripts": {
+    "dev": "pnpm with-env tsx watch src/index.ts",
+    "start": "pnpm with-env tsx src/index.ts",
+    "build": "echo 'noop: no build operation to perform'",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../.env --"
+  },
+  "dependencies": {
+    "@forge/api": "workspace:*",
+    "@forge/consts": "workspace:*",
+    "@forge/db": "workspace:*",
+    "@forge/validators": "workspace:*",
+    "@t3-oss/env-core": "^0.11.1",
+    "discord.js": "^14.16.3",
+    "drizzle-orm": "^0.35.1",
+    "jimp": "^0.22.12",
+    "natural": "^8.1.0",
+    "node-cron": "^3.0.3",
+    "postgres": "^3.4.3",
+    "resend": "^3.2.0",
+    "sharp": "^0.34.5",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
+    "@types/node-cron": "^3.0.11",
+    "discord-api-types": "^0.37.113",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "tailwindcss": "catalog:",
+    "tsx": "^3.12.3",
+    "typescript": "catalog:"
+  },
+  "prettier": "@forge/prettier-config"
+}

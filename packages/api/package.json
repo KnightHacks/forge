@@ -8,8 +8,14 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./env": "./src/env.ts",
-    "./utils": "./src/utils.ts"
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "default": "./src/env.ts"
+    },
+    "./utils":{
+      "types": "./dist/utils.d.ts",
+      "default": "./src/utils.ts"
+    }
   },
   "license": "MIT",
   "scripts": {

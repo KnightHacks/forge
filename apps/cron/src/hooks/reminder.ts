@@ -1,5 +1,6 @@
+import type { APIEmbed } from "discord-api-types/v10";
 import type { InferSelectModel } from "drizzle-orm";
-import { EmbedBuilder, WebhookClient } from "discord.js";
+import { WebhookClient } from "discord.js";
 import { asc } from "drizzle-orm";
 import cron from "node-cron";
 
@@ -172,7 +173,7 @@ async function getEvents() {
   type EventRow = InferSelectModel<typeof DBEvent>;
   const prefixGroups: {
     prefix: string;
-    events: (EventRow & { prefix: string; })[];
+    events: (EventRow & { prefix: string })[];
   }[] = [];
 
   if (todayEvents.length > 0) {
@@ -297,15 +298,15 @@ async function cronLogic(webhook: WebhookClient) {
         "/" +
         event.discordId;
 
-      const eventEmbed = new EmbedBuilder()
-        .setColor(0xcca4f4)
-        .setTitle(event.name)
-        .setAuthor({
+      const eventEmbed: APIEmbed = {
+        color: 0xcca4f4,
+        title: event.name,
+        author: {
           name: `${formattedTag}`,
-        })
-        .setURL(discordEventURL)
-        .setDescription(event.description)
-        .addFields([
+        },
+        url: discordEventURL,
+        description: event.description,
+        fields: [
           {
             name: "Date",
             value: event.start_datetime.toLocaleString("en-US", {
@@ -349,8 +350,11 @@ async function cronLogic(webhook: WebhookClient) {
             }),
             inline: true,
           },
-        ])
-        .setThumbnail(EVENT_BANNER_IMAGE);
+        ],
+        thumbnail: {
+          url: EVENT_BANNER_IMAGE,
+        },
+      };
 
       // Send the message (embed)
       await webhook.send({
@@ -395,19 +399,18 @@ async function hackathonWarnCron(webhook: WebhookClient) {
       "/" +
       event.discordId;
 
-    const eventEmbed = new EmbedBuilder()
-      .setColor(0xc04b3d)
-      .setTitle(event.name)
-      .setDescription(
+    const eventEmbed: APIEmbed = {
+      color: 0xc04b3d,
+      title: event.name,
+      description:
         event.description.length > 100
           ? event.description.substring(0, 100) + "..."
           : event.description,
-      )
-      .setAuthor({
+      author: {
         name: `${formattedTag}`,
-      })
-      .setURL(discordEventURL)
-      .addFields([
+      },
+      url: discordEventURL,
+      fields: [
         {
           name: "Location",
           value: event.location,
@@ -437,8 +440,11 @@ async function hackathonWarnCron(webhook: WebhookClient) {
             }),
           inline: true,
         },
-      ])
-      .setThumbnail(HACK_BANNER_IMAGE);
+      ],
+      thumbnail: {
+        url: HACK_BANNER_IMAGE,
+      },
+    };
 
     // Send the message (embed)
     await webhook.send({
@@ -455,34 +461,29 @@ async function hackathonWarnCron(webhook: WebhookClient) {
 export function execute() {
   // Create webhook clients only if URLs are provided
   const pubWebhook = new WebhookClient({
-    url: env.DISCORD_DAILY_REMINDERS_WEBHOOK_URL,
+    url: env.DISCORD_WEBHOOK_REMINDERS,
   });
   const preWebhook = new WebhookClient({
-    url: env.DISCORD_PRE_DAILY_REMINDERS_WEBHOOK_URL,
+    url: env.DISCORD_WEBHOOK_REMINDERS_PRE,
   });
   const hackathonWebhook = new WebhookClient({
-    url: env.DISCORD_HACKATHON_WEBHOOK_URL,
+    url: env.DISCORD_WEBHOOK_REMINDERS_HACK,
   });
 
-  try {
-    // PRE-REMINDERS for Testing: 8:00AM
-    cron.schedule("0 8 * * *", () => {
-      // Avoid returning a Promise from the cron callback
-      void cronLogic(preWebhook);
-    });
+  // PRE-REMINDERS for Testing: 8:00AM
+  cron.schedule("0 8 * * *", () => {
+    // Avoid returning a Promise from the cron callback
+    void cronLogic(preWebhook);
+  });
 
-    // PUBLIC-REMINDERS for Testing: 12:00PM
-    cron.schedule("0 11 * * *", () => {
-      // Avoid returning a Promise from the cron callback
-      void cronLogic(pubWebhook);
-    });
+  // PUBLIC-REMINDERS for Testing: 12:00PM
+  cron.schedule("0 11 * * *", () => {
+    // Avoid returning a Promise from the cron callback
+    void cronLogic(pubWebhook);
+  });
 
-    // During hackathon, check events every 5 minutes
-    cron.schedule("*/5 * * * *", () => {
-      void hackathonWarnCron(hackathonWebhook);
-    });
-  } catch (err) {
-    // silences eslint. type safety with our errors basically
-    console.error("An unknown error occurred: ", err);
-  }
+  // During hackathon, check events every 5 minutes
+  cron.schedule("*/5 * * * *", () => {
+    void hackathonWarnCron(hackathonWebhook);
+  });
 }
