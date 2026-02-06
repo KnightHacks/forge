@@ -255,6 +255,9 @@ export const DEV_DISCORD_ADMIN_ROLE_ID = "1321955700540309645";
 export const PROD_DISCORD_VOLUNTEER_ROLE_ID = "1415505872360312974";
 export const DEV_DISCORD_VOLUNTEER_ROLE_ID = "1426947077514203279";
 
+// TODO: add DEV_ALUMNI_ROLE_ID
+export const PROD_ALUMNI_ROLE_ID = "486629512101232661";
+
 export interface PermissionDataObj {
   idx: number;
   name: string;
