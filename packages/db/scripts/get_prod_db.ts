@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /**
  * Usage:
- *   pnpm --filter @forge/db with-env tsx scripts/get_prod_db.ts [--truncate]
+ *   pnpm --filter=@forge/db with-env tsx scripts/get_prod_db.ts [--truncate]
  *
  * Pass in --truncate if you want to truncate the entire database before
  * pushing the rows from prod.
