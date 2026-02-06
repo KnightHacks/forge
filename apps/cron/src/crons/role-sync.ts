@@ -17,7 +17,7 @@ import { CronBuilder } from "../structs/CronBuilder";
  */
 export const roleSync = new CronBuilder({
   name: "role-sync",
-  cronExpression: "0 9 * * *", // 8am every day
+  cronExpression: "0 8 * * *", // 8am every day
   color: 2,
 }).addExecutor(async () => {
   // Get all roles that are linked in Blade

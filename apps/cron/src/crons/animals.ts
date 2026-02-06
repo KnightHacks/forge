@@ -20,7 +20,7 @@ const ANIMAL_WEBHOOK = new WebhookClient({ url: env.DISCORD_WEBHOOK_ANIMAL });
 
 export const cat = new CronBuilder({
   name: "animal/cat",
-  cronExpression: "0 13 * * *",
+  cronExpression: "0 13 * * *", // every day at 1pm
   color: 1,
 }).addExecutor(async () => {
   const res = await fetch(CAT_URL);
@@ -35,7 +35,7 @@ export const cat = new CronBuilder({
 
 export const capybara = new CronBuilder({
   name: "animal/capybara",
-  cronExpression: "30 13 * * *",
+  cronExpression: "30 13 * * *", // every day at 1:30pm
   color: 1,
 }).addExecutor(async () => {
   const res = await fetch(CAPYBARA_URL);
@@ -50,7 +50,7 @@ export const capybara = new CronBuilder({
 
 export const duck = new CronBuilder({
   name: "animal/duck",
-  cronExpression: "0 14 * * *",
+  cronExpression: "0 14 * * *", // every day at 2pm
   color: 1,
 }).addExecutor(async () => {
   const res = await fetch(DUCK_URK);
@@ -63,7 +63,7 @@ export const duck = new CronBuilder({
 
 export const goat = new CronBuilder({
   name: "animal/GOAT",
-  cronExpression: "30 14 * * *",
+  cronExpression: "30 14 * * *", // every day at 2:30pm
   color: 1,
 }).addExecutor(async () => {
   const allGoats = await db

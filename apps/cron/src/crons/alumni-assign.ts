@@ -14,7 +14,7 @@ const ALUMNI_PROD_ROLE = "486629512101232661"; // TODO: move to consts?
 
 export const alumniAssign = new CronBuilder({
   name: "alumni",
-  cronExpression: "0 8 * * *", // every day 7am
+  cronExpression: "0 8 * * *", // every day 8am
   color: 3,
 }).addExecutor(async () => {
   const today = new Date().toISOString().slice(0, 10);
