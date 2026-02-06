@@ -28,93 +28,100 @@ const DISCORD_HACKATHON_ROLE_ID = "1408025502119231498";
 export const preReminders = new CronBuilder({
   name: "reminders/pre",
   color: 6,
-  cronExpression: "0 8 * * *", // 8am every day
-}).addExecutor(genCronLogic(REMINDERS_PRE_WEBHOOK));
+}).addCron(
+  "0 8 * * *", // 8am every day
+  genCronLogic(REMINDERS_PRE_WEBHOOK),
+);
 
 export const reminders = new CronBuilder({
   name: "reminders",
   color: 6,
-  cronExpression: "0 11 * * *", // 11am every day
-}).addExecutor(genCronLogic(REMINDERS_WEBHOOK));
+}).addCron(
+  "0 11 * * *", // 11am every day
+  genCronLogic(REMINDERS_WEBHOOK),
+);
 
 export const hackReminders = new CronBuilder({
   name: "reminders/hack",
   color: 6,
-  cronExpression: "*/5 * * * *", // every 5 minutes
-}).addExecutor(async () => {
-  const activeHackathon = await getHackathonActive();
-  if (!activeHackathon) return;
+}).addCron(
+  "*/5 * * * *", // every 5 minutes
+  async () => {
+    const activeHackathon = await getHackathonActive();
+    if (!activeHackathon) return;
 
-  const hackathonEvents = await getHackEvents(activeHackathon.id);
-  if (hackathonEvents.length === 0) return;
+    const hackathonEvents = await getHackEvents(activeHackathon.id);
+    if (hackathonEvents.length === 0) return;
 
-  await HACK_REMINDERS_WEBHOOK.send({
-    content: `## ⚠️ Starting soon!\nAttention, <@&${DISCORD_HACKATHON_ROLE_ID}> hackers!\nThese events are starting in the next **15 minutes!**`,
-  });
+    await HACK_REMINDERS_WEBHOOK.send({
+      content: `## ⚠️ Starting soon!\nAttention, <@&${DISCORD_HACKATHON_ROLE_ID}> hackers!\nThese events are starting in the next **15 minutes!**`,
+    });
 
-  for (const event of hackathonEvents) {
-    const formattedTag = "[" + event.tag.toUpperCase().replace(" ", "-") + "]";
+    for (const event of hackathonEvents) {
+      const formattedTag =
+        "[" + event.tag.toUpperCase().replace(" ", "-") + "]";
 
-    const discordEventURL =
-      "https://discord.com/events/" +
-      DISCORD_PROD_GUILD_ID +
-      "/" +
-      event.discordId;
+      const discordEventURL =
+        "https://discord.com/events/" +
+        DISCORD_PROD_GUILD_ID +
+        "/" +
+        event.discordId;
 
-    const eventEmbed: APIEmbed = {
-      color: 0xc04b3d,
-      title: event.name,
-      description:
-        event.description.length > 100
-          ? event.description.substring(0, 100) + "..."
-          : event.description,
-      author: {
-        name: `${formattedTag}`,
-      },
-      url: discordEventURL,
-      fields: [
-        {
-          name: "Location",
-          value: event.location,
-          inline: true,
+      const eventEmbed: APIEmbed = {
+        color: 0xc04b3d,
+        title: event.name,
+        description:
+          event.description.length > 100
+            ? event.description.substring(0, 100) + "..."
+            : event.description,
+        author: {
+          name: `${formattedTag}`,
         },
-        {
-          name: "Time",
-          value:
-            new Date(
-              new Date(event.start_datetime).setHours(
-                new Date(event.start_datetime).getHours(),
-              ),
-            ).toLocaleString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-            }) +
-            " - " +
-            new Date(
-              new Date(event.end_datetime).setHours(
-                new Date(event.end_datetime).getHours(),
-              ),
-            ).toLocaleString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-            }),
-          inline: true,
+        url: discordEventURL,
+        fields: [
+          {
+            name: "Location",
+            value: event.location,
+            inline: true,
+          },
+          {
+            name: "Time",
+            value:
+              new Date(
+                new Date(event.start_datetime).setHours(
+                  new Date(event.start_datetime).getHours(),
+                ),
+              ).toLocaleString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              }) +
+              " - " +
+              new Date(
+                new Date(event.end_datetime).setHours(
+                  new Date(event.end_datetime).getHours(),
+                ),
+              ).toLocaleString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              }),
+            inline: true,
+          },
+        ],
+        thumbnail: {
+          url: HACK_BANNER_IMAGE,
         },
-      ],
-      thumbnail: {
-        url: HACK_BANNER_IMAGE,
-      },
-    };
+      };
 
-    await HACK_REMINDERS_WEBHOOK.send({ embeds: [eventEmbed] });
-  }
+      await HACK_REMINDERS_WEBHOOK.send({ embeds: [eventEmbed] });
+    }
 
-  await HACK_REMINDERS_WEBHOOK.send({
-    content: `We'll see you there! **Don't forget your lanyard and your Blade QR code!**`,
-  });
-});
+    await HACK_REMINDERS_WEBHOOK.send({
+      content: `We'll see you there! **Don't forget your lanyard and your Blade QR code!**`,
+    });
+  },
+);
 
 /**
  * I think that this genCronLogic is the best way to handle

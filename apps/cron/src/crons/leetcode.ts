@@ -39,68 +39,70 @@ const DAILY_MESSAGES = [
 export const leetcode = new CronBuilder({
   name: "leetcode",
   color: 5,
-  cronExpression: "0 12 * * *", // noon every day
-}).addExecutor(async () => {
-  const problem = await fetchData();
+}).addCron(
+  "0 12 * * *", // noon every day
+  async () => {
+    const problem = await fetchData();
 
-  const date = problem.date.split("-");
-  const dateString = date[1] + "/" + date[2] + "/" + date[0];
+    const date = problem.date.split("-");
+    const dateString = date[1] + "/" + date[2] + "/" + date[0];
 
-  const problemEmbed = {
-    color: 0x33e0ff, // https://www.color-hex.com/color/33e0ff
-    title: `${problem.questionFrontendId}. ${problem.questionTitle}`,
-    url: problem.questionLink,
-    author: {
-      name: `Leetcode Daily for ${dateString}`,
-      icon_url: LEETCODE_ICON_URL,
-    },
-    fields: [
-      {
-        name: "Difficulty",
-        value: problem.difficulty,
-        inline: true,
+    const problemEmbed = {
+      color: 0x33e0ff, // https://www.color-hex.com/color/33e0ff
+      title: `${problem.questionFrontendId}. ${problem.questionTitle}`,
+      url: problem.questionLink,
+      author: {
+        name: `Leetcode Daily for ${dateString}`,
+        icon_url: LEETCODE_ICON_URL,
       },
-      {
-        name: "Likes",
-        value: problem.likes.toString(),
-        inline: true,
-      },
-      {
-        name: "Dislikes",
-        value: problem.dislikes.toString(),
-        inline: true,
-      },
-      {
-        name: "Topics",
-        value: `${problem.topicTags
-          .map((top) => {
-            const topic = `${top.name}  -  *https://leetcode.com/tag/${top.slug}*`;
-            return `||${topic}||`;
-          })
-          .join("\n")}`,
-      },
-    ],
-  };
+      fields: [
+        {
+          name: "Difficulty",
+          value: problem.difficulty,
+          inline: true,
+        },
+        {
+          name: "Likes",
+          value: problem.likes.toString(),
+          inline: true,
+        },
+        {
+          name: "Dislikes",
+          value: problem.dislikes.toString(),
+          inline: true,
+        },
+        {
+          name: "Topics",
+          value: `${problem.topicTags
+            .map((top) => {
+              const topic = `${top.name}  -  *https://leetcode.com/tag/${top.slug}*`;
+              return `||${topic}||`;
+            })
+            .join("\n")}`,
+        },
+      ],
+    };
 
-  const msg = await LEETCODE_WEBHOOK.send({
-    content:
-      `# Good Afternoon!\nHere's today's daily Leetcode problem! <@&${DISCORD_LEETCODE_ROLE_ID}>\n` +
-      DAILY_MESSAGES[randInt(DAILY_MESSAGES.length)],
-    embeds: [problemEmbed],
-  });
+    const msg = await LEETCODE_WEBHOOK.send({
+      content:
+        `# Good Afternoon!\nHere's today's daily Leetcode problem! <@&${DISCORD_LEETCODE_ROLE_ID}>\n` +
+        DAILY_MESSAGES[randInt(DAILY_MESSAGES.length)],
+      embeds: [problemEmbed],
+    });
 
-  const thread = (await discord.post(Routes.threads(msg.channel_id, msg.id), {
-    body: {
-      name: dateString,
-      auto_archive_duration: ThreadAutoArchiveDuration.OneDay,
-    },
-  })) as APIThreadChannel;
+    const thread = (await discord.post(Routes.threads(msg.channel_id, msg.id), {
+      body: {
+        name: dateString,
+        auto_archive_duration: ThreadAutoArchiveDuration.OneDay,
+      },
+    })) as APIThreadChannel;
 
-  await LEETCODE_WEBHOOK.send({
-    content: "Make sure to wrap your solution with spoiler tags!",
-    threadId: thread.id,
-  });
-});
+    await LEETCODE_WEBHOOK.send({
+      content: "Make sure to wrap your solution with spoiler tags!",
+      threadId: thread.id,
+    });
+  },
+);
 
 interface DailyProblemProps {
   questionLink: string;

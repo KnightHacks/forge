@@ -46,19 +46,22 @@ for (const key of [
 
 export interface CronOptions {
   name: string;
-  cronExpression: string;
   color?: number;
+}
+
+export type ExecutorFunction = () => Promise<void> | void;
+export interface Cron {
+  expression: string;
+  executor: ExecutorFunction;
 }
 
 export class CronBuilder {
   public name: string;
   public color?: number;
-  private cronExpression: string;
-  private executors: (() => Promise<void> | void)[] = [];
+  private crons: Cron[] = [];
 
   constructor(options: CronOptions) {
     this.name = options.name;
-    this.cronExpression = options.cronExpression;
     this.color = options.color;
   }
 
@@ -71,27 +74,26 @@ export class CronBuilder {
    *  }
    * );
    */
-  public addExecutor(executor: () => Promise<void> | void): this {
-    this.executors.push(executor);
+  public addCron(expression: string, executor: ExecutorFunction): this {
+    this.crons.push({ expression, executor });
     return this;
   }
 
   public schedule(): void {
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    cron.schedule(this.cronExpression, this._executor.bind(this));
-    currentCron.run(this, () =>
-      console.log(`scheduled @ ${this.cronExpression}`),
-    );
+    for (const { expression, executor } of this.crons) {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      cron.schedule(expression, executor.bind(this));
+      currentCron.run(this, () => console.log(`scheduled @ ${expression}`));
+    }
   }
 
-  private async _executor(): Promise<void> {
+  private async _executor(executor: ExecutorFunction): Promise<void> {
     return await currentCron.run(this, async () => {
       const startTime = Date.now();
       console.log(`started @ ${new Date(startTime).toLocaleTimeString()}`);
 
       try {
-        // eslint-disable-next-line @typescript-eslint/await-thenable
-        await Promise.all(this.executors.map((executor) => executor()));
+        await executor();
       } catch (error) {
         console.error(error);
       }
