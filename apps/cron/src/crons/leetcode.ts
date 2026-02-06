@@ -39,7 +39,7 @@ const DAILY_MESSAGES = [
 export const leetcode = new CronBuilder({
   name: "leetcode",
   color: 5,
-  cronExpression: "0 12 * * *",
+  cronExpression: "0 12 * * *", // noon every day
 }).addExecutor(async () => {
   const problem = await fetchData();
 
