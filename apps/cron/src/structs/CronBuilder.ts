@@ -3,7 +3,12 @@ import cron from "node-cron";
 
 // DO NOT TOUCH
 const currentCron = new AsyncLocalStorage<CronBuilder | undefined>();
-for (const key of ["log", "error", "warn", "info"] satisfies (keyof typeof console)[]) {
+for (const key of [
+  "log",
+  "error",
+  "warn",
+  "info",
+] satisfies (keyof typeof console)[]) {
   const oldLogger =
     (console as unknown as Record<string, (...args: unknown[]) => void>)[key] ??
     (() => {
@@ -79,7 +84,7 @@ export class CronBuilder {
         // eslint-disable-next-line @typescript-eslint/await-thenable
         await Promise.all(this.executors.map((executor) => executor()));
       } catch (error) {
-        console.error(`Error during execution:`, error);
+        console.error(error);
       }
 
       const endTime = Date.now();
