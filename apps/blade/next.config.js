@@ -15,7 +15,7 @@ const config = {
     "@forge/db",
     "@forge/ui",
     "@forge/validators",
-    "forge/transactional",
+    "@forge/email",
   ],
 
   /** We already do linting and typechecking as separate tasks in CI */
