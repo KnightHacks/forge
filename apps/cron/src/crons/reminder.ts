@@ -372,21 +372,21 @@ async function getEvents() {
       event.end_datetime < todayEnd && event.start_datetime >= todayStart,
   );
 
-  console.log("Today Events: ", todayEvents);
+  console.log("Today's Events: ", todayEvents);
 
   const tomorrowEvents = allEvents.filter(
     (event) =>
       event.end_datetime < tomorrowEnd && event.start_datetime >= tomorrowStart,
   );
 
-  console.log("Tommmorow Events: ", tomorrowEvents);
+  console.log("Tomorrow's Events: ", tomorrowEvents);
 
   const nextWeekEvents = allEvents.filter(
     (event) =>
       event.end_datetime < nextWeekEnd && event.start_datetime >= nextWeekStart,
   );
 
-  console.log("Next Week Events: ", nextWeekEvents);
+  console.log("Next Week's Events: ", nextWeekEvents);
 
   // Filter out "Operations Meeting" from nextWeek
   const nextWeekFiltered = nextWeekEvents.filter(
