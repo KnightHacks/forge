@@ -2,6 +2,15 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import cron from "node-cron";
 
 // DO NOT TOUCH
+// Basically the whole point here is to override console.log such that when
+// we are inside of the CronBuilder AsyncLocalStorage, we add the logging info
+// to the messages.
+//
+// For all available functions:
+// 1) Reassign logger function so we can use it
+// 2) Check if we are in the AsyncLocalStorage we generate in cron
+// 3) Add the message to the front of args if we are
+// 4) Call the reassigned logger function
 const currentCron = new AsyncLocalStorage<CronBuilder | undefined>();
 for (const key of [
   "log",
@@ -13,11 +22,11 @@ for (const key of [
     (console as unknown as Record<string, (...args: unknown[]) => void>)[key] ??
     (() => {
       /* empty */
-    });
+    }); // 1
   (console as unknown as Record<string, (...args: unknown[]) => void>)[key] = (
     ...args: unknown[]
   ) => {
-    const store = currentCron.getStore();
+    const store = currentCron.getStore(); // 2
     if (store !== undefined) {
       let s = "";
       s += "\x1B[30mCRON\x1B[0m ";
@@ -28,9 +37,9 @@ for (const key of [
       if (store.color !== undefined) {
         s += `\x1B[0m`;
       }
-      args = [s, ...args];
+      args = [s, ...args]; // 3
     }
-    oldLogger.bind(console)(...args);
+    oldLogger.bind(console)(...args); // 4
   };
 }
 // DO NOT TOUCH
