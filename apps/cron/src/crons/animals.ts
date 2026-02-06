@@ -15,7 +15,7 @@ const { LevenshteinDistance, Metaphone } = natural;
 
 const CAPYBARA_URL = "https://api.capy.lol/v1/capybara?json=true";
 const CAT_URL = "https://api.thecatapi.com/v1/images/search?limit=1";
-const DUCK_URK = "https://random-d.uk/api/v2/quack";
+const DUCK_URL = "https://random-d.uk/api/v2/quack";
 const ANIMAL_WEBHOOK = new WebhookClient({ url: env.DISCORD_WEBHOOK_ANIMAL });
 
 export const cat = new CronBuilder({
@@ -53,7 +53,7 @@ export const duck = new CronBuilder({
   cronExpression: "0 14 * * *", // every day at 2pm
   color: 1,
 }).addExecutor(async () => {
-  const res = await fetch(DUCK_URK);
+  const res = await fetch(DUCK_URL);
   const data = (await res.json()) as { url: string };
 
   const embed = await createEmbed(data.url, "Daily Duck!");
