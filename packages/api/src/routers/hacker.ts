@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
 
+import type { AssignableHackerClass } from "@forge/consts/knight-hacks";
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import {
   BUCKET_NAME,
@@ -1178,7 +1179,7 @@ export const hackerRouter = {
             if (assignedClass) {
               await addRoleToMember(
                 discordId,
-                CLASS_ROLE_ID[assignedClass] ?? "",
+                CLASS_ROLE_ID[assignedClass as AssignableHackerClass],
               );
             }
           } catch (e) {
