@@ -3,25 +3,31 @@ import cron from "node-cron";
 
 // DO NOT TOUCH
 const currentCron = new AsyncLocalStorage<CronBuilder | undefined>();
-const oldLog = console.log;
-(console as unknown as { log: typeof console.log }).log = (
-  ...args: unknown[]
-) => {
-  const store = currentCron.getStore();
-  if (store !== undefined) {
-    let s = "";
-    s += "\x1B[30mCRON\x1B[0m ";
-    if (store.color !== undefined) {
-      s += `\x1B[1;3${store.color}m`;
+for (const key of ["log", "error", "warn", "info"] satisfies (keyof typeof console)[]) {
+  const oldLogger =
+    (console as unknown as Record<string, (...args: unknown[]) => void>)[key] ??
+    (() => {
+      /* empty */
+    });
+  (console as unknown as Record<string, (...args: unknown[]) => void>)[key] = (
+    ...args: unknown[]
+  ) => {
+    const store = currentCron.getStore();
+    if (store !== undefined) {
+      let s = "";
+      s += "\x1B[30mCRON\x1B[0m ";
+      if (store.color !== undefined) {
+        s += `\x1B[1;3${store.color}m`;
+      }
+      s += `[${store.name}]`;
+      if (store.color !== undefined) {
+        s += `\x1B[0m`;
+      }
+      args = [s, ...args];
     }
-    s += `[${store.name}]`;
-    if (store.color !== undefined) {
-      s += `\x1B[0m`;
-    }
-    args = [s, ...args];
-  }
-  oldLog.bind(console)(...args);
-};
+    oldLogger.bind(console)(...args);
+  };
+}
 // DO NOT TOUCH
 
 export interface CronOptions {
