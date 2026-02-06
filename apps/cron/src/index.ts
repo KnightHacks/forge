@@ -1,3 +1,4 @@
+import { alumniAssign } from "./crons/alumni-assign";
 import { capybara, cat, duck, goat } from "./crons/animals";
 import { roleSync } from "./crons/role-sync";
 
@@ -7,3 +8,5 @@ duck.schedule();
 goat.schedule();
 
 roleSync.schedule();
+
+alumniAssign.schedule();
