@@ -49,6 +49,8 @@ async function main() {
   /* eslint-disable no-restricted-properties */
   const envN = { ...process.env, PGPASSWORD: password };
 
+	//We wanna truncate all tables so that it updates already seeded rows too
+	//Probably at some point write a sed script that changes all inserts to upserts
   console.log("Truncating all tables in DB");
   //Imma be real ts was GPT pls lmk if its cooked
   await execAsync(
