@@ -20,91 +20,99 @@ const ANIMAL_WEBHOOK = new WebhookClient({ url: env.DISCORD_WEBHOOK_ANIMAL });
 
 export const cat = new CronBuilder({
   name: "animal/cat",
-  cronExpression: "0 13 * * *", // every day at 1pm
   color: 1,
-}).addExecutor(async () => {
-  const res = await fetch(CAT_URL);
-  const data = (await res.json()) as { url: string }[];
+}).addCron(
+  "0 13 * * *", // every day at 1pm
+  async () => {
+    const res = await fetch(CAT_URL);
+    const data = (await res.json()) as { url: string }[];
 
-  if (!data[0]) throw new Error("API returned empty");
+    if (!data[0]) throw new Error("API returned empty");
 
-  const embed = await createEmbed(data[0].url, "Daily Cat!");
+    const embed = await createEmbed(data[0].url, "Daily Cat!");
 
-  await ANIMAL_WEBHOOK.send({ embeds: [embed] });
-});
+    await ANIMAL_WEBHOOK.send({ embeds: [embed] });
+  },
+);
 
 export const capybara = new CronBuilder({
   name: "animal/capybara",
-  cronExpression: "30 13 * * *", // every day at 1:30pm
   color: 1,
-}).addExecutor(async () => {
-  const res = await fetch(CAPYBARA_URL);
-  const { data } = (await res.json()) as { data: { url: string } };
+}).addCron(
+  "30 13 * * *", // every day at 1:30pm
+  async () => {
+    const res = await fetch(CAPYBARA_URL);
+    const { data } = (await res.json()) as { data: { url: string } };
 
-  if (!data.url) throw new Error("API returned empty");
+    if (!data.url) throw new Error("API returned empty");
 
-  const embed = await createEmbed(data.url, "Daily Capybara!");
+    const embed = await createEmbed(data.url, "Daily Capybara!");
 
-  await ANIMAL_WEBHOOK.send({ embeds: [embed] });
-});
+    await ANIMAL_WEBHOOK.send({ embeds: [embed] });
+  },
+);
 
 export const duck = new CronBuilder({
   name: "animal/duck",
-  cronExpression: "0 14 * * *", // every day at 2pm
   color: 1,
-}).addExecutor(async () => {
-  const res = await fetch(DUCK_URL);
-  const data = (await res.json()) as { url: string };
+}).addCron(
+  "0 14 * * *", // every day at 2pm
+  async () => {
+    const res = await fetch(DUCK_URL);
+    const data = (await res.json()) as { url: string };
 
-  const embed = await createEmbed(data.url, "Daily Duck!");
+    const embed = await createEmbed(data.url, "Daily Duck!");
 
-  await ANIMAL_WEBHOOK.send({ embeds: [embed] });
-});
+    await ANIMAL_WEBHOOK.send({ embeds: [embed] });
+  },
+);
 
 export const goat = new CronBuilder({
   name: "animal/GOAT",
-  cronExpression: "30 14 * * *", // every day at 2:30pm
   color: 1,
-}).addExecutor(async () => {
-  const allGoats = await db
-    .select({
-      firstName: Member.firstName,
-      lastName: Member.lastName,
-      githubProfileUrl: Member.githubProfileUrl,
-      websiteUrl: Member.websiteUrl,
-      linkedinProfileUrl: Member.linkedinProfileUrl,
-      profilePictureUrl: Member.profilePictureUrl,
-      guildProfileVisible: Member.guildProfileVisible,
-    })
-    .from(Member)
-    .innerJoin(Permissions, eq(Permissions.userId, Member.userId))
-    .where(eq(Member.guildProfileVisible, true));
+}).addCron(
+  "30 14 * * *", // every day at 2:30pm
+  async () => {
+    const allGoats = await db
+      .select({
+        firstName: Member.firstName,
+        lastName: Member.lastName,
+        githubProfileUrl: Member.githubProfileUrl,
+        websiteUrl: Member.websiteUrl,
+        linkedinProfileUrl: Member.linkedinProfileUrl,
+        profilePictureUrl: Member.profilePictureUrl,
+        guildProfileVisible: Member.guildProfileVisible,
+      })
+      .from(Member)
+      .innerJoin(Permissions, eq(Permissions.userId, Member.userId))
+      .where(eq(Member.guildProfileVisible, true));
 
-  const goatsShuffled = allGoats.sort(() => Math.random() - 0.5);
-  const goat = goatsShuffled.find((member) => {
-    return member.profilePictureUrl?.trim();
-  });
+    const goatsShuffled = allGoats.sort(() => Math.random() - 0.5);
+    const goat = goatsShuffled.find((member) => {
+      return member.profilePictureUrl?.trim();
+    });
 
-  if (!goat?.profilePictureUrl?.trim())
-    throw new Error("No valid goat profile found");
+    if (!goat?.profilePictureUrl?.trim())
+      throw new Error("No valid goat profile found");
 
-  const url = [
-    goat.websiteUrl,
-    goat.linkedinProfileUrl,
-    goat.githubProfileUrl,
-  ].find((u) => u?.trim());
+    const url = [
+      goat.websiteUrl,
+      goat.linkedinProfileUrl,
+      goat.githubProfileUrl,
+    ].find((u) => u?.trim());
 
-  const name = replaceName(`${goat.firstName} ${goat.lastName}`);
-  console.log("goat chosen: ", name);
+    const name = replaceName(`${goat.firstName} ${goat.lastName}`);
+    console.log("goat chosen: ", name);
 
-  const embed = await createEmbed(
-    goat.profilePictureUrl,
-    name,
-    url ?? undefined,
-  );
+    const embed = await createEmbed(
+      goat.profilePictureUrl,
+      name,
+      url ?? undefined,
+    );
 
-  await ANIMAL_WEBHOOK.send({ embeds: [embed] });
-});
+    await ANIMAL_WEBHOOK.send({ embeds: [embed] });
+  },
+);
 
 async function createEmbed(imageUrl: string, title: string, titleUrl?: string) {
   const response = await fetch(imageUrl);
