@@ -17,7 +17,7 @@ export const emailRouter = {
     )
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EMAIL_PORTAL"], ctx);
-			console.log(input.data);
+      console.log(input.data);
       try {
         const response = await sendEmail({
           to: input.to,

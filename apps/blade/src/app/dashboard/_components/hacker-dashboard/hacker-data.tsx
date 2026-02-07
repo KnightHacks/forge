@@ -74,16 +74,16 @@ export function HackerData({
       id: hacker?.id ?? "",
     });
 
-    if (!hacker) return;
+    if (!hacker || !currentHackathon?.displayName) return;
 
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
-      subject: `See you at ${currentHackathon?.displayName}!`,
+      subject: `See you at ${currentHackathon.displayName}!`,
       template_id: HACKATHON_TEMPLATE_IDS.Confirmation,
       data: {
         name: hacker.firstName,
-        hackathon: currentHackathon?.displayName,
+        hackathon: currentHackathon.displayName,
       },
     });
   };
