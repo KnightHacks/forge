@@ -15,7 +15,7 @@ tone_instructions: >
 
 # ── Reviews ─────────────────────────────────────────────────────────────
 reviews:
-  profile: "assertive"
+  profile: "chill"
   request_changes_workflow: true
 
   # Summary & walkthrough
