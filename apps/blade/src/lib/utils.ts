@@ -1,10 +1,6 @@
 import type { AnyTRPCProcedure, AnyTRPCRouter } from "@trpc/server";
 import type { z } from "zod";
 
-import type { EventTagsColor } from "@forge/consts/knight-hacks";
-import type { HackerClass } from "@forge/db/schemas/knight-hacks";
-import { PERMISSION_DATA, PERMISSIONS } from "@forge/consts/knight-hacks";
-
 export const formatDateTime = (date: Date) => {
   // Create a new Date object 5 hours behind the original
   const adjustedDate = new Date(date.getTime());

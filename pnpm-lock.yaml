@@ -75,9 +75,6 @@ importers:
       '@forge/api':
         specifier: workspace:*
         version: link:../../packages/api
-      '@forge/consts':
-        specifier: workspace:*
-        version: link:../../packages/consts
       '@forge/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -404,7 +401,7 @@ importers:
         version: 7.4.4
       eslint:
         specifier: 'catalog:'
-        version: 9.39.2(jiti@2.6.1)
+        version: 9.39.2(jiti@1.21.7)
       prettier:
         specifier: 'catalog:'
         version: 3.8.1
@@ -499,9 +496,6 @@ importers:
       '@forge/auth':
         specifier: workspace:*
         version: link:../../packages/auth
-      '@forge/consts':
-        specifier: workspace:*
-        version: link:../../packages/consts
       '@forge/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -684,9 +678,6 @@ importers:
 
   apps/tk:
     dependencies:
-      '@forge/consts':
-        specifier: workspace:*
-        version: link:../../packages/consts
       '@forge/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -891,9 +882,6 @@ importers:
 
   packages/consts:
     dependencies:
-      '@forge/db':
-        specifier: workspace:*
-        version: link:../db
       minimatch:
         specifier: ^10.1.2
         version: 10.1.2
@@ -922,9 +910,6 @@ importers:
 
   packages/db:
     dependencies:
-      '@forge/api':
-        specifier: workspace:*
-        version: link:../api
       '@forge/consts':
         specifier: workspace:*
         version: link:../consts

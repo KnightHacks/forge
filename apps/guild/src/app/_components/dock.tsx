@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 
-import type { GuildTag } from "@forge/consts/knight-hacks";
-import { GUILD_TAG_OPTIONS } from "@forge/consts/knight-hacks";
+import type { GuildTag } from "@forge/consts";
+import { GUILD_TAG_OPTIONS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import {
