@@ -134,6 +134,20 @@ export const formsRouter = {
 
       const formId = existingForm.id;
 
+      // prevent toggling edit on a form with trpc connections
+      if (input.allowEdit === true) {
+        const connection = await db.query.TrpcFormConnection.findFirst({
+          where: (t, { eq }) => eq(t.form, formId),
+        });
+
+        if (connection) {
+          throw new TRPCError({
+            message: "Cannot add edit for a form with trpc connections",
+            code: "FORBIDDEN",
+          });
+        }
+      }
+
       await db
         .insert(FormsSchemas)
         .values({
@@ -326,6 +340,18 @@ export const formsRouter = {
     )
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EDIT_FORMS"], ctx);
+
+      const form = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) => eq(t.id, input.form),
+      });
+
+      if (form?.allowEdit) {
+        throw new TRPCError({
+          message: "Cannot add connection to form with allowEdit",
+          code: "BAD_REQUEST",
+        });
+      }
+
       try {
         await db.insert(TrpcFormConnection).values({ ...input });
       } catch {
