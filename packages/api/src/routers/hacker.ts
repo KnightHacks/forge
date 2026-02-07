@@ -3,15 +3,13 @@ import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
 
-import type { AssignableHackerClass } from "@forge/consts/knight-hacks";
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import {
   BUCKET_NAME,
-  CLASS_ROLE_ID,
-  HACKATHON_APPLICATION_STATES,
-  KH_EVENT_ROLE_ID,
+  DISCORD,
+  FORMS,
   KNIGHTHACKS_S3_BUCKET_REGION,
-} from "@forge/consts/knight-hacks";
+} from "@forge/consts";
 import { and, count, desc, eq, gt, or, sql, sum } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
@@ -25,6 +23,7 @@ import {
   InsertHackerSchema,
 } from "@forge/db/schemas/knight-hacks";
 
+import type { AssignableHackerClass } from "../../../consts/src/discord/knight-hacks-8";
 import { minioClient } from "../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../trpc";
 import {
@@ -966,7 +965,7 @@ export const hackerRouter = {
       controlPerms.or(["READ_HACK_DATA"], ctx);
 
       const results = await Promise.all(
-        HACKATHON_APPLICATION_STATES.map(async (s) => {
+        FORMS.HACKATHON_APPLICATION_STATES.map(async (s) => {
           const rows = await db
             .select({ count: count() })
             .from(HackerAttendee)
@@ -981,7 +980,7 @@ export const hackerRouter = {
       );
 
       const counts = Object.fromEntries(results) as Record<
-        (typeof HACKATHON_APPLICATION_STATES)[number],
+        (typeof FORMS.HACKATHON_APPLICATION_STATES)[number],
         number
       >;
 
@@ -1171,15 +1170,21 @@ export const hackerRouter = {
           });
         } else {
           try {
-            await addRoleToMember(discordId, KH_EVENT_ROLE_ID);
+            await addRoleToMember(
+              discordId,
+              DISCORD.KNIGHTHACKS_8.KH_EVENT_ROLE_ID,
+            );
             console.log(
-              `Assigned role ${KH_EVENT_ROLE_ID} to user ${discordId}`,
+              `Assigned role ${DISCORD.KNIGHTHACKS_8.KH_EVENT_ROLE_ID} to user ${discordId}`,
             );
             // VIP will already be given the discord role ahead of time, so no need to assign again
             if (assignedClass) {
               await addRoleToMember(
                 discordId,
-                CLASS_ROLE_ID[assignedClass as AssignableHackerClass],
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unnecessary-condition
+                DISCORD.KNIGHTHACKS_8.CLASS_ROLE_ID[
+                  assignedClass as AssignableHackerClass
+                ] ?? "",
               );
             }
           } catch (e) {

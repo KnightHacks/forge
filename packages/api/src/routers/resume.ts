@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { Client } from "minio";
 import { z } from "zod";
 
-import { KNIGHTHACKS_S3_BUCKET_REGION } from "@forge/consts/knight-hacks";
+import { KNIGHTHACKS_S3_BUCKET_REGION } from "@forge/consts";
 import { db } from "@forge/db/client";
 
 import { env } from "../env";

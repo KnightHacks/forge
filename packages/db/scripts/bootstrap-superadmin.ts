@@ -13,7 +13,7 @@
 */
 import { eq } from "drizzle-orm";
 
-import { PERMISSIONS } from "@forge/consts/knight-hacks";
+import { PERMISSIONS } from "@forge/consts";
 
 import { db } from "../src/client";
 import { Permissions, Roles } from "../src/schemas/auth";

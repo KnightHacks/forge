@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { Client } from "minio";
 import { z } from "zod";
 
-import { KNIGHTHACKS_S3_BUCKET_REGION } from "@forge/consts/knight-hacks";
+import { KNIGHTHACKS_S3_BUCKET_REGION } from "@forge/consts";
 import { and, count, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";

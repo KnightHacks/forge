@@ -8,36 +8,23 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
-import {
-  COUNTRIES,
-  EVENT_FEEDBACK_HEARD,
-  EVENT_FEEDBACK_SIMILAR_EVENT,
-  EVENT_TAGS,
-  GENDERS,
-  HACKATHON_APPLICATION_STATES,
-  LEVELS_OF_STUDY,
-  MAJORS,
-  RACES_OR_ETHNICITIES,
-  SCHOOLS,
-  SHIRT_SIZES,
-  SPONSOR_TIERS,
-} from "@forge/consts/knight-hacks";
+import { EVENTS, FORMS } from "@forge/consts";
 
 import { Roles, User } from "./auth";
 
 const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
-export const shirtSizeEnum = pgEnum("shirt_size", SHIRT_SIZES);
-export const eventTagEnum = pgEnum("event_tag", EVENT_TAGS);
-export const genderEnum = pgEnum("gender", GENDERS);
+export const shirtSizeEnum = pgEnum("shirt_size", FORMS.SHIRT_SIZES);
+export const eventTagEnum = pgEnum("event_tag", EVENTS.EVENT_TAGS);
+export const genderEnum = pgEnum("gender", FORMS.GENDERS);
 export const raceOrEthnicityEnum = pgEnum(
   "race_or_ethnicity",
-  RACES_OR_ETHNICITIES,
+  FORMS.RACES_OR_ETHNICITIES,
 );
-export const sponsorTierEnum = pgEnum("sponsor_tier", SPONSOR_TIERS);
+export const sponsorTierEnum = pgEnum("sponsor_tier", FORMS.SPONSOR_TIERS);
 export const hackathonApplicationStateEnum = pgEnum(
   "hackathon_application_state",
-  HACKATHON_APPLICATION_STATES,
+  FORMS.HACKATHON_APPLICATION_STATES,
 );
 
 export const Hackathon = createTable("hackathon", (t) => ({
@@ -69,9 +56,9 @@ export const Member = createTable(
     age: t.integer().notNull(),
     email: t.varchar({ length: 255 }).notNull(),
     phoneNumber: t.varchar({ length: 255 }),
-    school: t.text({ enum: SCHOOLS }).notNull(),
-    levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
-    major: t.text({ enum: MAJORS }).notNull().default("Computer Science"),
+    school: t.text({ enum: FORMS.SCHOOLS }).notNull(),
+    levelOfStudy: t.text({ enum: FORMS.LEVELS_OF_STUDY }).notNull(),
+    major: t.text({ enum: FORMS.MAJORS }).notNull().default("Computer Science"),
     gender: genderEnum().default("Prefer not to answer").notNull(),
     raceOrEthnicity: raceOrEthnicityEnum()
       .default("Prefer not to answer")
@@ -110,14 +97,14 @@ export const Hacker = createTable("hacker", (t) => ({
   discordUser: t.varchar({ length: 255 }).notNull(),
   age: t.integer().notNull(),
   country: t
-    .text({ enum: COUNTRIES })
+    .text({ enum: FORMS.COUNTRIES })
     .notNull()
     .default("United States of America"),
   email: t.varchar({ length: 255 }).notNull(),
   phoneNumber: t.varchar({ length: 255 }),
-  school: t.text({ enum: SCHOOLS }).notNull(),
-  levelOfStudy: t.text({ enum: LEVELS_OF_STUDY }).notNull(),
-  major: t.text({ enum: MAJORS }).notNull().default("Computer Science"),
+  school: t.text({ enum: FORMS.SCHOOLS }).notNull(),
+  levelOfStudy: t.text({ enum: FORMS.LEVELS_OF_STUDY }).notNull(),
+  major: t.text({ enum: FORMS.MAJORS }).notNull().default("Computer Science"),
   raceOrEthnicity: raceOrEthnicityEnum()
     .default("Prefer not to answer")
     .notNull(),
@@ -263,7 +250,7 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
     }),
   status: t
     .text("status", {
-      enum: HACKATHON_APPLICATION_STATES,
+      enum: FORMS.HACKATHON_APPLICATION_STATES,
     })
     .notNull()
     .default("pending"),
@@ -333,9 +320,9 @@ export const EventFeedback = createTable("event_feedback", (t) => ({
   overallEventRating: t.integer().notNull(),
   funRating: t.integer().notNull(),
   learnedRating: t.integer().notNull(),
-  heardAboutUs: t.text({ enum: EVENT_FEEDBACK_HEARD }).notNull(),
+  heardAboutUs: t.text({ enum: FORMS.EVENT_FEEDBACK_HEARD }).notNull(),
   additionalFeedback: t.text(),
-  similarEvent: t.text({ enum: EVENT_FEEDBACK_SIMILAR_EVENT }).notNull(),
+  similarEvent: t.text({ enum: EVENTS.EVENT_FEEDBACK_SIMILAR_EVENT }).notNull(),
   createdAt: t.timestamp().notNull().defaultNow(),
 }));
 

@@ -9,27 +9,16 @@ import { google } from "googleapis";
 import Stripe from "stripe";
 
 import type { Session } from "@forge/auth/server";
-import type {
-  FormType,
-  PermissionIndex,
-  PermissionKey,
-  ValidatorOptions,
-} from "@forge/consts/knight-hacks";
+import type { PermissionIndex, PermissionKey } from "@forge/consts";
 import {
-  DEV_DISCORD_ADMIN_ROLE_ID,
-  DEV_KNIGHTHACKS_GUILD_ID,
-  DEV_KNIGHTHACKS_LOG_CHANNEL,
+  DISCORD,
   FORM_ASSETS_BUCKET,
-  getDropdownOptionsFromConst,
+  FORMS,
   GOOGLE_PERSONIFY_EMAIL,
-  IS_PROD,
   PERMISSION_DATA,
   PERMISSIONS,
   PRESIGNED_URL_EXPIRY,
-  PROD_DISCORD_ADMIN_ROLE_ID,
-  PROD_KNIGHTHACKS_GUILD_ID,
-  PROD_KNIGHTHACKS_LOG_CHANNEL,
-} from "@forge/consts/knight-hacks";
+} from "@forge/consts";
 import { db } from "@forge/db/client";
 import { JudgeSession, Roles } from "@forge/db/schemas/auth";
 import { client } from "@forge/email";
@@ -37,31 +26,23 @@ import { client } from "@forge/email";
 import { env } from "./env";
 import { minioClient } from "./minio/minio-client";
 
-const DISCORD_ADMIN_ROLE_ID = IS_PROD
-  ? (PROD_DISCORD_ADMIN_ROLE_ID as string)
-  : (DEV_DISCORD_ADMIN_ROLE_ID as string);
-
-export const KNIGHTHACKS_GUILD_ID = IS_PROD
-  ? (PROD_KNIGHTHACKS_GUILD_ID as string)
-  : (DEV_KNIGHTHACKS_GUILD_ID as string);
-
-const PROD_VIP_ID = "1423358570203844689";
-const DEV_VIP_ID = "1423366084874080327";
-const VIP_ID = IS_PROD ? (PROD_VIP_ID as string) : (DEV_VIP_ID as string);
 export const discord = new REST({ version: "10" }).setToken(
   env.DISCORD_BOT_TOKEN,
 );
-const GUILD_ID = IS_PROD ? PROD_KNIGHTHACKS_GUILD_ID : DEV_KNIGHTHACKS_GUILD_ID;
 
 export async function addRoleToMember(discordUserId: string, roleId: string) {
-  await discord.put(Routes.guildMemberRole(GUILD_ID, discordUserId, roleId));
+  await discord.put(
+    Routes.guildMemberRole(DISCORD.KNIGHTHACKS_GUILD, discordUserId, roleId),
+  );
 }
 
 export async function removeRoleFromMember(
   discordUserId: string,
   roleId: string,
 ) {
-  await discord.delete(Routes.guildMemberRole(GUILD_ID, discordUserId, roleId));
+  await discord.delete(
+    Routes.guildMemberRole(DISCORD.KNIGHTHACKS_GUILD, discordUserId, roleId),
+  );
 }
 
 export async function resolveDiscordUserId(
@@ -69,7 +50,7 @@ export async function resolveDiscordUserId(
 ): Promise<string | null> {
   const q = username.trim().toLowerCase();
   const members = (await discord.get(
-    `${Routes.guildMembersSearch(GUILD_ID)}?query=${encodeURIComponent(q)}&limit=1`,
+    `${Routes.guildMembersSearch(DISCORD.KNIGHTHACKS_GUILD)}?query=${encodeURIComponent(q)}&limit=1`,
   )) as APIGuildMember[];
   return members[0]?.user.id ?? null;
 }
@@ -79,9 +60,9 @@ export const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
 export const isDiscordAdmin = async (user: Session["user"]) => {
   try {
     const guildMember = (await discord.get(
-      Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
+      Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),
     )) as APIGuildMember;
-    return guildMember.roles.includes(DISCORD_ADMIN_ROLE_ID);
+    return guildMember.roles.includes(DISCORD.ADMIN_ROLE);
   } catch (err) {
     console.error("Error: ", err);
     return false;
@@ -98,7 +79,7 @@ export const hasPermission = (
 
 export const parsePermissions = async (discordUserId: string) => {
   const guildMember = (await discord.get(
-    Routes.guildMember(KNIGHTHACKS_GUILD_ID, discordUserId),
+    Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),
   )) as APIGuildMember;
 
   const permissionsLength = Object.keys(PERMISSIONS).length;
@@ -180,7 +161,7 @@ export const controlPerms = {
 export const isDiscordMember = async (user: Session["user"]) => {
   try {
     await discord.get(
-      Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
+      Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),
     );
     return true;
   } catch {
@@ -190,9 +171,9 @@ export const isDiscordMember = async (user: Session["user"]) => {
 
 export async function isDiscordVIP(discordUserId: string) {
   const guildMember = (await discord.get(
-    Routes.guildMember(GUILD_ID, discordUserId),
+    Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),
   )) as APIGuildMember;
-  return guildMember.roles.includes(VIP_ID);
+  return guildMember.roles.includes(DISCORD.VIP_ROLE);
 }
 
 export const sendEmail = async ({
@@ -229,11 +210,6 @@ export const sendEmail = async ({
   }
 };
 
-const KNIGHTHACKS_LOG_CHANNEL =
-  env.NODE_ENV === "production"
-    ? (PROD_KNIGHTHACKS_LOG_CHANNEL as string)
-    : (DEV_KNIGHTHACKS_LOG_CHANNEL as string);
-
 export async function log({
   title,
   message,
@@ -245,7 +221,7 @@ export async function log({
   color: "tk_blue" | "blade_purple" | "uhoh_red" | "success_green";
   userId: string;
 }) {
-  await discord.post(Routes.channelMessages(KNIGHTHACKS_LOG_CHANNEL), {
+  await discord.post(Routes.channelMessages(DISCORD.LOG_CHANNEL), {
     body: {
       embeds: [
         {
@@ -349,11 +325,11 @@ function createJsonSchemaValidator({
   min,
   max,
   allowOther,
-}: ValidatorOptions): OptionalSchema {
+}: FORMS.ValidatorOptions): OptionalSchema {
   const schema: JSONSchema7 = {};
 
   const resolvedOptions = optionsConst
-    ? [...getDropdownOptionsFromConst(optionsConst)]
+    ? [...FORMS.getDropdownOptionsFromConst(optionsConst)]
     : options;
 
   switch (type) {
@@ -440,7 +416,7 @@ function createJsonSchemaValidator({
   return { success: true, schema };
 }
 
-export function generateJsonSchema(form: FormType): OptionalSchema {
+export function generateJsonSchema(form: FORMS.FormType): OptionalSchema {
   const schema: JSONSchema7 = {
     type: "object",
     properties: {},
@@ -472,7 +448,7 @@ export function generateJsonSchema(form: FormType): OptionalSchema {
 
 // Helper to regenerate presigned URLs for media
 export async function regenerateMediaUrls(
-  instructions: FormType["instructions"],
+  instructions: FORMS.FormType["instructions"],
 ) {
   if (!instructions) return [];
   const updatedQuestions = await Promise.all(
