@@ -10,7 +10,7 @@ import { Card } from "@forge/ui/card";
 import { SIGN_IN_PATH } from "~/consts";
 import { extractProcedures } from "~/lib/utils";
 import { api, HydrateClient } from "~/trpc/server";
-import { FormResponderClient } from "./_components/form-responder-client";
+import FormNotFound from "./_components/form-not-found";
 
 export default async function FormResponderPage({
   params,
@@ -23,14 +23,7 @@ export default async function FormResponderPage({
   }
 
   if (!params.formName) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
-        <Card className="max-w-md p-8 text-center">
-          <XCircle className="mx-auto mb-4 h-16 w-16 text-destructive" />
-          <h1 className="mb-2 text-2xl font-bold">Form not found</h1>
-        </Card>
-      </div>
-    );
+    return <FormNotFound />;
   }
 
   // handle url encode form names to allow spacing and special characters

@@ -4,7 +4,8 @@ import { auth } from "@forge/auth";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
-import { FormReviewClient } from "../_components/form-view-edit-client";
+import FormNotFound from "../_components/form-not-found";
+import ResponseNotFound from "../_components/response-not-found";
 
 export default async function FormResponderPage({
   params,
@@ -16,8 +17,12 @@ export default async function FormResponderPage({
     redirect(SIGN_IN_PATH);
   }
 
+  if (!params.formName) {
+    return <FormNotFound />;
+  }
+
   if (!params.responseId) {
-    return <div>Submission not found</div>;
+    return <ResponseNotFound />;
   }
 
   // handle url encode form names to allow spacing and special characters
