@@ -6,17 +6,29 @@ Please describe the motivation for this PR.
 
 # What
 
+Issue(s):
+
 <!--
 Please describe the changes made in this PR.
+Additionally, please reference any relevant issues.
 -->
 
 # Test Plan
 
 <!--
-Please describe how you tested the changes in this PR. 
+Please describe how you tested the changes in this PR.
 
 This could include:
 - How you verified the changes
 - Screenshots or logs if applicable
 - Any other relevant information
 -->
+
+## Checklist
+
+<!--
+IMPORTANT: Non-automated step. Make sure to confirm this, or Prod will go down.
+-->
+
+- [ ] Database: No schema changes, OR I have contacted the Development Lead to run `db:push` before merging
+- [ ] Environment Variables: No environment variables changed, OR I have contacted the Development Lead to modify them on Coolify BEFORE merging.

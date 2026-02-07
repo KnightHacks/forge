@@ -1,0 +1,412 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# Knight Hacks — Forge Monorepo
+# Last Updated: 2026-02-07
+
+# ── General Settings ────────────────────────────────────────────────────
+language: "en-US"
+early_access: true
+enable_free_tier: true
+
+# Max 250 chars — kept tight
+tone_instructions: >
+  Be concise, educational, and actionable. Show code fixes. Explain the "why."
+  Developers range from beginners to experienced. Reference CONTRIBUTING.md
+  conventions when relevant. Be constructive, not critical.
+
+# ── Reviews ─────────────────────────────────────────────────────────────
+reviews:
+  profile: "chill"
+  request_changes_workflow: true
+
+  # Summary & walkthrough
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  high_level_summary_in_walkthrough: false
+  collapse_walkthrough: true
+  sequence_diagrams: true
+  changed_files_summary: true
+  estimate_code_review_effort: true
+
+  # PR title
+  auto_title_instructions: >
+    Format: "[#ISSUE] <description>". Keep under 72 chars.
+    Example: "[#42] Add member registration endpoint"
+
+  # Context & status
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  review_status: true
+  review_details: false
+  commit_status: true
+  fail_commit_status: false
+  abort_on_close: true
+  disable_cache: false
+
+  # Labels
+  suggested_labels: true
+  auto_apply_labels: false
+  labeling_instructions:
+    # App labels
+    - label: "Blade"
+      instructions: "Apply when PR changes files in apps/blade/**"
+    - label: "Guild"
+      instructions: "Apply when PR changes files in apps/guild/**"
+    - label: "CRON"
+      instructions: "Apply when PR changes files in apps/cron/**"
+    - label: "T.K"
+      instructions: "Apply when PR changes files in apps/tk/**"
+    - label: "Hack Sites"
+      instructions: "Apply when PR changes files in a hackathon app (e.g. apps/2025/**, or similar year-based app directories)"
+
+    # Package labels
+    - label: "API"
+      instructions: "Apply when PR changes files in packages/api/** (tRPC routers, procedures)"
+    - label: "UI"
+      instructions: "Apply when PR changes files in packages/ui/** (shared component library)"
+    - label: "Database"
+      instructions: "Apply when PR changes files in packages/db/** (schemas, migrations, queries)"
+
+    # Type labels
+    - label: "Bug"
+      instructions: "Apply when PR fixes a bug or corrects broken behavior"
+    - label: "Feature"
+      instructions: "Apply when PR adds new functionality or capabilities"
+    - label: "Documentation"
+      instructions: "Apply when PR primarily changes .md files, JSDoc, or comments"
+
+    # Size labels
+    - label: "Major"
+      instructions: "Apply when PR touches 3+ packages/apps, changes shared APIs, or modifies database schemas. These need 2+ reviewers."
+    - label: "Minor"
+      instructions: "Apply when PR is a small, focused change in a single package/app. 1 reviewer sufficient."
+
+    # Workflow labels (CodeRabbit should suggest but not typically apply these)
+    - label: "Duplicate"
+      instructions: "Apply only if this PR clearly duplicates another open PR solving the same issue"
+    - label: "Help Wanted"
+      instructions: "Do not auto-suggest this label — it is manually applied to issues needing assignment"
+    - label: "Onboarding"
+      instructions: "Do not auto-suggest this label — it is manually applied to good first issues"
+
+  # Reviewers
+  suggested_reviewers: true
+  auto_assign_reviewers: false
+
+  # Misc
+  enable_prompt_for_ai_agents: true
+  poem: false
+  in_progress_fortune: false
+
+  # ── Path Filters ──────────────────────────────────────────────────────
+  path_filters:
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/.next/**"
+    - "!**/.turbo/**"
+    - "!**/.cache/**"
+    - "!**/coverage/**"
+    - "!pnpm-lock.yaml"
+    - "!**/*.generated.*"
+    - "!**/*.min.js"
+    - "!**/*.min.css"
+
+  # ── Path Instructions ─────────────────────────────────────────────────
+  path_instructions:
+    # Shared Packages
+    - path: "packages/api/**"
+      instructions: |
+        Shared tRPC API layer used by all apps. Pay special attention to:
+        - Breaking changes to router signatures (affects all consumers)
+        - Zod schema validation on all inputs
+        - Authorization checks in every procedure
+        - Error handling with user-facing messages
+        - Database transaction handling
+        - Integration points (Stripe, Discord, MinIO, PassKit)
+        - No N+1 query patterns
+
+    - path: "packages/db/**"
+      instructions: |
+        Database layer with Drizzle ORM + PostgreSQL. Critical checks:
+        - Schema changes must have a migration path (no db:push to production)
+        - Backwards compatibility or documented breaking changes
+        - Indexes on frequently queried columns
+        - Foreign key constraints and referential integrity
+        - No raw SQL with string interpolation (use parameterized queries)
+        - Flag any DROP/DELETE operations prominently
+
+    - path: "packages/auth/**"
+      instructions: |
+        Authentication via Better Auth. Security-critical:
+        - Session management and token handling
+        - Authorization logic and permission checks
+        - No hardcoded secrets — must use validated env imports
+        - CSRF protection
+        - OAuth integration security
+
+    - path: "packages/ui/**"
+      instructions: |
+        Shared shadcn/ui component library. Focus on:
+        - Accessibility (ARIA labels, keyboard nav, focus management)
+        - TypeScript prop types and generics
+        - Responsive design and mobile support
+        - Use cn() utility for Tailwind class merging
+        - Component composition patterns
+
+    - path: "packages/validators/**"
+      instructions: |
+        Zod validation schemas shared across API and forms. Ensure:
+        - Comprehensive validation rules with clear error messages
+        - Reusability across server and client
+        - Correct type inference (z.infer usage)
+
+    - path: "packages/email/**"
+      instructions: |
+        Email templates and sending logic. Check:
+        - Template rendering with proper escaping
+        - Error handling for send failures
+        - No hardcoded URLs (use env variables)
+
+    - path: "packages/consts/**"
+      instructions: |
+        Shared constants. Changes here affect the entire monorepo.
+        Ensure values are correct and changes are intentional.
+
+    # Applications
+    - path: "apps/blade/**"
+      instructions: |
+        Main app with admin, dashboard, hacker/member/judge portals. Check:
+        - Proper use of server vs client components ('use client' / 'use server')
+        - No secrets or API keys in client-side code
+        - Next.js App Router patterns (layouts, loading, error boundaries)
+        - Form validation on both client and server
+        - Payment flows (Stripe) must be thoroughly reviewed
+        - File uploads (resumes, QR codes) need proper validation
+        - Role-based access control enforcement
+        - Accessibility (alt text, ARIA, semantic HTML)
+
+    - path: "apps/cron/**"
+      instructions: |
+        Scheduled tasks service with Discord integration. Check:
+        - Cron schedules are clearly documented
+        - Error handling with retry logic
+        - Discord webhook failures should not crash the service
+        - Image processing edge cases handled
+        - Proper logging for debugging
+
+    - path: "apps/tk/**"
+      instructions: |
+        Discord bot service. Check:
+        - Command handlers validate input
+        - Rate limiting to prevent abuse
+        - Graceful error handling with user-friendly messages
+        - Discord API version compatibility
+
+    # Tooling & Config
+    - path: "tooling/**"
+      instructions: |
+        Shared ESLint, Prettier, TypeScript, and Tailwind configs.
+        Changes affect the entire monorepo — flag breaking changes prominently.
+        Verify changes don't break: pnpm lint, pnpm format, pnpm typecheck.
+
+    - path: "**/*.config.*"
+      instructions: |
+        Build tool and linter config files. Verify changes don't break CI.
+        Test locally before merging. Consider DX impact.
+
+    - path: ".github/**"
+      instructions: |
+        GitHub workflows, templates, and settings.
+        Test workflow changes in a fork or draft PR first.
+        Maintain CI performance (parallel jobs, caching).
+
+    - path: "**/*.test.*"
+      instructions: |
+        Test files. Check for meaningful descriptions, proper assertions,
+        and no skipped tests without explanation.
+
+  # ── Auto Review ───────────────────────────────────────────────────────
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT MERGE"
+      - "DO NOT REVIEW"
+      - "wip"
+    base_branches: []
+
+  # ── Finishing Touches ─────────────────────────────────────────────────
+  finishing_touches:
+    docstrings:
+      enabled: true
+    unit_tests:
+      enabled: true
+
+  # ── Pre-Merge Checks ─────────────────────────────────────────────────
+  pre_merge_checks:
+    title:
+      mode: "warning"
+      requirements: >
+        Must start with an issue number in brackets, e.g. "[#123]".
+        Followed by a concise description. Keep under 72 chars.
+        Example: "[#42] Add member registration endpoint"
+    description:
+      mode: "warning"
+    custom_checks:
+      - name: "No hardcoded secrets"
+        mode: "error"
+        instructions: >
+          Fail if any file contains hardcoded API keys, passwords, tokens,
+          or secrets as string literals (except in .env.example files or
+          config files referencing env variables). Look for patterns like
+          api_key = "sk-...", password = "...", token: "ghp_...".
+      - name: "Validated env access"
+        mode: "warning"
+        instructions: >
+          Flag any direct usage of process.env outside of env.ts config
+          files and *.config.* files. The codebase uses validated env
+          imports (import { env } from "~/env") instead of raw
+          process.env access.
+      - name: "No TypeScript escape hatches"
+        mode: "warning"
+        instructions: >
+          Flag usage of 'any' type, @ts-ignore, @ts-expect-error, and
+          non-null assertions (!.) — suggest 'unknown' with type guards,
+          optional chaining (?.), or proper typing instead.
+
+  # ── Tools ─────────────────────────────────────────────────────────────
+  tools:
+    shellcheck:
+      enabled: true
+    markdownlint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    hadolint:
+      enabled: true
+    actionlint:
+      enabled: true
+    yamllint:
+      enabled: true
+    languagetool:
+      enabled: true
+      enabled_only: false
+      level: "default"
+    biome:
+      enabled: false
+    ast-grep:
+      essential_rules: true
+    eslint:
+      enabled: true
+    # Disabled — not used in this repo
+    ruff:
+      enabled: false
+    phpstan:
+      enabled: false
+    phpmd:
+      enabled: false
+    phpcs:
+      enabled: false
+    golangci-lint:
+      enabled: false
+    swiftlint:
+      enabled: false
+    detekt:
+      enabled: false
+    flake8:
+      enabled: false
+    pylint:
+      enabled: false
+    rubocop:
+      enabled: false
+    clippy:
+      enabled: false
+    pmd:
+      enabled: false
+    clang:
+      enabled: false
+    cppcheck:
+      enabled: false
+    buf:
+      enabled: false
+    regal:
+      enabled: false
+    checkov:
+      enabled: false
+    tflint:
+      enabled: false
+    circleci:
+      enabled: false
+    sqlfluff:
+      enabled: false
+    prismaLint:
+      enabled: false
+    fortitudeLint:
+      enabled: false
+    semgrep:
+      enabled: false
+    shopifyThemeCheck:
+      enabled: false
+    luacheck:
+      enabled: false
+    brakeman:
+      enabled: false
+    dotenvLint:
+      enabled: true
+    htmlhint:
+      enabled: false
+    checkmake:
+      enabled: false
+    osvScanner:
+      enabled: true
+    blinter:
+      enabled: false
+    oxc:
+      enabled: false
+    trivy:
+      enabled: false
+
+# ── Chat ──────────────────────────────────────────────────────────────
+chat:
+  auto_reply: true
+  art: false
+
+# ── Knowledge Base ────────────────────────────────────────────────────
+knowledge_base:
+  opt_out: false
+  web_search:
+    enabled: true
+  code_guidelines:
+    enabled: true
+    filePatterns: []
+  learnings:
+    scope: "auto"
+  issues:
+    scope: "auto"
+  pull_requests:
+    scope: "auto"
+
+# ── Code Generation ──────────────────────────────────────────────────
+code_generation:
+  docstrings:
+    language: "en-US"
+    path_instructions: []
+  unit_tests:
+    path_instructions: []
+
+# ── Issue Enrichment ─────────────────────────────────────────────────
+issue_enrichment:
+  auto_enrich:
+    enabled: true
+  planning:
+    enabled: true
+    auto_planning:
+      enabled: true
+      labels:
+        - "Feature"
+        - "Bug"
+        - "Help Wanted"
+        - "Onboarding"
