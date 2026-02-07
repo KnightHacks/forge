@@ -1,5 +1,6 @@
 import { createAuthClient } from "better-auth/react";
 
+import { sanitizeCallbackURL } from "./callback-url";
 import { env } from "./env";
 
 export const authClient = createAuthClient({
@@ -33,7 +34,7 @@ export const signIn = async (
 ) => {
   await authClient.signIn.social({
     provider: provider,
-    callbackURL: redirectTo,
+    callbackURL: sanitizeCallbackURL(redirectTo),
   });
 };
 

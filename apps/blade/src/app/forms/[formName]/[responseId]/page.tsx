@@ -1,19 +1,43 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@forge/auth";
+import { auth } from "@forge/auth/server";
 
-import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import { FormReviewClient } from "../_components/form-view-edit-client";
 
+function serializeSearchParams(
+  searchParams: Record<string, string | string[] | undefined>,
+) {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value === undefined) continue;
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        params.append(key, entry);
+      }
+      continue;
+    }
+    params.set(key, value);
+  }
+
+  const queryString = params.toString();
+  return queryString ? `?${queryString}` : "";
+}
+
 export default async function FormResponderPage({
   params,
+  searchParams,
 }: {
   params: { responseId: string; formName: string };
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
   const session = await auth();
   if (!session) {
-    redirect(SIGN_IN_PATH);
+    const callbackURL =
+      `/forms/${encodeURIComponent(params.formName)}/${encodeURIComponent(params.responseId)}` +
+      serializeSearchParams(searchParams);
+    redirect(`/?callbackURL=${encodeURIComponent(callbackURL)}`);
   }
 
   if (!params.responseId) {
