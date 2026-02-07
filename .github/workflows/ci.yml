@@ -20,10 +20,6 @@ jobs:
       - name: Setup
         uses: ./tooling/github/setup
 
-      - name: Copy env
-        shell: bash
-        run: cp .env.example .env
-
       - name: Lint
         run: pnpm lint && pnpm lint:ws
 
@@ -58,14 +54,9 @@ jobs:
       - name: Setup
         uses: ./tooling/github/setup
 
-      - name: Copy env
-        shell: bash
-        run: cp .env.example .env
-
       - name: Build
         run: pnpm build
 
-  # PR hygiene checks — only run on pull requests
   pr-checks:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -78,6 +69,6 @@ jobs:
             const e = [];
             if (!pr.labels.length) e.push('Missing label.');
             if (!pr.assignees.length) e.push('Missing assignee.');
-            if (!/(close[sd]?|fix(e[sd])?|resolve[sd]?)\s+#\d+|#\d+/i.test(pr.body || ''))
-              e.push('Missing issue reference (e.g. Issue(s): #123).');
+            if (!/^\[#\d+\]/.test(pr.title))
+              e.push('Title must start with issue number (e.g. [#123] Add feature).');
             if (e.length) core.setFailed(e.join(' '));

@@ -29,9 +29,8 @@ reviews:
 
   # PR title
   auto_title_instructions: >
-    Format: "<type>(<scope>): <description>" — all lowercase.
-    Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore.
-    Scope = package/app name. Under 72 chars. Example: "feat(api): add member registration endpoint"
+    Format: "[#ISSUE] <description>". Keep under 72 chars.
+    Example: "[#42] Add member registration endpoint"
 
   # Context & status
   assess_linked_issues: true
@@ -251,9 +250,9 @@ reviews:
     title:
       mode: "warning"
       requirements: >
-        Must follow conventional commit format, all lowercase:
-        "<type>(<scope>): <description>".
-        Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore.
+        Must start with an issue number in brackets, e.g. "[#123]".
+        Followed by a concise description. Keep under 72 chars.
+        Example: "[#42] Add member registration endpoint"
     description:
       mode: "warning"
     custom_checks:
