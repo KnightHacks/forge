@@ -5,7 +5,7 @@ import {
   removeRoleFromMember,
   resolveDiscordUserId,
 } from "@forge/api/utils";
-import { PROD_ALUMNI_ROLE_ID } from "@forge/consts/consts/src/knight-hacks";
+import { PROD_ALUMNI_ROLE_ID } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
 
