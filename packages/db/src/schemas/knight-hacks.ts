@@ -10,7 +10,6 @@ import z from "zod";
 
 import {
   COUNTRIES,
-  DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
   EVENT_FEEDBACK_HEARD,
   EVENT_FEEDBACK_SIMILAR_EVENT,
   EVENT_TAGS,
@@ -462,74 +461,6 @@ export const JudgedSubmission = createTable("judged_submission", (t) => ({
 
 export const InsertJudgedSubmissionSchema =
   createInsertSchema(JudgedSubmission);
-// Email Queue Tables
-export const emailQueueStatusEnum = pgEnum("email_queue_status", [
-  "pending",
-  "processing",
-  "completed",
-  "failed",
-  "scheduled",
-]);
-
-export const emailPriorityEnum = pgEnum("email_priority", [
-  "now",
-  "high",
-  "standard",
-  "low",
-]);
-
-export const EmailQueue = createTable("email_queue", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  batch_id: t.uuid(),
-  batch_position: t.integer(),
-  queue_position: t.integer(),
-  priority: emailPriorityEnum().notNull().default("standard"),
-  status: emailQueueStatusEnum().notNull().default("pending"),
-  to: t.varchar({ length: 255 }).notNull(),
-  from: t.varchar({ length: 255 }),
-  subject: t.varchar({ length: 500 }).notNull(),
-  html: t.text().notNull(),
-  scheduled_for: t.timestamp(),
-  blacklist_rules: t.jsonb(),
-  editable_until: t.timestamp(),
-  attempts: t.integer().notNull().default(0),
-  max_attempts: t.integer().notNull().default(3),
-  last_error: t.text(),
-  created_at: t.timestamp().notNull().defaultNow(),
-  updated_at: t.timestamp().notNull().defaultNow(),
-  processed_at: t.timestamp(),
-}));
-
-export const EmailDailyCount = createTable("email_daily_count", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  date: t.date().notNull().unique(),
-  count: t.integer().notNull().default(0),
-  limit: t.integer(),
-  created_at: t.timestamp().notNull().defaultNow(),
-  updated_at: t.timestamp().notNull().defaultNow(),
-}));
-
-export const EmailConfig = createTable("email_config", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  daily_limit: t.integer().notNull().default(100),
-  cron_schedule: t
-    .varchar({ length: 50 })
-    .notNull()
-    .default(DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE),
-  enabled: t.boolean().notNull().default(true),
-  updated_at: t.timestamp().notNull().defaultNow(),
-}));
-
-export type InsertEmailQueue = typeof EmailQueue.$inferInsert;
-export type SelectEmailQueue = typeof EmailQueue.$inferSelect;
-export type InsertEmailDailyCount = typeof EmailDailyCount.$inferInsert;
-export type SelectEmailDailyCount = typeof EmailDailyCount.$inferSelect;
-export type InsertEmailConfig = typeof EmailConfig.$inferInsert;
-export type SelectEmailConfig = typeof EmailConfig.$inferSelect;
-
-export const InsertEmailQueueSchema = createInsertSchema(EmailQueue);
-export const InsertEmailDailyCountSchema = createInsertSchema(EmailDailyCount);
-export const InsertEmailConfigSchema = createInsertSchema(EmailConfig);
 
 export const OtherCompanies = createTable("companies", (t) => ({
   name: t.varchar({ length: 255 }).notNull().primaryKey(),
