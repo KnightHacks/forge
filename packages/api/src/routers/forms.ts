@@ -477,6 +477,32 @@ export const formsRouter = {
       });
     }),
 
+  editResponse: protectedProcedure
+    .input(
+      InsertFormResponseSchema.omit({ userId: true, form: true }).extend({
+        id: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.session.user.id;
+
+      const updated = await db
+        .update(FormResponse)
+        .set({ responseData: input.responseData, editedAt: new Date() })
+        .where(
+          and(eq(FormResponse.id, input.id), eq(FormResponse.userId, userId)),
+        )
+        .returning({ id: FormResponse.id, editedAt: FormResponse.editedAt });
+
+      if (updated.length === 0) {
+        throw new TRPCError({
+          message: "Form response edit failed",
+          code: "BAD_REQUEST",
+        });
+      }
+      return updated[0];
+    }),
+
   getResponses: permProcedure
     .input(z.object({ form: z.string() }))
     .query(async ({ input, ctx }) => {
@@ -534,12 +560,13 @@ export const formsRouter = {
       if (responseId) {
         return await db
           .select({
-            submittedAt: FormResponse.createdAt,
+            submittedAt: FormResponse.editedAt,
             responseData: FormResponse.responseData,
             formName: FormsSchemas.name,
             formSlug: FormsSchemas.slugName,
             id: FormResponse.id,
             hasSubmitted: sql<boolean>`true`,
+            allowEdit: sql<boolean>`false`,
           })
           .from(FormResponse)
           .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
@@ -551,40 +578,42 @@ export const formsRouter = {
           );
       }
 
-      // return all responses all forms
+      // return all responses of form
       const form = input.form;
-      if (!form) {
+      if (form) {
         return await db
           .select({
-            submittedAt: FormResponse.createdAt,
+            submittedAt: FormResponse.editedAt,
             responseData: FormResponse.responseData,
             formName: FormsSchemas.name,
             formSlug: FormsSchemas.slugName,
             id: FormResponse.id,
             hasSubmitted: sql<boolean>`true`,
+            allowEdit: sql<boolean>`false`,
           })
           .from(FormResponse)
           .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
-          .where(eq(FormResponse.userId, userId))
-          .orderBy(desc(FormResponse.createdAt));
+          .where(
+            and(eq(FormResponse.userId, userId), eq(FormsSchemas.id, form)),
+          )
+          .orderBy(desc(FormResponse.editedAt));
       }
 
-      // return all responses of form
+      // return all responses all forms
       return await db
         .select({
-          submittedAt: FormResponse.createdAt,
+          submittedAt: FormResponse.editedAt,
           responseData: FormResponse.responseData,
           formName: FormsSchemas.name,
           formSlug: FormsSchemas.slugName,
           id: FormResponse.id,
           hasSubmitted: sql<boolean>`true`,
+          allowEdit: FormsSchemas.allowEdit,
         })
         .from(FormResponse)
         .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
-        .where(
-          and(eq(FormResponse.userId, userId), eq(FormsSchemas.id, form)),
-        )
-        .orderBy(desc(FormResponse.createdAt));
+        .where(eq(FormResponse.userId, userId))
+        .orderBy(desc(FormResponse.editedAt));
     }),
 
   // Generate presigned upload URL for direct MinIO upload
