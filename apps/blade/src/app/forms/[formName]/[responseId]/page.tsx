@@ -5,6 +5,7 @@ import { auth } from "@forge/auth";
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import FormNotFound from "../_components/form-not-found";
+import { FormReviewWrapper } from "../_components/form-view-edit-client";
 import ResponseNotFound from "../_components/response-not-found";
 
 export default async function FormResponderPage({
@@ -42,7 +43,7 @@ export default async function FormResponderPage({
 
   return (
     <HydrateClient>
-      <FormReviewClient
+      <FormReviewWrapper
         formName={formName}
         userName={userName}
         responseId={responseId}

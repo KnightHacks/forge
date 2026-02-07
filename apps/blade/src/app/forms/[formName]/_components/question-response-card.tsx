@@ -35,7 +35,7 @@ type FormQuestion = z.infer<typeof QuestionValidator>;
 interface QuestionResponseCardProps {
   question: FormQuestion;
   value?: string | string[] | number | Date | boolean | null;
-  onChange: (value: string | string[] | number | Date | null) => void;
+  onChange: (value: string | string[] | number | Date | boolean | null) => void;
   onBlur?: () => void;
   disabled?: boolean;
   formId?: string;

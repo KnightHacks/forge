@@ -11,6 +11,7 @@ import { SIGN_IN_PATH } from "~/consts";
 import { extractProcedures } from "~/lib/utils";
 import { api, HydrateClient } from "~/trpc/server";
 import FormNotFound from "./_components/form-not-found";
+import { FormResponderWrapper } from "./_components/form-responder-client";
 
 export default async function FormResponderPage({
   params,
@@ -111,7 +112,7 @@ export default async function FormResponderPage({
 
   return (
     <HydrateClient>
-      <FormResponderClient
+      <FormResponderWrapper
         handleCallbacks={handleCallbacks}
         formName={formName}
         userName={userName}
