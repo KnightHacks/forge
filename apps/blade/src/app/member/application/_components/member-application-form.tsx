@@ -6,21 +6,15 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
-import type { GradTerm } from "@forge/consts/knight-hacks";
 import {
   ALLOWED_PROFILE_PICTURE_EXTENSIONS,
   ALLOWED_PROFILE_PICTURE_TYPES,
-  COMPANIES,
-  GENDERS,
+  FORMS,
+  GradTerm,
   KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
   KNIGHTHACKS_MAX_RESUME_SIZE,
-  LEVELS_OF_STUDY,
-  MAJORS,
-  RACES_OR_ETHNICITIES,
-  SCHOOLS,
-  SHIRT_SIZES,
   TERM_TO_DATE,
-} from "@forge/consts/knight-hacks";
+} from "@forge/consts";
 import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -489,7 +483,7 @@ export function MemberApplicationForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {GENDERS.map((item) => (
+                  {FORMS.GENDERS.map((item) => (
                     <SelectItem key={item} value={item}>
                       {item}
                     </SelectItem>
@@ -519,7 +513,7 @@ export function MemberApplicationForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {RACES_OR_ETHNICITIES.map((item) => (
+                  {FORMS.RACES_OR_ETHNICITIES.map((item) => (
                     <SelectItem key={item} value={item}>
                       {item}
                     </SelectItem>
@@ -545,7 +539,7 @@ export function MemberApplicationForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {SHIRT_SIZES.map((item) => (
+                  {FORMS.SHIRT_SIZES.map((item) => (
                     <SelectItem key={item} value={item}>
                       {item}
                     </SelectItem>
@@ -573,7 +567,7 @@ export function MemberApplicationForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {LEVELS_OF_STUDY.map((item) => (
+                  {FORMS.LEVELS_OF_STUDY.map((item) => (
                     <SelectItem key={item} value={item}>
                       {item}
                     </SelectItem>
@@ -594,7 +588,7 @@ export function MemberApplicationForm() {
               </FormLabel>
               <FormControl>
                 <ResponsiveComboBox
-                  items={SCHOOLS}
+                  items={FORMS.SCHOOLS}
                   renderItem={(item) => <div>{item}</div>}
                   getItemValue={(item) => item}
                   getItemLabel={(item) => item}
@@ -617,7 +611,7 @@ export function MemberApplicationForm() {
               </FormLabel>
               <FormControl>
                 <ResponsiveComboBox
-                  items={MAJORS}
+                  items={FORMS.MAJORS}
                   renderItem={(item) => <div>{item}</div>}
                   getItemValue={(item) => item}
                   getItemLabel={(item) => item}
@@ -696,7 +690,7 @@ export function MemberApplicationForm() {
               </FormLabel>
               <FormControl>
                 <ResponsiveComboBox
-                  items={[...COMPANIES, ...otherCompanies, "Other"]}
+                  items={[...FORMS.COMPANIES, ...otherCompanies, "Other"]}
                   renderItem={(item) => <div>{item}</div>}
                   getItemValue={(item) => item}
                   getItemLabel={(item) => item}

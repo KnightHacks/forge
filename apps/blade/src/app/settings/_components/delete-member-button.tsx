@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Trash2 } from "lucide-react";
 
-import { USE_CAUTION } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -19,6 +18,7 @@ import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
+import { USE_CAUTION } from '@forge/consts';
 
 export default function DeleteMemberButton({
   memberId,

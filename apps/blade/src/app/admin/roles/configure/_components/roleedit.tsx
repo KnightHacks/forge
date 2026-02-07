@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Link, Loader2, Pencil, User, X } from "lucide-react";
 import { z } from "zod";
 
-import { PERMISSION_DATA, PERMISSIONS } from "@forge/consts/knight-hacks";
+import { PERMISSION_DATA, PERMISSIONS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
 import {

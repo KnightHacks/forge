@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
-import { USE_CAUTION } from "@forge/consts/knight-hacks";
+import { USE_CAUTION } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
