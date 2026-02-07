@@ -26,4 +26,8 @@ This could include:
 
 ## Checklist
 
+<!--
+IMPORTANT: Non-automated step. Make sure to confirm this, or Prod will go down.
+-->
+
 - [ ] Database: No schema changes, OR I have contacted @dvidal1205 to run `db:push` before merging
