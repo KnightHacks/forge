@@ -4,6 +4,7 @@ import { auth } from "@forge/auth/server";
 
 import { api, HydrateClient } from "~/trpc/server";
 import FormNotFound from "../_components/form-not-found";
+import { FormReviewWrapper } from "../_components/form-view-edit-client";
 import ResponseNotFound from "../_components/response-not-found";
 
 function serializeSearchParams(
@@ -66,7 +67,7 @@ export default async function FormResponderPage({
 
   return (
     <HydrateClient>
-      <FormReviewClient
+      <FormReviewWrapper
         formName={formName}
         userName={userName}
         responseId={responseId}
