@@ -31,3 +31,4 @@ IMPORTANT: Non-automated step. Make sure to confirm this, or Prod will go down.
 -->
 
 - [ ] Database: No schema changes, OR I have contacted the Development Lead to run `db:push` before merging
+- [ ] Environment Variables: No environment variables changed, OR I have contacted the Development Lead to modify them on Coolify BEFORE merging.
