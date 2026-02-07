@@ -17,7 +17,6 @@
   "dependencies": {
     "@forge/api": "workspace:*",
     "@forge/auth": "workspace:*",
-    "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
     "@forge/ui": "workspace:*",
     "@gsap/react": "^2.1.2",

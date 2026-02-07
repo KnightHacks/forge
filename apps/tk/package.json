@@ -14,7 +14,6 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
     "@forge/validators": "workspace:*",
     "@t3-oss/env-core": "^0.11.1",
