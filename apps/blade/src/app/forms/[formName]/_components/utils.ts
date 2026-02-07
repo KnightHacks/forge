@@ -1,5 +1,6 @@
-import { FormType, QuestionValidatorType } from "@forge/consts/knight-hacks";
 import { z } from "zod";
+
+import { FormType, QuestionValidatorType } from "@forge/consts/knight-hacks";
 
 /** UI state in the client */
 export type FormResponseUI = Partial<
@@ -16,6 +17,7 @@ export const getValidatorResponse = (
   responses: FormResponseUI,
   form: FormType,
 ) => {
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-call
   const zodSchema = new Function("z", `return ${zodValidator}`)(
     z,
   ) as z.ZodSchema;

@@ -6,15 +6,10 @@ import type { FormType } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 
+import type { FormResponsePayload, FormResponseUI } from "./utils";
 import { InstructionResponseCard } from "~/app/forms/[formName]/_components/instruction-response-card";
 import { QuestionResponseCard } from "~/app/forms/[formName]/_components/question-response-card";
-import {
-  FormResponsePayload,
-  FormResponseUI,
-  getValidationError,
-  isFormValid,
-  normalizeResponses,
-} from "./utils";
+import { getValidationError, isFormValid, normalizeResponses } from "./utils";
 
 /**
  * Shared renderer for "fill out form" and "review/edit response".
@@ -26,7 +21,6 @@ export function FormRunner({
   isReview = false,
   form,
   formId,
-  userName, // optional if you want to show it somewhere later
   zodValidator,
   initialResponses,
   allowEdit = true,
@@ -87,11 +81,8 @@ export function FormRunner({
     });
   };
 
-  const canSubmit = useMemo(() => {
-    if (!allowEdit) return false;
-    if (isSubmitting) return false;
-    return isFormValid(zodValidator, responses, form);
-  }, [allowEdit, isSubmitting, isFormValid, zodValidator, responses, form]);
+  const canSubmit =
+    allowEdit && !isSubmitting && isFormValid(zodValidator, responses, form);
 
   const handleSubmit = () => {
     const payload = normalizeResponses(responses, form);
@@ -111,6 +102,7 @@ export function FormRunner({
   }
 
   const allItems = useMemo(() => {
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
     const questionsWithType: QuestionWithOrder[] = form.questions.map((q) => ({
       ...q,
       itemType: "question" as const,
@@ -137,7 +129,9 @@ export function FormRunner({
         {/* Header */}
         <Card className="border-t-8 border-t-primary duration-500 animate-in fade-in slide-in-from-top-4">
           <div className="space-y-2 p-6">
-            <h1 className="text-3xl font-bold">{"askjdgasd"}</h1>
+            <h1 className="text-3xl font-bold">
+              {(isReview && (allowEdit ? "Edit" : "View") + " - ") + form.name}
+            </h1>
 
             {form.description && (
               <p className="text-muted-foreground">{form.description}</p>
@@ -162,7 +156,10 @@ export function FormRunner({
                 }}
               >
                 {isInstruction ? (
-                  <InstructionResponseCard instruction={item as any} />
+                  <>
+                    {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */}
+                    <InstructionResponseCard instruction={item as any} />
+                  </>
                 ) : (
                   <QuestionResponseCard
                     question={item}
@@ -186,6 +183,7 @@ export function FormRunner({
             );
           })}
         </div>
+        {/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */}
 
         {submitError && (
           <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-destructive">

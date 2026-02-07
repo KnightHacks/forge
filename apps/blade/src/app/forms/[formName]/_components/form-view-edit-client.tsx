@@ -5,13 +5,13 @@ import { Loader2 } from "lucide-react";
 
 import type { FormType } from "@forge/consts/knight-hacks";
 
+import type { FormResponsePayload, FormResponseUI } from "./utils";
 import { api } from "~/trpc/react";
 import { useSubmissionSuccess } from "../_hooks/useSubmissionSuccess";
 import FormNotFound from "./form-not-found";
 import { FormRunner } from "./form-runner";
 import { SubmissionSuccessCard } from "./form-submitted-success";
 import ResponseNotFound from "./response-not-found";
-import { type FormResponsePayload, type FormResponseUI } from "./utils";
 
 interface FormReviewWrapperProps {
   formName: string;
@@ -147,7 +147,7 @@ function payloadToUI(
                 : null;
         break;
       default:
-        out[key] = raw as any;
+        out[key] = raw;
         break;
     }
   }

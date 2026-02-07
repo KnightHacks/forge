@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
+
 import { Card } from "@forge/ui/card";
 
 interface SubmissionSuccessCardProps {
@@ -33,14 +34,10 @@ export function SubmissionSuccessCard({
         {/* Text */}
         <div
           className={`mt-4 transition-all duration-500 ease-out ${
-            showText
-              ? "translate-y-0 opacity-100"
-              : "translate-y-4 opacity-0"
+            showText ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
           }`}
         >
-          <h1 className="mb-2 text-2xl font-bold">
-            Thanks, {userName}!
-          </h1>
+          <h1 className="mb-2 text-2xl font-bold">Thanks, {userName}!</h1>
 
           <p className="text-muted-foreground">
             Your response to &quot;{formName}&quot; has been recorded.
