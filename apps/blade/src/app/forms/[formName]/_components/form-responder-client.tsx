@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 
 import type { FormType } from "@forge/consts/knight-hacks";
+import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 
+import type { FormResponsePayload } from "./utils";
 import { api } from "~/trpc/react";
 import { useSubmissionSuccess } from "../_hooks/useSubmissionSuccess";
 import FormNotFound from "./form-not-found";
 import { FormRunner } from "./form-runner";
 import { SubmissionSuccessCard } from "./form-submitted-success";
-import { type FormResponsePayload } from "./utils";
-import Link from "next/link";
-import { Button } from "@forge/ui/button";
 
 interface FormResponderWrapperProps {
   formName: string;
@@ -34,9 +34,6 @@ export function FormResponderWrapper({
 
   const formQuery = api.forms.getForm.useQuery({ slug_name: formName });
   const duesQuery = api.duesPayment.validatePaidDues.useQuery();
-  const existingResponseQuery = api.forms.getUserResponse.useQuery({
-    form: formQuery.data?.id ?? "",
-  });
 
   const submitResponse = api.forms.createResponse.useMutation({
     onSuccess: (_data, variables) => {
@@ -51,12 +48,24 @@ export function FormResponderWrapper({
     },
   });
 
+  if (formQuery.isLoading || duesQuery.isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (formQuery.error || !formQuery.data) return <FormNotFound />;
+
+  const formId = formQuery.data.id;
+  const existingResponseQuery = api.forms.getUserResponse.useQuery(
+    { form: formId },
+    { enabled: !!formId },
+  );
+
   // loading
-  if (
-    formQuery.isLoading ||
-    duesQuery.isLoading ||
-    existingResponseQuery.isLoading
-  ) {
+  if (existingResponseQuery.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -65,25 +74,21 @@ export function FormResponderWrapper({
   }
 
   // not found
-  if (formQuery.error || !formQuery.data) return <FormNotFound />;
-  if (existingResponseQuery.error || !existingResponseQuery.data) return (<div>Error Loading existing response</div>);
-
+  if (existingResponseQuery.error)
+    return <div>Error Loading existing response</div>;
 
   const form = formQuery.data.formData;
-  const formId = formQuery.data.id;
-
   const zodValidator = formQuery.data.zodValidator;
   const isDuesOnly = formQuery.data.duesOnly;
   const allowResubmission = formQuery.data.allowResubmission;
   const allowEdit = formQuery.data.allowEdit;
-
 
   const duesCheckFailed = !!duesQuery.error;
   const hasPaidDues = duesCheckFailed
     ? true
     : (duesQuery.data?.duesPaid ?? false);
 
-  const hasAlreadySubmitted = (existingResponseQuery.data.length ?? 0) !== 0;
+  const hasAlreadySubmitted = (existingResponseQuery.data?.length ?? 0) !== 0;
 
   // dues gate
   if (isDuesOnly && !hasPaidDues) {
@@ -102,6 +107,7 @@ export function FormResponderWrapper({
 
   // already submitted gate
   if (hasAlreadySubmitted && !allowResubmission) {
+    const existing = existingResponseQuery.data?.[0];
     return (
       <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
         <Card className="max-w-md p-8 text-center">
@@ -110,10 +116,9 @@ export function FormResponderWrapper({
           <p className="text-muted-foreground">
             You have already submitted a response to this form.
           </p>
-          {existingResponseQuery.data[0] && (
-            <Link
-              href={`/forms/${existingResponseQuery.data[0].formSlug ?? ""}/${existingResponseQuery.data[0].id}`}
-            >
+
+          {existing && (
+            <Link href={`/forms/${existing.formSlug ?? ""}/${existing.id}`}>
               <Button size="sm">
                 {allowEdit ? "Edit " : "View "} Response
               </Button>
@@ -151,7 +156,7 @@ export function FormResponderWrapper({
       formId={formId}
       userName={userName}
       zodValidator={zodValidator}
-      allowEdit={true}
+      allowEdit={true} // always true on first submission
       isSubmitting={submitResponse.isPending}
       submitError={submitError}
       onSubmit={onSubmit}
