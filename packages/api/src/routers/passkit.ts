@@ -61,10 +61,7 @@ export const passkitRouter = {
           projectRoot = parent;
         }
       }
-      const passDir = path.join(
-        projectRoot,
-        "packages/api/passes/member.pass",
-      );
+      const passDir = path.join(projectRoot, "packages/api/passes/member.pass");
 
       const pass = await PKPass.from(
         {

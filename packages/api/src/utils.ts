@@ -32,10 +32,10 @@ import {
 } from "@forge/consts/knight-hacks";
 import { db } from "@forge/db/client";
 import { JudgeSession, Roles } from "@forge/db/schemas/auth";
+import { client } from "@forge/email";
 
 import { env } from "./env";
 import { minioClient } from "./minio/minio-client";
-import { client } from "@forge/email";
 
 const DISCORD_ADMIN_ROLE_ID = IS_PROD
   ? (PROD_DISCORD_ADMIN_ROLE_ID as string)
@@ -200,23 +200,23 @@ export const sendEmail = async ({
   subject,
   template_id,
   from,
-	data
+  data,
 }: {
   to: string | string[];
   subject: string;
   template_id: number;
-	data: Record<string, string>,
+  data: Record<string, string>;
   from?: string;
-}): Promise<{ success: true; }> => {
+}): Promise<{ success: true }> => {
   try {
     await client.tx.send({
-			template_id: template_id,
-			from_email: from ?? env.LISTMONK_FROM_EMAIL,
-			subscriber_mode: "external",
-			subscriber_emails: (typeof(to) === "string") ? [to] : to,
-			subject: subject,
-			data: data
-		});
+      template_id: template_id,
+      from_email: from ?? env.LISTMONK_FROM_EMAIL,
+      subscriber_mode: "external",
+      subscriber_emails: typeof to === "string" ? [to] : to,
+      subject: subject,
+      data: data,
+    });
 
     return { success: true };
   } catch (error) {

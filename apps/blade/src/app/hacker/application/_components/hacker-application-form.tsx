@@ -18,6 +18,7 @@ import {
   SHIRT_SIZES,
 } from "@forge/consts/knight-hacks";
 import { InsertHackerSchema } from "@forge/db/schemas/knight-hacks";
+import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -44,7 +45,6 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import { HACKATHON_TEMPLATE_IDS } from "@forge/email";
 
 export function HackerFormPage({
   hackathonId,
@@ -381,11 +381,11 @@ export function HackerFormPage({
               from: "donotreply@knighthacks.org",
               to: values.email,
               subject: "Knight Hacks VIII - We recieved your application!",
-							template_id: HACKATHON_TEMPLATE_IDS.Apply,
-							data: {
-								name: values.firstName,
-								hackathon: hackathonName
-							}
+              template_id: HACKATHON_TEMPLATE_IDS.Apply,
+              data: {
+                name: values.firstName,
+                hackathon: hackathonName,
+              },
             });
           } catch (error) {
             // eslint-disable-next-line no-console

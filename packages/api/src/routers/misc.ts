@@ -21,7 +21,9 @@ export interface FundingRequestInput {
   itemization?: string;
 }
 
-export function generateListmonkData(input: FundingRequestInput): Record<string, string> {
+export function generateListmonkData(
+  input: FundingRequestInput,
+): Record<string, string> {
   // Format text for HTML display (convert newlines to <br> tags)
   const formatText = (text: string | null | undefined): string => {
     if (!text) return "N/A";
@@ -217,14 +219,14 @@ export const miscRouter = {
           ? new Date(input.dateNeeded)
           : input.dateNeeded;
       const formattedDate = `${String(dateObj.getMonth() + 1).padStart(2, "0")}/${String(dateObj.getDate()).padStart(2, "0")}`;
-			const data = generateListmonkData(input);
+      const data = generateListmonkData(input);
 
       await sendEmail({
         to: ["treasurer@knighthacks.org", "exec@knighthacks.org"],
         subject: `KHFR - $${input.amount.toLocaleString()} | ${formattedDate} | ${input.team}`,
-				template_id: 12,
+        template_id: 12,
         from: "Funding Requests <funding-requests@knighthacks.org>",
-				data: data
+        data: data,
       });
     }),
 } satisfies TRPCRouterRecord;

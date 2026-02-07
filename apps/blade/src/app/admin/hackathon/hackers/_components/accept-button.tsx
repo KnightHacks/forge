@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
+import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import { HACKATHON_TEMPLATE_IDS } from "@forge/email";
 
 export default function AcceptButton({
   hacker,
@@ -57,11 +57,11 @@ export default function AcceptButton({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
       subject: `[ACTION REQUIRED] ${hackathonName} Acceptance Information!`,
-			template_id: HACKATHON_TEMPLATE_IDS.Accepted,
-			data: {
-				name: hacker.firstName,
-				hackathon: hackathonName
-			}
+      template_id: HACKATHON_TEMPLATE_IDS.Accepted,
+      data: {
+        name: hacker.firstName,
+        hackathon: hackathonName,
+      },
     });
   };
 
