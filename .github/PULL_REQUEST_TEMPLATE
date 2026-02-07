@@ -5,6 +5,7 @@ Please describe the motivation for this PR.
 -->
 
 # What
+
 Issue(s):
 
 <!--
@@ -15,10 +16,14 @@ Additionally, please reference any relevant issues.
 # Test Plan
 
 <!--
-Please describe how you tested the changes in this PR. 
+Please describe how you tested the changes in this PR.
 
 This could include:
 - How you verified the changes
 - Screenshots or logs if applicable
 - Any other relevant information
 -->
+
+## Checklist
+
+- [ ] Database: No schema changes, OR I have contacted @dvidal1205 to run `db:push` before merging
