@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { toNextJsHandler } from "better-auth/next-js";
 
+import { sanitizeCallbackURL } from "./callback-url";
 import {
   auth as betterAuthInstance,
   invalidateSessionToken,
@@ -36,11 +37,18 @@ export const auth = async () => {
 export async function signInRoute(req: Request) {
   const url = new URL(req.url);
   const provider = url.searchParams.get("provider");
-  const callbackURL = url.searchParams.get("callbackURL") ?? "/dashboard";
+  const callbackURL = sanitizeCallbackURL(url.searchParams.get("callbackURL"));
 
   if (!provider) {
     return NextResponse.json(
       { error: "Missing provider parameter" },
+      { status: 400 },
+    );
+  }
+
+  if (provider !== "discord") {
+    return NextResponse.json(
+      { error: "Unsupported provider parameter" },
       { status: 400 },
     );
   }
@@ -75,6 +83,8 @@ export const signIn = (
   { redirectTo }: { redirectTo: string },
 ) => {
   redirect(
-    `${env.NEXT_PUBLIC_BLADE_URL}/api/auth/signin?provider=${provider}&callbackURL=${redirectTo}`,
+    `${env.NEXT_PUBLIC_BLADE_URL}/api/auth/signin?provider=${encodeURIComponent(
+      provider,
+    )}&callbackURL=${encodeURIComponent(sanitizeCallbackURL(redirectTo))}`,
   );
 };

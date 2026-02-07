@@ -4,22 +4,46 @@ import { stringify } from "superjson";
 
 import { appRouter } from "@forge/api";
 import { log } from "@forge/api/utils";
-import { auth } from "@forge/auth";
+import { auth } from "@forge/auth/server";
 import { Card } from "@forge/ui/card";
 
-import { SIGN_IN_PATH } from "~/consts";
 import { extractProcedures } from "~/lib/utils";
 import { api, HydrateClient } from "~/trpc/server";
 import { FormResponderClient } from "./_components/form-responder-client";
 
+function serializeSearchParams(
+  searchParams: Record<string, string | string[] | undefined>,
+) {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value === undefined) continue;
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        params.append(key, entry);
+      }
+      continue;
+    }
+    params.set(key, value);
+  }
+
+  const queryString = params.toString();
+  return queryString ? `?${queryString}` : "";
+}
+
 export default async function FormResponderPage({
   params,
+  searchParams,
 }: {
   params: { formName: string };
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
   const session = await auth();
   if (!session) {
-    redirect(SIGN_IN_PATH);
+    const callbackURL =
+      `/forms/${encodeURIComponent(params.formName)}` +
+      serializeSearchParams(searchParams);
+    redirect(`/?callbackURL=${encodeURIComponent(callbackURL)}`);
   }
 
   if (!params.formName) {

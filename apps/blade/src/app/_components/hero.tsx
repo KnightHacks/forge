@@ -2,12 +2,20 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { DiscordLogoIcon } from "@radix-ui/react-icons";
 
 import { signIn } from "@forge/auth";
 import { Button } from "@forge/ui/button";
 
 export function Hero() {
+  const searchParams = useSearchParams();
+  const requestedCallbackURL = searchParams.get("callbackURL");
+  const callbackURL =
+    requestedCallbackURL?.startsWith("/forms/") === true
+      ? requestedCallbackURL
+      : "/dashboard";
+
   return (
     <div className="dark:bg-dark relative h-screen w-screen bg-background">
       <div className="absolute bottom-0 left-0 right-0 top-0 hidden bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] dark:block"></div>
@@ -34,7 +42,7 @@ export function Hero() {
                     className="w-full"
                     formAction={async () => {
                       await signIn("discord", {
-                        redirectTo: "/dashboard",
+                        redirectTo: callbackURL,
                       });
                     }}
                   >
