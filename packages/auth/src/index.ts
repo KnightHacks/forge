@@ -1,6 +1,7 @@
 import { createAuthClient } from "better-auth/react";
 
 import { env } from "./env";
+import { sanitizeCallbackURL } from "./callback-url";
 
 export const authClient = createAuthClient({
   baseURL: env.NEXT_PUBLIC_BLADE_URL,
@@ -33,7 +34,7 @@ export const signIn = async (
 ) => {
   await authClient.signIn.social({
     provider: provider,
-    callbackURL: redirectTo,
+    callbackURL: sanitizeCallbackURL(redirectTo),
   });
 };
 
