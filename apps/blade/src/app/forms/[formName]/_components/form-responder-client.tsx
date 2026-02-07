@@ -35,6 +35,13 @@ export function FormResponderWrapper({
   const formQuery = api.forms.getForm.useQuery({ slug_name: formName });
   const duesQuery = api.duesPayment.validatePaidDues.useQuery();
 
+  const formIdGate = formQuery.data?.id;
+
+  const existingResponseQuery = api.forms.getUserResponse.useQuery(
+    { form: formIdGate },
+    { enabled: !!formIdGate },
+  );
+
   const submitResponse = api.forms.createResponse.useMutation({
     onSuccess: (_data, variables) => {
       setSubmitError(null);
@@ -59,10 +66,6 @@ export function FormResponderWrapper({
   if (formQuery.error || !formQuery.data) return <FormNotFound />;
 
   const formId = formQuery.data.id;
-  const existingResponseQuery = api.forms.getUserResponse.useQuery(
-    { form: formId },
-    { enabled: !!formId },
-  );
 
   // loading
   if (existingResponseQuery.isLoading) {
