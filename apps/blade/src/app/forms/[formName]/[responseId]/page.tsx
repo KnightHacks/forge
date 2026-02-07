@@ -5,9 +5,9 @@ import { auth } from "@forge/auth/server";
 import { api, HydrateClient } from "~/trpc/server";
 import { FormReviewClient } from "../_components/form-view-edit-client";
 
-function serializeSearchParams(searchParams: {
-  [key: string]: string | string[] | undefined;
-}) {
+function serializeSearchParams(
+  searchParams: Record<string, string | string[] | undefined>,
+) {
   const params = new URLSearchParams();
 
   for (const [key, value] of Object.entries(searchParams)) {
@@ -30,7 +30,7 @@ export default async function FormResponderPage({
   searchParams,
 }: {
   params: { responseId: string; formName: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
   const session = await auth();
   if (!session) {

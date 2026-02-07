@@ -3,13 +3,13 @@ import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { toNextJsHandler } from "better-auth/next-js";
 
+import { sanitizeCallbackURL } from "./callback-url";
 import {
   auth as betterAuthInstance,
   invalidateSessionToken,
   isSecureContext,
   validateToken,
 } from "./config";
-import { sanitizeCallbackURL } from "./callback-url";
 import { env } from "./env";
 
 export { validateToken, invalidateSessionToken, isSecureContext };

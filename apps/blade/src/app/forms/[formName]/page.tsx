@@ -11,9 +11,9 @@ import { extractProcedures } from "~/lib/utils";
 import { api, HydrateClient } from "~/trpc/server";
 import { FormResponderClient } from "./_components/form-responder-client";
 
-function serializeSearchParams(searchParams: {
-  [key: string]: string | string[] | undefined;
-}) {
+function serializeSearchParams(
+  searchParams: Record<string, string | string[] | undefined>,
+) {
   const params = new URLSearchParams();
 
   for (const [key, value] of Object.entries(searchParams)) {
@@ -36,7 +36,7 @@ export default async function FormResponderPage({
   searchParams,
 }: {
   params: { formName: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
   const session = await auth();
   if (!session) {
