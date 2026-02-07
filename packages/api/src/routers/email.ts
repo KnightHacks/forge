@@ -10,20 +10,21 @@ export const emailRouter = {
       z.object({
         to: z.string().email(),
         subject: z.string().min(1),
-				template_id: z.number(),
+        template_id: z.number(),
         from: z.string().min(1),
-				data: z.object({})
+        data: z.record(z.string()),
       }),
     )
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EMAIL_PORTAL"], ctx);
+			console.log(input.data);
       try {
         const response = await sendEmail({
           to: input.to,
           subject: input.subject,
           from: input.from,
-					template_id: input.template_id,
-					data: input.data
+          template_id: input.template_id,
+          data: input.data,
         });
 
         return response;

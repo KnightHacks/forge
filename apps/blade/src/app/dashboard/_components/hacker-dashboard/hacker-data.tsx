@@ -5,6 +5,7 @@ import Image from "next/image";
 import { CircleCheckBig, Loader2 } from "lucide-react";
 
 import { USE_CAUTION } from "@forge/consts/knight-hacks";
+import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -23,7 +24,6 @@ import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
 import ConfirmWithTOS from "./confirm-button";
 import { HackerQRCodePopup } from "./hacker-qr-button";
-import { HACKATHON_TEMPLATE_IDS } from "@forge/email";
 
 type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
 
@@ -80,11 +80,11 @@ export function HackerData({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
       subject: `See you at ${currentHackathon?.displayName}!`,
-			template_id: HACKATHON_TEMPLATE_IDS.Confirmation,
-			data: {
-				name: hacker.firstName,
-				hackathon: currentHackathon?.displayName
-			}
+      template_id: HACKATHON_TEMPLATE_IDS.Confirmation,
+      data: {
+        name: hacker.firstName,
+        hackathon: currentHackathon?.displayName,
+      },
     });
   };
 

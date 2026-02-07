@@ -3,9 +3,9 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
- 		LISTMONK_URL: z.string(),
-		LISTMONK_USER: z.string(),
-		LISTMONK_TOKEN: z.string(), 
+    LISTMONK_URL: z.string(),
+    LISTMONK_USER: z.string(),
+    LISTMONK_TOKEN: z.string(),
   },
   experimental__runtimeEnv: {},
   skipValidation:

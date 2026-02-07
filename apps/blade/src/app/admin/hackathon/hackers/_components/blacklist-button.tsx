@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Gavel, Loader2 } from "lucide-react";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
+import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -15,7 +16,6 @@ import {
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import { HACKATHON_TEMPLATE_IDS } from "@forge/email";
 
 export default function BlacklistButton({
   hacker,
@@ -68,11 +68,11 @@ export default function BlacklistButton({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
       subject: `${hackathonName} Status Update`,
-			template_id: HACKATHON_TEMPLATE_IDS.Blacklist,
-			data: {
-				name: hacker.firstName,
-				hackathon: hackathonName
-			}
+      template_id: HACKATHON_TEMPLATE_IDS.Blacklist,
+      data: {
+        name: hacker.firstName,
+        hackathon: hackathonName,
+      },
     });
   };
 

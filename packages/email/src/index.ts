@@ -1,11 +1,11 @@
-export { client } from "./client";
+import { Listmonk } from "@maloma/listmonk";
 
-export const HACKATHON_TEMPLATE_IDS = {
-	"Blacklist": 6,
-	"Accepted": 7,
-	"Apply": 8,
-	"Capacity": 9,
-	"Confirmation": 10,
-	"Waitlist": 11
-};
+import { env } from "./env";
 
+export const client = new Listmonk({
+  url: env.LISTMONK_URL,
+  auth: {
+    username: env.LISTMONK_USER,
+    password: env.LISTMONK_TOKEN,
+  },
+});
