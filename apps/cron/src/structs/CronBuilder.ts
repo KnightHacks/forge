@@ -82,7 +82,7 @@ export class CronBuilder {
   public schedule(): void {
     for (const { expression, executor } of this.crons) {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      cron.schedule(expression, executor.bind(this));
+      cron.schedule(expression, this._executor.bind(this, executor));
       currentCron.run(this, () => console.log(`scheduled @ ${expression}`));
     }
   }
