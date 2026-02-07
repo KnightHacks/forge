@@ -10,8 +10,9 @@ export const emailRouter = {
       z.object({
         to: z.string().email(),
         subject: z.string().min(1),
-        body: z.string().min(1),
+				template_id: z.number(),
         from: z.string().min(1),
+				data: z.object({})
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -20,8 +21,9 @@ export const emailRouter = {
         const response = await sendEmail({
           to: input.to,
           subject: input.subject,
-          html: input.body,
           from: input.from,
+					template_id: input.template_id,
+					data: input.data
         });
 
         return response;

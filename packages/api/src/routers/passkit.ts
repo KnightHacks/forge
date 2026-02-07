@@ -63,7 +63,7 @@ export const passkitRouter = {
       }
       const passDir = path.join(
         projectRoot,
-        "packages/transactional/passes/member.pass",
+        "packages/api/passes/member.pass",
       );
 
       const pass = await PKPass.from(

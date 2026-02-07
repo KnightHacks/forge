@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { render } from "@react-email/render";
 import { Check, Loader2 } from "lucide-react";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
-import AcceptanceEmail from "@forge/transactional/emails/knighthacks-viii/acceptance-email";
 import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
+import { HACKATHON_TEMPLATE_IDS } from "@forge/email";
 
 export default function AcceptButton({
   hacker,
@@ -45,7 +44,7 @@ export default function AcceptButton({
     },
   });
 
-  const handleUpdateStatus = async () => {
+  const handleUpdateStatus = () => {
     setIsLoading(true);
 
     updateStatus.mutate({
@@ -54,13 +53,15 @@ export default function AcceptButton({
       hackathonName,
     });
 
-    const html = await render(<AcceptanceEmail name={hacker.firstName} />);
-
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
       subject: `[ACTION REQUIRED] ${hackathonName} Acceptance Information!`,
-      body: html,
+			template_id: HACKATHON_TEMPLATE_IDS.Accepted,
+			data: {
+				name: hacker.firstName,
+				hackathon: hackathonName
+			}
     });
   };
 

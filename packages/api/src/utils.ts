@@ -6,7 +6,6 @@ import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { and, eq, gt, inArray } from "drizzle-orm";
 import { google } from "googleapis";
-import { Resend } from "resend";
 import Stripe from "stripe";
 
 import type { Session } from "@forge/auth/server";
@@ -36,6 +35,7 @@ import { JudgeSession, Roles } from "@forge/db/schemas/auth";
 
 import { env } from "./env";
 import { minioClient } from "./minio/minio-client";
+import { client } from "@forge/email";
 
 const DISCORD_ADMIN_ROLE_ID = IS_PROD
   ? (PROD_DISCORD_ADMIN_ROLE_ID as string)
@@ -75,9 +75,6 @@ export async function resolveDiscordUserId(
 }
 
 export const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
-
-// Initialize Resend
-export const resend = new Resend(env.RESEND_API_KEY);
 
 export const isDiscordAdmin = async (user: Session["user"]) => {
   try {
@@ -198,57 +195,30 @@ export async function isDiscordVIP(discordUserId: string) {
   return guildMember.roles.includes(VIP_ID);
 }
 
-// Email sending utility function using Resend
 export const sendEmail = async ({
   to,
   subject,
-  html,
+  template_id,
   from,
-  cc,
-  bcc,
+	data
 }: {
   to: string | string[];
   subject: string;
-  html: string;
+  template_id: number;
+	data: Record<string, string>,
   from?: string;
-  cc?: string | string[];
-  bcc?: string | string[];
-}): Promise<{ success: true; messageId: string }> => {
+}): Promise<{ success: true; }> => {
   try {
-    const emailPayload: {
-      from: string;
-      to: string | string[];
-      subject: string;
-      html: string;
-      cc?: string | string[];
-      bcc?: string | string[];
-    } = {
-      from: from ?? env.RESEND_FROM_EMAIL,
-      to,
-      subject,
-      html,
-    };
+    await client.tx.send({
+			template_id: template_id,
+			from_email: from ?? env.LISTMONK_FROM_EMAIL,
+			subscriber_mode: "external",
+			subscriber_emails: (typeof(to) === "string") ? [to] : to,
+			subject: subject,
+			data: data
+		});
 
-    if (cc) {
-      emailPayload.cc = cc;
-    }
-
-    if (bcc) {
-      emailPayload.bcc = bcc;
-    }
-
-    const { data, error } = await resend.emails.send(emailPayload);
-
-    if (error) {
-      console.error("Resend error:", error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-
-    if (!data) {
-      throw new Error("Failed to send email: No data returned from Resend");
-    }
-
-    return { success: true, messageId: data.id };
+    return { success: true };
   } catch (error) {
     console.error("Error sending email:", error);
     throw new Error(
