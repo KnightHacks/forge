@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 
-import type { EVENT_TAGS } from "@forge/consts/knight-hacks";
-import { USE_CAUTION } from "@forge/consts/knight-hacks";
+import type { EVENTS } from "@forge/consts";
+import { USE_CAUTION } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -26,7 +26,7 @@ interface DeleteEventButtonProps {
     discordId: string;
     googleId: string;
     name: string;
-    tag: (typeof EVENT_TAGS)[number];
+    tag: (typeof EVENTS.EVENT_TAGS)[number];
   };
 }
 

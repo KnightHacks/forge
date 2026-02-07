@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Trash2 } from "lucide-react";
 
-import { USE_CAUTION } from "@forge/consts/knight-hacks";
+import { USE_CAUTION } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,

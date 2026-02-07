@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Mail } from "lucide-react";
 
-import { SPONSOR_VIDEO_LINK } from "@forge/consts/knight-hacks";
+import { SPONSOR_VIDEO_LINK } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 
 export const metadata: Metadata = {
@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   description: "Help us make dreams!",
 };
 
+// TODO: move to consts
 const SPONSOR_VIDEO_LINK_2 =
   "https://www.youtube.com/embed/OzW_4QeCfM0?si=G8SUf8UbEo2W5MnL";
 

@@ -7,17 +7,7 @@ import { render } from "@react-email/render";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
-import {
-  ALLERGIES,
-  COUNTRIES,
-  GENDERS,
-  KNIGHTHACKS_MAX_RESUME_SIZE,
-  LEVELS_OF_STUDY,
-  MAJORS,
-  RACES_OR_ETHNICITIES,
-  SCHOOLS,
-  SHIRT_SIZES,
-} from "@forge/consts/knight-hacks";
+import { FORMS, KNIGHTHACKS_MAX_RESUME_SIZE } from "@forge/consts";
 import { InsertHackerSchema } from "@forge/db/schemas/knight-hacks";
 import ApplyEmail from "@forge/transactional/emails/knighthacks-viii/apply-email";
 import { Badge } from "@forge/ui/badge";
@@ -356,7 +346,7 @@ export function HackerFormPage({
               email: values.email,
               dob: values.dob,
               phoneNumber: values.phoneNumber,
-              country: values.country as (typeof COUNTRIES)[number],
+              country: values.country as (typeof FORMS.COUNTRIES)[number],
               school: values.school,
               major: values.major,
               levelOfStudy: values.levelOfStudy,
@@ -509,7 +499,7 @@ export function HackerFormPage({
               <FormControl>
                 <ResponsiveComboBox
                   key={`country-${comboBoxKey}-${field.value || "empty"}`}
-                  items={COUNTRIES}
+                  items={FORMS.COUNTRIES}
                   renderItem={(country) => <div>{country}</div>}
                   getItemValue={(country) => country}
                   getItemLabel={(country) => country}
@@ -542,7 +532,7 @@ export function HackerFormPage({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {GENDERS.map((gender) => (
+                    {FORMS.GENDERS.map((gender) => (
                       <SelectItem key={gender} value={gender}>
                         {gender}
                       </SelectItem>
@@ -574,7 +564,7 @@ export function HackerFormPage({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {RACES_OR_ETHNICITIES.map((race) => (
+                    {FORMS.RACES_OR_ETHNICITIES.map((race) => (
                       <SelectItem key={race} value={race}>
                         {race}
                       </SelectItem>
@@ -602,7 +592,7 @@ export function HackerFormPage({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {LEVELS_OF_STUDY.map((level) => (
+                    {FORMS.LEVELS_OF_STUDY.map((level) => (
                       <SelectItem key={level} value={level}>
                         {level}
                       </SelectItem>
@@ -625,7 +615,7 @@ export function HackerFormPage({
               <FormControl>
                 <ResponsiveComboBox
                   key={`school-${comboBoxKey}-${field.value}`}
-                  items={SCHOOLS}
+                  items={FORMS.SCHOOLS}
                   renderItem={(school) => <div>{school}</div>}
                   getItemValue={(school) => school}
                   getItemLabel={(school) => school}
@@ -649,7 +639,7 @@ export function HackerFormPage({
               <FormControl>
                 <ResponsiveComboBox
                   key={`major-${comboBoxKey}-${field.value}`}
-                  items={MAJORS}
+                  items={FORMS.MAJORS}
                   renderItem={(major) => <div>{major}</div>}
                   getItemValue={(major) => major}
                   getItemLabel={(major) => major}
@@ -693,7 +683,7 @@ export function HackerFormPage({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {SHIRT_SIZES.map((size) => (
+                    {FORMS.SHIRT_SIZES.map((size) => (
                       <SelectItem key={size} value={size}>
                         {size}
                       </SelectItem>
@@ -883,7 +873,7 @@ export function HackerFormPage({
                       className="w-full min-w-[var(--radix-popover-trigger-width)] max-w-none p-1"
                     >
                       <div className="flex w-full flex-col">
-                        {ALLERGIES.map((allergy) => (
+                        {FORMS.ALLERGIES.map((allergy) => (
                           <div
                             key={allergy}
                             onClick={() => {

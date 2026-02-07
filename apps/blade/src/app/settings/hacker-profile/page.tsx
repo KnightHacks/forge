@@ -3,11 +3,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
-import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 import { Separator } from "@forge/ui/separator";
 
 import { api, HydrateClient } from "~/trpc/server";
 import { HackerProfileForm } from "./hacker-profile-form";
+import { DISCORD } from '@forge/consts';
 
 export default async function SettingsProfilePage() {
   const session = await auth();
@@ -41,7 +41,7 @@ export default async function SettingsProfilePage() {
         <p className="mb-1 text-sm text-gray-400">
           Please reach out to an organizer in the{" "}
           <Link
-            href={PERMANENT_DISCORD_INVITE}
+            href={DISCORD.PERMANENT_INVITE}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary underline"

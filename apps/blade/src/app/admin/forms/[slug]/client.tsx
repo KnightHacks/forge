@@ -24,11 +24,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { ArrowLeft, Loader2, Plus, Save, Users } from "lucide-react";
 
-import type {
-  FormType,
-  InstructionValidator,
-  QuestionValidator,
-} from "@forge/consts/knight-hacks";
+import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -55,8 +51,8 @@ import { api } from "~/trpc/react";
 import { ConnectionViewer } from "./con-viewer";
 import ListMatcher from "./linker";
 
-type FormQuestion = z.infer<typeof QuestionValidator>;
-type FormInstruction = z.infer<typeof InstructionValidator>;
+type FormQuestion = z.infer<typeof FORMS.QuestionValidator>;
+type FormInstruction = z.infer<typeof FORMS.InstructionValidator>;
 type UIQuestion = FormQuestion & { id: string };
 type UIInstruction = FormInstruction & { id: string };
 
@@ -150,7 +146,7 @@ function ConnectionsTab(props: {
   procs: Record<string, ProcedureMeta>;
   slug: string;
   id: string;
-  formData: FormType;
+  formData: FORMS.FormType;
 }) {
   const questions = props.formData.questions.map((q) => q.question);
   const { data: connections } = api.forms.getConnections.useQuery({

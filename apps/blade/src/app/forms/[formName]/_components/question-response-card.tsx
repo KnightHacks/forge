@@ -6,8 +6,6 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { FileUp, Loader2, X } from "lucide-react";
 
-import type { QuestionValidator } from "@forge/consts/knight-hacks";
-import { getDropdownOptionsFromConst } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -29,8 +27,9 @@ import { TimePicker } from "@forge/ui/time-picker";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
+import { FORMS } from '@forge/consts';
 
-type FormQuestion = z.infer<typeof QuestionValidator>;
+type FormQuestion = z.infer<typeof FORMS.QuestionValidator>;
 
 interface QuestionResponseCardProps {
   question: FormQuestion;
@@ -353,7 +352,7 @@ function MultipleChoiceInput({
 }) {
   // If optionsConst is set, load options from constants instead of question.options
   const options = question.optionsConst
-    ? getDropdownOptionsFromConst(question.optionsConst)
+    ? FORMS.getDropdownOptionsFromConst(question.optionsConst)
     : question.options || [];
   const questionKey = question.question.replace(/\s+/g, "-").toLowerCase();
   const [otherText, setOtherText] = useState<string>("");
@@ -465,7 +464,7 @@ function CheckboxesInput({
 }) {
   // If optionsConst is set, load options from constants instead of question.options
   const options = question.optionsConst
-    ? getDropdownOptionsFromConst(question.optionsConst)
+    ? FORMS.getDropdownOptionsFromConst(question.optionsConst)
     : question.options || [];
   const selectedValues = value || [];
   const questionKey = question.question.replace(/\s+/g, "-").toLowerCase();
@@ -618,7 +617,7 @@ function DropdownInput({
 }) {
   // If optionsConst is set, load options from constants instead of question.options
   const options = question.optionsConst
-    ? getDropdownOptionsFromConst(question.optionsConst)
+    ? FORMS.getDropdownOptionsFromConst(question.optionsConst)
     : question.options || [];
 
   // Use ResponsiveComboBox for dropdowns with more than 15 options

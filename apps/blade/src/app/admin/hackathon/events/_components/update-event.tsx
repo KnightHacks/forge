@@ -5,7 +5,7 @@ import { Loader2, Pencil } from "lucide-react";
 import { z } from "zod";
 
 import type { InsertEvent } from "@forge/db/schemas/knight-hacks";
-import { EVENT_POINTS, EVENT_TAGS } from "@forge/consts/knight-hacks";
+import { EVENTS } from "@forge/consts";
 import { InsertEventSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -157,14 +157,14 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       endHour: endHour,
       endMinute: endMinute,
       endAmPm: endAmPm as "AM" | "PM",
-      points: EVENT_POINTS[event.tag],
+      points: EVENTS.EVENT_POINTS[event.tag],
     },
   });
 
   // Auto-update points when tag changes
   useEffect(() => {
     const currentTag = form.getValues("tag");
-    const points = EVENT_POINTS[currentTag] || 0;
+    const points = EVENTS.EVENT_POINTS[currentTag] || 0;
     form.setValue("points", points);
   }, [form.watch("tag")]);
 
@@ -305,7 +305,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {EVENT_TAGS.map((tagOption) => (
+                            {EVENTS.EVENT_TAGS.map((tagOption) => (
                               <SelectItem key={tagOption} value={tagOption}>
                                 {tagOption}
                               </SelectItem>

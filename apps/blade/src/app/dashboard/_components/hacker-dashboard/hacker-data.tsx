@@ -5,7 +5,7 @@ import Image from "next/image";
 import { render } from "@react-email/render";
 import { CircleCheckBig, Loader2 } from "lucide-react";
 
-import { USE_CAUTION } from "@forge/consts/knight-hacks";
+import { USE_CAUTION } from "@forge/consts";
 import ConfirmationEmail from "@forge/transactional/emails/knighthacks-viii/confirmation-email";
 import { Button } from "@forge/ui/button";
 import {

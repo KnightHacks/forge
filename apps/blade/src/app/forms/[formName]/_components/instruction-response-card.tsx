@@ -3,10 +3,10 @@
 import type { z } from "zod";
 import Image from "next/image";
 
-import type { InstructionValidator } from "@forge/consts/knight-hacks";
+import type { FORMS } from "@forge/consts";
 import { Card } from "@forge/ui/card";
 
-type FormInstruction = z.infer<typeof InstructionValidator>;
+type FormInstruction = z.infer<typeof FORMS.InstructionValidator>;
 
 interface InstructionResponseCardProps {
   instruction: FormInstruction;

@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 
-import type { InstructionValidator } from "@forge/consts/knight-hacks";
+import type { FORMS } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
@@ -26,7 +26,7 @@ import { useMediaQuery } from "@forge/ui/use-media-query";
 
 import { api } from "~/trpc/react";
 
-type FormInstruction = z.infer<typeof InstructionValidator>;
+type FormInstruction = z.infer<typeof FORMS.InstructionValidator>;
 
 interface InstructionEditCardProps {
   instruction: FormInstruction & { id: string };
