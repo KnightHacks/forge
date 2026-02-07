@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@forge/auth/server";
 
 import { api, HydrateClient } from "~/trpc/server";
-import { FormReviewClient } from "../_components/form-view-edit-client";
+import FormNotFound from "../_components/form-not-found";
+import ResponseNotFound from "../_components/response-not-found";
 
 function serializeSearchParams(
   searchParams: Record<string, string | string[] | undefined>,
@@ -40,8 +41,12 @@ export default async function FormResponderPage({
     redirect(`/?callbackURL=${encodeURIComponent(callbackURL)}`);
   }
 
+  if (!params.formName) {
+    return <FormNotFound />;
+  }
+
   if (!params.responseId) {
-    return <div>Submission not found</div>;
+    return <ResponseNotFound />;
   }
 
   // handle url encode form names to allow spacing and special characters
