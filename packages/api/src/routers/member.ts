@@ -5,10 +5,10 @@ import { z } from "zod";
 
 import {
   BUCKET_NAME,
-  COMPANIES,
   DUES_PAYMENT,
+  FORMS,
   KNIGHTHACKS_S3_BUCKET_REGION,
-} from "@forge/consts/knight-hacks";
+} from "@forge/consts";
 import {
   and,
   count,
@@ -90,7 +90,10 @@ export const memberRouter = {
 
       //If the company the user entered doesn't already exist, add it to the other companies db
       const company = input.company;
-      if (company && !(COMPANIES as readonly string[]).includes(company)) {
+      if (
+        company &&
+        !(FORMS.COMPANIES as readonly string[]).includes(company)
+      ) {
         try {
           await db.insert(OtherCompanies).values({
             name: company,
@@ -181,7 +184,10 @@ export const memberRouter = {
       }
 
       const company = input.company;
-      if (company && !(COMPANIES as readonly string[]).includes(company)) {
+      if (
+        company &&
+        !(FORMS.COMPANIES as readonly string[]).includes(company)
+      ) {
         try {
           await db.insert(OtherCompanies).values({
             name: company,

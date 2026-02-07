@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import { DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE } from "@forge/consts/knight-hacks";
+import { FORMS } from "@forge/consts";
 import { db } from "@forge/db/client";
 import {
   EmailConfig,
@@ -324,7 +324,7 @@ export const emailQueueRouter = {
         // Return default config
         return {
           dailyLimit: 100,
-          cronSchedule: DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
+          cronSchedule: FORMS.DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
           enabled: true,
         };
       }
@@ -333,7 +333,7 @@ export const emailQueueRouter = {
       if (!config) {
         return {
           dailyLimit: 100,
-          cronSchedule: DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
+          cronSchedule: FORMS.DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
           enabled: true,
         };
       }
@@ -351,7 +351,7 @@ export const emailQueueRouter = {
       );
       return {
         dailyLimit: 100,
-        cronSchedule: DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
+        cronSchedule: FORMS.DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE,
         enabled: true,
       };
     }

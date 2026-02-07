@@ -1,10 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import QRCode from "qrcode";
 
-import {
-  BUCKET_NAME,
-  KNIGHTHACKS_S3_BUCKET_REGION,
-} from "@forge/consts/knight-hacks";
+import { BUCKET_NAME, KNIGHTHACKS_S3_BUCKET_REGION } from "@forge/consts";
 
 import { minioClient } from "../minio/minio-client";
 import { protectedProcedure } from "../trpc";

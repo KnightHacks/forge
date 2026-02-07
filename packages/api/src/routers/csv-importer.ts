@@ -1,7 +1,7 @@
 import { parse } from "csv-parse/sync";
 import z from "zod";
 
-import { DEVPOST_TEAM_MEMBER_EMAIL_OFFSET } from "@forge/consts/knight-hacks";
+import { FORMS } from "@forge/consts";
 import { eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Challenges, Submissions, Teams } from "@forge/db/schemas/knight-hacks";
@@ -90,11 +90,11 @@ export const csvImporterRouter = {
           const email2 = record["Team Member 1 Email"];
           const email3 =
             recordValues[
-              teamMember1EmailIndex + DEVPOST_TEAM_MEMBER_EMAIL_OFFSET
+              teamMember1EmailIndex + FORMS.DEVPOST_TEAM_MEMBER_EMAIL_OFFSET
             ];
           const email4 =
             recordValues[
-              teamMember1EmailIndex + DEVPOST_TEAM_MEMBER_EMAIL_OFFSET * 2
+              teamMember1EmailIndex + FORMS.DEVPOST_TEAM_MEMBER_EMAIL_OFFSET * 2
             ];
 
           // Combine emails into comma-separated string, filtering out empty values

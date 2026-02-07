@@ -4,13 +4,12 @@ import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
-import type { FormType } from "@forge/consts/knight-hacks";
 import {
   FORM_ASSETS_BUCKET,
-  FormSchemaValidator,
+  FORMS,
   KNIGHTHACKS_S3_BUCKET_REGION,
   PRESIGNED_URL_EXPIRY,
-} from "@forge/consts/knight-hacks";
+} from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";
 import {
@@ -46,7 +45,7 @@ export const formsRouter = {
         formData: true,
         formValidatorJson: true,
       })
-        .extend({ formData: FormSchemaValidator })
+        .extend({ formData: FORMS.FormSchemaValidator })
         .extend({ section: z.string().optional() }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -104,7 +103,7 @@ export const formsRouter = {
         formData: true,
         formValidatorJson: true,
       })
-        .extend({ formData: FormSchemaValidator })
+        .extend({ formData: FORMS.FormSchemaValidator })
         .extend({ responseRoleIds: z.array(z.string().uuid()).optional() }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -187,7 +186,7 @@ export const formsRouter = {
       }
 
       const { formValidatorJson: _JSONValidator, ...retForm } = form;
-      const formData = form.formData as FormType;
+      const formData = form.formData as FORMS.FormType;
 
       const responseRoles = await db
         .select({ roleId: FormResponseRoles.roleId })
@@ -426,7 +425,7 @@ export const formsRouter = {
         }
       }
 
-      const formData = form.formData as FormType;
+      const formData = form.formData as FORMS.FormType;
       const jsonSchema = generateJsonSchema(formData);
 
       if (!jsonSchema.success) {
