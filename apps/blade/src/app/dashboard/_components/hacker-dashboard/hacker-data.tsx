@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { render } from "@react-email/render";
 import { CircleCheckBig, Loader2 } from "lucide-react";
 
 import { USE_CAUTION } from "@forge/consts/knight-hacks";
-import ConfirmationEmail from "@forge/transactional/emails/knighthacks-viii/confirmation-email";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -25,6 +23,7 @@ import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
 import ConfirmWithTOS from "./confirm-button";
 import { HackerQRCodePopup } from "./hacker-qr-button";
+import { HACKATHON_TEMPLATE_IDS } from "@forge/email";
 
 type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
 
@@ -69,7 +68,7 @@ export function HackerData({
 
   const utils = api.useUtils();
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     setLoading(true);
     confirmHacker.mutate({
       id: hacker?.id ?? "",
@@ -77,13 +76,15 @@ export function HackerData({
 
     if (!hacker) return;
 
-    const html = await render(<ConfirmationEmail name={hacker.firstName} />);
-
     sendEmail.mutate({
       from: "donotreply@knighthacks.org",
       to: hacker.email,
       subject: `See you at ${currentHackathon?.displayName}!`,
-      body: html,
+			template_id: HACKATHON_TEMPLATE_IDS.Confirmation,
+			data: {
+				name: hacker.firstName,
+				hackathon: currentHackathon?.displayName
+			}
     });
   };
 

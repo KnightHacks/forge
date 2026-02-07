@@ -24,7 +24,6 @@
     "@forge/auth": "workspace:*",
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
-    "@forge/transactional": "workspace:^",
     "@forge/ui": "workspace:*",
     "@forge/validators": "workspace:*",
     "@react-email/render": "1.1.0",

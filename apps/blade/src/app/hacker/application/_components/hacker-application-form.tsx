@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { render } from "@react-email/render";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
@@ -19,7 +18,6 @@ import {
   SHIRT_SIZES,
 } from "@forge/consts/knight-hacks";
 import { InsertHackerSchema } from "@forge/db/schemas/knight-hacks";
-import ApplyEmail from "@forge/transactional/emails/knighthacks-viii/apply-email";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -46,6 +44,7 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
+import { HACKATHON_TEMPLATE_IDS } from "@forge/email";
 
 export function HackerFormPage({
   hackathonId,
@@ -378,13 +377,15 @@ export function HackerFormPage({
               hackathonName: hackathonId,
             });
 
-            const html = await render(<ApplyEmail name={values.firstName} />);
-
             sendEmail.mutate({
               from: "donotreply@knighthacks.org",
               to: values.email,
               subject: "Knight Hacks VIII - We recieved your application!",
-              body: html,
+							template_id: HACKATHON_TEMPLATE_IDS.Apply,
+							data: {
+								name: values.firstName,
+								hackathon: hackathonName
+							}
             });
           } catch (error) {
             // eslint-disable-next-line no-console

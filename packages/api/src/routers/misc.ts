@@ -4,13 +4,72 @@ import { z } from "zod";
 
 import {
   ALLOWED_FORM_ASSIGNABLE_DISC_ROLES,
-  generateFundingRequestEmailHtml,
   RECRUITING_CHANNEL,
   TEAM_MAP,
 } from "@forge/consts/knight-hacks";
 
 import { protectedProcedure } from "../trpc";
 import { discord, KNIGHTHACKS_GUILD_ID, sendEmail } from "../utils";
+
+export interface FundingRequestInput {
+  team: string;
+  amount: number;
+  dateNeeded: Date | string;
+  importance: number;
+  deadlineType?: string;
+  description?: string;
+  itemization?: string;
+}
+
+export function generateListmonkData(input: FundingRequestInput): Record<string, string> {
+  // Format text for HTML display (convert newlines to <br> tags)
+  const formatText = (text: string | null | undefined): string => {
+    if (!text) return "N/A";
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
+      .replace(/\n/g, "<br>");
+  };
+
+  // Format date as MM/DD
+  const formatDate = (date: Date | string): string => {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    return `${month}/${day}`;
+  };
+
+  // Format amount with thousand separators
+  const formatAmount = (amount: number): string => {
+    return amount.toLocaleString();
+  };
+
+  // Format submission timestamp
+  const formatSubmittedAt = (): string => {
+    return new Date().toLocaleString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  return {
+    team: input.team,
+    amount: formatAmount(input.amount),
+    dateNeeded: formatDate(input.dateNeeded),
+    importance: input.importance.toString(),
+    deadlineType: input.deadlineType ?? "N/A",
+    description: formatText(input.description),
+    itemization: formatText(input.itemization),
+    submittedAt: formatSubmittedAt(),
+  };
+}
 
 // Miscellaneous routes (primarily for form integrations)
 export const miscRouter = {
@@ -158,14 +217,14 @@ export const miscRouter = {
           ? new Date(input.dateNeeded)
           : input.dateNeeded;
       const formattedDate = `${String(dateObj.getMonth() + 1).padStart(2, "0")}/${String(dateObj.getDate()).padStart(2, "0")}`;
-      const htmlContent = generateFundingRequestEmailHtml(input);
+			const data = generateListmonkData(input);
 
       await sendEmail({
-        to: "treasurer@knighthacks.org",
-        cc: "exec@knighthacks.org",
+        to: ["treasurer@knighthacks.org", "exec@knighthacks.org"],
         subject: `KHFR - $${input.amount.toLocaleString()} | ${formattedDate} | ${input.team}`,
-        html: htmlContent,
+				template_id: 12,
         from: "Funding Requests <funding-requests@knighthacks.org>",
+				data: data
       });
     }),
 } satisfies TRPCRouterRecord;
