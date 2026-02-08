@@ -466,3 +466,5 @@ When developing locally:
 - Check `@forge/consts/knight-hacks` for available permissions
 - Read the [Architecture Guide](./ARCHITECTURE.md) to understand data flow
 - See [CONTRIBUTING.md](../CONTRIBUTING.md) for general contribution guidelines
+- Read our [Github Etiquette](./GITHUB-ETIQUETTE.md) guide for how to contribute to the project
+- Check out the [Getting Started](./GETTING-STARTED.md) guide for setup instructions if you haven't already

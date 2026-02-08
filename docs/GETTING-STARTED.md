@@ -242,3 +242,5 @@ pnpm --version  # Should be >= 9.6.0
 Now that you're set up, explore the codebase:
 
 - Check out the [Architecture Overview](./ARCHITECTURE.md) to understand how everything fits together
+- Look at the [API & Permissions](./API-AND-PERMISSIONS.md) guide for backend development guidelines
+- Read our [Github Etiquette](./GITHUB-ETIQUETTE.md) guide for how to contribute to the project
