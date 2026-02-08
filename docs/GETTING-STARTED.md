@@ -73,7 +73,9 @@ Start the local Postgres database with Docker:
 docker compose up
 ```
 
-Push the database schema:
+> IMPORTANT!
+
+You must push the database schema to your local database before running the project. This is a common source of errors for new contributors.
 
 ```bash
 pnpm db:push
@@ -86,6 +88,52 @@ pnpm db:studio
 ```
 
 This opens a GUI at [local.drizzle.studio](http://local.drizzle.studio).
+
+### 5. (Optional) Bootstrap Superadmin Access
+
+If you need to work on admin-level pages or test permission-based features, you'll need superadmin access. This requires a one-time bootstrap step.
+
+**Why is this needed?**
+
+Forge uses a role-based permission system. To access admin features, you need a role with permissions. But to create roles, you need admin access. This creates a chicken-and-egg problem for fresh databases. The bootstrap script solves this by directly inserting a superadmin role into the database.
+
+**How to bootstrap:**
+
+1. Start the database and run Blade at least once
+2. Log in to Blade using Discord OAuth (this creates your user record)
+3. Get your Discord user ID (right-click your profile in Discord with Developer Mode enabled)
+4. Choose any Discord role ID to link to the superadmin role (this is just metadata stored in the database)
+5. Run the bootstrap script:
+
+```bash
+pnpm db:bootstrap <discord-role-id> <discord-user-id>
+```
+
+Example:
+
+```bash
+pnpm db:bootstrap 1321955700540309645 238081392481665025
+```
+
+After running this, you'll have full superadmin permissions and can manage other roles through the Blade UI.
+
+### 6. (Optional) Populate Test Data from Production
+
+**Dev Team Members Only:** If you have access to the shared MinIO instance, you can pull a sanitized copy of production data to test with realistic data locally.
+
+```bash
+pnpm db:pull
+```
+
+This downloads and inserts production data into your local database without removing existing data (like your superadmin role).
+
+If you want to completely replace your local database with the production snapshot:
+
+```bash
+pnpm db:pull --truncate
+```
+
+**Note:** You can run the superadmin bootstrap script after pulling production data if needed.
 
 ## Running the Project
 
