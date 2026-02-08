@@ -70,5 +70,6 @@ Try to keep CI green! To do this, please ensure the following:
 - Your code is formatted correctly (run `pnpm format`)
 - Your code passes linting (run `pnpm lint`)
 - Your code is type-checked (run `pnpm typecheck`)
+- Your code is able to build (run `pnpm build`)
 
 Most importantly, make sure your code is well-documented and easy to understand!

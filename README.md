@@ -13,10 +13,13 @@
 
 Welcome to Knight Hacks' monorepo, Forge! It contains the source code for all applications created by our development team!
 
+New to the project? Start with our [Getting Started Guide](/docs/GETTING-STARTED.md).
+
 ## 🗺 Layout
 
 - [`.github`](/.github) Contains all of our GitHub-related files
 - [`apps`](/apps) Applications we've built and maintain
+- [`docs`](/docs) Documentation for contributors and developers
 - [`packages`](/packages) Packages we share across our applications
 - [`tooling`](/tooling) Configuration files for tools we use when building our applications
 - [`turbo/generators`](/turbo/generators) A CLI tool to generate boilerplate for a new package under [`packages`](/packages)
