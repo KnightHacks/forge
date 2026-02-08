@@ -282,4 +282,4 @@ Now that you understand the architecture:
 - Read the [Contribution Guide](../CONTRIBUTING.md) for contribution guidelines
 - Setup your environment by following the [Getting Started Guide](./GETTING-STARTED.md)
 - Check out the [API & Permissions](./API-AND-PERMISSIONS.md) guide for forge specific backend development guidelines
-- Read our [Github Etiquette](./GITHUB-ETIQUETTE.md) guide for how to contribute to the project
+- Read our [GitHub Etiquette](./GITHUB-ETIQUETTE.md) guide for how to contribute to the project

@@ -13,7 +13,7 @@
     "clean:workspaces": "turbo run clean",
     "db:push": "turbo -F @forge/db push",
     "db:studio": "turbo -F @forge/db studio",
-    "db:pull": "pnpm --filter=@forge/db with-env tsx scripts/get_prod_db.ts [--truncate]",
+    "db:pull": "pnpm --filter=@forge/db with-env tsx scripts/get_prod_db.ts",
     "db:bootstrap": "pnpm --filter=@forge/db with-env tsx scripts/bootstrap-superadmin.ts",
     "dev": "turbo watch dev --continue",
     "dev:blade": "turbo watch dev -F @forge/blade...",
