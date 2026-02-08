@@ -150,7 +150,7 @@ export function FormResponderWrapper({
   return (
     <FormRunner
       isReview={false}
-      form={form as FormType}
+      form={form}
       formId={formId}
       userName={userName}
       zodValidator={zodValidator}

@@ -248,15 +248,14 @@ export function EditorClient({
         banner: formBanner || undefined,
         questions: questions.map(({ id: _, ...rest }) => rest),
         instructions: instructions.map(
-          ({ id: _, imageUrl: _imageUrl, videoUrl: _videoUrl, ...rest }) =>
-            rest,
+          ({ id: _, imageUrl: _imageUrl, videoUrl: _videoUrl, ...rest }) => rest
         ),
       },
       duesOnly,
       allowResubmission,
       allowEdit,
       responseRoleIds,
-    } as any);
+    } as unknown as FORMS.FormType);
   }, [
     isLoading,
     isFetching,

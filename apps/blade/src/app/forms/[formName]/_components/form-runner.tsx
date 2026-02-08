@@ -2,10 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-import type {
-  FormType,
-  InstructionValidatorType,
-} from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 
@@ -13,6 +9,7 @@ import type { FormResponsePayload, FormResponseUI } from "./utils";
 import { InstructionResponseCard } from "~/app/forms/[formName]/_components/instruction-response-card";
 import { QuestionResponseCard } from "~/app/forms/[formName]/_components/question-response-card";
 import { getValidationError, isFormValid, normalizeResponses } from "./utils";
+import type { FORMS } from '@forge/consts';
 
 /**
  * Shared renderer for "fill out form" and "review/edit response".
@@ -32,7 +29,7 @@ export function FormRunner({
   onSubmit,
 }: {
   isReview?: boolean;
-  form: FormType;
+  form: FORMS.FormType;
 
   formId: string;
 
@@ -111,7 +108,7 @@ export function FormRunner({
 
   const instructionsWithType: InstructionWithOrder[] = (
     form.instructions || []
-  ).map((inst: InstructionValidatorType) => ({
+  ).map((inst: FORMS.InstructionValidatorType) => ({
     ...inst,
     itemType: "instruction" as const,
   }));

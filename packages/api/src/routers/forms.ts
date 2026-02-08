@@ -1,3 +1,4 @@
+import type { TRPCRouterRecord } from "@trpc/server";
 import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
@@ -536,7 +537,7 @@ export const formsRouter = {
       }
 
       // Validate responseData against form schema
-      const formData = form.formData as FormType;
+      const formData = form.formData as FORMS.FormType;
       const jsonSchema = generateJsonSchema(formData);
 
       if (!jsonSchema.success) {
@@ -1357,4 +1358,4 @@ export const formsRouter = {
 
       return { canEdit: hasSectionRole };
     }),
-};
+} satisfies TRPCRouterRecord;

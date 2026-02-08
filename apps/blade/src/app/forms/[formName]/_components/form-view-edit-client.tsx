@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 
-import type { FormType } from "@forge/consts/knight-hacks";
+import type { FORMS } from "@forge/consts";
 
 import type { FormResponsePayload, FormResponseUI } from "./utils";
 import { api } from "~/trpc/react";
@@ -50,7 +50,7 @@ export function FormReviewWrapper({
   });
 
   const form = formQuery.data;
-  const formData = form?.formData;
+  const formData = form?.formData as FORMS.FormType;
 
   const stored = (responseQuery.data?.[0]?.responseData ??
     {}) as FormResponsePayload;
@@ -58,7 +58,7 @@ export function FormReviewWrapper({
   const initialResponses = useMemo(() => {
     if (!formData) return {};
     return payloadToUI(stored, formData);
-  }, [stored, form]);
+  }, [formData, stored]);
 
   if (formQuery.isLoading || responseQuery.isLoading) {
     return (
@@ -98,7 +98,7 @@ export function FormReviewWrapper({
   return (
     <FormRunner
       isReview={true}
-      form={formData as FormType}
+      form={formData}
       formId={form.id}
       userName={userName}
       zodValidator={zodValidator}
@@ -114,7 +114,7 @@ export function FormReviewWrapper({
 // Form response payload -> UI conversion
 function payloadToUI(
   payload: FormResponsePayload,
-  form: FormType,
+  form: FORMS.FormType,
 ): FormResponseUI {
   const out: FormResponseUI = {};
 

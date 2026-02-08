@@ -187,7 +187,7 @@ export const FormSchemaValidator = z.object({
 export type FormType = z.infer<typeof FormSchemaValidator>;
 export type InstructionValidatorType = z.infer<typeof InstructionValidator>;
 
-type QuestionValidatorType = z.infer<typeof QuestionValidator>;
+export type QuestionValidatorType = z.infer<typeof QuestionValidator>;
 export type ValidatorOptions = Omit<QuestionValidatorType, "question">;
 
 export type QuestionsType = z.infer<typeof QuestionValidator>["type"];
