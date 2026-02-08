@@ -542,7 +542,7 @@ export const FormResponse = createTable("form_response", (t) => ({
     .references(() => User.id, { onDelete: "cascade" }),
   responseData: t.jsonb().notNull(),
   createdAt: t.timestamp().notNull().defaultNow(),
-  editedAt: t.timestamp().defaultNow(),
+  editedAt: t.timestamp().notNull().defaultNow(),
 }));
 
 export const InsertFormResponseSchema = createInsertSchema(FormResponse);
