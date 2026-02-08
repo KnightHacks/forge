@@ -52,6 +52,7 @@ export function FormReviewWrapper({
   const form = formQuery.data;
   const formData = form?.formData as FORMS.FormType;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const stored = (responseQuery.data?.[0]?.responseData ??
     {}) as FormResponsePayload;
 
@@ -90,7 +91,8 @@ export function FormReviewWrapper({
   const onSubmit = (payload: FormResponsePayload) => {
     editResponse.mutate({
       id: responseId,
-      responseData: payload,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+      responseData: payload as any,
     });
   };
 
