@@ -176,12 +176,12 @@ export const myRouter = {
 
 2. **Both `.meta()` and `.input()` are required** with the same schema
 
-3. **The form responder client** consumes this metadata to validate and submit form data
+3. **The form responder client** consumes this metadata to validate input and submit form data sent through this procedure via the form connector.
 
 ### Why Both?
 
 - `.input()` - Used by tRPC for runtime validation
-- `.meta()` with `inputSchema` - Used by the form builder/responder to generate forms and validate on the client side
+- `.meta()` with `inputSchema` - Used by the form builder/responder to validate form input for the procedure on the client side
 
 ## Logging Requirement
 
