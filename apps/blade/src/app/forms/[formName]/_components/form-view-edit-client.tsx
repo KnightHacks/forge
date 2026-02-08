@@ -56,7 +56,6 @@ export function FormReviewWrapper({
     {}) as FormResponsePayload;
 
   const initialResponses = useMemo(() => {
-    if (!formData) return {};
     return payloadToUI(stored, formData);
   }, [formData, stored]);
 
@@ -68,7 +67,7 @@ export function FormReviewWrapper({
     );
   }
 
-  if (formQuery.error || !formData) return <FormNotFound />;
+  if (formQuery.error || !form) return <FormNotFound />;
   if (responseQuery.error || !responseQuery.data) return <ResponseNotFound />;
 
   const zodValidator = form.zodValidator;

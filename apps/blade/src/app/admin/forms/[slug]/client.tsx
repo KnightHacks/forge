@@ -197,8 +197,7 @@ export function EditorClient({
     error: fetchError,
     isLoading: isFetching,
   } = api.forms.getForm.useQuery(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-    { slug_name: slug } as any,
+    { slug_name: slug },
     { retry: false, refetchOnWindowFocus: false },
   );
 
@@ -212,10 +211,7 @@ export function EditorClient({
   });
 
   const handleSaveForm = React.useCallback(() => {
-    if (isLoading || isFetching || !formTitle) return;
-
-    // Allow mock mode to proceed without real formData
-    if (!formData && slug !== "test-form") return;
+    if (isLoading || isFetching || !formTitle || !formData) return;
 
     // Check for duplicate question names
     const questionNames = new Set<string>();
@@ -236,26 +232,23 @@ export function EditorClient({
       return;
     }
 
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    /* eslint-disable @typescript-eslint/no-unsafe-argument */
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
     updateFormMutation.mutate({
-      id: (formData as any).id,
+      id: formData.id,
       formData: {
         name: formTitle,
         description: formDescription,
         banner: formBanner || undefined,
         questions: questions.map(({ id: _, ...rest }) => rest),
         instructions: instructions.map(
-          ({ id: _, imageUrl: _imageUrl, videoUrl: _videoUrl, ...rest }) => rest
+          ({ id: _, imageUrl: _imageUrl, videoUrl: _videoUrl, ...rest }) =>
+            rest,
         ),
       },
       duesOnly,
       allowResubmission,
       allowEdit,
       responseRoleIds,
-    } as unknown as FORMS.FormType);
+    });
   }, [
     isLoading,
     isFetching,
@@ -296,7 +289,7 @@ export function EditorClient({
         setDuesOnly(formData.duesOnly);
         setAllowResubmission(formData.allowResubmission);
         setAllowEdit(formData.allowEdit);
-        setResponseRoleIds((formData as any).responseRoleIds || []);
+        setResponseRoleIds(formData.responseRoleIds);
 
         const loadedQuestions: UIQuestion[] = (
           formData.formData as FORMS.FormType
