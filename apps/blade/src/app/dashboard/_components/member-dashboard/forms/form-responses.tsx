@@ -35,10 +35,13 @@ export async function FormResponses() {
                     </span>
                   </div>
 
-                  <ViewFormResponseButton
-                    formNameSlug={formResponse.formSlug ?? ""}
-                    responseIdSlug={formResponse.id}
-                  />
+                  <Button asChild size="sm">
+                    <Link
+                      href={`/forms/${formResponse.formSlug}/${formResponse.id}`}
+                    >
+                      {formResponse.allowEdit ? "Edit" : "View"}
+                    </Link>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -52,19 +55,5 @@ export async function FormResponses() {
         </CardHeader>
       )}
     </Card>
-  );
-}
-
-function ViewFormResponseButton({
-  responseIdSlug,
-  formNameSlug,
-}: {
-  responseIdSlug: string;
-  formNameSlug: string;
-}) {
-  return (
-    <Link href={`/forms/${formNameSlug}/${responseIdSlug}`}>
-      <Button size="sm">View/Edit</Button>
-    </Link>
   );
 }
