@@ -151,9 +151,9 @@ export const permProcedure = protectedProcedure.use(async ({ ctx, next }) => {
     .innerJoin(Permissions, eq(Roles.id, Permissions.roleId))
     .where(sql`cast(${Permissions.userId} as text) = ${ctx.session.user.id}`);
 
-  const permissionsBits = new Array(Object.keys(PERMISSIONS.PERMISSIONS).length).fill(
-    false,
-  ) as boolean[];
+  const permissionsBits = new Array(
+    Object.keys(PERMISSIONS.PERMISSIONS).length,
+  ).fill(false) as boolean[];
 
   permRows.forEach((v) => {
     for (let i = 0; i < v.permissions.length; i++) {

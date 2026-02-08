@@ -267,9 +267,9 @@ export const rolesRouter = {
           sql`cast(${Permissions.userId} as text) = ${input ? input.userId : ctx.session.user.id}`,
         );
 
-      const permissionsBits = new Array(Object.keys(PERMISSIONS.PERMISSIONS).length).fill(
-        false,
-      ) as boolean[];
+      const permissionsBits = new Array(
+        Object.keys(PERMISSIONS.PERMISSIONS).length,
+      ).fill(false) as boolean[];
 
       permRows.forEach((v) => {
         for (let i = 0; i < v.permissions.length; i++) {

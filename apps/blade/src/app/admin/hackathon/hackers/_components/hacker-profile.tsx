@@ -163,7 +163,10 @@ export default function HackerProfileButton({
                     <FaGithub size={GUILD.MEMBER_PROFILE_ICON_SIZE} />
                   </Link>
                 ) : (
-                  <FaGithub size={GUILD.MEMBER_PROFILE_ICON_SIZE} color="gray" />
+                  <FaGithub
+                    size={GUILD.MEMBER_PROFILE_ICON_SIZE}
+                    color="gray"
+                  />
                 )}
               </div>
               <div>
@@ -172,7 +175,10 @@ export default function HackerProfileButton({
                     <FaLinkedin size={GUILD.MEMBER_PROFILE_ICON_SIZE} />
                   </Link>
                 ) : (
-                  <FaLinkedin size={GUILD.MEMBER_PROFILE_ICON_SIZE} color="gray" />
+                  <FaLinkedin
+                    size={GUILD.MEMBER_PROFILE_ICON_SIZE}
+                    color="gray"
+                  />
                 )}
               </div>
               <div>
