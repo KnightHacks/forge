@@ -156,19 +156,18 @@ function genCronLogic(webhook: WebhookClient): () => Promise<void> {
       await webhook.send({
         content: `# Events this Week (${formattedDate})\nWe hope you've had an amazing weekend so far, @everyone :D\nHere are some of the events planned for this week!`,
       });
-      return;
+    } else {
+      const today = new Date();
+      const formattedDate = today.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      });
+
+      await webhook.send({
+        content: `# Event Reminders\nGood morning, <@&${DISCORD_REMINDER_ROLE_ID}>!\nToday is ${formattedDate}, and here are some reminders about upcoming events!`,
+      });
     }
-
-    const today = new Date();
-    const formattedDate = today.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    });
-
-    await webhook.send({
-      content: `# Event Reminders\nGood morning, <@&${DISCORD_REMINDER_ROLE_ID}>!\nToday is ${formattedDate}, and here are some reminders about upcoming events!`,
-    });
 
     // For each prefix group, send a line announcing the prefix, then send each event as an embed
     for (const group of groupedPrefixes) {
