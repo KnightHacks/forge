@@ -1,6 +1,10 @@
 import type { AnyTRPCProcedure, AnyTRPCRouter } from "@trpc/server";
 import type { z } from "zod";
 
+import type { EVENTS } from "@forge/consts";
+import type { HackerClass } from "@forge/db/schemas/knight-hacks";
+import { PERMISSION_DATA, PERMISSIONS } from "@forge/consts";
+
 export const formatDateTime = (date: Date) => {
   // Create a new Date object 5 hours behind the original
   const adjustedDate = new Date(date.getTime());
@@ -35,8 +39,8 @@ export const formatDateRange = (startDate: Date, endDate: Date) => {
   return `${start} - ${end}`;
 };
 
-export const getTagColor = (tag: EventTagsColor) => {
-  const colors: Record<EventTagsColor, string> = {
+export const getTagColor = (tag: EVENTS.EventTagsColor) => {
+  const colors: Record<EVENTS.EventTagsColor, string> = {
     GBM: "bg-blue-100 text-blue-800",
     Social: "bg-pink-100 text-pink-800",
     Kickstart: "bg-green-100 text-green-800",
