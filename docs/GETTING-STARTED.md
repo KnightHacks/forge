@@ -87,7 +87,7 @@ pnpm db:push
 pnpm db:studio
 ```
 
-This opens a GUI at [local.drizzle.studio](http://local.drizzle.studio).
+This opens a GUI at [local.drizzle.studio](https://local.drizzle.studio).
 
 ### 5. (Optional) Bootstrap Superadmin Access
 
