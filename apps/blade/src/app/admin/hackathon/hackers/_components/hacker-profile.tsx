@@ -6,6 +6,7 @@ import { User } from "lucide-react";
 import { FaGithub, FaGlobe, FaLinkedin } from "react-icons/fa";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
+import { FORMS, MEMBER_PROFILE_ICON_SIZE } from "@forge/consts";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import {
@@ -19,7 +20,6 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 import FoodRestrictionsButton from "./food-restrictions";
-import { FORMS, MEMBER_PROFILE_ICON_SIZE } from '@forge/consts';
 
 export default function HackerProfileButton({
   hacker,

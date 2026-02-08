@@ -5,6 +5,7 @@ import { Loader2, Pencil } from "lucide-react";
 import { z } from "zod";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
+import { FORMS } from "@forge/consts";
 import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
@@ -37,7 +38,6 @@ import {
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import { FORMS } from '@forge/consts';
 
 export default function UpdateMemberButton({
   member,

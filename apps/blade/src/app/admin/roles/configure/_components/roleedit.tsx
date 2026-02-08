@@ -2,7 +2,7 @@
 
 import type { APIRole } from "discord-api-types/v10";
 import type { ZodBoolean } from "zod";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, Loader2, Pencil, User, X } from "lucide-react";
 import { z } from "zod";
 
@@ -79,9 +79,20 @@ export default function RoleEdit({
     defaultValues: defaults,
   });
 
+  const updateString = useCallback((values: z.infer<typeof roleSchema>) => {
+    const perms = Object.entries(values);
+    let newString = "";
+    perms.forEach((v) => {
+      if (v[1]) newString += "1";
+      else newString += "0";
+    });
+
+    setPermString(newString);
+  }, []);
+
   useEffect(() => {
     updateString(form.getValues());
-  }, []);
+  }, [form, updateString]);
 
   useEffect(() => {
     if (roles)
@@ -98,7 +109,7 @@ export default function RoleEdit({
     }
 
     void doGetRole();
-  }, [roleID]);
+  }, [oldRole, roleID, roleQ, roles]);
 
   useEffect(() => {
     if (roles)
@@ -107,19 +118,7 @@ export default function RoleEdit({
           ? false
           : roles.find((v) => v.name == name) != undefined,
       );
-  }, [name]);
-
-  function updateString(values: z.infer<typeof roleSchema>) {
-    const perms = Object.entries(values);
-    console.log(perms);
-    let newString = "";
-    perms.forEach((v) => {
-      if (v[1]) newString += "1";
-      else newString += "0";
-    });
-
-    setPermString(newString);
-  }
+  }, [name, oldRole?.name, roles]);
 
   function sendRole(str: string) {
     try {

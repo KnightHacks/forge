@@ -4,6 +4,7 @@
 
 import { Cell, Pie, PieChart } from "recharts";
 
+import { FORMS } from "@forge/consts";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
@@ -11,7 +12,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@forge/ui/chart";
-import { FORMS } from '@forge/consts';
 
 // props - expects a question string and array of responses
 interface ResponsePieChartProps {
@@ -78,8 +78,9 @@ export function ResponsePieChart({
     chartConfig[item.name] = {
       label: item.name,
       color:
-        FORMS.ADMIN_PIE_CHART_COLORS[index % FORMS.ADMIN_PIE_CHART_COLORS.length] ??
-        "#000000",
+        FORMS.ADMIN_PIE_CHART_COLORS[
+          index % FORMS.ADMIN_PIE_CHART_COLORS.length
+        ] ?? "#000000",
     };
   });
 

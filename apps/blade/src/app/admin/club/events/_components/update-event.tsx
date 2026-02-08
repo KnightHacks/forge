@@ -5,6 +5,7 @@ import { Loader2, Pencil } from "lucide-react";
 import { z } from "zod";
 
 import type { InsertEvent } from "@forge/db/schemas/knight-hacks";
+import { EVENTS } from "@forge/consts";
 import { InsertEventSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -39,7 +40,6 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import { EVENTS } from '@forge/consts';
 
 // 12-hour-based hours (1–12)
 const hours = Array.from({ length: 12 }, (_, i) =>

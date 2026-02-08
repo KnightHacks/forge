@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
-import type {
-  GradTerm} from "@forge/consts";
+import type { GradTerm } from "@forge/consts";
 import {
   ALLOWED_PROFILE_PICTURE_EXTENSIONS,
   ALLOWED_PROFILE_PICTURE_TYPES,

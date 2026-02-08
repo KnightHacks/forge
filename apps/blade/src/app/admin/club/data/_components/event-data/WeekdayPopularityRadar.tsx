@@ -10,13 +10,13 @@ import {
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
+import { FORMS } from "@forge/consts";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@forge/ui/chart";
-import { FORMS } from '@forge/consts';
 
 export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
   const chartConfig = {
@@ -107,7 +107,8 @@ export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
     }))
     .sort(
       (a, b) =>
-        FORMS.WEEKDAY_ORDER.indexOf(a.weekday) - FORMS.WEEKDAY_ORDER.indexOf(b.weekday),
+        FORMS.WEEKDAY_ORDER.indexOf(a.weekday) -
+        FORMS.WEEKDAY_ORDER.indexOf(b.weekday),
     );
 
   const maxAvgAttendees = Math.max(

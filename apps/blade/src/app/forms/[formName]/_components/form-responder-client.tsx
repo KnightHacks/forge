@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { z } from "zod";
 
+import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 
@@ -109,7 +110,7 @@ export function FormResponderClient({
     ? true
     : (duesQuery.data?.duesPaid ?? false);
 
-  const form = formQuery.data.formData;
+  const form = formQuery.data.formData as FORMS.FormType;
   const isDuesOnly = formQuery.data.duesOnly;
   const allowResubmission = formQuery.data.allowResubmission;
   const hasAlreadySubmitted = existingResponseQuery.data?.length !== 0;

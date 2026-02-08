@@ -166,7 +166,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
     const currentTag = form.getValues("tag");
     const points = EVENTS.EVENT_POINTS[currentTag] || 0;
     form.setValue("points", points);
-  }, [form.watch("tag")]);
+  }, [form]);
 
   const onSubmit = form.handleSubmit((values) => {
     setIsLoading(true);

@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { CircleCheckBig, Loader2 } from "lucide-react";
 
-import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { USE_CAUTION } from "@forge/consts";
+import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,

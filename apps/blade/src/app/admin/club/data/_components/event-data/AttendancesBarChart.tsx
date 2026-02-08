@@ -11,13 +11,13 @@ import {
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
+import { FORMS } from "@forge/consts";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@forge/ui/chart";
-import { FORMS } from '@forge/consts';
 
 export default function AttendancesBarChart({
   events,

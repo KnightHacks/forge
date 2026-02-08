@@ -9,8 +9,8 @@ import {
   YAxis,
 } from "recharts";
 
-import type { ChartConfig } from "@forge/ui/chart";
 import type { FORMS } from "@forge/consts";
+import type { ChartConfig } from "@forge/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { ChartContainer, ChartTooltip } from "@forge/ui/chart";
 

@@ -6,6 +6,7 @@ import { User } from "lucide-react";
 import { FaGithub, FaGlobe, FaLinkedin } from "react-icons/fa";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
+import { FORMS, MEMBER_PROFILE_ICON_SIZE } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -16,7 +17,6 @@ import {
 } from "@forge/ui/dialog";
 
 import { api } from "~/trpc/react";
-import { FORMS, MEMBER_PROFILE_ICON_SIZE } from '@forge/consts';
 
 export default function MemberProfileButton({
   member,

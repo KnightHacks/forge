@@ -1,9 +1,9 @@
 import { useState } from "react";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
+import { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
-import { FORMS } from '@forge/consts';
 
 export default function PopularityRanking({
   events,

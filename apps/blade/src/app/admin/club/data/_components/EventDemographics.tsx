@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { FORMS } from "@forge/consts";
 import { Checkbox } from "@forge/ui/checkbox";
 import {
   Select,
@@ -17,7 +18,6 @@ import AttendancesMobile from "./event-data/AttendancesMobile";
 import PopularityRanking from "./event-data/PopularityRanking";
 import TypePie from "./event-data/TypePie";
 import { WeekdayPopularityRadar } from "./event-data/WeekdayPopularityRadar";
-import { FORMS } from '@forge/consts';
 
 export default function EventDemographics() {
   const { data: events } = api.event.getEvents.useQuery();

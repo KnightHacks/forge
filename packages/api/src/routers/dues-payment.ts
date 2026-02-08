@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import Stripe from "stripe";
 import { z } from "zod";
 
+import { KNIGHTHACKS_MEMBERSHIP_PRICE } from "@forge/consts";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
@@ -10,7 +11,6 @@ import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
 import { env } from "../env";
 import { protectedProcedure } from "../trpc";
 import { log, stripe } from "../utils";
-import { KNIGHTHACKS_MEMBERSHIP_PRICE } from '@forge/consts';
 
 export const duesPaymentRouter = {
   createCheckout: protectedProcedure.mutation(async ({ ctx }) => {

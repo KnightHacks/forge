@@ -3,11 +3,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
+import { DISCORD } from "@forge/consts";
 import { Separator } from "@forge/ui/separator";
 
 import { api, HydrateClient } from "~/trpc/server";
 import { HackerProfileForm } from "./hacker-profile-form";
-import { DISCORD } from '@forge/consts';
 
 export default async function SettingsProfilePage() {
   const session = await auth();

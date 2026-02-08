@@ -1181,7 +1181,7 @@ export const hackerRouter = {
             if (assignedClass) {
               await addRoleToMember(
                 discordId,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unnecessary-condition
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 DISCORD.KNIGHTHACKS_8.CLASS_ROLE_ID[
                   assignedClass as AssignableHackerClass
                 ] ?? "",

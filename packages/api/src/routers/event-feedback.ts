@@ -2,6 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { DISCORD, EVENTS } from "@forge/consts";
 import { and, eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
@@ -12,7 +13,6 @@ import {
 
 import { permProcedure } from "../trpc";
 import { controlPerms, log } from "../utils";
-import { DISCORD, EVENTS } from '@forge/consts';
 
 export const eventFeedbackRouter = {
   createEventFeedback: permProcedure

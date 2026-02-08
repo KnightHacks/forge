@@ -1,4 +1,5 @@
-import type { FORMS } from '@forge/consts';
+import type { FORMS } from "@forge/consts";
+
 import { FileUploadResponsesTable } from "./FileUploadResponsesTable";
 import { ResponseBarChart } from "./ResponseBarChart";
 import { ResponseHorizontalBarChart } from "./ResponseHorizontalBarChart";

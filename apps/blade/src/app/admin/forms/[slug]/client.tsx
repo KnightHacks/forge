@@ -256,18 +256,19 @@ export function EditorClient({
       responseRoleIds,
     } as any);
   }, [
+    isLoading,
+    isFetching,
     formTitle,
+    formData,
+    slug,
+    questions,
+    updateFormMutation,
     formDescription,
     formBanner,
-    questions,
     instructions,
     duesOnly,
     allowResubmission,
-    formData,
-    isLoading,
-    isFetching,
-    updateFormMutation,
-    slug,
+    responseRoleIds,
   ]);
 
   useEffect(() => {
@@ -294,21 +295,19 @@ export function EditorClient({
         setAllowResubmission(formData.allowResubmission);
         setResponseRoleIds((formData as any).responseRoleIds || []);
 
-        const loadedQuestions: UIQuestion[] = formData.formData.questions.map(
-          (q: FormQuestion & { order?: number }) => ({
-            ...q,
-            id: crypto.randomUUID(),
-          }),
-        );
+        const loadedQuestions: UIQuestion[] = (
+          formData.formData as FORMS.FormType
+        ).questions.map((q: FormQuestion & { order?: number }) => ({
+          ...q,
+          id: crypto.randomUUID(),
+        }));
 
-        /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
         const loadedInstructions: UIInstruction[] = (
-          (formData.formData as any).instructions || []
+          (formData.formData as FORMS.FormType).instructions || []
         ).map((inst: FormInstruction & { order?: number }) => ({
           ...inst,
           id: crypto.randomUUID(),
         }));
-        /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
         setQuestions(loadedQuestions);
         setInstructions(loadedInstructions);
@@ -320,12 +319,12 @@ export function EditorClient({
   // auto save trigger when toggle switches are changed
   useEffect(() => {
     if (!isLoading) handleSaveForm();
-  }, [duesOnly, allowResubmission, responseRoleIds, isLoading]); // removed handleSaveForm to prevent save-on-every-render
+  }, [duesOnly, allowResubmission, responseRoleIds, isLoading, handleSaveForm]); // removed handleSaveForm to prevent save-on-every-render
 
   // auto save when finishing editing an item (changing active card)
   useEffect(() => {
     if (!isLoading) handleSaveForm();
-  }, [activeItemId, isLoading]); // triggers when switching items or clicking off
+  }, [activeItemId, handleSaveForm, isLoading]); // triggers when switching items or clicking off
 
   // Periodic auto-save every 40 seconds
   useEffect(() => {

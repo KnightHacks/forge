@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
+import { CLEAR_DUES_MESSAGE, USE_CAUTION } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -17,7 +18,6 @@ import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import { CLEAR_DUES_MESSAGE, USE_CAUTION } from '@forge/consts';
 
 export default function FinalDuesDialogButton({
   disabled,
