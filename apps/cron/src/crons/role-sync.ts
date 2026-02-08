@@ -32,6 +32,9 @@ export const roleSync = new CronBuilder({
     let addedCount = 0;
     let removedCount = 0;
     let skippedCount = 0;
+		let errorCount = 0;
+
+		let erroredUsers = [];
 
     for (const user of users) {
       try {
@@ -57,9 +60,6 @@ export const roleSync = new CronBuilder({
         // Check 1: Remove permissions from Blade if user doesn't have role on Discord
         for (const perm of userPermissions) {
           if (!discordRoleIds.includes(perm.discordRoleId)) {
-            console.log(
-              `Removing "${perm.roleName}" from user ${user.name} (${user.discordUserId}) - not on Discord`,
-            );
             await db
               .delete(Permissions)
               .where(eq(Permissions.id, perm.permissionId));
@@ -78,9 +78,6 @@ export const roleSync = new CronBuilder({
             continue;
           }
 
-          console.log(
-            `Adding "${role.name}" to user ${user.name} (${user.discordUserId}) - found on Discord`,
-          );
           await db.insert(Permissions).values({
             roleId: role.id,
             userId: user.id,
@@ -90,21 +87,23 @@ export const roleSync = new CronBuilder({
       } catch (error) {
         // User might not be in the guild anymore
         if ((error as { status?: number } | undefined)?.status === 404) {
-          console.log(
-            `User ${user.name} (${user.discordUserId}) not found in guild - skipping`,
-          );
           skippedCount++;
         } else {
-          console.error(
-            `Error syncing user ${user.name} (${user.discordUserId}):`,
-            error,
-          );
+					errorCount++;
+					if(erroredUsers.length < 5) erroredUsers.push(user.name);
         }
       }
     }
 
     console.log(
-      `Sync completed. Added: ${addedCount}, Removed: ${removedCount}, Skipped: ${skippedCount}`,
+      `Sync completed. Added: ${addedCount}, Removed: ${removedCount}, Skipped: ${skippedCount}, Errors: ${errorCount}`,
     );
+
+		if(errorCount > 0) {
+			console.log(`First ${erroredUsers.length} users it errored for:`);
+			for(const name of erroredUsers) {
+				console.log(name);
+			}
+		}
   },
 );
