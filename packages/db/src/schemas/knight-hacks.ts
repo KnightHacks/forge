@@ -488,6 +488,7 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
   createdAt: t.timestamp().notNull().defaultNow(),
   duesOnly: t.boolean().notNull().default(false),
   allowResubmission: t.boolean().notNull().default(false),
+  allowEdit: t.boolean().notNull().default(false),
   formData: t.jsonb().notNull(),
   formValidatorJson: t.jsonb().notNull(),
   section: t.varchar({ length: 255 }).notNull().default("General"),
@@ -528,6 +529,7 @@ export const FormResponse = createTable("form_response", (t) => ({
     .references(() => User.id, { onDelete: "cascade" }),
   responseData: t.jsonb().notNull(),
   createdAt: t.timestamp().notNull().defaultNow(),
+  editedAt: t.timestamp().notNull().defaultNow(),
 }));
 
 export const InsertFormResponseSchema = createInsertSchema(FormResponse);

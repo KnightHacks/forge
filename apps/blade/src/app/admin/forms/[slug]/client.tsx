@@ -184,6 +184,7 @@ export function EditorClient({
   const [instructions, setInstructions] = useState<UIInstruction[]>([]);
   const [duesOnly, setDuesOnly] = useState(false);
   const [allowResubmission, setAllowResubmission] = useState(true);
+  const [allowEdit, setAllowEdit] = useState(true);
   const [responseRoleIds, setResponseRoleIds] = useState<string[]>([]);
   const [responseRolesDialogOpen, setResponseRolesDialogOpen] = useState(false);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
@@ -253,6 +254,7 @@ export function EditorClient({
       },
       duesOnly,
       allowResubmission,
+      allowEdit,
       responseRoleIds,
     } as any);
   }, [
@@ -268,6 +270,7 @@ export function EditorClient({
     instructions,
     duesOnly,
     allowResubmission,
+    allowEdit,
     responseRoleIds,
   ]);
 
@@ -293,6 +296,7 @@ export function EditorClient({
         setFormBanner(formData.formData.banner || "");
         setDuesOnly(formData.duesOnly);
         setAllowResubmission(formData.allowResubmission);
+        setAllowEdit(formData.allowEdit);
         setResponseRoleIds((formData as any).responseRoleIds || []);
 
         const loadedQuestions: UIQuestion[] = (
@@ -319,7 +323,14 @@ export function EditorClient({
   // auto save trigger when toggle switches are changed
   useEffect(() => {
     if (!isLoading) handleSaveForm();
-  }, [duesOnly, allowResubmission, responseRoleIds, isLoading, handleSaveForm]); // removed handleSaveForm to prevent save-on-every-render
+  }, [
+    duesOnly,
+    allowResubmission,
+    responseRoleIds,
+    isLoading,
+    allowEdit,
+    handleSaveForm,
+  ]); // removed handleSaveForm to prevent save-on-every-render
 
   // auto save when finishing editing an item (changing active card)
   useEffect(() => {
@@ -541,7 +552,7 @@ export function EditorClient({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6 lg:gap-8">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6 lg:gap-3">
             <div className="flex items-center gap-3">
               <Switch
                 id="dues-only"
@@ -566,6 +577,19 @@ export function EditorClient({
                 className="cursor-pointer text-sm font-bold"
               >
                 Allow Multiple Responses
+              </Label>
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch
+                id="allow-edit"
+                checked={allowEdit}
+                onCheckedChange={setAllowEdit}
+              />
+              <Label
+                htmlFor="allow-edit"
+                className="cursor-pointer text-sm font-bold"
+              >
+                Allow Response Edit
               </Label>
             </div>
             <Dialog

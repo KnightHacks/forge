@@ -109,7 +109,6 @@ export const formsRouter = {
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EDIT_FORMS"], ctx);
       const jsonSchema = generateJsonSchema(input.formData);
-      console.log(input);
 
       const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
 
@@ -132,6 +131,20 @@ export const formsRouter = {
       }
 
       const formId = existingForm.id;
+
+      // prevent toggling edit on a form with trpc connections
+      if (input.allowEdit === true) {
+        const connection = await db.query.TrpcFormConnection.findFirst({
+          where: (t, { eq }) => eq(t.form, formId),
+        });
+
+        if (connection) {
+          throw new TRPCError({
+            message: "Cannot add edit for a form with trpc connections",
+            code: "FORBIDDEN",
+          });
+        }
+      }
 
       await db
         .insert(FormsSchemas)
@@ -325,6 +338,18 @@ export const formsRouter = {
     )
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EDIT_FORMS"], ctx);
+
+      const form = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) => eq(t.id, input.form),
+      });
+
+      if (form?.allowEdit) {
+        throw new TRPCError({
+          message: "Cannot add connection to form with allowEdit",
+          code: "BAD_REQUEST",
+        });
+      }
+
       try {
         await db.insert(TrpcFormConnection).values({ ...input });
       } catch {
@@ -476,6 +501,78 @@ export const formsRouter = {
       });
     }),
 
+  editResponse: protectedProcedure
+    .input(
+      InsertFormResponseSchema.omit({ userId: true, form: true }).extend({
+        id: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.session.user.id;
+
+      // Fetch the existing response to get the form ID
+      const existingResponse = await db.query.FormResponse.findFirst({
+        where: (t, { eq, and }) =>
+          and(eq(t.id, input.id), eq(t.userId, userId)),
+      });
+
+      if (!existingResponse) {
+        throw new TRPCError({
+          message: "Response not found or not owned by user",
+          code: "NOT_FOUND",
+        });
+      }
+
+      // Verify the form allows editing
+      const form = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) => eq(t.id, existingResponse.form),
+      });
+
+      if (!form?.allowEdit) {
+        throw new TRPCError({
+          message: "This form does not allow editing responses",
+          code: "FORBIDDEN",
+        });
+      }
+
+      // Validate responseData against form schema
+      const formData = form.formData as FormType;
+      const jsonSchema = generateJsonSchema(formData);
+
+      if (!jsonSchema.success) {
+        throw new TRPCError({
+          message: jsonSchema.msg,
+          code: "BAD_REQUEST",
+        });
+      }
+
+      const zodSchemaString = jsonSchemaToZod(jsonSchema.schema);
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-call
+      const zodSchema = new Function("z", `return ${zodSchemaString}`)(
+        z,
+      ) as z.ZodSchema;
+
+      const validationResult = zodSchema.safeParse(input.responseData);
+      if (!validationResult.success) {
+        const errorMessages = validationResult.error.errors.map((err) => {
+          const path = err.path.join(".");
+          return path ? `${path}: ${err.message}` : err.message;
+        });
+        throw new TRPCError({
+          message: `Form response failed validation: ${errorMessages.join("; ")}`,
+          code: "BAD_REQUEST",
+        });
+      }
+
+      const updated = await db
+        .update(FormResponse)
+        .set({ responseData: input.responseData, editedAt: new Date() })
+        .where(eq(FormResponse.id, input.id))
+        .returning({ id: FormResponse.id, editedAt: FormResponse.editedAt });
+
+      return updated[0];
+    }),
+
   getResponses: permProcedure
     .input(z.object({ form: z.string() }))
     .query(async ({ input, ctx }) => {
@@ -533,12 +630,13 @@ export const formsRouter = {
       if (responseId) {
         return await db
           .select({
-            submittedAt: FormResponse.createdAt,
+            submittedAt: FormResponse.editedAt,
             responseData: FormResponse.responseData,
             formName: FormsSchemas.name,
             formSlug: FormsSchemas.slugName,
             id: FormResponse.id,
             hasSubmitted: sql<boolean>`true`,
+            allowEdit: FormsSchemas.allowEdit,
           })
           .from(FormResponse)
           .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
@@ -550,40 +648,42 @@ export const formsRouter = {
           );
       }
 
-      // return all responses all forms
+      // return all responses of form
       const form = input.form;
-      if (!form) {
+      if (form) {
         return await db
           .select({
-            submittedAt: FormResponse.createdAt,
+            submittedAt: FormResponse.editedAt,
             responseData: FormResponse.responseData,
             formName: FormsSchemas.name,
             formSlug: FormsSchemas.slugName,
             id: FormResponse.id,
             hasSubmitted: sql<boolean>`true`,
+            allowEdit: FormsSchemas.allowEdit,
           })
           .from(FormResponse)
           .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
-          .where(eq(FormResponse.userId, userId))
-          .orderBy(desc(FormResponse.createdAt));
+          .where(
+            and(eq(FormResponse.userId, userId), eq(FormsSchemas.id, form)),
+          )
+          .orderBy(desc(FormResponse.editedAt));
       }
 
-      // return all responses of form
+      // return all responses all forms
       return await db
         .select({
-          submittedAt: FormResponse.createdAt,
+          submittedAt: FormResponse.editedAt,
           responseData: FormResponse.responseData,
           formName: FormsSchemas.name,
           formSlug: FormsSchemas.slugName,
           id: FormResponse.id,
           hasSubmitted: sql<boolean>`true`,
+          allowEdit: FormsSchemas.allowEdit,
         })
         .from(FormResponse)
         .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
-        .where(
-          and(eq(FormResponse.userId, userId), eq(FormsSchemas.name, form)),
-        )
-        .orderBy(desc(FormResponse.createdAt));
+        .where(eq(FormResponse.userId, userId))
+        .orderBy(desc(FormResponse.editedAt));
     }),
 
   // Generate presigned upload URL for direct MinIO upload

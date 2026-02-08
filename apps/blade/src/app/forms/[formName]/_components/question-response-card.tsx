@@ -33,8 +33,8 @@ type FormQuestion = z.infer<typeof FORMS.QuestionValidator>;
 
 interface QuestionResponseCardProps {
   question: FormQuestion;
-  value?: string | string[] | number | Date | null;
-  onChange: (value: string | string[] | number | Date | null) => void;
+  value?: string | string[] | number | Date | boolean | null;
+  onChange: (value: string | string[] | number | Date | boolean | null) => void;
   onBlur?: () => void;
   disabled?: boolean;
   formId?: string;
@@ -101,7 +101,7 @@ function QuestionBody({
   formId,
 }: {
   question: FormQuestion;
-  value?: string | string[] | number | Date | null;
+  value?: string | string[] | number | Date | boolean | null;
   onChange: (value: string | string[] | number | Date | null) => void;
   onBlur?: () => void;
   disabled?: boolean;
@@ -751,6 +751,11 @@ function FileUploadInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getUploadUrlMutation = api.forms.getUploadUrl.useMutation();
+
+  // used to sync with responseData for view/edit, otherwise value will be null
+  React.useEffect(() => {
+    setFileName(value ? (value.split("/").pop() ?? null) : null);
+  }, [value]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
