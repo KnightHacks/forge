@@ -241,6 +241,4 @@ pnpm --version  # Should be >= 9.6.0
 
 Now that you're set up, explore the codebase:
 
-- Check out the [Architecture Overview](./architecture.md) to understand how everything fits together
-- Review the [Development Workflow](./development-workflow.md) for daily development practices
-- Browse [Common Tasks](./common-tasks.md) for practical how-to guides
+- Check out the [Architecture Overview](./ARCHITECTURE.md) to understand how everything fits together
