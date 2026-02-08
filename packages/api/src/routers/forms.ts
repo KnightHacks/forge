@@ -110,7 +110,6 @@ export const formsRouter = {
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EDIT_FORMS"], ctx);
       const jsonSchema = generateJsonSchema(input.formData);
-      console.log(input);
 
       const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
 
@@ -512,20 +511,66 @@ export const formsRouter = {
     .mutation(async ({ input, ctx }) => {
       const userId = ctx.session.user.id;
 
-      const updated = await db
-        .update(FormResponse)
-        .set({ responseData: input.responseData, editedAt: new Date() })
-        .where(
-          and(eq(FormResponse.id, input.id), eq(FormResponse.userId, userId)),
-        )
-        .returning({ id: FormResponse.id, editedAt: FormResponse.editedAt });
+      // Fetch the existing response to get the form ID
+      const existingResponse = await db.query.FormResponse.findFirst({
+        where: (t, { eq, and }) =>
+          and(eq(t.id, input.id), eq(t.userId, userId)),
+      });
 
-      if (updated.length === 0) {
+      if (!existingResponse) {
         throw new TRPCError({
-          message: "Form response edit failed",
+          message: "Response not found or not owned by user",
+          code: "NOT_FOUND",
+        });
+      }
+
+      // Verify the form allows editing
+      const form = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) => eq(t.id, existingResponse.form),
+      });
+
+      if (!form?.allowEdit) {
+        throw new TRPCError({
+          message: "This form does not allow editing responses",
+          code: "FORBIDDEN",
+        });
+      }
+
+      // Validate responseData against form schema
+      const formData = form.formData as FormType;
+      const jsonSchema = generateJsonSchema(formData);
+
+      if (!jsonSchema.success) {
+        throw new TRPCError({
+          message: jsonSchema.msg,
           code: "BAD_REQUEST",
         });
       }
+
+      const zodSchemaString = jsonSchemaToZod(jsonSchema.schema);
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-call
+      const zodSchema = new Function("z", `return ${zodSchemaString}`)(
+        z,
+      ) as z.ZodSchema;
+
+      const validationResult = zodSchema.safeParse(input.responseData);
+      if (!validationResult.success) {
+        const errorMessages = validationResult.error.errors.map((err) => {
+          const path = err.path.join(".");
+          return path ? `${path}: ${err.message}` : err.message;
+        });
+        throw new TRPCError({
+          message: `Form response failed validation: ${errorMessages.join("; ")}`,
+          code: "BAD_REQUEST",
+        });
+      }
+
+      const updated = await db
+        .update(FormResponse)
+        .set({ responseData: input.responseData, editedAt: new Date() })
+        .where(eq(FormResponse.id, input.id))
+        .returning({ id: FormResponse.id, editedAt: FormResponse.editedAt });
+
       return updated[0];
     }),
 
@@ -592,7 +637,7 @@ export const formsRouter = {
             formSlug: FormsSchemas.slugName,
             id: FormResponse.id,
             hasSubmitted: sql<boolean>`true`,
-            allowEdit: sql<boolean>`false`,
+            allowEdit: FormsSchemas.allowEdit,
           })
           .from(FormResponse)
           .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
@@ -615,7 +660,7 @@ export const formsRouter = {
             formSlug: FormsSchemas.slugName,
             id: FormResponse.id,
             hasSubmitted: sql<boolean>`true`,
-            allowEdit: sql<boolean>`false`,
+            allowEdit: FormsSchemas.allowEdit,
           })
           .from(FormResponse)
           .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))

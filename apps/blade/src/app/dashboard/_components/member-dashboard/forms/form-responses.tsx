@@ -35,13 +35,13 @@ export async function FormResponses() {
                     </span>
                   </div>
 
-                  <Link
-                    href={`/forms/${formResponse.formSlug}/${formResponse.id}`}
-                  >
-                    <Button size="sm">
+                  <Button asChild size="sm">
+                    <Link
+                      href={`/forms/${formResponse.formSlug}/${formResponse.id}`}
+                    >
                       {formResponse.allowEdit ? "Edit" : "View"}
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               </div>
             ))}

@@ -328,7 +328,7 @@ export function EditorClient({
   // auto save trigger when toggle switches are changed
   useEffect(() => {
     if (!isLoading) handleSaveForm();
-  }, [duesOnly, allowResubmission, responseRoleIds, isLoading]); // removed handleSaveForm to prevent save-on-every-render
+  }, [duesOnly, allowResubmission, responseRoleIds, isLoading, allowEdit]); // removed handleSaveForm to prevent save-on-every-render
 
   // auto save when finishing editing an item (changing active card)
   useEffect(() => {
@@ -579,7 +579,7 @@ export function EditorClient({
             </div>
             <div className="flex items-center gap-3">
               <Switch
-                id="allow-resubmit"
+                id="allow-edit"
                 checked={allowEdit}
                 onCheckedChange={setAllowEdit}
               />

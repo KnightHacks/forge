@@ -26,7 +26,12 @@ export function useSubmissionSuccess(
   );
 
   useEffect(() => {
-    if (!isSubmitted) return;
+    if (!isSubmitted) {
+      setShowCheckmark(false);
+      setShowText(false);
+      setRedirectCountdown(Math.ceil(redirectDelayMs / 1000));
+      return;
+    }
 
     const checkTimer = setTimeout(
       () => setShowCheckmark(true),
@@ -36,7 +41,7 @@ export function useSubmissionSuccess(
     const textTimer = setTimeout(() => setShowText(true), textDelayMs);
 
     const countdownInterval = setInterval(() => {
-      setRedirectCountdown((prev) => prev - 1);
+      setRedirectCountdown((prev) => Math.max(prev - 1, 0));
     }, 1000);
 
     const redirectTimer = setTimeout(() => {

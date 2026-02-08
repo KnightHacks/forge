@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-import type { FormType } from "@forge/consts/knight-hacks";
+import type { FormType, InstructionValidatorType } from "@forge/consts/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 
@@ -101,24 +101,21 @@ export function FormRunner({
     order?: number;
   }
 
-  const allItems = useMemo(() => {
-    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
-    const questionsWithType: QuestionWithOrder[] = form.questions.map((q) => ({
-      ...q,
-      itemType: "question" as const,
-    }));
+  const questionsWithType: QuestionWithOrder[] = form.questions.map((q) => ({
+    ...q,
+    itemType: "question" as const,
+  }));
 
-    const instructionsWithType: InstructionWithOrder[] = (
-      (form as any).instructions || []
-    ).map((inst: any) => ({
-      ...inst,
-      itemType: "instruction" as const,
-    }));
+  const instructionsWithType: InstructionWithOrder[] = (
+    (form).instructions || []
+  ).map((inst: InstructionValidatorType) => ({
+    ...inst,
+    itemType: "instruction" as const,
+  }));
 
-    return [...questionsWithType, ...instructionsWithType].sort(
-      (a, b) => (a.order ?? 999) - (b.order ?? 999),
-    );
-  }, [form]);
+  const allItems = [...questionsWithType, ...instructionsWithType].sort(
+    (a, b) => (a.order ?? 999) - (b.order ?? 999),
+  );
 
   return (
     <div className="min-h-screen overflow-x-visible bg-primary/5 p-6">
@@ -158,8 +155,7 @@ export function FormRunner({
               >
                 {isInstruction ? (
                   <>
-                    {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */}
-                    <InstructionResponseCard instruction={item as any} />
+                    <InstructionResponseCard instruction={item} />
                   </>
                 ) : (
                   <QuestionResponseCard
@@ -184,7 +180,6 @@ export function FormRunner({
             );
           })}
         </div>
-        {/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */}
 
         {submitError && (
           <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-destructive">
