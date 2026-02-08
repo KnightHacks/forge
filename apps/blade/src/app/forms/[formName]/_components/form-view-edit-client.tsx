@@ -2,8 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
 
 import type { FORMS } from "@forge/consts";
 
