@@ -137,15 +137,13 @@ function genCronLogic(webhook: WebhookClient): () => Promise<void> {
       0,
     );
 
-    let eventsCount = 0;
+    console.log(`Found a total of ${totalEvents} events`);
     for (const group of groupedPrefixes) {
-      eventsCount += group.events.length;
       console.log(`Events for ${group.prefix}`);
       for (const event of group.events) {
         console.log(`Title: ${event.name}`);
       }
     }
-    console.log(`Found a total of ${eventsCount} events`);
 
     if (totalEvents === 0) return;
 
