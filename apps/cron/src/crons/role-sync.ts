@@ -32,9 +32,9 @@ export const roleSync = new CronBuilder({
     let addedCount = 0;
     let removedCount = 0;
     let skippedCount = 0;
-		let errorCount = 0;
+    let errorCount = 0;
 
-		let erroredUsers = [];
+    let erroredUsers = [];
 
     for (const user of users) {
       try {
@@ -89,8 +89,8 @@ export const roleSync = new CronBuilder({
         if ((error as { status?: number } | undefined)?.status === 404) {
           skippedCount++;
         } else {
-					errorCount++;
-					if(erroredUsers.length < 5) erroredUsers.push(user.name);
+          errorCount++;
+          if (erroredUsers.length < 5) erroredUsers.push(user.name);
         }
       }
     }
@@ -99,11 +99,11 @@ export const roleSync = new CronBuilder({
       `Sync completed. Added: ${addedCount}, Removed: ${removedCount}, Skipped: ${skippedCount}, Errors: ${errorCount}`,
     );
 
-		if(errorCount > 0) {
-			console.log(`First ${erroredUsers.length} users it errored for:`);
-			for(const name of erroredUsers) {
-				console.log(name);
-			}
-		}
+    if (errorCount > 0) {
+      console.log(`First ${erroredUsers.length} users it errored for:`);
+      for (const name of erroredUsers) {
+        console.log(name);
+      }
+    }
   },
 );
