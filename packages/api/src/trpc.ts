@@ -11,7 +11,6 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import type { Session } from "@forge/auth/server";
-import type { PermissionKey } from "@forge/consts";
 import { validateToken } from "@forge/auth/server";
 import { PERMISSIONS } from "@forge/consts";
 import { eq, sql } from "@forge/db";
@@ -164,13 +163,13 @@ export const permProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 
   const permissionsMap = Object.keys(PERMISSIONS).reduce(
     (accumulator, key) => {
-      const index = PERMISSIONS[key];
+      const index = PERMISSIONS.PERMISSIONS[key];
       if (index === undefined) return accumulator;
       accumulator[key] = permissionsBits[index] ?? false;
 
       return accumulator;
     },
-    {} as Record<PermissionKey, boolean>,
+    {} as Record<PERMISSIONS.PermissionKey, boolean>,
   );
 
   return next({

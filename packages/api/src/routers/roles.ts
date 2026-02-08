@@ -4,7 +4,6 @@ import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
-import type { PermissionKey } from "@forge/consts";
 import { DISCORD, PERMISSIONS } from "@forge/consts";
 import { eq, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
@@ -280,13 +279,13 @@ export const rolesRouter = {
 
       const permissionsMap = Object.keys(PERMISSIONS).reduce(
         (accumulator, key) => {
-          const index = PERMISSIONS[key];
+          const index = PERMISSIONS.PERMISSIONS[key];
           if (index === undefined) return accumulator;
           accumulator[key] = permissionsBits[index] ?? false;
 
           return accumulator;
         },
-        {} as Record<PermissionKey, boolean>,
+        {} as Record<PERMISSIONS.PermissionKey, boolean>,
       );
 
       return permissionsMap;

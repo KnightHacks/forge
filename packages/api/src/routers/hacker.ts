@@ -4,12 +4,7 @@ import QRCode from "qrcode";
 import { z } from "zod";
 
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
-import {
-  BUCKET_NAME,
-  DISCORD,
-  FORMS,
-  KNIGHTHACKS_S3_BUCKET_REGION,
-} from "@forge/consts";
+import { FORMS, HACKATHONS, MINIO } from "@forge/consts";
 import { and, count, desc, eq, gt, or, sql, sum } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
@@ -23,7 +18,6 @@ import {
   InsertHackerSchema,
 } from "@forge/db/schemas/knight-hacks";
 
-import type { AssignableHackerClass } from "../../../consts/src/discord/knight-hacks-8";
 import { minioClient } from "../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../trpc";
 import {
@@ -465,17 +459,19 @@ export const hackerRouter = {
 
         if (existingHackerProfile.length === 0) {
           const objectName = `qr-code-${userId}.png`;
-          const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+          const bucketExists = await minioClient.bucketExists(
+            MINIO.QR_BUCKET_NAME,
+          );
           if (!bucketExists) {
             await minioClient.makeBucket(
-              BUCKET_NAME,
-              KNIGHTHACKS_S3_BUCKET_REGION,
+              MINIO.QR_BUCKET_NAME,
+              MINIO.BUCKET_REGION,
             );
           }
           const qrData = `user:${userId}`;
           const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
           await minioClient.putObject(
-            BUCKET_NAME,
+            MINIO.QR_BUCKET_NAME,
             objectName,
             qrBuffer,
             qrBuffer.length,
@@ -1172,18 +1168,18 @@ export const hackerRouter = {
           try {
             await addRoleToMember(
               discordId,
-              DISCORD.KNIGHTHACKS_8.KH_EVENT_ROLE_ID,
+              HACKATHONS.KNIGHT_HACKS_8.KH_EVENT_ROLE_ID,
             );
             console.log(
-              `Assigned role ${DISCORD.KNIGHTHACKS_8.KH_EVENT_ROLE_ID} to user ${discordId}`,
+              `Assigned role ${HACKATHONS.KNIGHT_HACKS_8.KH_EVENT_ROLE_ID} to user ${discordId}`,
             );
             // VIP will already be given the discord role ahead of time, so no need to assign again
             if (assignedClass) {
               await addRoleToMember(
                 discordId,
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                DISCORD.KNIGHTHACKS_8.CLASS_ROLE_ID[
-                  assignedClass as AssignableHackerClass
+                HACKATHONS.KNIGHT_HACKS_8.CLASS_ROLE_ID[
+                  assignedClass as HACKATHONS.KNIGHT_HACKS_8.AssignableHackerClass
                 ] ?? "",
               );
             }

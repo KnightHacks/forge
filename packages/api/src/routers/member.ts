@@ -3,12 +3,7 @@ import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
 
-import {
-  BUCKET_NAME,
-  DUES_PAYMENT,
-  FORMS,
-  KNIGHTHACKS_S3_BUCKET_REGION,
-} from "@forge/consts";
+import { CLUB, FORMS, MINIO } from "@forge/consts";
 import {
   and,
   count,
@@ -57,17 +52,19 @@ export const memberRouter = {
 
         if (existingMember.length === 0) {
           const objectName = `qr-code-${userId}.png`;
-          const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+          const bucketExists = await minioClient.bucketExists(
+            MINIO.QR_BUCKET_NAME,
+          );
           if (!bucketExists) {
             await minioClient.makeBucket(
-              BUCKET_NAME,
-              KNIGHTHACKS_S3_BUCKET_REGION,
+              MINIO.QR_BUCKET_NAME,
+              MINIO.BUCKET_REGION,
             );
           }
           const qrData = `user:${userId}`;
           const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
           await minioClient.putObject(
-            BUCKET_NAME,
+            MINIO.BUCKET_REGION,
             objectName,
             qrBuffer,
             qrBuffer.length,
@@ -426,7 +423,7 @@ export const memberRouter = {
         });
       await db.insert(DuesPayment).values({
         memberId: input.id,
-        amount: DUES_PAYMENT as number,
+        amount: CLUB.DUES_PAYMENT as number,
         paymentDate: new Date(),
         year: new Date().getFullYear(),
       });

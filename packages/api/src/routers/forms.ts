@@ -5,12 +5,7 @@ import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
-import {
-  FORM_ASSETS_BUCKET,
-  FORMS,
-  KNIGHTHACKS_S3_BUCKET_REGION,
-  PRESIGNED_URL_EXPIRY,
-} from "@forge/consts";
+import { FORMS, MINIO } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";
 import {
@@ -721,26 +716,28 @@ export const formsRouter = {
 
       try {
         // Ensure bucket exists
-        const bucketExists = await minioClient.bucketExists(FORM_ASSETS_BUCKET);
+        const bucketExists = await minioClient.bucketExists(
+          MINIO.FORM_ASSETS_BUCKET_NAME,
+        );
         if (!bucketExists) {
           await minioClient.makeBucket(
-            FORM_ASSETS_BUCKET,
-            KNIGHTHACKS_S3_BUCKET_REGION,
+            MINIO.FORM_ASSETS_BUCKET_NAME,
+            MINIO.BUCKET_REGION,
           );
         }
 
         // Generate presigned PUT URL for upload (15 minutes to complete upload)
         const uploadUrl = await minioClient.presignedPutObject(
-          FORM_ASSETS_BUCKET,
+          MINIO.FORM_ASSETS_BUCKET_NAME,
           objectName,
           15 * 60, // 15 minutes
         );
 
         // Generate presigned GET URL for immediate preview
         const viewUrl = await minioClient.presignedGetObject(
-          FORM_ASSETS_BUCKET,
+          MINIO.FORM_ASSETS_BUCKET_NAME,
           objectName,
-          PRESIGNED_URL_EXPIRY,
+          MINIO.PRESIGNED_URL_EXPIRY,
         );
 
         return { uploadUrl, objectName, viewUrl };
@@ -764,7 +761,10 @@ export const formsRouter = {
       const { objectName } = input;
 
       try {
-        await minioClient.removeObject(FORM_ASSETS_BUCKET, objectName);
+        await minioClient.removeObject(
+          MINIO.FORM_ASSETS_BUCKET_NAME,
+          objectName,
+        );
         return { success: true };
       } catch (e) {
         console.error("deleteMedia error:", e);
@@ -787,9 +787,9 @@ export const formsRouter = {
 
       try {
         const viewUrl = await minioClient.presignedGetObject(
-          FORM_ASSETS_BUCKET,
+          MINIO.FORM_ASSETS_BUCKET_NAME,
           objectName,
-          PRESIGNED_URL_EXPIRY,
+          MINIO.PRESIGNED_URL_EXPIRY,
         );
         return { viewUrl };
       } catch (e) {

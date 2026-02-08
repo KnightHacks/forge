@@ -9,16 +9,7 @@ import { google } from "googleapis";
 import Stripe from "stripe";
 
 import type { Session } from "@forge/auth/server";
-import type { PermissionIndex, PermissionKey } from "@forge/consts";
-import {
-  DISCORD,
-  FORM_ASSETS_BUCKET,
-  FORMS,
-  GOOGLE_PERSONIFY_EMAIL,
-  PERMISSION_DATA,
-  PERMISSIONS,
-  PRESIGNED_URL_EXPIRY,
-} from "@forge/consts";
+import { DISCORD, EVENTS, FORMS, MINIO, PERMISSIONS } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { JudgeSession, Roles } from "@forge/db/schemas/auth";
 import { client } from "@forge/email";
@@ -71,7 +62,7 @@ export const isDiscordAdmin = async (user: Session["user"]) => {
 
 export const hasPermission = (
   userPermissions: string,
-  permission: PermissionIndex,
+  permission: PERMISSIONS.PermissionIndex,
 ): boolean => {
   const permissionBit = userPermissions[permission];
   return permissionBit === "1";
@@ -113,14 +104,14 @@ export const parsePermissions = async (discordUserId: string) => {
   // creates the map of permissions to their boolean values
   const permissionsMap = Object.keys(PERMISSIONS).reduce(
     (accumulator, key) => {
-      const index = PERMISSIONS[key];
+      const index = PERMISSIONS.PERMISSIONS[key];
       if (index === undefined) return accumulator;
 
       accumulator[key] = permissionsBits[index] ?? false;
 
       return accumulator;
     },
-    {} as Record<PermissionKey, boolean>,
+    {} as Record<PERMISSIONS.PermissionKey, boolean>,
   );
 
   return permissionsMap;
@@ -129,13 +120,13 @@ export const parsePermissions = async (discordUserId: string) => {
 // Mock tRPC context for type-safety
 interface Context {
   session: {
-    permissions: Record<PermissionKey, boolean>;
+    permissions: Record<PERMISSIONS.PermissionKey, boolean>;
   };
 }
 
 export const controlPerms = {
   // Returns true if the user has any required permission OR has isOfficer role
-  or: (perms: PermissionKey[], ctx: Context) => {
+  or: (perms: PERMISSIONS.PermissionKey[], ctx: Context) => {
     // first check if user has IS_OFFICER
     if (ctx.session.permissions.IS_OFFICER) return true;
 
@@ -146,7 +137,7 @@ export const controlPerms = {
   },
 
   // Returns true only if the user has ALL required permissions
-  and: (perms: PermissionKey[], ctx: Context) => {
+  and: (perms: PERMISSIONS.PermissionKey[], ctx: Context) => {
     // first check if user has IS_OFFICER
     if (ctx.session.permissions.IS_OFFICER) return true;
 
@@ -300,7 +291,7 @@ const auth = new google.auth.JWT(
   undefined,
   GOOGLE_PRIVATE_KEY,
   [gapiCalendar, gapiGmailSend, gapiGmailSettingsSharing],
-  GOOGLE_PERSONIFY_EMAIL as string,
+  EVENTS.GOOGLE_PERSONIFY_EMAIL as string,
 );
 
 export const gmail = google.gmail({
@@ -459,9 +450,9 @@ export async function regenerateMediaUrls(
       if ("imageObjectName" in i && i.imageObjectName) {
         try {
           updated.imageUrl = await minioClient.presignedGetObject(
-            FORM_ASSETS_BUCKET,
+            MINIO.FORM_ASSETS_BUCKET_NAME,
             i.imageObjectName,
-            PRESIGNED_URL_EXPIRY,
+            MINIO.PRESIGNED_URL_EXPIRY,
           );
         } catch (e) {
           console.error("Failed to regenerate image URL:", e);
@@ -472,9 +463,9 @@ export async function regenerateMediaUrls(
       if ("videoObjectName" in i && i.videoObjectName) {
         try {
           updated.videoUrl = await minioClient.presignedGetObject(
-            FORM_ASSETS_BUCKET,
+            MINIO.FORM_ASSETS_BUCKET_NAME,
             i.videoObjectName,
-            PRESIGNED_URL_EXPIRY,
+            MINIO.PRESIGNED_URL_EXPIRY,
           );
         } catch (e) {
           console.error("Failed to regenerate video URL:", e);
@@ -494,7 +485,7 @@ export function getPermsAsList(perms: string) {
   for (let i = 0; i < perms.length; i++) {
     const permKey = permKeys.at(i);
     if (perms[i] == "1" && permKey) {
-      const permissionData = PERMISSION_DATA[permKey];
+      const permissionData = PERMISSIONS.PERMISSION_DATA[permKey];
       if (permissionData) list.push(permissionData.name);
     }
   }

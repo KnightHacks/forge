@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import Stripe from "stripe";
 import { z } from "zod";
 
-import { KNIGHTHACKS_MEMBERSHIP_PRICE } from "@forge/consts";
+import { CLUB } from "@forge/consts";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
@@ -19,7 +19,7 @@ export const duesPaymentRouter = {
         ? "http://localhost:3000"
         : "https://blade.knighthacks.org";
 
-    const price = KNIGHTHACKS_MEMBERSHIP_PRICE as number;
+    const price = CLUB.MEMBERSHIP_PRICE as number;
 
     const member = await db
       .select()

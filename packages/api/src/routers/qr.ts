@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import QRCode from "qrcode";
 
-import { BUCKET_NAME, KNIGHTHACKS_S3_BUCKET_REGION } from "@forge/consts";
+import { MINIO } from "@forge/consts";
 
 import { minioClient } from "../minio/minio-client";
 import { protectedProcedure } from "../trpc";
@@ -13,19 +13,21 @@ export const qrRouter = {
 
     try {
       try {
-        await minioClient.statObject(BUCKET_NAME, objectName);
+        await minioClient.statObject(MINIO.QR_BUCKET_NAME, objectName);
       } catch {
-        const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+        const bucketExists = await minioClient.bucketExists(
+          MINIO.QR_BUCKET_NAME,
+        );
         if (!bucketExists) {
           await minioClient.makeBucket(
-            BUCKET_NAME,
-            KNIGHTHACKS_S3_BUCKET_REGION,
+            MINIO.QR_BUCKET_NAME,
+            MINIO.BUCKET_REGION,
           );
         }
         const qrData = `user:${userId}`;
         const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
         await minioClient.putObject(
-          BUCKET_NAME,
+          MINIO.QR_BUCKET_NAME,
           objectName,
           qrBuffer,
           qrBuffer.length,
@@ -34,7 +36,7 @@ export const qrRouter = {
       }
 
       const qrCodeUrl = await minioClient.presignedGetObject(
-        BUCKET_NAME,
+        MINIO.QR_BUCKET_NAME,
         objectName,
         60 * 60 * 24,
       );

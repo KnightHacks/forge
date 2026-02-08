@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { Client } from "minio";
 import { z } from "zod";
 
-import { KNIGHTHACKS_S3_BUCKET_REGION } from "@forge/consts";
+import { MINIO } from "@forge/consts";
 import { db } from "@forge/db/client";
 
 import { env } from "../env";
@@ -39,7 +39,7 @@ export const resumeRouter = {
         // Ensure bucket exists
         const bucketExists = await s3Client.bucketExists(bucketName);
         if (!bucketExists) {
-          await s3Client.makeBucket(bucketName, KNIGHTHACKS_S3_BUCKET_REGION);
+          await s3Client.makeBucket(bucketName, MINIO.BUCKET_REGION);
         }
 
         // Overwrite any existing resume associated with the user

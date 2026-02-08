@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
-import { DISCORD } from "@forge/consts";
+import { DISCORD, FORMS, TEAM } from "@forge/consts";
 
 import { protectedProcedure } from "../trpc";
 import { discord } from "../utils";
@@ -84,7 +84,7 @@ export const miscRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      if (!DISCORD.ALLOWED_FORM_ASSIGNABLE_DISC_ROLES.includes(input.roleId)) {
+      if (FORMS.ALLOWED_ASSIGNABLE_DISCORD_ROLES.includes(input.roleId)) {
         throw new Error(
           `Roleid: ${input.roleId} is not assignable through forms for security purposes. Add to consts and make a PR if this is a mistake.`,
         );
@@ -129,7 +129,7 @@ export const miscRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      const team = DISCORD.TEAMS.find((team) => team.team === input.team);
+      const team = TEAM.TEAMS.find((team) => team.team === input.team);
       if (!team) {
         throw new Error("Team not found");
       }

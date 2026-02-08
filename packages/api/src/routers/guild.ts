@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { Client } from "minio";
 import { z } from "zod";
 
-import { KNIGHTHACKS_S3_BUCKET_REGION } from "@forge/consts";
+import { MINIO } from "@forge/consts";
 import { and, count, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
@@ -12,8 +12,6 @@ import { Member } from "@forge/db/schemas/knight-hacks";
 import { env } from "../env";
 import { minioClient } from "../minio/minio-client";
 import { protectedProcedure, publicProcedure } from "../trpc";
-
-const GUILD_PROFILE_PICTURES_BUCKET_NAME = "guild-profile-pictures";
 
 const s3Client = new Client({
   endPoint: env.MINIO_ENDPOINT,
@@ -58,12 +56,12 @@ export const guildRouter = {
 
       try {
         const bucketExists = await minioClient.bucketExists(
-          GUILD_PROFILE_PICTURES_BUCKET_NAME,
+          MINIO.PROFILE_PICTURES_BUCKET_NAME,
         );
         if (!bucketExists) {
           await minioClient.makeBucket(
-            GUILD_PROFILE_PICTURES_BUCKET_NAME,
-            KNIGHTHACKS_S3_BUCKET_REGION,
+            MINIO.PROFILE_PICTURES_BUCKET_NAME,
+            MINIO.BUCKET_REGION,
           );
         }
       } catch (e) {
@@ -80,7 +78,7 @@ export const guildRouter = {
       const existingObjects: string[] = [];
       try {
         const stream = minioClient.listObjects(
-          GUILD_PROFILE_PICTURES_BUCKET_NAME,
+          MINIO.PROFILE_PICTURES_BUCKET_NAME,
           userDirectory,
           true,
         ) as AsyncIterable<BucketItem>;
@@ -99,7 +97,7 @@ export const guildRouter = {
       if (existingObjects.length > 0) {
         try {
           await minioClient.removeObjects(
-            GUILD_PROFILE_PICTURES_BUCKET_NAME,
+            MINIO.PROFILE_PICTURES_BUCKET_NAME,
             existingObjects,
           );
         } catch (e) {
@@ -116,7 +114,7 @@ export const guildRouter = {
 
       try {
         await minioClient.putObject(
-          GUILD_PROFILE_PICTURES_BUCKET_NAME,
+          MINIO.PROFILE_PICTURES_BUCKET_NAME,
           objectName,
           fileBuffer,
           fileBuffer.length,
@@ -133,7 +131,7 @@ export const guildRouter = {
         });
       }
 
-      const publicUrl = `https://${env.MINIO_ENDPOINT}/${GUILD_PROFILE_PICTURES_BUCKET_NAME}/${objectName}`;
+      const publicUrl = `https://${env.MINIO_ENDPOINT}/${MINIO.PROFILE_PICTURES_BUCKET_NAME}/${objectName}`;
 
       return { profilePictureUrl: publicUrl };
     }),

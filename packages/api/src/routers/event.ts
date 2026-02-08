@@ -5,12 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
-import {
-  CALENDAR_TIME_ZONE,
-  DISCORD,
-  EVENTS,
-  GOOGLE_CALENDAR_ID,
-} from "@forge/consts";
+import { DISCORD, EVENTS } from "@forge/consts";
 import { count, desc, eq, getTableColumns } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
@@ -129,10 +124,10 @@ export const eventRouter = {
             body: {
               description: hackDesc + input.description + pointDesc,
               name: formattedName,
-              privacy_level: DISCORD.DISCORD_EVENT_PRIVACY_LEVEL,
+              privacy_level: DISCORD.EVENT_PRIVACY_LEVEL,
               scheduled_start_time: startLocalIso, // Use ISO for Discord
               scheduled_end_time: endLocalIso, // Use ISO for Discord
-              entity_type: DISCORD.DISCORD_EVENT_TYPE,
+              entity_type: DISCORD.EVENT_TYPE,
               entity_metadata: {
                 location: input.location,
               },
@@ -152,15 +147,15 @@ export const eventRouter = {
       let googleEventId: string | undefined;
       try {
         const response = await calendar.events.insert({
-          calendarId: GOOGLE_CALENDAR_ID,
+          calendarId: EVENTS.GOOGLE_CALENDAR_ID,
           requestBody: {
             end: {
               dateTime: endLocalIso, // ISO for Google Calendar
-              timeZone: CALENDAR_TIME_ZONE,
+              timeZone: EVENTS.CALENDAR_TIME_ZONE,
             },
             start: {
               dateTime: startLocalIso, // ISO for Google Calendar
-              timeZone: CALENDAR_TIME_ZONE,
+              timeZone: EVENTS.CALENDAR_TIME_ZONE,
             },
             description: input.description,
             summary: formattedName,
@@ -238,7 +233,7 @@ export const eventRouter = {
         // Clean up the event in Google Calendar if the database insert fails
         try {
           await calendar.events.delete({
-            calendarId: GOOGLE_CALENDAR_ID,
+            calendarId: EVENTS.GOOGLE_CALENDAR_ID,
             eventId: googleEventId,
           });
         } catch (cleanupErr) {
@@ -326,10 +321,10 @@ export const eventRouter = {
             body: {
               description: hackDesc + input.description + pointDesc,
               name: formattedName,
-              privacy_level: DISCORD.DISCORD_EVENT_PRIVACY_LEVEL,
+              privacy_level: DISCORD.EVENT_PRIVACY_LEVEL,
               scheduled_start_time: startLocalIso,
               scheduled_end_time: endLocalIso,
-              entity_type: DISCORD.DISCORD_EVENT_TYPE,
+              entity_type: DISCORD.EVENT_TYPE,
               entity_metadata: {
                 location: input.location,
               },
@@ -347,16 +342,16 @@ export const eventRouter = {
       // Step 2: Update the event in Google Calendar
       try {
         await calendar.events.update({
-          calendarId: GOOGLE_CALENDAR_ID,
+          calendarId: EVENTS.GOOGLE_CALENDAR_ID,
           eventId: input.googleId,
           requestBody: {
             end: {
               dateTime: endLocalIso,
-              timeZone: CALENDAR_TIME_ZONE,
+              timeZone: EVENTS.CALENDAR_TIME_ZONE,
             },
             start: {
               dateTime: startLocalIso,
-              timeZone: CALENDAR_TIME_ZONE,
+              timeZone: EVENTS.CALENDAR_TIME_ZONE,
             },
             description: input.description,
             summary: formattedName,
@@ -498,7 +493,7 @@ export const eventRouter = {
       // Step 2: Delete the event in the Google Calendar
       try {
         await calendar.events.delete({
-          calendarId: GOOGLE_CALENDAR_ID,
+          calendarId: EVENTS.GOOGLE_CALENDAR_ID,
           eventId: input.googleId,
         } as calendar_v3.Params$Resource$Events$Delete);
       } catch (error) {
