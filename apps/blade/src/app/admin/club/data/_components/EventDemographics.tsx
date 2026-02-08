@@ -2,11 +2,6 @@
 
 import { useState } from "react";
 
-import type { Semester } from "@forge/consts/knight-hacks";
-import {
-  ALL_DATES_RANGE_UNIX,
-  SEMESTER_START_DATES,
-} from "@forge/consts/knight-hacks";
 import { Checkbox } from "@forge/ui/checkbox";
 import {
   Select,
@@ -22,19 +17,20 @@ import AttendancesMobile from "./event-data/AttendancesMobile";
 import PopularityRanking from "./event-data/PopularityRanking";
 import TypePie from "./event-data/TypePie";
 import { WeekdayPopularityRadar } from "./event-data/WeekdayPopularityRadar";
+import { FORMS } from '@forge/consts';
 
 export default function EventDemographics() {
   const { data: events } = api.event.getEvents.useQuery();
-  const semestersArr: Semester[] = [
+  const semestersArr: FORMS.Semester[] = [
     {
       name: "All Semesters",
-      startDate: new Date(ALL_DATES_RANGE_UNIX.start),
-      endDate: new Date(ALL_DATES_RANGE_UNIX.end),
+      startDate: new Date(FORMS.ALL_DATES_RANGE_UNIX.start),
+      endDate: new Date(FORMS.ALL_DATES_RANGE_UNIX.end),
     },
   ]; // for select options
 
   const defaultSemester = semestersArr[0] ?? null;
-  const [activeSemester, setActiveSemester] = useState<Semester | null>(
+  const [activeSemester, setActiveSemester] = useState<FORMS.Semester | null>(
     defaultSemester,
   );
   const [includeHackathons, setIncludeHackathons] = useState(false);
@@ -43,13 +39,13 @@ export default function EventDemographics() {
   events?.forEach(({ start_datetime }) => {
     const year = start_datetime.getFullYear();
     const springStart = new Date(
-      `${year}-${SEMESTER_START_DATES.spring.month + 1}-${SEMESTER_START_DATES.spring.day}`,
+      `${year}-${FORMS.SEMESTER_START_DATES.spring.month + 1}-${FORMS.SEMESTER_START_DATES.spring.day}`,
     );
     const summerStart = new Date(
-      `${year}-${SEMESTER_START_DATES.summer.month + 1}-${SEMESTER_START_DATES.summer.day}`,
+      `${year}-${FORMS.SEMESTER_START_DATES.summer.month + 1}-${FORMS.SEMESTER_START_DATES.summer.day}`,
     );
     const fallStart = new Date(
-      `${year}-${SEMESTER_START_DATES.fall.month + 1}-${SEMESTER_START_DATES.fall.day}`,
+      `${year}-${FORMS.SEMESTER_START_DATES.fall.month + 1}-${FORMS.SEMESTER_START_DATES.fall.day}`,
     );
 
     // keep track of semesters that exist in events table of db
@@ -58,7 +54,7 @@ export default function EventDemographics() {
       if (!semestersSet.has(semesterName)) {
         semestersSet.add(semesterName);
         const springEnd = new Date(
-          `${year}-${SEMESTER_START_DATES.summer.month + 1}-${SEMESTER_START_DATES.summer.day}`,
+          `${year}-${FORMS.SEMESTER_START_DATES.summer.month + 1}-${FORMS.SEMESTER_START_DATES.summer.day}`,
         );
         semestersArr.push({
           name: semesterName,
@@ -71,7 +67,7 @@ export default function EventDemographics() {
       if (!semestersSet.has(semesterName)) {
         semestersSet.add(semesterName);
         const summerEnd = new Date(
-          `${year}-${SEMESTER_START_DATES.fall.month + 1}-${SEMESTER_START_DATES.fall.day}`,
+          `${year}-${FORMS.SEMESTER_START_DATES.fall.month + 1}-${FORMS.SEMESTER_START_DATES.fall.day}`,
         );
         semestersArr.push({
           name: semesterName,
@@ -87,7 +83,7 @@ export default function EventDemographics() {
       if (!semestersSet.has(semesterName)) {
         semestersSet.add(semesterName);
         const fallEnd = new Date(
-          `${year + 1}-${SEMESTER_START_DATES.spring.month + 1}-${SEMESTER_START_DATES.spring.day}`,
+          `${year + 1}-${FORMS.SEMESTER_START_DATES.spring.month + 1}-${FORMS.SEMESTER_START_DATES.spring.day}`,
         );
         semestersArr.push({
           name: semesterName,

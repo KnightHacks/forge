@@ -12,7 +12,7 @@ import {
   Users,
 } from "lucide-react";
 
-import type { PermissionKey } from "@forge/consts/knight-hacks";
+import type { PermissionKey } from "@forge/consts";
 
 import { USER_DROPDOWN_ICON_COLOR, USER_DROPDOWN_ICON_SIZE } from "~/consts";
 

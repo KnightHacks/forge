@@ -5,11 +5,6 @@ import { Loader2, Pencil } from "lucide-react";
 import { z } from "zod";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
-import {
-  LEVELS_OF_STUDY,
-  SCHOOLS,
-  SHIRT_SIZES,
-} from "@forge/consts/knight-hacks";
 import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
@@ -42,6 +37,7 @@ import {
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
+import { FORMS } from '@forge/consts';
 
 export default function UpdateMemberButton({
   member,
@@ -267,7 +263,7 @@ export default function UpdateMemberButton({
                         </FormLabel>
                         <FormControl>
                           <ResponsiveComboBox
-                            items={SCHOOLS}
+                            items={FORMS.SCHOOLS}
                             renderItem={(school) => <div>{school}</div>}
                             getItemValue={(school) => school}
                             getItemLabel={(school) => school}
@@ -320,7 +316,7 @@ export default function UpdateMemberButton({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {LEVELS_OF_STUDY.map((level) => (
+                              {FORMS.LEVELS_OF_STUDY.map((level) => (
                                 <SelectItem key={level} value={level}>
                                   {level}
                                 </SelectItem>
@@ -354,7 +350,7 @@ export default function UpdateMemberButton({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {SHIRT_SIZES.map((shirt_size) => (
+                              {FORMS.SHIRT_SIZES.map((shirt_size) => (
                                 <SelectItem key={shirt_size} value={shirt_size}>
                                   {shirt_size}
                                 </SelectItem>

@@ -10,22 +10,19 @@ import {
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
-import {
-  ADMIN_PIE_CHART_COLORS,
-  WEEKDAY_ORDER,
-} from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@forge/ui/chart";
+import { FORMS } from '@forge/consts';
 
 export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
   const chartConfig = {
     attendees: {
       label: "Average attendees",
-      color: ADMIN_PIE_CHART_COLORS[1],
+      color: FORMS.ADMIN_PIE_CHART_COLORS[1],
     },
   } satisfies ChartConfig;
 
@@ -106,11 +103,11 @@ export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
     .map(([weekday, { totalAttendees, totalEvents }]) => ({
       weekday: weekday,
       avgAttendees: (totalAttendees / totalEvents).toFixed(0),
-      fill: ADMIN_PIE_CHART_COLORS[1],
+      fill: FORMS.ADMIN_PIE_CHART_COLORS[1],
     }))
     .sort(
       (a, b) =>
-        WEEKDAY_ORDER.indexOf(a.weekday) - WEEKDAY_ORDER.indexOf(b.weekday),
+        FORMS.WEEKDAY_ORDER.indexOf(a.weekday) - FORMS.WEEKDAY_ORDER.indexOf(b.weekday),
     );
 
   const maxAvgAttendees = Math.max(
@@ -145,7 +142,7 @@ export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
               <Radar
                 dataKey="avgAttendees"
                 name="Average Attendees:"
-                fill={ADMIN_PIE_CHART_COLORS[1]}
+                fill={FORMS.ADMIN_PIE_CHART_COLORS[1]}
                 fillOpacity={0.6}
                 dot={{
                   r: 4,

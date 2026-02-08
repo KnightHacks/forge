@@ -4,9 +4,8 @@ import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { useEffect, useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
-import type { GENDERS } from "@forge/consts/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
-import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
+import { FORMS } from "@forge/consts";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
@@ -23,7 +22,7 @@ import {
 } from "@forge/ui/select";
 
 interface Person {
-  gender?: (typeof GENDERS)[number];
+  gender?: (typeof FORMS.GENDERS)[number];
 }
 
 export default function GenderPie({ people }: { people: Person[] }) {
@@ -61,7 +60,10 @@ export default function GenderPie({ people }: { people: Person[] }) {
     if (gender && !baseConfig[gender]) {
       baseConfig[gender] = {
         label: gender,
-        color: ADMIN_PIE_CHART_COLORS[colorIdx % ADMIN_PIE_CHART_COLORS.length],
+        color:
+          FORMS.ADMIN_PIE_CHART_COLORS[
+            colorIdx % FORMS.ADMIN_PIE_CHART_COLORS.length
+          ],
       };
       colorIdx++;
     }
@@ -192,8 +194,8 @@ export default function GenderPie({ people }: { people: Person[] }) {
                 <Cell
                   key={`cell-${index}`}
                   fill={
-                    ADMIN_PIE_CHART_COLORS[
-                      index % ADMIN_PIE_CHART_COLORS.length
+                    FORMS.ADMIN_PIE_CHART_COLORS[
+                      index % FORMS.ADMIN_PIE_CHART_COLORS.length
                     ]
                   }
                 />

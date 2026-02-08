@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { z } from "zod";
 
-import { EVENT_TAGS } from "@forge/consts/knight-hacks";
 import { InsertEventSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -39,6 +38,7 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
+import { EVENTS } from '@forge/consts';
 
 // 12-hour-based hours (1–12), displayed as "01", "02", ..., "12"
 const hours = Array.from({ length: 12 }, (_, i) =>
@@ -101,7 +101,7 @@ export function CreateEventButton() {
       description: "",
       dues_paying: false,
       location: "",
-      tag: EVENT_TAGS[0],
+      tag: EVENTS.EVENT_TAGS[0],
       hackathonId: "none",
       startDate: "",
       endDate: "",
@@ -261,7 +261,7 @@ export function CreateEventButton() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {EVENT_TAGS.map((tagOption) => (
+                            {EVENTS.EVENT_TAGS.map((tagOption) => (
                               <SelectItem key={tagOption} value={tagOption}>
                                 {tagOption}
                               </SelectItem>

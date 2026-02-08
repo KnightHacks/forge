@@ -6,7 +6,6 @@ import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
-import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
@@ -21,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
+import { FORMS } from '@forge/consts';
 
 export default function TypePie({ events }: { events: ReturnEvent[] }) {
   const id = "pie-interactive";
@@ -66,7 +66,7 @@ export default function TypePie({ events }: { events: ReturnEvent[] }) {
     if (!baseConfig[tag]) {
       baseConfig[tag] = {
         label: tag,
-        color: ADMIN_PIE_CHART_COLORS[colorIdx % ADMIN_PIE_CHART_COLORS.length],
+        color: FORMS.ADMIN_PIE_CHART_COLORS[colorIdx % FORMS.ADMIN_PIE_CHART_COLORS.length],
       };
       colorIdx++;
     }
@@ -183,8 +183,8 @@ export default function TypePie({ events }: { events: ReturnEvent[] }) {
                 <Cell
                   key={`cell-${index}`}
                   fill={
-                    ADMIN_PIE_CHART_COLORS[
-                      index % ADMIN_PIE_CHART_COLORS.length
+                    FORMS.ADMIN_PIE_CHART_COLORS[
+                      index % FORMS.ADMIN_PIE_CHART_COLORS.length
                     ]
                   }
                 />

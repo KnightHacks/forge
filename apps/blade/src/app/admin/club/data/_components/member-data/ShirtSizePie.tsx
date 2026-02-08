@@ -4,9 +4,8 @@ import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { useEffect, useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
-import type { SHIRT_SIZES } from "@forge/consts/knight-hacks";
+import { FORMS } from "@forge/consts";
 import type { ChartConfig } from "@forge/ui/chart";
-import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
@@ -23,7 +22,7 @@ import {
 } from "@forge/ui/select";
 
 interface Member {
-  shirtSize?: (typeof SHIRT_SIZES)[number];
+  shirtSize?: (typeof FORMS.SHIRT_SIZES)[number];
 }
 
 export default function ShirtSizePie({ members }: { members: Member[] }) {
@@ -66,7 +65,7 @@ export default function ShirtSizePie({ members }: { members: Member[] }) {
     if (shirtSize && !baseConfig[shirtSize]) {
       baseConfig[shirtSize] = {
         label: shirtSize,
-        color: ADMIN_PIE_CHART_COLORS[colorIdx % ADMIN_PIE_CHART_COLORS.length],
+        color: FORMS.ADMIN_PIE_CHART_COLORS[colorIdx % FORMS.ADMIN_PIE_CHART_COLORS.length],
       };
       colorIdx++;
     }
@@ -197,8 +196,8 @@ export default function ShirtSizePie({ members }: { members: Member[] }) {
                 <Cell
                   key={`cell-${index}`}
                   fill={
-                    ADMIN_PIE_CHART_COLORS[
-                      index % ADMIN_PIE_CHART_COLORS.length
+                    FORMS.ADMIN_PIE_CHART_COLORS[
+                      index % FORMS.ADMIN_PIE_CHART_COLORS.length
                     ]
                   }
                 />

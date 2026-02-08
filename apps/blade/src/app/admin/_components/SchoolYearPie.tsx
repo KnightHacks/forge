@@ -5,11 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
 
 import type { ChartConfig } from "@forge/ui/chart";
-import {
-  ADMIN_PIE_CHART_COLORS,
-  LEVELS_OF_STUDY,
-  SHORT_LEVELS_OF_STUDY,
-} from "@forge/consts/knight-hacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
@@ -24,19 +19,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
+import { FORMS } from '@forge/consts';
 
 interface Person {
-  levelOfStudy?: (typeof LEVELS_OF_STUDY)[number];
+  levelOfStudy?: (typeof FORMS.LEVELS_OF_STUDY)[number];
 }
 
 const shortenLevelOfStudy = (levelOfStudy: string): string => {
   const replacements: Record<string, string> = {
     // Undergraduate University (2 year - community college or similar)
-    [LEVELS_OF_STUDY[2]]: SHORT_LEVELS_OF_STUDY[0], // Undergraduate University (2 year)
+    [FORMS.LEVELS_OF_STUDY[2]]: FORMS.SHORT_LEVELS_OF_STUDY[0], // Undergraduate University (2 year)
     // Graduate University (Masters, Professional, Doctoral, etc)
-    [LEVELS_OF_STUDY[4]]: SHORT_LEVELS_OF_STUDY[1], // Graduate University (Masters/PhD)
+    [FORMS.LEVELS_OF_STUDY[4]]: FORMS.SHORT_LEVELS_OF_STUDY[1], // Graduate University (Masters/PhD)
     // Other Vocational / Trade Program or Apprenticeship
-    [LEVELS_OF_STUDY[6]]: SHORT_LEVELS_OF_STUDY[2], // Vocational/Trade School
+    [FORMS.LEVELS_OF_STUDY[6]]: FORMS.SHORT_LEVELS_OF_STUDY[2], // Vocational/Trade School
   };
   return replacements[levelOfStudy] ?? levelOfStudy;
 };
@@ -84,7 +80,7 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
     if (shortenedString && !baseConfig[shortenedString]) {
       baseConfig[shortenedString] = {
         label: shortenedString,
-        color: ADMIN_PIE_CHART_COLORS[colorIdx % ADMIN_PIE_CHART_COLORS.length],
+        color: FORMS.ADMIN_PIE_CHART_COLORS[colorIdx % FORMS.ADMIN_PIE_CHART_COLORS.length],
       };
       colorIdx++;
     }
@@ -217,8 +213,8 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
                 <Cell
                   key={`cell-${index}`}
                   fill={
-                    ADMIN_PIE_CHART_COLORS[
-                      index % ADMIN_PIE_CHART_COLORS.length
+                    FORMS.ADMIN_PIE_CHART_COLORS[
+                      index % FORMS.ADMIN_PIE_CHART_COLORS.length
                     ]
                   }
                 />
