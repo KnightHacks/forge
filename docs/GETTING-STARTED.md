@@ -75,7 +75,7 @@ docker compose up
 
 > IMPORTANT!
 
-You must push the database schema to your local database before running the project. This is a common source of errors for new contributors.
+You must push the database schema to your local database before running the project. This is a common source of errors for new contributors. The most common error for this will be a "Failed to get current session" error on any page within Blade.
 
 ```bash
 pnpm db:push
