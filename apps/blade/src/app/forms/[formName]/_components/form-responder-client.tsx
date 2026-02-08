@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
+import Link from "next/link";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 
 import type { FORMS } from "@forge/consts";
@@ -9,12 +11,18 @@ import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 
 import type { FormResponsePayload } from "./utils";
+import type { FormResponsePayload } from "./utils";
 import { api } from "~/trpc/react";
 import { useSubmissionSuccess } from "../_hooks/useSubmissionSuccess";
 import FormNotFound from "./form-not-found";
 import { FormRunner } from "./form-runner";
 import { SubmissionSuccessCard } from "./form-submitted-success";
+import { useSubmissionSuccess } from "../_hooks/useSubmissionSuccess";
+import FormNotFound from "./form-not-found";
+import { FormRunner } from "./form-runner";
+import { SubmissionSuccessCard } from "./form-submitted-success";
 
+interface FormResponderWrapperProps {
 interface FormResponderWrapperProps {
   formName: string;
   userName: string;
@@ -22,19 +30,30 @@ interface FormResponderWrapperProps {
 }
 
 export function FormResponderWrapper({
+export function FormResponderWrapper({
   formName,
   userName,
   handleCallbacks,
+}: FormResponderWrapperProps) {
 }: FormResponderWrapperProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const { showCheckmark, showText, redirectCountdown } =
     useSubmissionSuccess(isSubmitted);
+  const { showCheckmark, showText, redirectCountdown } =
+    useSubmissionSuccess(isSubmitted);
 
+  const formQuery = api.forms.getForm.useQuery({ slug_name: formName });
   const formQuery = api.forms.getForm.useQuery({ slug_name: formName });
   const duesQuery = api.duesPayment.validatePaidDues.useQuery();
 
+  const formIdGate = formQuery.data?.id;
+
+  const existingResponseQuery = api.forms.getUserResponse.useQuery(
+    { form: formIdGate },
+    { enabled: !!formIdGate },
+  );
   const formIdGate = formQuery.data?.id;
 
   const existingResponseQuery = api.forms.getUserResponse.useQuery(
@@ -59,6 +78,7 @@ export function FormResponderWrapper({
     formQuery.isLoading ||
     duesQuery.isLoading ||
     existingResponseQuery.isLoading
+  ) {
   ) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
@@ -87,7 +107,9 @@ export function FormResponderWrapper({
     : (duesQuery.data?.duesPaid ?? false);
 
   const hasAlreadySubmitted = (existingResponseQuery.data?.length ?? 0) !== 0;
+  const hasAlreadySubmitted = (existingResponseQuery.data?.length ?? 0) !== 0;
 
+  // dues gate
   // dues gate
   if (isDuesOnly && !hasPaidDues) {
     return (
@@ -104,7 +126,9 @@ export function FormResponderWrapper({
   }
 
   // already submitted gate
+  // already submitted gate
   if (hasAlreadySubmitted && !allowResubmission) {
+    const existing = existingResponseQuery.data?.[0];
     const existing = existingResponseQuery.data?.[0];
     return (
       <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
@@ -122,11 +146,20 @@ export function FormResponderWrapper({
               </Button>
             </Link>
           )}
+
+          {existing && (
+            <Link href={`/forms/${existing.formSlug ?? ""}/${existing.id}`}>
+              <Button size="sm">
+                {allowEdit ? "Edit " : "View "} Response
+              </Button>
+            </Link>
+          )}
         </Card>
       </div>
     );
   }
 
+  // success
   // success
   if (isSubmitted) {
     return (
@@ -141,7 +174,20 @@ export function FormResponderWrapper({
   }
 
   const onSubmit = (payload: FormResponsePayload) => {
+      <SubmissionSuccessCard
+        userName={userName}
+        formName={form.name}
+        showCheckmark={showCheckmark}
+        showText={showText}
+        redirectCountdown={redirectCountdown}
+      />
+    );
+  }
+
+  const onSubmit = (payload: FormResponsePayload) => {
     submitResponse.mutate({
+      form: formId,
+      responseData: payload,
       form: formId,
       responseData: payload,
     });

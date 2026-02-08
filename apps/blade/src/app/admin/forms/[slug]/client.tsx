@@ -185,6 +185,7 @@ export function EditorClient({
   const [duesOnly, setDuesOnly] = useState(false);
   const [allowResubmission, setAllowResubmission] = useState(true);
   const [allowEdit, setAllowEdit] = useState(true);
+  const [allowEdit, setAllowEdit] = useState(true);
   const [responseRoleIds, setResponseRoleIds] = useState<string[]>([]);
   const [responseRolesDialogOpen, setResponseRolesDialogOpen] = useState(false);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
