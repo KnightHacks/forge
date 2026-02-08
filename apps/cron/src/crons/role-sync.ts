@@ -34,7 +34,7 @@ export const roleSync = new CronBuilder({
     let skippedCount = 0;
     let errorCount = 0;
 
-    let erroredUsers = [];
+    const erroredUsers = [];
 
     for (const user of users) {
       try {
@@ -100,9 +100,9 @@ export const roleSync = new CronBuilder({
     );
 
     if (errorCount > 0) {
-      console.log(`First ${erroredUsers.length} users it errored for:`);
+      console.warn(`First ${erroredUsers.length} users it errored for:`);
       for (const name of erroredUsers) {
-        console.log(name);
+        console.warn(name);
       }
     }
   },
