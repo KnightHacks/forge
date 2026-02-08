@@ -55,7 +55,11 @@ export function FormResponderWrapper({
     },
   });
 
-  if (formQuery.isLoading || duesQuery.isLoading) {
+  if (
+    formQuery.isLoading ||
+    duesQuery.isLoading ||
+    existingResponseQuery.isLoading
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -66,15 +70,6 @@ export function FormResponderWrapper({
   if (formQuery.error || !formQuery.data) return <FormNotFound />;
 
   const formId = formQuery.data.id;
-
-  // loading
-  if (existingResponseQuery.isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   // not found
   if (existingResponseQuery.error)

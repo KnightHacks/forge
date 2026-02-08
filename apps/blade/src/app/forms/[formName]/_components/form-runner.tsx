@@ -130,7 +130,8 @@ export function FormRunner({
         <Card className="border-t-8 border-t-primary duration-500 animate-in fade-in slide-in-from-top-4">
           <div className="space-y-2 p-6">
             <h1 className="text-3xl font-bold">
-              {(isReview && (allowEdit ? "Edit" : "View") + " - ") + form.name}
+              {isReview && `${allowEdit ? "Edit" : "View"} - `}
+              {form.name}
             </h1>
 
             {form.description && (
