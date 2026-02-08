@@ -1,7 +1,10 @@
-export * as DISCORD from "./discord";
 export * as FORMS from "./forms";
+export * as HACKATHONS from "./hackathons";
+export * as PROJECT_LAUNCH from "./project-launch";
+export * as CLUB from "./club";
+export * as DISCORD from "./discord";
 export * as EVENTS from "./events";
-export * as OFFICERS from "./officers";
-
-// TODO: get rid of misc
-export * from "./misc";
+export * as GUILD from "./guild";
+export * as MINIO from "./minio";
+export * as PERMISSIONS from "./permissions";
+export * as TEAM from "./team";

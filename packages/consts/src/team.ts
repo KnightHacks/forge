@@ -1,4 +1,4 @@
-export const LIST = [
+export const OFFICERS = [
   {
     name: "Dylan Vidal",
     position: "President",
@@ -43,4 +43,37 @@ export const LIST = [
   },
 ] as const;
 
-export type Officer = (typeof LIST)[number];
+export type Officer = (typeof OFFICERS)[number];
+
+export const TEAMS = [
+  {
+    team: "Outreach",
+    color: "#88fea1",
+    director_role: "779845137822908436",
+  },
+  {
+    team: "Design",
+    color: "#eaacff",
+    director_role: "874028482089349172",
+  },
+  {
+    team: "Development",
+    color: "#93ceff",
+    director_role: "1082124530077683772",
+  },
+  {
+    team: "Sponsorship",
+    color: "#f5f4af",
+    director_role: "626815399442513920",
+  },
+  {
+    team: "Workshops",
+    color: "#206694",
+    director_role: "757002949603098837",
+  },
+  {
+    team: "Projects/Mentorship",
+    color: "#3498db",
+    director_role: "1244790444626280550",
+  },
+];

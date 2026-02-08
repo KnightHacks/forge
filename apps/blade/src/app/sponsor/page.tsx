@@ -9,9 +9,6 @@ export const metadata: Metadata = {
   description: "Help us make dreams!",
 };
 
-// TODO: move to consts
-const SPONSOR_VIDEO_LINK_2 =
-  "https://www.youtube.com/embed/OzW_4QeCfM0?si=G8SUf8UbEo2W5MnL";
 
 const STATS = [
   { value: "1,000+", label: "Students" },

@@ -1,5 +1,7 @@
 import * as z from "zod";
 
+import { PROJECT_LAUNCH_26 } from "../project-launch";
+// These are elsewhere to reduce file length...
 import { COMPANIES } from "./companies";
 import { COUNTRIES } from "./countries";
 import { SCHOOLS } from "./schools";
@@ -138,60 +140,6 @@ export const SHORT_RACES_AND_ETHNICITIES = [
   "Native American/Alaskan Native",
 ] as const;
 
-export const QuestionValidator = z.object({
-  question: z.string(),
-  image: z.string().url().optional(),
-  type: z.enum([
-    "SHORT_ANSWER",
-    "PARAGRAPH",
-    "MULTIPLE_CHOICE",
-    "CHECKBOXES",
-    "DROPDOWN",
-    "LINEAR_SCALE",
-    "DATE",
-    "TIME",
-    "EMAIL",
-    "NUMBER",
-    "PHONE",
-    "FILE_UPLOAD",
-    "BOOLEAN",
-    "LINK",
-  ]),
-  options: z.array(z.string()).optional(),
-  optionsConst: z.string().optional(),
-  optional: z.boolean().optional(),
-  allowOther: z.boolean().optional(),
-  min: z.number().optional(),
-  max: z.number().optional(),
-  order: z.number().optional(),
-});
-
-export const InstructionValidator = z.object({
-  title: z.string().max(200),
-  content: z.string().max(2000).optional(),
-  imageUrl: z.string().url().optional(),
-  videoUrl: z.string().url().optional(),
-  imageObjectName: z.string().optional(),
-  videoObjectName: z.string().optional(),
-  order: z.number().optional(),
-});
-
-export const FormSchemaValidator = z.object({
-  banner: z.string().url().optional(),
-  name: z.string().max(200),
-  description: z.string().max(500),
-  questions: z.array(QuestionValidator),
-  instructions: z.array(InstructionValidator).optional(),
-});
-
-export type FormType = z.infer<typeof FormSchemaValidator>;
-export type InstructionValidatorType = z.infer<typeof InstructionValidator>;
-
-export type QuestionValidatorType = z.infer<typeof QuestionValidator>;
-export type ValidatorOptions = Omit<QuestionValidatorType, "question">;
-
-export type QuestionsType = z.infer<typeof QuestionValidator>["type"];
-
 export const AVAILABLE_DROPDOWN_CONSTANTS = {
   LEVELS_OF_STUDY: "Levels of Study",
   ALLERGIES: "Allergies",
@@ -222,6 +170,14 @@ export const EVENT_FEEDBACK_HEARD = [
   "From Class Presentation",
   "From Another Club",
 ] as const;
+
+export const TERM_TO_DATE = {
+  Spring: { month: 4, day: 2 }, // May 2
+  Summer: { month: 7, day: 6 }, // Aug 6
+  Fall: { month: 11, day: 10 }, // Dec 10
+} as const;
+
+export type GradTerm = keyof typeof TERM_TO_DATE;
 
 export function getDropdownOptionsFromConst(
   constName: string,
@@ -341,4 +297,62 @@ export interface Semester {
   endDate: Date;
 }
 
+export const ALLOWED_ASSIGNABLE_DISCORD_ROLES = [PROJECT_LAUNCH_26.MEMBER_ROLE];
+
+// TODO: decide where these go
+
 export const DEVPOST_TEAM_MEMBER_EMAIL_OFFSET = 3;
+
+export const QuestionValidator = z.object({
+  question: z.string(),
+  image: z.string().url().optional(),
+  type: z.enum([
+    "SHORT_ANSWER",
+    "PARAGRAPH",
+    "MULTIPLE_CHOICE",
+    "CHECKBOXES",
+    "DROPDOWN",
+    "LINEAR_SCALE",
+    "DATE",
+    "TIME",
+    "EMAIL",
+    "NUMBER",
+    "PHONE",
+    "FILE_UPLOAD",
+    "BOOLEAN",
+    "LINK",
+  ]),
+  options: z.array(z.string()).optional(),
+  optionsConst: z.string().optional(),
+  optional: z.boolean().optional(),
+  allowOther: z.boolean().optional(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+  order: z.number().optional(),
+});
+
+export const InstructionValidator = z.object({
+  title: z.string().max(200),
+  content: z.string().max(2000).optional(),
+  imageUrl: z.string().url().optional(),
+  videoUrl: z.string().url().optional(),
+  imageObjectName: z.string().optional(),
+  videoObjectName: z.string().optional(),
+  order: z.number().optional(),
+});
+
+export const FormSchemaValidator = z.object({
+  banner: z.string().url().optional(),
+  name: z.string().max(200),
+  description: z.string().max(500),
+  questions: z.array(QuestionValidator),
+  instructions: z.array(InstructionValidator).optional(),
+});
+
+export type FormType = z.infer<typeof FormSchemaValidator>;
+export type InstructionValidatorType = z.infer<typeof InstructionValidator>;
+
+export type QuestionValidatorType = z.infer<typeof QuestionValidator>;
+export type ValidatorOptions = Omit<QuestionValidatorType, "question">;
+
+export type QuestionsType = z.infer<typeof QuestionValidator>["type"];

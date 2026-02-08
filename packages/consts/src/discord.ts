@@ -1,10 +1,11 @@
-// TODO: JSDOC all all of the non PROD_ or DEV_ exports
-import { IS_PROD } from "../util";
-import * as KNIGHTHACKS_8 from "./knight-hacks-8";
-import * as PROJECT_LAUNCH_26 from "./project-launch-26";
+import {
+  GuildScheduledEventEntityType,
+  GuildScheduledEventPrivacyLevel,
+} from "discord-api-types/v10";
 
-export { KNIGHTHACKS_8 };
-export { PROJECT_LAUNCH_26 };
+import { IS_PROD } from "./util";
+
+// TODO: JSDOC all all of the non PROD_ or DEV_ exports
 
 export const PROD_OFFICER_ROLE = "486629374758748180";
 export const DEV_OFFICER_ROLE = "1246637685011906560";
@@ -45,42 +46,5 @@ export const RECRUITING_CHANNEL = IS_PROD
 
 export const PERMANENT_INVITE = "https://discord.com/invite/Kv5g9vf";
 
-export const DISCORD_EVENT_TYPE = 3;
-export const DISCORD_EVENT_PRIVACY_LEVEL = 2;
-
-export const TEAMS = [
-  {
-    team: "Outreach",
-    color: "#88fea1",
-    director_role: "779845137822908436",
-  },
-  {
-    team: "Design",
-    color: "#eaacff",
-    director_role: "874028482089349172",
-  },
-  {
-    team: "Development",
-    color: "#93ceff",
-    director_role: "1082124530077683772",
-  },
-  {
-    team: "Sponsorship",
-    color: "#f5f4af",
-    director_role: "626815399442513920",
-  },
-  {
-    team: "Workshops",
-    color: "#206694",
-    director_role: "757002949603098837",
-  },
-  {
-    team: "Projects/Mentorship",
-    color: "#3498db",
-    director_role: "1244790444626280550",
-  },
-];
-
-export const ALLOWED_FORM_ASSIGNABLE_DISC_ROLES = [
-  PROJECT_LAUNCH_26.MEMBER_ROLE,
-];
+export const EVENT_TYPE = GuildScheduledEventEntityType.External;
+export const EVENT_PRIVACY_LEVEL = GuildScheduledEventPrivacyLevel.GuildOnly;

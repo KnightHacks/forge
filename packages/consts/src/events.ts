@@ -1,3 +1,5 @@
+import { IS_PROD } from "./util";
+
 export const EVENT_TAGS = [
   "GBM",
   "Social",
@@ -68,3 +70,15 @@ export const EVENT_FEEDBACK_SLIDER_STEP = 1;
 export const EVENT_FEEDBACK_SLIDER_VALUE = 5;
 export const EVENT_FEEDBACK_TEXT_ROWS = 4;
 export const EVENT_FEEDBACK_POINTS_INCREMENT = 10;
+
+export const CALENDAR_TIME_ZONE = "America/New_York";
+
+export const PROD_GOOGLE_CALENDAR_ID =
+  "c_0b9df2b0062a5d711fc16060ff3286ef404b174bfafc4cbdd4e3009e91536e94@group.calendar.google.com";
+export const DEV_GOOGLE_CALENDAR_ID =
+  "c_178118a9a25d9f278014b123b79b7e9caf9b29ac94bba3934237db00979e0f75@group.calendar.google.com";
+export const GOOGLE_CALENDAR_ID = IS_PROD
+  ? PROD_GOOGLE_CALENDAR_ID
+  : DEV_GOOGLE_CALENDAR_ID;
+
+export const GOOGLE_PERSONIFY_EMAIL = "dylan@knighthacks.org";
