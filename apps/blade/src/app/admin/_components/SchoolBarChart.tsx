@@ -25,6 +25,14 @@ interface Person {
   school?: (typeof FORMS.SCHOOLS)[number];
 }
 
+/**
+ * Render a vertical bar chart of the top 10 schools by number of people.
+ *
+ * Truncates school names longer than 35 characters for axis labels while preserving full names in tooltips, and displays a centered message when no school data is available.
+ *
+ * @param people - Array of Person objects used to compute counts per school.
+ * @returns The rendered Schools bar chart element.
+ */
 export default function SchoolBarChart({ people }: { people: Person[] }) {
   const schoolCounts: Record<string, number> = {};
 

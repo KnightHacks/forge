@@ -30,6 +30,17 @@ interface LevelOfStudyPieProps {
   hackathonDate: Date | string;
 }
 
+/**
+ * Render a pie chart showing the distribution of hackers by year of study relative to a hackathon date.
+ *
+ * The component groups hackers by computed levels ("Freshman", "Sophomore", "Junior", "Senior", "Graduate", "Alumni", or "Unknown"
+ * when dates are invalid) based on each hacker's `gradDate` compared to `hackathonDate`, and provides an interactive selector
+ * to highlight a level and show its count.
+ *
+ * @param hackers - Array of hackers; each hacker's `gradDate` is used to determine their level of study.
+ * @param hackathonDate - Date (or ISO date string) representing the hackathon date used as the reference year.
+ * @returns The rendered pie chart component displaying counts per level of study.
+ */
 export default function LevelOfStudyPie({
   hackers,
   hackathonDate,

@@ -339,6 +339,17 @@ function QuestionBody({
   }
 }
 
+/**
+ * Renders a multiple-choice radio group for a question, optionally allowing an "Other" text entry and reporting selections to the parent.
+ *
+ * When `question.optionsConst` is set, options are loaded from the FORMS constants; otherwise `question.options` are used. If `question.allowOther` is true, an "Other" radio option with a text input is shown when selected; the text is capitalized and propagated. Selection changes call `onChange` with the chosen option string, the entered "Other" text, `OTHER_VALUE` while "Other" is selected with no text, or `null` to clear the answer.
+ *
+ * @param question - The form question definition (text, options, flags such as `allowOther` and `optionsConst`).
+ * @param value - Current answer value (an option string, an "Other" string, `OTHER_VALUE`, or `undefined`/`null`).
+ * @param onChange - Callback invoked with the new value when the selection or "Other" text changes.
+ * @param disabled - If true, disables interaction with the control.
+ * @returns The rendered multiple-choice input element.
+ */
 function MultipleChoiceInput({
   question,
   value,
@@ -451,6 +462,18 @@ function MultipleChoiceInput({
   );
 }
 
+/**
+ * Renders a list of checkbox options for a form question and an optional editable "Other" entry.
+ *
+ * Renders checkboxes from `question.options` or from constants via `question.optionsConst`. When `question.allowOther`
+ * is true an "Other" checkbox and a text input are shown; the input value is capitalized on blur and included in the selected values.
+ *
+ * @param question - The form question definition; may provide `options`, `optionsConst`, and `allowOther`.
+ * @param value - Currently selected values for the question (array of strings).
+ * @param onChange - Called with the updated selected values when selections change. If "Other" is checked without text, the special marker `"__OTHER__"` is included; otherwise the entered other text is included.
+ * @param disabled - If true, all inputs are rendered disabled.
+ * @returns The checkbox group UI as a JSX element.
+ */
 function CheckboxesInput({
   question,
   value,
@@ -604,6 +627,17 @@ function CheckboxesInput({
   );
 }
 
+/**
+ * Renders a dropdown input for a form question, using a searchable combobox when there are more than 15 options.
+ *
+ * The options are taken from `question.optionsConst` (via FORMS.getDropdownOptionsFromConst) when present, otherwise from `question.options`.
+ *
+ * @param question - The form question that provides options or a constant reference for options.
+ * @param value - The currently selected option value, if any.
+ * @param onChange - Called when the selection changes with the selected option string or `null` when cleared.
+ * @param disabled - If `true`, the input is disabled.
+ * @returns The dropdown React element (either a ResponsiveComboBox or a Select).
+ */
 function DropdownInput({
   question,
   value,

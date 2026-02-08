@@ -52,6 +52,14 @@ const minutes = Array.from({ length: 12 }, (_, i) =>
 
 const amPmOptions = ["AM", "PM"] as const;
 
+/**
+ * Renders a "Create Event" button and dialog containing a form to create a new event.
+ *
+ * The component manages dialog and submission state, validates and composes start/end datetimes
+ * from separate date and 12-hour time inputs, and calls the event creation mutation.
+ *
+ * @returns A React element that provides the trigger button and the create-event dialog form.
+ */
 export function CreateEventButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

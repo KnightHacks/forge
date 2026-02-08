@@ -18,6 +18,15 @@ export const metadata: Metadata = {
   description: "View Form Responses",
 };
 
+/**
+ * Render the admin page that displays responses for a form identified by its slug.
+ *
+ * This page verifies the current session and permission (redirecting to the sign-in page or root when access is not allowed), attempts to load the form by `slug`, and renders either a "Form Not Found" message or a responses view (tabs for "All Responses" and "Per User") wrapped with HydrateClient.
+ *
+ * @param params - Route parameters object
+ * @param params.slug - The form slug used to fetch the form and its responses (case sensitive)
+ * @returns The page JSX showing the form responses or a not-found message
+ */
 export default async function FormResponsesPage({
   params,
 }: {

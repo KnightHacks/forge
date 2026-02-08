@@ -223,6 +223,12 @@ export const EVENT_FEEDBACK_HEARD = [
   "From Another Club",
 ] as const;
 
+/**
+ * Retrieve dropdown option values for a named constant.
+ *
+ * @param constName - The constant name to look up (one of: `LEVELS_OF_STUDY`, `ALLERGIES`, `MAJORS`, `GENDERS`, `RACES_OR_ETHNICITIES`, `COUNTRIES`, `SCHOOLS`, `COMPANIES`, `SHIRT_SIZES`, `EVENT_FEEDBACK_HEARD`, `SHORT_LEVELS_OF_STUDY`, `SHORT_RACES_AND_ETHNICITIES`)
+ * @returns The array of option strings associated with `constName`, or an empty array if the name is not recognized.
+ */
 export function getDropdownOptionsFromConst(
   constName: string,
 ): readonly string[] {

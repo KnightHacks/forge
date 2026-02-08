@@ -39,6 +39,14 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 import { FORMS } from '@forge/consts';
 
+/**
+ * Renders an "Update Member" button that opens a dialog containing a pre-filled form for editing a member's details.
+ *
+ * The dialog validates input, submits updates via the member API, shows success/error toasts, and invalidates member caches on completion.
+ *
+ * @param member - The member record used to populate the form fields.
+ * @returns A React element that renders the update button and modal form UI.
+ */
 export default function UpdateMemberButton({
   member,
 }: {

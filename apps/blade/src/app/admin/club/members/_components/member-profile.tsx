@@ -18,6 +18,12 @@ import {
 import { api } from "~/trpc/react";
 import { FORMS, MEMBER_PROFILE_ICON_SIZE } from '@forge/consts';
 
+/**
+ * Renders a button that opens a dialog displaying a member's detailed profile.
+ *
+ * @param member - The member record whose details will be shown in the dialog.
+ * @returns A React element containing the profile button and the dialog UI for the provided member.
+ */
 export default function MemberProfileButton({
   member,
 }: {

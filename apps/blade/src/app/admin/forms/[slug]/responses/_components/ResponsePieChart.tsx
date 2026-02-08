@@ -21,6 +21,17 @@ interface ResponsePieChartProps {
   }[];
 }
 
+/**
+ * Render a pie chart showing the distribution of answers for a single question.
+ *
+ * Normalizes answers before counting: boolean values and the strings `"true"`/`"false"` are shown as
+ * "Yes"/"No", objects are JSON-stringified, and other primitives are stringified. Displays the
+ * total response count, a colored pie chart, and a legend with each option's percentage.
+ *
+ * @param question - The question text whose answers are visualized
+ * @param responses - Array of response objects; each item contains a `responseData` map from question text to an answer
+ * @returns A React element containing the pie chart, legend, and response count
+ */
 export function ResponsePieChart({
   question,
   responses,

@@ -19,6 +19,17 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 import { USE_CAUTION } from '@forge/consts';
 
+/**
+ * Render a destructive button that opens a confirmation dialog to delete a member.
+ *
+ * The dialog displays the member's name, requires typing the exact confirmation phrase
+ * (paste is prevented), and shows a loading state while the deletion is in progress.
+ * On success a success toast is shown and the dialog resets and closes; on error an error toast is shown.
+ * The member cache is invalidated after the mutation settles.
+ *
+ * @param member - The member to delete; must include `id`, `firstName`, and `lastName` for identification and display.
+ * @returns The JSX element for the delete button and its confirmation dialog.
+ */
 export default function DeleteMemberButton({
   member,
 }: {

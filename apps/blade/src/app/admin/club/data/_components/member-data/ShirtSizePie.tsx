@@ -25,6 +25,14 @@ interface Member {
   shirtSize?: (typeof FORMS.SHIRT_SIZES)[number];
 }
 
+/**
+ * Renders a selectable donut chart summarizing member shirt sizes and highlights the selected segment.
+ *
+ * Aggregates `members` by their `shirtSize`, displays each size as a colored slice, lets the user pick an active size via a dropdown, and shows the active size's member count in the chart center.
+ *
+ * @param members - Array of members to aggregate by their `shirtSize` property.
+ * @returns The Shirt Sizes pie chart component.
+ */
 export default function ShirtSizePie({ members }: { members: Member[] }) {
   const id = "pie-interactive-shirt";
 

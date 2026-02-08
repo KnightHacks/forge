@@ -39,6 +39,15 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
+/**
+ * Render a button that opens a modal form for editing a hacker's details.
+ *
+ * The dialog contains a form prefilled from the provided `hacker`, submits updates
+ * to the server, shows success or error toasts, and refreshes hacker data after the mutation settles.
+ *
+ * @param hacker - Hacker data used to populate form fields and to identify which record to update.
+ * @returns A React element rendering the update button and the update-modal form.
+ */
 export default function UpdateHackerButton({
   hacker,
 }: {

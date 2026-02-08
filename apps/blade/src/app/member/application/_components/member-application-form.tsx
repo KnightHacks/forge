@@ -43,6 +43,13 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
+/**
+ * Render the Knight Hacks membership application form.
+ *
+ * Renders the membership application UI, validates inputs (including resume and profile picture files), uploads files when provided, submits the final member payload to the API, and displays success or error toasts. On successful submission the user is navigated to the dashboard.
+ *
+ * @returns The React element for the membership application form.
+ */
 export function MemberApplicationForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);

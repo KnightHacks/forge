@@ -5,6 +5,15 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { FORMS } from '@forge/consts';
 
+/**
+ * Render a card titled "Most Popular Events" showing events ranked by total attendance.
+ *
+ * Displays up to 10 events that have at least one attendee, showing the top 3 by default.
+ * If more than 3 events are available, a "Show more" / "Show less" toggle reveals or hides the full list.
+ *
+ * @param events - Array of events to rank; each event is expected to include `id`, `name`, `tag`, `numAttended`, and `numHackerAttended`
+ * @returns A React element containing an ordered list of ranked events with attendance counts and an optional toggle button
+ */
 export default function PopularityRanking({
   events,
 }: {

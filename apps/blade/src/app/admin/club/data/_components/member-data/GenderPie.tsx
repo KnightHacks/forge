@@ -22,6 +22,17 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 
+/**
+ * Render an interactive donut pie chart that visualizes member counts grouped by gender.
+ *
+ * The component aggregates the provided members by their `gender`, assigns a consistent color
+ * palette per gender, and displays a selectable list of genders. Selecting a gender highlights
+ * its slice and updates the center label to show that gender's member count. If the active
+ * gender is removed from the data, the component selects the first available gender.
+ *
+ * @param members - Array of members to aggregate and visualize by gender
+ * @returns A Card containing a configurable pie chart, a gender select control, and a center label showing the selected gender's member count
+ */
 export default function SchoolYearPie({
   members,
 }: {

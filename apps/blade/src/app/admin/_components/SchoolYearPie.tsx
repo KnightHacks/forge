@@ -37,6 +37,15 @@ const shortenLevelOfStudy = (levelOfStudy: string): string => {
   return replacements[levelOfStudy] ?? levelOfStudy;
 };
 
+/**
+ * Render an interactive pie chart that visualizes counts of people grouped by level of study.
+ *
+ * The chart includes a selector to choose the active level, highlights the active slice, and
+ * shows the selected level's count in the chart center.
+ *
+ * @param people - Array of Person objects used to compute counts per level of study.
+ * @returns A card element containing the interactive pie chart and level selector.
+ */
 export default function SchoolYearPie({ people }: { people: Person[] }) {
   const id = "pie-interactive";
 

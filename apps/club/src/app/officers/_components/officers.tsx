@@ -9,6 +9,11 @@ import { OFFICERS } from "@forge/consts";
 
 import OfficerCard from "./assets/officer-card";
 
+/**
+ * Renders a responsive grid of officer cards and attaches scroll-triggered slide-and-fade entrance animations to each card.
+ *
+ * @returns The React element for the officers grid.
+ */
 export default function Officers() {
   gsap.registerPlugin(useGSAP, ScrollTrigger);
   const officersRef = useRef<(HTMLDivElement | null)[]>([]);

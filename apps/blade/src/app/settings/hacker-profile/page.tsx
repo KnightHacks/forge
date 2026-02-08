@@ -9,6 +9,15 @@ import { api, HydrateClient } from "~/trpc/server";
 import { HackerProfileForm } from "./hacker-profile-form";
 import { DISCORD } from '@forge/consts';
 
+/**
+ * Render the hacker profile settings page with access control and conditional content.
+ *
+ * If the request has no authenticated session, redirects to the root ("/").
+ * If the authenticated user has no hacker profile, returns a centered placeholder that prompts the user to join Discord.
+ * Otherwise returns the hacker profile editor populated with the user's profile and current hackathon data.
+ *
+ * @returns The page's JSX: a placeholder UI when the user has no hacker profile; the hacker profile editor populated with existing data otherwise.
+ */
 export default async function SettingsProfilePage() {
   const session = await auth();
 

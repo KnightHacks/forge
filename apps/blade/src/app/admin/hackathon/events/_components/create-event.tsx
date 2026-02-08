@@ -52,6 +52,17 @@ const minutes = Array.from({ length: 12 }, (_, i) =>
 
 const amPmOptions = ["AM", "PM"] as const;
 
+/**
+ * Render a button that opens a dialog containing a form for creating a new event.
+ *
+ * The component manages dialog visibility and submission state, validates the
+ * entered dates/times and hackathon/dues constraints, shows success/error toasts,
+ * and submits the final event payload to the backend via the TRPC `createEvent`
+ * mutation. Form fields include name, tag, optional hackathon, start/end dates
+ * and times, location, description, and a dues-paying flag.
+ *
+ * @returns A React element that provides the "Create Event" trigger and dialog form.
+ */
 export function CreateEventButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

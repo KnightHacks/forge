@@ -39,6 +39,16 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
+/**
+ * Renders a modal feedback form for a given event and member.
+ *
+ * The form lets the member rate the event (overall, fun, learned), indicate where they heard about the event, opt into seeing similar events, and provide optional additional feedback. If the member already submitted feedback for the event, the trigger button is disabled. Submitting the form sends the feedback to the server, shows success or error toasts, and closes the dialog on success.
+ *
+ * @param event - Event data used to populate the form (id and name are required).
+ * @param member - Member data used to associate feedback (id is required).
+ * @param size - Size of the trigger button; one of `"md" | "sm" | "lg" | "icon" | null | undefined`.
+ * @returns The dialog-based feedback form element.
+ */
 export function EventFeedbackForm({
   event,
   member,

@@ -15,6 +15,17 @@ export const metadata: Metadata = {
   description: "The official Knight Hacks Hacker Dashboard",
 };
 
+/**
+ * Render the hackathon dashboard UI for a given hacker.
+ *
+ * Displays a registration prompt when no hacker is provided, a configuration error
+ * if the hacker's class is missing or invalid, or the full dashboard with
+ * class-specific styling and sections (profile data, team points, countdown,
+ * and upcoming events) when valid.
+ *
+ * @param hacker - The current hacker profile returned from the server; may be `null`/`undefined` when the user is not registered.
+ * @returns A React element rendering the appropriate dashboard or informative prompt based on `hacker` and its class information.
+ */
 export default async function HackathonDashboard({
   hacker,
 }: {

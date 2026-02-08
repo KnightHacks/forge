@@ -100,6 +100,16 @@ function parseDateTime(value: string | Date) {
   };
 }
 
+/**
+ * Render a button that opens a dialog allowing the user to edit and submit updates for an existing event.
+ *
+ * The dialog is prefilled from `event`, validates business rules (e.g., no dues for hackathon events,
+ * end date must be after start date), converts selected date/time inputs into Date objects, and calls
+ * the updateEvent mutation. Shows success or error toasts and invalidates cached event data after settlement.
+ *
+ * @param event - The existing event object used to populate the update form
+ * @returns The "Update Event" trigger button and the edit dialog UI
+ */
 export function UpdateEventButton({ event }: { event: InsertEvent }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

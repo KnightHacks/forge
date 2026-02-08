@@ -20,6 +20,16 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 import { USE_CAUTION } from '@forge/consts';
 
+/**
+ * Renders a button that opens a confirmation dialog to delete a member and performs the deletion.
+ *
+ * The dialog requires typing the exact confirmation phrase when extra caution is enabled. On successful deletion the component shows a success toast, closes the dialog, and navigates to the application root; on failure it shows an error toast.
+ *
+ * @param memberId - The unique identifier of the member to delete.
+ * @param firstName - The member's first name (unused by the component but available for callers).
+ * @param lastName - The member's last name (unused by the component but available for callers).
+ * @returns The DeleteMemberButton React element.
+ */
 export default function DeleteMemberButton({
   memberId,
 }: {

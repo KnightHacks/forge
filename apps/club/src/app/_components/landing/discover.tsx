@@ -12,6 +12,12 @@ import CoolButton2 from "./assets/coolbutton2";
 import NeonTkSVG from "./assets/neon-tk";
 import Counter from "./discover-assets/counter";
 
+/**
+ * Renders the Discover landing section with animated entrance effects and a member counter.
+ *
+ * @param memberCount - Number to display as the active members count in the counter component.
+ * @returns The React element for the full-screen Discover section, including animations, call-to-action button, and decorative logo.
+ */
 export default function Discover({ memberCount }: { memberCount: number }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const counterRef = useRef<HTMLDivElement>(null);

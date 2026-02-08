@@ -19,6 +19,13 @@ import TypePie from "./event-data/TypePie";
 import { WeekdayPopularityRadar } from "./event-data/WeekdayPopularityRadar";
 import { FORMS } from '@forge/consts';
 
+/**
+ * Render interactive event demographics and visualizations with semester filtering and an optional hackathon inclusion toggle.
+ *
+ * The component fetches events, derives selectable semester ranges from event dates (plus an "All Semesters" option), and filters events by the selected semester and hackathon inclusion setting. It displays a semester Select control, a checkbox to include/exclude hackathon events, multiple responsive visualizations for the filtered events, and a centered message when no events match the selection.
+ *
+ * @returns A React element containing the semester selector, hackathon toggle, and data visualizations (or a "No events found" message when the filtered set is empty).
+ */
 export default function EventDemographics() {
   const { data: events } = api.event.getEvents.useQuery();
   const semestersArr: FORMS.Semester[] = [

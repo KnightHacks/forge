@@ -37,6 +37,12 @@ const shortenRaceOrEthnicity = (raceOrEthnicity: string): string => {
   return replacements[raceOrEthnicity] ?? raceOrEthnicity;
 };
 
+/**
+ * Render a pie chart showing the distribution of people by race or ethnicity with a selectable active segment.
+ *
+ * @param people - Array of Person objects whose `raceOrEthnicity` values will be counted and displayed
+ * @returns The React element that renders an interactive pie chart and a select control for choosing the active segment
+ */
 export default function RaceOrEthnicityPie({ people }: { people: Person[] }) {
   const id = "pie-interactive";
 

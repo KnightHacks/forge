@@ -21,6 +21,12 @@ import { api } from "~/trpc/react";
 import FoodRestrictionsButton from "./food-restrictions";
 import { FORMS, MEMBER_PROFILE_ICON_SIZE } from '@forge/consts';
 
+/**
+ * Renders a button that opens a dialog showing a detailed hacker profile.
+ *
+ * @param hacker - Hacker profile data used to populate the dialog
+ * @returns A React element containing the profile button and the populated dialog
+ */
 export default function HackerProfileButton({
   hacker,
 }: {

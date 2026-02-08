@@ -19,6 +19,16 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 import { CLEAR_DUES_MESSAGE, USE_CAUTION } from '@forge/consts';
 
+/**
+ * Render a destructive confirmation dialog and its trigger button used to clear all member dues.
+ *
+ * The dialog requires the user to type a specific confirmation message before enabling the destructive action,
+ * coordinates local loading/open state with external open-state setters, and invokes the mutation that clears dues.
+ *
+ * @param setFirstOpen - Setter to update the external "first" open state; cleared when the dialog is cancelled or the action succeeds.
+ * @param setSecondOpen - Setter to update the external "second" open state; cleared when the dialog is cancelled or the action succeeds.
+ * @returns The trigger button and modal dialog UI for confirming and executing the "clear all dues" action.
+ */
 export default function FinalDuesDialogButton({
   disabled,
   setFirstOpen,

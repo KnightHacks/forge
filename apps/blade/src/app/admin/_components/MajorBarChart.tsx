@@ -25,6 +25,17 @@ interface Person {
   major?: (typeof FORMS.MAJORS)[number];
 }
 
+/**
+ * Render a vertical bar chart showing the top 10 majors by student count.
+ *
+ * The component tallies majors from `people`, sorts majors by count descending,
+ * truncates major names longer than 35 characters for display, and renders a
+ * vertical bar chart with tooltips and inline count labels. If no major data
+ * is present, a centered fallback message is shown.
+ *
+ * @param people - Array of Person objects to aggregate by `major`
+ * @returns The rendered Card element containing the majors bar chart or a fallback message
+ */
 export default function MajorBarChart({ people }: { people: Person[] }) {
   const majorCounts: Record<string, number> = {};
 

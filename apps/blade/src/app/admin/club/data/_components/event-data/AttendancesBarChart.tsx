@@ -19,6 +19,15 @@ import {
 } from "@forge/ui/chart";
 import { FORMS } from '@forge/consts';
 
+/**
+ * Render a vertical bar chart showing average attendances grouped by event tag.
+ *
+ * Averages are computed per tag from events where (numAttended + numHackerAttended) is greater than or equal to 5; each tag's average is rounded to the nearest integer. If no tags qualify, a "No attendance data found" message is rendered instead.
+ *
+ * @param events - Array of events used to compute average attendances; each event's total attendees is `numAttended + numHackerAttended` and contributes to the tag's average only when that total is >= 5
+ * @param className - Optional CSS class applied to the outer Card component
+ * @returns A Card containing a vertical bar chart of average attendees by event type, or a centered message when no data is available
+ */
 export default function AttendancesBarChart({
   events,
   className,

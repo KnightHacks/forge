@@ -25,6 +25,16 @@ interface Member {
   school?: (typeof FORMS.SCHOOLS)[number];
 }
 
+/**
+ * Render a horizontal bar chart showing the top 10 schools by member count.
+ *
+ * The component counts `school` values from the provided `members`, displays the highest-count
+ * schools (up to 10) as bars, truncates long school names for on-chart labels, and exposes the
+ * full school name in the tooltip.
+ *
+ * @param members - Array of Member objects; entries without a `school` value are ignored.
+ * @returns A JSX element containing the bar chart or a centered message when no school data exists.
+ */
 export default function SchoolBarChart({ members }: { members: Member[] }) {
   const schoolCounts: Record<string, number> = {};
 

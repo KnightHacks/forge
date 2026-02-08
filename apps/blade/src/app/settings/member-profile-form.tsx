@@ -44,6 +44,16 @@ import { api } from "~/trpc/react";
 import { MemberAppCard } from "../_components/option-cards";
 import DeleteMemberButton from "./_components/delete-member-button";
 
+/**
+ * Render the Knight Hacks member profile form with validated fields, file uploads, and update/delete actions.
+ *
+ * Renders a multi-section form populated from the provided member data that lets members edit personal, demographic,
+ * academic, employment, and profile customization information. Handles client-side validation, resume and profile
+ * picture uploads, graduation date composition, company "Other" flow, and invokes server mutations to persist changes.
+ *
+ * @param data - Initial member data used to populate the form (typically the result of serverCaller.member.getMember).
+ * @returns The member profile form React element.
+ */
 export function MemberProfileForm({
   data,
 }: {

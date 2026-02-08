@@ -36,6 +36,18 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
+/**
+ * Render the hacker application form for a specific hackathon.
+ *
+ * Prefills fields from a previous application when available, enforces form
+ * validations (including a minimum age of 18 by the hackathon start date),
+ * handles resume upload, submits the application, and sends a confirmation email.
+ *
+ * @param hackathonId - Identifier of the hackathon used when creating the application record.
+ * @param hackathonName - Display name of the hackathon shown in titles and emails.
+ * @param hackathonStartDate - Hackathon start date as an ISO date string; used to validate applicant age.
+ * @returns The Hacker registration React component ready to be mounted.
+ */
 export function HackerFormPage({
   hackathonId,
   hackathonName,

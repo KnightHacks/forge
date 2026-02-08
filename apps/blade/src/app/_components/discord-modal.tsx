@@ -13,6 +13,14 @@ import {
   DialogTitle,
 } from "@forge/ui/dialog";
 
+/**
+ * Render a dialog prompting the user to join the Knight Hacks Discord.
+ *
+ * The dialog's open state is initialized from `initialState`. The primary action opens the permanent Discord invite in a new tab; the secondary action closes the dialog.
+ *
+ * @param initialState - Whether the dialog is open on initial render
+ * @returns The rendered dialog element
+ */
 export function TacoTuesday({ initialState }: { initialState: boolean }) {
   const [open, setOpen] = useState<boolean>(initialState);
   return (

@@ -82,6 +82,13 @@ const QUESTION_ICONS: Record<string, React.ElementType> = {
   LINK: Link,
 };
 
+/**
+ * Renders an editable card for a single form question with controls to edit the question text, change question type, manage options/scale bounds, toggle required, duplicate, delete, and reorder.
+ *
+ * Changing the question type will auto-initialize or clear options and set default min/max for scale/number types; it also calls `onForceSave` when provided.
+ *
+ * @returns The React element representing the question edit card configured for the provided `question` and callbacks.
+ */
 export function QuestionEditCard({
   question,
   isActive,
@@ -398,6 +405,17 @@ function QuestionBody({
   }
 }
 
+/**
+ * Render and manage the editable options UI for a choice-style form question.
+ *
+ * Renders either a preset-constant selector or a list of editable option inputs (with add/remove,
+ * paste-to-insert-multiple, and keyboard behaviors), and exposes controls for toggling the
+ * "Allow Other" option when applicable.
+ *
+ * @param question - The question object (including `id`) whose options, type, and related flags drive the UI.
+ * @param onUpdate - Called with an updated question whenever options, `optionsConst`, or `allowOther` change.
+ * @returns The React element for the options editor for the provided question.
+ */
 function OptionList({
   question,
   onUpdate,

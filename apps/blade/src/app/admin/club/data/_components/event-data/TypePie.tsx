@@ -22,6 +22,16 @@ import {
 } from "@forge/ui/select";
 import { FORMS } from '@forge/consts';
 
+/**
+ * Render an interactive pie chart that visualizes the distribution of events grouped by tag.
+ *
+ * Aggregates the provided events by their `tag` field, computes counts and percentages for each
+ * tag, and renders a selectable card containing a pie chart with a center label showing the
+ * active slice's percentage.
+ *
+ * @param events - Array of events whose `tag` values will be counted and displayed
+ * @returns The JSX element rendering a selectable pie chart summary of event types by tag
+ */
 export default function TypePie({ events }: { events: ReturnEvent[] }) {
   const id = "pie-interactive";
 

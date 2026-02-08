@@ -25,6 +25,12 @@ interface Person {
   gender?: (typeof FORMS.GENDERS)[number];
 }
 
+/**
+ * Render an interactive donut chart of people grouped by gender with a select control to choose the active slice.
+ *
+ * @param people - Array of person objects whose `gender` values will be aggregated for the chart
+ * @returns A Card element containing a responsive donut chart, tooltip, central count label for the active gender, and a dropdown to change the active slice
+ */
 export default function GenderPie({ people }: { people: Person[] }) {
   const id = "pie-interactive";
 

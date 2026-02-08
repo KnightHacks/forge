@@ -37,6 +37,17 @@ import { api } from "~/trpc/react";
 import DeleteHackerButton from "../_components/delete-hacker-button";
 import { HackerAppCard } from "../../_components/option-cards";
 
+/**
+ * Render an editable hacker profile form for viewing and updating a user's application data.
+ *
+ * The form displays and allows editing of personal, demographic, academic, survey, links,
+ * resume, food allergies, and MLH consent fields; it handles resume upload and persists
+ * changes to the server while providing UI feedback.
+ *
+ * @param data - Initial hacker data used to populate the form (from the server's getHacker).
+ * @param hackathon - Current hackathon data used for contextual UI (from the server's getCurrentHackathon).
+ * @returns The rendered form UI for editing and submitting a hacker profile.
+ */
 export function HackerProfileForm({
   data,
   hackathon,

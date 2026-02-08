@@ -30,6 +30,17 @@ interface YearOfStudyPieProps {
   members: Member[];
 }
 
+/**
+ * Render an interactive pie chart of members grouped by academic year category.
+ *
+ * Calculates each member's category (e.g., "Freshman", "Sophomore", "Junior", "Senior",
+ * "High School", "Graduate", "Alumni", or "Unknown") from their graduation date and
+ * level of study, aggregates counts per category, and displays a selectable pie chart
+ * with the active segment's count shown in the center.
+ *
+ * @param members - Array of member records whose `gradDate` and `levelOfStudy` are used to determine categories
+ * @returns A React element containing a Card with a selectable, colored pie chart and a centered count for the active segment
+ */
 export default function YearOfStudyPie({ members }: YearOfStudyPieProps) {
   const id = "pie-interactive";
 

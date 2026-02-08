@@ -25,6 +25,14 @@ interface Hacker {
   shirtSize?: (typeof FORMS.SHIRT_SIZES)[number];
 }
 
+/**
+ * Render an interactive pie chart of shirt sizes among the provided hackers.
+ *
+ * Displays a pie where each slice represents the count of hackers for a shirt size, highlights the selected slice, and provides a dropdown to change the active slice. The component recalculates counts from the `hackers` prop and updates the active selection if data changes.
+ *
+ * @param hackers - Array of Hacker objects; only entries with a truthy `shirtSize` are counted.
+ * @returns The card element containing the configured pie chart, select control, and centered count label for the active size.
+ */
 export default function ShirtSizePie({ hackers }: { hackers: Hacker[] }) {
   const id = "pie-interactive-shirt-hackers";
 

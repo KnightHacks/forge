@@ -18,6 +18,14 @@ import {
 } from "@forge/ui/chart";
 import { FORMS } from '@forge/consts';
 
+/**
+ * Render a card containing a radar chart of average attendance grouped by weekday.
+ *
+ * Only events whose combined attendees (numAttended + numHackerAttended) are 5 or more are included; Saturday and Sunday are combined under "Sat/Sun".
+ *
+ * @param events - Array of events to aggregate and visualize.
+ * @returns A React element: a Card containing a radar chart that displays the average attendees per weekday (averages rounded to the nearest integer).
+ */
 export function WeekdayPopularityRadar({ events }: { events: ReturnEvent[] }) {
   const chartConfig = {
     attendees: {

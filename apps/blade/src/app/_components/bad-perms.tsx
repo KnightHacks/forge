@@ -3,6 +3,12 @@ import { ShieldX } from "lucide-react";
 import type { PermissionKey } from "@forge/consts";
 import { PERMISSION_DATA } from "@forge/consts";
 
+/**
+ * Renders an "Access Denied" alert that lists human-readable names for the given permission keys.
+ *
+ * @param perms - Array of permission keys to display; unknown or missing keys are ignored
+ * @returns A JSX element containing an access-denied alert with the permission names joined by ", "
+ */
 export function BadPerms({ perms }: { perms: PermissionKey[] }) {
   const permNames: string[] = [];
   perms.forEach((v) => {

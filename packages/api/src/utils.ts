@@ -30,12 +30,24 @@ export const discord = new REST({ version: "10" }).setToken(
   env.DISCORD_BOT_TOKEN,
 );
 
+/**
+ * Adds a role to a member of the KnightHacks Discord guild.
+ *
+ * @param discordUserId - The Discord user ID of the member to modify
+ * @param roleId - The Discord role ID to add to the member
+ */
 export async function addRoleToMember(discordUserId: string, roleId: string) {
   await discord.put(
     Routes.guildMemberRole(DISCORD.KNIGHTHACKS_GUILD, discordUserId, roleId),
   );
 }
 
+/**
+ * Removes a role from a member in the KnightHacks Discord guild.
+ *
+ * @param discordUserId - The Discord user ID of the member to update.
+ * @param roleId - The ID of the role to remove.
+ */
 export async function removeRoleFromMember(
   discordUserId: string,
   roleId: string,
@@ -45,6 +57,12 @@ export async function removeRoleFromMember(
   );
 }
 
+/**
+ * Finds a Discord user ID in the KnightHacks guild matching the provided username query.
+ *
+ * @param username - The username or search query to match against guild members
+ * @returns The Discord user ID of the first matched member as a `string`, or `null` if no match is found
+ */
 export async function resolveDiscordUserId(
   username: string,
 ): Promise<string | null> {
@@ -169,6 +187,12 @@ export const isDiscordMember = async (user: Session["user"]) => {
   }
 };
 
+/**
+ * Check whether a Discord user has the VIP role in the KnightHacks guild.
+ *
+ * @param discordUserId - The Discord user ID to check
+ * @returns `true` if the user has the VIP role in the KnightHacks guild, `false` otherwise.
+ */
 export async function isDiscordVIP(discordUserId: string) {
   const guildMember = (await discord.get(
     Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),
@@ -210,6 +234,14 @@ export const sendEmail = async ({
   }
 };
 
+/**
+ * Posts an embedded log message to the configured Discord log channel.
+ *
+ * @param title - Brief title shown at the top of the embed
+ * @param message - Main body text of the embed
+ * @param color - Visual color of the embed; one of `"tk_blue"`, `"blade_purple"`, `"uhoh_red"`, or `"success_green"`
+ * @param userId - Discord user ID to mention in the embed
+ */
 export async function log({
   title,
   message,
@@ -317,6 +349,23 @@ type OptionalSchema =
   | { success: true; schema: JSONSchema7 }
   | { success: false; msg: string };
 
+/**
+ * Builds a JSON Schema7 validator fragment for a form field from validator options.
+ *
+ * Produces a JSON Schema7 object that enforces the field's type, formats, allowed options,
+ * and min/max constraints. When `optionsConst` is provided it is used to resolve dropdown/choice
+ * options; otherwise `options` is used. Validation for required selections is applied when `optional`
+ * is false.
+ *
+ * @param optional - Whether the field is optional (omitting required constraints when true)
+ * @param type - The form field type to generate schema for (e.g., SHORT_ANSWER, CHECKBOXES)
+ * @param options - Explicit option values for choice/dropdown/checkbox fields
+ * @param optionsConst - A constant reference to resolve option values instead of `options`
+ * @param min - Minimum constraint: minLength for strings, minItems for arrays, minimum for numbers
+ * @param max - Maximum constraint: maxLength for strings, maxItems for arrays, maximum for numbers
+ * @param allowOther - When true, permits values outside the declared options for choice fields
+ * @returns `success: true` with `{ schema }` containing the JSONSchema7 fragment on success; `success: false` with `msg` when validator options are invalid (e.g., missing options for choice fields)
+ */
 function createJsonSchemaValidator({
   optional,
   type,
@@ -416,6 +465,13 @@ function createJsonSchemaValidator({
   return { success: true, schema };
 }
 
+/**
+ * Builds a JSON Schema (Draft-07) that validates responses for the given form.
+ *
+ * @param form - The form definition containing an ordered list of questions and validators
+ * @returns An object with `success: true` and the generated JSON Schema under `schema` when all questions validate;
+ *          otherwise returns the first validation error produced by a question validator (an object with `success: false` and `msg`).
+ */
 export function generateJsonSchema(form: FORMS.FormType): OptionalSchema {
   const schema: JSONSchema7 = {
     type: "object",
@@ -446,7 +502,16 @@ export function generateJsonSchema(form: FORMS.FormType): OptionalSchema {
   return { success: true, schema };
 }
 
-// Helper to regenerate presigned URLs for media
+/**
+ * Regenerates presigned image and video URLs for each form instruction that references stored media.
+ *
+ * For each instruction with an `imageObjectName` or `videoObjectName`, attempts to replace `imageUrl`/`videoUrl`
+ * with a newly generated presigned URL. If generating a URL fails for an item, the original URL (if any) is left unchanged
+ * and processing continues for other items.
+ *
+ * @param instructions - The form's instructions array to process
+ * @returns The updated instructions array with regenerated `imageUrl` and `videoUrl` where applicable
+ */
 export async function regenerateMediaUrls(
   instructions: FORMS.FormType["instructions"],
 ) {

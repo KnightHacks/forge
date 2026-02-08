@@ -17,6 +17,17 @@ import FirstTimeInfo from "./FirstTimeInfo";
 import LevelOfStudyPie from "./LevelOfStudyPie";
 import ShirtSizePie from "./ShirtSizePie";
 
+/**
+ * Render interactive charts and status filters for hackers belonging to a given hackathon.
+ *
+ * Fetches hackers and hackathon metadata for the provided hackathonId, provides a status
+ * ToggleGroup to filter hackers (with an "all" default), and displays a collection of
+ * summary charts and info components for the filtered set. Shows an empty-state message
+ * when the hackathon has no hackers or when no hackers match the active filter.
+ *
+ * @param hackathonId - The identifier of the hackathon whose hackers and metadata are displayed
+ * @returns A React element containing the status filter controls and the assembled charts/info components, or appropriate empty-state messages
+ */
 export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
   const { data: hackers } = api.hacker.getHackers.useQuery(hackathonId);
   const { data: hackathon } =

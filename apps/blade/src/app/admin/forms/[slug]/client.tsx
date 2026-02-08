@@ -142,6 +142,15 @@ function SortableItem({
   );
 }
 
+/**
+ * Render the connections interface for a form: a procedure matcher and a list of saved connections.
+ *
+ * @param props.procs - Map of procedure IDs to their metadata used by the matcher.
+ * @param props.slug - Form slug used when rendering each connection viewer.
+ * @param props.id - Form ID used to fetch the form's saved connections.
+ * @param props.formData - Full form definition; the component reads question texts from this object.
+ * @returns A React element containing a ListMatcher for the form and a ConnectionViewer for each fetched connection.
+ */
 function ConnectionsTab(props: {
   procs: Record<string, ProcedureMeta>;
   slug: string;

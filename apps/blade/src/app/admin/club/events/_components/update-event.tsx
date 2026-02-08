@@ -99,6 +99,16 @@ function parseDateTime(value: string | Date) {
   };
 }
 
+/**
+ * Render a dialog-based form for updating an existing event.
+ *
+ * Renders a button that opens a dialog containing a pre-filled update form for the given event,
+ * validates date/time inputs, and submits an update mutation. Shows success or error toasts and
+ * disables controls while the update is in progress.
+ *
+ * @param event - The event to edit (pre-fills form fields)
+ * @returns A React element containing the update-event dialog and trigger button
+ */
 export function UpdateEventButton({ event }: { event: InsertEvent }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

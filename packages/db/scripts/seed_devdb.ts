@@ -220,6 +220,11 @@ interface DiscordRole {
   flags: number;
 }
 
+/**
+ * Synchronizes production Discord roles that have permissions with the development guild and records ID mappings.
+ *
+ * Fetches production roles referenced in the backup database, attempts to match each by name and permissions with an existing role in the dev guild, and creates the role in the dev guild when no match exists. Updates the module-level `roleIdMappings` map with production-to-development role ID pairs. Performs network calls to the Discord API and returns early if the backup database is not initialized.
+ */
 async function syncRoles() {
   if (!backupDb) return;
 
@@ -285,6 +290,13 @@ interface DiscordGuildScheduledEvent {
   image?: string | null;
 }
 
+/**
+ * Synchronizes scheduled events from the production guild to the development guild and records ID mappings.
+ *
+ * For each scheduled event in the production guild, reuses a development event that matches by name and start time
+ * or creates a new development event with the production event's data. Updates the global `eventIdMappings`
+ * with the mapping from production event ID to development event ID. Does nothing if the backup database is not initialized.
+ */
 async function syncEvents() {
   if (!backupDb) return;
 
