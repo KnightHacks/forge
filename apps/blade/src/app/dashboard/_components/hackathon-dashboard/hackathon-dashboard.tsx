@@ -73,7 +73,7 @@ export default async function HackathonDashboard({
   }
 
   const HACKER_CLASS_INFO_TYPED: Record<string, HackerClassInfo> =
-    HACKER_CLASS_INFO as Record<string, HackerClassInfo>;
+    DISCORD.KNIGHTHACKS_8.HACKER_CLASS_INFO as Record<string, HackerClassInfo>;
 
   const classInfo = HACKER_CLASS_INFO_TYPED[hacker.class] ?? {
     teamColor: "#000000",
