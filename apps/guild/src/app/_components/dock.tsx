@@ -4,8 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 
-import type { GuildTag } from "@forge/consts";
-import { GUILD_TAG_OPTIONS } from "@forge/consts";
+import { GUILD } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import {
@@ -20,7 +19,7 @@ const PAGE_SIZE_OPTIONS = [20, 40, 60, 80, 100] as const;
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 const DEFAULT_PAGE_SIZE: PageSize = 20;
 
-type Tag = GuildTag | "none";
+type Tag = GUILD.GuildTag | "none";
 
 interface DockProps {
   initialQuery: string;
@@ -104,7 +103,7 @@ export default function Dock({
           <SelectItem value="none" className="focus:bg-violet-500/30">
             All
           </SelectItem>
-          {GUILD_TAG_OPTIONS.map((t) => (
+          {GUILD.GUILD_TAG_OPTIONS.map((t) => (
             <SelectItem
               key={t}
               value={t}

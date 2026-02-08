@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import type { GuildTag } from "@forge/consts";
-import { GUILD_TAG_OPTIONS } from "@forge/consts";
+import { GUILD } from "@forge/consts";
 // import { ExternalLink, Github, Linkedin, Search } from "lucide-react"; // Moved to client component
 // Remove other imports only used by the card rendering if they are now fully in GuildMembersDisplay
 
@@ -37,8 +36,8 @@ export default async function GuildPage({
   const currentPage = Number(searchParams.page ?? 0);
   if (Number.isNaN(currentPage) || currentPage < 0) notFound();
 
-  const selectedTag: GuildTag | undefined =
-    GUILD_TAG_OPTIONS.find((t) => t === searchParams.tag) ?? undefined;
+  const selectedTag: GUILD.GuildTag | undefined =
+    GUILD.GUILD_TAG_OPTIONS.find((t) => t === searchParams.tag) ?? undefined;
 
   const { members, total } = await api.guild.getGuildMembers({
     page: currentPage,
