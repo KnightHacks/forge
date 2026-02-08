@@ -70,6 +70,8 @@ The tRPC router that defines all API endpoints. This is the API layer that apps 
 - Only `blade` exposes write operations
 - Other apps consume read-only endpoints
 
+To create a new API endpoint, you need to add a procedure in an existing router, or create a new router altogether. If creating a new router, you need to add it to the `appRouter` in `packages/api/src/root.ts`. Then, this new procedure will be available to all apps that use the `@forge/api` package.
+
 ### `@forge/db`
 
 Database layer using Drizzle ORM with PostgreSQL.

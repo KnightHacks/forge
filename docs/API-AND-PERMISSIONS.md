@@ -80,7 +80,7 @@ Permissions are stored as a bit string (e.g., `"111010"`). Each position represe
 - `1` = user has the permission
 - `0` = user doesn't have the permission
 
-The mapping is defined in `@forge/consts/knight-hacks` in the `PERMISSIONS` object.
+The mapping is defined in `@forge/consts/knight-hacks` in the `PERMISSIONS` object. Each permission has a unique index number that is used to store the permission in the database. For example, the `IS_OFFICER` permission has an index of `0`. This means that a user with a permission string of `"10000000000000000000"` has the `IS_OFFICER` permission.
 
 ### Permission Checking
 
@@ -418,7 +418,7 @@ try {
 
 Group related procedures into routers by domain:
 
-```
+```text
 routers/
 ├── members.ts      # Member management
 ├── events.ts       # Event management

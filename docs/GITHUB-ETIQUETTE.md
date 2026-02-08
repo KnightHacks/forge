@@ -43,6 +43,7 @@ repo/add-prettier-config
 - Use lowercase with hyphens
 - Be descriptive but concise
 - Focus on what the change does, not how
+- Commits will be squashed when merged into main, but to resolve conflicts on your branch, you may use either a squash merge or a rebase merge.
 
 ## Commit Messages
 

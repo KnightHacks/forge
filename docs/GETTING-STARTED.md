@@ -185,6 +185,7 @@ Look for issues labeled [`Onboarding`](https://github.com/KnightHacks/forge/labe
 
 ### Development Workflow
 
+0. Before getting started developing, make sure you understand our [GitHub Etiquette](./GITHUB-ETIQUETTE.md)
 1. Create a new branch for your changes
 2. Make your changes
 3. Test your changes locally
