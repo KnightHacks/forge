@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
-import { FORMS, KNIGHTHACKS_MAX_RESUME_SIZE } from "@forge/consts";
+import { FORMS, MINIO } from "@forge/consts";
 import { InsertHackerSchema } from "@forge/db/schemas/knight-hacks";
 import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { Badge } from "@forge/ui/badge";
@@ -198,11 +198,11 @@ export function HackerFormPage({
               }
 
               // Validate file size is <= 5MB
-              if (fileList[0].size > KNIGHTHACKS_MAX_RESUME_SIZE) {
+              if (fileList[0].size > MINIO.MAX_RESUME_SIZE) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_big,
                   type: "number",
-                  maximum: KNIGHTHACKS_MAX_RESUME_SIZE,
+                  maximum: MINIO.MAX_RESUME_SIZE,
                   inclusive: true,
                   exact: false,
                   message: "File too large: maximum 5MB",

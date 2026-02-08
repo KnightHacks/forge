@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 
-import { USE_CAUTION } from "@forge/consts";
+import { CLUB } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -104,7 +104,7 @@ export default function DeleteMemberButton({
             <Button
               variant="destructive"
               disabled={
-                (USE_CAUTION as boolean)
+                (CLUB.USE_CAUTION as boolean)
                   ? confirm !== "I am absolutely sure" || isLoading
                   : isLoading
               }

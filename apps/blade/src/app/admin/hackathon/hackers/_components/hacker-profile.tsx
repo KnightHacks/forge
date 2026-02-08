@@ -6,7 +6,7 @@ import { User } from "lucide-react";
 import { FaGithub, FaGlobe, FaLinkedin } from "react-icons/fa";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
-import { FORMS, MEMBER_PROFILE_ICON_SIZE } from "@forge/consts";
+import { FORMS, GUILD } from "@forge/consts";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import {
@@ -160,28 +160,28 @@ export default function HackerProfileButton({
               <div>
                 {hacker.githubProfileUrl ? (
                   <Link href={hacker.githubProfileUrl} target="_blank">
-                    <FaGithub size={MEMBER_PROFILE_ICON_SIZE} />
+                    <FaGithub size={GUILD.MEMBER_PROFILE_ICON_SIZE} />
                   </Link>
                 ) : (
-                  <FaGithub size={MEMBER_PROFILE_ICON_SIZE} color="gray" />
+                  <FaGithub size={GUILD.MEMBER_PROFILE_ICON_SIZE} color="gray" />
                 )}
               </div>
               <div>
                 {hacker.linkedinProfileUrl ? (
                   <Link href={hacker.linkedinProfileUrl} target="_blank">
-                    <FaLinkedin size={MEMBER_PROFILE_ICON_SIZE} />
+                    <FaLinkedin size={GUILD.MEMBER_PROFILE_ICON_SIZE} />
                   </Link>
                 ) : (
-                  <FaLinkedin size={MEMBER_PROFILE_ICON_SIZE} color="gray" />
+                  <FaLinkedin size={GUILD.MEMBER_PROFILE_ICON_SIZE} color="gray" />
                 )}
               </div>
               <div>
                 {hacker.websiteUrl ? (
                   <Link href={hacker.websiteUrl} target="_blank">
-                    <FaGlobe size={MEMBER_PROFILE_ICON_SIZE} />
+                    <FaGlobe size={GUILD.MEMBER_PROFILE_ICON_SIZE} />
                   </Link>
                 ) : (
-                  <FaGlobe size={MEMBER_PROFILE_ICON_SIZE} color="gray" />
+                  <FaGlobe size={GUILD.MEMBER_PROFILE_ICON_SIZE} color="gray" />
                 )}
               </div>
             </div>

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { LayoutDashboard } from "lucide-react";
 
-import type { PermissionKey } from "@forge/consts";
+import type { PERMISSIONS } from "@forge/consts";
 import { signOut } from "@forge/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@forge/ui/avatar";
 import { Button } from "@forge/ui/button";
@@ -29,7 +29,7 @@ import {
 } from "./reusable-user-dropdown";
 
 interface UserDropdownProps {
-  permissions: Record<PermissionKey, boolean>;
+  permissions: Record<PERMISSIONS.PermissionKey, boolean>;
 }
 
 /**
@@ -37,7 +37,7 @@ interface UserDropdownProps {
  */
 function filterItemsByPermissions(
   items: roleItems[],
-  permissions: Record<PermissionKey, boolean>,
+  permissions: Record<PERMISSIONS.PermissionKey, boolean>,
 ): roleItems[] {
   return items.filter((item) => {
     // If no permissions required, show the item

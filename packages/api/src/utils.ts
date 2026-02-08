@@ -73,7 +73,7 @@ export const parsePermissions = async (discordUserId: string) => {
     Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),
   )) as APIGuildMember;
 
-  const permissionsLength = Object.keys(PERMISSIONS).length;
+  const permissionsLength = Object.keys(PERMISSIONS.PERMISSIONS).length;
 
   // array of booleans. the boolean value at the index indicates if the user has that permission.
   // true means the user has the permission, false means the user doesn't have the permission.
@@ -102,7 +102,7 @@ export const parsePermissions = async (discordUserId: string) => {
   }
 
   // creates the map of permissions to their boolean values
-  const permissionsMap = Object.keys(PERMISSIONS).reduce(
+  const permissionsMap = Object.keys(PERMISSIONS.PERMISSIONS).reduce(
     (accumulator, key) => {
       const index = PERMISSIONS.PERMISSIONS[key];
       if (index === undefined) return accumulator;
@@ -481,7 +481,7 @@ export async function regenerateMediaUrls(
 
 export function getPermsAsList(perms: string) {
   const list = [];
-  const permKeys = Object.keys(PERMISSIONS);
+  const permKeys = Object.keys(PERMISSIONS.PERMISSIONS);
   for (let i = 0; i < perms.length; i++) {
     const permKey = permKeys.at(i);
     if (perms[i] == "1" && permKey) {

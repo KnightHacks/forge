@@ -1,12 +1,11 @@
 import { ShieldX } from "lucide-react";
 
-import type { PermissionKey } from "@forge/consts";
-import { PERMISSION_DATA } from "@forge/consts";
+import { PERMISSIONS } from "@forge/consts";
 
-export function BadPerms({ perms }: { perms: PermissionKey[] }) {
+export function BadPerms({ perms }: { perms: PERMISSIONS.PermissionKey[] }) {
   const permNames: string[] = [];
   perms.forEach((v) => {
-    const permissionData = PERMISSION_DATA[v];
+    const permissionData = PERMISSIONS.PERMISSION_DATA[v];
     if (permissionData) permNames.push(permissionData.name);
   });
 

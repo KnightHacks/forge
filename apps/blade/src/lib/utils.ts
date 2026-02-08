@@ -3,7 +3,7 @@ import type { z } from "zod";
 
 import type { EVENTS } from "@forge/consts";
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
-import { PERMISSION_DATA, PERMISSIONS } from "@forge/consts";
+import { PERMISSIONS } from "@forge/consts";
 
 export const formatDateTime = (date: Date) => {
   // Create a new Date object 5 hours behind the original
@@ -119,11 +119,11 @@ export function extractProcedures(router: AnyTRPCRouter) {
 
 export function getPermsAsList(perms: string) {
   const list = [];
-  const permKeys = Object.keys(PERMISSIONS);
+  const permKeys = Object.keys(PERMISSIONS.PERMISSIONS);
   for (let i = 0; i < perms.length; i++) {
     const permKey = permKeys.at(i);
     if (perms[i] == "1" && permKey) {
-      const permissionData = PERMISSION_DATA[permKey];
+      const permissionData = PERMISSIONS.PERMISSION_DATA[permKey];
       if (permissionData) list.push(permissionData.name);
     }
   }

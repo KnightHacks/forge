@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
-import { CLEAR_DUES_MESSAGE, USE_CAUTION } from "@forge/consts";
+import { CLUB } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -113,8 +113,8 @@ export default function FinalDuesDialogButton({
           <Button
             variant="destructive"
             disabled={
-              (USE_CAUTION as boolean)
-                ? confirmText !== CLEAR_DUES_MESSAGE || isLoading
+              (CLUB.USE_CAUTION as boolean)
+                ? confirmText !== CLUB.CLEAR_DUES_MESSAGE || isLoading
                 : isLoading
             }
             onClick={handleClearDues}

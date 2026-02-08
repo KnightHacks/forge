@@ -267,7 +267,7 @@ export const rolesRouter = {
           sql`cast(${Permissions.userId} as text) = ${input ? input.userId : ctx.session.user.id}`,
         );
 
-      const permissionsBits = new Array(Object.keys(PERMISSIONS).length).fill(
+      const permissionsBits = new Array(Object.keys(PERMISSIONS.PERMISSIONS).length).fill(
         false,
       ) as boolean[];
 
@@ -277,7 +277,7 @@ export const rolesRouter = {
         }
       });
 
-      const permissionsMap = Object.keys(PERMISSIONS).reduce(
+      const permissionsMap = Object.keys(PERMISSIONS.PERMISSIONS).reduce(
         (accumulator, key) => {
           const index = PERMISSIONS.PERMISSIONS[key];
           if (index === undefined) return accumulator;

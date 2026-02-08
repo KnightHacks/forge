@@ -12,7 +12,7 @@ import {
   Users,
 } from "lucide-react";
 
-import type { PermissionKey } from "@forge/consts";
+import type { PERMISSIONS } from "@forge/consts";
 
 import { USER_DROPDOWN_ICON_COLOR, USER_DROPDOWN_ICON_SIZE } from "~/consts";
 
@@ -29,8 +29,8 @@ export interface roleItems {
   component: React.JSX.Element;
   route: string;
   requiredPermissions?: {
-    or?: PermissionKey[];
-    and?: PermissionKey[];
+    or?: PERMISSIONS.PermissionKey[];
+    and?: PERMISSIONS.PermissionKey[];
   };
 }
 

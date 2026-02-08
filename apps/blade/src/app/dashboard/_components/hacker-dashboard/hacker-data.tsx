@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { CircleCheckBig, Loader2 } from "lucide-react";
 
-import { USE_CAUTION } from "@forge/consts";
+import { CLUB } from "@forge/consts";
 import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { Button } from "@forge/ui/button";
 import {
@@ -294,7 +294,7 @@ export function HackerData({
                 <Button
                   variant="destructive"
                   disabled={
-                    (USE_CAUTION as boolean)
+                    (CLUB.USE_CAUTION as boolean)
                       ? confirmationText !== "I am absolutely sure" || loading
                       : loading
                   }
