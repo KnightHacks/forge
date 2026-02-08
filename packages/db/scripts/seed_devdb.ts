@@ -15,7 +15,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import Pool from "pg-pool";
 import { stringify } from "superjson";
 
-import { DISCORD, KNIGHTHACKS_S3_BUCKET_REGION } from "@forge/consts";
+import { DISCORD, MINIO } from "@forge/consts";
 
 import { minioClient } from "../../api/src/minio/minio-client";
 import { discord, log } from "../../api/src/utils";
@@ -339,7 +339,7 @@ async function minio() {
   try {
     const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
     if (!bucketExists) {
-      await minioClient.makeBucket(BUCKET_NAME, KNIGHTHACKS_S3_BUCKET_REGION);
+      await minioClient.makeBucket(BUCKET_NAME, MINIO.BUCKET_REGION);
     }
 
     await minioClient.fPutObject(BUCKET_NAME, filePath, filePath, {
