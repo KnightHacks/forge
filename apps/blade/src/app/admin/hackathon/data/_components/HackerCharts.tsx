@@ -16,6 +16,7 @@ import ApplicationsOverTimeBarChart from "./ApplicationsOverTimeBarChart";
 import FirstTimeInfo from "./FirstTimeInfo";
 import LevelOfStudyPie from "./LevelOfStudyPie";
 import ShirtSizePie from "./ShirtSizePie";
+import DuesOverTimeBarChart from "./DuesOverTimeBarChart";
 
 export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
   const { data: hackers } = api.hacker.getHackers.useQuery(hackathonId);
@@ -90,6 +91,7 @@ export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
                   hackers={filteredHackers}
                   selectedStatuses={selectedStatuses}
                 />
+                <DuesOverTimeBarChart />
                 <FoodAllergiesBarChart people={filteredHackers} />
                 <FirstTimeHackersPie people={filteredHackers} />
                 <AgeBarChart people={filteredHackers} />
