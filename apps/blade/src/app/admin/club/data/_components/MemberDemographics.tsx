@@ -16,7 +16,7 @@ export default function MemberDemographics() {
   const { data: members } = api.member.getMembers.useQuery();
   const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
   const { data: events } = api.event.getEvents.useQuery();
-  const { data: duesPaymentDates } = api.member.getDuesPaymentDates.useQuery();
+  const { data: duesPaymentDates } = api.duesPayment.getDuesPaymentDates.useQuery();
   const { data: memberAttendance } =
     api.member.getMemberAttendanceCounts.useQuery();
 
