@@ -67,11 +67,11 @@ export default function DuesOverTimeBarChart({
       Date.UTC(
         minDate.getUTCFullYear(),
         minDate.getUTCMonth(),
-        minDate.getUTCDate()
+        minDate.getUTCDate(),
       ),
     );
     startDate.setUTCDate(startDate.getUTCDate() - startDate.getUTCDay());
-      
+
     let currentDate = new Date(startDate);
 
     // Create buckets until we exceed maxDate
