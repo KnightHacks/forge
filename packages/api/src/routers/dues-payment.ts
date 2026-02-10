@@ -101,5 +101,5 @@ export const duesPaymentRouter = {
     return await db
       .select({ paymentDate: DuesPayment.paymentDate })
       .from(DuesPayment);
-    }),
+  }),
 } satisfies TRPCRouterRecord;
