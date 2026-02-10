@@ -63,15 +63,21 @@ export default function DuesOverTimeBarChart({
     const oneWeekMs = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
     // Start from the beginning of the week containing minDate
-    const startDate = new Date(minDate);
-    startDate.setDate(startDate.getDate() - startDate.getDay());
-
+    const startDate = new Date(
+      Date.UTC(
+        minDate.getUTCFullYear(),
+        minDate.getUTCMonth(),
+        minDate.getUTCDate()
+      ),
+    );
+    startDate.setUTCDate(startDate.getUTCDate() - startDate.getUTCDay());
+      
     let currentDate = new Date(startDate);
 
     // Create buckets until we exceed maxDate
     while (currentDate <= maxDate) {
       const bucketEnd = new Date(currentDate.getTime() + oneWeekMs);
-      const bucketKey = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
+      const bucketKey = currentDate.toISOString().slice(0, 10); // YYYY-MM-DD
       buckets[bucketKey] = 0;
       currentDate = new Date(bucketEnd);
     }
@@ -84,7 +90,7 @@ export default function DuesOverTimeBarChart({
         const bucketEnd = new Date(bucketDate.getTime() + oneWeekMs);
 
         if (paymentDate >= bucketDate && paymentDate < bucketEnd) {
-          const bucketKey = `${bucketDate.getMonth() + 1}/${bucketDate.getDate()}`;
+          const bucketKey = bucketDate.toISOString().slice(0, 10);
           buckets[bucketKey] = (buckets[bucketKey] ?? 0) + 1;
           break;
         }
