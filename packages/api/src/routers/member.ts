@@ -382,6 +382,14 @@ export const memberRouter = {
       );
   }),
 
+  getDuesPaymentDates: permProcedure.query(async ({ ctx }) => {
+    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+
+    return await db
+      .select({ paymentDate: DuesPayment.paymentDate})
+      .from(DuesPayment);
+  }),
+
   getMemberAttendanceCounts: permProcedure.query(async ({ ctx }) => {
     controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
