@@ -231,6 +231,7 @@ export const hackerRouter = {
       let hackathon;
       const points: number[] = [];
 
+      // CRUD NOTES: replace this with a DB query of classes
       HACKER_CLASSES.forEach(() => {
         points.push(0);
       });
@@ -269,7 +270,7 @@ export const hackerRouter = {
           .where(
             and(
               eq(HackerAttendee.hackathonId, hackathon.id),
-              eq(HackerAttendee.class, c ?? "Alchemist"),
+              eq(HackerAttendee.class, c ?? "Alchemist"), //un-hardcode this
             ),
           );
 
@@ -317,6 +318,14 @@ export const hackerRouter = {
       // this code is going to start looking really stupid
       // but its all so that we dont have to send like half the DB of hackers to the client
       // and hopefully save performance
+
+      // CRUD NOTES
+      // HACKER_CLASSES will have to be replaced with a call to the DB
+      // this code will have to be adjusted incase a hackathon a class count != 6
+      // i dont know what I was smoking when i was making this
+
+      // this code assumes we will only have 2 teams ever
+      // which is very unlikely to change but still upsets me
 
       const topA = await db
         .select({

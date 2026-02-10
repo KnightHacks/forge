@@ -413,6 +413,7 @@ export const KH_EVENT_ROLE_ID = IS_PROD
   : DEV_DISCORD_ROLE_KNIGHT_HACKS_8;
 export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
 
+// CRUD NOTES: jesus christ what is this why did we never do this sooner
 export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
   Operator: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,
   Mechanist: IS_PROD ? PROD_DISCORD_ROLE_MACHINIST : DEV_DISCORD_ROLE_MACHINIST,
@@ -6716,6 +6717,11 @@ export interface ClassInfo {
   classPfp: string;
 }
 
+// CRUD NOTES
+// this gives us a good idea for what we need to implement when we update for CRUD
+// classes will need to have Name, Image, Team
+// teams will need to have Name, Color
+//
 export const HACKER_CLASS_INFO: Record<AssignableHackerClass, ClassInfo> = {
   Mechanist: {
     team: "Humanity",

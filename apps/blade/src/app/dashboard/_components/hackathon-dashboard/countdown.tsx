@@ -14,6 +14,7 @@ export default function HackingCountdown() {
 
   useEffect(() => {
     // Set your target end date here
+    // CRUD NOTES: this needs to be replaced with a defined hacking stop time in the DB
     const targetDate = new Date("2025-10-26T11:00:00").getTime();
 
     const updateCountdown = () => {

@@ -226,6 +226,7 @@ export const EventAttendee = createTable("event_attendee", (t) => ({
     }),
 }));
 
+// CRUD NOTES: put these into the db PLEASE 
 export const HACKER_TEAMS = ["Humanity", "Monstrosity"] as const;
 export const HACKER_CLASSES = [
   "Operator",
@@ -235,6 +236,7 @@ export const HACKER_CLASSES = [
   "Monstologist",
   "Alchemist",
 ] as const;
+// CRUD NOTES: fuck my stupid chud life these types are used everywhere
 export const SPECIAL_HACKER_CLASSES = ["VIP"] as const;
 export const HACKER_CLASSES_ALL = [
   ...HACKER_CLASSES,

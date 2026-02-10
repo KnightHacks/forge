@@ -18,6 +18,7 @@ export const hackathonRouter = {
 
   getCurrentHackathon: publicProcedure.query(async () => {
     // Find first hackathon that hasnt ended yet
+    // this is kinda breaking stuff honestly
     return await db.query.Hackathon.findFirst({
       orderBy: (t, { asc }) => asc(t.endDate),
       where: (t, { and, gte, lte }) =>

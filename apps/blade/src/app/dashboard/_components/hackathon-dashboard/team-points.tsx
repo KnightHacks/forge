@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Crown, Dot, Loader } from "lucide-react";
 
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
+// CRUD TEAMS
 import { HACKER_TEAMS } from "@forge/db/schemas/knight-hacks";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
 
@@ -50,6 +51,8 @@ export function TeamPoints({
     if (classPoints) updateByTeam();
   }, [classPoints]);
 
+
+  // CRUD NOTES: replace these with defined colors in DB
   const humanityHex = "#4075b7";
   const monstrosityHex = "#c04b3d";
 

@@ -63,6 +63,7 @@ export const getTagColor = (tag: EventTagsColor) => {
   return colors[tag];
 };
 
+// CRUD NOTES: oh lord; this needs to be moved into DB
 export const getClassTeam = (tag: HackerClass) => {
   if (["Harbinger", "Alchemist", "Monstologist"].includes(tag)) {
     return {

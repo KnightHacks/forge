@@ -337,6 +337,7 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               <div
                 className="text-2xl"
                 style={{
+                  // CRUD NOTES: these type validations will have to be updated
                   color: getClassTeam(assignedClass as HackerClass).teamColor,
                   textShadow: `0 0 10px ${getClassTeam(assignedClass as HackerClass).teamColor}, 0 0 20px ${getClassTeam(assignedClass as HackerClass).teamColor}`,
                 }}
