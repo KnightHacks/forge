@@ -92,13 +92,9 @@ export function PerUserResponsesView({
 
   const users = Object.values(groupedByUser).sort((a, b) => {
     const timeA =
-      a.length > 0
-        ? Math.min(...a.map((r) => r.submittedAt.getTime()))
-        : 0;
+      a.length > 0 ? Math.min(...a.map((r) => r.submittedAt.getTime())) : 0;
     const timeB =
-      b.length > 0
-        ? Math.min(...b.map((r) => r.submittedAt.getTime()))
-        : 0;
+      b.length > 0 ? Math.min(...b.map((r) => r.submittedAt.getTime())) : 0;
     return timeA - timeB;
   });
 
