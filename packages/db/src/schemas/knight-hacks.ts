@@ -66,7 +66,7 @@ export const Member = createTable(
     guildProfileVisible: t.boolean().notNull().default(true),
     tagline: t.varchar("tagline", { length: 80 }),
     about: t.varchar("about", { length: 500 }),
-    profilePictureUrl: t.varchar("profile_picture_url", { length: 255 }),
+    profilePictureUrl: t.varchar("profile_picture_url", { length: 512 }),
     shirtSize: shirtSizeEnum().notNull(),
     githubProfileUrl: t.varchar({ length: 255 }),
     linkedinProfileUrl: t.varchar({ length: 255 }),
