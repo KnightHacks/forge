@@ -9,8 +9,8 @@ import { db } from "@forge/db/client";
 import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
-import { protectedProcedure } from "../trpc";
-import { log, stripe } from "../utils";
+import { permProcedure, protectedProcedure } from "../trpc";
+import { controlPerms, log, stripe } from "../utils";
 
 export const duesPaymentRouter = {
   createCheckout: protectedProcedure.mutation(async ({ ctx }) => {
@@ -94,4 +94,12 @@ export const duesPaymentRouter = {
         status: session.payment_status,
       };
     }),
+
+  getDuesPaymentDates: permProcedure.query(async ({ ctx }) => {
+    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+
+    return await db
+      .select({ paymentDate: DuesPayment.paymentDate })
+      .from(DuesPayment);
+  }),
 } satisfies TRPCRouterRecord;
