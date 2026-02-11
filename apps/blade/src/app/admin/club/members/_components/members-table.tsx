@@ -16,15 +16,6 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@forge/ui/select";
-
 import SortButton from "~/app/admin/_components/SortButton";
 import { api } from "~/trpc/react";
 import ClearDuesButton from "./clear-dues";
@@ -34,6 +25,7 @@ import MemberProfileButton from "./member-profile";
 import UpdateMemberButton from "./update-member";
 import CustomPagination from "../../../_components/CustomPagination";
 import { useSearchParams } from "next/navigation";
+import CustomPaginationSelect from "~/app/admin/_components/CustomPaginationSelect";
 
 type Member = InsertMember;
 type SortField = keyof Member;
@@ -63,7 +55,7 @@ export default function MemberTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
   const [activeSort, setActiveSort] = useState<ActiveOrder>("field");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState<number>(10);
   const searchParams = useSearchParams();
   const currentPage = Number(searchParams.get("page") || 1);
   
@@ -126,20 +118,10 @@ export default function MemberTable() {
             </Button>
           </div>
           <div>
-            <Select
-              onValueChange={(value) => setPageSize(Number(value))}
-            >
-              <SelectTrigger className="w-auto">
-                <SelectValue placeholder="Member Amount" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <CustomPaginationSelect 
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
           </div>
           <div className="relative w-full">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -153,10 +135,6 @@ export default function MemberTable() {
           <div>
             <ClearDuesButton />
           </div>
-        </div>
-        <div className="whitespace-nowrap text-center text-sm font-bold">
-          Returned {sortedMembers.length}{" "}
-          {sortedMembers.length === 1 ? "member" : "members"}
         </div>
       </div>
 
