@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
+import { /*ArrowDown, ArrowUp, Clock,*/ Search } from "lucide-react";
 
-import type { InsertMember, Member } from "@forge/db/schemas/knight-hacks";
-import { Button } from "@forge/ui/button";
+import type { /*InsertMember, Member*/ } from "@forge/db/schemas/knight-hacks";
+//import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import {
@@ -16,23 +16,25 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
-import SortButton from "~/app/admin/_components/SortButton";
+//import SortButton from "~/app/admin/_components/SortButton";
 import { api } from "~/trpc/react";
 import ClearDuesButton from "./clear-dues";
 import DeleteMemberButton from "./delete-member";
 import DuesToggleButton from "./dues-toggle";
 import MemberProfileButton from "./member-profile";
 import UpdateMemberButton from "./update-member";
-import CustomPagination from "../../../_components/CustomPagination";
 import { useSearchParams } from "next/navigation";
+import CustomPagination from "~/app/admin/_components/CustomPagination";
 import CustomPaginationSelect from "~/app/admin/_components/CustomPaginationSelect";
+import { useDebounce } from "~/app/admin/_hooks/debounce";
 
-type Member = InsertMember;
-type SortField = keyof Member;
-type SortOrder = "asc" | "desc" | null;
-type TimeOrder = "asc" | "desc";
-type ActiveOrder = "time" | "field";
+//type Member = InsertMember;
+//type SortField = keyof Member;
+//type SortOrder = "asc" | "desc" | null;
+//type TimeOrder = "asc" | "desc";
+//type ActiveOrder = "time" | "field";
 
+/*
 function parseDate(datePart: string, timePart: string): Date {
   const date = new Date(datePart);
   const [hours, minutes, seconds, microseconds] = timePart
@@ -48,23 +50,27 @@ function parseDate(datePart: string, timePart: string): Date {
 
   return date;
 }
+*/
 
 export default function MemberTable() {
-  const [sortField, setSortField] = useState<SortField | null>(null);
-  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
+  //const [sortField, setSortField] = useState<SortField | null>(null);
+  //const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
-  const [activeSort, setActiveSort] = useState<ActiveOrder>("field");
+  //const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
+  //const [activeSort, setActiveSort] = useState<ActiveOrder>("field");
   const [pageSize, setPageSize] = useState<number>(10);
   const searchParams = useSearchParams();
   const currentPage = Number(searchParams.get("page") || 1);
-  
+  const debounceSearchTerm = useDebounce(searchTerm, 250);
 
-  const { data: members} = api.member.getMembers.useQuery({
+  const { data: members } = api.member.getMembers.useQuery({
     currentPage,
     pageSize,
+    searchTerm: debounceSearchTerm,
   });
-  const { data: totalCount } = api.member.getMemberCount.useQuery();
+  const { data: totalCount } = api.member.getMemberCount.useQuery({
+    searchTerm: debounceSearchTerm,
+  });
   const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
 
   const duesMap = new Map();
@@ -73,6 +79,7 @@ export default function MemberTable() {
     duesMap.set(status.id, true);
   }
 
+  /*
   const filteredMembers = (members ?? []).filter((member) =>
     Object.values(member).some((value) => {
       if (value === null) return false;
@@ -96,26 +103,29 @@ export default function MemberTable() {
 
     return 0;
   });
-
+  
   const toggleTimeSort = () => {
     setTimeSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     setActiveSort("time");
   };
-
+  
   const toggleFieldSort = () => {
     setActiveSort("field");
   };
+
+  <Button className="flex flex-row gap-1" onClick={toggleTimeSort}>
+    <Clock />
+    {timeSortOrder === "asc" && <ArrowUp />}
+    {timeSortOrder === "desc" && <ArrowDown />}
+  </Button>
+  */
 
   return (
     <div>
       <div className="border-b pb-2">
         <div className="flex items-center gap-2 pb-2">
           <div>
-            <Button className="flex flex-row gap-1" onClick={toggleTimeSort}>
-              <Clock />
-              {timeSortOrder === "asc" && <ArrowUp />}
-              {timeSortOrder === "desc" && <ArrowDown />}
-            </Button>
+            
           </div>
           <div>
             <CustomPaginationSelect 
@@ -141,6 +151,7 @@ export default function MemberTable() {
       <Table>
         <TableHeader>
           <TableRow>
+            {/*
             <TableHead className="text-center">
               <SortButton
                 field="firstName"
@@ -185,6 +196,7 @@ export default function MemberTable() {
                 setActiveSort={toggleFieldSort}
               />
             </TableHead>
+            */}
             <TableHead className="text-center">
               <Label>Dues Paying?</Label>
             </TableHead>
@@ -206,7 +218,7 @@ export default function MemberTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedMembers.map((member) => (
+          {(members ?? [] ).map((member) => (
             <TableRow key={member.id}>
               <TableCell className="text-center font-medium">
                 {member.firstName}

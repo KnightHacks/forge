@@ -11,13 +11,15 @@ import {
 } from "@forge/consts/knight-hacks";
 import {
   and,
+  asc,
   count,
   desc,
-  asc,
   eq,
   exists,
   getTableColumns,
+  ilike,
   isNull,
+  or,
   sql,
 } from "@forge/db";
 import { db } from "@forge/db/client";
@@ -304,7 +306,7 @@ export const memberRouter = {
       .from(Event)
       .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
       .groupBy(Event.id)
-      .as("eventsSubQuery");  
+      .as("eventsSubQuery");
     const events = await db
       .select({
         ...getTableColumns(Event),
@@ -322,33 +324,79 @@ export const memberRouter = {
   }),
 
   getMembers: permProcedure
-  .input(
-    z.object({
-      currentPage: z.number().min(1).optional(),
-      pageSize: z.number().min(1).max(100).optional(),
-    }).optional(),
-  )
-  .query(async ({ input, ctx }) => {
-    // CHECKIN_CLUB_EVENT is here because people trying to check-in
-    // need to retrieve the member list for manual entry
-    controlPerms.or(["READ_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx);
+    .input(
+      z
+        .object({
+          currentPage: z.number().min(1).optional(),
+          pageSize: z.number().min(1).max(100).optional(),
+          searchTerm: z.string().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ input, ctx }) => {
+      controlPerms.or(["READ_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx);
 
-    if (input?.currentPage && input.pageSize) {
-      const offset = (input.currentPage - 1) * input.pageSize;
-      return await db
-        .select()
-        .from(Member)
-        .offset(offset)
-        .limit(input.pageSize)
-        .orderBy(asc(Member.id));
-    }
+      if (input?.currentPage && input.pageSize) {
+        const offset = (input.currentPage - 1) * input.pageSize;
+        const searchPattern = `%${input.searchTerm ?? ""}%`;
 
-    return await db.query.Member.findMany();
-  }),
-  getMemberCount: publicProcedure.query(
-    async () =>
-      (await db.select({ count: count() }).from(Member))[0]?.count ?? 0,
-  ),
+        // Build query conditionally
+        if (input.searchTerm && input.searchTerm.length > 0) {
+          return await db
+            .select()
+            .from(Member)
+            .where(
+              or(
+                ilike(Member.firstName, searchPattern),
+                ilike(Member.lastName, searchPattern),
+                ilike(Member.email, searchPattern),
+                ilike(Member.discordUser, searchPattern),
+                ilike(Member.company, searchPattern),
+              ),
+            )
+            .offset(offset)
+            .limit(input.pageSize)
+            .orderBy(asc(Member.id));
+        }
+
+        return await db
+          .select()
+          .from(Member)
+          .offset(offset)
+          .limit(input.pageSize)
+          .orderBy(asc(Member.id));
+      }
+
+      return await db.query.Member.findMany();
+    }),
+
+  getMemberCount: publicProcedure
+    .input(
+      z
+        .object({
+          searchTerm: z.string().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ input }) => {
+      if (input?.searchTerm && input.searchTerm.length > 0) {
+        const searchPattern = `%${input.searchTerm}%`;
+        const result = await db
+          .select({ count: count() })
+          .from(Member)
+          .where(
+            or(
+              ilike(Member.firstName, searchPattern),
+              ilike(Member.lastName, searchPattern),
+              ilike(Member.email, searchPattern),
+              ilike(Member.discordUser, searchPattern),
+              ilike(Member.company, searchPattern),
+            ),
+          );
+        return result[0]?.count ?? 0;
+      }
+      return (await db.select({ count: count() }).from(Member))[0]?.count ?? 0;
+    }),
 
   giveMemberPoints: permProcedure
     .input(

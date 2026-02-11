@@ -26,7 +26,7 @@ export default function CustomPaginationSelect({
     onValueChange={(value: string) => onPageSizeChange(Number(value))}
     >
       <SelectTrigger className={className ?? "w-auto"}>
-        <SelectValue>`{pageSize} Members`</SelectValue>
+        <SelectValue>{pageSize} Members</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
