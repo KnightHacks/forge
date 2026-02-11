@@ -16,14 +16,14 @@ interface MemberPaginationProps {
   itemCount: number,
   pageSize: number,
   currentPage: number,
-  classname?: string,
+  className?: string,
 };
 
 export default function CustomPagination({
   itemCount,
   pageSize,
   currentPage,
-  classname,
+  className,
 }: MemberPaginationProps ) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -75,7 +75,7 @@ export default function CustomPagination({
   };
 
   return (
-    <Pagination className={cn(classname)}>
+    <Pagination className={cn(className)}>
       <PaginationContent>
         <PaginationItem>
           <PaginationPrevious 
