@@ -7,7 +7,6 @@ import {
   ChartPie,
   FormInput,
   Hotel,
-  Mail,
   Settings,
   ShieldCheck,
   Swords,
@@ -154,12 +153,6 @@ export default async function Admin() {
           label: "Forms",
           icon: FormInput,
           show: perms.READ_FORMS || perms.EDIT_FORMS || perms.IS_OFFICER,
-        },
-        {
-          href: "/admin/email",
-          label: "Email Portal",
-          icon: Mail,
-          show: perms.EMAIL_PORTAL || perms.IS_OFFICER,
         },
         {
           href: "/admin/roles/configure",
