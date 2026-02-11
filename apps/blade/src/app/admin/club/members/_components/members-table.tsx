@@ -16,16 +16,6 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@forge/ui/pagination";
-
 import SortButton from "~/app/admin/_components/SortButton";
 import { api } from "~/trpc/react";
 import ClearDuesButton from "./clear-dues";
@@ -33,6 +23,8 @@ import DeleteMemberButton from "./delete-member";
 import DuesToggleButton from "./dues-toggle";
 import MemberProfileButton from "./member-profile";
 import UpdateMemberButton from "./update-member";
+import CustomPagination from "../../../_components/CustomPagination";
+import { useSearchParams } from "next/navigation";
 
 type Member = InsertMember;
 type SortField = keyof Member;
@@ -62,13 +54,15 @@ export default function MemberTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
   const [activeSort, setActiveSort] = useState<ActiveOrder>("field");
-  const [page, setPage] = useState(1);
+  const searchParams = useSearchParams();
+  const currentPage = Number(searchParams.get("page") || 1);
   const pageSize = 10;
 
-  const { data: members } = api.member.getMembers.useQuery({
-    page,
+  const { data: members} = api.member.getMembers.useQuery({
+    currentPage,
     pageSize,
   });
+  const { data: totalCount } = api.member.getMemberCount.useQuery();
   const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
 
   const duesMap = new Map();
@@ -245,31 +239,12 @@ export default function MemberTable() {
           ))}
         </TableBody>
       </Table>
-
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious href="#" />
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationLink href="#">1</PaginationLink>
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationLink href="#" isActive>
-              2
-            </PaginationLink>
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationLink href="#">3</PaginationLink>
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationEllipsis />
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationNext href="#" />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+      <CustomPagination 
+        classname="py-3"
+        itemCount={totalCount ?? 0}
+        currentPage={currentPage}
+        pageSize={pageSize}
+      />
     </div>
   );
 }

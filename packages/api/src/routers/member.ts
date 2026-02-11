@@ -13,6 +13,7 @@ import {
   and,
   count,
   desc,
+  asc,
   eq,
   exists,
   getTableColumns,
@@ -323,7 +324,7 @@ export const memberRouter = {
   getMembers: permProcedure
   .input(
     z.object({
-      page: z.number().min(1).optional(),
+      currentPage: z.number().min(1).optional(),
       pageSize: z.number().min(1).max(100).optional(),
     }).optional(),
   )
@@ -332,14 +333,14 @@ export const memberRouter = {
     // need to retrieve the member list for manual entry
     controlPerms.or(["READ_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx);
 
-    if (input?.page && input.pageSize) {
-      const offset = (input.page - 1) * input.pageSize;
+    if (input?.currentPage && input.pageSize) {
+      const offset = (input.currentPage - 1) * input.pageSize;
       return await db
         .select()
         .from(Member)
         .offset(offset)
         .limit(input.pageSize)
-        .orderBy(desc(Member.id));
+        .orderBy(asc(Member.id));
     }
 
     return await db.query.Member.findMany();
