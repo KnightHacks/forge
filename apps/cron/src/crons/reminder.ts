@@ -402,7 +402,7 @@ async function getEvents() {
 
   console.log("Next Week's Events: ", nextWeekEvents);
 
-  // Filter out "Operations Meeting" from nextWeek
+  // Filter out "Operations Meeting" and "Project Launch Lab Hours" from nextWeek
   const nextWeekFiltered = nextWeekEvents.filter((event) => {
     const tag = event.tag.toLowerCase();
     const name = event.name.toLowerCase();
