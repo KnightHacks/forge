@@ -303,7 +303,7 @@ export const memberRouter = {
       .from(Event)
       .leftJoin(EventAttendee, eq(Event.id, EventAttendee.eventId))
       .groupBy(Event.id)
-      .as("eventsSubQuery");
+      .as("eventsSubQuery");  
     const events = await db
       .select({
         ...getTableColumns(Event),
@@ -320,10 +320,27 @@ export const memberRouter = {
     return events;
   }),
 
-  getMembers: permProcedure.query(async ({ ctx }) => {
+  getMembers: permProcedure
+  .input(
+    z.object({
+      page: z.number().min(1).optional(),
+      pageSize: z.number().min(1).max(100).optional(),
+    }).optional(),
+  )
+  .query(async ({ input, ctx }) => {
     // CHECKIN_CLUB_EVENT is here because people trying to check-in
     // need to retrieve the member list for manual entry
     controlPerms.or(["READ_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx);
+
+    if (input?.page && input.pageSize) {
+      const offset = (input.page - 1) * input.pageSize;
+      return await db
+        .select()
+        .from(Member)
+        .offset(offset)
+        .limit(input.pageSize)
+        .orderBy(desc(Member.id));
+    }
 
     return await db.query.Member.findMany();
   }),

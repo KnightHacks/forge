@@ -16,6 +16,16 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@forge/ui/pagination";
+
 import SortButton from "~/app/admin/_components/SortButton";
 import { api } from "~/trpc/react";
 import ClearDuesButton from "./clear-dues";
@@ -52,8 +62,13 @@ export default function MemberTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
   const [activeSort, setActiveSort] = useState<ActiveOrder>("field");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
-  const { data: members } = api.member.getMembers.useQuery();
+  const { data: members } = api.member.getMembers.useQuery({
+    page,
+    pageSize,
+  });
   const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
 
   const duesMap = new Map();
@@ -230,6 +245,31 @@ export default function MemberTable() {
           ))}
         </TableBody>
       </Table>
+
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious href="#" />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#">1</PaginationLink>
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#" isActive>
+              2
+            </PaginationLink>
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#">3</PaginationLink>
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationEllipsis />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationNext href="#" />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   );
 }
