@@ -1,6 +1,8 @@
-"use client"
-import { useSearchParams, useRouter } from "next/navigation";
+"use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
+
+import { cn } from "@forge/ui";
 import {
   Pagination,
   PaginationContent,
@@ -10,21 +12,20 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@forge/ui/pagination";
-import { cn } from "@forge/ui";
 
 interface MemberPaginationProps {
-  itemCount: number,
-  pageSize: number,
-  currentPage: number,
-  className?: string,
-};
+  itemCount: number;
+  pageSize: number;
+  currentPage: number;
+  className?: string;
+}
 
 export default function CustomPagination({
   itemCount,
   pageSize,
   currentPage,
   className,
-}: MemberPaginationProps ) {
+}: MemberPaginationProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -33,16 +34,16 @@ export default function CustomPagination({
 
   const changePage = (page: number) => {
     const params = new URLSearchParams(searchParams);
-    params.set('page', page.toString());
-    router.push('?' + params.toString());
+    params.set("page", page.toString());
+    router.push("?" + params.toString());
   };
 
   const getPageNumber = (): (number | "ellipsis")[] => {
     const pages: (number | "ellipsis")[] = [];
 
-    if (pageCount <= 5){
+    if (pageCount <= 5) {
       // Show all page if less then 5
-      for(let i = 1; i <= pageCount; i++){
+      for (let i = 1; i <= pageCount; i++) {
         pages.push(i);
       }
     } else {
@@ -58,12 +59,12 @@ export default function CustomPagination({
       const start = Math.max(2, currentPage - 1);
       const end = Math.min(pageCount - 1, currentPage + 1);
 
-      for(let i = start; i <= end; i++){
+      for (let i = start; i <= end; i++) {
         pages.push(i);
       }
 
       // Show an ellipsis if the page is too "far" from the end
-      if (currentPage < pageCount - 2){
+      if (currentPage < pageCount - 2) {
         pages.push("ellipsis");
       }
 
@@ -78,7 +79,7 @@ export default function CustomPagination({
     <Pagination className={cn(className)}>
       <PaginationContent>
         <PaginationItem>
-          <PaginationPrevious 
+          <PaginationPrevious
             onClick={() => changePage(currentPage - 1)}
             aria-disabled={currentPage <= 1}
           />
@@ -86,20 +87,20 @@ export default function CustomPagination({
         {getPageNumber().map((page, idx) => (
           <PaginationItem key={idx}>
             {page === "ellipsis" ? (
-              <PaginationEllipsis/>
+              <PaginationEllipsis />
             ) : (
               <PaginationLink
                 onClick={() => changePage(page)}
                 isActive={currentPage === page}
                 className="cursor-pointer"
-              >  
+              >
                 {page}
               </PaginationLink>
             )}
           </PaginationItem>
         ))}
         <PaginationItem>
-          <PaginationNext 
+          <PaginationNext
             onClick={() => changePage(currentPage + 1)}
             aria-disabled={currentPage >= pageCount}
           />

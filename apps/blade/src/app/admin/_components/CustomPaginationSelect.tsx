@@ -19,11 +19,11 @@ export default function CustomPaginationSelect({
   onPageSizeChange,
   options = [10, 25, 50, 100],
   className,
-} : CustomPaginationSelectProps ){
+}: CustomPaginationSelectProps) {
   return (
-    <Select 
-    value={pageSize.toString()}
-    onValueChange={(value: string) => onPageSizeChange(Number(value))}
+    <Select
+      value={pageSize.toString()}
+      onValueChange={(value: string) => onPageSizeChange(Number(value))}
     >
       <SelectTrigger className={className ?? "w-auto"}>
         <SelectValue>{pageSize} Members</SelectValue>

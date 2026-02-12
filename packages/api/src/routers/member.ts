@@ -330,7 +330,15 @@ export const memberRouter = {
           currentPage: z.number().min(1).optional(),
           pageSize: z.number().min(1).max(100).optional(),
           searchTerm: z.string().optional(),
-          sortField: z.enum(["firstName", "lastName", "email", "discordUser", "dateCreated"]).optional(),
+          sortField: z
+            .enum([
+              "firstName",
+              "lastName",
+              "email",
+              "discordUser",
+              "dateCreated",
+            ])
+            .optional(),
           sortOrder: z.enum(["desc", "asc"]).optional(),
           sortByTime: z.boolean().optional(),
         })
@@ -350,24 +358,28 @@ export const memberRouter = {
         // Build query conditionally
         if (input.searchTerm && input.searchTerm.length > 0) {
           query = query.where(
-              or(
-                // Check whatever attribute you want
-                ilike(Member.firstName, searchPattern),
-                ilike(Member.lastName, searchPattern),
-                ilike(Member.email, searchPattern),
-                ilike(Member.discordUser, searchPattern),
-                ilike(Member.company, searchPattern),
-                // Handle full names
-                sql`CONCAT(${Member.firstName}, ' ', ${Member.lastName}) ILIKE ${searchPattern}`,
-              ),
-            ) as typeof query;
+            or(
+              // Check whatever attribute you want
+              ilike(Member.firstName, searchPattern),
+              ilike(Member.lastName, searchPattern),
+              ilike(Member.email, searchPattern),
+              ilike(Member.discordUser, searchPattern),
+              ilike(Member.company, searchPattern),
+              // Handle full names
+              sql`CONCAT(${Member.firstName}, ' ', ${Member.lastName}) ILIKE ${searchPattern}`,
+            ),
+          ) as typeof query;
         }
 
         // Add the sorting here
         if (input.sortByTime) {
           query.orderBy(
-            input.sortOrder === "desc" ? desc(Member.timeCreated) : asc(Member.dateCreated),
-            input.sortOrder === "desc" ? desc(Member.timeCreated) : asc(Member.timeCreated),
+            input.sortOrder === "desc"
+              ? desc(Member.timeCreated)
+              : asc(Member.dateCreated),
+            input.sortOrder === "desc"
+              ? desc(Member.timeCreated)
+              : asc(Member.timeCreated),
           ) as typeof query;
         } else if (input.sortField && input.sortOrder) {
           const sortColumn = Member[input.sortField];

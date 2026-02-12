@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
 
+import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
-import { Button } from "@forge/ui/button";
 import {
   Table,
   TableBody,
@@ -15,20 +16,24 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
+import CustomPagination from "~/app/admin/_components/CustomPagination";
+import CustomPaginationSelect from "~/app/admin/_components/CustomPaginationSelect";
 import SortButton from "~/app/admin/_components/SortButton";
+import { useDebounce } from "~/app/admin/_hooks/debounce";
 import { api } from "~/trpc/react";
 import ClearDuesButton from "./clear-dues";
 import DeleteMemberButton from "./delete-member";
 import DuesToggleButton from "./dues-toggle";
 import MemberProfileButton from "./member-profile";
 import UpdateMemberButton from "./update-member";
-import { useSearchParams } from "next/navigation";
-import CustomPagination from "~/app/admin/_components/CustomPagination";
-import CustomPaginationSelect from "~/app/admin/_components/CustomPaginationSelect";
-import { useDebounce } from "~/app/admin/_hooks/debounce";
 
-// We dont need to sort through so many different fields
-type SortField = "firstName" | "lastName" | "email" | "discordUser" | "dateCreated";
+// We dont need to sort through so many different fields 
+type SortField =
+  | "firstName"
+  | "lastName"
+  | "email"
+  | "discordUser"
+  | "dateCreated";
 type SortOrder = "asc" | "desc" | null;
 
 export default function MemberTable() {
@@ -40,7 +45,8 @@ export default function MemberTable() {
   const [timeSortOrder, setTimeSortOrder] = useState<"asc" | "desc">("asc");
 
   const searchParams = useSearchParams();
-  const currentPage = Number(searchParams.get("page") || 1);  
+  const router = useRouter();
+  const currentPage = Number(searchParams.get("page") || 1);
   const debounceSearchTerm = useDebounce(searchTerm, 250);
 
   const { data: members } = api.member.getMembers.useQuery({
@@ -73,9 +79,14 @@ export default function MemberTable() {
     setSortByTime(false);
   };
 
-  /*
-  
-  */
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+
+    // We need to reset the page back to 1 when changing member viewing size
+    const params = new URLSearchParams(searchParams);
+    params.set("page", "1");
+    router.push("?" + params.toString());
+  };
 
   return (
     <div>
@@ -89,9 +100,9 @@ export default function MemberTable() {
             </Button>
           </div>
           <div>
-            <CustomPaginationSelect 
+            <CustomPaginationSelect
               pageSize={pageSize}
-              onPageSizeChange={setPageSize}
+              onPageSizeChange={handlePageSizeChange}
             />
           </div>
           <div className="relative w-full">
@@ -177,7 +188,7 @@ export default function MemberTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(members ?? [] ).map((member) => (
+          {(members ?? []).map((member) => (
             <TableRow key={member.id}>
               <TableCell className="text-center font-medium">
                 {member.firstName}
@@ -214,7 +225,7 @@ export default function MemberTable() {
           ))}
         </TableBody>
       </Table>
-      <CustomPagination 
+      <CustomPagination
         className="py-3"
         itemCount={totalCount ?? 0}
         currentPage={currentPage}

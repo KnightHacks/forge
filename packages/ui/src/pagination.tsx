@@ -1,8 +1,10 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+
 import { cn } from "@forge/ui";
-import { buttonVariants } from "./button";
+
 import type { ButtonProps } from "./button";
+import { buttonVariants } from "./button";
 
 const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
   <nav
@@ -61,7 +63,7 @@ PaginationLink.displayName = "PaginationLink";
 
 const PaginationPrevious = ({
   className,
-  size="md",
+  size = "md",
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => (
   <PaginationLink
@@ -78,7 +80,7 @@ PaginationPrevious.displayName = "PaginationPrevious";
 
 const PaginationNext = ({
   className,
-  size="md",
+  size = "md",
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => (
   <PaginationLink
