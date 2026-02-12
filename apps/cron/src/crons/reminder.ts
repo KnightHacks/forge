@@ -402,12 +402,16 @@ async function getEvents() {
 
   console.log("Next Week's Events: ", nextWeekEvents);
 
-  // Filter out "Operations Meeting" from nextWeek
-  const nextWeekFiltered = nextWeekEvents.filter(
-    (event) =>
-      !event.tag.includes("Operations Meeting") &&
-      !event.name.includes("Lab Hours"),
-  );
+  // Filter out "Operations Meeting" and "Project Launch Lab Hours" from nextWeek
+  const nextWeekFiltered = nextWeekEvents.filter((event) => {
+    const tag = event.tag.toLowerCase();
+    const name = event.name.toLowerCase();
+    const ops = tag === "ops";
+    const plLab =
+      tag === "project launch" &&
+      (name.includes("lab") || name.includes("hours"));
+    return !ops && !plLab;
+  });
 
   // Build the final array of prefix groups
   type EventRow = InferSelectModel<typeof Event>;
