@@ -7,6 +7,13 @@ import { Button } from "@forge/ui/button";
 export const metadata: Metadata = {
   title: "Sponsor Knight Hacks!",
   description: "Help us make dreams!",
+  openGraph: {
+    title: "Sponsor Knight Hacks!",
+    description: "Help us make dreams!",
+    url: "https://blade.knighthacks.org/sponsor",
+    siteName: "Blade",
+    images: [{ url: "https://club.knighthacks.org/community.png" }],
+  },
 };
 
 const SPONSOR_VIDEO_LINK_2 =

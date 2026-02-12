@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { api } from "~/trpc/server";
 import RoleAssign from "./roleassign";
+
+export const metadata: Metadata = {
+  title: "Blade | Manage Roles",
+  description: "Manage Knight Hacks roles.",
+};
 
 export default async function ManageRoles() {
   const hasAccess = await api.roles.hasPermission({

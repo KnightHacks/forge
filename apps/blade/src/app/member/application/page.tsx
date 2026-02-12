@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { auth, signIn } from "@forge/auth/server";
 
 import { api } from "~/trpc/server";
 import { MemberApplicationForm } from "./_components/member-application-form";
+
+export const metadata: Metadata = {
+  title: "Blade | Member Application",
+  description: "Apply for Knight Hacks membership.",
+};
 
 export default async function MemberApplicationPage() {
   const session = await auth();

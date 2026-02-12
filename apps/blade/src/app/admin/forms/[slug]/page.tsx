@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { appRouter } from "@forge/api";
@@ -6,6 +7,11 @@ import { auth } from "@forge/auth/server";
 import { extractProcedures } from "~/lib/utils";
 import { api } from "~/trpc/server";
 import { EditorClient } from "./client";
+
+export const metadata: Metadata = {
+  title: "Blade | Edit Form",
+  description: "Edit Form.",
+};
 
 export default async function FormEditorPage({
   params,

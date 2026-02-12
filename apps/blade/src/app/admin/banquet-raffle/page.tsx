@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { eq, gt } from "drizzle-orm";
 
@@ -9,6 +10,11 @@ import { Member } from "@forge/db/schemas/knight-hacks";
 import { SIGN_IN_PATH } from "~/consts";
 import { api } from "~/trpc/server";
 import RaffleDraw from "./components/raffle-draw";
+
+export const metadata: Metadata = {
+  title: "Blade | Banquet Raffle",
+  description: "Draw a raffle winner",
+};
 
 export default async function Raffle() {
   const session = await auth();
