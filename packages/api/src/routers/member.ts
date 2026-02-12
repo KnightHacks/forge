@@ -332,6 +332,7 @@ export const memberRouter = {
           searchTerm: z.string().optional(),
           sortField: z.enum(["firstName", "lastName", "email", "discordUser", "dateCreated"]).optional(),
           sortOrder: z.enum(["desc", "asc"]).optional(),
+          sortByTime: z.boolean().optional(),
         })
         .optional(),
     )
@@ -363,7 +364,12 @@ export const memberRouter = {
         }
 
         // Add the sorting here
-        if (input.sortField && input.sortOrder) {
+        if (input.sortByTime) {
+          query.orderBy(
+            input.sortOrder === "desc" ? desc(Member.timeCreated) : asc(Member.dateCreated),
+            input.sortOrder === "desc" ? desc(Member.timeCreated) : asc(Member.timeCreated),
+          ) as typeof query;
+        } else if (input.sortField && input.sortOrder) {
           const sortColumn = Member[input.sortField];
           query = query.orderBy(
             input.sortOrder === "asc" ? asc(sortColumn) : desc(sortColumn),

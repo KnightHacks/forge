@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { /*ArrowDown, ArrowUp, Clock,*/ Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
 
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { Button } from "@forge/ui/button";
 import {
   Table,
   TableBody,
@@ -35,6 +36,9 @@ export default function MemberTable() {
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState<number>(10);
+  const [sortByTime, setSortByTime] = useState(false);
+  const [timeSortOrder, setTimeSortOrder] = useState<"asc" | "desc">("asc");
+
   const searchParams = useSearchParams();
   const currentPage = Number(searchParams.get("page") || 1);  
   const debounceSearchTerm = useDebounce(searchTerm, 250);
@@ -43,8 +47,9 @@ export default function MemberTable() {
     currentPage,
     pageSize,
     searchTerm: debounceSearchTerm,
-    sortField: sortField ?? undefined,
-    sortOrder: sortOrder ?? undefined,
+    sortField: sortByTime ? undefined : (sortField ?? undefined),
+    sortOrder: sortByTime ? timeSortOrder : (sortOrder ?? undefined),
+    sortByTime,
   });
   const { data: totalCount } = api.member.getMemberCount.useQuery({
     searchTerm: debounceSearchTerm,
@@ -57,12 +62,19 @@ export default function MemberTable() {
     duesMap.set(status.id, true);
   }
 
+  const toggleTimeSort = () => {
+    setTimeSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    setSortByTime(true);
+    setSortField(null);
+    setSortOrder(null);
+  };
+
+  const handleSortField = () => {
+    setSortByTime(false);
+  };
+
   /*
-  <Button className="flex flex-row gap-1" onClick={toggleTimeSort}>
-    <Clock />
-    {timeSortOrder === "asc" && <ArrowUp />}
-    {timeSortOrder === "desc" && <ArrowDown />}
-  </Button>
+  
   */
 
   return (
@@ -70,7 +82,11 @@ export default function MemberTable() {
       <div className="border-b pb-2">
         <div className="flex items-center gap-2 pb-2">
           <div>
-            
+            <Button className="flex flex-row gap-1" onClick={toggleTimeSort}>
+              <Clock />
+              {timeSortOrder === "asc" && <ArrowUp />}
+              {timeSortOrder === "desc" && <ArrowDown />}
+            </Button>
           </div>
           <div>
             <CustomPaginationSelect 
@@ -104,6 +120,7 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
+                setActiveSort={handleSortField}
               />
             </TableHead>
             <TableHead className="text-center">
@@ -114,6 +131,7 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
+                setActiveSort={handleSortField}
               />
             </TableHead>
             <TableHead className="text-center">
@@ -124,6 +142,7 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
+                setActiveSort={handleSortField}
               />
             </TableHead>
             <TableHead>
@@ -134,6 +153,7 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
+                setActiveSort={handleSortField}
               />
             </TableHead>
             <TableHead className="text-center">
