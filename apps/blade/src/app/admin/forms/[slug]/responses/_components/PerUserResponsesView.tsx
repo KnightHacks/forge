@@ -91,9 +91,11 @@ export function PerUserResponsesView({
   );
 
   const users = Object.values(groupedByUser).sort((a, b) => {
-    const nameA = `${a[0]?.member.firstName} ${a[0]?.member.lastName}`;
-    const nameB = `${b[0]?.member.firstName} ${b[0]?.member.lastName}`;
-    return nameA.localeCompare(nameB);
+    const timeA =
+      a.length > 0 ? Math.min(...a.map((r) => r.submittedAt.getTime())) : 0;
+    const timeB =
+      b.length > 0 ? Math.min(...b.map((r) => r.submittedAt.getTime())) : 0;
+    return timeA - timeB;
   });
 
   const [currentUserIndex, setCurrentUserIndex] = useState(0);

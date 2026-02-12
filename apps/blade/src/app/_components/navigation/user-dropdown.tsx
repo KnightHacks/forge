@@ -91,7 +91,7 @@ export function UserDropdown({ permissions }: UserDropdownProps) {
           </Avatar>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="mr-4 w-screen sm:w-56">
+      <DropdownMenuContent className="mr-4 max-h-[75vh] w-screen overflow-y-auto sm:max-h-[80vh] sm:w-56">
         <DropdownMenuLabel>{data ? data.name : "My Account"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
