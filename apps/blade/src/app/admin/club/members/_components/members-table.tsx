@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { /*ArrowDown, ArrowUp, Clock,*/ Search } from "lucide-react";
 
-import type { /*InsertMember, Member*/ } from "@forge/db/schemas/knight-hacks";
-//import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import {
@@ -16,7 +14,7 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
-//import SortButton from "~/app/admin/_components/SortButton";
+import SortButton from "~/app/admin/_components/SortButton";
 import { api } from "~/trpc/react";
 import ClearDuesButton from "./clear-dues";
 import DeleteMemberButton from "./delete-member";
@@ -28,45 +26,25 @@ import CustomPagination from "~/app/admin/_components/CustomPagination";
 import CustomPaginationSelect from "~/app/admin/_components/CustomPaginationSelect";
 import { useDebounce } from "~/app/admin/_hooks/debounce";
 
-//type Member = InsertMember;
-//type SortField = keyof Member;
-//type SortOrder = "asc" | "desc" | null;
-//type TimeOrder = "asc" | "desc";
-//type ActiveOrder = "time" | "field";
-
-/*
-function parseDate(datePart: string, timePart: string): Date {
-  const date = new Date(datePart);
-  const [hours, minutes, seconds, microseconds] = timePart
-    .split(/[:.]/)
-    .map(Number);
-
-  date.setUTCHours(
-    hours ?? 0,
-    minutes ?? 0,
-    seconds ?? 0,
-    Math.floor((microseconds ?? 0) / 1000),
-  );
-
-  return date;
-}
-*/
+// We dont need to sort through so many different fields
+type SortField = "firstName" | "lastName" | "email" | "discordUser" | "dateCreated";
+type SortOrder = "asc" | "desc" | null;
 
 export default function MemberTable() {
-  //const [sortField, setSortField] = useState<SortField | null>(null);
-  //const [sortOrder, setSortOrder] = useState<SortOrder>(null);
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  //const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
-  //const [activeSort, setActiveSort] = useState<ActiveOrder>("field");
   const [pageSize, setPageSize] = useState<number>(10);
   const searchParams = useSearchParams();
-  const currentPage = Number(searchParams.get("page") || 1);
+  const currentPage = Number(searchParams.get("page") || 1);  
   const debounceSearchTerm = useDebounce(searchTerm, 250);
 
   const { data: members } = api.member.getMembers.useQuery({
     currentPage,
     pageSize,
     searchTerm: debounceSearchTerm,
+    sortField: sortField ?? undefined,
+    sortOrder: sortOrder ?? undefined,
   });
   const { data: totalCount } = api.member.getMemberCount.useQuery({
     searchTerm: debounceSearchTerm,
@@ -80,39 +58,6 @@ export default function MemberTable() {
   }
 
   /*
-  const filteredMembers = (members ?? []).filter((member) =>
-    Object.values(member).some((value) => {
-      if (value === null) return false;
-      return value.toString().toLowerCase().includes(searchTerm.toLowerCase());
-    }),
-  );
-
-  const sortedMembers = [...filteredMembers].sort((a, b) => {
-    const dateA = parseDate(a.dateCreated, a.timeCreated);
-    const dateB = parseDate(b.dateCreated, b.timeCreated);
-
-    if (activeSort == "time") {
-      if (dateA < dateB) return timeSortOrder === "asc" ? -1 : 1;
-      if (dateA > dateB) return timeSortOrder === "asc" ? 1 : -1;
-    } else {
-      if (!sortField || sortOrder === null) return 0;
-      if (a[sortField] == null || b[sortField] == null) return 0;
-      if (a[sortField] < b[sortField]) return sortOrder === "asc" ? -1 : 1;
-      if (a[sortField] > b[sortField]) return sortOrder === "asc" ? 1 : -1;
-    }
-
-    return 0;
-  });
-  
-  const toggleTimeSort = () => {
-    setTimeSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    setActiveSort("time");
-  };
-  
-  const toggleFieldSort = () => {
-    setActiveSort("field");
-  };
-
   <Button className="flex flex-row gap-1" onClick={toggleTimeSort}>
     <Clock />
     {timeSortOrder === "asc" && <ArrowUp />}
@@ -151,7 +96,6 @@ export default function MemberTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            {/*
             <TableHead className="text-center">
               <SortButton
                 field="firstName"
@@ -160,7 +104,6 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
-                setActiveSort={toggleFieldSort}
               />
             </TableHead>
             <TableHead className="text-center">
@@ -171,7 +114,6 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
-                setActiveSort={toggleFieldSort}
               />
             </TableHead>
             <TableHead className="text-center">
@@ -182,7 +124,6 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
-                setActiveSort={toggleFieldSort}
               />
             </TableHead>
             <TableHead>
@@ -193,10 +134,8 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
-                setActiveSort={toggleFieldSort}
               />
             </TableHead>
-            */}
             <TableHead className="text-center">
               <Label>Dues Paying?</Label>
             </TableHead>

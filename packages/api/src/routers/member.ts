@@ -330,6 +330,8 @@ export const memberRouter = {
           currentPage: z.number().min(1).optional(),
           pageSize: z.number().min(1).max(100).optional(),
           searchTerm: z.string().optional(),
+          sortField: z.enum(["firstName", "lastName", "email", "discordUser", "dateCreated"]).optional(),
+          sortOrder: z.enum(["desc", "asc"]).optional(),
         })
         .optional(),
     )
@@ -337,34 +339,41 @@ export const memberRouter = {
       controlPerms.or(["READ_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx);
 
       if (input?.currentPage && input.pageSize) {
+        // Calculate the offset and set the search term to be sql friendly
         const offset = (input.currentPage - 1) * input.pageSize;
         const searchPattern = `%${input.searchTerm ?? ""}%`;
 
+        // Build the base query
+        let query = db.select().from(Member);
+
         // Build query conditionally
         if (input.searchTerm && input.searchTerm.length > 0) {
-          return await db
-            .select()
-            .from(Member)
-            .where(
+          query = query.where(
               or(
+                // Check whatever attribute you want
                 ilike(Member.firstName, searchPattern),
                 ilike(Member.lastName, searchPattern),
                 ilike(Member.email, searchPattern),
                 ilike(Member.discordUser, searchPattern),
                 ilike(Member.company, searchPattern),
+                // Handle full names
+                sql`CONCAT(${Member.firstName}, ' ', ${Member.lastName}) ILIKE ${searchPattern}`,
               ),
-            )
-            .offset(offset)
-            .limit(input.pageSize)
-            .orderBy(asc(Member.id));
+            ) as typeof query;
         }
 
-        return await db
-          .select()
-          .from(Member)
-          .offset(offset)
-          .limit(input.pageSize)
-          .orderBy(asc(Member.id));
+        // Add the sorting here
+        if (input.sortField && input.sortOrder) {
+          const sortColumn = Member[input.sortField];
+          query = query.orderBy(
+            input.sortOrder === "asc" ? asc(sortColumn) : desc(sortColumn),
+          ) as typeof query;
+        } else {
+          // Default sort by ID
+          query = query.orderBy(asc(Member.id)) as typeof query;
+        }
+
+        return await query.offset(offset).limit(input.pageSize);
       }
 
       return await db.query.Member.findMany();
@@ -391,6 +400,8 @@ export const memberRouter = {
               ilike(Member.email, searchPattern),
               ilike(Member.discordUser, searchPattern),
               ilike(Member.company, searchPattern),
+              // Handle full names
+              sql`CONCAT(${Member.firstName}, ' ', ${Member.lastName}) ILIKE ${searchPattern}`,
             ),
           );
         return result[0]?.count ?? 0;
