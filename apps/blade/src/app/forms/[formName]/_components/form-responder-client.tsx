@@ -36,8 +36,6 @@ export function FormResponderWrapper({
 
   const formIdGate = formQuery.data?.id;
 
-  if (!formIdGate) return <FormNotFound />;
-
   const existingResponseQuery = api.forms.getUserResponse.useQuery(
     { form: formIdGate },
     { enabled: !!formIdGate },
@@ -49,7 +47,7 @@ export function FormResponderWrapper({
       setIsSubmitted(true);
       void handleCallbacks(
         formName,
-        formIdGate,
+        formIdGate ?? "",
         variables.responseData as Record<string, unknown>,
       );
     },

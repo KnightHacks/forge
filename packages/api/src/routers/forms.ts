@@ -3,7 +3,7 @@ import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
-import { z } from "zod";
+import * as z from "zod";
 
 import { FORMS, MINIO } from "@forge/consts";
 import { db } from "@forge/db/client";

@@ -734,6 +734,7 @@ export const memberRouter = {
           allowEdit: false,
           allowResubmission: false,
           duesOnly: false,
+          section: "Feedback",
         });
       }
 
