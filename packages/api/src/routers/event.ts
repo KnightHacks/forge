@@ -515,13 +515,13 @@ export const eventRouter = {
       // Step 3: Delete the event in the database
       await db.delete(Event).where(eq(Event.id, input.id));
     }),
-	ensureForm: protectedProcedure
-		.input(
+  ensureForm: protectedProcedure
+    .input(
       z.object({
         eventId: z.string().uuid(),
       }),
-		)
-		.mutation(async ({ input }) =>{
+    )
+    .mutation(async ({ input }) => {
       const event = await db.query.Event.findFirst({
         where: eq(Event.id, input.eventId),
       });
@@ -602,5 +602,5 @@ export const eventRouter = {
           section: "Feedback",
         });
       }
-	}),
+    }),
 } satisfies TRPCRouterRecord;

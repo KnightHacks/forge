@@ -11,7 +11,6 @@ import { MemberInfo } from "./info";
 import { Donate } from "./payment/donate";
 import { Payment } from "./payment/payment-dues";
 import { Points } from "./points";
-import { useEffect } from "react";
 
 export const metadata: Metadata = {
   title: "Member Dashboard",
@@ -102,9 +101,9 @@ export default async function MemberDashboard({
 
   const isAlumni = calcAlumniStatus(member.gradDate, member);
 
-	events.value.forEach(async (e) => {
-		await api.event.ensureForm({ eventId: e.id });
-	});
+  await Promise.all(
+    events.value.map((e) => api.event.ensureForm({ eventId: e.id })),
+  );
 
   return (
     <div className="flex-col md:flex">
