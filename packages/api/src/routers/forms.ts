@@ -204,7 +204,8 @@ export const formsRouter = {
       controlPerms.or(["EDIT_FORMS"], ctx);
       // find the form to delete duh
       const form = await db.query.FormsSchemas.findFirst({
-        where: (t, { eq }) => eq(t.slugName, input.slug_name),
+        where: (t, { eq }) =>
+          eq(t.slugName, decodeURIComponent(input.slug_name)),
       });
 
       if (!form) {
@@ -897,7 +898,8 @@ export const formsRouter = {
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EDIT_FORMS"], ctx);
       const form = await db.query.FormsSchemas.findFirst({
-        where: (t, { eq }) => eq(t.slugName, input.slug_name),
+        where: (t, { eq }) =>
+          eq(t.slugName, decodeURIComponent(input.slug_name)),
       });
 
       if (!form) {
@@ -1239,7 +1241,8 @@ export const formsRouter = {
       }
 
       const form = await db.query.FormsSchemas.findFirst({
-        where: (t, { eq }) => eq(t.slugName, input.slug_name),
+        where: (t, { eq }) =>
+          eq(t.slugName, decodeURIComponent(input.slug_name)),
         columns: { sectionId: true, section: true },
       });
 

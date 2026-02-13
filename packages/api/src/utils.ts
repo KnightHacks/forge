@@ -530,24 +530,11 @@ export async function createForm(input: CreateFormType) {
     sectionId = section?.id ?? null;
   }
 
-  await db
-    .insert(FormsSchemas)
-    .values({
-      ...input,
-      name: input.formData.name,
-      slugName: slug_name,
-      formValidatorJson: jsonSchema.schema,
-      sectionId,
-    })
-    .onConflictDoUpdate({
-      //If it already exists upsert it
-      target: FormsSchemas.id,
-      set: {
-        ...input,
-        name: input.formData.name,
-        slugName: slug_name,
-        formValidatorJson: jsonSchema.schema,
-        sectionId,
-      },
-    });
+  await db.insert(FormsSchemas).values({
+    ...input,
+    name: input.formData.name,
+    slugName: slug_name,
+    formValidatorJson: jsonSchema.schema,
+    sectionId,
+  });
 }
