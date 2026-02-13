@@ -13,7 +13,7 @@ export async function FormResponses() {
   const hasResponses = userFormResponeses.length > 0;
 
   return (
-    <Card className="h-full">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Form Submissions</CardTitle>
         <Info color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
@@ -21,7 +21,7 @@ export async function FormResponses() {
 
       {hasResponses ? (
         <CardContent className="flex-1">
-          <div className="flex h-36 flex-col gap-3 overflow-y-auto">
+          <div className="flex max-h-80 flex-col gap-3 overflow-y-auto">
             {userFormResponeses.map((formResponse) => (
               <div
                 key={`view-response-button-${formResponse.id}`}
