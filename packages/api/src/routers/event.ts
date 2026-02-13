@@ -18,8 +18,8 @@ import {
   Member,
 } from "@forge/db/schemas/knight-hacks";
 
-import { permProcedure, publicProcedure } from "../trpc";
-import { calendar, controlPerms, discord, log } from "../utils";
+import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
+import { calendar, controlPerms, createForm, discord, log } from "../utils";
 
 export const eventRouter = {
   getEvents: publicProcedure.query(async () => {
@@ -515,4 +515,92 @@ export const eventRouter = {
       // Step 3: Delete the event in the database
       await db.delete(Event).where(eq(Event.id, input.id));
     }),
+	ensureForm: protectedProcedure
+		.input(
+      z.object({
+        eventId: z.string().uuid(),
+      }),
+		)
+		.mutation(async ({ input }) =>{
+      const event = await db.query.Event.findFirst({
+        where: eq(Event.id, input.eventId),
+      });
+
+      if (!event)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Event with ID ${input.eventId} not found.`,
+        });
+
+      const formName = event.name + " Feedback Form";
+      const formSlugName = formName.toLowerCase().replaceAll(" ", "-");
+
+      const form = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) => eq(t.slugName, formSlugName),
+      });
+
+      if (form === undefined) {
+        await createForm({
+          formData: {
+            name: formName,
+            description: `Provide feedback for ${event.name} to help us make events better in the future!`,
+            questions: [
+              {
+                max: 10,
+                min: 0,
+                type: "LINEAR_SCALE",
+                order: 0,
+                optional: false,
+                question: "How would you rate the event overall?",
+              },
+              {
+                max: 10,
+                min: 0,
+                type: "LINEAR_SCALE",
+                order: 1,
+                optional: false,
+                question: "How much fun did you have?",
+              },
+              {
+                max: 10,
+                min: 0,
+                type: "LINEAR_SCALE",
+                order: 2,
+                optional: false,
+                question: "How much did you learn?",
+              },
+              {
+                type: "MULTIPLE_CHOICE",
+                order: 3,
+                options: [
+                  "Discord",
+                  "Instagram",
+                  "Knightconnect",
+                  "Word of Mouth",
+                  "CECS Emailing List",
+                  "Reddit",
+                  "LinkedIn",
+                  "Class Presentation",
+                  "Another Club",
+                ],
+                optional: false,
+                question: "Where did you hear about us?",
+                allowOther: true,
+              },
+              {
+                type: "SHORT_ANSWER",
+                order: 4,
+                optional: true,
+                question:
+                  "Do you have any additional feedback about this event?",
+              },
+            ],
+          },
+          allowEdit: false,
+          allowResubmission: false,
+          duesOnly: false,
+          section: "Feedback",
+        });
+      }
+	}),
 } satisfies TRPCRouterRecord;
