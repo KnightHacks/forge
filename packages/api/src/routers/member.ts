@@ -348,79 +348,74 @@ export const memberRouter = {
         .optional(),
     )
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx);
+      controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
-      if (input?.currentPage && input.pageSize) {
-        // Calculate the offset and set the search term to be sql friendly
-        const offset = (input.currentPage - 1) * input.pageSize;
-        const searchPattern = `%${input.searchTerm ?? ""}%`;
+      const currentPage = input?.currentPage ?? 1;
+      const pageSize = input?.pageSize ?? 10;
+      const offset = (currentPage - 1) * pageSize;
+      const searchPattern = `%${input?.searchTerm ?? ""}%`;
 
-        // Build the base query
-        let query = db.select().from(Member);
+      // Build the base query
+      let query = db.select().from(Member);
 
-        // Build conditions array
-        const conditions = [];
+      // Build conditions array
+      const conditions = [];
 
-        if (input.searchTerm && input.searchTerm.length > 0) {
-          conditions.push(
-            or(
-              // Check whatever attribute you want
-              ilike(Member.firstName, searchPattern),
-              ilike(Member.lastName, searchPattern),
-              ilike(Member.email, searchPattern),
-              ilike(Member.discordUser, searchPattern),
-              ilike(Member.company, searchPattern),
-              // Handle full names
-              sql`CONCAT(${Member.firstName}, ' ', ${Member.lastName}) ILIKE ${searchPattern}`,
-            ),
-          );
-        }
-
-        if (input.schoolFilter) {
-          conditions.push(
-            eq(
-              Member.school,
-              input.schoolFilter as (typeof Member.school.enumValues)[number],
-            ),
-          );
-        }
-
-        if (input.majorFilter) {
-          conditions.push(
-            eq(
-              Member.major,
-              input.majorFilter as (typeof Member.major.enumValues)[number],
-            ),
-          );
-        }
-
-        if (conditions.length > 0) {
-          query = query.where(and(...conditions)) as typeof query;
-        }
-
-        // Sorting
-        if (input.sortByTime) {
-          query = query.orderBy(
-            input.sortOrder === "desc"
-              ? desc(Member.dateCreated)
-              : asc(Member.dateCreated),
-            input.sortOrder === "desc"
-              ? desc(Member.timeCreated)
-              : asc(Member.timeCreated),
-          ) as typeof query;
-        } else if (input.sortField && input.sortOrder) {
-          const sortColumn = Member[input.sortField];
-          query = query.orderBy(
-            input.sortOrder === "asc" ? asc(sortColumn) : desc(sortColumn),
-          ) as typeof query;
-        } else {
-          query = query.orderBy(asc(Member.id)) as typeof query;
-        }
-
-        return await query.offset(offset).limit(input.pageSize);
+      if (input?.searchTerm && input.searchTerm.length > 0) {
+        conditions.push(
+          or(
+            ilike(Member.firstName, searchPattern),
+            ilike(Member.lastName, searchPattern),
+            ilike(Member.email, searchPattern),
+            ilike(Member.discordUser, searchPattern),
+            ilike(Member.company, searchPattern),
+            sql`CONCAT(${Member.firstName}, ' ', ${Member.lastName}) ILIKE ${searchPattern}`,
+          ),
+        );
       }
 
-      return await db.query.Member.findMany();
+      if (input?.schoolFilter) {
+        conditions.push(
+          eq(
+            Member.school,
+            input.schoolFilter as (typeof Member.school.enumValues)[number],
+          ),
+        );
+      }
+
+      if (input?.majorFilter) {
+        conditions.push(
+          eq(
+            Member.major,
+            input.majorFilter as (typeof Member.major.enumValues)[number],
+          ),
+        );
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions)) as typeof query;
+      }
+
+      // Sorting
+      if (input?.sortByTime) {
+        query = query.orderBy(
+          input.sortOrder === "desc"
+            ? desc(Member.dateCreated)
+            : asc(Member.dateCreated),
+          input.sortOrder === "desc"
+            ? desc(Member.timeCreated)
+            : asc(Member.timeCreated),
+        ) as typeof query;
+      } else if (input?.sortField && input.sortOrder) {
+        const sortColumn = Member[input.sortField];
+        query = query.orderBy(
+          input.sortOrder === "asc" ? asc(sortColumn) : desc(sortColumn),
+        ) as typeof query;
+      } else {
+        query = query.orderBy(asc(Member.id)) as typeof query;
+      }
+
+      return await query.offset(offset).limit(pageSize);
     }),
 
   getMemberCount: permProcedure

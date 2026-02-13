@@ -52,7 +52,7 @@ export default function MemberTable() {
   const currentPage = Math.max(1, Number(searchParams.get("page")) || 1);
   const debounceSearchTerm = useDebounce(searchTerm, 250);
 
-  const { data: members } = api.member.getMembers.useQuery({
+  const membersQuery = api.member.getMembers.useQuery({
     currentPage,
     pageSize,
     searchTerm: debounceSearchTerm,
@@ -62,18 +62,42 @@ export default function MemberTable() {
     schoolFilter,
     majorFilter,
   });
-  const { data: totalCount } = api.member.getMemberCount.useQuery({
+  const totalCountQuery = api.member.getMemberCount.useQuery({
     searchTerm: debounceSearchTerm,
     schoolFilter,
     majorFilter,
   });
-  const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
-  const { data: schools } = api.member.getDistinctSchools.useQuery();
-  const { data: majors } = api.member.getDistinctMajors.useQuery();
+  const duesQuery = api.member.getDuesPayingMembers.useQuery();
+  const schoolsQuery = api.member.getDistinctSchools.useQuery();
+  const majorsQuery = api.member.getDistinctMajors.useQuery();
+
+  const isLoading =
+    membersQuery.isLoading ||
+    totalCountQuery.isLoading ||
+    duesQuery.isLoading ||
+    schoolsQuery.isLoading ||
+    majorsQuery.isLoading;
+
+  const hasError =
+    membersQuery.error ||
+    totalCountQuery.error ||
+    duesQuery.error ||
+    schoolsQuery.error ||
+    majorsQuery.error;
+
+  // Include Skeletons for future ticket
+  if (isLoading) return <div>Loading members...</div>;
+  if (hasError) return <div>Failed to load members.</div>;
+
+  const members = membersQuery.data ?? [];
+  const totalCount = totalCountQuery.data ?? 0;
+  const duesPayingStatus = duesQuery.data ?? [];
+  const schools = schoolsQuery.data ?? [];
+  const majors = majorsQuery.data ?? [];
 
   const duesMap = new Map();
 
-  for (const status of duesPayingStatus ?? []) {
+  for (const status of duesPayingStatus) {
     duesMap.set(status.id, true);
   }
 
@@ -119,13 +143,20 @@ export default function MemberTable() {
             <Input
               placeholder="Search members..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                if (currentPage !== 1) {
+                  const params = new URLSearchParams(searchParams);
+                  params.set("page", "1");
+                  router.push("?" + params.toString());
+                }
+              }}
               className="pl-8"
             />
           </div>
           <div>
             <ResponsiveComboBox
-              items={["All Schools", ...(schools ?? [])]}
+              items={["All Schools", ...schools]}
               renderItem={(school) => <span>{school}</span>}
               getItemValue={(school) => school}
               getItemLabel={(school) => school}
@@ -135,18 +166,18 @@ export default function MemberTable() {
                 params.set("page", "1");
                 router.push("?" + params.toString());
               }}
-              buttonPlaceholder="All School's"
+              buttonPlaceholder="All Schools"
               inputPlaceholder="Search schools..."
             />
           </div>
           <div>
             <ResponsiveComboBox
-              items={majors ?? []}
+              items={["All Majors", ...majors]}
               renderItem={(major) => <span>{major}</span>}
               getItemValue={(major) => major}
               getItemLabel={(major) => major}
               onItemSelect={(major) => {
-                setMajorFilter(major);
+                setMajorFilter(major === "All Majors" ? "" : major);
                 const params = new URLSearchParams(searchParams);
                 params.set("page", "1");
                 router.push("?" + params.toString());
@@ -229,7 +260,7 @@ export default function MemberTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(members ?? []).map((member) => (
+          {members.map((member) => (
             <TableRow key={member.id}>
               <TableCell className="text-center font-medium">
                 {member.firstName}
@@ -268,7 +299,7 @@ export default function MemberTable() {
       </Table>
       <CustomPagination
         className="py-3"
-        itemCount={totalCount ?? 0}
+        itemCount={totalCount}
         currentPage={currentPage}
         pageSize={pageSize}
       />
