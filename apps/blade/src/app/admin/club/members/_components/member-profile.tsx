@@ -6,13 +6,7 @@ import { User } from "lucide-react";
 import { FaGithub, FaGlobe, FaLinkedin } from "react-icons/fa";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
-import {
-  LEVELS_OF_STUDY,
-  MEMBER_PROFILE_ICON_SIZE,
-  RACES_OR_ETHNICITIES,
-  SHORT_LEVELS_OF_STUDY,
-  SHORT_RACES_AND_ETHNICITIES,
-} from "@forge/consts/knight-hacks";
+import { FORMS, GUILD } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -109,12 +103,12 @@ export default function MemberProfileButton({
               </p>
               <p>
                 <b className="text-gray-400">Level Of Study:</b>{" "}
-                {member.levelOfStudy === LEVELS_OF_STUDY[2] // Undergraduate University (2 year - community college or similar)
-                  ? SHORT_LEVELS_OF_STUDY[0] // Undergraduate University (2 year)
-                  : member.levelOfStudy === LEVELS_OF_STUDY[4] // Graduate University (Masters, Professional, Doctoral, etc)
-                    ? SHORT_LEVELS_OF_STUDY[1] // Graduate University (Masters/PhD)
-                    : member.levelOfStudy === LEVELS_OF_STUDY[6] // Other Vocational / Trade Program or Apprenticeship
-                      ? SHORT_LEVELS_OF_STUDY[2] // Vocational/Trade School
+                {member.levelOfStudy === FORMS.LEVELS_OF_STUDY[2] // Undergraduate University (2 year - community college or similar)
+                  ? FORMS.SHORT_LEVELS_OF_STUDY[0] // Undergraduate University (2 year)
+                  : member.levelOfStudy === FORMS.LEVELS_OF_STUDY[4] // Graduate University (Masters, Professional, Doctoral, etc)
+                    ? FORMS.SHORT_LEVELS_OF_STUDY[1] // Graduate University (Masters/PhD)
+                    : member.levelOfStudy === FORMS.LEVELS_OF_STUDY[6] // Other Vocational / Trade Program or Apprenticeship
+                      ? FORMS.SHORT_LEVELS_OF_STUDY[2] // Vocational/Trade School
                       : member.levelOfStudy}
               </p>
               <p>
@@ -132,12 +126,12 @@ export default function MemberProfileButton({
               </p>
               <p>
                 <b className="text-gray-400">Race Or Ethnicity:</b>{" "}
-                {member.raceOrEthnicity === RACES_OR_ETHNICITIES[4] // Native Hawaiian or Other Pacific Islander
-                  ? SHORT_RACES_AND_ETHNICITIES[0] // Native Hawaiian/Pacific Islander
-                  : member.raceOrEthnicity === RACES_OR_ETHNICITIES[2] // Hispanic / Latino / Spanish Origin
-                    ? SHORT_RACES_AND_ETHNICITIES[1] // Hispanic/Latino
-                    : member.raceOrEthnicity === RACES_OR_ETHNICITIES[5] // Native American or Alaskan Native
-                      ? SHORT_RACES_AND_ETHNICITIES[2] // Native American/Alaskan Native
+                {member.raceOrEthnicity === FORMS.RACES_OR_ETHNICITIES[4] // Native Hawaiian or Other Pacific Islander
+                  ? FORMS.SHORT_RACES_AND_ETHNICITIES[0] // Native Hawaiian/Pacific Islander
+                  : member.raceOrEthnicity === FORMS.RACES_OR_ETHNICITIES[2] // Hispanic / Latino / Spanish Origin
+                    ? FORMS.SHORT_RACES_AND_ETHNICITIES[1] // Hispanic/Latino
+                    : member.raceOrEthnicity === FORMS.RACES_OR_ETHNICITIES[5] // Native American or Alaskan Native
+                      ? FORMS.SHORT_RACES_AND_ETHNICITIES[2] // Native American/Alaskan Native
                       : member.raceOrEthnicity}
               </p>
             </div>
@@ -148,28 +142,34 @@ export default function MemberProfileButton({
               <div>
                 {member.githubProfileUrl ? (
                   <Link href={member.githubProfileUrl} target="_blank">
-                    <FaGithub size={MEMBER_PROFILE_ICON_SIZE} />
+                    <FaGithub size={GUILD.MEMBER_PROFILE_ICON_SIZE} />
                   </Link>
                 ) : (
-                  <FaGithub size={MEMBER_PROFILE_ICON_SIZE} color="gray" />
+                  <FaGithub
+                    size={GUILD.MEMBER_PROFILE_ICON_SIZE}
+                    color="gray"
+                  />
                 )}
               </div>
               <div>
                 {member.linkedinProfileUrl ? (
                   <Link href={member.linkedinProfileUrl} target="_blank">
-                    <FaLinkedin size={MEMBER_PROFILE_ICON_SIZE} />
+                    <FaLinkedin size={GUILD.MEMBER_PROFILE_ICON_SIZE} />
                   </Link>
                 ) : (
-                  <FaLinkedin size={MEMBER_PROFILE_ICON_SIZE} color="gray" />
+                  <FaLinkedin
+                    size={GUILD.MEMBER_PROFILE_ICON_SIZE}
+                    color="gray"
+                  />
                 )}
               </div>
               <div>
                 {member.websiteUrl ? (
                   <Link href={member.websiteUrl} target="_blank">
-                    <FaGlobe size={MEMBER_PROFILE_ICON_SIZE} />
+                    <FaGlobe size={GUILD.MEMBER_PROFILE_ICON_SIZE} />
                   </Link>
                 ) : (
-                  <FaGlobe size={MEMBER_PROFILE_ICON_SIZE} color="gray" />
+                  <FaGlobe size={GUILD.MEMBER_PROFILE_ICON_SIZE} color="gray" />
                 )}
               </div>
             </div>

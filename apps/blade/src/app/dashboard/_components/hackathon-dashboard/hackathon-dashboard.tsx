@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { HACKER_CLASS_INFO } from "@forge/consts/knight-hacks";
+import { HACKATHONS } from "@forge/consts";
 
 import type { api as serverCall } from "~/trpc/server";
 import { HackerAppCard } from "~/app/_components/option-cards";
@@ -42,7 +42,10 @@ export default async function HackathonDashboard({
     );
   }
 
-  if (!hacker.class || !(hacker.class in HACKER_CLASS_INFO)) {
+  if (
+    !hacker.class ||
+    !(hacker.class in HACKATHONS.KNIGHT_HACKS_8.HACKER_CLASS_INFO)
+  ) {
     return (
       <div className="flex flex-col items-center justify-center gap-y-6 px-4 py-12 text-center">
         <div className="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950">
@@ -69,8 +72,8 @@ export default async function HackathonDashboard({
     classPfp: string;
   }
 
-  const HACKER_CLASS_INFO_TYPED: Record<string, HackerClassInfo> =
-    HACKER_CLASS_INFO as Record<string, HackerClassInfo>;
+  const HACKER_CLASS_INFO_TYPED: Record<string, HackerClassInfo> = HACKATHONS
+    .KNIGHT_HACKS_8.HACKER_CLASS_INFO as Record<string, HackerClassInfo>;
 
   const classInfo = HACKER_CLASS_INFO_TYPED[hacker.class] ?? {
     teamColor: "#000000",

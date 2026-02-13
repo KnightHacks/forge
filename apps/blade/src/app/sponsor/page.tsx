@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
 import { Mail } from "lucide-react";
 
-import { SPONSOR_VIDEO_LINK } from "@forge/consts/knight-hacks";
+import { HACKATHONS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 
 export const metadata: Metadata = {
   title: "Sponsor Knight Hacks!",
   description: "Help us make dreams!",
 };
-
-const SPONSOR_VIDEO_LINK_2 =
-  "https://www.youtube.com/embed/OzW_4QeCfM0?si=G8SUf8UbEo2W5MnL";
 
 const STATS = [
   { value: "1,000+", label: "Students" },
@@ -19,7 +16,7 @@ const STATS = [
   { value: "1", label: "Weekend" },
 ];
 
-const VIDEOS = [SPONSOR_VIDEO_LINK, SPONSOR_VIDEO_LINK_2];
+const VIDEOS = [HACKATHONS.SPONSOR_VIDEO_LINK, HACKATHONS.SPONSOR_VIDEO_LINK_2];
 
 export default function Sponsor() {
   return (

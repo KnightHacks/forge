@@ -5,16 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
-import {
-  CALENDAR_TIME_ZONE,
-  DEV_GOOGLE_CALENDAR_ID,
-  DEV_KNIGHTHACKS_GUILD_ID,
-  DISCORD_EVENT_PRIVACY_LEVEL,
-  DISCORD_EVENT_TYPE,
-  EVENT_POINTS,
-  PROD_GOOGLE_CALENDAR_ID,
-  PROD_KNIGHTHACKS_GUILD_ID,
-} from "@forge/consts/knight-hacks";
+import { DISCORD, EVENTS } from "@forge/consts";
 import { count, desc, eq, getTableColumns } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
@@ -27,18 +18,8 @@ import {
   Member,
 } from "@forge/db/schemas/knight-hacks";
 
-import { env } from "../env";
 import { permProcedure, publicProcedure } from "../trpc";
 import { calendar, controlPerms, discord, log } from "../utils";
-
-const GOOGLE_CALENDAR_ID =
-  env.NODE_ENV === "production"
-    ? (PROD_GOOGLE_CALENDAR_ID as string)
-    : (DEV_GOOGLE_CALENDAR_ID as string);
-const KNIGHTHACKS_GUILD_ID =
-  env.NODE_ENV === "production"
-    ? (PROD_KNIGHTHACKS_GUILD_ID as string)
-    : (DEV_KNIGHTHACKS_GUILD_ID as string);
 
 export const eventRouter = {
   getEvents: publicProcedure.query(async () => {
@@ -132,21 +113,21 @@ export const eventRouter = {
         ? `### ⚔️ ${input.hackathonName} ⚔️\n\n`
         : "";
 
-      const pointDesc = `\n\n**⭐ ${EVENT_POINTS[input.tag] || 0} Points**`;
+      const pointDesc = `\n\n**⭐ ${EVENTS.EVENT_POINTS[input.tag] || 0} Points**`;
 
       // Step 1: Create the event in Discord
       let discordEventId: string | undefined;
       try {
         const response = (await discord.post(
-          Routes.guildScheduledEvents(KNIGHTHACKS_GUILD_ID),
+          Routes.guildScheduledEvents(DISCORD.KNIGHTHACKS_GUILD),
           {
             body: {
               description: hackDesc + input.description + pointDesc,
               name: formattedName,
-              privacy_level: DISCORD_EVENT_PRIVACY_LEVEL,
+              privacy_level: DISCORD.EVENT_PRIVACY_LEVEL,
               scheduled_start_time: startLocalIso, // Use ISO for Discord
               scheduled_end_time: endLocalIso, // Use ISO for Discord
-              entity_type: DISCORD_EVENT_TYPE,
+              entity_type: DISCORD.EVENT_TYPE,
               entity_metadata: {
                 location: input.location,
               },
@@ -166,15 +147,15 @@ export const eventRouter = {
       let googleEventId: string | undefined;
       try {
         const response = await calendar.events.insert({
-          calendarId: GOOGLE_CALENDAR_ID,
+          calendarId: EVENTS.GOOGLE_CALENDAR_ID,
           requestBody: {
             end: {
               dateTime: endLocalIso, // ISO for Google Calendar
-              timeZone: CALENDAR_TIME_ZONE,
+              timeZone: EVENTS.CALENDAR_TIME_ZONE,
             },
             start: {
               dateTime: startLocalIso, // ISO for Google Calendar
-              timeZone: CALENDAR_TIME_ZONE,
+              timeZone: EVENTS.CALENDAR_TIME_ZONE,
             },
             description: input.description,
             summary: formattedName,
@@ -189,7 +170,10 @@ export const eventRouter = {
         if (discordEventId) {
           try {
             await discord.delete(
-              Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, discordEventId),
+              Routes.guildScheduledEvent(
+                DISCORD.KNIGHTHACKS_GUILD,
+                discordEventId,
+              ),
             );
           } catch (cleanupErr) {
             console.error(JSON.stringify(cleanupErr, null, 2));
@@ -227,7 +211,7 @@ export const eventRouter = {
           ...input,
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
-          points: EVENT_POINTS[input.tag] || 0,
+          points: EVENTS.EVENT_POINTS[input.tag] || 0,
           discordId: discordEventId,
           googleId: googleEventId,
         });
@@ -237,7 +221,10 @@ export const eventRouter = {
         // Clean up the event in Discord if the database insert fails
         try {
           await discord.delete(
-            Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, discordEventId),
+            Routes.guildScheduledEvent(
+              DISCORD.KNIGHTHACKS_GUILD,
+              discordEventId,
+            ),
           );
         } catch (cleanupErr) {
           console.error(JSON.stringify(cleanupErr, null, 2));
@@ -246,7 +233,7 @@ export const eventRouter = {
         // Clean up the event in Google Calendar if the database insert fails
         try {
           await calendar.events.delete({
-            calendarId: GOOGLE_CALENDAR_ID,
+            calendarId: EVENTS.GOOGLE_CALENDAR_ID,
             eventId: googleEventId,
           });
         } catch (cleanupErr) {
@@ -321,20 +308,23 @@ export const eventRouter = {
         ? `### ⚔️ ${input.hackathonName} ⚔️\n\n`
         : "";
 
-      const pointDesc = `\n\n**⭐ ${EVENT_POINTS[input.tag] || 0} Points**`;
+      const pointDesc = `\n\n**⭐ ${EVENTS.EVENT_POINTS[input.tag] || 0} Points**`;
 
       // Step 1: Update the event in Discord
       try {
         await discord.patch(
-          Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, input.discordId),
+          Routes.guildScheduledEvent(
+            DISCORD.KNIGHTHACKS_GUILD,
+            input.discordId,
+          ),
           {
             body: {
               description: hackDesc + input.description + pointDesc,
               name: formattedName,
-              privacy_level: DISCORD_EVENT_PRIVACY_LEVEL,
+              privacy_level: DISCORD.EVENT_PRIVACY_LEVEL,
               scheduled_start_time: startLocalIso,
               scheduled_end_time: endLocalIso,
-              entity_type: DISCORD_EVENT_TYPE,
+              entity_type: DISCORD.EVENT_TYPE,
               entity_metadata: {
                 location: input.location,
               },
@@ -352,16 +342,16 @@ export const eventRouter = {
       // Step 2: Update the event in Google Calendar
       try {
         await calendar.events.update({
-          calendarId: GOOGLE_CALENDAR_ID,
+          calendarId: EVENTS.GOOGLE_CALENDAR_ID,
           eventId: input.googleId,
           requestBody: {
             end: {
               dateTime: endLocalIso,
-              timeZone: CALENDAR_TIME_ZONE,
+              timeZone: EVENTS.CALENDAR_TIME_ZONE,
             },
             start: {
               dateTime: startLocalIso,
-              timeZone: CALENDAR_TIME_ZONE,
+              timeZone: EVENTS.CALENDAR_TIME_ZONE,
             },
             description: input.description,
             summary: formattedName,
@@ -460,7 +450,7 @@ export const eventRouter = {
           ...input,
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
-          points: input.hackathonId ? EVENT_POINTS[input.tag] || 0 : 0,
+          points: input.hackathonId ? EVENTS.EVENT_POINTS[input.tag] || 0 : 0,
         })
         .where(eq(Event.id, input.id));
     }),
@@ -487,7 +477,10 @@ export const eventRouter = {
       // Step 1: Delete the event in Discord
       try {
         await discord.delete(
-          Routes.guildScheduledEvent(KNIGHTHACKS_GUILD_ID, input.discordId),
+          Routes.guildScheduledEvent(
+            DISCORD.KNIGHTHACKS_GUILD,
+            input.discordId,
+          ),
         );
       } catch (error) {
         console.error(JSON.stringify(error, null, 2));
@@ -500,7 +493,7 @@ export const eventRouter = {
       // Step 2: Delete the event in the Google Calendar
       try {
         await calendar.events.delete({
-          calendarId: GOOGLE_CALENDAR_ID,
+          calendarId: EVENTS.GOOGLE_CALENDAR_ID,
           eventId: input.googleId,
         } as calendar_v3.Params$Resource$Events$Delete);
       } catch (error) {

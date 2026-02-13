@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { HACKATHON_APPLICATION_STATES } from "@forge/consts/knight-hacks";
+import { FORMS } from "@forge/consts";
 import { ToggleGroup, ToggleGroupItem } from "@forge/ui/toggle-group";
 
 import AgeBarChart from "~/app/admin/_components/AgeBarChart";
@@ -72,7 +72,7 @@ export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
                 <ToggleGroupItem value="all" aria-label="toggle-all">
                   all
                 </ToggleGroupItem>
-                {HACKATHON_APPLICATION_STATES.map((item) => (
+                {FORMS.HACKATHON_APPLICATION_STATES.map((item) => (
                   <ToggleGroupItem
                     key={item}
                     value={item}

@@ -54,7 +54,7 @@ export default function RoleTable() {
     }
 
     if (roles) void fetchDiscordRoles();
-  }, [roles]);
+  }, [discordRolesQ, roles]);
 
   function deleteRole(id: string) {
     try {

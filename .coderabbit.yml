@@ -62,6 +62,8 @@ reviews:
     # Package labels
     - label: "API"
       instructions: "Apply when PR changes files in packages/api/** (tRPC routers, procedures)"
+    - label: "Constants"
+      instructions: "Apply when PR changes files in packages/consts/** (constants)"
     - label: "UI"
       instructions: "Apply when PR changes files in packages/ui/** (shared component library)"
     - label: "Database"
@@ -170,8 +172,14 @@ reviews:
 
     - path: "packages/consts/**"
       instructions: |
-        Shared constants. Changes here affect the entire monorepo.
-        Ensure values are correct and changes are intentional.
+        Shared constants used across all apps and packages. Changes here affect the entire monorepo. Check:
+        - All constant names follow SCREAMING_SNAKE_CASE convention
+        - Values are intentional and well-documented (Discord IDs, API endpoints, role IDs, etc.)
+        - URLs and external API endpoints are correct and won't break integrations
+        - Type definitions are properly exported and used
+        - Constants do not contain sensitive data
+        - PROD and DEV constants are prefixed accordingly
+        - Exported values have valid reason to be shared repository wide
 
     # Applications
     - path: "apps/blade/**"

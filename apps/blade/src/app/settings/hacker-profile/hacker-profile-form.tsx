@@ -5,16 +5,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
-import {
-  ALLERGIES,
-  GENDERS,
-  KNIGHTHACKS_MAX_RESUME_SIZE,
-  LEVELS_OF_STUDY,
-  MAJORS,
-  RACES_OR_ETHNICITIES,
-  SCHOOLS,
-  SHIRT_SIZES,
-} from "@forge/consts/knight-hacks";
+import { FORMS, MINIO } from "@forge/consts";
 import { InsertHackerSchema } from "@forge/db/schemas/knight-hacks";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
@@ -179,11 +170,11 @@ export function HackerProfileForm({
               });
             }
 
-            if (file.size > KNIGHTHACKS_MAX_RESUME_SIZE) {
+            if (file.size > MINIO.MAX_RESUME_SIZE) {
               ctx.addIssue({
                 code: z.ZodIssueCode.too_big,
                 type: "number",
-                maximum: KNIGHTHACKS_MAX_RESUME_SIZE,
+                maximum: MINIO.MAX_RESUME_SIZE,
                 inclusive: true,
                 exact: false,
                 message: "File too large: maximum 5MB",
@@ -426,7 +417,7 @@ export function HackerProfileForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {GENDERS.map((gender) => (
+                      {FORMS.GENDERS.map((gender) => (
                         <SelectItem key={gender} value={gender}>
                           {gender}
                         </SelectItem>
@@ -461,7 +452,7 @@ export function HackerProfileForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {RACES_OR_ETHNICITIES.map((race) => (
+                      {FORMS.RACES_OR_ETHNICITIES.map((race) => (
                         <SelectItem key={race} value={race}>
                           {race}
                         </SelectItem>
@@ -492,7 +483,7 @@ export function HackerProfileForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {SHIRT_SIZES.map((size) => (
+                      {FORMS.SHIRT_SIZES.map((size) => (
                         <SelectItem key={size} value={size}>
                           {size}
                         </SelectItem>
@@ -529,7 +520,7 @@ export function HackerProfileForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {LEVELS_OF_STUDY.map((level) => (
+                      {FORMS.LEVELS_OF_STUDY.map((level) => (
                         <SelectItem key={level} value={level}>
                           {level}
                         </SelectItem>
@@ -551,7 +542,7 @@ export function HackerProfileForm({
                 </FormLabel>
                 <FormControl>
                   <ResponsiveComboBox
-                    items={SCHOOLS}
+                    items={FORMS.SCHOOLS}
                     renderItem={(school) => <div>{school}</div>}
                     getItemValue={(school) => school}
                     getItemLabel={(school) => school}
@@ -574,7 +565,7 @@ export function HackerProfileForm({
                 </FormLabel>
                 <FormControl>
                   <ResponsiveComboBox
-                    items={MAJORS}
+                    items={FORMS.MAJORS}
                     renderItem={(major) => <div>{major}</div>}
                     getItemValue={(major) => major}
                     getItemLabel={(major) => major}
@@ -793,7 +784,7 @@ export function HackerProfileForm({
                         className="w-full min-w-[var(--radix-popover-trigger-width)] max-w-none p-1"
                       >
                         <div className="flex w-full flex-col">
-                          {ALLERGIES.map((allergy) => (
+                          {FORMS.ALLERGIES.map((allergy) => (
                             <div
                               key={allergy}
                               onClick={() => {

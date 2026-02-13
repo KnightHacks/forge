@@ -15,11 +15,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import Pool from "pg-pool";
 import { stringify } from "superjson";
 
-import {
-  DEV_KNIGHTHACKS_GUILD_ID,
-  KNIGHTHACKS_S3_BUCKET_REGION,
-  PROD_KNIGHTHACKS_GUILD_ID,
-} from "@forge/consts/knight-hacks";
+import { DISCORD, MINIO } from "@forge/consts";
 
 import { minioClient } from "../../api/src/minio/minio-client";
 import { discord, log } from "../../api/src/utils";
@@ -233,12 +229,12 @@ async function syncRoles() {
     ).map((row) => row.discordRoleId),
   );
   let prodRoles = (await discord.get(
-    Routes.guildRoles(PROD_KNIGHTHACKS_GUILD_ID),
+    Routes.guildRoles(DISCORD.PROD_KNIGHTHACKS_GUILD),
   )) as DiscordRole[];
   prodRoles = prodRoles.filter((role) => prodRolesWithPerms.has(role.id));
 
   const devRolesArr = (await discord.get(
-    Routes.guildRoles(DEV_KNIGHTHACKS_GUILD_ID),
+    Routes.guildRoles(DISCORD.DEV_KNIGHTHACKS_GUILD),
   )) as DiscordRole[];
   const devRoles = Object.fromEntries(
     devRolesArr.map((role) => [role.name + " " + role.permissions, role]),
@@ -251,7 +247,7 @@ async function syncRoles() {
     } else {
       await new Promise((resolve) => setTimeout(resolve, 100));
       const newRole = (await discord.post(
-        Routes.guildRoles(DEV_KNIGHTHACKS_GUILD_ID),
+        Routes.guildRoles(DISCORD.DEV_KNIGHTHACKS_GUILD),
         {
           body: {
             name: role.name,
@@ -293,11 +289,11 @@ async function syncEvents() {
   if (!backupDb) return;
 
   const prodEvents = (await discord.get(
-    Routes.guildScheduledEvents(PROD_KNIGHTHACKS_GUILD_ID),
+    Routes.guildScheduledEvents(DISCORD.PROD_KNIGHTHACKS_GUILD),
   )) as DiscordGuildScheduledEvent[];
 
   const devEventsArr = (await discord.get(
-    Routes.guildScheduledEvents(DEV_KNIGHTHACKS_GUILD_ID),
+    Routes.guildScheduledEvents(DISCORD.DEV_KNIGHTHACKS_GUILD),
   )) as DiscordGuildScheduledEvent[];
   const devEvents = Object.fromEntries(
     devEventsArr.map((ev) => [ev.name + " " + ev.scheduled_start_time, ev]),
@@ -310,7 +306,7 @@ async function syncEvents() {
     } else {
       await new Promise((resolve) => setTimeout(resolve, 100));
       const newEvent = (await discord.post(
-        Routes.guildScheduledEvents(DEV_KNIGHTHACKS_GUILD_ID),
+        Routes.guildScheduledEvents(DISCORD.DEV_KNIGHTHACKS_GUILD),
         {
           body: {
             name: event.name,
@@ -343,7 +339,7 @@ async function minio() {
   try {
     const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
     if (!bucketExists) {
-      await minioClient.makeBucket(BUCKET_NAME, KNIGHTHACKS_S3_BUCKET_REGION);
+      await minioClient.makeBucket(BUCKET_NAME, MINIO.BUCKET_REGION);
     }
 
     await minioClient.fPutObject(BUCKET_NAME, filePath, filePath, {

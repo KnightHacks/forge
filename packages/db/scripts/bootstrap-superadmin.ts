@@ -13,7 +13,7 @@
 */
 import { eq } from "drizzle-orm";
 
-import { PERMISSIONS } from "@forge/consts/knight-hacks";
+import { PERMISSIONS } from "@forge/consts";
 
 import { db } from "../src/client";
 import { Permissions, Roles } from "../src/schemas/auth";
@@ -39,14 +39,14 @@ async function bootstrapSuperadmin() {
   console.log("Starting superadmin bootstrap...\n");
 
   // Create superadmin permission string (all permissions set to "1")
-  const permissionsCount = Object.keys(PERMISSIONS).length;
+  const permissionsCount = Object.keys(PERMISSIONS.PERMISSIONS).length;
   const allPermissions = "1".repeat(permissionsCount);
 
   console.log(
     `Permission string (${permissionsCount} permissions): ${allPermissions}`,
   );
   console.log(`   All permissions enabled:\n`);
-  Object.entries(PERMISSIONS).forEach(([key, index]) => {
+  Object.entries(PERMISSIONS.PERMISSIONS).forEach(([key, index]) => {
     console.log(`   [${index}] ${key}`);
   });
   console.log("");

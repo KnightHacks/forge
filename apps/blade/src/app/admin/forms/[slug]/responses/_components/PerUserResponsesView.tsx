@@ -15,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 
-import type { FormType } from "@forge/consts/knight-hacks";
+import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Separator } from "@forge/ui/separator";
@@ -24,7 +24,7 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 
 interface PerUserResponsesViewProps {
-  formData: FormType;
+  formData: FORMS.FormType;
   responses: {
     id: string;
     submittedAt: Date;

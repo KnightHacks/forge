@@ -6,7 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
-import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
+import { DISCORD } from "@forge/consts";
 
 import CoolButton2 from "./assets/coolbutton2";
 import NeonTkSVG from "./assets/neon-tk";
@@ -108,7 +108,7 @@ export default function Discover({ memberCount }: { memberCount: number }) {
               className="flex w-[300px] items-center justify-center md:w-[450px]"
               onClick={() =>
                 window.open(
-                  PERMANENT_DISCORD_INVITE as string,
+                  DISCORD.PERMANENT_INVITE as string,
                   "_blank",
                   "noopener,noreferrer",
                 )

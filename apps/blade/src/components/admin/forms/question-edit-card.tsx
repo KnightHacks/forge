@@ -27,12 +27,7 @@ import {
   X,
 } from "lucide-react";
 
-import type { QuestionValidator } from "@forge/consts/knight-hacks";
-import {
-  AVAILABLE_DROPDOWN_CONSTANTS,
-  FORM_QUESTION_TYPES,
-  getDropdownOptionsFromConst,
-} from "@forge/consts/knight-hacks";
+import { FORMS } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
@@ -52,7 +47,7 @@ import { Textarea } from "@forge/ui/textarea";
 import { TimePicker } from "@forge/ui/time-picker";
 import { useMediaQuery } from "@forge/ui/use-media-query";
 
-type FormQuestion = z.infer<typeof QuestionValidator>;
+type FormQuestion = z.infer<typeof FORMS.QuestionValidator>;
 type QuestionType = FormQuestion["type"];
 
 interface QuestionEditCardProps {
@@ -193,7 +188,7 @@ export function QuestionEditCard({
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
-              {FORM_QUESTION_TYPES.map((type) => {
+              {FORMS.FORM_QUESTION_TYPES.map((type) => {
                 const Icon = QUESTION_ICONS[type.value];
                 return (
                   <SelectItem key={type.value} value={type.value}>
@@ -492,13 +487,13 @@ function OptionList({
   const isRestrictedType =
     question.type === "MULTIPLE_CHOICE" || question.type === "CHECKBOXES";
 
-  const availableConstants = Object.entries(AVAILABLE_DROPDOWN_CONSTANTS).map(
-    ([key, label]) => {
-      const constOptions = getDropdownOptionsFromConst(key);
-      const isDisabled = isRestrictedType && constOptions.length >= 15;
-      return { key, label, isDisabled, length: constOptions.length };
-    },
-  );
+  const availableConstants = Object.entries(
+    FORMS.AVAILABLE_DROPDOWN_CONSTANTS,
+  ).map(([key, label]) => {
+    const constOptions = FORMS.getDropdownOptionsFromConst(key);
+    const isDisabled = isRestrictedType && constOptions.length >= 15;
+    return { key, label, isDisabled, length: constOptions.length };
+  });
 
   return (
     <div className="flex flex-col gap-2">
@@ -534,8 +529,8 @@ function OptionList({
             <p className="text-xs text-muted-foreground">
               Using constant:{" "}
               {
-                AVAILABLE_DROPDOWN_CONSTANTS[
-                  optionsConst as keyof typeof AVAILABLE_DROPDOWN_CONSTANTS
+                FORMS.AVAILABLE_DROPDOWN_CONSTANTS[
+                  optionsConst as keyof typeof FORMS.AVAILABLE_DROPDOWN_CONSTANTS
                 ]
               }
             </p>
