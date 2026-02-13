@@ -18,6 +18,7 @@ import {
   exists,
   getTableColumns,
   ilike,
+  isNotNull,
   isNull,
   or,
   sql,
@@ -341,6 +342,8 @@ export const memberRouter = {
             .optional(),
           sortOrder: z.enum(["desc", "asc"]).optional(),
           sortByTime: z.boolean().optional(),
+          schoolFilter: z.string().optional(),
+          majorFilter: z.string().optional(),
         })
         .optional(),
     )
@@ -355,9 +358,11 @@ export const memberRouter = {
         // Build the base query
         let query = db.select().from(Member);
 
-        // Build query conditionally
+        // Build conditions array
+        const conditions = [];
+
         if (input.searchTerm && input.searchTerm.length > 0) {
-          query = query.where(
+          conditions.push(
             or(
               // Check whatever attribute you want
               ilike(Member.firstName, searchPattern),
@@ -368,10 +373,32 @@ export const memberRouter = {
               // Handle full names
               sql`CONCAT(${Member.firstName}, ' ', ${Member.lastName}) ILIKE ${searchPattern}`,
             ),
-          ) as typeof query;
+          );
         }
 
-        // Add the sorting here
+        if (input.schoolFilter) {
+          conditions.push(
+            eq(
+              Member.school,
+              input.schoolFilter as (typeof Member.school.enumValues)[number],
+            ),
+          );
+        }
+
+        if (input.majorFilter) {
+          conditions.push(
+            eq(
+              Member.major,
+              input.majorFilter as (typeof Member.major.enumValues)[number],
+            ),
+          );
+        }
+
+        if (conditions.length > 0) {
+          query = query.where(and(...conditions)) as typeof query;
+        }
+
+        // Sorting
         if (input.sortByTime) {
           query = query.orderBy(
             input.sortOrder === "desc"
@@ -387,7 +414,6 @@ export const memberRouter = {
             input.sortOrder === "asc" ? asc(sortColumn) : desc(sortColumn),
           ) as typeof query;
         } else {
-          // Default sort by ID
           query = query.orderBy(asc(Member.id)) as typeof query;
         }
 
@@ -402,31 +428,77 @@ export const memberRouter = {
       z
         .object({
           searchTerm: z.string().optional(),
+          schoolFilter: z.string().optional(),
+          majorFilter: z.string().optional(),
         })
         .optional(),
     )
     .query(async ({ input, ctx }) => {
       controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+
+      const conditions = [];
+
       if (input?.searchTerm && input.searchTerm.length > 0) {
         const searchPattern = `%${input.searchTerm}%`;
-        const result = await db
-          .select({ count: count() })
-          .from(Member)
-          .where(
-            or(
-              ilike(Member.firstName, searchPattern),
-              ilike(Member.lastName, searchPattern),
-              ilike(Member.email, searchPattern),
-              ilike(Member.discordUser, searchPattern),
-              ilike(Member.company, searchPattern),
-              // Handle full names
-              sql`CONCAT(${Member.firstName}, ' ', ${Member.lastName}) ILIKE ${searchPattern}`,
-            ),
-          );
-        return result[0]?.count ?? 0;
+        conditions.push(
+          or(
+            ilike(Member.firstName, searchPattern),
+            ilike(Member.lastName, searchPattern),
+            ilike(Member.email, searchPattern),
+            ilike(Member.discordUser, searchPattern),
+            ilike(Member.company, searchPattern),
+            // Handle full names
+            sql`CONCAT(${Member.firstName}, ' ', ${Member.lastName}) ILIKE ${searchPattern}`,
+          ),
+        );
       }
-      return (await db.select({ count: count() }).from(Member))[0]?.count ?? 0;
+
+      if (input?.schoolFilter) {
+        conditions.push(
+          eq(
+            Member.school,
+            input.schoolFilter as (typeof Member.school.enumValues)[number],
+          ),
+        );
+      }
+      if (input?.majorFilter) {
+        conditions.push(
+          eq(
+            Member.major,
+            input.majorFilter as (typeof Member.major.enumValues)[number],
+          ),
+        );
+      }
+
+      let query = db.select({ count: count() }).from(Member);
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions)) as typeof query;
+      }
+
+      return (await query)[0]?.count ?? 0;
     }),
+
+  getDistinctSchools: permProcedure.query(async ({ ctx }) => {
+    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    const results = await db
+      .selectDistinct({ school: Member.school })
+      .from(Member)
+      .where(isNotNull(Member.school))
+      .orderBy(asc(Member.school));
+
+    return results.map((r) => r.school).filter(Boolean) as string[];
+  }),
+
+  getDistinctMajors: permProcedure.query(async ({ ctx }) => {
+    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    const results = await db
+      .selectDistinct({ major: Member.major })
+      .from(Member)
+      .where(isNotNull(Member.major))
+      .orderBy(asc(Member.major));
+    return results.map((r) => r.major).filter(Boolean) as string[];
+  }),
 
   giveMemberPoints: permProcedure
     .input(

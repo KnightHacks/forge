@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { FormType, QuestionValidatorType } from "@forge/consts/knight-hacks";
+import type { FormType, QuestionValidatorType } from "@forge/consts/knight-hacks";
 
 /** UI state in the client */
 export type FormResponseUI = Partial<

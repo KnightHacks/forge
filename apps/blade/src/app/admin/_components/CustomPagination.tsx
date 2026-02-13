@@ -102,9 +102,13 @@ export default function CustomPagination({
         ))}
         <PaginationItem>
           <PaginationNext
-            onClick={() => currentPage < pageCount && changePage(currentPage + 1)}
+            onClick={() =>
+              currentPage < pageCount && changePage(currentPage + 1)
+            }
             aria-disabled={currentPage >= pageCount}
-            className={currentPage >= pageCount ? "pointer-events-none opacity-50" : ""}
+            className={
+              currentPage >= pageCount ? "pointer-events-none opacity-50" : ""
+            }
           />
         </PaginationItem>
       </PaginationContent>

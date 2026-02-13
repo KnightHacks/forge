@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Select,
@@ -30,7 +30,9 @@ export default function CustomPaginationSelect({
       onValueChange={(value: string) => onPageSizeChange(Number(value))}
     >
       <SelectTrigger className={className ?? "w-auto"}>
-        <SelectValue>{pageSize} {label ?? "Members"}</SelectValue>
+        <SelectValue>
+          {pageSize} {label ?? "Members"}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>

@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import {
   Table,
   TableBody,
@@ -27,7 +28,7 @@ import DuesToggleButton from "./dues-toggle";
 import MemberProfileButton from "./member-profile";
 import UpdateMemberButton from "./update-member";
 
-// We dont need to sort through so many different fields 
+// We dont need to sort through so many different fields
 type SortField =
   | "firstName"
   | "lastName"
@@ -39,10 +40,12 @@ type SortOrder = "asc" | "desc" | null;
 export default function MemberTable() {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [pageSize, setPageSize] = useState<number>(10);
-  const [sortByTime, setSortByTime] = useState(false);
+  const [sortByTime, setSortByTime] = useState<boolean>(false);
   const [timeSortOrder, setTimeSortOrder] = useState<"asc" | "desc">("asc");
+  const [schoolFilter, setSchoolFilter] = useState<string>("");
+  const [majorFilter, setMajorFilter] = useState<string>("");
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -56,11 +59,17 @@ export default function MemberTable() {
     sortField: sortByTime ? undefined : (sortField ?? undefined),
     sortOrder: sortByTime ? timeSortOrder : (sortOrder ?? undefined),
     sortByTime,
+    schoolFilter,
+    majorFilter,
   });
   const { data: totalCount } = api.member.getMemberCount.useQuery({
     searchTerm: debounceSearchTerm,
+    schoolFilter,
+    majorFilter,
   });
   const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
+  const { data: schools } = api.member.getDistinctSchools.useQuery();
+  const { data: majors } = api.member.getDistinctMajors.useQuery();
 
   const duesMap = new Map();
 
@@ -112,6 +121,38 @@ export default function MemberTable() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8"
+            />
+          </div>
+          <div>
+            <ResponsiveComboBox
+              items={["All Schools", ...(schools ?? [])]}
+              renderItem={(school) => <span>{school}</span>}
+              getItemValue={(school) => school}
+              getItemLabel={(school) => school}
+              onItemSelect={(school) => {
+                setSchoolFilter(school === "All Schools" ? "" : school);
+                const params = new URLSearchParams(searchParams);
+                params.set("page", "1");
+                router.push("?" + params.toString());
+              }}
+              buttonPlaceholder="All School's"
+              inputPlaceholder="Search schools..."
+            />
+          </div>
+          <div>
+            <ResponsiveComboBox
+              items={majors ?? []}
+              renderItem={(major) => <span>{major}</span>}
+              getItemValue={(major) => major}
+              getItemLabel={(major) => major}
+              onItemSelect={(major) => {
+                setMajorFilter(major);
+                const params = new URLSearchParams(searchParams);
+                params.set("page", "1");
+                router.push("?" + params.toString());
+              }}
+              buttonPlaceholder="All Majors"
+              inputPlaceholder="Search majors..."
             />
           </div>
           <div>
