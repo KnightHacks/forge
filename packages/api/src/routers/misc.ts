@@ -85,7 +85,7 @@ export const miscRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      if (FORMS.ALLOWED_ASSIGNABLE_DISCORD_ROLES.includes(input.roleId)) {
+      if (!FORMS.ALLOWED_ASSIGNABLE_DISCORD_ROLES.includes(input.roleId)) {
         throw new TRPCError({
           message: `Roleid: ${input.roleId} is not assignable through forms for security purposes. Add to consts and make a PR if this is a mistake.`,
           code: "INTERNAL_SERVER_ERROR",
