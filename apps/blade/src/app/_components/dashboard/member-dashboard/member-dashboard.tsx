@@ -4,6 +4,7 @@ import type { api as serverCall } from "~/trpc/server";
 import { MemberAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
 import { AlumniDiscord } from "./AlumniDiscord";
+import { AlumniRecap } from "./AlumniRecap";
 import { EventNumber } from "./event/event-number";
 import { EventShowcase } from "./event/event-showcase";
 import { FormResponses } from "./forms/form-responses";
@@ -86,24 +87,21 @@ export default async function MemberDashboard({
     );
   }
 
-  const [events, dues] = await Promise.allSettled([
+  const isAlumni = calcAlumniStatus(member.gradDate, member);
+
+  const [events, dues, hackathons] = await Promise.allSettled([
     api.member.getEvents(),
     api.duesPayment.validatePaidDues(),
+    isAlumni ? api.hackathon.getPastHackathons() : Promise.resolve([]),
   ]);
 
-  if (events.status === "rejected" || dues.status === "rejected") {
+  if (events.status === "rejected" || dues.status === "rejected" || hackathons.status === "rejected") {
     return (
       <div className="mt-10 flex flex-col items-center justify-center gap-y-6 font-bold">
         Something went wrong. Please try again later.
       </div>
     );
   }
-
-  const isAlumni = calcAlumniStatus(member.gradDate, member);
-
-  await Promise.all(
-    events.value.map((e) => api.event.ensureForm({ eventId: e.id })),
-  );
 
   return (
     <div className="flex-col md:flex">
@@ -131,7 +129,15 @@ export default async function MemberDashboard({
 
             {isAlumni ? <AlumniDiscord /> : <Points size={member.points} />}
 
-            <EventNumber size={events.value.length} />
+            {isAlumni ? (
+              <AlumniRecap 
+                member={member}
+                events={events.value}
+                hackathons={hackathons.value}
+              />
+            ) : (
+              <EventNumber size={events.value.length} />
+            )}  
 
             <div className="lg:col-span-1">
               <FormResponses />
