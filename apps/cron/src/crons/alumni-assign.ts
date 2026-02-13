@@ -5,7 +5,7 @@ import {
   removeRoleFromMember,
   resolveDiscordUserId,
 } from "@forge/api/utils";
-import { PROD_ALUMNI_ROLE_ID } from "@forge/consts/knight-hacks";
+import { DISCORD } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
 
@@ -28,7 +28,7 @@ export const alumniAssign = new CronBuilder({
     for (const { discordUser } of graduatedMembers) {
       try {
         const discordId = await resolveDiscordUserId(discordUser);
-        if (discordId) await addRoleToMember(discordId, PROD_ALUMNI_ROLE_ID);
+        if (discordId) await addRoleToMember(discordId, DISCORD.ALUMNI_ROLE);
       } catch (err) {
         console.error(`Failed to add alumni role for ${discordUser}:`, err);
       }
@@ -51,7 +51,7 @@ export const alumniAssign = new CronBuilder({
       try {
         const discordId = await resolveDiscordUserId(discordUser);
         if (discordId)
-          await removeRoleFromMember(discordId, PROD_ALUMNI_ROLE_ID);
+          await removeRoleFromMember(discordId, DISCORD.ALUMNI_ROLE);
       } catch (err) {
         console.error(`Failed to remove alumni role for ${discordUser}:`, err);
       }

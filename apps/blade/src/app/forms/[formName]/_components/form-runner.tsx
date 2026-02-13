@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import type {
-  FormType,
-  InstructionValidatorType,
-} from "@forge/consts/knight-hacks";
+import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 
@@ -32,7 +29,7 @@ export function FormRunner({
   onSubmit,
 }: {
   isReview?: boolean;
-  form: FormType;
+  form: FORMS.FormType;
 
   formId: string;
 
@@ -111,7 +108,7 @@ export function FormRunner({
 
   const instructionsWithType: InstructionWithOrder[] = (
     form.instructions || []
-  ).map((inst: InstructionValidatorType) => ({
+  ).map((inst: FORMS.InstructionValidatorType) => ({
     ...inst,
     itemType: "instruction" as const,
   }));

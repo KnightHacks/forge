@@ -2,10 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import {
-  EVENT_FEEDBACK_POINTS_INCREMENT,
-  OFFICER_ROLE_ID,
-} from "@forge/consts/knight-hacks";
+import { DISCORD, EVENTS } from "@forge/consts";
 import { and, eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
@@ -61,7 +58,7 @@ export const eventFeedbackRouter = {
       await db
         .update(Member)
         .set({
-          points: sql`${Member.points} + ${EVENT_FEEDBACK_POINTS_INCREMENT}`,
+          points: sql`${Member.points} + ${EVENTS.EVENT_FEEDBACK_POINTS_INCREMENT}`,
         })
         .where(eq(Member.id, input.memberId));
 
@@ -98,7 +95,7 @@ export const eventFeedbackRouter = {
     )
     .mutation(async ({ input, ctx }) => {
       await log({
-        message: `<@&${OFFICER_ROLE_ID}> ${input.description}`,
+        message: `<@&${DISCORD.OFFICER_ROLE}> ${input.description}`,
         title: "Hackathon Issue",
         color: "uhoh_red",
         userId: ctx.session.user.discordUserId,

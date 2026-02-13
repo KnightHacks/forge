@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-import type { FormType } from "@forge/consts/knight-hacks";
+import type { FORMS } from "@forge/consts";
 import { auth } from "@forge/auth";
 import { Button } from "@forge/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
@@ -52,8 +52,7 @@ export default async function FormResponsesPage({
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const formData = form.formData as any as FormType;
+  const formData = form.formData as FORMS.FormType;
 
   const apiResponses = await api.forms.getResponses({ form: form.id });
 

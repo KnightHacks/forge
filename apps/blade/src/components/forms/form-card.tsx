@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { QrCode } from "lucide-react";
 
+import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
   Card,
@@ -139,7 +140,10 @@ export function FormCard({
 
       <CardContent>
         <p className="max-h-12 overflow-hidden text-sm text-muted-foreground">
-          {fullForm?.formData.description || "No description"}
+          {fullForm?.formData
+            ? (fullForm.formData as FORMS.FormType).description ||
+              "No description"
+            : "No description"}
         </p>
       </CardContent>
 

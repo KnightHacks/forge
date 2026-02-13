@@ -3,15 +3,8 @@ import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
 
-import type { AssignableHackerClass } from "@forge/consts/knight-hacks";
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
-import {
-  BUCKET_NAME,
-  CLASS_ROLE_ID,
-  HACKATHON_APPLICATION_STATES,
-  KH_EVENT_ROLE_ID,
-  KNIGHTHACKS_S3_BUCKET_REGION,
-} from "@forge/consts/knight-hacks";
+import { FORMS, HACKATHONS, MINIO } from "@forge/consts";
 import { and, count, desc, eq, gt, or, sql, sum } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
@@ -466,17 +459,19 @@ export const hackerRouter = {
 
         if (existingHackerProfile.length === 0) {
           const objectName = `qr-code-${userId}.png`;
-          const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+          const bucketExists = await minioClient.bucketExists(
+            MINIO.QR_BUCKET_NAME,
+          );
           if (!bucketExists) {
             await minioClient.makeBucket(
-              BUCKET_NAME,
-              KNIGHTHACKS_S3_BUCKET_REGION,
+              MINIO.QR_BUCKET_NAME,
+              MINIO.BUCKET_REGION,
             );
           }
           const qrData = `user:${userId}`;
           const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
           await minioClient.putObject(
-            BUCKET_NAME,
+            MINIO.QR_BUCKET_NAME,
             objectName,
             qrBuffer,
             qrBuffer.length,
@@ -966,7 +961,7 @@ export const hackerRouter = {
       controlPerms.or(["READ_HACK_DATA"], ctx);
 
       const results = await Promise.all(
-        HACKATHON_APPLICATION_STATES.map(async (s) => {
+        FORMS.HACKATHON_APPLICATION_STATES.map(async (s) => {
           const rows = await db
             .select({ count: count() })
             .from(HackerAttendee)
@@ -981,7 +976,7 @@ export const hackerRouter = {
       );
 
       const counts = Object.fromEntries(results) as Record<
-        (typeof HACKATHON_APPLICATION_STATES)[number],
+        (typeof FORMS.HACKATHON_APPLICATION_STATES)[number],
         number
       >;
 
@@ -1171,15 +1166,21 @@ export const hackerRouter = {
           });
         } else {
           try {
-            await addRoleToMember(discordId, KH_EVENT_ROLE_ID);
+            await addRoleToMember(
+              discordId,
+              HACKATHONS.KNIGHT_HACKS_8.KH_EVENT_ROLE_ID,
+            );
             console.log(
-              `Assigned role ${KH_EVENT_ROLE_ID} to user ${discordId}`,
+              `Assigned role ${HACKATHONS.KNIGHT_HACKS_8.KH_EVENT_ROLE_ID} to user ${discordId}`,
             );
             // VIP will already be given the discord role ahead of time, so no need to assign again
             if (assignedClass) {
               await addRoleToMember(
                 discordId,
-                CLASS_ROLE_ID[assignedClass as AssignableHackerClass],
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                HACKATHONS.KNIGHT_HACKS_8.CLASS_ROLE_ID[
+                  assignedClass as HACKATHONS.KNIGHT_HACKS_8.AssignableHackerClass
+                ] ?? "",
               );
             }
           } catch (e) {

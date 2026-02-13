@@ -5,21 +5,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
-import type { GradTerm } from "@forge/consts/knight-hacks";
-import {
-  ALLOWED_PROFILE_PICTURE_EXTENSIONS,
-  ALLOWED_PROFILE_PICTURE_TYPES,
-  COMPANIES,
-  GENDERS,
-  KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
-  KNIGHTHACKS_MAX_RESUME_SIZE,
-  LEVELS_OF_STUDY,
-  MAJORS,
-  RACES_OR_ETHNICITIES,
-  SCHOOLS,
-  SHIRT_SIZES,
-  TERM_TO_DATE,
-} from "@forge/consts/knight-hacks";
+import { FORMS, MINIO } from "@forge/consts";
 import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -69,7 +55,7 @@ export function MemberProfileForm({
 
   const [showOtherCompany, setShowOtherCompany] = useState(
     member?.company &&
-      !(COMPANIES as readonly string[]).includes(member.company),
+      !(FORMS.COMPANIES as readonly string[]).includes(member.company),
   );
 
   const updateMember = api.member.updateMember.useMutation({
@@ -161,11 +147,11 @@ export function MemberProfileForm({
                   message: "Resume must be a PDF",
                 });
               }
-              if (file.size > KNIGHTHACKS_MAX_RESUME_SIZE) {
+              if (file.size > MINIO.MAX_RESUME_SIZE) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_big,
                   type: "number",
-                  maximum: KNIGHTHACKS_MAX_RESUME_SIZE,
+                  maximum: MINIO.MAX_RESUME_SIZE,
                   inclusive: true,
                   message: "File too large: maximum 5MB",
                 });
@@ -186,19 +172,19 @@ export function MemberProfileForm({
           if (fileList.length === 1) {
             const file = fileList[0];
             if (file instanceof File) {
-              if (!ALLOWED_PROFILE_PICTURE_TYPES.includes(file.type)) {
+              if (!MINIO.ALLOWED_PROFILE_PICTURE_TYPES.includes(file.type)) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.custom,
-                  message: `Invalid file type. Allowed: ${ALLOWED_PROFILE_PICTURE_EXTENSIONS.join(", ")}`,
+                  message: `Invalid file type. Allowed: ${MINIO.ALLOWED_PROFILE_PICTURE_EXTENSIONS.join(", ")}`,
                 });
               }
-              if (file.size > KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE) {
+              if (file.size > MINIO.KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_big,
                   type: "number",
-                  maximum: KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
+                  maximum: MINIO.KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
                   inclusive: true,
-                  message: `File too large: maximum ${KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE / (1024 * 1024)}MB`,
+                  message: `File too large: maximum ${MINIO.KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE / (1024 * 1024)}MB`,
                 });
               }
             }
@@ -261,7 +247,7 @@ export function MemberProfileForm({
       email: member?.email ?? "",
       phoneNumber: member?.phoneNumber ?? "",
       dob: member?.dob,
-      gradTerm: initTermYear.term as GradTerm,
+      gradTerm: initTermYear.term as FORMS.GradTerm,
       gradYear: initTermYear.year,
       company: member?.company,
       githubProfileUrl: member?.githubProfileUrl ?? "",
@@ -346,7 +332,7 @@ export function MemberProfileForm({
                 profilePictureUrl = result.profilePictureUrl;
               }
               const termKey = values.gradTerm;
-              const { month, day } = TERM_TO_DATE[termKey];
+              const { month, day } = FORMS.TERM_TO_DATE[termKey];
 
               const year = Number(values.gradYear);
               const gradDateIso = new Date(year, month, day).toISOString();
@@ -478,7 +464,7 @@ export function MemberProfileForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {GENDERS.map((gender) => (
+                      {FORMS.GENDERS.map((gender) => (
                         <SelectItem key={gender} value={gender}>
                           {gender}
                         </SelectItem>
@@ -513,7 +499,7 @@ export function MemberProfileForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {RACES_OR_ETHNICITIES.map((raceOrEthnicity) => (
+                      {FORMS.RACES_OR_ETHNICITIES.map((raceOrEthnicity) => (
                         <SelectItem
                           key={raceOrEthnicity}
                           value={raceOrEthnicity}
@@ -547,7 +533,7 @@ export function MemberProfileForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {SHIRT_SIZES.map((size) => (
+                      {FORMS.SHIRT_SIZES.map((size) => (
                         <SelectItem key={size} value={size}>
                           {size}
                         </SelectItem>
@@ -586,7 +572,7 @@ export function MemberProfileForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {LEVELS_OF_STUDY.map((levelOfStudy) => (
+                      {FORMS.LEVELS_OF_STUDY.map((levelOfStudy) => (
                         <SelectItem key={levelOfStudy} value={levelOfStudy}>
                           {levelOfStudy}
                         </SelectItem>
@@ -608,7 +594,7 @@ export function MemberProfileForm({
                 </FormLabel>
                 <FormControl>
                   <ResponsiveComboBox
-                    items={SCHOOLS}
+                    items={FORMS.SCHOOLS}
                     renderItem={(school) => <div>{school}</div>}
                     getItemValue={(school) => school}
                     getItemLabel={(school) => school}
@@ -631,7 +617,7 @@ export function MemberProfileForm({
                 </FormLabel>
                 <FormControl>
                   <ResponsiveComboBox
-                    items={MAJORS}
+                    items={FORMS.MAJORS}
                     renderItem={(major) => <div>{major}</div>}
                     getItemValue={(major) => major}
                     getItemLabel={(major) => major}
@@ -665,11 +651,13 @@ export function MemberProfileForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {(["Spring", "Summer", "Fall"] as GradTerm[]).map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      ))}
+                      {(["Spring", "Summer", "Fall"] as FORMS.GradTerm[]).map(
+                        (t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ),
+                      )}
                     </SelectContent>
                   </Select>
                 </FormControl>
@@ -716,7 +704,7 @@ export function MemberProfileForm({
                 </FormLabel>
                 <FormControl>
                   <ResponsiveComboBox
-                    items={[...COMPANIES, ...otherCompanies, "Other"]}
+                    items={[...FORMS.COMPANIES, ...otherCompanies, "Other"]}
                     renderItem={(item) => <div>{item}</div>}
                     getItemValue={(item) => item}
                     getItemLabel={(item) => item}
@@ -731,7 +719,9 @@ export function MemberProfileForm({
                     }}
                     buttonPlaceholder={
                       member.company &&
-                      (COMPANIES as readonly string[]).includes(member.company)
+                      (FORMS.COMPANIES as readonly string[]).includes(
+                        member.company,
+                      )
                         ? member.company
                         : member.company
                           ? "Other"
@@ -802,7 +792,7 @@ export function MemberProfileForm({
                 <FormControl>
                   <Input
                     type="file"
-                    accept={ALLOWED_PROFILE_PICTURE_TYPES.join(",")}
+                    accept={MINIO.ALLOWED_PROFILE_PICTURE_TYPES.join(",")}
                     {...pictureRef}
                     onChange={(event) => {
                       field.onChange(

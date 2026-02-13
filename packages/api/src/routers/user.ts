@@ -12,7 +12,7 @@ import { controlPerms } from "../utils";
 //     // check if it's a valid number index
 //     if (typeof value === "number") {
 //       // check if the number exists as a value in PERMISSIONS object
-//       return (Object.values(PERMISSIONS) as number[]).includes(value);
+//       return (Object.values(PERMISSIONS.PERMISSIONS) as number[]).includes(value);
 //     }
 
 //     // check if it's a valid string key

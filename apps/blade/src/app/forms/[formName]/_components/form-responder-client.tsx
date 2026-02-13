@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 
-import type { FormType } from "@forge/consts/knight-hacks";
+import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 
@@ -75,7 +75,7 @@ export function FormResponderWrapper({
   if (existingResponseQuery.error)
     return <div>Error Loading existing response</div>;
 
-  const form = formQuery.data.formData;
+  const form = formQuery.data.formData as FORMS.FormType;
   const zodValidator = formQuery.data.zodValidator;
   const isDuesOnly = formQuery.data.duesOnly;
   const allowResubmission = formQuery.data.allowResubmission;
@@ -143,14 +143,15 @@ export function FormResponderWrapper({
   const onSubmit = (payload: FormResponsePayload) => {
     submitResponse.mutate({
       form: formId,
-      responseData: payload,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+      responseData: payload as any,
     });
   };
 
   return (
     <FormRunner
       isReview={false}
-      form={form as FormType}
+      form={form}
       formId={formId}
       userName={userName}
       zodValidator={zodValidator}

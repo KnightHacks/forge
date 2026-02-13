@@ -1,5 +1,4 @@
 {
   "extends": "@forge/tsconfig/internal-package.json",
-  "include": ["src"],
-  "exclude": ["node_modules"]
+  "include": ["src"]
 }

@@ -4,17 +4,11 @@ import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
-import type { PermissionKey } from "@forge/consts/knight-hacks";
-import {
-  DEV_KNIGHTHACKS_GUILD_ID,
-  PERMISSIONS,
-  PROD_KNIGHTHACKS_GUILD_ID,
-} from "@forge/consts/knight-hacks";
+import { DISCORD, PERMISSIONS } from "@forge/consts";
 import { eq, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 
-import { env } from "../env";
 import { permProcedure, protectedProcedure } from "../trpc";
 import {
   addRoleToMember,
@@ -24,11 +18,6 @@ import {
   log,
   removeRoleFromMember,
 } from "../utils";
-
-const KNIGHTHACKS_GUILD_ID =
-  env.NODE_ENV === "production"
-    ? (PROD_KNIGHTHACKS_GUILD_ID as string)
-    : (DEV_KNIGHTHACKS_GUILD_ID as string);
 
 export const rolesRouter = {
   // ROLES
@@ -82,7 +71,10 @@ export const rolesRouter = {
         for (const bladeUser of bladeUsers) {
           try {
             const guildMember = (await discord.get(
-              Routes.guildMember(KNIGHTHACKS_GUILD_ID, bladeUser.discordUserId),
+              Routes.guildMember(
+                DISCORD.KNIGHTHACKS_GUILD,
+                bladeUser.discordUserId,
+              ),
             )) as APIGuildMember;
 
             checkedCount++;
@@ -221,7 +213,7 @@ export const rolesRouter = {
     .query(async ({ input }): Promise<APIRole | null> => {
       try {
         return (await discord.get(
-          Routes.guildRole(KNIGHTHACKS_GUILD_ID, input.roleId),
+          Routes.guildRole(DISCORD.KNIGHTHACKS_GUILD, input.roleId),
         )) as APIRole | null;
       } catch {
         return null;
@@ -239,7 +231,7 @@ export const rolesRouter = {
         try {
           ret.push(
             (await discord.get(
-              Routes.guildRole(KNIGHTHACKS_GUILD_ID, r.discordRoleId),
+              Routes.guildRole(DISCORD.KNIGHTHACKS_GUILD, r.discordRoleId),
             )) as APIRole | null,
           );
         } catch {
@@ -253,7 +245,7 @@ export const rolesRouter = {
   getDiscordRoleCounts: protectedProcedure.query(
     async (): Promise<Record<string, number> | null> => {
       return (await discord.get(
-        `/guilds/${KNIGHTHACKS_GUILD_ID}/roles/member-counts`,
+        `/guilds/${DISCORD.KNIGHTHACKS_GUILD}/roles/member-counts`,
       )) as Record<string, number>;
     },
   ),
@@ -275,9 +267,9 @@ export const rolesRouter = {
           sql`cast(${Permissions.userId} as text) = ${input ? input.userId : ctx.session.user.id}`,
         );
 
-      const permissionsBits = new Array(Object.keys(PERMISSIONS).length).fill(
-        false,
-      ) as boolean[];
+      const permissionsBits = new Array(
+        Object.keys(PERMISSIONS.PERMISSIONS).length,
+      ).fill(false) as boolean[];
 
       permRows.forEach((v) => {
         for (let i = 0; i < v.permissions.length; i++) {
@@ -285,15 +277,15 @@ export const rolesRouter = {
         }
       });
 
-      const permissionsMap = Object.keys(PERMISSIONS).reduce(
+      const permissionsMap = Object.keys(PERMISSIONS.PERMISSIONS).reduce(
         (accumulator, key) => {
-          const index = PERMISSIONS[key];
+          const index = PERMISSIONS.PERMISSIONS[key];
           if (index === undefined) return accumulator;
           accumulator[key] = permissionsBits[index] ?? false;
 
           return accumulator;
         },
-        {} as Record<PermissionKey, boolean>,
+        {} as Record<PERMISSIONS.PermissionKey, boolean>,
       );
 
       return permissionsMap;

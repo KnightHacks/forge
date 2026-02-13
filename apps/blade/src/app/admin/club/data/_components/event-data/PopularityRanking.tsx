@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
-import { RANKING_STYLES } from "@forge/consts/knight-hacks";
+import { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
@@ -36,7 +36,7 @@ export default function PopularityRanking({
               (event, index: number) => (
                 <li
                   key={event.id}
-                  className={`flex justify-between text-sm ${RANKING_STYLES[index] ?? "text-gray-400 md:text-base lg:text-base"}`}
+                  className={`flex justify-between text-sm ${FORMS.RANKING_STYLES[index] ?? "text-gray-400 md:text-base lg:text-base"}`}
                 >
                   <span className="me-4">
                     {index + 1}. {event.name} &#91;{event.tag.toUpperCase()}
