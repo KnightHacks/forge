@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { XCircle } from "lucide-react";
 
+import { auth } from "@forge/auth/server";
 import { Card } from "@forge/ui/card";
 
 import { api, HydrateClient } from "~/trpc/server";
 import { FormResponderWrapper } from "./_components/form-responder-client";
-import { XCircle } from "lucide-react";
-
-import { auth } from "@forge/auth/server";
 
 export async function generateMetadata({
   params,
@@ -75,7 +74,7 @@ export default async function FormResponderPage({
     // fallback to discord name if member lookup fails
   }
 
-	const formName = params.formName;
+  const formName = params.formName;
 
   const form = await api.forms.getForm({ slug_name: formName });
 
@@ -96,13 +95,9 @@ export default async function FormResponderPage({
     );
   }
 
-
   return (
     <HydrateClient>
-      <FormResponderWrapper
-        formName={formName}
-        userName={userName}
-      />
+      <FormResponderWrapper formName={formName} userName={userName} />
     </HydrateClient>
   );
 }

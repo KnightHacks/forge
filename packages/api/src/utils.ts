@@ -7,17 +7,17 @@ import { Routes } from "discord-api-types/v10";
 import { and, eq, gt, inArray } from "drizzle-orm";
 import { google } from "googleapis";
 import Stripe from "stripe";
+import z from "zod";
 
 import type { Session } from "@forge/auth/server";
 import { DISCORD, EVENTS, FORMS, MINIO, PERMISSIONS } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { JudgeSession, Roles } from "@forge/db/schemas/auth";
+import { FormSchemaSchema, FormsSchemas } from "@forge/db/schemas/knight-hacks";
 import { client } from "@forge/email";
 
 import { env } from "./env";
 import { minioClient } from "./minio/minio-client";
-import { FormSchemaSchema, FormsSchemas } from "@forge/db/schemas/knight-hacks";
-import z from "zod";
 
 export const discord = new REST({ version: "10" }).setToken(
   env.DISCORD_BOT_TOKEN,
@@ -496,59 +496,58 @@ export function getPermsAsList(perms: string) {
 
 // All of this will be moved to @forge/utils but its here for now
 export const CreateFormSchema = FormSchemaSchema.omit({
-        id: true,
-        name: true,
-        slugName: true,
-        createdAt: true,
-        formData: true,
-				formValidatorJson: true,
+  id: true,
+  name: true,
+  slugName: true,
+  createdAt: true,
+  formData: true,
+  formValidatorJson: true,
 })
-.extend({ formData: FORMS.FormSchemaValidator })
-.extend({ section: z.string().optional() });
+  .extend({ formData: FORMS.FormSchemaValidator })
+  .extend({ section: z.string().optional() });
 
 type CreateFormType = z.infer<typeof CreateFormSchema>;
 
 export async function createForm(input: CreateFormType) {
-	const jsonSchema = generateJsonSchema(input.formData);
+  const jsonSchema = generateJsonSchema(input.formData);
 
-	const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
+  const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
 
-	if (!jsonSchema.success) {
-		throw new TRPCError({
-			message: jsonSchema.msg,
-			code: "BAD_REQUEST",
-		});
-	}
+  if (!jsonSchema.success) {
+    throw new TRPCError({
+      message: jsonSchema.msg,
+      code: "BAD_REQUEST",
+    });
+  }
 
-	let sectionId: string | null = null;
-	const sectionName = input.section ?? "General";
+  let sectionId: string | null = null;
+  const sectionName = input.section ?? "General";
 
-	if (sectionName !== "General") {
-		const section = await db.query.FormSections.findFirst({
-			where: (t, { eq }) => eq(t.name, sectionName),
-		});
-			sectionId = section?.id ?? null;
-	}
+  if (sectionName !== "General") {
+    const section = await db.query.FormSections.findFirst({
+      where: (t, { eq }) => eq(t.name, sectionName),
+    });
+    sectionId = section?.id ?? null;
+  }
 
-	await db
-	.insert(FormsSchemas)
-	.values({
-		...input,
-		name: input.formData.name,
-		slugName: slug_name,
-		formValidatorJson: jsonSchema.schema,
-		sectionId,
-	})
-	.onConflictDoUpdate({
-		//If it already exists upsert it
-		target: FormsSchemas.id,
-	set: {
-		...input,
-		name: input.formData.name,
-		slugName: slug_name,
-		formValidatorJson: jsonSchema.schema,
-		sectionId,
-	},
-	});
+  await db
+    .insert(FormsSchemas)
+    .values({
+      ...input,
+      name: input.formData.name,
+      slugName: slug_name,
+      formValidatorJson: jsonSchema.schema,
+      sectionId,
+    })
+    .onConflictDoUpdate({
+      //If it already exists upsert it
+      target: FormsSchemas.id,
+      set: {
+        ...input,
+        name: input.formData.name,
+        slugName: slug_name,
+        formValidatorJson: jsonSchema.schema,
+        sectionId,
+      },
+    });
 }
-

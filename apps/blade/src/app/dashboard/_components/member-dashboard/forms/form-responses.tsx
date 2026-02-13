@@ -35,13 +35,15 @@ export async function FormResponses() {
                     </span>
                   </div>
 
-									{formResponse.formSlug && <Button asChild size="sm">
-                    <Link
-                      href={`/forms/${encodeURIComponent(formResponse.formSlug)}/${formResponse.id}`}
-                    >
-                      {formResponse.allowEdit ? "Edit" : "View"}
-                    </Link>
-                  </Button>}
+                  {formResponse.formSlug && (
+                    <Button asChild size="sm">
+                      <Link
+                        href={`/forms/${encodeURIComponent(formResponse.formSlug)}/${formResponse.id}`}
+                      >
+                        {formResponse.allowEdit ? "Edit" : "View"}
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

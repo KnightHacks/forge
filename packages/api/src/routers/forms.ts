@@ -25,11 +25,11 @@ import { minioClient } from "../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../trpc";
 import {
   controlPerms,
+  createForm,
+  CreateFormSchema,
   generateJsonSchema,
   log,
   regenerateMediaUrls,
-	createForm,
-	CreateFormSchema,
 } from "../utils";
 
 export const formsRouter = {
@@ -37,7 +37,7 @@ export const formsRouter = {
     .input(CreateFormSchema)
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EDIT_FORMS"], ctx);
-			await createForm(input);
+      await createForm(input);
     }),
 
   updateForm: permProcedure
@@ -134,7 +134,8 @@ export const formsRouter = {
     .input(z.object({ slug_name: z.string() }))
     .query(async ({ input }) => {
       const form = await db.query.FormsSchemas.findFirst({
-        where: (t, { eq }) => eq(t.slugName, decodeURIComponent(input.slug_name)),
+        where: (t, { eq }) =>
+          eq(t.slugName, decodeURIComponent(input.slug_name)),
       });
 
       if (form === undefined) {
