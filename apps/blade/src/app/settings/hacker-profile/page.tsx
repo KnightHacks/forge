@@ -7,7 +7,7 @@ import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
 import { Separator } from "@forge/ui/separator";
 
 import { api, HydrateClient } from "~/trpc/server";
-import { HackerProfileForm } from "./hacker-profile-form";
+import { HackerProfileForm } from "~/app/_components/settings/hacker-profile-form";
 
 export default async function SettingsProfilePage() {
   const session = await auth();

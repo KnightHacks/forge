@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { api, HydrateClient } from "~/trpc/server";
-import ResultsTable from "./_components/results-table";
+import ResultsTable from "~/app/_components/judge/results-table";
 
 export const metadata: Metadata = {
   title: "Blade | Hackthon Results",

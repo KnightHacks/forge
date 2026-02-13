@@ -5,7 +5,7 @@ import { auth } from "@forge/auth";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
-import { CheckInPage } from "./_components/check-in-page";
+import { CheckInPage } from "~/app/_components/admin/hackathon/check-in/check-in-page";
 
 export const metadata: Metadata = {
   title: "Blade | Hackathon Check-in",

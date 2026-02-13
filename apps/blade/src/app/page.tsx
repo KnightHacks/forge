@@ -1,5 +1,5 @@
 import { HydrateClient } from "~/trpc/server";
-import { Auth } from "./_components/auth-showcase";
+import { Auth } from "~/app/_components/auth-showcase";
 
 export default function HomePage() {
   return (

@@ -5,8 +5,8 @@ import { auth } from "@forge/auth";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
-import MemberTable from "./_components/members-table";
-import ScannerPopUp from "./_components/scanner";
+import MemberTable from "~/app/_components/admin/club/members/members-table";
+import ScannerPopUp from "~/app/_components/shared/scanner";
 
 export const metadata: Metadata = {
   title: "Blade | Members",

@@ -5,7 +5,7 @@ import { auth } from "@forge/auth";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
-import HackerClient from "./hacker-client";
+import HackerClient from "~/app/_components/admin/hackathon/hackers/hacker-client";
 
 export const metadata: Metadata = {
   title: "Blade | Judge Assignment",

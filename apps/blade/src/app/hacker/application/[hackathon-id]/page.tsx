@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { auth, signIn } from "@forge/auth/server";
 
 import { api } from "~/trpc/server";
-import { HackerFormPage } from "../_components/hacker-application-form";
+import { HackerFormPage } from "~/app/_components/dashboard/hacker/hacker-application-form";
 
 export default async function HackerApplicationPage({
   params,

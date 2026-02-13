@@ -6,8 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
-import EventDemographics from "./_components/EventDemographics";
-import MemberDemographics from "./_components/MemberDemographics";
+import EventDemographics from "~/app/_components/admin/club/data/EventDemographics";
+import MemberDemographics from "~/app/_components/admin/club/data/MemberDemographics";
 
 export const metadata: Metadata = {
   title: "Blade | Data",

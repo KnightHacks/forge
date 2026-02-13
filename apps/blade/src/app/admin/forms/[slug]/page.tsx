@@ -5,7 +5,7 @@ import { auth } from "@forge/auth/server";
 
 import { extractProcedures } from "~/lib/utils";
 import { api } from "~/trpc/server";
-import { EditorClient } from "./client";
+import { EditorClient } from "~/app/_components/admin/forms/editor/client";
 
 export default async function FormEditorPage({
   params,

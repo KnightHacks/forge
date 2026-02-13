@@ -5,7 +5,7 @@ import { auth } from "@forge/auth";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api } from "~/trpc/server";
-import QRCodesClient from "./_components/judges-client";
+import QRCodesClient from "~/app/_components/admin/hackathon/judge-assignment/judges-client";
 
 export const metadata: Metadata = {
   title: "Blade | Judges",

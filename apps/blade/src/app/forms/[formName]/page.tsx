@@ -9,8 +9,8 @@ import { Card } from "@forge/ui/card";
 
 import { extractProcedures } from "~/lib/utils";
 import { api, HydrateClient } from "~/trpc/server";
-import FormNotFound from "./_components/form-not-found";
-import { FormResponderWrapper } from "./_components/form-responder-client";
+import FormNotFound from "~/app/_components/forms/form-not-found";
+import { FormResponderWrapper } from "~/app/_components/forms/form-responder-client";
 
 function serializeSearchParams(
   searchParams: Record<string, string | string[] | undefined>,
