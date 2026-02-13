@@ -118,9 +118,9 @@ export function FormResponderWrapper({
             You have already submitted a response to this form.
           </p>
 
-          {existing && (
+          {existing?.formSlug && (
             <Link
-              href={`/forms/${encodeURIComponent(existing.formSlug ?? "")}/${existing.id}`}
+              href={`/forms/${encodeURIComponent(existing.formSlug)}/${existing.id}`}
             >
               <Button size="sm">
                 {allowEdit ? "Edit " : "View "} Response
