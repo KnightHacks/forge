@@ -484,7 +484,7 @@ export const InsertFormSectionSchema = createInsertSchema(FormSections);
 export const FormsSchemas = createTable("form_schemas", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   name: t.varchar({ length: 255 }).notNull(),
-  slugName: t.varchar({ length: 255 }).notNull(),
+  slugName: t.varchar({ length: 255 }).notNull().unique(),
   createdAt: t.timestamp().notNull().defaultNow(),
   duesOnly: t.boolean().notNull().default(false),
   allowResubmission: t.boolean().notNull().default(false),
