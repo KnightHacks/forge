@@ -256,7 +256,6 @@ export function EditorClient({
     formData,
     slug,
     questions,
-    updateFormMutation,
     formDescription,
     formBanner,
     instructions,
