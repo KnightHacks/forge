@@ -573,20 +573,11 @@ export const eventRouter = {
                 {
                   type: "MULTIPLE_CHOICE",
                   order: 3,
-                  options: [
-                    "Discord",
-                    "Instagram",
-                    "Knightconnect",
-                    "Word of Mouth",
-                    "CECS Emailing List",
-                    "Reddit",
-                    "LinkedIn",
-                    "Class Presentation",
-                    "Another Club",
-                  ],
+                  options: [],
                   optional: false,
                   question: "Where did you hear about us?",
                   allowOther: true,
+                  optionsConst: "EVENT_FEEDBACK_HEARD",
                 },
                 {
                   type: "SHORT_ANSWER",

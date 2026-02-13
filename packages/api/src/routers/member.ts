@@ -30,7 +30,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
+import { permProcedure, protectedProcedure } from "../trpc";
 import { controlPerms, log } from "../utils";
 
 export const memberRouter = {
