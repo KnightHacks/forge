@@ -14,17 +14,16 @@ import { useSubmissionSuccess } from "../_hooks/useSubmissionSuccess";
 import FormNotFound from "./form-not-found";
 import { FormRunner } from "./form-runner";
 import { SubmissionSuccessCard } from "./form-submitted-success";
+import { handleCallbacks } from "./connection-handler";
 
 interface FormResponderWrapperProps {
   formName: string;
   userName: string;
-  handleCallbacks: (response: Record<string, unknown>) => void;
 }
 
 export function FormResponderWrapper({
   formName,
-  userName,
-  handleCallbacks,
+	userName,
 }: FormResponderWrapperProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -37,6 +36,8 @@ export function FormResponderWrapper({
 
   const formIdGate = formQuery.data?.id;
 
+	if(!formIdGate) return <FormNotFound />
+
   const existingResponseQuery = api.forms.getUserResponse.useQuery(
     { form: formIdGate },
     { enabled: !!formIdGate },
@@ -46,7 +47,7 @@ export function FormResponderWrapper({
     onSuccess: (_data, variables) => {
       setSubmitError(null);
       setIsSubmitted(true);
-      handleCallbacks(variables.responseData as Record<string, unknown>);
+      void handleCallbacks(formName, formIdGate, variables.responseData as Record<string, unknown>);
     },
     onError: (error) => {
       setSubmitError(
