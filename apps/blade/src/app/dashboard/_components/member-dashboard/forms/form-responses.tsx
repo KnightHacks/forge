@@ -35,13 +35,13 @@ export async function FormResponses() {
                     </span>
                   </div>
 
-                  <Button asChild size="sm">
+									{formResponse.formSlug && <Button asChild size="sm">
                     <Link
                       href={`/forms/${encodeURIComponent(formResponse.formSlug)}/${formResponse.id}`}
                     >
                       {formResponse.allowEdit ? "Edit" : "View"}
                     </Link>
-                  </Button>
+                  </Button>}
                 </div>
               </div>
             ))}
