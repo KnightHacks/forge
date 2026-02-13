@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -12,11 +11,6 @@ import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import { AllResponsesView } from "./_components/AllResponsesView";
 import { PerUserResponsesView } from "./_components/PerUserResponsesView";
-
-export const metadata: Metadata = {
-  title: "Blade | Form Responses",
-  description: "View Form Responses",
-};
 
 export default async function FormResponsesPage({
   params,

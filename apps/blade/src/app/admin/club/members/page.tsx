@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
@@ -7,11 +6,6 @@ import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import MemberTable from "./_components/members-table";
 import ScannerPopUp from "./_components/scanner";
-
-export const metadata: Metadata = {
-  title: "Blade | Members",
-  description: "Manage Knight Hacks members.",
-};
 
 export default async function Members() {
   // authentication
