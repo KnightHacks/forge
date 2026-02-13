@@ -236,7 +236,7 @@ export default function RaffleDraw({ entries }: { entries: RaffleEntry[] }) {
         // Confetti
         if (containerRef.current) {
           const rect = containerRef.current.getBoundingClientRect();
-          confetti({
+          void confetti({
             particleCount: 150,
             spread: 90,
             origin: {
