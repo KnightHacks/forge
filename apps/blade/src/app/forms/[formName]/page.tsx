@@ -20,9 +20,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   try {
     const form = await api.forms.getForm({ slug_name: params.formName });
+    const description = `Official application for ${form.name} through Blade.`;
 
     return {
-      title: `${form.name}`,
+      title: `Blade | ${form.name}`,
+      description,
     };
   } catch {
     return {
