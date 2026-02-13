@@ -12,12 +12,20 @@ import {
   FileSpreadsheet,
   FileText,
   Loader2,
-  X,
+  Trash2,
 } from "lucide-react";
 
 import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@forge/ui/dialog";
 import { Separator } from "@forge/ui/separator";
 import { toast } from "@forge/ui/toast";
 
@@ -261,12 +269,14 @@ export function PerUserResponsesView({
 }
 
 function DeleteResponseButton({ responseId }: { responseId: string }) {
+  const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const utils = api.useUtils();
 
   const deleteResponse = api.forms.deleteResponse.useMutation({
     async onSuccess() {
       toast.success("Response deleted");
+      setIsOpen(false);
       await utils.forms.getResponses.invalidate();
       router.refresh();
     },
@@ -276,19 +286,48 @@ function DeleteResponseButton({ responseId }: { responseId: string }) {
   });
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={() => deleteResponse.mutate({ id: responseId })}
-      disabled={deleteResponse.isPending}
-      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-    >
-      {deleteResponse.isPending ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <X className="h-4 w-4" />
-      )}
-    </Button>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Delete response"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete Response</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Are you sure you want to delete this response? This action cannot be
+          undone.
+        </p>
+        <DialogFooter className="mt-4">
+          <Button
+            variant="outline"
+            onClick={() => setIsOpen(false)}
+            disabled={deleteResponse.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => deleteResponse.mutate({ id: responseId })}
+            disabled={deleteResponse.isPending}
+          >
+            {deleteResponse.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Delete"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
