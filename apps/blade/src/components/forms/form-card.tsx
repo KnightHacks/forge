@@ -157,14 +157,14 @@ export function FormCard({
             className="flex-1"
             onClick={(e) => e.stopPropagation()}
           >
-            <Link href={`/admin/forms/${slug_name}/responses`}>Responses</Link>
+            <Link href={`/admin/forms/${encodeURIComponent(slug_name)}/responses`}>Responses</Link>
           </Button>
           <Button
             asChild
             className="flex-1"
             onClick={(e) => e.stopPropagation()}
           >
-            <Link href={`/admin/forms/${slug_name}`}>Edit Form</Link>
+            <Link href={`/admin/forms/${encodeURIComponent(slug_name)}`}>Edit Form</Link>
           </Button>
         </div>
       </CardFooter>
