@@ -46,7 +46,7 @@ export default function MemberTable() {
 
   const searchParams = useSearchParams();
   const router = useRouter();
-  const currentPage = Number(searchParams.get("page") || 1);
+  const currentPage = Math.max(1, Number(searchParams.get("page")) || 1);
   const debounceSearchTerm = useDebounce(searchTerm, 250);
 
   const { data: members } = api.member.getMembers.useQuery({

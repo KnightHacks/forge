@@ -34,7 +34,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
+import { permProcedure, protectedProcedure } from "../trpc";
 import { controlPerms, log } from "../utils";
 
 export const memberRouter = {
@@ -373,9 +373,9 @@ export const memberRouter = {
 
         // Add the sorting here
         if (input.sortByTime) {
-          query.orderBy(
+          query = query.orderBy(
             input.sortOrder === "desc"
-              ? desc(Member.timeCreated)
+              ? desc(Member.dateCreated)
               : asc(Member.dateCreated),
             input.sortOrder === "desc"
               ? desc(Member.timeCreated)
@@ -397,7 +397,7 @@ export const memberRouter = {
       return await db.query.Member.findMany();
     }),
 
-  getMemberCount: publicProcedure
+  getMemberCount: permProcedure
     .input(
       z
         .object({
@@ -405,7 +405,8 @@ export const memberRouter = {
         })
         .optional(),
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
       if (input?.searchTerm && input.searchTerm.length > 0) {
         const searchPattern = `%${input.searchTerm}%`;
         const result = await db

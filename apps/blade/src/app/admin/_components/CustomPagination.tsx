@@ -13,7 +13,7 @@ import {
   PaginationPrevious,
 } from "@forge/ui/pagination";
 
-interface MemberPaginationProps {
+interface CustomPaginationProps {
   itemCount: number;
   pageSize: number;
   currentPage: number;
@@ -25,7 +25,7 @@ export default function CustomPagination({
   pageSize,
   currentPage,
   className,
-}: MemberPaginationProps) {
+}: CustomPaginationProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -80,8 +80,9 @@ export default function CustomPagination({
       <PaginationContent>
         <PaginationItem>
           <PaginationPrevious
-            onClick={() => changePage(currentPage - 1)}
+            onClick={() => currentPage > 1 && changePage(currentPage - 1)}
             aria-disabled={currentPage <= 1}
+            className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
           />
         </PaginationItem>
         {getPageNumber().map((page, idx) => (
@@ -101,8 +102,9 @@ export default function CustomPagination({
         ))}
         <PaginationItem>
           <PaginationNext
-            onClick={() => changePage(currentPage + 1)}
+            onClick={() => currentPage < pageCount && changePage(currentPage + 1)}
             aria-disabled={currentPage >= pageCount}
+            className={currentPage >= pageCount ? "pointer-events-none opacity-50" : ""}
           />
         </PaginationItem>
       </PaginationContent>

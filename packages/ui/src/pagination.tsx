@@ -45,10 +45,13 @@ const PaginationLink = ({
   className,
   isActive,
   size = "icon",
+  href,
   ...props
 }: PaginationLinkProps) => (
   <a
     aria-current={isActive ? "page" : undefined}
+    role={href ? undefined : "button"}
+    tabIndex={href ? undefined : 0}
     className={cn(
       buttonVariants({
         variant: isActive ? "outline" : "ghost",
@@ -56,6 +59,7 @@ const PaginationLink = ({
       }),
       className,
     )}
+    href={href}
     {...props}
   />
 );

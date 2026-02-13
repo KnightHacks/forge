@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Select,
   SelectContent,
@@ -12,6 +14,7 @@ interface CustomPaginationSelectProps {
   onPageSizeChange: (pageSize: number) => void;
   options?: number[];
   className?: string;
+  label?: string;
 }
 
 export default function CustomPaginationSelect({
@@ -19,6 +22,7 @@ export default function CustomPaginationSelect({
   onPageSizeChange,
   options = [10, 25, 50, 100],
   className,
+  label,
 }: CustomPaginationSelectProps) {
   return (
     <Select
@@ -26,7 +30,7 @@ export default function CustomPaginationSelect({
       onValueChange={(value: string) => onPageSizeChange(Number(value))}
     >
       <SelectTrigger className={className ?? "w-auto"}>
-        <SelectValue>{pageSize} Members</SelectValue>
+        <SelectValue>{pageSize} {label ?? "Members"}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
