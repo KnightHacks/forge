@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
@@ -8,11 +7,6 @@ import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import EventDemographics from "./_components/EventDemographics";
 import MemberDemographics from "./_components/MemberDemographics";
-
-export const metadata: Metadata = {
-  title: "Blade | Data",
-  description: "View member and event demographics.",
-};
 
 export default async function Data() {
   // authentication

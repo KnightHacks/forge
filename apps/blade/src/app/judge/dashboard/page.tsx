@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AlertTriangle, Trophy } from "lucide-react";
 
@@ -15,11 +14,6 @@ import { Separator } from "@forge/ui/separator";
 
 import { api } from "~/trpc/server";
 import { ProjectsTable } from "../_components/projects-table";
-
-export const metadata: Metadata = {
-  title: "Blade | Judge Dashboard",
-  description: "Judging dashboard for current hackathon.",
-};
 
 export default async function Page() {
   const isJudge = await api.auth.getJudgeStatus();

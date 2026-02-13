@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
@@ -8,11 +7,6 @@ import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 import HackerEventDemographics from "../../club/data/_components/HackerEventDemographics";
 import HackathonDataContent from "./_components/HackathonDataContent";
-
-export const metadata: Metadata = {
-  title: "Blade | Hackathon Data",
-  description: "View hackathon demographics.",
-};
 
 export default async function HackathonData() {
   const session = await auth();

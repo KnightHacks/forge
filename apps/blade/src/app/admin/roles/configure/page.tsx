@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ShieldPlus } from "lucide-react";
 
@@ -10,11 +9,6 @@ import { SIGN_IN_PATH } from "~/consts";
 import { api } from "~/trpc/server";
 import RoleEdit from "./_components/roleedit";
 import RoleTable from "./_components/roletable";
-
-export const metadata: Metadata = {
-  title: "Blade | Role Configuration",
-  description: "Configure Knight Hacks roles",
-};
 
 export default async function Roles() {
   const session = await auth();
