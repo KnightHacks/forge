@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
@@ -8,11 +7,6 @@ import { api, HydrateClient } from "~/trpc/server";
 import { AddPoints } from "../../_components/AddPoints";
 import ScannerPopUp from "../../club/members/_components/scanner";
 import { EventsTable } from "./_components/events-table";
-
-export const metadata: Metadata = {
-  title: "Blade Hackathon Events",
-  description: "Manage Knight Hacks hackathon events.",
-};
 
 export default async function HackathonEvents() {
   // Check if the user is authenticated

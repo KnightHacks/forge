@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -5,6 +6,11 @@ import { auth, signIn } from "@forge/auth/server";
 
 import { api } from "~/trpc/server";
 import { HackerFormPage } from "../_components/hacker-application-form";
+
+export const metadata: Metadata = {
+  title: "Blade | Hacker Application",
+  description: "Application to be a hacker",
+};
 
 export default async function HackerApplicationPage({
   params,

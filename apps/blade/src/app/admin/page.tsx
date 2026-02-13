@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -27,11 +26,6 @@ import {
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
-
-export const metadata: Metadata = {
-  title: "Blade | Admin",
-  description: "Manage Knight Hacks as an administrator.",
-};
 
 export default async function Admin() {
   const session = await auth();

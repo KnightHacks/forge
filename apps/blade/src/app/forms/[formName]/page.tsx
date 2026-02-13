@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { XCircle } from "lucide-react";
 import { stringify } from "superjson";
@@ -11,6 +12,26 @@ import { extractProcedures } from "~/lib/utils";
 import { api, HydrateClient } from "~/trpc/server";
 import FormNotFound from "./_components/form-not-found";
 import { FormResponderWrapper } from "./_components/form-responder-client";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { formName: string };
+}): Promise<Metadata> {
+  try {
+    const form = await api.forms.getForm({ slug_name: params.formName });
+    const description = `Official application for ${form.name} through Blade.`;
+
+    return {
+      title: `Blade | ${form.name}`,
+      description,
+    };
+  } catch {
+    return {
+      title: "Blade | Form Not Found",
+    };
+  }
+}
 
 function serializeSearchParams(
   searchParams: Record<string, string | string[] | undefined>,

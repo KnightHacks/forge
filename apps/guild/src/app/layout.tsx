@@ -15,6 +15,12 @@ export const metadata: Metadata = {
       "View the Guild Collective of Knight Hacks, a community of technologists at the University of Central Florida.",
     url: "https://guild.knighthacks.org",
     siteName: "Knight Hacks",
+    images: [
+      {
+        url: "https://blade.knighthacks.org/banner.png",
+        alt: "Knight Hacks Banner",
+      },
+    ],
   },
 };
 

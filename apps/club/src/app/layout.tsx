@@ -26,6 +26,12 @@ export const metadata: Metadata = {
       "UCF's largest hackathon and software engineering organization",
     url: "https://club.knighthacks.org",
     siteName: "Knight Hacks",
+    images: [
+      {
+        url: "https://blade.knighthacks.org/banner.png",
+        alt: "Knight Hacks Banner",
+      },
+    ],
   },
 };
 
