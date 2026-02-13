@@ -1,4 +1,4 @@
-import type { FormType } from "@forge/consts/knight-hacks";
+import type { FORMS } from "@forge/consts";
 
 import { FileUploadResponsesTable } from "./FileUploadResponsesTable";
 import { ResponseBarChart } from "./ResponseBarChart";
@@ -7,7 +7,7 @@ import { ResponsePieChart } from "./ResponsePieChart";
 import { ResponsesTable } from "./ResponsesTable";
 
 interface AllResponsesViewProps {
-  formData: FormType;
+  formData: FORMS.FormType;
   responses: {
     submittedAt: Date;
     responseData: Record<string, unknown>;

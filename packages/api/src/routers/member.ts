@@ -3,12 +3,7 @@ import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 import { z } from "zod";
 
-import {
-  BUCKET_NAME,
-  COMPANIES,
-  DUES_PAYMENT,
-  KNIGHTHACKS_S3_BUCKET_REGION,
-} from "@forge/consts/knight-hacks";
+import { CLUB, FORMS, MINIO } from "@forge/consts";
 import {
   and,
   asc,
@@ -61,17 +56,19 @@ export const memberRouter = {
 
         if (existingMember.length === 0) {
           const objectName = `qr-code-${userId}.png`;
-          const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+          const bucketExists = await minioClient.bucketExists(
+            MINIO.QR_BUCKET_NAME,
+          );
           if (!bucketExists) {
             await minioClient.makeBucket(
-              BUCKET_NAME,
-              KNIGHTHACKS_S3_BUCKET_REGION,
+              MINIO.QR_BUCKET_NAME,
+              MINIO.BUCKET_REGION,
             );
           }
           const qrData = `user:${userId}`;
           const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
           await minioClient.putObject(
-            BUCKET_NAME,
+            MINIO.BUCKET_REGION,
             objectName,
             qrBuffer,
             qrBuffer.length,
@@ -94,7 +91,10 @@ export const memberRouter = {
 
       //If the company the user entered doesn't already exist, add it to the other companies db
       const company = input.company;
-      if (company && !(COMPANIES as readonly string[]).includes(company)) {
+      if (
+        company &&
+        !(FORMS.COMPANIES as readonly string[]).includes(company)
+      ) {
         try {
           await db.insert(OtherCompanies).values({
             name: company,
@@ -185,7 +185,10 @@ export const memberRouter = {
       }
 
       const company = input.company;
-      if (company && !(COMPANIES as readonly string[]).includes(company)) {
+      if (
+        company &&
+        !(FORMS.COMPANIES as readonly string[]).includes(company)
+      ) {
         try {
           await db.insert(OtherCompanies).values({
             name: company,
@@ -583,7 +586,7 @@ export const memberRouter = {
         });
       await db.insert(DuesPayment).values({
         memberId: input.id,
-        amount: DUES_PAYMENT as number,
+        amount: CLUB.DUES_PAYMENT as number,
         paymentDate: new Date(),
         year: new Date().getFullYear(),
       });

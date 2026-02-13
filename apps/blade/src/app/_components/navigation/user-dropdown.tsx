@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { LayoutDashboard } from "lucide-react";
 
-import type { PermissionKey } from "@forge/consts/knight-hacks";
+import type { PERMISSIONS } from "@forge/consts";
 import { signOut } from "@forge/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@forge/ui/avatar";
 import { Button } from "@forge/ui/button";
@@ -29,7 +29,7 @@ import {
 } from "./reusable-user-dropdown";
 
 interface UserDropdownProps {
-  permissions: Record<PermissionKey, boolean>;
+  permissions: Record<PERMISSIONS.PermissionKey, boolean>;
 }
 
 /**
@@ -37,7 +37,7 @@ interface UserDropdownProps {
  */
 function filterItemsByPermissions(
   items: roleItems[],
-  permissions: Record<PermissionKey, boolean>,
+  permissions: Record<PERMISSIONS.PermissionKey, boolean>,
 ): roleItems[] {
   return items.filter((item) => {
     // If no permissions required, show the item
@@ -91,7 +91,7 @@ export function UserDropdown({ permissions }: UserDropdownProps) {
           </Avatar>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="mr-4 w-screen sm:w-56">
+      <DropdownMenuContent className="mr-4 max-h-[75vh] w-screen overflow-y-auto sm:max-h-[80vh] sm:w-56">
         <DropdownMenuLabel>{data ? data.name : "My Account"}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>

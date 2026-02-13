@@ -11,9 +11,8 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import type { Session } from "@forge/auth/server";
-import type { PermissionKey } from "@forge/consts/knight-hacks";
 import { validateToken } from "@forge/auth/server";
-import { PERMISSIONS } from "@forge/consts/knight-hacks";
+import { PERMISSIONS } from "@forge/consts";
 import { eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";
@@ -152,9 +151,9 @@ export const permProcedure = protectedProcedure.use(async ({ ctx, next }) => {
     .innerJoin(Permissions, eq(Roles.id, Permissions.roleId))
     .where(sql`cast(${Permissions.userId} as text) = ${ctx.session.user.id}`);
 
-  const permissionsBits = new Array(Object.keys(PERMISSIONS).length).fill(
-    false,
-  ) as boolean[];
+  const permissionsBits = new Array(
+    Object.keys(PERMISSIONS.PERMISSIONS).length,
+  ).fill(false) as boolean[];
 
   permRows.forEach((v) => {
     for (let i = 0; i < v.permissions.length; i++) {
@@ -162,15 +161,15 @@ export const permProcedure = protectedProcedure.use(async ({ ctx, next }) => {
     }
   });
 
-  const permissionsMap = Object.keys(PERMISSIONS).reduce(
+  const permissionsMap = Object.keys(PERMISSIONS.PERMISSIONS).reduce(
     (accumulator, key) => {
-      const index = PERMISSIONS[key];
+      const index = PERMISSIONS.PERMISSIONS[key];
       if (index === undefined) return accumulator;
       accumulator[key] = permissionsBits[index] ?? false;
 
       return accumulator;
     },
-    {} as Record<PermissionKey, boolean>,
+    {} as Record<PERMISSIONS.PermissionKey, boolean>,
   );
 
   return next({

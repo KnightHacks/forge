@@ -1,7 +1,8 @@
 import type { APIGuildMember } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 
-import { discord, KNIGHTHACKS_GUILD_ID } from "@forge/api/utils";
+import { discord } from "@forge/api/utils";
+import { DISCORD } from "@forge/consts";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
@@ -40,7 +41,7 @@ export const roleSync = new CronBuilder({
       try {
         // Fetch the user's roles from Discord
         const guildMember = (await discord.get(
-          Routes.guildMember(KNIGHTHACKS_GUILD_ID, user.discordUserId),
+          Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),
         )) as APIGuildMember;
 
         const discordRoleIds = guildMember.roles;

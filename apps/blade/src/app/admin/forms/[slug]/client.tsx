@@ -24,11 +24,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { ArrowLeft, Loader2, Plus, Save, Users } from "lucide-react";
 
-import type {
-  FormType,
-  InstructionValidator,
-  QuestionValidator,
-} from "@forge/consts/knight-hacks";
+import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -55,8 +51,8 @@ import { api } from "~/trpc/react";
 import { ConnectionViewer } from "./con-viewer";
 import ListMatcher from "./linker";
 
-type FormQuestion = z.infer<typeof QuestionValidator>;
-type FormInstruction = z.infer<typeof InstructionValidator>;
+type FormQuestion = z.infer<typeof FORMS.QuestionValidator>;
+type FormInstruction = z.infer<typeof FORMS.InstructionValidator>;
 type UIQuestion = FormQuestion & { id: string };
 type UIInstruction = FormInstruction & { id: string };
 
@@ -150,7 +146,7 @@ function ConnectionsTab(props: {
   procs: Record<string, ProcedureMeta>;
   slug: string;
   id: string;
-  formData: FormType;
+  formData: FORMS.FormType;
 }) {
   const questions = props.formData.questions.map((q) => q.question);
   const { data: connections } = api.forms.getConnections.useQuery({
@@ -201,8 +197,7 @@ export function EditorClient({
     error: fetchError,
     isLoading: isFetching,
   } = api.forms.getForm.useQuery(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-    { slug_name: slug } as any,
+    { slug_name: slug },
     { retry: false, refetchOnWindowFocus: false },
   );
 
@@ -216,10 +211,7 @@ export function EditorClient({
   });
 
   const handleSaveForm = React.useCallback(() => {
-    if (isLoading || isFetching || !formTitle) return;
-
-    // Allow mock mode to proceed without real formData
-    if (!formData && slug !== "test-form") return;
+    if (isLoading || isFetching || !formTitle || !formData) return;
 
     // Check for duplicate question names
     const questionNames = new Set<string>();
@@ -240,12 +232,8 @@ export function EditorClient({
       return;
     }
 
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    /* eslint-disable @typescript-eslint/no-unsafe-argument */
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
     updateFormMutation.mutate({
-      id: (formData as any).id,
+      id: formData.id,
       formData: {
         name: formTitle,
         description: formDescription,
@@ -260,21 +248,22 @@ export function EditorClient({
       allowResubmission,
       allowEdit,
       responseRoleIds,
-    } as any);
+    });
   }, [
+    isLoading,
+    isFetching,
     formTitle,
+    formData,
+    slug,
+    questions,
+    updateFormMutation,
     formDescription,
     formBanner,
-    questions,
     instructions,
     duesOnly,
     allowResubmission,
     allowEdit,
-    formData,
-    isLoading,
-    isFetching,
-    updateFormMutation,
-    slug,
+    responseRoleIds,
   ]);
 
   useEffect(() => {
@@ -300,23 +289,21 @@ export function EditorClient({
         setDuesOnly(formData.duesOnly);
         setAllowResubmission(formData.allowResubmission);
         setAllowEdit(formData.allowEdit);
-        setResponseRoleIds((formData as any).responseRoleIds || []);
+        setResponseRoleIds(formData.responseRoleIds);
 
-        const loadedQuestions: UIQuestion[] = formData.formData.questions.map(
-          (q: FormQuestion & { order?: number }) => ({
-            ...q,
-            id: crypto.randomUUID(),
-          }),
-        );
+        const loadedQuestions: UIQuestion[] = (
+          formData.formData as FORMS.FormType
+        ).questions.map((q: FormQuestion & { order?: number }) => ({
+          ...q,
+          id: crypto.randomUUID(),
+        }));
 
-        /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
         const loadedInstructions: UIInstruction[] = (
-          (formData.formData as any).instructions || []
+          (formData.formData as FORMS.FormType).instructions || []
         ).map((inst: FormInstruction & { order?: number }) => ({
           ...inst,
           id: crypto.randomUUID(),
         }));
-        /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
         setQuestions(loadedQuestions);
         setInstructions(loadedInstructions);
@@ -328,12 +315,19 @@ export function EditorClient({
   // auto save trigger when toggle switches are changed
   useEffect(() => {
     if (!isLoading) handleSaveForm();
-  }, [duesOnly, allowResubmission, responseRoleIds, isLoading, allowEdit]); // removed handleSaveForm to prevent save-on-every-render
+  }, [
+    duesOnly,
+    allowResubmission,
+    responseRoleIds,
+    isLoading,
+    allowEdit,
+    handleSaveForm,
+  ]); // removed handleSaveForm to prevent save-on-every-render
 
   // auto save when finishing editing an item (changing active card)
   useEffect(() => {
     if (!isLoading) handleSaveForm();
-  }, [activeItemId, isLoading]); // triggers when switching items or clicking off
+  }, [activeItemId, handleSaveForm, isLoading]); // triggers when switching items or clicking off
 
   // Periodic auto-save every 40 seconds
   useEffect(() => {

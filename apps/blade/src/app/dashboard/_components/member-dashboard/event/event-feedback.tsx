@@ -5,14 +5,7 @@ import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import type { InsertMember, SelectEvent } from "@forge/db/schemas/knight-hacks";
-import {
-  EVENT_FEEDBACK_HEARD,
-  EVENT_FEEDBACK_SIMILAR_EVENT,
-  EVENT_FEEDBACK_SLIDER_MAXIMUM,
-  EVENT_FEEDBACK_SLIDER_MINIMUM,
-  EVENT_FEEDBACK_SLIDER_STEP,
-  EVENT_FEEDBACK_TEXT_ROWS,
-} from "@forge/consts/knight-hacks";
+import { EVENTS, FORMS } from "@forge/consts";
 import { InsertEventFeedbackSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
@@ -100,19 +93,19 @@ export function EventFeedbackForm({
       eventId: z.string().nonempty(),
       overallEventRating: z
         .number()
-        .min(EVENT_FEEDBACK_SLIDER_MINIMUM)
-        .max(EVENT_FEEDBACK_SLIDER_MAXIMUM),
+        .min(EVENTS.EVENT_FEEDBACK_SLIDER_MINIMUM)
+        .max(EVENTS.EVENT_FEEDBACK_SLIDER_MAXIMUM),
       funRating: z
         .number()
-        .min(EVENT_FEEDBACK_SLIDER_MINIMUM)
-        .max(EVENT_FEEDBACK_SLIDER_MAXIMUM),
+        .min(EVENTS.EVENT_FEEDBACK_SLIDER_MINIMUM)
+        .max(EVENTS.EVENT_FEEDBACK_SLIDER_MAXIMUM),
       learnedRating: z
         .number()
-        .min(EVENT_FEEDBACK_SLIDER_MINIMUM)
-        .max(EVENT_FEEDBACK_SLIDER_MAXIMUM),
-      heardAboutUs: z.enum(EVENT_FEEDBACK_HEARD),
+        .min(EVENTS.EVENT_FEEDBACK_SLIDER_MINIMUM)
+        .max(EVENTS.EVENT_FEEDBACK_SLIDER_MAXIMUM),
+      heardAboutUs: z.enum(FORMS.EVENT_FEEDBACK_HEARD),
       additionalFeedback: z.string(),
-      similarEvent: z.enum(EVENT_FEEDBACK_SIMILAR_EVENT),
+      similarEvent: z.enum(EVENTS.EVENT_FEEDBACK_SIMILAR_EVENT),
     }),
     defaultValues: {
       memberId: member.id,
@@ -167,9 +160,9 @@ export function EventFeedbackForm({
                       <div className="flex flex-row justify-center gap-2">
                         <p className="font-bold">1</p>
                         <Slider
-                          min={EVENT_FEEDBACK_SLIDER_MINIMUM}
-                          max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
-                          step={EVENT_FEEDBACK_SLIDER_STEP}
+                          min={EVENTS.EVENT_FEEDBACK_SLIDER_MINIMUM}
+                          max={EVENTS.EVENT_FEEDBACK_SLIDER_MAXIMUM}
+                          step={EVENTS.EVENT_FEEDBACK_SLIDER_STEP}
                           onValueChange={(value) => {
                             field.onChange(value[0]);
                             setEventOverallValue(value[0] ?? 5);
@@ -195,9 +188,9 @@ export function EventFeedbackForm({
                       <div className="flex flex-row justify-center gap-2">
                         <p className="font-bold">1</p>
                         <Slider
-                          min={EVENT_FEEDBACK_SLIDER_MINIMUM}
-                          max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
-                          step={EVENT_FEEDBACK_SLIDER_STEP}
+                          min={EVENTS.EVENT_FEEDBACK_SLIDER_MINIMUM}
+                          max={EVENTS.EVENT_FEEDBACK_SLIDER_MAXIMUM}
+                          step={EVENTS.EVENT_FEEDBACK_SLIDER_STEP}
                           onValueChange={(value) => {
                             field.onChange(value[0]);
                             setFunValue(value[0] ?? 5);
@@ -223,9 +216,9 @@ export function EventFeedbackForm({
                       <div className="flex flex-row justify-center gap-2">
                         <p className="font-bold">1</p>
                         <Slider
-                          min={EVENT_FEEDBACK_SLIDER_MINIMUM}
-                          max={EVENT_FEEDBACK_SLIDER_MAXIMUM}
-                          step={EVENT_FEEDBACK_SLIDER_STEP}
+                          min={EVENTS.EVENT_FEEDBACK_SLIDER_MINIMUM}
+                          max={EVENTS.EVENT_FEEDBACK_SLIDER_MAXIMUM}
+                          step={EVENTS.EVENT_FEEDBACK_SLIDER_STEP}
                           onValueChange={(value) => {
                             field.onChange(value[0]);
                             setLearnedValue(value[0] ?? 5);
@@ -258,7 +251,7 @@ export function EventFeedbackForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {EVENT_FEEDBACK_HEARD.map((place) => (
+                          {FORMS.EVENT_FEEDBACK_HEARD.map((place) => (
                             <SelectItem key={place} value={place}>
                               {place}
                             </SelectItem>
@@ -285,7 +278,7 @@ export function EventFeedbackForm({
                         value={field.value}
                         className="flex flex-col items-center"
                       >
-                        {EVENT_FEEDBACK_SIMILAR_EVENT.map((option) => (
+                        {EVENTS.EVENT_FEEDBACK_SIMILAR_EVENT.map((option) => (
                           <div
                             key={option}
                             className="flex items-center space-x-2"
@@ -326,7 +319,7 @@ export function EventFeedbackForm({
                       <Textarea
                         id="additionalFeedback"
                         placeholder="Enter additional feedback..."
-                        rows={EVENT_FEEDBACK_TEXT_ROWS}
+                        rows={EVENTS.EVENT_FEEDBACK_TEXT_ROWS}
                         {...field}
                       />
                     </FormControl>

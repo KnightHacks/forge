@@ -11,7 +11,7 @@ import {
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import type { ChartConfig } from "@forge/ui/chart";
-import { ADMIN_PIE_CHART_COLORS } from "@forge/consts/knight-hacks";
+import { FORMS } from "@forge/consts";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   ChartContainer,
@@ -33,7 +33,7 @@ export default function AttendancesBarChart({
     if (!baseConfig[tag]) {
       baseConfig[tag] = {
         label: tag,
-        color: ADMIN_PIE_CHART_COLORS[6],
+        color: FORMS.ADMIN_PIE_CHART_COLORS[6],
       };
     }
   });
@@ -57,7 +57,7 @@ export default function AttendancesBarChart({
     ([tag, { totalAttendees, totalEvents }]) => ({
       tag: tag,
       avgAttendees: (totalAttendees / totalEvents).toFixed(0),
-      fill: baseConfig[tag]?.color ?? ADMIN_PIE_CHART_COLORS[6],
+      fill: baseConfig[tag]?.color ?? FORMS.ADMIN_PIE_CHART_COLORS[6],
     }),
   );
 

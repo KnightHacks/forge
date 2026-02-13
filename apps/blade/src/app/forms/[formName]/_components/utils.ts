@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-import type {
-  FormType,
-  QuestionValidatorType,
-} from "@forge/consts/knight-hacks";
+import type { FORMS } from "@forge/consts";
 
 /** UI state in the client */
 export type FormResponseUI = Partial<
@@ -18,7 +15,7 @@ export type FormResponsePayload = Partial<
 export const getValidatorResponse = (
   zodValidator: string,
   responses: FormResponseUI,
-  form: FormType,
+  form: FORMS.FormType,
 ) => {
   // eslint-disable-next-line @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-call
   const zodSchema = new Function("z", `return ${zodValidator}`)(
@@ -33,7 +30,7 @@ export const getValidatorResponse = (
 // normalized responses needed for zod validation and therefore proc responseData
 export const normalizeResponses = (
   responses: FormResponseUI,
-  form: FormType,
+  form: FORMS.FormType,
 ): FormResponsePayload => {
   const out: FormResponsePayload = {};
 
@@ -68,10 +65,10 @@ export const normalizeResponses = (
 
 // get specific validator error for question
 export const getValidationError = (
-  question: QuestionValidatorType,
+  question: FORMS.QuestionValidatorType,
   zodValidator: string,
   responses: FormResponseUI,
-  form: FormType,
+  form: FORMS.FormType,
 ) => {
   const validatorResponse = getValidatorResponse(zodValidator, responses, form);
   if (validatorResponse.success) return null;
@@ -87,5 +84,5 @@ export const getValidationError = (
 export const isFormValid = (
   zodValidator: string,
   responses: FormResponseUI,
-  form: FormType,
+  form: FORMS.FormType,
 ) => getValidatorResponse(zodValidator, responses, form).success;

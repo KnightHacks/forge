@@ -2,14 +2,10 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
-import {
-  ALLOWED_FORM_ASSIGNABLE_DISC_ROLES,
-  RECRUITING_CHANNEL,
-  TEAM_MAP,
-} from "@forge/consts/knight-hacks";
+import { DISCORD, FORMS, TEAM } from "@forge/consts";
 
 import { protectedProcedure } from "../trpc";
-import { discord, KNIGHTHACKS_GUILD_ID, sendEmail } from "../utils";
+import { discord } from "../utils";
 
 export interface FundingRequestInput {
   team: string;
@@ -88,7 +84,7 @@ export const miscRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      if (!ALLOWED_FORM_ASSIGNABLE_DISC_ROLES.includes(input.roleId)) {
+      if (FORMS.ALLOWED_ASSIGNABLE_DISCORD_ROLES.includes(input.roleId)) {
         throw new Error(
           `Roleid: ${input.roleId} is not assignable through forms for security purposes. Add to consts and make a PR if this is a mistake.`,
         );
@@ -97,7 +93,11 @@ export const miscRouter = {
       try {
         const discId = ctx.session.user.discordUserId;
         await discord.put(
-          Routes.guildMemberRole(KNIGHTHACKS_GUILD_ID, discId, input.roleId),
+          Routes.guildMemberRole(
+            DISCORD.KNIGHTHACKS_GUILD,
+            discId,
+            input.roleId,
+          ),
         );
       } catch {
         throw new Error(
@@ -129,7 +129,7 @@ export const miscRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      const team = TEAM_MAP.find((team) => team.team === input.team);
+      const team = TEAM.TEAMS.find((team) => team.team === input.team);
       if (!team) {
         throw new Error("Team not found");
       }
@@ -139,7 +139,7 @@ export const miscRouter = {
       // Convert hex color string to integer for Discord API
       const colorInt = parseInt(team.color.replace("#", ""), 16);
 
-      await discord.post(Routes.channelMessages(RECRUITING_CHANNEL), {
+      await discord.post(Routes.channelMessages(DISCORD.RECRUITING_CHANNEL), {
         body: {
           content: `<@&${directorRole}> **New Applicant for ${team.team}!**`,
           embeds: [
@@ -186,47 +186,6 @@ export const miscRouter = {
             },
           ],
         },
-      });
-    }),
-
-  fundingRequest: protectedProcedure
-    .meta({
-      id: "fundingRequest",
-      inputSchema: z.object({
-        team: z.string().min(1),
-        description: z.string(),
-        amount: z.number(),
-        itemization: z.string(),
-        importance: z.number(),
-        dateNeeded: z.string(),
-        deadlineType: z.string(),
-      }),
-    })
-    .input(
-      z.object({
-        team: z.string().min(1),
-        description: z.string(),
-        amount: z.number(),
-        itemization: z.string(),
-        importance: z.number(),
-        dateNeeded: z.string(),
-        deadlineType: z.string(),
-      }),
-    )
-    .mutation(async ({ input }) => {
-      const dateObj =
-        typeof input.dateNeeded === "string"
-          ? new Date(input.dateNeeded)
-          : input.dateNeeded;
-      const formattedDate = `${String(dateObj.getMonth() + 1).padStart(2, "0")}/${String(dateObj.getDate()).padStart(2, "0")}`;
-      const data = generateListmonkData(input);
-
-      await sendEmail({
-        to: ["treasurer@knighthacks.org", "exec@knighthacks.org"],
-        subject: `KHFR - $${input.amount.toLocaleString()} | ${formattedDate} | ${input.team}`,
-        template_id: 12,
-        from: "Funding Requests <funding-requests@knighthacks.org>",
-        data: data,
       });
     }),
 } satisfies TRPCRouterRecord;

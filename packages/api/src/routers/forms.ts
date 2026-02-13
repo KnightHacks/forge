@@ -1,16 +1,11 @@
+import type { TRPCRouterRecord } from "@trpc/server";
 import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
-import type { FormType } from "@forge/consts/knight-hacks";
-import {
-  FORM_ASSETS_BUCKET,
-  FormSchemaValidator,
-  KNIGHTHACKS_S3_BUCKET_REGION,
-  PRESIGNED_URL_EXPIRY,
-} from "@forge/consts/knight-hacks";
+import { FORMS, MINIO } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";
 import {
@@ -46,7 +41,7 @@ export const formsRouter = {
         formData: true,
         formValidatorJson: true,
       })
-        .extend({ formData: FormSchemaValidator })
+        .extend({ formData: FORMS.FormSchemaValidator })
         .extend({ section: z.string().optional() }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -104,7 +99,7 @@ export const formsRouter = {
         formData: true,
         formValidatorJson: true,
       })
-        .extend({ formData: FormSchemaValidator })
+        .extend({ formData: FORMS.FormSchemaValidator })
         .extend({ responseRoleIds: z.array(z.string().uuid()).optional() }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -200,7 +195,7 @@ export const formsRouter = {
       }
 
       const { formValidatorJson: _JSONValidator, ...retForm } = form;
-      const formData = form.formData as FormType;
+      const formData = form.formData as FORMS.FormType;
 
       const responseRoles = await db
         .select({ roleId: FormResponseRoles.roleId })
@@ -451,7 +446,7 @@ export const formsRouter = {
         }
       }
 
-      const formData = form.formData as FormType;
+      const formData = form.formData as FORMS.FormType;
       const jsonSchema = generateJsonSchema(formData);
 
       if (!jsonSchema.success) {
@@ -537,7 +532,7 @@ export const formsRouter = {
       }
 
       // Validate responseData against form schema
-      const formData = form.formData as FormType;
+      const formData = form.formData as FORMS.FormType;
       const jsonSchema = generateJsonSchema(formData);
 
       if (!jsonSchema.success) {
@@ -721,26 +716,28 @@ export const formsRouter = {
 
       try {
         // Ensure bucket exists
-        const bucketExists = await minioClient.bucketExists(FORM_ASSETS_BUCKET);
+        const bucketExists = await minioClient.bucketExists(
+          MINIO.FORM_ASSETS_BUCKET_NAME,
+        );
         if (!bucketExists) {
           await minioClient.makeBucket(
-            FORM_ASSETS_BUCKET,
-            KNIGHTHACKS_S3_BUCKET_REGION,
+            MINIO.FORM_ASSETS_BUCKET_NAME,
+            MINIO.BUCKET_REGION,
           );
         }
 
         // Generate presigned PUT URL for upload (15 minutes to complete upload)
         const uploadUrl = await minioClient.presignedPutObject(
-          FORM_ASSETS_BUCKET,
+          MINIO.FORM_ASSETS_BUCKET_NAME,
           objectName,
           15 * 60, // 15 minutes
         );
 
         // Generate presigned GET URL for immediate preview
         const viewUrl = await minioClient.presignedGetObject(
-          FORM_ASSETS_BUCKET,
+          MINIO.FORM_ASSETS_BUCKET_NAME,
           objectName,
-          PRESIGNED_URL_EXPIRY,
+          MINIO.PRESIGNED_URL_EXPIRY,
         );
 
         return { uploadUrl, objectName, viewUrl };
@@ -764,7 +761,10 @@ export const formsRouter = {
       const { objectName } = input;
 
       try {
-        await minioClient.removeObject(FORM_ASSETS_BUCKET, objectName);
+        await minioClient.removeObject(
+          MINIO.FORM_ASSETS_BUCKET_NAME,
+          objectName,
+        );
         return { success: true };
       } catch (e) {
         console.error("deleteMedia error:", e);
@@ -787,9 +787,9 @@ export const formsRouter = {
 
       try {
         const viewUrl = await minioClient.presignedGetObject(
-          FORM_ASSETS_BUCKET,
+          MINIO.FORM_ASSETS_BUCKET_NAME,
           objectName,
-          PRESIGNED_URL_EXPIRY,
+          MINIO.PRESIGNED_URL_EXPIRY,
         );
         return { viewUrl };
       } catch (e) {
@@ -1358,4 +1358,4 @@ export const formsRouter = {
 
       return { canEdit: hasSectionRole };
     }),
-};
+} satisfies TRPCRouterRecord;

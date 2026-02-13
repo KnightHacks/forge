@@ -9,7 +9,7 @@ import {
   YAxis,
 } from "recharts";
 
-import type { SCHOOLS } from "@forge/consts/knight-hacks";
+import type { FORMS } from "@forge/consts";
 import type { ChartConfig } from "@forge/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { ChartContainer, ChartTooltip } from "@forge/ui/chart";
@@ -22,7 +22,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 interface Person {
-  school?: (typeof SCHOOLS)[number];
+  school?: (typeof FORMS.SCHOOLS)[number];
 }
 
 export default function SchoolBarChart({ people }: { people: Person[] }) {

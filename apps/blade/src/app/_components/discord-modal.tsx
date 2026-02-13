@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 
-import { PERMANENT_DISCORD_INVITE } from "@forge/consts/knight-hacks";
+import { DISCORD } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -48,7 +48,7 @@ export function TacoTuesday({ initialState }: { initialState: boolean }) {
                   className="text-md w-3/4"
                   onClick={() =>
                     window.open(
-                      PERMANENT_DISCORD_INVITE,
+                      DISCORD.PERMANENT_INVITE,
                       "_blank",
                       "noopener,noreferrer",
                     )

@@ -1,0 +1,50 @@
+import {
+  GuildScheduledEventEntityType,
+  GuildScheduledEventPrivacyLevel,
+} from "discord-api-types/v10";
+
+import { IS_PROD } from "./util";
+
+// TODO: JSDOC all all of the non PROD_ or DEV_ exports
+
+export const PROD_OFFICER_ROLE = "486629374758748180";
+export const DEV_OFFICER_ROLE = "1246637685011906560";
+export const OFFICER_ROLE = IS_PROD ? PROD_OFFICER_ROLE : DEV_OFFICER_ROLE;
+
+export const PROD_ADMIN_ROLE = "1319413082258411652";
+export const DEV_ADMIN_ROLE = "1321955700540309645";
+export const ADMIN_ROLE = IS_PROD ? PROD_ADMIN_ROLE : DEV_ADMIN_ROLE;
+
+export const PROD_VOLUNTEER_ROLE = "1415505872360312974";
+export const DEV_VOLUNTEER_ROLE = "1426947077514203279";
+export const VOLUNTEER_ROLE = IS_PROD
+  ? PROD_VOLUNTEER_ROLE
+  : DEV_VOLUNTEER_ROLE;
+
+// TODO: add DEV_ALUMNI_ROLE
+export const PROD_ALUMNI_ROLE = "486629512101232661";
+export const ALUMNI_ROLE = PROD_ALUMNI_ROLE;
+
+export const PROD_VIP_ROLE = "1423358570203844689";
+export const DEV_VIP_ROLE = "1423366084874080327";
+export const VIP_ROLE = IS_PROD ? PROD_VIP_ROLE : DEV_VIP_ROLE;
+
+export const PROD_KNIGHTHACKS_GUILD = "486628710443778071";
+export const DEV_KNIGHTHACKS_GUILD = "1151877367434850364";
+export const KNIGHTHACKS_GUILD = IS_PROD
+  ? PROD_KNIGHTHACKS_GUILD
+  : DEV_KNIGHTHACKS_GUILD;
+
+export const PROD_LOG_CHANNEL = "1324885515412963531";
+export const DEV_LOG_CHANNEL = "1284582557689843785";
+export const LOG_CHANNEL = IS_PROD ? PROD_LOG_CHANNEL : DEV_LOG_CHANNEL;
+
+export const PROD_RECRUITING_CHANNEL = "1461758896950608104";
+export const RECRUITING_CHANNEL = IS_PROD
+  ? PROD_RECRUITING_CHANNEL
+  : DEV_LOG_CHANNEL;
+
+export const PERMANENT_INVITE = "https://discord.com/invite/Kv5g9vf";
+
+export const EVENT_TYPE = GuildScheduledEventEntityType.External;
+export const EVENT_PRIVACY_LEVEL = GuildScheduledEventPrivacyLevel.GuildOnly;

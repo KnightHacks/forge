@@ -3,7 +3,6 @@ import {
   ChartPie,
   FormInput,
   Hotel,
-  Mail,
   Settings,
   ShieldCheck,
   Swords,
@@ -12,7 +11,7 @@ import {
   Users,
 } from "lucide-react";
 
-import type { PermissionKey } from "@forge/consts/knight-hacks";
+import type { PERMISSIONS } from "@forge/consts";
 
 import { USER_DROPDOWN_ICON_COLOR, USER_DROPDOWN_ICON_SIZE } from "~/consts";
 
@@ -29,8 +28,8 @@ export interface roleItems {
   component: React.JSX.Element;
   route: string;
   requiredPermissions?: {
-    or?: PermissionKey[];
-    and?: PermissionKey[];
+    or?: PERMISSIONS.PermissionKey[];
+    and?: PERMISSIONS.PermissionKey[];
   };
 }
 
@@ -64,16 +63,6 @@ export const systemItems: roleItems[] = [
     route: "/admin/forms",
     requiredPermissions: {
       or: ["READ_FORMS", "EDIT_FORMS", "IS_OFFICER"],
-    },
-  },
-  {
-    name: "Email",
-    component: (
-      <Mail color={USER_DROPDOWN_ICON_COLOR} size={USER_DROPDOWN_ICON_SIZE} />
-    ),
-    route: "/admin/email",
-    requiredPermissions: {
-      or: ["EMAIL_PORTAL", "IS_OFFICER"],
     },
   },
   {

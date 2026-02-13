@@ -2,11 +2,11 @@
 
 import type { APIRole } from "discord-api-types/v10";
 import type { ZodBoolean } from "zod";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, Loader2, Pencil, User, X } from "lucide-react";
 import { z } from "zod";
 
-import { PERMISSION_DATA, PERMISSIONS } from "@forge/consts/knight-hacks";
+import { PERMISSIONS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
 import {
@@ -45,7 +45,7 @@ export default function RoleEdit({
   const [isUpdating, setIsUpdating] = useState(false);
 
   const [permString, setPermString] = useState(
-    "0".repeat(Object.keys(PERMISSIONS).length),
+    "0".repeat(Object.keys(PERMISSIONS.PERMISSIONS).length),
   );
 
   const roleQ = api.roles.getDiscordRole.useQuery(
@@ -63,7 +63,7 @@ export default function RoleEdit({
   // Create base form schema dynamically from consts
   const roleObj: Record<string, ZodBoolean> = {};
   const defaults: Record<string, boolean> = {};
-  Object.keys(PERMISSIONS).map((v, i) => {
+  Object.keys(PERMISSIONS.PERMISSIONS).map((v, i) => {
     roleObj[v] = z.boolean();
     if (oldRole) {
       defaults[v] = oldRole.permissions?.at(i) == "1";
@@ -79,9 +79,20 @@ export default function RoleEdit({
     defaultValues: defaults,
   });
 
+  const updateString = useCallback((values: z.infer<typeof roleSchema>) => {
+    const perms = Object.entries(values);
+    let newString = "";
+    perms.forEach((v) => {
+      if (v[1]) newString += "1";
+      else newString += "0";
+    });
+
+    setPermString(newString);
+  }, []);
+
   useEffect(() => {
     updateString(form.getValues());
-  }, []);
+  }, [form, updateString]);
 
   useEffect(() => {
     if (roles)
@@ -98,7 +109,7 @@ export default function RoleEdit({
     }
 
     void doGetRole();
-  }, [roleID]);
+  }, [oldRole, roleID, roleQ, roles]);
 
   useEffect(() => {
     if (roles)
@@ -107,19 +118,7 @@ export default function RoleEdit({
           ? false
           : roles.find((v) => v.name == name) != undefined,
       );
-  }, [name]);
-
-  function updateString(values: z.infer<typeof roleSchema>) {
-    const perms = Object.entries(values);
-    console.log(perms);
-    let newString = "";
-    perms.forEach((v) => {
-      if (v[1]) newString += "1";
-      else newString += "0";
-    });
-
-    setPermString(newString);
-  }
+  }, [name, oldRole?.name, roles]);
 
   function sendRole(str: string) {
     try {
@@ -270,7 +269,7 @@ export default function RoleEdit({
             onSubmit={form.handleSubmit(updateString)}
             className="flex max-h-[40vh] flex-col overflow-y-scroll rounded-lg border"
           >
-            {Object.entries(PERMISSION_DATA).map((v) => (
+            {Object.entries(PERMISSIONS.PERMISSION_DATA).map((v) => (
               <FormField
                 control={form.control}
                 name={v[0]}

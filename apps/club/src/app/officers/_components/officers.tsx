@@ -5,7 +5,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
-import { OFFICERS } from "@forge/consts/knight-hacks";
+import { TEAM } from "@forge/consts";
 
 import OfficerCard from "./assets/officer-card";
 
@@ -45,7 +45,7 @@ export default function Officers() {
 
   return (
     <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 py-14 md:grid-cols-2">
-      {OFFICERS.map((officer, index) => (
+      {TEAM.OFFICERS.map((officer, index) => (
         <div
           key={index}
           ref={(el) => {
