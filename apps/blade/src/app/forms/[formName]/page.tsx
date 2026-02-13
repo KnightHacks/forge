@@ -68,12 +68,17 @@ export default async function FormResponderPage({
     redirect(`/?callbackURL=${encodeURIComponent(callbackURL)}`);
   }
 
-  if (!params.formName) {
+  return (
+		<FormResponderHydrater formName={params.formName} />
+  );
+}
+
+export async function FormResponderHydrater({ formName } : { formName: string }) {
+  const session = await auth();
+
+  if (!session) {
     return <FormNotFound />;
   }
-
-  // handle url encode form names to allow spacing and special characters
-  const formName = params.formName;
 
   // use blade member name instead of discord name
   let userName = session.user.name || "Member";

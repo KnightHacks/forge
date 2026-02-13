@@ -37,7 +37,7 @@ export async function FormResponses() {
 
                   <Button asChild size="sm">
                     <Link
-                      href={`/forms/${formResponse.formSlug}/${formResponse.id}`}
+                      href={`/forms/${encodeURIComponent(formResponse.formSlug)}/${formResponse.id}`}
                     >
                       {formResponse.allowEdit ? "Edit" : "View"}
                     </Link>

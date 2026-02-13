@@ -3,7 +3,7 @@ import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
-import * as z from "zod";
+import { z } from "zod";
 
 import { FORMS, MINIO } from "@forge/consts";
 import { db } from "@forge/db/client";
@@ -28,66 +28,16 @@ import {
   generateJsonSchema,
   log,
   regenerateMediaUrls,
+	createForm,
+	CreateFormSchema,
 } from "../utils";
 
 export const formsRouter = {
   createForm: permProcedure
-    .input(
-      FormSchemaSchema.omit({
-        id: true,
-        name: true,
-        slugName: true,
-        createdAt: true,
-        formData: true,
-        formValidatorJson: true,
-      })
-        .extend({ formData: FORMS.FormSchemaValidator })
-        .extend({ section: z.string().optional() }),
-    )
+    .input(CreateFormSchema)
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EDIT_FORMS"], ctx);
-
-      const jsonSchema = generateJsonSchema(input.formData);
-
-      const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
-
-      if (!jsonSchema.success) {
-        throw new TRPCError({
-          message: jsonSchema.msg,
-          code: "BAD_REQUEST",
-        });
-      }
-
-      let sectionId: string | null = null;
-      const sectionName = input.section ?? "General";
-
-      if (sectionName !== "General") {
-        const section = await db.query.FormSections.findFirst({
-          where: (t, { eq }) => eq(t.name, sectionName),
-        });
-        sectionId = section?.id ?? null;
-      }
-
-      await db
-        .insert(FormsSchemas)
-        .values({
-          ...input,
-          name: input.formData.name,
-          slugName: slug_name,
-          formValidatorJson: jsonSchema.schema,
-          sectionId,
-        })
-        .onConflictDoUpdate({
-          //If it already exists upsert it
-          target: FormsSchemas.id,
-          set: {
-            ...input,
-            name: input.formData.name,
-            slugName: slug_name,
-            formValidatorJson: jsonSchema.schema,
-            sectionId,
-          },
-        });
+			await createForm(input);
     }),
 
   updateForm: permProcedure
@@ -184,7 +134,7 @@ export const formsRouter = {
     .input(z.object({ slug_name: z.string() }))
     .query(async ({ input }) => {
       const form = await db.query.FormsSchemas.findFirst({
-        where: (t, { eq }) => eq(t.slugName, input.slug_name),
+        where: (t, { eq }) => eq(t.slugName, decodeURIComponent(input.slug_name)),
       });
 
       if (form === undefined) {

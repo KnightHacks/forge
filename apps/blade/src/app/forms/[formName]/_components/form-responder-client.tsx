@@ -116,7 +116,7 @@ export function FormResponderWrapper({
           </p>
 
           {existing && (
-            <Link href={`/forms/${existing.formSlug ?? ""}/${existing.id}`}>
+            <Link href={`/forms/${encodeURIComponent(existing.formSlug ?? "")}/${existing.id}`}>
               <Button size="sm">
                 {allowEdit ? "Edit " : "View "} Response
               </Button>
