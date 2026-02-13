@@ -6,12 +6,16 @@ import { z } from "zod";
 import { CLUB, FORMS, MINIO } from "@forge/consts";
 import {
   and,
+  asc,
   count,
   desc,
   eq,
   exists,
   getTableColumns,
+  ilike,
+  isNotNull,
   isNull,
+  or,
   sql,
 } from "@forge/db";
 import { db } from "@forge/db/client";
@@ -26,7 +30,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { minioClient } from "../minio/minio-client";
-import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
+import { permProcedure, protectedProcedure } from "../trpc";
 import { controlPerms, log } from "../utils";
 
 export const memberRouter = {
@@ -323,17 +327,176 @@ export const memberRouter = {
     return events;
   }),
 
-  getMembers: permProcedure.query(async ({ ctx }) => {
-    // CHECKIN_CLUB_EVENT is here because people trying to check-in
-    // need to retrieve the member list for manual entry
-    controlPerms.or(["READ_MEMBERS", "CHECKIN_CLUB_EVENT"], ctx);
+  getMembers: permProcedure
+    .input(
+      z
+        .object({
+          currentPage: z.number().min(1).optional(),
+          pageSize: z.number().min(1).max(100).optional(),
+          searchTerm: z.string().optional(),
+          sortField: z
+            .enum([
+              "firstName",
+              "lastName",
+              "email",
+              "discordUser",
+              "dateCreated",
+            ])
+            .optional(),
+          sortOrder: z.enum(["desc", "asc"]).optional(),
+          sortByTime: z.boolean().optional(),
+          schoolFilter: z.string().optional(),
+          majorFilter: z.string().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ input, ctx }) => {
+      controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
-    return await db.query.Member.findMany();
+      const currentPage = input?.currentPage ?? 1;
+      const pageSize = input?.pageSize ?? 10;
+      const offset = (currentPage - 1) * pageSize;
+      const searchPattern = `%${input?.searchTerm ?? ""}%`;
+
+      // Build the base query
+      let query = db.select().from(Member);
+
+      // Build conditions array
+      const conditions = [];
+
+      if (input?.searchTerm && input.searchTerm.length > 0) {
+        conditions.push(
+          or(
+            ilike(Member.firstName, searchPattern),
+            ilike(Member.lastName, searchPattern),
+            ilike(Member.email, searchPattern),
+            ilike(Member.discordUser, searchPattern),
+            ilike(Member.company, searchPattern),
+            sql`CONCAT(${Member.firstName}, ' ', ${Member.lastName}) ILIKE ${searchPattern}`,
+          ),
+        );
+      }
+
+      if (input?.schoolFilter) {
+        conditions.push(
+          eq(
+            Member.school,
+            input.schoolFilter as (typeof Member.school.enumValues)[number],
+          ),
+        );
+      }
+
+      if (input?.majorFilter) {
+        conditions.push(
+          eq(
+            Member.major,
+            input.majorFilter as (typeof Member.major.enumValues)[number],
+          ),
+        );
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions)) as typeof query;
+      }
+
+      // Sorting
+      if (input?.sortByTime) {
+        query = query.orderBy(
+          input.sortOrder === "desc"
+            ? desc(Member.dateCreated)
+            : asc(Member.dateCreated),
+          input.sortOrder === "desc"
+            ? desc(Member.timeCreated)
+            : asc(Member.timeCreated),
+        ) as typeof query;
+      } else if (input?.sortField && input.sortOrder) {
+        const sortColumn = Member[input.sortField];
+        query = query.orderBy(
+          input.sortOrder === "asc" ? asc(sortColumn) : desc(sortColumn),
+        ) as typeof query;
+      } else {
+        query = query.orderBy(asc(Member.id)) as typeof query;
+      }
+
+      return await query.offset(offset).limit(pageSize);
+    }),
+
+  getMemberCount: permProcedure
+    .input(
+      z
+        .object({
+          searchTerm: z.string().optional(),
+          schoolFilter: z.string().optional(),
+          majorFilter: z.string().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ input, ctx }) => {
+      controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+
+      const conditions = [];
+
+      if (input?.searchTerm && input.searchTerm.length > 0) {
+        const searchPattern = `%${input.searchTerm}%`;
+        conditions.push(
+          or(
+            ilike(Member.firstName, searchPattern),
+            ilike(Member.lastName, searchPattern),
+            ilike(Member.email, searchPattern),
+            ilike(Member.discordUser, searchPattern),
+            ilike(Member.company, searchPattern),
+            // Handle full names
+            sql`CONCAT(${Member.firstName}, ' ', ${Member.lastName}) ILIKE ${searchPattern}`,
+          ),
+        );
+      }
+
+      if (input?.schoolFilter) {
+        conditions.push(
+          eq(
+            Member.school,
+            input.schoolFilter as (typeof Member.school.enumValues)[number],
+          ),
+        );
+      }
+      if (input?.majorFilter) {
+        conditions.push(
+          eq(
+            Member.major,
+            input.majorFilter as (typeof Member.major.enumValues)[number],
+          ),
+        );
+      }
+
+      let query = db.select({ count: count() }).from(Member);
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions)) as typeof query;
+      }
+
+      return (await query)[0]?.count ?? 0;
+    }),
+
+  getDistinctSchools: permProcedure.query(async ({ ctx }) => {
+    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    const results = await db
+      .selectDistinct({ school: Member.school })
+      .from(Member)
+      .where(isNotNull(Member.school))
+      .orderBy(asc(Member.school));
+
+    return results.map((r) => r.school).filter(Boolean) as string[];
   }),
-  getMemberCount: publicProcedure.query(
-    async () =>
-      (await db.select({ count: count() }).from(Member))[0]?.count ?? 0,
-  ),
+
+  getDistinctMajors: permProcedure.query(async ({ ctx }) => {
+    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    const results = await db
+      .selectDistinct({ major: Member.major })
+      .from(Member)
+      .where(isNotNull(Member.major))
+      .orderBy(asc(Member.major));
+    return results.map((r) => r.major).filter(Boolean) as string[];
+  }),
 
   giveMemberPoints: permProcedure
     .input(

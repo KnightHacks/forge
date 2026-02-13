@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
 
-import type { InsertMember, Member } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import {
   Table,
   TableBody,
@@ -16,7 +17,10 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
+import CustomPagination from "~/app/admin/_components/CustomPagination";
+import CustomPaginationSelect from "~/app/admin/_components/CustomPaginationSelect";
 import SortButton from "~/app/admin/_components/SortButton";
+import { useDebounce } from "~/app/admin/_hooks/debounce";
 import { api } from "~/trpc/react";
 import ClearDuesButton from "./clear-dues";
 import DeleteMemberButton from "./delete-member";
@@ -24,75 +28,97 @@ import DuesToggleButton from "./dues-toggle";
 import MemberProfileButton from "./member-profile";
 import UpdateMemberButton from "./update-member";
 
-type Member = InsertMember;
-type SortField = keyof Member;
+// We dont need to sort through so many different fields
+type SortField =
+  | "firstName"
+  | "lastName"
+  | "email"
+  | "discordUser"
+  | "dateCreated";
 type SortOrder = "asc" | "desc" | null;
-type TimeOrder = "asc" | "desc";
-type ActiveOrder = "time" | "field";
-
-function parseDate(datePart: string, timePart: string): Date {
-  const date = new Date(datePart);
-  const [hours, minutes, seconds, microseconds] = timePart
-    .split(/[:.]/)
-    .map(Number);
-
-  date.setUTCHours(
-    hours ?? 0,
-    minutes ?? 0,
-    seconds ?? 0,
-    Math.floor((microseconds ?? 0) / 1000),
-  );
-
-  return date;
-}
 
 export default function MemberTable() {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
-  const [activeSort, setActiveSort] = useState<ActiveOrder>("field");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [sortByTime, setSortByTime] = useState<boolean>(false);
+  const [timeSortOrder, setTimeSortOrder] = useState<"asc" | "desc">("asc");
+  const [schoolFilter, setSchoolFilter] = useState<string>("");
+  const [majorFilter, setMajorFilter] = useState<string>("");
 
-  const { data: members } = api.member.getMembers.useQuery();
-  const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const currentPage = Math.max(1, Number(searchParams.get("page")) || 1);
+  const debounceSearchTerm = useDebounce(searchTerm, 250);
+
+  const membersQuery = api.member.getMembers.useQuery({
+    currentPage,
+    pageSize,
+    searchTerm: debounceSearchTerm,
+    sortField: sortByTime ? undefined : (sortField ?? undefined),
+    sortOrder: sortByTime ? timeSortOrder : (sortOrder ?? undefined),
+    sortByTime,
+    schoolFilter,
+    majorFilter,
+  });
+  const totalCountQuery = api.member.getMemberCount.useQuery({
+    searchTerm: debounceSearchTerm,
+    schoolFilter,
+    majorFilter,
+  });
+  const duesQuery = api.member.getDuesPayingMembers.useQuery();
+  const schoolsQuery = api.member.getDistinctSchools.useQuery();
+  const majorsQuery = api.member.getDistinctMajors.useQuery();
+
+  const isLoading =
+    membersQuery.isLoading ||
+    totalCountQuery.isLoading ||
+    duesQuery.isLoading ||
+    schoolsQuery.isLoading ||
+    majorsQuery.isLoading;
+
+  const hasError =
+    membersQuery.error ||
+    totalCountQuery.error ||
+    duesQuery.error ||
+    schoolsQuery.error ||
+    majorsQuery.error;
+
+  // Include Skeletons for future ticket
+  if (isLoading) return <div>Loading members...</div>;
+  if (hasError) return <div>Failed to load members.</div>;
+
+  const members = membersQuery.data ?? [];
+  const totalCount = totalCountQuery.data ?? 0;
+  const duesPayingStatus = duesQuery.data ?? [];
+  const schools = schoolsQuery.data ?? [];
+  const majors = majorsQuery.data ?? [];
 
   const duesMap = new Map();
 
-  for (const status of duesPayingStatus ?? []) {
+  for (const status of duesPayingStatus) {
     duesMap.set(status.id, true);
   }
 
-  const filteredMembers = (members ?? []).filter((member) =>
-    Object.values(member).some((value) => {
-      if (value === null) return false;
-      return value.toString().toLowerCase().includes(searchTerm.toLowerCase());
-    }),
-  );
-
-  const sortedMembers = [...filteredMembers].sort((a, b) => {
-    const dateA = parseDate(a.dateCreated, a.timeCreated);
-    const dateB = parseDate(b.dateCreated, b.timeCreated);
-
-    if (activeSort == "time") {
-      if (dateA < dateB) return timeSortOrder === "asc" ? -1 : 1;
-      if (dateA > dateB) return timeSortOrder === "asc" ? 1 : -1;
-    } else {
-      if (!sortField || sortOrder === null) return 0;
-      if (a[sortField] == null || b[sortField] == null) return 0;
-      if (a[sortField] < b[sortField]) return sortOrder === "asc" ? -1 : 1;
-      if (a[sortField] > b[sortField]) return sortOrder === "asc" ? 1 : -1;
-    }
-
-    return 0;
-  });
-
   const toggleTimeSort = () => {
     setTimeSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    setActiveSort("time");
+    setSortByTime(true);
+    setSortField(null);
+    setSortOrder(null);
   };
 
-  const toggleFieldSort = () => {
-    setActiveSort("field");
+  const handleSortField = () => {
+    setSortByTime(false);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+
+    // We need to reset the page back to 1 when changing member viewing size
+    const params = new URLSearchParams(searchParams);
+    params.set("page", "1");
+    router.push("?" + params.toString());
   };
 
   return (
@@ -106,22 +132,63 @@ export default function MemberTable() {
               {timeSortOrder === "desc" && <ArrowDown />}
             </Button>
           </div>
+          <div>
+            <CustomPaginationSelect
+              pageSize={pageSize}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </div>
           <div className="relative w-full">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search members..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                if (currentPage !== 1) {
+                  const params = new URLSearchParams(searchParams);
+                  params.set("page", "1");
+                  router.push("?" + params.toString());
+                }
+              }}
               className="pl-8"
+            />
+          </div>
+          <div>
+            <ResponsiveComboBox
+              items={["All Schools", ...schools]}
+              renderItem={(school) => <span>{school}</span>}
+              getItemValue={(school) => school}
+              getItemLabel={(school) => school}
+              onItemSelect={(school) => {
+                setSchoolFilter(school === "All Schools" ? "" : school);
+                const params = new URLSearchParams(searchParams);
+                params.set("page", "1");
+                router.push("?" + params.toString());
+              }}
+              buttonPlaceholder="All Schools"
+              inputPlaceholder="Search schools..."
+            />
+          </div>
+          <div>
+            <ResponsiveComboBox
+              items={["All Majors", ...majors]}
+              renderItem={(major) => <span>{major}</span>}
+              getItemValue={(major) => major}
+              getItemLabel={(major) => major}
+              onItemSelect={(major) => {
+                setMajorFilter(major === "All Majors" ? "" : major);
+                const params = new URLSearchParams(searchParams);
+                params.set("page", "1");
+                router.push("?" + params.toString());
+              }}
+              buttonPlaceholder="All Majors"
+              inputPlaceholder="Search majors..."
             />
           </div>
           <div>
             <ClearDuesButton />
           </div>
-        </div>
-        <div className="whitespace-nowrap text-center text-sm font-bold">
-          Returned {sortedMembers.length}{" "}
-          {sortedMembers.length === 1 ? "member" : "members"}
         </div>
       </div>
 
@@ -136,7 +203,7 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
-                setActiveSort={toggleFieldSort}
+                setActiveSort={handleSortField}
               />
             </TableHead>
             <TableHead className="text-center">
@@ -147,7 +214,7 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
-                setActiveSort={toggleFieldSort}
+                setActiveSort={handleSortField}
               />
             </TableHead>
             <TableHead className="text-center">
@@ -158,7 +225,7 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
-                setActiveSort={toggleFieldSort}
+                setActiveSort={handleSortField}
               />
             </TableHead>
             <TableHead>
@@ -169,7 +236,7 @@ export default function MemberTable() {
                 sortOrder={sortOrder}
                 setSortField={setSortField}
                 setSortOrder={setSortOrder}
-                setActiveSort={toggleFieldSort}
+                setActiveSort={handleSortField}
               />
             </TableHead>
             <TableHead className="text-center">
@@ -193,7 +260,7 @@ export default function MemberTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedMembers.map((member) => (
+          {members.map((member) => (
             <TableRow key={member.id}>
               <TableCell className="text-center font-medium">
                 {member.firstName}
@@ -230,6 +297,12 @@ export default function MemberTable() {
           ))}
         </TableBody>
       </Table>
+      <CustomPagination
+        className="py-3"
+        itemCount={totalCount}
+        currentPage={currentPage}
+        pageSize={pageSize}
+      />
     </div>
   );
 }
