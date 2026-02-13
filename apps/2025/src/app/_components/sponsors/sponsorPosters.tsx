@@ -262,7 +262,7 @@ export default function SponsorPosters() {
                       className={`relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 ${tierConfig.hover}`}
                     >
                       {/* subtle dot pattern */}
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[length:20px_20px] opacity-30" />
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-size-[20px_20px] opacity-30" />
 
                       {/* logo container */}
                       <div className="relative flex h-full w-full items-center justify-center">
