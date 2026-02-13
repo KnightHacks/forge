@@ -1,6 +1,6 @@
 "use client";
 
-import useScrollAnimation from "../hooks/useScrollAnimation";
+import useScrollAnimation from "~/hooks/useScrollAnimation";
 import AboutComicSVG from "./about-comic-svg";
 import AboutText from "./about-text";
 

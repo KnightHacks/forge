@@ -1,6 +1,6 @@
 "use client";
 
-import useScrollAnimation from "../hooks/useScrollAnimation";
+import useScrollAnimation from "~/hooks/useScrollAnimation";
 import TextBox from "../textbox";
 import Comic from "./comic";
 

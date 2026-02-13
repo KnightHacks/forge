@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 import { BackgroundGradientAnimation } from "../ui/background-gradient-animation";
-import { Card, CardContent } from "../ui/card";
+import { Card, CardContent } from "@forge/ui/card";
 import { partnerLogos } from "./partnerLogos";
 
 const Partners = () => {

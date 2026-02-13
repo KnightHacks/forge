@@ -1,6 +1,6 @@
 "use client";
 
-import useStaggeredAnimation from "../hooks/useStaggeredAnimation";
+import useStaggeredAnimation from "~/hooks/useStaggeredAnimation";
 import SponsorPosters from "./sponsorPosters";
 import SponsorsTitle from "./sponsorsTitle";
 

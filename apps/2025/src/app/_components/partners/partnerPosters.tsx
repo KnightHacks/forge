@@ -94,7 +94,7 @@ const partners: Partner[] = [
   },
 ];
 
-import useStaggeredAnimation from "../hooks/useStaggeredAnimation";
+import useStaggeredAnimation from "~/hooks/useStaggeredAnimation";
 
 export default function PartnerPosters() {
   const partnersGridRef = useStaggeredAnimation(80);

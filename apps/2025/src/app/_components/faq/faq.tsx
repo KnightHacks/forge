@@ -5,7 +5,7 @@ import { ChevronDownIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import useStaggeredAnimation from "../hooks/useStaggeredAnimation";
+import useStaggeredAnimation from "~/hooks/useStaggeredAnimation";
 
 /* Radix aliases ----------------------------------------------------------- */
 const Accordion = AccordionPrimitive.Root;

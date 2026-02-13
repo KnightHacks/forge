@@ -23,6 +23,7 @@ export default async function FormResponsesPage({
 }: {
   params: { slug: string };
 }) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const session = await auth();
   if (!session) {
     redirect(SIGN_IN_PATH);

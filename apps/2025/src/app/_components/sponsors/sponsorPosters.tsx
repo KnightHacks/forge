@@ -37,7 +37,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import useStaggeredAnimation from "../hooks/useStaggeredAnimation";
+import useStaggeredAnimation from "~/hooks/useStaggeredAnimation";
 
 type Tier = "Platinum" | "Gold" | "Silver" | "Bronze";
 
