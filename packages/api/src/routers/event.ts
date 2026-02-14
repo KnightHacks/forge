@@ -6,11 +6,23 @@ import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
 import { DISCORD, EVENTS } from "@forge/consts";
-import { count, desc, eq, getTableColumns } from "@forge/db";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  gt,
+  inArray,
+  isNull,
+  lt,
+} from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Event,
   EventAttendee,
+  FormResponse,
+  FormsSchemas,
   Hacker,
   HackerAttendee,
   HackerEventAttendee,
@@ -515,13 +527,14 @@ export const eventRouter = {
       // Step 3: Delete the event in the database
       await db.delete(Event).where(eq(Event.id, input.id));
     }),
+
   ensureForm: protectedProcedure
     .input(
       z.object({
         eventId: z.string().uuid(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .query(async ({ input }) => {
       const event = await db.query.Event.findFirst({
         where: eq(Event.id, input.eventId),
       });
@@ -539,66 +552,151 @@ export const eventRouter = {
         where: (t, { eq }) => eq(t.slugName, formSlugName),
       });
 
-      if (form === undefined) {
-        try {
-          await createForm({
-            formData: {
-              name: formName,
-              description: `Provide feedback for ${event.name} to help us make events better in the future!`,
-              questions: [
-                {
-                  max: 10,
-                  min: 0,
-                  type: "LINEAR_SCALE",
-                  order: 0,
-                  optional: false,
-                  question: "How would you rate the event overall?",
-                },
-                {
-                  max: 10,
-                  min: 0,
-                  type: "LINEAR_SCALE",
-                  order: 1,
-                  optional: false,
-                  question: "How much fun did you have?",
-                },
-                {
-                  max: 10,
-                  min: 0,
-                  type: "LINEAR_SCALE",
-                  order: 2,
-                  optional: false,
-                  question: "How much did you learn?",
-                },
-                {
-                  type: "MULTIPLE_CHOICE",
-                  order: 3,
-                  options: [],
-                  optional: false,
-                  question: "Where did you hear about us?",
-                  allowOther: true,
-                  optionsConst: "EVENT_FEEDBACK_HEARD",
-                },
-                {
-                  type: "SHORT_ANSWER",
-                  order: 4,
-                  optional: true,
-                  question:
-                    "Do you have any additional feedback about this event?",
-                },
-              ],
-            },
-            allowEdit: false,
-            allowResubmission: false,
-            duesOnly: false,
-            section: "Feedback",
-          });
-        } catch {
-          throw new TRPCError({
-            message: "Could not create form",
-            code: "INTERNAL_SERVER_ERROR",
-          });
-        }
+      if (form) return form;
+
+      try {
+        return await createForm({
+          formData: {
+            name: formName,
+            description: `Provide feedback for ${event.name} to help us make events better in the future!`,
+            questions: [
+              {
+                max: 10,
+                min: 0,
+                type: "LINEAR_SCALE",
+                order: 0,
+                optional: false,
+                question: "How would you rate the event overall?",
+              },
+              {
+                max: 10,
+                min: 0,
+                type: "LINEAR_SCALE",
+                order: 1,
+                optional: false,
+                question: "How much fun did you have?",
+              },
+              {
+                max: 10,
+                min: 0,
+                type: "LINEAR_SCALE",
+                order: 2,
+                optional: false,
+                question: "How much did you learn?",
+              },
+              {
+                type: "MULTIPLE_CHOICE",
+                order: 3,
+                options: [],
+                optional: false,
+                question: "Where did you hear about us?",
+                allowOther: true,
+                optionsConst: "EVENT_FEEDBACK_HEARD",
+              },
+              {
+                type: "SHORT_ANSWER",
+                order: 4,
+                optional: true,
+                question:
+                  "Do you have any additional feedback about this event?",
+              },
+            ],
+          },
+          allowEdit: false,
+          allowResubmission: false,
+          duesOnly: false,
+          section: "Feedback",
+        });
+      } catch {
+        throw new TRPCError({
+          message: "Could not create form",
+          code: "INTERNAL_SERVER_ERROR",
+        });
       }
+    }),
+
+  getFeedback: permProcedure
+    .input(
+      z.object({
+        startDate: z.date().nullable(),
+        endDate: z.date().nullable(),
+        includeHackathons: z.boolean(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      controlPerms.or(["READ_CLUB_EVENT"], ctx);
+
+      const conditions = [];
+
+      const isUsableDate = (d: Date | null): d is Date =>
+        d instanceof Date && Math.abs(d.getTime()) < 8640000000000000;
+
+      if (isUsableDate(input.startDate) && isUsableDate(input.endDate)) {
+        conditions.push(gt(Event.start_datetime, input.startDate));
+        conditions.push(lt(Event.start_datetime, input.endDate));
+      }
+
+      if (!input.includeHackathons) {
+        conditions.push(isNull(Event.hackathonId));
+      }
+
+      const events = await db
+        .select()
+        .from(Event)
+        .where(conditions.length ? and(...conditions) : undefined);
+
+      if (events.length === 0) {
+        return [];
+      }
+
+      const forms = await db
+        .select()
+        .from(FormsSchemas)
+        .where(
+          inArray(
+            FormsSchemas.slugName,
+            events.map((e) =>
+              (e.name + " Feedback Form").toLowerCase().replaceAll(" ", "-"),
+            ),
+          ),
+        );
+
+      if (forms.length === 0) {
+        return [];
+      }
+
+      const responses = await db
+        .select()
+        .from(FormResponse)
+        .where(
+          inArray(
+            FormResponse.form,
+            forms.map((f) => f.id),
+          ),
+        );
+
+      const feedback: { event: string; howHear: string; rating: number }[] = [];
+
+      const formIdToEvent = new Map<string, string>();
+
+      for (const f of forms) {
+        const eventName = f.name.replace(" Feedback Form", "");
+        formIdToEvent.set(f.id, eventName);
+      }
+
+      for (const r of responses) {
+        const data = r.responseData as {
+          "Where did you hear about us?": string;
+          "How would you rate the event overall?": number;
+        };
+
+        feedback.push({
+          event: formIdToEvent.get(r.form) ?? "",
+          howHear: data["Where did you hear about us?"],
+          rating: data["How would you rate the event overall?"],
+        });
+      }
+
+      return feedback;
     }),
 } satisfies TRPCRouterRecord;

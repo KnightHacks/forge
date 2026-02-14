@@ -497,6 +497,7 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
     .references(() => FormSections.id, { onDelete: "set null" }),
 }));
 
+export type Form = typeof FormsSchemas.$inferSelect;
 //Ts so dumb
 export const FormSchemaSchema = createInsertSchema(FormsSchemas);
 

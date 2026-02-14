@@ -13,7 +13,11 @@ import type { Session } from "@forge/auth/server";
 import { DISCORD, EVENTS, FORMS, MINIO, PERMISSIONS } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { JudgeSession, Roles } from "@forge/db/schemas/auth";
-import { FormSchemaSchema, FormsSchemas } from "@forge/db/schemas/knight-hacks";
+import {
+  Form,
+  FormSchemaSchema,
+  FormsSchemas,
+} from "@forge/db/schemas/knight-hacks";
 import { client } from "@forge/email";
 
 import { env } from "./env";
@@ -508,7 +512,7 @@ export const CreateFormSchema = FormSchemaSchema.omit({
 
 type CreateFormType = z.infer<typeof CreateFormSchema>;
 
-export async function createForm(input: CreateFormType) {
+export async function createForm(input: CreateFormType): Promise<Form> {
   const jsonSchema = generateJsonSchema(input.formData);
 
   const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
@@ -530,11 +534,23 @@ export async function createForm(input: CreateFormType) {
     sectionId = section?.id ?? null;
   }
 
-  await db.insert(FormsSchemas).values({
-    ...input,
-    name: input.formData.name,
-    slugName: slug_name,
-    formValidatorJson: jsonSchema.schema,
-    sectionId,
-  });
+  const [form] = await db
+    .insert(FormsSchemas)
+    .values({
+      ...input,
+      name: input.formData.name,
+      slugName: slug_name,
+      formValidatorJson: jsonSchema.schema,
+      sectionId,
+    })
+    .returning();
+
+  if (!form) {
+    throw new TRPCError({
+      message: "Could not create form",
+      code: "INTERNAL_SERVER_ERROR",
+    });
+  }
+
+  return form;
 }
