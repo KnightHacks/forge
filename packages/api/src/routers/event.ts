@@ -46,7 +46,82 @@ export const eventRouter = {
       .leftJoin(HackerEventAttendee, eq(Event.id, HackerEventAttendee.eventId))
       .groupBy(Event.id)
       .orderBy(desc(Event.start_datetime));
-    return events;
+
+    const formSlugs = events.map((e) =>
+      (e.name + " Feedback Form").toLowerCase().replaceAll(" ", "-"),
+    );
+
+    const forms = await db
+      .select()
+      .from(FormsSchemas)
+      .where(inArray(FormsSchemas.slugName, formSlugs));
+
+    if (forms.length === 0) {
+      return events.map((event) => ({
+        ...event,
+        averageRating: null,
+        feedbackCount: 0,
+        formSlug: null,
+      }));
+    }
+
+    const responses = await db
+      .select()
+      .from(FormResponse)
+      .where(
+        inArray(
+          FormResponse.form,
+          forms.map((f) => f.id),
+        ),
+      );
+
+    const formIdToSlug = new Map<string, string>();
+    const formIdToEventName = new Map<string, string>();
+    for (const f of forms) {
+      const eventName = f.name.replace(" Feedback Form", "");
+      formIdToSlug.set(f.id, f.slugName);
+      formIdToEventName.set(f.id, eventName);
+    }
+
+    const eventRatings = new Map<
+      string,
+      { total: number; count: number; formSlug: string }
+    >();
+
+    for (const response of responses) {
+      const eventName = formIdToEventName.get(response.form);
+      if (!eventName) continue;
+
+      const data = response.responseData as {
+        "How would you rate the event overall?": number;
+      };
+
+      const rating = data["How would you rate the event overall?"];
+      if (typeof rating !== "number") continue;
+
+      const formSlug = formIdToSlug.get(response.form);
+      if (!formSlug) continue;
+
+      if (!eventRatings.has(eventName)) {
+        eventRatings.set(eventName, { total: 0, count: 0, formSlug });
+      }
+
+      const current = eventRatings.get(eventName);
+      if (current) {
+        current.total += rating;
+        current.count += 1;
+      }
+    }
+
+    return events.map((event) => {
+      const rating = eventRatings.get(event.name);
+      return {
+        ...event,
+        averageRating: rating ? rating.total / rating.count : null,
+        feedbackCount: rating?.count ?? 0,
+        formSlug: rating?.formSlug ?? null,
+      };
+    });
   }),
   getAttendees: permProcedure
     .input(z.string())
