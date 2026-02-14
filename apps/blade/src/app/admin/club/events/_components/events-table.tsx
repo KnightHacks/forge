@@ -24,6 +24,8 @@ import { DeleteEventButton } from "./delete-event";
 import { EventDetailsButton } from "./event-details";
 import { UpdateEventButton } from "./update-event";
 import { ViewAttendanceButton } from "./view-attendance-button";
+import { ViewFeedbackButton } from "./view-feedback-button";
+import { ViewRatingButton } from "./view-rating-button";
 
 type Event = ReturnEvent;
 type SortField = keyof Event;
@@ -149,6 +151,12 @@ export function EventsTable() {
               />
             </TableHead>
             <TableHead className="text-center">
+              <Label>Rating</Label>
+            </TableHead>
+            <TableHead className="text-center">
+              <Label>Feedback</Label>
+            </TableHead>
+            <TableHead className="text-center">
               <Label>Event Details</Label>
             </TableHead>
 
@@ -166,7 +174,7 @@ export function EventsTable() {
           <TableRow>
             <TableCell
               className="text- bg-muted/50 font-bold sm:text-center"
-              colSpan={8}
+              colSpan={10}
             >
               Upcoming Events
             </TableCell>
@@ -193,6 +201,14 @@ export function EventsTable() {
                 </TableCell>
 
                 <TableCell className="text-center">
+                  <ViewRatingButton event={event} />
+                </TableCell>
+
+                <TableCell className="text-center">
+                  <ViewFeedbackButton event={event} />
+                </TableCell>
+
+                <TableCell className="text-center">
                   <EventDetailsButton
                     event={{ ...event, hackathonName: undefined }}
                   />
@@ -214,7 +230,7 @@ export function EventsTable() {
           <TableRow>
             <TableCell
               className="bg-muted/50 text-left font-bold sm:text-center"
-              colSpan={8}
+              colSpan={10}
             >
               Previous Events
             </TableCell>
@@ -241,6 +257,14 @@ export function EventsTable() {
                 </TableCell>
 
                 <TableCell className="text-center">
+                  <ViewRatingButton event={event} />
+                </TableCell>
+
+                <TableCell className="text-center">
+                  <ViewFeedbackButton event={event} />
+                </TableCell>
+
+                <TableCell className="text-center">
                   <EventDetailsButton
                     event={{ ...event, hackathonName: undefined }}
                   />
@@ -264,7 +288,7 @@ export function EventsTable() {
             <TableCell className="text-right">
               {sortedEvents.reduce((sum, event) => sum + event.numAttended, 0)}
             </TableCell>
-            <TableCell colSpan={3} />
+            <TableCell colSpan={5} />
           </TableRow>
         </TableFooter>
       </Table>

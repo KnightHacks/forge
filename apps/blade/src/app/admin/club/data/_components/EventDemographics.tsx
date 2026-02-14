@@ -15,7 +15,9 @@ import {
 import { api } from "~/trpc/react";
 import AttendancesBarChart from "./event-data/AttendancesBarChart";
 import AttendancesMobile from "./event-data/AttendancesMobile";
+import FoundPie from "./event-data/HowFound";
 import PopularityRanking from "./event-data/PopularityRanking";
+import RankingRating from "./event-data/RatingRanking";
 import TypePie from "./event-data/TypePie";
 import { WeekdayPopularityRadar } from "./event-data/WeekdayPopularityRadar";
 
@@ -107,6 +109,12 @@ export default function EventDemographics() {
     })
     .sort((a, b) => (a.tag > b.tag ? 1 : a.tag < b.tag ? -1 : 0)); // ensure same order of tags
 
+  const { data: feedback } = api.event.getFeedback.useQuery({
+    startDate: activeSemester?.startDate ?? null,
+    endDate: activeSemester?.endDate ?? null,
+    includeHackathons,
+  });
+
   return (
     <div className="my-6">
       {events && (
@@ -148,6 +156,7 @@ export default function EventDemographics() {
           {filteredEvents && filteredEvents.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
               <PopularityRanking events={filteredEvents} />
+              {feedback && <RankingRating feedback={feedback} />}
 
               {/* visible on large/medium screens */}
               <AttendancesBarChart
@@ -161,6 +170,7 @@ export default function EventDemographics() {
               />
 
               <TypePie events={filteredEvents} />
+              <FoundPie found={(feedback ?? []).map((f) => f.howHear)} />
               <WeekdayPopularityRadar events={filteredEvents} />
             </div>
           ) : (
