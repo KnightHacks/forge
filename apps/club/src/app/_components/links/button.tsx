@@ -1,7 +1,7 @@
 import type { ComponentType, SVGProps } from "react";
 import type { ButtonProps } from "rsuite";
 
-import MenuHorizontalSVG from "./assets/menu horizontal";
+import MenuHorizontalSVG from "./assets/menu-horizontal";
 
 interface Props extends ButtonProps {
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
