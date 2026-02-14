@@ -660,6 +660,7 @@ export const memberRouter = {
       const event = await db.query.Event.findFirst({
         where: eq(Event.id, input.eventId),
       });
+
       if (!event)
         throw new TRPCError({
           code: "NOT_FOUND",

@@ -11,6 +11,7 @@ import { Card } from "@forge/ui/card";
 import type { FormResponsePayload } from "./utils";
 import { api } from "~/trpc/react";
 import { useSubmissionSuccess } from "../_hooks/useSubmissionSuccess";
+import { handleCallbacks } from "./connection-handler";
 import FormNotFound from "./form-not-found";
 import { FormRunner } from "./form-runner";
 import { SubmissionSuccessCard } from "./form-submitted-success";
@@ -18,13 +19,11 @@ import { SubmissionSuccessCard } from "./form-submitted-success";
 interface FormResponderWrapperProps {
   formName: string;
   userName: string;
-  handleCallbacks: (response: Record<string, unknown>) => void;
 }
 
 export function FormResponderWrapper({
   formName,
   userName,
-  handleCallbacks,
 }: FormResponderWrapperProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -46,7 +45,11 @@ export function FormResponderWrapper({
     onSuccess: (_data, variables) => {
       setSubmitError(null);
       setIsSubmitted(true);
-      handleCallbacks(variables.responseData as Record<string, unknown>);
+      void handleCallbacks(
+        formName,
+        formIdGate ?? "",
+        variables.responseData as Record<string, unknown>,
+      );
     },
     onError: (error) => {
       setSubmitError(
@@ -115,8 +118,10 @@ export function FormResponderWrapper({
             You have already submitted a response to this form.
           </p>
 
-          {existing && (
-            <Link href={`/forms/${existing.formSlug ?? ""}/${existing.id}`}>
+          {existing?.formSlug && (
+            <Link
+              href={`/forms/${encodeURIComponent(existing.formSlug)}/${existing.id}`}
+            >
               <Button size="sm">
                 {allowEdit ? "Edit " : "View "} Response
               </Button>
