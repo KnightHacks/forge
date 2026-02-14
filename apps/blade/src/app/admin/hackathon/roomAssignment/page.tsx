@@ -4,7 +4,7 @@ import { auth } from "@forge/auth";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
-import { ChallengesTable } from "./_components/ChallengesTable";
+import { ChallengesTable } from "~/app/_components/admin/hackathon/roomAssignment/ChallengesTable";
 
 export default async function Hackers() {
   const session = await auth();

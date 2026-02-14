@@ -6,7 +6,7 @@ import { auth } from "@forge/auth";
 import { Separator } from "@forge/ui/separator";
 
 import { api, HydrateClient } from "~/trpc/server";
-import { MemberProfileForm } from "./member-profile-form";
+import { MemberProfileForm } from "~/app/_components/settings/member-profile-form";
 
 export default async function SettingsProfilePage() {
   const session = await auth();

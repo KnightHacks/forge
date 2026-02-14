@@ -6,7 +6,7 @@ import { buttonVariants } from "@forge/ui/button";
 import { Separator } from "@forge/ui/separator";
 
 import { SIDEBAR_NAV_ITEMS } from "~/consts";
-import { SidebarNav } from "./_components/sidebar-nav";
+import { SidebarNav } from "~/app/_components/settings/sidebar-nav";
 
 interface SettingsLayoutProps {
   children: React.ReactNode;

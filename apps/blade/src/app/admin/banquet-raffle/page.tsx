@@ -8,7 +8,7 @@ import { Member } from "@forge/db/schemas/knight-hacks";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api } from "~/trpc/server";
-import RaffleDraw from "./components/raffle-draw";
+import RaffleDraw from "~/app/_components/admin/banquet-raffle/raffle-draw";
 
 export default async function Raffle() {
   const session = await auth();

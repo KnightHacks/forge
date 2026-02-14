@@ -4,7 +4,7 @@ import { auth } from "@forge/auth";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api } from "~/trpc/server";
-import FormsClient from "../../_components/admin/forms/homepage";
+import FormsClient from "~/app/_components/admin/forms/homepage";
 
 export default async function Page() {
   const session = await auth();

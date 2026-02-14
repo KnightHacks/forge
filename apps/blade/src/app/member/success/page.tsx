@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 
-import { MembershipSuccess } from "./_components/membership-success-page";
-import { MembershipSuccessSkeleton } from "./_components/membership-success-skeleton";
+import { MembershipSuccess } from "~/app/_components/dashboard/member/membership-success-page";
+import { MembershipSuccessSkeleton } from "~/app/_components/dashboard/member/membership-success-skeleton";
 
 export default function CheckoutSuccessPage() {
   return (

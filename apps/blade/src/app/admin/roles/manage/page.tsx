@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { api } from "~/trpc/server";
-import RoleAssign from "./roleassign";
+import RoleAssign from "~/app/_components/admin/roles/roleassign";
 
 export default async function ManageRoles() {
   const hasAccess = await api.roles.hasPermission({

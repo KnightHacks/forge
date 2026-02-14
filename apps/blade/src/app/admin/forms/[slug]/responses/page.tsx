@@ -9,14 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
-import { AllResponsesView } from "./_components/AllResponsesView";
-import { PerUserResponsesView } from "./_components/PerUserResponsesView";
+import { AllResponsesView } from "~/app/_components/admin/forms/responses/AllResponsesView";
+import { PerUserResponsesView } from "~/app/_components/admin/forms/responses/PerUserResponsesView";
 
 export default async function FormResponsesPage({
   params,
 }: {
   params: { slug: string };
 }) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const session = await auth();
   if (!session) {
     redirect(SIGN_IN_PATH);

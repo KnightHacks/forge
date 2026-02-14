@@ -13,7 +13,7 @@ import {
 import { Separator } from "@forge/ui/separator";
 
 import { api } from "~/trpc/server";
-import { ProjectsTable } from "../_components/projects-table";
+import { ProjectsTable } from "~/app/_components/judge/projects-table";
 
 export default async function Page() {
   const isJudge = await api.auth.getJudgeStatus();

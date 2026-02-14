@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import { auth } from "@forge/auth";
 
 import { api, HydrateClient } from "~/trpc/server";
-import { TacoTuesday } from "../_components/discord-modal";
-import { SessionNavbar } from "../_components/navigation/session-navbar";
-import { UserInterface } from "../_components/user-interface";
+import { TacoTuesday } from "~/app/_components/discord-modal";
+import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
+import { UserInterface } from "~/app/_components/user-interface";
 
 export const metadata: Metadata = {
   title: "Blade | Dashboard",

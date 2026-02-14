@@ -1,4 +1,4 @@
-import { JudgeNavigation } from "./_components/judge-navigation";
+import { JudgeNavigation } from "~/app/_components/judge/judge-navigation";
 
 export default function JudgeLayout({
   children,

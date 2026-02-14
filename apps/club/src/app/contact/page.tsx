@@ -1,9 +1,9 @@
 import React from "react";
 
-import ContactForm from "./_components/contact-form";
-import Header from "./_components/header";
-import LeftSide from "./_components/left-side";
-import RightSide from "./_components/right-side";
+import ContactForm from "~/app/_components/contact/contact-form";
+import Header from "~/app/_components/contact/header";
+import LeftSide from "~/app/_components/contact/left-side";
+import RightSide from "~/app/_components/contact/right-side";
 
 export default function page() {
   return (
