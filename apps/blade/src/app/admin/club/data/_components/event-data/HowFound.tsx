@@ -77,7 +77,7 @@ export default function FoundPie({ found }: { found: string[] }) {
       <ChartStyle id={id} config={baseConfig} />
       <CardHeader className="flex-col items-start gap-4 space-y-0 pb-0">
         <div className="grid gap-1">
-          <CardTitle className="text-xl">Event Types</CardTitle>
+          <CardTitle className="text-xl">Referred By</CardTitle>
         </div>
         <Select
           value={activeLevel ? activeLevel : undefined}

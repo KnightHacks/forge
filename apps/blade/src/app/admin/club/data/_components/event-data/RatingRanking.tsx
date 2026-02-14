@@ -34,7 +34,7 @@ export default function RatingRanking({ feedback }: { feedback: Feedback[] }) {
   return (
     <Card className="md:col-span-2 lg:col-span-2">
       <CardHeader>
-        <CardTitle className="text-xl">Most Popular Events</CardTitle>
+        <CardTitle className="text-xl">Best Rated Events</CardTitle>
       </CardHeader>
       <CardContent>
         {topEvents.length > 0 ? (
@@ -55,7 +55,7 @@ export default function RatingRanking({ feedback }: { feedback: Feedback[] }) {
           </ol>
         ) : (
           <p className="mb-14 mt-10 text-center text-slate-300">
-            No attendance data found
+            No rating data found
           </p>
         )}
         <div className="flex justify-center">

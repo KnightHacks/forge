@@ -585,11 +585,11 @@ export const eventRouter = {
                 question: "How much did you learn?",
               },
               {
-                type: "MULTIPLE_CHOICE",
+                type: "CHECKBOXES",
                 order: 3,
                 options: [],
                 optional: false,
-                question: "Where did you hear about us?",
+                question: "Where did you hear this event?",
                 allowOther: true,
                 optionsConst: "EVENT_FEEDBACK_HEARD",
               },
