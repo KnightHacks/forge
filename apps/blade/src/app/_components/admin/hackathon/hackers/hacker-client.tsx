@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
-import { HACKER_STATUS_MAP } from "~/consts";
 import HackerStatusCounter from "~/app/_components/admin/hackathon/hackers/hacker-status-counter";
 import HackerTable from "~/app/_components/admin/hackathon/hackers/hackers-table";
+import { HACKER_STATUS_MAP } from "~/consts";
 
 export default function HackersClient({
   currentActiveHackathon,

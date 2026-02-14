@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { auth, signIn } from "@forge/auth/server";
 
-import { api } from "~/trpc/server";
 import { MemberApplicationForm } from "~/app/_components/dashboard/member/member-application-form";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Member Application",

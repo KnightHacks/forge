@@ -11,8 +11,8 @@ import {
 } from "@forge/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
-import ScannerPopUp from "~/app/_components/shared/scanner";
 import { ManualEntryForm } from "~/app/_components/admin/club/check-in/manual-entry-form";
+import ScannerPopUp from "~/app/_components/shared/scanner";
 
 export function CheckInPage() {
   return (

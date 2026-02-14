@@ -2,9 +2,9 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 
+import QRCodesClient from "~/app/_components/admin/hackathon/judge-assignment/judges-client";
 import { SIGN_IN_PATH } from "~/consts";
 import { api } from "~/trpc/server";
-import QRCodesClient from "~/app/_components/admin/hackathon/judge-assignment/judges-client";
 
 export default async function Judges() {
   const session = await auth();

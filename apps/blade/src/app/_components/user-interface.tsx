@@ -1,10 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
-import { api } from "~/trpc/server";
 import HackathonDashboard from "~/app/_components/dashboard/hackathon-dashboard/hackathon-dashboard";
 import HackerDashboard from "~/app/_components/dashboard/hacker-dashboard/hacker-dashboard";
 import MemberDashboard from "~/app/_components/dashboard/member-dashboard/member-dashboard";
 import { HackerAppCard, MemberAppCard } from "~/app/_components/option-cards";
+import { api } from "~/trpc/server";
 
 export async function UserInterface() {
   const [member, hacker] = await Promise.allSettled([

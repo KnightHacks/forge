@@ -27,8 +27,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { toast } from "@forge/ui/toast";
 
-import { api } from "~/trpc/react";
 import ToggleButton from "~/app/_components/admin/hackathon/hackers/toggle-button";
+import { api } from "~/trpc/react";
 
 export function ManualEntryForm() {
   const { data: events } = api.event.getEvents.useQuery();

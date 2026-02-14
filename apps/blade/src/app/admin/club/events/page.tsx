@@ -2,11 +2,11 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 
-import { SIGN_IN_PATH } from "~/consts";
-import { api, HydrateClient } from "~/trpc/server";
+import { EventsTable } from "~/app/_components/admin/club/events/events-table";
 import { AddPoints } from "~/app/_components/shared/AddPoints";
 import ScannerPopUp from "~/app/_components/shared/scanner";
-import { EventsTable } from "~/app/_components/admin/club/events/events-table";
+import { SIGN_IN_PATH } from "~/consts";
+import { api, HydrateClient } from "~/trpc/server";
 
 export default async function Events() {
   const session = await auth();

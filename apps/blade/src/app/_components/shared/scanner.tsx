@@ -27,9 +27,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { toast } from "@forge/ui/toast";
 
+import ToggleButton from "~/app/_components/admin/hackathon/hackers/toggle-button";
 import { getClassTeam } from "~/lib/utils";
 import { api } from "~/trpc/react";
-import ToggleButton from "~/app/_components/admin/hackathon/hackers/toggle-button";
 
 const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   const { data: events } = api.event.getEvents.useQuery();

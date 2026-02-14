@@ -12,9 +12,9 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 
+import MemberProfileButton from "~/app/_components/admin/club/members/member-profile";
 import HackerProfileButton from "~/app/_components/admin/hackathon/hackers/hacker-profile";
 import { api } from "~/trpc/react";
-import MemberProfileButton from "~/app/_components/admin/club/members/member-profile";
 
 export function ViewAttendanceButton({
   event,

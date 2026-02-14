@@ -1,10 +1,10 @@
 "use client";
 
-import { api } from "~/trpc/react";
 import AgeBarChart from "~/app/_components/admin/charts/AgeBarChart";
 import MajorBarChart from "~/app/_components/admin/charts/MajorBarChart";
 import RaceOrEthnicityPie from "~/app/_components/admin/charts/RaceOrEthnicityPie";
 import SchoolYearPie from "~/app/_components/admin/charts/SchoolYearPie";
+import { api } from "~/trpc/react";
 import DuesOverTimeBarChart from "./member-data/DuesOverTimeBarChart";
 import EngagementInfo from "./member-data/EngagementInfo";
 import GenderPie from "./member-data/GenderPie";

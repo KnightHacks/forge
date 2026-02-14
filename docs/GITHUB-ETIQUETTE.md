@@ -69,6 +69,7 @@ removed deprecated cron job
 ### Examples
 
 **Good:**
+
 ```
 added permission checks to events page
 fixed typo in email template
@@ -76,6 +77,7 @@ updated dependencies to latest versions
 ```
 
 **Avoid:**
+
 ```
 stuff
 asdfasdf
@@ -90,6 +92,7 @@ All work starts with an issue.
 ### Who Can Create Issues
 
 Anyone can create issues:
+
 - **Community members** can report bugs or request features
 - **Developers** create issues for work items
 - **External contributors** can create issues and pick them up
@@ -103,6 +106,7 @@ Anyone can create issues:
 ### Issue Requirements
 
 Every issue must have:
+
 1. **At least one label** (see label guide below)
 2. **An assignee** (if work has started or been claimed)
 
@@ -131,6 +135,7 @@ The title must start with `[#XYZ]` where XYZ is the issue number.
 ### Examples
 
 **Good:**
+
 ```
 [#45] Add event registration form
 [#102] Fix member count display bug
@@ -138,6 +143,7 @@ The title must start with `[#XYZ]` where XYZ is the issue number.
 ```
 
 **Bad:**
+
 ```
 Add event registration form (missing issue number)
 [45] Fix bug (missing # symbol)
@@ -167,6 +173,7 @@ A PR template is auto-populated when you create a PR. Fill it out completely:
 ### Draft PRs
 
 Draft PRs are encouraged for:
+
 - Early feedback on approach
 - Work in progress that needs discussion
 - Large changes where you want direction before continuing
@@ -235,6 +242,7 @@ Labels: Documentation, Minor
 All PRs are first reviewed by CodeRabbit (automated code review).
 
 **Your responsibilities:**
+
 - Read all CodeRabbit comments
 - Either fix the issue or dismiss the comment with explanation
 - Don't ignore CodeRabbit - resolve or dismiss all comments
@@ -263,10 +271,12 @@ pnpm build
 Once CodeRabbit is resolved and CI passes, request review from the dev team.
 
 **Review requirements:**
+
 - **Minor changes** - 1 reviewer approval required
 - **Major changes** - 2+ reviewer approvals required
 
 **Review timeline:**
+
 - Reviews typically take 1-3 days
 - Be patient but feel free to follow up if it's been >3 days
 
@@ -280,6 +290,7 @@ When reviewers request changes:
 - Re-request review when ready
 
 **Be receptive to feedback:**
+
 - Assume good intent
 - Ask questions if you don't understand
 - Explain your reasoning if you disagree
@@ -288,10 +299,12 @@ When reviewers request changes:
 ### 5. Merging
 
 **Who can merge:**
+
 - Maintainers can merge any PR
 - Developers (including you) can merge their own PRs
 
 **Merge requirements:**
+
 - All CI checks must pass (no exceptions)
 - Required approvals received
 - CodeRabbit comments resolved or dismissed
@@ -304,6 +317,7 @@ When reviewers request changes:
 ### Where to Communicate
 
 **Use PR comments for:**
+
 - Questions about the code
 - Requesting clarification
 - Discussing implementation details
@@ -311,6 +325,7 @@ When reviewers request changes:
 - Responding to review feedback
 
 **Avoid Discord for:**
+
 - PR-specific discussions (these should be on GitHub)
 - Code review feedback
 - Technical implementation details
@@ -320,6 +335,7 @@ Discord is fine for general questions, but keep PR discussions on GitHub to avoi
 ### Tagging People
 
 Tagging is appropriate when:
+
 - Requesting review: `@username can you review this?`
 - Asking for specific expertise: `@username do you know how this works?`
 - Following up after 3+ days: `@username gentle ping on this PR`

@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 import { auth } from "@forge/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
-import { SIGN_IN_PATH } from "~/consts";
-import { api, HydrateClient } from "~/trpc/server";
 import HackerEventDemographics from "~/app/_components/admin/club/data/HackerEventDemographics";
 import HackathonDataContent from "~/app/_components/admin/hackathon/data/HackathonDataContent";
+import { SIGN_IN_PATH } from "~/consts";
+import { api, HydrateClient } from "~/trpc/server";
 
 export default async function HackathonData() {
   const session = await auth();

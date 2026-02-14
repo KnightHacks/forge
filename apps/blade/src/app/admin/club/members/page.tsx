@@ -2,10 +2,10 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 
-import { SIGN_IN_PATH } from "~/consts";
-import { api, HydrateClient } from "~/trpc/server";
 import MemberTable from "~/app/_components/admin/club/members/members-table";
 import ScannerPopUp from "~/app/_components/shared/scanner";
+import { SIGN_IN_PATH } from "~/consts";
+import { api, HydrateClient } from "~/trpc/server";
 
 export default async function Members() {
   // authentication

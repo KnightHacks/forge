@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 import { auth } from "@forge/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
-import { SIGN_IN_PATH } from "~/consts";
-import { api, HydrateClient } from "~/trpc/server";
 import EventDemographics from "~/app/_components/admin/club/data/EventDemographics";
 import MemberDemographics from "~/app/_components/admin/club/data/MemberDemographics";
+import { SIGN_IN_PATH } from "~/consts";
+import { api, HydrateClient } from "~/trpc/server";
 
 export default async function Data() {
   // authentication

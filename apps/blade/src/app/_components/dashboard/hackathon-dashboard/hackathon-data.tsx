@@ -14,10 +14,10 @@ import {
 } from "@forge/ui/dialog";
 
 import type { api as serverCall } from "~/trpc/server";
-import { HACKER_STATUS_MAP } from "~/consts";
-import { api } from "~/trpc/react";
 import { HackerQRCodePopup } from "~/app/_components/dashboard/hacker-dashboard/hacker-qr-button";
 import { DownloadQRPass } from "~/app/_components/dashboard/member-dashboard/download-qr-pass";
+import { HACKER_STATUS_MAP } from "~/consts";
+import { api } from "~/trpc/react";
 import AlertButton from "./issue-dialog";
 import { PointLeaderboard } from "./point-leaderboard";
 

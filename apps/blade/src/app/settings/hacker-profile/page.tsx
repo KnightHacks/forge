@@ -6,8 +6,8 @@ import { auth } from "@forge/auth";
 import { DISCORD } from "@forge/consts";
 import { Separator } from "@forge/ui/separator";
 
-import { api, HydrateClient } from "~/trpc/server";
 import { HackerProfileForm } from "~/app/_components/settings/hacker-profile-form";
+import { api, HydrateClient } from "~/trpc/server";
 
 export default async function SettingsProfilePage() {
   const session = await auth();

@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@forge/auth";
 import { Separator } from "@forge/ui/separator";
 
-import { api, HydrateClient } from "~/trpc/server";
 import { MemberProfileForm } from "~/app/_components/settings/member-profile-form";
+import { api, HydrateClient } from "~/trpc/server";
 
 export default async function SettingsProfilePage() {
   const session = await auth();

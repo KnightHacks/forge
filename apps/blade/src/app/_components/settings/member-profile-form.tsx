@@ -32,9 +32,9 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import type { api as serverCaller } from "~/trpc/server";
-import { api } from "~/trpc/react";
 import { MemberAppCard } from "~/app/_components/option-cards";
 import DeleteMemberButton from "~/app/_components/settings/delete-member-button";
+import { api } from "~/trpc/react";
 
 export function MemberProfileForm({
   data,
