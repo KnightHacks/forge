@@ -2,10 +2,10 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth/server";
 
+import FormNotFound from "~/app/_components/forms/form-not-found";
+import { FormReviewWrapper } from "~/app/_components/forms/form-view-edit-client";
+import ResponseNotFound from "~/app/_components/forms/response-not-found";
 import { api, HydrateClient } from "~/trpc/server";
-import FormNotFound from "../_components/form-not-found";
-import { FormReviewWrapper } from "../_components/form-view-edit-client";
-import ResponseNotFound from "../_components/response-not-found";
 
 function serializeSearchParams(
   searchParams: Record<string, string | string[] | undefined>,

@@ -1,7 +1,8 @@
 import React from "react";
 import Link from "next/link";
 
-import { Separator } from "../ui/separator";
+import { Separator } from "@forge/ui/separator";
+
 import { footerLinks, footerMessage } from "./footerContent";
 
 export default function Footer() {

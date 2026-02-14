@@ -5,10 +5,10 @@ import { auth } from "@forge/auth";
 import { Button } from "@forge/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@forge/ui/dialog";
 
+import RoleEdit from "~/app/_components/admin/roles/roleedit";
+import RoleTable from "~/app/_components/admin/roles/roletable";
 import { SIGN_IN_PATH } from "~/consts";
 import { api } from "~/trpc/server";
-import RoleEdit from "./_components/roleedit";
-import RoleTable from "./_components/roletable";
 
 export default async function Roles() {
   const session = await auth();

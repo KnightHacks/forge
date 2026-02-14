@@ -157,15 +157,15 @@ Replace `@forge/blade` with any app name.
 
 When running the apps, they will be available at the following ports:
 
-| App | Package Name | Port | URL | Description |
-|-----|-------------|------|-----|-------------|
-| Blade | `@forge/blade` | 3000 | http://localhost:3000 | Main monolithic app (membership, hacker registration, dues, events) |
-| Club | `@forge/club` | 3001 | http://localhost:3001 | Club site (frontend only) |
-| 2025 | `@forge/2025` | 3002 | http://localhost:3002 | Knight Hacks VIII 2025 hackathon site (frontend only) |
-| Guild | `@forge/guild` | 3003 | http://localhost:3003 | Member networking site (Knight Hacks LinkedIn) |
-| GemiKnights | `@forge/gemiknights` | 3005 | http://localhost:3005 | GemiKnights 2025 hackathon site (frontend only) |
-| TK | `@forge/tk` | N/A | N/A | Discord bot for Knight Hacks server |
-| Cron | `@forge/cron` | N/A | N/A | Cron job server |
+| App         | Package Name         | Port | URL                   | Description                                                         |
+| ----------- | -------------------- | ---- | --------------------- | ------------------------------------------------------------------- |
+| Blade       | `@forge/blade`       | 3000 | http://localhost:3000 | Main monolithic app (membership, hacker registration, dues, events) |
+| Club        | `@forge/club`        | 3001 | http://localhost:3001 | Club site (frontend only)                                           |
+| 2025        | `@forge/2025`        | 3002 | http://localhost:3002 | Knight Hacks VIII 2025 hackathon site (frontend only)               |
+| Guild       | `@forge/guild`       | 3003 | http://localhost:3003 | Member networking site (Knight Hacks LinkedIn)                      |
+| GemiKnights | `@forge/gemiknights` | 3005 | http://localhost:3005 | GemiKnights 2025 hackathon site (frontend only)                     |
+| TK          | `@forge/tk`          | N/A  | N/A                   | Discord bot for Knight Hacks server                                 |
+| Cron        | `@forge/cron`        | N/A  | N/A                   | Cron job server                                                     |
 
 ## What Works Locally
 

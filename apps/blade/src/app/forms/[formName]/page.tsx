@@ -8,10 +8,10 @@ import { log } from "@forge/api/utils";
 import { auth } from "@forge/auth/server";
 import { Card } from "@forge/ui/card";
 
+import FormNotFound from "~/app/_components/forms/form-not-found";
+import { FormResponderWrapper } from "~/app/_components/forms/form-responder-client";
 import { extractProcedures } from "~/lib/utils";
 import { api, HydrateClient } from "~/trpc/server";
-import FormNotFound from "./_components/form-not-found";
-import { FormResponderWrapper } from "./_components/form-responder-client";
 
 export async function generateMetadata({
   params,

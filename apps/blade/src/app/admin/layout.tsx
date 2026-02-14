@@ -1,4 +1,4 @@
-import { SessionNavbar } from "../_components/navigation/session-navbar";
+import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
 
 export default function AdminLayout(props: { children: React.ReactNode }) {
   return (
