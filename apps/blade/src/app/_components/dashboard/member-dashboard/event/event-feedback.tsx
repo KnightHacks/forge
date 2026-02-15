@@ -6,7 +6,7 @@ import type { InsertMember, SelectEvent } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@forge/ui/dialog";
 
-import { FormResponderWrapper } from "~/app/forms/[formName]/_components/form-responder-client";
+import { FormResponderWrapper } from "~/app/_components/forms/form-responder-client";
 
 export function EventFeedbackForm({
   event,
