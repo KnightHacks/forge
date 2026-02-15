@@ -101,6 +101,10 @@ export default async function MemberDashboard({
 
   const isAlumni = calcAlumniStatus(member.gradDate, member);
 
+  await Promise.all(
+    events.value.map((e) => api.event.ensureForm({ eventId: e.id })),
+  );
+
   return (
     <div className="flex-col md:flex">
       <div className="flex-1 space-y-4">

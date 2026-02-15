@@ -21,7 +21,7 @@ export function FormQRCodeDialog({
   const formUrl =
     typeof window !== "undefined"
       ? // make the qr a url to the form forms/<slug name of form>
-        `${window.location.origin}/forms/${formSlug}`
+        `${window.location.origin}/forms/${encodeURIComponent(formSlug)}`
       : "";
 
   useEffect(() => {
