@@ -1,6 +1,6 @@
 "use client";
 
-import useScrollAnimation from "../hooks/useScrollAnimation";
+import useScrollAnimation from "~/hooks/useScrollAnimation";
 import TextBox from "../textbox";
 import Comic from "./comic";
 
@@ -11,7 +11,7 @@ export default function Tracks() {
     <section
       id="tracks"
       ref={tracksRef}
-      className="animate-on-scroll z-10 mt-0 mb-[50px] flex min-h-[800px] flex-col items-center space-y-1 overflow-x-hidden pt-0 sm:mt-40 sm:mb-20 sm:min-h-0 sm:space-y-2 sm:pt-0 md:space-y-3 lg:mb-32 xl:mb-40"
+      className="animate-on-scroll z-10 mt-0 mb-12.5 flex min-h-200 flex-col items-center space-y-1 overflow-x-hidden pt-0 sm:mt-40 sm:mb-20 sm:min-h-0 sm:space-y-2 sm:pt-0 md:space-y-3 lg:mb-32 xl:mb-40"
     >
       <div className="flex w-full flex-col items-center pt-0 sm:pt-12 md:pt-16 lg:pt-20 xl:pt-24">
         <div className="relative w-[95%] sm:w-[90%] md:w-[80%] lg:w-[70%] xl:w-[60%]">

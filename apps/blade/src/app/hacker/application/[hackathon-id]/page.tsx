@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 
 import { auth, signIn } from "@forge/auth/server";
 
+import { HackerFormPage } from "~/app/_components/dashboard/hacker/hacker-application-form";
 import { api } from "~/trpc/server";
-import { HackerFormPage } from "../_components/hacker-application-form";
 
 export const metadata: Metadata = {
   title: "Blade | Hacker Application",

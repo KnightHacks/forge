@@ -5,7 +5,7 @@ import { ChevronDownIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import useStaggeredAnimation from "../hooks/useStaggeredAnimation";
+import useStaggeredAnimation from "~/hooks/useStaggeredAnimation";
 
 /* Radix aliases ----------------------------------------------------------- */
 const Accordion = AccordionPrimitive.Root;
@@ -375,7 +375,7 @@ export default function Faq() {
         <div className="w-full px-4 py-4 sm:px-2">
           <div className="mx-auto max-w-4xl">
             {/* Fixed height container to prevent background shifting */}
-            <div className="min-h-[1000px] sm:min-h-[1100px] md:min-h-[1200px] lg:min-h-[1300px]">
+            <div className="min-h-250 sm:min-h-275 md:min-h-300 lg:min-h-325">
               <Accordion type="single" collapsible className="w-full space-y-4">
                 {filteredFaqData.map((faq) => (
                   <div key={faq.id} className="stagger-item animate-pop-out">

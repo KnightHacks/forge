@@ -12,8 +12,8 @@ import {
 } from "@forge/ui/card";
 import { Separator } from "@forge/ui/separator";
 
+import { ProjectsTable } from "~/app/_components/judge/projects-table";
 import { api } from "~/trpc/server";
-import { ProjectsTable } from "../_components/projects-table";
 
 export default async function Page() {
   const isJudge = await api.auth.getJudgeStatus();

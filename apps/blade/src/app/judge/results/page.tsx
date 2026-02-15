@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
+import ResultsTable from "~/app/_components/judge/results-table";
 import { api, HydrateClient } from "~/trpc/server";
-import ResultsTable from "./_components/results-table";
 
 export default async function ResultsDashboard() {
   const hasAccess = await api.roles.hasPermission({

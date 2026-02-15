@@ -1,0 +1,48 @@
+"use client";
+
+import AgeBarChart from "~/app/_components/admin/charts/AgeBarChart";
+import MajorBarChart from "~/app/_components/admin/charts/MajorBarChart";
+import RaceOrEthnicityPie from "~/app/_components/admin/charts/RaceOrEthnicityPie";
+import SchoolYearPie from "~/app/_components/admin/charts/SchoolYearPie";
+import { api } from "~/trpc/react";
+import DuesOverTimeBarChart from "./member-data/DuesOverTimeBarChart";
+import EngagementInfo from "./member-data/EngagementInfo";
+import GenderPie from "./member-data/GenderPie";
+import SchoolBarChart from "./member-data/SchoolBarChart";
+import ShirtSizePie from "./member-data/ShirtSizePie";
+import YearOfStudyPie from "./member-data/YearOfStudyPie";
+
+export default function MemberDemographics() {
+  const { data: members } = api.member.getMembers.useQuery();
+  const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
+  const { data: events } = api.event.getEvents.useQuery();
+  const { data: duesPaymentDates } =
+    api.duesPayment.getDuesPaymentDates.useQuery();
+  const { data: memberAttendance } =
+    api.member.getMemberAttendanceCounts.useQuery();
+
+  return (
+    <div className="my-6">
+      {members && duesPayingStatus && memberAttendance && duesPaymentDates && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
+          <EngagementInfo
+            members={members}
+            events={events ?? []}
+            numDuesPaying={duesPayingStatus.length}
+            memberAttendance={memberAttendance}
+          />
+
+          <DuesOverTimeBarChart duesPaymentDates={duesPaymentDates} />
+          <AgeBarChart people={members} />
+          <YearOfStudyPie members={members} />
+          <GenderPie members={members} />
+          <RaceOrEthnicityPie people={members} />
+          <SchoolYearPie people={members} />
+          <SchoolBarChart members={members} />
+          <MajorBarChart people={members} />
+          <ShirtSizePie members={members} />
+        </div>
+      )}
+    </div>
+  );
+}

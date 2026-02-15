@@ -1,5 +1,5 @@
-import Header from "./_components/header";
-import Officers from "./_components/officers";
+import Header from "~/app/_components/officers/header";
+import Officers from "~/app/_components/officers/officers";
 
 export default function officers() {
   return (

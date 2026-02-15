@@ -5,8 +5,8 @@ import { XCircle } from "lucide-react";
 import { auth } from "@forge/auth/server";
 import { Card } from "@forge/ui/card";
 
+import { FormResponderWrapper } from "~/app/_components/forms/form-responder-client";
 import { api, HydrateClient } from "~/trpc/server";
-import { FormResponderWrapper } from "./_components/form-responder-client";
 
 export async function generateMetadata({
   params,
