@@ -4,11 +4,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 /* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import confetti from "canvas-confetti";
 import { Sparkles, Trophy, Volume2, VolumeX } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
@@ -233,21 +232,6 @@ export default function RaffleDraw({ entries }: { entries: RaffleEntry[] }) {
         const finalEntry = visibleEntries[mid];
         setWinner(finalEntry ?? null);
         playWinnerSound();
-
-        // Confetti
-        if (containerRef.current) {
-          const rect = containerRef.current.getBoundingClientRect();
-          void confetti({
-            particleCount: 150,
-            spread: 90,
-            origin: {
-              x:
-                rect.left / window.innerWidth +
-                rect.width / window.innerWidth / 2,
-              y: rect.top / window.innerHeight,
-            },
-          });
-        }
       }
     }, animationSpeed);
 

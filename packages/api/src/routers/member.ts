@@ -353,10 +353,20 @@ export const memberRouter = {
     .query(async ({ input, ctx }) => {
       controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
-      const currentPage = input?.currentPage ?? 1;
-      const pageSize = input?.pageSize ?? 10;
+      if (
+        typeof input?.currentPage === "undefined" &&
+        typeof input?.pageSize === "undefined" &&
+        typeof input?.searchTerm === "undefined" &&
+        typeof input?.schoolFilter === "undefined" &&
+        typeof input?.majorFilter === "undefined"
+      ) {
+        return db.query.Member.findMany();
+      }
+
+      const currentPage = input.currentPage ?? 1;
+      const pageSize = input.pageSize ?? 10;
       const offset = (currentPage - 1) * pageSize;
-      const searchPattern = `%${input?.searchTerm ?? ""}%`;
+      const searchPattern = `%${input.searchTerm ?? ""}%`;
 
       // Build the base query
       let query = db.select().from(Member);
@@ -364,7 +374,7 @@ export const memberRouter = {
       // Build conditions array
       const conditions = [];
 
-      if (input?.searchTerm && input.searchTerm.length > 0) {
+      if (input.searchTerm && input.searchTerm.length > 0) {
         conditions.push(
           or(
             ilike(Member.firstName, searchPattern),
@@ -377,7 +387,7 @@ export const memberRouter = {
         );
       }
 
-      if (input?.schoolFilter) {
+      if (input.schoolFilter) {
         conditions.push(
           eq(
             Member.school,
@@ -386,7 +396,7 @@ export const memberRouter = {
         );
       }
 
-      if (input?.majorFilter) {
+      if (input.majorFilter) {
         conditions.push(
           eq(
             Member.major,
@@ -400,7 +410,7 @@ export const memberRouter = {
       }
 
       // Sorting
-      if (input?.sortByTime) {
+      if (input.sortByTime) {
         query = query.orderBy(
           input.sortOrder === "desc"
             ? desc(Member.dateCreated)
@@ -409,7 +419,7 @@ export const memberRouter = {
             ? desc(Member.timeCreated)
             : asc(Member.timeCreated),
         ) as typeof query;
-      } else if (input?.sortField && input.sortOrder) {
+      } else if (input.sortField && input.sortOrder) {
         const sortColumn = Member[input.sortField];
         query = query.orderBy(
           input.sortOrder === "asc" ? asc(sortColumn) : desc(sortColumn),

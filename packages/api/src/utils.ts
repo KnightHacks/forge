@@ -10,14 +10,11 @@ import Stripe from "stripe";
 import z from "zod";
 
 import type { Session } from "@forge/auth/server";
+import type { Form } from "@forge/db/schemas/knight-hacks";
 import { DISCORD, EVENTS, FORMS, MINIO, PERMISSIONS } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { JudgeSession, Roles } from "@forge/db/schemas/auth";
-import {
-  Form,
-  FormSchemaSchema,
-  FormsSchemas,
-} from "@forge/db/schemas/knight-hacks";
+import { FormSchemaSchema, FormsSchemas } from "@forge/db/schemas/knight-hacks";
 import { client } from "@forge/email";
 
 import { env } from "./env";
