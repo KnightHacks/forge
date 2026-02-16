@@ -125,6 +125,7 @@ Shared constants used across the repository.
 - `Hacker`: Full profile for hackathon participants (national students)
 
 A single `User` can be both a `Member` and a `Hacker`. We separate these because Knight Hacks serves two distinct audiences:
+
 - Local club members at UCF
 - National students attending our 1000+ person annual hackathon
 

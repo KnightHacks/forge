@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
-import { CreateFormCard } from "~/components/forms/create-form-card";
-import { FormCard } from "~/components/forms/form-card";
-import { SectionManagerDialog } from "~/components/forms/section-manager-dialog";
+import { CreateFormCard } from "~/app/_components/forms/shared/create-form-card";
+import { FormCard } from "~/app/_components/forms/shared/form-card";
+import { SectionManagerDialog } from "~/app/_components/forms/shared/section-manager-dialog";
 import { api } from "~/trpc/react";
 
 export default function FormsClient() {

@@ -57,7 +57,7 @@ export const myRouter = {
     .mutation(async ({ input, ctx }) => {
       // Check if user has the required permission
       controlPerms.or(["MANAGE_EVENTS"], ctx);
-      
+
       return await db.delete(Events).where(eq(Events.id, input.eventId));
     }),
 };
@@ -117,12 +117,11 @@ For admin pages, use the permissions router to check if a user can access a page
 // If someone has edit rights, they need to see the page
 // Same is true for read-only access
 export const pageRouter = {
-  canAccessEventsPage: permProcedure
-    .query(async ({ ctx }) => {
-      // Will throw UNAUTHORIZED if they don't have either permission
-      controlPerms.or(["VIEW_EVENTS", "MANAGE_EVENTS"], ctx);
-      return { canAccess: true };
-    }),
+  canAccessEventsPage: permProcedure.query(async ({ ctx }) => {
+    // Will throw UNAUTHORIZED if they don't have either permission
+    controlPerms.or(["VIEW_EVENTS", "MANAGE_EVENTS"], ctx);
+    return { canAccess: true };
+  }),
 };
 ```
 
@@ -222,21 +221,24 @@ Every mutation must wrap its logic in a try-catch block with appropriate logging
 ```typescript
 export const myRouter = {
   updateMember: permProcedure
-    .input(z.object({
-      memberId: z.string(),
-      name: z.string(),
-    }))
+    .input(
+      z.object({
+        memberId: z.string(),
+        name: z.string(),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
       try {
         // Check permissions
         controlPerms.or(["MANAGE_MEMBERS"], ctx);
-        
+
         // Perform the action
-        const result = await db.update(Members)
+        const result = await db
+          .update(Members)
           .set({ name: input.name })
           .where(eq(Members.id, input.memberId))
           .returning();
-        
+
         // Log success
         await log({
           title: "Member Updated",
@@ -244,7 +246,7 @@ export const myRouter = {
           color: "success_green",
           userId: ctx.session.user.discordUserId,
         });
-        
+
         return result;
       } catch (error) {
         // Log failure
@@ -254,7 +256,7 @@ export const myRouter = {
           color: "uhoh_red",
           userId: ctx.session.user.discordUserId,
         });
-        
+
         // Re-throw to let tRPC handle the error response
         throw error;
       }
@@ -284,37 +286,35 @@ export const myRouter = {
         where: eq(Members.id, input.id),
       });
     }),
-    
+
   // Sensitive query - should be logged
-  exportAllMemberData: permProcedure
-    .query(async ({ ctx }) => {
-      try {
-        controlPerms.or(["EXPORT_DATA"], ctx);
-        
-        const data = await db.query.Members.findMany();
-        
-        await log({
-          title: "Member Data Exported",
-          message: `Exported ${data.length} member records`,
-          color: "blade_purple",
-          userId: ctx.session.user.discordUserId,
-        });
-        
-        return data;
-      } catch (error) {
-        await log({
-          title: "Member Export Failed",
-          message: `Failed to export member data: ${error instanceof Error ? error.message : "Unknown error"}`,
-          color: "uhoh_red",
-          userId: ctx.session.user.discordUserId,
-        });
-        
-        throw error;
-      }
-    }),
+  exportAllMemberData: permProcedure.query(async ({ ctx }) => {
+    try {
+      controlPerms.or(["EXPORT_DATA"], ctx);
+
+      const data = await db.query.Members.findMany();
+
+      await log({
+        title: "Member Data Exported",
+        message: `Exported ${data.length} member records`,
+        color: "blade_purple",
+        userId: ctx.session.user.discordUserId,
+      });
+
+      return data;
+    } catch (error) {
+      await log({
+        title: "Member Export Failed",
+        message: `Failed to export member data: ${error instanceof Error ? error.message : "Unknown error"}`,
+        color: "uhoh_red",
+        userId: ctx.session.user.discordUserId,
+      });
+
+      throw error;
+    }
+  }),
 };
 ```
-
 
 ## Best Practices
 
@@ -332,14 +332,14 @@ Every mutation must log both success and failure. No exceptions.
 .mutation(async ({ input, ctx }) => {
   try {
     const result = await db.update(Something).set(input);
-    
+
     await log({
       title: "Something Updated",
       message: `Updated something with ID ${input.id}`,
       color: "success_green",
       userId: ctx.session.user.discordUserId,
     });
-    
+
     return result;
   } catch (error) {
     await log({
@@ -348,7 +348,7 @@ Every mutation must log both success and failure. No exceptions.
       color: "uhoh_red",
       userId: ctx.session.user.discordUserId,
     });
-    
+
     throw error;
   }
 });
@@ -393,14 +393,14 @@ import { TRPCError } from "@trpc/server";
 
 try {
   const found = await db.query.Something.findFirst();
-  
+
   if (!found) {
     throw new TRPCError({
       code: "NOT_FOUND",
       message: "Resource not found",
     });
   }
-  
+
   // ... rest of logic
 } catch (error) {
   await log({
@@ -409,7 +409,7 @@ try {
     color: "uhoh_red",
     userId: ctx.session.user.discordUserId,
   });
-  
+
   throw error;
 }
 ```
@@ -438,13 +438,13 @@ export const complexRouter = {
     .mutation(async ({ input, ctx }) => {
       // Check permissions first
       controlPerms.or(["COMPLEX_PERMISSION"], ctx);
-      
+
       // Step 1: Fetch related data
       const data = await db.query.Something.findFirst();
-      
+
       // Step 2: Process based on business logic
       // Note: We do X because of Y business requirement
-      
+
       // Step 3: Update database
       // ...
     }),

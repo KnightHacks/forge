@@ -1,4 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
@@ -84,10 +85,11 @@ export const miscRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      if (FORMS.ALLOWED_ASSIGNABLE_DISCORD_ROLES.includes(input.roleId)) {
-        throw new Error(
-          `Roleid: ${input.roleId} is not assignable through forms for security purposes. Add to consts and make a PR if this is a mistake.`,
-        );
+      if (!FORMS.ALLOWED_ASSIGNABLE_DISCORD_ROLES.includes(input.roleId)) {
+        throw new TRPCError({
+          message: `Roleid: ${input.roleId} is not assignable through forms for security purposes. Add to consts and make a PR if this is a mistake.`,
+          code: "INTERNAL_SERVER_ERROR",
+        });
       }
 
       try {
@@ -99,10 +101,12 @@ export const miscRouter = {
             input.roleId,
           ),
         );
-      } catch {
-        throw new Error(
-          `Could not assign role ${input.roleId} to user ${ctx.session.user.name}`,
-        );
+      } catch (err) {
+        throw new TRPCError({
+          message: `Could not assign role ${input.roleId} to user ${ctx.session.user.name}`,
+          cause: err,
+          code: "INTERNAL_SERVER_ERROR",
+        });
       }
     }),
 

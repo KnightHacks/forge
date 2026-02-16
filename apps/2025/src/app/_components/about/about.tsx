@@ -1,6 +1,6 @@
 "use client";
 
-import useScrollAnimation from "../hooks/useScrollAnimation";
+import useScrollAnimation from "~/hooks/useScrollAnimation";
 import AboutComicSVG from "./about-comic-svg";
 import AboutText from "./about-text";
 
@@ -11,7 +11,7 @@ export default function About() {
   return (
     <section
       id="about"
-      className="z-10 mt-0 mb-[150px] flex min-h-[1200px] w-full justify-center px-4 pt-0 sm:mb-0 sm:min-h-0 sm:px-6 sm:pt-8 md:px-8 md:pt-8 lg:px-12 lg:pt-12"
+      className="z-10 mt-0 mb-37.5 flex min-h-300 w-full justify-center px-4 pt-0 sm:mb-0 sm:min-h-0 sm:px-6 sm:pt-8 md:px-8 md:pt-8 lg:px-12 lg:pt-12"
     >
       <div className="relative w-[95%] sm:w-[90%] md:w-[80%] lg:w-[70%] xl:w-[60%]">
         <h2 className="sr-only">About Knight Hacks</h2>
