@@ -54,7 +54,7 @@ export default function MemberTable() {
   const isFirstRender = useRef(true);
   const stableRefs = useRef({ currentPage, searchParams, router });
 
-  // Sole purpose is to get rid of lintin error I keep getting :(
+  // Sole purpose is to get rid of linting error I keep getting :(
   useEffect(() => {
     stableRefs.current = { currentPage, searchParams, router };
   });
