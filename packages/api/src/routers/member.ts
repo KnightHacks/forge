@@ -358,8 +358,8 @@ export const memberRouter = {
         input?.pageSize === undefined &&
         input?.searchTerm === undefined &&
         input?.schoolFilter === undefined &&
-        input?.majorFilter === undefined && 
-        input?.sortField === undefined && 
+        input?.majorFilter === undefined &&
+        input?.sortField === undefined &&
         input?.sortByTime === undefined
       ) {
         return db.query.Member.findMany();
