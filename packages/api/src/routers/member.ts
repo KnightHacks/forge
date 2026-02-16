@@ -354,11 +354,13 @@ export const memberRouter = {
       controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
       if (
-        typeof input?.currentPage === "undefined" &&
-        typeof input?.pageSize === "undefined" &&
-        typeof input?.searchTerm === "undefined" &&
-        typeof input?.schoolFilter === "undefined" &&
-        typeof input?.majorFilter === "undefined"
+        input?.currentPage === undefined &&
+        input?.pageSize === undefined &&
+        input?.searchTerm === undefined &&
+        input?.schoolFilter === undefined &&
+        input?.majorFilter === undefined && 
+        input?.sortField === undefined && 
+        input?.sortByTime === undefined
       ) {
         return db.query.Member.findMany();
       }
