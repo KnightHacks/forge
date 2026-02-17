@@ -332,7 +332,7 @@ export const memberRouter = {
       z
         .object({
           currentPage: z.number().min(1).optional(),
-          pageSize: z.number().min(1).max(100).optional(),
+          pageSize: z.number().min(1).optional(),
           searchTerm: z.string().optional(),
           sortField: z
             .enum([
@@ -362,7 +362,16 @@ export const memberRouter = {
         input?.sortField === undefined &&
         input?.sortByTime === undefined
       ) {
-        return db.query.Member.findMany();
+        return db.query.Member.findMany({
+          orderBy: (member, { asc }) => asc(member.id),
+        });
+      }
+
+      // Optional choice pageSize = Infinity
+      if (input.pageSize === Infinity) {
+        return db.query.Member.findMany({
+          orderBy: (member, { asc }) => asc(member.id),
+        });
       }
 
       const currentPage = input.currentPage ?? 1;
