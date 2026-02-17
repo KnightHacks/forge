@@ -44,6 +44,7 @@ export const auth = betterAuth({
     discord: {
       clientId: env.DISCORD_CLIENT_ID,
       clientSecret: env.DISCORD_CLIENT_SECRET,
+      scope: ["guilds.join"],
       mapProfileToUser: (profile) => {
         return {
           id: randomUUID(),
