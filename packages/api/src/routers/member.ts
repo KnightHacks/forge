@@ -330,47 +330,48 @@ export const memberRouter = {
   getMembers: permProcedure
     .input(
       z
-        .object({
-          currentPage: z.number().min(1).optional(),
-          pageSize: z.number().min(1).optional(),
-          searchTerm: z.string().optional(),
-          sortField: z
-            .enum([
-              "firstName",
-              "lastName",
-              "email",
-              "discordUser",
-              "dateCreated",
-            ])
-            .optional(),
-          sortOrder: z.enum(["desc", "asc"]).optional(),
-          sortByTime: z.boolean().optional(),
-          schoolFilter: z.string().optional(),
-          majorFilter: z.string().optional(),
-        })
+        .union([
+          z.object({
+            fetchAll: z.literal(true),
+          }),
+          z.object({
+            fetchAll: z.literal(false).optional(),
+            currentPage: z.number().min(1).optional(),
+            pageSize: z.number().min(1).optional(),
+            searchTerm: z.string().optional(),
+            sortField: z
+              .enum([
+                "firstName",
+                "lastName",
+                "email",
+                "discordUser",
+                "dateCreated",
+              ])
+              .optional(),
+            sortOrder: z.enum(["desc", "asc"]).optional(),
+            sortByTime: z.boolean().optional(),
+            schoolFilter: z.string().optional(),
+            majorFilter: z.string().optional(),
+          }),
+        ])
         .optional(),
     )
     .query(async ({ input, ctx }) => {
       controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
+      // If theres a fetch all flag set to true OR no inputs are passed in get all members
       if (
-        input?.currentPage === undefined &&
-        input?.pageSize === undefined &&
-        input?.searchTerm === undefined &&
-        input?.schoolFilter === undefined &&
-        input?.majorFilter === undefined &&
-        input?.sortField === undefined &&
-        input?.sortByTime === undefined
+        input?.fetchAll ||
+        (input?.currentPage === undefined &&
+          input?.pageSize === undefined &&
+          input?.searchTerm === undefined &&
+          input?.schoolFilter === undefined &&
+          input?.majorFilter === undefined &&
+          input?.sortField === undefined &&
+          input?.sortByTime === undefined)
       ) {
         return db.query.Member.findMany({
-          orderBy: (member, { asc }) => asc(member.id),
-        });
-      }
-
-      // Optional choice pageSize = Infinity
-      if (input.pageSize === Infinity) {
-        return db.query.Member.findMany({
-          orderBy: (member, { asc }) => asc(member.id),
+          orderBy: asc(Member.id),
         });
       }
 

@@ -14,7 +14,7 @@ import YearOfStudyPie from "./member-data/YearOfStudyPie";
 
 export default function MemberDemographics() {
   const { data: members } = api.member.getMembers.useQuery({
-    pageSize: Infinity,
+    fetchAll: true,
   });
   const { data: duesPayingStatus } = api.member.getDuesPayingMembers.useQuery();
   const { data: events } = api.event.getEvents.useQuery();
