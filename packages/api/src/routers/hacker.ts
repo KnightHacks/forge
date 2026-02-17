@@ -1036,6 +1036,18 @@ export const hackerRouter = {
       const currentPage = input.currentPage ?? 1;
       const pageSize = input.pageSize ?? 10;
       const offset = (currentPage - 1) * pageSize;
+      const conditions = [eq(HackerAttendee.hackathonId, input.hackathonId)];
+      if (input.searchTerm && input.searchTerm.length > 0) {
+        const searchPattern = `%${input.searchTerm}%`;
+        const searchCondition = or(
+          ilike(Hacker.firstName, searchPattern),
+          ilike(Hacker.lastName, searchPattern),
+          ilike(Hacker.email, searchPattern),
+          ilike(Hacker.discordUser, searchPattern),
+          sql`CONCAT(${Hacker.firstName}, ' ', ${Hacker.lastName}) ILIKE ${searchPattern}`,
+        );
+        if (searchCondition) conditions.push(searchCondition);
+      }
       return await db
         .select({
           id: Hacker.id,
@@ -1052,10 +1064,39 @@ export const hackerRouter = {
         })
         .from(Hacker)
         .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
-        .where(eq(HackerAttendee.hackathonId, input.hackathonId))
+        .where(and(...conditions))
         .orderBy(asc(Hacker.id))
         .offset(offset)
         .limit(pageSize);
+    }),
+
+  getHackerCount: permProcedure
+    .input(
+      z.object({
+        hackathonId: z.string(),
+        searchTerm: z.string().optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      controlPerms.or(["READ_HACKERS", "CHECK_HACK_EVENT"], ctx);
+      const conditions = [eq(HackerAttendee.hackathonId, input.hackathonId)];
+      if (input.searchTerm && input.searchTerm.length > 0) {
+        const searchPattern = `%${input.searchTerm}%`;
+        const searchCondition = or(
+          ilike(Hacker.firstName, searchPattern),
+          ilike(Hacker.lastName, searchPattern),
+          ilike(Hacker.email, searchPattern),
+          ilike(Hacker.discordUser, searchPattern),
+          sql`CONCAT(${Hacker.firstName}, ' ', ${Hacker.lastName}) ILIKE ${searchPattern}`,
+        );
+        if (searchCondition) conditions.push(searchCondition);
+      }
+      const result = await db
+        .select({ count: count() })
+        .from(Hacker)
+        .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+        .where(and(...conditions));
+      return result[0]?.count ?? 0;
     }),
 
   eventCheckIn: permProcedure
