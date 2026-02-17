@@ -1047,6 +1047,8 @@ export const hackerRouter = {
           sql`CONCAT(${Hacker.firstName}, ' ', ${Hacker.lastName}) ILIKE ${searchPattern}`,
         );
         if (searchCondition) conditions.push(searchCondition);
+        if (input.statusFilter)
+          conditions.push(eq(HackerAttendee.status, input.statusFilter));
       }
       return await db
         .select({
@@ -1075,10 +1077,20 @@ export const hackerRouter = {
       z.object({
         hackathonId: z.string(),
         searchTerm: z.string().optional(),
+        statusFilter: z
+          .enum([
+            "pending",
+            "accepted",
+            "confirmed",
+            "withdrawn",
+            "denied",
+            "waitlisted",
+          ])
+          .optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
-      controlPerms.or(["READ_HACKERS", "CHECK_HACK_EVENT"], ctx);
+      controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
       const conditions = [eq(HackerAttendee.hackathonId, input.hackathonId)];
       if (input.searchTerm && input.searchTerm.length > 0) {
         const searchPattern = `%${input.searchTerm}%`;
@@ -1090,6 +1102,8 @@ export const hackerRouter = {
           sql`CONCAT(${Hacker.firstName}, ' ', ${Hacker.lastName}) ILIKE ${searchPattern}`,
         );
         if (searchCondition) conditions.push(searchCondition);
+        if (input.statusFilter)
+          conditions.push(eq(HackerAttendee.status, input.statusFilter));
       }
       const result = await db
         .select({ count: count() })
