@@ -64,14 +64,19 @@ export const auth = betterAuth({
     session: {
       create: {
         after: async (session) => {
-          const user = await db.query.User.findFirst({
-            where: eq(User.id, session.userId),
-          });
+          try {
+            const user = await db.query.User.findFirst({
+              where: eq(User.id, session.userId),
+            });
 
           const discordUserId = user?.discordUserId;
           if (!discordUserId) return;
 
           void handleDiscordOAuthCallback(discordUserId);
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error("Error in Discord auto join hook:", error);
+          }
         },
       },
     },
