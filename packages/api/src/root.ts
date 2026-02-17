@@ -9,7 +9,7 @@ import { eventFeedbackRouter } from "./routers/event-feedback";
 import { formsRouter } from "./routers/forms";
 import { guildRouter } from "./routers/guild";
 import { hackathonRouter } from "./routers/hackathon";
-import { hackerRouter } from "./routers/hacker";
+import { hackerRouter } from "./routers/hackers/index";
 import { judgeRouter } from "./routers/judge";
 import { memberRouter } from "./routers/member";
 import { miscRouter } from "./routers/misc";
