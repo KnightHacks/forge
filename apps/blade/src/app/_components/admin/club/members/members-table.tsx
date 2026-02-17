@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
 
@@ -50,7 +50,26 @@ export default function MemberTable() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const currentPage = Math.max(1, Number(searchParams.get("page")) || 1);
-  const debounceSearchTerm = useDebounce(searchTerm, 250);
+  const debounceSearchTerm = useDebounce(searchTerm, 500);
+  const isFirstRender = useRef(true);
+  const stableRefs = useRef({ currentPage, searchParams, router });
+
+  // Sole purpose is to get rid of linting error I keep getting :(
+  useEffect(() => {
+    stableRefs.current = { currentPage, searchParams, router };
+  });
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (stableRefs.current.currentPage !== 1) {
+      const params = new URLSearchParams(stableRefs.current.searchParams);
+      params.set("page", "1");
+      stableRefs.current.router.replace("?" + params.toString());
+    }
+  }, [debounceSearchTerm]);
 
   const membersQuery = api.member.getMembers.useQuery({
     currentPage,
@@ -71,7 +90,7 @@ export default function MemberTable() {
   const schoolsQuery = api.member.getDistinctSchools.useQuery();
   const majorsQuery = api.member.getDistinctMajors.useQuery();
 
-  const isLoading =
+  const isInitialLoading =
     membersQuery.isLoading ||
     totalCountQuery.isLoading ||
     duesQuery.isLoading ||
@@ -84,10 +103,6 @@ export default function MemberTable() {
     duesQuery.error ||
     schoolsQuery.error ||
     majorsQuery.error;
-
-  // Include Skeletons for future ticket
-  if (isLoading) return <div>Loading members...</div>;
-  if (hasError) return <div>Failed to load members.</div>;
 
   const members = membersQuery.data ?? [];
   const totalCount = totalCountQuery.data ?? 0;
@@ -124,37 +139,28 @@ export default function MemberTable() {
   return (
     <div>
       <div className="border-b pb-2">
-        <div className="flex items-center gap-2 pb-2">
-          <div>
+        <div className="flex flex-col gap-2 pb-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex items-center gap-2">
             <Button className="flex flex-row gap-1" onClick={toggleTimeSort}>
               <Clock />
               {timeSortOrder === "asc" && <ArrowUp />}
               {timeSortOrder === "desc" && <ArrowDown />}
             </Button>
-          </div>
-          <div>
             <CustomPaginationSelect
               pageSize={pageSize}
               onPageSizeChange={handlePageSizeChange}
             />
           </div>
-          <div className="relative w-full">
+          <div className="relative w-full sm:min-w-[150px] sm:flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search members..."
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                if (currentPage !== 1) {
-                  const params = new URLSearchParams(searchParams);
-                  params.set("page", "1");
-                  router.push("?" + params.toString());
-                }
-              }}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8"
             />
           </div>
-          <div>
+          <div className="flex items-center gap-2">
             <ResponsiveComboBox
               items={["All Schools", ...schools]}
               renderItem={(school) => <span>{school}</span>}
@@ -169,8 +175,6 @@ export default function MemberTable() {
               buttonPlaceholder="All Schools"
               inputPlaceholder="Search schools..."
             />
-          </div>
-          <div>
             <ResponsiveComboBox
               items={["All Majors", ...majors]}
               renderItem={(major) => <span>{major}</span>}
@@ -260,41 +264,55 @@ export default function MemberTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {members.map((member) => (
-            <TableRow key={member.id}>
-              <TableCell className="text-center font-medium">
-                {member.firstName}
-              </TableCell>
-              <TableCell className="text-center font-medium">
-                {member.lastName}
-              </TableCell>
-              <TableCell className="text-center font-medium">
-                {member.discordUser}
-              </TableCell>
-              <TableCell className="font-medium">{member.email}</TableCell>
-              <TableCell className="text-center font-medium">
-                {duesMap.has(member.id) ? "Yes" : "No"}
-              </TableCell>
-              <TableCell className="text-center">
-                {member.company ?? ""}
-              </TableCell>
-              <TableCell className="text-center">
-                <DuesToggleButton
-                  member={member}
-                  status={duesMap.has(member.id)}
-                />
-              </TableCell>
-              <TableCell className="text-center">
-                <MemberProfileButton member={member} />
-              </TableCell>
-              <TableCell className="text-center">
-                <UpdateMemberButton member={member} />
-              </TableCell>
-              <TableCell className="text-center">
-                <DeleteMemberButton member={member} />
+          {isInitialLoading ? (
+            <TableRow>
+              <TableCell colSpan={10} className="py-8 text-center">
+                Loading Members ...
               </TableCell>
             </TableRow>
-          ))}
+          ) : hasError ? (
+            <TableRow>
+              <TableCell colSpan={10} className="py-8 text-center">
+                Failed to load members!
+              </TableCell>
+            </TableRow>
+          ) : (
+            members.map((member) => (
+              <TableRow key={member.id}>
+                <TableCell className="text-center font-medium">
+                  {member.firstName}
+                </TableCell>
+                <TableCell className="text-center font-medium">
+                  {member.lastName}
+                </TableCell>
+                <TableCell className="text-center font-medium">
+                  {member.discordUser}
+                </TableCell>
+                <TableCell className="font-medium">{member.email}</TableCell>
+                <TableCell className="text-center font-medium">
+                  {duesMap.has(member.id) ? "Yes" : "No"}
+                </TableCell>
+                <TableCell className="text-center">
+                  {member.company ?? ""}
+                </TableCell>
+                <TableCell className="text-center">
+                  <DuesToggleButton
+                    member={member}
+                    status={duesMap.has(member.id)}
+                  />
+                </TableCell>
+                <TableCell className="text-center">
+                  <MemberProfileButton member={member} />
+                </TableCell>
+                <TableCell className="text-center">
+                  <UpdateMemberButton member={member} />
+                </TableCell>
+                <TableCell className="text-center">
+                  <DeleteMemberButton member={member} />
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
       <CustomPagination
