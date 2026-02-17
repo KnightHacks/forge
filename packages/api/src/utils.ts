@@ -4,8 +4,7 @@ import { cookies } from "next/headers";
 import { REST } from "@discordjs/rest";
 import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
-import { Account } from "@forge/db/schemas/auth";
-import { and, eq, gt, inArray, desc } from "drizzle-orm";
+import { and, desc, eq, gt, inArray } from "drizzle-orm";
 import { google } from "googleapis";
 import Stripe from "stripe";
 import z from "zod";
@@ -14,7 +13,7 @@ import type { Session } from "@forge/auth/server";
 import type { Form } from "@forge/db/schemas/knight-hacks";
 import { DISCORD, EVENTS, FORMS, MINIO, PERMISSIONS } from "@forge/consts";
 import { db } from "@forge/db/client";
-import { JudgeSession, Roles } from "@forge/db/schemas/auth";
+import { Account, JudgeSession, Roles } from "@forge/db/schemas/auth";
 import { FormSchemaSchema, FormsSchemas } from "@forge/db/schemas/knight-hacks";
 import { client } from "@forge/email";
 
@@ -54,19 +53,15 @@ export async function addMemberToServer(
       },
     );
 
-    console.log(
-      `Added ${discordUserId} to the KH discord server`,
-    );
+    console.log(`Added ${discordUserId} to the KH discord server`);
     return;
   } catch (error) {
-
     console.error(
       `Failed to add user ${discordUserId} to the KH discord server:`,
       error instanceof Error ? error.message : "Unknown error",
     );
   }
 }
-
 
 export async function handleDiscordOAuthCallback(
   discordUserId: string,
@@ -83,12 +78,7 @@ export async function handleDiscordOAuthCallback(
     const accounts = await db
       .select({ account: Account })
       .from(Account)
-      .where(
-        and(
-          eq(Account.provider, "discord"),
-          eq(Account.userId, user.id),
-        ),
-      )
+      .where(and(eq(Account.provider, "discord"), eq(Account.userId, user.id)))
       .orderBy(desc(Account.updatedAt))
       .limit(1);
 

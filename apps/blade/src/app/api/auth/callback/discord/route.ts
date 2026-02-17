@@ -1,9 +1,10 @@
-import { handlers } from "@forge/auth/server";
 import type { NextRequest } from "next/server";
+import { desc, eq } from "drizzle-orm";
+
 import { handleDiscordOAuthCallback } from "@forge/api/utils";
+import { handlers } from "@forge/auth/server";
 import { db } from "@forge/db/client";
 import { Account } from "@forge/db/schemas/auth";
-import { eq, desc } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const response = await handlers.GET(req);
@@ -24,10 +25,8 @@ export async function GET(req: NextRequest) {
         void handleDiscordOAuthCallback(discordUserId);
       }
     } catch (err) {
-      console.error(
-        "Error in Discord callback handler:",
-        err,
-      );
+      // eslint-disable-next-line no-console
+      console.error("Error in Discord callback handler:", err);
     }
   }
 
