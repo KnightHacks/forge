@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { REST } from "@discordjs/rest";
 import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
-import { and, eq, gt, inArray } from "drizzle-orm";
+import { and, desc, eq, gt, inArray } from "drizzle-orm";
 import { google } from "googleapis";
 import Stripe from "stripe";
 import z from "zod";
@@ -13,7 +13,7 @@ import type { Session } from "@forge/auth/server";
 import type { Form } from "@forge/db/schemas/knight-hacks";
 import { DISCORD, EVENTS, FORMS, MINIO, PERMISSIONS } from "@forge/consts";
 import { db } from "@forge/db/client";
-import { JudgeSession, Roles } from "@forge/db/schemas/auth";
+import { Account, JudgeSession, Roles } from "@forge/db/schemas/auth";
 import { FormSchemaSchema, FormsSchemas } from "@forge/db/schemas/knight-hacks";
 import { client } from "@forge/email";
 
@@ -37,6 +37,64 @@ export async function removeRoleFromMember(
   await discord.delete(
     Routes.guildMemberRole(DISCORD.KNIGHTHACKS_GUILD, discordUserId, roleId),
   );
+}
+
+export async function addMemberToServer(
+  discordUserId: string,
+  accessToken: string,
+): Promise<void> {
+  try {
+    await discord.put(
+      Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),
+      {
+        body: {
+          access_token: accessToken,
+        },
+      },
+    );
+
+    console.log(`Added ${discordUserId} to the KH discord server`);
+    return;
+  } catch (error) {
+    console.error(
+      `Failed to add user ${discordUserId} to the KH discord server:`,
+      error instanceof Error ? error.message : "Unknown error",
+    );
+  }
+}
+
+export async function handleDiscordOAuthCallback(
+  discordUserId: string,
+): Promise<void> {
+  try {
+    const user = await db.query.User.findFirst({
+      where: (u, { eq }) => eq(u.discordUserId, discordUserId),
+    });
+
+    if (!user) {
+      return;
+    }
+
+    const accounts = await db
+      .select({ account: Account })
+      .from(Account)
+      .where(and(eq(Account.provider, "discord"), eq(Account.userId, user.id)))
+      .orderBy(desc(Account.updatedAt))
+      .limit(1);
+
+    const account = accounts[0]?.account;
+    const accessToken = account?.access_token;
+    const scope = account?.scope;
+
+    if (accessToken && scope?.includes("guilds.join")) {
+      void addMemberToServer(discordUserId, accessToken);
+    }
+  } catch (error) {
+    console.error(
+      `Failed to handle Discord OAuth callback for ${discordUserId}:`,
+      error instanceof Error ? error.message : "Unknown error",
+    );
+  }
 }
 
 export async function resolveDiscordUserId(

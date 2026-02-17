@@ -2,10 +2,12 @@ import { randomUUID } from "crypto";
 import { headers } from "next/headers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { eq } from "drizzle-orm";
 
 import { db } from "@forge/db/client";
 import { Account, Session, User, Verifications } from "@forge/db/schemas/auth";
 
+import { handleDiscordOAuthCallback } from "../../api/src/utils";
 import { env } from "./env";
 
 export const isSecureContext = env.NODE_ENV !== "development";
@@ -44,6 +46,7 @@ export const auth = betterAuth({
     discord: {
       clientId: env.DISCORD_CLIENT_ID,
       clientSecret: env.DISCORD_CLIENT_SECRET,
+      scope: ["guilds.join"],
       mapProfileToUser: (profile) => {
         return {
           id: randomUUID(),
@@ -53,6 +56,28 @@ export const auth = betterAuth({
           emailVerified: profile.verified || false,
           discordUserId: profile.id,
         };
+      },
+    },
+  },
+
+  databaseHooks: {
+    session: {
+      create: {
+        after: async (session) => {
+          try {
+            const user = await db.query.User.findFirst({
+              where: eq(User.id, session.userId),
+            });
+
+            const discordUserId = user?.discordUserId;
+            if (!discordUserId) return;
+
+            void handleDiscordOAuthCallback(discordUserId);
+          } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error("Error in Discord auto join hook:", error);
+          }
+        },
       },
     },
   },
