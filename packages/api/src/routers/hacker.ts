@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import { FORMS, HACKATHONS, MINIO } from "@forge/consts";
-import { and, count, desc, eq, gt, or, sql, sum } from "@forge/db";
+import { and, asc, count, desc, eq, gt, ilike, or, sql, sum } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
 import {
@@ -1005,6 +1005,57 @@ export const hackerRouter = {
       }
 
       return counts;
+    }),
+
+  getHackersPage: permProcedure
+    .input(
+      z.object({
+        hackathonId: z.string(),
+        currentPage: z.number().min(1).optional(),
+        pageSize: z.number().min(1).optional(),
+        searchTerm: z.string().optional(),
+        sortField: z
+          .enum(["firstName", "lastName", "emai", "discordUser", "dateCreated"])
+          .optional(),
+        sortOrder: z.enum(["asc", "desc"]),
+        sortByTime: z.boolean().optional(),
+        statusFilter: z
+          .enum([
+            "pending",
+            "accepted",
+            "confirmed",
+            "withdrawn",
+            "denied",
+            "waitlisted",
+          ])
+          .optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
+      const currentPage = input.currentPage ?? 1;
+      const pageSize = input.pageSize ?? 10;
+      const offset = (currentPage - 1) * pageSize;
+      return await db
+        .select({
+          id: Hacker.id,
+          userId: Hacker.userId,
+          firstName: Hacker.firstName,
+          lastName: Hacker.lastName,
+          discordUser: Hacker.discordUser,
+          email: Hacker.email,
+          dateCreated: Hacker.dateCreated,
+          timeCreated: Hacker.timeCreated,
+          status: HackerAttendee.status,
+          timeApplied: HackerAttendee.timeApplied,
+          timeConfirmed: HackerAttendee.timeConfirmed,
+        })
+        .from(Hacker)
+        .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+        .where(eq(HackerAttendee.hackathonId, input.hackathonId))
+        .orderBy(asc(Hacker.id))
+        .offset(offset)
+        .limit(pageSize);
     }),
 
   eventCheckIn: permProcedure
