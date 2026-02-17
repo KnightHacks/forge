@@ -2,6 +2,8 @@ import { randomUUID } from "crypto";
 import { headers } from "next/headers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { eq } from "drizzle-orm";
+import { handleDiscordOAuthCallback } from "../../api/src/utils";
 
 import { db } from "@forge/db/client";
 import { Account, Session, User, Verifications } from "@forge/db/schemas/auth";
@@ -54,6 +56,24 @@ export const auth = betterAuth({
           emailVerified: profile.verified || false,
           discordUserId: profile.id,
         };
+      },
+    },
+  },
+
+  databaseHooks: {
+    session: {
+      create: {
+        after: async (session) => {
+          
+          const user = await db.query.User.findFirst({
+            where: eq(User.id, session.userId),
+          });
+  
+          const discordUserId = user?.discordUserId;
+          if (!discordUserId) return;
+  
+          void handleDiscordOAuthCallback(discordUserId);
+        },
       },
     },
   },
