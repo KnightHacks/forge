@@ -69,13 +69,13 @@ export const auth = betterAuth({
               where: eq(User.id, session.userId),
             });
 
-          const discordUserId = user?.discordUserId;
-          if (!discordUserId) return;
+            const discordUserId = user?.discordUserId;
+            if (!discordUserId) return;
 
-          void handleDiscordOAuthCallback(discordUserId);
-        } catch (error) {
-          // eslint-disable-next-line no-console
-          console.error("Error in Discord auto join hook:", error);
+            void handleDiscordOAuthCallback(discordUserId);
+          } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error("Error in Discord auto join hook:", error);
           }
         },
       },
