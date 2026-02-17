@@ -3,11 +3,11 @@ import { headers } from "next/headers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { eq } from "drizzle-orm";
-import { handleDiscordOAuthCallback } from "../../api/src/utils";
 
 import { db } from "@forge/db/client";
 import { Account, Session, User, Verifications } from "@forge/db/schemas/auth";
 
+import { handleDiscordOAuthCallback } from "../../api/src/utils";
 import { env } from "./env";
 
 export const isSecureContext = env.NODE_ENV !== "development";
@@ -64,14 +64,13 @@ export const auth = betterAuth({
     session: {
       create: {
         after: async (session) => {
-          
           const user = await db.query.User.findFirst({
             where: eq(User.id, session.userId),
           });
-  
+
           const discordUserId = user?.discordUserId;
           if (!discordUserId) return;
-  
+
           void handleDiscordOAuthCallback(discordUserId);
         },
       },
