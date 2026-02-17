@@ -1015,7 +1015,13 @@ export const hackerRouter = {
         pageSize: z.number().min(1).optional(),
         searchTerm: z.string().optional(),
         sortField: z
-          .enum(["firstName", "lastName", "emai", "discordUser", "dateCreated"])
+          .enum([
+            "firstName",
+            "lastName",
+            "email",
+            "discordUser",
+            "dateCreated",
+          ])
           .optional(),
         sortOrder: z.enum(["asc", "desc"]),
         sortByTime: z.boolean().optional(),
@@ -1050,7 +1056,7 @@ export const hackerRouter = {
         if (input.statusFilter)
           conditions.push(eq(HackerAttendee.status, input.statusFilter));
       }
-      return await db
+      let query = db
         .select({
           id: Hacker.id,
           userId: Hacker.userId,
@@ -1066,10 +1072,25 @@ export const hackerRouter = {
         })
         .from(Hacker)
         .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
-        .where(and(...conditions))
-        .orderBy(asc(Hacker.id))
-        .offset(offset)
-        .limit(pageSize);
+        .where(and(...conditions));
+      if (input.sortByTime) {
+        query = query.orderBy(
+          input.sortOrder === "desc"
+            ? desc(Hacker.dateCreated)
+            : asc(Hacker.dateCreated),
+          input.sortOrder === "desc"
+            ? desc(Hacker.timeCreated)
+            : asc(Hacker.timeCreated),
+        ) as typeof query;
+      } else if (input.sortField) {
+        const sortColumn = Hacker[input.sortField];
+        query = query.orderBy(
+          input.sortOrder === "asc" ? asc(sortColumn) : desc(sortColumn),
+        ) as typeof query;
+      } else {
+        query = query.orderBy(asc(Hacker.id)) as typeof query;
+      }
+      return await query.offset(offset).limit(pageSize);
     }),
 
   getHackerCount: permProcedure
