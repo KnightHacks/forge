@@ -726,7 +726,7 @@ export const hackerMutationRouter = {
 
       if (!input.id) {
         throw new TRPCError({
-          message: "Hacker ID is required to update a member's status!",
+          message: "Hacker ID is required to give points!",
           code: "BAD_REQUEST",
         });
       }
