@@ -90,6 +90,32 @@ export function AlumniRecap({
         <Trophy color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
+        {/* Current Officers */}
+        <div className="space-y-4 pb-5">
+
+          <ul className="space-y-3">
+            <li className="rounded-lg border p-3">
+              <p className="font-medium">Adrian</p>
+              <p className="text-sm text-muted-foreground">President</p>
+            </li>
+
+            <li className="rounded-lg border p-3">
+              <p className="font-medium">Carlos</p>
+              <p className="text-sm text-muted-foreground">Vice President</p>
+            </li>
+
+            <li className="rounded-lg border p-3">
+              <p className="font-medium">Jason</p>
+              <p className="text-sm text-muted-foreground">Treasurer</p>
+            </li>
+
+            <li className="rounded-lg border p-3">
+              <p className="font-medium">Nat</p>
+              <p className="text-sm text-muted-foreground">Secretary</p>
+            </li>
+          </ul>
+        </div>
+
         {/* Class Year */}
         <div className="flex items-center gap-2">
           <GraduationCap
