@@ -36,6 +36,12 @@ export const hackerPaginationRouter = {
             "waitlisted",
           ])
           .optional(),
+        schoolFilter: z.string().optional(),
+        majorFilter: z.string().optional(),
+        raceFilter: z.string().optional(),
+        genderFilter: z.string().optional(),
+        gradYearFilter: z.number().int().optional(),
+        isFirstTimeFilter: z.boolean().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -64,6 +70,46 @@ export const hackerPaginationRouter = {
 
       if (input.statusFilter) {
         conditions.push(eq(HackerAttendee.status, input.statusFilter));
+      }
+      if (input.schoolFilter) {
+        conditions.push(
+          eq(
+            Hacker.school,
+            input.schoolFilter as (typeof Hacker.school.enumValues)[number],
+          ),
+        );
+      }
+      if (input.majorFilter) {
+        conditions.push(
+          eq(
+            Hacker.major,
+            input.majorFilter as (typeof Hacker.major.enumValues)[number],
+          ),
+        );
+      }
+      if (input.raceFilter) {
+        conditions.push(
+          eq(
+            Hacker.raceOrEthnicity,
+            input.raceFilter as (typeof Hacker.raceOrEthnicity.enumValues)[number],
+          ),
+        );
+      }
+      if (input.genderFilter) {
+        conditions.push(
+          eq(
+            Hacker.gender,
+            input.genderFilter as (typeof Hacker.gender.enumValues)[number],
+          ),
+        );
+      }
+      if (input.gradYearFilter) {
+        conditions.push(
+          sql`EXTRACT(YEAR FROM ${Hacker.gradDate}) = ${input.gradYearFilter}`,
+        );
+      }
+      if (input.isFirstTimeFilter !== undefined) {
+        conditions.push(eq(Hacker.isFirstTime, input.isFirstTimeFilter));
       }
 
       let query = db
@@ -142,6 +188,12 @@ export const hackerPaginationRouter = {
             "waitlisted",
           ])
           .optional(),
+        schoolFilter: z.string().optional(),
+        majorFilter: z.string().optional(),
+        raceFilter: z.string().optional(),
+        genderFilter: z.string().optional(),
+        gradYearFilter: z.number().int().optional(),
+        isFirstTimeFilter: z.boolean().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -167,6 +219,46 @@ export const hackerPaginationRouter = {
       if (input.statusFilter) {
         conditions.push(eq(HackerAttendee.status, input.statusFilter));
       }
+      if (input.schoolFilter) {
+        conditions.push(
+          eq(
+            Hacker.school,
+            input.schoolFilter as (typeof Hacker.school.enumValues)[number],
+          ),
+        );
+      }
+      if (input.majorFilter) {
+        conditions.push(
+          eq(
+            Hacker.major,
+            input.majorFilter as (typeof Hacker.major.enumValues)[number],
+          ),
+        );
+      }
+      if (input.raceFilter) {
+        conditions.push(
+          eq(
+            Hacker.raceOrEthnicity,
+            input.raceFilter as (typeof Hacker.raceOrEthnicity.enumValues)[number],
+          ),
+        );
+      }
+      if (input.genderFilter) {
+        conditions.push(
+          eq(
+            Hacker.gender,
+            input.genderFilter as (typeof Hacker.gender.enumValues)[number],
+          ),
+        );
+      }
+      if (input.gradYearFilter) {
+        conditions.push(
+          sql`EXTRACT(YEAR FROM ${Hacker.gradDate}) = ${input.gradYearFilter}`,
+        );
+      }
+      if (input.isFirstTimeFilter !== undefined) {
+        conditions.push(eq(Hacker.isFirstTime, input.isFirstTimeFilter));
+      }
 
       const result = await db
         .select({ count: count() })
@@ -175,5 +267,62 @@ export const hackerPaginationRouter = {
         .where(and(...conditions));
 
       return result[0]?.count ?? 0;
+    }),
+
+  getHackerFilterOptions: permProcedure
+    .input(
+      z.object({
+        hackathonId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
+
+      const [schools, majors, races, genders, gradDates] = await Promise.all([
+        db
+          .selectDistinct({ value: Hacker.school })
+          .from(Hacker)
+          .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+          .where(eq(HackerAttendee.hackathonId, input.hackathonId))
+          .orderBy(asc(Hacker.school)),
+        db
+          .selectDistinct({ value: Hacker.major })
+          .from(Hacker)
+          .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+          .where(eq(HackerAttendee.hackathonId, input.hackathonId))
+          .orderBy(asc(Hacker.major)),
+        db
+          .selectDistinct({ value: Hacker.raceOrEthnicity })
+          .from(Hacker)
+          .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+          .where(eq(HackerAttendee.hackathonId, input.hackathonId))
+          .orderBy(asc(Hacker.raceOrEthnicity)),
+        db
+          .selectDistinct({ value: Hacker.gender })
+          .from(Hacker)
+          .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+          .where(eq(HackerAttendee.hackathonId, input.hackathonId))
+          .orderBy(asc(Hacker.gender)),
+        db
+          .selectDistinct({ value: Hacker.gradDate })
+          .from(Hacker)
+          .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+          .where(eq(HackerAttendee.hackathonId, input.hackathonId))
+          .orderBy(asc(Hacker.gradDate)),
+      ]);
+
+      const gradYears = Array.from(
+        new Set(gradDates.map((g) => Number(g.value.slice(0, 4)))),
+      )
+        .filter((g) => Number.isFinite(g))
+        .sort((a, b) => a - b);
+
+      return {
+        schools: schools.map((s) => s.value),
+        majors: majors.map((m) => m.value),
+        races: races.map((r) => r.value),
+        genders: genders.map((g) => g.value),
+        gradYears,
+      };
     }),
 };

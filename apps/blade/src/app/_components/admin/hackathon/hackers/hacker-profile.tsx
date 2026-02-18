@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
+
 import FoodRestrictionsButton from "./food-restrictions";
 
 export default function HackerProfileButton({
