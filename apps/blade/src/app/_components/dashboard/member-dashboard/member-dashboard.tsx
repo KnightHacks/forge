@@ -5,6 +5,8 @@ import { MemberAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
 import { AlumniDiscord } from "./AlumniDiscord";
 import { AlumniRecap } from "./AlumniRecap";
+import DayInHistory from "./day-in-history";
+import EarlyAccessVolunteer from "./early-access-volunteer";
 import { EventNumber } from "./event/event-number";
 import { EventShowcase } from "./event/event-showcase";
 import { FormResponses } from "./forms/form-responses";
@@ -95,10 +97,55 @@ export default async function MemberDashboard({
     isAlumni ? api.hackathon.getPastHackathons() : Promise.resolve([]),
   ]);
 
-  if (events.status === "rejected" || dues.status === "rejected" || hackathons.status === "rejected") {
+  if (
+    events.status === "rejected" ||
+    dues.status === "rejected" ||
+    hackathons.status === "rejected"
+  ) {
     return (
       <div className="mt-10 flex flex-col items-center justify-center gap-y-6 font-bold">
         Something went wrong. Please try again later.
+      </div>
+    );
+  }
+
+  // Alumni Dashboard
+  if (isAlumni) {
+    return (
+      <div className="flex-col md:flex">
+        <div className="flex-1 space-y-4">
+          <div className="animate-fade-in mb-8 flex items-center justify-between space-y-2">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">
+                Hello, {member.firstName}!
+              </h2>
+              <p className="text-muted-foreground">Alumni Dashboard</p>
+            </div>
+          </div>
+          {/* Unified View */}
+          <div className="animate-mobile-initial-expand space-y-4">
+            <div className="animate-fade-in grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="flex flex-col gap-4">
+                <AlumniDiscord />
+                <EarlyAccessVolunteer />
+                <MemberInfo />
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <Donate />
+                <DayInHistory />
+              </div>
+
+              <div>
+                <AlumniRecap
+                  member={member}
+                  events={events.value}
+                  hackathons={hackathons.value}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -111,33 +158,19 @@ export default async function MemberDashboard({
             <h2 className="text-xl font-bold tracking-tight">
               Hello, {member.firstName}!
             </h2>
-            <p className="text-muted-foreground">
-              {`${isAlumni ? "Alumni" : "Member"}`} Dashboard
-            </p>
+            <p className="text-muted-foreground">Member Dashboard</p>
           </div>
         </div>
         {/* Unified View */}
         <div className="animate-mobile-initial-expand space-y-4">
           <div className="animate-fade-in grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {isAlumni ? (
-              <Donate />
-            ) : (
-              <Payment status={dues.value.duesPaid} member={member} />
-            )}
+            <Payment status={dues.value.duesPaid} member={member} />
 
             <MemberInfo />
 
-            {isAlumni ? <AlumniDiscord /> : <Points size={member.points} />}
+            <Points size={member.points} />
 
-            {isAlumni ? (
-              <AlumniRecap 
-                member={member}
-                events={events.value}
-                hackathons={hackathons.value}
-              />
-            ) : (
-              <EventNumber size={events.value.length} />
-            )}  
+            <EventNumber size={events.value.length} />
 
             <div className="lg:col-span-1">
               <FormResponses />
