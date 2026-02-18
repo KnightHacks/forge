@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
 
@@ -78,6 +78,8 @@ export default function HackerTable({
   const router = useRouter();
   const currentPage = Math.max(1, Number(searchParams.get("page")) || 1);
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const isFirstRender = useRef(true);
+  const stableRefs = useRef({ currentPage, searchParams, router });
   const statusFilter: HackerStatus | undefined =
     filterStatus && HACKER_STATUSES.includes(filterStatus as HackerStatus)
       ? (filterStatus as HackerStatus)
@@ -95,7 +97,13 @@ export default function HackerTable({
       sortByTime,
       statusFilter,
     },
-    { enabled: !!activeHackathon?.id },
+    {
+      enabled: !!activeHackathon?.id,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      staleTime: 30_000,
+    },
   );
 
   const hackerCountQuery = api.hackerPagination.getHackerCount.useQuery(
@@ -104,7 +112,13 @@ export default function HackerTable({
       searchTerm: debouncedSearchTerm,
       statusFilter,
     },
-    { enabled: !!activeHackathon?.id },
+    {
+      enabled: !!activeHackathon?.id,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      staleTime: 30_000,
+    },
   );
 
   const hackers = hackersQuery.data ?? [];
@@ -126,22 +140,25 @@ export default function HackerTable({
     }
   }, [hackathons, activeHackathon]);
 
-  const resetToFirstPage = useCallback(() => {
-    if (currentPage === 1) return;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", "1");
-    router.replace("?" + params.toString());
-  }, [currentPage, searchParams, router]);
+  useEffect(() => {
+    stableRefs.current = { currentPage, searchParams, router };
+  });
 
   useEffect(() => {
-    if (currentPage !== 1) resetToFirstPage();
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (stableRefs.current.currentPage !== 1) {
+      const params = new URLSearchParams(stableRefs.current.searchParams);
+      params.set("page", "1");
+      stableRefs.current.router.replace("?" + params.toString());
+    }
   }, [
     debouncedSearchTerm,
-    filterStatus,
+    statusFilter,
     pageSize,
     activeHackathon?.id,
-    currentPage,
-    resetToFirstPage,
   ]);
 
   // Apply soft blacklist transformation BEFORE filtering
@@ -153,7 +170,9 @@ export default function HackerTable({
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize);
-    resetToFirstPage();
+    const params = new URLSearchParams(searchParams);
+    params.set("page", "1");
+    router.replace("?" + params.toString());
   };
 
   const toggleTimeSort = () => {
@@ -176,7 +195,9 @@ export default function HackerTable({
             const selectedHackathon =
               hackathons?.find((h) => h.name === name) ?? null;
             setActiveHackathon(selectedHackathon);
-            resetToFirstPage();
+            const params = new URLSearchParams(searchParams);
+            params.set("page", "1");
+            router.replace("?" + params.toString());
           }}
         >
           <SelectTrigger
