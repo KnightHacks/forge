@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Gem, Home, Trophy, Users } from "lucide-react";

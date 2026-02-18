@@ -252,6 +252,7 @@ export function EditorClient({
   }, [
     isLoading,
     isFetching,
+    updateFormMutation,
     formTitle,
     formData,
     slug,

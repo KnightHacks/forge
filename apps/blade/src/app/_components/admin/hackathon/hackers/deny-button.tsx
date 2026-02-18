@@ -28,7 +28,7 @@ export default function DenyButton({
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const utils = api.useUtils();
-  const updateStatus = api.hacker.updateHackerStatus.useMutation({
+  const updateStatus = api.hackerMutation.updateHackerStatus.useMutation({
     onSuccess() {
       toast.success(
         `Denied ${hacker.firstName} ${hacker.lastName} successfully!`,
@@ -40,7 +40,11 @@ export default function DenyButton({
       setIsLoading(false);
     },
     async onSettled() {
-      await utils.hacker.invalidate();
+      await Promise.all([
+        utils.hackerQuery.invalidate(),
+        utils.hackerPagination.invalidate(),
+        utils.hackerMutation.invalidate(),
+      ]);
       setIsLoading(false);
     },
   });

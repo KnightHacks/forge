@@ -30,7 +30,7 @@ type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
 export function HackerData({
   data,
 }: {
-  data: Awaited<ReturnType<(typeof serverCall.hacker)["getHacker"]>>;
+  data: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
 }) {
   const [hackerStatus, setHackerStatus] = useState<string | null>("");
   const [hackerStatusColor, setHackerStatusColor] = useState<string>("");
@@ -42,7 +42,7 @@ export function HackerData({
   const { data: currentHackathon } =
     api.hackathon.getCurrentHackathon.useQuery();
 
-  const { data: hacker, isError } = api.hacker.getHacker.useQuery(
+  const { data: hacker, isError } = api.hackerQuery.getHacker.useQuery(
     {},
     {
       initialData: data,
@@ -105,12 +105,12 @@ export function HackerData({
     return HACKER_STATUS_MAP[status].color;
   }
 
-  const confirmHacker = api.hacker.confirmHacker.useMutation({
+  const confirmHacker = api.hackerMutation.confirmHacker.useMutation({
     async onSuccess() {
       setHackerStatus("Confirmed");
       setHackerStatusColor(getStatusColor("confirmed"));
       setIsConfirmOpen(true);
-      await utils.hacker.getHacker.invalidate();
+      await utils.hackerQuery.getHacker.invalidate();
     },
     onError() {
       toast.error("Oops! Something went wrong. Please try again later.");
@@ -120,12 +120,12 @@ export function HackerData({
     },
   });
 
-  const withdrawHacker = api.hacker.withdrawHacker.useMutation({
+  const withdrawHacker = api.hackerMutation.withdrawHacker.useMutation({
     async onSuccess() {
       setHackerStatus("Withdrawn");
       setHackerStatusColor(getStatusColor("withdrawn"));
       toast.success("You have withdrawn from the hackathon!");
-      await utils.hacker.getHacker.invalidate();
+      await utils.hackerQuery.getHacker.invalidate();
     },
     onError() {
       toast.error("Oops! Something went wrong. Please try again later.");

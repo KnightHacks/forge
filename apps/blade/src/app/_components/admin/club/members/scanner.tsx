@@ -75,7 +75,7 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
       });
     },
   });
-  const hackerEventCheckIn = api.hacker.eventCheckIn.useMutation({
+  const hackerEventCheckIn = api.hackerMutation.eventCheckIn.useMutation({
     onSuccess(opts) {
       toast.success(opts.message);
       setErrorColor(

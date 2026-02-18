@@ -27,13 +27,17 @@ export default function HackerSurveyResponsesButton({
 
   useEffect(() => {
     async function invalidateHackers() {
-      await utils.hacker.invalidate();
+      await Promise.all([
+        utils.hackerQuery.invalidate(),
+        utils.hackerPagination.invalidate(),
+        utils.hackerMutation.invalidate(),
+      ]);
     }
 
     invalidateHackers().catch(() => {
       toast.error("Error invalidating hackers in survey responses!");
     });
-  }, [utils.hacker, hacker]);
+  }, [utils, hacker]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

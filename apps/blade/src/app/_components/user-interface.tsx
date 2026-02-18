@@ -9,7 +9,7 @@ import { api } from "~/trpc/server";
 export async function UserInterface() {
   const [member, hacker] = await Promise.allSettled([
     api.member.getMember(),
-    api.hacker.getHacker({}),
+    api.hackerQuery.getHacker({}),
   ]);
 
   const currentHackathon = await api.hackathon.getCurrentHackathon();

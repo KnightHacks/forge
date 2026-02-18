@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp, Clock, Search } from "lucide-react";
 
-import type {
-  Hacker,
-  InsertHackathon,
-  InsertHacker,
-} from "@forge/db/schemas/knight-hacks";
+import type { InsertHackathon } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
@@ -28,54 +25,90 @@ import {
 } from "@forge/ui/table";
 
 import SortButton from "~/app/_components/shared/SortButton";
+import { useDebounce } from "~/app/admin/_hooks/debounce";
 import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
+import CustomPagination from "../../charts/CustomPagination";
+import CustomPaginationSelect from "../../charts/CustomPaginationSelect";
 import DeleteHackerButton from "./delete-hacker";
 import HackerProfileButton from "./hacker-profile";
 import HackerStatusToggle from "./hacker-status-toggle";
 import HackerSurveyResponsesButton from "./hacker-survey-responses";
 import UpdateHackerButton from "./update-hacker";
 
-function parseDate(datePart: string, timePart: string): Date {
-  const date = new Date(datePart);
-  const [hours, minutes, seconds, microseconds] = timePart
-    .split(/[:.]/)
-    .map(Number);
-
-  date.setUTCHours(
-    hours ?? 0,
-    minutes ?? 0,
-    seconds ?? 0,
-    Math.floor((microseconds ?? 0) / 1000),
-  );
-
-  return date;
-}
-
-type Hacker = InsertHacker;
-type SortField = keyof Hacker;
+type SortField =
+  | "firstName"
+  | "lastName"
+  | "email"
+  | "discordUser"
+  | "dateCreated";
 type SortOrder = "asc" | "desc" | null;
 type TimeOrder = "asc" | "desc";
-type ActiveOrder = "time" | "field";
+type HackerStatus =
+  | "pending"
+  | "accepted"
+  | "confirmed"
+  | "denied"
+  | "waitlisted"
+  | "withdrawn";
+
+const HACKER_STATUSES: readonly HackerStatus[] = [
+  "pending",
+  "accepted",
+  "confirmed",
+  "withdrawn",
+  "denied",
+  "waitlisted",
+] as const;
 
 export default function HackerTable({
   filterStatus,
 }: {
   filterStatus: string | null;
 }) {
+  const [pageSize, setPageSize] = useState(10);
+  const [sortByTime, setSortByTime] = useState(false);
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
-  const [activeSort, setActiveSort] = useState<ActiveOrder>("field");
   const [activeHackathon, setActiveHackathon] =
     useState<InsertHackathon | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const currentPage = Math.max(1, Number(searchParams.get("page")) || 1);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const statusFilter: HackerStatus | undefined =
+    filterStatus && HACKER_STATUSES.includes(filterStatus as HackerStatus)
+      ? (filterStatus as HackerStatus)
+      : undefined;
 
   const { data: hackathons } = api.hackathon.getHackathons.useQuery();
-  const { data: hackers } = api.hacker.getAllHackers.useQuery(
-    { hackathonName: activeHackathon?.name },
-    { enabled: !!activeHackathon },
+  const hackersQuery = api.hackerPagination.getHackersPage.useQuery(
+    {
+      hackathonId: activeHackathon?.id ?? "",
+      currentPage,
+      pageSize,
+      searchTerm: debouncedSearchTerm,
+      sortField: sortByTime ? undefined : (sortField ?? undefined),
+      sortOrder: (sortByTime ? timeSortOrder : sortOrder) ?? "asc",
+      sortByTime,
+      statusFilter,
+    },
+    { enabled: !!activeHackathon?.id },
   );
+
+  const hackerCountQuery = api.hackerPagination.getHackerCount.useQuery(
+    {
+      hackathonId: activeHackathon?.id ?? "",
+      searchTerm: debouncedSearchTerm,
+      statusFilter,
+    },
+    { enabled: !!activeHackathon?.id },
+  );
+
+  const hackers = hackersQuery.data ?? [];
+  const totalCount = hackerCountQuery.data ?? 0;
 
   // Default to the closest hackathon that hasn't passed
   useEffect(() => {
@@ -93,52 +126,45 @@ export default function HackerTable({
     }
   }, [hackathons, activeHackathon]);
 
+  const resetToFirstPage = useCallback(() => {
+    if (currentPage === 1) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", "1");
+    router.replace("?" + params.toString());
+  }, [currentPage, searchParams, router]);
+
+  useEffect(() => {
+    if (currentPage !== 1) resetToFirstPage();
+  }, [
+    debouncedSearchTerm,
+    filterStatus,
+    pageSize,
+    activeHackathon?.id,
+    currentPage,
+    resetToFirstPage,
+  ]);
+
   // Apply soft blacklist transformation BEFORE filtering
-  const hackersWithBlacklist = (hackers ?? []).map((hacker) =>
+  const hackersWithBlacklist = hackers.map((hacker) =>
     hacker.id === "7f89fe4d-26f0-42fe-ac98-22d8f648d7a7"
       ? { ...hacker, status: "denied" }
       : hacker,
   );
 
-  const filteredHackers = hackersWithBlacklist
-    .filter((hacker) => {
-      if (!filterStatus) return true;
-      return hacker.status === filterStatus;
-    })
-    .filter((hacker) =>
-      Object.values(hacker).some((value) => {
-        if (value === null) return false;
-        return value
-          .toString()
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase());
-      }),
-    );
-
-  const sortedHackers = [...filteredHackers].sort((a, b) => {
-    const dateA = parseDate(a.dateCreated, a.timeCreated);
-    const dateB = parseDate(b.dateCreated, b.timeCreated);
-
-    if (activeSort == "time") {
-      if (dateA < dateB) return timeSortOrder === "asc" ? -1 : 1;
-      if (dateA > dateB) return timeSortOrder === "asc" ? 1 : -1;
-    } else {
-      if (!sortField || sortOrder === null) return 0;
-      if (a[sortField] == null || b[sortField] == null) return 0;
-      if (a[sortField] < b[sortField]) return sortOrder === "asc" ? -1 : 1;
-      if (a[sortField] > b[sortField]) return sortOrder === "asc" ? 1 : -1;
-    }
-
-    return 0;
-  });
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    resetToFirstPage();
+  };
 
   const toggleTimeSort = () => {
     setTimeSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    setActiveSort("time");
+    setSortByTime(true);
+    setSortField(null);
+    setSortOrder(null);
   };
 
   const toggleFieldSort = () => {
-    setActiveSort("field");
+    setSortByTime(false);
   };
 
   return (
@@ -150,6 +176,7 @@ export default function HackerTable({
             const selectedHackathon =
               hackathons?.find((h) => h.name === name) ?? null;
             setActiveHackathon(selectedHackathon);
+            resetToFirstPage();
           }}
         >
           <SelectTrigger
@@ -181,6 +208,10 @@ export default function HackerTable({
               {timeSortOrder === "desc" && <ArrowDown />}
             </Button>
           </div>
+          <CustomPaginationSelect
+            pageSize={pageSize}
+            onPageSizeChange={handlePageSizeChange}
+          />
           <div className="relative w-full">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -192,8 +223,7 @@ export default function HackerTable({
           </div>
         </div>
         <div className="whitespace-nowrap text-center text-sm font-bold">
-          Returned {sortedHackers.length}{" "}
-          {sortedHackers.length === 1 ? "hacker" : "hackers"}
+          Returned {totalCount} {totalCount === 1 ? "hacker" : "hackers"}
         </div>
       </div>
 
@@ -265,7 +295,7 @@ export default function HackerTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedHackers.map((hacker) => (
+          {hackersWithBlacklist.map((hacker) => (
             <TableRow key={hacker.id}>
               <TableCell className="text-center font-medium">
                 {hacker.firstName}
@@ -311,6 +341,12 @@ export default function HackerTable({
           ))}
         </TableBody>
       </Table>
+      <CustomPagination
+        className="mt-4"
+        itemCount={totalCount}
+        pageSize={pageSize}
+        currentPage={currentPage}
+      />
     </div>
   );
 }

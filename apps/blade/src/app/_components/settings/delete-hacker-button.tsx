@@ -35,7 +35,7 @@ export default function DeleteHackerButton({
   const [isOpen, setIsOpen] = useState(false);
 
   // Our TRPC mutation for deleting a hacker
-  const deleteHacker = api.hacker.deleteHacker.useMutation({
+  const deleteHacker = api.hackerMutation.deleteHacker.useMutation({
     onSuccess() {
       toast.success("Hacker successfully deleted.");
       setIsOpen(false);

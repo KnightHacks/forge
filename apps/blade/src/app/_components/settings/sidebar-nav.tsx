@@ -21,7 +21,7 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
 
   const { data: member, isLoading: memberLoading } =
     api.member.getMember.useQuery(undefined, { staleTime: Infinity });
-  const { data: hacker } = api.hacker.getHacker.useQuery(
+  const { data: hacker } = api.hackerQuery.getHacker.useQuery(
     {},
     { staleTime: Infinity },
   );

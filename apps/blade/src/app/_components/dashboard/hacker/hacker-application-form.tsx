@@ -64,7 +64,7 @@ export function HackerFormPage({
     },
   });
 
-  const createHacker = api.hacker.createHacker.useMutation({
+  const createHacker = api.hackerMutation.createHacker.useMutation({
     onSuccess() {
       toast.success("Application submitted successfully!");
       // user gets sent back to homepage upon successful form submission

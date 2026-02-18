@@ -41,7 +41,7 @@ export function HackerProfileForm({
   data,
   hackathon,
 }: {
-  data: Awaited<ReturnType<(typeof serverCaller.hacker)["getHacker"]>>;
+  data: Awaited<ReturnType<(typeof serverCaller.hackerQuery)["getHacker"]>>;
   hackathon: Awaited<
     ReturnType<(typeof serverCaller.hackathon)["getCurrentHackathon"]>
   >;
@@ -52,7 +52,7 @@ export function HackerProfileForm({
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
   const allergiesRef = useRef<string[]>([]);
 
-  const { data: hacker, isError } = api.hacker.getHacker.useQuery(
+  const { data: hacker, isError } = api.hackerQuery.getHacker.useQuery(
     {},
     {
       initialData: data,
@@ -68,10 +68,10 @@ export function HackerProfileForm({
     },
   });
 
-  const updateHacker = api.hacker.updateHacker.useMutation({
+  const updateHacker = api.hackerMutation.updateHacker.useMutation({
     async onSuccess() {
       toast.success("Profile updated!");
-      await utils.hacker.getHacker.invalidate();
+      await utils.hackerQuery.getHacker.invalidate();
     },
     onError() {
       toast.error("Oops! Something went wrong. Please try again later.");

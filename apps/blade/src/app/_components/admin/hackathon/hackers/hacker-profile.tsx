@@ -31,13 +31,17 @@ export default function HackerProfileButton({
   const utils = api.useUtils();
   useEffect(() => {
     async function invalidateHackers() {
-      await utils.hacker.invalidate();
+      await Promise.all([
+        utils.hackerQuery.invalidate(),
+        utils.hackerPagination.invalidate(),
+        utils.hackerMutation.invalidate(),
+      ]);
     }
 
     invalidateHackers().catch(() => {
       toast.error("Error invalidating hackers in hacker profile!");
     });
-  }, [utils.hacker, hacker]);
+  }, [utils, hacker]);
 
   const hackingSince = new Date(hacker.dateCreated ?? new Date());
   hackingSince.setDate(hackingSince.getDate() + 1);

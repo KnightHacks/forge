@@ -14,7 +14,7 @@ const HackerStatusCounter = ({
   onClick: (status: string | null) => void;
 }) => {
   const { data, isLoading, error } =
-    api.hacker.statusCountByHackathonId.useQuery(hackathonId);
+    api.hackerQuery.statusCountByHackathonId.useQuery(hackathonId);
   if (isLoading) return <span>Loading…</span>;
   if (error || !data) return <span>Failed to load</span>;
   const counts = data as Record<string, number>;

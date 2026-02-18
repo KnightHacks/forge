@@ -22,7 +22,7 @@ export function PointLeaderboard({
   hacker,
   hId,
 }: {
-  hacker: Awaited<ReturnType<(typeof serverCall.hacker)["getHacker"]>>;
+  hacker: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
   hId: string;
 }) {
   const dummy: HackerClass[] = [
@@ -33,7 +33,7 @@ export function PointLeaderboard({
     "Monstologist",
   ];
 
-  const { data: data } = api.hacker.getTopHackers.useQuery({
+  const { data: data } = api.hackerQuery.getTopHackers.useQuery({
     hackathonName: hId,
     hPoints: hacker?.points || 0,
     hClass: hacker?.class || "Alchemist",
