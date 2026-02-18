@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { FORMS } from "@forge/consts";
-import { and, asc, count, desc, eq, gt, or, sum } from "@forge/db";
+import { and, count, desc, eq, gt, or, sum } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Hacker,
@@ -11,9 +11,9 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import { permProcedure, protectedProcedure } from "../../trpc";
-import { controlPerms } from "../../utils";
+import { controlPerms, log } from "../../utils";
 
-export const hackerQueriesRouter = {
+export const hackerQueryRouter = {
   getHacker: protectedProcedure
     .input(z.object({ hackathonName: z.string().optional() }))
     .query(async ({ input, ctx }) => {
@@ -466,5 +466,143 @@ export const hackerQueriesRouter = {
       }
 
       return counts;
+    }),
+
+  giveHackerPoints: permProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        hackathonName: z.string(),
+        amount: z.number(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_HACKERS"], ctx);
+
+      if (!input.id) {
+        throw new TRPCError({
+          message: "Hacker ID is required to update a member's status!",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      const hacker = await db.query.Hacker.findFirst({
+        where: (t, { eq }) => eq(t.id, input.id),
+      });
+
+      if (!hacker) {
+        throw new TRPCError({
+          message: "Hacker not found!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      // Fetch the hackathon by name to get the ID
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.name, input.hackathonName),
+      });
+
+      if (!hackathon) {
+        throw new TRPCError({
+          message: `Hackathon not found! - ${input.hackathonName}`,
+          code: "NOT_FOUND",
+        });
+      }
+
+      const attendee = await db.query.HackerAttendee.findFirst({
+        where: (t, { eq, and }) =>
+          and(eq(t.hackathonId, hackathon.id), eq(t.hackerId, hacker.id)),
+      });
+
+      if (!attendee) {
+        throw new TRPCError({
+          message: `Attendee not found for ${hacker.firstName} ${hacker.lastName}`,
+          code: "NOT_FOUND",
+        });
+      }
+
+      await db
+        .update(HackerAttendee)
+        .set({ points: attendee.points + input.amount })
+        .where(
+          and(
+            eq(HackerAttendee.hackerId, input.id),
+            eq(HackerAttendee.hackathonId, hackathon.id),
+          ),
+        );
+
+      await log({
+        title: `Gave Points`,
+        message: `Gave ${input.amount} points to ${hacker.firstName} ${hacker.lastName} for ${hackathon.displayName}`,
+        color: "tk_blue",
+        userId: ctx.session.user.discordUserId,
+      });
+    }),
+
+  updateHackerStatus: permProcedure
+    .input(
+      z.object({
+        id: z.string(), // This is the hacker ID
+        hackathonName: z.string(),
+        status: z.enum([
+          "pending",
+          "accepted",
+          "confirmed",
+          "withdrawn",
+          "denied",
+          "waitlisted",
+        ]),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_HACKERS"], ctx);
+
+      if (!input.id) {
+        throw new TRPCError({
+          message: "Hacker ID is required to update a member's status!",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      const hacker = await db.query.Hacker.findFirst({
+        where: (t, { eq }) => eq(t.id, input.id),
+      });
+
+      if (!hacker) {
+        throw new TRPCError({
+          message: "Hacker not found!",
+          code: "NOT_FOUND",
+        });
+      }
+
+      // Fetch the hackathon by name to get the ID
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.displayName, input.hackathonName),
+      });
+
+      if (!hackathon) {
+        throw new TRPCError({
+          message: `Hackathon not found! - ${input.hackathonName}`,
+          code: "NOT_FOUND",
+        });
+      }
+
+      // Update status in HackerAttendee table
+      await db
+        .update(HackerAttendee)
+        .set({ status: input.status })
+        .where(
+          and(
+            eq(HackerAttendee.hackerId, input.id),
+            eq(HackerAttendee.hackathonId, hackathon.id),
+          ),
+        );
+
+      await log({
+        title: `Hacker Status Updated ${hackathon.displayName ? `for ${hackathon.displayName}` : ""}`,
+        message: `Hacker status for ${hacker.firstName} ${hacker.lastName} has changed to ${input.status}!`,
+        color: "tk_blue",
+        userId: ctx.session.user.discordUserId,
+      });
     }),
 };
