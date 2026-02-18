@@ -233,7 +233,7 @@ export const hackerMutationRouter = {
       await log({
         title: "Hacker Updated",
         message: `Blade profile for ${hacker.firstName} ${hacker.lastName} has been updated.
-                \n**Changes:**\n${changesString}`,
+\n**Changes:**\n${changesString}`,
         color: "tk_blue",
         userId: ctx.session.user.discordUserId,
       });
