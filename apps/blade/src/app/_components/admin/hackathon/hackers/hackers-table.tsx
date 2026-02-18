@@ -25,6 +25,8 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
+import type { FilterOption } from "~/app/_components/shared/filter-options";
+import { buildCountedFilterOptions } from "~/app/_components/shared/filter-options";
 import SortButton from "~/app/_components/shared/SortButton";
 import { useDebounce } from "~/app/admin/_hooks/debounce";
 import { HACKER_STATUS_MAP } from "~/consts";
@@ -61,11 +63,6 @@ const HACKER_STATUSES: readonly HackerStatus[] = [
   "denied",
   "waitlisted",
 ] as const;
-
-type FilterOption = {
-  value: string;
-  label: string;
-};
 
 export default function HackerTable({
   filterStatus,
@@ -173,41 +170,26 @@ export default function HackerTable({
       returning: 0,
     },
   };
-  const schoolOptions: FilterOption[] = [
-    { value: "", label: "All Schools" },
-    ...filterOptions.schools.map((s) => ({
-      value: s.value,
-      label: `${s.value} (${s.count})`,
-    })),
-  ];
-  const majorOptions: FilterOption[] = [
-    { value: "", label: "All Majors" },
-    ...filterOptions.majors.map((m) => ({
-      value: m.value,
-      label: `${m.value} (${m.count})`,
-    })),
-  ];
-  const raceOptions: FilterOption[] = [
-    { value: "", label: "All Races" },
-    ...filterOptions.races.map((r) => ({
-      value: r.value,
-      label: `${r.value} (${r.count})`,
-    })),
-  ];
-  const genderOptions: FilterOption[] = [
-    { value: "", label: "All Genders" },
-    ...filterOptions.genders.map((g) => ({
-      value: g.value,
-      label: `${g.value} (${g.count})`,
-    })),
-  ];
-  const gradYearOptions: FilterOption[] = [
-    { value: "", label: "All Grad Years" },
-    ...filterOptions.gradYears.map((y) => ({
-      value: y.value.toString(),
-      label: `${y.value} (${y.count})`,
-    })),
-  ];
+  const schoolOptions: FilterOption[] = buildCountedFilterOptions(
+    "All Schools",
+    filterOptions.schools,
+  );
+  const majorOptions: FilterOption[] = buildCountedFilterOptions(
+    "All Majors",
+    filterOptions.majors,
+  );
+  const raceOptions: FilterOption[] = buildCountedFilterOptions(
+    "All Races",
+    filterOptions.races,
+  );
+  const genderOptions: FilterOption[] = buildCountedFilterOptions(
+    "All Genders",
+    filterOptions.genders,
+  );
+  const gradYearOptions: FilterOption[] = buildCountedFilterOptions(
+    "All Grad Years",
+    filterOptions.gradYears,
+  );
   const firstTimeOptions: FilterOption[] = [
     { value: "all", label: "All Hackers" },
     {

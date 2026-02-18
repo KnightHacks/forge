@@ -17,8 +17,10 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
+import type { FilterOption } from "~/app/_components/shared/filter-options";
 import CustomPagination from "~/app/_components/admin/charts/CustomPagination";
 import CustomPaginationSelect from "~/app/_components/admin/charts/CustomPaginationSelect";
+import { buildCountedFilterOptions } from "~/app/_components/shared/filter-options";
 import SortButton from "~/app/_components/shared/SortButton";
 import { useDebounce } from "~/app/admin/_hooks/debounce";
 import { api } from "~/trpc/react";
@@ -87,28 +89,32 @@ export default function MemberTable() {
     majorFilter,
   });
   const duesQuery = api.member.getDuesPayingMembers.useQuery();
-  const schoolsQuery = api.member.getDistinctSchools.useQuery();
-  const majorsQuery = api.member.getDistinctMajors.useQuery();
+  const filterOptionsQuery = api.member.getMemberFilterOptions.useQuery();
 
   const isInitialLoading =
     membersQuery.isLoading ||
     totalCountQuery.isLoading ||
     duesQuery.isLoading ||
-    schoolsQuery.isLoading ||
-    majorsQuery.isLoading;
+    filterOptionsQuery.isLoading;
 
   const hasError =
     membersQuery.error ||
     totalCountQuery.error ||
     duesQuery.error ||
-    schoolsQuery.error ||
-    majorsQuery.error;
+    filterOptionsQuery.error;
 
   const members = membersQuery.data ?? [];
   const totalCount = totalCountQuery.data ?? 0;
   const duesPayingStatus = duesQuery.data ?? [];
-  const schools = schoolsQuery.data ?? [];
-  const majors = majorsQuery.data ?? [];
+  const filterOptions = filterOptionsQuery.data ?? { schools: [], majors: [] };
+  const schoolOptions: FilterOption[] = buildCountedFilterOptions(
+    "All Schools",
+    filterOptions.schools,
+  );
+  const majorOptions: FilterOption[] = buildCountedFilterOptions(
+    "All Majors",
+    filterOptions.majors,
+  );
 
   const duesMap = new Map();
 
@@ -162,12 +168,12 @@ export default function MemberTable() {
           </div>
           <div className="flex items-center gap-2">
             <ResponsiveComboBox
-              items={["All Schools", ...schools]}
-              renderItem={(school) => <span>{school}</span>}
-              getItemValue={(school) => school}
-              getItemLabel={(school) => school}
+              items={schoolOptions}
+              renderItem={(school) => <span>{school.label}</span>}
+              getItemValue={(school) => school.value}
+              getItemLabel={(school) => school.label}
               onItemSelect={(school) => {
-                setSchoolFilter(school === "All Schools" ? "" : school);
+                setSchoolFilter(school.value);
                 const params = new URLSearchParams(searchParams);
                 params.set("page", "1");
                 router.push("?" + params.toString());
@@ -176,12 +182,12 @@ export default function MemberTable() {
               inputPlaceholder="Search schools..."
             />
             <ResponsiveComboBox
-              items={["All Majors", ...majors]}
-              renderItem={(major) => <span>{major}</span>}
-              getItemValue={(major) => major}
-              getItemLabel={(major) => major}
+              items={majorOptions}
+              renderItem={(major) => <span>{major.label}</span>}
+              getItemValue={(major) => major.value}
+              getItemLabel={(major) => major.label}
               onItemSelect={(major) => {
-                setMajorFilter(major === "All Majors" ? "" : major);
+                setMajorFilter(major.value);
                 const params = new URLSearchParams(searchParams);
                 params.set("page", "1");
                 router.push("?" + params.toString());
