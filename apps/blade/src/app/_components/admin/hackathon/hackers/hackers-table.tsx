@@ -8,6 +8,7 @@ import type { InsertHackathon } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import {
   Select,
   SelectContent,
@@ -72,6 +73,14 @@ export default function HackerTable({
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [timeSortOrder, setTimeSortOrder] = useState<TimeOrder>("asc");
+  const [schoolFilter, setSchoolFilter] = useState("");
+  const [majorFilter, setMajorFilter] = useState("");
+  const [raceFilter, setRaceFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState("");
+  const [gradYearFilter, setGradYearFilter] = useState<number | undefined>();
+  const [isFirstTimeFilter, setIsFirstTimeFilter] = useState<
+    "all" | "yes" | "no"
+  >("all");
   const [activeHackathon, setActiveHackathon] =
     useState<InsertHackathon | null>(null);
   const searchParams = useSearchParams();
@@ -84,8 +93,21 @@ export default function HackerTable({
     filterStatus && HACKER_STATUSES.includes(filterStatus as HackerStatus)
       ? (filterStatus as HackerStatus)
       : undefined;
+  const parsedIsFirstTimeFilter =
+    isFirstTimeFilter === "all" ? undefined : isFirstTimeFilter === "yes";
 
   const { data: hackathons } = api.hackathon.getHackathons.useQuery();
+  const filterOptionsQuery =
+    api.hackerPagination.getHackerFilterOptions.useQuery(
+      { hackathonId: activeHackathon?.id ?? "" },
+      {
+        enabled: !!activeHackathon?.id,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
+        staleTime: 30_000,
+      },
+    );
   const hackersQuery = api.hackerPagination.getHackersPage.useQuery(
     {
       hackathonId: activeHackathon?.id ?? "",
@@ -96,6 +118,12 @@ export default function HackerTable({
       sortOrder: (sortByTime ? timeSortOrder : sortOrder) ?? "asc",
       sortByTime,
       statusFilter,
+      schoolFilter: schoolFilter || undefined,
+      majorFilter: majorFilter || undefined,
+      raceFilter: raceFilter || undefined,
+      genderFilter: genderFilter || undefined,
+      gradYearFilter,
+      isFirstTimeFilter: parsedIsFirstTimeFilter,
     },
     {
       enabled: !!activeHackathon?.id,
@@ -111,6 +139,12 @@ export default function HackerTable({
       hackathonId: activeHackathon?.id ?? "",
       searchTerm: debouncedSearchTerm,
       statusFilter,
+      schoolFilter: schoolFilter || undefined,
+      majorFilter: majorFilter || undefined,
+      raceFilter: raceFilter || undefined,
+      genderFilter: genderFilter || undefined,
+      gradYearFilter,
+      isFirstTimeFilter: parsedIsFirstTimeFilter,
     },
     {
       enabled: !!activeHackathon?.id,
@@ -123,6 +157,13 @@ export default function HackerTable({
 
   const hackers = hackersQuery.data ?? [];
   const totalCount = hackerCountQuery.data ?? 0;
+  const filterOptions = filterOptionsQuery.data ?? {
+    schools: [],
+    majors: [],
+    races: [],
+    genders: [],
+    gradYears: [],
+  };
 
   // Default to the closest hackathon that hasn't passed
   useEffect(() => {
@@ -159,6 +200,12 @@ export default function HackerTable({
     statusFilter,
     pageSize,
     activeHackathon?.id,
+    schoolFilter,
+    majorFilter,
+    raceFilter,
+    genderFilter,
+    gradYearFilter,
+    isFirstTimeFilter,
   ]);
 
   // Apply soft blacklist transformation BEFORE filtering
@@ -220,20 +267,20 @@ export default function HackerTable({
         </h2>
       </div>
 
-      <div className="flex flex-col border-b pb-2">
-        <div className="flex items-center gap-2 pb-2">
-          <div>
+      <div className="flex flex-col border-b pb-3">
+        <div className="flex flex-col gap-2 pb-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex items-center gap-2">
             <Button className="flex flex-row gap-1" onClick={toggleTimeSort}>
               <Clock />
               {timeSortOrder === "asc" && <ArrowUp />}
               {timeSortOrder === "desc" && <ArrowDown />}
             </Button>
+            <CustomPaginationSelect
+              pageSize={pageSize}
+              onPageSizeChange={handlePageSizeChange}
+            />
           </div>
-          <CustomPaginationSelect
-            pageSize={pageSize}
-            onPageSizeChange={handlePageSizeChange}
-          />
-          <div className="relative w-full">
+          <div className="relative w-full sm:min-w-[150px] sm:flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search hackers..."
@@ -242,126 +289,241 @@ export default function HackerTable({
               className="pl-8"
             />
           </div>
+          <div className="grid w-full grid-cols-2 gap-2">
+            <ResponsiveComboBox
+              items={["All Schools", ...filterOptions.schools]}
+              renderItem={(school) => <span>{school}</span>}
+              getItemValue={(school) => school}
+              getItemLabel={(school) => school}
+              onItemSelect={(school) => {
+                setSchoolFilter(school === "All Schools" ? "" : school);
+                const params = new URLSearchParams(searchParams);
+                params.set("page", "1");
+                router.replace("?" + params.toString());
+              }}
+              buttonPlaceholder="All Schools"
+              inputPlaceholder="Search schools..."
+            />
+            <ResponsiveComboBox
+              items={["All Majors", ...filterOptions.majors]}
+              renderItem={(major) => <span>{major}</span>}
+              getItemValue={(major) => major}
+              getItemLabel={(major) => major}
+              onItemSelect={(major) => {
+                setMajorFilter(major === "All Majors" ? "" : major);
+                const params = new URLSearchParams(searchParams);
+                params.set("page", "1");
+                router.replace("?" + params.toString());
+              }}
+              buttonPlaceholder="All Majors"
+              inputPlaceholder="Search majors..."
+            />
+            <ResponsiveComboBox
+              items={["All Races", ...filterOptions.races]}
+              renderItem={(race) => <span>{race}</span>}
+              getItemValue={(race) => race}
+              getItemLabel={(race) => race}
+              onItemSelect={(race) => {
+                setRaceFilter(race === "All Races" ? "" : race);
+                const params = new URLSearchParams(searchParams);
+                params.set("page", "1");
+                router.replace("?" + params.toString());
+              }}
+              buttonPlaceholder="All Races"
+              inputPlaceholder="Search races..."
+            />
+            <ResponsiveComboBox
+              items={["All Genders", ...filterOptions.genders]}
+              renderItem={(gender) => <span>{gender}</span>}
+              getItemValue={(gender) => gender}
+              getItemLabel={(gender) => gender}
+              onItemSelect={(gender) => {
+                setGenderFilter(gender === "All Genders" ? "" : gender);
+                const params = new URLSearchParams(searchParams);
+                params.set("page", "1");
+                router.replace("?" + params.toString());
+              }}
+              buttonPlaceholder="All Genders"
+              inputPlaceholder="Search genders..."
+            />
+            <ResponsiveComboBox
+              items={[
+                "All Grad Years",
+                ...filterOptions.gradYears.map((y) => y.toString()),
+              ]}
+              renderItem={(year) => <span>{year}</span>}
+              getItemValue={(year) => year}
+              getItemLabel={(year) => year}
+              onItemSelect={(year) => {
+                setGradYearFilter(
+                  year === "All Grad Years" ? undefined : Number(year),
+                );
+                const params = new URLSearchParams(searchParams);
+                params.set("page", "1");
+                router.replace("?" + params.toString());
+              }}
+              buttonPlaceholder="All Grad Years"
+              inputPlaceholder="Search grad years..."
+            />
+            <ResponsiveComboBox
+              items={["All Hackers", "First Time", "Returning"]}
+              renderItem={(type) => <span>{type}</span>}
+              getItemValue={(type) => type}
+              getItemLabel={(type) => type}
+              onItemSelect={(type) => {
+                setIsFirstTimeFilter(
+                  type === "First Time"
+                    ? "yes"
+                    : type === "Returning"
+                      ? "no"
+                      : "all",
+                );
+                const params = new URLSearchParams(searchParams);
+                params.set("page", "1");
+                router.replace("?" + params.toString());
+              }}
+              buttonPlaceholder="All Hackers"
+              inputPlaceholder="Select type..."
+            />
+          </div>
         </div>
         <div className="whitespace-nowrap text-center text-sm font-bold">
           Returned {totalCount} {totalCount === 1 ? "hacker" : "hackers"}
         </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="text-center">
-              <SortButton
-                field="firstName"
-                label="First Name"
-                sortField={sortField}
-                sortOrder={sortOrder}
-                setSortField={setSortField}
-                setSortOrder={setSortOrder}
-                setActiveSort={toggleFieldSort}
-              />
-            </TableHead>
-            <TableHead className="text-center">
-              <SortButton
-                field="lastName"
-                label="Last Name"
-                sortField={sortField}
-                sortOrder={sortOrder}
-                setSortField={setSortField}
-                setSortOrder={setSortOrder}
-                setActiveSort={toggleFieldSort}
-              />
-            </TableHead>
-            <TableHead className="text-center">
-              <SortButton
-                field="discordUser"
-                label="Discord"
-                sortField={sortField}
-                sortOrder={sortOrder}
-                setSortField={setSortField}
-                setSortOrder={setSortOrder}
-                setActiveSort={toggleFieldSort}
-              />
-            </TableHead>
-            <TableHead>
-              <SortButton
-                field="email"
-                label="Email"
-                sortField={sortField}
-                sortOrder={sortOrder}
-                setSortField={setSortField}
-                setSortOrder={setSortOrder}
-                setActiveSort={toggleFieldSort}
-              />
-            </TableHead>
-            <TableHead className="text-center">
-              <Label>Status</Label>
-            </TableHead>
-            <TableHead className="text-center">
-              <Label>Status Toggle</Label>
-            </TableHead>
-            <TableHead className="text-center">
-              <Label>Hacker Profile</Label>
-            </TableHead>
-            <TableHead className="text-center">
-              <Label>Survey Responses</Label>
-            </TableHead>
-            <TableHead className="text-center">
-              <Label>Update</Label>
-            </TableHead>
-            <TableHead className="text-center">
-              <Label>Delete</Label>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {hackersWithBlacklist.map((hacker) => (
-            <TableRow key={hacker.id}>
-              <TableCell className="text-center font-medium">
-                {hacker.firstName}
-              </TableCell>
-              <TableCell className="text-center font-medium">
-                {hacker.lastName}
-              </TableCell>
-              <TableCell className="text-center font-medium">
-                {hacker.discordUser}
-              </TableCell>
-              <TableCell className="font-medium">{hacker.email}</TableCell>
-              <TableCell
-                className={`break-keep text-center font-bold ${HACKER_STATUS_MAP[hacker.status as keyof typeof HACKER_STATUS_MAP].color}`}
-              >
-                {
-                  HACKER_STATUS_MAP[
-                    hacker.status as keyof typeof HACKER_STATUS_MAP
-                  ].name
-                }
-              </TableCell>
-              <TableCell>
-                <HackerStatusToggle
-                  hacker={hacker}
-                  hackathonName={activeHackathon?.displayName ?? ""}
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-center">
+                <SortButton
+                  field="firstName"
+                  label="First Name"
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  setSortField={setSortField}
+                  setSortOrder={setSortOrder}
+                  setActiveSort={toggleFieldSort}
                 />
-              </TableCell>
-              <TableCell className="text-center">
-                <HackerProfileButton hacker={hacker} />
-              </TableCell>
-              <TableCell className="text-center">
-                <HackerSurveyResponsesButton hacker={hacker} />
-              </TableCell>
-              <TableCell className="text-center">
-                <UpdateHackerButton hacker={hacker} />
-              </TableCell>
-              <TableCell className="text-center">
-                <DeleteHackerButton
-                  hacker={hacker}
-                  hackathonName={activeHackathon?.displayName ?? ""}
+              </TableHead>
+              <TableHead className="text-center">
+                <SortButton
+                  field="lastName"
+                  label="Last Name"
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  setSortField={setSortField}
+                  setSortOrder={setSortOrder}
+                  setActiveSort={toggleFieldSort}
                 />
-              </TableCell>
+              </TableHead>
+              <TableHead className="hidden md:table-cell">
+                <SortButton
+                  field="discordUser"
+                  label="Discord"
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  setSortField={setSortField}
+                  setSortOrder={setSortOrder}
+                  setActiveSort={toggleFieldSort}
+                />
+              </TableHead>
+              <TableHead className="hidden md:table-cell">
+                <SortButton
+                  field="email"
+                  label="Email"
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  setSortField={setSortField}
+                  setSortOrder={setSortOrder}
+                  setActiveSort={toggleFieldSort}
+                />
+              </TableHead>
+              <TableHead className="hidden text-center md:table-cell">
+                <Label>Status</Label>
+              </TableHead>
+              <TableHead className="hidden text-center md:table-cell">
+                <Label>Status Toggle</Label>
+              </TableHead>
+              <TableHead className="hidden text-center md:table-cell">
+                <Label>Hacker Profile</Label>
+              </TableHead>
+              <TableHead className="hidden text-center md:table-cell">
+                <Label>Survey Responses</Label>
+              </TableHead>
+              <TableHead className="hidden text-center md:table-cell">
+                <Label>Update</Label>
+              </TableHead>
+              <TableHead className="hidden text-center md:table-cell">
+                <Label>Delete</Label>
+              </TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {hackersQuery.isLoading || hackerCountQuery.isLoading ? (
+              <TableRow>
+                <TableCell colSpan={10} className="py-8 text-center">
+                  Loading Hackers ...
+                </TableCell>
+              </TableRow>
+            ) : hackersQuery.error || hackerCountQuery.error ? (
+              <TableRow>
+                <TableCell colSpan={10} className="py-8 text-center">
+                  Failed to load hackers!
+                </TableCell>
+              </TableRow>
+            ) : (
+              hackersWithBlacklist.map((hacker) => (
+                <TableRow key={hacker.id}>
+                  <TableCell className="text-center font-medium">
+                    {hacker.firstName}
+                  </TableCell>
+                  <TableCell className="text-center font-medium">
+                    {hacker.lastName}
+                  </TableCell>
+                  <TableCell className="hidden text-center font-medium md:table-cell">
+                    {hacker.discordUser}
+                  </TableCell>
+                  <TableCell className="hidden font-medium md:table-cell">
+                    {hacker.email}
+                  </TableCell>
+                  <TableCell
+                    className={`hidden break-keep text-center font-bold md:table-cell ${HACKER_STATUS_MAP[hacker.status as keyof typeof HACKER_STATUS_MAP].color}`}
+                  >
+                    {
+                      HACKER_STATUS_MAP[
+                        hacker.status as keyof typeof HACKER_STATUS_MAP
+                      ].name
+                    }
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <HackerStatusToggle
+                      hacker={hacker}
+                      hackathonName={activeHackathon?.displayName ?? ""}
+                    />
+                  </TableCell>
+                  <TableCell className="hidden text-center md:table-cell">
+                    <HackerProfileButton hacker={hacker} />
+                  </TableCell>
+                  <TableCell className="hidden text-center md:table-cell">
+                    <HackerSurveyResponsesButton hacker={hacker} />
+                  </TableCell>
+                  <TableCell className="hidden text-center md:table-cell">
+                    <UpdateHackerButton hacker={hacker} />
+                  </TableCell>
+                  <TableCell className="hidden text-center md:table-cell">
+                    <DeleteHackerButton
+                      hacker={hacker}
+                      hackathonName={activeHackathon?.displayName ?? ""}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
       <CustomPagination
         className="mt-4"
         itemCount={totalCount}
