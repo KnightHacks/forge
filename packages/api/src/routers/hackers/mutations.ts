@@ -487,32 +487,7 @@ export const hackerMutationRouter = {
           userId: Hacker.userId,
           firstName: Hacker.firstName,
           lastName: Hacker.lastName,
-          gender: Hacker.gender,
           discordUser: Hacker.discordUser,
-          age: Hacker.age,
-          country: Hacker.country,
-          email: Hacker.email,
-          phoneNumber: Hacker.phoneNumber,
-          school: Hacker.school,
-          major: Hacker.major,
-          levelOfStudy: Hacker.levelOfStudy,
-          raceOrEthnicity: Hacker.raceOrEthnicity,
-          shirtSize: Hacker.shirtSize,
-          githubProfileUrl: Hacker.githubProfileUrl,
-          linkedinProfileUrl: Hacker.linkedinProfileUrl,
-          websiteUrl: Hacker.websiteUrl,
-          resumeUrl: Hacker.resumeUrl,
-          dob: Hacker.dob,
-          gradDate: Hacker.gradDate,
-          survey1: Hacker.survey1,
-          survey2: Hacker.survey2,
-          isFirstTime: Hacker.isFirstTime,
-          foodAllergies: Hacker.foodAllergies,
-          agreesToReceiveEmailsFromMLH: Hacker.agreesToReceiveEmailsFromMLH,
-          agreesToMLHCodeOfConduct: Hacker.agreesToMLHCodeOfConduct,
-          agreesToMLHDataSharing: Hacker.agreesToMLHDataSharing,
-          dateCreated: Hacker.dateCreated,
-          timeCreated: Hacker.timeCreated,
           status: HackerAttendee.status,
           class: HackerAttendee.class,
           points: HackerAttendee.points,
@@ -743,7 +718,7 @@ export const hackerMutationRouter = {
       z.object({
         id: z.string(),
         hackathonName: z.string(),
-        amount: z.number(),
+        amount: z.number().int().min(1),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -847,7 +822,7 @@ export const hackerMutationRouter = {
 
       // Fetch the hackathon by name to get the ID
       const hackathon = await db.query.Hackathon.findFirst({
-        where: (t, { eq }) => eq(t.displayName, input.hackathonName),
+        where: (t, { eq }) => eq(t.name, input.hackathonName),
       });
 
       if (!hackathon) {
