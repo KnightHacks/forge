@@ -1,11 +1,13 @@
 import { z } from "zod";
 
-import { and, asc, count, desc, eq, ilike, or, sql } from "@forge/db";
+import { and, asc, count, desc, eq, ilike, ne, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Hacker, HackerAttendee } from "@forge/db/schemas/knight-hacks";
 
 import { permProcedure } from "../../trpc";
 import { controlPerms } from "../../utils";
+
+const SOFT_BLACKLIST_HACKER_ID = "7f89fe4d-26f0-42fe-ac98-22d8f648d7a7";
 
 export const hackerPaginationRouter = {
   getHackersPage: permProcedure
@@ -13,7 +15,7 @@ export const hackerPaginationRouter = {
       z.object({
         hackathonId: z.string(),
         currentPage: z.number().min(1).optional(),
-        pageSize: z.number().min(1).optional(),
+        pageSize: z.number().min(1).max(100).optional(),
         searchTerm: z.string().optional(),
         sortField: z
           .enum([
@@ -69,7 +71,19 @@ export const hackerPaginationRouter = {
       }
 
       if (input.statusFilter) {
-        conditions.push(eq(HackerAttendee.status, input.statusFilter));
+        if (input.statusFilter === "denied") {
+          const deniedCondition = or(
+            eq(HackerAttendee.status, "denied"),
+            eq(Hacker.id, SOFT_BLACKLIST_HACKER_ID),
+          );
+          if (deniedCondition) conditions.push(deniedCondition);
+        } else {
+          const nonDeniedCondition = and(
+            eq(HackerAttendee.status, input.statusFilter),
+            ne(Hacker.id, SOFT_BLACKLIST_HACKER_ID),
+          );
+          if (nonDeniedCondition) conditions.push(nonDeniedCondition);
+        }
       }
       if (input.schoolFilter) {
         conditions.push(
@@ -109,7 +123,9 @@ export const hackerPaginationRouter = {
         );
       }
       if (input.isFirstTimeFilter !== undefined) {
-        conditions.push(eq(Hacker.isFirstTime, input.isFirstTimeFilter));
+        conditions.push(
+          sql`COALESCE(${Hacker.isFirstTime}, false) = ${input.isFirstTimeFilter}`,
+        );
       }
 
       let query = db
@@ -144,7 +160,10 @@ export const hackerPaginationRouter = {
           agreesToMLHDataSharing: Hacker.agreesToMLHDataSharing,
           dateCreated: Hacker.dateCreated,
           timeCreated: Hacker.timeCreated,
-          status: HackerAttendee.status,
+          status: sql<string>`CASE
+            WHEN ${Hacker.id} = ${SOFT_BLACKLIST_HACKER_ID} THEN 'denied'
+            ELSE ${HackerAttendee.status}
+          END`,
           timeApplied: HackerAttendee.timeApplied,
           timeConfirmed: HackerAttendee.timeConfirmed,
         })
@@ -217,7 +236,19 @@ export const hackerPaginationRouter = {
       }
 
       if (input.statusFilter) {
-        conditions.push(eq(HackerAttendee.status, input.statusFilter));
+        if (input.statusFilter === "denied") {
+          const deniedCondition = or(
+            eq(HackerAttendee.status, "denied"),
+            eq(Hacker.id, SOFT_BLACKLIST_HACKER_ID),
+          );
+          if (deniedCondition) conditions.push(deniedCondition);
+        } else {
+          const nonDeniedCondition = and(
+            eq(HackerAttendee.status, input.statusFilter),
+            ne(Hacker.id, SOFT_BLACKLIST_HACKER_ID),
+          );
+          if (nonDeniedCondition) conditions.push(nonDeniedCondition);
+        }
       }
       if (input.schoolFilter) {
         conditions.push(
@@ -257,11 +288,13 @@ export const hackerPaginationRouter = {
         );
       }
       if (input.isFirstTimeFilter !== undefined) {
-        conditions.push(eq(Hacker.isFirstTime, input.isFirstTimeFilter));
+        conditions.push(
+          sql`COALESCE(${Hacker.isFirstTime}, false) = ${input.isFirstTimeFilter}`,
+        );
       }
 
       const result = await db
-        .select({ count: count() })
+        .select({ count: count().mapWith(Number) })
         .from(Hacker)
         .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
         .where(and(...conditions));
@@ -277,62 +310,84 @@ export const hackerPaginationRouter = {
     )
     .query(async ({ ctx, input }) => {
       controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
+      const gradYearExpr = sql<number>`EXTRACT(YEAR FROM ${Hacker.gradDate})::int`;
+      const isFirstTimeExpr = sql<boolean>`COALESCE(${Hacker.isFirstTime}, false)`;
+      const whereClause = eq(HackerAttendee.hackathonId, input.hackathonId);
 
-      const rows = await db
-        .select({
-          school: Hacker.school,
-          major: Hacker.major,
-          race: Hacker.raceOrEthnicity,
-          gender: Hacker.gender,
-          gradDate: Hacker.gradDate,
-          isFirstTime: Hacker.isFirstTime,
-        })
-        .from(Hacker)
-        .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
-        .where(eq(HackerAttendee.hackathonId, input.hackathonId));
+      const [schools, majors, races, genders, gradYears, hackerTypeCounts] =
+        await Promise.all([
+          db
+            .select({
+              value: Hacker.school,
+              count: count().mapWith(Number),
+            })
+            .from(Hacker)
+            .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+            .where(whereClause)
+            .groupBy(Hacker.school)
+            .orderBy(asc(Hacker.school)),
+          db
+            .select({
+              value: Hacker.major,
+              count: count().mapWith(Number),
+            })
+            .from(Hacker)
+            .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+            .where(whereClause)
+            .groupBy(Hacker.major)
+            .orderBy(asc(Hacker.major)),
+          db
+            .select({
+              value: Hacker.raceOrEthnicity,
+              count: count().mapWith(Number),
+            })
+            .from(Hacker)
+            .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+            .where(whereClause)
+            .groupBy(Hacker.raceOrEthnicity)
+            .orderBy(asc(Hacker.raceOrEthnicity)),
+          db
+            .select({
+              value: Hacker.gender,
+              count: count().mapWith(Number),
+            })
+            .from(Hacker)
+            .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+            .where(whereClause)
+            .groupBy(Hacker.gender)
+            .orderBy(asc(Hacker.gender)),
+          db
+            .select({
+              value: gradYearExpr.mapWith(Number),
+              count: count().mapWith(Number),
+            })
+            .from(Hacker)
+            .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+            .where(whereClause)
+            .groupBy(gradYearExpr)
+            .orderBy(asc(gradYearExpr)),
+          db
+            .select({
+              value: isFirstTimeExpr,
+              count: count().mapWith(Number),
+            })
+            .from(Hacker)
+            .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+            .where(whereClause)
+            .groupBy(isFirstTimeExpr),
+        ]);
 
-      const schoolCounts = new Map<string, number>();
-      const majorCounts = new Map<string, number>();
-      const raceCounts = new Map<string, number>();
-      const genderCounts = new Map<string, number>();
-      const gradYearCounts = new Map<number, number>();
-      let firstTimeCount = 0;
-      let returningCount = 0;
-
-      for (const row of rows) {
-        schoolCounts.set(row.school, (schoolCounts.get(row.school) ?? 0) + 1);
-        majorCounts.set(row.major, (majorCounts.get(row.major) ?? 0) + 1);
-        raceCounts.set(row.race, (raceCounts.get(row.race) ?? 0) + 1);
-        genderCounts.set(row.gender, (genderCounts.get(row.gender) ?? 0) + 1);
-
-        const gradYear = Number(row.gradDate.slice(0, 4));
-        if (Number.isFinite(gradYear)) {
-          gradYearCounts.set(gradYear, (gradYearCounts.get(gradYear) ?? 0) + 1);
-        }
-
-        if (row.isFirstTime) {
-          firstTimeCount += 1;
-        } else {
-          returningCount += 1;
-        }
-      }
+      const firstTimeCount =
+        hackerTypeCounts.find((row) => row.value === true)?.count ?? 0;
+      const returningCount =
+        hackerTypeCounts.find((row) => row.value === false)?.count ?? 0;
 
       return {
-        schools: Array.from(schoolCounts.entries())
-          .sort((a, b) => a[0].localeCompare(b[0]))
-          .map(([value, count]) => ({ value, count })),
-        majors: Array.from(majorCounts.entries())
-          .sort((a, b) => a[0].localeCompare(b[0]))
-          .map(([value, count]) => ({ value, count })),
-        races: Array.from(raceCounts.entries())
-          .sort((a, b) => a[0].localeCompare(b[0]))
-          .map(([value, count]) => ({ value, count })),
-        genders: Array.from(genderCounts.entries())
-          .sort((a, b) => a[0].localeCompare(b[0]))
-          .map(([value, count]) => ({ value, count })),
-        gradYears: Array.from(gradYearCounts.entries())
-          .sort((a, b) => a[0] - b[0])
-          .map(([value, count]) => ({ value, count })),
+        schools,
+        majors,
+        races,
+        genders,
+        gradYears,
         hackerTypeCounts: {
           firstTime: firstTimeCount,
           returning: returningCount,
