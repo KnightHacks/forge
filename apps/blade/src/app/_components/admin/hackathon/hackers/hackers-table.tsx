@@ -64,6 +64,8 @@ const HACKER_STATUSES: readonly HackerStatus[] = [
   "waitlisted",
 ] as const;
 
+const DEFAULT_STATUS_META = { name: "Unknown", color: "text-gray-400" };
+
 export default function HackerTable({
   filterStatus,
 }: {
@@ -218,6 +220,7 @@ export default function HackerTable({
     }
   }, [hackathons, activeHackathon]);
 
+  // Intentionally run every render so page-reset logic uses fresh refs and avoids stale closures.
   useEffect(() => {
     stableRefs.current = { currentPage, searchParams, router };
   });
@@ -331,6 +334,7 @@ export default function HackerTable({
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search hackers..."
+              aria-label="Search hackers"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8"
@@ -408,8 +412,9 @@ export default function HackerTable({
                 getItemValue={(year) => year.value}
                 getItemLabel={(year) => year.label}
                 onItemSelect={(year) => {
+                  const parsedYear = parseInt(year.value, 10);
                   setGradYearFilter(
-                    year.value === "" ? undefined : Number(year.value),
+                    Number.isInteger(parsedYear) ? parsedYear : undefined,
                   );
                   const params = new URLSearchParams(searchParams);
                   params.set("page", "1");
@@ -526,9 +531,11 @@ export default function HackerTable({
             ) : (
               hackers.map((hacker) => {
                 const statusMeta =
-                  HACKER_STATUS_MAP[
-                    hacker.status as keyof typeof HACKER_STATUS_MAP
-                  ];
+                  hacker.status in HACKER_STATUS_MAP
+                    ? HACKER_STATUS_MAP[
+                        hacker.status as keyof typeof HACKER_STATUS_MAP
+                      ]
+                    : DEFAULT_STATUS_META;
                 return (
                   <TableRow key={hacker.id}>
                     <TableCell className="text-center font-medium">
