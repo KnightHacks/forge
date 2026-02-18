@@ -1,12 +1,12 @@
-export type FilterOption = {
+export interface FilterOption {
   value: string;
   label: string;
-};
+}
 
-export type CountedFilterValue<T extends string | number = string> = {
+export interface CountedFilterValue<T extends string | number = string> {
   value: T;
   count: number;
-};
+}
 
 export function buildCountedFilterOptions<T extends string | number>(
   allLabel: string,
