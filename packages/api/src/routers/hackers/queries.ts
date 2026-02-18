@@ -344,7 +344,6 @@ export const hackerQueryRouter = {
         )
         .orderBy(desc(HackerAttendee.points))
         .limit(5);
-      console.log(topA);
 
       const topB = await db
         .select({
