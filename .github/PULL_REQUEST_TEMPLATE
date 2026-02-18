@@ -6,7 +6,13 @@ Please describe the motivation for this PR.
 
 # What
 
-Issue(s):
+<!--
+If need be, change closes to a more applicable keyword.
+https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue
+Examples: "Closes: #67"; "Resolves: #420"; "Closes: #128, fixes: #64"
+-->
+
+Closes: #ISSUE_NUMBER
 
 <!--
 Please describe the changes made in this PR.
