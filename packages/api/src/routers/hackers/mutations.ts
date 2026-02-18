@@ -793,7 +793,7 @@ export const hackerMutationRouter = {
 
       await db
         .update(HackerAttendee)
-        .set({ points: attendee.points + input.amount })
+        .set({ points: sql`${HackerAttendee.points} + ${input.amount}` })
         .where(
           and(
             eq(HackerAttendee.hackerId, input.id),
