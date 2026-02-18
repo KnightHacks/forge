@@ -278,51 +278,65 @@ export const hackerPaginationRouter = {
     .query(async ({ ctx, input }) => {
       controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
 
-      const [schools, majors, races, genders, gradDates] = await Promise.all([
-        db
-          .selectDistinct({ value: Hacker.school })
-          .from(Hacker)
-          .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
-          .where(eq(HackerAttendee.hackathonId, input.hackathonId))
-          .orderBy(asc(Hacker.school)),
-        db
-          .selectDistinct({ value: Hacker.major })
-          .from(Hacker)
-          .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
-          .where(eq(HackerAttendee.hackathonId, input.hackathonId))
-          .orderBy(asc(Hacker.major)),
-        db
-          .selectDistinct({ value: Hacker.raceOrEthnicity })
-          .from(Hacker)
-          .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
-          .where(eq(HackerAttendee.hackathonId, input.hackathonId))
-          .orderBy(asc(Hacker.raceOrEthnicity)),
-        db
-          .selectDistinct({ value: Hacker.gender })
-          .from(Hacker)
-          .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
-          .where(eq(HackerAttendee.hackathonId, input.hackathonId))
-          .orderBy(asc(Hacker.gender)),
-        db
-          .selectDistinct({ value: Hacker.gradDate })
-          .from(Hacker)
-          .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
-          .where(eq(HackerAttendee.hackathonId, input.hackathonId))
-          .orderBy(asc(Hacker.gradDate)),
-      ]);
+      const rows = await db
+        .select({
+          school: Hacker.school,
+          major: Hacker.major,
+          race: Hacker.raceOrEthnicity,
+          gender: Hacker.gender,
+          gradDate: Hacker.gradDate,
+          isFirstTime: Hacker.isFirstTime,
+        })
+        .from(Hacker)
+        .innerJoin(HackerAttendee, eq(Hacker.id, HackerAttendee.hackerId))
+        .where(eq(HackerAttendee.hackathonId, input.hackathonId));
 
-      const gradYears = Array.from(
-        new Set(gradDates.map((g) => Number(g.value.slice(0, 4)))),
-      )
-        .filter((g) => Number.isFinite(g))
-        .sort((a, b) => a - b);
+      const schoolCounts = new Map<string, number>();
+      const majorCounts = new Map<string, number>();
+      const raceCounts = new Map<string, number>();
+      const genderCounts = new Map<string, number>();
+      const gradYearCounts = new Map<number, number>();
+      let firstTimeCount = 0;
+      let returningCount = 0;
+
+      for (const row of rows) {
+        schoolCounts.set(row.school, (schoolCounts.get(row.school) ?? 0) + 1);
+        majorCounts.set(row.major, (majorCounts.get(row.major) ?? 0) + 1);
+        raceCounts.set(row.race, (raceCounts.get(row.race) ?? 0) + 1);
+        genderCounts.set(row.gender, (genderCounts.get(row.gender) ?? 0) + 1);
+
+        const gradYear = Number(row.gradDate.slice(0, 4));
+        if (Number.isFinite(gradYear)) {
+          gradYearCounts.set(gradYear, (gradYearCounts.get(gradYear) ?? 0) + 1);
+        }
+
+        if (row.isFirstTime) {
+          firstTimeCount += 1;
+        } else {
+          returningCount += 1;
+        }
+      }
 
       return {
-        schools: schools.map((s) => s.value),
-        majors: majors.map((m) => m.value),
-        races: races.map((r) => r.value),
-        genders: genders.map((g) => g.value),
-        gradYears,
+        schools: Array.from(schoolCounts.entries())
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([value, count]) => ({ value, count })),
+        majors: Array.from(majorCounts.entries())
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([value, count]) => ({ value, count })),
+        races: Array.from(raceCounts.entries())
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([value, count]) => ({ value, count })),
+        genders: Array.from(genderCounts.entries())
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([value, count]) => ({ value, count })),
+        gradYears: Array.from(gradYearCounts.entries())
+          .sort((a, b) => a[0] - b[0])
+          .map(([value, count]) => ({ value, count })),
+        hackerTypeCounts: {
+          firstTime: firstTimeCount,
+          returning: returningCount,
+        },
       };
     }),
 };

@@ -23,17 +23,17 @@ export default function HackersClient({
         </div>
       </div>
 
-      <div>
-        {currentActiveHackathon ? (
-          <HackerStatusCounter
-            hackathonId={currentActiveHackathon.id}
-            onClick={setFilterStatus}
-          />
-        ) : (
-          <div>No upcoming hackathon.</div>
-        )}
-      </div>
+      {currentActiveHackathon ? (
+        <HackerStatusCounter
+          hackathonId={currentActiveHackathon.id}
+          onClick={setFilterStatus}
+        />
+      ) : null}
+
       <div className="mb-6 text-center text-lg font-medium">
+        {!currentActiveHackathon ? (
+          <div className="mb-2">No upcoming hackathon.</div>
+        ) : null}
         {filterStatus ? (
           <div className="text-center">
             <span>You are currently viewing hackers with the status: </span>

@@ -62,6 +62,11 @@ const HACKER_STATUSES: readonly HackerStatus[] = [
   "waitlisted",
 ] as const;
 
+type FilterOption = {
+  value: string;
+  label: string;
+};
+
 export default function HackerTable({
   filterStatus,
 }: {
@@ -163,7 +168,57 @@ export default function HackerTable({
     races: [],
     genders: [],
     gradYears: [],
+    hackerTypeCounts: {
+      firstTime: 0,
+      returning: 0,
+    },
   };
+  const schoolOptions: FilterOption[] = [
+    { value: "", label: "All Schools" },
+    ...filterOptions.schools.map((s) => ({
+      value: s.value,
+      label: `${s.value} (${s.count})`,
+    })),
+  ];
+  const majorOptions: FilterOption[] = [
+    { value: "", label: "All Majors" },
+    ...filterOptions.majors.map((m) => ({
+      value: m.value,
+      label: `${m.value} (${m.count})`,
+    })),
+  ];
+  const raceOptions: FilterOption[] = [
+    { value: "", label: "All Races" },
+    ...filterOptions.races.map((r) => ({
+      value: r.value,
+      label: `${r.value} (${r.count})`,
+    })),
+  ];
+  const genderOptions: FilterOption[] = [
+    { value: "", label: "All Genders" },
+    ...filterOptions.genders.map((g) => ({
+      value: g.value,
+      label: `${g.value} (${g.count})`,
+    })),
+  ];
+  const gradYearOptions: FilterOption[] = [
+    { value: "", label: "All Grad Years" },
+    ...filterOptions.gradYears.map((y) => ({
+      value: y.value.toString(),
+      label: `${y.value} (${y.count})`,
+    })),
+  ];
+  const firstTimeOptions: FilterOption[] = [
+    { value: "all", label: "All Hackers" },
+    {
+      value: "yes",
+      label: `First Time (${filterOptions.hackerTypeCounts.firstTime})`,
+    },
+    {
+      value: "no",
+      label: `Returning (${filterOptions.hackerTypeCounts.returning})`,
+    },
+  ];
 
   // Default to the closest hackathon that hasn't passed
   useEffect(() => {
@@ -235,40 +290,39 @@ export default function HackerTable({
 
   return (
     <div>
-      <div className="mb-4 mt-6 flex flex-col justify-between gap-4 md:flex-row-reverse lg:flex-row-reverse">
-        <Select
-          value={activeHackathon?.name ?? undefined}
-          onValueChange={(name) => {
-            const selectedHackathon =
-              hackathons?.find((h) => h.name === name) ?? null;
-            setActiveHackathon(selectedHackathon);
-            const params = new URLSearchParams(searchParams);
-            params.set("page", "1");
-            router.replace("?" + params.toString());
-          }}
-        >
-          <SelectTrigger
-            className="md:w-1/2 lg:w-1/2"
-            aria-label="Select a hackathon"
-          >
-            <SelectValue placeholder="Select a hackathon..." />
-          </SelectTrigger>
-          <SelectContent>
-            {hackathons?.map((hackathon) => (
-              <SelectItem key={hackathon.id} value={hackathon.name}>
-                {hackathon.name}
-                <span className="me-2" />
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="mb-4 mt-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h2 className="text-2xl font-bold">
           {activeHackathon?.name ?? "All Hackers"}
         </h2>
+        <div className="w-full md:ml-auto md:w-auto md:min-w-[220px]">
+          <Select
+            value={activeHackathon?.name ?? undefined}
+            onValueChange={(name) => {
+              const selectedHackathon =
+                hackathons?.find((h) => h.name === name) ?? null;
+              setActiveHackathon(selectedHackathon);
+              const params = new URLSearchParams(searchParams);
+              params.set("page", "1");
+              router.replace("?" + params.toString());
+            }}
+          >
+            <SelectTrigger className="w-full" aria-label="Select a hackathon">
+              <SelectValue placeholder="Select a hackathon..." />
+            </SelectTrigger>
+            <SelectContent>
+              {hackathons?.map((hackathon) => (
+                <SelectItem key={hackathon.id} value={hackathon.name}>
+                  {hackathon.name}
+                  <span className="me-2" />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="flex flex-col border-b pb-3">
-        <div className="flex flex-col gap-2 pb-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="flex flex-col gap-2 pb-4 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="flex items-center gap-2">
             <Button className="flex flex-row gap-1" onClick={toggleTimeSort}>
               <Clock />
@@ -289,102 +343,105 @@ export default function HackerTable({
               className="pl-8"
             />
           </div>
-          <div className="grid w-full grid-cols-2 gap-2">
-            <ResponsiveComboBox
-              items={["All Schools", ...filterOptions.schools]}
-              renderItem={(school) => <span>{school}</span>}
-              getItemValue={(school) => school}
-              getItemLabel={(school) => school}
-              onItemSelect={(school) => {
-                setSchoolFilter(school === "All Schools" ? "" : school);
-                const params = new URLSearchParams(searchParams);
-                params.set("page", "1");
-                router.replace("?" + params.toString());
-              }}
-              buttonPlaceholder="All Schools"
-              inputPlaceholder="Search schools..."
-            />
-            <ResponsiveComboBox
-              items={["All Majors", ...filterOptions.majors]}
-              renderItem={(major) => <span>{major}</span>}
-              getItemValue={(major) => major}
-              getItemLabel={(major) => major}
-              onItemSelect={(major) => {
-                setMajorFilter(major === "All Majors" ? "" : major);
-                const params = new URLSearchParams(searchParams);
-                params.set("page", "1");
-                router.replace("?" + params.toString());
-              }}
-              buttonPlaceholder="All Majors"
-              inputPlaceholder="Search majors..."
-            />
-            <ResponsiveComboBox
-              items={["All Races", ...filterOptions.races]}
-              renderItem={(race) => <span>{race}</span>}
-              getItemValue={(race) => race}
-              getItemLabel={(race) => race}
-              onItemSelect={(race) => {
-                setRaceFilter(race === "All Races" ? "" : race);
-                const params = new URLSearchParams(searchParams);
-                params.set("page", "1");
-                router.replace("?" + params.toString());
-              }}
-              buttonPlaceholder="All Races"
-              inputPlaceholder="Search races..."
-            />
-            <ResponsiveComboBox
-              items={["All Genders", ...filterOptions.genders]}
-              renderItem={(gender) => <span>{gender}</span>}
-              getItemValue={(gender) => gender}
-              getItemLabel={(gender) => gender}
-              onItemSelect={(gender) => {
-                setGenderFilter(gender === "All Genders" ? "" : gender);
-                const params = new URLSearchParams(searchParams);
-                params.set("page", "1");
-                router.replace("?" + params.toString());
-              }}
-              buttonPlaceholder="All Genders"
-              inputPlaceholder="Search genders..."
-            />
-            <ResponsiveComboBox
-              items={[
-                "All Grad Years",
-                ...filterOptions.gradYears.map((y) => y.toString()),
-              ]}
-              renderItem={(year) => <span>{year}</span>}
-              getItemValue={(year) => year}
-              getItemLabel={(year) => year}
-              onItemSelect={(year) => {
-                setGradYearFilter(
-                  year === "All Grad Years" ? undefined : Number(year),
-                );
-                const params = new URLSearchParams(searchParams);
-                params.set("page", "1");
-                router.replace("?" + params.toString());
-              }}
-              buttonPlaceholder="All Grad Years"
-              inputPlaceholder="Search grad years..."
-            />
-            <ResponsiveComboBox
-              items={["All Hackers", "First Time", "Returning"]}
-              renderItem={(type) => <span>{type}</span>}
-              getItemValue={(type) => type}
-              getItemLabel={(type) => type}
-              onItemSelect={(type) => {
-                setIsFirstTimeFilter(
-                  type === "First Time"
-                    ? "yes"
-                    : type === "Returning"
-                      ? "no"
-                      : "all",
-                );
-                const params = new URLSearchParams(searchParams);
-                params.set("page", "1");
-                router.replace("?" + params.toString());
-              }}
-              buttonPlaceholder="All Hackers"
-              inputPlaceholder="Select type..."
-            />
+          <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-2 md:flex md:flex-nowrap md:justify-center md:gap-2">
+            <div className="w-full md:w-[170px]">
+              <ResponsiveComboBox
+                items={schoolOptions}
+                renderItem={(school) => <span>{school.label}</span>}
+                getItemValue={(school) => school.value}
+                getItemLabel={(school) => school.label}
+                onItemSelect={(school) => {
+                  setSchoolFilter(school.value);
+                  const params = new URLSearchParams(searchParams);
+                  params.set("page", "1");
+                  router.replace("?" + params.toString());
+                }}
+                buttonPlaceholder="All Schools"
+                inputPlaceholder="Search schools..."
+              />
+            </div>
+            <div className="w-full md:w-[170px]">
+              <ResponsiveComboBox
+                items={majorOptions}
+                renderItem={(major) => <span>{major.label}</span>}
+                getItemValue={(major) => major.value}
+                getItemLabel={(major) => major.label}
+                onItemSelect={(major) => {
+                  setMajorFilter(major.value);
+                  const params = new URLSearchParams(searchParams);
+                  params.set("page", "1");
+                  router.replace("?" + params.toString());
+                }}
+                buttonPlaceholder="All Majors"
+                inputPlaceholder="Search majors..."
+              />
+            </div>
+            <div className="w-full md:w-[170px]">
+              <ResponsiveComboBox
+                items={raceOptions}
+                renderItem={(race) => <span>{race.label}</span>}
+                getItemValue={(race) => race.value}
+                getItemLabel={(race) => race.label}
+                onItemSelect={(race) => {
+                  setRaceFilter(race.value);
+                  const params = new URLSearchParams(searchParams);
+                  params.set("page", "1");
+                  router.replace("?" + params.toString());
+                }}
+                buttonPlaceholder="All Races"
+                inputPlaceholder="Search races..."
+              />
+            </div>
+            <div className="w-full md:w-[170px]">
+              <ResponsiveComboBox
+                items={genderOptions}
+                renderItem={(gender) => <span>{gender.label}</span>}
+                getItemValue={(gender) => gender.value}
+                getItemLabel={(gender) => gender.label}
+                onItemSelect={(gender) => {
+                  setGenderFilter(gender.value);
+                  const params = new URLSearchParams(searchParams);
+                  params.set("page", "1");
+                  router.replace("?" + params.toString());
+                }}
+                buttonPlaceholder="All Genders"
+                inputPlaceholder="Search genders..."
+              />
+            </div>
+            <div className="w-full md:w-[170px]">
+              <ResponsiveComboBox
+                items={gradYearOptions}
+                renderItem={(year) => <span>{year.label}</span>}
+                getItemValue={(year) => year.value}
+                getItemLabel={(year) => year.label}
+                onItemSelect={(year) => {
+                  setGradYearFilter(
+                    year.value === "" ? undefined : Number(year.value),
+                  );
+                  const params = new URLSearchParams(searchParams);
+                  params.set("page", "1");
+                  router.replace("?" + params.toString());
+                }}
+                buttonPlaceholder="All Grad Years"
+                inputPlaceholder="Search grad years..."
+              />
+            </div>
+            <div className="w-full md:w-[170px]">
+              <ResponsiveComboBox
+                items={firstTimeOptions}
+                renderItem={(type) => <span>{type.label}</span>}
+                getItemValue={(type) => type.value}
+                getItemLabel={(type) => type.label}
+                onItemSelect={(type) => {
+                  setIsFirstTimeFilter(type.value as "all" | "yes" | "no");
+                  const params = new URLSearchParams(searchParams);
+                  params.set("page", "1");
+                  router.replace("?" + params.toString());
+                }}
+                buttonPlaceholder="All Hackers"
+                inputPlaceholder="Select type..."
+              />
+            </div>
           </div>
         </div>
         <div className="whitespace-nowrap text-center text-sm font-bold">
