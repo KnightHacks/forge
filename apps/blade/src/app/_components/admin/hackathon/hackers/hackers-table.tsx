@@ -243,20 +243,29 @@ export default function HackerTable({
     genderFilter,
     gradYearFilter,
     isFirstTimeFilter,
+    sortByTime,
+    sortField,
+    sortOrder,
+    timeSortOrder,
   ]);
 
-  // Apply soft blacklist transformation BEFORE filtering
-  const hackersWithBlacklist = hackers.map((hacker) =>
-    hacker.id === "7f89fe4d-26f0-42fe-ac98-22d8f648d7a7"
-      ? { ...hacker, status: "denied" }
-      : hacker,
-  );
+  const isTableLoading =
+    hackersQuery.isLoading ||
+    hackerCountQuery.isLoading ||
+    filterOptionsQuery.isLoading;
+  const tableError =
+    hackersQuery.error || hackerCountQuery.error || filterOptionsQuery.error;
+
+  const resetToFirstPage = () => {
+    if (stableRefs.current.currentPage === 1) return;
+    const params = new URLSearchParams(stableRefs.current.searchParams);
+    params.set("page", "1");
+    stableRefs.current.router.replace("?" + params.toString());
+  };
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize);
-    const params = new URLSearchParams(searchParams);
-    params.set("page", "1");
-    router.replace("?" + params.toString());
+    resetToFirstPage();
   };
 
   const toggleTimeSort = () => {
@@ -264,10 +273,12 @@ export default function HackerTable({
     setSortByTime(true);
     setSortField(null);
     setSortOrder(null);
+    resetToFirstPage();
   };
 
   const toggleFieldSort = () => {
     setSortByTime(false);
+    resetToFirstPage();
   };
 
   return (
@@ -500,65 +511,67 @@ export default function HackerTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {hackersQuery.isLoading || hackerCountQuery.isLoading ? (
+            {isTableLoading ? (
               <TableRow>
                 <TableCell colSpan={10} className="py-8 text-center">
                   Loading Hackers ...
                 </TableCell>
               </TableRow>
-            ) : hackersQuery.error || hackerCountQuery.error ? (
+            ) : tableError ? (
               <TableRow>
                 <TableCell colSpan={10} className="py-8 text-center">
                   Failed to load hackers!
                 </TableCell>
               </TableRow>
             ) : (
-              hackersWithBlacklist.map((hacker) => (
-                <TableRow key={hacker.id}>
-                  <TableCell className="text-center font-medium">
-                    {hacker.firstName}
-                  </TableCell>
-                  <TableCell className="text-center font-medium">
-                    {hacker.lastName}
-                  </TableCell>
-                  <TableCell className="hidden text-center font-medium md:table-cell">
-                    {hacker.discordUser}
-                  </TableCell>
-                  <TableCell className="hidden font-medium md:table-cell">
-                    {hacker.email}
-                  </TableCell>
-                  <TableCell
-                    className={`hidden break-keep text-center font-bold md:table-cell ${HACKER_STATUS_MAP[hacker.status as keyof typeof HACKER_STATUS_MAP].color}`}
-                  >
-                    {
-                      HACKER_STATUS_MAP[
-                        hacker.status as keyof typeof HACKER_STATUS_MAP
-                      ].name
-                    }
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <HackerStatusToggle
-                      hacker={hacker}
-                      hackathonName={activeHackathon?.displayName ?? ""}
-                    />
-                  </TableCell>
-                  <TableCell className="hidden text-center md:table-cell">
-                    <HackerProfileButton hacker={hacker} />
-                  </TableCell>
-                  <TableCell className="hidden text-center md:table-cell">
-                    <HackerSurveyResponsesButton hacker={hacker} />
-                  </TableCell>
-                  <TableCell className="hidden text-center md:table-cell">
-                    <UpdateHackerButton hacker={hacker} />
-                  </TableCell>
-                  <TableCell className="hidden text-center md:table-cell">
-                    <DeleteHackerButton
-                      hacker={hacker}
-                      hackathonName={activeHackathon?.displayName ?? ""}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))
+              hackers.map((hacker) => {
+                const statusMeta =
+                  HACKER_STATUS_MAP[
+                    hacker.status as keyof typeof HACKER_STATUS_MAP
+                  ];
+                return (
+                  <TableRow key={hacker.id}>
+                    <TableCell className="text-center font-medium">
+                      {hacker.firstName}
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      {hacker.lastName}
+                    </TableCell>
+                    <TableCell className="hidden text-center font-medium md:table-cell">
+                      {hacker.discordUser}
+                    </TableCell>
+                    <TableCell className="hidden font-medium md:table-cell">
+                      {hacker.email}
+                    </TableCell>
+                    <TableCell
+                      className={`hidden break-keep text-center font-bold md:table-cell ${statusMeta.color}`}
+                    >
+                      {statusMeta.name}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <HackerStatusToggle
+                        hacker={hacker}
+                        hackathonName={activeHackathon?.displayName ?? ""}
+                      />
+                    </TableCell>
+                    <TableCell className="hidden text-center md:table-cell">
+                      <HackerProfileButton hacker={hacker} />
+                    </TableCell>
+                    <TableCell className="hidden text-center md:table-cell">
+                      <HackerSurveyResponsesButton hacker={hacker} />
+                    </TableCell>
+                    <TableCell className="hidden text-center md:table-cell">
+                      <UpdateHackerButton hacker={hacker} />
+                    </TableCell>
+                    <TableCell className="hidden text-center md:table-cell">
+                      <DeleteHackerButton
+                        hacker={hacker}
+                        hackathonName={activeHackathon?.displayName ?? ""}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
