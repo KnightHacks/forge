@@ -19,19 +19,27 @@ interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
 export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
   const pathname = usePathname();
 
-  const { data: member, isLoading: memberLoading } =
-    api.member.getMember.useQuery(undefined, { staleTime: Infinity });
-  const { data: hacker } = api.hackerQuery.getHacker.useQuery(
-    {},
-    { staleTime: Infinity },
-  );
+  const {
+    data: member,
+    isLoading: memberLoading,
+    error: memberError,
+  } = api.member.getMember.useQuery(undefined, { staleTime: Infinity });
+  const {
+    data: hacker,
+    isLoading: hackerLoading,
+    error: hackerError,
+  } = api.hackerQuery.getHacker.useQuery({}, { staleTime: Infinity });
 
-  if (memberLoading) {
+  if (memberLoading || hackerLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin" />
       </div>
     );
+  }
+
+  if (memberError || hackerError) {
+    return null;
   }
 
   if (!member && !hacker) {
