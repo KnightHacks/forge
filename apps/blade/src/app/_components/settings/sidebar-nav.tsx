@@ -39,7 +39,11 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
   }
 
   if (memberError || hackerError) {
-    return null;
+    return (
+      <div aria-live="polite" className="p-2 text-sm text-destructive">
+        Unable to load navigation.
+      </div>
+    );
   }
 
   if (!member && !hacker) {
