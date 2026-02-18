@@ -51,7 +51,7 @@ export function ManualEntryForm() {
   const filteredEvents = events?.filter((v) => v.hackathonId);
 
   // Get hackers for the selected hackathon
-  const { data: hackers } = api.hacker.getAllHackers.useQuery(
+  const { data: hackers } = api.hackerQuery.getAllHackers.useQuery(
     { hackathonName: activeHackathon?.name },
     { enabled: !!activeHackathon },
   );
@@ -86,7 +86,7 @@ export function ManualEntryForm() {
     return dayAfterEvent < now;
   });
 
-  const hackerEventCheckIn = api.hacker.eventCheckIn.useMutation({
+  const hackerEventCheckIn = api.hackerMutation.eventCheckIn.useMutation({
     onSuccess(opts) {
       toast.success(opts.message);
       form.reset();

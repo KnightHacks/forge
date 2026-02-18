@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { NotepadText } from "lucide-react";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
@@ -12,9 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
-import { toast } from "@forge/ui/toast";
-
-import { api } from "~/trpc/react";
 
 export default function HackerSurveyResponsesButton({
   hacker,
@@ -22,18 +19,6 @@ export default function HackerSurveyResponsesButton({
   hacker: InsertHacker;
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-
-  const utils = api.useUtils();
-
-  useEffect(() => {
-    async function invalidateHackers() {
-      await utils.hacker.invalidate();
-    }
-
-    invalidateHackers().catch(() => {
-      toast.error("Error invalidating hackers in survey responses!");
-    });
-  }, [utils.hacker, hacker]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { User } from "lucide-react";
 import { FaGithub, FaGlobe, FaLinkedin } from "react-icons/fa";
@@ -16,9 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
-import { toast } from "@forge/ui/toast";
 
-import { api } from "~/trpc/react";
 import FoodRestrictionsButton from "./food-restrictions";
 
 export default function HackerProfileButton({
@@ -27,17 +25,6 @@ export default function HackerProfileButton({
   hacker: InsertHacker;
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-
-  const utils = api.useUtils();
-  useEffect(() => {
-    async function invalidateHackers() {
-      await utils.hacker.invalidate();
-    }
-
-    invalidateHackers().catch(() => {
-      toast.error("Error invalidating hackers in hacker profile!");
-    });
-  }, [utils.hacker, hacker]);
 
   const hackingSince = new Date(hacker.dateCreated ?? new Date());
   hackingSince.setDate(hackingSince.getDate() + 1);

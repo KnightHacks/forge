@@ -9,7 +9,9 @@ import { eventFeedbackRouter } from "./routers/event-feedback";
 import { formsRouter } from "./routers/forms";
 import { guildRouter } from "./routers/guild";
 import { hackathonRouter } from "./routers/hackathon";
-import { hackerRouter } from "./routers/hacker";
+import { hackerMutationRouter } from "./routers/hackers/mutations";
+import { hackerPaginationRouter } from "./routers/hackers/pagination";
+import { hackerQueryRouter } from "./routers/hackers/queries";
 import { judgeRouter } from "./routers/judge";
 import { memberRouter } from "./routers/member";
 import { miscRouter } from "./routers/misc";
@@ -26,7 +28,9 @@ export const appRouter = createTRPCRouter<{
   duesPayment: typeof duesPaymentRouter;
   member: typeof memberRouter;
   hackathon: typeof hackathonRouter;
-  hacker: typeof hackerRouter;
+  hackerPagination: typeof hackerPaginationRouter;
+  hackerQuery: typeof hackerQueryRouter;
+  hackerMutation: typeof hackerMutationRouter;
   event: typeof eventRouter;
   eventFeedback: typeof eventFeedbackRouter;
   user: typeof userRouter;
@@ -47,7 +51,9 @@ export const appRouter = createTRPCRouter<{
   duesPayment: duesPaymentRouter,
   member: memberRouter,
   hackathon: hackathonRouter,
-  hacker: hackerRouter,
+  hackerPagination: hackerPaginationRouter,
+  hackerMutation: hackerMutationRouter,
+  hackerQuery: hackerQueryRouter,
   event: eventRouter,
   eventFeedback: eventFeedbackRouter,
   user: userRouter,

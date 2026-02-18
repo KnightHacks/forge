@@ -19,7 +19,7 @@ export default function AcceptButton({
 
   const utils = api.useUtils();
 
-  const updateStatus = api.hacker.updateHackerStatus.useMutation({
+  const updateStatus = api.hackerMutation.updateHackerStatus.useMutation({
     onSuccess() {
       toast.success(`Accepted ${hacker.firstName} ${hacker.lastName}!`);
     },
@@ -28,7 +28,11 @@ export default function AcceptButton({
       setIsLoading(false);
     },
     onSettled: async () => {
-      await utils.hacker.invalidate();
+      await Promise.all([
+        utils.hackerQuery.invalidate(),
+        utils.hackerPagination.invalidate(),
+        utils.hackerMutation.invalidate(),
+      ]);
       setIsLoading(false);
     },
   });

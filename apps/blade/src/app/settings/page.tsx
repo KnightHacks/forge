@@ -18,7 +18,7 @@ export default async function SettingsProfilePage() {
   const memberData = await api.member.getMember();
 
   if (!memberData) {
-    const hackerData = await api.hacker.getHacker({});
+    const hackerData = await api.hackerQuery.getHacker({});
     if (hackerData) {
       redirect("/settings/hacker-profile");
     }

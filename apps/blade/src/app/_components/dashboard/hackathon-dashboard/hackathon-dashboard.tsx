@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default async function HackathonDashboard({
   hacker,
 }: {
-  hacker: Awaited<ReturnType<(typeof serverCall.hacker)["getHacker"]>>;
+  hacker: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
 }) {
   interface HackerClassInfo {
     teamColor: string;

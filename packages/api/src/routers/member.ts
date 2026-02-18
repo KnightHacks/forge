@@ -520,6 +520,34 @@ export const memberRouter = {
     return results.map((r) => r.major).filter(Boolean) as string[];
   }),
 
+  getMemberFilterOptions: permProcedure.query(async ({ ctx }) => {
+    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+
+    const rows = await db
+      .select({
+        school: Member.school,
+        major: Member.major,
+      })
+      .from(Member);
+
+    const schoolCounts = new Map<string, number>();
+    const majorCounts = new Map<string, number>();
+
+    for (const row of rows) {
+      schoolCounts.set(row.school, (schoolCounts.get(row.school) ?? 0) + 1);
+      majorCounts.set(row.major, (majorCounts.get(row.major) ?? 0) + 1);
+    }
+
+    return {
+      schools: Array.from(schoolCounts.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([value, count]) => ({ value, count })),
+      majors: Array.from(majorCounts.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([value, count]) => ({ value, count })),
+    };
+  }),
+
   giveMemberPoints: permProcedure
     .input(
       z.object({

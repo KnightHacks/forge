@@ -18,7 +18,7 @@ import LevelOfStudyPie from "./LevelOfStudyPie";
 import ShirtSizePie from "./ShirtSizePie";
 
 export default function HackerCharts({ hackathonId }: { hackathonId: string }) {
-  const { data: hackers } = api.hacker.getHackers.useQuery(hackathonId);
+  const { data: hackers } = api.hackerQuery.getHackers.useQuery(hackathonId);
   const { data: hackathon } =
     api.hackathon.getHackathonById.useQuery(hackathonId);
 

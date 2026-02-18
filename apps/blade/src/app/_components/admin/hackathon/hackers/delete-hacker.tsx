@@ -33,7 +33,7 @@ export default function DeleteHackerButton({
 
   const utils = api.useUtils();
 
-  const deleteHacker = api.hacker.deleteHacker.useMutation({
+  const deleteHacker = api.hackerMutation.deleteHacker.useMutation({
     onSuccess() {
       toast.success("Hacker deleted successfully!");
       setIsOpen(false);
@@ -44,7 +44,11 @@ export default function DeleteHackerButton({
     },
     async onSettled() {
       setIsLoading(false);
-      await utils.hacker.invalidate();
+      await Promise.all([
+        utils.hackerQuery.invalidate(),
+        utils.hackerPagination.invalidate(),
+        utils.hackerMutation.invalidate(),
+      ]);
     },
   });
 

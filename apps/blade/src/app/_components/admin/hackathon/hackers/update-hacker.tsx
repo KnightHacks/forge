@@ -49,7 +49,7 @@ export default function UpdateHackerButton({
 
   const utils = api.useUtils();
 
-  const updateHacker = api.hacker.updateHacker.useMutation({
+  const updateHacker = api.hackerMutation.updateHacker.useMutation({
     onSuccess() {
       toast.success("Hacker updated successfully!");
       setIsOpen(false);
@@ -58,7 +58,11 @@ export default function UpdateHackerButton({
       toast.error(opts.message);
     },
     async onSettled() {
-      await utils.hacker.invalidate();
+      await Promise.all([
+        utils.hackerQuery.invalidate(),
+        utils.hackerPagination.invalidate(),
+        utils.hackerMutation.invalidate(),
+      ]);
       setIsLoading(false);
     },
   });

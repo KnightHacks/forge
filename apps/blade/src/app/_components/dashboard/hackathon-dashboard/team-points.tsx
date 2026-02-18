@@ -17,7 +17,7 @@ export function TeamPoints({
   hId: string;
   hClass: HackerClass;
 }) {
-  const { data: classPoints } = api.hacker.getPointsByClass.useQuery({
+  const { data: classPoints } = api.hackerQuery.getPointsByClass.useQuery({
     hackathonName: hId,
   });
   const [byTeam, setByTeam] = useState<number[]>([0, 0]);

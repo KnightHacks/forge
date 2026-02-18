@@ -29,7 +29,7 @@ export function HackathonData({
   team,
   classPfp,
 }: {
-  data: Awaited<ReturnType<(typeof serverCall.hacker)["getHacker"]>>;
+  data: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
   teamColor: string;
   team: string;
   classPfp: string;
@@ -37,7 +37,7 @@ export function HackathonData({
   const [hackerStatus, setHackerStatus] = useState<string | null>("");
   const [hackerStatusColor, setHackerStatusColor] = useState<string>("");
 
-  const { data: hacker, isError } = api.hacker.getHacker.useQuery(
+  const { data: hacker, isError } = api.hackerQuery.getHacker.useQuery(
     {},
     {
       initialData: data,

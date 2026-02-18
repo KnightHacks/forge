@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default async function HackerDashboard({
   hacker,
 }: {
-  hacker: Awaited<ReturnType<(typeof serverCall.hacker)["getHacker"]>>;
+  hacker: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
 }) {
   const [resume, pastHackathons] = await Promise.allSettled([
     api.resume.getResume(),

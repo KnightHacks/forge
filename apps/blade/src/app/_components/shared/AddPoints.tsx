@@ -32,7 +32,7 @@ export function AddPoints({ type }: { type: "Member" | "Hacker" }) {
 
   const { data: users } =
     type == "Hacker"
-      ? api.hacker.getAllHackers.useQuery(
+      ? api.hackerQuery.getAllHackers.useQuery(
           { hackathonName: activeHackathon?.name },
           { enabled: !!activeHackathon },
         )
@@ -48,7 +48,7 @@ export function AddPoints({ type }: { type: "Member" | "Hacker" }) {
   const [openSub, setOpenSub] = useState(false);
   const [points, setPoints] = useState(0);
 
-  const giveHackerPoints = api.hacker.giveHackerPoints.useMutation({
+  const giveHackerPoints = api.hackerMutation.giveHackerPoints.useMutation({
     onSuccess() {
       toast.success(
         `Gave ${points} points to ${selectedUser?.firstName} ${selectedUser?.lastName}`,

@@ -47,7 +47,7 @@ export default async function HackerApplicationPage({
   }
 
   try {
-    const isHacker = await api.hacker.getHacker({
+    const isHacker = await api.hackerQuery.getHacker({
       hackathonName: params["hackathon-id"],
     });
 
