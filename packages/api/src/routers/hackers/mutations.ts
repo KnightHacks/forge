@@ -16,7 +16,7 @@ import {
   HackerEventAttendee,
   InsertHackerSchema,
 } from "@forge/db/schemas/knight-hacks";
-import { discord, permissions } from "@forge/utils";
+import { discord, logger, permissions } from "@forge/utils";
 
 import { minioClient } from "../../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../../trpc";
@@ -93,7 +93,7 @@ export const hackerMutationRouter = {
           );
         }
       } catch (error) {
-        console.error("Error with generating QR code: ", error);
+        logger.error("Error with generating QR code: ", error);
       }
 
       const today = new Date();
@@ -600,7 +600,7 @@ export const hackerMutationRouter = {
               discordId,
               HACKATHONS.KNIGHT_HACKS_8.KH_EVENT_ROLE_ID,
             );
-            console.log(
+            logger.log(
               `Assigned role ${HACKATHONS.KNIGHT_HACKS_8.KH_EVENT_ROLE_ID} to user ${discordId}`,
             );
             // VIP will already be given the discord role ahead of time, so no need to assign again
@@ -620,7 +620,7 @@ export const hackerMutationRouter = {
               color: "uhoh_red",
               userId: ctx.session.user.discordUserId,
             });
-            console.error(
+            logger.error(
               "Failed to assign Discord roles:",
               (e as Error).message,
             );

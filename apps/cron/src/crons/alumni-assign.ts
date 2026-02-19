@@ -3,7 +3,7 @@ import { and, gt, isNotNull, isNull, lte, or } from "drizzle-orm";
 import { DISCORD } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
-import { discord } from "@forge/utils";
+import { discord, logger } from "@forge/utils";
 
 import { CronBuilder } from "../structs/CronBuilder";
 
@@ -27,7 +27,7 @@ export const alumniAssign = new CronBuilder({
         if (discordId)
           await discord.addRoleToMember(discordId, DISCORD.ALUMNI_ROLE);
       } catch (err) {
-        console.error(`Failed to add alumni role for ${discordUser}:`, err);
+        logger.error(`Failed to add alumni role for ${discordUser}:`, err);
       }
     }
 
@@ -50,7 +50,7 @@ export const alumniAssign = new CronBuilder({
         if (discordId)
           await discord.removeRoleFromMember(discordId, DISCORD.ALUMNI_ROLE);
       } catch (err) {
-        console.error(`Failed to remove alumni role for ${discordUser}:`, err);
+        logger.error(`Failed to remove alumni role for ${discordUser}:`, err);
       }
     }
   },

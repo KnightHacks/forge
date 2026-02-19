@@ -1,6 +1,7 @@
 import { Listmonk } from "@maloma/listmonk";
 
 import { env } from "./env";
+import { logger } from "@forge/utils";
 
 export const client = new Listmonk({
   url: env.LISTMONK_URL,
@@ -35,7 +36,7 @@ export const sendEmail = async ({
 
     return { success: true };
   } catch (error) {
-    console.error("Error sending email:", error);
+    logger.error("Error sending email:", error);
     throw new Error(
       `Failed to send email: ${
         error instanceof Error ? error.message : "Unknown error"

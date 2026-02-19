@@ -29,7 +29,7 @@ import {
   InsertEventSchema,
   Member,
 } from "@forge/db/schemas/knight-hacks";
-import { discord, permissions } from "@forge/utils";
+import { discord, logger, permissions } from "@forge/utils";
 
 import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
 import { calendar, createForm } from "../utils";
@@ -224,7 +224,7 @@ export const eventRouter = {
         )) as APIExternalGuildScheduledEvent;
         discordEventId = response.id;
       } catch (error) {
-        console.error(JSON.stringify(error, null, 2));
+        logger.error(JSON.stringify(error, null, 2));
         throw new TRPCError({
           message: "Failed to create event in Discord",
           code: "BAD_REQUEST",
@@ -252,7 +252,7 @@ export const eventRouter = {
         } as calendar_v3.Params$Resource$Events$Insert);
         googleEventId = response.data.id ?? undefined;
       } catch (error) {
-        console.error("ERROR MESSAGE:", JSON.stringify(error, null, 2));
+        logger.error("ERROR MESSAGE:", JSON.stringify(error, null, 2));
 
         // Clean up the event in Discord if the Google Calendar event fails
         if (discordEventId) {
@@ -264,7 +264,7 @@ export const eventRouter = {
               ),
             );
           } catch (cleanupErr) {
-            console.error(JSON.stringify(cleanupErr, null, 2));
+            logger.error(JSON.stringify(cleanupErr, null, 2));
           }
         }
 
@@ -304,7 +304,7 @@ export const eventRouter = {
           googleId: googleEventId,
         });
       } catch (error) {
-        console.error(JSON.stringify(error, null, 2));
+        logger.error(JSON.stringify(error, null, 2));
 
         // Clean up the event in Discord if the database insert fails
         try {
@@ -315,7 +315,7 @@ export const eventRouter = {
             ),
           );
         } catch (cleanupErr) {
-          console.error(JSON.stringify(cleanupErr, null, 2));
+          logger.error(JSON.stringify(cleanupErr, null, 2));
         }
 
         // Clean up the event in Google Calendar if the database insert fails
@@ -325,7 +325,7 @@ export const eventRouter = {
             eventId: googleEventId,
           });
         } catch (cleanupErr) {
-          console.error(JSON.stringify(cleanupErr, null, 2));
+          logger.error(JSON.stringify(cleanupErr, null, 2));
         }
 
         throw new TRPCError({
@@ -420,7 +420,7 @@ export const eventRouter = {
           },
         );
       } catch (error) {
-        console.error(JSON.stringify(error, null, 2));
+        logger.error(JSON.stringify(error, null, 2));
         throw new TRPCError({
           message: "Failed to update event in Discord",
           code: "BAD_REQUEST",
@@ -447,7 +447,7 @@ export const eventRouter = {
           },
         } as calendar_v3.Params$Resource$Events$Update);
       } catch (error) {
-        console.error(JSON.stringify(error, null, 2));
+        logger.error(JSON.stringify(error, null, 2));
         throw new TRPCError({
           message: "Failed to update event in Google Calendar",
           code: "BAD_REQUEST",
@@ -571,7 +571,7 @@ export const eventRouter = {
           ),
         );
       } catch (error) {
-        console.error(JSON.stringify(error, null, 2));
+        logger.error(JSON.stringify(error, null, 2));
         throw new TRPCError({
           message: "Failed to delete event in Discord",
           code: "BAD_REQUEST",
@@ -585,7 +585,7 @@ export const eventRouter = {
           eventId: input.googleId,
         } as calendar_v3.Params$Resource$Events$Delete);
       } catch (error) {
-        console.error(JSON.stringify(error, null, 2));
+        logger.error(JSON.stringify(error, null, 2));
         throw new TRPCError({
           message: "Failed to delete event in Google Calendar",
           code: "BAD_REQUEST",

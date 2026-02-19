@@ -2,6 +2,7 @@ import { spawn } from "child_process";
 import { createInterface } from "readline/promises";
 
 import { CronBuilder } from "../structs/CronBuilder";
+import { logger } from "@forge/utils";
 
 const COMMAND = "pnpm";
 const COMMAND_ARGS = [
@@ -36,7 +37,7 @@ export const backupFilteredDb = new CronBuilder({
           input: stream,
           crlfDelay: Infinity,
         })) {
-          if (line) console[key](line);
+          if (line) logger[key](line);
         }
       }),
     );

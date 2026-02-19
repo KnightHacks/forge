@@ -5,7 +5,7 @@ import { FORMS } from "@forge/consts";
 import { eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Challenges, Submissions, Teams } from "@forge/db/schemas/knight-hacks";
-import { permissions } from "@forge/utils";
+import { logger, permissions } from "@forge/utils";
 
 import { permProcedure } from "../trpc";
 
@@ -249,7 +249,7 @@ export const csvImporterRouter = {
             ([matchKey, teamRows]) => {
               const teamId = teamIdMap.get(matchKey);
               if (!teamId) {
-                console.error(`Team not found for matchKey: ${matchKey}`);
+                logger.error(`Team not found for matchKey: ${matchKey}`);
                 throw new Error(`Failed to find team ID for: ${matchKey}`);
               }
 
@@ -312,7 +312,7 @@ export const csvImporterRouter = {
 
         return result;
       } catch (error) {
-        console.error("CSV import error:", error);
+        logger.error("CSV import error:", error);
 
         throw new Error(
           error instanceof Error ? error.message : "Failed to import CSV",

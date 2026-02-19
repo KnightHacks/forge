@@ -14,6 +14,7 @@ import { db } from "@forge/db/client";
 import { Account } from "@forge/db/schemas/auth";
 
 import { env } from "./env";
+import { logger } from "./logger";
 
 export const api = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
 
@@ -46,10 +47,10 @@ export async function addMemberToServer(
       },
     );
 
-    console.log(`Added ${discordUserId} to the KH discord server`);
+    logger.log(`Added ${discordUserId} to the KH discord server`);
     return;
   } catch (error) {
-    console.error(
+    logger.error(
       `Failed to add user ${discordUserId} to the KH discord server:`,
       error instanceof Error ? error.message : "Unknown error",
     );
@@ -83,7 +84,7 @@ export async function handleDiscordOAuthCallback(
       void addMemberToServer(discordUserId, accessToken);
     }
   } catch (error) {
-    console.error(
+    logger.error(
       `Failed to handle Discord OAuth callback for ${discordUserId}:`,
       error instanceof Error ? error.message : "Unknown error",
     );
@@ -110,7 +111,7 @@ export const isDiscordAdmin = async (user: Session["user"]) => {
     )) as APIGuildMember;
     return guildMember.roles.includes(DISCORD.ADMIN_ROLE);
   } catch (err) {
-    console.error("Error: ", err);
+    logger.error("Error: ", err);
     return false;
   }
 };

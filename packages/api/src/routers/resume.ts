@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { MINIO } from "@forge/consts";
 import { db } from "@forge/db/client";
+import { logger } from "@forge/utils";
 
 import { env } from "../env";
 import { protectedProcedure } from "../trpc";
@@ -87,14 +88,14 @@ export const resumeRouter = {
 
     // If neither member nor hacker found, return null
     if (!member && !hacker) {
-      console.error("No resume found for user");
+      logger.error("No resume found for user");
       return { url: null };
     }
 
     const filename = member?.resumeUrl ?? hacker?.resumeUrl;
 
     if (!filename) {
-      console.error("No resume URL found for user");
+      logger.error("No resume URL found for user");
       return { url: null };
     }
 

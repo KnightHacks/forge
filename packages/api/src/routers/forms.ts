@@ -20,7 +20,7 @@ import {
   TrpcFormConnection,
   TrpcFormConnectionSchema,
 } from "@forge/db/schemas/knight-hacks";
-import { discord, permissions } from "@forge/utils";
+import { discord, logger, permissions } from "@forge/utils";
 
 import { minioClient } from "../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../trpc";
@@ -693,7 +693,7 @@ export const formsRouter = {
 
         return { uploadUrl, objectName, viewUrl };
       } catch (e) {
-        console.error("getUploadUrl error:", e);
+        logger.error("getUploadUrl error:", e);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to generate upload URL",
@@ -718,7 +718,7 @@ export const formsRouter = {
         );
         return { success: true };
       } catch (e) {
-        console.error("deleteMedia error:", e);
+        logger.error("deleteMedia error:", e);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to delete media",
@@ -744,7 +744,7 @@ export const formsRouter = {
         );
         return { viewUrl };
       } catch (e) {
-        console.error("getFileUrl error:", e);
+        logger.error("getFileUrl error:", e);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to generate file URL",

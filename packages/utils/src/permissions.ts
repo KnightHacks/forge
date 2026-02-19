@@ -6,6 +6,8 @@ import { PERMISSIONS } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { JudgeSession } from "@forge/db/schemas/auth";
 
+import { logger } from "./logger";
+
 export const hasPermission = (
   userPermissions: string,
   permission: PERMISSIONS.PermissionIndex,
@@ -65,7 +67,7 @@ export const isJudgeAdmin = async () => {
 
     return rows.length > 0;
   } catch (err) {
-    console.error("isJudgeAdmin DB check error:", err);
+    logger.error("isJudgeAdmin DB check error:", err);
     return false;
   }
 };

@@ -28,7 +28,7 @@ import {
   Member,
   OtherCompanies,
 } from "@forge/db/schemas/knight-hacks";
-import { discord, permissions } from "@forge/utils";
+import { discord, logger, permissions } from "@forge/utils";
 
 import { minioClient } from "../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../trpc";
@@ -76,7 +76,7 @@ export const memberRouter = {
           );
         }
       } catch (error) {
-        console.error("Error with generating QR code: ", error);
+        logger.error("Error with generating QR code: ", error);
       }
 
       const today = new Date();
@@ -100,7 +100,7 @@ export const memberRouter = {
             name: company,
           });
         } catch (error) {
-          console.log("Unable to insert company: ", error);
+          logger.log("Unable to insert company: ", error);
         }
       }
 
@@ -194,7 +194,7 @@ export const memberRouter = {
             name: company,
           });
         } catch (error) {
-          console.log("Unable to insert company: ", error);
+          logger.log("Unable to insert company: ", error);
         }
       }
 

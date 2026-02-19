@@ -8,6 +8,7 @@ import { Event } from "@forge/db/schemas/knight-hacks";
 
 import { env } from "../env";
 import { CronBuilder } from "../structs/CronBuilder";
+import { logger } from "@forge/utils";
 
 const REMINDERS_WEBHOOK = new WebhookClient({
   url: env.DISCORD_WEBHOOK_REMINDERS,
@@ -137,11 +138,11 @@ function genCronLogic(webhook: WebhookClient): () => Promise<void> {
       0,
     );
 
-    console.log(`Found a total of ${totalEvents} events`);
+    logger.log(`Found a total of ${totalEvents} events`);
     for (const group of groupedPrefixes) {
-      console.log(`Events for ${group.prefix}`);
+      logger.log(`Events for ${group.prefix}`);
       for (const event of group.events) {
-        console.log(`Title: ${event.name}`);
+        logger.log(`Title: ${event.name}`);
       }
     }
 
@@ -386,21 +387,21 @@ async function getEvents() {
       event.end_datetime < todayEnd && event.start_datetime >= todayStart,
   );
 
-  console.log("Today's Events: ", todayEvents);
+  logger.log("Today's Events: ", todayEvents);
 
   const tomorrowEvents = allEvents.filter(
     (event) =>
       event.end_datetime < tomorrowEnd && event.start_datetime >= tomorrowStart,
   );
 
-  console.log("Tomorrow's Events: ", tomorrowEvents);
+  logger.log("Tomorrow's Events: ", tomorrowEvents);
 
   const nextWeekEvents = allEvents.filter(
     (event) =>
       event.end_datetime < nextWeekEnd && event.start_datetime >= nextWeekStart,
   );
 
-  console.log("Next Week's Events: ", nextWeekEvents);
+  logger.log("Next Week's Events: ", nextWeekEvents);
 
   // Filter out "Operations Meeting" and "Project Launch Lab Hours" from nextWeek
   const nextWeekFiltered = nextWeekEvents.filter((event) => {

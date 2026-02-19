@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { google } from "googleapis";

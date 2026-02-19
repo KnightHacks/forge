@@ -8,7 +8,7 @@ import { DISCORD, PERMISSIONS } from "@forge/consts";
 import { eq, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
-import { discord, permissions } from "@forge/utils";
+import { discord, logger, permissions } from "@forge/utils";
 
 import { permProcedure, protectedProcedure } from "../trpc";
 
@@ -338,15 +338,15 @@ export const rolesRouter = {
       // We log the error but don't break the flow - Blade permission is still granted
       try {
         await discord.addRoleToMember(user.discordUserId, role.discordRoleId);
-        console.log(
+        logger.log(
           `Successfully added Discord role ${role.discordRoleId} to user ${user.discordUserId}`,
         );
       } catch (error) {
-        console.error(
+        logger.error(
           `Failed to add Discord role ${role.discordRoleId} to user ${user.discordUserId}:`,
           error,
         );
-        console.error(
+        logger.error(
           `   This may be due to role hierarchy or bot permissions. Blade permission will still be granted.`,
         );
       }
@@ -404,15 +404,15 @@ export const rolesRouter = {
           user.discordUserId,
           role.discordRoleId,
         );
-        console.log(
+        logger.log(
           `✅ Successfully removed Discord role ${role.discordRoleId} from user ${user.discordUserId}`,
         );
       } catch (error) {
-        console.error(
+        logger.error(
           `Failed to remove Discord role ${role.discordRoleId} from user ${user.discordUserId}:`,
           error,
         );
-        console.error(
+        logger.error(
           `   This may be due to role hierarchy or bot permissions. Blade permission will still be revoked.`,
         );
       }
@@ -495,7 +495,7 @@ export const rolesRouter = {
                     roleData.discordRoleId,
                   );
                 } catch (discordError) {
-                  console.error(
+                  logger.error(
                     `Discord role grant failed for ${userData.name} -> ${roleData.name}:`,
                     discordError,
                   );
@@ -513,7 +513,7 @@ export const rolesRouter = {
                     roleData.discordRoleId,
                   );
                 } catch (discordError) {
-                  console.error(
+                  logger.error(
                     `Discord role revoke failed for ${userData.name} -> ${roleData.name}:`,
                     discordError,
                   );
@@ -525,7 +525,7 @@ export const rolesRouter = {
               }
             } catch (error) {
               // This catches DB errors only (Discord errors are caught above)
-              console.error(
+              logger.error(
                 `Database error for ${input.revoking ? "revoke" : "grant"} role ${roleData.name} ${input.revoking ? "from" : "to"} ${userData.name}:`,
                 error,
               );
