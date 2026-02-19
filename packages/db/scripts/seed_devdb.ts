@@ -8,7 +8,7 @@
 // sensitive data. It will also take all the server specific discord IDs in the
 // DB and then sync them up with an event/role in the dev server and change the
 // ID in the db for the local version. This sql file is uploaded to our minio
-// client to be pulled by the get_prod_db.ts script. There's no realistic 
+// client to be pulled by the get_prod_db.ts script. There's no realistic
 // reason for this script to ever be ran on dev unless you're updating it cause
 // I probably messed a lot up :D. See get_prod_db.ts for how to get prod data
 // into your local db for deving.
@@ -28,9 +28,9 @@ import Pool from "pg-pool";
 import { stringify } from "superjson";
 
 import { DISCORD, MINIO } from "@forge/consts";
-import { discord } from "../../utils/src";
 
 import { minioClient } from "../../api/src/minio/minio-client";
+import { discord } from "../../utils/src";
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
 import * as knightHacksSchema from "../src/schemas/knight-hacks";

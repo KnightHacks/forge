@@ -1,9 +1,10 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
+import { permissions } from "@forge/utils";
+
 import { permProcedure } from "../trpc";
 import { sendEmail } from "../utils";
-import { permissions } from "@forge/utils";
 
 export const emailRouter = {
   sendEmail: permProcedure

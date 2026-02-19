@@ -14,9 +14,7 @@ import { Account } from "@forge/db/schemas/auth";
 
 import { env } from "./env";
 
-export const api = new REST({ version: "10" }).setToken(
-  env.DISCORD_BOT_TOKEN,
-);
+export const api = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
 
 export async function addRoleToMember(discordUserId: string, roleId: string) {
   await api.put(

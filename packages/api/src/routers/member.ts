@@ -697,7 +697,10 @@ export const memberRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      permissions.controlPerms.or(["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(
+        ["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"],
+        ctx,
+      );
 
       const member = await db.query.Member.findFirst({
         where: eq(Member.userId, input.userId),

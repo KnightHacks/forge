@@ -8,10 +8,9 @@ import { DISCORD, PERMISSIONS } from "@forge/consts";
 import { eq, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
-import { discord } from "@forge/utils";
+import { discord, permissions } from "@forge/utils";
 
 import { permProcedure, protectedProcedure } from "../trpc";
-import { permissions } from "@forge/utils";
 
 export const rolesRouter = {
   // ROLES
@@ -401,7 +400,10 @@ export const rolesRouter = {
       // Note: This may fail due to role hierarchy or bot permissions
       // We log the error but don't break the flow - Blade permission is still revoked
       try {
-        await discord.removeRoleFromMember(user.discordUserId, role.discordRoleId);
+        await discord.removeRoleFromMember(
+          user.discordUserId,
+          role.discordRoleId,
+        );
         console.log(
           `✅ Successfully removed Discord role ${role.discordRoleId} from user ${user.discordUserId}`,
         );

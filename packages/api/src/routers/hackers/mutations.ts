@@ -16,10 +16,10 @@ import {
   HackerEventAttendee,
   InsertHackerSchema,
 } from "@forge/db/schemas/knight-hacks";
+import { discord, permissions } from "@forge/utils";
 
 import { minioClient } from "../../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../../trpc";
-import { discord, permissions } from "@forge/utils";
 
 export const hackerMutationRouter = {
   createHacker: protectedProcedure
@@ -589,7 +589,7 @@ export const hackerMutationRouter = {
 
         if (!discordId) {
           await discord.log({
-          title: "Discord role assign skipped",
+            title: "Discord role assign skipped",
             message: `Could not resolve Discord ID for "${hacker.discordUser}".`,
             color: "uhoh_red",
             userId: ctx.session.user.discordUserId,

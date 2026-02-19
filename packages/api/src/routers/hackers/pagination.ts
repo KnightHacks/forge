@@ -3,9 +3,9 @@ import { z } from "zod";
 import { and, asc, count, desc, eq, ilike, ne, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Hacker, HackerAttendee } from "@forge/db/schemas/knight-hacks";
+import { permissions } from "@forge/utils";
 
 import { permProcedure } from "../../trpc";
-import { permissions } from "@forge/utils";
 
 const SOFT_BLACKLIST_HACKER_ID = "7f89fe4d-26f0-42fe-ac98-22d8f648d7a7";
 
