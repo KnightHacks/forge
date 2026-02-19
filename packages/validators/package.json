@@ -19,7 +19,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "minimatch": "^10.1.2",
+    "minimatch": "^10.2.1",
     "zod": "catalog:"
   },
   "devDependencies": {

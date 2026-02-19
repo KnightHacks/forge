@@ -38,7 +38,7 @@
     "@trpc/server": "catalog:",
     "discord-api-types": "^0.37.113",
     "json-schema-to-zod": "^2.7.0",
-    "minimatch": "^10.1.2",
+    "minimatch": "^10.2.1",
     "minio": "^8.0.3",
     "passkit-generator": "^3.4.0",
     "qrcode": "^1.5.4",
