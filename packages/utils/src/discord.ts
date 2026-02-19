@@ -4,7 +4,8 @@
 //
 
 import type { APIGuildMember } from "discord-api-types/v10";
-import { REST, Routes } from "discord.js";
+import { REST } from "@discordjs/rest";
+import { Routes } from "discord-api-types/v10";
 import { and, desc, eq } from "drizzle-orm";
 
 import type { Session } from "@forge/auth/server";

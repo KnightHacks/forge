@@ -28,8 +28,8 @@
   },
   "prettier": "@forge/prettier-config",
   "dependencies": {
+    "@discordjs/rest": "^2.4.0",
     "@t3-oss/env-nextjs": "^0.11.1",
-    "discord-api-types": "^0.37.113",
-    "discord.js": "^14.16.3"
+    "discord-api-types": "^0.37.113"
   }
 }
