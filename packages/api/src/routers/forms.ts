@@ -20,6 +20,7 @@ import {
   TrpcFormConnection,
   TrpcFormConnectionSchema,
 } from "@forge/db/schemas/knight-hacks";
+import { discord } from "@forge/utils";
 
 import { minioClient } from "../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../trpc";
@@ -28,7 +29,6 @@ import {
   createForm,
   CreateFormSchema,
   generateJsonSchema,
-  log,
   regenerateMediaUrls,
 } from "../utils";
 
@@ -441,7 +441,7 @@ export const formsRouter = {
         ...input,
       });
 
-      await log({
+      await discord.log({
         title: `Form submitted to blade forms`,
         message: `**Form submitted:** ${form.name}\n**User:** ${ctx.session.user.name}`,
         color: "success_green",
@@ -549,7 +549,7 @@ export const formsRouter = {
       controlPerms.or(["EDIT_FORMS"], ctx);
       try {
         await db.delete(FormResponse).where(eq(FormResponse.id, input.id));
-        await log({
+        await discord.log({
           title: `Form response deleted`,
           message: `**Response deleted:** ${input.id}`,
           color: "uhoh_red",
@@ -924,7 +924,7 @@ export const formsRouter = {
         .set({ section: input.section, sectionId })
         .where(eq(FormsSchemas.id, form.id));
 
-      await log({
+      await discord.log({
         title: `Form section updated`,
         message: `**Form:** ${form.name}\n**Section:** ${oldSection} -> ${input.section}`,
         color: "success_green",
@@ -952,7 +952,7 @@ export const formsRouter = {
         .set({ section: input.newName })
         .where(eq(FormsSchemas.section, input.oldName));
 
-      await log({
+      await discord.log({
         title: `Form section renamed`,
         message: `**Form section:** ${input.oldName} -> ${input.newName}`,
         color: "success_green",
@@ -1057,7 +1057,7 @@ export const formsRouter = {
         .from(Roles)
         .where(inArray(Roles.id, input.roleIds));
 
-      await log({
+      await discord.log({
         title: `Form section created`,
         message: `**Form section:** ${input.name}. Roles: ${roleNames.map((r) => r.name).join(", ")}`,
         color: "success_green",
@@ -1163,7 +1163,7 @@ export const formsRouter = {
         .from(Roles)
         .where(inArray(Roles.id, input.roleIds));
 
-      await log({
+      await discord.log({
         title: `Form section roles updated`,
         message: `**Form section:** ${input.sectionName}. Roles: ${roleNames.length > 0 ? roleNames.map((r) => r.name).join(", ") : "None (all users)"}`,
         color: "success_green",
@@ -1221,7 +1221,7 @@ export const formsRouter = {
         .set({ order: currentSection?.order ?? currentIndex })
         .where(eq(FormSections.id, targetSection?.id ?? ""));
 
-      await log({
+      await discord.log({
         title: `Form section reordered`,
         message: `**Form section:** ${input.sectionName} moved ${input.direction}`,
         color: "success_green",

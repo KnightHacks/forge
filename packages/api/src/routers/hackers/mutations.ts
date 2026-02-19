@@ -19,13 +19,8 @@ import {
 
 import { minioClient } from "../../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../../trpc";
-import {
-  addRoleToMember,
-  controlPerms,
-  isDiscordVIP,
-  log,
-  resolveDiscordUserId,
-} from "../../utils";
+import { controlPerms } from "../../utils";
+import { discord } from "@forge/utils";
 
 export const hackerMutationRouter = {
   createHacker: protectedProcedure
@@ -131,7 +126,7 @@ export const hackerMutationRouter = {
         status: "pending",
       });
 
-      await log({
+      await discord.log({
         title: `Hacker Created for ${hackathon.displayName}`,
         message: `${hackerData.firstName} ${hackerData.lastName} has signed up for the upcoming hackathon: ${hackathon.name.toUpperCase()}!`,
         color: "tk_blue",
@@ -230,7 +225,7 @@ export const hackerMutationRouter = {
         .join("\n");
 
       // Log the changes
-      await log({
+      await discord.log({
         title: "Hacker Updated",
         message: `Blade profile for ${hacker.firstName} ${hacker.lastName} has been updated.
 \n**Changes:**\n${changesString}`,
@@ -261,7 +256,7 @@ export const hackerMutationRouter = {
 
       await db.delete(Hacker).where(eq(Hacker.id, input.id));
 
-      await log({
+      await discord.log({
         title: `Hacker Deleted for ${input.hackathonName}`,
         message: `Profile for ${input.firstName} ${input.lastName} has been deleted.`,
         color: "uhoh_red",
@@ -354,7 +349,7 @@ export const hackerMutationRouter = {
           ),
         );
 
-      await log({
+      await discord.log({
         title: "Hacker Confirmed",
         message: `${hacker.firstName} ${hacker.lastName} has confirmed their attendance!`,
         color: "success_green",
@@ -525,8 +520,8 @@ export const hackerMutationRouter = {
       const eventTag = event.tag;
       let discordId: string | null = null;
 
-      discordId = await resolveDiscordUserId(hacker.discordUser);
-      const isVIP = discordId ? await isDiscordVIP(discordId) : false;
+      discordId = await discord.resolveDiscordUserId(hacker.discordUser);
+      const isVIP = discordId ? await discord.isDiscordVIP(discordId) : false;
 
       let assignedClass: HackerClass | null = hackerAttendee.class ?? null;
 
@@ -594,15 +589,15 @@ export const hackerMutationRouter = {
         });
 
         if (!discordId) {
-          await log({
-            title: "Discord role assign skipped",
+          await discord.log({
+          title: "Discord role assign skipped",
             message: `Could not resolve Discord ID for "${hacker.discordUser}".`,
             color: "uhoh_red",
             userId: ctx.session.user.discordUserId,
           });
         } else {
           try {
-            await addRoleToMember(
+            await discord.addRoleToMember(
               discordId,
               HACKATHONS.KNIGHT_HACKS_8.KH_EVENT_ROLE_ID,
             );
@@ -611,7 +606,7 @@ export const hackerMutationRouter = {
             );
             // VIP will already be given the discord role ahead of time, so no need to assign again
             if (assignedClass) {
-              await addRoleToMember(
+              await discord.addRoleToMember(
                 discordId,
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 HACKATHONS.KNIGHT_HACKS_8.CLASS_ROLE_ID[
@@ -620,7 +615,7 @@ export const hackerMutationRouter = {
               );
             }
           } catch (e) {
-            await log({
+            await discord.log({
               title: "Discord role assign failed",
               message: `Failed to assign Discord roles for "${hacker.discordUser}".`,
               color: "uhoh_red",
@@ -679,7 +674,7 @@ export const hackerMutationRouter = {
         .where(eq(HackerAttendee.id, hackerAttendee.id));
 
       if (eventTag === "Check-in") {
-        await log({
+        await discord.log({
           title: `Hacker Checked-In`,
           message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon ${
             assignedClass ? ` (Class: ${assignedClass}).` : ""
@@ -698,7 +693,7 @@ export const hackerMutationRouter = {
           eventName: eventTag,
         };
       }
-      await log({
+      await discord.log({
         title: "Hacker Checked-In",
         message: `Hacker ${hacker.firstName} ${hacker.lastName} has been checked in to event ${eventTag}.`,
         color: "success_green",
@@ -776,7 +771,7 @@ export const hackerMutationRouter = {
           ),
         );
 
-      await log({
+      await discord.log({
         title: `Gave Points`,
         message: `Gave ${input.amount} points to ${hacker.firstName} ${hacker.lastName} for ${hackathon.displayName}`,
         color: "tk_blue",
@@ -843,7 +838,7 @@ export const hackerMutationRouter = {
           ),
         );
 
-      await log({
+      await discord.log({
         title: `Hacker Status Updated ${hackathon.displayName ? `for ${hackathon.displayName}` : ""}`,
         message: `Hacker status for ${hacker.firstName} ${hacker.lastName} has changed to ${input.status}!`,
         color: "tk_blue",

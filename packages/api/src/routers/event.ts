@@ -29,9 +29,10 @@ import {
   InsertEventSchema,
   Member,
 } from "@forge/db/schemas/knight-hacks";
+import { discord } from "@forge/utils";
 
 import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
-import { calendar, controlPerms, createForm, discord, log } from "../utils";
+import { calendar, controlPerms, createForm } from "../utils";
 
 export const eventRouter = {
   getEvents: publicProcedure.query(async () => {
@@ -205,7 +206,7 @@ export const eventRouter = {
       // Step 1: Create the event in Discord
       let discordEventId: string | undefined;
       try {
-        const response = (await discord.post(
+        const response = (await discord.api.post(
           Routes.guildScheduledEvents(DISCORD.KNIGHTHACKS_GUILD),
           {
             body: {
@@ -256,7 +257,7 @@ export const eventRouter = {
         // Clean up the event in Discord if the Google Calendar event fails
         if (discordEventId) {
           try {
-            await discord.delete(
+            await discord.api.delete(
               Routes.guildScheduledEvent(
                 DISCORD.KNIGHTHACKS_GUILD,
                 discordEventId,
@@ -307,7 +308,7 @@ export const eventRouter = {
 
         // Clean up the event in Discord if the database insert fails
         try {
-          await discord.delete(
+          await discord.api.delete(
             Routes.guildScheduledEvent(
               DISCORD.KNIGHTHACKS_GUILD,
               discordEventId,
@@ -334,7 +335,7 @@ export const eventRouter = {
       }
 
       // Step 4: Log the creation
-      await log({
+      await discord.log({
         title: "Event Created",
         message: `The event **${formattedName}** was created.`,
         color: "blade_purple",
@@ -399,7 +400,7 @@ export const eventRouter = {
 
       // Step 1: Update the event in Discord
       try {
-        await discord.patch(
+        await discord.api.patch(
           Routes.guildScheduledEvent(
             DISCORD.KNIGHTHACKS_GUILD,
             input.discordId,
@@ -518,7 +519,7 @@ export const eventRouter = {
 
       const oldFormattedName = `[${event.tag.toUpperCase().replace(" ", "-")}] ${event.name}`;
 
-      await log({
+      await discord.log({
         title: "Event Updated",
         message: `Event **${oldFormattedName}** was updated.\n**Changes:**\n${changesString}`,
         color: "blade_purple",
@@ -563,7 +564,7 @@ export const eventRouter = {
 
       // Step 1: Delete the event in Discord
       try {
-        await discord.delete(
+        await discord.api.delete(
           Routes.guildScheduledEvent(
             DISCORD.KNIGHTHACKS_GUILD,
             input.discordId,
@@ -592,7 +593,7 @@ export const eventRouter = {
       }
 
       const formattedName = `[${input.tag.toUpperCase().replace(" ", "-")}] ${input.name}`;
-      await log({
+      await discord.log({
         title: "Event Deleted",
         message: `The event **${formattedName}** was deleted.`,
         color: "uhoh_red",

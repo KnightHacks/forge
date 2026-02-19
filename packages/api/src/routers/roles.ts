@@ -8,16 +8,10 @@ import { DISCORD, PERMISSIONS } from "@forge/consts";
 import { eq, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
+import { discord } from "@forge/utils";
 
 import { permProcedure, protectedProcedure } from "../trpc";
-import {
-  addRoleToMember,
-  controlPerms,
-  discord,
-  getPermsAsList,
-  log,
-  removeRoleFromMember,
-} from "../utils";
+import { controlPerms, getPermsAsList } from "../utils";
 
 export const rolesRouter = {
   // ROLES
@@ -70,7 +64,7 @@ export const rolesRouter = {
 
         for (const bladeUser of bladeUsers) {
           try {
-            const guildMember = (await discord.get(
+            const guildMember = (await discord.api.get(
               Routes.guildMember(
                 DISCORD.KNIGHTHACKS_GUILD,
                 bladeUser.discordUserId,
@@ -98,7 +92,7 @@ export const rolesRouter = {
           }
         }
 
-        await log({
+        await discord.log({
           title: `Created Role: ${input.name}`,
           message: `Role linked to <@&${input.roleId}>
                   \n**Permissions:** ${getPermsAsList(input.permissions).join(", ")}
@@ -107,7 +101,7 @@ export const rolesRouter = {
           userId: ctx.session.user.discordUserId,
         });
       } catch {
-        await log({
+        await discord.log({
           title: `Created Role: ${input.name}`,
           message: `Role linked to <@&${input.roleId}>
                   \n**Permissions:** ${getPermsAsList(input.permissions).join(", ")}
@@ -160,7 +154,7 @@ export const rolesRouter = {
         })
         .where(eq(Roles.id, input.id));
 
-      await log({
+      await discord.log({
         title: `Updated Role`,
         message: `The **${exist.name}** Role (<@&${input.roleId}>) role has been updated.
                 \n**Name:** ${exist.name} -> ${input.name}
@@ -188,7 +182,7 @@ export const rolesRouter = {
 
       await db.delete(Roles).where(eq(Roles.id, input.id));
 
-      await log({
+      await discord.log({
         title: `Deleted Role`,
         message: `The **${exist.name}** Role (<@&${exist.discordRoleId}>) role has been deleted.`,
         color: "uhoh_red",
@@ -212,7 +206,7 @@ export const rolesRouter = {
     .input(z.object({ roleId: z.string() }))
     .query(async ({ input }): Promise<APIRole | null> => {
       try {
-        return (await discord.get(
+        return (await discord.api.get(
           Routes.guildRole(DISCORD.KNIGHTHACKS_GUILD, input.roleId),
         )) as APIRole | null;
       } catch {
@@ -230,7 +224,7 @@ export const rolesRouter = {
       for (const r of input.roles) {
         try {
           ret.push(
-            (await discord.get(
+            (await discord.api.get(
               Routes.guildRole(DISCORD.KNIGHTHACKS_GUILD, r.discordRoleId),
             )) as APIRole | null,
           );
@@ -244,7 +238,7 @@ export const rolesRouter = {
 
   getDiscordRoleCounts: protectedProcedure.query(
     async (): Promise<Record<string, number> | null> => {
-      return (await discord.get(
+      return (await discord.api.get(
         `/guilds/${DISCORD.KNIGHTHACKS_GUILD}/roles/member-counts`,
       )) as Record<string, number>;
     },
@@ -344,7 +338,7 @@ export const rolesRouter = {
       // Note: This may fail due to role hierarchy or bot permissions
       // We log the error but don't break the flow - Blade permission is still granted
       try {
-        await addRoleToMember(user.discordUserId, role.discordRoleId);
+        await discord.addRoleToMember(user.discordUserId, role.discordRoleId);
         console.log(
           `Successfully added Discord role ${role.discordRoleId} to user ${user.discordUserId}`,
         );
@@ -363,7 +357,7 @@ export const rolesRouter = {
         userId: input.userId,
       });
 
-      await log({
+      await discord.log({
         title: `Granted Role`,
         message: `The **${role.name}** role (<@&${role.discordRoleId}>) has been granted to <@${user.discordUserId}>.`,
         color: "success_green",
@@ -407,7 +401,7 @@ export const rolesRouter = {
       // Note: This may fail due to role hierarchy or bot permissions
       // We log the error but don't break the flow - Blade permission is still revoked
       try {
-        await removeRoleFromMember(user.discordUserId, role.discordRoleId);
+        await discord.removeRoleFromMember(user.discordUserId, role.discordRoleId);
         console.log(
           `✅ Successfully removed Discord role ${role.discordRoleId} from user ${user.discordUserId}`,
         );
@@ -423,7 +417,7 @@ export const rolesRouter = {
 
       await db.delete(Permissions).where(eq(Permissions.id, perm.id));
 
-      await log({
+      await discord.log({
         title: `Revoked Role`,
         message: `The **${role.name}** role (<@&${role.discordRoleId}>) has been revoked from <@${user.discordUserId}>.`,
         color: "uhoh_red",
@@ -494,7 +488,7 @@ export const rolesRouter = {
               if (!input.revoking) {
                 // Granting role - Discord may fail due to hierarchy/perms
                 try {
-                  await addRoleToMember(
+                  await discord.addRoleToMember(
                     userData.discordUserId,
                     roleData.discordRoleId,
                   );
@@ -512,7 +506,7 @@ export const rolesRouter = {
               } else if (perm) {
                 // Revoking role - Discord may fail due to hierarchy/perms
                 try {
-                  await removeRoleFromMember(
+                  await discord.removeRoleFromMember(
                     userData.discordUserId,
                     roleData.discordRoleId,
                   );
@@ -545,7 +539,7 @@ export const rolesRouter = {
             failed.map((v) => `${v.userName} -> ${v.roleName}`).join("\n")
           : "";
 
-      await log({
+      await discord.log({
         title: `${input.revoking ? "Revoked" : "Granted"} Batch Roles`,
         message:
           `The following roles have been ${input.revoking ? "revoked from" : "granted to"} the following users:\n\n` +

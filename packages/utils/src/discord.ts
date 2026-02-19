@@ -6,7 +6,6 @@
 import type { APIGuildMember } from "discord-api-types/v10";
 import { REST, Routes } from "discord.js";
 import { and, desc, eq } from "drizzle-orm";
-import Stripe from "stripe";
 
 import type { Session } from "@forge/auth/server";
 import { DISCORD } from "@forge/consts";
@@ -101,8 +100,6 @@ export async function resolveDiscordUserId(
   )) as APIGuildMember[];
   return members[0]?.user.id ?? null;
 }
-
-export const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
 
 // TODO: look into not using Session here so we can remove the auth import
 //       which will let us clean up our imports.

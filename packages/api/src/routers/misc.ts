@@ -4,9 +4,9 @@ import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
 import { DISCORD, FORMS, TEAM } from "@forge/consts";
+import { discord } from "@forge/utils";
 
 import { protectedProcedure } from "../trpc";
-import { discord } from "../utils";
 
 export interface FundingRequestInput {
   team: string;
@@ -94,13 +94,7 @@ export const miscRouter = {
 
       try {
         const discId = ctx.session.user.discordUserId;
-        await discord.put(
-          Routes.guildMemberRole(
-            DISCORD.KNIGHTHACKS_GUILD,
-            discId,
-            input.roleId,
-          ),
-        );
+        await discord.addRoleToMember(discId, input.roleId);
       } catch (err) {
         throw new TRPCError({
           message: `Could not assign role ${input.roleId} to user ${ctx.session.user.name}`,
@@ -143,53 +137,57 @@ export const miscRouter = {
       // Convert hex color string to integer for Discord API
       const colorInt = parseInt(team.color.replace("#", ""), 16);
 
-      await discord.post(Routes.channelMessages(DISCORD.RECRUITING_CHANNEL), {
-        body: {
-          content: `<@&${directorRole}> **New Applicant for ${team.team}!**`,
-          embeds: [
-            {
-              title: `${input.name}'s Application`,
-              description: `A new applicant is interested in joining the **${team.team}** team.\n\nPlease see details below:`,
-              color: colorInt,
-              fields: [
-                {
-                  name: "Name",
-                  value: input.name,
-                  inline: true,
+      // TODO: refactor to util
+      await discord.api.post(
+        Routes.channelMessages(DISCORD.RECRUITING_CHANNEL),
+        {
+          body: {
+            content: `<@&${directorRole}> **New Applicant for ${team.team}!**`,
+            embeds: [
+              {
+                title: `${input.name}'s Application`,
+                description: `A new applicant is interested in joining the **${team.team}** team.\n\nPlease see details below:`,
+                color: colorInt,
+                fields: [
+                  {
+                    name: "Name",
+                    value: input.name,
+                    inline: true,
+                  },
+                  {
+                    name: "Email",
+                    value: input.email,
+                    inline: true,
+                  },
+                  {
+                    name: "Major",
+                    value: input.major,
+                    inline: true,
+                  },
+                  {
+                    name: "Grad Term",
+                    value: input.gradTerm,
+                    inline: true,
+                  },
+                  {
+                    name: "Grad Year",
+                    value: input.gradYear.toString(),
+                    inline: true,
+                  },
+                  {
+                    name: "Team",
+                    value: team.team,
+                    inline: true,
+                  },
+                ],
+                footer: {
+                  text: `Submitted at: ${new Date().toLocaleString()}`,
                 },
-                {
-                  name: "Email",
-                  value: input.email,
-                  inline: true,
-                },
-                {
-                  name: "Major",
-                  value: input.major,
-                  inline: true,
-                },
-                {
-                  name: "Grad Term",
-                  value: input.gradTerm,
-                  inline: true,
-                },
-                {
-                  name: "Grad Year",
-                  value: input.gradYear.toString(),
-                  inline: true,
-                },
-                {
-                  name: "Team",
-                  value: team.team,
-                  inline: true,
-                },
-              ],
-              footer: {
-                text: `Submitted at: ${new Date().toLocaleString()}`,
+                timestamp: new Date().toISOString(),
               },
-              timestamp: new Date().toISOString(),
-            },
-          ],
+            ],
+          },
         },
-      });
+      );
     }),
 } satisfies TRPCRouterRecord;

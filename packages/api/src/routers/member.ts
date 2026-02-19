@@ -28,10 +28,11 @@ import {
   Member,
   OtherCompanies,
 } from "@forge/db/schemas/knight-hacks";
+import { discord } from "@forge/utils";
 
 import { minioClient } from "../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../trpc";
-import { controlPerms, log } from "../utils";
+import { controlPerms } from "../utils";
 
 export const memberRouter = {
   createMember: protectedProcedure
@@ -112,7 +113,7 @@ export const memberRouter = {
         phoneNumber: input.phoneNumber === "" ? null : input.phoneNumber,
       });
 
-      await log({
+      await discord.log({
         title: "Member Created",
         message: `${input.firstName} ${input.lastName} has signed up for Blade`,
         color: "tk_blue",
@@ -258,7 +259,7 @@ export const memberRouter = {
         .join("\n");
 
       // Log the changes
-      await log({
+      await discord.log({
         title: "Member Updated",
         message: `Blade profile for ${member.firstName} ${member.lastName} has been updated.
         \n**Changes:**\n${changesString}`,
@@ -281,7 +282,7 @@ export const memberRouter = {
         });
       }
       await db.delete(Member).where(eq(Member.id, input.id));
-      await log({
+      await discord.log({
         title: "Member Deleted",
         message: `Profile for ${memberToDelete.firstName} ${memberToDelete.lastName} (ID: ${input.id}) has been deleted.`,
         color: "uhoh_red",
@@ -574,7 +575,7 @@ export const memberRouter = {
         .set({ points: sql`${Member.points} + ${input.amount}` })
         .where(eq(Member.id, member.id));
 
-      await log({
+      await discord.log({
         title: `Gave Points`,
         message: `Gave ${input.amount} points to ${member.firstName} ${member.lastName} (Member)`,
         color: "tk_blue",
@@ -644,7 +645,7 @@ export const memberRouter = {
         where: eq(Member.id, input.id),
         columns: { firstName: true, lastName: true },
       });
-      await log({
+      await discord.log({
         title: "Dues Status Accredited",
         message: `${member?.firstName} ${member?.lastName} has been accredited dues status.`,
         color: "success_green",
@@ -667,7 +668,7 @@ export const memberRouter = {
         where: eq(Member.id, input.id),
         columns: { firstName: true, lastName: true },
       });
-      await log({
+      await discord.log({
         title: "Dues Status Revoked",
         message: `${member?.firstName} ${member?.lastName} has been revoked of dues status.`,
         color: "uhoh_red",
@@ -679,7 +680,7 @@ export const memberRouter = {
     controlPerms.or(["IS_OFFICER"], ctx);
 
     await db.delete(DuesPayment);
-    await log({
+    await discord.log({
       title: "ALL DUES CLEARED",
       message:
         "ALL DUES HAVE BEEN CLEARED. THIS ACTION IS REVERSIBLE FOR ONLY 7 DAYS.",
@@ -747,7 +748,7 @@ export const memberRouter = {
         .update(Member)
         .set({ points: sql`${Member.points} + ${input.eventPoints}` })
         .where(eq(Member.id, member.id));
-      await log({
+      await discord.log({
         title: "User Checked-In",
         message: `${member.firstName} ${member.lastName} has been checked in to event ${event.name}.`,
         color: "success_green",

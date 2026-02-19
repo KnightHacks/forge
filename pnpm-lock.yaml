@@ -766,6 +766,9 @@ importers:
       '@forge/email':
         specifier: workspace:^
         version: link:../email
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@forge/validators':
         specifier: workspace:*
         version: link:../validators
