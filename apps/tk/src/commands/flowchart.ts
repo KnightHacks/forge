@@ -104,7 +104,7 @@ export async function execute(interaction: CommandInteraction) {
   const flowchartState = flowchartUrls[major]?.[year];
 
   if (!flowchartState) {
-    if (major == "Data Science") {
+    if (major === "Data Science") {
       return interaction.reply({
         content:
           "Data Science only has a flowchart for the 2024-2025 catalog year!",
