@@ -366,15 +366,27 @@ export const calendar = google.calendar({
 });
 
 // KnightConnect (Campus Labs Engage) API types
+export interface EngageEventAddress {
+  name?: string;
+  address?: string;
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  onlineLocation?: string;
+  instructions?: string;
+}
+
 export interface EngageEvent {
   name: string;
   description: string;
   startsOn: string; // ISO 8601
   endsOn: string; // ISO 8601
-  address: string;
+  address: EngageEventAddress;
   organizationIds: number[];
   submittedByOrganizationId: number;
-  submittedById: number;
+  submittedById: { communityMemberId: number };
 }
 
 export interface EngageEventResponse {
@@ -391,7 +403,9 @@ async function engageFetch(
   const url = `${env.KNIGHTCONNECT_API_URL}${path}`;
   const headers = new Headers(options.headers);
   headers.set("X-Engage-Api-Key", env.KNIGHTCONNECT_API_KEY);
-  headers.set("Content-Type", "application/json");
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
   const response = await fetch(url, { ...options, headers });
 
@@ -408,7 +422,7 @@ async function engageFetch(
 export const knightConnect = {
   async createEvent(event: EngageEvent): Promise<EngageEventResponse> {
     const res = await engageFetch(
-      `/api/v1/organizations/${env.KNIGHTCONNECT_ORG_ID}/events`,
+      `/v3.0/events/event`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -417,7 +431,7 @@ export const knightConnect = {
             env.KNIGHTCONNECT_ORG_ID,
             10,
           ),
-          submittedById: parseInt(env.KNIGHTCONNECT_SUBMITTER_ID, 10),
+          submittedById: { communityMemberId: parseInt(env.KNIGHTCONNECT_SUBMITTER_ID, 10) },
           organizationIds: [parseInt(env.KNIGHTCONNECT_ORG_ID, 10)],
         }),
       },
@@ -435,11 +449,21 @@ export const knightConnect = {
     engageEventId: number,
     event: Partial<EngageEvent>,
   ): Promise<EngageEventResponse> {
+    // Build JSON Patch operations (RFC 6902)
+    const submitterId = parseInt(env.KNIGHTCONNECT_SUBMITTER_ID, 10);
+    const patchOps = (
+      Object.entries(event) as [keyof EngageEvent, unknown][]
+    ).map(([key, value]) => ({ op: "replace" as const, path: `/${key}`, value }));
+    // Always include submittedById (required by Engage API)
+    if (!patchOps.some((op) => op.path === "/submittedById")) {
+      patchOps.push({ op: "add", path: "/submittedById", value: { communityMemberId: submitterId } });
+    }
+
     const res = await engageFetch(
-      `/api/v1/organizations/${env.KNIGHTCONNECT_ORG_ID}/events/${engageEventId}`,
+      `/v3.0/events/event/${engageEventId}`,
       {
-        method: "PUT",
-        body: JSON.stringify(event),
+        method: "PATCH",
+        body: JSON.stringify(patchOps),
       },
     );
     if (!res.ok) {
@@ -453,8 +477,11 @@ export const knightConnect = {
 
   async cancelEvent(engageEventId: number): Promise<void> {
     const res = await engageFetch(
-      `/api/v1/organizations/${env.KNIGHTCONNECT_ORG_ID}/events/${engageEventId}/cancel`,
-      { method: "POST" },
+      `/v3.0/events/event/${engageEventId}/cancel`,
+      {
+        method: "POST",
+        body: JSON.stringify({ comments: "Cancelled programmatically" }),
+      },
     );
     if (!res.ok) {
       throw new TRPCError({

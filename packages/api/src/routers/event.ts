@@ -30,8 +30,9 @@ import {
   Member,
 } from "@forge/db/schemas/knight-hacks";
 
+import { env } from "../env";
 import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
-import { calendar, controlPerms, createForm, discord, log } from "../utils";
+import { calendar, controlPerms, createForm, discord, knightConnect, log } from "../utils";
 
 export const eventRouter = {
   getEvents: publicProcedure.query(async () => {
@@ -164,7 +165,7 @@ export const eventRouter = {
     }),
   createEvent: permProcedure
     .input(
-      InsertEventSchema.omit({ id: true, discordId: true, googleId: true }),
+      InsertEventSchema.omit({ id: true, discordId: true, googleId: true, knightConnectId: true }),
     )
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
@@ -273,7 +274,58 @@ export const eventRouter = {
         });
       }
 
-      // Step 3: Insert the event into the database (using Date objects for timestamp columns)
+      // Step 3: Create the event in KnightConnect
+      let knightConnectId: string | null = null;
+      if (env.KNIGHTCONNECT_ENABLED === "true") {
+        try {
+          const kcResponse = await knightConnect.createEvent({
+            name: formattedName,
+            description: hackDesc + input.description,
+            startsOn: startLocalIso,
+            endsOn: endLocalIso,
+            address: { address: input.location },
+            organizationIds: [parseInt(env.KNIGHTCONNECT_ORG_ID, 10)],
+            submittedByOrganizationId: parseInt(env.KNIGHTCONNECT_ORG_ID, 10),
+            submittedById: { communityMemberId: parseInt(env.KNIGHTCONNECT_SUBMITTER_ID, 10) },
+          });
+          knightConnectId = String(kcResponse.id);
+        } catch (error) {
+          console.error(JSON.stringify(error, null, 2));
+
+          // Roll back Discord event
+          if (discordEventId) {
+            try {
+              await discord.delete(
+                Routes.guildScheduledEvent(
+                  DISCORD.KNIGHTHACKS_GUILD,
+                  discordEventId,
+                ),
+              );
+            } catch (cleanupErr) {
+              console.error(JSON.stringify(cleanupErr, null, 2));
+            }
+          }
+
+          // Roll back Google Calendar event
+          if (googleEventId) {
+            try {
+              await calendar.events.delete({
+                calendarId: EVENTS.GOOGLE_CALENDAR_ID,
+                eventId: googleEventId,
+              });
+            } catch (cleanupErr) {
+              console.error(JSON.stringify(cleanupErr, null, 2));
+            }
+          }
+
+          throw new TRPCError({
+            message: "Failed to create event in KnightConnect",
+            code: "BAD_REQUEST",
+          });
+        }
+      }
+
+      // Step 4: Insert the event into the database (using Date objects for timestamp columns)
       if (!discordEventId) {
         throw new TRPCError({
           message: "Failed to create event in Discord",
@@ -288,7 +340,7 @@ export const eventRouter = {
       }
 
       try {
-        // Step 3: Update the event in the database using Date objects
+        // Step 4: Insert the event into the database using Date objects
         const dayBeforeStart = new Date(startLocalDate);
         dayBeforeStart.setDate(dayBeforeStart.getDate() - 1);
         const dayBeforeEnd = new Date(endLocalDate);
@@ -301,6 +353,7 @@ export const eventRouter = {
           points: EVENTS.EVENT_POINTS[input.tag] || 0,
           discordId: discordEventId,
           googleId: googleEventId,
+          knightConnectId,
         });
       } catch (error) {
         console.error(JSON.stringify(error, null, 2));
@@ -327,13 +380,30 @@ export const eventRouter = {
           console.error(JSON.stringify(cleanupErr, null, 2));
         }
 
+        // Clean up the KnightConnect event if the database insert fails
+        if (knightConnectId) {
+          try {
+            await knightConnect.cancelEvent(parseInt(knightConnectId, 10));
+          } catch (cleanupErr) {
+            console.error(JSON.stringify(cleanupErr, null, 2));
+          }
+        }
+
         throw new TRPCError({
           message: "Failed to create event in the database",
           code: "BAD_REQUEST",
         });
       }
 
-      // Step 4: Log the creation
+      // Step 5: Log the creation
+      if (knightConnectId) {
+        await log({
+          title: "KnightConnect Synced",
+          message: `The event **${formattedName}** was synced to KnightConnect (ID: ${knightConnectId}).`,
+          color: "success_green",
+          userId: ctx.session.user.discordUserId,
+        });
+      }
       await log({
         title: "Event Created",
         message: `The event **${formattedName}** was created.`,
@@ -453,6 +523,33 @@ export const eventRouter = {
         });
       }
 
+      // Step 3 (KC): Update the event in KnightConnect
+      if (env.KNIGHTCONNECT_ENABLED === "true") {
+        if (event.knightConnectId) {
+          try {
+            await knightConnect.updateEvent(parseInt(event.knightConnectId, 10), {
+              name: formattedName,
+              description: hackDesc + input.description,
+              startsOn: startLocalIso,
+              endsOn: endLocalIso,
+              address: { address: input.location },
+            });
+          } catch (kcError) {
+            console.error(JSON.stringify(kcError, null, 2));
+            await log({
+              title: "KnightConnect Update Failed",
+              message: `Failed to update event **${formattedName}** in KnightConnect.`,
+              color: "uhoh_red",
+              userId: ctx.session.user.discordUserId,
+            }).catch(() => undefined);
+          }
+        } else {
+          console.warn(
+            `Event ${input.id} has no knightConnectId; skipping KnightConnect update.`,
+          );
+        }
+      }
+
       // Create a record of changes for logging
       const updateData = { ...input };
       const changes = Object.keys(updateData).reduce(
@@ -547,6 +644,7 @@ export const eventRouter = {
         id: true,
         discordId: true,
         googleId: true,
+        knightConnectId: true,
         tag: true,
         name: true,
       }),
@@ -592,6 +690,34 @@ export const eventRouter = {
       }
 
       const formattedName = `[${input.tag.toUpperCase().replace(" ", "-")}] ${input.name}`;
+
+      // Step 3 (KC): Cancel the event in KnightConnect
+      if (env.KNIGHTCONNECT_ENABLED === "true") {
+        if (input.knightConnectId) {
+          try {
+            await knightConnect.cancelEvent(parseInt(input.knightConnectId, 10));
+            await log({
+              title: "KnightConnect Event Cancelled",
+              message: `The event **${formattedName}** was cancelled in KnightConnect.`,
+              color: "blade_purple",
+              userId: ctx.session.user.discordUserId,
+            });
+          } catch (kcError) {
+            console.error(JSON.stringify(kcError, null, 2));
+            await log({
+              title: "KnightConnect Cancellation Failed",
+              message: `Failed to cancel event **${formattedName}** in KnightConnect.`,
+              color: "uhoh_red",
+              userId: ctx.session.user.discordUserId,
+            }).catch(() => undefined);
+          }
+        } else {
+          console.warn(
+            `Event ${input.id} has no knightConnectId; skipping KnightConnect cancellation.`,
+          );
+        }
+      }
+
       await log({
         title: "Event Deleted",
         message: `The event **${formattedName}** was deleted.`,
@@ -599,7 +725,7 @@ export const eventRouter = {
         userId: ctx.session.user.discordUserId,
       });
 
-      // Step 3: Delete the event in the database
+      // Step 4: Delete the event in the database
       await db.delete(Event).where(eq(Event.id, input.id));
     }),
 

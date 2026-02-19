@@ -27,6 +27,10 @@ export const env = createEnv({
     KNIGHTCONNECT_API_URL: z
       .string()
       .default("https://engage.ucf.edu"),
+    KNIGHTCONNECT_ENABLED: z
+      .string()
+      .optional()
+      .default("true"),
   },
   experimental__runtimeEnv: {},
   skipValidation:
