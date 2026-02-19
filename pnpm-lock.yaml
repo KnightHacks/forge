@@ -1155,7 +1155,26 @@ importers:
         version: 3.25.76
 
   packages/utils:
+    dependencies:
+      '@t3-oss/env-nextjs':
+        specifier: ^0.11.1
+        version: 0.11.1(typescript@5.7.3)(zod@4.3.6)
+      discord-api-types:
+        specifier: ^0.37.113
+        version: 0.37.120
+      discord.js:
+        specifier: ^14.16.3
+        version: 14.25.1
     devDependencies:
+      '@forge/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../consts
+      '@forge/db':
+        specifier: workspace:*
+        version: link:../db
       '@forge/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint
