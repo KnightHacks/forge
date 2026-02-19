@@ -104,6 +104,9 @@ export async function resolveDiscordUserId(
 
 export const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
 
+// TODO: look into not using Session here so we can remove the auth import
+//       which will let us clean up our imports.
+
 export const isDiscordAdmin = async (user: Session["user"]) => {
   try {
     const guildMember = (await api.get(
