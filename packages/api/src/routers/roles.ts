@@ -11,7 +11,7 @@ import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import { discord } from "@forge/utils";
 
 import { permProcedure, protectedProcedure } from "../trpc";
-import { controlPerms, getPermsAsList } from "../utils";
+import { permissions } from "@forge/utils";
 
 export const rolesRouter = {
   // ROLES
@@ -25,7 +25,7 @@ export const rolesRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      controlPerms.or(["CONFIGURE_ROLES"], ctx);
+      permissions.controlPerms.or(["CONFIGURE_ROLES"], ctx);
 
       // check for duplicate discord role
       const dupe = await db.query.Roles.findFirst({
@@ -95,7 +95,7 @@ export const rolesRouter = {
         await discord.log({
           title: `Created Role: ${input.name}`,
           message: `Role linked to <@&${input.roleId}>
-                  \n**Permissions:** ${getPermsAsList(input.permissions).join(", ")}
+                  \n**Permissions:** ${permissions.getPermsAsList(input.permissions).join(", ")}
                   \n**Auto-synced:** ${syncedCount} user(s) granted (checked ${checkedCount} Blade users)`,
           color: "blade_purple",
           userId: ctx.session.user.discordUserId,
@@ -104,7 +104,7 @@ export const rolesRouter = {
         await discord.log({
           title: `Created Role: ${input.name}`,
           message: `Role linked to <@&${input.roleId}>
-                  \n**Permissions:** ${getPermsAsList(input.permissions).join(", ")}
+                  \n**Permissions:** ${permissions.getPermsAsList(input.permissions).join(", ")}
                   \n**Note:** Auto-sync unavailable. Checked ${checkedCount} users, synced ${syncedCount}.`,
           color: "blade_purple",
           userId: ctx.session.user.discordUserId,
@@ -122,7 +122,7 @@ export const rolesRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      controlPerms.or(["CONFIGURE_ROLES"], ctx);
+      permissions.controlPerms.or(["CONFIGURE_ROLES"], ctx);
 
       // check for existing role
       const exist = await db.query.Roles.findFirst({
@@ -158,8 +158,8 @@ export const rolesRouter = {
         title: `Updated Role`,
         message: `The **${exist.name}** Role (<@&${input.roleId}>) role has been updated.
                 \n**Name:** ${exist.name} -> ${input.name}
-                \n**Original Perms:**\n${getPermsAsList(exist.permissions).join("\n")}
-                \n**New Perms:**\n${getPermsAsList(input.permissions).join("\n")}`,
+                \n**Original Perms:**\n${permissions.getPermsAsList(exist.permissions).join("\n")}
+                \n**New Perms:**\n${permissions.getPermsAsList(input.permissions).join("\n")}`,
         color: "blade_purple",
         userId: ctx.session.user.discordUserId,
       });
@@ -168,7 +168,7 @@ export const rolesRouter = {
   deleteRoleLink: permProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      controlPerms.or(["CONFIGURE_ROLES"], ctx);
+      permissions.controlPerms.or(["CONFIGURE_ROLES"], ctx);
 
       // check for existing role
       const exist = await db.query.Roles.findFirst({
@@ -294,8 +294,8 @@ export const rolesRouter = {
     )
     .query(({ input, ctx }) => {
       try {
-        if (input.or) controlPerms.or(input.or, ctx);
-        if (input.and) controlPerms.and(input.and, ctx);
+        if (input.or) permissions.controlPerms.or(input.or, ctx);
+        if (input.and) permissions.controlPerms.and(input.and, ctx);
       } catch {
         return false;
       }
@@ -306,7 +306,7 @@ export const rolesRouter = {
   grantPermission: permProcedure
     .input(z.object({ roleId: z.string(), userId: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["ASSIGN_ROLES"], ctx);
+      permissions.controlPerms.or(["ASSIGN_ROLES"], ctx);
 
       const exists = await db.query.Permissions.findFirst({
         where: (t, { eq, and }) =>
@@ -368,7 +368,7 @@ export const rolesRouter = {
   revokePermission: permProcedure
     .input(z.object({ roleId: z.string(), userId: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["ASSIGN_ROLES"], ctx);
+      permissions.controlPerms.or(["ASSIGN_ROLES"], ctx);
 
       const perm = await db.query.Permissions.findFirst({
         where: (t, { eq, and }) =>
@@ -434,7 +434,7 @@ export const rolesRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["ASSIGN_ROLES"], ctx);
+      permissions.controlPerms.or(["ASSIGN_ROLES"], ctx);
 
       interface Return {
         roleName: string;

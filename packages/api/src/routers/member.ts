@@ -28,11 +28,10 @@ import {
   Member,
   OtherCompanies,
 } from "@forge/db/schemas/knight-hacks";
-import { discord } from "@forge/utils";
+import { discord, permissions } from "@forge/utils";
 
 import { minioClient } from "../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../trpc";
-import { controlPerms } from "../utils";
 
 export const memberRouter = {
   createMember: protectedProcedure
@@ -358,7 +357,7 @@ export const memberRouter = {
         .optional(),
     )
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+      permissions.controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
       // If theres a fetch all flag set to true OR no inputs are passed in get all members
       if (
@@ -455,7 +454,7 @@ export const memberRouter = {
         .optional(),
     )
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+      permissions.controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
       const conditions = [];
 
@@ -501,7 +500,7 @@ export const memberRouter = {
     }),
 
   getDistinctSchools: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    permissions.controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
     const results = await db
       .selectDistinct({ school: Member.school })
       .from(Member)
@@ -512,7 +511,7 @@ export const memberRouter = {
   }),
 
   getDistinctMajors: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    permissions.controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
     const results = await db
       .selectDistinct({ major: Member.major })
       .from(Member)
@@ -522,7 +521,7 @@ export const memberRouter = {
   }),
 
   getMemberFilterOptions: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    permissions.controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
     const rows = await db
       .select({
@@ -557,7 +556,7 @@ export const memberRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_MEMBERS"], ctx);
+      permissions.controlPerms.or(["EDIT_MEMBERS"], ctx);
 
       const member = await db.query.Member.findFirst({
         where: eq(Member.id, input.id),
@@ -584,7 +583,7 @@ export const memberRouter = {
     }),
 
   getDuesPayingMembers: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    permissions.controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
     return await db
       .select()
@@ -600,7 +599,7 @@ export const memberRouter = {
   }),
 
   getMemberAttendanceCounts: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    permissions.controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
     // Get attendance count for each member
     const memberAttendance = await db
@@ -628,7 +627,7 @@ export const memberRouter = {
   createDuesPayingMember: permProcedure
     .input(InsertMemberSchema.pick({ id: true }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_MEMBERS", "IS_OFFICER"], ctx);
+      permissions.controlPerms.or(["EDIT_MEMBERS", "IS_OFFICER"], ctx);
 
       if (!input.id)
         throw new TRPCError({
@@ -656,7 +655,7 @@ export const memberRouter = {
   deleteDuesPayingMember: permProcedure
     .input(InsertMemberSchema.pick({ id: true }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_MEMBERS", "IS_OFFICER"], ctx);
+      permissions.controlPerms.or(["EDIT_MEMBERS", "IS_OFFICER"], ctx);
 
       if (!input.id)
         throw new TRPCError({
@@ -677,7 +676,7 @@ export const memberRouter = {
     }),
 
   clearAllDues: permProcedure.mutation(async ({ ctx }) => {
-    controlPerms.or(["IS_OFFICER"], ctx);
+    permissions.controlPerms.or(["IS_OFFICER"], ctx);
 
     await db.delete(DuesPayment);
     await discord.log({
@@ -698,7 +697,7 @@ export const memberRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["CHECKIN_CLUB_EVENT", "CHECKIN_HACK_EVENT"], ctx);
 
       const member = await db.query.Member.findFirst({
         where: eq(Member.userId, input.userId),

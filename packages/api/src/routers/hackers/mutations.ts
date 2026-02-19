@@ -19,8 +19,7 @@ import {
 
 import { minioClient } from "../../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../../trpc";
-import { controlPerms } from "../../utils";
-import { discord } from "@forge/utils";
+import { discord, permissions } from "@forge/utils";
 
 export const hackerMutationRouter = {
   createHacker: protectedProcedure
@@ -245,7 +244,7 @@ export const hackerMutationRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_HACKERS"], ctx);
+      permissions.controlPerms.or(["EDIT_HACKERS"], ctx);
 
       if (!input.id) {
         throw new TRPCError({
@@ -458,7 +457,7 @@ export const hackerMutationRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["CHECKIN_HACK_EVENT", "EDIT_HACKERS"], ctx);
+      permissions.controlPerms.or(["CHECKIN_HACK_EVENT", "EDIT_HACKERS"], ctx);
 
       const event = await db.query.Event.findFirst({
         where: eq(Event.id, input.eventId),
@@ -717,7 +716,7 @@ export const hackerMutationRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_HACKERS"], ctx);
+      permissions.controlPerms.or(["EDIT_HACKERS"], ctx);
 
       if (!input.id) {
         throw new TRPCError({
@@ -795,7 +794,7 @@ export const hackerMutationRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_HACKERS"], ctx);
+      permissions.controlPerms.or(["EDIT_HACKERS"], ctx);
 
       if (!input.id) {
         throw new TRPCError({

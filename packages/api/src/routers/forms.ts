@@ -20,12 +20,11 @@ import {
   TrpcFormConnection,
   TrpcFormConnectionSchema,
 } from "@forge/db/schemas/knight-hacks";
-import { discord } from "@forge/utils";
+import { discord, permissions } from "@forge/utils";
 
 import { minioClient } from "../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../trpc";
 import {
-  controlPerms,
   createForm,
   CreateFormSchema,
   generateJsonSchema,
@@ -36,7 +35,7 @@ export const formsRouter = {
   createForm: permProcedure
     .input(CreateFormSchema)
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       await createForm(input);
     }),
 
@@ -53,7 +52,7 @@ export const formsRouter = {
         .extend({ responseRoleIds: z.array(z.string().uuid()).optional() }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       const jsonSchema = generateJsonSchema(input.formData);
 
       const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
@@ -201,7 +200,7 @@ export const formsRouter = {
   deleteForm: permProcedure
     .input(z.object({ slug_name: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       // find the form to delete duh
       const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) =>
@@ -234,7 +233,7 @@ export const formsRouter = {
       }),
     )
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       const { cursor, section } = input;
       const limit = input.limit;
 
@@ -285,7 +284,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) => eq(t.id, input.form),
@@ -327,7 +326,7 @@ export const formsRouter = {
   deleteConnection: permProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       try {
         await db
           .delete(TrpcFormConnection)
@@ -524,7 +523,7 @@ export const formsRouter = {
   getResponses: permProcedure
     .input(z.object({ form: z.string() }))
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       return await db
         .select({
           id: FormResponse.id,
@@ -546,7 +545,7 @@ export const formsRouter = {
   deleteResponse: permProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       try {
         await db.delete(FormResponse).where(eq(FormResponse.id, input.id));
         await discord.log({
@@ -709,7 +708,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       const { objectName } = input;
 
       try {
@@ -734,7 +733,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       const { objectName } = input;
 
       try {
@@ -754,7 +753,7 @@ export const formsRouter = {
     }),
 
   getSections: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+    permissions.controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
 
     const isOfficer = ctx.session.permissions.IS_OFFICER;
 
@@ -873,7 +872,7 @@ export const formsRouter = {
   }),
 
   getSectionCounts: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+    permissions.controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
     const counts = await db
       .select({
         section: FormsSchemas.section,
@@ -896,7 +895,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) =>
           eq(t.slugName, decodeURIComponent(input.slug_name)),
@@ -940,7 +939,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       await db
         .update(FormSections)
@@ -963,7 +962,7 @@ export const formsRouter = {
   deleteSection: permProcedure
     .input(z.object({ section: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       await db
         .update(FormsSchemas)
         .set({ section: "General", sectionId: null })
@@ -982,7 +981,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       const existing = await db.query.FormSections.findFirst({
         where: (t, { eq }) => eq(t.name, input.name),
@@ -1068,7 +1067,7 @@ export const formsRouter = {
   getSectionRoles: permProcedure
     .input(z.object({ sectionName: z.string() }))
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
 
       const section = await db.query.FormSections.findFirst({
         where: (t, { eq }) => eq(t.name, input.sectionName),
@@ -1107,7 +1106,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       const section = await db.query.FormSections.findFirst({
         where: (t, { eq }) => eq(t.name, input.sectionName),
@@ -1179,7 +1178,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       const allSections = await db
         .select({
@@ -1232,7 +1231,7 @@ export const formsRouter = {
   checkFormEditAccess: permProcedure
     .input(z.object({ slug_name: z.string() }))
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       const isOfficer = ctx.session.permissions.IS_OFFICER;
 

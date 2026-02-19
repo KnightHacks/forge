@@ -29,10 +29,10 @@ import {
   InsertEventSchema,
   Member,
 } from "@forge/db/schemas/knight-hacks";
-import { discord } from "@forge/utils";
+import { discord, permissions } from "@forge/utils";
 
 import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
-import { calendar, controlPerms, createForm } from "../utils";
+import { calendar, createForm } from "../utils";
 
 export const eventRouter = {
   getEvents: publicProcedure.query(async () => {
@@ -127,7 +127,7 @@ export const eventRouter = {
   getAttendees: permProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      controlPerms.or(["READ_CLUB_EVENT"], ctx);
+      permissions.controlPerms.or(["READ_CLUB_EVENT"], ctx);
 
       const attendees = await db
         .select({
@@ -143,7 +143,7 @@ export const eventRouter = {
   getHackerAttendees: permProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      controlPerms.or(["READ_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["READ_HACK_EVENT"], ctx);
 
       const attendees = await db
         .select({
@@ -168,7 +168,7 @@ export const eventRouter = {
       InsertEventSchema.omit({ id: true, discordId: true, googleId: true }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
 
       // Step 0: Convert provided start/end datetimes into Local Date objects
       const startDatetime = new Date(input.start_datetime);
@@ -346,7 +346,7 @@ export const eventRouter = {
   updateEvent: permProcedure
     .input(InsertEventSchema)
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
 
       if (!input.id) {
         throw new TRPCError({
@@ -553,7 +553,7 @@ export const eventRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
 
       if (!input.id) {
         throw new TRPCError({
@@ -700,7 +700,7 @@ export const eventRouter = {
       }),
     )
     .query(async ({ ctx, input }) => {
-      controlPerms.or(["READ_CLUB_EVENT"], ctx);
+      permissions.controlPerms.or(["READ_CLUB_EVENT"], ctx);
 
       const conditions = [];
 

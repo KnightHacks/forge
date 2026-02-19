@@ -7,7 +7,7 @@ import { db } from "@forge/db/client";
 import { Challenges, Submissions, Teams } from "@forge/db/schemas/knight-hacks";
 
 import { permProcedure } from "../trpc";
-import { controlPerms } from "../utils";
+import { permissions } from "@forge/utils";
 
 interface CsvImporterRecord {
   "Opt-In Prize": string | null;
@@ -32,7 +32,7 @@ export const csvImporterRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      controlPerms.or(["IS_OFFICER"], ctx);
+      permissions.controlPerms.or(["IS_OFFICER"], ctx);
 
       try {
         // Get raw records
