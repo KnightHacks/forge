@@ -7,44 +7,9 @@ import type { Form } from "@forge/db/schemas/knight-hacks";
 import { EVENTS, FORMS, MINIO } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { FormSchemaSchema, FormsSchemas } from "@forge/db/schemas/knight-hacks";
-import { client } from "@forge/email";
 
 import { env } from "./env";
 import { minioClient } from "./minio/minio-client";
-
-export const sendEmail = async ({
-  to,
-  subject,
-  template_id,
-  from,
-  data,
-}: {
-  to: string | string[];
-  subject: string;
-  template_id: number;
-  data: Record<string, string>;
-  from?: string;
-}): Promise<{ success: true }> => {
-  try {
-    await client.tx.send({
-      template_id: template_id,
-      from_email: from ?? env.LISTMONK_FROM_EMAIL,
-      subscriber_mode: "external",
-      subscriber_emails: typeof to === "string" ? [to] : to,
-      subject: subject,
-      data: data,
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error("Error sending email:", error);
-    throw new Error(
-      `Failed to send email: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`,
-    );
-  }
-};
 
 const GOOGLE_PRIVATE_KEY = Buffer.from(env.GOOGLE_PRIVATE_KEY_B64, "base64")
   .toString("utf-8")
