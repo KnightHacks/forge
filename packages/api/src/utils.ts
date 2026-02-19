@@ -365,6 +365,106 @@ export const calendar = google.calendar({
   auth: auth,
 });
 
+// KnightConnect (Campus Labs Engage) API types
+export interface EngageEvent {
+  name: string;
+  description: string;
+  startsOn: string; // ISO 8601
+  endsOn: string; // ISO 8601
+  address: string;
+  organizationIds: number[];
+  submittedByOrganizationId: number;
+  submittedById: number;
+}
+
+export interface EngageEventResponse {
+  id: number;
+  name: string;
+  startsOn: string;
+  endsOn: string;
+}
+
+async function engageFetch(
+  path: string,
+  options: RequestInit = {},
+): Promise<Response> {
+  const url = `${env.KNIGHTCONNECT_API_URL}${path}`;
+  const headers = new Headers(options.headers);
+  headers.set("X-Engage-Api-Key", env.KNIGHTCONNECT_API_KEY);
+  headers.set("Content-Type", "application/json");
+
+  const response = await fetch(url, { ...options, headers });
+
+  if (response.status === 429) {
+    const retryAfter = response.headers.get("Retry-After");
+    const delayMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : 5000;
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    return engageFetch(path, options);
+  }
+
+  return response;
+}
+
+export const knightConnect = {
+  async createEvent(event: EngageEvent): Promise<EngageEventResponse> {
+    const res = await engageFetch(
+      `/api/v1/organizations/${env.KNIGHTCONNECT_ORG_ID}/events`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ...event,
+          submittedByOrganizationId: parseInt(
+            env.KNIGHTCONNECT_ORG_ID,
+            10,
+          ),
+          submittedById: parseInt(env.KNIGHTCONNECT_SUBMITTER_ID, 10),
+          organizationIds: [parseInt(env.KNIGHTCONNECT_ORG_ID, 10)],
+        }),
+      },
+    );
+    if (!res.ok) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `KnightConnect createEvent failed: ${res.status} ${res.statusText}`,
+      });
+    }
+    return res.json() as Promise<EngageEventResponse>;
+  },
+
+  async updateEvent(
+    engageEventId: number,
+    event: Partial<EngageEvent>,
+  ): Promise<EngageEventResponse> {
+    const res = await engageFetch(
+      `/api/v1/organizations/${env.KNIGHTCONNECT_ORG_ID}/events/${engageEventId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(event),
+      },
+    );
+    if (!res.ok) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `KnightConnect updateEvent failed: ${res.status} ${res.statusText}`,
+      });
+    }
+    return res.json() as Promise<EngageEventResponse>;
+  },
+
+  async cancelEvent(engageEventId: number): Promise<void> {
+    const res = await engageFetch(
+      `/api/v1/organizations/${env.KNIGHTCONNECT_ORG_ID}/events/${engageEventId}/cancel`,
+      { method: "POST" },
+    );
+    if (!res.ok) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `KnightConnect cancelEvent failed: ${res.status} ${res.statusText}`,
+      });
+    }
+  },
+};
+
 type OptionalSchema =
   | { success: true; schema: JSONSchema7 }
   | { success: false; msg: string };

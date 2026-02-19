@@ -172,6 +172,7 @@ export const Event = createTable("event", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   discordId: t.varchar({ length: 255 }).notNull(),
   googleId: t.varchar({ length: 255 }).notNull(),
+  knightConnectId: t.varchar({ length: 255 }),
   name: t.varchar({ length: 255 }).notNull(),
   tag: eventTagEnum().notNull(),
   description: t.text().notNull(),

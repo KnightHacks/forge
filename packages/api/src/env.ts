@@ -21,6 +21,12 @@ export const env = createEnv({
     BLADE_URL: z.string(),
     GOOGLE_CLIENT_EMAIL: z.string(),
     GOOGLE_PRIVATE_KEY_B64: z.string(),
+    KNIGHTCONNECT_API_KEY: z.string(),
+    KNIGHTCONNECT_ORG_ID: z.string(),
+    KNIGHTCONNECT_SUBMITTER_ID: z.string(),
+    KNIGHTCONNECT_API_URL: z
+      .string()
+      .default("https://engage.ucf.edu"),
   },
   experimental__runtimeEnv: {},
   skipValidation:
