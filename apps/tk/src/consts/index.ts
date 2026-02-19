@@ -42,17 +42,35 @@ export const TK_DUCK_URL = "https://random-d.uk/api/v2/quack";
 export const TK_FACTS_URL =
   "https://uselessfacts.jsph.pl/api/v2/facts/random?language=en";
 
-export const CS_FLOWCHART_URL =
-  "https://blade.knighthacks.org/flowcharts/bs-cs.png";
+export const CS_FLOWCHART_23_24_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-cs-23-24.png";
 
-export const IT_FLOWCHART_URL =
-  "https://blade.knighthacks.org/flowcharts/bs-it.png";
+export const CS_FLOWCHART_24_25_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-cs-24-25.png";
 
-export const CPE_FLOWCHART_URL =
-  "https://blade.knighthacks.org/flowcharts/bs-cpe.png";
+export const CS_FLOWCHART_25_26_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-cs-25-26.png";
 
-export const DS_FLOWCHART_URL =
-  "https://blade.knighthacks.org/flowcharts/bs-ds.png";
+export const IT_FLOWCHART_23_24_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-it-23-24.png";
+
+export const IT_FLOWCHART_24_25_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-it-24-25.png";
+
+export const IT_FLOWCHART_25_26_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-it-25-26.png";
+
+export const CPE_FLOWCHART_23_24_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-cpe-23-24.png";
+
+export const CPE_FLOWCHART_24_25_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-cpe-24-25.png";
+
+export const CPE_FLOWCHART_25_26_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-cpe-25-26.png";
+
+export const DS_FLOWCHART_24_25_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-ds-24-25.png";
 
 export const TK_FOX_URL = "https://randomfox.ca/floof/";
 
