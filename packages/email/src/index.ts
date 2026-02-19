@@ -1,7 +1,8 @@
 import { Listmonk } from "@maloma/listmonk";
 
-import { env } from "./env";
 import { logger } from "@forge/utils";
+
+import { env } from "./env";
 
 export const client = new Listmonk({
   url: env.LISTMONK_URL,

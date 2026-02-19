@@ -5,10 +5,10 @@ import { asc } from "drizzle-orm";
 
 import { db } from "@forge/db/client";
 import { Event } from "@forge/db/schemas/knight-hacks";
+import { logger } from "@forge/utils";
 
 import { env } from "../env";
 import { CronBuilder } from "../structs/CronBuilder";
-import { logger } from "@forge/utils";
 
 const REMINDERS_WEBHOOK = new WebhookClient({
   url: env.DISCORD_WEBHOOK_REMINDERS,

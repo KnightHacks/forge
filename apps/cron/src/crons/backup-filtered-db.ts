@@ -1,8 +1,9 @@
 import { spawn } from "child_process";
 import { createInterface } from "readline/promises";
 
-import { CronBuilder } from "../structs/CronBuilder";
 import { logger } from "@forge/utils";
+
+import { CronBuilder } from "../structs/CronBuilder";
 
 const COMMAND = "pnpm";
 const COMMAND_ARGS = [
