@@ -199,6 +199,9 @@ importers:
       '@forge/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@forge/validators':
         specifier: workspace:*
         version: link:../../packages/validators
@@ -426,6 +429,9 @@ importers:
       '@forge/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@forge/validators':
         specifier: workspace:*
         version: link:../../packages/validators

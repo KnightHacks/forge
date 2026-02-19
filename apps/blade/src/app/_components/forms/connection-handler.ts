@@ -3,8 +3,8 @@
 import { stringify } from "superjson";
 
 import { appRouter } from "@forge/api";
-import { log } from "@forge/api/utils";
 import { auth } from "@forge/auth/server";
+import { discord } from "@forge/utils";
 
 import { extractProcedures } from "~/lib/utils";
 import { api } from "~/trpc/server";
@@ -46,7 +46,7 @@ export const handleCallbacks = async (
 
     try {
       await proc(data);
-      await log({
+      await discord.log({
         title: `Successfully automatically fired procedure`,
         message: `**Successfully fired procedure**\n\`${con.proc}\`\n\nTriggered after **${name}** submission from **${session.user.name}**`,
         color: "success_green",
@@ -54,7 +54,7 @@ export const handleCallbacks = async (
       });
     } catch (error) {
       const errorMessage = JSON.stringify(error, null, 2);
-      await log({
+      await discord.log({
         title: `Failed to automatically fire procedure`,
         message:
           `**Failed to fire procedure**\n\`${con.proc}\`\n\nTriggered after **${name}** submission from **${session.user.name}**\n\n**Data:**\n\`\`\`json\n${stringify(data)}\`\`\`` +

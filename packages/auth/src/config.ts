@@ -74,7 +74,6 @@ export const auth = betterAuth({
 
             await discord.handleDiscordOAuthCallback(discordUserId);
           } catch (error) {
-            // eslint-disable-next-line no-console
             console.error("Error in Discord auto join hook:", error);
           }
         },
