@@ -350,6 +350,9 @@ importers:
       '@forge/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@gsap/react':
         specifier: ^2.1.2
         version: 2.1.2(gsap@3.14.2)(react@18.3.1)
