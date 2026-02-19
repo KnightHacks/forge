@@ -1,125 +1,19 @@
-import type { APIGuildMember } from "discord-api-types/v10";
 import type { JSONSchema7 } from "json-schema";
 import { cookies } from "next/headers";
-import { REST } from "@discordjs/rest";
 import { TRPCError } from "@trpc/server";
-import { Routes } from "discord-api-types/v10";
-import { and, desc, eq, gt, inArray } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { google } from "googleapis";
-import Stripe from "stripe";
 import z from "zod";
 
-import type { Session } from "@forge/auth/server";
 import type { Form } from "@forge/db/schemas/knight-hacks";
-import { DISCORD, EVENTS, FORMS, MINIO, PERMISSIONS } from "@forge/consts";
+import { EVENTS, FORMS, MINIO, PERMISSIONS } from "@forge/consts";
 import { db } from "@forge/db/client";
-import { Account, JudgeSession, Roles } from "@forge/db/schemas/auth";
+import { JudgeSession } from "@forge/db/schemas/auth";
 import { FormSchemaSchema, FormsSchemas } from "@forge/db/schemas/knight-hacks";
 import { client } from "@forge/email";
 
 import { env } from "./env";
 import { minioClient } from "./minio/minio-client";
-
-export const discord = new REST({ version: "10" }).setToken(
-  env.DISCORD_BOT_TOKEN,
-);
-
-export async function addRoleToMember(discordUserId: string, roleId: string) {
-  await discord.put(
-    Routes.guildMemberRole(DISCORD.KNIGHTHACKS_GUILD, discordUserId, roleId),
-  );
-}
-
-export async function removeRoleFromMember(
-  discordUserId: string,
-  roleId: string,
-) {
-  await discord.delete(
-    Routes.guildMemberRole(DISCORD.KNIGHTHACKS_GUILD, discordUserId, roleId),
-  );
-}
-
-export async function addMemberToServer(
-  discordUserId: string,
-  accessToken: string,
-): Promise<void> {
-  try {
-    await discord.put(
-      Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),
-      {
-        body: {
-          access_token: accessToken,
-        },
-      },
-    );
-
-    console.log(`Added ${discordUserId} to the KH discord server`);
-    return;
-  } catch (error) {
-    console.error(
-      `Failed to add user ${discordUserId} to the KH discord server:`,
-      error instanceof Error ? error.message : "Unknown error",
-    );
-  }
-}
-
-export async function handleDiscordOAuthCallback(
-  discordUserId: string,
-): Promise<void> {
-  try {
-    const user = await db.query.User.findFirst({
-      where: (u, { eq }) => eq(u.discordUserId, discordUserId),
-    });
-
-    if (!user) {
-      return;
-    }
-
-    const accounts = await db
-      .select({ account: Account })
-      .from(Account)
-      .where(and(eq(Account.provider, "discord"), eq(Account.userId, user.id)))
-      .orderBy(desc(Account.updatedAt))
-      .limit(1);
-
-    const account = accounts[0]?.account;
-    const accessToken = account?.access_token;
-    const scope = account?.scope;
-
-    if (accessToken && scope?.includes("guilds.join")) {
-      void addMemberToServer(discordUserId, accessToken);
-    }
-  } catch (error) {
-    console.error(
-      `Failed to handle Discord OAuth callback for ${discordUserId}:`,
-      error instanceof Error ? error.message : "Unknown error",
-    );
-  }
-}
-
-export async function resolveDiscordUserId(
-  username: string,
-): Promise<string | null> {
-  const q = username.trim().toLowerCase();
-  const members = (await discord.get(
-    `${Routes.guildMembersSearch(DISCORD.KNIGHTHACKS_GUILD)}?query=${encodeURIComponent(q)}&limit=1`,
-  )) as APIGuildMember[];
-  return members[0]?.user.id ?? null;
-}
-
-export const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
-
-export const isDiscordAdmin = async (user: Session["user"]) => {
-  try {
-    const guildMember = (await discord.get(
-      Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),
-    )) as APIGuildMember;
-    return guildMember.roles.includes(DISCORD.ADMIN_ROLE);
-  } catch (err) {
-    console.error("Error: ", err);
-    return false;
-  }
-};
 
 export const hasPermission = (
   userPermissions: string,
@@ -127,55 +21,6 @@ export const hasPermission = (
 ): boolean => {
   const permissionBit = userPermissions[permission];
   return permissionBit === "1";
-};
-
-export const parsePermissions = async (discordUserId: string) => {
-  const guildMember = (await discord.get(
-    Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),
-  )) as APIGuildMember;
-
-  const permissionsLength = Object.keys(PERMISSIONS.PERMISSIONS).length;
-
-  // array of booleans. the boolean value at the index indicates if the user has that permission.
-  // true means the user has the permission, false means the user doesn't have the permission.
-  const permissionsBits = new Array(permissionsLength).fill(false) as boolean[];
-
-  if (guildMember.roles.length > 0) {
-    // get only roles the user has
-    const userDbRoles = await db
-      .select()
-      .from(Roles)
-      .where(inArray(Roles.discordRoleId, guildMember.roles));
-
-    for (const role of userDbRoles) {
-      if (!role.permissions) continue;
-
-      for (
-        let i = 0;
-        i < role.permissions.length && i < permissionsLength;
-        ++i
-      ) {
-        if (role.permissions[i] === "1") {
-          permissionsBits[i] = true;
-        }
-      }
-    }
-  }
-
-  // creates the map of permissions to their boolean values
-  const permissionsMap = Object.keys(PERMISSIONS.PERMISSIONS).reduce(
-    (accumulator, key) => {
-      const index = PERMISSIONS.PERMISSIONS[key];
-      if (index === undefined) return accumulator;
-
-      accumulator[key] = permissionsBits[index] ?? false;
-
-      return accumulator;
-    },
-    {} as Record<PERMISSIONS.PermissionKey, boolean>,
-  );
-
-  return permissionsMap;
 };
 
 // Mock tRPC context for type-safety
@@ -210,24 +55,6 @@ export const controlPerms = {
   },
 };
 
-export const isDiscordMember = async (user: Session["user"]) => {
-  try {
-    await discord.get(
-      Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),
-    );
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-export async function isDiscordVIP(discordUserId: string) {
-  const guildMember = (await discord.get(
-    Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),
-  )) as APIGuildMember;
-  return guildMember.roles.includes(DISCORD.VIP_ROLE);
-}
-
 export const sendEmail = async ({
   to,
   subject,
@@ -261,38 +88,6 @@ export const sendEmail = async ({
     );
   }
 };
-
-export async function log({
-  title,
-  message,
-  color,
-  userId,
-}: {
-  title: string;
-  message: string;
-  color: "tk_blue" | "blade_purple" | "uhoh_red" | "success_green";
-  userId: string;
-}) {
-  await discord.post(Routes.channelMessages(DISCORD.LOG_CHANNEL), {
-    body: {
-      embeds: [
-        {
-          title: title,
-          description: message + `\n\nUser: <@${userId}>`.toString(),
-          color: {
-            tk_blue: 0x1a73e8,
-            blade_purple: 0xcca4f4,
-            uhoh_red: 0xff0000,
-            success_green: 0x00ff00,
-          }[color],
-          footer: {
-            text: new Date().toLocaleString(),
-          },
-        },
-      ],
-    },
-  });
-}
 
 export const isJudgeAdmin = async () => {
   try {
