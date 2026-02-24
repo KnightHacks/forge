@@ -148,7 +148,10 @@ function ConnectionsTab(props: {
   id: string;
   formData: FORMS.FormType;
 }) {
-  const questions = props.formData.questions.map((q) => q.question);
+  const formQuestions = Array.isArray(props.formData.questions)
+    ? props.formData.questions
+    : [];
+  const questions = formQuestions.map((q) => q.question);
   const { data: connections } = api.forms.getConnections.useQuery({
     id: props.id,
   });
@@ -266,6 +269,11 @@ export function EditorClient({
     responseRoleIds,
   ]);
 
+  const saveFormRef = React.useRef(handleSaveForm);
+  useEffect(() => {
+    saveFormRef.current = handleSaveForm;
+  }, [handleSaveForm]);
+
   useEffect(() => {
     if (!isFetching) {
       if (fetchError || !formData) {
@@ -283,6 +291,7 @@ export function EditorClient({
         setFormTitle(slug);
         setIsLoading(false);
       } else {
+        const loadedFormData = formData.formData as FORMS.FormType;
         setFormTitle(formData.name);
         setFormDescription(formData.formData.description);
         setFormBanner(formData.formData.banner || "");
@@ -291,19 +300,26 @@ export function EditorClient({
         setAllowEdit(formData.allowEdit);
         setResponseRoleIds(formData.responseRoleIds);
 
-        const loadedQuestions: UIQuestion[] = (
-          formData.formData as FORMS.FormType
-        ).questions.map((q: FormQuestion & { order?: number }) => ({
-          ...q,
-          id: crypto.randomUUID(),
-        }));
+        const formQuestions = Array.isArray(loadedFormData.questions)
+          ? loadedFormData.questions
+          : [];
+        const formInstructions = Array.isArray(loadedFormData.instructions)
+          ? loadedFormData.instructions
+          : [];
 
-        const loadedInstructions: UIInstruction[] = (
-          (formData.formData as FORMS.FormType).instructions || []
-        ).map((inst: FormInstruction & { order?: number }) => ({
-          ...inst,
-          id: crypto.randomUUID(),
-        }));
+        const loadedQuestions: UIQuestion[] = formQuestions.map(
+          (q: FormQuestion & { order?: number }) => ({
+            ...q,
+            id: crypto.randomUUID(),
+          }),
+        );
+
+        const loadedInstructions: UIInstruction[] = formInstructions.map(
+          (inst: FormInstruction & { order?: number }) => ({
+            ...inst,
+            id: crypto.randomUUID(),
+          }),
+        );
 
         setQuestions(loadedQuestions);
         setInstructions(loadedInstructions);
@@ -314,31 +330,30 @@ export function EditorClient({
 
   // auto save trigger when toggle switches are changed
   useEffect(() => {
-    if (!isLoading) handleSaveForm();
+    if (!isLoading) saveFormRef.current();
   }, [
     duesOnly,
     allowResubmission,
     responseRoleIds,
     isLoading,
     allowEdit,
-    handleSaveForm,
-  ]); // removed handleSaveForm to prevent save-on-every-render
+  ]);
 
   // auto save when finishing editing an item (changing active card)
   useEffect(() => {
-    if (!isLoading) handleSaveForm();
-  }, [activeItemId, handleSaveForm, isLoading]); // triggers when switching items or clicking off
+    if (!isLoading) saveFormRef.current();
+  }, [activeItemId, isLoading]); // triggers when switching items or clicking off
 
   // Periodic auto-save every 40 seconds
   useEffect(() => {
     if (isLoading) return;
 
     const interval = setInterval(() => {
-      handleSaveForm();
+      saveFormRef.current();
     }, 40000);
 
     return () => clearInterval(interval);
-  }, [isLoading, handleSaveForm]);
+  }, [isLoading]);
 
   // Memoize duplicate detection for UI feedback
   const duplicateIds = React.useMemo(() => {
