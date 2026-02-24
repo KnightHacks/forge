@@ -331,13 +331,7 @@ export function EditorClient({
   // auto save trigger when toggle switches are changed
   useEffect(() => {
     if (!isLoading) saveFormRef.current();
-  }, [
-    duesOnly,
-    allowResubmission,
-    responseRoleIds,
-    isLoading,
-    allowEdit,
-  ]);
+  }, [duesOnly, allowResubmission, responseRoleIds, isLoading, allowEdit]);
 
   // auto save when finishing editing an item (changing active card)
   useEffect(() => {
