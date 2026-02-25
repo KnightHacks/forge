@@ -24,11 +24,10 @@ const PAGE_SIZE_OPTIONS = [20, 40, 60, 80, 100] as const;
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 const DEFAULT_PAGE_SIZE: PageSize = 20;
 
-export default async function GuildPage({
-  searchParams,
-}: {
-  searchParams: { q?: string; page?: string; ps?: string; tag?: string };
+export default async function GuildPage(props: {
+  searchParams: Promise<{ q?: string; page?: string; ps?: string; tag?: string }>;
 }) {
+  const searchParams = await props.searchParams;
   const query = searchParams.q?.trim() ?? undefined;
   const pageSize: PageSize =
     PAGE_SIZE_OPTIONS.find((n) => String(n) === searchParams.ps) ??
@@ -60,7 +59,7 @@ export default async function GuildPage({
 
   return (
     <div className="dark min-h-screen bg-slate-950 text-slate-100">
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-size-[14px_24px]" />
       <div className="max-w-8xl container relative mx-auto p-6 py-10 md:p-8 lg:py-12">
         <h1 className="mb-8 text-4xl font-bold tracking-tight text-slate-50">
           The Guild Collective

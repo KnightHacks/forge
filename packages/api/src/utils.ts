@@ -296,7 +296,7 @@ export async function log({
 
 export const isJudgeAdmin = async () => {
   try {
-    const token = cookies().get("sessionToken")?.value;
+    const token = (await cookies()).get("sessionToken")?.value;
     if (!token) return false;
 
     const now = new Date();
@@ -319,7 +319,7 @@ export const isJudgeAdmin = async () => {
 };
 
 export const getJudgeSessionFromCookie = async () => {
-  const token = cookies().get("sessionToken")?.value;
+  const token = (await cookies()).get("sessionToken")?.value;
   if (!token) return null;
 
   const now = new Date();
