@@ -31,9 +31,9 @@
     "@forge/prettier-config": "workspace:*",
     "@forge/tailwind-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
-    "@turbo/gen": "^2.1.3",
+    "@turbo/gen": "^2.8.11",
     "prettier": "catalog:",
-    "turbo": "^2.1.3",
+    "turbo": "^2.8.11",
     "typescript": "catalog:"
   },
   "prettier": "@forge/prettier-config",
