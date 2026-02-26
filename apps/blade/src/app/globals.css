@@ -2,6 +2,12 @@
 @source "../../packages/ui/src";
 @config "../../tailwind.config.ts";
 
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  max-width: 1400px;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

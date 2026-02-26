@@ -4,13 +4,6 @@ import { fontFamily } from "tailwindcss/defaultTheme";
 export default {
   darkMode: ["class"],
   theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
     extend: {
       backgroundImage: {
         "custom-radial": `radial-gradient(121.83% 96.39% at 50.3% 9.28%, 
@@ -132,22 +125,6 @@ export default {
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
-        },
-      },
-      screens: {
-        seOnly: { max: "391px" },
-        seWidth: { max: "376px" },
-        iPadMini: {
-          raw: "(min-width: 768px) and (max-width: 819px) and (min-height: 1024px)",
-        },
-        iPadPro: {
-          raw: "(min-width: 1024px) and (max-width: 1366px) and (min-height: 1366px)",
-        },
-        tall: {
-          raw: "(min-height: 800px) and (max-width: 765px)",
-        },
-        taller: {
-          raw: "(min-height: 1200px) and (max-width: 1023px)",
         },
       },
     },

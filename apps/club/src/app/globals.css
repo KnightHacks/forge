@@ -4,6 +4,19 @@
 @source "../../packages/ui/src";
 @config "../../tailwind.config.ts";
 
+@custom-variant seOnly (@media (max-width: 391px));
+@custom-variant seWidth (@media (max-width: 376px));
+@custom-variant iPadMini (@media (min-width: 768px) and (max-width: 819px) and (min-height: 1024px));
+@custom-variant iPadPro (@media (min-width: 1024px) and (max-width: 1366px) and (min-height: 1366px));
+@custom-variant tall (@media (min-height: 800px) and (max-width: 765px));
+@custom-variant taller (@media (min-height: 1200px) and (max-width: 1023px));
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  max-width: 1400px;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
