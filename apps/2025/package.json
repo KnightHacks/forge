@@ -40,13 +40,13 @@
     "@types/node": "^20.16.11",
     "@types/react": "catalog:react18",
     "@types/react-dom": "catalog:react18",
-    "eslint": "^9.22.0",
+    "eslint": "catalog:",
     "eslint-config-next": "^15.5.12",
     "postcss": "^8.4.47",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.8",
-    "tailwindcss": "^4.1.4",
-    "typescript": "~5.7.2",
+    "tailwindcss": "catalog:",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.26.1"
   },
   "ct3aMetadata": {
