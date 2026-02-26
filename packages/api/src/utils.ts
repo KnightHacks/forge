@@ -107,7 +107,7 @@ export async function resolveDiscordUserId(
   return members[0]?.user.id ?? null;
 }
 
-export const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
+export const stripe = new Stripe(env.STRIPE_SECRET_KEY);
 
 export const isDiscordAdmin = async (user: Session["user"]) => {
   try {
