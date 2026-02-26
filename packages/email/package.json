@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@maloma/listmonk": "^1.0.1",
-    "@t3-oss/env-nextjs": "^0.11.1",
+    "@t3-oss/env-nextjs": "^0.13.10",
     "minimatch": "^10.2.4"
   },
   "devDependencies": {
@@ -34,7 +34,7 @@
     "@forge/prettier-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
     "@types/minimatch": "^6.0.0",
-    "dotenv-cli": "^7.4.4",
+    "dotenv-cli": "^11.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

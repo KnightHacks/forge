@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
+
 const { fontFamily } = defaultTheme;
 
 export default {

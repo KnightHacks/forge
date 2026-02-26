@@ -35,7 +35,7 @@
     "@forge/validators": "workspace:*",
     "@stripe/stripe-js": "^5.10.0",
     "@trpc/server": "catalog:",
-    "discord-api-types": "^0.37.120",
+    "discord-api-types": "^0.38.40",
     "json-schema-to-zod": "^2.7.0",
     "minimatch": "^10.2.4",
     "minio": "^8.0.6",
