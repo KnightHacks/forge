@@ -33,7 +33,7 @@
     "@forge/db": "workspace:*",
     "@forge/email": "workspace:^",
     "@forge/validators": "workspace:*",
-    "@stripe/stripe-js": "^5.10.0",
+    "@stripe/stripe-js": "^8.8.0",
     "@trpc/server": "catalog:",
     "discord-api-types": "^0.38.40",
     "json-schema-to-zod": "^2.7.0",

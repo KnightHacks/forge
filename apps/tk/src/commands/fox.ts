@@ -1,6 +1,6 @@
 import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
-import JIMP from "jimp";
+import { Jimp as JIMP } from "jimp";
 
 import { TK_FOX_URL } from "../consts";
 

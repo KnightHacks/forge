@@ -22,13 +22,9 @@ import { cn } from "@forge/ui";
 
 import { Label } from "./label";
 
-const useForm = <
-  TOut extends FieldValues,
-  TDef extends ZodTypeDef,
-  TIn extends FieldValues,
->(
+const useForm = <TIn extends FieldValues>(
   props: Omit<UseFormProps<TIn>, "resolver"> & {
-    schema: ZodType<TOut, TDef, TIn>;
+    schema: ZodType<TIn, ZodTypeDef & { typeName: string }, TIn>;
   },
 ) => {
   const form = __useForm<TIn>({
