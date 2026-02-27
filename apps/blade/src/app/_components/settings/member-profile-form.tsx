@@ -435,7 +435,7 @@ export function MemberProfileForm({
             )}
           />
 
-          <div className="!mt-10">
+          <div className="mt-10!">
             <h3 className="text-lg font-medium">Demographic Information</h3>
             <p className="text-sm text-muted-foreground">
               This is some additional information about you.
@@ -547,7 +547,7 @@ export function MemberProfileForm({
             )}
           />
 
-          <div className="!mt-10">
+          <div className="mt-10!">
             <h3 className="text-lg font-medium">Academic Information</h3>
             <p className="text-sm text-muted-foreground">
               This is where you go to school and what you're studying.
@@ -755,7 +755,7 @@ export function MemberProfileForm({
             />
           )}
 
-          <div className="!mt-10">
+          <div className="mt-10!">
             <h3 className="text-lg font-medium">Guild Profile Customization</h3>
             <p className="text-sm text-muted-foreground">
               Personalize how you appear on the Knight Hacks{" "}
@@ -920,7 +920,7 @@ export function MemberProfileForm({
           )}
         </form>
       </Form>
-      <div className="!mt-12">
+      <div className="mt-12!">
         <h3 className="text-lg font-medium text-red-700">Danger Zone</h3>
         <p className="mb-4 text-sm text-red-700/75">
           Avoid this if you're not sure what you're doing.

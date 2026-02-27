@@ -846,7 +846,7 @@ export function HackerFormPage({
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="flex h-auto min-h-[3rem] w-full items-center justify-start space-x-2 px-3"
+                        className="flex h-auto min-h-12 w-full items-center justify-start space-x-2 px-3"
                       >
                         <span className="text-sm text-gray-400">
                           Select Allergies:
@@ -872,7 +872,7 @@ export function HackerFormPage({
                     </PopoverTrigger>
                     <PopoverContent
                       align="start"
-                      className="w-full min-w-[var(--radix-popover-trigger-width)] max-w-none p-1"
+                      className="min-w-(--radix-popover-trigger-width) w-full max-w-none p-1"
                     >
                       <div className="flex w-full flex-col">
                         {FORMS.ALLERGIES.map((allergy) => (

@@ -138,7 +138,7 @@ export default function ShirtSizePie({ hackers }: { hackers: Hacker[] }) {
         <ChartContainer
           id={id}
           config={baseConfig}
-          className="mx-auto aspect-square w-full max-w-[300px]"
+          className="max-w-75 mx-auto aspect-square w-full"
         >
           <PieChart>
             <ChartTooltip
@@ -186,6 +186,7 @@ export default function ShirtSizePie({ hackers }: { hackers: Hacker[] }) {
                         </tspan>
                         <tspan
                           x={viewBox.cx}
+                          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                           y={(viewBox.cy ?? 0) + 24}
                           className="fill-muted-foreground"
                         >

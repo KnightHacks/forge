@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  let success = false;
+  let success: boolean;
 
   switch (event.type) {
     case "checkout.session.async_payment_failed":

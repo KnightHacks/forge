@@ -27,6 +27,7 @@ export function useSubmissionSuccess(
 
   useEffect(() => {
     if (!isSubmitted) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowCheckmark(false);
       setShowText(false);
       setRedirectCountdown(Math.ceil(redirectDelayMs / 1000));
