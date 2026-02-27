@@ -6,5 +6,12 @@
   ],
   "css.lint.unknownAtRules": "ignore",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "tailwindCSS.experimental.configFile": {
+    "apps/blade/**": "apps/blade/tailwind.config.ts",
+    "apps/club/**": "apps/club/tailwind.config.ts",
+    "apps/guild/**": "apps/guild/tailwind.config.ts",
+    "apps/gemiknights/**": "apps/gemiknights/tailwind.config.ts",
+    "apps/2025/**": "apps/2025/tailwind.config.ts"
+  }
 }
