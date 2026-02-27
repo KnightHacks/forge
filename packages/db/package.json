@@ -34,7 +34,7 @@
     "@forge/consts": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.10",
     "drizzle-orm": "^0.45.1",
-    "drizzle-zod": "^0.5.1",
+    "drizzle-zod": "^0.8.3",
     "minimatch": "^10.2.4",
     "pg": "^8.19.0",
     "pg-pool": "^3.12.0",

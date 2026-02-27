@@ -12,7 +12,7 @@ export const emailRouter = {
         subject: z.string().min(1),
         template_id: z.number(),
         from: z.string().min(1),
-        data: z.record(z.string()),
+        data: z.record(z.string(), z.string()),
       }),
     )
     .mutation(async ({ input, ctx }) => {
