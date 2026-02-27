@@ -1,12 +1,27 @@
-import type { ComponentType, SVGProps } from "react";
-import type { ButtonProps } from "rsuite";
+import type {
+  AnchorHTMLAttributes,
+  ButtonHTMLAttributes,
+  ComponentType,
+  SVGProps,
+} from "react";
 
 import MenuHorizontalSVG from "./assets/menu-horizontal";
 
-interface Props extends ButtonProps {
+type Base = {
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
-  href?: string;
-}
+};
+
+type ButtonVariant = Base &
+  ButtonHTMLAttributes<HTMLButtonElement> & {
+    href?: undefined;
+  };
+
+type AnchorVariant = Base &
+  AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+  };
+
+type Props = ButtonVariant | AnchorVariant;
 
 export default function Button({ icon: Icon, href, ...props }: Props) {
   const innerText = props.children;
@@ -16,7 +31,7 @@ export default function Button({ icon: Icon, href, ...props }: Props) {
       <>
         <button
           className="font-pragati transition-color bg-linear-to-br group relative inline-flex transform items-center gap-2 rounded-[200px] border border-[#D8B4FE] bg-transparent px-14 py-3 text-[12px] font-normal leading-normal tracking-[1px] text-white duration-100 hover:bg-[#D8B4FE] hover:text-[#0F172A] md:px-24 md:text-[13px] md:font-bold md:tracking-[.8px]"
-          {...props}
+          {...(props as ButtonHTMLAttributes<HTMLButtonElement>)}
         >
           {Icon && (
             <Icon
@@ -39,7 +54,7 @@ export default function Button({ icon: Icon, href, ...props }: Props) {
       <a
         href={href}
         className="font-pragati transition-color bg-linear-to-br group relative inline-flex transform items-center gap-2 rounded-[200px] border border-[#D8B4FE] bg-transparent px-14 py-3 text-[12px] font-normal leading-normal tracking-[1px] text-white duration-100 hover:bg-[#D8B4FE] hover:text-[#0F172A] md:px-24 md:text-[13px] md:font-bold md:tracking-[.8px]"
-        {...props}
+        {...(props as AnchorHTMLAttributes<HTMLAnchorElement>)}
       >
         {Icon && (
           <Icon
