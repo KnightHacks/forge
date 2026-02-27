@@ -24,10 +24,9 @@ export async function execute(interaction: CommandInteraction) {
     if (!data[0]) {
       throw new Error("No cat image found");
     }
-    const img = JIMP.read(data[0].url);
-    const width = (await img).getWidth(),
-      height = (await img).getHeight();
-    const color = (await img).getPixelColor(width / 2, height / 2);
+    const img = await JIMP.read(data[0].url);
+    const { width, height } = img;
+    const color = img.getPixelColor(Math.floor(width / 2), Math.floor(height / 2));
 
     // this code sets the color of the embed to the main color of the image
     const r = (color >> 24) & 0xff;
