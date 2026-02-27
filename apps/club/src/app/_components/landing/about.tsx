@@ -55,7 +55,7 @@ export default function About() {
             ref={textRef}
             className="font-poppins px-4 text-lg font-semibold leading-relaxed tracking-wide text-white/80 md:px-12 md:text-2xl"
           >
-            <span className="bg-gradient-to-r from-purple-800 via-purple-300 to-white bg-clip-text font-black text-transparent">
+            <span className="bg-linear-to-r from-purple-800 via-purple-300 to-white bg-clip-text font-black text-transparent">
               Knight Hacks
             </span>{" "}
             is the largest Software Development and only Hackathon organization
@@ -70,9 +70,9 @@ export default function About() {
           </p>
         </div>
       </div>
-      <SwordSVG className="animate-float absolute right-20 hidden h-auto w-full max-w-[400px] text-purple-400 opacity-50 md:block" />
-      <NeonTkSVG className="animate-float absolute left-10 top-16 hidden h-[200px] w-full max-w-[400px] text-purple-400 opacity-50 md:block" />
-      <TerminalSVG className="animate-float absolute -bottom-48 left-[-60px] hidden h-auto w-full max-w-[500px] text-purple-800 opacity-40 md:block" />
+      <SwordSVG className="animate-float absolute right-20 hidden h-auto w-full max-w-100 text-purple-400 opacity-50 md:block" />
+      <NeonTkSVG className="animate-float absolute left-10 top-16 hidden h-50 w-full max-w-100 text-purple-400 opacity-50 md:block" />
+      <TerminalSVG className="animate-float absolute -bottom-48 -left-15 hidden h-auto w-full max-w-125 text-purple-800 opacity-40 md:block" />
     </div>
   );
 }

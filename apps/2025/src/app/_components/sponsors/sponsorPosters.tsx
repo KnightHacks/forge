@@ -246,17 +246,11 @@ export default function SponsorPosters() {
               >
                 <Link
                   href={sponsor.link}
-                  passHref
-                  legacyBehavior
                   aria-label={sponsor.ariaLabel}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="group relative flex h-full items-center justify-center rounded-none focus:outline-4 focus:outline-offset-2 focus:outline-[#1570AD]"
                 >
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group relative flex h-full items-center justify-center rounded-none focus:outline-4 focus:outline-offset-2 focus:outline-[#1570AD]"
-                  >
                     {/* Main card */}
                     <div
                       className={`relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 ${tierConfig.hover}`}
@@ -308,7 +302,6 @@ export default function SponsorPosters() {
 
                     {/* Black drop shadow */}
                     <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-                  </a>
                 </Link>
               </div>
             );

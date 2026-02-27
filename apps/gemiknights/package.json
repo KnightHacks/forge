@@ -33,7 +33,7 @@
     "next": "^16.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "rsuite": "^5.83.4",
+    "rsuite": "^6.1.2",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
@@ -42,7 +42,7 @@
     "@forge/tailwind-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
     "@tailwindcss/postcss": "^4.2.1",
-    "@types/node": "^25.3.1",
+    "@types/node": "^25.3.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "dotenv-cli": "^11.0.0",

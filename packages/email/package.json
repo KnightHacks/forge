@@ -33,7 +33,6 @@
     "@forge/eslint-config": "workspace:*",
     "@forge/prettier-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
-    "@types/minimatch": "^6.0.0",
     "dotenv-cli": "^11.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",

@@ -45,7 +45,6 @@
     "@forge/eslint-config": "workspace:*",
     "@forge/prettier-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
-    "@types/minimatch": "^6.0.0",
     "@types/pg": "^8.16.0",
     "@types/pg-pool": "^2.0.7",
     "dotenv-cli": "^11.0.0",

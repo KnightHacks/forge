@@ -49,7 +49,7 @@ export default function KightHacksLogoSVG(props: SVGProps<SVGSVGElement>) {
             d="M719.385 529.247C719.233 529.133 719.086 529.03 718.94 528.944C719.002 528.892 719.227 529.098 719.385 529.247Z"
             fill="#D8B4FE"
             stroke="#DBC34C"
-            stroke-width="0.14"
+            strokeWidth="0.14"
             stroke-miterlimit="10"
           />
           <path
@@ -144,7 +144,7 @@ export default function KightHacksLogoSVG(props: SVGProps<SVGSVGElement>) {
             d="M719.385 529.247C719.233 529.133 719.086 529.03 718.94 528.944C719.002 528.892 719.227 529.098 719.385 529.247Z"
             fill="#D8B4FE"
             stroke="#DBC34C"
-            stroke-width="0.14"
+            strokeWidth="0.14"
             stroke-miterlimit="10"
           />
           <path
@@ -169,7 +169,7 @@ export default function KightHacksLogoSVG(props: SVGProps<SVGSVGElement>) {
           width="2490.96"
           height="2490.96"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
