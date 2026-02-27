@@ -79,12 +79,13 @@ export default function UpdateMemberButton({
   });
 
   const form = useForm({
+    // @ts-expect-error -- schema uses .transform() so input≠output; ZodType<TIn,TIn> in useForm can't represent this
     schema: UpdateMemberSchema,
     defaultValues: {
       firstName: member.firstName || "",
       lastName: member.lastName || "",
       email: member.email || "",
-      points: (member.points ?? 0).toString(),
+      points: member.points ?? 0,
       phoneNumber: member.phoneNumber || "",
       dob: member.dob || "",
       gender: member.gender,

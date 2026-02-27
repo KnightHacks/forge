@@ -173,7 +173,7 @@ export function HackerProfileForm({
             if (file.size > MINIO.MAX_RESUME_SIZE) {
               ctx.addIssue({
                 code: z.ZodIssueCode.too_big,
-                type: "number",
+                origin: "number",
                 maximum: MINIO.MAX_RESUME_SIZE,
                 inclusive: true,
                 exact: false,

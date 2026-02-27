@@ -166,6 +166,7 @@ export default function SchoolYearPie({ people }: { people: Person[] }) {
               nameKey="name"
               innerRadius={60}
               strokeWidth={5}
+              // @ts-expect-error -- recharts v3 removed activeIndex from Pie TS types
               activeIndex={activeIndex}
               activeShape={({
                 outerRadius = 0,

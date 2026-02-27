@@ -201,7 +201,7 @@ export function HackerFormPage({
               if (fileList[0].size > MINIO.MAX_RESUME_SIZE) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_big,
-                  type: "number",
+                  origin: "number",
                   maximum: MINIO.MAX_RESUME_SIZE,
                   inclusive: true,
                   exact: false,
@@ -286,6 +286,7 @@ export function HackerFormPage({
       // Set selected allergies for the UI
       if (previousHacker.foodAllergies) {
         const allergies = previousHacker.foodAllergies.split(",");
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedAllergies(allergies);
       }
 

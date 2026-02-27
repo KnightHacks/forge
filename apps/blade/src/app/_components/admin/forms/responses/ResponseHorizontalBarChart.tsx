@@ -138,7 +138,6 @@ export function ResponseHorizontalBarChart({
                 dataKey="count"
                 fill="var(--color-count)"
                 radius={4}
-                layout="vertical"
                 barSize={22}
               >
                 <LabelList
@@ -192,7 +191,6 @@ export function ResponseHorizontalBarChart({
                 dataKey="count"
                 fill="var(--color-count)"
                 radius={4}
-                layout="vertical"
                 barSize={30}
               >
                 <LabelList

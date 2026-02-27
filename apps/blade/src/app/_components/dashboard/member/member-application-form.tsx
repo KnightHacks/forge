@@ -90,6 +90,7 @@ export function MemberApplicationForm() {
   };
 
   const form = useForm({
+    // @ts-expect-error -- schema uses .transform() so input≠output; ZodType<TIn,TIn> in useForm can't represent this
     schema: InsertMemberSchema.omit({
       discordUser: true,
       userId: true,
@@ -187,7 +188,7 @@ export function MemberApplicationForm() {
               if (file.size > MINIO.MAX_RESUME_SIZE) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_big,
-                  type: "number",
+                  origin: "number",
                   maximum: MINIO.MAX_RESUME_SIZE,
                   inclusive: true,
                   message: "File too large: maximum 5MB",
@@ -232,7 +233,7 @@ export function MemberApplicationForm() {
               if (file.size > MINIO.KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_big,
-                  type: "number",
+                  origin: "number",
                   maximum: MINIO.KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
                   inclusive: true,
                   message: `File too large: maximum ${MINIO.KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE / (1024 * 1024)}MB`,
@@ -255,7 +256,7 @@ export function MemberApplicationForm() {
       phoneNumber: "",
       dob: "",
       gradTerm: "Spring",
-      gradYear: (new Date().getFullYear() + 1).toString(),
+      gradYear: new Date().getFullYear() + 1,
       githubProfileUrl: "",
       linkedinProfileUrl: "",
       websiteUrl: "",
