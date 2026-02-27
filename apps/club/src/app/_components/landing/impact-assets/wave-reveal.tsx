@@ -133,7 +133,7 @@ const createAnimatedNodes = (
   const isLast = index === length - 1;
 
   const className = cn(
-    "inline-block opacity-0 transition-all ease-in-out fill-mode-forwards",
+    "fill-mode-forwards inline-block opacity-0 transition-all ease-in-out",
     {
       // Determine the animation direction
       ["animate-[reveal-down]"]: !isUp && !blur,
