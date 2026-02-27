@@ -4,7 +4,7 @@ import defaultTheme from "tailwindcss/defaultTheme";
 const { fontFamily } = defaultTheme;
 
 export default {
-  darkMode: ["class"],
+  darkMode: ["class", ".dark"],
   theme: {
     extend: {
       backgroundImage: {

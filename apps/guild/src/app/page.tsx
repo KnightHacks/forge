@@ -2,22 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { GUILD } from "@forge/consts";
-// import { ExternalLink, Github, Linkedin, Search } from "lucide-react"; // Moved to client component
-// Remove other imports only used by the card rendering if they are now fully in GuildMembersDisplay
-
 import { Button } from "@forge/ui/button";
 
-// import { Input } from "@forge/ui/input"; // Moved to Dock
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@forge/ui/select"; // Moved to Dock
-
 import { api } from "~/trpc/server";
-import Dock from "./_components/dock"; // Assuming Dock handles search/filter inputs
+import Dock from "./_components/dock";
 import { GuildMembersDisplay } from "./_components/guild-member-display";
 
 const PAGE_SIZE_OPTIONS = [20, 40, 60, 80, 100] as const;
