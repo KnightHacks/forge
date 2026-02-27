@@ -160,9 +160,9 @@ export default function CalendarEventsPage({
           )}
         </div>
       </div>
-      <TerminalSVG className="animate-float absolute -top-80 right-12 z-0 hidden h-auto w-full max-w-100 transform opacity-70 md:block" />
-      <SwordSVG className="animate-float absolute -left-40 -top-20 z-0 hidden w-125 text-purple-400 opacity-50 md:block" />
-      <NeonTkSVG className="animate-float absolute bottom-14 right-24 hidden w-100 text-purple-500 opacity-50 md:block" />
+      <TerminalSVG className="animate-float max-w-100 absolute -top-80 right-12 z-0 hidden h-auto w-full transform opacity-70 md:block" />
+      <SwordSVG className="animate-float w-125 absolute -left-40 -top-20 z-0 hidden text-purple-400 opacity-50 md:block" />
+      <NeonTkSVG className="animate-float w-100 absolute bottom-14 right-24 hidden text-purple-500 opacity-50 md:block" />
     </section>
   );
 }

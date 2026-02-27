@@ -34,12 +34,12 @@ const links = [
 
 export default function Header() {
   return (
-    <div className="relative flex h-full w-screen flex-col items-center justify-center overflow-visible pb-77.5">
+    <div className="pb-77.5 relative flex h-full w-screen flex-col items-center justify-center overflow-visible">
       <div className="flex flex-col items-center text-center">
-        <KightHacksLogoSVG className="absolute top-12.5 h-150 w-150 object-contain" />
-        <KightHacksTextSVG className="absolute top-45 h-57.5 w-57.5 object-contain" />
+        <KightHacksLogoSVG className="top-12.5 h-150 w-150 absolute object-contain" />
+        <KightHacksTextSVG className="top-45 h-57.5 w-57.5 absolute object-contain" />
 
-        <div className="absolute top-75 flex flex-row items-center space-x-2 pr-2 align-middle">
+        <div className="top-75 absolute flex flex-row items-center space-x-2 pr-2 align-middle">
           {links.map(({ Icon, label, href }) => (
             <a
               key={href}

@@ -70,9 +70,9 @@ export default function About() {
           </p>
         </div>
       </div>
-      <SwordSVG className="animate-float absolute right-20 hidden h-auto w-full max-w-100 text-purple-400 opacity-50 md:block" />
-      <NeonTkSVG className="animate-float absolute left-10 top-16 hidden h-50 w-full max-w-100 text-purple-400 opacity-50 md:block" />
-      <TerminalSVG className="animate-float absolute -bottom-48 -left-15 hidden h-auto w-full max-w-125 text-purple-800 opacity-40 md:block" />
+      <SwordSVG className="animate-float max-w-100 absolute right-20 hidden h-auto w-full text-purple-400 opacity-50 md:block" />
+      <NeonTkSVG className="animate-float h-50 max-w-100 absolute left-10 top-16 hidden w-full text-purple-400 opacity-50 md:block" />
+      <TerminalSVG className="animate-float -left-15 max-w-125 absolute -bottom-48 hidden h-auto w-full text-purple-800 opacity-40 md:block" />
     </div>
   );
 }
