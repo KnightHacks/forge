@@ -7,9 +7,9 @@ import type {
 
 import MenuHorizontalSVG from "./assets/menu-horizontal";
 
-type Base = {
+interface Base {
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
-};
+}
 
 type ButtonVariant = Base &
   ButtonHTMLAttributes<HTMLButtonElement> & {

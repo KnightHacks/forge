@@ -16,6 +16,35 @@ import TerminalSVG from "./assets/terminal";
 
 import "rsuite/Calendar/styles/index.css";
 
+function TodoList({ list }: { list: ReturnEvent[] }) {
+  if (!list.length) {
+    return (
+      <ul className="space-y-2">
+        <li className="rounded-md bg-purple-900/50 p-3 text-white">
+          No events for this date
+        </li>
+      </ul>
+    );
+  }
+  return (
+    <List bordered style={{ flex: 1 }}>
+      {list.map((item) => (
+        <List.Item
+          key={item.id}
+          className="mb-4 rounded-lg bg-purple-900/30 p-3 text-white"
+        >
+          <div className="flex justify-between">
+            <span>
+              {formatDateRange(item.start_datetime, item.end_datetime)}
+            </span>
+            <span>{item.name}</span>
+          </div>
+        </List.Item>
+      ))}
+    </List>
+  );
+}
+
 export default function CalendarEventsPage({
   events,
 }: {
@@ -61,6 +90,7 @@ export default function CalendarEventsPage({
     const key = `${date.getDate()}-${date.getMonth()}-${date.getFullYear()}`;
     return eventMap.get(key) ?? [];
   }
+  const selectedList = selectedDate ? getTodoList(selectedDate) : [];
   function renderCell(date: Date) {
     const hasEvents = getTodoList(date).length > 0;
 
@@ -73,35 +103,6 @@ export default function CalendarEventsPage({
       </div>
     ) : null;
   }
-  const TodoList = ({ date }: { date: Date }) => {
-    const list = getTodoList(date);
-    if (!list.length) {
-      return (
-        <ul className="space-y-2">
-          <li className="rounded-md bg-purple-900/50 p-3 text-white">
-            No events for this date
-          </li>
-        </ul>
-      );
-    }
-    return (
-      <List bordered style={{ flex: 1 }}>
-        {list.map((item) => (
-          <List.Item
-            key={item.id}
-            className="mb-4 rounded-lg bg-purple-900/30 p-3 text-white"
-          >
-            <div className="flex justify-between">
-              <span>
-                {formatDateRange(item.start_datetime, item.end_datetime)}
-              </span>
-              <span>{item.name}</span>
-            </div>
-          </List.Item>
-        ))}
-      </List>
-    );
-  };
   const handleSelect = (date: Date) => {
     setSelectedDate(date);
   };
@@ -154,7 +155,7 @@ export default function CalendarEventsPage({
                   })}{" "}
                   Events
                 </h2>
-                <TodoList date={selectedDate} />
+                <TodoList list={selectedList} />
               </div>
             </div>
           )}

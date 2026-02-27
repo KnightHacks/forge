@@ -37,6 +37,7 @@ export const emailRouter = {
           `Failed to send email: ${
             error instanceof Error ? error.message : "Unknown error"
           }`,
+          { cause: error },
         );
       }
     }),
