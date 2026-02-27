@@ -28,7 +28,10 @@ export async function execute(interaction: CommandInteraction) {
     // get the average color of the img, make it the embed color
     const img = await JIMP.read(data.data.url);
     const { width, height } = img;
-    const color = img.getPixelColor(Math.floor(width / 2), Math.floor(height / 2));
+    const color = img.getPixelColor(
+      Math.floor(width / 2),
+      Math.floor(height / 2),
+    );
 
     const r = (color >> 24) & 0xff;
     const g = (color >> 16) & 0xff;

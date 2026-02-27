@@ -22,7 +22,10 @@ export async function execute(interaction: CommandInteraction) {
 
     const img = await JIMP.read(data.image);
     const { width, height } = img;
-    const color = img.getPixelColor(Math.floor(width / 2), Math.floor(height / 2));
+    const color = img.getPixelColor(
+      Math.floor(width / 2),
+      Math.floor(height / 2),
+    );
 
     const r = (color >> 24) & 0xff;
     const g = (color >> 16) & 0xff;
