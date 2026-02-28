@@ -27,7 +27,7 @@
   "dependencies": {
     "@maloma/listmonk": "^1.0.1",
     "@t3-oss/env-nextjs": "^0.11.1",
-    "minimatch": "^10.2.1"
+    "minimatch": "^10.2.3"
   },
   "devDependencies": {
     "@forge/eslint-config": "workspace:*",
