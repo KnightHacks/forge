@@ -8,7 +8,7 @@ import { DuesPayment, DuesPaymentSchema } from "@forge/db/schemas/knight-hacks";
 import { env } from "~/env";
 
 async function membershipRecord(sessionId: string) {
-  const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY);
 
   // TODO: Make this function safe to run multiple times,
   // even concurrently, with the same session ID
@@ -50,7 +50,7 @@ async function membershipRecord(sessionId: string) {
 
 export async function POST(request: NextRequest) {
   const sig = request.headers.get("stripe-signature") ?? "";
-  const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY);
   const webhookSecret = env.STRIPE_SECRET_WEBHOOK_KEY;
   const body = await request.text();
   let event: Stripe.Event;
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  let success = false;
+  let success: boolean;
 
   switch (event.type) {
     case "checkout.session.async_payment_failed":

@@ -99,7 +99,7 @@ export function ResponseHorizontalBarChart({
       {/* center the chart horizontally and make scrollable */}
       <CardContent className="flex flex-col items-center justify-center px-3 pb-3 pt-0 md:px-6 md:pb-6 md:pt-6">
         {/* Mobile view - compact horizontal bar chart */}
-        <div className="max-h-[300px] w-full overflow-y-auto overflow-x-hidden md:hidden">
+        <div className="max-h-75 w-full overflow-y-auto overflow-x-hidden md:hidden">
           <ChartContainer
             config={chartConfig}
             className="w-full"
@@ -138,7 +138,6 @@ export function ResponseHorizontalBarChart({
                 dataKey="count"
                 fill="var(--color-count)"
                 radius={4}
-                layout="vertical"
                 barSize={22}
               >
                 <LabelList
@@ -153,7 +152,7 @@ export function ResponseHorizontalBarChart({
         </div>
 
         {/* Desktop view - original horizontal bar chart */}
-        <div className="hidden max-h-[500px] w-full overflow-y-auto md:block">
+        <div className="max-h-125 hidden w-full overflow-y-auto md:block">
           <ChartContainer
             config={chartConfig}
             className="w-full"
@@ -192,7 +191,6 @@ export function ResponseHorizontalBarChart({
                 dataKey="count"
                 fill="var(--color-count)"
                 radius={4}
-                layout="vertical"
                 barSize={30}
               >
                 <LabelList

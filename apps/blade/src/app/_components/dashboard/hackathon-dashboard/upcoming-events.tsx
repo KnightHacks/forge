@@ -16,6 +16,7 @@ import { api } from "~/trpc/server";
 export default async function UpcomingEvents() {
   const events = await api.event.getEvents();
 
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
   const fiveHoursLater = now + 5 * 60 * 60 * 1000;
 

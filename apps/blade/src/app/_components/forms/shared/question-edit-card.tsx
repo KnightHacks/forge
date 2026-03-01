@@ -168,7 +168,7 @@ export function QuestionEditCard({
             value={question.question}
             onChange={handleTitleChange}
             placeholder="Question"
-            className="min-h-[3rem] resize-none overflow-hidden border-none bg-transparent px-0 py-0 text-lg font-medium placeholder:text-muted-foreground focus-visible:ring-0"
+            className="min-h-12 resize-none overflow-hidden border-none bg-transparent px-0 py-0 text-lg font-medium placeholder:text-muted-foreground focus-visible:ring-0"
             rows={1}
             onInput={(e) => {
               // Auto-resize

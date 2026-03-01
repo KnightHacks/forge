@@ -316,6 +316,7 @@ export const csvImporterRouter = {
 
         throw new Error(
           error instanceof Error ? error.message : "Failed to import CSV",
+          { cause: error },
         );
       }
     }),

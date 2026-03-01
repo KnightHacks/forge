@@ -421,7 +421,7 @@ export const formsRouter = {
 
       if (!response.success) {
         // Format Zod errors into a readable message
-        const errorMessages = response.error.errors.map((err) => {
+        const errorMessages = response.error.issues.map((err) => {
           const path = err.path.join(".");
           return path ? `${path}: ${err.message}` : err.message;
         });
@@ -502,7 +502,7 @@ export const formsRouter = {
 
       const validationResult = zodSchema.safeParse(input.responseData);
       if (!validationResult.success) {
-        const errorMessages = validationResult.error.errors.map((err) => {
+        const errorMessages = validationResult.error.issues.map((err) => {
           const path = err.path.join(".");
           return path ? `${path}: ${err.message}` : err.message;
         });
