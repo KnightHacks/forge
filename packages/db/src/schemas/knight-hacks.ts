@@ -179,6 +179,8 @@ export const Event = createTable("event", (t) => ({
   end_datetime: t.timestamp().notNull(),
   location: t.varchar({ length: 255 }).notNull(),
   dues_paying: t.boolean().notNull().default(false),
+  isOperationsCalendar: t.boolean().notNull().default(false),
+  roles: t.varchar({ length: 255 }).array().notNull().default([]),
   points: t.integer(),
   // Can be null if the event is not associated with a hackathon (e.g. club events)
   hackathonId: t.uuid().references(() => Hackathon.id, {

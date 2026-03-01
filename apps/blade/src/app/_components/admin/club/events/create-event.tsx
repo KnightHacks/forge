@@ -92,6 +92,8 @@ export function CreateEventButton() {
     endHour: z.string(),
     endMinute: z.string(),
     endAmPm: z.enum(["AM", "PM"]),
+    roles: z.array(z.string()).default([]),
+    isOperationsCalendar: z.boolean().default(false),
   });
 
   const form = useForm({
@@ -111,6 +113,8 @@ export function CreateEventButton() {
       endHour: "",
       endMinute: "",
       endAmPm: "PM",
+      roles: [],
+      isOperationsCalendar: false,
     },
   });
 
@@ -203,6 +207,8 @@ export function CreateEventButton() {
                 hackathonName:
                   hackathons?.find((v) => v.id === values.hackathonId)
                     ?.displayName ?? null,
+                roles: values.roles,
+                isOperationsCalendar: values.isOperationsCalendar,
               });
             })}
             noValidate
@@ -582,6 +588,86 @@ export function CreateEventButton() {
                       </FormControl>
                     </div>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Visible To Roles */}
+              <FormField
+                control={form.control}
+                name="roles"
+                render={({}) => (
+                  <FormItem>
+                    <div className="grid grid-cols-4 items-start gap-4">
+                      <FormLabel className="text-right mt-1">
+                        Visible To Roles
+                      </FormLabel>
+                      <div className="col-span-3 grid grid-cols-2 gap-y-3 gap-x-2 mt-1">
+                        {/* NOTE: Replace `rolesData` with your actual tRPC query data.
+                          Example: const { data: rolesData } = api.roles.getAll.useQuery();
+                        */}
+                        {rolesData?.map((role) => (
+                          <FormField
+                            key={role.id}
+                            control={form.control}
+                            name="roles"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={role.id}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(role.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...(field.value || []), role.id])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value: string) => value !== role.id
+                                              )
+                                            );
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal cursor-pointer">
+                                    {role.name}
+                                  </FormLabel>
+                                </FormItem>
+                              );
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Target Calendar Checkbox */}
+              <FormField
+                control={form.control}
+                name="isOperationsCalendar"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">
+                        Internal Event?
+                      </FormLabel>
+                      <FormControl className="col-span-3 flex items-center">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                          <span className="text-sm font-normal text-gray-400">
+                            Use Operations Calendar (Hide from public events)
+                          </span>
+                        </div>
+                      </FormControl>
+                    </div>
                   </FormItem>
                 )}
               />
