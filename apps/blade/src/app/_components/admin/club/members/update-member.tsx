@@ -79,13 +79,12 @@ export default function UpdateMemberButton({
   });
 
   const form = useForm({
-    // @ts-expect-error -- schema uses .transform() so input≠output; ZodType<TIn,TIn> in useForm can't represent this
     schema: UpdateMemberSchema,
     defaultValues: {
       firstName: member.firstName || "",
       lastName: member.lastName || "",
       email: member.email || "",
-      points: member.points ?? 0,
+      points: (member.points ?? 0).toString(),
       phoneNumber: member.phoneNumber || "",
       dob: member.dob || "",
       gender: member.gender,
@@ -312,7 +311,7 @@ export default function UpdateMemberButton({
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger className="max-w-75 overflow-hidden truncate">
+                              <SelectTrigger className="max-w-[300px] overflow-hidden truncate">
                                 <SelectValue placeholder="Select level of study" />
                               </SelectTrigger>
                             </FormControl>

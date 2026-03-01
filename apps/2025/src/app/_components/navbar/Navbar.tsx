@@ -14,20 +14,22 @@ const NAV_LINKS = [
 
 const Navbar = () => {
   const [showFloating, setShowFloating] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+
     const handleScroll = () => {
       // Show navbar when scrolling, hide when at top
       const shouldShow = window.scrollY > 50;
       setShowFloating(shouldShow);
     };
 
-    // set initial value without a dedicated mounted state
-    handleScroll();
-
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  if (!mounted) return null;
 
   return (
     <>

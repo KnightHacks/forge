@@ -91,13 +91,11 @@ export default function RoleEdit({
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     updateString(form.getValues());
   }, [form, updateString]);
 
   useEffect(() => {
     if (roles)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsDupeID(
         oldRole
           ? false
@@ -115,7 +113,6 @@ export default function RoleEdit({
 
   useEffect(() => {
     if (roles)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsDupeName(
         oldRole?.name == name
           ? false

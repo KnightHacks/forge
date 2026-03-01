@@ -76,15 +76,15 @@ export default function Discover({ memberCount }: { memberCount: number }) {
   return (
     <div
       ref={containerRef}
-      className="bg-linear-to-b relative flex h-screen flex-col items-center justify-center overflow-hidden from-[#1b112b] via-[#331d52] to-[#4c1d95] px-4"
+      className="relative flex h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#1b112b] via-[#331d52] to-[#4c1d95] px-4"
     >
-      <NeonTkSVG className="animate-float w-62.5 absolute left-20 top-20 hidden text-purple-500 opacity-50 md:block" />
+      <NeonTkSVG className="animate-float absolute left-20 top-20 hidden w-[250px] text-purple-500 opacity-50 md:block" />
       <div className="z-10 mb-48 flex flex-col items-center space-y-6 text-center md:mb-0">
         <div className="flex flex-col items-center space-y-4">
           <div ref={counterRef} className="flex items-baseline gap-3">
             <Counter
               targetValue={memberCount}
-              className="font-pragati animate-shine bg-linear-to-r from-yellow-400 via-yellow-500 to-yellow-300 bg-clip-text text-[40px] font-extrabold leading-none tracking-wide text-transparent md:text-[70px]"
+              className="font-pragati animate-shine bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-300 bg-clip-text text-[40px] font-extrabold leading-none tracking-wide text-transparent md:text-[70px]"
             />
             <span className="font-pragati text-[28px] font-bold tracking-wide text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] md:text-[44px]">
               Active Members
@@ -99,13 +99,13 @@ export default function Discover({ memberCount }: { memberCount: number }) {
         </div>
         <div
           ref={buttonRef}
-          className="p-0.75 relative z-0 flex max-w-max items-center overflow-hidden rounded-full"
+          className="relative z-0 flex max-w-max items-center overflow-hidden rounded-full p-[3px]"
         >
           <div className="moving-border absolute inset-0 h-full w-full rounded-full bg-[conic-gradient(from_0deg,#9722b6_20deg,#8b5cf6_140deg,transparent_240deg)]" />
           <div className="relative z-10 flex items-center">
             <CoolButton2
               label="Join the Community!"
-              className="w-75 md:w-112.5 flex items-center justify-center"
+              className="flex w-[300px] items-center justify-center md:w-[450px]"
               onClick={() =>
                 window.open(
                   DISCORD.PERMANENT_INVITE as string,

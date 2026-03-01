@@ -26,7 +26,6 @@ export default function HackathonDataContent() {
         (a, b) =>
           new Date(b.startDate).getTime() - new Date(a.startDate).getTime(),
       );
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveHackathon(sortedHackathons[0] ?? null);
     }
   }, [hackathons, activeHackathon]);

@@ -246,62 +246,69 @@ export default function SponsorPosters() {
               >
                 <Link
                   href={sponsor.link}
+                  passHref
+                  legacyBehavior
                   aria-label={sponsor.ariaLabel}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative flex h-full items-center justify-center rounded-none focus:outline-4 focus:outline-offset-2 focus:outline-[#1570AD]"
                 >
-                  {/* Main card */}
-                  <div
-                    className={`relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 ${tierConfig.hover}`}
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative flex h-full items-center justify-center rounded-none focus:outline-4 focus:outline-offset-2 focus:outline-[#1570AD]"
                   >
-                    {/* subtle dot pattern */}
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-size-[20px_20px] opacity-30" />
+                    {/* Main card */}
+                    <div
+                      className={`relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 ${tierConfig.hover}`}
+                    >
+                      {/* subtle dot pattern */}
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-size-[20px_20px] opacity-30" />
 
-                    {/* logo container */}
-                    <div className="relative flex h-full w-full items-center justify-center">
-                      {sponsor.alt === "GOOGLE" ? (
-                        <>
+                      {/* logo container */}
+                      <div className="relative flex h-full w-full items-center justify-center">
+                        {sponsor.alt === "GOOGLE" ? (
+                          <>
+                            <Image
+                              src="/sponsorSectionSvgs/google-mobile.svg"
+                              alt={sponsor.alt}
+                              fill
+                              className="object-contain p-4 drop-shadow-sm sm:hidden"
+                              sizes="45vw"
+                              draggable={false}
+                            />
+                            <Image
+                              src="/sponsorSectionSvgs/google.svg"
+                              alt={sponsor.alt}
+                              fill
+                              className="hidden object-contain p-8 drop-shadow-sm sm:block"
+                              sizes="(max-width: 1024px) 16vw, 12vw"
+                              draggable={false}
+                            />
+                          </>
+                        ) : (
                           <Image
-                            src="/sponsorSectionSvgs/google-mobile.svg"
+                            src={sponsor.src}
                             alt={sponsor.alt}
                             fill
-                            className="object-contain p-4 drop-shadow-sm sm:hidden"
-                            sizes="45vw"
+                            className={`object-contain drop-shadow-sm ${
+                              sponsor.alt === "NVIDIA"
+                                ? "p-2 sm:p-4 md:scale-125 md:p-6"
+                                : "p-4 md:p-8"
+                            } ${sponsor.alt === "GITHUB" ? "p-2 sm:p-4 md:scale-125 md:p-6" : ""} ${
+                              sponsor.alt === "SHINIES PROPS"
+                                ? "brightness-0"
+                                : ""
+                            }`}
+                            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 16vw, 12vw"
                             draggable={false}
                           />
-                          <Image
-                            src="/sponsorSectionSvgs/google.svg"
-                            alt={sponsor.alt}
-                            fill
-                            className="hidden object-contain p-8 drop-shadow-sm sm:block"
-                            sizes="(max-width: 1024px) 16vw, 12vw"
-                            draggable={false}
-                          />
-                        </>
-                      ) : (
-                        <Image
-                          src={sponsor.src}
-                          alt={sponsor.alt}
-                          fill
-                          className={`object-contain drop-shadow-sm ${
-                            sponsor.alt === "NVIDIA"
-                              ? "p-2 sm:p-4 md:scale-125 md:p-6"
-                              : "p-4 md:p-8"
-                          } ${sponsor.alt === "GITHUB" ? "p-2 sm:p-4 md:scale-125 md:p-6" : ""} ${
-                            sponsor.alt === "SHINIES PROPS"
-                              ? "brightness-0"
-                              : ""
-                          }`}
-                          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 16vw, 12vw"
-                          draggable={false}
-                        />
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Black drop shadow */}
-                  <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
+                    {/* Black drop shadow */}
+                    <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
+                  </a>
                 </Link>
               </div>
             );

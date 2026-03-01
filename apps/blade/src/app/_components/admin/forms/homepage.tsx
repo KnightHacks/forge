@@ -21,7 +21,6 @@ export default function FormsClient() {
     if (sections.length > 0 && !sections.includes(activeSection)) {
       const firstSection = sections[0];
       if (firstSection) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveSection(firstSection);
       }
     }

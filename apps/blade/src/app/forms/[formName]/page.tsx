@@ -8,10 +8,11 @@ import { Card } from "@forge/ui/card";
 import { FormResponderWrapper } from "~/app/_components/forms/form-responder-client";
 import { api, HydrateClient } from "~/trpc/server";
 
-export async function generateMetadata(props: {
-  params: Promise<{ formName: string }>;
+export async function generateMetadata({
+  params,
+}: {
+  params: { formName: string };
 }): Promise<Metadata> {
-  const params = await props.params;
   try {
     const form = await api.forms.getForm({ slug_name: params.formName });
     const description = `Official application for ${form.name} through Blade.`;
@@ -47,12 +48,13 @@ function serializeSearchParams(
   return queryString ? `?${queryString}` : "";
 }
 
-export default async function FormResponderPage(props: {
-  params: Promise<{ formName: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+export default async function FormResponderPage({
+  params,
+  searchParams,
+}: {
+  params: { formName: string };
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const params = await props.params;
-  const searchParams = await props.searchParams;
   const session = await auth();
   if (!session) {
     const callbackURL =

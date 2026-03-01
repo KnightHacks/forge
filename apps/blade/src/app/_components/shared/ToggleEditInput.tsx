@@ -32,7 +32,6 @@ export default function ToggleEditInput({
 
   useEffect(() => {
     if (submit) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setToggle(false);
     }
   }, [submit]);

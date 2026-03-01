@@ -66,7 +66,7 @@ export function FileUploadResponsesTable({
         </p>
       </CardHeader>
       <CardContent>
-        <div className="max-h-125 overflow-y-auto">
+        <div className="max-h-[500px] overflow-y-auto">
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-background">
               <TableRow>

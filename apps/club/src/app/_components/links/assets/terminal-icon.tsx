@@ -62,7 +62,7 @@ export default function TerminalIconSVG(props: SVGProps<SVGSVGElement>) {
           width="3230.37"
           height="3229.72"
           filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
+          color-interpolation-filters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -181,7 +181,7 @@ export default function TerminalIconSVG(props: SVGProps<SVGSVGElement>) {
           width="197.284"
           height="195.155"
           filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
+          color-interpolation-filters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -300,7 +300,7 @@ export default function TerminalIconSVG(props: SVGProps<SVGSVGElement>) {
           width="197.284"
           height="195.155"
           filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
+          color-interpolation-filters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -419,7 +419,7 @@ export default function TerminalIconSVG(props: SVGProps<SVGSVGElement>) {
           width="197.284"
           height="195.155"
           filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
+          color-interpolation-filters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -538,7 +538,7 @@ export default function TerminalIconSVG(props: SVGProps<SVGSVGElement>) {
           width="827.71"
           height="840.103"
           filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
+          color-interpolation-filters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -657,7 +657,7 @@ export default function TerminalIconSVG(props: SVGProps<SVGSVGElement>) {
           width="827.723"
           height="840.117"
           filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
+          color-interpolation-filters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -776,7 +776,7 @@ export default function TerminalIconSVG(props: SVGProps<SVGSVGElement>) {
           width="1036.57"
           height="1088.93"
           filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
+          color-interpolation-filters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix

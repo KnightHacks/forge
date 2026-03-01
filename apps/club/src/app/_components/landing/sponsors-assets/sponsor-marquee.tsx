@@ -42,7 +42,7 @@ const companies = [
 const SponsorsMarquee = () => {
   return (
     <>
-      <div className="mask-[linear-gradient(to_right,transparent_0,black_128px,black_calc(100%-128px),transparent_100%)] inline-flex w-full flex-nowrap overflow-hidden">
+      <div className="inline-flex w-full flex-nowrap overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
         <ul className="animate-infinite-scroll my-12 flex items-center justify-center gap-20 md:justify-start [&_img]:max-w-none [&_li]:mx-8">
           {companies.map((logo, index) => (
             <li key={index}>

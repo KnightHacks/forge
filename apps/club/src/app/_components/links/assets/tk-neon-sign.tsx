@@ -26,7 +26,7 @@ export default function TKNeonSignSVG(props: SVGProps<SVGSVGElement>) {
           width="1334.12"
           height="1310.56"
           filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
+          color-interpolation-filters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix

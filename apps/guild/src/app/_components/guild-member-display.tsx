@@ -130,7 +130,7 @@ export function GuildMembersDisplay({ members }: GuildMembersDisplayProps) {
               type: "spring",
               stiffness: 80,
               damping: 20,
-              delay: (index % 20) * 0.05,
+              delay: Math.random() * 0.5,
             }}
             whileHover={{
               y: -8,

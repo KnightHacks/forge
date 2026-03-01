@@ -14,11 +14,11 @@ export default function AbstractShapeRight2SVG(props: SVGProps<SVGSVGElement>) {
     >
       <g filter="url(#filter0_dd_314_4710)">
         <path
-          fillRule="evenodd"
-          clipRule="evenodd"
+          fill-rule="evenodd"
+          clip-rule="evenodd"
           d="M107.898 161.104C92.3891 174.516 98.3667 202.791 107.089 221.385C115.111 238.484 149.913 235.718 151.712 254.5C157.092 310.648 89.2246 375.224 125.942 418.168C154.051 451.043 190.662 361.726 231.594 347.927C264.317 336.897 307.602 371.44 333.188 348.304C358.519 325.399 356.025 279.386 341.803 248.273C328.434 219.027 287.901 216.215 263.313 195.446C254.069 187.638 247.565 177.164 243.964 165.63C232.296 128.261 258.057 55.6512 218.944 53.3474C179.306 51.0126 204.612 134.047 176.179 161.637C159.541 177.782 125.435 145.938 107.898 161.104Z"
           stroke="#C084FC"
-          strokeWidth="5"
+          stroke-width="5"
         />
       </g>
       <defs>
@@ -29,7 +29,7 @@ export default function AbstractShapeRight2SVG(props: SVGProps<SVGSVGElement>) {
           width="359.111"
           height="477.085"
           filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
+          color-interpolation-filters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix

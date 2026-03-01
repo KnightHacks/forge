@@ -173,7 +173,7 @@ export function HackerProfileForm({
             if (file.size > MINIO.MAX_RESUME_SIZE) {
               ctx.addIssue({
                 code: z.ZodIssueCode.too_big,
-                origin: "number",
+                type: "number",
                 maximum: MINIO.MAX_RESUME_SIZE,
                 inclusive: true,
                 exact: false,
@@ -246,7 +246,6 @@ export function HackerProfileForm({
     });
 
     if (hacker.foodAllergies) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedAllergies(hacker.foodAllergies.split(","));
       allergiesRef.current = hacker.foodAllergies.split(",");
     }
@@ -389,7 +388,7 @@ export function HackerProfileForm({
               </FormItem>
             )}
           />
-          <div className="mt-10!">
+          <div className="!mt-10">
             <h3 className="text-lg font-medium">Demographic Information</h3>
             <p className="text-sm text-muted-foreground">
               This is some additional information about you.
@@ -496,7 +495,7 @@ export function HackerProfileForm({
               </FormItem>
             )}
           />
-          <div className="mt-10!">
+          <div className="!mt-10">
             <h3 className="text-lg font-medium">Academic Information</h3>
             <p className="text-sm text-muted-foreground">
               This is where you go to school and what you're studying.
@@ -594,7 +593,7 @@ export function HackerProfileForm({
               </FormItem>
             )}
           />
-          <div className="mt-10!">
+          <div className="!mt-10">
             <h3 className="text-lg font-medium">Hackathon Survey</h3>
             <p className="text-sm text-muted-foreground">
               Tell us a bit more about yourself!
@@ -640,7 +639,7 @@ export function HackerProfileForm({
               </FormItem>
             )}
           />
-          <div className="mt-10!">
+          <div className="!mt-10">
             <h3 className="text-lg font-medium">Additional Links</h3>
             <p className="text-sm text-muted-foreground">
               Feel free to include what makes you, you.
@@ -756,7 +755,7 @@ export function HackerProfileForm({
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="flex h-auto min-h-12 w-full items-center justify-start space-x-2 px-3"
+                          className="flex h-auto min-h-[3rem] w-full items-center justify-start space-x-2 px-3"
                         >
                           <span className="text-sm text-gray-400">
                             Select Allergies:
@@ -782,7 +781,7 @@ export function HackerProfileForm({
                       </PopoverTrigger>
                       <PopoverContent
                         align="start"
-                        className="min-w-(--radix-popover-trigger-width) w-full max-w-none p-1"
+                        className="w-full min-w-[var(--radix-popover-trigger-width)] max-w-none p-1"
                       >
                         <div className="flex w-full flex-col">
                           {FORMS.ALLERGIES.map((allergy) => (
@@ -943,7 +942,7 @@ export function HackerProfileForm({
           )}
         </form>
       </Form>
-      <div className="mt-12!">
+      <div className="!mt-12">
         <h3 className="text-lg font-medium text-red-700">Danger Zone</h3>
         <p className="mb-4 text-sm text-red-700/75">
           Avoid this if you're not sure what you're doing.

@@ -77,16 +77,16 @@ export default function TKNeonSVG(props: SVGProps<SVGSVGElement>) {
         <path
           d="M121.769 636.087L134.55 612.768L158.61 622.188"
           stroke="#D8B4FE"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         />
         <path
           d="M41.1972 662.267L54.0093 638.896L78.0391 648.368"
           stroke="#D8B4FE"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         />
         <path
           d="M154.539 495.097C152.665 476.612 147.917 436.365 143.089 418.402C141.619 412.909 140.181 408.421 138.609 404.276C137.359 400.887 132.816 393.169 129.349 390.426C127.995 413.956 125.55 435.953 120.721 458.286C125.381 460.86 129.368 464.442 133.417 468.096C135.193 469.545 136.896 471.057 138.454 472.693"
@@ -282,7 +282,7 @@ export default function TKNeonSVG(props: SVGProps<SVGSVGElement>) {
           width="1367.61"
           height="1266.57"
           filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
+          color-interpolation-filters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix

@@ -7,7 +7,7 @@ import type {
   FieldValues,
   UseFormProps,
 } from "react-hook-form";
-import type { ZodType } from "zod";
+import type { ZodType, ZodTypeDef } from "zod";
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Slot } from "@radix-ui/react-slot";
@@ -22,9 +22,13 @@ import { cn } from "@forge/ui";
 
 import { Label } from "./label";
 
-const useForm = <TIn extends FieldValues>(
+const useForm = <
+  TOut extends FieldValues,
+  TDef extends ZodTypeDef,
+  TIn extends FieldValues,
+>(
   props: Omit<UseFormProps<TIn>, "resolver"> & {
-    schema: ZodType<TIn, TIn>;
+    schema: ZodType<TOut, TDef, TIn>;
   },
 ) => {
   const form = __useForm<TIn>({

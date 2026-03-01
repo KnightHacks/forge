@@ -92,7 +92,7 @@ export function FormReviewWrapper({
   const onSubmit = (payload: FormResponsePayload) => {
     editResponse.mutate({
       id: responseId,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
       responseData: payload as any,
     });
   };

@@ -15,9 +15,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tailwindcss/postcss": "^4.2.1",
-    "postcss": "^8.5.6",
-    "tailwindcss": "catalog:"
+    "postcss": "^8.4.47",
+    "tailwindcss": "catalog:",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@forge/eslint-config": "workspace:*",

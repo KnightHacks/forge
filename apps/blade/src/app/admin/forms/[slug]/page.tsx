@@ -7,10 +7,11 @@ import { EditorClient } from "~/app/_components/admin/forms/editor/client";
 import { extractProcedures } from "~/lib/utils";
 import { api } from "~/trpc/server";
 
-export default async function FormEditorPage(props: {
-  params: Promise<{ slug: string }>;
+export default async function FormEditorPage({
+  params,
+}: {
+  params: { slug: string };
 }) {
-  const params = await props.params;
   const session = await auth();
 
   if (!session) {

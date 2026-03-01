@@ -107,7 +107,7 @@ export async function resolveDiscordUserId(
   return members[0]?.user.id ?? null;
 }
 
-export const stripe = new Stripe(env.STRIPE_SECRET_KEY);
+export const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
 
 export const isDiscordAdmin = async (user: Session["user"]) => {
   try {
@@ -258,7 +258,6 @@ export const sendEmail = async ({
       `Failed to send email: ${
         error instanceof Error ? error.message : "Unknown error"
       }`,
-      { cause: error },
     );
   }
 };
@@ -297,7 +296,7 @@ export async function log({
 
 export const isJudgeAdmin = async () => {
   try {
-    const token = (await cookies()).get("sessionToken")?.value;
+    const token = cookies().get("sessionToken")?.value;
     if (!token) return false;
 
     const now = new Date();
@@ -320,7 +319,7 @@ export const isJudgeAdmin = async () => {
 };
 
 export const getJudgeSessionFromCookie = async () => {
-  const token = (await cookies()).get("sessionToken")?.value;
+  const token = cookies().get("sessionToken")?.value;
   if (!token) return null;
 
   const now = new Date();
@@ -348,12 +347,13 @@ const gapiGmailSend = "https://www.googleapis.com/auth/gmail.send";
 const gapiGmailSettingsSharing =
   "https://www.googleapis.com/auth/gmail.settings.sharing";
 
-const auth = new google.auth.JWT({
-  email: env.GOOGLE_CLIENT_EMAIL,
-  key: GOOGLE_PRIVATE_KEY,
-  scopes: [gapiCalendar, gapiGmailSend, gapiGmailSettingsSharing],
-  subject: EVENTS.GOOGLE_PERSONIFY_EMAIL as string,
-});
+const auth = new google.auth.JWT(
+  env.GOOGLE_CLIENT_EMAIL,
+  undefined,
+  GOOGLE_PRIVATE_KEY,
+  [gapiCalendar, gapiGmailSend, gapiGmailSettingsSharing],
+  EVENTS.GOOGLE_PERSONIFY_EMAIL as string,
+);
 
 export const gmail = google.gmail({
   version: "v1",

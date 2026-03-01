@@ -27,12 +27,13 @@ function serializeSearchParams(
   return queryString ? `?${queryString}` : "";
 }
 
-export default async function FormResponderPage(props: {
-  params: Promise<{ responseId: string; formName: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+export default async function FormResponderPage({
+  params,
+  searchParams,
+}: {
+  params: { responseId: string; formName: string };
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const params = await props.params;
-  const searchParams = await props.searchParams;
   const session = await auth();
   if (!session) {
     const callbackURL =

@@ -12,10 +12,11 @@ import { PerUserResponsesView } from "~/app/_components/admin/forms/responses/Pe
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 
-export default async function FormResponsesPage(props: {
-  params: Promise<{ slug: string }>;
+export default async function FormResponsesPage({
+  params,
+}: {
+  params: { slug: string };
 }) {
-  const params = await props.params;
   const session = await auth();
   if (!session) {
     redirect(SIGN_IN_PATH);

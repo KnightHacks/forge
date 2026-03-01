@@ -24,7 +24,7 @@ export const handlers = toNextJsHandler(betterAuthInstance);
 
 export const auth = async () => {
   try {
-    const headersList = await headers();
+    const headersList = headers();
     const sess = await betterAuthInstance.api.getSession({
       headers: headersList,
     });

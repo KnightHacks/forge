@@ -25,7 +25,7 @@ export default function KightHacksTextSVG(props: SVGProps<SVGSVGElement>) {
           width="437.729"
           height="149.92"
           filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
+          color-interpolation-filters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix

@@ -242,7 +242,7 @@ export const judgeRouter = {
         expires,
       });
 
-      (await cookies()).set({
+      cookies().set({
         name: "sessionToken",
         value: sessionToken,
         httpOnly: true,

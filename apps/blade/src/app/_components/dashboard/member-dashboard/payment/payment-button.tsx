@@ -28,7 +28,6 @@ export default function PaymentButton({ member }: { member: InsertMember }) {
         member.school !== "Full Sail University") ||
       (month > 3 && month < 7) // disable during summer months
     ) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisableButton(true);
     }
   }, [member.school]);

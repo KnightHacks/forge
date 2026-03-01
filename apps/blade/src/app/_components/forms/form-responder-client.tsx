@@ -148,7 +148,7 @@ export function FormResponderWrapper({
   const onSubmit = (payload: FormResponsePayload) => {
     submitResponse.mutate({
       form: formId,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
       responseData: payload as any,
     });
   };

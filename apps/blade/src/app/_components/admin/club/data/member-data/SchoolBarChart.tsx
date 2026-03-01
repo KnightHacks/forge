@@ -78,9 +78,7 @@ export default function SchoolBarChart({ members }: { members: Member[] }) {
               <ChartTooltip
                 cursor={false}
                 content={({ active, payload }) => {
-                  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unsafe-member-access
                   if (active && payload?.[0]?.payload) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     const data = payload[0].payload as {
                       fullSchool: string;
                       members: number;

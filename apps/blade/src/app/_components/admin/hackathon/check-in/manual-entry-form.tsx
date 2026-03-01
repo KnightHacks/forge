@@ -68,7 +68,6 @@ export function ManualEntryForm() {
           new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
       )[0];
 
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveHackathon(closestHackathon ?? hackathons[0] ?? null);
     }
   }, [hackathons, activeHackathon]);

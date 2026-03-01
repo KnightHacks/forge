@@ -57,7 +57,7 @@ export function ResponsesTable({ question, responses }: ResponsesTableProps) {
       </CardHeader>
       <CardContent>
         {/* allow horizontal scrolling if table is too wide */}
-        <div className="max-h-125 overflow-y-auto">
+        <div className="max-h-[500px] overflow-y-auto">
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-background">
               <TableRow>

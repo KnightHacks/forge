@@ -64,8 +64,8 @@ export default function Impact() {
       ref={containerRef}
       className="relative flex h-screen min-h-screen flex-col items-center justify-center"
     >
-      <NeonTkSVG className="animate-float -bottom-37.75 w-75 absolute left-2.5 hidden text-purple-400 opacity-50 md:block" />
-      <SwordSVG className="animate-float w-75 absolute right-20 top-0 hidden text-purple-500 opacity-50 md:block" />
+      <NeonTkSVG className="animate-float absolute bottom-[-151px] left-[10px] hidden w-[300px] text-purple-400 opacity-50 md:block" />
+      <SwordSVG className="animate-float absolute right-20 top-0 hidden w-[300px] text-purple-500 opacity-50 md:block" />
       <div
         ref={headerRef}
         className="mb-16 flex flex-col items-center justify-center gap-2 md:mb-0"
@@ -75,14 +75,14 @@ export default function Impact() {
         </p>
         <h1
           ref={impactTextRef}
-          className="bg-linear-to-r animate-pulse from-white via-purple-300 to-purple-800 bg-clip-text text-4xl font-black text-transparent md:text-6xl"
+          className="animate-pulse bg-gradient-to-r from-white via-purple-300 to-purple-800 bg-clip-text text-4xl font-black text-transparent md:text-6xl"
         >
           IMPACT
         </h1>
       </div>
       <div
         ref={expandableRef}
-        className="h-150 xl:h-175 mt-12 flex w-full items-center justify-center md:w-2/3"
+        className="mt-12 flex h-[600px] w-full items-center justify-center md:w-2/3 xl:h-[700px]"
       >
         <Expandable autoPlay={inView} />
       </div>

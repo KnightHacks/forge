@@ -175,9 +175,10 @@ function Type({
   const [direction, setDirection] = useState<TypingDirection>(
     TypingDirection.Forward,
   );
+  const [isComplete, setIsComplete] = useState(false);
+
   const words = useMemo(() => text.split(/\s+/), [text]);
   const total = smooth ? words.length : text.length;
-  const isComplete = index === total && !repeat;
 
   useEffect(() => {
     // eslint-disable-next-line prefer-const
@@ -223,6 +224,7 @@ function Type({
 
   useEffect(() => {
     if (index === total && !repeat) {
+      setIsComplete(true);
       onComplete?.();
     }
   }, [index, total, repeat, onComplete]);

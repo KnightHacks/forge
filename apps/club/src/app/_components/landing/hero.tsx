@@ -11,8 +11,8 @@ import TypingText from "./hero-assets/typing-text";
 const Hero = ({ bladeUrl }: { bladeUrl: string }) => {
   return (
     <section className="relative min-h-screen overflow-hidden px-4 py-12">
-      <SwordSVG className="animate-float w-75 absolute -left-10 top-8 hidden text-purple-400 opacity-50 md:block" />
-      <NeonTkSVG className="animate-float w-75 absolute bottom-20 right-20 hidden text-purple-500 opacity-50 md:block" />
+      <SwordSVG className="animate-float absolute left-[-40px] top-8 block hidden w-[300px] text-purple-400 opacity-50 md:block" />
+      <NeonTkSVG className="animate-float absolute bottom-20 right-20 hidden w-[300px] text-purple-500 opacity-50 md:block" />
 
       <div className="z-50 mx-auto max-w-6xl">
         <div className="grid min-h-[calc(100vh-6rem)] items-center gap-8 lg:grid-cols-2">
@@ -26,7 +26,7 @@ const Hero = ({ bladeUrl }: { bladeUrl: string }) => {
               repeat={false}
             />
             <div className="mt-8 flex justify-center md:justify-start">
-              <div className="p-0.75 relative z-0 flex max-w-max items-center overflow-hidden rounded-lg">
+              <div className="relative z-0 flex max-w-max items-center overflow-hidden rounded-lg p-[3px]">
                 <div className="moving-border absolute inset-0 h-full w-full rounded-lg bg-[conic-gradient(from_0deg,#9722b6_20deg,#8b5cf6_140deg,transparent_240deg)]" />
                 <div className="relative z-10">
                   <Link href={bladeUrl}>

@@ -1,10 +1,14 @@
 import type { Config } from "tailwindcss";
-import defaultTheme from "tailwindcss/defaultTheme";
+import { fontFamily } from "tailwindcss/defaultTheme";
 
-const { fontFamily } = defaultTheme;
+import baseConfig from "@forge/tailwind-config/web";
 
 export default {
-  darkMode: ["class", ".dark"],
+  // We need to append the path to the UI package to the content array so that
+  // those classes are included correctly.
+  content: [...baseConfig.content, "../../packages/ui/src/*.{ts,tsx}"],
+  presets: [baseConfig],
+
   theme: {
     extend: {
       backgroundImage: {
@@ -30,46 +34,6 @@ export default {
         background: "hsl(var(--background))",
         950: "#10182B",
         cream: "#F4F4ED",
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-      },
-      borderColor: {
-        DEFAULT: "hsl(var(--border))",
-      },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
         impact: `
@@ -96,8 +60,6 @@ export default {
       },
       animation: {
         "infinite-scroll": "infinite-scroll 160s linear infinite",
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
       },
       keyframes: {
         "infinite-scroll": {
@@ -120,13 +82,21 @@ export default {
           "0%": { transform: "rotate(0deg)" },
           "100%": { transform: "rotate(360deg)" },
         },
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
+      },
+      screens: {
+        seOnly: { max: "391px" },
+        seWidth: { max: "376px" },
+        iPadMini: {
+          raw: "(min-width: 768px) and (max-width: 819px) and (min-height: 1024px)",
         },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+        iPadPro: {
+          raw: "(min-width: 1024px) and (max-width: 1366px) and (min-height: 1366px)",
+        },
+        tall: {
+          raw: "(min-height: 800px) and (max-width: 765px)",
+        },
+        taller: {
+          raw: "(min-height: 1200px) and (max-width: 1023px)",
         },
       },
     },

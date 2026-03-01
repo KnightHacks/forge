@@ -86,7 +86,6 @@ export function PointLeaderboard({
       );
   }, [activeTop, hacker?.id, data?.place, activeInd]);
 
-  // eslint-disable-next-line react-hooks/purity
   return targetDate <= Date.now() && !isAdmin ? (
     <>
       <p>

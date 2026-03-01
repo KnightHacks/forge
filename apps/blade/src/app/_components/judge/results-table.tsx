@@ -386,7 +386,7 @@ export default function ResultsTable() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-45 truncate text-center">
+                  <TableCell className="max-w-[180px] truncate text-center">
                     <span title={project.challengeTitle}>
                       {project.challengeTitle}
                     </span>

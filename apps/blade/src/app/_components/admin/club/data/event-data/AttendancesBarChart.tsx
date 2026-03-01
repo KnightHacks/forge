@@ -103,6 +103,7 @@ export default function AttendancesBarChart({
               <Bar
                 dataKey="avgAttendees"
                 name="Average attendees: "
+                layout="vertical"
                 radius={4}
                 barSize={100}
               >

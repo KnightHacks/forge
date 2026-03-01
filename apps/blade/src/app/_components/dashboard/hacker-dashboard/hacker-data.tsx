@@ -136,7 +136,6 @@ export function HackerData({
   });
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHackerStatus(getStatusName(hacker?.status));
     setHackerStatusColor(getStatusColor(hacker?.status));
   }, [hacker]);

@@ -91,7 +91,6 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
   // Auto-filter challenge based on selected judge
   useEffect(() => {
     if (selectedJudge) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setChallengeFilter(selectedJudge.challengeId);
     } else {
       setChallengeFilter("");
