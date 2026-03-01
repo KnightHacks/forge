@@ -164,7 +164,10 @@ export const eventRouter = {
     }),
   createEvent: permProcedure
     .input(
-      InsertEventSchema.omit({ id: true, discordId: true, googleId: true }),
+      InsertEventSchema.omit({ id: true, discordId: true, googleId: true }).extend({
+        roles: z.array(z.string()).default([]),
+        isOperationsCalendar: z.boolean().default(false),
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
@@ -234,7 +237,8 @@ export const eventRouter = {
       let googleEventId: string | undefined;
       try {
         const response = await calendar.events.insert({
-          calendarId: EVENTS.GOOGLE_CALENDAR_ID,
+          // NEED GOOGLE OPS ID 
+          calendarId: input.isOperationsCalendar ? google_ops_id : EVENTS.GOOGLE_CALENDAR_ID,
           requestBody: {
             end: {
               dateTime: endLocalIso, // ISO for Google Calendar
@@ -320,7 +324,7 @@ export const eventRouter = {
         // Clean up the event in Google Calendar if the database insert fails
         try {
           await calendar.events.delete({
-            calendarId: EVENTS.GOOGLE_CALENDAR_ID,
+            calendarId: input.isOperationsCalendar ? google_ops_id : EVENTS.GOOGLE_CALENDAR_ID,
             eventId: googleEventId,
           });
         } catch (cleanupErr) {
