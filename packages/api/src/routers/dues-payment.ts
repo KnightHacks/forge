@@ -1,6 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import Stripe from "stripe";
 import { z } from "zod";
 
 import { CLUB } from "@forge/consts";
@@ -60,6 +59,35 @@ export const duesPaymentRouter = {
     return { checkoutUrl: session.url };
   }),
 
+  createPaymentIntent: protectedProcedure.mutation(async ({ ctx }) => {
+    const price = CLUB.MEMBERSHIP_PRICE as number;
+
+    const member = await db
+      .select()
+      .from(Member)
+      .where(eq(Member.userId, ctx.session.user.id))
+      .limit(1);
+
+    if (member.length === 0) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message:
+          "User is not a member of Knight Hacks, please sign up and try again.",
+      });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: price,
+      currency: "usd",
+      payment_method_types: ["card", "us_bank_account"],
+      metadata: {
+        member_id: member[0]?.id ?? "",
+      },
+    });
+
+    return { clientSecret: paymentIntent.client_secret };
+  }),
+
   validatePaidDues: protectedProcedure.query(async ({ ctx }) => {
     const duesPaymentExists = await db
       .select()
@@ -77,21 +105,45 @@ export const duesPaymentRouter = {
   orderSuccess: protectedProcedure
     .input(z.string())
     .query(async ({ input, ctx }) => {
-      const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
-      const session = await stripe.checkout.sessions.retrieve(input);
+      const paymentIntent = await stripe.paymentIntents.retrieve(input);
+
+      if (paymentIntent.status !== "succeeded") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Payment has not been completed.",
+        });
+      }
+
+      const memberId = paymentIntent.metadata?.member_id ?? "";
+
+      // Idempotency guard: skip insert if already fulfilled
+      const existing = await db
+        .select()
+        .from(DuesPayment)
+        .where(eq(DuesPayment.memberId, memberId))
+        .limit(1);
+
+      if (existing.length === 0) {
+        await db.insert(DuesPayment).values({
+          memberId,
+          amount: paymentIntent.amount,
+          paymentDate: new Date(paymentIntent.created * 1000),
+          year: new Date().getFullYear(),
+        });
+      }
 
       await log({
-        message: `A member has successfully paid their dues. ${session.amount_total}`,
+        message: `A member has successfully paid their dues. ${paymentIntent.amount}`,
         title: "Dues Paid",
         color: "success_green",
         userId: ctx.session.user.discordUserId,
       });
 
       return {
-        id: session.id,
-        total: session.amount_total,
-        email: session.customer_details?.email,
-        status: session.payment_status,
+        id: paymentIntent.id,
+        total: paymentIntent.amount,
+        email: paymentIntent.receipt_email,
+        status: paymentIntent.status,
       };
     }),
 

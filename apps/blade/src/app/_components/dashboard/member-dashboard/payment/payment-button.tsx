@@ -6,13 +6,8 @@ import { useRouter } from "next/navigation";
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 
-import { api } from "~/trpc/react";
-
 export default function PaymentButton({ member }: { member: InsertMember }) {
-  const { mutateAsync: createCheckoutUrl } =
-    api.duesPayment.createCheckout.useMutation();
   const router = useRouter();
-
   const [disableButton, setDisableButton] = useState<boolean>(false);
 
   useEffect(() => {
@@ -32,15 +27,9 @@ export default function PaymentButton({ member }: { member: InsertMember }) {
     }
   }, [member.school]);
 
-  const handleCheckout = async () => {
-    const { checkoutUrl } = await createCheckoutUrl();
-    if (checkoutUrl) {
-      router.push(checkoutUrl);
-    }
-  };
   return (
     <Button
-      onClick={handleCheckout}
+      onClick={() => router.push("/member/checkout")}
       disabled={disableButton}
       className="w-full"
     >

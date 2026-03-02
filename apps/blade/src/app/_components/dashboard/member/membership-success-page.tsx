@@ -17,10 +17,10 @@ export function MembershipSuccess() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const checkoutSessionId = searchParams.get("session_id") ?? "";
+  const paymentIntentId = searchParams.get("payment_intent") ?? "";
 
   const { data, isPending, isError } =
-    api.duesPayment.orderSuccess.useQuery(checkoutSessionId);
+    api.duesPayment.orderSuccess.useQuery(paymentIntentId);
 
   if (isError) {
     toast.error("Something went wrong, please contact support.");
@@ -32,8 +32,8 @@ export function MembershipSuccess() {
     return <MembershipSuccessSkeleton />;
   }
 
-  if (data.status === "unpaid") {
-    toast.error("Checkout session was not complete, please try again.");
+  if (data.status !== "succeeded") {
+    toast.error("Payment was not completed, please try again.");
     router.push(SIGN_IN_PATH);
     return null;
   }
