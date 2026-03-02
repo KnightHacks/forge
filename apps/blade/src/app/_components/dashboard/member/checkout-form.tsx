@@ -84,14 +84,14 @@ function PaymentForm() {
         });
 
         if (error) {
-            setErrorMessage(error.message ?? "An unexpected error occurred.");
+            setErrorMessage(error.message ?? null);
             setIsSubmitting(false);
             return;
         }
 
         if (
-            paymentIntent?.status === "succeeded" ||
-            paymentIntent?.status === "processing"
+            paymentIntent.status === "succeeded" ||
+            paymentIntent.status === "processing"
         ) {
             router.push(`/member/success?payment_intent=${paymentIntent.id}`);
         } else {
@@ -139,9 +139,7 @@ export function CheckoutForm() {
                 }
             },
             onError: (error) => {
-                setIntentError(
-                    error.message ?? "Could not initialize payment. Please try again.",
-                );
+                setIntentError(error.message);
                 toast.error("Failed to start checkout.");
             },
         });
