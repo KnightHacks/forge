@@ -38,7 +38,7 @@ export function FormResponderWrapper({
 
   const existingResponseQuery = api.forms.getUserResponse.useQuery(
     { form: formIdGate },
-    { enabled: !!formIdGate },
+    { enabled: !!formIdGate && !formQuery.data?.isClosed },
   );
 
   const submitResponse = api.forms.createResponse.useMutation({
@@ -74,15 +74,12 @@ export function FormResponderWrapper({
 
   const formId = formQuery.data.id;
 
-  // not found
-  if (existingResponseQuery.error)
-    return <div>Error Loading existing response</div>;
-
   const form = formQuery.data.formData as FORMS.FormType;
   const zodValidator = formQuery.data.zodValidator;
   const isDuesOnly = formQuery.data.duesOnly;
   const allowResubmission = formQuery.data.allowResubmission;
   const allowEdit = formQuery.data.allowEdit;
+  const isClosed = formQuery.data.isClosed;
 
   const duesCheckFailed = !!duesQuery.error;
   const hasPaidDues = duesCheckFailed
@@ -90,6 +87,21 @@ export function FormResponderWrapper({
     : (duesQuery.data?.duesPaid ?? false);
 
   const hasAlreadySubmitted = (existingResponseQuery.data?.length ?? 0) !== 0;
+
+  // Closed Gate
+  if (isClosed) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
+        <Card className="max-w-md p-8 text-center">
+          <XCircle className="mx-auto mb-4 h-16 w-16 text-destructive" />
+          <h1 className="mb-2 text-2xl font-bold">Form Closed</h1>
+          <p className="text-muted-foreground">
+            This form is no longer accepting responses.
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   // dues gate
   if (isDuesOnly && !hasPaidDues) {
@@ -105,6 +117,8 @@ export function FormResponderWrapper({
       </div>
     );
   }
+
+  if (existingResponseQuery.error) return <div>Error Loading Form State</div>;
 
   // already submitted gate
   if (hasAlreadySubmitted && !allowResubmission) {

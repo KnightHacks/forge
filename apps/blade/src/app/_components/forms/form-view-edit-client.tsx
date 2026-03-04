@@ -74,7 +74,7 @@ export function FormReviewWrapper({
 
   const zodValidator = form.zodValidator;
 
-  const allowEdit = form.allowEdit;
+  const allowEdit = form.allowEdit && !form.isClosed;
 
   // success
   if (isSubmitted) {
