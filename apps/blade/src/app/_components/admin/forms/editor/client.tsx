@@ -576,7 +576,7 @@ export function EditorClient({
             <div className="flex items-center gap-3">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
+                  <Button
                     variant="outline"
                     size="sm"
                     className="gap-2"
