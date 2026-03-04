@@ -357,6 +357,13 @@ export const formsRouter = {
         });
       }
 
+      if (form.isClosed) {
+        throw new TRPCError({
+          message: "This form is closed and no longer accepting responses",
+          code: "FORBIDDEN",
+        });
+      }
+
       const responseRoles = await db
         .select({ roleId: FormResponseRoles.roleId })
         .from(FormResponseRoles)
@@ -476,6 +483,13 @@ export const formsRouter = {
         where: (t, { eq }) => eq(t.id, existingResponse.form),
       });
 
+      if (form?.isClosed) {
+        throw new TRPCError({
+          message: "This form is closed and no longer accepting responses",
+          code: "FORBIDDEN",
+        });
+      }
+
       if (!form?.allowEdit) {
         throw new TRPCError({
           message: "This form does not allow editing responses",
@@ -585,6 +599,7 @@ export const formsRouter = {
             id: FormResponse.id,
             hasSubmitted: sql<boolean>`true`,
             allowEdit: FormsSchemas.allowEdit,
+            isClosed: FormsSchemas.isClosed,
           })
           .from(FormResponse)
           .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
@@ -608,6 +623,7 @@ export const formsRouter = {
             id: FormResponse.id,
             hasSubmitted: sql<boolean>`true`,
             allowEdit: FormsSchemas.allowEdit,
+            isClosed: FormsSchemas.isClosed,
           })
           .from(FormResponse)
           .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
@@ -627,6 +643,7 @@ export const formsRouter = {
           id: FormResponse.id,
           hasSubmitted: sql<boolean>`true`,
           allowEdit: FormsSchemas.allowEdit,
+          isClosed: FormsSchemas.isClosed,
         })
         .from(FormResponse)
         .leftJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
@@ -1311,5 +1328,42 @@ export const formsRouter = {
       );
 
       return { canEdit: hasSectionRole };
+    }),
+  toggleFormClosed: permProcedure
+    .input(
+      z.object({
+        slug_name: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      controlPerms.or(["EDIT_FORMS"], ctx);
+
+      // Get the form
+      const form = await db.query.FormsSchemas.findFirst({
+        where: (t, { eq }) =>
+          eq(t.slugName, decodeURIComponent(input.slug_name)),
+      });
+
+      // Validate if we got the form
+      if (!form) {
+        throw new TRPCError({ message: "Form not found", code: "NOT_FOUND" });
+      }
+
+      // Update the forms isClosed state
+      const newState = !form.isClosed;
+
+      await db
+        .update(FormsSchemas)
+        .set({ isClosed: newState })
+        .where(eq(FormsSchemas.id, form.id));
+
+      await log({
+        title: `Form ${newState ? "Closed" : "Opened"}`,
+        message: `**Form** ${form.name}`,
+        color: newState ? "uhoh_red" : "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
+
+      return { isClosed: newState };
     }),
 } satisfies TRPCRouterRecord;

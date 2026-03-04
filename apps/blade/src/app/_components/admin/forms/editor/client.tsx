@@ -22,7 +22,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeft, Loader2, Plus, Save, Users } from "lucide-react";
+import { ArrowLeft, CogIcon, Loader2, Plus, Save, Users } from "lucide-react";
 
 import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
@@ -37,9 +37,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@forge/ui/dropdown-menu";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
-import { Switch } from "@forge/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { Textarea } from "@forge/ui/textarea";
 
@@ -194,6 +202,7 @@ export function EditorClient({
 
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<string>("");
+  const [isClosed, setIsClosed] = useState(false);
 
   const {
     data: formData,
@@ -251,6 +260,7 @@ export function EditorClient({
       allowResubmission,
       allowEdit,
       responseRoleIds,
+      isClosed,
     });
   }, [
     isLoading,
@@ -267,6 +277,7 @@ export function EditorClient({
     allowResubmission,
     allowEdit,
     responseRoleIds,
+    isClosed,
   ]);
 
   const saveFormRef = React.useRef(handleSaveForm);
@@ -299,6 +310,7 @@ export function EditorClient({
         setAllowResubmission(formData.allowResubmission);
         setAllowEdit(formData.allowEdit);
         setResponseRoleIds(formData.responseRoleIds);
+        setIsClosed(formData.isClosed);
 
         const formQuestions = Array.isArray(loadedFormData.questions)
           ? loadedFormData.questions
@@ -331,7 +343,14 @@ export function EditorClient({
   // auto save trigger when toggle switches are changed
   useEffect(() => {
     if (!isLoading) saveFormRef.current();
-  }, [duesOnly, allowResubmission, responseRoleIds, isLoading, allowEdit]);
+  }, [
+    duesOnly,
+    allowResubmission,
+    responseRoleIds,
+    isLoading,
+    allowEdit,
+    isClosed,
+  ]);
 
   // auto save when finishing editing an item (changing active card)
   useEffect(() => {
@@ -555,43 +574,43 @@ export function EditorClient({
 
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6 lg:gap-3">
             <div className="flex items-center gap-3">
-              <Switch
-                id="dues-only"
-                checked={duesOnly}
-                onCheckedChange={setDuesOnly}
-              />
-              <Label
-                htmlFor="dues-only"
-                className="cursor-pointer text-sm font-bold"
-              >
-                Dues Only
-              </Label>
-            </div>
-            <div className="flex items-center gap-3">
-              <Switch
-                id="allow-resubmit"
-                checked={allowResubmission}
-                onCheckedChange={setAllowResubmission}
-              />
-              <Label
-                htmlFor="allow-resubmit"
-                className="cursor-pointer text-sm font-bold"
-              >
-                Allow Multiple Responses
-              </Label>
-            </div>
-            <div className="flex items-center gap-3">
-              <Switch
-                id="allow-edit"
-                checked={allowEdit}
-                onCheckedChange={setAllowEdit}
-              />
-              <Label
-                htmlFor="allow-edit"
-                className="cursor-pointer text-sm font-bold"
-              >
-                Allow Response Edit
-              </Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <CogIcon className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="min-w-40">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>Form Settings</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuCheckboxItem
+                      checked={duesOnly}
+                      onCheckedChange={setDuesOnly}
+                    >
+                      Dues Only
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={allowResubmission}
+                      onCheckedChange={setAllowResubmission}
+                    >
+                      Allow Multiple Responses
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={allowEdit}
+                      onCheckedChange={setAllowEdit}
+                    >
+                      Allow Response Edit
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={isClosed}
+                      onCheckedChange={setIsClosed}
+                    >
+                      Form Closed
+                    </DropdownMenuCheckboxItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <Dialog
               open={responseRolesDialogOpen}

@@ -83,6 +83,7 @@ export function FormResponderWrapper({
   const isDuesOnly = formQuery.data.duesOnly;
   const allowResubmission = formQuery.data.allowResubmission;
   const allowEdit = formQuery.data.allowEdit;
+  const isClosed = formQuery.data.isClosed;
 
   const duesCheckFailed = !!duesQuery.error;
   const hasPaidDues = duesCheckFailed
@@ -100,6 +101,20 @@ export function FormResponderWrapper({
           <h1 className="mb-2 text-2xl font-bold">Dues Required</h1>
           <p className="text-muted-foreground">
             This form is only available to members who have paid their dues.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isClosed) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-primary/5 p-6">
+        <Card className="max-w-md p-8 text-center">
+          <XCircle className="mx-auto mb-4 h-16 w-16 text-destructive" />
+          <h1 className="mb-2 text-2xl font-bold">Form Closed</h1>
+          <p className="text-muted-foreground">
+            This form is no longer accepting responses.
           </p>
         </Card>
       </div>
