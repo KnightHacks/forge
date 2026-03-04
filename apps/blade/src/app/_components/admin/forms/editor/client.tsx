@@ -576,7 +576,13 @@ export function EditorClient({
             <div className="flex items-center gap-3">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    aria-label="Open form settings"
+                    title="Form settings"
+                  >
                     <CogIcon className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>

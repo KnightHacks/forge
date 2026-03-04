@@ -1350,20 +1350,26 @@ export const formsRouter = {
       }
 
       // Update the forms isClosed state
-      const newState = !form.isClosed;
-
-      await db
+      const [updatedForm] = await db
         .update(FormsSchemas)
-        .set({ isClosed: newState })
-        .where(eq(FormsSchemas.id, form.id));
+        .set({ isClosed: sql`NOT ${FormsSchemas.isClosed}` })
+        .where(eq(FormsSchemas.id, form.id))
+        .returning({
+          isClosed: FormsSchemas.isClosed,
+          name: FormsSchemas.name,
+        });
+
+      if (!updatedForm) {
+        throw new TRPCError({ message: "Form not found", code: "NOT_FOUND" });
+      }
 
       await log({
-        title: `Form ${newState ? "Closed" : "Opened"}`,
-        message: `**Form** ${form.name}`,
-        color: newState ? "uhoh_red" : "success_green",
+        title: `Form ${updatedForm.isClosed ? "closed" : "opened"}`,
+        message: `**Form:** ${updatedForm.name}`,
+        color: updatedForm.isClosed ? "uhoh_red" : "success_green",
         userId: ctx.session.user.discordUserId,
       });
 
-      return { isClosed: newState };
+      return { isClosed: updatedForm.isClosed };
     }),
 } satisfies TRPCRouterRecord;
