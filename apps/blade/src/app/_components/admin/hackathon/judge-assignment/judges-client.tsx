@@ -81,6 +81,7 @@ export default function QRCodesClient() {
       setSelectedRoom(null);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
+      // TODO: look into not logging into the console
       // eslint-disable-next-line no-console
       console.error("Failed to generate room:", err);
       alert(`Failed to generate room: ${message}`);

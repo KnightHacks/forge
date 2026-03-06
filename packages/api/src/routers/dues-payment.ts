@@ -7,10 +7,10 @@ import { CLUB } from "@forge/consts";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
+import { discord, permissions, stripe } from "@forge/utils";
 
 import { env } from "../env";
 import { permProcedure, protectedProcedure } from "../trpc";
-import { controlPerms, log, stripe } from "../utils";
 
 export const duesPaymentRouter = {
   createCheckout: protectedProcedure.mutation(async ({ ctx }) => {
@@ -80,7 +80,7 @@ export const duesPaymentRouter = {
       const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
       const session = await stripe.checkout.sessions.retrieve(input);
 
-      await log({
+      await discord.log({
         message: `A member has successfully paid their dues. ${session.amount_total}`,
         title: "Dues Paid",
         color: "success_green",
@@ -96,7 +96,7 @@ export const duesPaymentRouter = {
     }),
 
   getDuesPaymentDates: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    permissions.controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
     return await db
       .select({ paymentDate: DuesPayment.paymentDate })

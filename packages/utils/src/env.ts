@@ -1,12 +1,10 @@
-import { createEnv } from "@t3-oss/env-nextjs";
+import { createEnv } from "@t3-oss/env-nextjs"; // TODO: look into not using the nextjs version
 import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    LISTMONK_URL: z.string(),
-    LISTMONK_USER: z.string(),
-    LISTMONK_TOKEN: z.string(),
-    LISTMONK_FROM_EMAIL: z.string(),
+    DISCORD_BOT_TOKEN: z.string(),
+    STRIPE_SECRET_KEY: z.string(),
   },
   experimental__runtimeEnv: {},
   skipValidation:

@@ -1,9 +1,9 @@
-/* eslint-disable no-console */
 import type { NextRequest } from "next/server";
 import Stripe from "stripe";
 
 import { db } from "@forge/db/client";
 import { DuesPayment, DuesPaymentSchema } from "@forge/db/schemas/knight-hacks";
+import { logger } from "@forge/utils";
 
 import { env } from "~/env";
 
@@ -11,10 +11,10 @@ async function membershipRecord(sessionId: string) {
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
 
   // TODO: Make this function safe to run multiple times,
-  // even concurrently, with the same session ID
+  //       even concurrently, with the same session ID
 
   // TODO: Make sure fulfillment hasn't already been
-  // peformed for this Checkout Session
+  //       peformed for this Checkout Session
 
   // Retrieve the Checkout Session from the API
   try {
@@ -32,7 +32,7 @@ async function membershipRecord(sessionId: string) {
     }).safeParse(values);
 
     if (!validatedCheckoutFields.success) {
-      console.log(validatedCheckoutFields.error.issues);
+      logger.log(validatedCheckoutFields.error.issues);
       throw new Error("Invalid or missing field(s)");
     }
     // Check the Checkout Session's payment_status property
@@ -43,7 +43,7 @@ async function membershipRecord(sessionId: string) {
     }
     throw new Error("Checkout session payment status is unpaid");
   } catch (e) {
-    console.error("Error:", e);
+    logger.error("Error:", e);
     return false;
   }
 }

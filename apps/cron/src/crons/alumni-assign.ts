@@ -1,13 +1,9 @@
 import { and, gt, isNotNull, isNull, lte, or } from "drizzle-orm";
 
-import {
-  addRoleToMember,
-  removeRoleFromMember,
-  resolveDiscordUserId,
-} from "@forge/api/utils";
 import { DISCORD } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
+import { discord, logger } from "@forge/utils";
 
 import { CronBuilder } from "../structs/CronBuilder";
 
@@ -27,10 +23,11 @@ export const alumniAssign = new CronBuilder({
 
     for (const { discordUser } of graduatedMembers) {
       try {
-        const discordId = await resolveDiscordUserId(discordUser);
-        if (discordId) await addRoleToMember(discordId, DISCORD.ALUMNI_ROLE);
+        const discordId = await discord.resolveDiscordUserId(discordUser);
+        if (discordId)
+          await discord.addRoleToMember(discordId, DISCORD.ALUMNI_ROLE);
       } catch (err) {
-        console.error(`Failed to add alumni role for ${discordUser}:`, err);
+        logger.error(`Failed to add alumni role for ${discordUser}:`, err);
       }
     }
 
@@ -49,11 +46,11 @@ export const alumniAssign = new CronBuilder({
 
     for (const { discordUser } of nonGraduatedMembers) {
       try {
-        const discordId = await resolveDiscordUserId(discordUser);
+        const discordId = await discord.resolveDiscordUserId(discordUser);
         if (discordId)
-          await removeRoleFromMember(discordId, DISCORD.ALUMNI_ROLE);
+          await discord.removeRoleFromMember(discordId, DISCORD.ALUMNI_ROLE);
       } catch (err) {
-        console.error(`Failed to remove alumni role for ${discordUser}:`, err);
+        logger.error(`Failed to remove alumni role for ${discordUser}:`, err);
       }
     }
   },

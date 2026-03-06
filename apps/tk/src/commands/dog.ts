@@ -2,6 +2,8 @@ import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import JIMP from "jimp";
 
+import { logger } from "@forge/utils";
+
 import { TK_DOG_URL } from "../consts";
 
 // DOG COMMAND
@@ -40,9 +42,9 @@ export async function execute(interaction: CommandInteraction) {
     void interaction.reply({ embeds: [embed] });
   } catch (err: unknown) {
     if (err instanceof Error) {
-      console.error(err.message);
+      logger.error(err.message);
     } else {
-      console.error("An unknown error occurred: ", err);
+      logger.error("An unknown error occurred: ", err);
     }
   }
 }

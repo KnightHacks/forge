@@ -32,6 +32,7 @@
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
     "@forge/email": "workspace:^",
+    "@forge/utils": "workspace:*",
     "@forge/validators": "workspace:*",
     "@stripe/stripe-js": "^5.2.0",
     "@trpc/server": "catalog:",

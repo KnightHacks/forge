@@ -1,0 +1,35 @@
+{
+  "name": "@forge/utils",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "devDependencies": {
+    "@forge/auth": "workspace:*",
+    "@forge/consts": "workspace:*",
+    "@forge/db": "workspace:*",
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@forge/prettier-config",
+  "dependencies": {
+    "@discordjs/rest": "^2.4.0",
+    "@t3-oss/env-nextjs": "^0.11.1",
+    "discord-api-types": "^0.37.113"
+  }
+}

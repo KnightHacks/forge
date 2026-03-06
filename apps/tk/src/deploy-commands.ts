@@ -1,5 +1,7 @@
 import { REST, Routes } from "discord.js";
 
+import { logger } from "@forge/utils";
+
 import { commands } from "./commands";
 import { env } from "./env";
 
@@ -18,7 +20,7 @@ interface DeployCommandsProps {
 export async function deployCommands({ guildId }: DeployCommandsProps) {
   try {
     // Log that the commands are being refreshed
-    console.log("Started refreshing application (/) commands.");
+    logger.log("Started refreshing application (/) commands.");
 
     // Load all of the commands
     await rest.put(
@@ -29,9 +31,9 @@ export async function deployCommands({ guildId }: DeployCommandsProps) {
     );
 
     // Log that the commands have been successfully reloaded
-    console.log("Successfully reloaded application (/) commands.");
+    logger.log("Successfully reloaded application (/) commands.");
   } catch (error) {
     // Log any errors that occur
-    console.error(error);
+    logger.error(error);
   }
 }

@@ -1,6 +1,8 @@
 import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
 
+import { logger } from "@forge/utils";
+
 import { TK_FACTS_URL } from "../consts";
 
 // FACT COMMAND
@@ -39,9 +41,9 @@ export async function execute(interaction: CommandInteraction) {
     return interaction.reply(data.text);
   } catch (err: unknown) {
     if (err instanceof Error) {
-      console.log(err.message);
+      logger.log(err.message);
     } else {
-      console.error("An unknown error occurred: ", err);
+      logger.error("An unknown error occurred: ", err);
     }
   }
 }

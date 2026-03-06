@@ -1,9 +1,9 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 
 import { db } from "@forge/db/client";
+import { permissions } from "@forge/utils";
 
 import { permProcedure, protectedProcedure } from "../trpc";
-import { controlPerms } from "../utils";
 
 // // helper schema to check if a value is either of type PermissionKey or PermissionIndex
 // // z.custom doesn't perform any validation by itself, so it will let any type at runtime
@@ -39,7 +39,7 @@ export const userRouter = {
 
   // Also appends roles to returned users
   getUsers: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["CONFIGURE_ROLES"], ctx);
+    permissions.controlPerms.or(["CONFIGURE_ROLES"], ctx);
     const users = await db.query.User.findMany({
       with: {
         permissions: true,
