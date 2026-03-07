@@ -114,9 +114,9 @@ importers:
       superjson:
         specifier: 2.2.6
         version: 2.2.6
-      tailwindcss-animate:
-        specifier: ^1.0.7
-        version: 1.0.7(tailwindcss@4.2.1)
+      tw-animate-css:
+        specifier: ^1.4.0
+        version: 1.4.0
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -237,7 +237,7 @@ importers:
         version: 6.6.0
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       google-auth-library:
         specifier: ^10.6.1
         version: 10.6.1
@@ -280,6 +280,9 @@ importers:
       superjson:
         specifier: 2.2.6
         version: 2.2.6
+      tw-animate-css:
+        specifier: ^1.4.0
+        version: 1.4.0
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -358,7 +361,7 @@ importers:
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -377,6 +380,9 @@ importers:
       rsuite:
         specifier: ^6.1.2
         version: 6.1.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      tw-animate-css:
+        specifier: ^1.4.0
+        version: 1.4.0
     devDependencies:
       '@forge/eslint-config':
         specifier: workspace:*
@@ -534,7 +540,7 @@ importers:
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -628,7 +634,7 @@ importers:
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -647,6 +653,9 @@ importers:
       rsuite:
         specifier: ^6.1.2
         version: 6.1.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      tw-animate-css:
+        specifier: ^1.4.0
+        version: 1.4.0
     devDependencies:
       '@forge/eslint-config':
         specifier: workspace:*
@@ -7762,11 +7771,6 @@ packages:
   tailwind-merge@3.5.0:
     resolution: {integrity: sha512-I8K9wewnVDkL1NTGoqWmVEIlUcB9gFriAEkXkfCjX5ib8ezGxtR3xD7iZIxrfArjEsH7F1CHD4RFUtxefdqV/A==}
 
-  tailwindcss-animate@1.0.7:
-    resolution: {integrity: sha512-bl6mpH3T7I3UFxuvDEXLxy/VuFxBk5bbzplh7tXI68mwMokNYd1t9qPBHlnyTwfa4JGC4zP516I1hYYtQ/vspA==}
-    peerDependencies:
-      tailwindcss: '>=3.0.0 || insiders'
-
   tailwindcss@4.2.1:
     resolution: {integrity: sha512-/tBrSQ36vCleJkAOsy9kbNTgaxvGbyOamC30PRePTQe/o1MFwEKHQk4Cn7BNGaPtjp+PuUrByJehM1hgxfq4sw==}
 
@@ -13324,7 +13328,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  geist@1.7.0(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
+  geist@1.7.0(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
     dependencies:
       next: 16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
@@ -15515,10 +15519,6 @@ snapshots:
   tabs@0.2.0: {}
 
   tailwind-merge@3.5.0: {}
-
-  tailwindcss-animate@1.0.7(tailwindcss@4.2.1):
-    dependencies:
-      tailwindcss: 4.2.1
 
   tailwindcss@4.2.1: {}
 

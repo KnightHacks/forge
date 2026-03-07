@@ -1,6 +1,8 @@
 @import "tailwindcss";
-@source "../../packages/ui/src";
+@import "tw-animate-css";
+@source "../../../../packages/ui/src";
 @config "../../tailwind.config.ts";
+@custom-variant dark (&:is(.dark *));
 
 @utility container {
   margin-inline: auto;
