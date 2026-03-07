@@ -20,11 +20,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
-
 import { events as eventUtils, time } from "@forge/utils";
-import { DASHBOARD_ICON_SIZE } from "~/consts";
-import type { api } from "~/trpc/server";
 
+import type { api } from "~/trpc/server";
+import { DASHBOARD_ICON_SIZE } from "~/consts";
 import { EventFeedbackForm } from "./event-feedback";
 
 export function EventShowcase({

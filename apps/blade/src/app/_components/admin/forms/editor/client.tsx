@@ -25,6 +25,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { ArrowLeft, CogIcon, Loader2, Plus, Save, Users } from "lucide-react";
 
 import type { FORMS } from "@forge/consts";
+import type { trpc } from "@forge/utils";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -52,14 +53,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { Textarea } from "@forge/ui/textarea";
 
 import type { MatchingType } from "./linker";
-import type { trpc } from "@forge/utils";
-
-type ProcedureMeta = trpc.ProcedureMeta;
 import { InstructionEditCard } from "~/app/_components/forms/shared/instruction-edit-card";
 import { QuestionEditCard } from "~/app/_components/forms/shared/question-edit-card";
 import { api } from "~/trpc/react";
 import { ConnectionViewer } from "./con-viewer";
 import ListMatcher from "./linker";
+
+type ProcedureMeta = trpc.ProcedureMeta;
 
 type FormQuestion = z.infer<typeof FORMS.QuestionValidator>;
 type FormInstruction = z.infer<typeof FORMS.InstructionValidator>;

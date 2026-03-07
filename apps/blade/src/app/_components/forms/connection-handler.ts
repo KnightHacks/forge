@@ -4,9 +4,8 @@ import { stringify } from "superjson";
 
 import { appRouter } from "@forge/api";
 import { auth } from "@forge/auth/server";
-import { discord } from "@forge/utils";
+import { discord, trpc } from "@forge/utils";
 
-import { trpc } from "@forge/utils";
 import { api } from "~/trpc/server";
 
 export const handleCallbacks = async (

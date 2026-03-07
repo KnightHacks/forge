@@ -5,9 +5,9 @@ import { Dot, Loader } from "lucide-react";
 
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import { HACKER_TEAMS } from "@forge/db/schemas/knight-hacks";
+import { hackathons } from "@forge/utils";
 
 import type { api as serverCall } from "~/trpc/server";
-import { hackathons } from "@forge/utils";
 import { api } from "~/trpc/react";
 
 interface LeaderboardEntry {

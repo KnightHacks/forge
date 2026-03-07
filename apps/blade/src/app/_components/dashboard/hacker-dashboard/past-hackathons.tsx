@@ -9,8 +9,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
-
 import { time } from "@forge/utils";
+
 import type { api } from "~/trpc/server";
 
 export function PastHackathonButton({

@@ -1,7 +1,7 @@
 "use client";
 
-import { CalendarDays, MapPin, Star, Users } from "lucide-react";
 import { useState } from "react";
+import { CalendarDays, MapPin, Star, Users } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
@@ -40,7 +40,9 @@ export function EventDetailsButton({
           <div>
             <div className="flex flex-row justify-normal gap-4 pb-2 text-left">
               <DialogTitle>{event.name}</DialogTitle>
-              <Badge className={`${events.getTagColor(event.tag)} whitespace-nowrap`}>
+              <Badge
+                className={`${events.getTagColor(event.tag)} whitespace-nowrap`}
+              >
                 {event.tag}
               </Badge>
               {event.hackathonName && (

@@ -6,8 +6,8 @@ import { Crown, Dot, Loader } from "lucide-react";
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import { HACKER_TEAMS } from "@forge/db/schemas/knight-hacks";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
-
 import { hackathons } from "@forge/utils";
+
 import { api } from "~/trpc/react";
 
 export function TeamPoints({

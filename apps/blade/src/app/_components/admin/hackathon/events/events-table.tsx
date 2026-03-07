@@ -1,7 +1,7 @@
 "use client";
 
-import { Search } from "lucide-react";
 import { useState } from "react";
+import { Search } from "lucide-react";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import { Input } from "@forge/ui/input";
@@ -15,8 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@forge/ui/table";
-
 import { time } from "@forge/utils";
+
 import SortButton from "~/app/_components/shared/SortButton";
 import { api } from "~/trpc/react";
 import { CreateEventButton } from "./create-event";
