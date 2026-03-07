@@ -5,7 +5,10 @@ import { Loader2 } from "lucide-react";
 
 import type { FORMS } from "@forge/consts";
 
-import type { FormResponsePayload, FormResponseUI } from "./utils";
+import type { forms } from "@forge/utils";
+
+type FormResponsePayload = forms.FormResponsePayload;
+type FormResponseUI = forms.FormResponseUI;
 import { api } from "~/trpc/react";
 import { useSubmissionSuccess } from "./_hooks/useSubmissionSuccess";
 import FormNotFound from "./form-not-found";

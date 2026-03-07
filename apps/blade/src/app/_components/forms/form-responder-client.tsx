@@ -8,7 +8,9 @@ import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 
-import type { FormResponsePayload } from "./utils";
+import type { forms } from "@forge/utils";
+
+type FormResponsePayload = forms.FormResponsePayload;
 import { api } from "~/trpc/react";
 import { useSubmissionSuccess } from "./_hooks/useSubmissionSuccess";
 import { handleCallbacks } from "./connection-handler";
