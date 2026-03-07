@@ -22,14 +22,17 @@
     "@forge/eslint-config": "workspace:*",
     "@forge/prettier-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
+    "@trpc/server": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "zod": "catalog:"
   },
   "prettier": "@forge/prettier-config",
   "dependencies": {
     "@discordjs/rest": "^2.4.0",
     "@t3-oss/env-nextjs": "^0.11.1",
-    "discord-api-types": "^0.37.113"
+    "discord-api-types": "^0.37.113",
+    "googleapis": "^144.0.0"
   }
 }

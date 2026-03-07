@@ -3,7 +3,6 @@ import type { z } from "zod";
 
 import type { EVENTS } from "@forge/consts";
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
-import { PERMISSIONS } from "@forge/consts";
 
 export const formatDateTime = (date: Date) => {
   // Create a new Date object 5 hours behind the original
@@ -26,18 +25,6 @@ export const getFormattedDate = (start_datetime: string | Date) => {
   return date.toLocaleDateString();
 };
 
-export const formatDateRange = (startDate: Date, endDate: Date) => {
-  const start = new Date(startDate).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-  const end = new Date(endDate).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  return `${start} - ${end}`;
-};
 
 export const getTagColor = (tag: EVENTS.EventTagsColor) => {
   const colors: Record<EVENTS.EventTagsColor, string> = {
@@ -117,15 +104,3 @@ export function extractProcedures(router: AnyTRPCRouter) {
   return procedures;
 }
 
-export function getPermsAsList(perms: string) {
-  const list = [];
-  const permKeys = Object.keys(PERMISSIONS.PERMISSIONS);
-  for (let i = 0; i < perms.length; i++) {
-    const permKey = permKeys.at(i);
-    if (perms[i] == "1" && permKey) {
-      const permissionData = PERMISSIONS.PERMISSION_DATA[permKey];
-      if (permissionData) list.push(permissionData.name);
-    }
-  }
-  return list;
-}

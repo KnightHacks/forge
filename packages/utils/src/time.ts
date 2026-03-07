@@ -31,10 +31,35 @@ export function formatHourTime(date: Date): string {
  * @example
  * const start = new Date('2023-02-19T09:00:00');
  * const end = new Date('2023-02-19T17:00:00');
- * console.log(formatDateRange(start, end)); // "9:00am - 5:00pm"
+ * console.log(formatTimeRange(start, end)); // "9:00am - 5:00pm"
  */
-export const formatDateRange = (startDate: Date, endDate: Date) => {
+export const formatTimeRange = (startDate: Date, endDate: Date) => {
   const start = formatHourTime(startDate);
   const end = formatHourTime(endDate);
+  return `${start} - ${end}`;
+};
+
+/**
+ * Formats a date range (start and end date) into a readable date range string.
+ *
+ * @param {Date} startDate - The start date of the range.
+ * @param {Date} endDate - The end date of the range.
+ * @returns {string} The formatted date range in "Jan 1 - Jan 15, 2024" format.
+ *
+ * @example
+ * const start = new Date('2024-01-01');
+ * const end = new Date('2024-01-15');
+ * console.log(formatDateRange(start, end)); // "Jan 1 - Jan 15, 2024"
+ */
+export const formatDateRange = (startDate: Date, endDate: Date) => {
+  const start = new Date(startDate).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+  const end = new Date(endDate).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
   return `${start} - ${end}`;
 };

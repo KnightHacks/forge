@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+import React, { useRef } from "react";
 import { Calendar, List } from "rsuite";
 
 import type { RouterOutputs } from "@forge/api";
@@ -94,7 +94,7 @@ export default function CalendarEventsPage({
           >
             <div className="flex justify-between">
               <span>
-                {time.formatDateRange(item.start_datetime, item.end_datetime)}
+                {time.formatTimeRange(item.start_datetime, item.end_datetime)}
               </span>
               <span>{item.name}</span>
             </div>

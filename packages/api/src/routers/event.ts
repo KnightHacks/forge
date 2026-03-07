@@ -29,10 +29,9 @@ import {
   InsertEventSchema,
   Member,
 } from "@forge/db/schemas/knight-hacks";
-import { discord, logger, permissions } from "@forge/utils";
+import { discord, forms, google, logger, permissions } from "@forge/utils";
 
 import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
-import { calendar, createForm } from "../utils";
 
 export const eventRouter = {
   getEvents: publicProcedure.query(async () => {
@@ -234,7 +233,7 @@ export const eventRouter = {
       // Step 2: Insert the event into the Google Calendar
       let googleEventId: string | undefined;
       try {
-        const response = await calendar.events.insert({
+        const response = await google.calendar.events.insert({
           calendarId: EVENTS.GOOGLE_CALENDAR_ID,
           requestBody: {
             end: {
@@ -320,7 +319,7 @@ export const eventRouter = {
 
         // Clean up the event in Google Calendar if the database insert fails
         try {
-          await calendar.events.delete({
+          await google.calendar.events.delete({
             calendarId: EVENTS.GOOGLE_CALENDAR_ID,
             eventId: googleEventId,
           });
@@ -429,7 +428,7 @@ export const eventRouter = {
 
       // Step 2: Update the event in Google Calendar
       try {
-        await calendar.events.update({
+        await google.calendar.events.update({
           calendarId: EVENTS.GOOGLE_CALENDAR_ID,
           eventId: input.googleId,
           requestBody: {
@@ -580,7 +579,7 @@ export const eventRouter = {
 
       // Step 2: Delete the event in the Google Calendar
       try {
-        await calendar.events.delete({
+        await google.calendar.events.delete({
           calendarId: EVENTS.GOOGLE_CALENDAR_ID,
           eventId: input.googleId,
         } as calendar_v3.Params$Resource$Events$Delete);
@@ -631,7 +630,7 @@ export const eventRouter = {
       if (form) return form;
 
       try {
-        return await createForm({
+        return await forms.createForm({
           formData: {
             name: formName,
             description: `Provide feedback for ${event.name} to help us make events better in the future!`,

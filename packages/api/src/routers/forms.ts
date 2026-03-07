@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import type { JSONSchema7 } from "json-schema";
 import jsonSchemaToZod from "json-schema-to-zod";
 import * as z from "zod";
 
@@ -20,23 +20,17 @@ import {
   TrpcFormConnection,
   TrpcFormConnectionSchema,
 } from "@forge/db/schemas/knight-hacks";
-import { discord, logger, permissions } from "@forge/utils";
+import { discord, forms, logger, permissions } from "@forge/utils";
 
 import { minioClient } from "../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../trpc";
-import {
-  createForm,
-  CreateFormSchema,
-  generateJsonSchema,
-  regenerateMediaUrls,
-} from "../utils";
 
 export const formsRouter = {
   createForm: permProcedure
-    .input(CreateFormSchema)
+    .input(forms.CreateFormSchema)
     .mutation(async ({ input, ctx }) => {
       permissions.controlPerms.or(["EDIT_FORMS"], ctx);
-      await createForm(input);
+      await forms.createForm(input);
     }),
 
   updateForm: permProcedure
@@ -53,7 +47,7 @@ export const formsRouter = {
     )
     .mutation(async ({ input, ctx }) => {
       permissions.controlPerms.or(["EDIT_FORMS"], ctx);
-      const jsonSchema = generateJsonSchema(input.formData);
+      const jsonSchema = forms.generateJsonSchema(input.formData);
 
       const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
 
@@ -153,8 +147,9 @@ export const formsRouter = {
         .where(eq(FormResponseRoles.formId, form.id));
 
       // Regenerate presigned URLs for any media that has objectNames
-      const instructionsWithFreshUrls = await regenerateMediaUrls(
+      const instructionsWithFreshUrls = await forms.regenerateMediaUrls(
         formData.instructions,
+        minioClient,
       );
 
       return {
@@ -398,7 +393,7 @@ export const formsRouter = {
       }
 
       const formData = form.formData as FORMS.FormType;
-      const jsonSchema = generateJsonSchema(formData);
+      const jsonSchema = forms.generateJsonSchema(formData);
 
       if (!jsonSchema.success) {
         throw new TRPCError({
@@ -484,7 +479,7 @@ export const formsRouter = {
 
       // Validate responseData against form schema
       const formData = form.formData as FORMS.FormType;
-      const jsonSchema = generateJsonSchema(formData);
+      const jsonSchema = forms.generateJsonSchema(formData);
 
       if (!jsonSchema.success) {
         throw new TRPCError({

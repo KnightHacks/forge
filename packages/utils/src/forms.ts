@@ -1,43 +1,11 @@
-/* eslint-disable no-console */
-import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
-import { google } from "googleapis";
+import type { JSONSchema7 } from "json-schema";
 import z from "zod";
 
-import type { Form } from "@forge/db/schemas/knight-hacks";
-import { EVENTS, FORMS, MINIO } from "@forge/consts";
+import { FORMS, MINIO } from "@forge/consts";
 import { db } from "@forge/db/client";
+import type { Form } from "@forge/db/schemas/knight-hacks";
 import { FormSchemaSchema, FormsSchemas } from "@forge/db/schemas/knight-hacks";
-
-import { env } from "./env";
-import { minioClient } from "./minio/minio-client";
-
-const GOOGLE_PRIVATE_KEY = Buffer.from(env.GOOGLE_PRIVATE_KEY_B64, "base64")
-  .toString("utf-8")
-  .replace(/\\n/g, "\n");
-
-const gapiCalendar = "https://www.googleapis.com/auth/calendar";
-const gapiGmailSend = "https://www.googleapis.com/auth/gmail.send";
-const gapiGmailSettingsSharing =
-  "https://www.googleapis.com/auth/gmail.settings.sharing";
-
-const auth = new google.auth.JWT(
-  env.GOOGLE_CLIENT_EMAIL,
-  undefined,
-  GOOGLE_PRIVATE_KEY,
-  [gapiCalendar, gapiGmailSend, gapiGmailSettingsSharing],
-  EVENTS.GOOGLE_PERSONIFY_EMAIL as string,
-);
-
-export const gmail = google.gmail({
-  version: "v1",
-  auth: auth,
-});
-
-export const calendar = google.calendar({
-  version: "v3",
-  auth: auth,
-});
 
 type OptionalSchema =
   | { success: true; schema: JSONSchema7 }
@@ -175,6 +143,13 @@ export function generateJsonSchema(form: FORMS.FormType): OptionalSchema {
 // Helper to regenerate presigned URLs for media
 export async function regenerateMediaUrls(
   instructions: FORMS.FormType["instructions"],
+  minioClient: {
+    presignedGetObject: (
+      bucket: string,
+      objectName: string,
+      expiry: number,
+    ) => Promise<string>;
+  },
 ) {
   if (!instructions) return [];
   const updatedQuestions = await Promise.all(
@@ -190,6 +165,7 @@ export async function regenerateMediaUrls(
             MINIO.PRESIGNED_URL_EXPIRY,
           );
         } catch (e) {
+          // eslint-disable-next-line no-console
           console.error("Failed to regenerate image URL:", e);
         }
       }
@@ -203,6 +179,7 @@ export async function regenerateMediaUrls(
             MINIO.PRESIGNED_URL_EXPIRY,
           );
         } catch (e) {
+          // eslint-disable-next-line no-console
           console.error("Failed to regenerate video URL:", e);
         }
       }
@@ -214,7 +191,6 @@ export async function regenerateMediaUrls(
   return updatedQuestions;
 }
 
-// All of this will be moved to @forge/utils but its here for now
 export const CreateFormSchema = FormSchemaSchema.omit({
   id: true,
   name: true,
