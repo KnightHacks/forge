@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { CalendarDays, MapPin, Star, Users } from "lucide-react";
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
@@ -15,8 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
-
-import { formatDateTime, getTagColor } from "~/lib/utils";
+import { events, time } from "@forge/utils";
 
 export function EventDetailsButton({
   event,
@@ -41,12 +40,12 @@ export function EventDetailsButton({
           <div>
             <div className="flex flex-row justify-normal gap-4 pb-2 text-left">
               <DialogTitle>{event.name}</DialogTitle>
-              <Badge className={`${getTagColor(event.tag)} whitespace-nowrap`}>
+              <Badge className={`${events.getTagColor(event.tag)} whitespace-nowrap`}>
                 {event.tag}
               </Badge>
               {event.hackathonName && (
                 <Badge
-                  className={`${getTagColor(event.tag)} whitespace-nowrap`}
+                  className={`${events.getTagColor(event.tag)} whitespace-nowrap`}
                 >
                   {event.hackathonName}
                 </Badge>
@@ -63,14 +62,14 @@ export function EventDetailsButton({
               <div className="flex flex-col items-start">
                 <span className="text-sm font-medium text-gray-600">Start</span>
                 <span className="mt-1 font-medium">
-                  {formatDateTime(event.start_datetime)}
+                  {time.formatDateTime(event.start_datetime)}
                 </span>
               </div>
 
               <div className="flex flex-col items-start">
                 <span className="text-sm font-medium text-gray-600">End</span>
                 <span className="mt-1 font-medium">
-                  {formatDateTime(event.end_datetime)}
+                  {time.formatDateTime(event.end_datetime)}
                 </span>
               </div>
             </div>

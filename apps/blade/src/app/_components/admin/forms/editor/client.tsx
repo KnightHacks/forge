@@ -52,7 +52,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { Textarea } from "@forge/ui/textarea";
 
 import type { MatchingType } from "./linker";
-import type { ProcedureMeta } from "~/lib/utils";
+import type { trpc } from "@forge/utils";
+
+type ProcedureMeta = trpc.ProcedureMeta;
 import { InstructionEditCard } from "~/app/_components/forms/shared/instruction-edit-card";
 import { QuestionEditCard } from "~/app/_components/forms/shared/question-edit-card";
 import { api } from "~/trpc/react";

@@ -16,7 +16,9 @@ import {
 } from "@forge/ui/select";
 import { toast } from "@forge/ui/toast";
 
-import type { ProcedureMeta } from "~/lib/utils";
+import type { trpc } from "@forge/utils";
+
+type ProcedureMeta = trpc.ProcedureMeta;
 import { api } from "~/trpc/react";
 
 const matchingSchema = z.object({

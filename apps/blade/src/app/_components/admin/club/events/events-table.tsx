@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Search } from "lucide-react";
+import { useState } from "react";
 
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 import { Input } from "@forge/ui/input";
@@ -16,8 +16,8 @@ import {
   TableRow,
 } from "@forge/ui/table";
 
+import { time } from "@forge/utils";
 import SortButton from "~/app/_components/shared/SortButton";
-import { getFormattedDate } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { CreateEventButton } from "./create-event";
 import { DeleteEventButton } from "./delete-event";
@@ -188,7 +188,7 @@ export function EventsTable() {
                 <TableCell className="text-center">{event.tag}</TableCell>
 
                 <TableCell className="text-center">
-                  {getFormattedDate(event.start_datetime)}
+                  {time.getFormattedDate(event.start_datetime)}
                 </TableCell>
 
                 <TableCell>{event.location}</TableCell>
@@ -244,7 +244,7 @@ export function EventsTable() {
                 <TableCell className="text-center">{event.tag}</TableCell>
 
                 <TableCell className="text-center">
-                  {getFormattedDate(event.start_datetime)}
+                  {time.getFormattedDate(event.start_datetime)}
                 </TableCell>
 
                 <TableCell>{event.location}</TableCell>

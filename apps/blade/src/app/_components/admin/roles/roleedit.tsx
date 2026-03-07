@@ -1,9 +1,9 @@
 "use client";
 
 import type { APIRole } from "discord-api-types/v10";
-import { Link, Loader2, Pencil, User, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
 import type { ZodBoolean } from "zod";
+import { useCallback, useEffect, useState } from "react";
+import { Link, Loader2, Pencil, User, X } from "lucide-react";
 import { z } from "zod";
 
 import { PERMISSIONS } from "@forge/consts";
@@ -20,8 +20,8 @@ import {
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { toast } from "@forge/ui/toast";
-
 import { permissions } from "@forge/utils";
+
 import { api } from "~/trpc/react";
 
 export default function RoleEdit({

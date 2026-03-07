@@ -63,3 +63,46 @@ export const formatDateRange = (startDate: Date, endDate: Date) => {
   });
   return `${start} - ${end}`;
 };
+
+/**
+ * Formats a date into a readable date-time string with timezone adjustment.
+ * Creates a new Date object adjusted by 1 day and formats it.
+ *
+ * @param {Date} date - The date object to format.
+ * @returns {string} The formatted date-time in "MMM D, YYYY, h:mm AM/PM" format.
+ *
+ * @example
+ * const date = new Date('2023-02-19T14:30:00');
+ * console.log(formatDateTime(date)); // "Feb 20, 2023, 2:30 PM"
+ */
+export const formatDateTime = (date: Date) => {
+  // Create a new Date object 5 hours behind the original
+  const adjustedDate = new Date(date.getTime());
+  adjustedDate.setDate(adjustedDate.getDate() + 1);
+
+  return adjustedDate.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+/**
+ * Formats a date into a simple date string with timezone adjustment.
+ * Creates a new Date object adjusted by 1 day and formats it.
+ *
+ * @param {string | Date} start_datetime - The date to format.
+ * @returns {string} The formatted date string.
+ *
+ * @example
+ * const date = new Date('2023-02-19');
+ * console.log(getFormattedDate(date)); // "2/20/2023"
+ */
+export const getFormattedDate = (start_datetime: string | Date) => {
+  const date = new Date(start_datetime);
+  date.setDate(date.getDate() + 1);
+  return date.toLocaleDateString();
+};

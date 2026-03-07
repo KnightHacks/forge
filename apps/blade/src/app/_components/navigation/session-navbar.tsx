@@ -1,5 +1,5 @@
-import { ChevronDown, Shield } from "lucide-react";
 import Link from "next/link";
+import { ChevronDown, Shield } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -12,8 +12,8 @@ import {
   NavigationMenuList,
 } from "@forge/ui/navigation-menu";
 import { Separator } from "@forge/ui/separator";
-
 import { permissions } from "@forge/utils";
+
 import { api } from "~/trpc/server";
 import ClubLogo from "./club-logo";
 import { UserDropdown } from "./user-dropdown";

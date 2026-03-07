@@ -28,6 +28,9 @@
     "typescript": "catalog:",
     "zod": "catalog:"
   },
+  "peerDependencies": {
+    "@trpc/server": "catalog:"
+  },
   "prettier": "@forge/prettier-config",
   "dependencies": {
     "@discordjs/rest": "^2.4.0",

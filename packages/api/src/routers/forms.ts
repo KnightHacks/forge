@@ -1330,7 +1330,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       // Get the form
       const form = await db.query.FormsSchemas.findFirst({
@@ -1357,7 +1357,7 @@ export const formsRouter = {
         throw new TRPCError({ message: "Form not found", code: "NOT_FOUND" });
       }
 
-      await log({
+      await discord.log({
         title: `Form ${updatedForm.isClosed ? "closed" : "opened"}`,
         message: `**Form:** ${updatedForm.name}`,
         color: updatedForm.isClosed ? "uhoh_red" : "success_green",

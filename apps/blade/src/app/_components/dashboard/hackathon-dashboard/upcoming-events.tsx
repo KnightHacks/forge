@@ -1,4 +1,3 @@
-import React from "react";
 import { Star } from "lucide-react";
 
 import { Badge } from "@forge/ui/badge";
@@ -10,7 +9,7 @@ import {
   CardTitle,
 } from "@forge/ui/card";
 
-import { formatDateTime } from "~/lib/utils";
+import { time } from "@forge/utils";
 import { api } from "~/trpc/server";
 
 export default async function UpcomingEvents() {
@@ -52,7 +51,7 @@ export default async function UpcomingEvents() {
                     {event.name}
                   </CardTitle>
                   <CardDescription className="text-sm font-medium sm:text-base">
-                    {formatDateTime(event.start_datetime)} @ {event.location}
+                    {time.formatDateTime(event.start_datetime)} @ {event.location}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

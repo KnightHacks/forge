@@ -6,7 +6,7 @@ import { appRouter } from "@forge/api";
 import { auth } from "@forge/auth/server";
 import { discord } from "@forge/utils";
 
-import { extractProcedures } from "~/lib/utils";
+import { trpc } from "@forge/utils";
 import { api } from "~/trpc/server";
 
 export const handleCallbacks = async (
@@ -19,7 +19,7 @@ export const handleCallbacks = async (
   if (!session) return;
 
   const connections = await api.forms.getConnections({ id });
-  const procs = extractProcedures(appRouter);
+  const procs = trpc.extractProcedures(appRouter);
 
   for (const con of connections) {
     const data: Record<string, unknown> = {};

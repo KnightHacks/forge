@@ -4,7 +4,7 @@ import { appRouter } from "@forge/api";
 import { auth } from "@forge/auth/server";
 
 import { EditorClient } from "~/app/_components/admin/forms/editor/client";
-import { extractProcedures } from "~/lib/utils";
+import { trpc } from "@forge/utils";
 import { api } from "~/trpc/server";
 
 export default async function FormEditorPage({
@@ -35,7 +35,7 @@ export default async function FormEditorPage({
 
   return (
     <>
-      <EditorClient procs={extractProcedures(appRouter)} slug={params.slug} />
+      <EditorClient procs={trpc.extractProcedures(appRouter)} slug={params.slug} />
     </>
   );
 }

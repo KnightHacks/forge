@@ -7,7 +7,7 @@ import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import { HACKER_TEAMS } from "@forge/db/schemas/knight-hacks";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
 
-import { getClassTeam } from "~/lib/utils";
+import { hackathons } from "@forge/utils";
 import { api } from "~/trpc/react";
 
 export function TeamPoints({
@@ -21,7 +21,7 @@ export function TeamPoints({
     hackathonName: hId,
   });
   const [byTeam, setByTeam] = useState<number[]>([0, 0]);
-  const team = getClassTeam(hClass);
+  const team = hackathons.getClassTeam(hClass);
 
   function formatPts(pt: number) {
     const fmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
