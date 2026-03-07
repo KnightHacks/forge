@@ -22,7 +22,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeft, Loader2, Plus, Save, Users } from "lucide-react";
+import { ArrowLeft, CogIcon, Loader2, Plus, Save, Users } from "lucide-react";
 
 import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
@@ -37,9 +37,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@forge/ui/dropdown-menu";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
-import { Switch } from "@forge/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { Textarea } from "@forge/ui/textarea";
 
@@ -148,7 +156,10 @@ function ConnectionsTab(props: {
   id: string;
   formData: FORMS.FormType;
 }) {
-  const questions = props.formData.questions.map((q) => q.question);
+  const formQuestions = Array.isArray(props.formData.questions)
+    ? props.formData.questions
+    : [];
+  const questions = formQuestions.map((q) => q.question);
   const { data: connections } = api.forms.getConnections.useQuery({
     id: props.id,
   });
@@ -191,6 +202,7 @@ export function EditorClient({
 
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<string>("");
+  const [isClosed, setIsClosed] = useState(false);
 
   const {
     data: formData,
@@ -248,6 +260,7 @@ export function EditorClient({
       allowResubmission,
       allowEdit,
       responseRoleIds,
+      isClosed,
     });
   }, [
     isLoading,
@@ -264,7 +277,13 @@ export function EditorClient({
     allowResubmission,
     allowEdit,
     responseRoleIds,
+    isClosed,
   ]);
+
+  const saveFormRef = React.useRef(handleSaveForm);
+  useEffect(() => {
+    saveFormRef.current = handleSaveForm;
+  }, [handleSaveForm]);
 
   useEffect(() => {
     if (!isFetching) {
@@ -283,6 +302,7 @@ export function EditorClient({
         setFormTitle(slug);
         setIsLoading(false);
       } else {
+        const loadedFormData = formData.formData as FORMS.FormType;
         setFormTitle(formData.name);
         setFormDescription(formData.formData.description);
         setFormBanner(formData.formData.banner || "");
@@ -290,20 +310,28 @@ export function EditorClient({
         setAllowResubmission(formData.allowResubmission);
         setAllowEdit(formData.allowEdit);
         setResponseRoleIds(formData.responseRoleIds);
+        setIsClosed(formData.isClosed);
 
-        const loadedQuestions: UIQuestion[] = (
-          formData.formData as FORMS.FormType
-        ).questions.map((q: FormQuestion & { order?: number }) => ({
-          ...q,
-          id: crypto.randomUUID(),
-        }));
+        const formQuestions = Array.isArray(loadedFormData.questions)
+          ? loadedFormData.questions
+          : [];
+        const formInstructions = Array.isArray(loadedFormData.instructions)
+          ? loadedFormData.instructions
+          : [];
 
-        const loadedInstructions: UIInstruction[] = (
-          (formData.formData as FORMS.FormType).instructions || []
-        ).map((inst: FormInstruction & { order?: number }) => ({
-          ...inst,
-          id: crypto.randomUUID(),
-        }));
+        const loadedQuestions: UIQuestion[] = formQuestions.map(
+          (q: FormQuestion & { order?: number }) => ({
+            ...q,
+            id: crypto.randomUUID(),
+          }),
+        );
+
+        const loadedInstructions: UIInstruction[] = formInstructions.map(
+          (inst: FormInstruction & { order?: number }) => ({
+            ...inst,
+            id: crypto.randomUUID(),
+          }),
+        );
 
         setQuestions(loadedQuestions);
         setInstructions(loadedInstructions);
@@ -314,31 +342,31 @@ export function EditorClient({
 
   // auto save trigger when toggle switches are changed
   useEffect(() => {
-    if (!isLoading) handleSaveForm();
+    if (!isLoading) saveFormRef.current();
   }, [
     duesOnly,
     allowResubmission,
     responseRoleIds,
     isLoading,
     allowEdit,
-    handleSaveForm,
-  ]); // removed handleSaveForm to prevent save-on-every-render
+    isClosed,
+  ]);
 
   // auto save when finishing editing an item (changing active card)
   useEffect(() => {
-    if (!isLoading) handleSaveForm();
-  }, [activeItemId, handleSaveForm, isLoading]); // triggers when switching items or clicking off
+    if (!isLoading) saveFormRef.current();
+  }, [activeItemId, isLoading]); // triggers when switching items or clicking off
 
   // Periodic auto-save every 40 seconds
   useEffect(() => {
     if (isLoading) return;
 
     const interval = setInterval(() => {
-      handleSaveForm();
+      saveFormRef.current();
     }, 40000);
 
     return () => clearInterval(interval);
-  }, [isLoading, handleSaveForm]);
+  }, [isLoading]);
 
   // Memoize duplicate detection for UI feedback
   const duplicateIds = React.useMemo(() => {
@@ -546,43 +574,49 @@ export function EditorClient({
 
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6 lg:gap-3">
             <div className="flex items-center gap-3">
-              <Switch
-                id="dues-only"
-                checked={duesOnly}
-                onCheckedChange={setDuesOnly}
-              />
-              <Label
-                htmlFor="dues-only"
-                className="cursor-pointer text-sm font-bold"
-              >
-                Dues Only
-              </Label>
-            </div>
-            <div className="flex items-center gap-3">
-              <Switch
-                id="allow-resubmit"
-                checked={allowResubmission}
-                onCheckedChange={setAllowResubmission}
-              />
-              <Label
-                htmlFor="allow-resubmit"
-                className="cursor-pointer text-sm font-bold"
-              >
-                Allow Multiple Responses
-              </Label>
-            </div>
-            <div className="flex items-center gap-3">
-              <Switch
-                id="allow-edit"
-                checked={allowEdit}
-                onCheckedChange={setAllowEdit}
-              />
-              <Label
-                htmlFor="allow-edit"
-                className="cursor-pointer text-sm font-bold"
-              >
-                Allow Response Edit
-              </Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    aria-label="Open form settings"
+                    title="Form settings"
+                  >
+                    <CogIcon className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="min-w-40">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>Form Settings</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuCheckboxItem
+                      checked={duesOnly}
+                      onCheckedChange={setDuesOnly}
+                    >
+                      Dues Only
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={allowResubmission}
+                      onCheckedChange={setAllowResubmission}
+                    >
+                      Allow Multiple Responses
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={allowEdit}
+                      onCheckedChange={setAllowEdit}
+                    >
+                      Allow Response Edit
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={isClosed}
+                      onCheckedChange={setIsClosed}
+                    >
+                      Form Closed
+                    </DropdownMenuCheckboxItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <Dialog
               open={responseRolesDialogOpen}

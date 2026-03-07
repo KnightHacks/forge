@@ -50,7 +50,7 @@ export function FormReviewWrapper({
   });
 
   const form = formQuery.data;
-  const formData = form?.formData as FORMS.FormType;
+  const formData = form?.formData as FORMS.FormType | undefined;
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const stored = (responseQuery.data?.[0]?.responseData ??
@@ -70,10 +70,11 @@ export function FormReviewWrapper({
 
   if (formQuery.error || !form) return <FormNotFound />;
   if (responseQuery.error || !responseQuery.data) return <ResponseNotFound />;
+  if (!formData) return <FormNotFound />;
 
   const zodValidator = form.zodValidator;
 
-  const allowEdit = form.allowEdit;
+  const allowEdit = form.allowEdit && !form.isClosed;
 
   // success
   if (isSubmitted) {
@@ -115,11 +116,12 @@ export function FormReviewWrapper({
 // Form response payload -> UI conversion
 function payloadToUI(
   payload: FormResponsePayload,
-  form: FORMS.FormType,
+  form: FORMS.FormType | undefined,
 ): FormResponseUI {
   const out: FormResponseUI = {};
+  const questions = form?.questions ?? [];
 
-  for (const q of form.questions) {
+  for (const q of questions) {
     const key = q.question;
     const raw = payload[key];
 
