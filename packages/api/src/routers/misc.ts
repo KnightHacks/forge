@@ -4,7 +4,7 @@ import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
 import { DISCORD, FORMS, TEAM } from "@forge/consts";
-import { discord } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
 
 import { protectedProcedure } from "../trpc";
 

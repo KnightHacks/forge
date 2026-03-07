@@ -12,6 +12,7 @@
       "types": "./dist/env.d.ts",
       "default": "./src/env.ts"
     },
+    "./minio/minio-client": "./src/minio/minio-client.ts",
     "./utils": {
       "types": "./dist/utils.d.ts",
       "default": "./src/utils.ts"

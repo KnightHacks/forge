@@ -20,7 +20,9 @@ import {
   TrpcFormConnection,
   TrpcFormConnectionSchema,
 } from "@forge/db/schemas/knight-hacks";
-import { discord, forms, logger, permissions } from "@forge/utils";
+import { logger, permissions } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
+import * as forms from "@forge/utils/forms";
 
 import { minioClient } from "../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../trpc";

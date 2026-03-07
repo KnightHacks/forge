@@ -29,7 +29,10 @@ import {
   InsertEventSchema,
   Member,
 } from "@forge/db/schemas/knight-hacks";
-import { discord, forms, google, logger, permissions } from "@forge/utils";
+import { logger, permissions } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
+import * as forms from "@forge/utils/forms";
+import * as google from "@forge/utils/google";
 
 import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
 

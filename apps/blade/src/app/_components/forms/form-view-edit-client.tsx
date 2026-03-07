@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import type { FORMS } from "@forge/consts";
-import type { forms } from "@forge/utils";
+import type * as forms from "@forge/utils/forms.client";
 
 import { api } from "~/trpc/react";
 import { useSubmissionSuccess } from "./_hooks/useSubmissionSuccess";

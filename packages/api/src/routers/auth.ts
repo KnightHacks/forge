@@ -1,7 +1,9 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 
 import { invalidateSessionToken } from "@forge/auth/server";
-import { discord, permissions } from "@forge/utils";
+import { permissions } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
+import * as permissionsServer from "@forge/utils/permissions.server";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
 
@@ -35,7 +37,7 @@ export const authRouter = {
     return discord.isDiscordMember(ctx.session.user);
   }),
   getJudgeStatus: publicProcedure.query(async () => {
-    const isJudge = await permissions.isJudgeAdmin();
+    const isJudge = await permissionsServer.isJudgeAdmin();
     return isJudge;
   }),
 

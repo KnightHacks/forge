@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
-import { forms } from "@forge/utils";
+import * as forms from "@forge/utils/forms.client";
 
 import { InstructionResponseCard } from "~/app/_components/forms/instruction-response-card";
 import { QuestionResponseCard } from "~/app/_components/forms/question-response-card";

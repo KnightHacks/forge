@@ -31,8 +31,9 @@ import { stringify } from "superjson";
 
 import { DISCORD, MINIO } from "@forge/consts";
 
+// Scripts can use relative imports to avoid circular dependencies
 import { minioClient } from "../../api/src/minio/minio-client";
-import { discord } from "../../utils/src";
+import * as discord from "../../utils/src/discord";
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
 import * as knightHacksSchema from "../src/schemas/knight-hacks";

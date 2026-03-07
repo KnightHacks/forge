@@ -7,7 +7,9 @@ import { CLUB } from "@forge/consts";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
-import { discord, permissions, stripe } from "@forge/utils";
+import { permissions } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
+import { stripe } from "@forge/utils/stripe";
 
 import { env } from "../env";
 import { permProcedure, protectedProcedure } from "../trpc";

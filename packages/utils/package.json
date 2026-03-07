@@ -4,7 +4,13 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./discord": "./src/discord.ts",
+    "./forms": "./src/forms.ts",
+    "./forms.client": "./src/forms.client.ts",
+    "./google": "./src/google.ts",
+    "./permissions.server": "./src/permissions.server.ts",
+    "./stripe": "./src/stripe.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -36,6 +42,7 @@
     "@discordjs/rest": "^2.4.0",
     "@t3-oss/env-nextjs": "^0.11.1",
     "discord-api-types": "^0.37.113",
-    "googleapis": "^144.0.0"
+    "googleapis": "^144.0.0",
+    "server-only": "^0.0.1"
   }
 }

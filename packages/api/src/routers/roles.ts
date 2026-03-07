@@ -8,7 +8,8 @@ import { DISCORD, PERMISSIONS } from "@forge/consts";
 import { eq, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
-import { discord, logger, permissions } from "@forge/utils";
+import { logger, permissions } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
 
 import { permProcedure, protectedProcedure } from "../trpc";
 

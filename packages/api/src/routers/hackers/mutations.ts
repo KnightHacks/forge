@@ -16,7 +16,8 @@ import {
   HackerEventAttendee,
   InsertHackerSchema,
 } from "@forge/db/schemas/knight-hacks";
-import { discord, logger, permissions } from "@forge/utils";
+import { logger, permissions } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
 
 import { minioClient } from "../../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../../trpc";

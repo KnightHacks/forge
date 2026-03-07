@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
 import { DISCORD } from "@forge/consts";
-import { discord } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
 
 import { permProcedure } from "../trpc";
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 
 import type { FORMS } from "@forge/consts";
-import type { forms } from "@forge/utils";
+import type * as forms from "@forge/utils/forms.client";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 

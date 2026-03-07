@@ -18,7 +18,9 @@ import { PERMISSIONS } from "@forge/consts";
 import { eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";
-import { discord, permissions } from "@forge/utils";
+import { permissions } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
+import * as permissionsServer from "@forge/utils/permissions.server";
 
 /**
  * 1. CONTEXT
@@ -182,13 +184,13 @@ export const judgeProcedure = publicProcedure.use(async ({ ctx, next }) => {
   if (ctx.session) {
     isAdmin = await discord.isDiscordAdmin(ctx.session.user);
   }
-  const isJudge = await permissions.isJudgeAdmin();
+  const isJudge = await permissionsServer.isJudgeAdmin();
 
   if (!isAdmin && !isJudge) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
-  const judgeSession = await permissions.getJudgeSessionFromCookie();
+  const judgeSession = await permissionsServer.getJudgeSessionFromCookie();
 
   return next({
     ctx: {

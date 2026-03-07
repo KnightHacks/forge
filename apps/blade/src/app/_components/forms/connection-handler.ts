@@ -4,7 +4,8 @@ import { stringify } from "superjson";
 
 import { appRouter } from "@forge/api";
 import { auth } from "@forge/auth/server";
-import { discord, trpc } from "@forge/utils";
+import { trpc } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
 
 import { api } from "~/trpc/server";
 
