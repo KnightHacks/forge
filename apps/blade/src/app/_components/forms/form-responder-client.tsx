@@ -5,18 +5,18 @@ import Link from "next/link";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 
 import type { FORMS } from "@forge/consts";
+import type { forms } from "@forge/utils";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
 
-import type { forms } from "@forge/utils";
-
-type FormResponsePayload = forms.FormResponsePayload;
 import { api } from "~/trpc/react";
 import { useSubmissionSuccess } from "./_hooks/useSubmissionSuccess";
 import { handleCallbacks } from "./connection-handler";
 import FormNotFound from "./form-not-found";
 import { FormRunner } from "./form-runner";
 import { SubmissionSuccessCard } from "./form-submitted-success";
+
+type FormResponsePayload = forms.FormResponsePayload;
 
 interface FormResponderWrapperProps {
   formName: string;
