@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  foreignKey,
   pgEnum,
   pgTableCreator,
   primaryKey,
@@ -8,7 +9,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
-import { EVENTS, FORMS } from "@forge/consts";
+import { EVENTS, FORMS, ISSUE } from "@forge/consts";
 
 import { Roles, User } from "./auth";
 
@@ -26,6 +27,7 @@ export const hackathonApplicationStateEnum = pgEnum(
   "hackathon_application_state",
   FORMS.HACKATHON_APPLICATION_STATES,
 );
+export const issueStatus = pgEnum("issue_status", ISSUE.ISSUE_STATUS);
 
 export const Hackathon = createTable("hackathon", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -547,3 +549,107 @@ export const TrpcFormConnection = createTable("trpc_form_connection", (t) => ({
 }));
 
 export const TrpcFormConnectionSchema = createInsertSchema(TrpcFormConnection);
+
+export const Issue = createTable(
+  "issue",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    status: issueStatus().notNull(),
+    name: t.text().notNull(),
+    description: t.text().notNull(),
+    links: t.text().array(),
+    event: t.uuid().references(() => Event.id),
+    date: t.timestamp(),
+    team: t
+      .uuid()
+      .notNull()
+      .references(() => Roles.id),
+    creator: t
+      .uuid()
+      .notNull()
+      .references(() => User.id),
+    parent: t.uuid(),
+  }),
+  (table) => ({
+    parentReference: foreignKey({
+      columns: [table.parent],
+      foreignColumns: [table.id],
+      name: "issue_parent_fk",
+    }),
+  }),
+);
+
+export const IssuesToTeamsVisibility = createTable(
+  "issues_to_teams_visibility",
+  (t) => ({
+    issueId: t
+      .uuid("issue_id")
+      .notNull()
+      .references(() => Issue.id),
+    teamId: t
+      .uuid("team_id")
+      .notNull()
+      .references(() => Roles.id),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.issueId, table.teamId] }),
+  }),
+);
+
+export const issuesToTeamsVisibilityRelations = relations(
+  IssuesToTeamsVisibility,
+  ({ one }) => ({
+    issue: one(Issue, {
+      fields: [IssuesToTeamsVisibility.issueId],
+      references: [Issue.id],
+    }),
+    team: one(Roles, {
+      fields: [IssuesToTeamsVisibility.teamId],
+      references: [Roles.id],
+    }),
+  }),
+);
+
+export const IssuesToUsersAssignment = createTable(
+  "issues_to_users_assignment",
+  (t) => ({
+    issueId: t
+      .uuid("issue_id")
+      .notNull()
+      .references(() => Issue.id),
+    userId: t
+      .uuid("user_id")
+      .notNull()
+      .references(() => User.id),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.issueId, table.userId] }),
+  }),
+);
+
+export const issuesToUsersAssignmentRelations = relations(
+  IssuesToUsersAssignment,
+  ({ one }) => ({
+    issue: one(Issue, {
+      fields: [IssuesToUsersAssignment.issueId],
+      references: [Issue.id],
+    }),
+    user: one(User, {
+      fields: [IssuesToUsersAssignment.userId],
+      references: [User.id],
+    }),
+  }),
+);
+
+export const issueRelations = relations(Issue, ({ many }) => ({
+  teamVisibility: many(IssuesToTeamsVisibility),
+  userAssignments: many(IssuesToUsersAssignment),
+}));
+
+export const rolesRelations = relations(Roles, ({ many }) => ({
+  visibleIssues: many(IssuesToTeamsVisibility),
+}));
+
+export const usersRelations = relations(User, ({ many }) => ({
+  assignedIssues: many(IssuesToUsersAssignment),
+}));

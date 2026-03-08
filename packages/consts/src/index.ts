@@ -8,3 +8,4 @@ export * as GUILD from "./guild";
 export * as MINIO from "./minio";
 export * as PERMISSIONS from "./permissions";
 export * as TEAM from "./team";
+export * as ISSUE from "./issue";
