@@ -4,11 +4,12 @@ import natural from "natural";
 import sharp from "sharp";
 
 import { db } from "@forge/db/client";
-
-const { LevenshteinDistance, Metaphone } = natural;
+import { logger } from "@forge/utils";
 
 // GOAT COMMAND
 // random G.O.A.T. image
+
+const { LevenshteinDistance, Metaphone } = natural;
 
 const VALID_ONSETS = new Set([
   "b",
@@ -169,7 +170,7 @@ export const getGoatEmbed = async () => {
     if (guildProfileVisible) goat = rest;
   }
 
-  console.log(goat);
+  logger.log(goat);
 
   const response = await fetch(goat.profilePictureUrl);
   const buffer = await response.arrayBuffer();
@@ -216,7 +217,7 @@ export async function execute(interaction: CommandInteraction) {
     const embed = await getGoatEmbed();
     void interaction.reply({ embeds: [embed] });
   } catch (err: unknown) {
-    if (err instanceof Error) console.error(err.message);
-    else console.error("An unknown error occurred: ", err);
+    if (err instanceof Error) logger.error(err.message);
+    else logger.error("An unknown error occurred: ", err);
   }
 }

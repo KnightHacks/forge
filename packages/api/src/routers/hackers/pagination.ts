@@ -3,9 +3,9 @@ import { z } from "zod";
 import { and, asc, count, desc, eq, ilike, ne, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Hacker, HackerAttendee } from "@forge/db/schemas/knight-hacks";
+import { permissions } from "@forge/utils";
 
 import { permProcedure } from "../../trpc";
-import { controlPerms } from "../../utils";
 
 const SOFT_BLACKLIST_HACKER_ID = "7f89fe4d-26f0-42fe-ac98-22d8f648d7a7";
 
@@ -47,7 +47,7 @@ export const hackerPaginationRouter = {
       }),
     )
     .query(async ({ ctx, input }) => {
-      controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
 
       const currentPage = input.currentPage ?? 1;
       const pageSize = input.pageSize ?? 10;
@@ -216,7 +216,7 @@ export const hackerPaginationRouter = {
       }),
     )
     .query(async ({ ctx, input }) => {
-      controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
 
       const conditions = [eq(HackerAttendee.hackathonId, input.hackathonId)];
 
@@ -309,7 +309,7 @@ export const hackerPaginationRouter = {
       }),
     )
     .query(async ({ ctx, input }) => {
-      controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
       const gradYearExpr = sql<number>`EXTRACT(YEAR FROM ${Hacker.gradDate})::int`;
       const isFirstTimeExpr = sql<boolean>`COALESCE(${Hacker.isFirstTime}, false)`;
       const whereClause = eq(HackerAttendee.hackathonId, input.hackathonId);

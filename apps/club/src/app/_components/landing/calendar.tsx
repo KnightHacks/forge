@@ -9,12 +9,13 @@ import { Calendar, List } from "rsuite";
 import type { RouterOutputs } from "@forge/api";
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 
-import { formatDateRange } from "~/lib/utils";
 import NeonTkSVG from "./assets/neon-tk";
 import SwordSVG from "./assets/sword";
 import TerminalSVG from "./assets/terminal";
 
 import "rsuite/Calendar/styles/index.css";
+
+import { time } from "@forge/utils";
 
 function TodoList({ list }: { list: ReturnEvent[] }) {
   if (!list.length) {
@@ -35,7 +36,7 @@ function TodoList({ list }: { list: ReturnEvent[] }) {
         >
           <div className="flex justify-between">
             <span>
-              {formatDateRange(item.start_datetime, item.end_datetime)}
+              {time.formatTimeRange(item.start_datetime, item.end_datetime)}
             </span>
             <span>{item.name}</span>
           </div>

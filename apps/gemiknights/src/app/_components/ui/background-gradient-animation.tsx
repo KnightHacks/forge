@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { cn } from "~/lib/utils";
+import { cn } from "@forge/ui";
 
 export const BackgroundGradientAnimation = ({
   gradientBackgroundStart = "rgb(108, 0, 162)",

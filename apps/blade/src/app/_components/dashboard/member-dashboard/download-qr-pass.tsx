@@ -45,6 +45,7 @@ export function DownloadQRPass() {
 
         toast.success("Apple Wallet pass downloaded successfully!");
       } catch (error) {
+        // TODO: look into not logging into the console
         console.error("Error downloading pass:", error); // eslint-disable-line no-console
         toast.error("Failed to download pass");
       } finally {
@@ -52,6 +53,7 @@ export function DownloadQRPass() {
       }
     },
     onError: (error: { message?: string }) => {
+      // TODO: look into not logging into the console
       console.error("Error generating pass:", error); // eslint-disable-line no-console
       toast.error(error.message ?? "Failed to generate pass");
       setIsDownloading(false);

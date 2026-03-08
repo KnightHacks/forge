@@ -8,6 +8,7 @@ import { MINIO } from "@forge/consts";
 import { and, count, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
+import { logger } from "@forge/utils";
 
 import { env } from "../env";
 import { minioClient } from "../minio/minio-client";
@@ -42,7 +43,7 @@ export const guildRouter = {
       );
 
       if (!base64Data) {
-        console.error("uploadProfilePicture: Base64 data is missing.");
+        logger.error("uploadProfilePicture: Base64 data is missing.");
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Base64 data is missing or invalid after stripping prefix.",
@@ -65,7 +66,7 @@ export const guildRouter = {
           );
         }
       } catch (e) {
-        console.error(
+        logger.error(
           "uploadProfilePicture: Error checking/creating bucket:",
           e,
         );
@@ -88,7 +89,7 @@ export const guildRouter = {
           }
         }
       } catch (e) {
-        console.warn(
+        logger.warn(
           "uploadProfilePicture: Error listing existing profile pictures, proceeding with upload:",
           e,
         );
@@ -101,7 +102,7 @@ export const guildRouter = {
             existingObjects,
           );
         } catch (e) {
-          console.error(
+          logger.error(
             "uploadProfilePicture: Error removing existing profile pictures:",
             e,
           );
@@ -121,7 +122,7 @@ export const guildRouter = {
           { "Content-Type": contentType },
         );
       } catch (e) {
-        console.error(
+        logger.error(
           "uploadProfilePicture: Error uploading profile picture to Minio:",
           e,
         );
@@ -247,7 +248,7 @@ export const guildRouter = {
             "response-content-disposition": `attachment; filename="${downloadName}"`,
           },
         );
-        console.log("Resumé URL generated:", url);
+        logger.log("Resumé URL generated:", url);
         return { url };
       } catch {
         throw new TRPCError({

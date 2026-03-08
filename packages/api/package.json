@@ -12,6 +12,7 @@
       "types": "./dist/env.d.ts",
       "default": "./src/env.ts"
     },
+    "./minio/minio-client": "./src/minio/minio-client.ts",
     "./utils": {
       "types": "./dist/utils.d.ts",
       "default": "./src/utils.ts"
@@ -32,6 +33,7 @@
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
     "@forge/email": "workspace:^",
+    "@forge/utils": "workspace:*",
     "@forge/validators": "workspace:*",
     "@stripe/stripe-js": "^8.8.0",
     "@trpc/server": "catalog:",

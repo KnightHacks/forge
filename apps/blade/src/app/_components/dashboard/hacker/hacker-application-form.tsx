@@ -379,6 +379,7 @@ export function HackerFormPage({
               },
             });
           } catch (error) {
+            // TODO: look into not logging into the console
             // eslint-disable-next-line no-console
             console.error("Error uploading resume or creating hacker:", error);
             toast.error(

@@ -20,6 +20,7 @@
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
     "@forge/ui": "workspace:*",
+    "@forge/utils": "workspace:*",
     "@gsap/react": "^2.1.2",
     "@svgr/webpack": "^8.1.0",
     "framer-motion": "^12.34.3",

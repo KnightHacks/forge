@@ -7,9 +7,4 @@ export default [
   },
   ...baseConfig,
   ...restrictEnvAccess,
-  {
-    rules: {
-      "no-console": "off",
-    },
-  },
 ];

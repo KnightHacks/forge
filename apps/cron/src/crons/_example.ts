@@ -1,3 +1,5 @@
+import { logger } from "@forge/utils";
+
 import { CronBuilder } from "../structs/CronBuilder";
 
 export const testCron = new CronBuilder({
@@ -6,6 +8,6 @@ export const testCron = new CronBuilder({
 }).addCron(
   "* * * * * ", // every minute
   () => {
-    console.log("This is an example cron that runs every minute");
+    logger.log("This is an example cron that runs every minute");
   },
 );

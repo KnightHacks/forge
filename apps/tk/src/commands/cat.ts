@@ -2,6 +2,8 @@ import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import { Jimp as JIMP } from "jimp";
 
+import { logger } from "@forge/utils";
+
 import { TK_CAT_URL } from "../consts";
 
 // CAT COMMAND
@@ -52,9 +54,9 @@ export async function execute(interaction: CommandInteraction) {
     // catch any errors
   } catch (err: unknown) {
     if (err instanceof Error) {
-      console.error(err.message);
+      logger.error(err.message);
     } else {
-      console.error("An unknown error occurred: ", err);
+      logger.error("An unknown error occurred: ", err);
     }
   }
 }

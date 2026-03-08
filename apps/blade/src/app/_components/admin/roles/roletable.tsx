@@ -29,8 +29,8 @@ import {
   TableRow,
 } from "@forge/ui/table";
 import { toast } from "@forge/ui/toast";
+import { permissions } from "@forge/utils";
 
-import { getPermsAsList } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import RoleEdit from "./roleedit";
 
@@ -138,7 +138,7 @@ export default function RoleTable() {
                       tabIndex={0}
                       className="flex w-fit flex-row gap-1 rounded-lg border px-2 py-1 hover:bg-muted"
                     >
-                      {getPermsAsList(v.permissions).length}
+                      {permissions.getPermsAsList(v.permissions).length}
                       <ChevronDown className="my-auto size-4" />
                     </div>
                   </DropdownMenuTrigger>
@@ -147,7 +147,7 @@ export default function RoleTable() {
                       This role has the following permissions:
                     </h3>
                     <ul className="mt-1 max-h-48 list-disc overflow-y-auto px-4">
-                      {getPermsAsList(v.permissions).map((p) => {
+                      {permissions.getPermsAsList(v.permissions).map((p) => {
                         return (
                           <li className={`p-1 text-sm text-muted-foreground`}>
                             {p}

@@ -32,6 +32,7 @@ export default function MemberProfileButton({
     }
 
     invalidateMembers().catch((error) => {
+      // TODO: why are we logging to the browser console
       // eslint-disable-next-line no-console
       console.error("Error invalidating members in member profile: ", error);
     });

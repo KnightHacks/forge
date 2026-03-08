@@ -2,7 +2,7 @@ import type { APIThreadChannel } from "discord-api-types/v10";
 import { Routes, ThreadAutoArchiveDuration } from "discord-api-types/v10";
 import { WebhookClient } from "discord.js";
 
-import { discord } from "@forge/api/utils";
+import * as discord from "@forge/utils/discord";
 
 import { env } from "../env";
 import { CronBuilder } from "../structs/CronBuilder";
@@ -90,12 +90,15 @@ export const leetcode = new CronBuilder({
       embeds: [problemEmbed],
     });
 
-    const thread = (await discord.post(Routes.threads(msg.channel_id, msg.id), {
-      body: {
-        name: dateString,
-        auto_archive_duration: ThreadAutoArchiveDuration.OneDay,
+    const thread = (await discord.api.post(
+      Routes.threads(msg.channel_id, msg.id),
+      {
+        body: {
+          name: dateString,
+          auto_archive_duration: ThreadAutoArchiveDuration.OneDay,
+        },
       },
-    })) as APIThreadChannel;
+    )) as APIThreadChannel;
 
     await LEETCODE_WEBHOOK.send({
       content: "Make sure to wrap your solution with spoiler tags!",

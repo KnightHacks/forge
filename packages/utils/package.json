@@ -1,0 +1,48 @@
+{
+  "name": "@forge/utils",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./discord": "./src/discord.ts",
+    "./forms": "./src/forms.ts",
+    "./forms.client": "./src/forms.client.ts",
+    "./google": "./src/google.ts",
+    "./permissions.server": "./src/permissions.server.ts",
+    "./stripe": "./src/stripe.ts"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "devDependencies": {
+    "@forge/auth": "workspace:*",
+    "@forge/consts": "workspace:*",
+    "@forge/db": "workspace:*",
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
+    "@trpc/server": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "@trpc/server": "catalog:"
+  },
+  "prettier": "@forge/prettier-config",
+  "dependencies": {
+    "@discordjs/rest": "^2.6.0",
+    "@t3-oss/env-nextjs": "^0.13.10",
+    "discord-api-types": "^0.38.40",
+    "googleapis": "^171.4.0",
+    "server-only": "^0.0.1"
+  }
+}

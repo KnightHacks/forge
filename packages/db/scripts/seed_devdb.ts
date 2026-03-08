@@ -1,8 +1,22 @@
+// TODO: use a real logger to avoid this issue
 /* eslint-disable no-console */
+
 // Usage:
 //   pnpm --filter @forge/db with-env tsx scripts/seed_devdb.ts
 
-// A script to be run on prod only, this will take the prod db and make a backup sql script to insert all rows that don't have sensitive user data. It will only keep data from our admin members and delete any judging data/other sensitive data. It will also take all the server specific discord IDs in the DB and then sync them up with an event/role in the dev server and change the ID in the db for the local version. This sql file is uploaded to our minio client to be pulled by the get_prod_db.ts script. There's no realistic reason for this script to ever be ran on dev unless you're updating it cause I probably messed a lot up :D. See get_prod_db.ts for how to get prod data into your local db for deving.
+// A script to be run on prod only, this will take the prod db and make a
+// backup sql script to insert all rows that don't have sensitive user data. It
+// will only keep data from our admin members and delete any judging data/other
+// sensitive data. It will also take all the server specific discord IDs in the
+// DB and then sync them up with an event/role in the dev server and change the
+// ID in the db for the local version. This sql file is uploaded to our minio
+// client to be pulled by the get_prod_db.ts script. There's no realistic
+// reason for this script to ever be ran on dev unless you're updating it cause
+// I probably messed a lot up :D. See get_prod_db.ts for how to get prod data
+// into your local db for deving.
+
+// TODO: look into moving into a separate area so we don't have to do the BS
+//       that we do with `../../api` and `../../utils`
 
 import { exec } from "child_process";
 import { unlink } from "fs/promises";
@@ -17,8 +31,9 @@ import { stringify } from "superjson";
 
 import { DISCORD, MINIO } from "@forge/consts";
 
+// Scripts can use relative imports to avoid circular dependencies
 import { minioClient } from "../../api/src/minio/minio-client";
-import { discord, log } from "../../api/src/utils";
+import * as discord from "../../utils/src/discord";
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
 import * as knightHacksSchema from "../src/schemas/knight-hacks";
@@ -228,12 +243,12 @@ async function syncRoles() {
       await backupDb.query.Roles.findMany({ columns: { discordRoleId: true } })
     ).map((row) => row.discordRoleId),
   );
-  let prodRoles = (await discord.get(
+  let prodRoles = (await discord.api.get(
     Routes.guildRoles(DISCORD.PROD_KNIGHTHACKS_GUILD),
   )) as DiscordRole[];
   prodRoles = prodRoles.filter((role) => prodRolesWithPerms.has(role.id));
 
-  const devRolesArr = (await discord.get(
+  const devRolesArr = (await discord.api.get(
     Routes.guildRoles(DISCORD.DEV_KNIGHTHACKS_GUILD),
   )) as DiscordRole[];
   const devRoles = Object.fromEntries(
@@ -246,7 +261,7 @@ async function syncRoles() {
       roleIdMappings[role.id] = devRoles[hash].id;
     } else {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      const newRole = (await discord.post(
+      const newRole = (await discord.api.post(
         Routes.guildRoles(DISCORD.DEV_KNIGHTHACKS_GUILD),
         {
           body: {
@@ -288,11 +303,11 @@ interface DiscordGuildScheduledEvent {
 async function syncEvents() {
   if (!backupDb) return;
 
-  const prodEvents = (await discord.get(
+  const prodEvents = (await discord.api.get(
     Routes.guildScheduledEvents(DISCORD.PROD_KNIGHTHACKS_GUILD),
   )) as DiscordGuildScheduledEvent[];
 
-  const devEventsArr = (await discord.get(
+  const devEventsArr = (await discord.api.get(
     Routes.guildScheduledEvents(DISCORD.DEV_KNIGHTHACKS_GUILD),
   )) as DiscordGuildScheduledEvent[];
   const devEvents = Object.fromEntries(
@@ -305,7 +320,7 @@ async function syncEvents() {
       eventIdMappings[event.id] = devEvents[hash].id;
     } else {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      const newEvent = (await discord.post(
+      const newEvent = (await discord.api.post(
         Routes.guildScheduledEvents(DISCORD.DEV_KNIGHTHACKS_GUILD),
         {
           body: {
@@ -415,7 +430,7 @@ async function main() {
     console.log("Cleaning up backup db");
     await cleanUp();
 
-    await log({
+    await discord.log({
       title: `Successfully saved limited prod db to minio`,
       message: `Successfully saved limited prod db to minio. Run the get_prod_db.ts script to get it into your local dev db.`,
       color: "success_green",
@@ -425,7 +440,7 @@ async function main() {
     process.exit(0);
   } catch (error) {
     console.error("Error during database seeding:", error);
-    await log({
+    await discord.log({
       title: `Failed to save limited prod db to minio`,
       message: `Failed to sav limited prod db to minio. Error: ${stringify(error)}`,
       color: "uhoh_red",
