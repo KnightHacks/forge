@@ -9,9 +9,9 @@ import {
   HACKER_CLASSES,
   HackerAttendee,
 } from "@forge/db/schemas/knight-hacks";
+import { permissions } from "@forge/utils";
 
 import { permProcedure, protectedProcedure } from "../../trpc";
-import { controlPerms } from "../../utils";
 
 export const hackerQueryRouter = {
   getHacker: protectedProcedure
@@ -108,7 +108,7 @@ export const hackerQueryRouter = {
   getHackers: permProcedure.input(z.string()).query(async ({ ctx, input }) => {
     // CHECKIN_HACK_EVENT is here because people trying to check-in
     // need to retrieve the member list for manual entry
-    controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
+    permissions.controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
 
     const hackers = await db
       .select({
@@ -157,7 +157,7 @@ export const hackerQueryRouter = {
   getAllHackers: permProcedure
     .input(z.object({ hackathonName: z.string().optional() }))
     .query(async ({ ctx, input }) => {
-      controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["READ_HACKERS", "CHECKIN_HACK_EVENT"], ctx);
 
       let hackathon;
 
@@ -420,7 +420,7 @@ export const hackerQueryRouter = {
   statusCountByHackathonId: permProcedure
     .input(z.string())
     .query(async ({ ctx, input: hackathonId }) => {
-      controlPerms.or(["READ_HACK_DATA"], ctx);
+      permissions.controlPerms.or(["READ_HACK_DATA"], ctx);
 
       const results = await Promise.all(
         FORMS.HACKATHON_APPLICATION_STATES.map(async (s) => {

@@ -17,6 +17,7 @@
     "@forge/api": "workspace:*",
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
+    "@forge/utils": "workspace:*",
     "@forge/validators": "workspace:*",
     "@t3-oss/env-core": "^0.11.1",
     "discord.js": "^14.16.3",

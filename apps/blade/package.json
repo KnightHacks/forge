@@ -26,6 +26,7 @@
     "@forge/db": "workspace:*",
     "@forge/email": "workspace:^",
     "@forge/ui": "workspace:*",
+    "@forge/utils": "workspace:*",
     "@forge/validators": "workspace:*",
     "@react-email/render": "1.1.0",
     "@stripe/react-stripe-js": "^3.0.0",

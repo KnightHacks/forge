@@ -1,6 +1,8 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import cron from "node-cron";
 
+import { logger } from "@forge/utils";
+
 // DO NOT TOUCH
 // Basically the whole point here is to override console.log such that when
 // we are inside of the CronBuilder AsyncLocalStorage, we add the logging info
@@ -83,23 +85,23 @@ export class CronBuilder {
     for (const { expression, executor } of this.crons) {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       cron.schedule(expression, this._executor.bind(this, executor));
-      currentCron.run(this, () => console.log(`scheduled @ ${expression}`));
+      currentCron.run(this, () => logger.log(`scheduled @ ${expression}`));
     }
   }
 
   private async _executor(executor: ExecutorFunction): Promise<void> {
     return await currentCron.run(this, async () => {
       const startTime = Date.now();
-      console.log(`started @ ${new Date(startTime).toLocaleTimeString()}`);
+      logger.log(`started @ ${new Date(startTime).toLocaleTimeString()}`);
 
       try {
         await executor();
       } catch (error) {
-        console.error(error);
+        logger.error(error);
       }
 
       const endTime = Date.now();
-      console.log(
+      logger.log(
         `finished @ ${new Date(endTime).toLocaleTimeString()} (${endTime - startTime}ms)`,
       );
     });

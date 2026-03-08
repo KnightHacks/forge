@@ -1,6 +1,8 @@
 import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
 
+import { logger } from "@forge/utils";
+
 import { TK_JOKE_URL } from "../consts";
 
 interface JokeProps {
@@ -30,9 +32,9 @@ export async function execute(interaction: CommandInteraction) {
     }
   } catch (err: unknown) {
     if (err instanceof Error) {
-      console.error(err.message);
+      logger.error(err.message);
     } else {
-      console.error("An unknown error occurred: ", err);
+      logger.error("An unknown error occurred: ", err);
     }
   }
 }

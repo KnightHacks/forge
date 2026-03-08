@@ -29,9 +29,12 @@ import {
   InsertEventSchema,
   Member,
 } from "@forge/db/schemas/knight-hacks";
+import { logger, permissions } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
+import * as forms from "@forge/utils/forms";
+import * as google from "@forge/utils/google";
 
 import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
-import { calendar, controlPerms, createForm, discord, log } from "../utils";
 
 export const eventRouter = {
   getEvents: publicProcedure.query(async () => {
@@ -126,7 +129,7 @@ export const eventRouter = {
   getAttendees: permProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      controlPerms.or(["READ_CLUB_EVENT"], ctx);
+      permissions.controlPerms.or(["READ_CLUB_EVENT"], ctx);
 
       const attendees = await db
         .select({
@@ -142,7 +145,7 @@ export const eventRouter = {
   getHackerAttendees: permProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      controlPerms.or(["READ_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["READ_HACK_EVENT"], ctx);
 
       const attendees = await db
         .select({
@@ -170,7 +173,7 @@ export const eventRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
 
       // Step 0: Convert provided start/end datetimes into Local Date objects
       const startDatetime = new Date(input.start_datetime);
@@ -208,7 +211,7 @@ export const eventRouter = {
       // Step 1: Create the event in Discord
       let discordEventId: string | undefined;
       try {
-        const response = (await discord.post(
+        const response = (await discord.api.post(
           Routes.guildScheduledEvents(DISCORD.KNIGHTHACKS_GUILD),
           {
             body: {
@@ -226,7 +229,7 @@ export const eventRouter = {
         )) as APIExternalGuildScheduledEvent;
         discordEventId = response.id;
       } catch (error) {
-        console.error(JSON.stringify(error, null, 2));
+        logger.error(JSON.stringify(error, null, 2));
         throw new TRPCError({
           message: "Failed to create event in Discord",
           code: "BAD_REQUEST",
@@ -255,19 +258,19 @@ export const eventRouter = {
         } as calendar_v3.Params$Resource$Events$Insert);
         googleEventId = response.data.id ?? undefined;
       } catch (error) {
-        console.error("ERROR MESSAGE:", JSON.stringify(error, null, 2));
+        logger.error("ERROR MESSAGE:", JSON.stringify(error, null, 2));
 
         // Clean up the event in Discord if the Google Calendar event fails
         if (discordEventId) {
           try {
-            await discord.delete(
+            await discord.api.delete(
               Routes.guildScheduledEvent(
                 DISCORD.KNIGHTHACKS_GUILD,
                 discordEventId,
               ),
             );
           } catch (cleanupErr) {
-            console.error(JSON.stringify(cleanupErr, null, 2));
+            logger.error(JSON.stringify(cleanupErr, null, 2));
           }
         }
 
@@ -307,18 +310,18 @@ export const eventRouter = {
           googleId: googleEventId,
         });
       } catch (error) {
-        console.error(JSON.stringify(error, null, 2));
+        logger.error(JSON.stringify(error, null, 2));
 
         // Clean up the event in Discord if the database insert fails
         try {
-          await discord.delete(
+          await discord.api.delete(
             Routes.guildScheduledEvent(
               DISCORD.KNIGHTHACKS_GUILD,
               discordEventId,
             ),
           );
         } catch (cleanupErr) {
-          console.error(JSON.stringify(cleanupErr, null, 2));
+          logger.error(JSON.stringify(cleanupErr, null, 2));
         }
 
         // Clean up the event in Google Calendar if the database insert fails
@@ -328,7 +331,7 @@ export const eventRouter = {
             eventId: googleEventId,
           });
         } catch (cleanupErr) {
-          console.error(JSON.stringify(cleanupErr, null, 2));
+          logger.error(JSON.stringify(cleanupErr, null, 2));
         }
 
         throw new TRPCError({
@@ -338,7 +341,7 @@ export const eventRouter = {
       }
 
       // Step 4: Log the creation
-      await log({
+      await discord.log({
         title: "Event Created",
         message: `The event **${formattedName}** was created.`,
         color: "blade_purple",
@@ -349,7 +352,7 @@ export const eventRouter = {
   updateEvent: permProcedure
     .input(InsertEventSchema)
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
 
       if (!input.id) {
         throw new TRPCError({
@@ -403,7 +406,7 @@ export const eventRouter = {
 
       // Step 1: Update the event in Discord
       try {
-        await discord.patch(
+        await discord.api.patch(
           Routes.guildScheduledEvent(
             DISCORD.KNIGHTHACKS_GUILD,
             input.discordId,
@@ -423,7 +426,7 @@ export const eventRouter = {
           },
         );
       } catch (error) {
-        console.error(JSON.stringify(error, null, 2));
+        logger.error(JSON.stringify(error, null, 2));
         throw new TRPCError({
           message: "Failed to update event in Discord",
           code: "BAD_REQUEST",
@@ -432,7 +435,7 @@ export const eventRouter = {
 
       // Step 2: Update the event in Google Calendar
       try {
-        await calendar.events.update({
+        await google.calendar.events.update({
           calendarId: EVENTS.GOOGLE_CALENDAR_ID,
           eventId: input.googleId,
           requestBody: {
@@ -450,7 +453,7 @@ export const eventRouter = {
           },
         } as calendar_v3.Params$Resource$Events$Update);
       } catch (error) {
-        console.error(JSON.stringify(error, null, 2));
+        logger.error(JSON.stringify(error, null, 2));
         throw new TRPCError({
           message: "Failed to update event in Google Calendar",
           code: "BAD_REQUEST",
@@ -522,7 +525,7 @@ export const eventRouter = {
 
       const oldFormattedName = `[${event.tag.toUpperCase().replace(" ", "-")}] ${event.name}`;
 
-      await log({
+      await discord.log({
         title: "Event Updated",
         message: `Event **${oldFormattedName}** was updated.\n**Changes:**\n${changesString}`,
         color: "blade_purple",
@@ -556,7 +559,7 @@ export const eventRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+      permissions.controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
 
       if (!input.id) {
         throw new TRPCError({
@@ -567,14 +570,14 @@ export const eventRouter = {
 
       // Step 1: Delete the event in Discord
       try {
-        await discord.delete(
+        await discord.api.delete(
           Routes.guildScheduledEvent(
             DISCORD.KNIGHTHACKS_GUILD,
             input.discordId,
           ),
         );
       } catch (error) {
-        console.error(JSON.stringify(error, null, 2));
+        logger.error(JSON.stringify(error, null, 2));
         throw new TRPCError({
           message: "Failed to delete event in Discord",
           code: "BAD_REQUEST",
@@ -583,12 +586,12 @@ export const eventRouter = {
 
       // Step 2: Delete the event in the Google Calendar
       try {
-        await calendar.events.delete({
+        await google.calendar.events.delete({
           calendarId: EVENTS.GOOGLE_CALENDAR_ID,
           eventId: input.googleId,
         } as calendar_v3.Params$Resource$Events$Delete);
       } catch (error) {
-        console.error(JSON.stringify(error, null, 2));
+        logger.error(JSON.stringify(error, null, 2));
         throw new TRPCError({
           message: "Failed to delete event in Google Calendar",
           code: "BAD_REQUEST",
@@ -596,7 +599,7 @@ export const eventRouter = {
       }
 
       const formattedName = `[${input.tag.toUpperCase().replace(" ", "-")}] ${input.name}`;
-      await log({
+      await discord.log({
         title: "Event Deleted",
         message: `The event **${formattedName}** was deleted.`,
         color: "uhoh_red",
@@ -634,7 +637,7 @@ export const eventRouter = {
       if (form) return form;
 
       try {
-        return await createForm({
+        return await forms.createForm({
           formData: {
             name: formName,
             description: `Provide feedback for ${event.name} to help us make events better in the future!`,
@@ -703,7 +706,7 @@ export const eventRouter = {
       }),
     )
     .query(async ({ ctx, input }) => {
-      controlPerms.or(["READ_CLUB_EVENT"], ctx);
+      permissions.controlPerms.or(["READ_CLUB_EVENT"], ctx);
 
       const conditions = [];
 

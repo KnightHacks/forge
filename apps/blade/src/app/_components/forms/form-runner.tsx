@@ -5,11 +5,13 @@ import { useEffect, useState } from "react";
 import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
+import * as forms from "@forge/utils/forms.client";
 
-import type { FormResponsePayload, FormResponseUI } from "./utils";
 import { InstructionResponseCard } from "~/app/_components/forms/instruction-response-card";
 import { QuestionResponseCard } from "~/app/_components/forms/question-response-card";
-import { getValidationError, isFormValid, normalizeResponses } from "./utils";
+
+type FormResponsePayload = forms.FormResponsePayload;
+type FormResponseUI = forms.FormResponseUI;
 
 /**
  * Shared renderer for "fill out form" and "review/edit response".
@@ -82,10 +84,12 @@ export function FormRunner({
   };
 
   const canSubmit =
-    allowEdit && !isSubmitting && isFormValid(zodValidator, responses, form);
+    allowEdit &&
+    !isSubmitting &&
+    forms.isFormValid(zodValidator, responses, form);
 
   const handleSubmit = () => {
-    const payload = normalizeResponses(responses, form);
+    const payload = forms.normalizeResponses(responses, form);
     onSubmit(payload);
   };
 
@@ -167,7 +171,7 @@ export function FormRunner({
                       handleResponseChange(item.question, value);
                     }}
                     formId={formId}
-                    error={getValidationError(
+                    error={forms.getValidationError(
                       item,
                       zodValidator,
                       responses,

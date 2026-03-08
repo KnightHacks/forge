@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 /**
  * YOU PROBABLY DON'T NEED TO EDIT THIS FILE, UNLESS:
  * 1. You want to modify request context (see Part 1)
@@ -16,12 +18,8 @@ import { PERMISSIONS } from "@forge/consts";
 import { eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";
-
-import {
-  getJudgeSessionFromCookie,
-  isDiscordAdmin,
-  isJudgeAdmin,
-} from "./utils";
+import * as discord from "@forge/utils/discord";
+import * as permissionsServer from "@forge/utils/permissions.server";
 
 /**
  * 1. CONTEXT
@@ -183,15 +181,15 @@ export const permProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 export const judgeProcedure = publicProcedure.use(async ({ ctx, next }) => {
   let isAdmin;
   if (ctx.session) {
-    isAdmin = await isDiscordAdmin(ctx.session.user);
+    isAdmin = await discord.isDiscordAdmin(ctx.session.user);
   }
-  const isJudge = await isJudgeAdmin();
+  const isJudge = await permissionsServer.isJudgeAdmin();
 
   if (!isAdmin && !isJudge) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
-  const judgeSession = await getJudgeSessionFromCookie();
+  const judgeSession = await permissionsServer.getJudgeSessionFromCookie();
 
   return next({
     ctx: {

@@ -7,6 +7,7 @@ import sharp from "sharp";
 import { db } from "@forge/db/client";
 import { Permissions } from "@forge/db/schemas/auth";
 import { Member } from "@forge/db/schemas/knight-hacks";
+import { logger } from "@forge/utils";
 
 import { env } from "../env";
 import { CronBuilder } from "../structs/CronBuilder";
@@ -102,7 +103,7 @@ export const goat = new CronBuilder({
     ].find((u) => u?.trim());
 
     const name = replaceName(`${goat.firstName} ${goat.lastName}`);
-    console.log("goat chosen: ", name);
+    logger.log("goat chosen: ", name);
 
     const embed = await createEmbed(
       goat.profilePictureUrl,

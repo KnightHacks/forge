@@ -1,11 +1,12 @@
 import type { APIGuildMember } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 
-import { discord } from "@forge/api/utils";
 import { DISCORD } from "@forge/consts";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
+import { logger } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
 
 import { CronBuilder } from "../structs/CronBuilder";
 
@@ -24,11 +25,11 @@ export const roleSync = new CronBuilder({
   async () => {
     // Get all roles that are linked in Blade
     const linkedRoles = await db.select().from(Roles);
-    console.log(`Found ${linkedRoles.length} linked roles`);
+    logger.log(`Found ${linkedRoles.length} linked roles`);
 
     // Get all users in Blade
     const users = await db.select().from(User);
-    console.log(`Checking ${users.length} users`);
+    logger.log(`Checking ${users.length} users`);
 
     let addedCount = 0;
     let removedCount = 0;
@@ -40,7 +41,7 @@ export const roleSync = new CronBuilder({
     for (const user of users) {
       try {
         // Fetch the user's roles from Discord
-        const guildMember = (await discord.get(
+        const guildMember = (await discord.api.get(
           Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),
         )) as APIGuildMember;
 
@@ -96,14 +97,14 @@ export const roleSync = new CronBuilder({
       }
     }
 
-    console.log(
+    logger.log(
       `Sync completed. Added: ${addedCount}, Removed: ${removedCount}, Skipped: ${skippedCount}, Errors: ${errorCount}`,
     );
 
     if (errorCount > 0) {
-      console.warn(`First ${erroredUsers.length} users it errored for:`);
+      logger.warn(`First ${erroredUsers.length} users it errored for:`);
       for (const name of erroredUsers) {
-        console.warn(name);
+        logger.warn(name);
       }
     }
   },
