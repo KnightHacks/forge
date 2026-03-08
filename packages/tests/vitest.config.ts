@@ -9,6 +9,7 @@ export default defineConfig({
     testTimeout: 30000,
     hookTimeout: 30000,
     teardownTimeout: 30000,
-    globalSetup: ["./setup/db.ts"],
+    globalTeardown: ["./setup/db.ts"],
+    setupFiles: ["./setup/vitest.setup.ts"],
   },
 });

@@ -1,9 +1,9 @@
-import type { InsertEvent, InsertMember } from "@forge/db/schemas/knight-hacks";
 import { PERMISSIONS } from "@forge/consts";
 import * as authSchema from "@forge/db/schemas/auth";
+import type { InsertEvent, InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Event, Member } from "@forge/db/schemas/knight-hacks";
 
-import { testDb } from "./db";
+import { getTestDb } from "./db";
 
 /**
  * Creates a test user in the database.
@@ -11,7 +11,7 @@ import { testDb } from "./db";
 export async function createTestUser(
   overrides?: Partial<typeof authSchema.User.$inferInsert>,
 ) {
-  if (!testDb) throw new Error("testDb not initialized");
+  const testDb = getTestDb();
 
   const [user] = await testDb
     .insert(authSchema.User)
@@ -33,7 +33,7 @@ export async function createTestUser(
 export async function createTestRole(
   overrides?: Partial<typeof authSchema.Roles.$inferInsert>,
 ) {
-  if (!testDb) throw new Error("testDb not initialized");
+  const testDb = getTestDb();
 
   const permissionsCount = Object.keys(PERMISSIONS.PERMISSIONS).length;
   const defaultPermissions = "0".repeat(permissionsCount);
@@ -41,8 +41,8 @@ export async function createTestRole(
   const [role] = await testDb
     .insert(authSchema.Roles)
     .values({
-      name: "Test Role",
-      discordRoleId: `test_role_${Date.now()}`,
+      name: `Test Role ${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      discordRoleId: `test_role_${Date.now()}_${Math.random().toString(36).slice(2)}`,
       permissions: defaultPermissions,
       ...overrides,
     })
@@ -59,7 +59,7 @@ export async function createTestMember(
   userId: string,
   overrides?: Partial<InsertMember>,
 ) {
-  if (!testDb) throw new Error("testDb not initialized");
+  const testDb = getTestDb();
 
   const now = new Date();
   const dob = new Date(now.getFullYear() - 20, 0, 1); // 20 years old
@@ -92,7 +92,7 @@ export async function createTestMember(
  * Creates a test event in the database.
  */
 export async function createTestEvent(overrides?: Partial<InsertEvent>) {
-  if (!testDb) throw new Error("testDb not initialized");
+  const testDb = getTestDb();
 
   const now = new Date();
   const startDate = new Date(now.getTime() + 24 * 60 * 60 * 1000); // Tomorrow
@@ -122,7 +122,7 @@ export async function createTestEvent(overrides?: Partial<InsertEvent>) {
  * Grants a role to a user.
  */
 export async function grantRole(userId: string, roleId: string) {
-  if (!testDb) throw new Error("testDb not initialized");
+  const testDb = getTestDb();
 
   const [permission] = await testDb
     .insert(authSchema.Permissions)

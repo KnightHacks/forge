@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
 import { exec } from "child_process";
-import fs from "fs";
-import { unlink } from "fs/promises";
-import { pipeline } from "stream/promises";
-import { promisify } from "util";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { drizzle } from "drizzle-orm/node-postgres";
+import fs from "fs";
+import { unlink } from "fs/promises";
 import Pool from "pg-pool";
+import { pipeline } from "stream/promises";
+import { promisify } from "util";
 
 import { minioClient } from "@forge/api/minio/minio-client";
 import * as authSchema from "@forge/db/schemas/auth";
@@ -34,7 +34,16 @@ type KnightHacksSchema = typeof knightHacksSchema;
 type DatabaseSchema = AuthSchema & KnightHacksSchema;
 
 let testPool: Pool<import("pg").Client> | null = null;
-export let testDb: NodePgDatabase<DatabaseSchema> | null = null;
+let testDb: NodePgDatabase<DatabaseSchema> | null = null;
+let isSetup = false;
+
+/**
+ * Getter function to access testDb. This ensures we always get the current value.
+ */
+export function getTestDb(): NodePgDatabase<DatabaseSchema> {
+  if (!testDb) throw new Error("testDb not initialized");
+  return testDb;
+}
 
 // Admin pool for DDL operations (CREATE/DROP DATABASE)
 const adminPool = new Pool({
@@ -46,45 +55,77 @@ const adminPool = new Pool({
  * Creates the ephemeral test database, pushes schema, and seeds test data.
  * Called once before all tests run.
  */
-async function setupDatabase() {
+export async function setupDatabase() {
+  // If already initialized, skip
+  if (isSetup && testDb) {
+    console.log("[Test DB] Already initialized, skipping setup");
+    return;
+  }
+
+  // Check if database already exists (another test file might have created it)
+  const dbExistsResult = await adminPool.query(
+    `SELECT 1 FROM pg_database WHERE datname = $1`,
+    [TEST_DB_NAME],
+  );
+  const dbExists = dbExistsResult.rows.length > 0;
+
+  if (dbExists && testDb) {
+    console.log("[Test DB] Database already exists and testDb initialized, skipping setup");
+    isSetup = true;
+    return;
+  }
+
   try {
-    console.log(`[Test DB] Dropping database ${TEST_DB_NAME} if it exists...`);
-    await adminPool.query(`DROP DATABASE IF EXISTS ${TEST_DB_NAME}`);
+    if (dbExists) {
+      // Database exists but testDb not initialized - just connect to it
+      console.log(`[Test DB] Database ${TEST_DB_NAME} already exists, connecting...`);
+    } else {
+      console.log(`[Test DB] Dropping database ${TEST_DB_NAME} if it exists...`);
+      await adminPool.query(`DROP DATABASE IF EXISTS ${TEST_DB_NAME}`);
 
-    console.log(`[Test DB] Creating fresh database ${TEST_DB_NAME}...`);
-    await adminPool.query(`CREATE DATABASE ${TEST_DB_NAME}`);
-
-    // Create test pool and drizzle instance
-    testPool = new Pool({
-      connectionString: TEST_DB_URL,
-    });
-
-    testDb = drizzle({
-      client: testPool,
-      schema: { ...authSchema, ...knightHacksSchema },
-      casing: "snake_case",
-    });
-
-    // Push schema using drizzle-kit
-    console.log(`[Test DB] Pushing schema to ${TEST_DB_NAME}...`);
-    const { stdout, stderr } = await execAsync(
-      `cd ../../packages/db && DATABASE_URL="${TEST_DB_URL}" pnpm drizzle-kit push`,
-    );
-    if (stderr && !stderr.includes("No schema changes")) {
-      console.warn("[Test DB] drizzle-kit push stderr:", stderr);
-    }
-    if (stdout) {
-      console.log("[Test DB] drizzle-kit push:", stdout);
+      console.log(`[Test DB] Creating fresh database ${TEST_DB_NAME}...`);
+      await adminPool.query(`CREATE DATABASE ${TEST_DB_NAME}`);
     }
 
-    // Pull seeded devdb from MinIO and apply it
-    console.log(`[Test DB] Pulling seeded devdb from MinIO...`);
-    await applySeededDevdb();
+    // Create test pool and drizzle instance (only if not already created)
+    if (!testPool) {
+      testPool = new Pool({
+        connectionString: TEST_DB_URL,
+      });
+    }
 
-    // Seed additional test data on top of the seeded devdb
-    console.log(`[Test DB] Seeding additional test data...`);
-    await seedTestData();
+    if (!testDb) {
+      testDb = drizzle({
+        client: testPool,
+        schema: { ...authSchema, ...knightHacksSchema },
+        casing: "snake_case",
+      });
+    }
 
+    // Only push schema and seed if database was just created
+    if (!dbExists) {
+      // Push schema using drizzle-kit
+      console.log(`[Test DB] Pushing schema to ${TEST_DB_NAME}...`);
+      const { stdout, stderr } = await execAsync(
+        `cd ../../packages/db && DATABASE_URL="${TEST_DB_URL}" pnpm drizzle-kit push`,
+      );
+      if (stderr && !stderr.includes("No schema changes")) {
+        console.warn("[Test DB] drizzle-kit push stderr:", stderr);
+      }
+      if (stdout) {
+        console.log("[Test DB] drizzle-kit push:", stdout);
+      }
+
+      // Pull seeded devdb from MinIO and apply it
+      console.log(`[Test DB] Pulling seeded devdb from MinIO...`);
+      await applySeededDevdb();
+
+      // Seed additional test data on top of the seeded devdb
+      console.log(`[Test DB] Seeding additional test data...`);
+      await seedTestData();
+    }
+
+    isSetup = true;
     console.log(`[Test DB] Setup complete!`);
   } catch (error) {
     console.error("[Test DB] Setup failed:", error);
@@ -181,11 +222,7 @@ async function teardownDatabase() {
   }
 }
 
-// Vitest global setup/teardown
-export async function setup() {
-  await setupDatabase();
-}
-
+// Vitest global teardown (setup is handled by setupFiles)
 export async function teardown() {
   await teardownDatabase();
 }
