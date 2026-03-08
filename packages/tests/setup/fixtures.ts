@@ -1,6 +1,6 @@
+import type { InsertEvent, InsertMember } from "@forge/db/schemas/knight-hacks";
 import { PERMISSIONS } from "@forge/consts";
 import * as authSchema from "@forge/db/schemas/auth";
-import type { InsertEvent, InsertMember } from "@forge/db/schemas/knight-hacks";
 import { Event, Member } from "@forge/db/schemas/knight-hacks";
 
 import { getTestDb } from "./db";

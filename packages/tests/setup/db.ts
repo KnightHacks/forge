@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
 import { exec } from "child_process";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { drizzle } from "drizzle-orm/node-postgres";
 import fs from "fs";
 import { unlink } from "fs/promises";
-import Pool from "pg-pool";
 import { pipeline } from "stream/promises";
 import { promisify } from "util";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { drizzle } from "drizzle-orm/node-postgres";
+import Pool from "pg-pool";
 
 import { minioClient } from "@forge/api/minio/minio-client";
 import * as authSchema from "@forge/db/schemas/auth";
@@ -70,7 +70,9 @@ export async function setupDatabase() {
   const dbExists = dbExistsResult.rows.length > 0;
 
   if (dbExists && testDb) {
-    console.log("[Test DB] Database already exists and testDb initialized, skipping setup");
+    console.log(
+      "[Test DB] Database already exists and testDb initialized, skipping setup",
+    );
     isSetup = true;
     return;
   }
@@ -78,9 +80,13 @@ export async function setupDatabase() {
   try {
     if (dbExists) {
       // Database exists but testDb not initialized - just connect to it
-      console.log(`[Test DB] Database ${TEST_DB_NAME} already exists, connecting...`);
+      console.log(
+        `[Test DB] Database ${TEST_DB_NAME} already exists, connecting...`,
+      );
     } else {
-      console.log(`[Test DB] Dropping database ${TEST_DB_NAME} if it exists...`);
+      console.log(
+        `[Test DB] Dropping database ${TEST_DB_NAME} if it exists...`,
+      );
       await adminPool.query(`DROP DATABASE IF EXISTS ${TEST_DB_NAME}`);
 
       console.log(`[Test DB] Creating fresh database ${TEST_DB_NAME}...`);
