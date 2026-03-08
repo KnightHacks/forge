@@ -12,6 +12,8 @@ import type { Appearance } from "@stripe/stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { useTheme } from "next-themes";
 
+import { FaStripe } from "react-icons/fa";
+
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
@@ -124,6 +126,11 @@ function PaymentForm() {
             <p className="text-xs text-muted-foreground">
                 All payments are non-refundable.
             </p>
+            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                <span>Powered by</span>
+                <FaStripe className="h-8 w-8 text-[#635BFF]" />
+                <span className="font-medium">  | Privacy Terms</span>
+            </div>
             <div className="flex justify-between">
                 <Button
                     type="button"
