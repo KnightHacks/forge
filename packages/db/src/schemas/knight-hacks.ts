@@ -547,3 +547,11 @@ export const TrpcFormConnection = createTable("trpc_form_connection", (t) => ({
 }));
 
 export const TrpcFormConnectionSchema = createInsertSchema(TrpcFormConnection);
+
+export const Template = createTable("template", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.text().notNull(),
+  body: t.jsonb().notNull(), 
+  createdAt: t.timestamp().defaultNow().notNull(),
+  updatedAt: t.timestamp().defaultNow().$onUpdate(() => new Date()).notNull(),
+}));
