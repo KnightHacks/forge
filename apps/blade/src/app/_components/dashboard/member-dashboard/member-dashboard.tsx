@@ -124,19 +124,19 @@ export default async function MemberDashboard({
           </div>
           {/* Unified View */}
           <div className="animate-mobile-initial-expand space-y-4">
-            <div className="animate-fade-in grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 gap-4 md:h-[800px] md:grid-cols-3">
+              <div className="grid gap-4 md:min-h-0 md:grid-rows-3">
                 <AlumniDiscord />
                 <EarlyAccessVolunteer />
                 <MemberInfo />
               </div>
 
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4 md:min-h-0 md:grid-rows-2">
                 <Donate />
                 <DayInHistory />
               </div>
 
-              <div>
+              <div className="grid gap-4 md:min-h-0 md:grid-rows-1">
                 <AlumniRecap
                   member={member}
                   events={events.value}
