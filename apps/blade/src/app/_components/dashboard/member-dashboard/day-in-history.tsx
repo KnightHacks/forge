@@ -1,12 +1,22 @@
 import { Card, CardTitle } from "@forge/ui/card";
 
+const ALUMNI_PHOTOS: { src: string; caption: string }[] = [
+  { src: "/alumni-recap/2019-crowd.jpg", caption: "Crowd at KH III" },
+  { src: "/alumni-recap/DSC_0125.JPG", caption: "GuitAR at KH 7" },
+  { src: "/alumni-recap/IMG_4699.JPG", caption: "KH Organizers 2017" },
+  { src: "/alumni-recap/IMG_6763.JPG", caption: "KH 4 Ops Sweaters" },
+  { src: "/alumni-recap/IMG_8131.JPG", caption: "KH 6 Food being Served" },
+  { src: "/alumni-recap/KnightHacks.JPG", caption: "KH Crew at Bitcamp" },
+  {
+    src: "/alumni-recap/ThankYouAllForAttendingYouAllMeanTheWorldToUs.png",
+    caption: "KH 8 Organizers",
+  },
+];
+
 export default function DayInHistory() {
-  // TODO: replace with real fetch later
-  const dailyImage = {
-    src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1600&q=80",
-    alt: "Mountain landscape at sunrise",
-    caption: "On this day: a breathtaking sunrise over the mountains (placeholder daily image).",
-  };
+  // TODO: replace with real proc fetch later
+  const dailyImage =
+    ALUMNI_PHOTOS[Math.floor(Math.random() * ALUMNI_PHOTOS.length)]!;
 
   return (
     <Card className="overflow-hidden px-4">
@@ -14,7 +24,7 @@ export default function DayInHistory() {
       <div className="">
         <img
           src={dailyImage.src}
-          alt={dailyImage.alt}
+          alt={dailyImage.caption}
           className="h-56 w-full object-cover sm:h-64"
           loading="lazy"
         />
