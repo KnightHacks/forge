@@ -4,6 +4,7 @@ import type { calendar_v3 } from "googleapis";
 import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
+import { env } from "../env";
 
 import { DISCORD, EVENTS } from "@forge/consts";
 import {
@@ -209,19 +210,36 @@ export const eventRouter = {
       const pointDesc = `\n\n**⭐ ${EVENTS.EVENT_POINTS[input.tag] || 0} Points**`;
 
       // Step 1: Create the event in Discord
+      // Determine if this should be hidden based on UI checkboxes
+      const isInternalEvent = input.roles.length > 0 || input.isOperationsCalendar;
+
+      // If it's internal, we lose the "location" field in Discord, so append it to the description
+      const finalDescription = isInternalEvent 
+        ? `${hackDesc}${input.description}\n\n📍 **Location:** ${input.location}${pointDesc}`
+        : `${hackDesc}${input.description}${pointDesc}`;
+
+      // Step 1: Create the event in Discord
       let discordEventId: string | undefined;
       try {
         const response = (await discord.api.post(
           Routes.guildScheduledEvents(DISCORD.KNIGHTHACKS_GUILD),
           {
             body: {
-              description: hackDesc + input.description + pointDesc,
+              description: finalDescription,
               name: formattedName,
               privacy_level: DISCORD.EVENT_PRIVACY_LEVEL,
-              scheduled_start_time: startLocalIso, // Use ISO for Discord
-              scheduled_end_time: endLocalIso, // Use ISO for Discord
-              entity_type: DISCORD.EVENT_TYPE,
-              entity_metadata: {
+              scheduled_start_time: startLocalIso,
+              scheduled_end_time: endLocalIso,
+              
+              // 2 = VOICE (Internal/Hidden), DISCORD.EVENT_TYPE = EXTERNAL (Public)
+              entity_type: isInternalEvent ? 2 : DISCORD.EVENT_TYPE,
+              
+              // Link to the private channel if internal. 
+              // Make sure 'env' is imported at the top of your file!
+              channel_id: isInternalEvent ? env.DISCORD_OPS_VOICE_CHANNEL_ID : undefined,
+              
+              // Only provide entity_metadata (location) if it's an external public event
+              entity_metadata: isInternalEvent ? undefined : {
                 location: input.location,
               },
             },
@@ -239,9 +257,9 @@ export const eventRouter = {
       // Step 2: Insert the event into the Google Calendar
       let googleEventId: string | undefined;
       try {
-        const response = await calendar.events.insert({
+        const response = await google.calendar.events.insert({
           // NEED GOOGLE OPS ID 
-          calendarId: input.isOperationsCalendar ? google_ops_id : EVENTS.GOOGLE_CALENDAR_ID,
+          calendarId: input.isOperationsCalendar ? EVENTS.DEV_GOOGLE_CALENDAR_ID : EVENTS.GOOGLE_CALENDAR_ID,
           requestBody: {
             end: {
               dateTime: endLocalIso, // ISO for Google Calendar
@@ -326,8 +344,8 @@ export const eventRouter = {
 
         // Clean up the event in Google Calendar if the database insert fails
         try {
-          await calendar.events.delete({
-            calendarId: input.isOperationsCalendar ? google_ops_id : EVENTS.GOOGLE_CALENDAR_ID,
+          await google.calendar.events.delete({
+            calendarId: input.isOperationsCalendar ? EVENTS.DEV_GOOGLE_CALENDAR_ID : EVENTS.GOOGLE_CALENDAR_ID,
             eventId: googleEventId,
           });
         } catch (cleanupErr) {
@@ -405,21 +423,38 @@ export const eventRouter = {
       const pointDesc = `\n\n**⭐ ${EVENTS.EVENT_POINTS[input.tag] || 0} Points**`;
 
       // Step 1: Update the event in Discord
+      
+      // Determine if this should be hidden based on UI checkboxes
+      const isInternalEvent = input.roles.length > 0 || input.isOperationsCalendar;
+
+      // If it's internal, we lose the "location" field in Discord, so append it to the description
+      const finalDescription = isInternalEvent 
+        ? `${hackDesc}${input.description}\n\n📍 **Location:** ${input.location}${pointDesc}`
+        : `${hackDesc}${input.description}${pointDesc}`;
+
+      // Step 1: Update the event in Discord
       try {
         await discord.api.patch(
           Routes.guildScheduledEvent(
             DISCORD.KNIGHTHACKS_GUILD,
-            input.discordId,
+            input.discordId, // <-- Notice it uses the ID here to know which one to update!
           ),
           {
             body: {
-              description: hackDesc + input.description + pointDesc,
+              description: finalDescription,
               name: formattedName,
               privacy_level: DISCORD.EVENT_PRIVACY_LEVEL,
               scheduled_start_time: startLocalIso,
               scheduled_end_time: endLocalIso,
-              entity_type: DISCORD.EVENT_TYPE,
-              entity_metadata: {
+              
+              // 2 = VOICE (Internal/Hidden), DISCORD.EVENT_TYPE = EXTERNAL (Public)
+              entity_type: isInternalEvent ? 2 : DISCORD.EVENT_TYPE,
+              
+              // Link to the private channel if internal.
+              channel_id: isInternalEvent ? env.DISCORD_OPS_VOICE_CHANNEL_ID : undefined,
+              
+              // Only provide entity_metadata (location) if it's an external public event
+              entity_metadata: isInternalEvent ? undefined : {
                 location: input.location,
               },
             },
@@ -436,7 +471,7 @@ export const eventRouter = {
       // Step 2: Update the event in Google Calendar
       try {
         await google.calendar.events.update({
-          calendarId: EVENTS.GOOGLE_CALENDAR_ID,
+          calendarId: input.isOperationsCalendar ? EVENTS.DEV_GOOGLE_CALENDAR_ID : EVENTS.GOOGLE_CALENDAR_ID,
           eventId: input.googleId,
           requestBody: {
             end: {
@@ -480,8 +515,8 @@ export const eventRouter = {
         {} as Record<
           string,
           {
-            before: string | number | Date | boolean | null;
-            after: string | number | Date | boolean | null | undefined;
+            before: string | number | Date | boolean | string[] | null;
+            after: string | number | Date | boolean | string[] | null | undefined;
           }
         >,
       );
@@ -561,6 +596,14 @@ export const eventRouter = {
     .mutation(async ({ input, ctx }) => {
       permissions.controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
 
+      const eventRecord = await db.query.Event.findFirst({
+        where: (t, { eq }) => eq(t.id, input.id ?? ""),
+      });
+
+      if (!eventRecord) {
+        throw new TRPCError({ message: "Event not found.", code: "BAD_REQUEST" });
+      }
+
       if (!input.id) {
         throw new TRPCError({
           message: "Event ID is required to delete an Event.",
@@ -587,7 +630,7 @@ export const eventRouter = {
       // Step 2: Delete the event in the Google Calendar
       try {
         await google.calendar.events.delete({
-          calendarId: EVENTS.GOOGLE_CALENDAR_ID,
+          calendarId: eventRecord.isOperationsCalendar ? EVENTS.DEV_GOOGLE_CALENDAR_ID : EVENTS.GOOGLE_CALENDAR_ID,
           eventId: input.googleId,
         } as calendar_v3.Params$Resource$Events$Delete);
       } catch (error) {
