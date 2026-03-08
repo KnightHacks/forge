@@ -28,13 +28,12 @@ export default function EarlyAccessVolunteer() {
             className="text-[hsl(263.4_70%_50.4%)]"
           />
         </div>
-      </CardHeader>
-
-      <CardContent className="px-0 pb-4">
         <p className="mb-3 text-[12px] text-muted-foreground">
           Fill out a form to help us match you with opportunities.
         </p>
+      </CardHeader>
 
+      <CardContent className="max-h-[120px] overflow-y-auto px-0 pb-4">
         {forms && (
           <div className="space-y-2">
             {forms.length > 0 ? (
@@ -48,7 +47,13 @@ export default function EarlyAccessVolunteer() {
                   <Link href={`/forms/${f.slugName}`} className="min-w-0">
                     <div className="min-w-0 text-left">
                       <div className="whitespace-normal break-words text-sm font-medium leading-snug">
-                        {f.slugName}
+                        {f.slugName
+                          .split("-")
+                          .map(
+                            (word) =>
+                              word.charAt(0).toUpperCase() + word.slice(1),
+                          )
+                          .join(" ")}
                       </div>
                     </div>
                   </Link>

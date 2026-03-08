@@ -27,40 +27,32 @@ interface Member {
 
 // Calculate year of study based on graduation date relative to current date
 const calcAlumniStatus = (gradDate: Date | string, member: Member): boolean => {
-  // Convert gradDate to Date object if it's a string
   const gradDateObj =
     typeof gradDate === "string" ? new Date(gradDate) : gradDate;
   const currentDate = new Date();
 
-  // Check if dates are valid
   if (isNaN(gradDateObj.getTime())) return false;
 
-  const gradYear = gradDateObj.getFullYear();
-  const currentYear = currentDate.getFullYear();
-  const yearsUntilGrad = gradYear - currentYear;
+  const hasGraduated = gradDateObj.getTime() <= currentDate.getTime();
 
   if (
     member.levelOfStudy === "Less than Secondary / High School" ||
     member.levelOfStudy === "Secondary / High School"
   ) {
-    if (yearsUntilGrad < -4) return true;
-    return false;
+    const cutoffDate = new Date();
+    cutoffDate.setFullYear(currentDate.getFullYear() - 4);
+    return gradDateObj <= cutoffDate;
   }
 
-  // Check for graduate students (Masters, PhD, etc.)
   if (
     member.levelOfStudy ===
       "Graduate University (Masters, Professional, Doctoral, etc)" ||
     member.levelOfStudy === "Post Doctorate"
   ) {
-    return false;
+    return hasGraduated;
   }
 
-  // If graduation date has passed, they are alumni
-  if (yearsUntilGrad < 0) return true;
-
-  // Current year graduates are still seniors until they actually graduate
-  return false;
+  return hasGraduated;
 };
 
 export default async function MemberDashboard({
@@ -135,7 +127,7 @@ export default async function MemberDashboard({
                 <MemberInfo />
               </div>
 
-              <div className="flex flex-col gap-4 md:min-h-0 md:grid-rows-2">
+              <div className="flex flex-col gap-4">
                 <Donate />
                 <DayInHistory />
               </div>

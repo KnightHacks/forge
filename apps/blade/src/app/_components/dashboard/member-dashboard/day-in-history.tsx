@@ -17,9 +17,15 @@ const ALUMNI_PHOTOS: { src: string; caption: string }[] = [
 
 export default function DayInHistory() {
   // TODO: replace with real proc fetch later
-  const dailyImage = (ALUMNI_PHOTOS[
-    Math.floor(Math.random() * ALUMNI_PHOTOS.length)
-  ] ?? ALUMNI_PHOTOS[0]) as { src: string; caption: string };
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor(
+    (now.getTime() - startOfYear.getTime()) / 86_400_000,
+  );
+  const dailyImage = ALUMNI_PHOTOS[dayOfYear % ALUMNI_PHOTOS.length] ?? {
+    src: "/alumni-recap/2019-crowd.jpg",
+    caption: "Crowd at KH III",
+  };
 
   return (
     <Card className="overflow-hidden px-4">

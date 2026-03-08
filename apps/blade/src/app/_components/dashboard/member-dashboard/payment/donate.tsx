@@ -14,8 +14,6 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 
-import { DASHBOARD_ICON_SIZE } from "~/consts";
-
 interface DonationOption {
   icon: LucideIcon;
   name: string;
@@ -70,14 +68,14 @@ function DonationDetailsModal({ options }: { options: DonationOption[] }) {
         </button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[560px]">
+      <DialogContent className="flex max-h-[90dvh] flex-col sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle className="text-center">
             Alumni Donation Tiers
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto pr-1">
           {options.map((o) => {
             const Icon = o.icon;
             return (
@@ -97,7 +95,12 @@ function DonationDetailsModal({ options }: { options: DonationOption[] }) {
                 <p className="text-sm text-muted-foreground">{o.description}</p>
 
                 <Button asChild size="sm" variant="outline" className="mt-2">
-                  <Link href={o.href} target="_blank" rel="noopener noreferrer">
+                  <Link
+                    href={o.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Donate — ${o.name} (${o.priceLabel})`}
+                  >
                     Donate
                   </Link>
                 </Button>
@@ -125,34 +128,29 @@ export function Donate() {
         </p>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {DONATION_OPTIONS.map((opt) => {
-            const Icon = opt.icon;
-
-            return (
-              <Button
-                key={opt.name}
-                asChild
-                variant="outline"
-                className="flex min-h-[88px] w-full flex-col items-center justify-center text-center transition-all hover:-translate-y-0.5 hover:shadow-md"
+          {DONATION_OPTIONS.map((opt) => (
+            <Button
+              key={opt.name}
+              asChild
+              variant="outline"
+              className="flex min-h-[88px] w-full flex-col items-center justify-center text-center transition-all hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <Link
+                href={opt.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full min-w-0 flex-col items-center justify-center text-center"
               >
-                <Link
-                  href={opt.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-full min-w-0 flex-col items-center justify-center text-center"
-                >
-                  <Icon
-                    size={DASHBOARD_ICON_SIZE}
-                    className="mb-2 text-[hsl(263.4_70%_50.4%)]"
-                  />
+                <span className="mb-1 text-base font-bold text-[hsl(263.4_70%_50.4%)]">
+                  {opt.priceLabel}
+                </span>
 
-                  <span className="w-full whitespace-normal break-words text-center text-xs font-semibold leading-snug">
-                    {opt.name}
-                  </span>
-                </Link>
-              </Button>
-            );
-          })}
+                <span className="w-full whitespace-normal break-words text-center text-xs font-semibold leading-snug">
+                  {opt.name}
+                </span>
+              </Link>
+            </Button>
+          ))}
         </div>
 
         <div className="flex justify-center">
