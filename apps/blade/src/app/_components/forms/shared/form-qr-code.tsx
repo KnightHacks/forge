@@ -8,6 +8,7 @@ import QRCode from "qrcode";
 import { Button } from "@forge/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@forge/ui/dialog";
 import { Drawer, DrawerContent, DrawerTrigger } from "@forge/ui/drawer";
+import { useMediaQuery } from "@forge/ui/use-media-query";
 
 export function FormQRCodeDialog({
   formSlug,
@@ -17,6 +18,7 @@ export function FormQRCodeDialog({
   trigger?: React.ReactNode;
 }) {
   const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const formUrl =
     typeof window !== "undefined"
@@ -57,24 +59,21 @@ export function FormQRCodeDialog({
     </Button>
   );
 
-  return (
-    <>
-      {/* two for desktop and mobile :p */}
-      <div className="md:hidden">
-        <Drawer>
-          <DrawerTrigger asChild>{triggerNode}</DrawerTrigger>
-          <DrawerContent className="mx-auto w-full max-w-sm">
-            {content}
-          </DrawerContent>
-        </Drawer>
-      </div>
+  if (isDesktop) {
+    return (
+      <Dialog>
+        <DialogTrigger asChild>{triggerNode}</DialogTrigger>
+        <DialogContent className="max-w-lg">{content}</DialogContent>
+      </Dialog>
+    );
+  }
 
-      <div className="hidden md:block">
-        <Dialog>
-          <DialogTrigger asChild>{triggerNode}</DialogTrigger>
-          <DialogContent className="max-w-lg">{content}</DialogContent>
-        </Dialog>
-      </div>
-    </>
+  return (
+    <Drawer>
+      <DrawerTrigger asChild>{triggerNode}</DrawerTrigger>
+      <DrawerContent className="mx-auto w-full max-w-sm">
+        {content}
+      </DrawerContent>
+    </Drawer>
   );
 }

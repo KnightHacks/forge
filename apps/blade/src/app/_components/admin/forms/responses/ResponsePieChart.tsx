@@ -196,7 +196,14 @@ export function ResponsePieChart({
               align="right"
               layout="vertical"
             />
-            <Pie data={chartData} dataKey="amount" nameKey="name">
+            <Pie
+              data={chartData}
+              dataKey="amount"
+              nameKey="name"
+              cx="35%"
+              cy="50%"
+              outerRadius={110}
+            >
               {/* apply colors to each slice */}
               {chartData.map((entry, index) => (
                 <Cell

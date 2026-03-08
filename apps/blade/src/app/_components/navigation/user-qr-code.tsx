@@ -20,11 +20,13 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@forge/ui/drawer";
+import { useMediaQuery } from "@forge/ui/use-media-query";
 
 import { api } from "~/trpc/react";
 
 export function QRCodePopup() {
   const { data: userQR, isLoading, isError } = api.qr.getQRCode.useQuery();
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const qrTrigger = (
     <Button size="sm" className="w-full gap-2">
@@ -58,38 +60,36 @@ export function QRCodePopup() {
     </div>
   );
 
+  if (isDesktop) {
+    return (
+      <Dialog>
+        <DialogTrigger asChild>{qrTrigger}</DialogTrigger>
+        <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Your <span className="font-bold text-primary">MEMBER</span> QR
+              Code
+            </DialogTitle>
+          </DialogHeader>
+          {qrContent}
+          <DialogDescription />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
-    <>
-      <div className="md:hidden">
-        <Drawer>
-          <DrawerTrigger asChild>{qrTrigger}</DrawerTrigger>
-          <DrawerContent className="mx-auto w-full max-w-sm">
-            <DrawerHeader>
-              <DrawerTitle>
-                Your <span className="font-bold text-primary">MEMBER</span> QR
-                Code
-              </DrawerTitle>
-            </DrawerHeader>
-            {qrContent}
-            <DrawerDescription />
-          </DrawerContent>
-        </Drawer>
-      </div>
-      <div className="hidden md:block">
-        <Dialog>
-          <DialogTrigger asChild>{qrTrigger}</DialogTrigger>
-          <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                Your <span className="font-bold text-primary">MEMBER</span> QR
-                Code
-              </DialogTitle>
-            </DialogHeader>
-            {qrContent}
-            <DialogDescription />
-          </DialogContent>
-        </Dialog>
-      </div>
-    </>
+    <Drawer>
+      <DrawerTrigger asChild>{qrTrigger}</DrawerTrigger>
+      <DrawerContent className="mx-auto w-full max-w-sm">
+        <DrawerHeader>
+          <DrawerTitle>
+            Your <span className="font-bold text-primary">MEMBER</span> QR Code
+          </DrawerTitle>
+        </DrawerHeader>
+        {qrContent}
+        <DrawerDescription />
+      </DrawerContent>
+    </Drawer>
   );
 }
