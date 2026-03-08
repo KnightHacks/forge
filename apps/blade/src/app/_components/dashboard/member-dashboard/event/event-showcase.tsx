@@ -20,10 +20,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
+import { events as eventUtils, time } from "@forge/utils";
 
 import type { api } from "~/trpc/server";
 import { DASHBOARD_ICON_SIZE } from "~/consts";
-import { formatDateTime, getTagColor } from "~/lib/utils";
 import { EventFeedbackForm } from "./event-feedback";
 
 export function EventShowcase({
@@ -73,7 +73,7 @@ export function EventShowcase({
             </CardDescription>
           </div>
           <Badge
-            className={`${getTagColor(mostRecent.tag)} order-1 my-auto mb-3 sm:order-2 sm:mb-auto`}
+            className={`${eventUtils.getTagColor(mostRecent.tag)} order-1 my-auto mb-3 sm:order-2 sm:mb-auto`}
           >
             {mostRecent.tag}
           </Badge>
@@ -86,14 +86,14 @@ export function EventShowcase({
               <div className="flex flex-col items-start">
                 <span className="text-sm font-medium text-gray-600">Start</span>
                 <span className="mt-1 font-medium">
-                  {formatDateTime(mostRecent.start_datetime)}
+                  {time.formatDateTime(mostRecent.start_datetime)}
                 </span>
               </div>
 
               <div className="flex flex-col items-start">
                 <span className="text-sm font-medium text-gray-600">End</span>
                 <span className="mt-1 font-medium">
-                  {formatDateTime(mostRecent.end_datetime)}
+                  {time.formatDateTime(mostRecent.end_datetime)}
                 </span>
               </div>
             </div>
@@ -145,7 +145,7 @@ export function EventShowcase({
                         </CardDescription>
                       </div>
                       <Badge
-                        className={`${getTagColor(event.tag)} order-1 my-auto mb-3 sm:order-2 sm:mb-auto`}
+                        className={`${eventUtils.getTagColor(event.tag)} order-1 my-auto mb-3 sm:order-2 sm:mb-auto`}
                       >
                         {event.tag}
                       </Badge>
@@ -160,7 +160,7 @@ export function EventShowcase({
                               Start
                             </span>
                             <span className="mt-1 font-medium">
-                              {formatDateTime(mostRecent.start_datetime)}
+                              {time.formatDateTime(mostRecent.start_datetime)}
                             </span>
                           </div>
 
@@ -169,7 +169,7 @@ export function EventShowcase({
                               End
                             </span>
                             <span className="mt-1 font-medium">
-                              {formatDateTime(mostRecent.end_datetime)}
+                              {time.formatDateTime(mostRecent.end_datetime)}
                             </span>
                           </div>
                         </div>

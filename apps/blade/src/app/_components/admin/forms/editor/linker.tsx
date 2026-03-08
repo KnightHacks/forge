@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 
+import type { trpc } from "@forge/utils";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
@@ -16,8 +17,9 @@ import {
 } from "@forge/ui/select";
 import { toast } from "@forge/ui/toast";
 
-import type { ProcedureMeta } from "~/lib/utils";
 import { api } from "~/trpc/react";
+
+type ProcedureMeta = trpc.ProcedureMeta;
 
 const matchingSchema = z.object({
   proc: z.string().optional(),

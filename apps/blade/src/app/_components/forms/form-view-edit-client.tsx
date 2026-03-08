@@ -4,14 +4,17 @@ import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import type { FORMS } from "@forge/consts";
+import type * as forms from "@forge/utils/forms.client";
 
-import type { FormResponsePayload, FormResponseUI } from "./utils";
 import { api } from "~/trpc/react";
 import { useSubmissionSuccess } from "./_hooks/useSubmissionSuccess";
 import FormNotFound from "./form-not-found";
 import { FormRunner } from "./form-runner";
 import { SubmissionSuccessCard } from "./form-submitted-success";
 import ResponseNotFound from "./response-not-found";
+
+type FormResponsePayload = forms.FormResponsePayload;
+type FormResponseUI = forms.FormResponseUI;
 
 interface FormReviewWrapperProps {
   formName: string;

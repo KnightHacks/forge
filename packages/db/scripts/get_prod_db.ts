@@ -1,4 +1,6 @@
+// TODO: use a real logger to avoid this issue
 /* eslint-disable no-console */
+
 /**
  * Usage:
  *   pnpm --filter=@forge/db with-env tsx scripts/get_prod_db.ts [--truncate]

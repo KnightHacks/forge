@@ -20,24 +20,19 @@ import {
   TrpcFormConnection,
   TrpcFormConnectionSchema,
 } from "@forge/db/schemas/knight-hacks";
+import { logger, permissions } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
+import * as forms from "@forge/utils/forms";
 
 import { minioClient } from "../minio/minio-client";
 import { permProcedure, protectedProcedure } from "../trpc";
-import {
-  controlPerms,
-  createForm,
-  CreateFormSchema,
-  generateJsonSchema,
-  log,
-  regenerateMediaUrls,
-} from "../utils";
 
 export const formsRouter = {
   createForm: permProcedure
-    .input(CreateFormSchema)
+    .input(forms.CreateFormSchema)
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
-      await createForm(input);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
+      await forms.createForm(input);
     }),
 
   updateForm: permProcedure
@@ -53,8 +48,8 @@ export const formsRouter = {
         .extend({ responseRoleIds: z.array(z.string().uuid()).optional() }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
-      const jsonSchema = generateJsonSchema(input.formData);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
+      const jsonSchema = forms.generateJsonSchema(input.formData);
 
       const slug_name = input.formData.name.toLowerCase().replaceAll(" ", "-");
 
@@ -154,8 +149,9 @@ export const formsRouter = {
         .where(eq(FormResponseRoles.formId, form.id));
 
       // Regenerate presigned URLs for any media that has objectNames
-      const instructionsWithFreshUrls = await regenerateMediaUrls(
+      const instructionsWithFreshUrls = await forms.regenerateMediaUrls(
         formData.instructions,
+        minioClient,
       );
 
       return {
@@ -201,7 +197,7 @@ export const formsRouter = {
   deleteForm: permProcedure
     .input(z.object({ slug_name: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       // find the form to delete duh
       const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) =>
@@ -234,7 +230,7 @@ export const formsRouter = {
       }),
     )
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       const { cursor, section } = input;
       const limit = input.limit;
 
@@ -285,7 +281,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) => eq(t.id, input.form),
@@ -327,7 +323,7 @@ export const formsRouter = {
   deleteConnection: permProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       try {
         await db
           .delete(TrpcFormConnection)
@@ -406,7 +402,7 @@ export const formsRouter = {
       }
 
       const formData = form.formData as FORMS.FormType;
-      const jsonSchema = generateJsonSchema(formData);
+      const jsonSchema = forms.generateJsonSchema(formData);
 
       if (!jsonSchema.success) {
         throw new TRPCError({
@@ -448,7 +444,7 @@ export const formsRouter = {
         ...input,
       });
 
-      await log({
+      await discord.log({
         title: `Form submitted to blade forms`,
         message: `**Form submitted:** ${form.name}\n**User:** ${ctx.session.user.name}`,
         color: "success_green",
@@ -499,7 +495,7 @@ export const formsRouter = {
 
       // Validate responseData against form schema
       const formData = form.formData as FORMS.FormType;
-      const jsonSchema = generateJsonSchema(formData);
+      const jsonSchema = forms.generateJsonSchema(formData);
 
       if (!jsonSchema.success) {
         throw new TRPCError({
@@ -538,7 +534,7 @@ export const formsRouter = {
   getResponses: permProcedure
     .input(z.object({ form: z.string() }))
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       return await db
         .select({
           id: FormResponse.id,
@@ -560,10 +556,10 @@ export const formsRouter = {
   deleteResponse: permProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       try {
         await db.delete(FormResponse).where(eq(FormResponse.id, input.id));
-        await log({
+        await discord.log({
           title: `Form response deleted`,
           message: `**Response deleted:** ${input.id}`,
           color: "uhoh_red",
@@ -711,7 +707,7 @@ export const formsRouter = {
 
         return { uploadUrl, objectName, viewUrl };
       } catch (e) {
-        console.error("getUploadUrl error:", e);
+        logger.error("getUploadUrl error:", e);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to generate upload URL",
@@ -726,7 +722,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       const { objectName } = input;
 
       try {
@@ -736,7 +732,7 @@ export const formsRouter = {
         );
         return { success: true };
       } catch (e) {
-        console.error("deleteMedia error:", e);
+        logger.error("deleteMedia error:", e);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to delete media",
@@ -751,7 +747,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
       const { objectName } = input;
 
       try {
@@ -762,7 +758,7 @@ export const formsRouter = {
         );
         return { viewUrl };
       } catch (e) {
-        console.error("getFileUrl error:", e);
+        logger.error("getFileUrl error:", e);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to generate file URL",
@@ -771,7 +767,7 @@ export const formsRouter = {
     }),
 
   getSections: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+    permissions.controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
 
     const isOfficer = ctx.session.permissions.IS_OFFICER;
 
@@ -890,7 +886,7 @@ export const formsRouter = {
   }),
 
   getSectionCounts: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+    permissions.controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
     const counts = await db
       .select({
         section: FormsSchemas.section,
@@ -913,7 +909,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       const form = await db.query.FormsSchemas.findFirst({
         where: (t, { eq }) =>
           eq(t.slugName, decodeURIComponent(input.slug_name)),
@@ -941,7 +937,7 @@ export const formsRouter = {
         .set({ section: input.section, sectionId })
         .where(eq(FormsSchemas.id, form.id));
 
-      await log({
+      await discord.log({
         title: `Form section updated`,
         message: `**Form:** ${form.name}\n**Section:** ${oldSection} -> ${input.section}`,
         color: "success_green",
@@ -957,7 +953,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       await db
         .update(FormSections)
@@ -969,7 +965,7 @@ export const formsRouter = {
         .set({ section: input.newName })
         .where(eq(FormsSchemas.section, input.oldName));
 
-      await log({
+      await discord.log({
         title: `Form section renamed`,
         message: `**Form section:** ${input.oldName} -> ${input.newName}`,
         color: "success_green",
@@ -980,7 +976,7 @@ export const formsRouter = {
   deleteSection: permProcedure
     .input(z.object({ section: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
       await db
         .update(FormsSchemas)
         .set({ section: "General", sectionId: null })
@@ -999,7 +995,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       const existing = await db.query.FormSections.findFirst({
         where: (t, { eq }) => eq(t.name, input.name),
@@ -1074,7 +1070,7 @@ export const formsRouter = {
         .from(Roles)
         .where(inArray(Roles.id, input.roleIds));
 
-      await log({
+      await discord.log({
         title: `Form section created`,
         message: `**Form section:** ${input.name}. Roles: ${roleNames.map((r) => r.name).join(", ")}`,
         color: "success_green",
@@ -1085,7 +1081,7 @@ export const formsRouter = {
   getSectionRoles: permProcedure
     .input(z.object({ sectionName: z.string() }))
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["READ_FORMS", "EDIT_FORMS"], ctx);
 
       const section = await db.query.FormSections.findFirst({
         where: (t, { eq }) => eq(t.name, input.sectionName),
@@ -1124,7 +1120,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       const section = await db.query.FormSections.findFirst({
         where: (t, { eq }) => eq(t.name, input.sectionName),
@@ -1180,7 +1176,7 @@ export const formsRouter = {
         .from(Roles)
         .where(inArray(Roles.id, input.roleIds));
 
-      await log({
+      await discord.log({
         title: `Form section roles updated`,
         message: `**Form section:** ${input.sectionName}. Roles: ${roleNames.length > 0 ? roleNames.map((r) => r.name).join(", ") : "None (all users)"}`,
         color: "success_green",
@@ -1196,7 +1192,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       const allSections = await db
         .select({
@@ -1238,7 +1234,7 @@ export const formsRouter = {
         .set({ order: currentSection?.order ?? currentIndex })
         .where(eq(FormSections.id, targetSection?.id ?? ""));
 
-      await log({
+      await discord.log({
         title: `Form section reordered`,
         message: `**Form section:** ${input.sectionName} moved ${input.direction}`,
         color: "success_green",
@@ -1249,7 +1245,7 @@ export const formsRouter = {
   checkFormEditAccess: permProcedure
     .input(z.object({ slug_name: z.string() }))
     .query(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       const isOfficer = ctx.session.permissions.IS_OFFICER;
 
@@ -1336,7 +1332,7 @@ export const formsRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EDIT_FORMS"], ctx);
+      permissions.controlPerms.or(["EDIT_FORMS"], ctx);
 
       // Get the form
       const form = await db.query.FormsSchemas.findFirst({
@@ -1363,7 +1359,7 @@ export const formsRouter = {
         throw new TRPCError({ message: "Form not found", code: "NOT_FOUND" });
       }
 
-      await log({
+      await discord.log({
         title: `Form ${updatedForm.isClosed ? "closed" : "opened"}`,
         message: `**Form:** ${updatedForm.name}`,
         color: updatedForm.isClosed ? "uhoh_red" : "success_green",

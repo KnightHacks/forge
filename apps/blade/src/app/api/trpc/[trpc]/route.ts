@@ -60,6 +60,7 @@ const handler = async (req: Request) => {
         headers: req.headers,
       }),
     onError({ error, path }) {
+      // TODO: look into not logging into the console
       // eslint-disable-next-line no-console
       console.error(`>>> tRPC Error on '${path}'`, error.message);
     },

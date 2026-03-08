@@ -199,6 +199,9 @@ importers:
       '@forge/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@forge/validators':
         specifier: workspace:*
         version: link:../../packages/validators
@@ -347,6 +350,9 @@ importers:
       '@forge/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@gsap/react':
         specifier: ^2.1.2
         version: 2.1.2(gsap@3.14.2)(react@18.3.1)
@@ -426,6 +432,9 @@ importers:
       '@forge/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@forge/validators':
         specifier: workspace:*
         version: link:../../packages/validators
@@ -687,6 +696,9 @@ importers:
       '@forge/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@forge/validators':
         specifier: workspace:*
         version: link:../../packages/validators
@@ -766,6 +778,9 @@ importers:
       '@forge/email':
         specifier: workspace:^
         version: link:../email
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@forge/validators':
         specifier: workspace:*
         version: link:../validators
@@ -983,6 +998,9 @@ importers:
 
   packages/email:
     dependencies:
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@maloma/listmonk':
         specifier: ^1.0.1
         version: 1.0.1
@@ -1150,6 +1168,58 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+
+  packages/utils:
+    dependencies:
+      '@discordjs/rest':
+        specifier: ^2.4.0
+        version: 2.6.0
+      '@t3-oss/env-nextjs':
+        specifier: ^0.11.1
+        version: 0.11.1(typescript@5.7.3)(zod@3.25.76)
+      discord-api-types:
+        specifier: ^0.37.113
+        version: 0.37.120
+      googleapis:
+        specifier: ^144.0.0
+        version: 144.0.0
+      server-only:
+        specifier: ^0.0.1
+        version: 0.0.1
+    devDependencies:
+      '@forge/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../consts
+      '@forge/db':
+        specifier: workspace:*
+        version: link:../db
+      '@forge/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@forge/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
+      '@forge/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.9.0(typescript@5.7.3)
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.2(jiti@2.6.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.1
+      typescript:
+        specifier: 'catalog:'
+        version: 5.7.3
       zod:
         specifier: 'catalog:'
         version: 3.25.76
@@ -4767,6 +4837,7 @@ packages:
   basic-ftp@5.1.0:
     resolution: {integrity: sha512-RkaJzeJKDbaDWTIPiJwubyljaEPwpVWkm9Rt5h9Nd6h7tEXTJ3VB4qxdZBioV7JO5yLUaOKwz7vDOzlncUsegw==}
     engines: {node: '>=10.0.0'}
+    deprecated: Security vulnerability fixed in 5.2.0, please upgrade
 
   better-auth@1.4.18:
     resolution: {integrity: sha512-bnyifLWBPcYVltH3RhS7CM62MoelEqC6Q+GnZwfiDWNfepXoQZBjEvn4urcERC7NTKgKq5zNBM8rvPvRBa6xcg==}
