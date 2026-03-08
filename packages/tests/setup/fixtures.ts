@@ -80,8 +80,10 @@ export async function createTestMember(
       dob,
       gradDate,
       shirtSize: "M",
+      gender: "Prefer not to answer",
+      raceOrEthnicity: "Prefer not to answer",
       ...overrides,
-    })
+    } as InsertMember)
     .returning();
 
   if (!member) throw new Error("Failed to create test member");
@@ -103,13 +105,15 @@ export async function createTestEvent(overrides?: Partial<InsertEvent>) {
     .values({
       name: "Test Event",
       description: "A test event",
-      startDate,
-      endDate,
+      start_datetime: startDate,
+      end_datetime: endDate,
       location: "Test Location",
       discordId: `test_event_${Date.now()}`,
-      googleCalendarId: null,
-      isHackathonEvent: false,
-      requiresDues: false,
+      googleId: `test_google_id_${Date.now()}`,
+      tag: "Social", // Default tag
+      dues_paying: false,
+      points: 0,
+      hackathonId: null,
       ...overrides,
     })
     .returning();

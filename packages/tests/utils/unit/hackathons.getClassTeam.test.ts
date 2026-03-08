@@ -31,6 +31,7 @@ describe("getClassTeam", () => {
   });
 
   it("should return Humanity team for other classes", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
     const result = hackathons.getClassTeam("Humanity" as any);
     expect(result).toEqual({
       team: "Humanity",
@@ -40,6 +41,7 @@ describe("getClassTeam", () => {
   });
 
   it("should return Humanity team for unknown class", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
     const result = hackathons.getClassTeam("UnknownClass" as any);
     expect(result).toEqual({
       team: "Humanity",

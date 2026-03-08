@@ -40,8 +40,10 @@ describe("cron.CronBuilder.executor", () => {
 
     // Mock schedule to capture the executor function
     vi.mocked(cron.schedule).mockImplementation(
-      (_expr: string, fn: () => Promise<void>) => {
-        scheduledFn = fn;
+      (_expr: string, fn: string | ((now: Date | "manual" | "init") => void)) => {
+        if (typeof fn === "function") {
+          scheduledFn = fn as () => Promise<void>;
+        }
         return {} as cron.ScheduledTask; // Return a mock cron task
       },
     );
@@ -68,8 +70,10 @@ describe("cron.CronBuilder.executor", () => {
 
     let scheduledFn: (() => Promise<void>) | undefined;
     vi.mocked(cron.schedule).mockImplementation(
-      (_expr: string, fn: () => Promise<void>) => {
-        scheduledFn = fn;
+      (_expr: string, fn: string | ((now: Date | "manual" | "init") => void)) => {
+        if (typeof fn === "function") {
+          scheduledFn = fn as () => Promise<void>;
+        }
         return {} as cron.ScheduledTask;
       },
     );
@@ -81,6 +85,7 @@ describe("cron.CronBuilder.executor", () => {
       await scheduledFn();
     }
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(vi.mocked(logger.log)).toHaveBeenCalled();
   });
 
@@ -95,8 +100,10 @@ describe("cron.CronBuilder.executor", () => {
 
     let scheduledFn: (() => Promise<void>) | undefined;
     vi.mocked(cron.schedule).mockImplementation(
-      (_expr: string, fn: () => Promise<void>) => {
-        scheduledFn = fn;
+      (_expr: string, fn: string | ((now: Date | "manual" | "init") => void)) => {
+        if (typeof fn === "function") {
+          scheduledFn = fn as () => Promise<void>;
+        }
         return {} as cron.ScheduledTask;
       },
     );
@@ -109,6 +116,7 @@ describe("cron.CronBuilder.executor", () => {
       await scheduledFn();
     }
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(vi.mocked(logger.log)).toHaveBeenCalled();
   });
 
@@ -122,8 +130,10 @@ describe("cron.CronBuilder.executor", () => {
 
     let scheduledFn: (() => Promise<void>) | undefined;
     vi.mocked(cron.schedule).mockImplementation(
-      (_expr: string, fn: () => Promise<void>) => {
-        scheduledFn = fn;
+      (_expr: string, fn: string | ((now: Date | "manual" | "init") => void)) => {
+        if (typeof fn === "function") {
+          scheduledFn = fn as () => Promise<void>;
+        }
         return {} as cron.ScheduledTask;
       },
     );
@@ -135,6 +145,7 @@ describe("cron.CronBuilder.executor", () => {
       await scheduledFn();
     }
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(vi.mocked(logger.error)).toHaveBeenCalled();
     expect(executor).toHaveBeenCalledTimes(1);
   });
@@ -150,6 +161,7 @@ describe("cron.CronBuilder.executor", () => {
     builder.addCron("* * * * *", executor);
     builder.schedule();
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(vi.mocked(logger.log)).toHaveBeenCalled();
   });
 
@@ -167,8 +179,10 @@ describe("cron.CronBuilder.executor", () => {
 
     let scheduledFn: (() => Promise<void>) | undefined;
     vi.mocked(cron.schedule).mockImplementation(
-      (_expr: string, fn: () => Promise<void>) => {
-        scheduledFn = fn;
+      (_expr: string, fn: string | ((now: Date | "manual" | "init") => void)) => {
+        if (typeof fn === "function") {
+          scheduledFn = fn as () => Promise<void>;
+        }
         return {} as cron.ScheduledTask;
       },
     );
@@ -182,6 +196,7 @@ describe("cron.CronBuilder.executor", () => {
       await promise;
     }
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(vi.mocked(logger.log)).toHaveBeenCalled();
   });
 });

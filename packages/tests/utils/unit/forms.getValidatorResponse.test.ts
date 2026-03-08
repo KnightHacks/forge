@@ -39,6 +39,7 @@ describe("getValidatorResponse", () => {
     ]);
 
     const zodValidator = "z.object({ name: z.string() })";
+     
     const result = getValidatorResponse(zodValidator, {}, form);
 
     expect(result.success).toBe(false);
@@ -145,6 +146,7 @@ describe("getValidatorResponse", () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(result.data.birthday).toBe("2024-01-15");
     }
   });

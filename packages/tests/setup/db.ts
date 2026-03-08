@@ -1,12 +1,13 @@
 /* eslint-disable no-console */
 import { exec } from "child_process";
-import fs from "fs";
-import { unlink } from "fs/promises";
-import { pipeline } from "stream/promises";
-import { promisify } from "util";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { drizzle } from "drizzle-orm/node-postgres";
+import fs from "fs";
+import { unlink } from "fs/promises";
+import type { Client } from "pg";
 import Pool from "pg-pool";
+import { pipeline } from "stream/promises";
+import { promisify } from "util";
 
 import { minioClient } from "@forge/api/minio/minio-client";
 import * as authSchema from "@forge/db/schemas/auth";
@@ -33,7 +34,7 @@ type AuthSchema = typeof authSchema;
 type KnightHacksSchema = typeof knightHacksSchema;
 type DatabaseSchema = AuthSchema & KnightHacksSchema;
 
-let testPool: Pool<import("pg").Client> | null = null;
+let testPool: Pool<Client> | null = null;
 let testDb: NodePgDatabase<DatabaseSchema> | null = null;
 let isSetup = false;
 
@@ -94,19 +95,15 @@ export async function setupDatabase() {
     }
 
     // Create test pool and drizzle instance (only if not already created)
-    if (!testPool) {
-      testPool = new Pool({
-        connectionString: TEST_DB_URL,
-      });
-    }
+    testPool ??= new Pool({
+      connectionString: TEST_DB_URL,
+    });
 
-    if (!testDb) {
-      testDb = drizzle({
-        client: testPool,
-        schema: { ...authSchema, ...knightHacksSchema },
-        casing: "snake_case",
-      });
-    }
+    testDb ??= drizzle({
+      client: testPool,
+      schema: { ...authSchema, ...knightHacksSchema },
+      casing: "snake_case",
+    });
 
     // Only push schema and seed if database was just created
     if (!dbExists) {
@@ -128,7 +125,7 @@ export async function setupDatabase() {
 
       // Seed additional test data on top of the seeded devdb
       console.log(`[Test DB] Seeding additional test data...`);
-      await seedTestData();
+      seedTestData();
     }
 
     isSetup = true;
@@ -167,7 +164,7 @@ async function applySeededDevdb() {
 
     // Apply the backup to the test database
     const { user, password, host, port } = parsePg();
-    /* eslint-disable no-restricted-properties */
+
     const envN = { ...process.env, PGPASSWORD: password };
 
     console.log("[Test DB] Applying backup.sql to test database...");
@@ -195,7 +192,7 @@ async function applySeededDevdb() {
  * Seeds additional test data on top of the seeded devdb.
  * This can include test-specific users, events, forms, etc.
  */
-async function seedTestData() {
+function seedTestData() {
   if (!testDb) throw new Error("testDb not initialized");
 
   // Additional test data can be added here if needed

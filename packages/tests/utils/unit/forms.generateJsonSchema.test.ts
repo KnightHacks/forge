@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { FORMS } from "@forge/consts";
+import type { FORMS } from "@forge/consts";
 import * as forms from "@forge/utils/forms";
 
 describe("generateJsonSchema", () => {
@@ -168,7 +168,7 @@ describe("generateJsonSchema", () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.schema.properties?.["Age"]).toEqual({
+      expect(result.schema.properties?.Age).toEqual({
         type: "number",
       });
     }
@@ -362,7 +362,7 @@ describe("generateJsonSchema", () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.schema.properties?.["Rating"]).toEqual({
+      expect(result.schema.properties?.Rating).toEqual({
         type: "number",
         minimum: 1,
         maximum: 10,
@@ -422,9 +422,10 @@ describe("generateJsonSchema", () => {
       expect(result.schema.properties?.["Choose or other"]).toEqual({
         type: "string",
       });
-      expect(
-        result.schema.properties?.["Choose or other"].enum,
-      ).toBeUndefined();
+      const prop = result.schema.properties?.["Choose or other"];
+      if (prop && typeof prop === "object" && !Array.isArray(prop)) {
+        expect(prop.enum).toBeUndefined();
+      }
     }
   });
 
@@ -452,9 +453,13 @@ describe("generateJsonSchema", () => {
         items: { type: "string" },
         minItems: 1,
       });
-      expect(
-        result.schema.properties?.["Select or other"].items.enum,
-      ).toBeUndefined();
+      const prop = result.schema.properties?.["Select or other"];
+      if (prop && typeof prop === "object" && !Array.isArray(prop) && "items" in prop) {
+        const items = prop.items;
+        if (items && typeof items === "object" && !Array.isArray(items)) {
+          expect(items.enum).toBeUndefined();
+        }
+      }
     }
   });
 
@@ -485,7 +490,7 @@ describe("generateJsonSchema", () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(Object.keys(result.schema.properties || {})).toHaveLength(3);
+      expect(Object.keys(result.schema.properties ?? {})).toHaveLength(3);
       expect(result.schema.required).toEqual(["Name", "Email"]);
       expect(result.schema.required).not.toContain("Comments");
     }

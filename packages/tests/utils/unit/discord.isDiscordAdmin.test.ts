@@ -1,6 +1,7 @@
 import { Routes } from "discord-api-types/v10";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { Session } from "@forge/auth/server";
 import { DISCORD } from "@forge/consts";
 
 // Mock the REST client
@@ -25,8 +26,15 @@ describe("discord.isDiscordAdmin", () => {
       roles: [DISCORD.ADMIN_ROLE, "other-role"],
     });
 
-    const user = {
+    const user: Session["user"] = {
+      id: "test-user-id",
       discordUserId: "123456789012345678",
+      name: "Test User",
+      email: "test@example.com",
+      emailVerified: true,
+      image: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const result = await isDiscordAdmin(user);
@@ -44,8 +52,15 @@ describe("discord.isDiscordAdmin", () => {
       roles: ["other-role", "another-role"],
     });
 
-    const user = {
+    const user: Session["user"] = {
+      id: "test-user-id",
       discordUserId: "123456789012345678",
+      name: "Test User",
+      email: "test@example.com",
+      emailVerified: true,
+      image: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const result = await isDiscordAdmin(user);
@@ -58,11 +73,20 @@ describe("discord.isDiscordAdmin", () => {
 
     const consoleErrorSpy = vi
       .spyOn(console, "error")
-      .mockImplementation(() => {});
+      .mockImplementation(() => {
+        // Mock implementation
+      });
     mockGet.mockRejectedValue(new Error("API error"));
 
-    const user = {
+    const user: Session["user"] = {
+      id: "test-user-id",
       discordUserId: "123456789012345678",
+      name: "Test User",
+      email: "test@example.com",
+      emailVerified: true,
+      image: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const result = await isDiscordAdmin(user);

@@ -38,6 +38,7 @@ describe("discord.log", () => {
               description: "Test Message\n\nUser: <@123456789012345678>",
               color: 0x1a73e8, // tk_blue
               footer: {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 text: expect.any(String),
               },
             },
@@ -130,8 +131,13 @@ describe("discord.log", () => {
     });
 
     const callArgs = mockPost.mock.calls[0];
-    const embed = callArgs[1]?.body?.embeds?.[0];
-    expect(embed?.footer?.text).toBeDefined();
-    expect(typeof embed?.footer?.text).toBe("string");
+    expect(callArgs).toBeDefined();
+    if (callArgs?.[1]) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const body = callArgs[1]?.body as { embeds?: { footer?: { text?: string } }[] } | undefined;
+      const embed = body?.embeds?.[0];
+      expect(embed?.footer?.text).toBeDefined();
+      expect(typeof embed?.footer?.text).toBe("string");
+    }
   });
 });

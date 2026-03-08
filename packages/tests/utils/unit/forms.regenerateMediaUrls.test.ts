@@ -34,6 +34,7 @@ describe("regenerateMediaUrls", () => {
 
     const instructions: FORMS.InstructionValidatorType[] = [
       {
+        title: "Test Instruction",
         imageObjectName: "test-image.jpg",
         order: 0,
       },
@@ -58,6 +59,7 @@ describe("regenerateMediaUrls", () => {
 
     const instructions: FORMS.InstructionValidatorType[] = [
       {
+        title: "Test Instruction",
         videoObjectName: "test-video.mp4",
         order: 0,
       },
@@ -86,6 +88,7 @@ describe("regenerateMediaUrls", () => {
 
     const instructions: FORMS.InstructionValidatorType[] = [
       {
+        title: "Test Instruction",
         imageObjectName: "test-image.jpg",
         videoObjectName: "test-video.mp4",
         order: 0,
@@ -108,10 +111,12 @@ describe("regenerateMediaUrls", () => {
 
     const instructions: FORMS.InstructionValidatorType[] = [
       {
+        title: "Instruction 1",
         imageObjectName: "image1.jpg",
         order: 0,
       },
       {
+        title: "Instruction 2",
         imageObjectName: "image2.jpg",
         order: 1,
       },
@@ -133,6 +138,7 @@ describe("regenerateMediaUrls", () => {
 
     const instructions: FORMS.InstructionValidatorType[] = [
       {
+        title: "Test Instruction",
         imageObjectName: "test-image.jpg",
         order: 5,
       },
@@ -148,13 +154,16 @@ describe("regenerateMediaUrls", () => {
   it("should handle errors gracefully when presignedGetObject fails", async () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
-      .mockImplementation(() => {});
+      .mockImplementation(() => {
+        // Mock implementation
+      });
     const mockMinioClient = {
       presignedGetObject: vi.fn().mockRejectedValue(new Error("MinIO error")),
     };
 
     const instructions: FORMS.InstructionValidatorType[] = [
       {
+        title: "Test Instruction",
         imageObjectName: "test-image.jpg",
         order: 0,
       },
@@ -175,6 +184,7 @@ describe("regenerateMediaUrls", () => {
 
     const instructions: FORMS.InstructionValidatorType[] = [
       {
+        title: "Test Instruction",
         order: 0,
       },
     ];

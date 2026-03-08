@@ -1,9 +1,10 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
 import type { FORMS } from "@forge/consts";
+import type { normalizeResponses as normalizeResponsesFn } from "@forge/utils/forms.client";
 
 describe("normalizeResponses", () => {
-  let normalizeResponses: typeof import("@forge/utils/forms.client").normalizeResponses;
+  let normalizeResponses: typeof normalizeResponsesFn;
 
   beforeAll(async () => {
     const module = await import("@forge/utils/forms.client");

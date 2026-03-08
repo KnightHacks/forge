@@ -9,12 +9,10 @@ describe("hasPermission", () => {
     const permissionString = "1".repeat(permissionsCount);
 
     // Test first permission
-    const firstPermIndex =
-      PERMISSIONS.PERMISSIONS[
-        Object.keys(
-          PERMISSIONS.PERMISSIONS,
-        )[0] as keyof typeof PERMISSIONS.PERMISSIONS
-      ]!;
+    const firstPermKey = Object.keys(PERMISSIONS.PERMISSIONS)[0];
+    if (!firstPermKey) throw new Error("No permissions found");
+    const firstPermIndex = PERMISSIONS.PERMISSIONS[firstPermKey];
+    if (firstPermIndex === undefined) throw new Error("Permission index not found");
     expect(permissions.hasPermission(permissionString, firstPermIndex)).toBe(
       true,
     );
@@ -24,12 +22,10 @@ describe("hasPermission", () => {
     const permissionsCount = Object.keys(PERMISSIONS.PERMISSIONS).length;
     const permissionString = "0".repeat(permissionsCount);
 
-    const firstPermIndex =
-      PERMISSIONS.PERMISSIONS[
-        Object.keys(
-          PERMISSIONS.PERMISSIONS,
-        )[0] as keyof typeof PERMISSIONS.PERMISSIONS
-      ]!;
+    const firstPermKey = Object.keys(PERMISSIONS.PERMISSIONS)[0];
+    if (!firstPermKey) throw new Error("No permissions found");
+    const firstPermIndex = PERMISSIONS.PERMISSIONS[firstPermKey];
+    if (firstPermIndex === undefined) throw new Error("Permission index not found");
     expect(permissions.hasPermission(permissionString, firstPermIndex)).toBe(
       false,
     );
@@ -40,18 +36,15 @@ describe("hasPermission", () => {
     // Set first bit to 1, rest to 0
     const permissionString = "1" + "0".repeat(permissionsCount - 1);
 
-    const firstPermIndex =
-      PERMISSIONS.PERMISSIONS[
-        Object.keys(
-          PERMISSIONS.PERMISSIONS,
-        )[0] as keyof typeof PERMISSIONS.PERMISSIONS
-      ]!;
-    const secondPermIndex =
-      PERMISSIONS.PERMISSIONS[
-        Object.keys(
-          PERMISSIONS.PERMISSIONS,
-        )[1] as keyof typeof PERMISSIONS.PERMISSIONS
-      ]!;
+    const permKeys = Object.keys(PERMISSIONS.PERMISSIONS);
+    const firstPermKey = permKeys[0];
+    const secondPermKey = permKeys[1];
+    if (!firstPermKey || !secondPermKey) throw new Error("Not enough permissions found");
+    const firstPermIndex = PERMISSIONS.PERMISSIONS[firstPermKey];
+    const secondPermIndex = PERMISSIONS.PERMISSIONS[secondPermKey];
+    if (firstPermIndex === undefined || secondPermIndex === undefined) {
+      throw new Error("Permission index not found");
+    }
 
     expect(permissions.hasPermission(permissionString, firstPermIndex)).toBe(
       true,
@@ -97,8 +90,10 @@ describe("hasPermission", () => {
 
     // Test hasPermission with the role's permission string
     const firstPermIndex = PERMISSIONS.PERMISSIONS.IS_OFFICER;
-    expect(permissions.hasPermission(dbRole!.permissions, firstPermIndex)).toBe(
-      true,
-    );
+    if (firstPermIndex !== undefined && dbRole) {
+      expect(permissions.hasPermission(dbRole.permissions, firstPermIndex)).toBe(
+        true,
+      );
+    }
   });
 });
