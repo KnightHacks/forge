@@ -24,7 +24,11 @@
     "lint:ws": "pnpm dlx sherif@latest",
     "postinstall": "pnpm lint:ws",
     "typecheck": "turbo run typecheck",
-    "ui-add": "turbo run ui-add"
+    "ui-add": "turbo run ui-add",
+    "test": "turbo -F @forge/tests test",
+    "test:unit": "turbo -F @forge/tests test:unit",
+    "test:integration": "turbo -F @forge/tests test:integration",
+    "test:e2e": "turbo -F @forge/tests test:e2e"
   },
   "devDependencies": {
     "@forge/eslint-config": "workspace:*",

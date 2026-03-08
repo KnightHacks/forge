@@ -1,0 +1,8 @@
+{
+  "extends": "@forge/tsconfig/internal-package.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}
