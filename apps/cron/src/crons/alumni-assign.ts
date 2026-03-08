@@ -3,7 +3,8 @@ import { and, gt, isNotNull, isNull, lte, or } from "drizzle-orm";
 import { DISCORD } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
-import { discord, logger } from "@forge/utils";
+import { logger } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
 
 import { CronBuilder } from "../structs/CronBuilder";
 

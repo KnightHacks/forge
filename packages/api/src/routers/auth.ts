@@ -1,7 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 
 import { invalidateSessionToken } from "@forge/auth/server";
-import { permissions } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 import * as permissionsServer from "@forge/utils/permissions.server";
 

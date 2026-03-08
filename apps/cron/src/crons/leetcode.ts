@@ -2,7 +2,7 @@ import type { APIThreadChannel } from "discord-api-types/v10";
 import { Routes, ThreadAutoArchiveDuration } from "discord-api-types/v10";
 import { WebhookClient } from "discord.js";
 
-import { discord } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
 
 import { env } from "../env";
 import { CronBuilder } from "../structs/CronBuilder";

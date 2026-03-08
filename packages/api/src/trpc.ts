@@ -18,7 +18,6 @@ import { PERMISSIONS } from "@forge/consts";
 import { eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";
-import { permissions } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 import * as permissionsServer from "@forge/utils/permissions.server";
 

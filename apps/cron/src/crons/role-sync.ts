@@ -5,7 +5,8 @@ import { DISCORD } from "@forge/consts";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
-import { discord, logger } from "@forge/utils";
+import { logger } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
 
 import { CronBuilder } from "../structs/CronBuilder";
 
