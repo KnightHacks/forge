@@ -106,6 +106,9 @@ function PaymentForm() {
             {errorMessage && (
                 <p className="text-sm text-destructive">{errorMessage}</p>
             )}
+            <p className="text-xs text-muted-foreground">
+                All payments are non-refundable.
+            </p>
             <div className="flex justify-between">
                 <Button
                     type="button"
