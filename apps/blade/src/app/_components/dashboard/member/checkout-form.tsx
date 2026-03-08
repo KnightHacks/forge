@@ -13,6 +13,8 @@ import { loadStripe } from "@stripe/stripe-js";
 import { useTheme } from "next-themes";
 
 import { Button } from "@forge/ui/button";
+import { Input } from "@forge/ui/input";
+import { Label } from "@forge/ui/label";
 import { toast } from "@forge/ui/toast";
 
 import { env } from "~/env";
@@ -67,6 +69,7 @@ function PaymentForm() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [email, setEmail] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -80,6 +83,7 @@ function PaymentForm() {
             redirect: "if_required",
             confirmParams: {
                 return_url: `${window.location.origin}/member/success`,
+                receipt_email: email,
             },
         });
 
@@ -102,6 +106,17 @@ function PaymentForm() {
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <div className="flex flex-col gap-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+            </div>
             <PaymentElement />
             {errorMessage && (
                 <p className="text-sm text-destructive">{errorMessage}</p>
