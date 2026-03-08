@@ -16,13 +16,13 @@ import {
 
 import { DASHBOARD_ICON_SIZE } from "~/consts";
 
-type DonationOption = {
+interface DonationOption {
   icon: LucideIcon;
   name: string;
   priceLabel: string;
   href: string;
   description: string;
-};
+}
 
 const DONATION_OPTIONS: DonationOption[] = [
   {

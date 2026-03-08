@@ -109,6 +109,10 @@ export default async function MemberDashboard({
     );
   }
 
+  await Promise.all(
+    events.value.map((e) => api.event.ensureForm({ eventId: e.id })),
+  );
+
   // Alumni Dashboard
   if (isAlumni) {
     return (

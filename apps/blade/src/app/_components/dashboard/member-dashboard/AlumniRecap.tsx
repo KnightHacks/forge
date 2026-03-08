@@ -92,7 +92,6 @@ export function AlumniRecap({
       <CardContent className="flex flex-1 flex-col gap-3">
         {/* Current Officers */}
         <div className="space-y-4 pb-5">
-
           <ul className="space-y-3">
             <li className="rounded-lg border p-3">
               <p className="font-medium">Adrian</p>

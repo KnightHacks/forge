@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { Card, CardTitle } from "@forge/ui/card";
 
 const ALUMNI_PHOTOS: { src: string; caption: string }[] = [
@@ -15,18 +17,20 @@ const ALUMNI_PHOTOS: { src: string; caption: string }[] = [
 
 export default function DayInHistory() {
   // TODO: replace with real proc fetch later
-  const dailyImage =
-    ALUMNI_PHOTOS[Math.floor(Math.random() * ALUMNI_PHOTOS.length)]!;
+  const dailyImage = (ALUMNI_PHOTOS[
+    Math.floor(Math.random() * ALUMNI_PHOTOS.length)
+  ] ?? ALUMNI_PHOTOS[0]) as { src: string; caption: string };
 
   return (
     <Card className="overflow-hidden px-4">
-        <CardTitle className="text-center">Day in History</CardTitle>
+      <CardTitle className="text-center">Day in History</CardTitle>
       <div className="">
-        <img
+        <Image
           src={dailyImage.src}
           alt={dailyImage.caption}
+          width={800}
+          height={400}
           className="h-56 w-full object-cover sm:h-64"
-          loading="lazy"
         />
       </div>
 
