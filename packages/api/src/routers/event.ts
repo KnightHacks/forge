@@ -215,8 +215,7 @@ export const eventRouter = {
 
       // Step 1: Create the event in Discord
       // Determine if this should be hidden based on UI checkboxes
-      const isInternalEvent =
-        (input.roles?.length ?? 0) > 0 || input.isOperationsCalendar;
+      const isInternalEvent = input.isOperationsCalendar;
 
       // If it's internal, we lose the "location" field in Discord, so append it to the description
       const finalDescription = isInternalEvent
@@ -443,20 +442,27 @@ export const eventRouter = {
       // Step 1: Update the event in Discord
 
       // Determine if this should be hidden based on UI checkboxes
-      const isInternalEvent =
-        (input.roles?.length ?? 0) > 0 || input.isOperationsCalendar;
+      const isInternalEvent = input.isOperationsCalendar;
 
       // If it's internal, we lose the "location" field in Discord, so append it to the description
       const finalDescription = isInternalEvent
         ? `${hackDesc}${input.description}\n\n📍 **Location:** ${input.location}${pointDesc}`
         : `${hackDesc}${input.description}${pointDesc}`;
 
+      const sourceCalendarId = event.isOperationsCalendar
+      ? EVENTS.DEV_GOOGLE_CALENDAR_ID
+      : EVENTS.GOOGLE_CALENDAR_ID;
+
+    const targetCalendarId = input.isOperationsCalendar
+      ? EVENTS.DEV_GOOGLE_CALENDAR_ID
+      : EVENTS.GOOGLE_CALENDAR_ID;
+
       // Step 1: Update the event in Discord
       try {
         await discord.api.patch(
           Routes.guildScheduledEvent(
             DISCORD.KNIGHTHACKS_GUILD,
-            input.discordId, // <-- Notice it uses the ID here to know which one to update!
+            event.discordId, // <-- Notice it uses the ID here to know which one to update!
           ),
           {
             body: {
@@ -492,26 +498,53 @@ export const eventRouter = {
       }
 
       // Step 2: Update the event in Google Calendar
+      
+      // We need a variable to track the Google ID, just in case the calendar changes and we get a new one!
+      let newGoogleId = event.googleId; 
+
       try {
-        await google.calendar.events.update({
-          calendarId: input.isOperationsCalendar
-            ? EVENTS.DEV_GOOGLE_CALENDAR_ID
-            : EVENTS.GOOGLE_CALENDAR_ID,
-          eventId: input.googleId,
-          requestBody: {
-            end: {
-              dateTime: endLocalIso,
-              timeZone: EVENTS.CALENDAR_TIME_ZONE,
-            },
-            start: {
-              dateTime: startLocalIso,
-              timeZone: EVENTS.CALENDAR_TIME_ZONE,
-            },
-            description: input.description,
-            summary: formattedName,
-            location: input.location,
+        // Define the body once so we don't have to type it twice
+        const calendarRequestBody = {
+          end: {
+            dateTime: endLocalIso,
+            timeZone: EVENTS.CALENDAR_TIME_ZONE,
           },
-        } as calendar_v3.Params$Resource$Events$Update);
+          start: {
+            dateTime: startLocalIso,
+            timeZone: EVENTS.CALENDAR_TIME_ZONE,
+          },
+          description: input.description,
+          summary: formattedName,
+          location: input.location,
+        };
+
+        if (sourceCalendarId === targetCalendarId) {
+          // The checkbox didn't change. Just update the existing event.
+          await google.calendar.events.update({
+            calendarId: sourceCalendarId,
+            eventId: event.googleId,
+            requestBody: calendarRequestBody,
+          });
+        } else {
+          // The Ops checkbox was flipped and the event is moving to a new calendar.
+          
+          // 1. Create the new event in the target calendar
+          const created = await google.calendar.events.insert({
+            calendarId: targetCalendarId,
+            requestBody: calendarRequestBody,
+          });
+
+          // 2. Delete the old event from the source calendar
+          await google.calendar.events.delete({
+            calendarId: sourceCalendarId,
+            eventId: event.googleId,
+          });
+
+          // 3. Capture the new Google ID so we can save it to the database
+          if (created.data.id) {
+            newGoogleId = created.data.id;
+          }
+        }
       } catch (error) {
         logger.error(JSON.stringify(error, null, 2));
         throw new TRPCError({
@@ -609,6 +642,8 @@ export const eventRouter = {
         .update(Event)
         .set({
           ...input,
+          googleId: newGoogleId, 
+          
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
           points: input.hackathonId ? EVENTS.EVENT_POINTS[input.tag] || 0 : 0,
@@ -651,7 +686,7 @@ export const eventRouter = {
         await discord.api.delete(
           Routes.guildScheduledEvent(
             DISCORD.KNIGHTHACKS_GUILD,
-            input.discordId,
+            eventRecord.discordId,
           ),
         );
       } catch (error) {
@@ -668,7 +703,7 @@ export const eventRouter = {
           calendarId: eventRecord.isOperationsCalendar
             ? EVENTS.DEV_GOOGLE_CALENDAR_ID
             : EVENTS.GOOGLE_CALENDAR_ID,
-          eventId: input.googleId,
+          eventId: eventRecord.googleId,
         } as calendar_v3.Params$Resource$Events$Delete);
       } catch (error) {
         logger.error(JSON.stringify(error, null, 2));

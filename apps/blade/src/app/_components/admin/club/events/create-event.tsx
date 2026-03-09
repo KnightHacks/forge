@@ -57,9 +57,11 @@ export function CreateEventButton() {
   const [isLoading, setIsLoading] = useState(false);
   const utils = api.useUtils();
 
-  const { data: hackathons } = api.hackathon.getHackathons.useQuery();
+  const hackathonsQuery = api.hackathon.getHackathons.useQuery();
+  const rolesQuery = api.roles.getAllLinks.useQuery();
 
-  const { data: rolesData } = api.roles.getAllLinks.useQuery();
+  const hackathons = hackathonsQuery.data;
+  const rolesData = rolesQuery.data;
 
   // TRPC mutation
   const createEvent = api.event.createEvent.useMutation({
@@ -129,6 +131,15 @@ export function CreateEventButton() {
       </DialogTrigger>
 
       <DialogContent className="max-h-[70vh] overflow-y-auto sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px]">
+        {hackathonsQuery.isLoading || rolesQuery.isLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : hackathonsQuery.isError || rolesQuery.isError ? (
+          <div className="py-8 text-sm text-red-500">
+            Failed to load event form options.
+          </div>
+        ) : (
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit((values) => {
@@ -707,6 +718,7 @@ export function CreateEventButton() {
             </DialogFooter>
           </form>
         </Form>
+        )}
       </DialogContent>
     </Dialog>
   );
