@@ -21,6 +21,7 @@ export default function FoodRestrictionsButton({
   const [foodString, setFoodString] = useState("");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFoodString(hacker.foodAllergies?.replace(/,/g, ", ") || "");
   }, [hacker.foodAllergies]);
 

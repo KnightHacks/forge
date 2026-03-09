@@ -112,33 +112,32 @@ export default function PartnerPosters() {
               key={idx}
               className={`${partner.mobilePosition} ${partner.gridPosition} stagger-item`}
             >
-              <Link href={partner.link} passHref legacyBehavior>
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative flex h-full items-center justify-center rounded-none focus:outline-4 focus:outline-offset-2 focus:outline-[#FBB03B]"
-                >
-                  {/* Main card */}
-                  <div className="relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 hover:scale-[1.02] hover:shadow-2xl hover:ring-4 hover:shadow-[#FBB03B]/80 hover:ring-[#FBB03B]/50">
-                    {/* subtle dot pattern */}
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-size-[20px_20px] opacity-30" />
+              <Link
+                href={partner.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative flex h-full items-center justify-center rounded-none focus:outline-4 focus:outline-offset-2 focus:outline-[#FBB03B]"
+              >
+                {/* Main card */}
+                <div className="relative flex h-full w-full items-center justify-center rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1 hover:scale-[1.02] hover:shadow-2xl hover:ring-4 hover:shadow-[#FBB03B]/80 hover:ring-[#FBB03B]/50">
+                  {/* subtle dot pattern */}
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-size-[20px_20px] opacity-30" />
 
-                    {/* logo container */}
-                    <div className="relative flex h-full w-full items-center justify-center">
-                      <Image
-                        src={partner.src}
-                        alt={partner.alt}
-                        fill
-                        className={`object-contain p-4 drop-shadow-sm md:p-8 ${partner.alt === "IEEE@UCF" ? "brightness-0 filter" : ""}`}
-                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 20vw"
-                        draggable={false}
-                      />
-                    </div>
+                  {/* logo container */}
+                  <div className="relative flex h-full w-full items-center justify-center">
+                    <Image
+                      src={partner.src}
+                      alt={partner.alt}
+                      fill
+                      className={`object-contain p-4 drop-shadow-sm md:p-8 ${partner.alt === "IEEE@UCF" ? "brightness-0 filter" : ""}`}
+                      sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 20vw"
+                      draggable={false}
+                    />
                   </div>
+                </div>
 
-                  {/* Black drop shadow */}
-                  <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
-                </a>
+                {/* Black drop shadow */}
+                <div className="absolute top-0 left-0 -z-10 h-full w-full rounded-none bg-black transition-transform duration-100 group-hover:translate-x-2 group-hover:translate-y-2" />
               </Link>
             </div>
           ))}

@@ -79,7 +79,7 @@ export const duesPaymentRouter = {
   orderSuccess: protectedProcedure
     .input(z.string())
     .query(async ({ input, ctx }) => {
-      const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
+      const stripe = new Stripe(env.STRIPE_SECRET_KEY);
       const session = await stripe.checkout.sessions.retrieve(input);
 
       await discord.log({

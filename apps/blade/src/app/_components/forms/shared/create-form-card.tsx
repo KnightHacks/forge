@@ -5,7 +5,7 @@ import { Loader2, Plus } from "lucide-react";
 import * as z from "zod";
 
 import { Button } from "@forge/ui/button";
-import { Card, CardHeader, CardTitle } from "@forge/ui/card";
+import { Card } from "@forge/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -161,10 +161,6 @@ export function CreateFormCard({ section }: { section?: string }) {
           </Form>
         </DialogContent>
       </Dialog>
-
-      <CardHeader>
-        <CardTitle>Create a new form</CardTitle>
-      </CardHeader>
     </Card>
   );
 }

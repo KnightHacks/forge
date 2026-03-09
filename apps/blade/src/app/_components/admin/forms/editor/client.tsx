@@ -291,6 +291,7 @@ export function EditorClient({
     if (!isFetching) {
       if (fetchError || !formData) {
         if (slug === "test-form") {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setFormTitle("Test Form (Mock)");
           setFormDescription(
             "This is a mock form description for testing UI components.",

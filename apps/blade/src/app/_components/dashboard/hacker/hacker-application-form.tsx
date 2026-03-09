@@ -201,7 +201,7 @@ export function HackerFormPage({
               if (fileList[0].size > MINIO.MAX_RESUME_SIZE) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_big,
-                  type: "number",
+                  origin: "number",
                   maximum: MINIO.MAX_RESUME_SIZE,
                   inclusive: true,
                   exact: false,
@@ -286,6 +286,7 @@ export function HackerFormPage({
       // Set selected allergies for the UI
       if (previousHacker.foodAllergies) {
         const allergies = previousHacker.foodAllergies.split(",");
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedAllergies(allergies);
       }
 
@@ -846,7 +847,7 @@ export function HackerFormPage({
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="flex h-auto min-h-[3rem] w-full items-center justify-start space-x-2 px-3"
+                        className="flex h-auto min-h-12 w-full items-center justify-start space-x-2 px-3"
                       >
                         <span className="text-sm text-gray-400">
                           Select Allergies:
@@ -872,7 +873,7 @@ export function HackerFormPage({
                     </PopoverTrigger>
                     <PopoverContent
                       align="start"
-                      className="w-full min-w-[var(--radix-popover-trigger-width)] max-w-none p-1"
+                      className="min-w-(--radix-popover-trigger-width) w-full max-w-none p-1"
                     >
                       <div className="flex w-full flex-col">
                         {FORMS.ALLERGIES.map((allergy) => (
