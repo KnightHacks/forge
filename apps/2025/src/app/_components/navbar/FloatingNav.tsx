@@ -258,7 +258,7 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
         ref={skipLinkRef}
         href="#main-content"
         tabIndex={1}
-        className="sr-only fixed top-0 left-0 z-[10000] rounded-none bg-[#d83434] px-4 py-2 text-white focus:not-sr-only focus:absolute focus:top-4 focus:left-4"
+        className="sr-only fixed top-0 left-0 z-10000 rounded-none bg-[#d83434] px-4 py-2 text-white focus:not-sr-only focus:absolute focus:top-4 focus:left-4"
       >
         Skip to main content
       </a>
@@ -271,7 +271,7 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
           opacity: isNavVisible || isAtTop ? 1 : 0,
         }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="fixed top-4 left-1/2 z-[9999] hidden w-auto -translate-x-1/2 md:block"
+        className="fixed top-4 left-1/2 z-9999 hidden w-auto -translate-x-1/2 md:block"
         role="navigation"
         aria-label="Main navigation"
         style={{
@@ -319,7 +319,7 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                           handleDesktopNavClick(link.href);
                         }
                       }}
-                      className={`tk-ccmeanwhile relative flex min-h-[48px] cursor-pointer items-center justify-center rounded-none px-3 py-3 text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] md:px-4 xl:text-lg ${
+                      className={`tk-ccmeanwhile relative flex min-h-12 cursor-pointer items-center justify-center rounded-none px-3 py-3 text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] md:px-4 xl:text-lg ${
                         isActive
                           ? "text-white shadow-lg"
                           : "text-slate-800 hover:text-white"
@@ -371,7 +371,7 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
           opacity: isNavVisible || isAtTop ? 1 : 0,
         }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="mobile-nav-container fixed top-4 left-4 z-[9999] touch-manipulation md:hidden"
+        className="mobile-nav-container fixed top-4 left-4 z-9999 touch-manipulation md:hidden"
         role="navigation"
         aria-label="Mobile navigation"
         style={{
@@ -430,7 +430,7 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="mobile-nav-container absolute top-full left-0 z-[9999] mt-2 touch-manipulation"
+              className="mobile-nav-container absolute top-full left-0 z-9999 mt-2 touch-manipulation"
               style={{
                 WebkitTapHighlightColor: "transparent",
                 maxHeight: "calc(100vh - 100px)",
@@ -443,7 +443,7 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
               <div className="group relative">
                 {/* Mobile menu with TextBox styling */}
                 <div className="relative rounded-none bg-[#F7F0C6] outline-2 -outline-offset-3 outline-black transition-transform duration-100 group-hover:-translate-x-1 group-hover:-translate-y-1">
-                  <div className="min-w-[200px] space-y-2 p-3">
+                  <div className="min-w-50 space-y-2 p-3">
                     {navLinks.map((link, index) => {
                       const isActive =
                         !isAtTop && activeSection === link.href.substring(1);
@@ -463,7 +463,7 @@ function FloatingNav({ navLinks }: FloatingNavProps) {
                               handleMobileNavClick(link.href);
                             }
                           }}
-                          className={`tk-ccmeanwhile flex min-h-[48px] w-full cursor-pointer items-center rounded-none px-4 py-3 text-left text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] ${
+                          className={`tk-ccmeanwhile flex min-h-12 w-full cursor-pointer items-center rounded-none px-4 py-3 text-left text-base font-bold outline-1 -outline-offset-1 outline-black transition-all duration-200 focus:outline-4 focus:outline-offset-2 focus:outline-[#d83434] ${
                             isActive
                               ? "text-white shadow-md"
                               : "text-slate-800 hover:text-white"

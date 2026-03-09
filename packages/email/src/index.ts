@@ -42,6 +42,7 @@ export const sendEmail = async ({
       `Failed to send email: ${
         error instanceof Error ? error.message : "Unknown error"
       }`,
+      { cause: error },
     );
   }
 };

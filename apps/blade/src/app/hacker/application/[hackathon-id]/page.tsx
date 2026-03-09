@@ -12,11 +12,10 @@ export const metadata: Metadata = {
   description: "Application to be a hacker",
 };
 
-export default async function HackerApplicationPage({
-  params,
-}: {
-  params: { "hackathon-id": string };
+export default async function HackerApplicationPage(props: {
+  params: Promise<{ "hackathon-id": string }>;
 }) {
+  const params = await props.params;
   const session = await auth();
 
   if (session == null) {

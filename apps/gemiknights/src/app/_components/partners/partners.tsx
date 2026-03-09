@@ -12,7 +12,7 @@ const Partners = () => {
   return (
     <motion.div
       id="partners"
-      className="flex h-screen w-full flex-col items-center justify-center gap-2 px-4 sm:gap-3 sm:px-6 md:gap-4 md:px-8"
+      className="flex h-screen w-full scroll-mt-20 flex-col items-center justify-center gap-2 px-4 sm:gap-3 sm:px-6 md:gap-4 md:px-8"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}

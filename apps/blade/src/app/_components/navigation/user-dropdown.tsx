@@ -84,7 +84,10 @@ export function UserDropdown({ permissions }: UserDropdownProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         {/* Needed a button with no styles for accessibility */}
-        <button className="cursor-pointer select-none rounded-full transition ease-in-out hover:ring-8 hover:ring-secondary data-[state=open]:ring-2 data-[state=open]:ring-primary">
+        <button
+          suppressHydrationWarning
+          className="cursor-pointer select-none rounded-full transition ease-in-out hover:ring-8 hover:ring-secondary data-[state=open]:ring-2 data-[state=open]:ring-primary"
+        >
           <Avatar>
             <AvatarImage src={`${data ? data.avatar : ""}`} />
             <AvatarFallback></AvatarFallback>

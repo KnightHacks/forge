@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { User } from "lucide-react";
 import { FaGithub, FaGlobe, FaLinkedin } from "react-icons/fa";
@@ -16,27 +16,12 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 
-import { api } from "~/trpc/react";
-
 export default function MemberProfileButton({
   member,
 }: {
   member: InsertMember;
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-
-  const utils = api.useUtils();
-  useEffect(() => {
-    async function invalidateMembers() {
-      await utils.member.invalidate();
-    }
-
-    invalidateMembers().catch((error) => {
-      // TODO: why are we logging to the browser console
-      // eslint-disable-next-line no-console
-      console.error("Error invalidating members in member profile: ", error);
-    });
-  }, [utils.member, member]);
 
   const memberSince = new Date(member.dateCreated ?? new Date());
   memberSince.setDate(memberSince.getDate() + 1);

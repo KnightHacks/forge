@@ -39,10 +39,10 @@
   },
   "prettier": "@forge/prettier-config",
   "dependencies": {
-    "@discordjs/rest": "^2.4.0",
-    "@t3-oss/env-nextjs": "^0.11.1",
-    "discord-api-types": "^0.37.113",
-    "googleapis": "^144.0.0",
+    "@discordjs/rest": "^2.6.0",
+    "@t3-oss/env-nextjs": "^0.13.10",
+    "discord-api-types": "^0.38.40",
+    "googleapis": "^171.4.0",
     "server-only": "^0.0.1"
   }
 }

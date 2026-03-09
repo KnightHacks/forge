@@ -518,9 +518,7 @@ export const hackerMutationRouter = {
       };
 
       const eventTag = event.tag;
-      let discordId: string | null = null;
-
-      discordId = await discord.resolveDiscordUserId(hacker.discordUser);
+      const discordId = await discord.resolveDiscordUserId(hacker.discordUser);
       const isVIP = discordId ? await discord.isDiscordVIP(discordId) : false;
 
       let assignedClass: HackerClass | null = hackerAttendee.class ?? null;

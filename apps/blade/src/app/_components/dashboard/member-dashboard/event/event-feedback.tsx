@@ -4,7 +4,13 @@ import { useState } from "react";
 
 import type { InsertMember, SelectEvent } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@forge/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@forge/ui/dialog";
 
 import { FormResponderWrapper } from "~/app/_components/forms/form-responder-client";
 
@@ -33,6 +39,9 @@ export function EventFeedbackForm({
         aria-describedby={undefined}
         className="max-h-[80vh] overflow-y-auto"
       >
+        <DialogHeader>
+          <DialogTitle>{event.name} Feedback</DialogTitle>
+        </DialogHeader>
         <FormResponderWrapper formName={slugName} userName={member.firstName} />
       </DialogContent>
     </Dialog>

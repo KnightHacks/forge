@@ -114,6 +114,7 @@ export function MemberProfileForm({
   };
 
   const form = useForm({
+    // @ts-expect-error -- schema uses .transform() so input≠output; ZodType<TIn,TIn> in useForm can't represent this
     schema: InsertMemberSchema.omit({
       age: true,
       userId: true,
@@ -150,7 +151,7 @@ export function MemberProfileForm({
               if (file.size > MINIO.MAX_RESUME_SIZE) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_big,
-                  type: "number",
+                  origin: "number",
                   maximum: MINIO.MAX_RESUME_SIZE,
                   inclusive: true,
                   message: "File too large: maximum 5MB",
@@ -181,7 +182,7 @@ export function MemberProfileForm({
               if (file.size > MINIO.KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_big,
-                  type: "number",
+                  origin: "number",
                   maximum: MINIO.KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE,
                   inclusive: true,
                   message: `File too large: maximum ${MINIO.KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE / (1024 * 1024)}MB`,
@@ -248,7 +249,7 @@ export function MemberProfileForm({
       phoneNumber: member?.phoneNumber ?? "",
       dob: member?.dob,
       gradTerm: initTermYear.term as FORMS.GradTerm,
-      gradYear: initTermYear.year,
+      gradYear: Number(initTermYear.year),
       company: member?.company,
       githubProfileUrl: member?.githubProfileUrl ?? "",
       linkedinProfileUrl: member?.linkedinProfileUrl ?? "",
@@ -434,7 +435,7 @@ export function MemberProfileForm({
             )}
           />
 
-          <div className="!mt-10">
+          <div className="mt-10!">
             <h3 className="text-lg font-medium">Demographic Information</h3>
             <p className="text-sm text-muted-foreground">
               This is some additional information about you.
@@ -546,7 +547,7 @@ export function MemberProfileForm({
             )}
           />
 
-          <div className="!mt-10">
+          <div className="mt-10!">
             <h3 className="text-lg font-medium">Academic Information</h3>
             <p className="text-sm text-muted-foreground">
               This is where you go to school and what you're studying.
@@ -754,7 +755,7 @@ export function MemberProfileForm({
             />
           )}
 
-          <div className="!mt-10">
+          <div className="mt-10!">
             <h3 className="text-lg font-medium">Guild Profile Customization</h3>
             <p className="text-sm text-muted-foreground">
               Personalize how you appear on the Knight Hacks{" "}
@@ -919,7 +920,7 @@ export function MemberProfileForm({
           )}
         </form>
       </Form>
-      <div className="!mt-12">
+      <div className="mt-12!">
         <h3 className="text-lg font-medium text-red-700">Danger Zone</h3>
         <p className="mb-4 text-sm text-red-700/75">
           Avoid this if you're not sure what you're doing.
