@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { AwardIcon, WrenchIcon } from "lucide-react";
-import { QrReader } from "react-qr-reader";
+import { useZxing } from "react-zxing";
 import { z } from "zod";
 
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
@@ -156,7 +156,6 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
             <select
               {...field}
               className="w-full rounded border p-2"
-              defaultValue=""
               onChange={(e) => {
                 const selectedEventId = e.target.value;
                 field.onChange(e);
@@ -219,6 +218,33 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
     />
   );
 
+  const { ref } = useZxing({
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    onDecodeResult: async (result) => {
+      if (scanningRef.current) return;
+      scanningRef.current = true;
+
+      try {
+        const eventId = form.getValues("eventId");
+        if (!eventId) {
+          toast.error("Please select an event first!");
+          return;
+        }
+
+        const userId = result.getText().substring(5);
+        form.setValue("userId", userId);
+
+        const checkinRoute =
+          eventType == "Hacker" ? hackerEventCheckIn : memberCheckIn;
+        await form.handleSubmit((data) => checkinRoute.mutate(data))();
+      } finally {
+        setTimeout(() => {
+          scanningRef.current = false;
+        }, 3000);
+      }
+    },
+  });
+
   return (
     <Dialog open={open}>
       <DialogTrigger asChild>
@@ -233,38 +259,8 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
         <DialogHeader>
           <DialogTitle className="absolute">Check-in {eventType}</DialogTitle>
         </DialogHeader>
-        <div>
-          <QrReader
-            scanDelay={2000}
-            constraints={{ facingMode: "environment" }}
-            onResult={async (result, _) => {
-              if (!result) return;
-              if (scanningRef.current) return;
-              scanningRef.current = true;
-              try {
-                const userId = result.getText().substring(5);
-                form.setValue("userId", userId);
-                const eventId = form.getValues("eventId");
-                if (eventId) {
-                  if (eventType === "Hacker") {
-                    await form.handleSubmit((data) =>
-                      hackerEventCheckIn.mutate(data),
-                    )();
-                  } else {
-                    await form.handleSubmit((data) =>
-                      memberCheckIn.mutate(data),
-                    )();
-                  }
-                } else {
-                  toast.error("Please select an event first!");
-                }
-              } finally {
-                setTimeout(() => {
-                  scanningRef.current = false;
-                }, 3000);
-              }
-            }}
-          />
+        <div className="m-5">
+          <video ref={ref}> </video>
         </div>
         <Form {...form}>
           <form
