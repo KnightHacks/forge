@@ -450,12 +450,12 @@ export const eventRouter = {
         : `${hackDesc}${input.description}${pointDesc}`;
 
       const sourceCalendarId = event.isOperationsCalendar
-      ? EVENTS.DEV_GOOGLE_CALENDAR_ID
-      : EVENTS.GOOGLE_CALENDAR_ID;
+        ? EVENTS.DEV_GOOGLE_CALENDAR_ID
+        : EVENTS.GOOGLE_CALENDAR_ID;
 
-    const targetCalendarId = input.isOperationsCalendar
-      ? EVENTS.DEV_GOOGLE_CALENDAR_ID
-      : EVENTS.GOOGLE_CALENDAR_ID;
+      const targetCalendarId = input.isOperationsCalendar
+        ? EVENTS.DEV_GOOGLE_CALENDAR_ID
+        : EVENTS.GOOGLE_CALENDAR_ID;
 
       // Step 1: Update the event in Discord
       try {
@@ -473,7 +473,7 @@ export const eventRouter = {
               scheduled_end_time: endLocalIso,
 
               // 2 = VOICE (Internal/Hidden), DISCORD.EVENT_TYPE = EXTERNAL (Public)
-              entity_type: isInternalEvent ? 2 : 3,
+              entity_type: isInternalEvent ? 2 : DISCORD.EVENT_TYPE,
 
               // Link to the private channel if internal.
               channel_id: isInternalEvent
@@ -498,9 +498,9 @@ export const eventRouter = {
       }
 
       // Step 2: Update the event in Google Calendar
-      
+
       // We need a variable to track the Google ID, just in case the calendar changes and we get a new one!
-      let newGoogleId = event.googleId; 
+      let newGoogleId = event.googleId;
 
       try {
         // Define the body once so we don't have to type it twice
@@ -526,19 +526,41 @@ export const eventRouter = {
             requestBody: calendarRequestBody,
           });
         } else {
-          // The Ops checkbox was flipped and the event is moving to a new calendar.
-          
+          // The Ops checkbox was flipped! The event is moving to a new calendar.
+
           // 1. Create the new event in the target calendar
           const created = await google.calendar.events.insert({
             calendarId: targetCalendarId,
             requestBody: calendarRequestBody,
           });
 
-          // 2. Delete the old event from the source calendar
-          await google.calendar.events.delete({
-            calendarId: sourceCalendarId,
-            eventId: event.googleId,
-          });
+          // 2. Safely attempt to delete the old event from the source calendar
+          try {
+            await google.calendar.events.delete({
+              calendarId: sourceCalendarId,
+              eventId: event.googleId,
+            });
+          } catch (deleteError) {
+            // COMPENSATING TRANSACTION: If delete fails, rollback the new event so we don't have duplicates!
+            logger.error(
+              "Failed to delete old calendar event. Rolling back new event creation...",
+            );
+            try {
+              if (created.data.id) {
+                await google.calendar.events.delete({
+                  calendarId: targetCalendarId,
+                  eventId: created.data.id,
+                });
+              }
+            } catch (rollbackError) {
+              logger.error(
+                "CRITICAL: Failed to rollback newly created calendar event",
+                rollbackError,
+              );
+            }
+            // Throw the original error so the frontend knows it failed
+            throw deleteError;
+          }
 
           // 3. Capture the new Google ID so we can save it to the database
           if (created.data.id) {
@@ -642,8 +664,8 @@ export const eventRouter = {
         .update(Event)
         .set({
           ...input,
-          googleId: newGoogleId, 
-          
+          googleId: newGoogleId,
+
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
           points: input.hackathonId ? EVENTS.EVENT_POINTS[input.tag] || 0 : 0,
