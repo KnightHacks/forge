@@ -59,6 +59,8 @@ export function CreateEventButton() {
 
   const { data: hackathons } = api.hackathon.getHackathons.useQuery();
 
+  const { data: rolesData } = api.roles.getAllLinks.useQuery();
+
   // TRPC mutation
   const createEvent = api.event.createEvent.useMutation({
     onSuccess() {

@@ -211,7 +211,7 @@ export const eventRouter = {
 
       // Step 1: Create the event in Discord
       // Determine if this should be hidden based on UI checkboxes
-      const isInternalEvent = input.roles.length > 0 || input.isOperationsCalendar;
+      const isInternalEvent = (input.roles?.length ?? 0) > 0 || input.isOperationsCalendar;
 
       // If it's internal, we lose the "location" field in Discord, so append it to the description
       const finalDescription = isInternalEvent 
@@ -368,7 +368,11 @@ export const eventRouter = {
     }),
 
   updateEvent: permProcedure
-    .input(InsertEventSchema)
+    .input(InsertEventSchema.extend({
+        roles: z.array(z.string()).default([]),
+        isOperationsCalendar: z.boolean().default(false),
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       permissions.controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
 
@@ -425,7 +429,7 @@ export const eventRouter = {
       // Step 1: Update the event in Discord
       
       // Determine if this should be hidden based on UI checkboxes
-      const isInternalEvent = input.roles.length > 0 || input.isOperationsCalendar;
+      const isInternalEvent = (input.roles?.length ?? 0) > 0 || input.isOperationsCalendar;
 
       // If it's internal, we lose the "location" field in Discord, so append it to the description
       const finalDescription = isInternalEvent 
@@ -448,13 +452,13 @@ export const eventRouter = {
               scheduled_end_time: endLocalIso,
               
               // 2 = VOICE (Internal/Hidden), DISCORD.EVENT_TYPE = EXTERNAL (Public)
-              entity_type: isInternalEvent ? 2 : DISCORD.EVENT_TYPE,
+              entity_type: isInternalEvent ? 2 : 3,
               
               // Link to the private channel if internal.
-              channel_id: isInternalEvent ? env.DISCORD_OPS_VOICE_CHANNEL_ID : undefined,
+              channel_id: isInternalEvent ? env.DISCORD_OPS_VOICE_CHANNEL_ID : null,
               
               // Only provide entity_metadata (location) if it's an external public event
-              entity_metadata: isInternalEvent ? undefined : {
+              entity_metadata: isInternalEvent ? null : {
                 location: input.location,
               },
             },
