@@ -1,7 +1,7 @@
 import type { APIEmbed } from "discord-api-types/v10";
 import type { InferSelectModel } from "drizzle-orm";
 import { WebhookClient } from "discord.js";
-import { asc, and, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 
 import { db } from "@forge/db/client";
 import { Event } from "@forge/db/schemas/knight-hacks";
@@ -287,8 +287,8 @@ async function getEvents() {
         and(
           eq(Event.isOperationsCalendar, false),
           // Drizzle's syntax for checking if an array is empty:
-          sql`array_length(${Event.roles}, 1) IS NULL` 
-        )
+          sql`array_length(${Event.roles}, 1) IS NULL`,
+        ),
       )
       .orderBy(asc(Event.start_datetime));
 
@@ -375,10 +375,10 @@ async function getEvents() {
     .where(
       and(
         eq(Event.isOperationsCalendar, false),
-          // Drizzle's syntax for checking if an array is empty:
-          sql`array_length(${Event.roles}, 1) IS NULL` 
-        )
-      )
+        // Drizzle's syntax for checking if an array is empty:
+        sql`array_length(${Event.roles}, 1) IS NULL`,
+      ),
+    )
     .orderBy(asc(Event.start_datetime));
 
   // Bandaid fix by adding one to every date
@@ -466,11 +466,11 @@ async function getHackEvents(hId: string) {
   const events = (
     await db.query.Event.findMany({
       orderBy: (evs, { asc }) => asc(evs.start_datetime),
-      where: (ev, { and, eq, sql }) => 
+      where: (ev, { and, eq, sql }) =>
         and(
           eq(ev.hackathonId, hId),
           eq(ev.isOperationsCalendar, false),
-          sql`array_length(${ev.roles}, 1) IS NULL`
+          sql`array_length(${ev.roles}, 1) IS NULL`,
         ),
     })
   )

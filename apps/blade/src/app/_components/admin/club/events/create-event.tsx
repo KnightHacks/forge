@@ -601,10 +601,10 @@ export function CreateEventButton() {
                 render={({}) => (
                   <FormItem>
                     <div className="grid grid-cols-4 items-start gap-4">
-                      <FormLabel className="text-right mt-1">
+                      <FormLabel className="mt-1 text-right">
                         Visible To Roles
                       </FormLabel>
-                      <div className="col-span-3 grid grid-cols-2 gap-y-3 gap-x-2 mt-1">
+                      <div className="col-span-3 mt-1 grid grid-cols-2 gap-x-2 gap-y-3">
                         {/* NOTE: Replace `rolesData` with your actual tRPC query data.
                           Example: const { data: rolesData } = api.roles.getAll.useQuery();
                         */}
@@ -624,16 +624,20 @@ export function CreateEventButton() {
                                       checked={field.value?.includes(role.id)}
                                       onCheckedChange={(checked) => {
                                         return checked
-                                          ? field.onChange([...(field.value || []), role.id])
+                                          ? field.onChange([
+                                              ...(field.value || []),
+                                              role.id,
+                                            ])
                                           : field.onChange(
                                               field.value?.filter(
-                                                (value: string) => value !== role.id
-                                              )
+                                                (value: string) =>
+                                                  value !== role.id,
+                                              ),
                                             );
                                       }}
                                     />
                                   </FormControl>
-                                  <FormLabel className="font-normal cursor-pointer">
+                                  <FormLabel className="cursor-pointer font-normal">
                                     {role.name}
                                   </FormLabel>
                                 </FormItem>
