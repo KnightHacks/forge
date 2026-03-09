@@ -2,6 +2,7 @@
 import type { NextRequest } from "next/server";
 import Stripe from "stripe";
 
+import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { DuesPayment, DuesPaymentSchema } from "@forge/db/schemas/knight-hacks";
 
@@ -48,6 +49,49 @@ async function membershipRecord(sessionId: string) {
   }
 }
 
+async function fulfillPaymentIntent(paymentIntentId: string) {
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status !== "succeeded") {
+      throw new Error("Payment intent has not succeeded");
+    }
+
+    const memberId = paymentIntent.metadata?.member_id;
+
+    const values = {
+      memberId,
+      amount: paymentIntent.amount,
+      paymentDate: new Date(paymentIntent.created * 1000),
+      year: new Date().getFullYear(),
+    };
+
+    const validated = DuesPaymentSchema.omit({ id: true }).safeParse(values);
+
+    if (!validated.success) {
+      console.log(validated.error.issues);
+      throw new Error("Invalid or missing field(s)");
+    }
+
+    const existing = await db
+      .select()
+      .from(DuesPayment)
+      .where(eq(DuesPayment.memberId, validated.data.memberId))
+      .limit(1);
+
+    if (existing.length === 0) {
+      await db.insert(DuesPayment).values(validated.data);
+    }
+
+    return true;
+  } catch (e) {
+    console.error("Error:", e);
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   const sig = request.headers.get("stripe-signature") ?? "";
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
@@ -79,6 +123,17 @@ export async function POST(request: NextRequest) {
     case "checkout.session.expired":
       return new Response("Checkout session expired", {
         status: 408,
+      });
+    case "payment_intent.succeeded":
+      success = await fulfillPaymentIntent(event.data.object.id);
+      break;
+    case "payment_intent.payment_failed":
+      return new Response("Payment failed", {
+        status: 401,
+      });
+    case "payment_intent.canceled":
+      return new Response("Payment canceled", {
+        status: 410,
       });
     default:
       return new Response(`Unhandled event type ${event.type}`, {
