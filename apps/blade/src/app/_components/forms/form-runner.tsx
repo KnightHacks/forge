@@ -128,7 +128,7 @@ export function FormRunner({
         {form.banner && <div className="overflow-hidden rounded-lg"></div>}
 
         {/* Header */}
-        <Card className="border-t-8 border-t-primary duration-500 animate-in fade-in slide-in-from-top-4">
+        <Card className="animate-in fade-in slide-in-from-top-4 border-t-8 border-t-primary duration-500">
           <div className="space-y-2 p-6">
             <h1 className="text-3xl font-bold">
               {isReview && `${allowEdit ? "Edit" : "View"} - `}
@@ -149,7 +149,7 @@ export function FormRunner({
             return (
               <div
                 key={`${isInstruction ? "inst" : "q"}-${index}`}
-                className={`duration-500 animate-in fade-in slide-in-from-bottom-4 ${
+                className={`animate-in fade-in slide-in-from-bottom-4 duration-500 ${
                   isInstruction ? "mt-8" : ""
                 }`}
                 style={{

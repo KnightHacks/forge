@@ -9,7 +9,7 @@ const About = () => {
   return (
     <motion.div
       id="about"
-      className="flex flex-col items-center justify-center"
+      className="flex scroll-mt-20 flex-col items-center justify-center"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}

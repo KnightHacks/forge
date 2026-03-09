@@ -303,7 +303,7 @@ export default function UpdateHackerButton({
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger className="max-w-[300px] overflow-hidden truncate">
+                              <SelectTrigger className="max-w-75 overflow-hidden truncate">
                                 <SelectValue placeholder="Select level of study" />
                               </SelectTrigger>
                             </FormControl>

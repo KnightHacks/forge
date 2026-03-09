@@ -18,11 +18,12 @@ export const hackathonRouter = {
 
   getCurrentHackathon: publicProcedure.query(async () => {
     // Find first hackathon that hasnt ended yet
-    return await db.query.Hackathon.findFirst({
+    const hackathon = await db.query.Hackathon.findFirst({
       orderBy: (t, { asc }) => asc(t.endDate),
       where: (t, { and, gte, lte }) =>
         and(gte(t.endDate, new Date()), lte(t.applicationOpen, new Date())),
     });
+    return hackathon ?? null;
   }),
 
   getPreviousHacker: protectedProcedure.query(async ({ ctx }) => {
@@ -61,9 +62,10 @@ export const hackathonRouter = {
   getHackathonById: publicProcedure
     .input(z.string())
     .query(async ({ input }) => {
-      return await db.query.Hackathon.findFirst({
+      const hackathon = await db.query.Hackathon.findFirst({
         where: (t, { eq }) => eq(t.id, input),
       });
+      return hackathon ?? null;
     }),
 
   getPastHackathons: protectedProcedure.query(async ({ ctx }) => {

@@ -138,7 +138,7 @@ export default function ShirtSizePie({ members }: { members: Member[] }) {
         <ChartContainer
           id={id}
           config={baseConfig}
-          className="mx-auto aspect-square w-full max-w-[300px]"
+          className="max-w-75 mx-auto aspect-square w-full"
         >
           <PieChart>
             <ChartTooltip
@@ -151,6 +151,7 @@ export default function ShirtSizePie({ members }: { members: Member[] }) {
               nameKey="name"
               innerRadius={60}
               strokeWidth={5}
+              // @ts-expect-error -- recharts v3 removed activeIndex from Pie TS types
               activeIndex={activeIndex}
               activeShape={({
                 outerRadius = 0,
@@ -185,6 +186,7 @@ export default function ShirtSizePie({ members }: { members: Member[] }) {
                         </tspan>
                         <tspan
                           x={viewBox.cx}
+                          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                           y={(viewBox.cy ?? 0) + 24}
                           className="fill-muted-foreground"
                         >

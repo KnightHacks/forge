@@ -15,13 +15,12 @@ const gapiGmailSend = "https://www.googleapis.com/auth/gmail.send";
 const gapiGmailSettingsSharing =
   "https://www.googleapis.com/auth/gmail.settings.sharing";
 
-const auth = new google.auth.JWT(
-  env.GOOGLE_CLIENT_EMAIL,
-  undefined,
-  GOOGLE_PRIVATE_KEY,
-  [gapiCalendar, gapiGmailSend, gapiGmailSettingsSharing],
-  EVENTS.GOOGLE_PERSONIFY_EMAIL as string,
-);
+const auth = new google.auth.JWT({
+  email: env.GOOGLE_CLIENT_EMAIL,
+  key: GOOGLE_PRIVATE_KEY,
+  scopes: [gapiCalendar, gapiGmailSend, gapiGmailSettingsSharing],
+  subject: EVENTS.GOOGLE_PERSONIFY_EMAIL as string,
+});
 
 export const gmail = google.gmail({
   version: "v1",

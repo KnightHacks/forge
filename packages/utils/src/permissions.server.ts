@@ -14,7 +14,7 @@ import { logger } from "./logger";
  */
 export const isJudgeAdmin = async () => {
   try {
-    const token = cookies().get("sessionToken")?.value;
+    const token = (await cookies()).get("sessionToken")?.value;
     if (!token) return false;
 
     const now = new Date();
@@ -41,7 +41,7 @@ export const isJudgeAdmin = async () => {
  * Uses cookies() from next/headers, so this can only be used in Server Components or Server Actions.
  */
 export const getJudgeSessionFromCookie = async () => {
-  const token = cookies().get("sessionToken")?.value;
+  const token = (await cookies()).get("sessionToken")?.value;
   if (!token) return null;
 
   const now = new Date();

@@ -103,7 +103,7 @@ export const auth = betterAuth({
 });
 
 export const validateToken = async () => {
-  const headersList = headers();
+  const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
 
   if (!session) return null;
