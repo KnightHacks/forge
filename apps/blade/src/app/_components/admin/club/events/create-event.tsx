@@ -618,9 +618,6 @@ export function CreateEventButton() {
                           Visible To Roles
                         </FormLabel>
                         <div className="col-span-3 mt-1 grid grid-cols-2 gap-x-2 gap-y-3">
-                          {/* NOTE: Replace `rolesData` with your actual tRPC query data.
-                          Example: const { data: rolesData } = api.roles.getAll.useQuery();
-                        */}
                           {rolesData?.map((role) => (
                             <FormField
                               key={role.id}
