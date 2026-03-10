@@ -540,7 +540,12 @@ export const eventRouter = {
           ...input,
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
-          points: input.hackathonId ? EVENTS.EVENT_POINTS[input.tag] || 0 : 0,
+          points:
+            input.points !== undefined
+              ? input.points
+              : input.hackathonId
+                ? EVENTS.EVENT_POINTS[input.tag] || 0
+                : (event.points ?? 0),
         })
         .where(eq(Event.id, input.id));
     }),

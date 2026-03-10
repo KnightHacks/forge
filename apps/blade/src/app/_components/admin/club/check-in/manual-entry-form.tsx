@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AwardIcon, Check, ChevronsUpDown } from "lucide-react";
 import { z } from "zod";
 
@@ -38,6 +38,8 @@ export function ManualEntryForm() {
     email: string;
   } | null>(null);
   const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const commandListRef = useRef<HTMLDivElement>(null);
 
   // Only show club events (events without hackathonId)
   const filteredEvents = events?.filter((v) => !v.hackathonId);
@@ -93,6 +95,13 @@ export function ManualEntryForm() {
     memberEventCheckIn.mutate(data);
   };
 
+  // Reset scroll to top when search value changes
+  useEffect(() => {
+    if (commandListRef.current) {
+      commandListRef.current.scrollTop = 0;
+    }
+  }, [searchValue]);
+
   const renderEventSelect = (filteredEvents: typeof events) => (
     <FormField
       name="eventId"
@@ -111,7 +120,6 @@ export function ManualEntryForm() {
             <select
               {...field}
               className="w-full rounded border p-2"
-              defaultValue=""
               onChange={(e) => {
                 const selectedEventId = e.target.value;
                 field.onChange(e);
@@ -172,8 +180,12 @@ export function ManualEntryForm() {
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
-                      <CommandInput placeholder="Search members by name or email..." />
-                      <CommandList>
+                      <CommandInput
+                        placeholder="Search members by name or email..."
+                        value={searchValue}
+                        onValueChange={setSearchValue}
+                      />
+                      <CommandList ref={commandListRef}>
                         <CommandEmpty>No members found.</CommandEmpty>
                         <CommandGroup>
                           {members?.map((member) => (
