@@ -30,46 +30,50 @@ async function requireIssue(id: string, label = "Issue") {
   return issue;
 }
 
-async function insertJunctions(
-  issueId: string,
-  teamVisibilityIds?: string[],
-  assigneeIds?: string[],
-) {
-  if (teamVisibilityIds?.length) {
-    await db
-      .insert(IssuesToTeamsVisibility)
-      .values(teamVisibilityIds.map((teamId) => ({ issueId, teamId })));
-  }
-  if (assigneeIds?.length) {
-    await db
-      .insert(IssuesToUsersAssignment)
-      .values(assigneeIds.map((userId) => ({ issueId, userId })));
-  }
-}
-
 export const issuesRouter = {
   createIssue: permProcedure
-    .input(CreateIssueInputSchema)
+    .input(CreateIssueInputSchema.omit({ creator: true }))
     .mutation(async ({ ctx, input }) => {
       permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
 
-      const { teamVisibilityIds, assigneeIds, ...rest } = input;
-      const [issue] = await db
-        .insert(Issue)
-        .values({
-          ...rest,
-          creator: ctx.session.user.id,
-        })
-        .returning();
+      return await db.transaction(async (tx) => {
+        const { teamVisibilityIds, assigneeIds, ...rest } = input;
 
-      if (!issue)
-        throw new TRPCError({
-          message: "Failed to create issue.",
-          code: "INTERNAL_SERVER_ERROR",
-        });
+        const [issue] = await tx
+          .insert(Issue)
+          .values({
+            ...rest,
+            creator: ctx.session.user.id,
+          })
+          .returning();
 
-      await insertJunctions(issue.id, teamVisibilityIds, assigneeIds);
-      return issue;
+        if (!issue) {
+          throw new TRPCError({
+            message: "Failed to create issue.",
+            code: "INTERNAL_SERVER_ERROR",
+          });
+        }
+
+        if (teamVisibilityIds?.length) {
+          await db.insert(IssuesToTeamsVisibility).values(
+            teamVisibilityIds.map((teamId) => ({
+              issueId: issue.id,
+              teamId,
+            })),
+          );
+        }
+
+        if (assigneeIds?.length) {
+          await db.insert(IssuesToUsersAssignment).values(
+            assigneeIds.map((userId) => ({
+              issueId: issue.id,
+              userId,
+            })),
+          );
+        }
+
+        return issue;
+      });
     }),
 
   getIssue: permProcedure

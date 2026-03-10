@@ -1,5 +1,6 @@
 import {
   foreignKey,
+  index,
   pgEnum,
   pgTableCreator,
   primaryKey,
@@ -571,6 +572,11 @@ export const Issue = createTable(
       foreignColumns: [table.id],
       name: "issue_parent_fk",
     }),
+    teamIdx: index("issue_team_idx").on(table.team),
+    creatorIdx: index("issue_creator_idx").on(table.creator),
+    statusIdx: index("issue_status_idx").on(table.status),
+    dateIdx: index("issue_date_idx").on(table.date),
+    parentIdx: index("issue_parent_idx").on(table.parent),
   }),
 );
 
@@ -582,11 +588,11 @@ export const IssuesToTeamsVisibility = createTable(
     issueId: t
       .uuid("issue_id")
       .notNull()
-      .references(() => Issue.id),
+      .references(() => Issue.id, { onDelete: "cascade" }),
     teamId: t
       .uuid("team_id")
       .notNull()
-      .references(() => Roles.id),
+      .references(() => Roles.id, { onDelete: "cascade" }),
   }),
   (table) => ({
     pk: primaryKey({ columns: [table.issueId, table.teamId] }),
@@ -599,11 +605,11 @@ export const IssuesToUsersAssignment = createTable(
     issueId: t
       .uuid("issue_id")
       .notNull()
-      .references(() => Issue.id),
+      .references(() => Issue.id, { onDelete: "cascade" }),
     userId: t
       .uuid("user_id")
       .notNull()
-      .references(() => User.id),
+      .references(() => User.id, { onDelete: "cascade" }),
   }),
   (table) => ({
     pk: primaryKey({ columns: [table.issueId, table.userId] }),
