@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { Loader2, Pencil } from "lucide-react";
+import { useState } from "react";
 import { z } from "zod";
 
-import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { FORMS } from "@forge/consts";
+import type { InsertMember } from "@forge/db/schemas/knight-hacks";
 import { InsertMemberSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
@@ -72,14 +72,13 @@ export default function UpdateMemberButton({
     firstName: z.string().min(1, "Required"),
     lastName: z.string().min(1, "Required"),
     email: z.string().email("Invalid email").min(1, "Required"),
-    points: z.string().transform((points) => Number(points)),
+    points: z.number(),
     phoneNumber: z
       .string()
       .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number"),
   });
 
   const form = useForm({
-    // @ts-expect-error -- schema uses .transform() so input≠output; ZodType<TIn,TIn> in useForm can't represent this
     schema: UpdateMemberSchema,
     defaultValues: {
       firstName: member.firstName || "",
@@ -115,14 +114,12 @@ export default function UpdateMemberButton({
               onSubmit={form.handleSubmit((values) => {
                 setIsLoading(true);
 
-                const points = Number(values.points);
-
                 updateMember.mutate({
                   id: member.id,
                   firstName: values.firstName,
                   lastName: values.lastName,
                   email: values.email,
-                  points: points,
+                  points: values.points,
                   dob: values.dob,
                   phoneNumber: values.phoneNumber,
                   school: values.school,
@@ -209,7 +206,15 @@ export default function UpdateMemberButton({
                           Points
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="1000" {...field} />
+                          <Input
+                            type="number"
+                            placeholder="1000"
+                            value={field.value}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(val === "" ? 0 : Number(val));
+                            }}
+                          />
                         </FormControl>
                         <FormMessage className="my-auto whitespace-nowrap" />
                       </div>
