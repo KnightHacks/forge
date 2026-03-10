@@ -105,6 +105,16 @@ export const PERMISSION_DATA: Record<string, PermissionDataObj> = {
     name: "Configure Roles",
     desc: "Allows creating, editing, or deleting roles.",
   },
+  READ_ISSUES: {
+    idx: 20,
+    name: "Read Issues",
+    desc: "Grants access to view issues on the calendar.",
+  },
+  EDIT_ISSUES: {
+    idx: 21,
+    name: "Edit Issues",
+    desc: "Allows creating, editing, or deleting issues.",
+  },
 } as const satisfies Record<string, PermissionDataObj>;
 
 export const PERMISSIONS = Object.fromEntries(

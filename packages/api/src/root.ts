@@ -12,6 +12,7 @@ import { hackathonRouter } from "./routers/hackathon";
 import { hackerMutationRouter } from "./routers/hackers/mutations";
 import { hackerPaginationRouter } from "./routers/hackers/pagination";
 import { hackerQueryRouter } from "./routers/hackers/queries";
+import { issuesRouter } from "./routers/issues";
 import { judgeRouter } from "./routers/judge";
 import { memberRouter } from "./routers/member";
 import { miscRouter } from "./routers/misc";
@@ -45,6 +46,7 @@ export const appRouter = createTRPCRouter<{
   companies: typeof companiesRouter;
   forms: typeof formsRouter;
   roles: typeof rolesRouter;
+  issues: typeof issuesRouter;
 }>({
   misc: miscRouter,
   auth: authRouter,
@@ -68,6 +70,7 @@ export const appRouter = createTRPCRouter<{
   companies: companiesRouter,
   forms: formsRouter,
   roles: rolesRouter,
+  issues: issuesRouter,
 });
 
 // export type definition of API
