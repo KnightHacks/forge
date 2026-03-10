@@ -10,16 +10,19 @@ import {
 
 export const UserRelations = relations(User, ({ many, one }) => ({
   accounts: many(Account),
+  sessions: many(Session),
   member: one(Member),
   permissions: many(Permissions, {
     relationName: "userPermissionRel",
   }),
+  assignedIssues: many(IssuesToUsersAssignment),
 }));
 
 export const RoleRelations = relations(Roles, ({ many }) => ({
   permissions: many(Permissions, {
     relationName: "rolePermissionRel",
   }),
+  visibleIssues: many(IssuesToTeamsVisibility),
 }));
 
 export const PermissionRelations = relations(Permissions, ({ one }) => ({
@@ -35,16 +38,9 @@ export const PermissionRelations = relations(Permissions, ({ one }) => ({
   }),
 }));
 
-export const AccountRelations = relations(Account, ({ one }) => ({
-  user: one(User, { fields: [Account.userId], references: [User.id] }),
-}));
-
-export const MemberRelations = relations(Member, ({ one }) => ({
-  user: one(User, { fields: [Member.userId], references: [User.id] }),
-}));
-
-export const SessionRelations = relations(Session, ({ one }) => ({
-  user: one(User, { fields: [Session.userId], references: [User.id] }),
+export const IssueRelations = relations(Issue, ({ many }) => ({
+  teamVisibility: many(IssuesToTeamsVisibility),
+  userAssignments: many(IssuesToUsersAssignment),
 }));
 
 export const issuesToTeamsVisibilityRelations = relations(
@@ -75,15 +71,14 @@ export const issuesToUsersAssignmentRelations = relations(
   }),
 );
 
-export const issueRelations = relations(Issue, ({ many }) => ({
-  teamVisibility: many(IssuesToTeamsVisibility),
-  userAssignments: many(IssuesToUsersAssignment),
+export const AccountRelations = relations(Account, ({ one }) => ({
+  user: one(User, { fields: [Account.userId], references: [User.id] }),
 }));
 
-export const rolesRelations = relations(Roles, ({ many }) => ({
-  visibleIssues: many(IssuesToTeamsVisibility),
+export const MemberRelations = relations(Member, ({ one }) => ({
+  user: one(User, { fields: [Member.userId], references: [User.id] }),
 }));
 
-export const usersRelations = relations(User, ({ many }) => ({
-  assignedIssues: many(IssuesToUsersAssignment),
+export const SessionRelations = relations(Session, ({ one }) => ({
+  user: one(User, { fields: [Session.userId], references: [User.id] }),
 }));
