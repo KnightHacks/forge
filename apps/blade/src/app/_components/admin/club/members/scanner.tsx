@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { AwardIcon, WrenchIcon } from "lucide-react";
 import { Scanner } from "@yudiel/react-qr-scanner";
+import { AwardIcon, WrenchIcon } from "lucide-react";
 import { z } from "zod";
 
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
