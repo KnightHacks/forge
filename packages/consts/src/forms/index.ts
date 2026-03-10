@@ -212,22 +212,135 @@ export function getDropdownOptionsFromConst(
   }
 }
 
+interface FormQuestionTypeValidationErrors {
+  required: string;
+  invalid?: string;
+  format?: string;
+}
+
+interface FormQuestionTypeConfig {
+  value: string;
+  label: string;
+  validationErrors: FormQuestionTypeValidationErrors;
+}
+
 export const FORM_QUESTION_TYPES = [
-  { value: "SHORT_ANSWER", label: "Short answer" },
-  { value: "PARAGRAPH", label: "Paragraph" },
-  { value: "MULTIPLE_CHOICE", label: "Multiple choice" },
-  { value: "CHECKBOXES", label: "Checkboxes" },
-  { value: "DROPDOWN", label: "Dropdown" },
-  { value: "FILE_UPLOAD", label: "File upload" },
-  { value: "LINEAR_SCALE", label: "Linear scale" },
-  { value: "DATE", label: "Date" },
-  { value: "TIME", label: "Time" },
-  { value: "EMAIL", label: "Email" },
-  { value: "NUMBER", label: "Number" },
-  { value: "PHONE", label: "Phone" },
-  { value: "BOOLEAN", label: "Boolean (Yes/No)" },
-  { value: "LINK", label: "Link (URL)" },
-] as const;
+  {
+    value: "SHORT_ANSWER",
+    label: "Short answer",
+    validationErrors: { required: "Answer required" },
+  },
+  {
+    value: "PARAGRAPH",
+    label: "Paragraph",
+    validationErrors: { required: "Answer required" },
+  },
+  {
+    value: "MULTIPLE_CHOICE",
+    label: "Multiple choice",
+    validationErrors: {
+      required: "Answer required",
+      invalid: "Answer required",
+    },
+  },
+  {
+    value: "CHECKBOXES",
+    label: "Checkboxes",
+    validationErrors: {
+      required: "Answer required",
+      invalid: "Answer required",
+    },
+  },
+  {
+    value: "DROPDOWN",
+    label: "Dropdown",
+    validationErrors: {
+      required: "Answer required",
+      invalid: "Answer required",
+    },
+  },
+  {
+    value: "FILE_UPLOAD",
+    label: "File upload",
+    validationErrors: { required: "Answer required" },
+  },
+  {
+    value: "LINEAR_SCALE",
+    label: "Linear scale",
+    validationErrors: { required: "Answer required" },
+  },
+  {
+    value: "DATE",
+    label: "Date",
+    validationErrors: {
+      required: "Answer required",
+      format: "Please type a valid date",
+    },
+  },
+  {
+    value: "TIME",
+    label: "Time",
+    validationErrors: {
+      required: "Answer required",
+      format: "Please type a valid time",
+    },
+  },
+  {
+    value: "EMAIL",
+    label: "Email",
+    validationErrors: {
+      required: "Answer required",
+      format: "Please type a valid email",
+    },
+  },
+  {
+    value: "NUMBER",
+    label: "Number",
+    validationErrors: {
+      required: "Answer required",
+      format: "Please type a valid number",
+    },
+  },
+  {
+    value: "PHONE",
+    label: "Phone",
+    validationErrors: {
+      required: "Answer required",
+      format: "Please type a valid phone number",
+    },
+  },
+  {
+    value: "BOOLEAN",
+    label: "Boolean (Yes/No)",
+    validationErrors: { required: "Answer required" },
+  },
+  {
+    value: "LINK",
+    label: "Link (URL)",
+    validationErrors: {
+      required: "Answer required",
+      format: "Please type a valid URL",
+    },
+  },
+] as const satisfies readonly FormQuestionTypeConfig[];
+
+export type FormQuestionType = (typeof FORM_QUESTION_TYPES)[number]["value"];
+
+interface FormQuestionTypeMetadata {
+  value: FormQuestionType;
+  label: string;
+  validationErrors: FormQuestionTypeValidationErrors;
+}
+
+export const FORM_QUESTION_TYPE_VALUES: readonly FormQuestionType[] =
+  FORM_QUESTION_TYPES.map((questionType) => questionType.value);
+
+export const FORM_QUESTION_TYPE_BY_VALUE: Record<
+  FormQuestionType,
+  FormQuestionTypeMetadata
+> = Object.fromEntries(
+  FORM_QUESTION_TYPES.map((questionType) => [questionType.value, questionType]),
+) as Record<FormQuestionType, FormQuestionTypeMetadata>;
 
 export const HACKATHON_APPLICATION_STATES = [
   "withdrawn",
@@ -306,22 +419,11 @@ export const DEVPOST_TEAM_MEMBER_EMAIL_OFFSET = 3;
 export const QuestionValidator = z.object({
   question: z.string(),
   image: z.string().url().optional(),
-  type: z.enum([
-    "SHORT_ANSWER",
-    "PARAGRAPH",
-    "MULTIPLE_CHOICE",
-    "CHECKBOXES",
-    "DROPDOWN",
-    "LINEAR_SCALE",
-    "DATE",
-    "TIME",
-    "EMAIL",
-    "NUMBER",
-    "PHONE",
-    "FILE_UPLOAD",
-    "BOOLEAN",
-    "LINK",
-  ]),
+  type: z.custom<FormQuestionType>(
+    (value): value is FormQuestionType =>
+      typeof value === "string" && value in FORM_QUESTION_TYPE_BY_VALUE,
+    { error: "Invalid form question type" },
+  ),
   options: z.array(z.string()).optional(),
   optionsConst: z.string().optional(),
   optional: z.boolean().optional(),
@@ -355,4 +457,4 @@ export type InstructionValidatorType = z.infer<typeof InstructionValidator>;
 export type QuestionValidatorType = z.infer<typeof QuestionValidator>;
 export type ValidatorOptions = Omit<QuestionValidatorType, "question">;
 
-export type QuestionsType = z.infer<typeof QuestionValidator>["type"];
+export type QuestionsType = FormQuestionType;
