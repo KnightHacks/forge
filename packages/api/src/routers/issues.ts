@@ -80,26 +80,31 @@ export const issuesRouter = {
     )
     .query(async ({ ctx, input }) => {
       permissions.controlPerms.or(["READ_ISSUES"], ctx);
-      const userRoles = (
-        await db.query.Permissions.findMany({
-          where: eq(Permissions.userId, ctx.session.user.id),
-        })
-      ).map((p) => p.roleId);
-      const issue = await db.query.Issue.findFirst({
-        where: and(
-          eq(Issue.id, input.id),
-          exists(
-            db
-              .select()
-              .from(IssuesToTeamsVisibility)
-              .where(
-                and(
-                  eq(IssuesToTeamsVisibility.issueId, Issue.id),
-                  inArray(IssuesToTeamsVisibility.teamId, userRoles),
-                ),
+
+      let visibilityFilter;
+
+      if (ctx.session.permissions.IS_OFFICER) {
+        visibilityFilter = sql`TRUE`;
+      } else {
+        const userRoles = (
+          await db.query.Permissions.findMany({
+            where: eq(Permissions.userId, ctx.session.user.id),
+          })
+        ).map((p) => p.roleId);
+        visibilityFilter = exists(
+          db
+            .select()
+            .from(IssuesToTeamsVisibility)
+            .where(
+              and(
+                eq(IssuesToTeamsVisibility.issueId, Issue.id),
+                inArray(IssuesToTeamsVisibility.teamId, userRoles),
               ),
-          ),
-        ),
+            ),
+        );
+      }
+      const issue = await db.query.Issue.findFirst({
+        where: and(eq(Issue.id, input.id), visibilityFilter),
       });
       if (!issue)
         throw new TRPCError({ message: `Issue not found.`, code: "NOT_FOUND" });
@@ -139,6 +144,29 @@ export const issuesRouter = {
         );
       }
 
+      let visibilityFilter;
+
+      if (ctx.session.permissions.IS_OFFICER) {
+        visibilityFilter = sql`TRUE`;
+      } else {
+        const userRoles = (
+          await db.query.Permissions.findMany({
+            where: eq(Permissions.userId, ctx.session.user.id),
+          })
+        ).map((p) => p.roleId);
+        visibilityFilter = exists(
+          db
+            .select()
+            .from(IssuesToTeamsVisibility)
+            .where(
+              and(
+                eq(IssuesToTeamsVisibility.issueId, Issue.id),
+                inArray(IssuesToTeamsVisibility.teamId, userRoles),
+              ),
+            ),
+        );
+      }
+
       if (input?.assigneeIds?.length) {
         filters.push(
           exists(
@@ -155,26 +183,8 @@ export const issuesRouter = {
         );
       }
 
-      const userRoles = (
-        await db.query.Permissions.findMany({
-          where: eq(Permissions.userId, ctx.session.user.id),
-        })
-      ).map((p) => p.roleId);
       const issues = await db.query.Issue.findMany({
-        where: and(
-          ...filters,
-          exists(
-            db
-              .select()
-              .from(IssuesToTeamsVisibility)
-              .where(
-                and(
-                  eq(IssuesToTeamsVisibility.issueId, Issue.id),
-                  inArray(IssuesToTeamsVisibility.teamId, userRoles),
-                ),
-              ),
-          ),
-        ),
+        where: and(...filters, visibilityFilter),
         with: {
           teamVisibility: { with: { team: true } },
           userAssignments: { with: { user: true } },
