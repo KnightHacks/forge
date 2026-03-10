@@ -93,7 +93,7 @@ export const duesPaymentRouter = {
       currency: "usd",
       payment_method_types: ["card", "us_bank_account"],
       metadata: {
-        member_id: member[0]?.id ?? "",
+        member_id: memberId,
       },
     });
     return { clientSecret: paymentIntent.client_secret };
@@ -122,12 +122,29 @@ export const duesPaymentRouter = {
         "canceled",
         "requires_payment_method",
         "requires_action",
+        "requires_capture",
       ];
 
       if (terminalFailureStatuses.includes(paymentIntent.status)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Payment has not been completed.",
+        });
+      }
+
+      const memberId = paymentIntent.metadata.member_id ?? "";
+
+      // Verify the payment belongs to the authenticated user
+      const currentMember = await db
+        .select({ id: Member.id })
+        .from(Member)
+        .where(eq(Member.userId, ctx.session.user.id))
+        .limit(1);
+
+      if (!currentMember[0] || currentMember[0].id !== memberId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Payment does not belong to the authenticated user.",
         });
       }
 
@@ -139,8 +156,6 @@ export const duesPaymentRouter = {
           status: paymentIntent.status,
         };
       }
-
-      const memberId = paymentIntent.metadata.member_id ?? "";
 
       const billingYear = new Date().getFullYear();
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -24,9 +25,14 @@ export function MembershipSuccess() {
     { enabled: Boolean(paymentIntentId) },
   );
 
+  useEffect(() => {
+    if (!paymentIntentId) {
+      toast.error("Invalid confirmation link.");
+      router.replace(SIGN_IN_PATH);
+    }
+  }, [paymentIntentId, router]);
+
   if (!paymentIntentId) {
-    toast.error("Invalid confirmation link.");
-    router.push(SIGN_IN_PATH);
     return null;
   }
 
