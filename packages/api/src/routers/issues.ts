@@ -74,33 +74,37 @@ export const issuesRouter = {
 
   getIssue: permProcedure
     .input(
-      z
-        .object({
-					id: z.string()
-        })
+      z.object({
+        id: z.string(),
+      }),
     )
     .query(async ({ ctx, input }) => {
       permissions.controlPerms.or(["READ_ISSUES"], ctx);
-			const userRoles = (await db.query.Permissions.findMany({
-				where: eq(Permissions.userId, ctx.session.user.id),
-			})).map(p => p.roleId);
-			  const issue = await db.query.Issue.findFirst({
-					where: and(eq(Issue.id, input.id), exists(
-						db.select()
-						.from(IssuesToTeamsVisibility)
-						.where(
-							and(
-								eq(IssuesToTeamsVisibility.issueId, Issue.id),
-								inArray(IssuesToTeamsVisibility.teamId, userRoles)
-							)
-						)
-					)),
-				});
-					if (!issue)
-						throw new TRPCError({ message: `Issue not found.`, code: "NOT_FOUND" });
-					return issue;
+      const userRoles = (
+        await db.query.Permissions.findMany({
+          where: eq(Permissions.userId, ctx.session.user.id),
+        })
+      ).map((p) => p.roleId);
+      const issue = await db.query.Issue.findFirst({
+        where: and(
+          eq(Issue.id, input.id),
+          exists(
+            db
+              .select()
+              .from(IssuesToTeamsVisibility)
+              .where(
+                and(
+                  eq(IssuesToTeamsVisibility.issueId, Issue.id),
+                  inArray(IssuesToTeamsVisibility.teamId, userRoles),
+                ),
+              ),
+          ),
+        ),
+      });
+      if (!issue)
+        throw new TRPCError({ message: `Issue not found.`, code: "NOT_FOUND" });
+      return issue;
     }),
-
 
   getAllIssues: permProcedure
     .input(
@@ -145,26 +149,32 @@ export const issuesRouter = {
         filters.push(inArray(Issue.id, ids));
       }
 
-			const userRoles = (await db.query.Permissions.findMany({
-				where: eq(Permissions.userId, ctx.session.user.id),
-			})).map(p => p.roleId);
+      const userRoles = (
+        await db.query.Permissions.findMany({
+          where: eq(Permissions.userId, ctx.session.user.id),
+        })
+      ).map((p) => p.roleId);
       const issues = await db.query.Issue.findMany({
-        where: and(...filters, exists(
-					db.select()
-						.from(IssuesToTeamsVisibility)
-						.where(
-							and(
-								eq(IssuesToTeamsVisibility.issueId, Issue.id),
-								inArray(IssuesToTeamsVisibility.teamId, userRoles)
-							)
-						)
-				)),
+        where: and(
+          ...filters,
+          exists(
+            db
+              .select()
+              .from(IssuesToTeamsVisibility)
+              .where(
+                and(
+                  eq(IssuesToTeamsVisibility.issueId, Issue.id),
+                  inArray(IssuesToTeamsVisibility.teamId, userRoles),
+                ),
+              ),
+          ),
+        ),
         with: {
           teamVisibility: { with: { team: true } },
           userAssignments: { with: { user: true } },
         },
       });
-			return issues;
+      return issues;
     }),
 
   updateIssue: permProcedure
