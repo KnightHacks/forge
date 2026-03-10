@@ -78,7 +78,11 @@ export const issuesRouter = {
           code: "INTERNAL_SERVER_ERROR",
         });
 
-      await insertJunctions(issue.id, input.teamVisibilityIds, input.assigneeIds);
+      await insertJunctions(
+        issue.id,
+        input.teamVisibilityIds,
+        input.assigneeIds,
+      );
       return issue;
     }),
 
@@ -104,7 +108,8 @@ export const issuesRouter = {
       if (input?.creatorId) filters.push(eq(Issue.creator, input.creatorId));
       if (input?.teamId) filters.push(eq(Issue.team, input.teamId));
       if (input?.status) filters.push(eq(Issue.status, input.status));
-      if (input?.dateFrom) filters.push(sql`${Issue.date} >= ${input.dateFrom}`);
+      if (input?.dateFrom)
+        filters.push(sql`${Issue.date} >= ${input.dateFrom}`);
       if (input?.dateTo) filters.push(sql`${Issue.date} <= ${input.dateTo}`);
       if (input?.parentId !== undefined) {
         filters.push(
@@ -170,7 +175,9 @@ export const issuesRouter = {
         if (teamVisibilityIds.length > 0) {
           await db
             .insert(IssuesToTeamsVisibility)
-            .values(teamVisibilityIds.map((teamId) => ({ issueId: id, teamId })));
+            .values(
+              teamVisibilityIds.map((teamId) => ({ issueId: id, teamId })),
+            );
         }
       }
 
@@ -221,7 +228,11 @@ export const issuesRouter = {
           code: "INTERNAL_SERVER_ERROR",
         });
 
-      await insertJunctions(issue.id, input.teamVisibilityIds, input.assigneeIds);
+      await insertJunctions(
+        issue.id,
+        input.teamVisibilityIds,
+        input.assigneeIds,
+      );
       return issue;
     }),
 
@@ -237,7 +248,10 @@ export const issuesRouter = {
       await db
         .delete(IssuesToTeamsVisibility)
         .where(eq(IssuesToTeamsVisibility.issueId, input.id));
-      await db.update(Issue).set({ parent: null }).where(eq(Issue.parent, input.id));
+      await db
+        .update(Issue)
+        .set({ parent: null })
+        .where(eq(Issue.parent, input.id));
       await db.delete(Issue).where(eq(Issue.id, input.id));
 
       return { success: true };
