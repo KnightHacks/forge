@@ -91,17 +91,20 @@ export const issuesRouter = {
             where: eq(Permissions.userId, ctx.session.user.id),
           })
         ).map((p) => p.roleId);
-        visibilityFilter = exists(
-          db
-            .select()
-            .from(IssuesToTeamsVisibility)
-            .where(
-              and(
-                eq(IssuesToTeamsVisibility.issueId, Issue.id),
-                inArray(IssuesToTeamsVisibility.teamId, userRoles),
-              ),
-            ),
-        );
+        visibilityFilter =
+          userRoles.length === 0
+            ? sql`FALSE`
+            : exists(
+                db
+                  .select()
+                  .from(IssuesToTeamsVisibility)
+                  .where(
+                    and(
+                      eq(IssuesToTeamsVisibility.issueId, Issue.id),
+                      inArray(IssuesToTeamsVisibility.teamId, userRoles),
+                    ),
+                  ),
+              );
       }
       const issue = await db.query.Issue.findFirst({
         where: and(eq(Issue.id, input.id), visibilityFilter),
@@ -154,17 +157,20 @@ export const issuesRouter = {
             where: eq(Permissions.userId, ctx.session.user.id),
           })
         ).map((p) => p.roleId);
-        visibilityFilter = exists(
-          db
-            .select()
-            .from(IssuesToTeamsVisibility)
-            .where(
-              and(
-                eq(IssuesToTeamsVisibility.issueId, Issue.id),
-                inArray(IssuesToTeamsVisibility.teamId, userRoles),
-              ),
-            ),
-        );
+        visibilityFilter =
+          userRoles.length === 0
+            ? sql`FALSE`
+            : exists(
+                db
+                  .select()
+                  .from(IssuesToTeamsVisibility)
+                  .where(
+                    and(
+                      eq(IssuesToTeamsVisibility.issueId, Issue.id),
+                      inArray(IssuesToTeamsVisibility.teamId, userRoles),
+                    ),
+                  ),
+              );
       }
 
       if (input?.assigneeIds?.length) {
