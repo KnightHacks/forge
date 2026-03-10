@@ -17,7 +17,7 @@ export const birthday = new CronBuilder({
   name: "birthday",
   color: 7,
 }).addCron(
-  "* * * * *", // every day at 12 (noon!)
+  "0 12 * * *", // every day at 12 (noon!)
   async () => {
     const today = new Date();
     const month = today.getMonth() + 1;
