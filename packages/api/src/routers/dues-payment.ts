@@ -63,13 +63,11 @@ export const duesPaymentRouter = {
 
   createPaymentIntent: protectedProcedure.mutation(async ({ ctx }) => {
     const price = CLUB.MEMBERSHIP_PRICE as number;
-
     const member = await db
       .select()
       .from(Member)
       .where(eq(Member.userId, ctx.session.user.id))
       .limit(1);
-
     if (member.length === 0) {
       throw new TRPCError({
         code: "NOT_FOUND",
@@ -77,7 +75,17 @@ export const duesPaymentRouter = {
           "User is not a member of Knight Hacks, please sign up and try again.",
       });
     }
-
+    const existingDues = await db
+      .select({ id: DuesPayment.id })
+      .from(DuesPayment)
+      .where(eq(DuesPayment.memberId, member[0].id))
+      .limit(1);
+    if (existingDues.length > 0) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "Membership dues have already been paid.",
+      });
+    }
     const paymentIntent = await stripe.paymentIntents.create({
       amount: price,
       currency: "usd",
@@ -86,7 +94,6 @@ export const duesPaymentRouter = {
         member_id: member[0]?.id ?? "",
       },
     });
-
     return { clientSecret: paymentIntent.client_secret };
   }),
 
@@ -118,6 +125,20 @@ export const duesPaymentRouter = {
 
       const memberId = paymentIntent.metadata?.member_id ?? "";
 
+      // Verify the payment belongs to the authenticated user
+      const currentMember = await db
+        .select({ id: Member.id })
+        .from(Member)
+        .where(eq(Member.userId, ctx.session.user.id))
+        .limit(1);
+
+      if (!currentMember[0] || currentMember[0].id !== memberId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Payment does not belong to the authenticated user.",
+        });
+      }
+
       // Idempotency guard: skip insert if already fulfilled
       const existing = await db
         .select()
@@ -132,14 +153,14 @@ export const duesPaymentRouter = {
           paymentDate: new Date(paymentIntent.created * 1000),
           year: new Date().getFullYear(),
         });
-      }
 
-      await discord.log({
-        message: `A member has successfully paid their dues. ${paymentIntent.amount}`,
-        title: "Dues Paid",
-        color: "success_green",
-        userId: ctx.session.user.discordUserId,
-      });
+        await discord.log({
+          message: `A member has successfully paid their dues. ${paymentIntent.amount}`,
+          title: "Dues Paid",
+          color: "success_green",
+          userId: ctx.session.user.discordUserId,
+        });
+      }
 
       return {
         id: paymentIntent.id,

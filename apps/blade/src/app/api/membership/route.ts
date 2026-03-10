@@ -1,7 +1,6 @@
 import type { NextRequest } from "next/server";
 import Stripe from "stripe";
 
-import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { DuesPayment, DuesPaymentSchema } from "@forge/db/schemas/knight-hacks";
 import { logger } from "@forge/utils";
@@ -39,7 +38,10 @@ async function membershipRecord(sessionId: string) {
     // Check the Checkout Session's payment_status property
     // to determine if fulfillment should be peformed
     if (checkoutSession.payment_status !== "unpaid") {
-      await db.insert(DuesPayment).values({ ...validatedCheckoutFields.data });
+      await db
+        .insert(DuesPayment)
+        .values({ ...validatedCheckoutFields.data })
+        .onConflictDoNothing();
       return true;
     }
     throw new Error("Checkout session payment status is unpaid");
@@ -75,15 +77,7 @@ async function fulfillPaymentIntent(paymentIntentId: string) {
       throw new Error("Invalid or missing field(s)");
     }
 
-    const existing = await db
-      .select()
-      .from(DuesPayment)
-      .where(eq(DuesPayment.memberId, validated.data.memberId))
-      .limit(1);
-
-    if (existing.length === 0) {
-      await db.insert(DuesPayment).values(validated.data);
-    }
+    await db.insert(DuesPayment).values(validated.data).onConflictDoNothing();
 
     return true;
   } catch (e) {
@@ -128,12 +122,16 @@ export async function POST(request: NextRequest) {
       success = await fulfillPaymentIntent(event.data.object.id);
       break;
     case "payment_intent.payment_failed":
-      return new Response("Payment failed", {
-        status: 401,
+      logger.warn("Payment failed", { paymentIntentId: event.data.object.id });
+      return new Response("Event received", {
+        status: 200,
       });
     case "payment_intent.canceled":
-      return new Response("Payment canceled", {
-        status: 410,
+      logger.warn("Payment canceled", {
+        paymentIntentId: event.data.object.id,
+      });
+      return new Response("Event received", {
+        status: 200,
       });
     default:
       return new Response(`Unhandled event type ${event.type}`, {

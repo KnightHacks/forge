@@ -288,18 +288,24 @@ export const HackerEventAttendee = createTable(
 export const InsertEventAttendeeSchema = createInsertSchema(EventAttendee);
 export const InsertHackerAttendeeSchema = createInsertSchema(HackerAttendee);
 
-export const DuesPayment = createTable("dues_payment", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  memberId: t
-    .uuid()
-    .notNull()
-    .references(() => Member.id, {
-      onDelete: "cascade",
-    }),
-  amount: t.integer().notNull(),
-  paymentDate: t.timestamp().notNull(),
-  year: t.integer().notNull(),
-}));
+export const DuesPayment = createTable(
+  "dues_payment",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    memberId: t
+      .uuid()
+      .notNull()
+      .references(() => Member.id, {
+        onDelete: "cascade",
+      }),
+    amount: t.integer().notNull(),
+    paymentDate: t.timestamp().notNull(),
+    year: t.integer().notNull(),
+  }),
+  (table) => ({
+    uniqueMemberYear: unique().on(table.memberId, table.year),
+  }),
+);
 
 export const DuesPaymentSchema = createInsertSchema(DuesPayment);
 
