@@ -1,5 +1,5 @@
-import { fileURLToPath } from "url";
 import { createJiti } from "jiti";
+import { fileURLToPath } from "url";
 
 // Import env files to validate at build time. Use jiti so we can load .ts files in here.
 await createJiti(fileURLToPath(import.meta.url)).import("./src/env");
@@ -26,6 +26,10 @@ const config = {
         protocol: "https",
         hostname: "minio-g0soogg4gs8gwcggw4ococok.knighthacks.org",
       },
+      {
+        protocol: "https",
+        hostname: "minio-y44gsgsskc4ko4kkwsg0csoc.135.237.97.107.sslip.io",
+      }
     ],
   },
 };
