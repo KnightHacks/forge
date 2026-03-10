@@ -140,13 +140,19 @@ export const issuesRouter = {
       }
 
       if (input?.assigneeIds?.length) {
-        const rows = await db
-          .select({ issueId: IssuesToUsersAssignment.issueId })
-          .from(IssuesToUsersAssignment)
-          .where(inArray(IssuesToUsersAssignment.userId, input.assigneeIds));
-        const ids = rows.map((r) => r.issueId);
-        if (ids.length === 0) return [];
-        filters.push(inArray(Issue.id, ids));
+        filters.push(
+          exists(
+            db
+              .select()
+              .from(IssuesToUsersAssignment)
+              .where(
+                and(
+                  eq(IssuesToUsersAssignment.issueId, Issue.id),
+                  inArray(IssuesToUsersAssignment.userId, input.assigneeIds),
+                ),
+              ),
+          ),
+        );
       }
 
       const userRoles = (
