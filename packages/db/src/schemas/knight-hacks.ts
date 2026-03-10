@@ -559,11 +559,11 @@ export const Issue = createTable(
     team: t
       .uuid()
       .notNull()
-      .references(() => Roles.id),
+      .references(() => Roles.id, { onDelete: "cascade" }),
     creator: t
       .uuid()
       .notNull()
-      .references(() => User.id),
+      .references(() => User.id, { onDelete: "cascade" }),
     parent: t.uuid(),
   }),
   (table) => ({
