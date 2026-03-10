@@ -72,6 +72,36 @@ export const issuesRouter = {
       return issue;
     }),
 
+  getIssue: permProcedure
+    .input(
+      z
+        .object({
+					id: z.string()
+        })
+    )
+    .query(async ({ ctx, input }) => {
+      permissions.controlPerms.or(["READ_ISSUES"], ctx);
+			const userRoles = (await db.query.Permissions.findMany({
+				where: eq(Permissions.userId, ctx.session.user.id),
+			})).map(p => p.roleId);
+			  const issue = await db.query.Issue.findFirst({
+					where: and(eq(Issue.id, input.id), exists(
+						db.select()
+						.from(IssuesToTeamsVisibility)
+						.where(
+							and(
+								eq(IssuesToTeamsVisibility.issueId, Issue.id),
+								inArray(IssuesToTeamsVisibility.teamId, userRoles)
+							)
+						)
+					)),
+				});
+					if (!issue)
+						throw new TRPCError({ message: `Issue not found.`, code: "NOT_FOUND" });
+					return issue;
+    }),
+
+
   getAllIssues: permProcedure
     .input(
       z
