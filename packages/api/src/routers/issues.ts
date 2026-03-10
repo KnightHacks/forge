@@ -3,10 +3,12 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { ISSUE } from "@forge/consts";
-import { and, eq, inArray, sql } from "@forge/db";
+import { and, eq, exists, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
+import { Permissions } from "@forge/db/schemas/auth";
 import {
   Issue,
+  IssueSchema,
   IssuesToTeamsVisibility,
   IssuesToUsersAssignment,
 } from "@forge/db/schemas/knight-hacks";
@@ -14,14 +16,7 @@ import { permissions } from "@forge/utils";
 
 import { permProcedure } from "../trpc";
 
-const createIssueInput = z.object({
-  name: z.string().min(1),
-  description: z.string().min(1),
-  status: z.enum(ISSUE.ISSUE_STATUS),
-  date: z.date().nullable().optional(),
-  event: z.string().uuid().nullable().optional(),
-  links: z.array(z.string().url()).nullable().optional(),
-  team: z.string().uuid(),
+const CreateIssueInputSchema = IssueSchema.extend({
   assigneeIds: z.array(z.string().uuid()).optional(),
   teamVisibilityIds: z.array(z.string().uuid()).optional(),
 });
@@ -54,20 +49,15 @@ async function insertJunctions(
 
 export const issuesRouter = {
   createIssue: permProcedure
-    .input(createIssueInput)
+    .input(CreateIssueInputSchema)
     .mutation(async ({ ctx, input }) => {
       permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
 
+      const { teamVisibilityIds, assigneeIds, ...rest } = input;
       const [issue] = await db
         .insert(Issue)
         .values({
-          name: input.name,
-          description: input.description,
-          status: input.status,
-          date: input.date ?? null,
-          event: input.event ?? null,
-          links: input.links ?? null,
-          team: input.team,
+          ...rest,
           creator: ctx.session.user.id,
         })
         .returning();
@@ -78,11 +68,7 @@ export const issuesRouter = {
           code: "INTERNAL_SERVER_ERROR",
         });
 
-      await insertJunctions(
-        issue.id,
-        input.teamVisibilityIds,
-        input.assigneeIds,
-      );
+      await insertJunctions(issue.id, teamVisibilityIds, assigneeIds);
       return issue;
     }),
 
@@ -129,13 +115,26 @@ export const issuesRouter = {
         filters.push(inArray(Issue.id, ids));
       }
 
-      return db.query.Issue.findMany({
-        where: and(...filters),
+			const userRoles = (await db.query.Permissions.findMany({
+				where: eq(Permissions.userId, ctx.session.user.id),
+			})).map(p => p.roleId);
+      const issues = await db.query.Issue.findMany({
+        where: and(...filters, exists(
+					db.select()
+						.from(IssuesToTeamsVisibility)
+						.where(
+							and(
+								eq(IssuesToTeamsVisibility.issueId, Issue.id),
+								inArray(IssuesToTeamsVisibility.teamId, userRoles)
+							)
+						)
+				)),
         with: {
           teamVisibility: { with: { team: true } },
           userAssignments: { with: { user: true } },
         },
       });
+			return issues;
     }),
 
   updateIssue: permProcedure
@@ -200,42 +199,6 @@ export const issuesRouter = {
         },
       });
     }),
-
-  createSubIssue: permProcedure
-    .input(createIssueInput.extend({ parentId: z.string().uuid() }))
-    .mutation(async ({ ctx, input }) => {
-      permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
-      await requireIssue(input.parentId, "Parent issue");
-
-      const [issue] = await db
-        .insert(Issue)
-        .values({
-          name: input.name,
-          description: input.description,
-          status: input.status,
-          date: input.date ?? null,
-          event: input.event ?? null,
-          links: input.links ?? null,
-          team: input.team,
-          creator: ctx.session.user.id,
-          parent: input.parentId,
-        })
-        .returning();
-
-      if (!issue)
-        throw new TRPCError({
-          message: "Failed to create sub-issue.",
-          code: "INTERNAL_SERVER_ERROR",
-        });
-
-      await insertJunctions(
-        issue.id,
-        input.teamVisibilityIds,
-        input.assigneeIds,
-      );
-      return issue;
-    }),
-
   deleteIssue: permProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
