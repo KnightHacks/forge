@@ -134,7 +134,7 @@ export const duesPaymentRouter = {
         });
       }
 
-      await log({
+      await discord.log({
         message: `A member has successfully paid their dues. ${paymentIntent.amount}`,
         title: "Dues Paid",
         color: "success_green",
