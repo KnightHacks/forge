@@ -554,7 +554,7 @@ export const Issue = createTable(
     name: t.text().notNull(),
     description: t.text().notNull(),
     links: t.text().array(),
-    event: t.uuid().references(() => Event.id),
+    event: t.uuid().references(() => Event.id, { onDelete: "set null" }),
     date: t.timestamp(),
     team: t
       .uuid()
@@ -571,7 +571,7 @@ export const Issue = createTable(
       columns: [table.parent],
       foreignColumns: [table.id],
       name: "issue_parent_fk",
-    }),
+    }).onDelete("set null"),
     teamIdx: index("issue_team_idx").on(table.team),
     creatorIdx: index("issue_creator_idx").on(table.creator),
     statusIdx: index("issue_status_idx").on(table.status),

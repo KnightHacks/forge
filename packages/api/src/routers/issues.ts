@@ -271,16 +271,6 @@ export const issuesRouter = {
       permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
       await requireIssue(input.id);
 
-      await db
-        .delete(IssuesToUsersAssignment)
-        .where(eq(IssuesToUsersAssignment.issueId, input.id));
-      await db
-        .delete(IssuesToTeamsVisibility)
-        .where(eq(IssuesToTeamsVisibility.issueId, input.id));
-      await db
-        .update(Issue)
-        .set({ parent: null })
-        .where(eq(Issue.parent, input.id));
       await db.delete(Issue).where(eq(Issue.id, input.id));
 
       return { success: true };
