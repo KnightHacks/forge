@@ -87,7 +87,7 @@ export function FormRunner({
   const handleSubmit = () => {
     // Mark that user has attempted to submit (to show validation errors)
     setHasAttemptedSubmit(true);
-    
+
     // Only submit if form is valid - prevent trpc call/onSubmit when there are errors
     if (forms.isFormValid(zodValidator, responses, form)) {
       const payload = forms.normalizeResponses(responses, form);
@@ -207,11 +207,7 @@ export function FormRunner({
             </Button>
           ) : (
             allowEdit && (
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                size="lg"
-              >
+              <Button onClick={handleSubmit} disabled={isSubmitting} size="lg">
                 {isSubmitting ? "Submitting Edits..." : "Submit Edits"}
               </Button>
             )

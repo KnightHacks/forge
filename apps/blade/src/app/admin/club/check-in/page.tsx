@@ -29,8 +29,7 @@ export default async function HackathonCheckIn() {
               Club Check-in
             </h1>
             <p className="text-muted-foreground">
-              Check-in members for club events using QR scanner
-              or manual entry
+              Check-in members for club events using QR scanner or manual entry
             </p>
           </div>
           <CheckInPage />

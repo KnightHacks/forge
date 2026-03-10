@@ -70,11 +70,10 @@ const getUserFriendlyError = (
   issue: z.ZodIssue,
 ): string | null => {
   const isRequired = !question.optional;
-  
+
   // Check if field is missing/undefined (required field error)
   const isMissingField =
-    issue.code === "invalid_type" &&
-    rawMessage.includes("received undefined");
+    issue.code === "invalid_type" && rawMessage.includes("received undefined");
 
   // Check for enum/option validation errors (invalid option selected)
   const isInvalidOption =

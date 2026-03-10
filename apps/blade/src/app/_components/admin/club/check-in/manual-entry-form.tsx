@@ -1,7 +1,7 @@
 "use client";
 
-import { AwardIcon, Check, ChevronsUpDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { AwardIcon, Check, ChevronsUpDown } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@forge/ui/button";

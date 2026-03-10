@@ -149,7 +149,10 @@ export default function RoleTable() {
                     <ul className="mt-1 max-h-48 list-disc overflow-y-auto px-4">
                       {permissions.getPermsAsList(v.permissions).map((p) => {
                         return (
-                          <li key={p} className={`p-1 text-sm text-muted-foreground`}>
+                          <li
+                            key={p}
+                            className={`p-1 text-sm text-muted-foreground`}
+                          >
                             {p}
                           </li>
                         );

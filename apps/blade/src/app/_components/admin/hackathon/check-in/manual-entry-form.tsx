@@ -1,7 +1,7 @@
 "use client";
 
-import { Check, ChevronsUpDown, WrenchIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Check, ChevronsUpDown, WrenchIcon } from "lucide-react";
 import { z } from "zod";
 
 import { HACKER_CLASSES } from "@forge/db/schemas/knight-hacks";

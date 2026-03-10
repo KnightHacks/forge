@@ -213,7 +213,10 @@ export default function RoleAssign() {
             <TableBody className="max-h-[50vh] overflow-y-scroll">
               {filteredUsers.map((v, i) => {
                 return (
-                  <TableRow key={v.id} className={`${i % 2 == 1 && "bg-muted/20"}`}>
+                  <TableRow
+                    key={v.id}
+                    className={`${i % 2 == 1 && "bg-muted/20"}`}
+                  >
                     <TableCell className="flex flex-row gap-4 text-base font-semibold">
                       <Checkbox
                         id={"user_" + i}

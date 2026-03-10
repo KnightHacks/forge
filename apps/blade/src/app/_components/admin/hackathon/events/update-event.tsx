@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Loader2, Pencil } from "lucide-react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
-import type { InsertEvent } from "@forge/db/schemas/knight-hacks";
 import { EVENTS } from "@forge/consts";
+import type { InsertEvent } from "@forge/db/schemas/knight-hacks";
 import { InsertEventSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -157,7 +157,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       endHour: endHour,
       endMinute: endMinute,
       endAmPm: endAmPm as "AM" | "PM",
-      points: event.points ?? EVENTS.EVENT_POINTS[event.tag] ?? undefined,
+      points: event.points ?? EVENTS.EVENT_POINTS[event.tag],
     },
   });
 
