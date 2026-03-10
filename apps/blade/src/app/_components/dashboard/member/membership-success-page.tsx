@@ -32,12 +32,6 @@ export function MembershipSuccess() {
     return <MembershipSuccessSkeleton />;
   }
 
-  if (data.status !== "succeeded") {
-    toast.error("Payment was not completed, please try again.");
-    router.push(SIGN_IN_PATH);
-    return null;
-  }
-
   return (
     <div className="min-h-screen py-12">
       <div className="mx-auto max-w-3xl px-4">

@@ -75,10 +75,11 @@ export const duesPaymentRouter = {
           "User is not a member of Knight Hacks, please sign up and try again.",
       });
     }
+    const memberId = member[0]?.id ?? "";
     const existingDues = await db
       .select({ id: DuesPayment.id })
       .from(DuesPayment)
-      .where(eq(DuesPayment.memberId, member[0].id))
+      .where(eq(DuesPayment.memberId, memberId))
       .limit(1);
     if (existingDues.length > 0) {
       throw new TRPCError({
@@ -123,21 +124,7 @@ export const duesPaymentRouter = {
         });
       }
 
-      const memberId = paymentIntent.metadata?.member_id ?? "";
-
-      // Verify the payment belongs to the authenticated user
-      const currentMember = await db
-        .select({ id: Member.id })
-        .from(Member)
-        .where(eq(Member.userId, ctx.session.user.id))
-        .limit(1);
-
-      if (!currentMember[0] || currentMember[0].id !== memberId) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Payment does not belong to the authenticated user.",
-        });
-      }
+      const memberId = paymentIntent.metadata.member_id ?? "";
 
       // Idempotency guard: skip insert if already fulfilled
       const existing = await db
@@ -153,14 +140,14 @@ export const duesPaymentRouter = {
           paymentDate: new Date(paymentIntent.created * 1000),
           year: new Date().getFullYear(),
         });
-
-        await discord.log({
-          message: `A member has successfully paid their dues. ${paymentIntent.amount}`,
-          title: "Dues Paid",
-          color: "success_green",
-          userId: ctx.session.user.discordUserId,
-        });
       }
+
+      await discord.log({
+        message: `A member has successfully paid their dues. ${paymentIntent.amount}`,
+        title: "Dues Paid",
+        color: "success_green",
+        userId: ctx.session.user.discordUserId,
+      });
 
       return {
         id: paymentIntent.id,

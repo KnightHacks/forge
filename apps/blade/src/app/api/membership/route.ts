@@ -73,7 +73,7 @@ async function fulfillPaymentIntent(paymentIntentId: string) {
     const validated = DuesPaymentSchema.omit({ id: true }).safeParse(values);
 
     if (!validated.success) {
-      console.log(validated.error.issues);
+      logger.log(validated.error.issues);
       throw new Error("Invalid or missing field(s)");
     }
 
@@ -81,7 +81,7 @@ async function fulfillPaymentIntent(paymentIntentId: string) {
 
     return true;
   } catch (e) {
-    console.error("Error:", e);
+    logger.error("Error:", e);
     return false;
   }
 }
