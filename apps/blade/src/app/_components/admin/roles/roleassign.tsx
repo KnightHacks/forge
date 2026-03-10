@@ -168,7 +168,7 @@ export default function RoleAssign() {
                 ) : (
                   roles.map((v, i) => {
                     return (
-                      <li className="flex flex-row gap-3">
+                      <li key={v.id} className="flex flex-row gap-3">
                         <Checkbox
                           id={"role-f_" + i}
                           checked={filterRoles[v.id] ?? false}
@@ -213,7 +213,7 @@ export default function RoleAssign() {
             <TableBody className="max-h-[50vh] overflow-y-scroll">
               {filteredUsers.map((v, i) => {
                 return (
-                  <TableRow className={`${i % 2 == 1 && "bg-muted/20"}`}>
+                  <TableRow key={v.id} className={`${i % 2 == 1 && "bg-muted/20"}`}>
                     <TableCell className="flex flex-row gap-4 text-base font-semibold">
                       <Checkbox
                         id={"user_" + i}
@@ -273,6 +273,7 @@ export default function RoleAssign() {
                               {v.permissions.map((p) => {
                                 return (
                                   <li
+                                    key={p.roleId}
                                     className={`p-1 text-sm text-muted-foreground`}
                                   >
                                     {mappedRoles[p.roleId]?.name ?? ""}
@@ -319,7 +320,7 @@ export default function RoleAssign() {
             ) : (
               roles.map((v, i) => {
                 return (
-                  <li className="flex flex-row gap-3">
+                  <li key={v.id} className="flex flex-row gap-3">
                     <Checkbox
                       id={"role_" + i}
                       checked={checkedRoles[v.id] ?? false}
