@@ -1,9 +1,9 @@
 import { WebhookClient } from "discord.js";
-import { and, eq, exists, sql } from "drizzle-orm";
+import { and, eq, exists, or, sql } from "drizzle-orm";
 
 import { db } from "@forge/db/client";
 import { Permissions, User } from "@forge/db/schemas/auth";
-import { Member } from "@forge/db/schemas/knight-hacks";
+import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
 import { logger } from "@forge/utils";
 
 import { env } from "../env";
@@ -34,12 +34,20 @@ export const birthday = new CronBuilder({
       .leftJoin(User, eq(User.id, Member.userId))
       .where(
         and(
-          exists(
-            // can be removed if we want to open to full member list
-            db
-              .select()
-              .from(Permissions)
-              .where(eq(Permissions.userId, Member.userId)),
+          // check that they are dues paying or have some permissions
+          or(
+            exists(
+              db
+                .select()
+                .from(Permissions)
+                .where(eq(Permissions.userId, Member.userId)),
+            ),
+            exists(
+              db
+                .select()
+                .from(DuesPayment)
+                .where(eq(DuesPayment.memberId, Member.id)),
+            ),
           ),
           eq(Member.guildProfileVisible, true),
           eq(sql`EXTRACT(MONTH FROM ${Member.dob})`, month),
