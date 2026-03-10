@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import {
   foreignKey,
   pgEnum,
@@ -139,10 +138,6 @@ export type SelectHacker = typeof Hacker.$inferSelect;
 
 export type InsertMember = typeof Member.$inferInsert;
 export type SelectMember = typeof Member.$inferSelect;
-
-export const MemberRelations = relations(Member, ({ one }) => ({
-  user: one(User, { fields: [Member.userId], references: [User.id] }),
-}));
 
 export const InsertMemberSchema = createInsertSchema(Member);
 export const InsertHackerSchema = createInsertSchema(Hacker);
@@ -579,6 +574,8 @@ export const Issue = createTable(
   }),
 );
 
+export const IssueSchema = createInsertSchema(Issue);
+
 export const IssuesToTeamsVisibility = createTable(
   "issues_to_teams_visibility",
   (t) => ({
@@ -593,20 +590,6 @@ export const IssuesToTeamsVisibility = createTable(
   }),
   (table) => ({
     pk: primaryKey({ columns: [table.issueId, table.teamId] }),
-  }),
-);
-
-export const issuesToTeamsVisibilityRelations = relations(
-  IssuesToTeamsVisibility,
-  ({ one }) => ({
-    issue: one(Issue, {
-      fields: [IssuesToTeamsVisibility.issueId],
-      references: [Issue.id],
-    }),
-    team: one(Roles, {
-      fields: [IssuesToTeamsVisibility.teamId],
-      references: [Roles.id],
-    }),
   }),
 );
 
@@ -626,30 +609,3 @@ export const IssuesToUsersAssignment = createTable(
     pk: primaryKey({ columns: [table.issueId, table.userId] }),
   }),
 );
-
-export const issuesToUsersAssignmentRelations = relations(
-  IssuesToUsersAssignment,
-  ({ one }) => ({
-    issue: one(Issue, {
-      fields: [IssuesToUsersAssignment.issueId],
-      references: [Issue.id],
-    }),
-    user: one(User, {
-      fields: [IssuesToUsersAssignment.userId],
-      references: [User.id],
-    }),
-  }),
-);
-
-export const issueRelations = relations(Issue, ({ many }) => ({
-  teamVisibility: many(IssuesToTeamsVisibility),
-  userAssignments: many(IssuesToUsersAssignment),
-}));
-
-export const rolesRelations = relations(Roles, ({ many }) => ({
-  visibleIssues: many(IssuesToTeamsVisibility),
-}));
-
-export const usersRelations = relations(User, ({ many }) => ({
-  assignedIssues: many(IssuesToUsersAssignment),
-}));
