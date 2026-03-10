@@ -1,14 +1,10 @@
 import type { Config } from "tailwindcss";
-import { fontFamily } from "tailwindcss/defaultTheme";
+import defaultTheme from "tailwindcss/defaultTheme";
 
-import baseConfig from "@forge/tailwind-config/web";
+const { fontFamily } = defaultTheme;
 
 export default {
-  // We need to append the path to the UI package to the content array so that
-  // those classes are included correctly.
-  content: [...baseConfig.content, "../../packages/ui/src/*.{ts,tsx}"],
-  presets: [baseConfig],
-
+  darkMode: ["class", ".dark"],
   theme: {
     extend: {
       backgroundImage: {
@@ -171,22 +167,6 @@ export default {
           "100%": { transform: "translateY(-50%)" },
         },
       },
-      screens: {
-        seOnly: { max: "391px" },
-        seWidth: { max: "376px" },
-        iPadMini: {
-          raw: "(min-width: 768px) and (max-width: 819px) and (min-height: 1024px)",
-        },
-        iPadPro: {
-          raw: "(min-width: 1024px) and (max-width: 1366px) and (min-height: 1366px)",
-        },
-        tall: {
-          raw: "(min-height: 800px) and (max-width: 765px)",
-        },
-        taller: {
-          raw: "(min-height: 1200px) and (max-width: 1023px)",
-        },
-      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -194,5 +174,4 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
 } satisfies Config;

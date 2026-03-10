@@ -5,11 +5,13 @@ import { useEffect, useState } from "react";
 import type { FORMS } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Card } from "@forge/ui/card";
+import * as forms from "@forge/utils/forms.client";
 
-import type { FormResponsePayload, FormResponseUI } from "./utils";
 import { InstructionResponseCard } from "~/app/_components/forms/instruction-response-card";
 import { QuestionResponseCard } from "~/app/_components/forms/question-response-card";
-import { getValidationError, isFormValid, normalizeResponses } from "./utils";
+
+type FormResponsePayload = forms.FormResponsePayload;
+type FormResponseUI = forms.FormResponseUI;
 
 /**
  * Shared renderer for "fill out form" and "review/edit response".
@@ -82,10 +84,12 @@ export function FormRunner({
   };
 
   const canSubmit =
-    allowEdit && !isSubmitting && isFormValid(zodValidator, responses, form);
+    allowEdit &&
+    !isSubmitting &&
+    forms.isFormValid(zodValidator, responses, form);
 
   const handleSubmit = () => {
-    const payload = normalizeResponses(responses, form);
+    const payload = forms.normalizeResponses(responses, form);
     onSubmit(payload);
   };
 
@@ -124,7 +128,7 @@ export function FormRunner({
         {form.banner && <div className="overflow-hidden rounded-lg"></div>}
 
         {/* Header */}
-        <Card className="border-t-8 border-t-primary duration-500 animate-in fade-in slide-in-from-top-4">
+        <Card className="animate-in fade-in slide-in-from-top-4 border-t-8 border-t-primary duration-500">
           <div className="space-y-2 p-6">
             <h1 className="text-3xl font-bold">
               {isReview && `${allowEdit ? "Edit" : "View"} - `}
@@ -145,7 +149,7 @@ export function FormRunner({
             return (
               <div
                 key={`${isInstruction ? "inst" : "q"}-${index}`}
-                className={`duration-500 animate-in fade-in slide-in-from-bottom-4 ${
+                className={`animate-in fade-in slide-in-from-bottom-4 duration-500 ${
                   isInstruction ? "mt-8" : ""
                 }`}
                 style={{
@@ -167,7 +171,7 @@ export function FormRunner({
                       handleResponseChange(item.question, value);
                     }}
                     formId={formId}
-                    error={getValidationError(
+                    error={forms.getValidationError(
                       item,
                       zodValidator,
                       responses,

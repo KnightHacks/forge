@@ -6,6 +6,7 @@ export const env = createEnv({
     LISTMONK_URL: z.string(),
     LISTMONK_USER: z.string(),
     LISTMONK_TOKEN: z.string(),
+    LISTMONK_FROM_EMAIL: z.string(),
   },
   experimental__runtimeEnv: {},
   skipValidation:

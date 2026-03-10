@@ -1,6 +1,8 @@
 import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
 
+import { logger } from "@forge/utils";
+
 import type { WeatherMapKeys } from "../consts";
 import { WEATHER_MAP } from "../consts";
 import { env } from "../env";
@@ -83,9 +85,9 @@ export async function execute(interaction: CommandInteraction) {
     return interaction.reply({ embeds: [embed] });
   } catch (err: unknown) {
     if (err instanceof Error) {
-      console.log(err.message);
+      logger.log(err.message);
     } else {
-      console.error("An unknown error occurred: ", err);
+      logger.error("An unknown error occurred: ", err);
     }
   }
 }

@@ -4,6 +4,9 @@ import type { api as serverCall } from "~/trpc/server";
 import { MemberAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
 import { AlumniDiscord } from "./AlumniDiscord";
+import { AlumniRecap } from "./AlumniRecap";
+import DayInHistory from "./day-in-history";
+import EarlyAccessVolunteer from "./early-access-volunteer";
 import { EventNumber } from "./event/event-number";
 import { EventShowcase } from "./event/event-showcase";
 import { FormResponses } from "./forms/form-responses";
@@ -24,40 +27,32 @@ interface Member {
 
 // Calculate year of study based on graduation date relative to current date
 const calcAlumniStatus = (gradDate: Date | string, member: Member): boolean => {
-  // Convert gradDate to Date object if it's a string
   const gradDateObj =
     typeof gradDate === "string" ? new Date(gradDate) : gradDate;
   const currentDate = new Date();
 
-  // Check if dates are valid
   if (isNaN(gradDateObj.getTime())) return false;
 
-  const gradYear = gradDateObj.getFullYear();
-  const currentYear = currentDate.getFullYear();
-  const yearsUntilGrad = gradYear - currentYear;
+  const hasGraduated = gradDateObj.getTime() <= currentDate.getTime();
 
   if (
     member.levelOfStudy === "Less than Secondary / High School" ||
     member.levelOfStudy === "Secondary / High School"
   ) {
-    if (yearsUntilGrad < -4) return true;
-    return false;
+    const cutoffDate = new Date();
+    cutoffDate.setFullYear(currentDate.getFullYear() - 4);
+    return gradDateObj <= cutoffDate;
   }
 
-  // Check for graduate students (Masters, PhD, etc.)
   if (
     member.levelOfStudy ===
       "Graduate University (Masters, Professional, Doctoral, etc)" ||
     member.levelOfStudy === "Post Doctorate"
   ) {
-    return false;
+    return hasGraduated;
   }
 
-  // If graduation date has passed, they are alumni
-  if (yearsUntilGrad < 0) return true;
-
-  // Current year graduates are still seniors until they actually graduate
-  return false;
+  return hasGraduated;
 };
 
 export default async function MemberDashboard({
@@ -86,12 +81,19 @@ export default async function MemberDashboard({
     );
   }
 
-  const [events, dues] = await Promise.allSettled([
+  const isAlumni = calcAlumniStatus(member.gradDate, member);
+
+  const [events, dues, hackathons] = await Promise.allSettled([
     api.member.getEvents(),
     api.duesPayment.validatePaidDues(),
+    isAlumni ? api.hackathon.getPastHackathons() : Promise.resolve([]),
   ]);
 
-  if (events.status === "rejected" || dues.status === "rejected") {
+  if (
+    events.status === "rejected" ||
+    dues.status === "rejected" ||
+    hackathons.status === "rejected"
+  ) {
     return (
       <div className="mt-10 flex flex-col items-center justify-center gap-y-6 font-bold">
         Something went wrong. Please try again later.
@@ -99,11 +101,50 @@ export default async function MemberDashboard({
     );
   }
 
-  const isAlumni = calcAlumniStatus(member.gradDate, member);
-
   await Promise.all(
     events.value.map((e) => api.event.ensureForm({ eventId: e.id })),
   );
+
+  // Alumni Dashboard
+  if (isAlumni) {
+    return (
+      <div className="flex-col md:flex">
+        <div className="flex-1 space-y-4">
+          <div className="animate-fade-in mb-8 flex items-center justify-between space-y-2">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">
+                Hello, {member.firstName}!
+              </h2>
+              <p className="text-muted-foreground">Alumni Dashboard</p>
+            </div>
+          </div>
+          {/* Unified View */}
+          <div className="animate-mobile-initial-expand space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:h-[800px] md:grid-cols-3">
+              <div className="grid gap-4 md:min-h-0 md:grid-rows-3">
+                <AlumniDiscord />
+                <EarlyAccessVolunteer />
+                <MemberInfo />
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <Donate />
+                <DayInHistory />
+              </div>
+
+              <div className="grid gap-4 md:min-h-0 md:grid-rows-1">
+                <AlumniRecap
+                  member={member}
+                  events={events.value}
+                  hackathons={hackathons.value}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-col md:flex">
@@ -113,23 +154,17 @@ export default async function MemberDashboard({
             <h2 className="text-xl font-bold tracking-tight">
               Hello, {member.firstName}!
             </h2>
-            <p className="text-muted-foreground">
-              {`${isAlumni ? "Alumni" : "Member"}`} Dashboard
-            </p>
+            <p className="text-muted-foreground">Member Dashboard</p>
           </div>
         </div>
         {/* Unified View */}
         <div className="animate-mobile-initial-expand space-y-4">
           <div className="animate-fade-in grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {isAlumni ? (
-              <Donate />
-            ) : (
-              <Payment status={dues.value.duesPaid} member={member} />
-            )}
+            <Payment status={dues.value.duesPaid} member={member} />
 
             <MemberInfo />
 
-            {isAlumni ? <AlumniDiscord /> : <Points size={member.points} />}
+            <Points size={member.points} />
 
             <EventNumber size={events.value.length} />
 

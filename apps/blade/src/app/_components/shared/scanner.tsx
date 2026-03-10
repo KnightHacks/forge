@@ -26,9 +26,9 @@ import {
 } from "@forge/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { toast } from "@forge/ui/toast";
+import { hackathons } from "@forge/utils";
 
 import ToggleButton from "~/app/_components/admin/hackathon/hackers/toggle-button";
-import { getClassTeam } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
 const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
@@ -337,8 +337,9 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               <div
                 className="text-2xl"
                 style={{
-                  color: getClassTeam(assignedClass as HackerClass).teamColor,
-                  textShadow: `0 0 10px ${getClassTeam(assignedClass as HackerClass).teamColor}, 0 0 20px ${getClassTeam(assignedClass as HackerClass).teamColor}`,
+                  color: hackathons.getClassTeam(assignedClass as HackerClass)
+                    .teamColor,
+                  textShadow: `0 0 10px ${hackathons.getClassTeam(assignedClass as HackerClass).teamColor}, 0 0 20px ${hackathons.getClassTeam(assignedClass as HackerClass).teamColor}`,
                 }}
               >
                 {assignedClass}

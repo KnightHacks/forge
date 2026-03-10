@@ -2,9 +2,9 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
 import { DISCORD } from "@forge/consts";
+import * as discord from "@forge/utils/discord";
 
 import { permProcedure } from "../trpc";
-import { log } from "../utils";
 
 export const eventFeedbackRouter = {
   logHackathonFeedback: permProcedure
@@ -14,7 +14,7 @@ export const eventFeedbackRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      await log({
+      await discord.log({
         message: `<@&${DISCORD.OFFICER_ROLE}> ${input.description}`,
         title: "Hackathon Issue",
         color: "uhoh_red",

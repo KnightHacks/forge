@@ -1,4 +1,3 @@
-import React from "react";
 import { Star } from "lucide-react";
 
 import { Badge } from "@forge/ui/badge";
@@ -9,13 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@forge/ui/card";
+import { time } from "@forge/utils";
 
-import { formatDateTime } from "~/lib/utils";
 import { api } from "~/trpc/server";
 
 export default async function UpcomingEvents() {
   const events = await api.event.getEvents();
 
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
   const fiveHoursLater = now + 5 * 60 * 60 * 1000;
 
@@ -52,7 +52,8 @@ export default async function UpcomingEvents() {
                     {event.name}
                   </CardTitle>
                   <CardDescription className="text-sm font-medium sm:text-base">
-                    {formatDateTime(event.start_datetime)} @ {event.location}
+                    {time.formatDateTime(event.start_datetime)} @{" "}
+                    {event.location}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

@@ -4,14 +4,17 @@ import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import type { FORMS } from "@forge/consts";
+import type * as forms from "@forge/utils/forms.client";
 
-import type { FormResponsePayload, FormResponseUI } from "./utils";
 import { api } from "~/trpc/react";
 import { useSubmissionSuccess } from "./_hooks/useSubmissionSuccess";
 import FormNotFound from "./form-not-found";
 import { FormRunner } from "./form-runner";
 import { SubmissionSuccessCard } from "./form-submitted-success";
 import ResponseNotFound from "./response-not-found";
+
+type FormResponsePayload = forms.FormResponsePayload;
+type FormResponseUI = forms.FormResponseUI;
 
 interface FormReviewWrapperProps {
   formName: string;
@@ -74,7 +77,7 @@ export function FormReviewWrapper({
 
   const zodValidator = form.zodValidator;
 
-  const allowEdit = form.allowEdit;
+  const allowEdit = form.allowEdit && !form.isClosed;
 
   // success
   if (isSubmitted) {
@@ -92,7 +95,7 @@ export function FormReviewWrapper({
   const onSubmit = (payload: FormResponsePayload) => {
     editResponse.mutate({
       id: responseId,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       responseData: payload as any,
     });
   };

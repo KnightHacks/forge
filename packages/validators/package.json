@@ -19,14 +19,13 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "minimatch": "^10.2.1",
+    "minimatch": "^10.2.4",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@forge/eslint-config": "workspace:*",
     "@forge/prettier-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
-    "@types/minimatch": "^6.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

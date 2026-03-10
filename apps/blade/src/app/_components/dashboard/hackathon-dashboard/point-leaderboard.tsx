@@ -5,9 +5,9 @@ import { Dot, Loader } from "lucide-react";
 
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import { HACKER_TEAMS } from "@forge/db/schemas/knight-hacks";
+import { hackathons } from "@forge/utils";
 
 import type { api as serverCall } from "~/trpc/server";
-import { getClassTeam } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
 interface LeaderboardEntry {
@@ -38,7 +38,7 @@ export function PointLeaderboard({
     hPoints: hacker?.points || 0,
     hClass: hacker?.class || "Alchemist",
   });
-  const team = getClassTeam(hacker?.class || "Alchemist");
+  const team = hackathons.getClassTeam(hacker?.class || "Alchemist");
 
   const [overall, setOverall] = useState<LeaderboardEntry[]>();
   const [showYours, setShowYours] = useState(false);
@@ -86,6 +86,7 @@ export function PointLeaderboard({
       );
   }, [activeTop, hacker?.id, data?.place, activeInd]);
 
+  // eslint-disable-next-line react-hooks/purity
   return targetDate <= Date.now() && !isAdmin ? (
     <>
       <p>
@@ -143,7 +144,7 @@ export function PointLeaderboard({
       <div className="flex w-full flex-col gap-1 rounded-xl border p-1">
         {!activeTop ? (
           dummy.map((v, i) => {
-            const t = getClassTeam(v);
+            const t = hackathons.getClassTeam(v);
             return (
               <div
                 className={`flex flex-row justify-between border p-1.5 px-2 ${i == 0 ? "rounded-t-lg font-semibold" : i == dummy.length - 1 ? "rounded-b-lg" : ""}`}
@@ -160,7 +161,7 @@ export function PointLeaderboard({
         ) : (
           <>
             {activeTop.map((v, i) => {
-              const t = getClassTeam(v.class || "Alchemist");
+              const t = hackathons.getClassTeam(v.class || "Alchemist");
               return (
                 <div
                   className={`flex flex-row justify-between border p-1 px-2 ${i == 0 ? "rounded-t-lg font-semibold" : i == activeTop.length - 1 && !showYours ? "rounded-b-lg" : ""}`}

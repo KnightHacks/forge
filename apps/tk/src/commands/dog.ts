@@ -1,6 +1,8 @@
 import type { CommandInteraction } from "discord.js";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
-import JIMP from "jimp";
+import { Jimp as JIMP } from "jimp";
+
+import { logger } from "@forge/utils";
 
 import { TK_DOG_URL } from "../consts";
 
@@ -21,10 +23,12 @@ export async function execute(interaction: CommandInteraction) {
     const data = (await res.json()) as DogProps;
 
     // gets the average color of the image and makes it the embed color
-    const img = JIMP.read(data.message);
-    const width = (await img).getWidth(),
-      height = (await img).getHeight();
-    const color = (await img).getPixelColor(width / 2, height / 2);
+    const img = await JIMP.read(data.message);
+    const { width, height } = img;
+    const color = img.getPixelColor(
+      Math.floor(width / 2),
+      Math.floor(height / 2),
+    );
 
     const r = (color >> 24) & 0xff;
     const g = (color >> 16) & 0xff;
@@ -40,9 +44,9 @@ export async function execute(interaction: CommandInteraction) {
     void interaction.reply({ embeds: [embed] });
   } catch (err: unknown) {
     if (err instanceof Error) {
-      console.error(err.message);
+      logger.error(err.message);
     } else {
-      console.error("An unknown error occurred: ", err);
+      logger.error("An unknown error occurred: ", err);
     }
   }
 }

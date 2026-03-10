@@ -9,12 +9,42 @@ import { Calendar, List } from "rsuite";
 import type { RouterOutputs } from "@forge/api";
 import type { ReturnEvent } from "@forge/db/schemas/knight-hacks";
 
-import { formatDateRange } from "~/lib/utils";
 import NeonTkSVG from "./assets/neon-tk";
 import SwordSVG from "./assets/sword";
 import TerminalSVG from "./assets/terminal";
 
 import "rsuite/Calendar/styles/index.css";
+
+import { time } from "@forge/utils";
+
+function TodoList({ list }: { list: ReturnEvent[] }) {
+  if (!list.length) {
+    return (
+      <ul className="space-y-2">
+        <li className="rounded-md bg-purple-900/50 p-3 text-white">
+          No events for this date
+        </li>
+      </ul>
+    );
+  }
+  return (
+    <List bordered style={{ flex: 1 }}>
+      {list.map((item) => (
+        <List.Item
+          key={item.id}
+          className="mb-4 rounded-lg bg-purple-900/30 p-3 text-white"
+        >
+          <div className="flex justify-between">
+            <span>
+              {time.formatTimeRange(item.start_datetime, item.end_datetime)}
+            </span>
+            <span>{item.name}</span>
+          </div>
+        </List.Item>
+      ))}
+    </List>
+  );
+}
 
 export default function CalendarEventsPage({
   events,
@@ -61,6 +91,7 @@ export default function CalendarEventsPage({
     const key = `${date.getDate()}-${date.getMonth()}-${date.getFullYear()}`;
     return eventMap.get(key) ?? [];
   }
+  const selectedList = selectedDate ? getTodoList(selectedDate) : [];
   function renderCell(date: Date) {
     const hasEvents = getTodoList(date).length > 0;
 
@@ -73,35 +104,6 @@ export default function CalendarEventsPage({
       </div>
     ) : null;
   }
-  const TodoList = ({ date }: { date: Date }) => {
-    const list = getTodoList(date);
-    if (!list.length) {
-      return (
-        <ul className="space-y-2">
-          <li className="rounded-md bg-purple-900/50 p-3 text-white">
-            No events for this date
-          </li>
-        </ul>
-      );
-    }
-    return (
-      <List bordered style={{ flex: 1 }}>
-        {list.map((item) => (
-          <List.Item
-            key={item.id}
-            className="mb-4 rounded-lg bg-purple-900/30 p-3 text-white"
-          >
-            <div className="flex justify-between">
-              <span>
-                {formatDateRange(item.start_datetime, item.end_datetime)}
-              </span>
-              <span>{item.name}</span>
-            </div>
-          </List.Item>
-        ))}
-      </List>
-    );
-  };
   const handleSelect = (date: Date) => {
     setSelectedDate(date);
   };
@@ -113,7 +115,7 @@ export default function CalendarEventsPage({
       <div className="relative z-20 mx-auto max-w-6xl">
         <h1
           ref={headerRef}
-          className="font-pragati bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text pb-12 text-center text-[28px] font-extrabold leading-[1.1] tracking-wider text-transparent text-white drop-shadow-[0_4px_32px_rgba(139,92,246,0.7)] md:text-[60px]"
+          className="font-pragati bg-linear-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text pb-12 text-center text-[28px] font-extrabold leading-[1.1] tracking-wider text-transparent drop-shadow-[0_4px_32px_rgba(139,92,246,0.7)] md:text-[60px]"
         >
           Stay up to date!
         </h1>
@@ -154,15 +156,15 @@ export default function CalendarEventsPage({
                   })}{" "}
                   Events
                 </h2>
-                <TodoList date={selectedDate} />
+                <TodoList list={selectedList} />
               </div>
             </div>
           )}
         </div>
       </div>
-      <TerminalSVG className="animate-float absolute -top-80 right-12 z-0 hidden h-auto w-full max-w-[400px] transform opacity-70 md:block" />
-      <SwordSVG className="animate-float absolute -left-40 -top-20 z-0 hidden w-[500px] text-purple-400 opacity-50 md:block" />
-      <NeonTkSVG className="animate-float absolute bottom-14 right-24 hidden w-[400px] text-purple-500 opacity-50 md:block" />
+      <TerminalSVG className="animate-float max-w-100 absolute -top-80 right-12 z-0 hidden h-auto w-full transform opacity-70 md:block" />
+      <SwordSVG className="animate-float w-125 absolute -left-40 -top-20 z-0 hidden text-purple-400 opacity-50 md:block" />
+      <NeonTkSVG className="animate-float w-100 absolute bottom-14 right-24 hidden text-purple-500 opacity-50 md:block" />
     </section>
   );
 }

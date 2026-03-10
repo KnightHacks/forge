@@ -1,4 +1,6 @@
+// TODO: use a real logger to avoid this issue
 /* eslint-disable no-console */
+
 /**
  * ONE-TIME BOOTSTRAP SCRIPT
 // This script creates a superadmin role with all permissions and assigns it to a user.

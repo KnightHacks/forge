@@ -20,8 +20,8 @@ import {
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { toast } from "@forge/ui/toast";
+import { permissions } from "@forge/utils";
 
-import { getPermsAsList } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
 export default function RoleEdit({
@@ -91,11 +91,13 @@ export default function RoleEdit({
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     updateString(form.getValues());
   }, [form, updateString]);
 
   useEffect(() => {
     if (roles)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsDupeID(
         oldRole
           ? false
@@ -113,6 +115,7 @@ export default function RoleEdit({
 
   useEffect(() => {
     if (roles)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsDupeName(
         oldRole?.name == name
           ? false
@@ -296,7 +299,7 @@ export default function RoleEdit({
         </Form>
       </div>
       <div className="flex flex-row justify-between">
-        <div className="my-auto text-sm font-medium">{`${getPermsAsList(permString).length} permission(s) applied`}</div>
+        <div className="my-auto text-sm font-medium">{`${permissions.getPermsAsList(permString).length} permission(s) applied`}</div>
         <Button
           disabled={
             !role ||

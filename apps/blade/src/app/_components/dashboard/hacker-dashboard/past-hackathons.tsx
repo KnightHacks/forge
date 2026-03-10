@@ -9,9 +9,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
+import { time } from "@forge/utils";
 
 import type { api } from "~/trpc/server";
-import { formatDateTime } from "~/lib/utils";
 
 export function PastHackathonButton({
   hackathons,
@@ -80,14 +80,14 @@ export function PastHackathonButton({
                       <div className="flex flex-col items-start">
                         <span className="font-medium text-gray-600">Start</span>
                         <span className="mt-1 font-medium">
-                          {formatDateTime(hackathon.startDate)}
+                          {time.formatDateTime(hackathon.startDate)}
                         </span>
                       </div>
 
                       <div className="flex flex-col items-start">
                         <span className="font-medium text-gray-600">End</span>
                         <span className="mt-1 font-medium">
-                          {formatDateTime(hackathon.endDate)}
+                          {time.formatDateTime(hackathon.endDate)}
                         </span>
                       </div>
                     </div>

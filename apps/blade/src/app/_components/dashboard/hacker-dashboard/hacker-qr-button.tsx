@@ -20,51 +20,29 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@forge/ui/drawer";
+import { useMediaQuery } from "@forge/ui/use-media-query";
 
 import { api } from "~/trpc/react";
 
 export function HackerQRCodePopup() {
-  const getQR = () => {
-    const { data: userQR, isLoading, isError } = api.qr.getQRCode.useQuery();
+  const { data: userQR, isLoading, isError } = api.qr.getQRCode.useQuery();
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
-    if (isError) {
-      return (
-        <div className="flex items-center justify-center overflow-y-auto">
-          <div className="text-black">
-            Something went wrong. please try again
-          </div>
-        </div>
-      );
-    }
-
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center overflow-y-auto">
-          <Loader2 color="#000000" size={50} className="animate-spin" />
-        </div>
-      );
-    }
-
-    if (userQR?.qrCodeUrl) {
-      return (
-        <div className="flex items-center justify-center overflow-y-auto">
-          <Image
-            unoptimized
-            src={userQR.qrCodeUrl}
-            alt="QR Code"
-            width={400}
-            height={400}
-          />
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex items-center justify-center overflow-y-auto">
-        <div className="text-black">No QR Code found.</div>
-      </div>
-    );
-  };
+  const qrInner = isError ? (
+    <div className="text-black">Something went wrong. please try again</div>
+  ) : isLoading ? (
+    <Loader2 color="#000000" size={50} className="animate-spin" />
+  ) : userQR?.qrCodeUrl ? (
+    <Image
+      unoptimized
+      src={userQR.qrCodeUrl}
+      alt="QR Code"
+      width={400}
+      height={400}
+    />
+  ) : (
+    <div className="text-black">No QR Code found.</div>
+  );
 
   const qrTrigger = (
     <Button
@@ -79,42 +57,43 @@ export function HackerQRCodePopup() {
 
   const qrContent = (
     <div className="flex items-center justify-center p-6">
-      <div className="rounded-lg bg-white p-4">{getQR()}</div>
+      <div className="rounded-lg bg-white p-4">{qrInner}</div>
     </div>
   );
 
+  if (isDesktop) {
+    return (
+      <Dialog>
+        <DialogTrigger asChild>{qrTrigger}</DialogTrigger>
+        <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Your <span className="font-bold text-primary">HACKER</span> QR
+              Code
+            </DialogTitle>
+          </DialogHeader>
+          {qrContent}
+          <DialogDescription />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
-    <>
-      <div className="w-full sm:w-auto md:hidden">
-        <Drawer>
-          <DrawerTrigger asChild>{qrTrigger}</DrawerTrigger>
-          <DrawerContent className="mx-auto w-full max-w-sm">
-            <DrawerHeader>
-              <DrawerTitle>
-                Your <span className="font-bold text-primary">HACKER</span> QR
-                Code
-              </DrawerTitle>
-            </DrawerHeader>
-            {qrContent}
-            <DrawerDescription />
-          </DrawerContent>
-        </Drawer>
-      </div>
-      <div className="hidden w-full sm:w-auto md:block">
-        <Dialog>
-          <DialogTrigger asChild>{qrTrigger}</DialogTrigger>
-          <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                Your <span className="font-bold text-primary">HACKER</span> QR
-                Code
-              </DialogTitle>
-            </DialogHeader>
-            {qrContent}
-            <DialogDescription />
-          </DialogContent>
-        </Dialog>
-      </div>
-    </>
+    <div className="w-full sm:w-auto">
+      <Drawer>
+        <DrawerTrigger asChild>{qrTrigger}</DrawerTrigger>
+        <DrawerContent className="mx-auto w-full max-w-sm">
+          <DrawerHeader>
+            <DrawerTitle>
+              Your <span className="font-bold text-primary">HACKER</span> QR
+              Code
+            </DrawerTitle>
+          </DrawerHeader>
+          {qrContent}
+          <DrawerDescription />
+        </DrawerContent>
+      </Drawer>
+    </div>
   );
 }

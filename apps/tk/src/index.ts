@@ -1,5 +1,7 @@
 import { Client } from "discord.js";
 
+import { logger } from "@forge/utils";
+
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
 import { env } from "./env";
@@ -15,7 +17,7 @@ export const client = new Client({
 
 // Log when T.K is ready
 client.once("ready", () => {
-  console.log("T.K is ready :)");
+  logger.log("T.K is ready :)");
 
   if (client.guilds.cache.size > 0) {
     for (const guild of client.guilds.cache.values()) {

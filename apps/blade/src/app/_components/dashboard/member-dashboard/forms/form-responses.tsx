@@ -34,13 +34,19 @@ export async function FormResponses() {
                       {new Date(formResponse.submittedAt).toLocaleString()}
                     </span>
                   </div>
-
+                  {formResponse.isClosed && (
+                    <span className="rounded-full bg-red-100 px-2 py-1 text-xs text-red-800">
+                      Closed
+                    </span>
+                  )}
                   {formResponse.formSlug && (
                     <Button asChild size="sm">
                       <Link
                         href={`/forms/${encodeURIComponent(formResponse.formSlug)}/${formResponse.id}`}
                       >
-                        {formResponse.allowEdit ? "Edit" : "View"}
+                        {formResponse.allowEdit && !formResponse.isClosed
+                          ? "Edit"
+                          : "View"}
                       </Link>
                     </Button>
                   )}

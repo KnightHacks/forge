@@ -5,6 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { PKPass } from "passkit-generator";
 
 import { db } from "@forge/db/client";
+import { logger } from "@forge/utils";
 
 import { env } from "../env";
 import { protectedProcedure } from "../trpc";
@@ -144,7 +145,7 @@ export const passkitRouter = {
         fileName: fileName,
       };
     } catch (error) {
-      console.error("Error generating passkit pass:", error);
+      logger.error("Error generating passkit pass:", error);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: `Failed to generate passkit pass: ${error instanceof Error ? error.message : "Unknown error"}`,

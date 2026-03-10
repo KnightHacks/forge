@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@forge/db/client";
 import { Account, Session, User, Verifications } from "@forge/db/schemas/auth";
 
-import { handleDiscordOAuthCallback } from "../../api/src/utils";
+import * as discord from "../../utils/src/discord";
 import { env } from "./env";
 
 export const isSecureContext = env.NODE_ENV !== "development";
@@ -72,8 +72,9 @@ export const auth = betterAuth({
             const discordUserId = user?.discordUserId;
             if (!discordUserId) return;
 
-            void handleDiscordOAuthCallback(discordUserId);
+            await discord.handleDiscordOAuthCallback(discordUserId);
           } catch (error) {
+            // TODO: remove this eslint-disable
             // eslint-disable-next-line no-console
             console.error("Error in Discord auto join hook:", error);
           }
@@ -102,7 +103,7 @@ export const auth = betterAuth({
 });
 
 export const validateToken = async () => {
-  const headersList = headers();
+  const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
 
   if (!session) return null;

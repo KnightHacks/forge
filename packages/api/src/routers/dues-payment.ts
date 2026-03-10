@@ -6,10 +6,12 @@ import { CLUB } from "@forge/consts";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
+import { permissions } from "@forge/utils";
+import * as discord from "@forge/utils/discord";
+import { stripe } from "@forge/utils/stripe";
 
 import { env } from "../env";
 import { permProcedure, protectedProcedure } from "../trpc";
-import { controlPerms, log, stripe } from "../utils";
 
 export const duesPaymentRouter = {
   createCheckout: protectedProcedure.mutation(async ({ ctx }) => {
@@ -148,7 +150,7 @@ export const duesPaymentRouter = {
     }),
 
   getDuesPaymentDates: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
+    permissions.controlPerms.or(["READ_MEMBERS", "READ_CLUB_DATA"], ctx);
 
     return await db
       .select({ paymentDate: DuesPayment.paymentDate })

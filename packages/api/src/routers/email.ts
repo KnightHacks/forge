@@ -1,8 +1,10 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
+import { sendEmail } from "@forge/email";
+import { logger, permissions } from "@forge/utils";
+
 import { permProcedure } from "../trpc";
-import { controlPerms, sendEmail } from "../utils";
 
 export const emailRouter = {
   sendEmail: permProcedure
@@ -12,12 +14,12 @@ export const emailRouter = {
         subject: z.string().min(1),
         template_id: z.number(),
         from: z.string().min(1),
-        data: z.record(z.string()),
+        data: z.record(z.string(), z.string()),
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      controlPerms.or(["EMAIL_PORTAL"], ctx);
-      console.log(input.data);
+      permissions.controlPerms.or(["EMAIL_PORTAL"], ctx);
+      logger.log(input.data);
       try {
         const response = await sendEmail({
           to: input.to,
@@ -29,7 +31,7 @@ export const emailRouter = {
 
         return response;
       } catch (error) {
-        console.error("Error sending email:", {
+        logger.error("Error sending email:", {
           error: error instanceof Error ? error.message : error,
           input,
         });
@@ -37,6 +39,7 @@ export const emailRouter = {
           `Failed to send email: ${
             error instanceof Error ? error.message : "Unknown error"
           }`,
+          { cause: error },
         );
       }
     }),

@@ -12,8 +12,8 @@ import {
   NavigationMenuList,
 } from "@forge/ui/navigation-menu";
 import { Separator } from "@forge/ui/separator";
+import { permissions } from "@forge/utils";
 
-import { getPermsAsList } from "~/lib/utils";
 import { api } from "~/trpc/server";
 import ClubLogo from "./club-logo";
 import { UserDropdown } from "./user-dropdown";
@@ -26,7 +26,7 @@ export async function SessionNavbar() {
     permString += v ? "1" : "0";
   });
 
-  const permList = getPermsAsList(permString);
+  const permList = permissions.getPermsAsList(permString);
 
   return (
     <div className="flex items-center justify-between px-3 py-3 sm:px-10 sm:py-5">

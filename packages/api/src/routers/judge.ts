@@ -15,10 +15,10 @@ import {
   Submissions,
   Teams,
 } from "@forge/db/schemas/knight-hacks";
+import { permissions } from "@forge/utils";
 
 import { env } from "../env";
 import { judgeProcedure, permProcedure, publicProcedure } from "../trpc";
-import { controlPerms } from "../utils";
 
 const SESSION_TTL_HOURS = 8;
 
@@ -242,7 +242,7 @@ export const judgeRouter = {
         expires,
       });
 
-      cookies().set({
+      (await cookies()).set({
         name: "sessionToken",
         value: sessionToken,
         httpOnly: true,
@@ -556,7 +556,7 @@ export const judgeRouter = {
 
   // Admin: Get all unique rooms with session counts
   getRoomsWithSessionCounts: permProcedure.query(async ({ ctx }) => {
-    controlPerms.or(["IS_OFFICER"], ctx);
+    permissions.controlPerms.or(["IS_OFFICER"], ctx);
 
     const now = new Date();
     const rooms = await db
@@ -576,7 +576,7 @@ export const judgeRouter = {
   deleteSessionsByRoom: permProcedure
     .input(z.object({ roomName: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      controlPerms.or(["IS_OFFICER"], ctx);
+      permissions.controlPerms.or(["IS_OFFICER"], ctx);
 
       const result = await db
         .delete(JudgeSession)

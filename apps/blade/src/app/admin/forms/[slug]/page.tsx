@@ -2,16 +2,15 @@ import { redirect } from "next/navigation";
 
 import { appRouter } from "@forge/api";
 import { auth } from "@forge/auth/server";
+import { trpc } from "@forge/utils";
 
 import { EditorClient } from "~/app/_components/admin/forms/editor/client";
-import { extractProcedures } from "~/lib/utils";
 import { api } from "~/trpc/server";
 
-export default async function FormEditorPage({
-  params,
-}: {
-  params: { slug: string };
+export default async function FormEditorPage(props: {
+  params: Promise<{ slug: string }>;
 }) {
+  const params = await props.params;
   const session = await auth();
 
   if (!session) {
@@ -35,7 +34,10 @@ export default async function FormEditorPage({
 
   return (
     <>
-      <EditorClient procs={extractProcedures(appRouter)} slug={params.slug} />
+      <EditorClient
+        procs={trpc.extractProcedures(appRouter)}
+        slug={params.slug}
+      />
     </>
   );
 }

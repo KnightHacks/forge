@@ -175,7 +175,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="2022.65"
           height="2000.45"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -294,7 +294,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2668"
           height="87.2666"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -413,7 +413,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2668"
           height="87.2666"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -532,7 +532,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2668"
           height="87.2666"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -651,7 +651,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="350.821"
           height="367.884"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -770,7 +770,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="350.821"
           height="367.884"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -889,7 +889,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="350.821"
           height="367.884"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -1008,7 +1008,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="351.584"
           height="361.821"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -1127,7 +1127,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="351.584"
           height="361.821"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -1246,7 +1246,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="267.691"
           height="284.753"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -1365,7 +1365,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2668"
           height="87.2666"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -1484,7 +1484,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="267.691"
           height="284.753"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -1603,7 +1603,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2665"
           height="87.2666"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -1722,7 +1722,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="267.691"
           height="284.753"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -1841,7 +1841,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2668"
           height="87.2666"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -1960,7 +1960,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="267.691"
           height="284.753"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -2079,7 +2079,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2668"
           height="87.2666"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -2198,7 +2198,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2668"
           height="87.2667"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -2317,7 +2317,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="159.436"
           height="166.261"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -2436,7 +2436,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2668"
           height="87.2667"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -2555,7 +2555,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2668"
           height="87.2667"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -2674,7 +2674,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="159.436"
           height="166.261"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -2793,7 +2793,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2668"
           height="87.2667"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -2912,7 +2912,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2665"
           height="87.2666"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -3031,7 +3031,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="159.436"
           height="166.261"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
@@ -3150,7 +3150,7 @@ export default function BinaryIconSVG(props: SVGProps<SVGSVGElement>) {
           width="87.2668"
           height="87.2666"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
           <feFlood flood-opacity="0" result="BackgroundImageFix" />
           <feColorMatrix
