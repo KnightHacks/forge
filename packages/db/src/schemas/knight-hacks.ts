@@ -1,5 +1,6 @@
-import { relations } from "drizzle-orm";
 import {
+  foreignKey,
+  index,
   pgEnum,
   pgTableCreator,
   primaryKey,
@@ -8,7 +9,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
-import { EVENTS, FORMS } from "@forge/consts";
+import { EVENTS, FORMS, ISSUE } from "@forge/consts";
 
 import { Roles, User } from "./auth";
 
@@ -26,6 +27,7 @@ export const hackathonApplicationStateEnum = pgEnum(
   "hackathon_application_state",
   FORMS.HACKATHON_APPLICATION_STATES,
 );
+export const issueStatus = pgEnum("issue_status", ISSUE.ISSUE_STATUS);
 
 export const Hackathon = createTable("hackathon", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -137,10 +139,6 @@ export type SelectHacker = typeof Hacker.$inferSelect;
 
 export type InsertMember = typeof Member.$inferInsert;
 export type SelectMember = typeof Member.$inferSelect;
-
-export const MemberRelations = relations(Member, ({ one }) => ({
-  user: one(User, { fields: [Member.userId], references: [User.id] }),
-}));
 
 export const InsertMemberSchema = createInsertSchema(Member);
 export const InsertHackerSchema = createInsertSchema(Hacker);
@@ -547,3 +545,73 @@ export const TrpcFormConnection = createTable("trpc_form_connection", (t) => ({
 }));
 
 export const TrpcFormConnectionSchema = createInsertSchema(TrpcFormConnection);
+
+export const Issue = createTable(
+  "issue",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    status: issueStatus().notNull(),
+    name: t.text().notNull(),
+    description: t.text().notNull(),
+    links: t.text().array(),
+    event: t.uuid().references(() => Event.id, { onDelete: "set null" }),
+    date: t.timestamp(),
+    team: t
+      .uuid()
+      .notNull()
+      .references(() => Roles.id, { onDelete: "restrict" }),
+    creator: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "restrict" }),
+    parent: t.uuid(),
+  }),
+  (table) => ({
+    parentReference: foreignKey({
+      columns: [table.parent],
+      foreignColumns: [table.id],
+      name: "issue_parent_fk",
+    }).onDelete("set null"),
+    teamIdx: index("issue_team_idx").on(table.team),
+    creatorIdx: index("issue_creator_idx").on(table.creator),
+    statusIdx: index("issue_status_idx").on(table.status),
+    dateIdx: index("issue_date_idx").on(table.date),
+    parentIdx: index("issue_parent_idx").on(table.parent),
+  }),
+);
+
+export const IssueSchema = createInsertSchema(Issue);
+
+export const IssuesToTeamsVisibility = createTable(
+  "issues_to_teams_visibility",
+  (t) => ({
+    issueId: t
+      .uuid("issue_id")
+      .notNull()
+      .references(() => Issue.id, { onDelete: "cascade" }),
+    teamId: t
+      .uuid("team_id")
+      .notNull()
+      .references(() => Roles.id, { onDelete: "cascade" }),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.issueId, table.teamId] }),
+  }),
+);
+
+export const IssuesToUsersAssignment = createTable(
+  "issues_to_users_assignment",
+  (t) => ({
+    issueId: t
+      .uuid("issue_id")
+      .notNull()
+      .references(() => Issue.id, { onDelete: "cascade" }),
+    userId: t
+      .uuid("user_id")
+      .notNull()
+      .references(() => User.id, { onDelete: "cascade" }),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.issueId, table.userId] }),
+  }),
+);
