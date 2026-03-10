@@ -17,10 +17,18 @@ export function MembershipSuccess() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const paymentIntentId = searchParams.get("payment_intent") ?? "";
+  const paymentIntentId = searchParams.get("payment_intent");
 
-  const { data, isPending, isError } =
-    api.duesPayment.orderSuccess.useQuery(paymentIntentId);
+  const { data, isPending, isError } = api.duesPayment.orderSuccess.useQuery(
+    paymentIntentId ?? "",
+    { enabled: Boolean(paymentIntentId) },
+  );
+
+  if (!paymentIntentId) {
+    toast.error("Invalid confirmation link.");
+    router.push(SIGN_IN_PATH);
+    return null;
+  }
 
   if (isError) {
     toast.error("Something went wrong, please contact support.");
@@ -30,6 +38,29 @@ export function MembershipSuccess() {
 
   if (isPending) {
     return <MembershipSuccessSkeleton />;
+  }
+
+  if (data.status === "processing") {
+    return (
+      <div className="min-h-screen py-12">
+        <div className="mx-auto max-w-3xl px-4">
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl font-bold">Payment Processing</h1>
+            <p className="mt-2">
+              Your payment is being processed. You will receive a confirmation
+              email once it is complete.
+            </p>
+          </div>
+          <Alert className="mb-8">
+            <AlertTitle>Pending</AlertTitle>
+            <AlertDescription>
+              Bank transfers can take 1–5 business days to settle. Your
+              membership will be activated once the payment clears.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
   }
 
   return (
