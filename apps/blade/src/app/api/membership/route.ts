@@ -59,7 +59,7 @@ async function fulfillPaymentIntent(paymentIntentId: string) {
       throw new Error("Payment intent has not succeeded");
     }
 
-    const memberId = paymentIntent.metadata?.member_id;
+    const memberId = paymentIntent.metadata.member_id;
 
     const values = {
       memberId,
