@@ -1,8 +1,8 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import type { APIExternalGuildScheduledEvent } from "discord-api-types/v10";
-import type { calendar_v3 } from "googleapis";
 import { TRPCError } from "@trpc/server";
+import type { APIExternalGuildScheduledEvent } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
+import type { calendar_v3 } from "googleapis";
 import { z } from "zod";
 
 import { DISCORD, EVENTS } from "@forge/consts";
@@ -540,7 +540,12 @@ export const eventRouter = {
           ...input,
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
-          points: input.hackathonId ? EVENTS.EVENT_POINTS[input.tag] || 0 : 0,
+          points:
+            input.points !== undefined
+              ? input.points
+              : input.hackathonId
+                ? EVENTS.EVENT_POINTS[input.tag] || 0
+                : event.points ?? 0,
         })
         .where(eq(Event.id, input.id));
     }),

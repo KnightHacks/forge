@@ -157,7 +157,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       endHour: endHour,
       endMinute: endMinute,
       endAmPm: endAmPm as "AM" | "PM",
-      points: EVENTS.EVENT_POINTS[event.tag],
+      points: event.points ?? EVENTS.EVENT_POINTS[event.tag] ?? undefined,
     },
   });
 
