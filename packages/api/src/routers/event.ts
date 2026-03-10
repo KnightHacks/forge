@@ -363,8 +363,8 @@ export const eventRouter = {
   updateEvent: permProcedure
     .input(
       InsertEventSchema.extend({
-        roles: z.array(z.string()).default([]),
-        isOperationsCalendar: z.boolean().default(false),
+        roles: z.array(z.string()).optional(),
+        isOperationsCalendar: z.boolean().optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -418,7 +418,7 @@ export const eventRouter = {
 
       const pointDesc = `\n\n**⭐ ${EVENTS.EVENT_POINTS[input.tag] || 0} Points**`;
 
-      const isInternalEvent = input.isOperationsCalendar;
+      const isInternalEvent = input.isOperationsCalendar ?? event.isOperationsCalendar;
 
       const finalDescription = isInternalEvent
         ? `${hackDesc}${input.description}\n\n📍 **Location:** ${input.location}${pointDesc}`
@@ -428,7 +428,7 @@ export const eventRouter = {
         ? EVENTS.DEV_GOOGLE_CALENDAR_ID
         : EVENTS.GOOGLE_CALENDAR_ID;
 
-      const targetCalendarId = input.isOperationsCalendar
+      const targetCalendarId = (input.isOperationsCalendar ?? event.isOperationsCalendar)
         ? EVENTS.DEV_GOOGLE_CALENDAR_ID
         : EVENTS.GOOGLE_CALENDAR_ID;
 
@@ -620,8 +620,10 @@ export const eventRouter = {
         .update(Event)
         .set({
           ...input,
-          googleId: newGoogleId,
-
+          googleId: newGoogleId, 
+          roles: input.roles ?? event.roles,
+          isOperationsCalendar: input.isOperationsCalendar ?? event.isOperationsCalendar,
+          
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
           points: input.hackathonId ? EVENTS.EVENT_POINTS[input.tag] || 0 : 0,
