@@ -80,7 +80,12 @@ export const duesPaymentRouter = {
     const existingDues = await db
       .select({ id: DuesPayment.id })
       .from(DuesPayment)
-      .where(and(eq(DuesPayment.memberId, memberId), eq(DuesPayment.year, billingYear)))
+      .where(
+        and(
+          eq(DuesPayment.memberId, memberId),
+          eq(DuesPayment.year, billingYear),
+        ),
+      )
       .limit(1);
     if (existingDues.length > 0) {
       throw new TRPCError({
@@ -141,7 +146,7 @@ export const duesPaymentRouter = {
         .where(eq(Member.userId, ctx.session.user.id))
         .limit(1);
 
-      if (!currentMember[0] || currentMember[0].id !== memberId) {
+      if (currentMember[0]?.id !== memberId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Payment does not belong to the authenticated user.",
