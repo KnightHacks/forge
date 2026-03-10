@@ -1,11 +1,11 @@
 "use client";
 
-import { Loader2, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Loader2, Pencil } from "lucide-react";
 import { z } from "zod";
 
-import { EVENTS } from "@forge/consts";
 import type { InsertEvent } from "@forge/db/schemas/knight-hacks";
+import { EVENTS } from "@forge/consts";
 import { InsertEventSchema } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
