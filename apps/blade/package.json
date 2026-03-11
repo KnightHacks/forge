@@ -37,6 +37,7 @@
     "@trpc/client": "catalog:",
     "@trpc/react-query": "catalog:",
     "@trpc/server": "catalog:",
+    "@yudiel/react-qr-scanner": "^2.5.1",
     "canvas-confetti": "^1.9.4",
     "csv-parse": "^6.1.0",
     "csv-stringify": "^6.6.0",

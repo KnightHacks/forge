@@ -1,6 +1,6 @@
 import z from "zod";
 
-import type { FORMS } from "@forge/consts";
+import { FORMS } from "@forge/consts";
 
 /** UI state in the client */
 export type FormResponseUI = Partial<
@@ -23,8 +23,41 @@ export const getValidatorResponse = (
   ) as z.ZodSchema;
 
   const payload = normalizeResponses(responses, form);
+  const questionLookup = new Map(
+    form.questions.map((question) => [question.question, question]),
+  );
 
-  return zodSchema.safeParse(payload);
+  return zodSchema.safeParse(payload, {
+    error: (issue) => {
+      const pathKey = issue.path?.[0];
+      if (typeof pathKey !== "string") return undefined;
+
+      const question = questionLookup.get(pathKey);
+      if (!question) return undefined;
+
+      const questionTypeMeta = FORMS.FORM_QUESTION_TYPE_BY_VALUE[question.type];
+      const validationErrors = questionTypeMeta.validationErrors;
+      const isMissingRequiredField =
+        issue.code === "invalid_type" && issue.input === undefined;
+      const requiredError = validationErrors.required;
+
+      if (isMissingRequiredField && !question.optional) {
+        return requiredError;
+      }
+
+      if (!question.optional && issue.code === "invalid_value") {
+        const invalidError = validationErrors.invalid;
+        return typeof invalidError === "string" ? invalidError : requiredError;
+      }
+
+      if (issue.code === "invalid_format" || issue.code === "invalid_type") {
+        const formatError = validationErrors.format;
+        return typeof formatError === "string" ? formatError : undefined;
+      }
+
+      return undefined;
+    },
+  });
 };
 
 // normalized responses needed for zod validation and therefore proc responseData
@@ -69,7 +102,11 @@ export const getValidationError = (
   zodValidator: string,
   responses: FormResponseUI,
   form: FORMS.FormType,
+  showErrors = false,
 ) => {
+  // Don't show errors until form has been submitted/attempted
+  if (!showErrors) return null;
+
   const validatorResponse = getValidatorResponse(zodValidator, responses, form);
   if (validatorResponse.success) return null;
 
@@ -78,7 +115,8 @@ export const getValidationError = (
     return typeof k === "string" && k === question.question;
   });
 
-  return issue?.message ?? null;
+  if (!issue) return null;
+  return issue.message;
 };
 
 export const isFormValid = (

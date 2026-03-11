@@ -55,6 +55,7 @@ export function FormRunner({
   const [responses, setResponses] = useState<FormResponseUI>(
     initialResponses ?? {},
   );
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   // If initialResponses, hydrate once it changes.
   useEffect(() => {
@@ -83,14 +84,16 @@ export function FormRunner({
     });
   };
 
-  const canSubmit =
-    allowEdit &&
-    !isSubmitting &&
-    forms.isFormValid(zodValidator, responses, form);
-
   const handleSubmit = () => {
-    const payload = forms.normalizeResponses(responses, form);
-    onSubmit(payload);
+    // Mark that user has attempted to submit (to show validation errors)
+    setHasAttemptedSubmit(true);
+
+    // Only submit if form is valid - prevent trpc call/onSubmit when there are errors
+    if (forms.isFormValid(zodValidator, responses, form)) {
+      const payload = forms.normalizeResponses(responses, form);
+      onSubmit(payload);
+    }
+    // If form is invalid, errors will now be visible but no submission happens
   };
 
   type QuestionWithOrder = (typeof form.questions)[number] & {
@@ -176,6 +179,7 @@ export function FormRunner({
                       zodValidator,
                       responses,
                       form,
+                      hasAttemptedSubmit,
                     )}
                     disabled={!allowEdit}
                   />
@@ -194,12 +198,16 @@ export function FormRunner({
         {/* Actions */}
         <div className="flex justify-between">
           {!isReview ? (
-            <Button onClick={handleSubmit} disabled={!canSubmit} size="lg">
+            <Button
+              onClick={handleSubmit}
+              disabled={!allowEdit || isSubmitting}
+              size="lg"
+            >
               {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
           ) : (
             allowEdit && (
-              <Button onClick={handleSubmit} disabled={!canSubmit} size="lg">
+              <Button onClick={handleSubmit} disabled={isSubmitting} size="lg">
                 {isSubmitting ? "Submitting Edits..." : "Submit Edits"}
               </Button>
             )

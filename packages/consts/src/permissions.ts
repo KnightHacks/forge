@@ -105,13 +105,23 @@ export const PERMISSION_DATA: Record<string, PermissionDataObj> = {
     name: "Configure Roles",
     desc: "Allows creating, editing, or deleting roles.",
   },
-  EDIT_ISSUE_TEMPLATES : {
+  READ_ISSUES: {
     idx: 20,
+    name: "Read Issues",
+    desc: "Grants access to view issues on the calendar.",
+  },
+  EDIT_ISSUES: {
+    idx: 21,
+    name: "Edit Issues",
+    desc: "Allows creating, editing, or deleting issues.",
+  },
+  EDIT_ISSUE_TEMPLATES: {
+    idx: 22,
     name: "Edit issue templates",
     desc: "Allows creating, editing, or deleting templates.",
   },
-  READ_ISSUE_TEMPLATES : {
-    idx: 21,
+  READ_ISSUE_TEMPLATES: {
+    idx: 23,
     name: "Read issue templates",
     desc: "Grants access to issue templates.",
   },
