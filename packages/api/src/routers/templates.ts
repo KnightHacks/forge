@@ -21,7 +21,7 @@ export const templatesRouter = {
   createTemplate: permProcedure
     .input(
       z.object({
-        name: z.string().min(1),
+        name: z.string().min(1, "A template name is required"),
         body: z.array(templateSubIssueSchema),
       }),
     )
@@ -75,7 +75,7 @@ export const templatesRouter = {
       if (updatedTemplate === undefined) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: `There was an error updating the template: ${input.id}`,
+          message: `Template with ID ${input.id} was not found`,
         });
       }
 
@@ -91,6 +91,8 @@ export const templatesRouter = {
       permissions.controlPerms.or(["EDIT_ISSUE_TEMPLATES"], ctx);
 
       await db.delete(Template).where(eq(Template.id, input.id));
+
+      return { deletedId: input.id };
     }),
   getTemplates: permProcedure.query(async ({ ctx }) => {
     permissions.controlPerms.or(["READ_ISSUE_TEMPLATES"], ctx);
