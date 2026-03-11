@@ -23,6 +23,9 @@ export const handleCallbacks = async (
 
   for (const con of connections) {
     const data: Record<string, unknown> = {};
+    const missingFields: string[] = [];
+    const availableFields = Object.keys(response);
+
     for (const map of con.connections as {
       procField: string;
       formField?: string;
@@ -30,8 +33,26 @@ export const handleCallbacks = async (
     }[]) {
       if (map.customValue !== undefined) {
         data[map.procField] = map.customValue;
-      } else if (map.formField && map.formField in response) {
-        data[map.procField] = response[map.formField];
+      } else if (map.formField) {
+        // Try exact match first (handles whitespace differences too)
+        const trimmedFormField = map.formField.trim();
+        if (trimmedFormField in response) {
+          data[map.procField] = response[trimmedFormField];
+        } else {
+          // Try case-insensitive match (also trim for whitespace tolerance)
+          const matchedField = availableFields.find(
+            (field) =>
+              field.trim().toLowerCase() === trimmedFormField.toLowerCase(),
+          );
+          if (matchedField) {
+            data[map.procField] = response[matchedField];
+          } else {
+            // Field not found - track it for error reporting
+            missingFields.push(
+              `${map.procField} (expected form field: "${map.formField}")`,
+            );
+          }
+        }
       }
     }
 
@@ -54,10 +75,15 @@ export const handleCallbacks = async (
       });
     } catch (error) {
       const errorMessage = JSON.stringify(error, null, 2);
+      const missingFieldsMsg =
+        missingFields.length > 0
+          ? `\n\n**Missing Form Fields:**\n${missingFields.map((f) => `- ${f}`).join("\n")}\n\n**Available Form Fields:**\n${availableFields.map((f) => `- "${f}"`).join("\n")}`
+          : "";
       await discord.log({
         title: `Failed to automatically fire procedure`,
         message:
           `**Failed to fire procedure**\n\`${con.proc}\`\n\nTriggered after **${name}** submission from **${session.user.name}**\n\n**Data:**\n\`\`\`json\n${stringify(data)}\`\`\`` +
+          missingFieldsMsg +
           `\n\n**Error:**\n\`\`\`json\n${errorMessage}\`\`\``,
         color: "uhoh_red",
         userId: session.user.discordUserId,

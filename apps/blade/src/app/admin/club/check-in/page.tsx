@@ -26,11 +26,10 @@ export default async function HackathonCheckIn() {
         <div className="flex flex-col items-center justify-center gap-6">
           <div className="text-center">
             <h1 className="pb-4 text-3xl font-extrabold tracking-tight sm:text-5xl">
-              Hackathon Check-in
+              Club Check-in
             </h1>
             <p className="text-muted-foreground">
-              Check-in hackers and members for hackathon events using QR scanner
-              or manual entry
+              Check-in members for club events using QR scanner or manual entry
             </p>
           </div>
           <CheckInPage />

@@ -67,6 +67,7 @@ const UpdateFormSchema = InsertEventSchema.omit({
   endHour: z.string(),
   endMinute: z.string(),
   endAmPm: z.enum(amPmOptions),
+  points: z.number().optional(),
 });
 
 function parseDateTime(value: string | Date) {
@@ -156,6 +157,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       endHour: endHour,
       endMinute: endMinute,
       endAmPm: endAmPm as "AM" | "PM",
+      points: event.points ?? undefined,
     },
   });
 
@@ -224,6 +226,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
         hackathons?.find((v) => {
           return v.id == values.hackathonId;
         })?.displayName ?? null,
+      points: values.points,
     });
   });
 
