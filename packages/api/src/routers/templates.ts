@@ -9,13 +9,22 @@ import { permissions } from "@forge/utils";
 
 import { permProcedure } from "../trpc";
 
-const templateSubIssueSchema = z.object({
+const baseTemplateSubIssueSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   team: z.string().optional(),
   assignee: z.string().optional(),
-  date: z.string().optional(),
+  dateMs: z.number().int().optional(),
 });
+
+export type TemplateSubIssue = z.infer<typeof baseTemplateSubIssueSchema> & {
+  children?: TemplateSubIssue[];
+};
+
+const templateSubIssueSchema: z.ZodType<TemplateSubIssue> =
+  baseTemplateSubIssueSchema.extend({
+    children: z.lazy(() => z.array(templateSubIssueSchema)).optional(),
+  });
 
 export const templatesRouter = {
   createTemplate: permProcedure
