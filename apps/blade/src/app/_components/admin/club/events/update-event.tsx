@@ -212,8 +212,6 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
     // Make update call
     updateEvent.mutate({
       id: event.id,
-      discordId: event.discordId,
-      googleId: event.googleId,
       name: values.name,
       dues_paying: values.dues_paying,
       description: values.description,

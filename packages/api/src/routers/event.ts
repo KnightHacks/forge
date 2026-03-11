@@ -362,7 +362,10 @@ export const eventRouter = {
 
   updateEvent: permProcedure
     .input(
-      InsertEventSchema.extend({
+      InsertEventSchema.omit({
+        discordId: true,
+        googleId: true,
+      }).extend({
         roles: z.array(z.string()).optional(),
         isOperationsCalendar: z.boolean().optional(),
       }),
@@ -418,7 +421,8 @@ export const eventRouter = {
 
       const pointDesc = `\n\n**⭐ ${EVENTS.EVENT_POINTS[input.tag] || 0} Points**`;
 
-      const isInternalEvent = input.isOperationsCalendar ?? event.isOperationsCalendar;
+      const isInternalEvent =
+        input.isOperationsCalendar ?? event.isOperationsCalendar;
 
       const finalDescription = isInternalEvent
         ? `${hackDesc}${input.description}\n\n📍 **Location:** ${input.location}${pointDesc}`
@@ -428,9 +432,10 @@ export const eventRouter = {
         ? EVENTS.DEV_GOOGLE_CALENDAR_ID
         : EVENTS.GOOGLE_CALENDAR_ID;
 
-      const targetCalendarId = (input.isOperationsCalendar ?? event.isOperationsCalendar)
-        ? EVENTS.DEV_GOOGLE_CALENDAR_ID
-        : EVENTS.GOOGLE_CALENDAR_ID;
+      const targetCalendarId =
+        (input.isOperationsCalendar ?? event.isOperationsCalendar)
+          ? EVENTS.DEV_GOOGLE_CALENDAR_ID
+          : EVENTS.GOOGLE_CALENDAR_ID;
 
       try {
         await discord.api.patch(
@@ -616,14 +621,17 @@ export const eventRouter = {
       const dayBeforeEnd = new Date(endLocalDate);
       dayBeforeEnd.setDate(dayBeforeEnd.getDate() - 1);
 
+      const { id: _id, ...mutableInput } = input;
+
       await db
         .update(Event)
         .set({
-          ...input,
-          googleId: newGoogleId, 
+          ...mutableInput,
+          googleId: newGoogleId,
           roles: input.roles ?? event.roles,
-          isOperationsCalendar: input.isOperationsCalendar ?? event.isOperationsCalendar,
-          
+          isOperationsCalendar:
+            input.isOperationsCalendar ?? event.isOperationsCalendar,
+
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
           points: input.hackathonId ? EVENTS.EVENT_POINTS[input.tag] || 0 : 0,
