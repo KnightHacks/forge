@@ -117,12 +117,12 @@ export const PERMISSION_DATA: Record<string, PermissionDataObj> = {
   },
   EDIT_ISSUE_TEMPLATES: {
     idx: 22,
-    name: "Edit issue templates",
+    name: "Edit Issue Templates",
     desc: "Allows creating, editing, or deleting templates.",
   },
   READ_ISSUE_TEMPLATES: {
     idx: 23,
-    name: "Read issue templates",
+    name: "Read Issue Templates",
     desc: "Grants access to issue templates.",
   },
 } as const satisfies Record<string, PermissionDataObj>;
