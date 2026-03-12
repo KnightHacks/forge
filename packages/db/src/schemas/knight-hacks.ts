@@ -615,3 +615,17 @@ export const IssuesToUsersAssignment = createTable(
     pk: primaryKey({ columns: [table.issueId, table.userId] }),
   }),
 );
+
+export const Template = createTable("template", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  name: t.text().notNull(),
+  body: t.jsonb().notNull(),
+  createdAt: t.timestamp().defaultNow().notNull(),
+  updatedAt: t
+    .timestamp()
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+}));
+
+export const InsertTemplateSchema = createInsertSchema(Template);
