@@ -4,7 +4,7 @@ import z from "zod";
 
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
-import { Template } from "@forge/db/schemas/knight-hacks";
+import { InsertTemplateSchema, Template } from "@forge/db/schemas/knight-hacks";
 import { permissions } from "@forge/utils";
 
 import { permProcedure } from "../trpc";
@@ -29,21 +29,19 @@ const templateSubIssueSchema: z.ZodType<TemplateSubIssue> =
 export const templatesRouter = {
   createTemplate: permProcedure
     .input(
-      z.object({
-        name: z.string().min(1, "A template name is required"),
+      InsertTemplateSchema.omit({
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+      }).extend({
+        name: z.string().min(1, "A template name is required"), // excludes empty strings
         body: z.array(templateSubIssueSchema),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       permissions.controlPerms.or(["EDIT_ISSUE_TEMPLATES"], ctx);
 
-      const [newTemplate] = await db
-        .insert(Template)
-        .values({
-          name: input.name,
-          body: input.body,
-        })
-        .returning();
+      const [newTemplate] = await db.insert(Template).values(input).returning();
 
       if (newTemplate === undefined) {
         throw new TRPCError({
@@ -56,35 +54,47 @@ export const templatesRouter = {
     }),
   updateTemplate: permProcedure
     .input(
-      z.object({
-        id: z.string().uuid(),
-        name: z.string().min(1, "Template Name cannot be empty").optional(),
-        body: z.array(templateSubIssueSchema).optional(),
-      }),
+      InsertTemplateSchema.omit({
+        createdAt: true,
+        updatedAt: true,
+      })
+        .partial() // makes all future fields optional
+        .extend({
+          id: z.string().uuid(), // forces ID to not be an optional field
+          name: z.string().min(1, "A template name is required").optional(), // excludes empty strings
+          body: z.array(templateSubIssueSchema).optional(),
+        }),
     )
     .mutation(async ({ ctx, input }) => {
       permissions.controlPerms.or(["EDIT_ISSUE_TEMPLATES"], ctx);
 
-      if (input.name === undefined && input.body === undefined) {
+      // We want to separate id from all optional fields
+      const { id, ...updateData } = input;
+
+      // this is true only if all fields of updateData are undefined
+      const hasUpdates = Object.values(updateData).some(
+        // value is unknown because it seems like ts can't resolve that value might be undefined
+        // and gives a type error thinking it can never overlap with undefined
+        (value: unknown) => value !== undefined,
+      );
+
+      if (!hasUpdates) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "You must provide either a name or a body to update.",
+          message: "You must provide at least one field to update.",
         });
       }
 
       const [updatedTemplate] = await db
         .update(Template)
-        .set({
-          ...(input.name ? { name: input.name } : {}),
-          ...(input.body ? { body: input.body } : {}),
-        })
-        .where(eq(Template.id, input.id))
+        .set(updateData)
+        .where(eq(Template.id, id))
         .returning();
 
       if (updatedTemplate === undefined) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: `Template with ID ${input.id} was not found`,
+          message: `Template with ID ${id} was not found`,
         });
       }
 
