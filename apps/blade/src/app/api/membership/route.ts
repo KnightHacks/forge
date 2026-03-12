@@ -38,10 +38,48 @@ async function membershipRecord(sessionId: string) {
     // Check the Checkout Session's payment_status property
     // to determine if fulfillment should be peformed
     if (checkoutSession.payment_status !== "unpaid") {
-      await db.insert(DuesPayment).values({ ...validatedCheckoutFields.data });
+      await db
+        .insert(DuesPayment)
+        .values({ ...validatedCheckoutFields.data })
+        .onConflictDoNothing();
       return true;
     }
     throw new Error("Checkout session payment status is unpaid");
+  } catch (e) {
+    logger.error("Error:", e);
+    return false;
+  }
+}
+
+async function fulfillPaymentIntent(paymentIntentId: string) {
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status !== "succeeded") {
+      throw new Error("Payment intent has not succeeded");
+    }
+
+    const memberId = paymentIntent.metadata.member_id;
+
+    const values = {
+      memberId,
+      amount: paymentIntent.amount,
+      paymentDate: new Date(paymentIntent.created * 1000),
+      year: new Date().getFullYear(),
+    };
+
+    const validated = DuesPaymentSchema.omit({ id: true }).safeParse(values);
+
+    if (!validated.success) {
+      logger.log(validated.error.issues);
+      throw new Error("Invalid or missing field(s)");
+    }
+
+    await db.insert(DuesPayment).values(validated.data).onConflictDoNothing();
+
+    return true;
   } catch (e) {
     logger.error("Error:", e);
     return false;
@@ -79,6 +117,21 @@ export async function POST(request: NextRequest) {
     case "checkout.session.expired":
       return new Response("Checkout session expired", {
         status: 408,
+      });
+    case "payment_intent.succeeded":
+      success = await fulfillPaymentIntent(event.data.object.id);
+      break;
+    case "payment_intent.payment_failed":
+      logger.warn("Payment failed", { paymentIntentId: event.data.object.id });
+      return new Response("Event received", {
+        status: 200,
+      });
+    case "payment_intent.canceled":
+      logger.warn("Payment canceled", {
+        paymentIntentId: event.data.object.id,
+      });
+      return new Response("Event received", {
+        status: 200,
       });
     default:
       return new Response(`Unhandled event type ${event.type}`, {
