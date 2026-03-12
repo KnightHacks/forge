@@ -34,20 +34,11 @@ export const birthday = new CronBuilder({
       .leftJoin(User, eq(User.id, Member.userId))
       .where(
         and(
-          // check that they are dues paying or have some permissions
-          or(
-            exists(
-              db
-                .select()
-                .from(Permissions)
-                .where(eq(Permissions.userId, Member.userId)),
-            ),
-            exists(
-              db
-                .select()
-                .from(DuesPayment)
-                .where(eq(DuesPayment.memberId, Member.id)),
-            ),
+          exists(
+            db
+              .select()
+              .from(Permissions)
+              .where(eq(Permissions.userId, Member.userId)),
           ),
           eq(Member.guildProfileVisible, true),
           eq(sql`EXTRACT(MONTH FROM ${Member.dob})`, month),
