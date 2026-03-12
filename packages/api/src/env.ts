@@ -19,6 +19,7 @@ export const env = createEnv({
     BLADE_URL: z.string(),
     GOOGLE_CLIENT_EMAIL: z.string(),
     GOOGLE_PRIVATE_KEY_B64: z.string(),
+    DISCORD_OPS_VOICE_CHANNEL_ID: z.string(),
   },
   experimental__runtimeEnv: {},
   skipValidation:
