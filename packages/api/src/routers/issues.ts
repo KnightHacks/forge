@@ -296,11 +296,7 @@ export const issuesRouter = {
     }),
   createTemplate: permProcedure
     .input(
-      InsertTemplateSchema.omit({
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-      }).extend({
+      InsertTemplateSchema.extend({
         name: z.string().min(1, "A template name is required"), // excludes empty strings
         body: z.array(templateSubIssueSchema),
       }),
