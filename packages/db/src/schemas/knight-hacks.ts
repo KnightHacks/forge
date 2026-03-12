@@ -627,3 +627,5 @@ export const Template = createTable("template", (t) => ({
     .$onUpdate(() => new Date())
     .notNull(),
 }));
+
+export const InsertTemplateSchema = createInsertSchema(Template);

@@ -58,14 +58,14 @@ export const templatesRouter = {
     .input(
       z.object({
         id: z.string().uuid(),
-        name: z.string().optional(),
+        name: z.string().min(1, "Template Name cannot be empty").optional(),
         body: z.array(templateSubIssueSchema).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       permissions.controlPerms.or(["EDIT_ISSUE_TEMPLATES"], ctx);
 
-      if (!input.name && !input.body) {
+      if (input.name === undefined && input.body === undefined) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "You must provide either a name or a body to update.",
@@ -99,12 +99,25 @@ export const templatesRouter = {
     .mutation(async ({ ctx, input }) => {
       permissions.controlPerms.or(["EDIT_ISSUE_TEMPLATES"], ctx);
 
-      await db.delete(Template).where(eq(Template.id, input.id));
+      const [deleted] = await db
+        .delete(Template)
+        .where(eq(Template.id, input.id))
+        .returning();
 
-      return { deletedId: input.id };
+      if (!deleted) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Template with ID ${input.id} was not found`,
+        });
+      }
+
+      return { deletedId: deleted.id };
     }),
   getTemplates: permProcedure.query(async ({ ctx }) => {
-    permissions.controlPerms.or(["READ_ISSUE_TEMPLATES"], ctx);
+    permissions.controlPerms.or(
+      ["READ_ISSUE_TEMPLATES", "EDIT_ISSUE_TEMPLATES"],
+      ctx,
+    );
 
     const templates = await db.query.Template.findMany({
       orderBy: (templates, { desc }) => [desc(templates.createdAt)],
