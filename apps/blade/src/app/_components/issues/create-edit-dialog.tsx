@@ -191,6 +191,7 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
     buildInitialFormValues,
   );
   const baseId = React.useId();
+  const isSubmitDisabled = !formValues.title.trim();
 
   React.useEffect(() => {
     setPortalElement(document.body);
@@ -336,12 +337,13 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
                 htmlFor={`${baseId}-title`}
                 className="text-sm text-white/70"
               >
-                Title
+                Title *
               </Label>
               <Input
                 id={`${baseId}-title`}
                 className={cn(baseField, "h-12 text-base font-medium")}
                 placeholder="Event title"
+                required
                 value={formValues.title}
                 onChange={(event) => updateForm("title", event.target.value)}
               />
@@ -800,7 +802,11 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
               >
                 Cancel
               </Button>
-              <Button type="submit" className="w-full sm:w-auto">
+              <Button
+                type="submit"
+                className="w-full sm:w-auto disabled:opacity-40"
+                disabled={isSubmitDisabled}
+              >
                 {intent === "edit" ? "Update Event" : "Create Event"}
               </Button>
             </div>
