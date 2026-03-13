@@ -28,6 +28,7 @@ export const hackathonApplicationStateEnum = pgEnum(
   FORMS.HACKATHON_APPLICATION_STATES,
 );
 export const issueStatus = pgEnum("issue_status", ISSUE.ISSUE_STATUS);
+export const issuePriority = pgEnum("issue_priority", ISSUE.PRIORITY);
 
 export const Hackathon = createTable("hackathon", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -562,6 +563,7 @@ export const Issue = createTable(
     links: t.text().array(),
     event: t.uuid().references(() => Event.id, { onDelete: "set null" }),
     date: t.timestamp(),
+    priority: issuePriority().notNull(),
     team: t
       .uuid()
       .notNull()
@@ -583,6 +585,7 @@ export const Issue = createTable(
     statusIdx: index("issue_status_idx").on(table.status),
     dateIdx: index("issue_date_idx").on(table.date),
     parentIdx: index("issue_parent_idx").on(table.parent),
+    priorityIdx: index("issue_priority_idx").on(table.priority),
   }),
 );
 
