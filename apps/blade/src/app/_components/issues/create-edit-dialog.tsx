@@ -4,7 +4,22 @@ import * as React from "react";
 import { Link2, Plus, Trash2, X } from "lucide-react";
 import { createPortal } from "react-dom";
 
-import { ISSUE_STATUS, PRIORITY } from "@forge/consts/src/issue";
+import { ISSUE } from "@forge/consts";
+
+// UI-specific constants (should not be in issue.ts)
+const STATUS_COLORS: Record<string, string> = {
+  BACKLOG: "bg-slate-400",
+  PLANNING: "bg-amber-400",
+  IN_PROGRESS: "bg-emerald-400",
+  FINISHED: "bg-rose-400",
+};
+
+const SECTION_TABS: { key: ISSUE.DetailSectionKey; label: string }[] = [
+  { key: "details", label: "Details" },
+  { key: "requirements", label: "Room & Requirements" },
+  { key: "links", label: "Links & Notes" },
+];
+
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
@@ -19,84 +34,9 @@ import {
 import { Switch } from "@forge/ui/switch";
 import { Textarea } from "@forge/ui/textarea";
 
-type IssueStatus = (typeof ISSUE_STATUS)[number];
-type IssuePriority = (typeof PRIORITY)[number];
-
-// Event fields from DB schema
-export interface EventFormValues {
-  discordId: string;
-  googleId: string;
-  name: string;
-  tag: string;
-  description: string;
-  startDate: string;
-  startTime: string;
-  endDate: string;
-  endTime: string;
-  location: string;
-  dues_paying: boolean;
-  points?: number;
-  hackathonId?: string;
+function getStatusLabel(status: string) {
+  return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
-
-type DetailSectionKey = "details" | "requirements" | "links";
-
-export interface IssueFormValues {
-  status: IssueStatus;
-  name: string;
-  description: string;
-  links: LinkItem[];
-  date: string; // ISO string
-  priority: IssuePriority;
-  team: string; // UUID or name
-  parent?: string;
-  // UI only fields
-  isEvent: boolean;
-  // For event, we store event form values
-  event?: EventFormValues;
-}
-
-export interface CreateEditDialogProps {
-  open: boolean;
-  intent?: "create" | "edit";
-  initialValues?: Partial<IssueFormValues>;
-  onClose?: () => void;
-  onSubmit?: (values: IssueFormValues) => void;
-  onDelete?: (values: IssueFormValues) => void;
-}
-
-const STATUS_OPTIONS = [
-  {
-    value: "confirmed",
-    label: "Confirmed",
-    caption: "Everything is locked in",
-    dotClass: "bg-emerald-400",
-  },
-  {
-    value: "tentative",
-    label: "Tentative",
-    caption: "Waiting on a few details",
-    dotClass: "bg-amber-400",
-  },
-  {
-    value: "draft",
-    label: "Draft",
-    caption: "Still being scoped",
-    dotClass: "bg-slate-400",
-  },
-  {
-    value: "cancelled",
-    label: "Cancelled",
-    caption: "No longer happening",
-    dotClass: "bg-rose-400",
-  },
-] as const;
-
-const SECTION_TABS: { key: DetailSectionKey; label: string }[] = [
-  { key: "details", label: "Details" },
-  { key: "requirements", label: "Room & Requirements" },
-  { key: "links", label: "Links & Notes" },
-];
 
 const TEAM_OPTIONS = [
   "Design",
@@ -107,48 +47,10 @@ const TEAM_OPTIONS = [
   "E-Board",
 ];
 
-const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
+// Helper to create a new link string
+const createLinkItem = (): string => "";
 
-const REQUIREMENT_FLAGS: {
-  key: keyof Pick<IssueFormValues, "needsDesignAssets" | "needsOutreach">;
-  label: string;
-  caption: string;
-}[] = [
-  {
-    key: "needsDesignAssets",
-    label: "Requires Design Assets",
-    caption: "Decks, flyers, or other creative deliverables",
-  },
-  {
-    key: "needsOutreach",
-    label: "Requires Outreach/Marketing",
-    caption: "Share with campus orgs or sponsors",
-  },
-];
-
-const focusGlow =
-  "transition-[border,background-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[rgba(120,82,255,0.45)] focus-visible:border-transparent";
-
-const baseField = cn(
-  "rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-foreground backdrop-blur-md placeholder:text-foreground/50 hover:border-white/20",
-  focusGlow,
-);
-
-const tabButtonBase = cn(
-  "flex-1 rounded-2xl border border-white/10 bg-white/0 px-4 py-3 text-sm font-medium text-foreground/70 transition-all duration-200 hover:text-foreground",
-  focusGlow,
-);
-
-const createLinkItem = (): LinkItem => ({
-  id:
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2),
-  label: "",
-  url: "",
-});
-
-const defaultEventForm = (): EventFormValues => {
+const defaultEventForm = (): ISSUE.EventFormValues => {
   const now = new Date();
   const end = new Date(now.getTime() + 60 * 60 * 1000);
   return {
@@ -168,18 +70,18 @@ const defaultEventForm = (): EventFormValues => {
   };
 };
 
-const defaultForm = (): IssueFormValues => {
+const defaultForm = (): ISSUE.IssueFormValues => {
   const now = new Date();
   // Default due date for tasks is today at 11:00 PM
   const dueDate = new Date(now);
   dueDate.setHours(23, 0, 0, 0);
   return {
-    status: ISSUE_STATUS[0],
+    status: ISSUE.ISSUE_STATUS[0],
     name: "",
     description: "",
     links: [],
     date: dueDate.toISOString(),
-    priority: PRIORITY[0],
+    priority: ISSUE.PRIORITY[0],
     team: "",
     parent: undefined,
     isEvent: false,
@@ -187,7 +89,7 @@ const defaultForm = (): IssueFormValues => {
   };
 };
 
-export function CreateEditDialog(props: CreateEditDialogProps) {
+export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
   const {
     open,
     intent = "create",
@@ -200,7 +102,7 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
     null,
   );
   const [activeSection, setActiveSection] =
-    React.useState<DetailSectionKey>("details");
+    React.useState<ISSUE.DetailSectionKey>("details");
   const buildInitialFormValues = React.useCallback(() => {
     const defaults = defaultForm();
     if (initialValues?.isEvent) {
@@ -220,7 +122,7 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
       links: initialValues?.links ?? defaults.links,
     };
   }, [initialValues]);
-  const [formValues, setFormValues] = React.useState<IssueFormValues>(
+  const [formValues, setFormValues] = React.useState<ISSUE.IssueFormValues>(
     buildInitialFormValues,
   );
   const baseId = React.useId();
@@ -229,9 +131,9 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
   )?.trim();
 
   // Helper for event form
-  const updateEventForm = <K extends keyof EventFormValues>(
+  const updateEventForm = <K extends keyof ISSUE.EventFormValues>(
     key: K,
-    value: EventFormValues[K],
+    value: ISSUE.EventFormValues[K],
   ) => {
     setFormValues((previous) => ({
       ...previous,
@@ -278,12 +180,7 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
     };
   }, [open, onClose]);
 
-  const statusMeta = React.useMemo(
-    () =>
-      STATUS_OPTIONS.find((status) => status.value === formValues.status) ??
-      STATUS_OPTIONS[0],
-    [formValues.status],
-  );
+  const statusColor = STATUS_COLORS[formValues.status] || "bg-slate-400";
 
   const handleOverlayPointerDown = (
     event: React.MouseEvent<HTMLDivElement>,
@@ -293,9 +190,9 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
     }
   };
 
-  const updateForm = <K extends keyof IssueFormValues>(
+  const updateForm = <K extends keyof ISSUE.IssueFormValues>(
     key: K,
-    value: IssueFormValues[K],
+    value: ISSUE.IssueFormValues[K],
   ) => {
     setFormValues((previous) => ({
       ...previous,
@@ -310,24 +207,17 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
     }));
   };
 
-  const handleRemoveLink = (id: string) => {
+  const handleRemoveLink = (index: number) => {
     setFormValues((previous) => ({
       ...previous,
-      links: previous.links.filter((link) => link.id !== id),
+      links: previous.links.filter((_, i) => i !== index),
     }));
   };
 
-  const handleLinkUpdate = (id: string, key: keyof LinkItem, value: string) => {
+  const handleLinkUpdate = (index: number, value: string) => {
     setFormValues((previous) => ({
       ...previous,
-      links: previous.links.map((link) =>
-        link.id === id
-          ? {
-              ...link,
-              [key]: value,
-            }
-          : link,
-      ),
+      links: previous.links.map((link, i) => (i === index ? value : link)),
     }));
   };
 
@@ -395,52 +285,32 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
         </header>
 
         <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/12 -mr-2 mt-8 min-h-0 flex-1 overflow-y-auto pr-2">
-          <div className="flex flex-col space-y-6">
-            {/* Toggle for Event or Task */}
-            <div className="mb-2 flex items-center gap-4">
-              <label className="flex items-center gap-2 text-sm font-medium text-white/80">
-                <input
-                  type="checkbox"
-                  checked={formValues.isEvent}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setFormValues((f) => ({
-                        ...f,
-                        isEvent: true,
-                        event: f.event ?? defaultEventForm(),
-                      }));
-                    } else {
-                      setFormValues((f) => ({
-                        ...f,
-                        isEvent: false,
-                        event: undefined,
-                        date: (() => {
-                          const d = new Date();
-                          d.setHours(23, 0, 0, 0);
-                          return d.toISOString();
-                        })(),
-                      }));
-                    }
-                  }}
-                />
-                This is an event (otherwise, it's a task)
-              </label>
-            </div>
-
-            {/* Name/Title */}
             <div className="space-y-3">
-              <Label
-                htmlFor={`${baseId}-name`}
-                className="text-sm text-white/70"
+              <Label className="text-sm text-white/70">Status</Label>
+              <Select
+                value={formValues.status}
+                onValueChange={(value) => updateForm("status", value as (typeof ISSUE.ISSUE_STATUS)[number])}
               >
-                {formValues.isEvent ? "Event Name *" : "Task Name *"}
-              </Label>
-              <Input
-                id={`${baseId}-name`}
-                className={cn(baseField, "h-12 text-base font-medium")}
-                placeholder={formValues.isEvent ? "Event name" : "Task name"}
-                required
-                value={
+                <SelectTrigger className={cn(baseField, "h-14 pr-12")} aria-label="Event status">
+                  <div className="flex flex-1 items-center gap-3 text-left">
+                    <span className={cn("size-2.5 rounded-full", statusColor)} />
+                    <span className="text-sm font-semibold text-white">
+                      {getStatusLabel(formValues.status)}
+                    </span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="min-w-[22rem] border-white/10 bg-[#0f0f1c] text-white">
+                  {ISSUE.ISSUE_STATUS.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      <div className="flex items-center gap-3">
+                        <span className={cn("size-2.5 rounded-full", STATUS_COLORS[status] || "bg-slate-400")} />
+                        <span className="text-sm font-semibold">{getStatusLabel(status)}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
                   formValues.isEvent
                     ? (formValues.event?.name ?? "")
                     : formValues.name
@@ -460,7 +330,7 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
               <Select
                 value={formValues.status}
                 onValueChange={(value) =>
-                  updateForm("status", value as IssueStatus)
+                  updateForm("status", value as (typeof ISSUE.ISSUE_STATUS)[number])
                 }
               >
                 <SelectTrigger
@@ -485,23 +355,11 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
                   </div>
                 </SelectTrigger>
                 <SelectContent className="min-w-[22rem] border-white/10 bg-[#0f0f1c] text-white">
-                  {STATUS_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                  {ISSUE.ISSUE_STATUS.map((status) => (
+                    <SelectItem key={status} value={status}>
                       <div className="flex items-center gap-3">
-                        <span
-                          className={cn(
-                            "size-2.5 rounded-full",
-                            option.dotClass,
-                          )}
-                        />
-                        <div className="leading-tight">
-                          <p className="text-sm font-semibold">
-                            {option.label}
-                          </p>
-                          <p className="text-xs text-white/60">
-                            {option.caption}
-                          </p>
-                        </div>
+                        <span className={cn("size-2.5 rounded-full", STATUS_COLORS[status] || "bg-slate-400")} />
+                        <span className="text-sm font-semibold">{getStatusLabel(status)}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -686,7 +544,7 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
                             <SelectValue placeholder="Select priority" />
                           </SelectTrigger>
                           <SelectContent>
-                            {PRIORITY_OPTIONS.map((priority) => (
+                            {ISSUE.PRIORITY.map((priority) => (
                               <SelectItem
                                 key={priority}
                                 value={priority.toLowerCase()}
@@ -815,51 +673,29 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
                       </p>
                     ) : (
                       <div className="space-y-3">
-                        {formValues.links.map((link) => (
+                        {formValues.links.map((link, i) => (
                           <div
-                            key={link.id}
+                            key={i}
                             className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 sm:flex-row"
                           >
                             <div className="flex-1 space-y-2">
                               <Input
                                 className={cn(baseField, "h-11")}
-                                placeholder="Label (e.g., Notion doc)"
-                                value={link.label}
+                                placeholder="Paste link (e.g., https://...)"
+                                value={link}
                                 onChange={(event) =>
-                                  handleLinkUpdate(
-                                    link.id,
-                                    "label",
-                                    event.target.value,
-                                  )
+                                  handleLinkUpdate(i, event.target.value)
                                 }
                               />
                             </div>
-                            <div className="flex flex-1 gap-3">
-                              <div className="relative flex-1">
-                                <Link2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-                                <Input
-                                  className={cn(baseField, "h-11 pl-9")}
-                                  placeholder="URL"
-                                  type="url"
-                                  value={link.url}
-                                  onChange={(event) =>
-                                    handleLinkUpdate(
-                                      link.id,
-                                      "url",
-                                      event.target.value,
-                                    )
-                                  }
-                                />
-                              </div>
-                              <Button
-                                variant="ghost"
-                                type="button"
-                                className="h-11 w-11 rounded-2xl border border-white/10 bg-transparent text-white/70 hover:border-white/30 hover:text-white"
-                                onClick={() => handleRemoveLink(link.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            <Button
+                              variant="ghost"
+                              type="button"
+                              className="h-11 w-11 rounded-2xl border border-white/10 bg-transparent text-white/70 hover:border-white/30 hover:text-white"
+                              onClick={() => handleRemoveLink(i)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         ))}
                       </div>
