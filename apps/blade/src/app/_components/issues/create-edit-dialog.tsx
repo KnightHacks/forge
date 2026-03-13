@@ -4,6 +4,7 @@ import * as React from "react";
 import { Link2, Plus, Trash2, X } from "lucide-react";
 import { createPortal } from "react-dom";
 
+import { ISSUE_STATUS, PRIORITY } from "@forge/consts/src/issue";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
@@ -18,34 +19,41 @@ import {
 import { Switch } from "@forge/ui/switch";
 import { Textarea } from "@forge/ui/textarea";
 
-type IssueStatus = (typeof STATUS_OPTIONS)[number]["value"];
+type IssueStatus = (typeof ISSUE_STATUS)[number];
+type IssuePriority = (typeof PRIORITY)[number];
 
-type DetailSectionKey = "details" | "requirements" | "links";
-
-type LinkItem = {
-  id: string;
-  label: string;
-  url: string;
-};
-
-export interface IssueFormValues {
-  title: string;
-  status: IssueStatus;
+// Event fields from DB schema
+export interface EventFormValues {
+  discordId: string;
+  googleId: string;
+  name: string;
+  tag: string;
+  description: string;
   startDate: string;
   startTime: string;
   endDate: string;
   endTime: string;
-  allDay: boolean;
-  team: string;
-  priority: string;
-  isHackathonCritical: boolean;
-  requiresRoom: boolean;
-  needsDesignAssets: boolean;
-  needsOutreach: boolean;
-  details: string;
-  requirements: string;
+  location: string;
+  dues_paying: boolean;
+  points?: number;
+  hackathonId?: string;
+}
+
+type DetailSectionKey = "details" | "requirements" | "links";
+
+export interface IssueFormValues {
+  status: IssueStatus;
+  name: string;
+  description: string;
   links: LinkItem[];
-  notes: string;
+  date: string; // ISO string
+  priority: IssuePriority;
+  team: string; // UUID or name
+  parent?: string;
+  // UI only fields
+  isEvent: boolean;
+  // For event, we store event form values
+  event?: EventFormValues;
 }
 
 export interface CreateEditDialogProps {
@@ -122,12 +130,12 @@ const focusGlow =
   "transition-[border,background-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[rgba(120,82,255,0.45)] focus-visible:border-transparent";
 
 const baseField = cn(
-  "text-foreground placeholder:text-foreground/50 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm backdrop-blur-md hover:border-white/20",
+  "rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-foreground backdrop-blur-md placeholder:text-foreground/50 hover:border-white/20",
   focusGlow,
 );
 
 const tabButtonBase = cn(
-  "text-foreground/70 hover:text-foreground flex-1 rounded-2xl border border-white/10 bg-white/0 px-4 py-3 text-sm font-medium transition-all duration-200",
+  "flex-1 rounded-2xl border border-white/10 bg-white/0 px-4 py-3 text-sm font-medium text-foreground/70 transition-all duration-200 hover:text-foreground",
   focusGlow,
 );
 
@@ -140,28 +148,42 @@ const createLinkItem = (): LinkItem => ({
   url: "",
 });
 
-const defaultForm = (): IssueFormValues => {
+const defaultEventForm = (): EventFormValues => {
   const now = new Date();
   const end = new Date(now.getTime() + 60 * 60 * 1000);
-
   return {
-    title: "",
-    status: "confirmed",
+    discordId: "",
+    googleId: "",
+    name: "",
+    tag: "",
+    description: "",
     startDate: formatDateForInput(now),
     startTime: formatTimeForInput(now),
     endDate: formatDateForInput(end),
     endTime: formatTimeForInput(end),
-    allDay: false,
-    team: "",
-    priority: "",
-    isHackathonCritical: false,
-    requiresRoom: false,
-    needsDesignAssets: false,
-    needsOutreach: false,
-    details: "",
-    requirements: "",
+    location: "",
+    dues_paying: false,
+    points: undefined,
+    hackathonId: undefined,
+  };
+};
+
+const defaultForm = (): IssueFormValues => {
+  const now = new Date();
+  // Default due date for tasks is today at 11:00 PM
+  const dueDate = new Date(now);
+  dueDate.setHours(23, 0, 0, 0);
+  return {
+    status: ISSUE_STATUS[0],
+    name: "",
+    description: "",
     links: [],
-    notes: "",
+    date: dueDate.toISOString(),
+    priority: PRIORITY[0],
+    team: "",
+    parent: undefined,
+    isEvent: false,
+    event: undefined,
   };
 };
 
@@ -181,9 +203,20 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
     React.useState<DetailSectionKey>("details");
   const buildInitialFormValues = React.useCallback(() => {
     const defaults = defaultForm();
+    if (initialValues?.isEvent) {
+      return {
+        ...defaults,
+        ...initialValues,
+        isEvent: true,
+        event: initialValues.event ?? defaultEventForm(),
+        links: initialValues?.links ?? defaults.links,
+      };
+    }
     return {
       ...defaults,
       ...initialValues,
+      isEvent: false,
+      event: undefined,
       links: initialValues?.links ?? defaults.links,
     };
   }, [initialValues]);
@@ -191,7 +224,23 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
     buildInitialFormValues,
   );
   const baseId = React.useId();
-  const isSubmitDisabled = !formValues.title.trim();
+  const isSubmitDisabled = !(
+    formValues.isEvent ? formValues.event?.name : formValues.name
+  )?.trim();
+
+  // Helper for event form
+  const updateEventForm = <K extends keyof EventFormValues>(
+    key: K,
+    value: EventFormValues[K],
+  ) => {
+    setFormValues((previous) => ({
+      ...previous,
+      event: {
+        ...(previous.event ?? defaultEventForm()),
+        [key]: value,
+      },
+    }));
+  };
 
   React.useEffect(() => {
     setPortalElement(document.body);
@@ -284,7 +333,12 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onSubmit?.(formValues);
+    // If not event, clear event field
+    if (!formValues.isEvent) {
+      onSubmit?.({ ...formValues, event: undefined });
+    } else {
+      onSubmit?.(formValues);
+    }
   };
 
   const handleDelete = () => {
@@ -305,14 +359,14 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
       onMouseDown={handleOverlayPointerDown}
     >
       <form
-        className="animate-in fade-in-0 zoom-in-95 text-foreground relative flex max-h-[90vh] w-full max-w-[680px] flex-col rounded-[28px] border border-white/10 bg-[rgba(8,8,20,0.95)] p-8 font-sans shadow-[0_25px_120px_rgba(0,0,0,0.45)]"
+        className="animate-in fade-in-0 zoom-in-95 relative flex max-h-[90vh] w-full max-w-[680px] flex-col rounded-[28px] border border-white/10 bg-[rgba(8,8,20,0.95)] p-8 font-sans text-foreground shadow-[0_25px_120px_rgba(0,0,0,0.45)]"
         onSubmit={handleSubmit}
         onMouseDown={(event) => event.stopPropagation()}
         style={{ maxHeight: "90vh" }}
       >
         <button
           type="button"
-          className="absolute top-6 right-6 inline-flex size-9 items-center justify-center rounded-full border border-white/10 text-white/70 transition hover:border-white/40 hover:text-white"
+          className="absolute right-6 top-6 inline-flex size-9 items-center justify-center rounded-full border border-white/10 text-white/70 transition hover:border-white/40 hover:text-white"
           onClick={onClose}
           aria-label="Close dialog"
         >
@@ -320,32 +374,84 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
         </button>
 
         <header className="space-y-2 pr-12">
-          <p className="text-xs font-semibold tracking-[0.4em] text-white/40 uppercase">
-            {intent === "edit" ? "Edit Event" : "Create Event"}
+          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-white/40">
+            {intent === "edit"
+              ? formValues.isEvent
+                ? "Edit Event"
+                : "Edit Task"
+              : formValues.isEvent
+                ? "Create Event"
+                : "Create Task"}
           </p>
           <h2 className="text-2xl font-semibold text-white">
             {intent === "edit"
-              ? "Update the event details below"
-              : "Enter the event details below"}
+              ? formValues.isEvent
+                ? "Update the event details below"
+                : "Update the task details below"
+              : formValues.isEvent
+                ? "Enter the event details below"
+                : "Enter the task details below"}
           </h2>
         </header>
 
-        <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/12 mt-8 -mr-2 min-h-0 flex-1 overflow-y-auto pr-2">
+        <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/12 -mr-2 mt-8 min-h-0 flex-1 overflow-y-auto pr-2">
           <div className="flex flex-col space-y-6">
+            {/* Toggle for Event or Task */}
+            <div className="mb-2 flex items-center gap-4">
+              <label className="flex items-center gap-2 text-sm font-medium text-white/80">
+                <input
+                  type="checkbox"
+                  checked={formValues.isEvent}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setFormValues((f) => ({
+                        ...f,
+                        isEvent: true,
+                        event: f.event ?? defaultEventForm(),
+                      }));
+                    } else {
+                      setFormValues((f) => ({
+                        ...f,
+                        isEvent: false,
+                        event: undefined,
+                        date: (() => {
+                          const d = new Date();
+                          d.setHours(23, 0, 0, 0);
+                          return d.toISOString();
+                        })(),
+                      }));
+                    }
+                  }}
+                />
+                This is an event (otherwise, it's a task)
+              </label>
+            </div>
+
+            {/* Name/Title */}
             <div className="space-y-3">
               <Label
-                htmlFor={`${baseId}-title`}
+                htmlFor={`${baseId}-name`}
                 className="text-sm text-white/70"
               >
-                Title *
+                {formValues.isEvent ? "Event Name *" : "Task Name *"}
               </Label>
               <Input
-                id={`${baseId}-title`}
+                id={`${baseId}-name`}
                 className={cn(baseField, "h-12 text-base font-medium")}
-                placeholder="Event title"
+                placeholder={formValues.isEvent ? "Event name" : "Task name"}
                 required
-                value={formValues.title}
-                onChange={(event) => updateForm("title", event.target.value)}
+                value={
+                  formValues.isEvent
+                    ? (formValues.event?.name ?? "")
+                    : formValues.name
+                }
+                onChange={(event) => {
+                  if (formValues.isEvent) {
+                    updateEventForm("name", event.target.value);
+                  } else {
+                    updateForm("name", event.target.value);
+                  }
+                }}
               />
             </div>
 
@@ -403,110 +509,121 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
               </Select>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+            {/* Date/Time fields */}
+            {formValues.isEvent ? (
+              <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor={`${baseId}-event-start-date`}
+                      className="text-xs uppercase tracking-wider text-white/50"
+                    >
+                      Start Date
+                    </Label>
+                    <Input
+                      id={`${baseId}-event-start-date`}
+                      type="date"
+                      className={cn(baseField, "h-12")}
+                      value={formValues.event?.startDate ?? ""}
+                      onChange={(e) =>
+                        updateEventForm("startDate", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor={`${baseId}-event-start-time`}
+                      className="text-xs uppercase tracking-wider text-white/50"
+                    >
+                      Start Time
+                    </Label>
+                    <Input
+                      id={`${baseId}-event-start-time`}
+                      type="time"
+                      className={cn(baseField, "h-12")}
+                      value={formValues.event?.startTime ?? ""}
+                      onChange={(e) =>
+                        updateEventForm("startTime", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor={`${baseId}-event-end-date`}
+                      className="text-xs uppercase tracking-wider text-white/50"
+                    >
+                      End Date
+                    </Label>
+                    <Input
+                      id={`${baseId}-event-end-date`}
+                      type="date"
+                      className={cn(baseField, "h-12")}
+                      value={formValues.event?.endDate ?? ""}
+                      onChange={(e) =>
+                        updateEventForm("endDate", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor={`${baseId}-event-end-time`}
+                      className="text-xs uppercase tracking-wider text-white/50"
+                    >
+                      End Time
+                    </Label>
+                    <Input
+                      id={`${baseId}-event-end-time`}
+                      type="time"
+                      className={cn(baseField, "h-12")}
+                      value={formValues.event?.endTime ?? ""}
+                      onChange={(e) =>
+                        updateEventForm("endTime", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
                   <Label
-                    htmlFor={`${baseId}-start-date`}
-                    className="text-xs tracking-wider text-white/50 uppercase"
+                    htmlFor={`${baseId}-event-location`}
+                    className="text-xs uppercase tracking-wider text-white/50"
                   >
-                    Start Date
+                    Location
                   </Label>
                   <Input
-                    id={`${baseId}-start-date`}
-                    type="date"
+                    id={`${baseId}-event-location`}
                     className={cn(baseField, "h-12")}
-                    value={formValues.startDate}
-                    onChange={(event) =>
-                      updateForm("startDate", event.target.value)
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor={`${baseId}-start-time`}
-                    className="text-xs tracking-wider text-white/50 uppercase"
-                  >
-                    Start Time
-                  </Label>
-                  <Input
-                    id={`${baseId}-start-time`}
-                    type="time"
-                    className={cn(
-                      baseField,
-                      "h-12",
-                      formValues.allDay && "opacity-40",
-                    )}
-                    value={formValues.startTime}
-                    disabled={formValues.allDay}
-                    onChange={(event) =>
-                      updateForm("startTime", event.target.value)
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor={`${baseId}-end-date`}
-                    className="text-xs tracking-wider text-white/50 uppercase"
-                  >
-                    End Date
-                  </Label>
-                  <Input
-                    id={`${baseId}-end-date`}
-                    type="date"
-                    className={cn(baseField, "h-12")}
-                    value={formValues.endDate}
-                    onChange={(event) =>
-                      updateForm("endDate", event.target.value)
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor={`${baseId}-end-time`}
-                    className="text-xs tracking-wider text-white/50 uppercase"
-                  >
-                    End Time
-                  </Label>
-                  <Input
-                    id={`${baseId}-end-time`}
-                    type="time"
-                    className={cn(
-                      baseField,
-                      "h-12",
-                      formValues.allDay && "opacity-40",
-                    )}
-                    value={formValues.endTime}
-                    disabled={formValues.allDay}
-                    onChange={(event) =>
-                      updateForm("endTime", event.target.value)
+                    value={formValues.event?.location ?? ""}
+                    onChange={(e) =>
+                      updateEventForm("location", e.target.value)
                     }
                   />
                 </div>
               </div>
-
-              <div className="flex items-start justify-between rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/80">
-                <div>
-                  <p className="text-xs tracking-[0.25em] text-white/40 uppercase">
-                    Mode
-                  </p>
-                  <p className="mt-2 text-base font-semibold text-white">
-                    All day
-                  </p>
-                  <p className="text-xs text-white/55">
-                    Ignores start & end times
-                  </p>
-                </div>
-                <Switch
-                  checked={formValues.allDay}
-                  onCheckedChange={(checked) => updateForm("allDay", checked)}
-                  className="mt-2"
+            ) : (
+              <div className="space-y-2">
+                <Label
+                  htmlFor={`${baseId}-task-due-date`}
+                  className="text-xs uppercase tracking-wider text-white/50"
+                >
+                  Due Date
+                </Label>
+                <Input
+                  id={`${baseId}-task-due-date`}
+                  type="date"
+                  className={cn(baseField, "h-12")}
+                  value={formValues.date.slice(0, 10)}
+                  onChange={(e) => {
+                    // Always set to 11:00 PM
+                    const d = new Date(e.target.value);
+                    d.setHours(23, 0, 0, 0);
+                    updateForm("date", d.toISOString());
+                  }}
                 />
               </div>
-            </div>
+            )}
 
             <div className="space-y-3">
-              <p className="text-xs font-semibold tracking-[0.35em] text-white/40 uppercase">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/40">
                 Sections
               </p>
               <div className="flex flex-wrap gap-3">
@@ -605,7 +722,7 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
 
                     <div className="flex items-start justify-between rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/80">
                       <div>
-                        <p className="text-xs tracking-[0.25em] text-white/40 uppercase">
+                        <p className="text-xs uppercase tracking-[0.25em] text-white/40">
                           Visibility
                         </p>
                         <p className="mt-2 text-base font-semibold text-white">
@@ -630,7 +747,7 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
                   <div className="space-y-4">
                     <div className="flex items-start justify-between rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/80">
                       <div>
-                        <p className="text-xs tracking-[0.25em] text-white/40 uppercase">
+                        <p className="text-xs uppercase tracking-[0.25em] text-white/40">
                           Room Booking
                         </p>
                         <p className="mt-2 text-base font-semibold text-white">
@@ -647,7 +764,7 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
                     </div>
 
                     <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                      <p className="text-xs tracking-[0.25em] text-white/40 uppercase">
+                      <p className="text-xs uppercase tracking-[0.25em] text-white/40">
                         Requirements
                       </p>
                       <div className="mt-4 space-y-4">
@@ -719,7 +836,7 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
                             </div>
                             <div className="flex flex-1 gap-3">
                               <div className="relative flex-1">
-                                <Link2 className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/40" />
+                                <Link2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
                                 <Input
                                   className={cn(baseField, "h-11 pl-9")}
                                   placeholder="URL"
@@ -804,7 +921,7 @@ export function CreateEditDialog(props: CreateEditDialogProps) {
               </Button>
               <Button
                 type="submit"
-                className="w-full sm:w-auto disabled:opacity-40"
+                className="w-full disabled:opacity-40 sm:w-auto"
                 disabled={isSubmitDisabled}
               >
                 {intent === "edit" ? "Update Event" : "Create Event"}
