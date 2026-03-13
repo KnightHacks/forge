@@ -5,4 +5,4 @@ export const ISSUE_STATUS = [
   "FINISHED",
 ] as const;
 
-export const PRIORITY = ["Lowest", "Low", "Medium", "High", "Highest"] as const;
+export const PRIORITY = ["LOWEST", "LOW", "MEDIUM", "HIGH", "HIGHEST"] as const;

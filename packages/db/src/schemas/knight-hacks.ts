@@ -585,6 +585,7 @@ export const Issue = createTable(
     statusIdx: index("issue_status_idx").on(table.status),
     dateIdx: index("issue_date_idx").on(table.date),
     parentIdx: index("issue_parent_idx").on(table.parent),
+    priorityIdx: index("issue_priority_idx").on(table.priority),
   }),
 );
 
