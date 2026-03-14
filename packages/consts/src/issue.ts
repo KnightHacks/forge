@@ -18,13 +18,6 @@ export interface CreateEditDialogProps {
   onDelete?: (values: IssueFormValues) => void;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  BACKLOG: "bg-slate-400",
-  PLANNING: "bg-amber-400",
-  IN_PROGRESS: "bg-emerald-400",
-  FINISHED: "bg-rose-400",
-};
-
 export type DetailSectionKey = "details" | "requirements" | "links";
 
 const SECTION_TABS: { key: DetailSectionKey; label: string }[] = [
@@ -47,6 +40,13 @@ export interface IssueFormValues {
   parent?: string;
   isEvent: boolean;
   event?: EventFormValues;
+  // Added fields for UI requirements
+  details: string;
+  notes: string;
+  isHackathonCritical: boolean;
+  requiresRoom: boolean;
+  requiresAV: boolean;
+  requiresFood: boolean;
 }
 
 export interface EventFormValues {
