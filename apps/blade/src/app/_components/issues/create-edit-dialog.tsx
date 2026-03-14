@@ -6,7 +6,25 @@ import { createPortal } from "react-dom";
 
 import { ISSUE } from "@forge/consts";
 
-// UI-specific constants (should not be in issue.ts)
+const baseField =
+  "w-full rounded-xl border border-white/10 bg-black/30 px-4 text-white placeholder:text-white/40 focus:border-white/30 focus:outline-none";
+
+const tabButtonBase =
+  "rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/70 transition hover:border-white/30 hover:text-white";
+
+const REQUIREMENT_FLAGS = [
+  {
+    key: "requiresAV",
+    label: "AV Equipment",
+    caption: "Projector, microphones, speakers",
+  },
+  {
+    key: "requiresFood",
+    label: "Food",
+    caption: "Snacks, catering, drinks",
+  },
+] as const;
+
 const STATUS_COLORS: Record<string, string> = {
   BACKLOG: "bg-slate-400",
   PLANNING: "bg-amber-400",
@@ -86,6 +104,13 @@ const defaultForm = (): ISSUE.IssueFormValues => {
     parent: undefined,
     isEvent: false,
     event: undefined,
+    //ui
+    details: "",
+    notes: "",
+    isHackathonCritical: false,
+    requiresRoom: false,
+    requiresAV: false,
+    requiresFood: false
   };
 };
 
@@ -179,8 +204,6 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
       window.removeEventListener("keydown", handleKeydown);
     };
   }, [open, onClose]);
-
-  const statusColor = STATUS_COLORS[formValues.status] || "bg-slate-400";
 
   const handleOverlayPointerDown = (
     event: React.MouseEvent<HTMLDivElement>,
@@ -285,45 +308,27 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
         </header>
 
         <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/12 -mr-2 mt-8 min-h-0 flex-1 overflow-y-auto pr-2">
-            <div className="space-y-3">
-              <Label className="text-sm text-white/70">Status</Label>
-              <Select
-                value={formValues.status}
-                onValueChange={(value) => updateForm("status", value as (typeof ISSUE.ISSUE_STATUS)[number])}
-              >
-                <SelectTrigger className={cn(baseField, "h-14 pr-12")} aria-label="Event status">
-                  <div className="flex flex-1 items-center gap-3 text-left">
-                    <span className={cn("size-2.5 rounded-full", statusColor)} />
-                    <span className="text-sm font-semibold text-white">
-                      {getStatusLabel(formValues.status)}
-                    </span>
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="min-w-[22rem] border-white/10 bg-[#0f0f1c] text-white">
-                  {ISSUE.ISSUE_STATUS.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      <div className="flex items-center gap-3">
-                        <span className={cn("size-2.5 rounded-full", STATUS_COLORS[status] || "bg-slate-400")} />
-                        <span className="text-sm font-semibold">{getStatusLabel(status)}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-                  formValues.isEvent
-                    ? (formValues.event?.name ?? "")
-                    : formValues.name
+          <div className="space-y-2">
+            <Label className="text-sm text-white/70">
+              {formValues.isEvent ? "Event Name" : "Task Name"}
+            </Label>
+
+            <Input
+              className={cn(baseField, "h-12")}
+              value={
+                formValues.isEvent
+                  ? formValues.event?.name ?? ""
+                  : formValues.name
+              }
+              onChange={(event) => {
+                if (formValues.isEvent) {
+                  updateEventForm("name", event.target.value);
+                } else {
+                  updateForm("name", event.target.value);
                 }
-                onChange={(event) => {
-                  if (formValues.isEvent) {
-                    updateEventForm("name", event.target.value);
-                  } else {
-                    updateForm("name", event.target.value);
-                  }
-                }}
-              />
-            </div>
+              }}
+            />
+          </div>
 
             <div className="space-y-3">
               <Label className="text-sm text-white/70">Status</Label>
@@ -341,17 +346,13 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                     <span
                       className={cn(
                         "size-2.5 rounded-full",
-                        statusMeta.dotClass,
+                        STATUS_COLORS[formValues.status] || "bg-slate-400",
                       )}
                     />
-                    <div className="flex flex-col leading-tight">
-                      <span className="text-sm font-semibold text-white">
-                        {statusMeta.label}
-                      </span>
-                      <span className="text-xs text-white/50">
-                        {statusMeta.caption}
-                      </span>
-                    </div>
+
+                    <span className="text-sm font-semibold text-white">
+                      {getStatusLabel(formValues.status)}
+                    </span>
                   </div>
                 </SelectTrigger>
                 <SelectContent className="min-w-[22rem] border-white/10 bg-[#0f0f1c] text-white">
@@ -534,7 +535,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                         <Select
                           value={formValues.priority}
                           onValueChange={(value) =>
-                            updateForm("priority", value)
+                            updateForm("priority", value as (typeof ISSUE.PRIORITY)[number])
                           }
                         >
                           <SelectTrigger
@@ -629,7 +630,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                         {REQUIREMENT_FLAGS.map((flag) => (
                           <div
                             key={flag.key}
-                            className="bg-white/5/20 flex items-start justify-between rounded-2xl border border-white/10 p-3"
+                            className="bg-white/5 flex items-start justify-between rounded-2xl border border-white/10 p-3"
                           >
                             <div className="pr-4">
                               <p className="text-base font-medium text-white">
@@ -726,7 +727,6 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
               </div>
             </div>
           </div>
-        </div>
 
         <footer className="mt-6 border-t border-white/10 pt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
