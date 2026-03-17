@@ -184,6 +184,7 @@ export const Event = createTable("event", (t) => ({
   hackathonId: t.uuid().references(() => Hackathon.id, {
     onDelete: "cascade",
   }),
+  discordChannelId: t.varchar({ length: 255 }),
 }));
 
 export type InsertEvent = typeof Event.$inferInsert;

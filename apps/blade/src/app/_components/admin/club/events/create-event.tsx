@@ -98,6 +98,7 @@ export function CreateEventButton() {
     endAmPm: z.enum(["AM", "PM"]),
     roles: z.array(z.string()).default([]),
     isOperationsCalendar: z.boolean().default(false),
+    discordChannelId: z.string().optional(),
   });
 
   const form = useForm({
@@ -119,6 +120,7 @@ export function CreateEventButton() {
       endAmPm: "PM",
       roles: [],
       isOperationsCalendar: false,
+      discordChannelId: "",
     },
   });
 
@@ -224,6 +226,7 @@ export function CreateEventButton() {
                       ?.displayName ?? null,
                   roles: values.roles,
                   isOperationsCalendar: values.isOperationsCalendar,
+                  discordChannelId: values.discordChannelId,
                 });
               })}
               noValidate
@@ -687,6 +690,31 @@ export function CreateEventButton() {
                     </FormItem>
                   )}
                 />
+
+                {/* Discord Channel ID — shown only for internal events */}
+                {form.watch("isOperationsCalendar") && (
+                  <FormField
+                    control={form.control}
+                    name="discordChannelId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <FormLabel className="text-right">
+                            Discord Channel ID
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Paste Discord voice channel ID"
+                              {...field}
+                              className="col-span-3"
+                            />
+                          </FormControl>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 {/* Dues Paying */}
                 <FormField

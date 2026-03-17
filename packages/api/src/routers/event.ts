@@ -34,7 +34,6 @@ import * as discord from "@forge/utils/discord";
 import * as forms from "@forge/utils/forms";
 import * as google from "@forge/utils/google";
 
-import { env } from "../env";
 import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
 
 export const eventRouter = {
@@ -175,10 +174,18 @@ export const eventRouter = {
       }).extend({
         roles: z.array(z.string()).default([]),
         isOperationsCalendar: z.boolean().default(false),
+        discordChannelId: z.string().optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
       permissions.controlPerms.or(["EDIT_CLUB_EVENT", "EDIT_HACK_EVENT"], ctx);
+
+      if (input.isOperationsCalendar && !input.discordChannelId) {
+        throw new TRPCError({
+          message: "Discord Channel ID is required for internal events.",
+          code: "BAD_REQUEST",
+        });
+      }
 
       const startDatetime = new Date(input.start_datetime);
       const endDatetime = new Date(input.end_datetime);
@@ -230,9 +237,7 @@ export const eventRouter = {
 
               entity_type: isInternalEvent ? 2 : DISCORD.EVENT_TYPE,
 
-              channel_id: isInternalEvent
-                ? env.DISCORD_OPS_VOICE_CHANNEL_ID
-                : undefined,
+              channel_id: isInternalEvent ? input.discordChannelId : undefined,
 
               entity_metadata: isInternalEvent
                 ? undefined
@@ -368,6 +373,7 @@ export const eventRouter = {
       }).extend({
         roles: z.array(z.string()).optional(),
         isOperationsCalendar: z.boolean().optional(),
+        discordChannelId: z.string().optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -387,6 +393,16 @@ export const eventRouter = {
       if (!event) {
         throw new TRPCError({
           message: "Event not found.",
+          code: "BAD_REQUEST",
+        });
+      }
+
+      const willBeInternal =
+        input.isOperationsCalendar ?? event.isOperationsCalendar;
+      const channelId = input.discordChannelId ?? event.discordChannelId;
+      if (willBeInternal && !channelId) {
+        throw new TRPCError({
+          message: "Discord Channel ID is required for internal events.",
           code: "BAD_REQUEST",
         });
       }
@@ -454,7 +470,7 @@ export const eventRouter = {
               entity_type: isInternalEvent ? 2 : DISCORD.EVENT_TYPE,
 
               channel_id: isInternalEvent
-                ? env.DISCORD_OPS_VOICE_CHANNEL_ID
+                ? (input.discordChannelId ?? event.discordChannelId)
                 : null,
 
               entity_metadata: isInternalEvent
@@ -631,6 +647,7 @@ export const eventRouter = {
           roles: input.roles ?? event.roles,
           isOperationsCalendar:
             input.isOperationsCalendar ?? event.isOperationsCalendar,
+          discordChannelId: input.discordChannelId ?? event.discordChannelId,
 
           start_datetime: dayBeforeStart,
           end_datetime: dayBeforeEnd,
