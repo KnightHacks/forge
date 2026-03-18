@@ -68,6 +68,9 @@ const UpdateFormSchema = InsertEventSchema.omit({
   endMinute: z.string(),
   endAmPm: z.enum(amPmOptions),
   points: z.number().optional(),
+  roles: z.array(z.string()).default([]),
+  isOperationsCalendar: z.boolean().default(false),
+  discordChannelId: z.string().optional(),
 });
 
 function parseDateTime(value: string | Date) {
@@ -104,7 +107,11 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { data: hackathons } = api.hackathon.getHackathons.useQuery();
+  const hackathonsQuery = api.hackathon.getHackathons.useQuery();
+  const rolesQuery = api.roles.getAllLinks.useQuery();
+
+  const hackathons = hackathonsQuery.data;
+  const rolesData = rolesQuery.data;
 
   // TRPC update mutation
   const utils = api.useUtils();
@@ -158,6 +165,9 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       endMinute: endMinute,
       endAmPm: endAmPm as "AM" | "PM",
       points: event.points ?? EVENTS.EVENT_POINTS[event.tag],
+      roles: event.roles ?? [],
+      isOperationsCalendar: event.isOperationsCalendar ?? false,
+      discordChannelId: event.discordChannelId ?? "",
     },
   });
 
@@ -221,8 +231,6 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
     // Make update call
     updateEvent.mutate({
       id: event.id,
-      discordId: event.discordId,
-      googleId: event.googleId,
       name: values.name,
       dues_paying: values.dues_paying,
       description: values.description,
@@ -236,6 +244,9 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
           return v.id == values.hackathonId;
         })?.displayName ?? null,
       points: values.points,
+      roles: values.roles,
+      isOperationsCalendar: values.isOperationsCalendar,
+      discordChannelId: values.discordChannelId,
     });
   });
 
@@ -249,433 +260,551 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
       </DialogTrigger>
 
       <DialogContent className="max-h-[70vh] overflow-y-auto sm:max-w-[600px] md:max-w-[700px] lg:max-w-[800px]">
-        <Form {...form}>
-          <form onSubmit={onSubmit}>
-            <DialogHeader>
-              <DialogTitle>Update Event</DialogTitle>
-              <DialogDescription>
-                Update the details for the new event. Click update when you're
-                done.
-              </DialogDescription>
-            </DialogHeader>
+        {hackathonsQuery.isLoading || rolesQuery.isLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : hackathonsQuery.isError || rolesQuery.isError ? (
+          <div className="py-8 text-sm text-red-500">
+            Failed to load event form options.
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={onSubmit}>
+              <DialogHeader>
+                <DialogTitle>Update Event</DialogTitle>
+                <DialogDescription>
+                  Update the details for the new event. Click update when you're
+                  done.
+                </DialogDescription>
+              </DialogHeader>
 
-            <div className="grid gap-4 py-4">
-              {/* Name */}
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel htmlFor="name" className="text-right">
-                        Name
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          id="name"
-                          placeholder="Enter event name"
-                          {...field}
-                          className="col-span-3"
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid gap-4 py-4">
+                {/* Name */}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel htmlFor="name" className="text-right">
+                          Name
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            id="name"
+                            placeholder="Enter event name"
+                            {...field}
+                            className="col-span-3"
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="tag"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel htmlFor="tag" className="text-right">
-                        Tag
-                      </FormLabel>
-                      <FormControl>
-                        <Select
-                          // Use defaultValue if the field already has a value
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="col-span-3">
-                              <SelectValue placeholder="Select a tag" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {EVENTS.EVENT_TAGS.map((tagOption) => (
-                              <SelectItem key={tagOption} value={tagOption}>
-                                {tagOption}
+                <FormField
+                  control={form.control}
+                  name="tag"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel htmlFor="tag" className="text-right">
+                          Tag
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            // Use defaultValue if the field already has a value
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Select a tag" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {EVENTS.EVENT_TAGS.map((tagOption) => (
+                                <SelectItem key={tagOption} value={tagOption}>
+                                  {tagOption}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Hackathon (pulls from Hackathon table) */}
+                <FormField
+                  control={form.control}
+                  name="hackathonId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel htmlFor="tag" className="text-right">
+                          Hackathon
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            // Use defaultValue if the field already has a value
+                            onValueChange={field.onChange}
+                            defaultValue={field.value ? field.value : "none"}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Select a tag" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem key="none" value="none">
+                                None
                               </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                              {hackathons?.map((h) => (
+                                <SelectItem key={h.id} value={h.id}>
+                                  {h.displayName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Hackathon (pulls from Hackathon table) */}
-              <FormField
-                control={form.control}
-                name="hackathonId"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel htmlFor="tag" className="text-right">
-                        Hackathon
-                      </FormLabel>
-                      <FormControl>
-                        <Select
-                          // Use defaultValue if the field already has a value
-                          onValueChange={field.onChange}
-                          defaultValue={field.value ? field.value : "none"}
-                        >
+                {/* Start Date */}
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel className="text-right">Date</FormLabel>
+                        <FormControl className="col-span-3">
+                          <Input type="date" {...field} />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Start Time (Hour, Minute, AM/PM) */}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Start</Label>
+                  <div className="col-span-3 flex items-center space-x-2">
+                    {/* Hour */}
+                    <FormField
+                      control={form.control}
+                      name="startHour"
+                      render={({ field }) => (
+                        <FormItem className="mb-0">
                           <FormControl>
-                            <SelectTrigger className="col-span-3">
-                              <SelectValue placeholder="Select a tag" />
-                            </SelectTrigger>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-[80px]">
+                                  <SelectValue placeholder="HH" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {hours.map((h) => (
+                                  <SelectItem key={h} value={h}>
+                                    {h}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem key="none" value="none">
-                              None
-                            </SelectItem>
-                            {hackathons?.map((h) => (
-                              <SelectItem key={h.id} value={h.id}>
-                                {h.displayName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <span>:</span>
 
-              {/* Start Date */}
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">Date</FormLabel>
-                      <FormControl className="col-span-3">
-                        <Input type="date" {...field} />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    {/* Minute */}
+                    <FormField
+                      control={form.control}
+                      name="startMinute"
+                      render={({ field }) => (
+                        <FormItem className="mb-0">
+                          <FormControl>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-[80px]">
+                                  <SelectValue placeholder="MM" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {minutes.map((m) => (
+                                  <SelectItem key={m} value={m}>
+                                    {m}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-              {/* Start Time (Hour, Minute, AM/PM) */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">Start</Label>
-                <div className="col-span-3 flex items-center space-x-2">
-                  {/* Hour */}
-                  <FormField
-                    control={form.control}
-                    name="startHour"
-                    render={({ field }) => (
-                      <FormItem className="mb-0">
-                        <FormControl>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="w-[80px]">
-                                <SelectValue placeholder="HH" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {hours.map((h) => (
-                                <SelectItem key={h} value={h}>
-                                  {h}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <span>:</span>
-
-                  {/* Minute */}
-                  <FormField
-                    control={form.control}
-                    name="startMinute"
-                    render={({ field }) => (
-                      <FormItem className="mb-0">
-                        <FormControl>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="w-[80px]">
-                                <SelectValue placeholder="MM" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {minutes.map((m) => (
-                                <SelectItem key={m} value={m}>
-                                  {m}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* AM/PM */}
-                  <FormField
-                    control={form.control}
-                    name="startAmPm"
-                    render={({ field }) => (
-                      <FormItem className="mb-0">
-                        <FormControl>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="w-[80px]">
-                                <SelectValue placeholder="AM/PM" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {amPmOptions.map((option) => (
-                                <SelectItem key={option} value={option}>
-                                  {option}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    {/* AM/PM */}
+                    <FormField
+                      control={form.control}
+                      name="startAmPm"
+                      render={({ field }) => (
+                        <FormItem className="mb-0">
+                          <FormControl>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-[80px]">
+                                  <SelectValue placeholder="AM/PM" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {amPmOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* End Date — NEW */}
-              <FormField
-                control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">End Date</FormLabel>
-                      <FormControl className="col-span-3">
-                        <Input type="date" {...field} />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* End Time (Hour, Minute, AM/PM) */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">End</Label>
-                <div className="col-span-3 flex items-center space-x-2">
-                  {/* Hour */}
-                  <FormField
-                    control={form.control}
-                    name="endHour"
-                    render={({ field }) => (
-                      <FormItem className="mb-0">
-                        <FormControl>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="w-[80px]">
-                                <SelectValue placeholder="HH" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {hours.map((h) => (
-                                <SelectItem key={h} value={h}>
-                                  {h}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                {/* End Date — NEW */}
+                <FormField
+                  control={form.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel className="text-right">End Date</FormLabel>
+                        <FormControl className="col-span-3">
+                          <Input type="date" {...field} />
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <span>:</span>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  {/* Minute */}
-                  <FormField
-                    control={form.control}
-                    name="endMinute"
-                    render={({ field }) => (
-                      <FormItem className="mb-0">
-                        <FormControl>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="w-[80px]">
-                                <SelectValue placeholder="MM" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {minutes.map((m) => (
-                                <SelectItem key={m} value={m}>
-                                  {m}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                {/* End Time (Hour, Minute, AM/PM) */}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">End</Label>
+                  <div className="col-span-3 flex items-center space-x-2">
+                    {/* Hour */}
+                    <FormField
+                      control={form.control}
+                      name="endHour"
+                      render={({ field }) => (
+                        <FormItem className="mb-0">
+                          <FormControl>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-[80px]">
+                                  <SelectValue placeholder="HH" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {hours.map((h) => (
+                                  <SelectItem key={h} value={h}>
+                                    {h}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <span>:</span>
 
-                  {/* AM/PM */}
-                  <FormField
-                    control={form.control}
-                    name="endAmPm"
-                    render={({ field }) => (
-                      <FormItem className="mb-0">
-                        <FormControl>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="w-[80px]">
-                                <SelectValue placeholder="AM/PM" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {amPmOptions.map((option) => (
-                                <SelectItem key={option} value={option}>
-                                  {option}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    {/* Minute */}
+                    <FormField
+                      control={form.control}
+                      name="endMinute"
+                      render={({ field }) => (
+                        <FormItem className="mb-0">
+                          <FormControl>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-[80px]">
+                                  <SelectValue placeholder="MM" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {minutes.map((m) => (
+                                  <SelectItem key={m} value={m}>
+                                    {m}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* AM/PM */}
+                    <FormField
+                      control={form.control}
+                      name="endAmPm"
+                      render={({ field }) => (
+                        <FormItem className="mb-0">
+                          <FormControl>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-[80px]">
+                                  <SelectValue placeholder="AM/PM" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {amPmOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
+
+                {/* Location */}
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel htmlFor="location" className="text-right">
+                          Location
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            id="location"
+                            placeholder="Enter location"
+                            {...field}
+                            className="col-span-3"
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Description */}
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel htmlFor="description" className="text-right">
+                          Description
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            id="description"
+                            placeholder="Enter description..."
+                            rows={4}
+                            {...field}
+                            className="col-span-3"
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Visible To Roles */}
+                <FormField
+                  control={form.control}
+                  name="roles"
+                  render={() => (
+                    <FormItem>
+                      <div className="grid grid-cols-4 items-start gap-4">
+                        <FormLabel className="mt-1 text-right">
+                          Visible To Roles
+                        </FormLabel>
+                        <div className="col-span-3 mt-1 grid grid-cols-2 gap-x-2 gap-y-3">
+                          {rolesData?.map((role) => (
+                            <FormField
+                              key={role.id}
+                              control={form.control}
+                              name="roles"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={role.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(role.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([
+                                                ...(field.value || []),
+                                                role.id,
+                                              ])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value: string) =>
+                                                    value !== role.id,
+                                                ),
+                                              );
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="cursor-pointer font-normal">
+                                      {role.name}
+                                    </FormLabel>
+                                  </FormItem>
+                                );
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Internal Event Checkbox */}
+                <FormField
+                  control={form.control}
+                  name="isOperationsCalendar"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel className="text-right">
+                          Internal Event?
+                        </FormLabel>
+                        <FormControl className="col-span-3 flex items-center">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                            <span className="text-sm font-normal text-gray-400">
+                              Use Operations Calendar (Hide from public events)
+                            </span>
+                          </div>
+                        </FormControl>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Discord Channel ID — shown only for internal events */}
+                {form.watch("isOperationsCalendar") && (
+                  <FormField
+                    control={form.control}
+                    name="discordChannelId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <FormLabel className="text-right">
+                            Discord Channel ID
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Paste Discord voice channel ID"
+                              {...field}
+                              className="col-span-3"
+                            />
+                          </FormControl>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {/* Dues Paying */}
+                <FormField
+                  control={form.control}
+                  name="dues_paying"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel className="text-right">
+                          Dues Paying?
+                        </FormLabel>
+                        <FormControl className="col-span-3">
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </div>
+                    </FormItem>
+                  )}
+                />
               </div>
 
-              {/* Location */}
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel htmlFor="location" className="text-right">
-                        Location
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          id="location"
-                          placeholder="Enter location"
-                          {...field}
-                          className="col-span-3"
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Description */}
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel htmlFor="description" className="text-right">
-                        Description
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          id="description"
-                          placeholder="Enter description..."
-                          rows={4}
-                          {...field}
-                          className="col-span-3"
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Dues Paying */}
-              <FormField
-                control={form.control}
-                name="dues_paying"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <FormLabel className="text-right">Dues Paying?</FormLabel>
-                      <FormControl className="col-span-3">
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <DialogFooter className="flex flex-row justify-between">
-              <Button
-                variant="outline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsOpen(false);
-                }}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <div className="flex items-center justify-center">
-                {isLoading ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <Button type="submit">Update Event</Button>
-                )}
-              </div>
-            </DialogFooter>
-          </form>
-        </Form>
+              <DialogFooter className="flex flex-row justify-between">
+                <Button
+                  variant="outline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(false);
+                  }}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+                <div className="flex items-center justify-center">
+                  {isLoading ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <Button type="submit">Update Event</Button>
+                  )}
+                </div>
+              </DialogFooter>
+            </form>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   );
