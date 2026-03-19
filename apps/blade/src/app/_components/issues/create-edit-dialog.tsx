@@ -1,44 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Trash2, X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { createPortal } from "react-dom";
 
 import { ISSUE } from "@forge/consts";
-
-const baseField = "w-full";
-
-const tabButtonBase =
-  "rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:text-foreground";
-
-const REQUIREMENT_FLAGS = [
-  {
-    key: "requiresAV",
-    label: "AV Equipment",
-    caption: "Projector, microphones, speakers",
-  },
-  {
-    key: "requiresFood",
-    label: "Food",
-    caption: "Snacks, catering, drinks",
-  },
-] as const;
-
-const STATUS_COLORS: Record<string, string> = {
-  BACKLOG: "bg-slate-400",
-  PLANNING: "bg-amber-400",
-  IN_PROGRESS: "bg-emerald-400",
-  FINISHED: "bg-rose-400",
-};
-
-const SECTION_TABS: { key: ISSUE.DetailSectionKey; label: string }[] = [
-  { key: "details", label: "Details" },
-  { key: "requirements", label: "Room & Requirements" },
-  { key: "links", label: "Links & Notes" },
-];
-
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
+import { Checkbox } from "@forge/ui/checkbox";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import {
@@ -48,24 +17,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
-import { Switch } from "@forge/ui/switch";
 import { Textarea } from "@forge/ui/textarea";
+
+import { api } from "~/trpc/react";
+
+const baseField = "w-full";
+
+const STATUS_COLORS: Record<string, string> = {
+  BACKLOG: "bg-slate-400",
+  PLANNING: "bg-amber-400",
+  IN_PROGRESS: "bg-emerald-400",
+  FINISHED: "bg-rose-400",
+};
 
 function getStatusLabel(status: string) {
   return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
-const TEAM_OPTIONS = [
-  "Design",
-  "Workshop",
-  "Outreach",
-  "Programs",
-  "Sponsorship",
-  "E-Board",
-];
-
-// Helper to create a new link string
-const createLinkItem = (): string => "";
+type IssueDialogFormValues = ISSUE.IssueFormValues & { roles: string[] };
 
 const defaultEventForm = (): ISSUE.EventFormValues => {
   const now = new Date();
@@ -87,7 +56,7 @@ const defaultEventForm = (): ISSUE.EventFormValues => {
   };
 };
 
-const defaultForm = (): ISSUE.IssueFormValues => {
+const defaultForm = (): IssueDialogFormValues => {
   const now = new Date();
   // Default due date for tasks is today at 11:00 PM
   const dueDate = new Date(now);
@@ -109,7 +78,8 @@ const defaultForm = (): ISSUE.IssueFormValues => {
     isHackathonCritical: false,
     requiresRoom: false,
     requiresAV: false,
-    requiresFood: false
+    requiresFood: false,
+    roles: [],
   };
 };
 
@@ -122,11 +92,11 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
     onDelete,
     onSubmit,
   } = props;
+  const rolesQuery = api.roles.getAllLinks.useQuery();
+  const rolesData = rolesQuery.data;
   const [portalElement, setPortalElement] = React.useState<Element | null>(
     null,
   );
-  const [activeSection, setActiveSection] =
-    React.useState<ISSUE.DetailSectionKey>("details");
   const buildInitialFormValues = React.useCallback(() => {
     const defaults = defaultForm();
     if (initialValues?.isEvent) {
@@ -136,6 +106,8 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
         isEvent: true,
         event: initialValues.event ?? defaultEventForm(),
         links: initialValues?.links ?? defaults.links,
+        roles: (initialValues as Partial<IssueDialogFormValues>)?.roles ??
+          defaults.roles,
       };
     }
     return {
@@ -144,9 +116,11 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
       isEvent: false,
       event: undefined,
       links: initialValues?.links ?? defaults.links,
+      roles: (initialValues as Partial<IssueDialogFormValues>)?.roles ??
+        defaults.roles,
     };
   }, [initialValues]);
-  const [formValues, setFormValues] = React.useState<ISSUE.IssueFormValues>(
+  const [formValues, setFormValues] = React.useState<IssueDialogFormValues>(
     buildInitialFormValues,
   );
   const baseId = React.useId();
@@ -178,7 +152,6 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
     }
 
     setFormValues(buildInitialFormValues());
-    setActiveSection("details");
   }, [buildInitialFormValues, open]);
 
   React.useEffect(() => {
@@ -219,27 +192,6 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
     setFormValues((previous) => ({
       ...previous,
       [key]: value,
-    }));
-  };
-
-  const handleAddLink = () => {
-    setFormValues((previous) => ({
-      ...previous,
-      links: [...previous.links, createLinkItem()],
-    }));
-  };
-
-  const handleRemoveLink = (index: number) => {
-    setFormValues((previous) => ({
-      ...previous,
-      links: previous.links.filter((_, i) => i !== index),
-    }));
-  };
-
-  const handleLinkUpdate = (index: number, value: string) => {
-    setFormValues((previous) => ({
-      ...previous,
-      links: previous.links.map((link, i) => (i === index ? value : link)),
     }));
   };
 
@@ -290,33 +242,27 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
               ? formValues.isEvent
                 ? "Edit Event"
                 : "Edit Task"
-              : formValues.isEvent
-                ? "Create Event"
-                : "Create Task"}
+              : "Create Issue"}
           </p>
           <h2 className="mt-1 text-lg font-semibold">
             {intent === "edit"
               ? formValues.isEvent
                 ? "Update the event details below"
                 : "Update the task details below"
-              : formValues.isEvent
-                ? "Enter the event details below"
-                : "Enter the task details below"}
+              : "Enter the issue details below"}
           </h2>
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="space-y-6 px-6 py-6">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">
-              {formValues.isEvent ? "Event Name" : "Task Name"}
-              </Label>
+              <Label className="text-right">{"Name"}</Label>
 
               <Input
                 className={cn(baseField, "col-span-3")}
                 value={
                   formValues.isEvent
-                    ? formValues.event?.name ?? ""
+                    ? (formValues.event?.name ?? "")
                     : formValues.name
                 }
                 onChange={(event) => {
@@ -330,16 +276,32 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Is Event?</Label>
+              <div className="col-span-3 flex items-center space-x-2">
+                <Checkbox
+                  checked={formValues.isEvent}
+                  onCheckedChange={() => undefined}
+                />
+                <span className="text-sm text-muted-foreground">
+                  Placeholder toggle (no behavior yet)
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right">Status</Label>
               <Select
                 value={formValues.status}
                 onValueChange={(value) =>
-                  updateForm("status", value as (typeof ISSUE.ISSUE_STATUS)[number])
+                  updateForm(
+                    "status",
+                    value as (typeof ISSUE.ISSUE_STATUS)[number],
+                  )
                 }
               >
                 <SelectTrigger
                   className={cn(baseField, "col-span-3")}
-                  aria-label="Event status"
+                  aria-label="Issue status"
                 >
                   <div className="flex flex-1 items-center gap-2 text-left">
                     <span
@@ -358,8 +320,15 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                   {ISSUE.ISSUE_STATUS.map((status) => (
                     <SelectItem key={status} value={status}>
                       <div className="flex items-center gap-2">
-                        <span className={cn("size-2 rounded-full", STATUS_COLORS[status] || "bg-slate-400")} />
-                        <span className="text-sm">{getStatusLabel(status)}</span>
+                        <span
+                          className={cn(
+                            "size-2 rounded-full",
+                            STATUS_COLORS[status] || "bg-slate-400",
+                          )}
+                        />
+                        <span className="text-sm">
+                          {getStatusLabel(status)}
+                        </span>
                       </div>
                     </SelectItem>
                   ))}
@@ -480,249 +449,79 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
               </div>
             )}
 
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-muted-foreground">
-                Sections
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {SECTION_TABS.map((section) => (
-                  <button
-                    key={section.key}
-                    type="button"
-                    className={cn(
-                      tabButtonBase,
-                      activeSection === section.key
-                        ? "border-primary bg-primary/10 text-foreground"
-                        : "",
-                    )}
-                    onClick={() => setActiveSection(section.key)}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Priority</Label>
+              <Select
+                value={formValues.priority}
+                onValueChange={(value) =>
+                  updateForm(
+                    "priority",
+                    value as (typeof ISSUE.PRIORITY)[number],
+                  )
+                }
+              >
+                <SelectTrigger
+                  className={cn(baseField, "col-span-3")}
+                  aria-label="Priority"
+                >
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ISSUE.PRIORITY.map((priority) => (
+                    <SelectItem key={priority} value={priority.toLowerCase()}>
+                      {priority}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor={`${baseId}-details`} className="pt-2 text-right">
+                Description
+              </Label>
+              <Textarea
+                id={`${baseId}-details`}
+                className={cn(
+                  baseField,
+                  "col-span-3 min-h-[140px] resize-none",
+                )}
+                placeholder="Description..."
+                value={formValues.details}
+                onChange={(event) => updateForm("details", event.target.value)}
+              />
+            </div>
+
+            {/* Visible To Roles */}
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="mt-1 text-right">Visible To Roles</Label>
+              <div className="col-span-3 mt-1 grid grid-cols-2 gap-x-2 gap-y-3">
+                {rolesData?.map((role) => (
+                  <div
+                    key={role.id}
+                    className="flex flex-row items-start space-x-3 space-y-0"
                   >
-                    {section.label}
-                  </button>
+                    <Checkbox
+                      checked={formValues.roles?.includes(role.id)}
+                      onCheckedChange={(checked) => {
+                        return checked
+                          ? updateForm("roles", [
+                              ...(formValues.roles || []),
+                              role.id,
+                            ])
+                          : updateForm(
+                              "roles",
+                              formValues.roles?.filter(
+                                (value: string) => value !== role.id,
+                              ) || [],
+                            );
+                      }}
+                    />
+                    <Label className="cursor-pointer font-normal">
+                      {role.name}
+                    </Label>
+                  </div>
                 ))}
-              </div>
-
-              <div className="rounded-md border p-4">
-                {activeSection === "details" && (
-                  <div className="space-y-4">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label className="text-sm">Team</Label>
-                        <Select
-                          value={formValues.team}
-                          onValueChange={(value) => updateForm("team", value)}
-                        >
-                          <SelectTrigger
-                            className={baseField}
-                            aria-label="Team"
-                          >
-                            <SelectValue placeholder="Select team" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {TEAM_OPTIONS.map((team) => (
-                              <SelectItem key={team} value={team.toLowerCase()}>
-                                {team}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-sm">
-                          Priority
-                        </Label>
-                        <Select
-                          value={formValues.priority}
-                          onValueChange={(value) =>
-                            updateForm("priority", value as (typeof ISSUE.PRIORITY)[number])
-                          }
-                        >
-                          <SelectTrigger
-                            className={baseField}
-                            aria-label="Priority"
-                          >
-                            <SelectValue placeholder="Select priority" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ISSUE.PRIORITY.map((priority) => (
-                              <SelectItem
-                                key={priority}
-                                value={priority.toLowerCase()}
-                              >
-                                {priority}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor={`${baseId}-details`}
-                        className="text-sm"
-                      >
-                        Description
-                      </Label>
-                      <Textarea
-                        id={`${baseId}-details`}
-                        className={cn(
-                          baseField,
-                          "min-h-[140px] resize-none",
-                        )}
-                        placeholder="Approve design system updates, outline agenda, attach quick summary."
-                        value={formValues.details}
-                        onChange={(event) =>
-                          updateForm("details", event.target.value)
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-start justify-between rounded-md border p-4 text-sm">
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Visibility
-                        </p>
-                        <p className="mt-1 text-base font-medium">
-                          Hackathon critical
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          High visibility during hackathon mode
-                        </p>
-                      </div>
-                      <Switch
-                        checked={formValues.isHackathonCritical}
-                        onCheckedChange={(checked) =>
-                          updateForm("isHackathonCritical", checked)
-                        }
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {activeSection === "requirements" && (
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between rounded-md border p-4 text-sm">
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Room Booking
-                        </p>
-                        <p className="mt-1 text-base font-medium">
-                          Room needed for this event
-                        </p>
-                      </div>
-                      <Switch
-                        checked={formValues.requiresRoom}
-                        onCheckedChange={(checked) =>
-                          updateForm("requiresRoom", checked)
-                        }
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div className="rounded-md border p-4">
-                      <p className="text-xs text-muted-foreground">
-                        Requirements
-                      </p>
-                      <div className="mt-4 space-y-4">
-                        {REQUIREMENT_FLAGS.map((flag) => (
-                          <div
-                            key={flag.key}
-                            className="flex items-start justify-between rounded-md border p-3"
-                          >
-                            <div className="pr-4">
-                              <p className="text-base font-medium">
-                                {flag.label}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {flag.caption}
-                              </p>
-                            </div>
-                            <Switch
-                              checked={formValues[flag.key]}
-                              onCheckedChange={(checked) =>
-                                updateForm(flag.key, checked)
-                              }
-                              className="mt-1"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeSection === "links" && (
-                  <div className="space-y-5">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <Label className="text-sm">Links</Label>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="h-9 border"
-                        onClick={handleAddLink}
-                      >
-                        <Plus className="mr-2 h-4 w-4" /> Add Link
-                      </Button>
-                    </div>
-                    {formValues.links.length === 0 ? (
-                      <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                        No links added. Click "Add Link" to include Notion docs,
-                        Figma files, or sign-up forms.
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {formValues.links.map((link, i) => (
-                          <div
-                            key={i}
-                            className="flex flex-col gap-3 rounded-md border p-4 sm:flex-row"
-                          >
-                            <div className="flex-1 space-y-2">
-                              <Input
-                                className={baseField}
-                                placeholder="Paste link (e.g., https://...)"
-                                value={link}
-                                onChange={(event) =>
-                                  handleLinkUpdate(i, event.target.value)
-                                }
-                              />
-                            </div>
-                            <Button
-                              variant="ghost"
-                              type="button"
-                              className="h-10 w-10 border"
-                              onClick={() => handleRemoveLink(i)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="space-y-3">
-                      <Label
-                        htmlFor={`${baseId}-notes`}
-                        className="text-sm"
-                      >
-                        Additional notes
-                      </Label>
-                      <Textarea
-                        id={`${baseId}-notes`}
-                        className={cn(
-                          baseField,
-                          "min-h-[140px] resize-none",
-                        )}
-                        placeholder="Any other context teammates should know before kicking off."
-                        value={formValues.notes}
-                        onChange={(event) =>
-                          updateForm("notes", event.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -760,7 +559,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 className="w-full disabled:opacity-40 sm:w-auto"
                 disabled={isSubmitDisabled}
               >
-                {intent === "edit" ? "Update Event" : "Create Event"}
+                {intent === "edit" ? "Update Event" : "Create Issue"}
               </Button>
             </div>
           </div>
