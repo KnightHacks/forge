@@ -1,16 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Link2, Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import { createPortal } from "react-dom";
 
 import { ISSUE } from "@forge/consts";
 
-const baseField =
-  "w-full rounded-xl border border-white/10 bg-black/30 px-4 text-white placeholder:text-white/40 focus:border-white/30 focus:outline-none";
+const baseField = "w-full";
 
 const tabButtonBase =
-  "rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/70 transition hover:border-white/30 hover:text-white";
+  "rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:text-foreground";
 
 const REQUIREMENT_FLAGS = [
   {
@@ -268,26 +267,25 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
     <div
       aria-modal
       role="dialog"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-10 backdrop-blur-2xl"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-10"
       onMouseDown={handleOverlayPointerDown}
     >
       <form
-        className="animate-in fade-in-0 zoom-in-95 relative flex max-h-[90vh] w-full max-w-[680px] flex-col rounded-[28px] border border-white/10 bg-[rgba(8,8,20,0.95)] p-8 font-sans text-foreground shadow-[0_25px_120px_rgba(0,0,0,0.45)]"
+        className="relative flex max-h-[70vh] w-full max-w-[800px] flex-col overflow-hidden rounded-lg border bg-background shadow-lg"
         onSubmit={handleSubmit}
         onMouseDown={(event) => event.stopPropagation()}
-        style={{ maxHeight: "90vh" }}
       >
         <button
           type="button"
-          className="absolute right-6 top-6 inline-flex size-9 items-center justify-center rounded-full border border-white/10 text-white/70 transition hover:border-white/40 hover:text-white"
+          className="absolute right-4 top-4 inline-flex size-8 items-center justify-center rounded-md border border-input text-muted-foreground transition hover:text-foreground"
           onClick={onClose}
           aria-label="Close dialog"
         >
           <X className="h-4 w-4" />
         </button>
 
-        <header className="space-y-2 pr-12">
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-white/40">
+        <header className="border-b px-6 py-4 pr-12">
+          <p className="text-xs font-medium text-muted-foreground">
             {intent === "edit"
               ? formValues.isEvent
                 ? "Edit Event"
@@ -296,7 +294,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 ? "Create Event"
                 : "Create Task"}
           </p>
-          <h2 className="text-2xl font-semibold text-white">
+          <h2 className="mt-1 text-lg font-semibold">
             {intent === "edit"
               ? formValues.isEvent
                 ? "Update the event details below"
@@ -307,31 +305,32 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
           </h2>
         </header>
 
-        <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/12 -mr-2 mt-8 min-h-0 flex-1 overflow-y-auto pr-2">
-          <div className="space-y-2">
-            <Label className="text-sm text-white/70">
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="space-y-6 px-6 py-6">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">
               {formValues.isEvent ? "Event Name" : "Task Name"}
-            </Label>
+              </Label>
 
-            <Input
-              className={cn(baseField, "h-12")}
-              value={
-                formValues.isEvent
-                  ? formValues.event?.name ?? ""
-                  : formValues.name
-              }
-              onChange={(event) => {
-                if (formValues.isEvent) {
-                  updateEventForm("name", event.target.value);
-                } else {
-                  updateForm("name", event.target.value);
+              <Input
+                className={cn(baseField, "col-span-3")}
+                value={
+                  formValues.isEvent
+                    ? formValues.event?.name ?? ""
+                    : formValues.name
                 }
-              }}
-            />
-          </div>
+                onChange={(event) => {
+                  if (formValues.isEvent) {
+                    updateEventForm("name", event.target.value);
+                  } else {
+                    updateForm("name", event.target.value);
+                  }
+                }}
+              />
+            </div>
 
-            <div className="space-y-3">
-              <Label className="text-sm text-white/70">Status</Label>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Status</Label>
               <Select
                 value={formValues.status}
                 onValueChange={(value) =>
@@ -339,28 +338,28 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 }
               >
                 <SelectTrigger
-                  className={cn(baseField, "h-14 pr-12")}
+                  className={cn(baseField, "col-span-3")}
                   aria-label="Event status"
                 >
-                  <div className="flex flex-1 items-center gap-3 text-left">
+                  <div className="flex flex-1 items-center gap-2 text-left">
                     <span
                       className={cn(
-                        "size-2.5 rounded-full",
+                        "size-2 rounded-full",
                         STATUS_COLORS[formValues.status] || "bg-slate-400",
                       )}
                     />
 
-                    <span className="text-sm font-semibold text-white">
+                    <span className="text-sm font-medium">
                       {getStatusLabel(formValues.status)}
                     </span>
                   </div>
                 </SelectTrigger>
-                <SelectContent className="min-w-[22rem] border-white/10 bg-[#0f0f1c] text-white">
+                <SelectContent>
                   {ISSUE.ISSUE_STATUS.map((status) => (
                     <SelectItem key={status} value={status}>
-                      <div className="flex items-center gap-3">
-                        <span className={cn("size-2.5 rounded-full", STATUS_COLORS[status] || "bg-slate-400")} />
-                        <span className="text-sm font-semibold">{getStatusLabel(status)}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={cn("size-2 rounded-full", STATUS_COLORS[status] || "bg-slate-400")} />
+                        <span className="text-sm">{getStatusLabel(status)}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -370,19 +369,19 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
 
             {/* Date/Time fields */}
             {formValues.isEvent ? (
-              <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+              <div className="grid gap-4 rounded-md border p-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label
                       htmlFor={`${baseId}-event-start-date`}
-                      className="text-xs uppercase tracking-wider text-white/50"
+                      className="text-sm"
                     >
                       Start Date
                     </Label>
                     <Input
                       id={`${baseId}-event-start-date`}
                       type="date"
-                      className={cn(baseField, "h-12")}
+                      className={baseField}
                       value={formValues.event?.startDate ?? ""}
                       onChange={(e) =>
                         updateEventForm("startDate", e.target.value)
@@ -392,14 +391,14 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                   <div className="space-y-2">
                     <Label
                       htmlFor={`${baseId}-event-start-time`}
-                      className="text-xs uppercase tracking-wider text-white/50"
+                      className="text-sm"
                     >
                       Start Time
                     </Label>
                     <Input
                       id={`${baseId}-event-start-time`}
                       type="time"
-                      className={cn(baseField, "h-12")}
+                      className={baseField}
                       value={formValues.event?.startTime ?? ""}
                       onChange={(e) =>
                         updateEventForm("startTime", e.target.value)
@@ -409,14 +408,14 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                   <div className="space-y-2">
                     <Label
                       htmlFor={`${baseId}-event-end-date`}
-                      className="text-xs uppercase tracking-wider text-white/50"
+                      className="text-sm"
                     >
                       End Date
                     </Label>
                     <Input
                       id={`${baseId}-event-end-date`}
                       type="date"
-                      className={cn(baseField, "h-12")}
+                      className={baseField}
                       value={formValues.event?.endDate ?? ""}
                       onChange={(e) =>
                         updateEventForm("endDate", e.target.value)
@@ -426,14 +425,14 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                   <div className="space-y-2">
                     <Label
                       htmlFor={`${baseId}-event-end-time`}
-                      className="text-xs uppercase tracking-wider text-white/50"
+                      className="text-sm"
                     >
                       End Time
                     </Label>
                     <Input
                       id={`${baseId}-event-end-time`}
                       type="time"
-                      className={cn(baseField, "h-12")}
+                      className={baseField}
                       value={formValues.event?.endTime ?? ""}
                       onChange={(e) =>
                         updateEventForm("endTime", e.target.value)
@@ -444,13 +443,13 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 <div className="flex flex-col gap-2">
                   <Label
                     htmlFor={`${baseId}-event-location`}
-                    className="text-xs uppercase tracking-wider text-white/50"
+                    className="text-sm"
                   >
                     Location
                   </Label>
                   <Input
                     id={`${baseId}-event-location`}
-                    className={cn(baseField, "h-12")}
+                    className={baseField}
                     value={formValues.event?.location ?? ""}
                     onChange={(e) =>
                       updateEventForm("location", e.target.value)
@@ -459,17 +458,17 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="grid grid-cols-4 items-center gap-4">
                 <Label
                   htmlFor={`${baseId}-task-due-date`}
-                  className="text-xs uppercase tracking-wider text-white/50"
+                  className="text-right"
                 >
                   Due Date
                 </Label>
                 <Input
                   id={`${baseId}-task-due-date`}
                   type="date"
-                  className={cn(baseField, "h-12")}
+                  className={cn(baseField, "col-span-3")}
                   value={formValues.date.slice(0, 10)}
                   onChange={(e) => {
                     // Always set to 11:00 PM
@@ -482,7 +481,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
             )}
 
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/40">
+              <p className="text-sm font-medium text-muted-foreground">
                 Sections
               </p>
               <div className="flex flex-wrap gap-3">
@@ -493,8 +492,8 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                     className={cn(
                       tabButtonBase,
                       activeSection === section.key
-                        ? "border-primary/60 bg-primary/10 text-white"
-                        : "backdrop-blur-sm",
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "",
                     )}
                     onClick={() => setActiveSection(section.key)}
                   >
@@ -503,18 +502,18 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 ))}
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+              <div className="rounded-md border p-4">
                 {activeSection === "details" && (
                   <div className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label className="text-sm text-white/70">Team</Label>
+                        <Label className="text-sm">Team</Label>
                         <Select
                           value={formValues.team}
                           onValueChange={(value) => updateForm("team", value)}
                         >
                           <SelectTrigger
-                            className={cn(baseField, "h-11")}
+                            className={baseField}
                             aria-label="Team"
                           >
                             <SelectValue placeholder="Select team" />
@@ -529,7 +528,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-sm text-white/70">
+                        <Label className="text-sm">
                           Priority
                         </Label>
                         <Select
@@ -539,7 +538,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                           }
                         >
                           <SelectTrigger
-                            className={cn(baseField, "h-11")}
+                            className={baseField}
                             aria-label="Priority"
                           >
                             <SelectValue placeholder="Select priority" />
@@ -561,7 +560,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                     <div className="space-y-2">
                       <Label
                         htmlFor={`${baseId}-details`}
-                        className="text-sm text-white/70"
+                        className="text-sm"
                       >
                         Description
                       </Label>
@@ -569,7 +568,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                         id={`${baseId}-details`}
                         className={cn(
                           baseField,
-                          "min-h-[140px] resize-none text-base leading-relaxed",
+                          "min-h-[140px] resize-none",
                         )}
                         placeholder="Approve design system updates, outline agenda, attach quick summary."
                         value={formValues.details}
@@ -579,15 +578,15 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                       />
                     </div>
 
-                    <div className="flex items-start justify-between rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/80">
+                    <div className="flex items-start justify-between rounded-md border p-4 text-sm">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.25em] text-white/40">
+                        <p className="text-xs text-muted-foreground">
                           Visibility
                         </p>
-                        <p className="mt-2 text-base font-semibold text-white">
+                        <p className="mt-1 text-base font-medium">
                           Hackathon critical
                         </p>
-                        <p className="text-xs text-white/55">
+                        <p className="text-xs text-muted-foreground">
                           High visibility during hackathon mode
                         </p>
                       </div>
@@ -604,12 +603,12 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
 
                 {activeSection === "requirements" && (
                   <div className="space-y-4">
-                    <div className="flex items-start justify-between rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/80">
+                    <div className="flex items-start justify-between rounded-md border p-4 text-sm">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.25em] text-white/40">
+                        <p className="text-xs text-muted-foreground">
                           Room Booking
                         </p>
-                        <p className="mt-2 text-base font-semibold text-white">
+                        <p className="mt-1 text-base font-medium">
                           Room needed for this event
                         </p>
                       </div>
@@ -622,21 +621,21 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                       />
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                      <p className="text-xs uppercase tracking-[0.25em] text-white/40">
+                    <div className="rounded-md border p-4">
+                      <p className="text-xs text-muted-foreground">
                         Requirements
                       </p>
                       <div className="mt-4 space-y-4">
                         {REQUIREMENT_FLAGS.map((flag) => (
                           <div
                             key={flag.key}
-                            className="bg-white/5 flex items-start justify-between rounded-2xl border border-white/10 p-3"
+                            className="flex items-start justify-between rounded-md border p-3"
                           >
                             <div className="pr-4">
-                              <p className="text-base font-medium text-white">
+                              <p className="text-base font-medium">
                                 {flag.label}
                               </p>
-                              <p className="text-xs text-white/55">
+                              <p className="text-xs text-muted-foreground">
                                 {flag.caption}
                               </p>
                             </div>
@@ -657,18 +656,18 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 {activeSection === "links" && (
                   <div className="space-y-5">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <Label className="text-sm text-white/70">Links</Label>
+                      <Label className="text-sm">Links</Label>
                       <Button
                         type="button"
                         variant="ghost"
-                        className="h-9 rounded-full border border-white/15 bg-transparent px-4 text-xs font-semibold text-white/80 hover:border-white/30 hover:bg-white/5"
+                        className="h-9 border"
                         onClick={handleAddLink}
                       >
                         <Plus className="mr-2 h-4 w-4" /> Add Link
                       </Button>
                     </div>
                     {formValues.links.length === 0 ? (
-                      <p className="rounded-2xl border border-dashed border-white/15 bg-black/20 p-4 text-sm text-white/60">
+                      <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
                         No links added. Click "Add Link" to include Notion docs,
                         Figma files, or sign-up forms.
                       </p>
@@ -677,11 +676,11 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                         {formValues.links.map((link, i) => (
                           <div
                             key={i}
-                            className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 sm:flex-row"
+                            className="flex flex-col gap-3 rounded-md border p-4 sm:flex-row"
                           >
                             <div className="flex-1 space-y-2">
                               <Input
-                                className={cn(baseField, "h-11")}
+                                className={baseField}
                                 placeholder="Paste link (e.g., https://...)"
                                 value={link}
                                 onChange={(event) =>
@@ -692,7 +691,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                             <Button
                               variant="ghost"
                               type="button"
-                              className="h-11 w-11 rounded-2xl border border-white/10 bg-transparent text-white/70 hover:border-white/30 hover:text-white"
+                              className="h-10 w-10 border"
                               onClick={() => handleRemoveLink(i)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -705,7 +704,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                     <div className="space-y-3">
                       <Label
                         htmlFor={`${baseId}-notes`}
-                        className="text-sm text-white/70"
+                        className="text-sm"
                       >
                         Additional notes
                       </Label>
@@ -713,7 +712,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                         id={`${baseId}-notes`}
                         className={cn(
                           baseField,
-                          "min-h-[140px] resize-none leading-relaxed",
+                          "min-h-[140px] resize-none",
                         )}
                         placeholder="Any other context teammates should know before kicking off."
                         value={formValues.notes}
@@ -727,8 +726,9 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
               </div>
             </div>
           </div>
+        </div>
 
-        <footer className="mt-6 border-t border-white/10 pt-6">
+        <footer className="border-t px-6 py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {intent === "edit" && (
               <Button
@@ -750,7 +750,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
               <Button
                 type="button"
                 variant="ghost"
-                className="w-full border border-white/10 bg-transparent text-white/80 hover:border-white/30 hover:bg-white/5 sm:w-auto"
+                className="w-full border sm:w-auto"
                 onClick={onClose}
               >
                 Cancel
