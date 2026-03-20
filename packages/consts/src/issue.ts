@@ -73,7 +73,10 @@ export interface EventFormValues {
   endDate: string;
   endTime: string;
   location: string;
+  roles?: string[];
   dues_paying: boolean;
+  isOperationsCalendar?: boolean;
+  discordChannelId?: string;
   points?: number;
   hackathonId?: string;
 }

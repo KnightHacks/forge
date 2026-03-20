@@ -142,20 +142,21 @@ type CreateEditDialogComponentProps = Omit<
 };
 
 const defaultEventForm = (): ISSUE.EventFormValues => {
-  const start = new Date(Date.now() + 60 * 60 * 1000);
-  const end = new Date(start.getTime() + 60 * 60 * 1000);
   return {
     discordId: "",
     googleId: "",
     name: "",
     tag: EVENTS.EVENT_TAGS[0],
     description: "",
-    startDate: formatDateForInput(start),
-    startTime: formatTimeForInput(start),
-    endDate: formatDateForInput(end),
-    endTime: formatTimeForInput(end),
+    startDate: "",
+    startTime: "",
+    endDate: "",
+    endTime: "",
     location: "",
+    roles: [],
     dues_paying: false,
+    isOperationsCalendar: false,
+    discordChannelId: "",
     points: undefined,
     hackathonId: undefined,
   };
@@ -301,6 +302,10 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const hasEventDescription = !!formValues.eventData?.description.trim();
   const hasEventStartTime = !!startDateTime;
   const hasEventEndTime = !!endDateTime;
+  const isInternalEvent = formValues.eventData?.isOperationsCalendar ?? false;
+  const hasDiscordChannelId =
+    !isInternalEvent ||
+    !!(formValues.eventData?.discordChannelId ?? "").trim();
   const isEventTimingValid =
     hasEventStartTime && hasEventEndTime && endDateTime > startDateTime;
   const isEventStartInFuture =
@@ -315,6 +320,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     hasEventDescription &&
     hasEventStartTime &&
     hasEventEndTime &&
+    hasDiscordChannelId &&
     isEventTimingValid &&
     isEventStartInFuture;
 
@@ -328,6 +334,13 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const safeVisibilityIds = React.useMemo(
     () => formValues.roles.filter((roleId) => roleIdSet.has(roleId)),
     [formValues.roles, roleIdSet],
+  );
+  const safeEventVisibilityIds = React.useMemo(
+    () =>
+      (formValues.eventData?.roles ?? []).filter((roleId) =>
+        roleIdSet.has(roleId),
+      ),
+    [formValues.eventData?.roles, roleIdSet],
   );
 
   // Helper for event form
@@ -361,9 +374,13 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       amPm: part === "amPm" ? toAmPmValue(value) : parsed.amPm,
     };
 
-    if (!next.hour || !next.minute) {
-      updateEventData(key, "");
-      return;
+    // Keep time editable when only one selector is changed by filling missing
+    // pieces with the first available option instead of clearing the field.
+    if (!next.hour) {
+      next.hour = ISSUE.EVENT_TIME_HOURS[0] ?? "01";
+    }
+    if (!next.minute) {
+      next.minute = ISSUE.EVENT_TIME_MINUTES[0] ?? "00";
     }
 
     updateEventData(key, `${to24h(next.hour, next.amPm)}:${next.minute}`);
@@ -479,6 +496,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
           ...(formValues.eventData ?? defaultEventForm()),
           name: formValues.name.trim(),
           description: (formValues.eventData?.description ?? "").trim(),
+          roles: safeEventVisibilityIds,
         }),
       );
       if (!isControlled) {
@@ -887,6 +905,48 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                       </div>
 
                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Internal Event?</Label>
+                        <div className="col-span-3 flex items-center">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={
+                                formValues.eventData?.isOperationsCalendar ??
+                                false
+                              }
+                              onCheckedChange={(checked) =>
+                                updateEventData(
+                                  "isOperationsCalendar",
+                                  checked === true,
+                                )
+                              }
+                            />
+                            <span className="text-sm font-normal text-gray-400">
+                              Use Operations Calendar (Hide from public events)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {(formValues.eventData?.isOperationsCalendar ?? false) && (
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label className="text-right">
+                            Discord Channel ID
+                          </Label>
+                          <Input
+                            className={cn(baseField, "col-span-3")}
+                            placeholder="Paste Discord voice channel ID"
+                            value={formValues.eventData?.discordChannelId ?? ""}
+                            onChange={(event) =>
+                              updateEventData(
+                                "discordChannelId",
+                                event.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label className="text-right">Dues Paying?</Label>
                         <div className="col-span-3 flex items-center">
                           <Checkbox
@@ -1045,9 +1105,11 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                     </div>
                   )}
 
-                  {/* Visible To Roles */}
+                  {/* Issue Visible To Roles */}
                   <div className="grid grid-cols-4 items-start gap-4">
-                    <Label className="mt-1 text-right">Visible To Roles</Label>
+                    <Label className="mt-1 text-right">
+                      Issue Visible To Roles
+                    </Label>
                     <div className="col-span-3 mt-1 grid grid-cols-2 gap-x-2 gap-y-3">
                       {rolesData?.map((role) => (
                         <div
@@ -1079,6 +1141,49 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                       ))}
                     </div>
                   </div>
+
+                  {formValues.isEvent && (
+                    <div className="grid grid-cols-4 items-start gap-4">
+                      <Label className="mt-1 text-right">
+                        Event Visible To Roles
+                      </Label>
+                      <div className="col-span-3 mt-1 grid grid-cols-2 gap-x-2 gap-y-3">
+                        {rolesData?.map((role) => (
+                          <div
+                            key={`event-role-${role.id}`}
+                            className="flex flex-row items-start space-x-3 space-y-0"
+                          >
+                            <Checkbox
+                              checked={
+                                formValues.eventData?.roles?.includes(role.id) ??
+                                false
+                              }
+                              onCheckedChange={(checked) => {
+                                const currentRoles =
+                                  formValues.eventData?.roles ?? [];
+                                return checked
+                                  ? updateEventData(
+                                      "roles",
+                                      Array.from(
+                                        new Set([...currentRoles, role.id]),
+                                      ),
+                                    )
+                                  : updateEventData(
+                                      "roles",
+                                      currentRoles.filter(
+                                        (value) => value !== role.id,
+                                      ),
+                                    );
+                              }}
+                            />
+                            <Label className="cursor-pointer font-normal">
+                              {role.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1129,12 +1234,4 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         )}
     </>
   );
-}
-
-function formatDateForInput(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
-
-function formatTimeForInput(date: Date) {
-  return date.toTimeString().slice(0, 5);
 }
