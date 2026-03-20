@@ -138,17 +138,14 @@ type IssueDialogFormValues = {
   parent?: string;
   isEvent: boolean;
   eventData?: ISSUE.EventFormValues;
-  details: string;
-  notes: string;
-  isHackathonCritical: boolean;
-  requiresRoom: boolean;
-  requiresAV: boolean;
-  requiresFood: boolean;
   teamVisibilityIds?: string[];
   assigneeIds?: string[];
   roles: string[];
 };
-type CreateEditDialogComponentProps = Omit<ISSUE.CreateEditDialogProps, "open"> & {
+type CreateEditDialogComponentProps = Omit<
+  ISSUE.CreateEditDialogProps,
+  "open"
+> & {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   children?: React.ReactNode;
@@ -186,12 +183,6 @@ const defaultForm = (): IssueDialogFormValues => {
     parent: undefined,
     isEvent: false,
     eventData: undefined,
-    details: "",
-    notes: "",
-    isHackathonCritical: false,
-    requiresRoom: false,
-    requiresAV: false,
-    requiresFood: false,
     roles: [],
   };
 };
@@ -302,6 +293,13 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     !formValues.team.trim() ||
     (formValues.isEvent &&
       (!isEventTimingValid || !formValues.eventData?.location?.trim()));
+  const safeVisibilityIds = React.useMemo(
+    () =>
+      formValues.roles.filter((roleId) =>
+        (rolesData ?? []).some((role) => role.id === roleId),
+      ),
+    [formValues.roles, rolesData],
+  );
 
   // Helper for event form
   const updateEventData = <K extends keyof ISSUE.EventFormValues>(
@@ -378,7 +376,12 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   }, [handleClose, isOpen]);
 
   React.useEffect(() => {
-    if (!isOpen || formValues.isEvent || formValues.team || !rolesData?.length) {
+    if (
+      !isOpen ||
+      formValues.isEvent ||
+      formValues.team ||
+      !rolesData?.length
+    ) {
       return;
     }
 
@@ -421,19 +424,22 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       parent: formValues.parent,
       isEvent: formValues.isEvent,
       event: eventValue,
-      details: formValues.details,
-      notes: formValues.notes,
-      isHackathonCritical: formValues.isHackathonCritical,
-      requiresRoom: formValues.requiresRoom,
-      requiresAV: formValues.requiresAV,
-      requiresFood: formValues.requiresFood,
-      teamVisibilityIds: formValues.roles,
+      details: "",
+      notes: "",
+      isHackathonCritical: false,
+      requiresRoom: false,
+      requiresAV: false,
+      requiresFood: false,
+      teamVisibilityIds:
+        safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
       assigneeIds: formValues.assigneeIds,
     });
 
     // If not event, clear event field
     if (!formValues.isEvent) {
-      onSubmit?.(toSubmitValues(normalizeTaskDueDate(formValues.date), undefined));
+      onSubmit?.(
+        toSubmitValues(normalizeTaskDueDate(formValues.date), undefined),
+      );
       if (!isControlled) {
         setInternalOpen(false);
       }
@@ -473,13 +479,14 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         parent: formValues.parent,
         isEvent: formValues.isEvent,
         event: formValues.eventData,
-        details: formValues.details,
-        notes: formValues.notes,
-        isHackathonCritical: formValues.isHackathonCritical,
-        requiresRoom: formValues.requiresRoom,
-        requiresAV: formValues.requiresAV,
-        requiresFood: formValues.requiresFood,
-        teamVisibilityIds: formValues.roles,
+        details: "",
+        notes: "",
+        isHackathonCritical: false,
+        requiresRoom: false,
+        requiresAV: false,
+        requiresFood: false,
+        teamVisibilityIds:
+          safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
         assigneeIds: formValues.assigneeIds,
       });
     }
@@ -514,558 +521,589 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                 <X className="h-4 w-4" />
               </button>
 
-            <header className="border-b px-6 py-4 pr-12">
-          <p className="text-xs font-medium text-muted-foreground">
-            {intent === "edit"
-              ? formValues.isEvent
-                ? "Edit Event"
-                : "Edit Task"
-              : "Create Issue"}
-          </p>
-          <h2 className="mt-1 text-lg font-semibold">
-            {intent === "edit"
-              ? formValues.isEvent
-                ? "Update the event details below"
-                : "Update the task details below"
-              : "Enter the issue details below"}
-          </h2>
-            </header>
+              <header className="border-b px-6 py-4 pr-12">
+                <p className="text-xs font-medium text-muted-foreground">
+                  {intent === "edit"
+                    ? formValues.isEvent
+                      ? "Edit Event"
+                      : "Edit Task"
+                    : "Create Issue"}
+                </p>
+                <h2 className="mt-1 text-lg font-semibold">
+                  {intent === "edit"
+                    ? formValues.isEvent
+                      ? "Update the event details below"
+                      : "Update the task details below"
+                    : "Enter the issue details below"}
+                </h2>
+              </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="space-y-6 px-6 py-6">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">{"Name"}</Label>
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <div className="space-y-6 px-6 py-6">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">{"Name"}</Label>
 
-              <Input
-                className={cn(baseField, "col-span-3")}
-                value={formValues.name}
-                onChange={(event) => updateForm("name", event.target.value)}
-              />
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Is Event?</Label>
-              <div className="col-span-3 flex items-center space-x-2">
-                <Checkbox
-                  checked={formValues.isEvent}
-                  onCheckedChange={(checked) => {
-                    const nextIsEvent = checked === true;
-                    if (nextIsEvent) {
-                      setFormValues((previous) => ({
-                        ...previous,
-                        isEvent: true,
-                        eventData: previous.eventData ?? defaultEventForm(),
-                      }));
-                      return;
-                    }
-
-                    setFormValues((previous) => ({
-                      ...previous,
-                      isEvent: false,
-                      eventData: undefined,
-                    }));
-                  }}
-                />
-                <span className="text-sm text-muted-foreground">
-                  Enable event fields for this issue
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Status</Label>
-              <Select
-                value={formValues.status}
-                onValueChange={(value) =>
-                  updateForm(
-                    "status",
-                    value as (typeof ISSUE.ISSUE_STATUS)[number],
-                  )
-                }
-              >
-                <SelectTrigger
-                  className={cn(baseField, "col-span-3")}
-                  aria-label="Issue status"
-                >
-                  <div className="flex flex-1 items-center gap-2 text-left">
-                    <span
-                      className={cn(
-                        "size-2 rounded-full",
-                        STATUS_COLORS[formValues.status] || "bg-slate-400",
-                      )}
+                    <Input
+                      className={cn(baseField, "col-span-3")}
+                      value={formValues.name}
+                      onChange={(event) =>
+                        updateForm("name", event.target.value)
+                      }
                     />
-
-                    <span className="text-sm font-medium">
-                      {getStatusLabel(formValues.status)}
-                    </span>
                   </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {ISSUE.ISSUE_STATUS.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "size-2 rounded-full",
-                            STATUS_COLORS[status] || "bg-slate-400",
-                          )}
-                        />
-                        <span className="text-sm">
-                          {getStatusLabel(status)}
-                        </span>
+
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">Is Event?</Label>
+                    <div className="col-span-3 flex items-center space-x-2">
+                      <Checkbox
+                        checked={formValues.isEvent}
+                        onCheckedChange={(checked) => {
+                          const nextIsEvent = checked === true;
+                          if (nextIsEvent) {
+                            setFormValues((previous) => ({
+                              ...previous,
+                              isEvent: true,
+                              eventData:
+                                previous.eventData ?? defaultEventForm(),
+                            }));
+                            return;
+                          }
+
+                          setFormValues((previous) => ({
+                            ...previous,
+                            isEvent: false,
+                            eventData: undefined,
+                          }));
+                        }}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        Enable event fields for this issue
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">Status</Label>
+                    <Select
+                      value={formValues.status}
+                      onValueChange={(value) =>
+                        updateForm(
+                          "status",
+                          value as (typeof ISSUE.ISSUE_STATUS)[number],
+                        )
+                      }
+                    >
+                      <SelectTrigger
+                        className={cn(baseField, "col-span-3")}
+                        aria-label="Issue status"
+                      >
+                        <div className="flex flex-1 items-center gap-2 text-left">
+                          <span
+                            className={cn(
+                              "size-2 rounded-full",
+                              STATUS_COLORS[formValues.status] ||
+                                "bg-slate-400",
+                            )}
+                          />
+
+                          <span className="text-sm font-medium">
+                            {getStatusLabel(formValues.status)}
+                          </span>
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ISSUE.ISSUE_STATUS.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  "size-2 rounded-full",
+                                  STATUS_COLORS[status] || "bg-slate-400",
+                                )}
+                              />
+                              <span className="text-sm">
+                                {getStatusLabel(status)}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Date/Time fields */}
+                  {formValues.isEvent ? (
+                    <>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Tag</Label>
+                        <Select
+                          value={
+                            formValues.eventData?.tag ?? EVENTS.EVENT_TAGS[0]
+                          }
+                          onValueChange={(value) =>
+                            updateEventData("tag", value)
+                          }
+                        >
+                          <SelectTrigger
+                            className={cn(baseField, "col-span-3")}
+                            aria-label="Event tag"
+                          >
+                            <SelectValue placeholder="Select a tag" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {EVENTS.EVENT_TAGS.map((tagOption) => (
+                              <SelectItem key={tagOption} value={tagOption}>
+                                {tagOption}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
-            {/* Date/Time fields */}
-            {formValues.isEvent ? (
-              <>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Tag</Label>
-                  <Select
-                    value={formValues.eventData?.tag ?? EVENTS.EVENT_TAGS[0]}
-                    onValueChange={(value) => updateEventData("tag", value)}
-                  >
-                    <SelectTrigger
-                      className={cn(baseField, "col-span-3")}
-                      aria-label="Event tag"
-                    >
-                      <SelectValue placeholder="Select a tag" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EVENTS.EVENT_TAGS.map((tagOption) => (
-                        <SelectItem key={tagOption} value={tagOption}>
-                          {tagOption}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Hackathon</Label>
+                        <Select
+                          value={formValues.eventData?.hackathonId ?? "none"}
+                          onValueChange={(value) =>
+                            updateEventData(
+                              "hackathonId",
+                              value === "none" ? undefined : value,
+                            )
+                          }
+                        >
+                          <SelectTrigger
+                            className={cn(baseField, "col-span-3")}
+                            aria-label="Hackathon"
+                          >
+                            <SelectValue placeholder="Select a hackathon" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            {hackathons?.map((h) => (
+                              <SelectItem key={h.id} value={h.id}>
+                                {h.displayName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Hackathon</Label>
-                  <Select
-                    value={formValues.eventData?.hackathonId ?? "none"}
-                    onValueChange={(value) =>
-                      updateEventData(
-                        "hackathonId",
-                        value === "none" ? undefined : value,
-                      )
-                    }
-                  >
-                    <SelectTrigger
-                      className={cn(baseField, "col-span-3")}
-                      aria-label="Hackathon"
-                    >
-                      <SelectValue placeholder="Select a hackathon" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {hackathons?.map((h) => (
-                        <SelectItem key={h.id} value={h.id}>
-                          {h.displayName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor={`${baseId}-event-start-date`}
+                          className="text-right"
+                        >
+                          Start Date
+                        </Label>
+                        <Input
+                          id={`${baseId}-event-start-date`}
+                          type="date"
+                          className={cn(baseField, "col-span-3")}
+                          value={formValues.eventData?.startDate ?? ""}
+                          onChange={(e) =>
+                            updateEventData("startDate", e.target.value)
+                          }
+                        />
+                      </div>
 
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor={`${baseId}-event-start-date`}
-                    className="text-right"
-                  >
-                    Start Date
-                  </Label>
-                  <Input
-                    id={`${baseId}-event-start-date`}
-                    type="date"
-                    className={cn(baseField, "col-span-3")}
-                    value={formValues.eventData?.startDate ?? ""}
-                    onChange={(e) =>
-                      updateEventData("startDate", e.target.value)
-                    }
-                  />
-                </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Start Time</Label>
+                        <div className="col-span-3 flex items-center space-x-2">
+                          <Select
+                            value={
+                              parseTimeTo12h(formValues.eventData?.startTime)
+                                .hour
+                            }
+                            onValueChange={(value) =>
+                              updateEventTimePart("start", "hour", value)
+                            }
+                          >
+                            <SelectTrigger className="w-[80px]">
+                              <SelectValue placeholder="HH" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {hours.map((h) => (
+                                <SelectItem key={h} value={h}>
+                                  {h}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
 
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Start Time</Label>
-                  <div className="col-span-3 flex items-center space-x-2">
-                    <Select
-                      value={parseTimeTo12h(formValues.eventData?.startTime).hour}
-                      onValueChange={(value) =>
-                        updateEventTimePart("start", "hour", value)
-                      }
-                    >
-                      <SelectTrigger className="w-[80px]">
-                        <SelectValue placeholder="HH" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {hours.map((h) => (
-                          <SelectItem key={h} value={h}>
-                            {h}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          <span>:</span>
 
-                    <span>:</span>
+                          <Select
+                            value={
+                              parseTimeTo12h(formValues.eventData?.startTime)
+                                .minute
+                            }
+                            onValueChange={(value) =>
+                              updateEventTimePart("start", "minute", value)
+                            }
+                          >
+                            <SelectTrigger className="w-[80px]">
+                              <SelectValue placeholder="MM" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {minutes.map((m) => (
+                                <SelectItem key={m} value={m}>
+                                  {m}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
 
-                    <Select
-                      value={parseTimeTo12h(formValues.eventData?.startTime).minute}
-                      onValueChange={(value) =>
-                        updateEventTimePart("start", "minute", value)
-                      }
-                    >
-                      <SelectTrigger className="w-[80px]">
-                        <SelectValue placeholder="MM" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {minutes.map((m) => (
-                          <SelectItem key={m} value={m}>
-                            {m}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          <Select
+                            value={
+                              parseTimeTo12h(formValues.eventData?.startTime)
+                                .amPm
+                            }
+                            onValueChange={(value) =>
+                              updateEventTimePart("start", "amPm", value)
+                            }
+                          >
+                            <SelectTrigger className="w-[80px]">
+                              <SelectValue placeholder="AM/PM" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {amPmOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
 
-                    <Select
-                      value={parseTimeTo12h(formValues.eventData?.startTime).amPm}
-                      onValueChange={(value) =>
-                        updateEventTimePart("start", "amPm", value)
-                      }
-                    >
-                      <SelectTrigger className="w-[80px]">
-                        <SelectValue placeholder="AM/PM" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {amPmOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor={`${baseId}-event-end-date`}
+                          className="text-right"
+                        >
+                          End Date
+                        </Label>
+                        <Input
+                          id={`${baseId}-event-end-date`}
+                          type="date"
+                          className={cn(baseField, "col-span-3")}
+                          value={formValues.eventData?.endDate ?? ""}
+                          onChange={(e) =>
+                            updateEventData("endDate", e.target.value)
+                          }
+                        />
+                      </div>
 
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor={`${baseId}-event-end-date`}
-                    className="text-right"
-                  >
-                    End Date
-                  </Label>
-                  <Input
-                    id={`${baseId}-event-end-date`}
-                    type="date"
-                    className={cn(baseField, "col-span-3")}
-                    value={formValues.eventData?.endDate ?? ""}
-                    onChange={(e) => updateEventData("endDate", e.target.value)}
-                  />
-                </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">End Time</Label>
+                        <div className="col-span-3 flex items-center space-x-2">
+                          <Select
+                            value={
+                              parseTimeTo12h(formValues.eventData?.endTime).hour
+                            }
+                            onValueChange={(value) =>
+                              updateEventTimePart("end", "hour", value)
+                            }
+                          >
+                            <SelectTrigger className="w-[80px]">
+                              <SelectValue placeholder="HH" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {hours.map((h) => (
+                                <SelectItem key={h} value={h}>
+                                  {h}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
 
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">End Time</Label>
-                  <div className="col-span-3 flex items-center space-x-2">
-                    <Select
-                      value={parseTimeTo12h(formValues.eventData?.endTime).hour}
-                      onValueChange={(value) =>
-                        updateEventTimePart("end", "hour", value)
-                      }
-                    >
-                      <SelectTrigger className="w-[80px]">
-                        <SelectValue placeholder="HH" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {hours.map((h) => (
-                          <SelectItem key={h} value={h}>
-                            {h}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          <span>:</span>
 
-                    <span>:</span>
+                          <Select
+                            value={
+                              parseTimeTo12h(formValues.eventData?.endTime)
+                                .minute
+                            }
+                            onValueChange={(value) =>
+                              updateEventTimePart("end", "minute", value)
+                            }
+                          >
+                            <SelectTrigger className="w-[80px]">
+                              <SelectValue placeholder="MM" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {minutes.map((m) => (
+                                <SelectItem key={m} value={m}>
+                                  {m}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
 
-                    <Select
-                      value={parseTimeTo12h(formValues.eventData?.endTime).minute}
-                      onValueChange={(value) =>
-                        updateEventTimePart("end", "minute", value)
-                      }
-                    >
-                      <SelectTrigger className="w-[80px]">
-                        <SelectValue placeholder="MM" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {minutes.map((m) => (
-                          <SelectItem key={m} value={m}>
-                            {m}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          <Select
+                            value={
+                              parseTimeTo12h(formValues.eventData?.endTime).amPm
+                            }
+                            onValueChange={(value) =>
+                              updateEventTimePart("end", "amPm", value)
+                            }
+                          >
+                            <SelectTrigger className="w-[80px]">
+                              <SelectValue placeholder="AM/PM" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {amPmOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
 
-                    <Select
-                      value={parseTimeTo12h(formValues.eventData?.endTime).amPm}
-                      onValueChange={(value) =>
-                        updateEventTimePart("end", "amPm", value)
-                      }
-                    >
-                      <SelectTrigger className="w-[80px]">
-                        <SelectValue placeholder="AM/PM" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {amPmOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor={`${baseId}-event-location`}
+                          className="text-right"
+                        >
+                          Room
+                        </Label>
+                        <Input
+                          id={`${baseId}-event-location`}
+                          className={cn(baseField, "col-span-3")}
+                          placeholder="Enter room"
+                          value={formValues.eventData?.location ?? ""}
+                          onChange={(e) =>
+                            updateEventData("location", e.target.value)
+                          }
+                        />
+                      </div>
 
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor={`${baseId}-event-location`}
-                    className="text-right"
-                  >
-                    Room
-                  </Label>
-                  <Input
-                    id={`${baseId}-event-location`}
-                    className={cn(baseField, "col-span-3")}
-                    placeholder="Enter room"
-                    value={formValues.eventData?.location ?? ""}
-                    onChange={(e) =>
-                      updateEventData("location", e.target.value)
-                    }
-                  />
-                </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Dues Paying?</Label>
+                        <div className="col-span-3 flex items-center">
+                          <Checkbox
+                            checked={formValues.eventData?.dues_paying ?? false}
+                            onCheckedChange={(checked) =>
+                              updateEventData("dues_paying", checked === true)
+                            }
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor={`${baseId}-task-due-date`}
+                          className="text-right"
+                        >
+                          Due Date
+                        </Label>
+                        <Input
+                          id={`${baseId}-task-due-date`}
+                          type="date"
+                          className={cn(baseField, "col-span-3")}
+                          value={getTaskDueDateInputValue(formValues.date)}
+                          onChange={(e) =>
+                            updateForm(
+                              "date",
+                              normalizeTaskDueDate(e.target.value),
+                            )
+                          }
+                        />
+                      </div>
 
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Dues Paying?</Label>
-                  <div className="col-span-3 flex items-center">
-                    <Checkbox
-                      checked={formValues.eventData?.dues_paying ?? false}
-                      onCheckedChange={(checked) =>
-                        updateEventData("dues_paying", checked === true)
-                      }
-                    />
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor={`${baseId}-task-due-date`}
-                    className="text-right"
-                  >
-                    Due Date
-                  </Label>
-                  <Input
-                    id={`${baseId}-task-due-date`}
-                    type="date"
-                    className={cn(baseField, "col-span-3")}
-                    value={getTaskDueDateInputValue(formValues.date)}
-                    onChange={(e) =>
-                      updateForm("date", normalizeTaskDueDate(e.target.value))
-                    }
-                  />
-                </div>
-
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor={`${baseId}-task-due-time`}
-                    className="text-right"
-                  >
-                    Due Time
-                  </Label>
-                  <Input
-                    id={`${baseId}-task-due-time`}
-                    type="time"
-                    className={cn(baseField, "col-span-3")}
-                    value={TASK_DUE_TIME}
-                    readOnly
-                    disabled
-                  />
-                </div>
-              </>
-            )}
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Priority</Label>
-              <Select
-                value={formValues.priority}
-                onValueChange={(value) =>
-                  updateForm(
-                    "priority",
-                    value as (typeof ISSUE.PRIORITY)[number],
-                  )
-                }
-              >
-                <SelectTrigger
-                  className={cn(baseField, "col-span-3")}
-                  aria-label="Priority"
-                >
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ISSUE.PRIORITY.map((priority) => (
-                    <SelectItem key={priority} value={priority}>
-                      {priority}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Team</Label>
-              <Select
-                value={formValues.team}
-                onValueChange={(value) => updateForm("team", value)}
-              >
-                <SelectTrigger
-                  className={cn(baseField, "col-span-3")}
-                  aria-label="Team"
-                >
-                  <SelectValue placeholder="Select team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {rolesData?.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label
-                htmlFor={`${baseId}-internal-description`}
-                className="pt-2 text-right"
-              >
-                {formValues.isEvent ? "Internal Description" : "Description"}
-              </Label>
-              <Textarea
-                id={`${baseId}-internal-description`}
-                className={cn(
-                  baseField,
-                  "col-span-3 min-h-[140px] resize-none",
-                )}
-                placeholder="Description..."
-                value={formValues.description}
-                onChange={(event) =>
-                  updateForm("description", event.target.value)
-                }
-              />
-            </div>
-
-            {formValues.isEvent && (
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label
-                  htmlFor={`${baseId}-external-description`}
-                  className="pt-2 text-right"
-                >
-                  External Description
-                </Label>
-                <Textarea
-                  id={`${baseId}-external-description`}
-                  className={cn(
-                    baseField,
-                    "col-span-3 min-h-[140px] resize-none",
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor={`${baseId}-task-due-time`}
+                          className="text-right"
+                        >
+                          Due Time
+                        </Label>
+                        <Input
+                          id={`${baseId}-task-due-time`}
+                          type="time"
+                          className={cn(baseField, "col-span-3")}
+                          value={TASK_DUE_TIME}
+                          readOnly
+                          disabled
+                        />
+                      </div>
+                    </>
                   )}
-                  placeholder="Public-facing event description..."
-                  value={formValues.eventData?.description ?? ""}
-                  onChange={(event) =>
-                    updateEventData("description", event.target.value)
-                  }
-                />
-              </div>
-            )}
 
-            {/* Visible To Roles */}
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="mt-1 text-right">Visible To Roles</Label>
-              <div className="col-span-3 mt-1 grid grid-cols-2 gap-x-2 gap-y-3">
-                {rolesData?.map((role) => (
-                  <div
-                    key={role.id}
-                    className="flex flex-row items-start space-x-3 space-y-0"
-                  >
-                    <Checkbox
-                      checked={formValues.roles?.includes(role.id)}
-                      onCheckedChange={(checked) => {
-                        return checked
-                          ? updateForm("roles", [
-                              ...(formValues.roles || []),
-                              role.id,
-                            ])
-                          : updateForm(
-                              "roles",
-                              formValues.roles?.filter(
-                                (value: string) => value !== role.id,
-                              ) || [],
-                            );
-                      }}
-                    />
-                    <Label className="cursor-pointer font-normal">
-                      {role.name}
-                    </Label>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">Priority</Label>
+                    <Select
+                      value={formValues.priority}
+                      onValueChange={(value) =>
+                        updateForm(
+                          "priority",
+                          value as (typeof ISSUE.PRIORITY)[number],
+                        )
+                      }
+                    >
+                      <SelectTrigger
+                        className={cn(baseField, "col-span-3")}
+                        aria-label="Priority"
+                      >
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ISSUE.PRIORITY.map((priority) => (
+                          <SelectItem key={priority} value={priority}>
+                            {priority}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                ))}
+
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">Team</Label>
+                    <Select
+                      value={formValues.team}
+                      onValueChange={(value) => updateForm("team", value)}
+                    >
+                      <SelectTrigger
+                        className={cn(baseField, "col-span-3")}
+                        aria-label="Team"
+                      >
+                        <SelectValue placeholder="Select team" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {rolesData?.map((role) => (
+                          <SelectItem key={role.id} value={role.id}>
+                            {role.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-4 items-start gap-4">
+                    <Label
+                      htmlFor={`${baseId}-internal-description`}
+                      className="pt-2 text-right"
+                    >
+                      {formValues.isEvent
+                        ? "Internal Description"
+                        : "Description"}
+                    </Label>
+                    <Textarea
+                      id={`${baseId}-internal-description`}
+                      className={cn(
+                        baseField,
+                        "col-span-3 min-h-[140px] resize-none",
+                      )}
+                      placeholder="Description..."
+                      value={formValues.description}
+                      onChange={(event) =>
+                        updateForm("description", event.target.value)
+                      }
+                    />
+                  </div>
+
+                  {formValues.isEvent && (
+                    <div className="grid grid-cols-4 items-start gap-4">
+                      <Label
+                        htmlFor={`${baseId}-external-description`}
+                        className="pt-2 text-right"
+                      >
+                        External Description
+                      </Label>
+                      <Textarea
+                        id={`${baseId}-external-description`}
+                        className={cn(
+                          baseField,
+                          "col-span-3 min-h-[140px] resize-none",
+                        )}
+                        placeholder="Public-facing event description..."
+                        value={formValues.eventData?.description ?? ""}
+                        onChange={(event) =>
+                          updateEventData("description", event.target.value)
+                        }
+                      />
+                    </div>
+                  )}
+
+                  {/* Visible To Roles */}
+                  <div className="grid grid-cols-4 items-start gap-4">
+                    <Label className="mt-1 text-right">Visible To Roles</Label>
+                    <div className="col-span-3 mt-1 grid grid-cols-2 gap-x-2 gap-y-3">
+                      {rolesData?.map((role) => (
+                        <div
+                          key={role.id}
+                          className="flex flex-row items-start space-x-3 space-y-0"
+                        >
+                          <Checkbox
+                            checked={formValues.roles?.includes(role.id)}
+                            onCheckedChange={(checked) => {
+                              return checked
+                                ? updateForm("roles", [
+                                    ...(formValues.roles || []),
+                                    role.id,
+                                  ])
+                                : updateForm(
+                                    "roles",
+                                    formValues.roles?.filter(
+                                      (value: string) => value !== role.id,
+                                    ) || [],
+                                  );
+                            }}
+                          />
+                          <Label className="cursor-pointer font-normal">
+                            {role.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-            </div>
 
-            <footer className="border-t px-6 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {intent === "edit" && (
-              <Button
-                type="button"
-                variant="destructive"
-                className="w-full sm:w-auto"
-                onClick={handleDelete}
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> Delete
-              </Button>
-            )}
+              <footer className="border-t px-6 py-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  {intent === "edit" && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="w-full sm:w-auto"
+                      onClick={handleDelete}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </Button>
+                  )}
 
-            <div
-              className={cn(
-                "flex flex-col gap-3 sm:flex-row",
-                intent !== "edit" && "sm:ml-auto",
-              )}
-            >
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full border sm:w-auto"
-                onClick={handleClose}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="w-full disabled:opacity-40 sm:w-auto"
-                disabled={isSubmitDisabled}
-              >
-                {intent === "edit"
-                  ? formValues.isEvent
-                    ? "Update Event"
-                    : "Update Issue"
-                  : "Create Issue"}
-              </Button>
-            </div>
-          </div>
+                  <div
+                    className={cn(
+                      "flex flex-col gap-3 sm:flex-row",
+                      intent !== "edit" && "sm:ml-auto",
+                    )}
+                  >
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full border sm:w-auto"
+                      onClick={handleClose}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="w-full disabled:opacity-40 sm:w-auto"
+                      disabled={isSubmitDisabled}
+                    >
+                      {intent === "edit"
+                        ? formValues.isEvent
+                          ? "Update Event"
+                          : "Update Issue"
+                        : "Create Issue"}
+                    </Button>
+                  </div>
+                </div>
               </footer>
             </form>
           </div>,
