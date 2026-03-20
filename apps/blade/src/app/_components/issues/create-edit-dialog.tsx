@@ -112,7 +112,7 @@ function parseEventDateTime(dateValue?: string, timeValue?: string) {
   return parsed;
 }
 
-type IssueDialogFormValues = {
+interface IssueDialogFormValues {
   id?: string;
   status: (typeof ISSUE.ISSUE_STATUS)[number];
   name: string;
@@ -127,7 +127,7 @@ type IssueDialogFormValues = {
   teamVisibilityIds?: string[];
   assigneeIds?: string[];
   roles: string[];
-};
+}
 type CreateEditDialogComponentProps = Omit<
   ISSUE.CreateEditDialogProps,
   "open"
@@ -200,36 +200,31 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   );
   const buildInitialFormValues = React.useCallback(() => {
     const defaults = defaultForm();
-    const extendedInitialValues = initialValues as
-      | (Partial<IssueDialogFormValues> & {
-          eventData?: ISSUE.EventFormValues;
-          event?: ISSUE.EventFormValues;
-        })
-      | undefined;
-    const resolvedEventData =
-      extendedInitialValues?.eventData ?? extendedInitialValues?.event;
+    const initial = (initialValues ?? {}) as Partial<IssueDialogFormValues> & {
+      eventData?: ISSUE.EventFormValues;
+      event?: ISSUE.EventFormValues;
+    };
+    const resolvedEventData = initial.eventData ?? initial.event;
     const resolvedRoles =
-      extendedInitialValues?.roles ??
-      initialValues?.teamVisibilityIds ??
-      defaults.roles;
-    if (initialValues?.isEvent) {
+      initial.roles ?? initial.teamVisibilityIds ?? defaults.roles;
+    if (initial.isEvent) {
       return {
         ...defaults,
-        ...initialValues,
+        ...initial,
         isEvent: true,
         eventData: resolvedEventData ?? defaultEventForm(),
-        links: initialValues?.links ?? defaults.links,
-        date: normalizeTaskDueDate(initialValues?.date ?? defaults.date),
+        links: initial.links ?? defaults.links,
+        date: normalizeTaskDueDate(initial.date ?? defaults.date),
         roles: resolvedRoles,
       };
     }
     return {
       ...defaults,
-      ...initialValues,
+      ...initial,
       isEvent: false,
       eventData: undefined,
-      date: normalizeTaskDueDate(initialValues?.date ?? defaults.date),
-      links: initialValues?.links ?? defaults.links,
+      date: normalizeTaskDueDate(initial.date ?? defaults.date),
+      links: initial.links ?? defaults.links,
       roles: resolvedRoles,
     };
   }, [initialValues]);
@@ -257,15 +252,25 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
     return React.cloneElement(child, {
       onClick: (event: React.MouseEvent) => {
-        child.props?.onClick?.(event);
+        child.props.onClick?.(event);
         if (isControlled) {
-          onOpenChange?.(true);
+          onOpenChange(true);
         } else {
           setInternalOpen(true);
         }
       },
     });
   }, [children, isControlled, onOpenChange]);
+
+  const updateForm = <K extends keyof IssueDialogFormValues>(
+    key: K,
+    value: IssueDialogFormValues[K],
+  ) => {
+    setFormValues((previous) => ({
+      ...previous,
+      [key]: value,
+    }));
+  };
 
   const baseId = React.useId();
   const startDateTime = parseEventDateTime(
@@ -283,7 +288,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     !formValues.team.trim() ||
     !!rolesError ||
     (formValues.isEvent &&
-      (!isEventTimingValid || !formValues.eventData?.location?.trim()));
+      (!isEventTimingValid || !formValues.eventData?.location.trim()));
   const roleIdSet = React.useMemo(
     () => new Set((rolesData ?? []).map((role) => role.id)),
     [rolesData],
@@ -377,7 +382,12 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       return;
     }
 
-    updateForm("team", rolesData[0]!.id);
+    const firstRole = rolesData[0];
+    if (!firstRole) {
+      return;
+    }
+
+    updateForm("team", firstRole.id);
   }, [formValues.isEvent, formValues.team, isOpen, rolesData]);
 
   const handleOverlayPointerDown = (
@@ -386,16 +396,6 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     if (event.target === event.currentTarget) {
       handleClose();
     }
-  };
-
-  const updateForm = <K extends keyof IssueDialogFormValues>(
-    key: K,
-    value: IssueDialogFormValues[K],
-  ) => {
-    setFormValues((previous) => ({
-      ...previous,
-      [key]: value,
-    }));
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
