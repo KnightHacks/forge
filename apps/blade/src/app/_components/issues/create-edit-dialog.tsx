@@ -126,6 +126,7 @@ interface IssueDialogFormValues {
   team: string;
   parent?: string;
   isEvent: boolean;
+  event?: ISSUE.UUID | null;
   eventData?: ISSUE.EventFormValues;
   teamVisibilityIds?: string[];
   assigneeIds?: string[];
@@ -171,6 +172,7 @@ const defaultForm = (): IssueDialogFormValues => {
     team: "",
     parent: undefined,
     isEvent: false,
+    event: null,
     eventData: undefined,
     roles: [],
   };
@@ -203,11 +205,8 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   );
   const buildInitialFormValues = React.useCallback(() => {
     const defaults = defaultForm();
-    const initial = (initialValues ?? {}) as Partial<IssueDialogFormValues> & {
-      eventData?: ISSUE.EventFormValues;
-      event?: ISSUE.EventFormValues;
-    };
-    const resolvedEventData = initial.eventData ?? initial.event;
+    const initial = (initialValues ?? {}) as Partial<IssueDialogFormValues>;
+    const resolvedEventData = initial.eventData;
     const resolvedRoles =
       initial.roles ?? initial.teamVisibilityIds ?? defaults.roles;
     if (initial.isEvent) {
@@ -215,6 +214,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         ...defaults,
         ...initial,
         isEvent: true,
+        event: initial.event ?? defaults.event,
         eventData: resolvedEventData ?? defaultEventForm(),
         links: initial.links ?? defaults.links,
         date: normalizeTaskDueDate(initial.date ?? defaults.date),
@@ -225,6 +225,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       ...defaults,
       ...initial,
       isEvent: false,
+      event: initial.event ?? defaults.event,
       eventData: undefined,
       date: normalizeTaskDueDate(initial.date ?? defaults.date),
       links: initial.links ?? defaults.links,
@@ -410,7 +411,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
     const toSubmitValues = (
       date: Date,
-      eventValue?: ISSUE.EventFormValues,
+      eventDataValue?: ISSUE.EventFormValues,
     ): ISSUE.IssueSubmitValues => ({
       id: formValues.id,
       status: formValues.status,
@@ -422,7 +423,8 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       team: formValues.team,
       parent: formValues.parent,
       isEvent: formValues.isEvent,
-      event: eventValue,
+      event: formValues.event ?? null,
+      eventData: eventDataValue,
       teamVisibilityIds:
         safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
       assigneeIds: formValues.assigneeIds,
@@ -471,7 +473,8 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         team: formValues.team,
         parent: formValues.parent,
         isEvent: formValues.isEvent,
-        event: formValues.eventData,
+        event: formValues.event ?? null,
+        eventData: formValues.eventData,
         teamVisibilityIds:
           safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
         assigneeIds: formValues.assigneeIds,
@@ -594,7 +597,9 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                         {ISSUE.ISSUE_STATUS.map((status) => (
                           <SelectItem key={status} value={status}>
                             <div className="flex items-center">
-                              <span className="text-sm">{getStatusLabel(status)}</span>
+                              <span className="text-sm">
+                                {getStatusLabel(status)}
+                              </span>
                             </div>
                           </SelectItem>
                         ))}

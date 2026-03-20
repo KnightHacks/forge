@@ -39,6 +39,7 @@ export interface CreateEditDialogProps {
 
 type IssueStatus = (typeof ISSUE_STATUS)[number];
 type IssuePriority = (typeof PRIORITY)[number];
+export type UUID = string;
 
 export interface IssueFormValues {
   status: IssueStatus;
@@ -50,7 +51,8 @@ export interface IssueFormValues {
   team: string;
   parent?: string;
   isEvent: boolean;
-  event?: EventFormValues;
+  event?: UUID | null;
+  eventData?: EventFormValues;
 }
 
 export type IssueSubmitValues = Omit<IssueFormValues, "date"> & {
