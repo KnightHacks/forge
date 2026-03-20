@@ -142,16 +142,16 @@ type CreateEditDialogComponentProps = Omit<
 };
 
 const defaultEventForm = (): ISSUE.EventFormValues => {
-  const now = new Date();
-  const end = new Date(now.getTime() + 60 * 60 * 1000);
+  const start = new Date(Date.now() + 60 * 60 * 1000);
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
   return {
     discordId: "",
     googleId: "",
     name: "",
     tag: EVENTS.EVENT_TAGS[0],
     description: "",
-    startDate: formatDateForInput(now),
-    startTime: formatTimeForInput(now),
+    startDate: formatDateForInput(start),
+    startTime: formatTimeForInput(start),
     endDate: formatDateForInput(end),
     endTime: formatTimeForInput(end),
     location: "",
@@ -289,14 +289,61 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     formValues.eventData?.endDate,
     formValues.eventData?.endTime,
   );
+  const nowTimestamp = Date.now();
+  const isNameValid = formValues.name.trim().length > 0;
+  const isTeamValid = formValues.team.trim().length > 0;
+  const isDescriptionValid = formValues.description.trim().length > 0;
+  const isRolesValid = !rolesError;
+  const isTaskDateValid = !Number.isNaN(formValues.date.getTime());
+
+  const hasEventData = !!formValues.eventData;
+  const hasEventLocation = !!formValues.eventData?.location.trim();
+  const hasEventDescription = !!formValues.eventData?.description.trim();
+  const hasEventStartTime = !!startDateTime;
+  const hasEventEndTime = !!endDateTime;
   const isEventTimingValid =
-    !!startDateTime && !!endDateTime && endDateTime > startDateTime;
+    hasEventStartTime && hasEventEndTime && endDateTime > startDateTime;
+  const isEventStartInFuture =
+    hasEventStartTime && startDateTime.getTime() > nowTimestamp;
+
+  const hasRequiredBaseFields =
+    isNameValid && isTeamValid && isDescriptionValid && isRolesValid;
+  const isTaskValid = isTaskDateValid;
+  const isEventValid =
+    hasEventData &&
+    hasEventLocation &&
+    hasEventDescription &&
+    hasEventStartTime &&
+    hasEventEndTime &&
+    isEventTimingValid &&
+    isEventStartInFuture;
+
   const isSubmitDisabled =
-    !formValues.name.trim() ||
-    !formValues.team.trim() ||
-    !!rolesError ||
-    (formValues.isEvent &&
-      (!isEventTimingValid || !formValues.eventData?.location.trim()));
+    !hasRequiredBaseFields ||
+    (formValues.isEvent ? !isEventValid : !isTaskValid);
+
+  let validationMessage: string | null = null;
+  if (!isNameValid) {
+    validationMessage = "Name is required.";
+  } else if (!isDescriptionValid) {
+    validationMessage = "Description is required.";
+  } else if (!isTeamValid) {
+    validationMessage = "Team is required.";
+  } else if (!isRolesValid) {
+    validationMessage = "Role data failed to load; please retry.";
+  } else if (!formValues.isEvent && !isTaskDateValid) {
+    validationMessage = "Task due date is invalid.";
+  } else if (formValues.isEvent && !hasEventLocation) {
+    validationMessage = "Event location is required.";
+  } else if (formValues.isEvent && !hasEventDescription) {
+    validationMessage = "Event external description is required.";
+  } else if (formValues.isEvent && (!hasEventStartTime || !hasEventEndTime)) {
+    validationMessage = "Event start and end date/time are required.";
+  } else if (formValues.isEvent && !isEventTimingValid) {
+    validationMessage = "Event end time must be after start time.";
+  } else if (formValues.isEvent && !isEventStartInFuture) {
+    validationMessage = "Event start time must be in the future.";
+  }
   const roleIdSet = React.useMemo(
     () => new Set((rolesData ?? []).map((role) => role.id)),
     [rolesData],
@@ -409,6 +456,10 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (isSubmitDisabled) {
+      return;
+    }
+
     const toSubmitValues = (
       date: Date,
       eventDataValue?: ISSUE.EventFormValues,
@@ -443,7 +494,11 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       const startTime = formValues.eventData?.startTime;
       const linkedIssueDate = parseEventDateTime(startDate, startTime);
 
-      if (!linkedIssueDate || !isEventTimingValid) {
+      if (
+        !linkedIssueDate ||
+        !isEventTimingValid ||
+        linkedIssueDate.getTime() <= Date.now()
+      ) {
         return;
       }
 
@@ -1064,6 +1119,11 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
               <footer className="border-t px-6 py-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  {validationMessage && (
+                    <p className="text-sm text-destructive">
+                      {validationMessage}
+                    </p>
+                  )}
                   {intent === "edit" && (
                     <Button
                       type="button"
