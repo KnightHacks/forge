@@ -115,6 +115,10 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
   );
   const buildInitialFormValues = React.useCallback(() => {
     const defaults = defaultForm();
+    const resolvedRoles =
+      (initialValues as Partial<IssueDialogFormValues>)?.roles ??
+      initialValues?.teamVisibilityIds ??
+      defaults.roles;
     if (initialValues?.isEvent) {
       return {
         ...defaults,
@@ -122,9 +126,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
         isEvent: true,
         event: initialValues.event ?? defaultEventForm(),
         links: initialValues?.links ?? defaults.links,
-        roles:
-          (initialValues as Partial<IssueDialogFormValues>)?.roles ??
-          defaults.roles,
+        roles: resolvedRoles,
       };
     }
     return {
@@ -134,9 +136,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
       event: undefined,
       date: normalizeTaskDueDate(initialValues?.date ?? defaults.date),
       links: initialValues?.links ?? defaults.links,
-      roles:
-        (initialValues as Partial<IssueDialogFormValues>)?.roles ??
-        defaults.roles,
+      roles: resolvedRoles,
     };
   }, [initialValues]);
   const [formValues, setFormValues] = React.useState<IssueDialogFormValues>(
