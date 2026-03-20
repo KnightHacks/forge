@@ -7,6 +7,25 @@ export const ISSUE_STATUS = [
 
 export const PRIORITY = ["LOWEST", "LOW", "MEDIUM", "HIGH", "HIGHEST"] as const;
 
+export const STATUS_COLORS: Record<(typeof ISSUE_STATUS)[number], string> = {
+  BACKLOG: "bg-slate-400",
+  PLANNING: "bg-amber-400",
+  IN_PROGRESS: "bg-emerald-400",
+  FINISHED: "bg-rose-400",
+};
+
+export const TASK_DUE_HOURS = 23;
+export const TASK_DUE_MINUTES = 0;
+export const TASK_DUE_TIME = "23:00";
+
+export const EVENT_TIME_HOURS = Array.from({ length: 12 }, (_, i) =>
+  (i + 1).toString().padStart(2, "0"),
+);
+export const EVENT_TIME_MINUTES = Array.from({ length: 12 }, (_, i) =>
+  (i * 5).toString().padStart(2, "0"),
+);
+export const EVENT_TIME_AM_PM_OPTIONS = ["AM", "PM"] as const;
+
 //Dialog
 
 export interface CreateEditDialogProps {
@@ -17,14 +36,6 @@ export interface CreateEditDialogProps {
   onSubmit?: (values: IssueSubmitValues) => void;
   onDelete?: (values: IssueSubmitValues) => void;
 }
-
-export type DetailSectionKey = "details" | "requirements" | "links";
-
-const SECTION_TABS: { key: DetailSectionKey; label: string }[] = [
-  { key: "details", label: "Details" },
-  { key: "requirements", label: "Room & Requirements" },
-  { key: "links", label: "Links & Notes" },
-];
 
 type IssueStatus = (typeof ISSUE_STATUS)[number];
 type IssuePriority = (typeof PRIORITY)[number];
@@ -40,13 +51,6 @@ export interface IssueFormValues {
   parent?: string;
   isEvent: boolean;
   event?: EventFormValues;
-  // Added fields for UI requirements
-  details: string;
-  notes: string;
-  isHackathonCritical: boolean;
-  requiresRoom: boolean;
-  requiresAV: boolean;
-  requiresFood: boolean;
 }
 
 export type IssueSubmitValues = Omit<IssueFormValues, "date"> & {
