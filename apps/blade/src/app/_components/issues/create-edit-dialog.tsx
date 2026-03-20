@@ -24,7 +24,10 @@ import { api } from "~/trpc/react";
 const baseField = "w-full";
 
 function getStatusLabel(status: string) {
-  return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  return status
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function normalizeTaskDueDate(dateValue?: string | Date) {
@@ -234,7 +237,9 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
   const handleClose = React.useCallback(() => {
     if (isControlled) {
-      onOpenChange?.(false);
+      if (onOpenChange) {
+        onOpenChange(false);
+      }
     } else {
       setInternalOpen(false);
     }
@@ -254,7 +259,9 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       onClick: (event: React.MouseEvent) => {
         child.props.onClick?.(event);
         if (isControlled) {
-          onOpenChange(true);
+          if (onOpenChange) {
+            onOpenChange(true);
+          }
         } else {
           setInternalOpen(true);
         }
@@ -577,15 +584,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                         className={cn(baseField, "col-span-3")}
                         aria-label="Issue status"
                       >
-                        <div className="flex flex-1 items-center gap-2 text-left">
-                          <span
-                            className={cn(
-                              "size-2 rounded-full",
-                              ISSUE.STATUS_COLORS[formValues.status] ||
-                                "bg-slate-400",
-                            )}
-                          />
-
+                        <div className="flex flex-1 items-center text-left">
                           <span className="text-sm font-medium">
                             {getStatusLabel(formValues.status)}
                           </span>
@@ -594,16 +593,8 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                       <SelectContent>
                         {ISSUE.ISSUE_STATUS.map((status) => (
                           <SelectItem key={status} value={status}>
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={cn(
-                                  "size-2 rounded-full",
-                                  ISSUE.STATUS_COLORS[status] || "bg-slate-400",
-                                )}
-                              />
-                              <span className="text-sm">
-                                {getStatusLabel(status)}
-                              </span>
+                            <div className="flex items-center">
+                              <span className="text-sm">{getStatusLabel(status)}</span>
                             </div>
                           </SelectItem>
                         ))}
