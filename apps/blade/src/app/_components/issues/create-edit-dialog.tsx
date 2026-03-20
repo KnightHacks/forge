@@ -37,14 +37,6 @@ function getStatusLabel(status: string) {
 const TASK_DUE_HOURS = 23;
 const TASK_DUE_MINUTES = 0;
 const TASK_DUE_TIME = "23:00";
-const DEFAULT_LEGACY_FIELDS = {
-  details: "",
-  notes: "",
-  isHackathonCritical: false,
-  requiresRoom: false,
-  requiresAV: false,
-  requiresFood: false,
-} as const;
 
 // Copied from create-event to keep time UX aligned.
 const hours = Array.from({ length: 12 }, (_, i) =>
@@ -438,7 +430,6 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       parent: formValues.parent,
       isEvent: formValues.isEvent,
       event: eventValue,
-      ...DEFAULT_LEGACY_FIELDS,
       teamVisibilityIds:
         safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
       assigneeIds: formValues.assigneeIds,
@@ -488,7 +479,6 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         parent: formValues.parent,
         isEvent: formValues.isEvent,
         event: formValues.eventData,
-        ...DEFAULT_LEGACY_FIELDS,
         teamVisibilityIds:
           safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
         assigneeIds: formValues.assigneeIds,
