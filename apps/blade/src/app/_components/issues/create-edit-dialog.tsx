@@ -321,29 +321,6 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const isSubmitDisabled =
     !hasRequiredBaseFields ||
     (formValues.isEvent ? !isEventValid : !isTaskValid);
-
-  let validationMessage: string | null = null;
-  if (!isNameValid) {
-    validationMessage = "Name is required.";
-  } else if (!isDescriptionValid) {
-    validationMessage = "Description is required.";
-  } else if (!isTeamValid) {
-    validationMessage = "Team is required.";
-  } else if (!isRolesValid) {
-    validationMessage = "Role data failed to load; please retry.";
-  } else if (!formValues.isEvent && !isTaskDateValid) {
-    validationMessage = "Task due date is invalid.";
-  } else if (formValues.isEvent && !hasEventLocation) {
-    validationMessage = "Event location is required.";
-  } else if (formValues.isEvent && !hasEventDescription) {
-    validationMessage = "Event external description is required.";
-  } else if (formValues.isEvent && (!hasEventStartTime || !hasEventEndTime)) {
-    validationMessage = "Event start and end date/time are required.";
-  } else if (formValues.isEvent && !isEventTimingValid) {
-    validationMessage = "Event end time must be after start time.";
-  } else if (formValues.isEvent && !isEventStartInFuture) {
-    validationMessage = "Event start time must be in the future.";
-  }
   const roleIdSet = React.useMemo(
     () => new Set((rolesData ?? []).map((role) => role.id)),
     [rolesData],
@@ -428,12 +405,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   }, [handleClose, isOpen]);
 
   React.useEffect(() => {
-    if (
-      !isOpen ||
-      formValues.isEvent ||
-      formValues.team ||
-      !rolesData?.length
-    ) {
+    if (!isOpen || formValues.team || !rolesData?.length) {
       return;
     }
 
@@ -443,7 +415,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     }
 
     updateForm("team", firstRole.id);
-  }, [formValues.isEvent, formValues.team, isOpen, rolesData]);
+  }, [formValues.team, isOpen, rolesData]);
 
   const handleOverlayPointerDown = (
     event: React.MouseEvent<HTMLDivElement>,
@@ -621,9 +593,6 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                           }));
                         }}
                       />
-                      <span className="text-sm text-muted-foreground">
-                        Enable event fields for this issue
-                      </span>
                     </div>
                   </div>
 
@@ -642,11 +611,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                         className={cn(baseField, "col-span-3")}
                         aria-label="Issue status"
                       >
-                        <div className="flex flex-1 items-center text-left">
-                          <span className="text-sm font-medium">
-                            {getStatusLabel(formValues.status)}
-                          </span>
-                        </div>
+                        <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
                         {ISSUE.ISSUE_STATUS.map((status) => (
@@ -1119,11 +1084,6 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
               <footer className="border-t px-6 py-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  {validationMessage && (
-                    <p className="text-sm text-destructive">
-                      {validationMessage}
-                    </p>
-                  )}
                   {intent === "edit" && (
                     <Button
                       type="button"
