@@ -12,10 +12,10 @@ export const PRIORITY = ["LOWEST", "LOW", "MEDIUM", "HIGH", "HIGHEST"] as const;
 export interface CreateEditDialogProps {
   open: boolean;
   intent?: "create" | "edit";
-  initialValues?: Partial<IssueFormValues>;
+  initialValues?: Partial<IssueSubmitValues>;
   onClose?: () => void;
-  onSubmit?: (values: IssueFormValues) => void;
-  onDelete?: (values: IssueFormValues) => void;
+  onSubmit?: (values: IssueSubmitValues) => void;
+  onDelete?: (values: IssueSubmitValues) => void;
 }
 
 export type DetailSectionKey = "details" | "requirements" | "links";
@@ -48,6 +48,13 @@ export interface IssueFormValues {
   requiresAV: boolean;
   requiresFood: boolean;
 }
+
+export type IssueSubmitValues = Omit<IssueFormValues, "date"> & {
+  id?: string;
+  date: string | Date;
+  teamVisibilityIds?: string[];
+  assigneeIds?: string[];
+};
 
 export interface EventFormValues {
   discordId: string;
