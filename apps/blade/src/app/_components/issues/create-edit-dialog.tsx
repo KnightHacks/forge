@@ -4,7 +4,7 @@ import * as React from "react";
 import { Trash2, X } from "lucide-react";
 import { createPortal } from "react-dom";
 
-import { ISSUE } from "@forge/consts";
+import { EVENTS, ISSUE } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -38,20 +38,92 @@ const TASK_DUE_HOURS = 23;
 const TASK_DUE_MINUTES = 0;
 const TASK_DUE_TIME = "23:00";
 
+// Copied from create-event to keep time UX aligned.
+const hours = Array.from({ length: 12 }, (_, i) =>
+  (i + 1).toString().padStart(2, "0"),
+);
+const minutes = Array.from({ length: 12 }, (_, i) =>
+  (i * 5).toString().padStart(2, "0"),
+);
+const amPmOptions = ["AM", "PM"] as const;
+
 function normalizeTaskDueDate(dateValue?: string | Date) {
   const dueDate = dateValue ? new Date(dateValue) : new Date();
   if (Number.isNaN(dueDate.getTime())) {
     const fallback = new Date();
     fallback.setHours(TASK_DUE_HOURS, TASK_DUE_MINUTES, 0, 0);
-    return fallback.toISOString();
+    return fallback;
   }
 
   dueDate.setHours(TASK_DUE_HOURS, TASK_DUE_MINUTES, 0, 0);
-  return dueDate.toISOString();
+  return dueDate;
 }
 
-function getTaskDueDateInputValue(dateValue: string | Date) {
-  return normalizeTaskDueDate(dateValue).slice(0, 10);
+function getTaskDueDateInputValue(dateValue: Date) {
+  return normalizeTaskDueDate(dateValue).toISOString().slice(0, 10);
+}
+
+function parseTimeTo12h(timeValue?: string): {
+  hour: string;
+  minute: string;
+  amPm: (typeof amPmOptions)[number];
+} {
+  const [hRaw, mRaw] = (timeValue ?? "").split(":");
+  const h = Number(hRaw);
+  const m = Number(mRaw);
+
+  if (Number.isNaN(h) || Number.isNaN(m)) {
+    return {
+      hour: "",
+      minute: "",
+      amPm: "PM" as (typeof amPmOptions)[number],
+    };
+  }
+
+  const amPm: (typeof amPmOptions)[number] = h >= 12 ? "PM" : "AM";
+  const hour24 = h % 12 || 12;
+  return {
+    hour: hour24.toString().padStart(2, "0"),
+    minute: m.toString().padStart(2, "0"),
+    amPm,
+  };
+}
+
+function to24h(hour12: string, amPm: (typeof amPmOptions)[number]) {
+  let h = Number(hour12);
+  if (Number.isNaN(h)) {
+    h = 0;
+  }
+  if (amPm === "PM" && h < 12) {
+    h += 12;
+  }
+  if (amPm === "AM" && h === 12) {
+    h = 0;
+  }
+  return h.toString().padStart(2, "0");
+}
+
+function toAmPmValue(value: string): (typeof amPmOptions)[number] {
+  return value === "AM" ? "AM" : "PM";
+}
+
+function parseEventDateTime(dateValue?: string, timeValue?: string) {
+  if (!dateValue || !timeValue) {
+    return null;
+  }
+
+  const [year, month, day] = dateValue.split("-").map(Number);
+  const [hour, minute] = timeValue.split(":").map(Number);
+  if (!year || !month || !day || Number.isNaN(hour) || Number.isNaN(minute)) {
+    return null;
+  }
+
+  const parsed = new Date(year, month - 1, day, hour, minute, 0, 0);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed;
 }
 
 type IssueDialogFormValues = ISSUE.IssueSubmitValues & { roles: string[] };
@@ -63,7 +135,7 @@ const defaultEventForm = (): ISSUE.EventFormValues => {
     discordId: "",
     googleId: "",
     name: "",
-    tag: "",
+    tag: EVENTS.EVENT_TAGS[0],
     description: "",
     startDate: formatDateForInput(now),
     startTime: formatTimeForInput(now),
@@ -87,14 +159,7 @@ const defaultForm = (): IssueDialogFormValues => {
     team: "",
     parent: undefined,
     isEvent: false,
-    event: undefined,
-    //ui
-    details: "",
-    notes: "",
-    isHackathonCritical: false,
-    requiresRoom: false,
-    requiresAV: false,
-    requiresFood: false,
+    eventData: undefined,
     roles: [],
   };
 };
@@ -109,12 +174,17 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
     onSubmit,
   } = props;
   const rolesQuery = api.roles.getAllLinks.useQuery();
+  const hackathonsQuery = api.hackathon.getHackathons.useQuery();
   const rolesData = rolesQuery.data;
+  const hackathons = hackathonsQuery.data;
   const [portalElement, setPortalElement] = React.useState<Element | null>(
     null,
   );
   const buildInitialFormValues = React.useCallback(() => {
     const defaults = defaultForm();
+    const legacyEvent = (initialValues as { event?: ISSUE.EventFormValues })
+      ?.event;
+    const resolvedEventData = initialValues?.eventData ?? legacyEvent;
     const resolvedRoles =
       (initialValues as Partial<IssueDialogFormValues>)?.roles ??
       initialValues?.teamVisibilityIds ??
@@ -124,8 +194,9 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
         ...defaults,
         ...initialValues,
         isEvent: true,
-        event: initialValues.event ?? defaultEventForm(),
+        eventData: resolvedEventData ?? defaultEventForm(),
         links: initialValues?.links ?? defaults.links,
+        date: normalizeTaskDueDate(initialValues?.date ?? defaults.date),
         roles: resolvedRoles,
       };
     }
@@ -133,7 +204,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
       ...defaults,
       ...initialValues,
       isEvent: false,
-      event: undefined,
+      eventData: undefined,
       date: normalizeTaskDueDate(initialValues?.date ?? defaults.date),
       links: initialValues?.links ?? defaults.links,
       roles: resolvedRoles,
@@ -143,23 +214,59 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
     buildInitialFormValues,
   );
   const baseId = React.useId();
+  const startDateTime = parseEventDateTime(
+    formValues.eventData?.startDate,
+    formValues.eventData?.startTime,
+  );
+  const endDateTime = parseEventDateTime(
+    formValues.eventData?.endDate,
+    formValues.eventData?.endTime,
+  );
+  const isEventTimingValid =
+    !!startDateTime && !!endDateTime && endDateTime > startDateTime;
   const isSubmitDisabled =
-    !(
-      formValues.isEvent ? formValues.event?.name : formValues.name
-    )?.trim() || (!formValues.isEvent && !formValues.team.trim());
+    !formValues.name.trim() ||
+    !formValues.team.trim() ||
+    (formValues.isEvent &&
+      (!isEventTimingValid || !formValues.eventData?.location?.trim()));
 
   // Helper for event form
-  const updateEventForm = <K extends keyof ISSUE.EventFormValues>(
+  const updateEventData = <K extends keyof ISSUE.EventFormValues>(
     key: K,
     value: ISSUE.EventFormValues[K],
   ) => {
     setFormValues((previous) => ({
       ...previous,
-      event: {
-        ...(previous.event ?? defaultEventForm()),
+      eventData: {
+        ...(previous.eventData ?? defaultEventForm()),
         [key]: value,
       },
     }));
+  };
+
+  const updateEventTimePart = (
+    which: "start" | "end",
+    part: "hour" | "minute" | "amPm",
+    value: string,
+  ) => {
+    const key = which === "start" ? "startTime" : "endTime";
+    const parsed = parseTimeTo12h(formValues.eventData?.[key]);
+    const next: {
+      hour: string;
+      minute: string;
+      amPm: (typeof amPmOptions)[number];
+    } = {
+      hour: part === "hour" ? value : parsed.hour,
+      minute: part === "minute" ? value : parsed.minute,
+      amPm: part === "amPm" ? toAmPmValue(value) : parsed.amPm,
+    };
+
+    if (!next.hour || !next.minute) {
+      updateEventData(key, "");
+      return;
+    }
+
+    updateEventData(key, `${to24h(next.hour, next.amPm)}:${next.minute}`);
   };
 
   React.useEffect(() => {
@@ -230,12 +337,30 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
       onSubmit?.({
         ...formValues,
         description: formValues.description.trim(),
-        event: undefined,
-        date: new Date(normalizeTaskDueDate(formValues.date)),
+        eventData: undefined,
+        date: normalizeTaskDueDate(formValues.date),
         teamVisibilityIds: formValues.roles,
       });
     } else {
-      onSubmit?.(formValues);
+      const startDate = formValues.eventData?.startDate;
+      const startTime = formValues.eventData?.startTime;
+      const linkedIssueDate = parseEventDateTime(startDate, startTime);
+
+      if (!linkedIssueDate || !isEventTimingValid) {
+        return;
+      }
+
+      onSubmit?.({
+        ...formValues,
+        description: formValues.description.trim(),
+        date: linkedIssueDate,
+        eventData: {
+          ...(formValues.eventData ?? defaultEventForm()),
+          name: formValues.name.trim(),
+          description: (formValues.eventData?.description ?? "").trim(),
+        },
+        teamVisibilityIds: formValues.roles,
+      });
     }
   };
 
@@ -294,18 +419,8 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
 
               <Input
                 className={cn(baseField, "col-span-3")}
-                value={
-                  formValues.isEvent
-                    ? (formValues.event?.name ?? "")
-                    : formValues.name
-                }
-                onChange={(event) => {
-                  if (formValues.isEvent) {
-                    updateEventForm("name", event.target.value);
-                  } else {
-                    updateForm("name", event.target.value);
-                  }
-                }}
+                value={formValues.name}
+                onChange={(event) => updateForm("name", event.target.value)}
               />
             </div>
 
@@ -314,10 +429,26 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
               <div className="col-span-3 flex items-center space-x-2">
                 <Checkbox
                   checked={formValues.isEvent}
-                  onCheckedChange={() => undefined}
+                  onCheckedChange={(checked) => {
+                    const nextIsEvent = checked === true;
+                    if (nextIsEvent) {
+                      setFormValues((previous) => ({
+                        ...previous,
+                        isEvent: true,
+                        eventData: previous.eventData ?? defaultEventForm(),
+                      }));
+                      return;
+                    }
+
+                    setFormValues((previous) => ({
+                      ...previous,
+                      isEvent: false,
+                      eventData: undefined,
+                    }));
+                  }}
                 />
                 <span className="text-sm text-muted-foreground">
-                  Placeholder toggle (no behavior yet)
+                  Enable event fields for this issue
                 </span>
               </div>
             </div>
@@ -372,94 +503,243 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
 
             {/* Date/Time fields */}
             {formValues.isEvent ? (
-              <div className="grid gap-4 rounded-md border p-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor={`${baseId}-event-start-date`}
-                      className="text-sm"
-                    >
-                      Start Date
-                    </Label>
-                    <Input
-                      id={`${baseId}-event-start-date`}
-                      type="date"
-                      className={baseField}
-                      value={formValues.event?.startDate ?? ""}
-                      onChange={(e) =>
-                        updateEventForm("startDate", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor={`${baseId}-event-start-time`}
-                      className="text-sm"
-                    >
-                      Start Time
-                    </Label>
-                    <Input
-                      id={`${baseId}-event-start-time`}
-                      type="time"
-                      className={baseField}
-                      value={formValues.event?.startTime ?? ""}
-                      onChange={(e) =>
-                        updateEventForm("startTime", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor={`${baseId}-event-end-date`}
-                      className="text-sm"
-                    >
-                      End Date
-                    </Label>
-                    <Input
-                      id={`${baseId}-event-end-date`}
-                      type="date"
-                      className={baseField}
-                      value={formValues.event?.endDate ?? ""}
-                      onChange={(e) =>
-                        updateEventForm("endDate", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor={`${baseId}-event-end-time`}
-                      className="text-sm"
-                    >
-                      End Time
-                    </Label>
-                    <Input
-                      id={`${baseId}-event-end-time`}
-                      type="time"
-                      className={baseField}
-                      value={formValues.event?.endTime ?? ""}
-                      onChange={(e) =>
-                        updateEventForm("endTime", e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label
-                    htmlFor={`${baseId}-event-location`}
-                    className="text-sm"
+              <>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Tag</Label>
+                  <Select
+                    value={formValues.eventData?.tag ?? EVENTS.EVENT_TAGS[0]}
+                    onValueChange={(value) => updateEventData("tag", value)}
                   >
-                    Location
+                    <SelectTrigger
+                      className={cn(baseField, "col-span-3")}
+                      aria-label="Event tag"
+                    >
+                      <SelectValue placeholder="Select a tag" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EVENTS.EVENT_TAGS.map((tagOption) => (
+                        <SelectItem key={tagOption} value={tagOption}>
+                          {tagOption}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Hackathon</Label>
+                  <Select
+                    value={formValues.eventData?.hackathonId ?? "none"}
+                    onValueChange={(value) =>
+                      updateEventData(
+                        "hackathonId",
+                        value === "none" ? undefined : value,
+                      )
+                    }
+                  >
+                    <SelectTrigger
+                      className={cn(baseField, "col-span-3")}
+                      aria-label="Hackathon"
+                    >
+                      <SelectValue placeholder="Select a hackathon" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {hackathons?.map((h) => (
+                        <SelectItem key={h.id} value={h.id}>
+                          {h.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label
+                    htmlFor={`${baseId}-event-start-date`}
+                    className="text-right"
+                  >
+                    Start Date
                   </Label>
                   <Input
-                    id={`${baseId}-event-location`}
-                    className={baseField}
-                    value={formValues.event?.location ?? ""}
+                    id={`${baseId}-event-start-date`}
+                    type="date"
+                    className={cn(baseField, "col-span-3")}
+                    value={formValues.eventData?.startDate ?? ""}
                     onChange={(e) =>
-                      updateEventForm("location", e.target.value)
+                      updateEventData("startDate", e.target.value)
                     }
                   />
                 </div>
-              </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Start Time</Label>
+                  <div className="col-span-3 flex items-center space-x-2">
+                    <Select
+                      value={parseTimeTo12h(formValues.eventData?.startTime).hour}
+                      onValueChange={(value) =>
+                        updateEventTimePart("start", "hour", value)
+                      }
+                    >
+                      <SelectTrigger className="w-[80px]">
+                        <SelectValue placeholder="HH" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hours.map((h) => (
+                          <SelectItem key={h} value={h}>
+                            {h}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <span>:</span>
+
+                    <Select
+                      value={parseTimeTo12h(formValues.eventData?.startTime).minute}
+                      onValueChange={(value) =>
+                        updateEventTimePart("start", "minute", value)
+                      }
+                    >
+                      <SelectTrigger className="w-[80px]">
+                        <SelectValue placeholder="MM" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {minutes.map((m) => (
+                          <SelectItem key={m} value={m}>
+                            {m}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={parseTimeTo12h(formValues.eventData?.startTime).amPm}
+                      onValueChange={(value) =>
+                        updateEventTimePart("start", "amPm", value)
+                      }
+                    >
+                      <SelectTrigger className="w-[80px]">
+                        <SelectValue placeholder="AM/PM" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {amPmOptions.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label
+                    htmlFor={`${baseId}-event-end-date`}
+                    className="text-right"
+                  >
+                    End Date
+                  </Label>
+                  <Input
+                    id={`${baseId}-event-end-date`}
+                    type="date"
+                    className={cn(baseField, "col-span-3")}
+                    value={formValues.eventData?.endDate ?? ""}
+                    onChange={(e) => updateEventData("endDate", e.target.value)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">End Time</Label>
+                  <div className="col-span-3 flex items-center space-x-2">
+                    <Select
+                      value={parseTimeTo12h(formValues.eventData?.endTime).hour}
+                      onValueChange={(value) =>
+                        updateEventTimePart("end", "hour", value)
+                      }
+                    >
+                      <SelectTrigger className="w-[80px]">
+                        <SelectValue placeholder="HH" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hours.map((h) => (
+                          <SelectItem key={h} value={h}>
+                            {h}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <span>:</span>
+
+                    <Select
+                      value={parseTimeTo12h(formValues.eventData?.endTime).minute}
+                      onValueChange={(value) =>
+                        updateEventTimePart("end", "minute", value)
+                      }
+                    >
+                      <SelectTrigger className="w-[80px]">
+                        <SelectValue placeholder="MM" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {minutes.map((m) => (
+                          <SelectItem key={m} value={m}>
+                            {m}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={parseTimeTo12h(formValues.eventData?.endTime).amPm}
+                      onValueChange={(value) =>
+                        updateEventTimePart("end", "amPm", value)
+                      }
+                    >
+                      <SelectTrigger className="w-[80px]">
+                        <SelectValue placeholder="AM/PM" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {amPmOptions.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label
+                    htmlFor={`${baseId}-event-location`}
+                    className="text-right"
+                  >
+                    Room
+                  </Label>
+                  <Input
+                    id={`${baseId}-event-location`}
+                    className={cn(baseField, "col-span-3")}
+                    placeholder="Enter room"
+                    value={formValues.eventData?.location ?? ""}
+                    onChange={(e) =>
+                      updateEventData("location", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Dues Paying?</Label>
+                  <div className="col-span-3 flex items-center">
+                    <Checkbox
+                      checked={formValues.eventData?.dues_paying ?? false}
+                      onCheckedChange={(checked) =>
+                        updateEventData("dues_paying", checked === true)
+                      }
+                    />
+                  </div>
+                </div>
+              </>
             ) : (
               <>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -550,13 +830,13 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
 
             <div className="grid grid-cols-4 items-start gap-4">
               <Label
-                htmlFor={`${baseId}-description`}
+                htmlFor={`${baseId}-internal-description`}
                 className="pt-2 text-right"
               >
-                Description
+                {formValues.isEvent ? "Internal Description" : "Description"}
               </Label>
               <Textarea
-                id={`${baseId}-description`}
+                id={`${baseId}-internal-description`}
                 className={cn(
                   baseField,
                   "col-span-3 min-h-[140px] resize-none",
@@ -568,6 +848,29 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 }
               />
             </div>
+
+            {formValues.isEvent && (
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label
+                  htmlFor={`${baseId}-external-description`}
+                  className="pt-2 text-right"
+                >
+                  External Description
+                </Label>
+                <Textarea
+                  id={`${baseId}-external-description`}
+                  className={cn(
+                    baseField,
+                    "col-span-3 min-h-[140px] resize-none",
+                  )}
+                  placeholder="Public-facing event description..."
+                  value={formValues.eventData?.description ?? ""}
+                  onChange={(event) =>
+                    updateEventData("description", event.target.value)
+                  }
+                />
+              </div>
+            )}
 
             {/* Visible To Roles */}
             <div className="grid grid-cols-4 items-start gap-4">
