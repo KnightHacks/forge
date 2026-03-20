@@ -34,7 +34,27 @@ function getStatusLabel(status: string) {
   return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
-type IssueDialogFormValues = ISSUE.IssueFormValues & { roles: string[] };
+const TASK_DUE_HOURS = 23;
+const TASK_DUE_MINUTES = 0;
+const TASK_DUE_TIME = "23:00";
+
+function normalizeTaskDueDate(dateValue?: string | Date) {
+  const dueDate = dateValue ? new Date(dateValue) : new Date();
+  if (Number.isNaN(dueDate.getTime())) {
+    const fallback = new Date();
+    fallback.setHours(TASK_DUE_HOURS, TASK_DUE_MINUTES, 0, 0);
+    return fallback.toISOString();
+  }
+
+  dueDate.setHours(TASK_DUE_HOURS, TASK_DUE_MINUTES, 0, 0);
+  return dueDate.toISOString();
+}
+
+function getTaskDueDateInputValue(dateValue: string | Date) {
+  return normalizeTaskDueDate(dateValue).slice(0, 10);
+}
+
+type IssueDialogFormValues = ISSUE.IssueSubmitValues & { roles: string[] };
 
 const defaultEventForm = (): ISSUE.EventFormValues => {
   const now = new Date();
@@ -57,16 +77,12 @@ const defaultEventForm = (): ISSUE.EventFormValues => {
 };
 
 const defaultForm = (): IssueDialogFormValues => {
-  const now = new Date();
-  // Default due date for tasks is today at 11:00 PM
-  const dueDate = new Date(now);
-  dueDate.setHours(23, 0, 0, 0);
   return {
     status: ISSUE.ISSUE_STATUS[0],
     name: "",
     description: "",
     links: [],
-    date: dueDate.toISOString(),
+    date: normalizeTaskDueDate(),
     priority: ISSUE.PRIORITY[0],
     team: "",
     parent: undefined,
@@ -106,7 +122,8 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
         isEvent: true,
         event: initialValues.event ?? defaultEventForm(),
         links: initialValues?.links ?? defaults.links,
-        roles: (initialValues as Partial<IssueDialogFormValues>)?.roles ??
+        roles:
+          (initialValues as Partial<IssueDialogFormValues>)?.roles ??
           defaults.roles,
       };
     }
@@ -115,8 +132,10 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
       ...initialValues,
       isEvent: false,
       event: undefined,
+      date: normalizeTaskDueDate(initialValues?.date ?? defaults.date),
       links: initialValues?.links ?? defaults.links,
-      roles: (initialValues as Partial<IssueDialogFormValues>)?.roles ??
+      roles:
+        (initialValues as Partial<IssueDialogFormValues>)?.roles ??
         defaults.roles,
     };
   }, [initialValues]);
@@ -124,9 +143,10 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
     buildInitialFormValues,
   );
   const baseId = React.useId();
-  const isSubmitDisabled = !(
-    formValues.isEvent ? formValues.event?.name : formValues.name
-  )?.trim();
+  const isSubmitDisabled =
+    !(
+      formValues.isEvent ? formValues.event?.name : formValues.name
+    )?.trim() || (!formValues.isEvent && !formValues.team.trim());
 
   // Helper for event form
   const updateEventForm = <K extends keyof ISSUE.EventFormValues>(
@@ -177,6 +197,14 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
     };
   }, [open, onClose]);
 
+  React.useEffect(() => {
+    if (!open || formValues.isEvent || formValues.team || !rolesData?.length) {
+      return;
+    }
+
+    updateForm("team", rolesData[0]!.id);
+  }, [formValues.isEvent, formValues.team, open, rolesData]);
+
   const handleOverlayPointerDown = (
     event: React.MouseEvent<HTMLDivElement>,
   ) => {
@@ -185,9 +213,9 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
     }
   };
 
-  const updateForm = <K extends keyof ISSUE.IssueFormValues>(
+  const updateForm = <K extends keyof IssueDialogFormValues>(
     key: K,
-    value: ISSUE.IssueFormValues[K],
+    value: IssueDialogFormValues[K],
   ) => {
     setFormValues((previous) => ({
       ...previous,
@@ -199,7 +227,13 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
     event.preventDefault();
     // If not event, clear event field
     if (!formValues.isEvent) {
-      onSubmit?.({ ...formValues, event: undefined });
+      onSubmit?.({
+        ...formValues,
+        description: formValues.description.trim(),
+        event: undefined,
+        date: new Date(normalizeTaskDueDate(formValues.date)),
+        teamVisibilityIds: formValues.roles,
+      });
     } else {
       onSubmit?.(formValues);
     }
@@ -427,26 +461,42 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label
-                  htmlFor={`${baseId}-task-due-date`}
-                  className="text-right"
-                >
-                  Due Date
-                </Label>
-                <Input
-                  id={`${baseId}-task-due-date`}
-                  type="date"
-                  className={cn(baseField, "col-span-3")}
-                  value={formValues.date.slice(0, 10)}
-                  onChange={(e) => {
-                    // Always set to 11:00 PM
-                    const d = new Date(e.target.value);
-                    d.setHours(23, 0, 0, 0);
-                    updateForm("date", d.toISOString());
-                  }}
-                />
-              </div>
+              <>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label
+                    htmlFor={`${baseId}-task-due-date`}
+                    className="text-right"
+                  >
+                    Due Date
+                  </Label>
+                  <Input
+                    id={`${baseId}-task-due-date`}
+                    type="date"
+                    className={cn(baseField, "col-span-3")}
+                    value={getTaskDueDateInputValue(formValues.date)}
+                    onChange={(e) =>
+                      updateForm("date", normalizeTaskDueDate(e.target.value))
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label
+                    htmlFor={`${baseId}-task-due-time`}
+                    className="text-right"
+                  >
+                    Due Time
+                  </Label>
+                  <Input
+                    id={`${baseId}-task-due-time`}
+                    type="time"
+                    className={cn(baseField, "col-span-3")}
+                    value={TASK_DUE_TIME}
+                    readOnly
+                    disabled
+                  />
+                </div>
+              </>
             )}
 
             <div className="grid grid-cols-4 items-center gap-4">
@@ -468,7 +518,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {ISSUE.PRIORITY.map((priority) => (
-                    <SelectItem key={priority} value={priority.toLowerCase()}>
+                    <SelectItem key={priority} value={priority}>
                       {priority}
                     </SelectItem>
                   ))}
@@ -476,19 +526,46 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
               </Select>
             </div>
 
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Team</Label>
+              <Select
+                value={formValues.team}
+                onValueChange={(value) => updateForm("team", value)}
+              >
+                <SelectTrigger
+                  className={cn(baseField, "col-span-3")}
+                  aria-label="Team"
+                >
+                  <SelectValue placeholder="Select team" />
+                </SelectTrigger>
+                <SelectContent>
+                  {rolesData?.map((role) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-4 items-start gap-4">
-              <Label htmlFor={`${baseId}-details`} className="pt-2 text-right">
+              <Label
+                htmlFor={`${baseId}-description`}
+                className="pt-2 text-right"
+              >
                 Description
               </Label>
               <Textarea
-                id={`${baseId}-details`}
+                id={`${baseId}-description`}
                 className={cn(
                   baseField,
                   "col-span-3 min-h-[140px] resize-none",
                 )}
                 placeholder="Description..."
-                value={formValues.details}
-                onChange={(event) => updateForm("details", event.target.value)}
+                value={formValues.description}
+                onChange={(event) =>
+                  updateForm("description", event.target.value)
+                }
               />
             </div>
 
@@ -559,7 +636,11 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 className="w-full disabled:opacity-40 sm:w-auto"
                 disabled={isSubmitDisabled}
               >
-                {intent === "edit" ? "Update Event" : "Create Issue"}
+                {intent === "edit"
+                  ? formValues.isEvent
+                    ? "Update Event"
+                    : "Update Issue"
+                  : "Create Issue"}
               </Button>
             </div>
           </div>
