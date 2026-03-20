@@ -126,7 +126,33 @@ function parseEventDateTime(dateValue?: string, timeValue?: string) {
   return parsed;
 }
 
-type IssueDialogFormValues = ISSUE.IssueSubmitValues & { roles: string[] };
+type IssueDialogFormValues = {
+  id?: string;
+  status: (typeof ISSUE.ISSUE_STATUS)[number];
+  name: string;
+  description: string;
+  links: string[];
+  date: Date;
+  priority: (typeof ISSUE.PRIORITY)[number];
+  team: string;
+  parent?: string;
+  isEvent: boolean;
+  eventData?: ISSUE.EventFormValues;
+  details: string;
+  notes: string;
+  isHackathonCritical: boolean;
+  requiresRoom: boolean;
+  requiresAV: boolean;
+  requiresFood: boolean;
+  teamVisibilityIds?: string[];
+  assigneeIds?: string[];
+  roles: string[];
+};
+type CreateEditDialogComponentProps = Omit<ISSUE.CreateEditDialogProps, "open"> & {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children?: React.ReactNode;
+};
 
 const defaultEventForm = (): ISSUE.EventFormValues => {
   const now = new Date();
@@ -160,19 +186,30 @@ const defaultForm = (): IssueDialogFormValues => {
     parent: undefined,
     isEvent: false,
     eventData: undefined,
+    details: "",
+    notes: "",
+    isHackathonCritical: false,
+    requiresRoom: false,
+    requiresAV: false,
+    requiresFood: false,
     roles: [],
   };
 };
 
-export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
+export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const {
     open,
+    onOpenChange,
     intent = "create",
     initialValues,
     onClose,
     onDelete,
     onSubmit,
+    children,
   } = props;
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
   const rolesQuery = api.roles.getAllLinks.useQuery();
   const hackathonsQuery = api.hackathon.getHackathons.useQuery();
   const rolesData = rolesQuery.data;
@@ -182,11 +219,16 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
   );
   const buildInitialFormValues = React.useCallback(() => {
     const defaults = defaultForm();
-    const legacyEvent = (initialValues as { event?: ISSUE.EventFormValues })
-      ?.event;
-    const resolvedEventData = initialValues?.eventData ?? legacyEvent;
+    const extendedInitialValues = initialValues as
+      | (Partial<IssueDialogFormValues> & {
+          eventData?: ISSUE.EventFormValues;
+          event?: ISSUE.EventFormValues;
+        })
+      | undefined;
+    const resolvedEventData =
+      extendedInitialValues?.eventData ?? extendedInitialValues?.event;
     const resolvedRoles =
-      (initialValues as Partial<IssueDialogFormValues>)?.roles ??
+      extendedInitialValues?.roles ??
       initialValues?.teamVisibilityIds ??
       defaults.roles;
     if (initialValues?.isEvent) {
@@ -213,6 +255,37 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
   const [formValues, setFormValues] = React.useState<IssueDialogFormValues>(
     buildInitialFormValues,
   );
+
+  const handleClose = React.useCallback(() => {
+    if (isControlled) {
+      onOpenChange?.(false);
+    } else {
+      setInternalOpen(false);
+    }
+    onClose?.();
+  }, [isControlled, onClose, onOpenChange]);
+
+  const trigger = React.useMemo(() => {
+    if (!children || !React.isValidElement(children)) {
+      return null;
+    }
+
+    const child = children as React.ReactElement<{
+      onClick?: (event: React.MouseEvent) => void;
+    }>;
+
+    return React.cloneElement(child, {
+      onClick: (event: React.MouseEvent) => {
+        child.props?.onClick?.(event);
+        if (isControlled) {
+          onOpenChange?.(true);
+        } else {
+          setInternalOpen(true);
+        }
+      },
+    });
+  }, [children, isControlled, onOpenChange]);
+
   const baseId = React.useId();
   const startDateTime = parseEventDateTime(
     formValues.eventData?.startDate,
@@ -274,15 +347,15 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
   }, []);
 
   React.useEffect(() => {
-    if (!open) {
+    if (!isOpen) {
       return;
     }
 
     setFormValues(buildInitialFormValues());
-  }, [buildInitialFormValues, open]);
+  }, [buildInitialFormValues, isOpen]);
 
   React.useEffect(() => {
-    if (!open) {
+    if (!isOpen) {
       return;
     }
 
@@ -292,7 +365,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
     const handleKeydown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose?.();
+        handleClose();
       }
     };
 
@@ -302,21 +375,21 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeydown);
     };
-  }, [open, onClose]);
+  }, [handleClose, isOpen]);
 
   React.useEffect(() => {
-    if (!open || formValues.isEvent || formValues.team || !rolesData?.length) {
+    if (!isOpen || formValues.isEvent || formValues.team || !rolesData?.length) {
       return;
     }
 
     updateForm("team", rolesData[0]!.id);
-  }, [formValues.isEvent, formValues.team, open, rolesData]);
+  }, [formValues.isEvent, formValues.team, isOpen, rolesData]);
 
   const handleOverlayPointerDown = (
     event: React.MouseEvent<HTMLDivElement>,
   ) => {
     if (event.target === event.currentTarget) {
-      onClose?.();
+      handleClose();
     }
   };
 
@@ -332,15 +405,38 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    const toSubmitValues = (
+      date: Date,
+      eventValue?: ISSUE.EventFormValues,
+    ): ISSUE.IssueSubmitValues => ({
+      id: formValues.id,
+      status: formValues.status,
+      name: formValues.name,
+      description: formValues.description.trim(),
+      links: formValues.links,
+      date,
+      priority: formValues.priority,
+      team: formValues.team,
+      parent: formValues.parent,
+      isEvent: formValues.isEvent,
+      event: eventValue,
+      details: formValues.details,
+      notes: formValues.notes,
+      isHackathonCritical: formValues.isHackathonCritical,
+      requiresRoom: formValues.requiresRoom,
+      requiresAV: formValues.requiresAV,
+      requiresFood: formValues.requiresFood,
+      teamVisibilityIds: formValues.roles,
+      assigneeIds: formValues.assigneeIds,
+    });
+
     // If not event, clear event field
     if (!formValues.isEvent) {
-      onSubmit?.({
-        ...formValues,
-        description: formValues.description.trim(),
-        eventData: undefined,
-        date: normalizeTaskDueDate(formValues.date),
-        teamVisibilityIds: formValues.roles,
-      });
+      onSubmit?.(toSubmitValues(normalizeTaskDueDate(formValues.date), undefined));
+      if (!isControlled) {
+        setInternalOpen(false);
+      }
     } else {
       const startDate = formValues.eventData?.startDate;
       const startTime = formValues.eventData?.startTime;
@@ -350,52 +446,75 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
         return;
       }
 
-      onSubmit?.({
-        ...formValues,
-        description: formValues.description.trim(),
-        date: linkedIssueDate,
-        eventData: {
+      onSubmit?.(
+        toSubmitValues(linkedIssueDate, {
           ...(formValues.eventData ?? defaultEventForm()),
           name: formValues.name.trim(),
           description: (formValues.eventData?.description ?? "").trim(),
-        },
-        teamVisibilityIds: formValues.roles,
-      });
+        }),
+      );
+      if (!isControlled) {
+        setInternalOpen(false);
+      }
     }
   };
 
   const handleDelete = () => {
     if (intent === "edit") {
-      onDelete?.(formValues);
+      onDelete?.({
+        id: formValues.id,
+        status: formValues.status,
+        name: formValues.name,
+        description: formValues.description,
+        links: formValues.links,
+        date: formValues.date,
+        priority: formValues.priority,
+        team: formValues.team,
+        parent: formValues.parent,
+        isEvent: formValues.isEvent,
+        event: formValues.eventData,
+        details: formValues.details,
+        notes: formValues.notes,
+        isHackathonCritical: formValues.isHackathonCritical,
+        requiresRoom: formValues.requiresRoom,
+        requiresAV: formValues.requiresAV,
+        requiresFood: formValues.requiresFood,
+        teamVisibilityIds: formValues.roles,
+        assigneeIds: formValues.assigneeIds,
+      });
     }
   };
 
-  if (!open || !portalElement) {
-    return null;
+  if (!portalElement) {
+    return trigger;
   }
 
-  return createPortal(
-    <div
-      aria-modal
-      role="dialog"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-10"
-      onMouseDown={handleOverlayPointerDown}
-    >
-      <form
-        className="relative flex max-h-[70vh] w-full max-w-[800px] flex-col overflow-hidden rounded-lg border bg-background shadow-lg"
-        onSubmit={handleSubmit}
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <button
-          type="button"
-          className="absolute right-4 top-4 inline-flex size-8 items-center justify-center rounded-md border border-input text-muted-foreground transition hover:text-foreground"
-          onClick={onClose}
-          aria-label="Close dialog"
-        >
-          <X className="h-4 w-4" />
-        </button>
+  return (
+    <>
+      {trigger}
+      {isOpen &&
+        createPortal(
+          <div
+            aria-modal
+            role="dialog"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-10"
+            onMouseDown={handleOverlayPointerDown}
+          >
+            <form
+              className="relative flex max-h-[70vh] w-full max-w-[800px] flex-col overflow-hidden rounded-lg border bg-background shadow-lg"
+              onSubmit={handleSubmit}
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="absolute right-4 top-4 inline-flex size-8 items-center justify-center rounded-md border border-input text-muted-foreground transition hover:text-foreground"
+                onClick={handleClose}
+                aria-label="Close dialog"
+              >
+                <X className="h-4 w-4" />
+              </button>
 
-        <header className="border-b px-6 py-4 pr-12">
+            <header className="border-b px-6 py-4 pr-12">
           <p className="text-xs font-medium text-muted-foreground">
             {intent === "edit"
               ? formValues.isEvent
@@ -410,9 +529,9 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 : "Update the task details below"
               : "Enter the issue details below"}
           </h2>
-        </header>
+            </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="space-y-6 px-6 py-6">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label className="text-right">{"Name"}</Label>
@@ -905,9 +1024,9 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
               </div>
             </div>
           </div>
-        </div>
+            </div>
 
-        <footer className="border-t px-6 py-4">
+            <footer className="border-t px-6 py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {intent === "edit" && (
               <Button
@@ -930,7 +1049,7 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
                 type="button"
                 variant="ghost"
                 className="w-full border sm:w-auto"
-                onClick={onClose}
+                onClick={handleClose}
               >
                 Cancel
               </Button>
@@ -947,10 +1066,12 @@ export function CreateEditDialog(props: ISSUE.CreateEditDialogProps) {
               </Button>
             </div>
           </div>
-        </footer>
-      </form>
-    </div>,
-    portalElement,
+              </footer>
+            </form>
+          </div>,
+          portalElement,
+        )}
+    </>
   );
 }
 
