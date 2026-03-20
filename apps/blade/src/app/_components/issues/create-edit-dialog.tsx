@@ -37,6 +37,14 @@ function getStatusLabel(status: string) {
 const TASK_DUE_HOURS = 23;
 const TASK_DUE_MINUTES = 0;
 const TASK_DUE_TIME = "23:00";
+const DEFAULT_LEGACY_FIELDS = {
+  details: "",
+  notes: "",
+  isHackathonCritical: false,
+  requiresRoom: false,
+  requiresAV: false,
+  requiresFood: false,
+} as const;
 
 // Copied from create-event to keep time UX aligned.
 const hours = Array.from({ length: 12 }, (_, i) =>
@@ -205,6 +213,10 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const hackathonsQuery = api.hackathon.getHackathons.useQuery();
   const rolesData = rolesQuery.data;
   const hackathons = hackathonsQuery.data;
+  const isRolesLoading = rolesQuery.isLoading;
+  const isHackathonsLoading = hackathonsQuery.isLoading;
+  const rolesError = rolesQuery.error;
+  const hackathonsError = hackathonsQuery.error;
   const [portalElement, setPortalElement] = React.useState<Element | null>(
     null,
   );
@@ -291,14 +303,16 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const isSubmitDisabled =
     !formValues.name.trim() ||
     !formValues.team.trim() ||
+    !!rolesError ||
     (formValues.isEvent &&
       (!isEventTimingValid || !formValues.eventData?.location?.trim()));
+  const roleIdSet = React.useMemo(
+    () => new Set((rolesData ?? []).map((role) => role.id)),
+    [rolesData],
+  );
   const safeVisibilityIds = React.useMemo(
-    () =>
-      formValues.roles.filter((roleId) =>
-        (rolesData ?? []).some((role) => role.id === roleId),
-      ),
-    [formValues.roles, rolesData],
+    () => formValues.roles.filter((roleId) => roleIdSet.has(roleId)),
+    [formValues.roles, roleIdSet],
   );
 
   // Helper for event form
@@ -424,12 +438,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       parent: formValues.parent,
       isEvent: formValues.isEvent,
       event: eventValue,
-      details: "",
-      notes: "",
-      isHackathonCritical: false,
-      requiresRoom: false,
-      requiresAV: false,
-      requiresFood: false,
+      ...DEFAULT_LEGACY_FIELDS,
       teamVisibilityIds:
         safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
       assigneeIds: formValues.assigneeIds,
@@ -479,12 +488,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         parent: formValues.parent,
         isEvent: formValues.isEvent,
         event: formValues.eventData,
-        details: "",
-        notes: "",
-        isHackathonCritical: false,
-        requiresRoom: false,
-        requiresAV: false,
-        requiresFood: false,
+        ...DEFAULT_LEGACY_FIELDS,
         teamVisibilityIds:
           safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
         assigneeIds: formValues.assigneeIds,
@@ -679,6 +683,16 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">None</SelectItem>
+                            {isHackathonsLoading && (
+                              <SelectItem value="loading" disabled>
+                                Loading hackathons...
+                              </SelectItem>
+                            )}
+                            {hackathonsError && (
+                              <SelectItem value="error" disabled>
+                                Failed to load hackathons
+                              </SelectItem>
+                            )}
                             {hackathons?.map((h) => (
                               <SelectItem key={h.id} value={h.id}>
                                 {h.displayName}
@@ -974,6 +988,16 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                         <SelectValue placeholder="Select team" />
                       </SelectTrigger>
                       <SelectContent>
+                        {isRolesLoading && (
+                          <SelectItem value="loading" disabled>
+                            Loading teams...
+                          </SelectItem>
+                        )}
+                        {rolesError && (
+                          <SelectItem value="error" disabled>
+                            Failed to load teams
+                          </SelectItem>
+                        )}
                         {rolesData?.map((role) => (
                           <SelectItem key={role.id} value={role.id}>
                             {role.name}
@@ -1039,18 +1063,20 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                           className="flex flex-row items-start space-x-3 space-y-0"
                         >
                           <Checkbox
-                            checked={formValues.roles?.includes(role.id)}
+                            checked={formValues.roles.includes(role.id)}
                             onCheckedChange={(checked) => {
                               return checked
-                                ? updateForm("roles", [
-                                    ...(formValues.roles || []),
-                                    role.id,
-                                  ])
+                                ? updateForm(
+                                    "roles",
+                                    Array.from(
+                                      new Set([...formValues.roles, role.id]),
+                                    ),
+                                  )
                                 : updateForm(
                                     "roles",
-                                    formValues.roles?.filter(
-                                      (value: string) => value !== role.id,
-                                    ) || [],
+                                    formValues.roles.filter(
+                                      (value) => value !== role.id,
+                                    ),
                                   );
                             }}
                           />
