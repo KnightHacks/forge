@@ -23,39 +23,19 @@ import { api } from "~/trpc/react";
 
 const baseField = "w-full";
 
-const STATUS_COLORS: Record<string, string> = {
-  BACKLOG: "bg-slate-400",
-  PLANNING: "bg-amber-400",
-  IN_PROGRESS: "bg-emerald-400",
-  FINISHED: "bg-rose-400",
-};
-
 function getStatusLabel(status: string) {
   return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
-
-const TASK_DUE_HOURS = 23;
-const TASK_DUE_MINUTES = 0;
-const TASK_DUE_TIME = "23:00";
-
-// Copied from create-event to keep time UX aligned.
-const hours = Array.from({ length: 12 }, (_, i) =>
-  (i + 1).toString().padStart(2, "0"),
-);
-const minutes = Array.from({ length: 12 }, (_, i) =>
-  (i * 5).toString().padStart(2, "0"),
-);
-const amPmOptions = ["AM", "PM"] as const;
 
 function normalizeTaskDueDate(dateValue?: string | Date) {
   const dueDate = dateValue ? new Date(dateValue) : new Date();
   if (Number.isNaN(dueDate.getTime())) {
     const fallback = new Date();
-    fallback.setHours(TASK_DUE_HOURS, TASK_DUE_MINUTES, 0, 0);
+    fallback.setHours(ISSUE.TASK_DUE_HOURS, ISSUE.TASK_DUE_MINUTES, 0, 0);
     return fallback;
   }
 
-  dueDate.setHours(TASK_DUE_HOURS, TASK_DUE_MINUTES, 0, 0);
+  dueDate.setHours(ISSUE.TASK_DUE_HOURS, ISSUE.TASK_DUE_MINUTES, 0, 0);
   return dueDate;
 }
 
@@ -66,7 +46,7 @@ function getTaskDueDateInputValue(dateValue: Date) {
 function parseTimeTo12h(timeValue?: string): {
   hour: string;
   minute: string;
-  amPm: (typeof amPmOptions)[number];
+  amPm: (typeof ISSUE.EVENT_TIME_AM_PM_OPTIONS)[number];
 } {
   const [hRaw, mRaw] = (timeValue ?? "").split(":");
   const h = Number(hRaw);
@@ -76,11 +56,12 @@ function parseTimeTo12h(timeValue?: string): {
     return {
       hour: "",
       minute: "",
-      amPm: "PM" as (typeof amPmOptions)[number],
+      amPm: "PM" as (typeof ISSUE.EVENT_TIME_AM_PM_OPTIONS)[number],
     };
   }
 
-  const amPm: (typeof amPmOptions)[number] = h >= 12 ? "PM" : "AM";
+  const amPm: (typeof ISSUE.EVENT_TIME_AM_PM_OPTIONS)[number] =
+    h >= 12 ? "PM" : "AM";
   const hour24 = h % 12 || 12;
   return {
     hour: hour24.toString().padStart(2, "0"),
@@ -89,7 +70,10 @@ function parseTimeTo12h(timeValue?: string): {
   };
 }
 
-function to24h(hour12: string, amPm: (typeof amPmOptions)[number]) {
+function to24h(
+  hour12: string,
+  amPm: (typeof ISSUE.EVENT_TIME_AM_PM_OPTIONS)[number],
+) {
   let h = Number(hour12);
   if (Number.isNaN(h)) {
     h = 0;
@@ -103,7 +87,9 @@ function to24h(hour12: string, amPm: (typeof amPmOptions)[number]) {
   return h.toString().padStart(2, "0");
 }
 
-function toAmPmValue(value: string): (typeof amPmOptions)[number] {
+function toAmPmValue(
+  value: string,
+): (typeof ISSUE.EVENT_TIME_AM_PM_OPTIONS)[number] {
   return value === "AM" ? "AM" : "PM";
 }
 
@@ -331,7 +317,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     const next: {
       hour: string;
       minute: string;
-      amPm: (typeof amPmOptions)[number];
+      amPm: (typeof ISSUE.EVENT_TIME_AM_PM_OPTIONS)[number];
     } = {
       hour: part === "hour" ? value : parsed.hour,
       minute: part === "minute" ? value : parsed.minute,
@@ -595,7 +581,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                           <span
                             className={cn(
                               "size-2 rounded-full",
-                              STATUS_COLORS[formValues.status] ||
+                              ISSUE.STATUS_COLORS[formValues.status] ||
                                 "bg-slate-400",
                             )}
                           />
@@ -612,7 +598,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                               <span
                                 className={cn(
                                   "size-2 rounded-full",
-                                  STATUS_COLORS[status] || "bg-slate-400",
+                                  ISSUE.STATUS_COLORS[status] || "bg-slate-400",
                                 )}
                               />
                               <span className="text-sm">
@@ -726,7 +712,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                               <SelectValue placeholder="HH" />
                             </SelectTrigger>
                             <SelectContent>
-                              {hours.map((h) => (
+                              {ISSUE.EVENT_TIME_HOURS.map((h) => (
                                 <SelectItem key={h} value={h}>
                                   {h}
                                 </SelectItem>
@@ -749,7 +735,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                               <SelectValue placeholder="MM" />
                             </SelectTrigger>
                             <SelectContent>
-                              {minutes.map((m) => (
+                              {ISSUE.EVENT_TIME_MINUTES.map((m) => (
                                 <SelectItem key={m} value={m}>
                                   {m}
                                 </SelectItem>
@@ -770,7 +756,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                               <SelectValue placeholder="AM/PM" />
                             </SelectTrigger>
                             <SelectContent>
-                              {amPmOptions.map((option) => (
+                              {ISSUE.EVENT_TIME_AM_PM_OPTIONS.map((option) => (
                                 <SelectItem key={option} value={option}>
                                   {option}
                                 </SelectItem>
@@ -813,7 +799,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                               <SelectValue placeholder="HH" />
                             </SelectTrigger>
                             <SelectContent>
-                              {hours.map((h) => (
+                              {ISSUE.EVENT_TIME_HOURS.map((h) => (
                                 <SelectItem key={h} value={h}>
                                   {h}
                                 </SelectItem>
@@ -836,7 +822,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                               <SelectValue placeholder="MM" />
                             </SelectTrigger>
                             <SelectContent>
-                              {minutes.map((m) => (
+                              {ISSUE.EVENT_TIME_MINUTES.map((m) => (
                                 <SelectItem key={m} value={m}>
                                   {m}
                                 </SelectItem>
@@ -856,7 +842,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                               <SelectValue placeholder="AM/PM" />
                             </SelectTrigger>
                             <SelectContent>
-                              {amPmOptions.map((option) => (
+                              {ISSUE.EVENT_TIME_AM_PM_OPTIONS.map((option) => (
                                 <SelectItem key={option} value={option}>
                                   {option}
                                 </SelectItem>
@@ -930,7 +916,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                           id={`${baseId}-task-due-time`}
                           type="time"
                           className={cn(baseField, "col-span-3")}
-                          value={TASK_DUE_TIME}
+                          value={ISSUE.TASK_DUE_TIME}
                           readOnly
                           disabled
                         />
