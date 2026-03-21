@@ -304,8 +304,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const hasEventEndTime = !!endDateTime;
   const isInternalEvent = formValues.eventData?.isOperationsCalendar ?? false;
   const hasDiscordChannelId =
-    !isInternalEvent ||
-    !!(formValues.eventData?.discordChannelId ?? "").trim();
+    !isInternalEvent || !!(formValues.eventData?.discordChannelId ?? "").trim();
   const isEventTimingValid =
     hasEventStartTime && hasEventEndTime && endDateTime > startDateTime;
   const isEventStartInFuture =
@@ -927,7 +926,8 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                         </div>
                       </div>
 
-                      {(formValues.eventData?.isOperationsCalendar ?? false) && (
+                      {(formValues.eventData?.isOperationsCalendar ??
+                        false) && (
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label className="text-right">
                             Discord Channel ID
@@ -1139,6 +1139,9 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                           </Label>
                         </div>
                       ))}
+                      <p className="col-span-2 text-sm font-normal text-gray-400">
+                        Teams who can see and manage the issue
+                      </p>
                     </div>
                   </div>
 
@@ -1155,8 +1158,9 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                           >
                             <Checkbox
                               checked={
-                                formValues.eventData?.roles?.includes(role.id) ??
-                                false
+                                formValues.eventData?.roles?.includes(
+                                  role.id,
+                                ) ?? false
                               }
                               onCheckedChange={(checked) => {
                                 const currentRoles =
@@ -1181,6 +1185,9 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                             </Label>
                           </div>
                         ))}
+                        <p className="col-span-2 text-sm font-normal text-gray-400">
+                          Teams who can see and join the event
+                        </p>
                       </div>
                     </div>
                   )}
