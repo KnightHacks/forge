@@ -290,7 +290,13 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     formValues.eventData?.endDate,
     formValues.eventData?.endTime,
   );
-  const nowTimestamp = Date.now();
+  const nowTimestampRef = React.useRef(0);
+  React.useEffect(() => {
+    if (isOpen) {
+      nowTimestampRef.current = Date.now();
+    }
+  }, [isOpen]);
+  const nowTimestamp = nowTimestampRef.current;
   const isNameValid = formValues.name.trim().length > 0;
   const isTeamValid = formValues.team.trim().length > 0;
   const isDescriptionValid = formValues.description.trim().length > 0;
