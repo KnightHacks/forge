@@ -290,13 +290,12 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     formValues.eventData?.endDate,
     formValues.eventData?.endTime,
   );
-  const nowTimestampRef = React.useRef(0);
+  const [nowTimestamp, setNowTimestamp] = React.useState<number | null>(null);
   React.useEffect(() => {
     if (isOpen) {
-      nowTimestampRef.current = Date.now();
+      setNowTimestamp(Date.now());
     }
   }, [isOpen]);
-  const nowTimestamp = nowTimestampRef.current;
   const isNameValid = formValues.name.trim().length > 0;
   const isTeamValid = formValues.team.trim().length > 0;
   const isDescriptionValid = formValues.description.trim().length > 0;
@@ -313,8 +312,11 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     !isInternalEvent || !!(formValues.eventData?.discordChannelId ?? "").trim();
   const isEventTimingValid =
     hasEventStartTime && hasEventEndTime && endDateTime > startDateTime;
-  const isEventStartInFuture =
-    hasEventStartTime && startDateTime.getTime() > nowTimestamp;
+  const isEventStartInFuture = Boolean(
+    hasEventStartTime &&
+      nowTimestamp !== null &&
+      startDateTime.getTime() > nowTimestamp,
+  );
 
   const hasRequiredBaseFields =
     isNameValid && isTeamValid && isDescriptionValid && isRolesValid;
