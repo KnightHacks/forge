@@ -314,8 +314,8 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     hasEventStartTime && hasEventEndTime && endDateTime > startDateTime;
   const isEventStartInFuture = Boolean(
     hasEventStartTime &&
-      nowTimestamp !== null &&
-      startDateTime.getTime() > nowTimestamp,
+    nowTimestamp !== null &&
+    startDateTime.getTime() > nowTimestamp,
   );
 
   const hasRequiredBaseFields =
