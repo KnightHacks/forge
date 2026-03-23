@@ -1,4 +1,3 @@
-import { WebhookClient } from "discord.js";
 import { and, inArray, isNotNull, ne } from "drizzle-orm";
 
 import { db } from "@forge/db/client";
@@ -9,11 +8,11 @@ import { logger } from "@forge/utils";
 import { env } from "../env";
 import { CronBuilder } from "../structs/CronBuilder";
 
-const ISSUE_REMINDER_WEBHOOKS = {
-  Teams: new WebhookClient({ url: env.DISCORD_WEBHOOK_ISSUE_TEAMS }),
-  Directors: new WebhookClient({ url: env.DISCORD_WEBHOOK_ISSUE_DIRECTORS }),
-  Design: new WebhookClient({ url: env.DISCORD_WEBHOOK_ISSUE_DESIGN }),
-  HackOrg: new WebhookClient({ url: env.DISCORD_WEBHOOK_ISSUE_HACKORG }),
+const _ISSUE_REMINDER_WEBHOOK_URLS = {
+  Teams: env.DISCORD_WEBHOOK_ISSUE_TEAMS,
+  Directors: env.DISCORD_WEBHOOK_ISSUE_DIRECTORS,
+  Design: env.DISCORD_WEBHOOK_ISSUE_DESIGN,
+  HackOrg: env.DISCORD_WEBHOOK_ISSUE_HACKORG,
 } as const;
 
 const ISSUE_REMINDER_CHANNELS = {
@@ -62,7 +61,7 @@ const ISSUE_REMINDER_DAY_ORDER: IssueReminderDay[] = [
 type IssueReminderDay =
   (typeof ISSUE_REMINDER_DAYS)[keyof typeof ISSUE_REMINDER_DAYS];
 
-type IssueReminderTarget = {
+interface IssueReminderTarget {
   issueId: string;
   issueName: string;
   teamId: string;
@@ -70,7 +69,7 @@ type IssueReminderTarget = {
   assigneeDiscordUserIds: string[];
   channel: keyof typeof ISSUE_REMINDER_CHANNELS;
   day: IssueReminderDay;
-};
+}
 
 type GroupedIssueReminders = Partial<
   Record<
@@ -141,11 +140,13 @@ const groupIssueReminderTargets = (
 ): GroupedIssueReminders => {
   const grouped: GroupedIssueReminders = {};
   for (const t of targets) {
-    if (!grouped[t.channel]) grouped[t.channel] = {};
+    grouped[t.channel] ??= {};
     const channelGroup = grouped[t.channel];
     if (!channelGroup) continue;
-    if (!channelGroup[t.day]) channelGroup[t.day] = [];
-    channelGroup[t.day].push(t);
+    channelGroup[t.day] ??= [];
+    const dayGroup = channelGroup[t.day];
+    if (!dayGroup) continue;
+    dayGroup.push(t);
   }
   return grouped;
 };
@@ -233,6 +234,8 @@ export const issueReminders = new CronBuilder({
 
     logger.log(`Would send issue reminders to ${channel}:`);
     logger.log(msg);
-    // await ISSUE_REMINDER_WEBHOOKS[channel].send({ content: msg });
+    // await new WebhookClient({
+    //   url: _ISSUE_REMINDER_WEBHOOK_URLS[channel],
+    // }).send({ content: msg });
   }
 });
