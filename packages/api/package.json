@@ -36,6 +36,7 @@
     "@forge/utils": "workspace:*",
     "@forge/validators": "workspace:*",
     "@stripe/stripe-js": "^8.8.0",
+    "@t3-oss/env-core": "^0.13.10",
     "@trpc/server": "catalog:",
     "discord-api-types": "^0.38.40",
     "json-schema-to-zod": "^2.7.0",

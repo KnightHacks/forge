@@ -1,4 +1,4 @@
-import { createEnv } from "@t3-oss/env-nextjs";
+import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const env = createEnv({
@@ -20,7 +20,7 @@ export const env = createEnv({
     GOOGLE_CLIENT_EMAIL: z.string(),
     GOOGLE_PRIVATE_KEY_B64: z.string(),
   },
-  experimental__runtimeEnv: {},
+  runtimeEnv: process.env,
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });
