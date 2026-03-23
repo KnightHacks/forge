@@ -86,6 +86,7 @@ const buildIssueReminderTarget = (issue: {
   if (!channel) return null;
   const day = getIssueReminderDay(issue.date);
   if (!day) return null;
+  if (!issue.teamDiscordRoleId) return null;
   return {
     issueId: issue.id,
     issueName: issue.name,
@@ -128,6 +129,41 @@ const isIssueReminderTarget = (
   val: IssueReminderTarget | null,
 ): val is IssueReminderTarget => {
   return val !== null;
+};
+
+const ISSUE_REMINDER_DAY_LABELS: Record<IssueReminderDay, string> = {
+  Fourteen: "Due in 14 days",
+  Seven: "Due in 7 days",
+  Three: "Due in 3 days",
+  One: "Due in 1 day",
+  Overdue: "Overdue",
+};
+
+const ISSUE_REMINDER_DAY_ORDER: IssueReminderDay[] = [
+  "Fourteen",
+  "Seven",
+  "Three",
+  "One",
+  "Overdue",
+];
+
+const formateIssueReminder = (target: IssueReminderTarget): string => {
+  const mentions = getIssueMentionTargets(target).join(", ");
+  return `-${target.issueName} ${mentions}`;
+};
+
+const formatChannelReminderMsg = (
+  grouped: Partial<Record<IssueReminderDay, IssueReminderTarget[]>>,
+): string | null => {
+  const sections: string[] = [];
+  for (const day of ISSUE_REMINDER_DAY_ORDER) {
+    const targets = grouped[day];
+    if (!targets || targets.length === 0) continue;
+    const lines = targets.map(formateIssueReminder).join("\n");
+    sections.push(`## ${ISSUE_REMINDER_DAY_LABELS[day]}\n${lines}`);
+  }
+  if (sections.length === 0) return null;
+  return `# Issue Reminders\n${sections.join("\n\n")}`;
 };
 
 export const issueReminders = new CronBuilder({
