@@ -1,6 +1,7 @@
 import { alumniAssign } from "./crons/alumni-assign";
 import { capybara, cat, duck, goat } from "./crons/animals";
 import { backupFilteredDb } from "./crons/backup-filtered-db";
+import { issueReminders } from "./crons/issue-reminders";
 import { leetcode } from "./crons/leetcode";
 import { preReminders, reminders } from "./crons/reminder";
 import { roleSync } from "./crons/role-sync";
@@ -23,3 +24,5 @@ reminders.schedule();
 // hackReminders.schedule();
 
 roleSync.schedule();
+
+issueReminders.schedule();
