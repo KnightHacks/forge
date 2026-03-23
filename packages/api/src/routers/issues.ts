@@ -131,6 +131,10 @@ export const issuesRouter = {
       }
       const issue = await db.query.Issue.findFirst({
         where: and(eq(Issue.id, input.id), visibilityFilter),
+        with: {
+          teamVisibility: { with: { team: true } },
+          userAssignments: { with: { uset: true } },
+        },
       });
       if (!issue)
         throw new TRPCError({ message: `Issue not found.`, code: "NOT_FOUND" });
