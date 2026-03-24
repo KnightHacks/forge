@@ -104,7 +104,9 @@ const getIssueReminderChannel = (
 ): keyof typeof ISSUE_REMINDER_CHANNELS | null => {
   const channel = ISSUE_TEAM_CHANNEL_MAP[teamId] ?? null;
   if (!channel) {
-    logger.warn(`Skipping issue reminder: no channel mapping for team ${teamId}.`);
+    logger.warn(
+      `Skipping issue reminder: no channel mapping for team ${teamId}.`,
+    );
   }
   return channel;
 };
