@@ -48,7 +48,7 @@ export default async function IssuePage({ params }: IssuePageProps) {
       </div>
 
       <div className="rounded-lg border p-4">
-        <h2 className="font-semibold">Owning Team</h2>
+        <h2 className="font-semibold">Team</h2>
         <p className="mt-2 text-muted-foreground">{issue.team.name}</p>
       </div>
 

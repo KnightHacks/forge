@@ -192,7 +192,10 @@ export const issueReminders = new CronBuilder({
   name: "issue-reminders",
   color: 2,
 }).addCron("0 9 * * *", async () => {
-  if (env.ISSUE_REMINDERS_ENABLED !== "true") return;
+  if (env.ISSUE_REMINDERS_ENABLED !== "true") {
+    logger.log("Issue reminders are disabled; skipping run.");
+    return;
+  }
 
   const issues = await db.query.Issue.findMany({
     where: and(isNotNull(Issue.date), ne(Issue.status, "FINISHED")),
