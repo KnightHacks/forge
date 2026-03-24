@@ -8,7 +8,7 @@ export const env = createEnv({
     GOOGLE_CLIENT_EMAIL: z.string(),
     GOOGLE_PRIVATE_KEY_B64: z.string(),
   },
-  runtimeEnv: {},
+  runtimeEnv: process.env,
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });
