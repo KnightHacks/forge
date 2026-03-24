@@ -327,62 +327,62 @@ export const issueReminders = new CronBuilder({
     return;
   }
 
-    const issues = await db.query.Issue.findMany({
-      where: and(isNotNull(Issue.date), ne(Issue.status, "FINISHED")),
-      with: {
-        userAssignments: {
-          with: {
-            user: true,
-          },
+  const issues = await db.query.Issue.findMany({
+    where: and(isNotNull(Issue.date), ne(Issue.status, "FINISHED")),
+    with: {
+      userAssignments: {
+        with: {
+          user: true,
         },
       },
-    });
-    if (issues.length === 0) return;
+    },
+  });
+  if (issues.length === 0) return;
 
-    const teamIds = [...new Set(issues.map((issue) => issue.team))];
-    const roles = await db
-      .select({
-        id: Roles.id,
-        discordRoleId: Roles.discordRoleId,
-      })
-      .from(Roles)
-      .where(inArray(Roles.id, teamIds));
+  const teamIds = [...new Set(issues.map((issue) => issue.team))];
+  const roles = await db
+    .select({
+      id: Roles.id,
+      discordRoleId: Roles.discordRoleId,
+    })
+    .from(Roles)
+    .where(inArray(Roles.id, teamIds));
 
-    const roleDiscordIdByTeamId: Record<string, string> = {};
-    for (const r of roles) {
-      roleDiscordIdByTeamId[r.id] = r.discordRoleId;
+  const roleDiscordIdByTeamId: Record<string, string> = {};
+  for (const r of roles) {
+    roleDiscordIdByTeamId[r.id] = r.discordRoleId;
+  }
+  const reminderTargets = issues
+    .map((issue) =>
+      buildIssueReminderTarget({
+        id: issue.id,
+        name: issue.name,
+        team: issue.team,
+        date: issue.date,
+        teamDiscordRoleId: roleDiscordIdByTeamId[issue.team] ?? "",
+        assigneeDiscordUserIds: issue.userAssignments.map(
+          (assignment) => assignment.user.discordUserId,
+        ),
+      }),
+    )
+    .filter(isIssueReminderTarget);
+
+  const groupedReminders = groupIssueReminderTargets(reminderTargets);
+  for (const channel of Object.keys(
+    ISSUE_REMINDER_CHANNELS,
+  ) as (keyof typeof ISSUE_REMINDER_CHANNELS)[]) {
+    const groupedChannel = groupedReminders[channel];
+    if (!groupedChannel) continue;
+
+    if (!ISSUE_REMINDER_WEBHOOK_URLS[channel]) {
+      logger.warn(
+        `Skipping issue reminders for ${channel}: webhook URL is not configured.`,
+      );
+      continue;
     }
-    const reminderTargets = issues
-      .map((issue) =>
-        buildIssueReminderTarget({
-          id: issue.id,
-          name: issue.name,
-          team: issue.team,
-          date: issue.date,
-          teamDiscordRoleId: roleDiscordIdByTeamId[issue.team] ?? "",
-          assigneeDiscordUserIds: issue.userAssignments.map(
-            (assignment) => assignment.user.discordUserId,
-          ),
-        }),
-      )
-      .filter(isIssueReminderTarget);
 
-    const groupedReminders = groupIssueReminderTargets(reminderTargets);
-    for (const channel of Object.keys(
-      ISSUE_REMINDER_CHANNELS,
-    ) as (keyof typeof ISSUE_REMINDER_CHANNELS)[]) {
-      const groupedChannel = groupedReminders[channel];
-      if (!groupedChannel) continue;
-
-      if (!ISSUE_REMINDER_WEBHOOK_URLS[channel]) {
-        logger.warn(
-          `Skipping issue reminders for ${channel}: webhook URL is not configured.`,
-        );
-        continue;
-      }
-
-      const chunks = splitChannelReminderMessages(groupedChannel);
-      if (chunks.length === 0) continue;
+    const chunks = splitChannelReminderMessages(groupedChannel);
+    if (chunks.length === 0) continue;
 
     for (const chunk of chunks) {
       await sendIssueReminderChunk(
