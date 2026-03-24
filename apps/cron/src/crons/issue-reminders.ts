@@ -80,18 +80,30 @@ type GroupedIssueReminders = Partial<
 >;
 
 const MAX_DISCORD_MESSAGE_LENGTH = 2000;
-const ISSUE_REMINDER_SEND_ATTEMPTS = 3;
-const ISSUE_REMINDER_RETRY_DELAY_MS = 500;
+const ISSUE_REMINDER_TIMEZONE = "America/New_York";
 
-const getUtcMidnightTimestamp = (date: Date): number => {
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+const getTimezoneMidnightTimestamp = (date: Date, timeZone: string): number => {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(date);
+
+  const year = Number(parts.find((part) => part.type === "year")?.value);
+  const month = Number(parts.find((part) => part.type === "month")?.value);
+  const day = Number(parts.find((part) => part.type === "day")?.value);
+
+  return Date.UTC(year, month - 1, day);
 };
 
 const getIssueReminderDay = (
   date: Date,
   now = new Date(),
 ): IssueReminderDay | null => {
-  const diffMs = getUtcMidnightTimestamp(date) - getUtcMidnightTimestamp(now);
+  const diffMs =
+    getTimezoneMidnightTimestamp(date, ISSUE_REMINDER_TIMEZONE) -
+    getTimezoneMidnightTimestamp(now, ISSUE_REMINDER_TIMEZONE);
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays === 14) return ISSUE_REMINDER_DAYS.Fourteen;
@@ -194,11 +206,6 @@ const getIssueUrl = (issueId: string): string => {
   return `${env.BLADE_URL.replace(/\/$/, "")}/issues/${issueId}`;
 };
 
-const getWebhookId = (url: string): string => {
-  const match = /\/webhooks\/([^/]+)/.exec(url);
-  return match?.[1] ?? "unknown";
-};
-
 const getAllowedMentions = (
   targets: IssueReminderTarget[],
 ): {
@@ -286,41 +293,25 @@ const splitChannelReminderMessages = (
   return chunks;
 };
 
-const sleep = async (ms: number) =>
-  await new Promise((resolve) => setTimeout(resolve, ms));
-
 const sendIssueReminderChunk = async (
   channel: keyof typeof ISSUE_REMINDER_CHANNELS,
   webhookUrl: string,
   chunk: { content: string; targets: IssueReminderTarget[] },
 ) => {
-  const webhookId = getWebhookId(webhookUrl);
   const webhook = new WebhookClient({ url: webhookUrl });
-
-  for (let attempt = 1; attempt <= ISSUE_REMINDER_SEND_ATTEMPTS; attempt++) {
-    try {
-      await webhook.send({
-        content: chunk.content,
-        allowedMentions: getAllowedMentions(chunk.targets),
-      });
-      return;
-    } catch (error) {
-      logger.error(
-        `Failed sending issue reminder chunk for ${channel} (webhook ${webhookId}) on attempt ${attempt}.`,
-        error,
-      );
-
-      if (attempt === ISSUE_REMINDER_SEND_ATTEMPTS) return;
-
-      await sleep(ISSUE_REMINDER_RETRY_DELAY_MS * attempt);
-    }
+  try {
+    await webhook.send({
+      content: chunk.content,
+      allowedMentions: getAllowedMentions(chunk.targets),
+    });
+  } catch (error) {
+    logger.error(`Failed sending issue reminder chunk for ${channel}.`, error);
   }
 };
 
 export const issueReminders = new CronBuilder({
   name: "issue-reminders",
   color: 2,
-  // This addCron schedule runs in the host timezone; keep the host in UTC so it aligns with getUtcMidnightTimestamp grouping.
 }).addCron("0 9 * * *", async () => {
   if (env.ISSUE_REMINDERS_ENABLED !== "true") {
     logger.log("Issue reminders are disabled; skipping run.");
