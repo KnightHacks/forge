@@ -1,4 +1,5 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { z } from "zod";
 
 import { auth } from "@forge/auth";
 
@@ -15,7 +16,14 @@ export default async function IssuePage({ params }: IssuePageProps) {
   const session = await auth();
   if (!session) redirect(SIGN_IN_PATH);
   const { id } = await params;
-  const issue = await api.issues.getIssue({ id });
+  if (!z.string().uuid().safeParse(id).success) notFound();
+  let issue;
+  try {
+    issue = await api.issues.getIssue({ id });
+  } catch {
+    notFound();
+  }
+
   return (
     <div className="container mx-auto max-w-4xl space-y-6 p-6 pb-16 lg:pt-40">
       <div className="space-y-2">
