@@ -1,3 +1,4 @@
+import { WebhookClient } from "discord.js";
 import { and, inArray, isNotNull, ne } from "drizzle-orm";
 
 import { db } from "@forge/db/client";
@@ -101,7 +102,11 @@ const getIssueReminderDay = (
 const getIssueReminderChannel = (
   teamId: string,
 ): keyof typeof ISSUE_REMINDER_CHANNELS | null => {
-  return ISSUE_TEAM_CHANNEL_MAP[teamId] ?? null;
+  const channel = ISSUE_TEAM_CHANNEL_MAP[teamId] ?? null;
+  if (!channel) {
+    logger.warn(`Skipping issue reminder: no channel mapping for team ${teamId}.`);
+  }
+  return channel;
 };
 
 const buildIssueReminderTarget = (issue: {
@@ -160,7 +165,7 @@ const isIssueReminderTarget = (
 const formatIssueReminder = (target: IssueReminderTarget): string => {
   const mentions = getIssueMentionTargets(target).join(", ");
   const issueUrl = getIssueUrl(target.issueId);
-  return `- [${target.issueName}](${issueUrl}) ${mentions}`;
+  return `- ${target.issueName}: ${issueUrl} ${mentions}`;
 };
 
 const formatChannelReminderMsg = (
@@ -185,6 +190,8 @@ export const issueReminders = new CronBuilder({
   name: "issue-reminders",
   color: 2,
 }).addCron("0 9 * * *", async () => {
+  if (env.ISSUE_REMINDERS_ENABLED !== "true") return;
+
   const issues = await db.query.Issue.findMany({
     where: and(isNotNull(Issue.date), ne(Issue.status, "FINISHED")),
     with: {
@@ -195,6 +202,8 @@ export const issueReminders = new CronBuilder({
       },
     },
   });
+  if (issues.length === 0) return;
+
   const teamIds = [...new Set(issues.map((issue) => issue.team))];
   const roles = await db
     .select({
@@ -229,11 +238,19 @@ export const issueReminders = new CronBuilder({
   ) as (keyof typeof ISSUE_REMINDER_CHANNELS)[]) {
     const groupedChannel = groupedReminders[channel];
     if (!groupedChannel) continue;
+
+    if (!ISSUE_REMINDER_WEBHOOK_URLS[channel]) {
+      logger.warn(
+        `Skipping issue reminders for ${channel}: webhook URL is not configured.`,
+      );
+      continue;
+    }
+
     const msg = formatChannelReminderMsg(groupedChannel);
     if (!msg) continue;
 
-    // await new WebhookClient({
-    //   url: ISSUE_REMINDER_WEBHOOK_URLS[channel],
-    // }).send({ content: msg });
+    await new WebhookClient({
+      url: ISSUE_REMINDER_WEBHOOK_URLS[channel],
+    }).send({ content: msg });
   }
 });
