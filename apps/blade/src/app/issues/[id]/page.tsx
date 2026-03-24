@@ -15,6 +15,10 @@ interface IssuePageProps {
 export default async function IssuePage({ params }: IssuePageProps) {
   const session = await auth();
   if (!session) redirect(SIGN_IN_PATH);
+
+  const hasAccess = await api.roles.hasPermission({ or: ["READ_ISSUES"] });
+  if (!hasAccess) notFound();
+
   const { id } = await params;
   if (!z.string().uuid().safeParse(id).success) notFound();
   let issue;
