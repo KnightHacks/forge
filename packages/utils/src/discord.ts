@@ -29,7 +29,7 @@ export async function sendRecruitingApplication(
     gradYear: string;
   },
 ) {
-  const team = TEAMS.find((x) => x.team == teamName);
+  const team = TEAMS.find((x) => x.team === teamName);
   if (!team) {
     throw new Error("Team not found");
   }
