@@ -184,25 +184,10 @@ const formatIssueReminder = (target: IssueReminderTarget): string => {
   return `- ${issueTitle}: ${issueUrl} ${mentions}`;
 };
 
-const getFormattedChannelSections = (
-  grouped: Partial<Record<IssueReminderDay, IssueReminderTarget[]>>,
-): string[] => {
-  const sections: string[] = [];
-  for (const day of ISSUE_REMINDER_DAY_ORDER) {
-    const targets = grouped[day];
-    if (!targets || targets.length === 0) continue;
-    const lines = targets.map(formatIssueReminder).join("\n");
-    sections.push(`## ${ISSUE_REMINDER_DAY_LABELS[day]}\n${lines}`);
-  }
-  return sections;
-};
-
-const formatChannelReminderMsg = (
-  grouped: Partial<Record<IssueReminderDay, IssueReminderTarget[]>>,
-): string | null => {
-  const sections = getFormattedChannelSections(grouped);
-  if (sections.length === 0) return null;
-  return `# Issue Reminders\n${sections.join("\n\n")}`;
+const truncateReminderLine = (line: string, maxLength: number): string => {
+  if (line.length <= maxLength) return line;
+  if (maxLength <= 1) return "…";
+  return `${line.slice(0, maxLength - 1)}…`;
 };
 
 const getIssueUrl = (issueId: string): string => {
@@ -263,9 +248,13 @@ const splitChannelReminderMessages = (
 
     let sectionChunkContent = `# Issue Reminders\n\n## ${ISSUE_REMINDER_DAY_LABELS[day]}`;
     let sectionChunkTargets: IssueReminderTarget[] = [];
+    const sectionHeaderLength = `${sectionChunkContent}\n`.length;
 
     for (let index = 0; index < sectionLines.length; index++) {
-      const line = sectionLines[index];
+      const line = truncateReminderLine(
+        sectionLines[index] ?? "",
+        MAX_DISCORD_MESSAGE_LENGTH - sectionHeaderLength,
+      );
       const target = targets[index];
       if (!target) continue;
       const nextSectionChunkContent = `${sectionChunkContent}\n${line}`;
@@ -306,10 +295,11 @@ const sendIssueReminderChunk = async (
   chunk: { content: string; targets: IssueReminderTarget[] },
 ) => {
   const webhookId = getWebhookId(webhookUrl);
+  const webhook = new WebhookClient({ url: webhookUrl });
 
   for (let attempt = 1; attempt <= ISSUE_REMINDER_SEND_ATTEMPTS; attempt++) {
     try {
-      await new WebhookClient({ url: webhookUrl }).send({
+      await webhook.send({
         content: chunk.content,
         allowedMentions: getAllowedMentions(chunk.targets),
       });
@@ -330,70 +320,70 @@ const sendIssueReminderChunk = async (
 export const issueReminders = new CronBuilder({
   name: "issue-reminders",
   color: 2,
+  // This addCron schedule runs in the host timezone; keep the host in UTC so it aligns with getUtcMidnightTimestamp grouping.
 }).addCron("0 9 * * *", async () => {
   if (env.ISSUE_REMINDERS_ENABLED !== "true") {
     logger.log("Issue reminders are disabled; skipping run.");
     return;
   }
 
-  const issues = await db.query.Issue.findMany({
-    where: and(isNotNull(Issue.date), ne(Issue.status, "FINISHED")),
-    with: {
-      userAssignments: {
-        with: {
-          user: true,
+    const issues = await db.query.Issue.findMany({
+      where: and(isNotNull(Issue.date), ne(Issue.status, "FINISHED")),
+      with: {
+        userAssignments: {
+          with: {
+            user: true,
+          },
         },
       },
-    },
-  });
-  if (issues.length === 0) return;
+    });
+    if (issues.length === 0) return;
 
-  const teamIds = [...new Set(issues.map((issue) => issue.team))];
-  const roles = await db
-    .select({
-      id: Roles.id,
-      discordRoleId: Roles.discordRoleId,
-    })
-    .from(Roles)
-    .where(inArray(Roles.id, teamIds));
+    const teamIds = [...new Set(issues.map((issue) => issue.team))];
+    const roles = await db
+      .select({
+        id: Roles.id,
+        discordRoleId: Roles.discordRoleId,
+      })
+      .from(Roles)
+      .where(inArray(Roles.id, teamIds));
 
-  const roleDiscordIdByTeamId: Record<string, string> = {};
-  for (const r of roles) {
-    roleDiscordIdByTeamId[r.id] = r.discordRoleId;
-  }
-  const reminderTargets = issues
-    .map((issue) =>
-      buildIssueReminderTarget({
-        id: issue.id,
-        name: issue.name,
-        team: issue.team,
-        date: issue.date,
-        teamDiscordRoleId: roleDiscordIdByTeamId[issue.team] ?? "",
-        assigneeDiscordUserIds: issue.userAssignments.map(
-          (assignment) => assignment.user.discordUserId,
-        ),
-      }),
-    )
-    .filter(isIssueReminderTarget);
-
-  const groupedReminders = groupIssueReminderTargets(reminderTargets);
-  for (const channel of Object.keys(
-    ISSUE_REMINDER_CHANNELS,
-  ) as (keyof typeof ISSUE_REMINDER_CHANNELS)[]) {
-    const groupedChannel = groupedReminders[channel];
-    if (!groupedChannel) continue;
-
-    if (!ISSUE_REMINDER_WEBHOOK_URLS[channel]) {
-      logger.warn(
-        `Skipping issue reminders for ${channel}: webhook URL is not configured.`,
-      );
-      continue;
+    const roleDiscordIdByTeamId: Record<string, string> = {};
+    for (const r of roles) {
+      roleDiscordIdByTeamId[r.id] = r.discordRoleId;
     }
+    const reminderTargets = issues
+      .map((issue) =>
+        buildIssueReminderTarget({
+          id: issue.id,
+          name: issue.name,
+          team: issue.team,
+          date: issue.date,
+          teamDiscordRoleId: roleDiscordIdByTeamId[issue.team] ?? "",
+          assigneeDiscordUserIds: issue.userAssignments.map(
+            (assignment) => assignment.user.discordUserId,
+          ),
+        }),
+      )
+      .filter(isIssueReminderTarget);
 
-    const msg = formatChannelReminderMsg(groupedChannel);
-    if (!msg) continue;
+    const groupedReminders = groupIssueReminderTargets(reminderTargets);
+    for (const channel of Object.keys(
+      ISSUE_REMINDER_CHANNELS,
+    ) as (keyof typeof ISSUE_REMINDER_CHANNELS)[]) {
+      const groupedChannel = groupedReminders[channel];
+      if (!groupedChannel) continue;
 
-    const chunks = splitChannelReminderMessages(groupedChannel);
+      if (!ISSUE_REMINDER_WEBHOOK_URLS[channel]) {
+        logger.warn(
+          `Skipping issue reminders for ${channel}: webhook URL is not configured.`,
+        );
+        continue;
+      }
+
+      const chunks = splitChannelReminderMessages(groupedChannel);
+      if (chunks.length === 0) continue;
+
     for (const chunk of chunks) {
       await sendIssueReminderChunk(
         channel,
