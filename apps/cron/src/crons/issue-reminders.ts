@@ -79,16 +79,19 @@ type GroupedIssueReminders = Partial<
   >
 >;
 
+const MAX_DISCORD_MESSAGE_LENGTH = 2000;
+const ISSUE_REMINDER_SEND_ATTEMPTS = 3;
+const ISSUE_REMINDER_RETRY_DELAY_MS = 500;
+
+const getUtcMidnightTimestamp = (date: Date): number => {
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+};
+
 const getIssueReminderDay = (
   date: Date,
   now = new Date(),
 ): IssueReminderDay | null => {
-  const dueDate = new Date(date);
-  dueDate.setHours(0, 0, 0, 0);
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
-
-  const diffMs = dueDate.getTime() - today.getTime();
+  const diffMs = getUtcMidnightTimestamp(date) - getUtcMidnightTimestamp(now);
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays === 14) return ISSUE_REMINDER_DAYS.Fourteen;
@@ -164,15 +167,26 @@ const isIssueReminderTarget = (
   return val !== null;
 };
 
+const sanitizeIssueReminderTitle = (title: string): string => {
+  return title
+    .replace(/\r?\n+/g, " ")
+    .replace(/<@&?/g, "<@\u200b")
+    .replace(/<!/g, "<!\u200b")
+    .replace(/@everyone/g, "@\u200beveryone")
+    .replace(/@here/g, "@\u200bhere")
+    .trim();
+};
+
 const formatIssueReminder = (target: IssueReminderTarget): string => {
   const mentions = getIssueMentionTargets(target).join(", ");
   const issueUrl = getIssueUrl(target.issueId);
-  return `- ${target.issueName}: ${issueUrl} ${mentions}`;
+  const issueTitle = sanitizeIssueReminderTitle(target.issueName);
+  return `- ${issueTitle}: ${issueUrl} ${mentions}`;
 };
 
-const formatChannelReminderMsg = (
+const getFormattedChannelSections = (
   grouped: Partial<Record<IssueReminderDay, IssueReminderTarget[]>>,
-): string | null => {
+): string[] => {
   const sections: string[] = [];
   for (const day of ISSUE_REMINDER_DAY_ORDER) {
     const targets = grouped[day];
@@ -180,12 +194,137 @@ const formatChannelReminderMsg = (
     const lines = targets.map(formatIssueReminder).join("\n");
     sections.push(`## ${ISSUE_REMINDER_DAY_LABELS[day]}\n${lines}`);
   }
+  return sections;
+};
+
+const formatChannelReminderMsg = (
+  grouped: Partial<Record<IssueReminderDay, IssueReminderTarget[]>>,
+): string | null => {
+  const sections = getFormattedChannelSections(grouped);
   if (sections.length === 0) return null;
   return `# Issue Reminders\n${sections.join("\n\n")}`;
 };
 
 const getIssueUrl = (issueId: string): string => {
   return `${env.BLADE_URL.replace(/\/$/, "")}/issues/${issueId}`;
+};
+
+const getWebhookId = (url: string): string => {
+  const match = /\/webhooks\/([^/]+)/.exec(url);
+  return match?.[1] ?? "unknown";
+};
+
+const getAllowedMentions = (
+  targets: IssueReminderTarget[],
+): {
+  parse: [];
+  users?: string[];
+  roles?: string[];
+} => {
+  const userIds = [
+    ...new Set(targets.flatMap((target) => target.assigneeDiscordUserIds)),
+  ];
+  const roleIds =
+    userIds.length === 0
+      ? [...new Set(targets.map((target) => target.teamDiscordRoleId))]
+      : [];
+
+  return {
+    parse: [],
+    ...(userIds.length > 0 ? { users: userIds } : {}),
+    ...(roleIds.length > 0 ? { roles: roleIds } : {}),
+  };
+};
+
+const splitChannelReminderMessages = (
+  grouped: Partial<Record<IssueReminderDay, IssueReminderTarget[]>>,
+): { content: string; targets: IssueReminderTarget[] }[] => {
+  const chunks: { content: string; targets: IssueReminderTarget[] }[] = [];
+  let currentContent = "# Issue Reminders";
+  let currentTargets: IssueReminderTarget[] = [];
+
+  for (const day of ISSUE_REMINDER_DAY_ORDER) {
+    const targets = grouped[day];
+    if (!targets || targets.length === 0) continue;
+
+    const sectionLines = targets.map(formatIssueReminder);
+    const sectionContent = `## ${ISSUE_REMINDER_DAY_LABELS[day]}\n${sectionLines.join("\n")}`;
+    const nextContent = `${currentContent}\n\n${sectionContent}`;
+
+    if (nextContent.length <= MAX_DISCORD_MESSAGE_LENGTH) {
+      currentContent = nextContent;
+      currentTargets.push(...targets);
+      continue;
+    }
+
+    if (currentTargets.length > 0) {
+      chunks.push({ content: currentContent, targets: currentTargets });
+    }
+
+    let sectionChunkContent = `# Issue Reminders\n\n## ${ISSUE_REMINDER_DAY_LABELS[day]}`;
+    let sectionChunkTargets: IssueReminderTarget[] = [];
+
+    for (let index = 0; index < sectionLines.length; index++) {
+      const line = sectionLines[index];
+      const target = targets[index];
+      if (!target) continue;
+      const nextSectionChunkContent = `${sectionChunkContent}\n${line}`;
+      if (nextSectionChunkContent.length > MAX_DISCORD_MESSAGE_LENGTH) {
+        if (sectionChunkTargets.length > 0) {
+          chunks.push({
+            content: sectionChunkContent,
+            targets: sectionChunkTargets,
+          });
+        }
+
+        sectionChunkContent = `# Issue Reminders\n\n## ${ISSUE_REMINDER_DAY_LABELS[day]}\n${line}`;
+        sectionChunkTargets = [target];
+        continue;
+      }
+
+      sectionChunkContent = nextSectionChunkContent;
+      sectionChunkTargets.push(target);
+    }
+
+    currentContent = sectionChunkContent;
+    currentTargets = sectionChunkTargets;
+  }
+
+  if (currentTargets.length > 0) {
+    chunks.push({ content: currentContent, targets: currentTargets });
+  }
+
+  return chunks;
+};
+
+const sleep = async (ms: number) =>
+  await new Promise((resolve) => setTimeout(resolve, ms));
+
+const sendIssueReminderChunk = async (
+  channel: keyof typeof ISSUE_REMINDER_CHANNELS,
+  webhookUrl: string,
+  chunk: { content: string; targets: IssueReminderTarget[] },
+) => {
+  const webhookId = getWebhookId(webhookUrl);
+
+  for (let attempt = 1; attempt <= ISSUE_REMINDER_SEND_ATTEMPTS; attempt++) {
+    try {
+      await new WebhookClient({ url: webhookUrl }).send({
+        content: chunk.content,
+        allowedMentions: getAllowedMentions(chunk.targets),
+      });
+      return;
+    } catch (error) {
+      logger.error(
+        `Failed sending issue reminder chunk for ${channel} (webhook ${webhookId}) on attempt ${attempt}.`,
+        error,
+      );
+
+      if (attempt === ISSUE_REMINDER_SEND_ATTEMPTS) return;
+
+      await sleep(ISSUE_REMINDER_RETRY_DELAY_MS * attempt);
+    }
+  }
 };
 
 export const issueReminders = new CronBuilder({
@@ -254,8 +393,13 @@ export const issueReminders = new CronBuilder({
     const msg = formatChannelReminderMsg(groupedChannel);
     if (!msg) continue;
 
-    await new WebhookClient({
-      url: ISSUE_REMINDER_WEBHOOK_URLS[channel],
-    }).send({ content: msg });
+    const chunks = splitChannelReminderMessages(groupedChannel);
+    for (const chunk of chunks) {
+      await sendIssueReminderChunk(
+        channel,
+        ISSUE_REMINDER_WEBHOOK_URLS[channel],
+        chunk,
+      );
+    }
   }
 });
