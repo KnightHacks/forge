@@ -8,7 +8,7 @@ import { logger } from "@forge/utils";
 import { env } from "../env";
 import { CronBuilder } from "../structs/CronBuilder";
 
-const _ISSUE_REMINDER_WEBHOOK_URLS = {
+const ISSUE_REMINDER_WEBHOOK_URLS = {
   Teams: env.DISCORD_WEBHOOK_ISSUE_TEAMS,
   Directors: env.DISCORD_WEBHOOK_ISSUE_DIRECTORS,
   Design: env.DISCORD_WEBHOOK_ISSUE_DESIGN,
@@ -178,7 +178,7 @@ const formatChannelReminderMsg = (
 };
 
 const getIssueUrl = (issueId: string): string => {
-  return `${env.BLADE_URL}/issues/${issueId}`;
+  return `${env.BLADE_URL.replace(/\/$/, "")}/issues/${issueId}`;
 };
 
 export const issueReminders = new CronBuilder({
@@ -232,10 +232,8 @@ export const issueReminders = new CronBuilder({
     const msg = formatChannelReminderMsg(groupedChannel);
     if (!msg) continue;
 
-    logger.log(`Would send issue reminders to ${channel}:`);
-    logger.log(msg);
     // await new WebhookClient({
-    //   url: _ISSUE_REMINDER_WEBHOOK_URLS[channel],
+    //   url: ISSUE_REMINDER_WEBHOOK_URLS[channel],
     // }).send({ content: msg });
   }
 });
