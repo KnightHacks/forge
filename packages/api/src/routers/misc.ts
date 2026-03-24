@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { FORMS } from "@forge/consts";
+import { logger } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 
 import { protectedProcedure } from "../trpc";
@@ -126,12 +127,21 @@ export const miscRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      await discord.sendRecruitingApplication(input.team, {
-        email: input.email,
-        gradTerm: input.gradTerm,
-        gradYear: input.gradYear.toString(),
-        major: input.major,
-        name: input.name,
-      });
+      try {
+        await discord.sendRecruitingApplication(input.team, {
+          email: input.email,
+          gradTerm: input.gradTerm,
+          gradYear: input.gradYear.toString(),
+          major: input.major,
+          name: input.name,
+        });
+      } catch (e) {
+        logger.error(e);
+        throw new TRPCError({
+          message: "An error has occurred.",
+          code: "INTERNAL_SERVER_ERROR",
+          cause: e,
+        });
+      }
     }),
 } satisfies TRPCRouterRecord;
