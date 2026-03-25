@@ -70,6 +70,7 @@ interface IssueReminderTarget {
   assigneeDiscordUserIds: string[];
   channel: keyof typeof ISSUE_REMINDER_CHANNELS;
   day: IssueReminderDay;
+  overdueDays: number | null;
 }
 
 type GroupedIssueReminders = Partial<
@@ -101,10 +102,7 @@ const getIssueReminderDay = (
   date: Date,
   now = new Date(),
 ): IssueReminderDay | null => {
-  const diffMs =
-    getTimezoneMidnightTimestamp(date, ISSUE_REMINDER_TIMEZONE) -
-    getTimezoneMidnightTimestamp(now, ISSUE_REMINDER_TIMEZONE);
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffDays = getIssueReminderDiffDays(date, now);
 
   if (diffDays === 14) return ISSUE_REMINDER_DAYS.Fourteen;
   if (diffDays === 7) return ISSUE_REMINDER_DAYS.Seven;
@@ -112,6 +110,13 @@ const getIssueReminderDay = (
   if (diffDays === 1) return ISSUE_REMINDER_DAYS.One;
   if (diffDays < 0) return ISSUE_REMINDER_DAYS.Overdue;
   return null;
+};
+
+const getIssueReminderDiffDays = (date: Date, now = new Date()): number => {
+  const diffMs =
+    getTimezoneMidnightTimestamp(date, ISSUE_REMINDER_TIMEZONE) -
+    getTimezoneMidnightTimestamp(now, ISSUE_REMINDER_TIMEZONE);
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 };
 
 const getIssueReminderChannel = (
@@ -148,6 +153,10 @@ const buildIssueReminderTarget = (issue: {
     assigneeDiscordUserIds: issue.assigneeDiscordUserIds,
     channel,
     day,
+    overdueDays:
+      day === ISSUE_REMINDER_DAYS.Overdue
+        ? Math.abs(getIssueReminderDiffDays(issue.date))
+        : null,
   };
 };
 
@@ -193,7 +202,11 @@ const formatIssueReminder = (target: IssueReminderTarget): string => {
   const mentions = getIssueMentionTargets(target).join(", ");
   const issueUrl = getIssueUrl(target.issueId);
   const issueTitle = sanitizeIssueReminderTitle(target.issueName);
-  return `- ${issueTitle}: ${issueUrl} ${mentions}`;
+  const overduePrefix =
+    target.day === ISSUE_REMINDER_DAYS.Overdue && target.overdueDays !== null
+      ? `(-${target.overdueDays} days) `
+      : "";
+  return `- ${overduePrefix}[${issueTitle}](<${issueUrl}>) ${mentions}`;
 };
 
 const truncateReminderLine = (line: string, maxLength: number): string => {
@@ -313,11 +326,6 @@ export const issueReminders = new CronBuilder({
   name: "issue-reminders",
   color: 2,
 }).addCron("0 9 * * *", async () => {
-  if (env.ISSUE_REMINDERS_ENABLED !== "true") {
-    logger.log("Issue reminders are disabled; skipping run.");
-    return;
-  }
-
   const issues = await db.query.Issue.findMany({
     where: and(isNotNull(Issue.date), ne(Issue.status, "FINISHED")),
     with: {
