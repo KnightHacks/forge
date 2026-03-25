@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
+
 import { api } from "~/trpc/react";
 
 type StatusFilter = "all" | (typeof ISSUE.ISSUE_STATUS)[number];
@@ -107,8 +108,12 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   const issuesQuery = api.issues.getAllIssues.useQuery(queryInput, {
     refetchOnWindowFocus: false,
   });
-  const { data: fetchedIssues, error: issuesError, isLoading, refetch } =
-    issuesQuery;
+  const {
+    data: fetchedIssues,
+    error: issuesError,
+    isLoading,
+    refetch,
+  } = issuesQuery;
   const issueErrorMessage = issuesError?.message ?? null;
 
   const roles = useMemo(() => rolesQuery.data ?? [], [rolesQuery.data]);
@@ -178,7 +183,15 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
       refresh,
       filters,
     }),
-    [blockedParentIds, filters, isLoading, issueErrorMessage, issues, refresh, roleNameById],
+    [
+      blockedParentIds,
+      filters,
+      isLoading,
+      issueErrorMessage,
+      issues,
+      refresh,
+      roleNameById,
+    ],
   );
 
   useEffect(() => {
