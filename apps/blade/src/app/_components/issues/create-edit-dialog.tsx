@@ -1,13 +1,19 @@
 "use client";
 
 import * as React from "react";
-import { Trash2, X } from "lucide-react";
+import { LayoutTemplate, Trash2, X } from "lucide-react";
 import { createPortal } from "react-dom";
 
 import { EVENTS, ISSUE } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@forge/ui/dropdown-menu";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import {
@@ -447,6 +453,31 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     if (event.target === event.currentTarget) {
       handleClose();
     }
+  };
+
+  const { data: templates = [], isLoading: isTemplatesLoading } =
+    api.issues.getTemplates.useQuery(undefined, { enabled: isOpen });
+
+  const applyTemplate = (template: {
+    name: string;
+    body: unknown;
+  }) => {
+    const body = template.body as ISSUE.TemplateSubIssue[];
+    const first = Array.isArray(body) ? body[0] : undefined;
+    const roles = Array.isArray(body)
+      ? [
+          ...new Set(
+            body.map((s) => s.team).filter((t): t is string => !!t),
+          ),
+        ]
+      : [];
+
+    setFormValues((prev) => ({
+      ...prev,
+      name: template.name,
+      description: first?.description ?? prev.description,
+      ...(roles.length > 0 && { roles }),
+    }));
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -1204,23 +1235,52 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
               <footer className="border-t px-6 py-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  {intent === "edit" && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      className="w-full sm:w-auto"
-                      onClick={handleDelete}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete
-                    </Button>
-                  )}
-
-                  <div
-                    className={cn(
-                      "flex flex-col gap-3 sm:flex-row",
-                      intent !== "edit" && "sm:ml-auto",
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    {intent === "edit" && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        className="w-full sm:w-auto"
+                        onClick={handleDelete}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                      </Button>
                     )}
-                  >
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full sm:w-auto"
+                        >
+                          <LayoutTemplate className="mr-2 h-4 w-4" />
+                          Import Template
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        {isTemplatesLoading && (
+                          <DropdownMenuItem disabled>
+                            Loading…
+                          </DropdownMenuItem>
+                        )}
+                        {!isTemplatesLoading && templates.length === 0 && (
+                          <DropdownMenuItem disabled>
+                            No templates available
+                          </DropdownMenuItem>
+                        )}
+                        {templates.map((t) => (
+                          <DropdownMenuItem
+                            key={t.id}
+                            onClick={() => applyTemplate(t)}
+                          >
+                            {t.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row">
                     <Button
                       type="button"
                       variant="ghost"

@@ -80,3 +80,11 @@ export interface EventFormValues {
   points?: number;
   hackathonId?: string;
 }
+export interface TemplateSubIssue {
+  title: string;
+  description?: string;
+  team?: string;
+  assignee?: string;
+  dateMs?: number;
+  children?: TemplateSubIssue[];
+}
