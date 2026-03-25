@@ -206,7 +206,7 @@ const formatIssueReminder = (target: IssueReminderTarget): string => {
     target.day === ISSUE_REMINDER_DAYS.Overdue && target.overdueDays !== null
       ? ` (${target.overdueDays} days)`
       : "";
-  return `- [${issueTitle}](<${issueUrl}>)${overdueSuffix} ${mentions}`;
+  return `[${issueTitle}](<${issueUrl}>)${overdueSuffix} ${mentions}`;
 };
 
 const truncateReminderLine = (line: string, maxLength: number): string => {
