@@ -1,4 +1,4 @@
-import { createEnv } from "@t3-oss/env-nextjs";
+import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const env = createEnv({
@@ -8,7 +8,7 @@ export const env = createEnv({
     LISTMONK_TOKEN: z.string(),
     LISTMONK_FROM_EMAIL: z.string(),
   },
-  experimental__runtimeEnv: {},
+  runtimeEnv: process.env,
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });
