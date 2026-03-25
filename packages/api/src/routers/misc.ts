@@ -1,9 +1,9 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
-import { DISCORD, FORMS, TEAM } from "@forge/consts";
+import { FORMS } from "@forge/consts";
+import { logger } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 
 import { protectedProcedure } from "../trpc";
@@ -127,67 +127,21 @@ export const miscRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      const team = TEAM.TEAMS.find((team) => team.team === input.team);
-      if (!team) {
-        throw new Error("Team not found");
+      try {
+        await discord.sendRecruitingApplication(input.team, {
+          email: input.email,
+          gradTerm: input.gradTerm,
+          gradYear: input.gradYear.toString(),
+          major: input.major,
+          name: input.name,
+        });
+      } catch (e) {
+        logger.error(e);
+        throw new TRPCError({
+          message: "An error has occurred.",
+          code: "INTERNAL_SERVER_ERROR",
+          cause: e,
+        });
       }
-
-      const directorRole = team.director_role;
-
-      // Convert hex color string to integer for Discord API
-      const colorInt = parseInt(team.color.replace("#", ""), 16);
-
-      // TODO: refactor to util
-      await discord.api.post(
-        Routes.channelMessages(DISCORD.RECRUITING_CHANNEL),
-        {
-          body: {
-            content: `<@&${directorRole}> **New Applicant for ${team.team}!**`,
-            embeds: [
-              {
-                title: `${input.name}'s Application`,
-                description: `A new applicant is interested in joining the **${team.team}** team.\n\nPlease see details below:`,
-                color: colorInt,
-                fields: [
-                  {
-                    name: "Name",
-                    value: input.name,
-                    inline: true,
-                  },
-                  {
-                    name: "Email",
-                    value: input.email,
-                    inline: true,
-                  },
-                  {
-                    name: "Major",
-                    value: input.major,
-                    inline: true,
-                  },
-                  {
-                    name: "Grad Term",
-                    value: input.gradTerm,
-                    inline: true,
-                  },
-                  {
-                    name: "Grad Year",
-                    value: input.gradYear.toString(),
-                    inline: true,
-                  },
-                  {
-                    name: "Team",
-                    value: team.team,
-                    inline: true,
-                  },
-                ],
-                footer: {
-                  text: `Submitted at: ${new Date().toLocaleString()}`,
-                },
-                timestamp: new Date().toISOString(),
-              },
-            ],
-          },
-        },
-      );
     }),
 } satisfies TRPCRouterRecord;
