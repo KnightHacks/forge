@@ -13,6 +13,7 @@ export function IssueFetcherPanePlayground() {
   const [fetcherData, setFetcherData] = useState<IssueFetcherPaneData | null>(
     null,
   );
+  const isReady = fetcherData !== null;
 
   return (
     <div className="space-y-6">
@@ -21,14 +22,20 @@ export function IssueFetcherPanePlayground() {
       <section className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-base font-semibold">Playground View</h3>
-          <span className="text-sm text-muted-foreground">
-            Showing {issues.length} issue(s)
-          </span>
+          {isReady && (
+            <span className="text-sm text-muted-foreground">
+              Showing {issues.length} issue(s)
+            </span>
+          )}
         </div>
 
-        {fetcherData?.isLoading ? (
+        {!isReady ? (
+          <p className="text-sm text-muted-foreground">
+            Waiting for fetcher state...
+          </p>
+        ) : fetcherData.isLoading ? (
           <p className="text-sm text-muted-foreground">Loading issues...</p>
-        ) : fetcherData?.error ? (
+        ) : fetcherData.error ? (
           <p className="text-sm text-destructive">{fetcherData.error}</p>
         ) : issues.length === 0 ? (
           <p className="text-sm text-muted-foreground">
@@ -51,7 +58,7 @@ export function IssueFetcherPanePlayground() {
                       EVENT-LINKED
                     </span>
                   )}
-                  {fetcherData?.blockedParentIds.has(issue.id) && (
+                  {fetcherData.blockedParentIds.has(issue.id) && (
                     <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
                       BLOCKED
                     </span>
@@ -65,7 +72,7 @@ export function IssueFetcherPanePlayground() {
                 <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2 lg:grid-cols-3">
                   <p>
                     <strong>Team:</strong>{" "}
-                    {fetcherData?.roleNameById.get(issue.team) ?? issue.team}
+                    {fetcherData.roleNameById.get(issue.team) ?? issue.team}
                   </p>
                   <p>
                     <strong>Due:</strong>{" "}

@@ -81,6 +81,13 @@ function parseLocalDate(value: string, endOfDay: boolean) {
 export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   const { actions, onDataChange, setIssues } = props;
   const [filters, setFilters] = useState<IssueFilters>(DEFAULT_ISSUE_FILTERS);
+  const statusSelectId = "issue-fetcher-status-select";
+  const teamSelectId = "issue-fetcher-team-select";
+  const typeSelectId = "issue-fetcher-type-select";
+  const searchInputId = "issue-fetcher-search-input";
+  const dateFromInputId = "issue-fetcher-date-from-input";
+  const dateToInputId = "issue-fetcher-date-to-input";
+  const rootOnlyCheckboxId = "issue-fetcher-root-only-checkbox";
 
   const rolesQuery = api.roles.getAllLinks.useQuery(undefined, {
     refetchOnWindowFocus: false,
@@ -108,13 +115,11 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   const issuesQuery = api.issues.getAllIssues.useQuery(queryInput, {
     refetchOnWindowFocus: false,
   });
-  const {
-    data: fetchedIssues,
-    error: issuesError,
-    isLoading,
-    refetch,
-  } = issuesQuery;
-  const issueErrorMessage = issuesError?.message ?? null;
+  const { data: fetchedIssues } = issuesQuery;
+  const combinedIsLoading = rolesQuery.isLoading || issuesQuery.isLoading;
+  const combinedError = rolesQuery.error ?? issuesQuery.error;
+  const combinedErrorMessage = combinedError?.message ?? null;
+  const isReady = !combinedIsLoading && !combinedError;
 
   const roles = useMemo(() => rolesQuery.data ?? [], [rolesQuery.data]);
   const roleNameById = useMemo(
@@ -170,24 +175,25 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   }, [allIssues, filters.issueKind, filters.rootOnly, filters.searchTerm]);
 
   const refresh = useCallback(() => {
-    void refetch();
-  }, [refetch]);
+    void Promise.all([rolesQuery.refetch(), issuesQuery.refetch()]);
+  }, [issuesQuery, rolesQuery]);
 
   const data = useMemo<IssueFetcherPaneData>(
     () => ({
-      issues,
-      blockedParentIds,
-      roleNameById,
-      isLoading,
-      error: issueErrorMessage,
+      issues: isReady ? issues : [],
+      blockedParentIds: isReady ? blockedParentIds : new Set<string>(),
+      roleNameById: isReady ? roleNameById : new Map<string, string>(),
+      isLoading: combinedIsLoading,
+      error: combinedErrorMessage,
       refresh,
       filters,
     }),
     [
       blockedParentIds,
+      combinedErrorMessage,
+      combinedIsLoading,
       filters,
-      isLoading,
-      issueErrorMessage,
+      isReady,
       issues,
       refresh,
       roleNameById,
@@ -195,8 +201,8 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   );
 
   useEffect(() => {
-    setIssues?.(issues);
-  }, [issues, setIssues]);
+    setIssues?.(isReady ? issues : []);
+  }, [isReady, issues, setIssues]);
 
   useEffect(() => {
     onDataChange?.(data);
@@ -221,17 +227,17 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
           </Button>
         </div>
         <div className="text-sm text-muted-foreground">
-          {data.isLoading
+          {combinedIsLoading
             ? "Loading issues..."
-            : data.error
-              ? data.error
-              : `${data.issues.length} issue(s) ready for parent views`}
+            : combinedErrorMessage
+              ? combinedErrorMessage
+              : `${issues.length} issue(s) ready for parent views`}
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1">
-          <Label>Status</Label>
+          <Label htmlFor={statusSelectId}>Status</Label>
           <Select
             value={filters.statusFilter}
             onValueChange={(value) =>
@@ -241,7 +247,7 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
               }))
             }
           >
-            <SelectTrigger>
+            <SelectTrigger id={statusSelectId}>
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
@@ -256,14 +262,14 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
         </div>
 
         <div className="space-y-1">
-          <Label>Team</Label>
+          <Label htmlFor={teamSelectId}>Team</Label>
           <Select
             value={filters.teamFilter}
             onValueChange={(value) =>
               setFilters((previous) => ({ ...previous, teamFilter: value }))
             }
           >
-            <SelectTrigger>
+            <SelectTrigger id={teamSelectId}>
               <SelectValue placeholder="All teams" />
             </SelectTrigger>
             <SelectContent>
@@ -278,7 +284,7 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
         </div>
 
         <div className="space-y-1">
-          <Label>Type</Label>
+          <Label htmlFor={typeSelectId}>Type</Label>
           <Select
             value={filters.issueKind}
             onValueChange={(value) =>
@@ -288,7 +294,7 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
               }))
             }
           >
-            <SelectTrigger>
+            <SelectTrigger id={typeSelectId}>
               <SelectValue placeholder="All issue types" />
             </SelectTrigger>
             <SelectContent>
@@ -300,8 +306,9 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
         </div>
 
         <div className="space-y-1">
-          <Label>Search</Label>
+          <Label htmlFor={searchInputId}>Search</Label>
           <Input
+            id={searchInputId}
             placeholder="Search name/description/id..."
             value={filters.searchTerm}
             onChange={(event) =>
@@ -314,8 +321,9 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
         </div>
 
         <div className="space-y-1">
-          <Label>Date From</Label>
+          <Label htmlFor={dateFromInputId}>Date From</Label>
           <Input
+            id={dateFromInputId}
             type="date"
             value={filters.dateFrom}
             onChange={(event) =>
@@ -328,8 +336,9 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
         </div>
 
         <div className="space-y-1">
-          <Label>Date To</Label>
+          <Label htmlFor={dateToInputId}>Date To</Label>
           <Input
+            id={dateToInputId}
             type="date"
             value={filters.dateTo}
             onChange={(event) =>
@@ -354,6 +363,7 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
 
       <div className="flex items-center space-x-2">
         <Checkbox
+          id={rootOnlyCheckboxId}
           checked={filters.rootOnly}
           onCheckedChange={(checked) =>
             setFilters((previous) => ({
@@ -362,7 +372,9 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
             }))
           }
         />
-        <Label>Show root issues only (hide subtasks)</Label>
+        <Label htmlFor={rootOnlyCheckboxId}>
+          Show root issues only (hide subtasks)
+        </Label>
       </div>
     </section>
   );
