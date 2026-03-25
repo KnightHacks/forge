@@ -254,7 +254,7 @@ const splitChannelReminderMessages = (
 
     const sectionLines = targets.map(formatIssueReminder);
     const sectionContent = `## ${ISSUE_REMINDER_DAY_LABELS[day]}\n${sectionLines.join("\n")}`;
-    const nextContent = `${currentContent}\n\n${sectionContent}`;
+    const nextContent = `${currentContent}\n${sectionContent}`;
 
     if (nextContent.length <= MAX_DISCORD_MESSAGE_LENGTH) {
       currentContent = nextContent;
