@@ -202,11 +202,11 @@ const formatIssueReminder = (target: IssueReminderTarget): string => {
   const mentions = getIssueMentionTargets(target).join(", ");
   const issueUrl = getIssueUrl(target.issueId);
   const issueTitle = sanitizeIssueReminderTitle(target.issueName);
-  const overduePrefix =
+  const overdueSuffix =
     target.day === ISSUE_REMINDER_DAYS.Overdue && target.overdueDays !== null
-      ? `(${target.overdueDays} days) `
+      ? ` (${target.overdueDays} days)`
       : "";
-  return `- ${overduePrefix}[${issueTitle}](<${issueUrl}>) ${mentions}`;
+  return `- [${issueTitle}](<${issueUrl}>)${overdueSuffix} ${mentions}`;
 };
 
 const truncateReminderLine = (line: string, maxLength: number): string => {
