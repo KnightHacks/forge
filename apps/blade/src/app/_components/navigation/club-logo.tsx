@@ -4,24 +4,25 @@ import Image from "next/image";
 
 export default function ClubLogo() {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center">
       <Image
         className="hidden dark:block"
-        src={"/white-kh-logo.svg"}
-        alt="The logo of Knight Hacks"
+        src="/blade-banner.svg"
+        alt="Blade"
         width={0}
         height={0}
-        style={{ width: "35px", height: "35px" }}
+        style={{ width: "auto", height: "32px" }}
+        priority
       />
       <Image
         className="block dark:hidden"
-        src={"/black-kh-logo.svg"}
-        alt="The logo of Knight Hacks"
+        src="/black-kh-title-logo.svg"
+        alt="Blade"
         width={0}
         height={0}
-        style={{ width: "35px", height: "35px" }}
+        style={{ width: "auto", height: "32px" }}
+        priority
       />
-      <div>Blade</div>
     </div>
   );
 }
