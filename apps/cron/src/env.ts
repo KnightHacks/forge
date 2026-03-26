@@ -9,6 +9,7 @@ export const env = createEnv({
     DISCORD_WEBHOOK_REMINDERS: z.string(),
     DISCORD_WEBHOOK_REMINDERS_PRE: z.string(),
     DISCORD_WEBHOOK_REMINDERS_HACK: z.string(),
+    BLADE_URL: z.string().url(),
   },
   runtimeEnvStrict: {
     DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
@@ -17,6 +18,7 @@ export const env = createEnv({
     DISCORD_WEBHOOK_REMINDERS: process.env.DISCORD_WEBHOOK_REMINDERS,
     DISCORD_WEBHOOK_REMINDERS_PRE: process.env.DISCORD_WEBHOOK_REMINDERS_PRE,
     DISCORD_WEBHOOK_REMINDERS_HACK: process.env.DISCORD_WEBHOOK_REMINDERS_HACK,
+    BLADE_URL: process.env.BLADE_URL,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
