@@ -9,11 +9,6 @@ export const env = createEnv({
     DISCORD_WEBHOOK_REMINDERS: z.string(),
     DISCORD_WEBHOOK_REMINDERS_PRE: z.string(),
     DISCORD_WEBHOOK_REMINDERS_HACK: z.string(),
-    DISCORD_WEBHOOK_ISSUE_TEAMS: z.string().url().optional(),
-    DISCORD_WEBHOOK_ISSUE_DIRECTORS: z.string().url().optional(),
-    DISCORD_WEBHOOK_ISSUE_DESIGN: z.string().url().optional(),
-    DISCORD_WEBHOOK_ISSUE_HACKORG: z.string().url().optional(),
-    ISSUE_REMINDERS_ENABLED: z.enum(["true", "false"]).optional(),
     BLADE_URL: z.string().url(),
   },
   runtimeEnvStrict: {
@@ -23,12 +18,6 @@ export const env = createEnv({
     DISCORD_WEBHOOK_REMINDERS: process.env.DISCORD_WEBHOOK_REMINDERS,
     DISCORD_WEBHOOK_REMINDERS_PRE: process.env.DISCORD_WEBHOOK_REMINDERS_PRE,
     DISCORD_WEBHOOK_REMINDERS_HACK: process.env.DISCORD_WEBHOOK_REMINDERS_HACK,
-    DISCORD_WEBHOOK_ISSUE_TEAMS: process.env.DISCORD_WEBHOOK_ISSUE_TEAMS,
-    DISCORD_WEBHOOK_ISSUE_DIRECTORS:
-      process.env.DISCORD_WEBHOOK_ISSUE_DIRECTORS,
-    DISCORD_WEBHOOK_ISSUE_DESIGN: process.env.DISCORD_WEBHOOK_ISSUE_DESIGN,
-    DISCORD_WEBHOOK_ISSUE_HACKORG: process.env.DISCORD_WEBHOOK_ISSUE_HACKORG,
-    ISSUE_REMINDERS_ENABLED: process.env.ISSUE_REMINDERS_ENABLED,
     BLADE_URL: process.env.BLADE_URL,
   },
   skipValidation:
