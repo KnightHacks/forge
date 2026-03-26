@@ -1,20 +1,14 @@
-import { WebhookClient } from "discord.js";
+import { Routes } from "discord-api-types/v10";
 import { and, inArray, isNotNull, ne } from "drizzle-orm";
 
 import { db } from "@forge/db/client";
 import { Roles } from "@forge/db/schemas/auth";
 import { Issue } from "@forge/db/schemas/knight-hacks";
 import { logger } from "@forge/utils";
+import { api } from "@forge/utils/discord";
 
 import { env } from "../env";
 import { CronBuilder } from "../structs/CronBuilder";
-
-const ISSUE_REMINDER_WEBHOOK_URLS = {
-  Teams: env.DISCORD_WEBHOOK_ISSUE_TEAMS,
-  Directors: env.DISCORD_WEBHOOK_ISSUE_DIRECTORS,
-  Design: env.DISCORD_WEBHOOK_ISSUE_DESIGN,
-  HackOrg: env.DISCORD_WEBHOOK_ISSUE_HACKORG,
-} as const;
 
 const ISSUE_REMINDER_CHANNELS = {
   Teams: "Teams",
@@ -23,16 +17,11 @@ const ISSUE_REMINDER_CHANNELS = {
   HackOrg: "HackOrg",
 } as const;
 
-const ISSUE_TEAM_CHANNEL_MAP: Record<
-  string,
-  keyof typeof ISSUE_REMINDER_CHANNELS
-> = {
-  "16ced653-dafd-46bc-a6ef-8f4fba6a6b46": "Teams",
-  "f4f544bf-7c69-43c1-b4b4-0585e73268a7": "Teams",
-  "9fc780ed-3c84-4e9a-bd10-b5c2be51f5a8": "Teams",
-  "b86a437b-0789-4ec4-8011-5ddde24865dc": "Directors",
-  "3b03b15d-4368-49e6-86c9-48c11775430b": "Design",
-  "110f5d0c-3299-46f6-b057-ae2ce28d4778": "HackOrg",
+const ISSUE_REMINDER_DESTINATION_CHANNEL_IDS = {
+  Teams: "1459204271655489567",
+  Directors: "1463407041191088188",
+  HackOrg: "1461565747649187874",
+  Design: "1483901622558920945",
 };
 
 const ISSUE_REMINDER_DAYS = {
@@ -119,18 +108,6 @@ const getIssueReminderDiffDays = (date: Date, now = new Date()): number => {
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 };
 
-const getIssueReminderChannel = (
-  teamId: string,
-): keyof typeof ISSUE_REMINDER_CHANNELS | null => {
-  const channel = ISSUE_TEAM_CHANNEL_MAP[teamId] ?? null;
-  if (!channel) {
-    logger.warn(
-      `Skipping issue reminder: no channel mapping for team ${teamId}.`,
-    );
-  }
-  return channel;
-};
-
 const buildIssueReminderTarget = (issue: {
   id: string;
   name: string;
@@ -138,10 +115,10 @@ const buildIssueReminderTarget = (issue: {
   date: Date | null;
   teamDiscordRoleId: string;
   assigneeDiscordUserIds: string[];
+  channel: keyof typeof ISSUE_REMINDER_CHANNELS | null;
 }): IssueReminderTarget | null => {
   if (!issue.date) return null;
-  const channel = getIssueReminderChannel(issue.team);
-  if (!channel) return null;
+  if (!issue.channel) return null;
   const day = getIssueReminderDay(issue.date);
   if (!day) return null;
   if (!issue.teamDiscordRoleId) return null;
@@ -151,7 +128,7 @@ const buildIssueReminderTarget = (issue: {
     teamId: issue.team,
     teamDiscordRoleId: issue.teamDiscordRoleId,
     assigneeDiscordUserIds: issue.assigneeDiscordUserIds,
-    channel,
+    channel: issue.channel,
     day,
     overdueDays:
       day === ISSUE_REMINDER_DAYS.Overdue
@@ -241,6 +218,13 @@ const getAllowedMentions = (
   };
 };
 
+const formatIssueReminderEmbedDescription = (content: string): string => {
+  return content
+    .replace(/^# Issue Reminders\n?/, "")
+    .replace(/^## (.+)$/gm, "**$1**")
+    .trim();
+};
+
 const splitChannelReminderMessages = (
   grouped: Partial<Record<IssueReminderDay, IssueReminderTarget[]>>,
 ): { content: string; targets: IssueReminderTarget[] }[] => {
@@ -308,14 +292,21 @@ const splitChannelReminderMessages = (
 
 const sendIssueReminderChunk = async (
   channel: keyof typeof ISSUE_REMINDER_CHANNELS,
-  webhookUrl: string,
+  channelId: string,
   chunk: { content: string; targets: IssueReminderTarget[] },
 ) => {
-  const webhook = new WebhookClient({ url: webhookUrl });
   try {
-    await webhook.send({
-      content: chunk.content,
-      allowedMentions: getAllowedMentions(chunk.targets),
+    await api.post(Routes.channelMessages(channelId), {
+      body: {
+        embeds: [
+          {
+            title: "Issue Reminders",
+            description: formatIssueReminderEmbedDescription(chunk.content),
+            color: 0xcca4f4,
+          },
+        ],
+        allowed_mentions: getAllowedMentions(chunk.targets),
+      },
     });
   } catch (error) {
     logger.error(`Failed sending issue reminder chunk for ${channel}.`, error);
@@ -343,27 +334,44 @@ export const issueReminders = new CronBuilder({
     .select({
       id: Roles.id,
       discordRoleId: Roles.discordRoleId,
+      issueReminderChannel: Roles.issueReminderChannel,
     })
     .from(Roles)
     .where(inArray(Roles.id, teamIds));
 
-  const roleDiscordIdByTeamId: Record<string, string> = {};
+  const roleDataByTeamId: Record<
+    string,
+    {
+      discordRoleId: string;
+      issueReminderChannel: keyof typeof ISSUE_REMINDER_CHANNELS | null;
+    }
+  > = {};
   for (const r of roles) {
-    roleDiscordIdByTeamId[r.id] = r.discordRoleId;
+    roleDataByTeamId[r.id] = {
+      discordRoleId: r.discordRoleId,
+      issueReminderChannel: r.issueReminderChannel,
+    };
   }
   const reminderTargets = issues
-    .map((issue) =>
-      buildIssueReminderTarget({
+    .map((issue) => {
+      const role = roleDataByTeamId[issue.team];
+      if (!role?.issueReminderChannel) {
+        logger.warn(
+          `Skipping issue reminder: no issue reminder channel configured for team ${issue.team}.`,
+        );
+      }
+      return buildIssueReminderTarget({
         id: issue.id,
         name: issue.name,
         team: issue.team,
         date: issue.date,
-        teamDiscordRoleId: roleDiscordIdByTeamId[issue.team] ?? "",
+        teamDiscordRoleId: role?.discordRoleId ?? "",
         assigneeDiscordUserIds: issue.userAssignments.map(
           (assignment) => assignment.user.discordUserId,
         ),
-      }),
-    )
+        channel: role?.issueReminderChannel ?? null,
+      });
+    })
     .filter(isIssueReminderTarget);
 
   const groupedReminders = groupIssueReminderTargets(reminderTargets);
@@ -373,20 +381,13 @@ export const issueReminders = new CronBuilder({
     const groupedChannel = groupedReminders[channel];
     if (!groupedChannel) continue;
 
-    if (!ISSUE_REMINDER_WEBHOOK_URLS[channel]) {
-      logger.warn(
-        `Skipping issue reminders for ${channel}: webhook URL is not configured.`,
-      );
-      continue;
-    }
-
     const chunks = splitChannelReminderMessages(groupedChannel);
     if (chunks.length === 0) continue;
 
     for (const chunk of chunks) {
       await sendIssueReminderChunk(
         channel,
-        ISSUE_REMINDER_WEBHOOK_URLS[channel],
+        ISSUE_REMINDER_DESTINATION_CHANNEL_IDS[channel],
         chunk,
       );
     }
