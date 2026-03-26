@@ -180,7 +180,7 @@ export function Hero() {
               <p className="max-w-prose text-lg text-muted-foreground sm:text-xl">
                 Whether you&apos;re a year-round{" "}
                 <span className="font-semibold text-foreground">member</span> or
-                a hackathon{" "}
+                an annual{" "}
                 <span className="font-semibold text-foreground">hacker</span>,{" "}
                 <b>Blade</b> is your home for everything Knight Hacks.
               </p>
