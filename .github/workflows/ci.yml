@@ -15,6 +15,28 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  migration_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Generate migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+        run: pnpm db:generate
+
+      - name: Verify migrations are committed
+        run: |
+          if [ -n "$(git status --porcelain -- packages/db/drizzle)" ]; then
+            echo "Detected uncommitted migration changes in packages/db/drizzle."
+            echo "Run 'pnpm db:generate' and commit the generated files."
+            git status --short -- packages/db/drizzle
+            exit 1
+          fi
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -50,7 +72,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [lint, format, typecheck]
+    needs: [migration_check, lint, format, typecheck]
     permissions:
       contents: read
     steps:
@@ -64,3 +86,23 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  migrate_prod:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: [build]
+    concurrency:
+      group: db-migrate-prod
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Apply database migrations
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: pnpm db:migrate
