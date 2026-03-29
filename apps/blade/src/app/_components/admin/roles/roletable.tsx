@@ -86,7 +86,7 @@ export default function RoleTable() {
         {roles.map((v, i) => {
           const role = discordRoles?.at(i);
           return (
-            <TableRow id={"role" + i} className="">
+            <TableRow key={v.id} id={"role" + i} className="">
               <TableCell>
                 <div className="text-base font-medium">{v.name}</div>
               </TableCell>
@@ -149,7 +149,10 @@ export default function RoleTable() {
                     <ul className="mt-1 max-h-48 list-disc overflow-y-auto px-4">
                       {permissions.getPermsAsList(v.permissions).map((p) => {
                         return (
-                          <li className={`p-1 text-sm text-muted-foreground`}>
+                          <li
+                            key={p}
+                            className={`p-1 text-sm text-muted-foreground`}
+                          >
                             {p}
                           </li>
                         );

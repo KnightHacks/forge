@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -17,10 +18,23 @@ export function MembershipSuccess() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const checkoutSessionId = searchParams.get("session_id") ?? "";
+  const paymentIntentId = searchParams.get("payment_intent");
 
-  const { data, isPending, isError } =
-    api.duesPayment.orderSuccess.useQuery(checkoutSessionId);
+  const { data, isPending, isError } = api.duesPayment.orderSuccess.useQuery(
+    paymentIntentId ?? "",
+    { enabled: Boolean(paymentIntentId) },
+  );
+
+  useEffect(() => {
+    if (!paymentIntentId) {
+      toast.error("Invalid confirmation link.");
+      router.replace(SIGN_IN_PATH);
+    }
+  }, [paymentIntentId, router]);
+
+  if (!paymentIntentId) {
+    return null;
+  }
 
   if (isError) {
     toast.error("Something went wrong, please contact support.");
@@ -32,10 +46,27 @@ export function MembershipSuccess() {
     return <MembershipSuccessSkeleton />;
   }
 
-  if (data.status === "unpaid") {
-    toast.error("Checkout session was not complete, please try again.");
-    router.push(SIGN_IN_PATH);
-    return null;
+  if (data.status === "processing") {
+    return (
+      <div className="min-h-screen py-12">
+        <div className="mx-auto max-w-3xl px-4">
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl font-bold">Payment Processing</h1>
+            <p className="mt-2">
+              Your payment is being processed. You will receive a confirmation
+              email once it is complete.
+            </p>
+          </div>
+          <Alert className="mb-8">
+            <AlertTitle>Pending</AlertTitle>
+            <AlertDescription>
+              Bank transfers can take 1–5 business days to settle. Your
+              membership will be activated once the payment clears.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
   }
 
   return (

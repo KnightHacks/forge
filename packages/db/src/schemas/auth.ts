@@ -1,10 +1,14 @@
-import { relations } from "drizzle-orm";
-import { pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
+import { pgEnum, pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
-import { Member } from "./knight-hacks";
-
 const createTable = pgTableCreator((name) => `auth_${name}`);
+
+export const IssueReminderChannelEnum = pgEnum("issue_reminder_channel", [
+  "Teams",
+  "Directors",
+  "Design",
+  "HackOrg",
+]);
 
 export const User = createTable("user", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -40,36 +44,10 @@ export const Roles = createTable("roles", (t) => ({
   name: t.varchar().notNull().default(""),
   discordRoleId: t.varchar().unique().notNull(),
   permissions: t.varchar().notNull(),
+  issueReminderChannel: IssueReminderChannelEnum(),
 }));
 
 export const InsertRolesSchema = createInsertSchema(Roles);
-
-export const UserRelations = relations(User, ({ many, one }) => ({
-  accounts: many(Account),
-  member: one(Member),
-  permissions: many(Permissions, {
-    relationName: "userPermissionRel",
-  }),
-}));
-
-export const RoleRelations = relations(Roles, ({ many }) => ({
-  permissions: many(Permissions, {
-    relationName: "rolePermissionRel",
-  }),
-}));
-
-export const PermissionRelations = relations(Permissions, ({ one }) => ({
-  role: one(Roles, {
-    fields: [Permissions.roleId],
-    references: [Roles.id],
-    relationName: "rolePermissionRel",
-  }),
-  user: one(User, {
-    fields: [Permissions.userId],
-    references: [User.id],
-    relationName: "userPermissionRel",
-  }),
-}));
 
 export const Account = createTable(
   "account",
@@ -102,10 +80,6 @@ export const Account = createTable(
   }),
 );
 
-export const AccountRelations = relations(Account, ({ one }) => ({
-  user: one(User, { fields: [Account.userId], references: [User.id] }),
-}));
-
 export const Session = createTable("session", (t) => ({
   id: t.text().notNull().primaryKey(),
   sessionToken: t.varchar({ length: 255 }).notNull(),
@@ -124,10 +98,6 @@ export const Session = createTable("session", (t) => ({
     .timestamp({ mode: "date", withTimezone: true })
     .defaultNow()
     .notNull(),
-}));
-
-export const SessionRelations = relations(Session, ({ one }) => ({
-  user: one(User, { fields: [Session.userId], references: [User.id] }),
 }));
 
 export const JudgeSession = createTable("judge_session", (t) => ({

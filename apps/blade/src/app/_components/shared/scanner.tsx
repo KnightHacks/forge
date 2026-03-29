@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Scanner } from "@yudiel/react-qr-scanner";
 import { AwardIcon, WrenchIcon } from "lucide-react";
-import { QrReader } from "react-qr-reader";
 import { z } from "zod";
 
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
@@ -234,15 +234,17 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
           <DialogTitle className="absolute">Check-in {eventType}</DialogTitle>
         </DialogHeader>
         <div>
-          <QrReader
+          <Scanner
             scanDelay={2000}
             constraints={{ facingMode: "environment" }}
-            onResult={async (result, _) => {
+            formats={["qr_code"]}
+            onScan={async (detectedCodes) => {
+              const result = detectedCodes[0];
               if (!result) return;
               if (scanningRef.current) return;
               scanningRef.current = true;
               try {
-                const userId = result.getText().substring(5);
+                const userId = result.rawValue.substring(5);
                 form.setValue("userId", userId);
                 const eventId = form.getValues("eventId");
                 if (eventId) {
