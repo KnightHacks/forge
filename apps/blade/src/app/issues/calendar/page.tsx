@@ -2,9 +2,6 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 
-import { EventsTable } from "~/app/_components/admin/club/events/events-table";
-import { AddPoints } from "~/app/_components/shared/AddPoints";
-import ScannerPopUp from "~/app/_components/shared/scanner";
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 
