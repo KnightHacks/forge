@@ -442,7 +442,7 @@ async function main() {
     console.error("Error during database seeding:", error);
     await discord.log({
       title: `Failed to save limited prod db to minio`,
-      message: `Failed to sav limited prod db to minio. Error: ${stringify(error)}`,
+      message: `Failed to save limited prod db to minio. Error: ${stringify(error)}`,
       color: "uhoh_red",
       userId: "Host",
     });

@@ -5,7 +5,10 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./discord": "./src/discord.ts",
+    "./discord": {
+      "types": "./dist/discord.d.ts",
+      "default": "./src/discord.ts"
+    },
     "./forms": "./src/forms.ts",
     "./forms.client": "./src/forms.client.ts",
     "./google": "./src/google.ts",

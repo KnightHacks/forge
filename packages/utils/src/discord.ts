@@ -9,11 +9,9 @@ import { Routes } from "discord-api-types/v10";
 import { and, desc, eq } from "drizzle-orm";
 
 import type { Session } from "@forge/auth/server";
-import { DISCORD } from "@forge/consts";
+import { DISCORD, TEAM } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Account } from "@forge/db/schemas/auth";
-
-import { TEAMS } from "../../consts/src/team";
 import { env } from "./env";
 import { logger } from "./logger";
 
@@ -29,7 +27,7 @@ export async function sendRecruitingApplication(
     gradYear: string;
   },
 ) {
-  const team = TEAMS.find((x) => x.team === teamName);
+  const team = TEAM.TEAMS.find((x) => x.team === teamName);
   if (!team) {
     throw new Error("Team not found");
   }
