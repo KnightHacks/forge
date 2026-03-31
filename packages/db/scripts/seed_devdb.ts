@@ -15,14 +15,13 @@
 // I probably messed a lot up :D. See get_prod_db.ts for how to get prod data
 // into your local db for deving.
 
-// TODO: look into moving into a separate area so we don't have to do the BS
-//       that we do with `../../api` and `../../utils`
-
 import { exec } from "child_process";
 import { unlink } from "fs/promises";
 import { promisify } from "util";
+import { REST } from "@discordjs/rest";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Client } from "pg";
+import { Client as MinioClient } from "minio";
 import { Routes } from "discord-api-types/v10";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -30,16 +29,41 @@ import Pool from "pg-pool";
 import { stringify } from "superjson";
 
 import { DISCORD, MINIO } from "@forge/consts";
-
-// Scripts can use relative imports to avoid circular dependencies
-import { minioClient } from "../../api/src/minio/minio-client";
-import * as discord from "../../utils/src/discord";
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
 import * as knightHacksSchema from "../src/schemas/knight-hacks";
 
 const execAsync = promisify(exec);
 console.log("Starting seeding script");
+
+function requireEnvVar(name: string): string {
+  /* eslint-disable no-restricted-properties */
+  const value = process.env[name];
+  /* eslint-enable no-restricted-properties */
+  if (!value) {
+    throw new Error(`Missing required env var: ${name}`);
+  }
+  return value;
+}
+
+const requiredEnv = {
+  DISCORD_BOT_TOKEN: requireEnvVar("DISCORD_BOT_TOKEN"),
+  MINIO_ENDPOINT: requireEnvVar("MINIO_ENDPOINT"),
+  MINIO_ACCESS_KEY: requireEnvVar("MINIO_ACCESS_KEY"),
+  MINIO_SECRET_KEY: requireEnvVar("MINIO_SECRET_KEY"),
+};
+
+const discordApi = new REST({ version: "10" }).setToken(
+  requiredEnv.DISCORD_BOT_TOKEN,
+);
+
+const minioClient = new MinioClient({
+  endPoint: requiredEnv.MINIO_ENDPOINT,
+  port: 443,
+  useSSL: true,
+  accessKey: requiredEnv.MINIO_ACCESS_KEY,
+  secretKey: requiredEnv.MINIO_SECRET_KEY,
+});
 
 type AuthSchema = typeof authSchema;
 type KnightHacksSchema = typeof knightHacksSchema;
@@ -243,12 +267,12 @@ async function syncRoles() {
       await backupDb.query.Roles.findMany({ columns: { discordRoleId: true } })
     ).map((row) => row.discordRoleId),
   );
-  let prodRoles = (await discord.api.get(
+  let prodRoles = (await discordApi.get(
     Routes.guildRoles(DISCORD.PROD_KNIGHTHACKS_GUILD),
   )) as DiscordRole[];
   prodRoles = prodRoles.filter((role) => prodRolesWithPerms.has(role.id));
 
-  const devRolesArr = (await discord.api.get(
+  const devRolesArr = (await discordApi.get(
     Routes.guildRoles(DISCORD.DEV_KNIGHTHACKS_GUILD),
   )) as DiscordRole[];
   const devRoles = Object.fromEntries(
@@ -261,7 +285,7 @@ async function syncRoles() {
       roleIdMappings[role.id] = devRoles[hash].id;
     } else {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      const newRole = (await discord.api.post(
+      const newRole = (await discordApi.post(
         Routes.guildRoles(DISCORD.DEV_KNIGHTHACKS_GUILD),
         {
           body: {
@@ -300,14 +324,46 @@ interface DiscordGuildScheduledEvent {
   image?: string | null;
 }
 
+async function logDiscord({
+  title,
+  message,
+  color,
+  userId,
+}: {
+  title: string;
+  message: string;
+  color: "tk_blue" | "blade_purple" | "uhoh_red" | "success_green";
+  userId: string;
+}) {
+  await discordApi.post(Routes.channelMessages(DISCORD.LOG_CHANNEL), {
+    body: {
+      embeds: [
+        {
+          title,
+          description: message + `\n\nUser: <@${userId}>`,
+          color: {
+            tk_blue: 0x1a73e8,
+            blade_purple: 0xcca4f4,
+            uhoh_red: 0xff0000,
+            success_green: 0x00ff00,
+          }[color],
+          footer: {
+            text: new Date().toLocaleString(),
+          },
+        },
+      ],
+    },
+  });
+}
+
 async function syncEvents() {
   if (!backupDb) return;
 
-  const prodEvents = (await discord.api.get(
+  const prodEvents = (await discordApi.get(
     Routes.guildScheduledEvents(DISCORD.PROD_KNIGHTHACKS_GUILD),
   )) as DiscordGuildScheduledEvent[];
 
-  const devEventsArr = (await discord.api.get(
+  const devEventsArr = (await discordApi.get(
     Routes.guildScheduledEvents(DISCORD.DEV_KNIGHTHACKS_GUILD),
   )) as DiscordGuildScheduledEvent[];
   const devEvents = Object.fromEntries(
@@ -320,7 +376,7 @@ async function syncEvents() {
       eventIdMappings[event.id] = devEvents[hash].id;
     } else {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      const newEvent = (await discord.api.post(
+      const newEvent = (await discordApi.post(
         Routes.guildScheduledEvents(DISCORD.DEV_KNIGHTHACKS_GUILD),
         {
           body: {
@@ -430,7 +486,7 @@ async function main() {
     console.log("Cleaning up backup db");
     await cleanUp();
 
-    await discord.log({
+    await logDiscord({
       title: `Successfully saved limited prod db to minio`,
       message: `Successfully saved limited prod db to minio. Run the get_prod_db.ts script to get it into your local dev db.`,
       color: "success_green",
@@ -440,7 +496,7 @@ async function main() {
     process.exit(0);
   } catch (error) {
     console.error("Error during database seeding:", error);
-    await discord.log({
+    await logDiscord({
       title: `Failed to save limited prod db to minio`,
       message: `Failed to save limited prod db to minio. Error: ${stringify(error)}`,
       color: "uhoh_red",
