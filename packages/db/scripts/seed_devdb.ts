@@ -18,17 +18,18 @@
 import { exec } from "child_process";
 import { unlink } from "fs/promises";
 import { promisify } from "util";
-import { REST } from "@discordjs/rest";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Client } from "pg";
-import { Client as MinioClient } from "minio";
+import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { Client as MinioClient } from "minio";
 import Pool from "pg-pool";
 import { stringify } from "superjson";
 
 import { DISCORD, MINIO } from "@forge/consts";
+
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
 import * as knightHacksSchema from "../src/schemas/knight-hacks";
