@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 
@@ -62,6 +69,10 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   const dateFromInputId = useId();
   const dateToInputId = useId();
   const rootOnlyCheckboxId = useId();
+  const headerId = useId();
+  const descriptionId = useId();
+  const dialogRef = useRef<HTMLElement | null>(null);
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
 
   const rolesQuery = api.roles.getAllLinks.useQuery(undefined, {
     refetchOnWindowFocus: false,
@@ -72,6 +83,17 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
     isLoading: rolesIsLoading,
     error: rolesError,
   } = rolesQuery;
+
+  const dateRangeError = useMemo(() => {
+    const parsedDateFrom = parseLocalDate(filters.dateFrom, false);
+    const parsedDateTo = parseLocalDate(filters.dateTo, true);
+
+    if (parsedDateFrom && parsedDateTo && parsedDateFrom > parsedDateTo) {
+      return "Date From must be on or before Date To.";
+    }
+
+    return null;
+  }, [filters.dateFrom, filters.dateTo]);
 
   const queryInput = useMemo(() => {
     const input: {
@@ -86,8 +108,13 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
 
     const parsedDateFrom = parseLocalDate(filters.dateFrom, false);
     const parsedDateTo = parseLocalDate(filters.dateTo, true);
-    if (parsedDateFrom) input.dateFrom = parsedDateFrom;
-    if (parsedDateTo) input.dateTo = parsedDateTo;
+    const hasInvertedDateRange =
+      parsedDateFrom && parsedDateTo && parsedDateFrom > parsedDateTo;
+
+    if (!hasInvertedDateRange) {
+      if (parsedDateFrom) input.dateFrom = parsedDateFrom;
+      if (parsedDateTo) input.dateTo = parsedDateTo;
+    }
 
     return Object.keys(input).length > 0 ? input : undefined;
   }, [filters]);
@@ -103,8 +130,8 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   } = issuesQuery;
   const combinedIsLoading = rolesIsLoading || issuesIsLoading;
   const combinedError = rolesError ?? issuesError;
-  const combinedErrorMessage = combinedError?.message ?? null;
-  const isReady = !combinedIsLoading && !combinedError;
+  const combinedErrorMessage = dateRangeError ?? combinedError?.message ?? null;
+  const isReady = !combinedIsLoading && !combinedError && !dateRangeError;
 
   const roles = useMemo(() => rolesData ?? [], [rolesData]);
   const roleNameById = useMemo(
@@ -118,18 +145,11 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   );
 
   const blockedParentIds = useMemo(() => {
-    const childrenByParent = new Map<string, ISSUE.IssueFetcherPaneIssue[]>();
+    const blockedParents = new Set<string>();
 
     for (const issue of allIssues) {
-      if (!issue.parent) continue;
-      const current = childrenByParent.get(issue.parent) ?? [];
-      childrenByParent.set(issue.parent, [...current, issue]);
-    }
-
-    const blockedParents = new Set<string>();
-    for (const [parentId, children] of childrenByParent.entries()) {
-      if (children.some((child) => child.status !== "FINISHED")) {
-        blockedParents.add(parentId);
+      if (issue.parent && issue.status !== "FINISHED") {
+        blockedParents.add(issue.parent);
       }
     }
 
@@ -228,8 +248,16 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
       return;
     }
 
+    previousActiveElementRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const focusTarget = window.requestAnimationFrame(() => {
+      dialogRef.current?.focus();
+    });
 
     const handleKeydown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -241,8 +269,10 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
     window.addEventListener("keydown", handleKeydown);
 
     return () => {
+      window.cancelAnimationFrame(focusTarget);
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeydown);
+      previousActiveElementRef.current?.focus();
     };
   }, [handleClose, isOpen]);
 
@@ -255,7 +285,15 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   };
 
   const content = (
-    <section className="relative flex max-h-[80vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg border bg-background shadow-lg">
+    <section
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={headerId}
+      aria-describedby={descriptionId}
+      tabIndex={-1}
+      className="relative flex max-h-[80vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg border bg-background shadow-lg"
+    >
       <button
         type="button"
         className="absolute right-4 top-4 inline-flex size-8 items-center justify-center rounded-md border border-input text-muted-foreground transition hover:text-foreground"
@@ -269,8 +307,10 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
         <p className="text-xs font-medium text-muted-foreground">
           Shared Issue Controls
         </p>
-        <h2 className="mt-1 text-lg font-semibold">Issue Fetcher Pane</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h2 id={headerId} className="mt-1 text-lg font-semibold">
+          Issue Fetcher Pane
+        </h2>
+        <p id={descriptionId} className="mt-1 text-sm text-muted-foreground">
           Shared filter + fetch controller for issues. Use this as the single
           data source, then hand the filtered result to list, kanban, or
           calendar views from the parent.
@@ -412,6 +452,14 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
               />
             </div>
 
+            {dateRangeError ? (
+              <div className="md:col-span-2 lg:col-span-4">
+                <p className="text-sm text-destructive" role="alert">
+                  {dateRangeError}
+                </p>
+              </div>
+            ) : null}
+
             <div className="flex items-end gap-2 lg:col-span-2">
               <Button
                 type="button"
@@ -453,8 +501,6 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
       {isOpen &&
         createPortal(
           <div
-            aria-modal
-            role="dialog"
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-10"
             onMouseDown={handleOverlayPointerDown}
           >
