@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 
+import Calendar from "~/app/_components/calendar/calendar";
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -21,7 +22,9 @@ export default async function Events() {
 
   return (
     <HydrateClient>
-      <main className="container h-screen"></main>
+      <main className="container h-screen">
+        <Calendar />
+      </main>
     </HydrateClient>
   );
 }
