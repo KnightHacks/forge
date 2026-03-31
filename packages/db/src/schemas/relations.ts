@@ -38,7 +38,11 @@ export const PermissionRelations = relations(Permissions, ({ one }) => ({
   }),
 }));
 
-export const IssueRelations = relations(Issue, ({ many }) => ({
+export const IssueRelations = relations(Issue, ({ many, one }) => ({
+  team: one(Roles, {
+    fields: [Issue.team],
+    references: [Roles.id],
+  }),
   teamVisibility: many(IssuesToTeamsVisibility),
   userAssignments: many(IssuesToUsersAssignment),
 }));
