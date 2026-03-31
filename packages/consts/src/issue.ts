@@ -26,7 +26,56 @@ export const EVENT_TIME_MINUTES = Array.from({ length: 12 }, (_, i) =>
 );
 export const EVENT_TIME_AM_PM_OPTIONS = ["AM", "PM"] as const;
 
-//Dialog
+export type StatusFilter = "all" | (typeof ISSUE_STATUS)[number];
+export type IssueKindFilter = "all" | "task" | "event_linked";
+
+export interface IssueFilters {
+  statusFilter: StatusFilter;
+  teamFilter: string;
+  searchTerm: string;
+  dateFrom: string;
+  dateTo: string;
+  rootOnly: boolean;
+  issueKind: IssueKindFilter;
+}
+
+export interface IssueFetcherPaneIssue {
+  id: string;
+  status: (typeof ISSUE_STATUS)[number];
+  name: string;
+  description: string;
+  links: string[] | null;
+  event: string | null;
+  date: Date | null;
+  priority: (typeof PRIORITY)[number];
+  team: string;
+  parent: string | null;
+  creator: string;
+  teamVisibility: { teamId: string }[];
+  userAssignments: { userId: string }[];
+}
+
+export interface IssueFetcherPaneData {
+  issues: IssueFetcherPaneIssue[];
+  blockedParentIds: Set<string>;
+  roleNameById: Map<string, string>;
+  isLoading: boolean;
+  error: string | null;
+  refresh: () => void;
+  filters: IssueFilters;
+}
+
+export const DEFAULT_ISSUE_FILTERS: IssueFilters = {
+  statusFilter: "all",
+  teamFilter: "all",
+  searchTerm: "",
+  dateFrom: "",
+  dateTo: "",
+  rootOnly: true,
+  issueKind: "all",
+};
+
+// Dialog
 
 export interface CreateEditDialogProps {
   open: boolean;

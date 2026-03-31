@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 
 import { ISSUE } from "@forge/consts";
 import { Button } from "@forge/ui/button";
@@ -17,60 +17,13 @@ import {
 
 import { api } from "~/trpc/react";
 
-type StatusFilter = "all" | (typeof ISSUE.ISSUE_STATUS)[number];
-type IssueKindFilter = "all" | "task" | "event_linked";
-
-export interface IssueFilters {
-  statusFilter: StatusFilter;
-  teamFilter: string;
-  searchTerm: string;
-  dateFrom: string;
-  dateTo: string;
-  rootOnly: boolean;
-  issueKind: IssueKindFilter;
-}
-
-export interface IssueFetcherPaneIssue {
-  id: string;
-  status: (typeof ISSUE.ISSUE_STATUS)[number];
-  name: string;
-  description: string;
-  links: string[] | null;
-  event: string | null;
-  date: Date | null;
-  priority: (typeof ISSUE.PRIORITY)[number];
-  team: string;
-  parent: string | null;
-  creator: string;
-  teamVisibility: { teamId: string }[];
-  userAssignments: { userId: string }[];
-}
-
-export interface IssueFetcherPaneData {
-  issues: IssueFetcherPaneIssue[];
-  blockedParentIds: Set<string>;
-  roleNameById: Map<string, string>;
-  isLoading: boolean;
-  error: string | null;
-  refresh: () => void;
-  filters: IssueFilters;
-}
-
 interface IssueFetcherPaneProps {
   actions?: React.ReactNode;
-  setIssues?: React.Dispatch<React.SetStateAction<IssueFetcherPaneIssue[]>>;
-  onDataChange?: (data: IssueFetcherPaneData) => void;
+  setIssues?: React.Dispatch<
+    React.SetStateAction<ISSUE.IssueFetcherPaneIssue[]>
+  >;
+  onDataChange?: (data: ISSUE.IssueFetcherPaneData) => void;
 }
-
-export const DEFAULT_ISSUE_FILTERS: IssueFilters = {
-  statusFilter: "all",
-  teamFilter: "all",
-  searchTerm: "",
-  dateFrom: "",
-  dateTo: "",
-  rootOnly: true,
-  issueKind: "all",
-};
 
 function parseLocalDate(value: string, endOfDay: boolean) {
   if (!value) return undefined;
@@ -80,18 +33,26 @@ function parseLocalDate(value: string, endOfDay: boolean) {
 
 export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   const { actions, onDataChange, setIssues } = props;
-  const [filters, setFilters] = useState<IssueFilters>(DEFAULT_ISSUE_FILTERS);
-  const statusSelectId = "issue-fetcher-status-select";
-  const teamSelectId = "issue-fetcher-team-select";
-  const typeSelectId = "issue-fetcher-type-select";
-  const searchInputId = "issue-fetcher-search-input";
-  const dateFromInputId = "issue-fetcher-date-from-input";
-  const dateToInputId = "issue-fetcher-date-to-input";
-  const rootOnlyCheckboxId = "issue-fetcher-root-only-checkbox";
+  const [filters, setFilters] = useState<ISSUE.IssueFilters>(
+    ISSUE.DEFAULT_ISSUE_FILTERS,
+  );
+  const statusSelectId = useId();
+  const teamSelectId = useId();
+  const typeSelectId = useId();
+  const searchInputId = useId();
+  const dateFromInputId = useId();
+  const dateToInputId = useId();
+  const rootOnlyCheckboxId = useId();
 
   const rolesQuery = api.roles.getAllLinks.useQuery(undefined, {
     refetchOnWindowFocus: false,
   });
+  const {
+    data: rolesData,
+    refetch: rolesRefetch,
+    isLoading: rolesIsLoading,
+    error: rolesError,
+  } = rolesQuery;
 
   const queryInput = useMemo(() => {
     const input: {
@@ -115,25 +76,30 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   const issuesQuery = api.issues.getAllIssues.useQuery(queryInput, {
     refetchOnWindowFocus: false,
   });
-  const { data: fetchedIssues } = issuesQuery;
-  const combinedIsLoading = rolesQuery.isLoading || issuesQuery.isLoading;
-  const combinedError = rolesQuery.error ?? issuesQuery.error;
+  const {
+    data: issuesData,
+    refetch: issuesRefetch,
+    isLoading: issuesIsLoading,
+    error: issuesError,
+  } = issuesQuery;
+  const combinedIsLoading = rolesIsLoading || issuesIsLoading;
+  const combinedError = rolesError ?? issuesError;
   const combinedErrorMessage = combinedError?.message ?? null;
   const isReady = !combinedIsLoading && !combinedError;
 
-  const roles = useMemo(() => rolesQuery.data ?? [], [rolesQuery.data]);
+  const roles = useMemo(() => rolesData ?? [], [rolesData]);
   const roleNameById = useMemo(
     () => new Map(roles.map((role) => [role.id, role.name])),
     [roles],
   );
 
   const allIssues = useMemo(
-    () => (fetchedIssues ?? []) as IssueFetcherPaneIssue[],
-    [fetchedIssues],
+    () => (issuesData ?? []) as ISSUE.IssueFetcherPaneIssue[],
+    [issuesData],
   );
 
   const blockedParentIds = useMemo(() => {
-    const childrenByParent = new Map<string, IssueFetcherPaneIssue[]>();
+    const childrenByParent = new Map<string, ISSUE.IssueFetcherPaneIssue[]>();
 
     for (const issue of allIssues) {
       if (!issue.parent) continue;
@@ -175,10 +141,10 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   }, [allIssues, filters.issueKind, filters.rootOnly, filters.searchTerm]);
 
   const refresh = useCallback(() => {
-    void Promise.all([rolesQuery.refetch(), issuesQuery.refetch()]);
-  }, [issuesQuery, rolesQuery]);
+    void Promise.all([rolesRefetch(), issuesRefetch()]);
+  }, [issuesRefetch, rolesRefetch]);
 
-  const data = useMemo<IssueFetcherPaneData>(
+  const data = useMemo<ISSUE.IssueFetcherPaneData>(
     () => ({
       issues: isReady ? issues : [],
       blockedParentIds: isReady ? blockedParentIds : new Set<string>(),
@@ -243,7 +209,7 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
             onValueChange={(value) =>
               setFilters((previous) => ({
                 ...previous,
-                statusFilter: value as StatusFilter,
+                statusFilter: value as ISSUE.StatusFilter,
               }))
             }
           >
@@ -290,7 +256,7 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
             onValueChange={(value) =>
               setFilters((previous) => ({
                 ...previous,
-                issueKind: value as IssueKindFilter,
+                issueKind: value as ISSUE.IssueKindFilter,
               }))
             }
           >
@@ -354,7 +320,7 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => setFilters(DEFAULT_ISSUE_FILTERS)}
+            onClick={() => setFilters(ISSUE.DEFAULT_ISSUE_FILTERS)}
           >
             Clear Filters
           </Button>
