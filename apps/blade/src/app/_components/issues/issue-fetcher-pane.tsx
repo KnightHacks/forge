@@ -1,20 +1,19 @@
 "use client";
 
 import * as React from "react";
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { X } from "lucide-react";
-import { createPortal } from "react-dom";
+import { useCallback, useId, useMemo, useState } from "react";
 
 import { ISSUE } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import {
@@ -58,7 +57,6 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : internalOpen;
-  const portalElement = typeof document === "undefined" ? null : document.body;
   const [filters, setFilters] = useState<ISSUE.IssueFilters>(
     ISSUE.DEFAULT_ISSUE_FILTERS,
   );
@@ -71,8 +69,6 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   const rootOnlyCheckboxId = useId();
   const headerId = useId();
   const descriptionId = useId();
-  const dialogRef = useRef<HTMLElement | null>(null);
-  const previousActiveElementRef = useRef<HTMLElement | null>(null);
 
   const rolesQuery = api.roles.getAllLinks.useQuery(undefined, {
     refetchOnWindowFocus: false,
@@ -205,117 +201,51 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
     ],
   );
 
-  useEffect(() => {
+  React.useEffect(() => {
     setIssues?.(isReady ? issues : []);
   }, [isReady, issues, setIssues]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     onDataChange?.(data);
   }, [data, onDataChange]);
 
-  const handleClose = useCallback(() => {
-    if (isControlled) {
-      onOpenChange?.(false);
-    } else {
-      setInternalOpen(false);
-    }
-    onClose?.();
-  }, [isControlled, onClose, onOpenChange]);
-
-  const trigger = useMemo(() => {
-    if (!children || !React.isValidElement(children)) {
-      return null;
-    }
-
-    const child = children as React.ReactElement<{
-      onClick?: (event: React.MouseEvent) => void;
-    }>;
-
-    return React.cloneElement(child, {
-      onClick: (event: React.MouseEvent) => {
-        child.props.onClick?.(event);
-        if (isControlled) {
-          onOpenChange?.(true);
-        } else {
-          setInternalOpen(true);
-        }
-      },
-    });
-  }, [children, isControlled, onOpenChange]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    previousActiveElementRef.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const focusTarget = window.requestAnimationFrame(() => {
-      dialogRef.current?.focus();
-    });
-
-    const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        handleClose();
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (isControlled) {
+        onOpenChange?.(nextOpen);
+      } else {
+        setInternalOpen(nextOpen);
       }
-    };
 
-    window.addEventListener("keydown", handleKeydown);
-
-    return () => {
-      window.cancelAnimationFrame(focusTarget);
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeydown);
-      previousActiveElementRef.current?.focus();
-    };
-  }, [handleClose, isOpen]);
-
-  const handleOverlayPointerDown = (
-    event: React.MouseEvent<HTMLDivElement>,
-  ) => {
-    if (event.target === event.currentTarget) {
-      handleClose();
-    }
-  };
+      if (!nextOpen) {
+        onClose?.();
+      }
+    },
+    [isControlled, onClose, onOpenChange],
+  );
 
   const content = (
-    <section
-      ref={dialogRef}
-      role="dialog"
-      aria-modal="true"
+    <DialogContent
       aria-labelledby={headerId}
       aria-describedby={descriptionId}
-      tabIndex={-1}
-      className="relative flex max-h-[80vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg border bg-background shadow-lg"
+      className="flex max-h-[80vh] max-w-5xl flex-col overflow-hidden p-0"
     >
-      <button
-        type="button"
-        className="absolute right-4 top-4 inline-flex size-8 items-center justify-center rounded-md border border-input text-muted-foreground transition hover:text-foreground"
-        onClick={handleClose}
-        aria-label="Close dialog"
-      >
-        <X className="h-4 w-4" />
-      </button>
-
-      <header className="border-b px-6 py-4 pr-12">
+      <DialogHeader className="space-y-0 border-b px-6 py-4 pr-12 text-left">
         <p className="text-xs font-medium text-muted-foreground">
           Shared Issue Controls
         </p>
-        <h2 id={headerId} className="mt-1 text-lg font-semibold">
+        <DialogTitle id={headerId} className="mt-1">
           Issue Fetcher Pane
-        </h2>
-        <p id={descriptionId} className="mt-1 text-sm text-muted-foreground">
+        </DialogTitle>
+        <DialogDescription
+          id={descriptionId}
+          className="mt-1 text-sm text-muted-foreground"
+        >
           Shared filter + fetch controller for issues. Use this as the single
           data source, then hand the filtered result to list, kanban, or
           calendar views from the parent.
-        </p>
-      </header>
+        </DialogDescription>
+      </DialogHeader>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
         <div className="space-y-4">
@@ -488,31 +418,15 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
           </div>
         </div>
       </div>
-    </section>
+    </DialogContent>
   );
 
-  if (!portalElement) {
-    return trigger;
-  }
-
   return (
-    <>
-      {trigger}
-      {isOpen &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-10"
-            onMouseDown={handleOverlayPointerDown}
-          >
-            <div
-              className="w-full"
-              onMouseDown={(event) => event.stopPropagation()}
-            >
-              {content}
-            </div>
-          </div>,
-          portalElement,
-        )}
-    </>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      {children && React.isValidElement(children) ? (
+        <DialogTrigger asChild>{children}</DialogTrigger>
+      ) : null}
+      {content}
+    </Dialog>
   );
 }
