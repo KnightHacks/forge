@@ -4,7 +4,6 @@
     "lib": ["ES2022", "dom", "dom.iterable"],
     "jsx": "preserve",
     "baseUrl": ".",
-    "moduleResolution": "Bundler",
     "paths": {
       "~/*": ["./src/*"]
     },

@@ -20,6 +20,7 @@ export default async function Events() {
   if (!hasAccess) {
     redirect("/");
   }
+
   return (
     <HydrateClient>
       <SessionNavbar />
