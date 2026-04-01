@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { LayoutTemplate, Pencil, Plus, Trash2 } from "lucide-react";
 
 import type { ISSUE } from "@forge/consts";
@@ -66,7 +66,11 @@ function toIssueTemplate(n: ISSUE.IssueTemplateEditNode): ISSUE.IssueTemplate {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function IssueTemplate() {
+export default function IssueTemplateDialog({
+  children,
+}: {
+  children?: React.ReactNode;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<"list" | "form">("list");
   const [editingTemplate, setEditingTemplate] = useState<StoredTemplate | null>(
@@ -217,10 +221,12 @@ export default function IssueTemplate() {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <LayoutTemplate className="mr-2 h-4 w-4" />
-          Templates
-        </Button>
+        {children ?? (
+          <Button variant="outline">
+            <LayoutTemplate className="mr-2 h-4 w-4" />
+            Templates
+          </Button>
+        )}
       </DialogTrigger>
 
       <DialogContent className="flex max-h-[70vh] w-full max-w-[800px] flex-col gap-0 overflow-hidden p-0">

@@ -472,7 +472,15 @@ export function IssueTemplateNode({
                 value={node.daysOffset ?? ""}
                 onChange={(e) => {
                   const val = e.target.value;
-                  update("daysOffset", val === "" ? undefined : Number(val));
+                  const parsed = Number(val);
+                  update(
+                    "daysOffset",
+                    val === ""
+                      ? undefined
+                      : Number.isNaN(parsed)
+                        ? undefined
+                        : parsed,
+                  );
                 }}
               />
               <span className="text-sm text-muted-foreground">
