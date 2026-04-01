@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useId, useState } from "react";
 import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
 
 import { ISSUE } from "@forge/consts";
@@ -11,6 +11,7 @@ import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Textarea } from "@forge/ui/textarea";
 
+import type { Hackathon, Role } from "./issue-form-fields";
 import {
   addChildToTreeNode,
   defaultEventForm,
@@ -21,9 +22,7 @@ import {
 } from "./issue-dialog-utils";
 import {
   EventFormFields,
-  type Hackathon,
   PrioritySelect,
-  type Role,
   RoleCheckboxGroup,
   StatusSelect,
   TeamSelect,
@@ -31,9 +30,9 @@ import {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-export function newSubIssueNode(
-  overrides: Partial<ISSUE.SubIssueEditNode> = {},
-): ISSUE.SubIssueEditNode {
+export function newIssueNode(
+  overrides: Partial<ISSUE.IssueEditNode> = {},
+): ISSUE.IssueEditNode {
   return {
     clientId: crypto.randomUUID(),
     status: ISSUE.ISSUE_STATUS[0],
@@ -52,53 +51,58 @@ export function newSubIssueNode(
   };
 }
 
-export function updateSubIssueNode(
-  nodes: ISSUE.SubIssueEditNode[],
+export function updateIssueNode(
+  nodes: ISSUE.IssueEditNode[],
   clientId: string,
-  patch: Partial<ISSUE.SubIssueEditNode>,
-): ISSUE.SubIssueEditNode[] {
+  patch: Partial<ISSUE.IssueEditNode>,
+): ISSUE.IssueEditNode[] {
   return updateTreeNode(nodes, clientId, patch, (n) => n.clientId);
 }
 
-export function removeSubIssueNode(
-  nodes: ISSUE.SubIssueEditNode[],
+export function removeIssueNode(
+  nodes: ISSUE.IssueEditNode[],
   clientId: string,
-): ISSUE.SubIssueEditNode[] {
+): ISSUE.IssueEditNode[] {
   return removeTreeNode(nodes, clientId, (n) => n.clientId);
 }
 
-export function addChildToSubIssueNode(
-  nodes: ISSUE.SubIssueEditNode[],
+export function addChildToIssueNode(
+  nodes: ISSUE.IssueEditNode[],
   parentClientId: string,
-): ISSUE.SubIssueEditNode[] {
-  return addChildToTreeNode(nodes, parentClientId, newSubIssueNode(), (n) => n.clientId);
+): ISSUE.IssueEditNode[] {
+  return addChildToTreeNode(
+    nodes,
+    parentClientId,
+    newIssueNode(),
+    (n) => n.clientId,
+  );
 }
 
-export function validateSubIssueNodes(
-  nodes: ISSUE.SubIssueEditNode[],
+export function validateIssueNodes(
+  nodes: ISSUE.IssueEditNode[],
 ): boolean {
   return nodes.every(
     (n) =>
       n.name.trim().length > 0 &&
       n.team.trim().length > 0 &&
       n.description.trim().length > 0 &&
-      validateSubIssueNodes(n.children),
+      validateIssueNodes(n.children),
   );
 }
 
-// ─── SubIssueNode ─────────────────────────────────────────────────────────────
+// ─── IssueNode ────────────────────────────────────────────────────────────────
 
-interface SubIssueNodeProps {
-  node: ISSUE.SubIssueEditNode;
+interface IssueNodeProps {
+  node: ISSUE.IssueEditNode;
   depth: number;
   roles: Role[];
   hackathons: Hackathon[];
-  onUpdate: (clientId: string, patch: Partial<ISSUE.SubIssueEditNode>) => void;
+  onUpdate: (clientId: string, patch: Partial<ISSUE.IssueEditNode>) => void;
   onRemove: (clientId: string) => void;
   onAddChild: (parentClientId: string) => void;
 }
 
-export function SubIssueNode({
+export function IssueNode({
   node,
   depth,
   roles,
@@ -106,14 +110,17 @@ export function SubIssueNode({
   onUpdate,
   onRemove,
   onAddChild,
-}: SubIssueNodeProps) {
-  const [expanded, setExpanded] = React.useState(false);
-  const baseId = React.useId();
+}: IssueNodeProps) {
+  const [expanded, setExpanded] = useState(false);
+  const baseId = useId();
 
-  const update = <K extends keyof ISSUE.SubIssueEditNode>(
+  const update = <K extends keyof ISSUE.IssueEditNode>(
     key: K,
-    value: ISSUE.SubIssueEditNode[K],
-  ) => onUpdate(node.clientId, { [key]: value } as Partial<ISSUE.SubIssueEditNode>);
+    value: ISSUE.IssueEditNode[K],
+  ) =>
+    onUpdate(node.clientId, {
+      [key]: value,
+    } as Partial<ISSUE.IssueEditNode>);
 
   const updateEvent = <K extends keyof ISSUE.EventFormValues>(
     key: K,
@@ -248,7 +255,7 @@ export function SubIssueNode({
             </Label>
             <Textarea
               id={`${baseId}-description`}
-              className="col-span-3 w-full min-h-[100px] resize-none"
+              className="col-span-3 min-h-[100px] w-full resize-none"
               placeholder="Description..."
               value={node.description}
               onChange={(e) => update("description", e.target.value)}
@@ -265,7 +272,7 @@ export function SubIssueNode({
               </Label>
               <Textarea
                 id={`${baseId}-ext-description`}
-                className="col-span-3 w-full min-h-[100px] resize-none"
+                className="col-span-3 min-h-[100px] w-full resize-none"
                 placeholder="Public-facing event description..."
                 value={node.eventData?.description ?? ""}
                 onChange={(e) => updateEvent("description", e.target.value)}
@@ -293,7 +300,7 @@ export function SubIssueNode({
             />
           )}
 
-          {/* Add nested sub-issue */}
+          {/* Add nested child issue */}
           <div className="flex justify-end">
             <Button
               type="button"
@@ -310,7 +317,7 @@ export function SubIssueNode({
 
       {/* Children */}
       {node.children.map((child) => (
-        <SubIssueNode
+        <IssueNode
           key={child.clientId}
           node={child}
           depth={depth + 1}
@@ -325,11 +332,11 @@ export function SubIssueNode({
   );
 }
 
-// ─── Template Sub-issue helpers ────────────────────────────────────────────────
+// ─── IssueTemplate helpers ────────────────────────────────────────────────────
 
-export function newTemplateSubIssueNode(
-  overrides: Partial<ISSUE.TemplateSubIssueEditNode> = {},
-): ISSUE.TemplateSubIssueEditNode {
+export function newIssueTemplateNode(
+  overrides: Partial<ISSUE.IssueTemplateEditNode> = {},
+): ISSUE.IssueTemplateEditNode {
   return {
     clientId: crypto.randomUUID(),
     name: "",
@@ -341,58 +348,58 @@ export function newTemplateSubIssueNode(
   };
 }
 
-export function updateTemplateSubIssueNode(
-  nodes: ISSUE.TemplateSubIssueEditNode[],
+export function updateIssueTemplateNode(
+  nodes: ISSUE.IssueTemplateEditNode[],
   clientId: string,
-  patch: Partial<ISSUE.TemplateSubIssueEditNode>,
-): ISSUE.TemplateSubIssueEditNode[] {
+  patch: Partial<ISSUE.IssueTemplateEditNode>,
+): ISSUE.IssueTemplateEditNode[] {
   return updateTreeNode(nodes, clientId, patch, (n) => n.clientId);
 }
 
-export function removeTemplateSubIssueNode(
-  nodes: ISSUE.TemplateSubIssueEditNode[],
+export function removeIssueTemplateNode(
+  nodes: ISSUE.IssueTemplateEditNode[],
   clientId: string,
-): ISSUE.TemplateSubIssueEditNode[] {
+): ISSUE.IssueTemplateEditNode[] {
   return removeTreeNode(nodes, clientId, (n) => n.clientId);
 }
 
-export function addChildToTemplateSubIssueNode(
-  nodes: ISSUE.TemplateSubIssueEditNode[],
+export function addChildToIssueTemplateNode(
+  nodes: ISSUE.IssueTemplateEditNode[],
   parentClientId: string,
-): ISSUE.TemplateSubIssueEditNode[] {
+): ISSUE.IssueTemplateEditNode[] {
   return addChildToTreeNode(
     nodes,
     parentClientId,
-    newTemplateSubIssueNode(),
+    newIssueTemplateNode(),
     (n) => n.clientId,
   );
 }
 
-export function validateTemplateSubIssueNodes(
-  nodes: ISSUE.TemplateSubIssueEditNode[],
+export function validateIssueTemplateNodes(
+  nodes: ISSUE.IssueTemplateEditNode[],
 ): boolean {
   return nodes.every(
     (n) =>
-      n.name.trim().length > 0 && validateTemplateSubIssueNodes(n.children),
+      n.name.trim().length > 0 && validateIssueTemplateNodes(n.children),
   );
 }
 
-// ─── TemplateSubIssueNode ─────────────────────────────────────────────────────
+// ─── IssueTemplateNode ────────────────────────────────────────────────────────
 
-interface TemplateSubIssueNodeProps {
-  node: ISSUE.TemplateSubIssueEditNode;
+interface IssueTemplateNodeProps {
+  node: ISSUE.IssueTemplateEditNode;
   depth: number;
   roles: Role[];
   hideRemove?: boolean;
   onUpdate: (
     clientId: string,
-    patch: Partial<ISSUE.TemplateSubIssueEditNode>,
+    patch: Partial<ISSUE.IssueTemplateEditNode>,
   ) => void;
   onRemove: (clientId: string) => void;
   onAddChild: (parentClientId: string) => void;
 }
 
-export function TemplateSubIssueNode({
+export function IssueTemplateNode({
   node,
   depth,
   roles,
@@ -400,18 +407,17 @@ export function TemplateSubIssueNode({
   onUpdate,
   onRemove,
   onAddChild,
-}: TemplateSubIssueNodeProps) {
-  const [expanded, setExpanded] = React.useState(false);
-  const baseId = React.useId();
+}: IssueTemplateNodeProps) {
+  const [expanded, setExpanded] = useState(false);
+  const baseId = useId();
 
-  const update = <K extends keyof ISSUE.TemplateSubIssueEditNode>(
+  const update = <K extends keyof ISSUE.IssueTemplateEditNode>(
     key: K,
-    value: ISSUE.TemplateSubIssueEditNode[K],
+    value: ISSUE.IssueTemplateEditNode[K],
   ) =>
-    onUpdate(
-      node.clientId,
-      { [key]: value } as Partial<ISSUE.TemplateSubIssueEditNode>,
-    );
+    onUpdate(node.clientId, {
+      [key]: value,
+    } as Partial<ISSUE.IssueTemplateEditNode>);
 
   return (
     <div className={cn("mt-2", depth > 0 && "ml-4 border-l pl-4")}>
@@ -468,10 +474,7 @@ export function TemplateSubIssueNode({
                 value={node.daysOffset ?? ""}
                 onChange={(e) => {
                   const val = e.target.value;
-                  update(
-                    "daysOffset",
-                    val === "" ? undefined : Number(val),
-                  );
+                  update("daysOffset", val === "" ? undefined : Number(val));
                 }}
               />
               <span className="text-sm text-muted-foreground">
@@ -501,7 +504,7 @@ export function TemplateSubIssueNode({
             </Label>
             <Textarea
               id={`${baseId}-description`}
-              className="col-span-3 w-full min-h-[100px] resize-none"
+              className="col-span-3 min-h-[100px] w-full resize-none"
               placeholder="Description..."
               value={node.description}
               onChange={(e) => update("description", e.target.value)}
@@ -525,7 +528,7 @@ export function TemplateSubIssueNode({
 
       {/* Children */}
       {node.children.map((child) => (
-        <TemplateSubIssueNode
+        <IssueTemplateNode
           key={child.clientId}
           node={child}
           depth={depth + 1}

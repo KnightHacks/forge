@@ -1,8 +1,17 @@
 "use client";
 
-import * as React from "react";
+import type { FormEvent, MouseEvent, ReactElement, ReactNode } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useCallback,
+  useId,
+  useMemo,
+  useState,
+} from "react";
+import { LayoutTemplate, Loader2, Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
-import { LayoutTemplate, Plus, Trash2 } from "lucide-react";
+
 import { EVENTS, ISSUE } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
@@ -10,6 +19,7 @@ import { Checkbox } from "@forge/ui/checkbox";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@forge/ui/dialog";
@@ -25,7 +35,6 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-
 import {
   defaultEventForm,
   getTaskDueDateInputValue,
@@ -40,13 +49,13 @@ import {
   TeamSelect,
 } from "./issue-form-fields";
 import {
-  addChildToSubIssueNode,
-  newSubIssueNode,
-  removeSubIssueNode,
-  SubIssueNode,
-  updateSubIssueNode,
-  validateSubIssueNodes,
-} from "./sub-issue-node";
+  addChildToIssueNode,
+  IssueNode,
+  newIssueNode,
+  removeIssueNode,
+  updateIssueNode,
+  validateIssueNodes,
+} from "./issue-node";
 
 const baseField = "w-full";
 
@@ -73,14 +82,21 @@ const issueFormSchema = z
   .superRefine((data, ctx) => {
     if (!data.isEvent) {
       if (Number.isNaN(data.date.getTime())) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid date", path: ["date"] });
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Invalid date",
+          path: ["date"],
+        });
       }
       return;
     }
 
     const ed = data.eventData;
     if (!ed) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Event data required" });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Event data required",
+      });
       return;
     }
 
@@ -88,12 +104,18 @@ const issueFormSchema = z
     const end = parseEventDateTime(ed.endDate, ed.endTime);
 
     if (!start || !end) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid start or end datetime" });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invalid start or end datetime",
+      });
       return;
     }
 
     if (end <= start) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "End time must be after start time" });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "End time must be after start time",
+      });
     }
 
     if (ed.isOperationsCalendar && !ed.discordChannelId?.trim()) {
@@ -111,27 +133,24 @@ type CreateEditDialogComponentProps = Omit<
 > & {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
-const defaultForm = (): ISSUE.SubIssueEditNode => {
-  return {
-    clientId: crypto.randomUUID(),
-    status: ISSUE.ISSUE_STATUS[0],
-    name: "",
-    description: "",
-    links: [],
-    date: normalizeTaskDueDate(),
-    priority: ISSUE.PRIORITY[0],
-    team: "",
-    parent: undefined,
-    isEvent: false,
-    event: null,
-    eventData: undefined,
-    roles: [],
-    children: [],
-  };
-};
+const defaultForm = (): ISSUE.IssueEditNode => newIssueNode();
+
+function templateToIssueNodes(
+  items: ISSUE.IssueTemplate[],
+): ISSUE.IssueEditNode[] {
+  return items.map((item) =>
+    newIssueNode({
+      name: item.title,
+      description: item.description ?? "",
+      team: item.team ?? "",
+      date: item.dateMs ? new Date(item.dateMs) : normalizeTaskDueDate(),
+      children: templateToIssueNodes(item.children ?? []),
+    }),
+  );
+}
 
 export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const {
@@ -144,9 +163,10 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     onSubmit,
     children,
   } = props;
-  const [internalOpen, setInternalOpen] = React.useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : internalOpen;
+  const utils = api.useUtils();
   const rolesQuery = api.roles.getAllLinks.useQuery();
   const hackathonsQuery = api.hackathon.getHackathons.useQuery();
   const createIssueMutation = api.issues.createIssue.useMutation();
@@ -162,9 +182,9 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const isHackathonsLoading = hackathonsQuery.isLoading;
   const rolesError = rolesQuery.error;
   const hackathonsError = hackathonsQuery.error;
-  const buildInitialFormValues = React.useCallback(() => {
+  const buildInitialFormValues = useCallback(() => {
     const defaults = defaultForm();
-    const initial = (initialValues ?? {}) as Partial<ISSUE.IssueSubmitValues>;
+    const { children: _children, ...initial }: Partial<ISSUE.IssueSubmitValues> = initialValues ?? {};
     const resolvedEventData = initial.eventData;
     const resolvedRoles = initial.teamVisibilityIds ?? defaults.roles;
     if (initial.isEvent) {
@@ -190,40 +210,36 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       roles: resolvedRoles,
     };
   }, [initialValues]);
-  const [formValues, setFormValues] = React.useState<ISSUE.SubIssueEditNode>(
+  const [formValues, setFormValues] = useState<ISSUE.IssueEditNode>(
     buildInitialFormValues,
   );
-  const [subIssues, setSubIssues] = React.useState<ISSUE.SubIssueEditNode[]>(
-    [],
-  );
+  const [childIssues, setChildIssues] = useState<ISSUE.IssueEditNode[]>([]);
 
-  const handleClose = React.useCallback(() => {
+  const handleClose = useCallback(() => {
     if (isControlled) {
-      if (onOpenChange) {
-        onOpenChange(false);
-      }
+      onOpenChange?.(false);
     } else {
       setInternalOpen(false);
     }
     onClose?.();
-  }, [isControlled, onClose, onOpenChange]);
+    setFormValues(buildInitialFormValues());
+    setChildIssues([]);
+  }, [buildInitialFormValues, isControlled, onClose, onOpenChange]);
 
-  const trigger = React.useMemo(() => {
-    if (!children || !React.isValidElement(children)) {
+  const trigger = useMemo(() => {
+    if (!children || !isValidElement(children)) {
       return null;
     }
 
-    const child = children as React.ReactElement<{
-      onClick?: (event: React.MouseEvent) => void;
+    const child = children as ReactElement<{
+      onClick?: (event: MouseEvent) => void;
     }>;
 
-    return React.cloneElement(child, {
-      onClick: (event: React.MouseEvent) => {
+    return cloneElement(child, {
+      onClick: (event: MouseEvent) => {
         child.props.onClick?.(event);
         if (isControlled) {
-          if (onOpenChange) {
-            onOpenChange(true);
-          }
+          onOpenChange?.(true);
         } else {
           setInternalOpen(true);
         }
@@ -231,9 +247,9 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     });
   }, [children, isControlled, onOpenChange]);
 
-  const updateForm = <K extends keyof ISSUE.SubIssueEditNode>(
+  const updateForm = <K extends keyof ISSUE.IssueEditNode>(
     key: K,
-    value: ISSUE.SubIssueEditNode[K],
+    value: ISSUE.IssueEditNode[K],
   ) => {
     setFormValues((previous) => ({
       ...previous,
@@ -241,41 +257,35 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     }));
   };
 
-  const baseId = React.useId();
-  const [nowTimestamp, setNowTimestamp] = React.useState<number | null>(null);
-  React.useEffect(() => {
-    if (isOpen) {
-      setNowTimestamp(Date.now());
-    }
-  }, [isOpen]);
+  const baseId = useId();
+  const effectiveTeam = formValues.team || (rolesData?.[0]?.id ?? "");
 
-  const isFormValid = issueFormSchema.safeParse(formValues).success;
+  const isFormValid = issueFormSchema.safeParse({ ...formValues, team: effectiveTeam }).success;
   const isRolesValid = !rolesError;
   const isEventStartInFuture =
     !formValues.isEvent ||
     Boolean(
       formValues.eventData &&
-        nowTimestamp !== null &&
-        (parseEventDateTime(
-          formValues.eventData.startDate,
-          formValues.eventData.startTime,
-        )?.getTime() ?? 0) > nowTimestamp,
+      (parseEventDateTime(
+        formValues.eventData.startDate,
+        formValues.eventData.startTime,
+      )?.getTime() ?? 0) > Date.now(),
     );
 
   const isSubmitDisabled =
     !isFormValid ||
     !isRolesValid ||
     !isEventStartInFuture ||
-    !validateSubIssueNodes(subIssues);
-  const roleIdSet = React.useMemo(
+    !validateIssueNodes(childIssues);
+  const roleIdSet = useMemo(
     () => new Set((rolesData ?? []).map((role) => role.id)),
     [rolesData],
   );
-  const safeVisibilityIds = React.useMemo(
+  const safeVisibilityIds = useMemo(
     () => formValues.roles.filter((roleId) => roleIdSet.has(roleId)),
     [formValues.roles, roleIdSet],
   );
-  const safeEventVisibilityIds = React.useMemo(
+  const safeEventVisibilityIds = useMemo(
     () =>
       (formValues.eventData?.roles ?? []).filter((roleId) =>
         roleIdSet.has(roleId),
@@ -297,65 +307,27 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     }));
   };
 
-  const handleUpdateSubIssue = React.useCallback(
-    (clientId: string, patch: Partial<ISSUE.SubIssueEditNode>) =>
-      setSubIssues((prev) => updateSubIssueNode(prev, clientId, patch)),
+  const handleUpdateIssue = useCallback(
+    (clientId: string, patch: Partial<ISSUE.IssueEditNode>) =>
+      setChildIssues((prev) => updateIssueNode(prev, clientId, patch)),
     [],
   );
-  const handleRemoveSubIssue = React.useCallback(
+  const handleRemoveIssue = useCallback(
     (clientId: string) =>
-      setSubIssues((prev) => removeSubIssueNode(prev, clientId)),
+      setChildIssues((prev) => removeIssueNode(prev, clientId)),
     [],
   );
-  const handleAddChildSubIssue = React.useCallback(
+  const handleAddChildIssue = useCallback(
     (parentClientId: string) =>
-      setSubIssues((prev) => addChildToSubIssueNode(prev, parentClientId)),
+      setChildIssues((prev) => addChildToIssueNode(prev, parentClientId)),
     [],
   );
-
-  React.useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    setFormValues(buildInitialFormValues());
-    setSubIssues([]);
-  }, [buildInitialFormValues, isOpen]);
-
-  React.useEffect(() => {
-    if (!isOpen || formValues.team || !rolesData?.length) {
-      return;
-    }
-
-    const firstRole = rolesData[0];
-    if (!firstRole) {
-      return;
-    }
-
-    updateForm("team", firstRole.id);
-  }, [formValues.team, isOpen, rolesData]);
 
   const { data: templates = [], isLoading: isTemplatesLoading } =
     api.issues.getTemplates.useQuery(undefined, { enabled: isOpen });
 
-  const templateToSubIssueNodes = (
-    items: ISSUE.TemplateSubIssue[],
-  ): ISSUE.SubIssueEditNode[] =>
-    items.map((item) =>
-      newSubIssueNode({
-        name: item.title,
-        description: item.description ?? "",
-        team: item.team ?? "",
-        date: item.dateMs ? new Date(item.dateMs) : normalizeTaskDueDate(),
-        children: item.children ? templateToSubIssueNodes(item.children) : [],
-      }),
-    );
-
-  const applyTemplate = (template: {
-    name: string;
-    body: unknown;
-  }) => {
-    const body = template.body as ISSUE.TemplateSubIssue[];
+  const applyTemplate = (template: { name: string; body: unknown }) => {
+    const body = template.body as ISSUE.IssueTemplate[];
     const root = Array.isArray(body) ? body[0] : undefined;
 
     setFormValues((prev) => ({
@@ -365,13 +337,13 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       ...(root?.team ? { team: root.team } : {}),
     }));
 
-    setSubIssues(templateToSubIssueNodes(root?.children ?? []));
+    setChildIssues(templateToIssueNodes(root?.children ?? []));
   };
 
-  async function buildSubIssues(
-    nodes: ISSUE.SubIssueEditNode[],
-  ): Promise<ISSUE.SubIssueSubmitNode[]> {
-    const results: ISSUE.SubIssueSubmitNode[] = [];
+  async function buildIssueNodes(
+    nodes: ISSUE.IssueEditNode[],
+  ): Promise<ISSUE.IssueSubmitNode[]> {
+    const results: ISSUE.IssueSubmitNode[] = [];
     for (const node of nodes) {
       let eventId: string | null = null;
 
@@ -417,14 +389,14 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         assigneeIds: node.assigneeIds,
         children:
           node.children.length > 0
-            ? await buildSubIssues(node.children)
+            ? await buildIssueNodes(node.children)
             : undefined,
       });
     }
     return results;
   }
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (isSubmitDisabled || isPending) {
@@ -437,7 +409,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       description: formValues.description.trim(),
       links: formValues.links,
       priority: formValues.priority,
-      team: formValues.team,
+      team: effectiveTeam,
       teamVisibilityIds:
         safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
       assigneeIds: formValues.assigneeIds,
@@ -445,8 +417,8 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
     try {
       if (intent === "create") {
-        const submitSubIssues =
-          subIssues.length > 0 ? await buildSubIssues(subIssues) : undefined;
+        const submitIssueNodes =
+          childIssues.length > 0 ? await buildIssueNodes(childIssues) : undefined;
 
         if (formValues.isEvent) {
           const ed = formValues.eventData ?? defaultEventForm();
@@ -474,17 +446,18 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
             ...baseIssueFields,
             date: startDatetime,
             event: createdEvent.id,
-            subIssues: submitSubIssues,
+            children: submitIssueNodes,
           });
         } else {
           await createIssueMutation.mutateAsync({
             ...baseIssueFields,
             date: normalizeTaskDueDate(formValues.date),
             event: null,
-            subIssues: submitSubIssues,
+            children: submitIssueNodes,
           });
         }
 
+        await utils.issues.invalidate();
         toast.success("Issue created successfully");
         onSubmit?.({
           ...baseIssueFields,
@@ -494,14 +467,14 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
           event: formValues.event ?? null,
           eventData: formValues.eventData,
         });
-      } else if (intent === "edit" && formValues.id) {
+      } else if (formValues.id) {
         await updateIssueMutation.mutateAsync({
           id: formValues.id,
           status: formValues.status,
           name: formValues.name.trim(),
           description: formValues.description.trim(),
           priority: formValues.priority,
-          team: formValues.team,
+          team: effectiveTeam,
           parent: formValues.parent ?? null,
           date: formValues.isEvent
             ? undefined
@@ -511,6 +484,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
           assigneeIds: formValues.assigneeIds,
         });
 
+        await utils.issues.invalidate();
         toast.success("Issue updated successfully");
         onSubmit?.({
           ...baseIssueFields,
@@ -541,7 +515,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         links: formValues.links,
         date: formValues.date,
         priority: formValues.priority,
-        team: formValues.team,
+        team: effectiveTeam,
         parent: formValues.parent,
         isEvent: formValues.isEvent,
         event: formValues.event ?? null,
@@ -586,238 +560,223 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               <div className="space-y-6 px-6 py-6">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">{"Name"}</Label>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Name</Label>
+                  <Input
+                    className={cn(baseField, "col-span-3")}
+                    value={formValues.name}
+                    onChange={(event) => updateForm("name", event.target.value)}
+                  />
+                </div>
 
-                    <Input
-                      className={cn(baseField, "col-span-3")}
-                      value={formValues.name}
-                      onChange={(event) =>
-                        updateForm("name", event.target.value)
-                      }
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Is Event?</Label>
+                  <div className="col-span-3 flex items-center space-x-2">
+                    <Checkbox
+                      checked={formValues.isEvent}
+                      onCheckedChange={(checked) => {
+                        const nextIsEvent = checked === true;
+                        setFormValues((previous) => ({
+                          ...previous,
+                          isEvent: nextIsEvent,
+                          eventData: nextIsEvent
+                            ? (previous.eventData ?? defaultEventForm())
+                            : undefined,
+                        }));
+                      }}
                     />
                   </div>
+                </div>
 
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Status</Label>
+                  <StatusSelect
+                    className={cn(baseField, "col-span-3")}
+                    value={formValues.status}
+                    onValueChange={(v) => updateForm("status", v)}
+                  />
+                </div>
 
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">Is Event?</Label>
-                    <div className="col-span-3 flex items-center space-x-2">
-                      <Checkbox
-                        checked={formValues.isEvent}
-                        onCheckedChange={(checked) => {
-                          const nextIsEvent = checked === true;
-                          if (nextIsEvent) {
-                            setFormValues((previous) => ({
-                              ...previous,
-                              isEvent: true,
-                              eventData:
-                                previous.eventData ?? defaultEventForm(),
-                            }));
-                            return;
-                          }
-
-                          setFormValues((previous) => ({
-                            ...previous,
-                            isEvent: false,
-                            eventData: undefined,
-                          }));
-                        }}
+                {/* Date/Time fields */}
+                {formValues.isEvent && formValues.eventData ? (
+                  <EventFormFields
+                    eventData={formValues.eventData}
+                    hackathons={hackathons ?? []}
+                    isHackathonsLoading={isHackathonsLoading}
+                    hackathonsError={hackathonsError}
+                    baseId={baseId}
+                    onChange={updateEventData}
+                  />
+                ) : (
+                  <>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label
+                        htmlFor={`${baseId}-task-due-date`}
+                        className="text-right"
+                      >
+                        Due Date
+                      </Label>
+                      <Input
+                        id={`${baseId}-task-due-date`}
+                        type="date"
+                        className={cn(baseField, "col-span-3")}
+                        value={getTaskDueDateInputValue(formValues.date)}
+                        onChange={(e) =>
+                          updateForm(
+                            "date",
+                            normalizeTaskDueDate(e.target.value),
+                          )
+                        }
                       />
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">Status</Label>
-                    <StatusSelect
-                      className={cn(baseField, "col-span-3")}
-                      value={formValues.status}
-                      onValueChange={(v) => updateForm("status", v)}
-                    />
-                  </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label
+                        htmlFor={`${baseId}-task-due-time`}
+                        className="text-right"
+                      >
+                        Due Time
+                      </Label>
+                      <Input
+                        id={`${baseId}-task-due-time`}
+                        type="time"
+                        className={cn(baseField, "col-span-3")}
+                        value={ISSUE.TASK_DUE_TIME}
+                        readOnly
+                        disabled
+                      />
+                    </div>
+                  </>
+                )}
 
-                  {/* Date/Time fields */}
-                  {formValues.isEvent && formValues.eventData ? (
-                    <EventFormFields
-                      eventData={formValues.eventData}
-                      hackathons={hackathons ?? []}
-                      isHackathonsLoading={isHackathonsLoading}
-                      hackathonsError={hackathonsError}
-                      baseId={baseId}
-                      onChange={updateEventData}
-                    />
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor={`${baseId}-task-due-date`}
-                          className="text-right"
-                        >
-                          Due Date
-                        </Label>
-                        <Input
-                          id={`${baseId}-task-due-date`}
-                          type="date"
-                          className={cn(baseField, "col-span-3")}
-                          value={getTaskDueDateInputValue(formValues.date)}
-                          onChange={(e) =>
-                            updateForm(
-                              "date",
-                              normalizeTaskDueDate(e.target.value),
-                            )
-                          }
-                        />
-                      </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Priority</Label>
+                  <PrioritySelect
+                    className={cn(baseField, "col-span-3")}
+                    value={formValues.priority}
+                    onValueChange={(v) => updateForm("priority", v)}
+                  />
+                </div>
 
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor={`${baseId}-task-due-time`}
-                          className="text-right"
-                        >
-                          Due Time
-                        </Label>
-                        <Input
-                          id={`${baseId}-task-due-time`}
-                          type="time"
-                          className={cn(baseField, "col-span-3")}
-                          value={ISSUE.TASK_DUE_TIME}
-                          readOnly
-                          disabled
-                        />
-                      </div>
-                    </>
-                  )}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Team</Label>
+                  <TeamSelect
+                    className={cn(baseField, "col-span-3")}
+                    value={effectiveTeam}
+                    onValueChange={(v) => updateForm("team", v)}
+                    roles={rolesData ?? []}
+                    isLoading={isRolesLoading}
+                    error={rolesError}
+                  />
+                </div>
 
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">Priority</Label>
-                    <PrioritySelect
-                      className={cn(baseField, "col-span-3")}
-                      value={formValues.priority}
-                      onValueChange={(v) => updateForm("priority", v)}
-                    />
-                  </div>
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label
+                    htmlFor={`${baseId}-internal-description`}
+                    className="pt-2 text-right"
+                  >
+                    {formValues.isEvent
+                      ? "Internal Description"
+                      : "Description"}
+                  </Label>
+                  <Textarea
+                    id={`${baseId}-internal-description`}
+                    className={cn(
+                      baseField,
+                      "col-span-3 min-h-[140px] resize-none",
+                    )}
+                    placeholder="Description..."
+                    value={formValues.description}
+                    onChange={(event) =>
+                      updateForm("description", event.target.value)
+                    }
+                  />
+                </div>
 
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">Team</Label>
-                    <TeamSelect
-                      className={cn(baseField, "col-span-3")}
-                      value={formValues.team}
-                      onValueChange={(v) => updateForm("team", v)}
-                      roles={rolesData ?? []}
-                      isLoading={isRolesLoading}
-                      error={rolesError}
-                    />
-                  </div>
-
+                {formValues.isEvent && (
                   <div className="grid grid-cols-4 items-start gap-4">
                     <Label
-                      htmlFor={`${baseId}-internal-description`}
+                      htmlFor={`${baseId}-external-description`}
                       className="pt-2 text-right"
                     >
-                      {formValues.isEvent
-                        ? "Internal Description"
-                        : "Description"}
+                      External Description
                     </Label>
                     <Textarea
-                      id={`${baseId}-internal-description`}
+                      id={`${baseId}-external-description`}
                       className={cn(
                         baseField,
                         "col-span-3 min-h-[140px] resize-none",
                       )}
-                      placeholder="Description..."
-                      value={formValues.description}
+                      placeholder="Public-facing event description..."
+                      value={formValues.eventData?.description ?? ""}
                       onChange={(event) =>
-                        updateForm("description", event.target.value)
+                        updateEventData("description", event.target.value)
                       }
                     />
                   </div>
+                )}
 
-                  {formValues.isEvent && (
-                    <div className="grid grid-cols-4 items-start gap-4">
-                      <Label
-                        htmlFor={`${baseId}-external-description`}
-                        className="pt-2 text-right"
-                      >
-                        External Description
-                      </Label>
-                      <Textarea
-                        id={`${baseId}-external-description`}
-                        className={cn(
-                          baseField,
-                          "col-span-3 min-h-[140px] resize-none",
-                        )}
-                        placeholder="Public-facing event description..."
-                        value={formValues.eventData?.description ?? ""}
-                        onChange={(event) =>
-                          updateEventData("description", event.target.value)
-                        }
-                      />
-                    </div>
-                  )}
+                {/* Issue Visible To Roles */}
+                <RoleCheckboxGroup
+                  label="Issue Visible To Roles"
+                  roles={rolesData ?? []}
+                  selectedIds={formValues.roles}
+                  onChange={(ids) => updateForm("roles", ids)}
+                  description="Teams who can see and manage the issue"
+                />
 
-                  {/* Issue Visible To Roles */}
+                {formValues.isEvent && (
                   <RoleCheckboxGroup
-                    label="Issue Visible To Roles"
+                    label="Event Visible To Roles"
                     roles={rolesData ?? []}
-                    selectedIds={formValues.roles}
-                    onChange={(ids) => updateForm("roles", ids)}
-                    description="Teams who can see and manage the issue"
+                    selectedIds={formValues.eventData?.roles ?? []}
+                    onChange={(ids) => updateEventData("roles", ids)}
+                    description="Teams who can see and join the event"
+                    keyPrefix="event-role-"
                   />
+                )}
 
-                  {formValues.isEvent && (
-                    <RoleCheckboxGroup
-                      label="Event Visible To Roles"
-                      roles={rolesData ?? []}
-                      selectedIds={formValues.eventData?.roles ?? []}
-                      onChange={(ids) => updateEventData("roles", ids)}
-                      description="Teams who can see and join the event"
-                      keyPrefix="event-role-"
-                    />
-                  )}
-
-                  {/* Sub-issues section (create only) */}
-                  {intent !== "edit" && (
-                    <div className="border-t pt-6">
-                      <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-sm font-semibold">Sub-issues</h3>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setSubIssues((prev) => [
-                              ...prev,
-                              newSubIssueNode(),
-                            ])
-                          }
-                        >
-                          <Plus className="mr-2 h-3 w-3" />
-                          Add Sub-issue
-                        </Button>
-                      </div>
-                      {subIssues.length === 0 && (
-                        <p className="text-sm text-muted-foreground">
-                          No sub-issues yet.
-                        </p>
-                      )}
-                      {subIssues.map((node) => (
-                        <SubIssueNode
-                          key={node.clientId}
-                          node={node}
-                          depth={0}
-                          roles={rolesData ?? []}
-                          hackathons={hackathons ?? []}
-                          onUpdate={handleUpdateSubIssue}
-                          onRemove={handleRemoveSubIssue}
-                          onAddChild={handleAddChildSubIssue}
-                        />
-                      ))}
+                {/* Sub-issues section (create only) */}
+                {intent !== "edit" && (
+                  <div className="border-t pt-6">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold">Sub-issues</h3>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setChildIssues((prev) => [...prev, newIssueNode()])
+                        }
+                      >
+                        <Plus className="mr-2 h-3 w-3" />
+                        Add Sub-issue
+                      </Button>
                     </div>
-                  )}
-                </div>
+                    {childIssues.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No sub-issues yet.
+                      </p>
+                    )}
+                    {childIssues.map((node) => (
+                      <IssueNode
+                        key={node.clientId}
+                        node={node}
+                        depth={0}
+                        roles={rolesData ?? []}
+                        hackathons={hackathons ?? []}
+                        onUpdate={handleUpdateIssue}
+                        onRemove={handleRemoveIssue}
+                        onAddChild={handleAddChildIssue}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
+            </div>
 
-            <footer className="border-t px-6 py-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <DialogFooter className="border-t px-6 py-4">
+              <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-3 sm:flex-row">
                   {intent === "edit" && (
                     <Button
@@ -875,19 +834,21 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                     className="w-full disabled:opacity-40 sm:w-auto"
                     disabled={isSubmitDisabled || isPending}
                   >
-                    {isPending
-                      ? intent === "edit"
-                        ? "Saving…"
-                        : "Creating…"
-                      : intent === "edit"
-                        ? formValues.isEvent
-                          ? "Update Event"
-                          : "Update Issue"
-                        : "Create Issue"}
+                    {isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : intent === "edit" ? (
+                      formValues.isEvent ? (
+                        "Update Event"
+                      ) : (
+                        "Update Issue"
+                      )
+                    ) : (
+                      "Create Issue"
+                    )}
                   </Button>
                 </div>
               </div>
-            </footer>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

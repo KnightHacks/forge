@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-
 import { EVENTS, ISSUE } from "@forge/consts";
 import { Checkbox } from "@forge/ui/checkbox";
 import { Input } from "@forge/ui/input";
@@ -291,7 +289,7 @@ export function EventFormFields({
       <div className="grid grid-cols-4 items-center gap-4">
         <Label className="text-right text-sm">Tag</Label>
         <Select
-          value={eventData.tag ?? EVENTS.EVENT_TAGS[0]}
+          value={eventData.tag}
           onValueChange={(v) => onChange("tag", v)}
         >
           <SelectTrigger className="col-span-3 w-full" aria-label="Tag">
@@ -349,7 +347,7 @@ export function EventFormFields({
           id={`${baseId}-start-date`}
           type="date"
           className="col-span-3 w-full"
-          value={eventData.startDate ?? ""}
+          value={eventData.startDate}
           onChange={(e) => onChange("startDate", e.target.value)}
         />
       </div>
@@ -370,7 +368,7 @@ export function EventFormFields({
           id={`${baseId}-end-date`}
           type="date"
           className="col-span-3 w-full"
-          value={eventData.endDate ?? ""}
+          value={eventData.endDate}
           onChange={(e) => onChange("endDate", e.target.value)}
         />
       </div>
@@ -391,7 +389,7 @@ export function EventFormFields({
           id={`${baseId}-location`}
           className="col-span-3 w-full"
           placeholder="Enter room"
-          value={eventData.location ?? ""}
+          value={eventData.location}
           onChange={(e) => onChange("location", e.target.value)}
         />
       </div>
@@ -419,7 +417,7 @@ export function EventFormFields({
           <Input
             className="col-span-3 w-full"
             placeholder="Paste Discord voice channel ID"
-            value={eventData.discordChannelId ?? ""}
+            value={eventData.discordChannelId}
             onChange={(e) => onChange("discordChannelId", e.target.value)}
           />
         </div>

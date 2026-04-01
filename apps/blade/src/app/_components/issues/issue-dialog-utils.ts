@@ -146,6 +146,9 @@ export function addChildToTreeNode<T extends { children: T[] }>(
   return nodes.map((n) => {
     if (getId(n) === parentId)
       return { ...n, children: [...n.children, newChild] };
-    return { ...n, children: addChildToTreeNode(n.children, parentId, newChild, getId) };
+    return {
+      ...n,
+      children: addChildToTreeNode(n.children, parentId, newChild, getId),
+    };
   });
 }

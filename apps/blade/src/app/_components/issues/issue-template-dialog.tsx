@@ -1,6 +1,7 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { LayoutTemplate, Pencil, Plus, Trash2 } from "lucide-react";
 
 import type { ISSUE } from "@forge/consts";
@@ -18,16 +19,15 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-
 import { TeamSelect } from "./issue-form-fields";
 import {
-  addChildToTemplateSubIssueNode,
-  newTemplateSubIssueNode,
-  removeTemplateSubIssueNode,
-  TemplateSubIssueNode,
-  updateTemplateSubIssueNode,
-  validateTemplateSubIssueNodes,
-} from "./sub-issue-node";
+  addChildToIssueTemplateNode,
+  IssueTemplateNode,
+  newIssueTemplateNode,
+  removeIssueTemplateNode,
+  updateIssueTemplateNode,
+  validateIssueTemplateNodes,
+} from "./issue-node";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,9 +41,9 @@ interface StoredTemplate {
 
 // ─── Conversion helpers ───────────────────────────────────────────────────────
 
-function fromTemplateSubIssue(
-  s: ISSUE.TemplateSubIssue,
-): ISSUE.TemplateSubIssueEditNode {
+function fromIssueTemplate(
+  s: ISSUE.IssueTemplate,
+): ISSUE.IssueTemplateEditNode {
   return {
     clientId: crypto.randomUUID(),
     name: s.title,
@@ -51,18 +51,19 @@ function fromTemplateSubIssue(
     team: s.team ?? "",
     daysOffset:
       s.dateMs !== undefined ? Math.round(s.dateMs / 86400000) : undefined,
-    children: (s.children ?? []).map(fromTemplateSubIssue),
+    children: (s.children ?? []).map(fromIssueTemplate),
   };
 }
 
-function toTemplateSubIssue(
-  n: ISSUE.TemplateSubIssueEditNode,
-): ISSUE.TemplateSubIssue {
-  const issue: ISSUE.TemplateSubIssue = { title: n.name };
+function toIssueTemplate(
+  n: ISSUE.IssueTemplateEditNode,
+): ISSUE.IssueTemplate {
+  const issue: ISSUE.IssueTemplate = { title: n.name };
   if (n.description) issue.description = n.description;
   if (n.team) issue.team = n.team;
   if (n.daysOffset !== undefined) issue.dateMs = n.daysOffset * 86400000;
-  if (n.children.length > 0) issue.children = n.children.map(toTemplateSubIssue);
+  if (n.children.length > 0)
+    issue.children = n.children.map(toIssueTemplate);
   return issue;
 }
 
@@ -71,10 +72,11 @@ function toTemplateSubIssue(
 export default function IssueTemplate() {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<"list" | "form">("list");
-  const [editingTemplate, setEditingTemplate] =
-    useState<StoredTemplate | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<StoredTemplate | null>(
+    null,
+  );
   const [templateName, setTemplateName] = useState("");
-  const [rootNodes, setRootNodes] = useState<ISSUE.TemplateSubIssueEditNode[]>(
+  const [rootNodes, setRootNodes] = useState<ISSUE.IssueTemplateEditNode[]>(
     [],
   );
 
@@ -96,8 +98,8 @@ export default function IssueTemplate() {
       toast.success("Template created");
       goToList();
     },
-    onError(err) {
-      toast.error(err.message || "Failed to create template");
+    onError(opts) {
+      toast.error(opts.message || "Failed to create template");
     },
     async onSettled() {
       await utils.issues.getTemplates.invalidate();
@@ -109,8 +111,8 @@ export default function IssueTemplate() {
       toast.success("Template updated");
       goToList();
     },
-    onError(err) {
-      toast.error(err.message || "Failed to update template");
+    onError(opts) {
+      toast.error(opts.message || "Failed to update template");
     },
     async onSettled() {
       await utils.issues.getTemplates.invalidate();
@@ -121,8 +123,8 @@ export default function IssueTemplate() {
     onSuccess() {
       toast.success("Template deleted");
     },
-    onError(err) {
-      toast.error(err.message || "Failed to delete template");
+    onError(opts) {
+      toast.error(opts.message || "Failed to delete template");
     },
     async onSettled() {
       await utils.issues.getTemplates.invalidate();
@@ -141,18 +143,18 @@ export default function IssueTemplate() {
   function openCreate() {
     setEditingTemplate(null);
     setTemplateName("");
-    setRootNodes([newTemplateSubIssueNode()]);
+    setRootNodes([newIssueTemplateNode()]);
     setView("form");
   }
 
   function openEdit(t: StoredTemplate) {
     setEditingTemplate(t);
     setTemplateName(t.name);
-    const body = t.body as ISSUE.TemplateSubIssue[];
+    const body = t.body as ISSUE.IssueTemplate[];
     setRootNodes(
       Array.isArray(body)
-        ? body.map(fromTemplateSubIssue)
-        : [newTemplateSubIssueNode()],
+        ? body.map(fromIssueTemplate)
+        : [newIssueTemplateNode()],
     );
     setView("form");
   }
@@ -161,39 +163,39 @@ export default function IssueTemplate() {
 
   function handleUpdate(
     clientId: string,
-    patch: Partial<ISSUE.TemplateSubIssueEditNode>,
+    patch: Partial<ISSUE.IssueTemplateEditNode>,
   ) {
-    setRootNodes((prev) => updateTemplateSubIssueNode(prev, clientId, patch));
+    setRootNodes((prev) => updateIssueTemplateNode(prev, clientId, patch));
   }
 
   function handleRemove(clientId: string) {
-    setRootNodes((prev) => removeTemplateSubIssueNode(prev, clientId));
+    setRootNodes((prev) => removeIssueTemplateNode(prev, clientId));
   }
 
   function handleAddChild(parentClientId: string) {
     setRootNodes((prev) =>
-      addChildToTemplateSubIssueNode(prev, parentClientId),
+      addChildToIssueTemplateNode(prev, parentClientId),
     );
   }
 
   // ── Root node helpers ──
 
   const root = rootNodes[0];
-  function updateRoot(patch: Partial<ISSUE.TemplateSubIssueEditNode>) {
+  function updateRoot(patch: Partial<ISSUE.IssueTemplateEditNode>) {
     if (root) handleUpdate(root.clientId, patch);
   }
 
   // ── Save ──
 
   const isFormValid =
-    templateName.trim().length > 0 && validateTemplateSubIssueNodes(rootNodes);
+    templateName.trim().length > 0 && validateIssueTemplateNodes(rootNodes);
   const isSaving = createTemplate.isPending || updateTemplate.isPending;
 
   function handleFormSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!isFormValid || isSaving) return;
 
-    const body = rootNodes.map(toTemplateSubIssue);
+    const body = rootNodes.map(toIssueTemplate);
 
     if (editingTemplate) {
       updateTemplate.mutate({
@@ -208,12 +210,17 @@ export default function IssueTemplate() {
 
   // ── Render ──
 
+  function handleClose() {
+    setIsOpen(false);
+    goToList();
+  }
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        setIsOpen(open);
-        if (!open) goToList();
+        if (!open) handleClose();
+        else setIsOpen(true);
       }}
     >
       <DialogTrigger asChild>
@@ -285,7 +292,7 @@ export default function IssueTemplate() {
             </div>
             <div className="shrink-0 border-t px-6 py-4">
               <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setIsOpen(false)}>
+                <Button variant="outline" onClick={handleClose}>
                   Close
                 </Button>
                 <Button onClick={openCreate}>
@@ -332,10 +339,12 @@ export default function IssueTemplate() {
                     <div className="grid grid-cols-4 items-start gap-4">
                       <Label className="pt-2 text-right">Description</Label>
                       <Textarea
-                        className="col-span-3 w-full min-h-[100px] resize-none"
+                        className="col-span-3 min-h-[100px] w-full resize-none"
                         placeholder="Description..."
                         value={root.description}
-                        onChange={(e) => updateRoot({ description: e.target.value })}
+                        onChange={(e) =>
+                          updateRoot({ description: e.target.value })
+                        }
                       />
                     </div>
 
@@ -349,7 +358,9 @@ export default function IssueTemplate() {
                           value={root.daysOffset ?? ""}
                           onChange={(e) => {
                             const val = e.target.value;
-                            updateRoot({ daysOffset: val === "" ? undefined : Number(val) });
+                            updateRoot({
+                              daysOffset: val === "" ? undefined : Number(val),
+                            });
                           }}
                         />
                         <span className="text-sm text-muted-foreground">
@@ -385,10 +396,12 @@ export default function IssueTemplate() {
                         </Button>
                       </div>
                       {root.children.length === 0 && (
-                        <p className="text-sm text-muted-foreground">No sub-tasks yet.</p>
+                        <p className="text-sm text-muted-foreground">
+                          No sub-tasks yet.
+                        </p>
                       )}
                       {root.children.map((child) => (
-                        <TemplateSubIssueNode
+                        <IssueTemplateNode
                           key={child.clientId}
                           node={child}
                           depth={0}
@@ -415,10 +428,7 @@ export default function IssueTemplate() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isSaving || !isFormValid}
-                >
+                <Button type="submit" disabled={isSaving || !isFormValid}>
                   {isSaving
                     ? "Saving…"
                     : editingTemplate

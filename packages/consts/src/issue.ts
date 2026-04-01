@@ -41,7 +41,7 @@ type IssueStatus = (typeof ISSUE_STATUS)[number];
 type IssuePriority = (typeof PRIORITY)[number];
 export type UUID = string;
 
-export interface SubIssueEditNode {
+export interface IssueEditNode {
   clientId: string;
   id?: string;
   status: IssueStatus;
@@ -57,10 +57,10 @@ export interface SubIssueEditNode {
   eventData?: EventFormValues;
   roles: string[];
   assigneeIds?: string[];
-  children: SubIssueEditNode[];
+  children: IssueEditNode[];
 }
 
-export interface SubIssueSubmitNode {
+export interface IssueSubmitNode {
   status: IssueStatus;
   name: string;
   description: string;
@@ -71,7 +71,7 @@ export interface SubIssueSubmitNode {
   event?: string | null;
   teamVisibilityIds?: string[];
   assigneeIds?: string[];
-  children?: SubIssueSubmitNode[];
+  children?: IssueSubmitNode[];
 }
 
 export type IssueSubmitValues = {
@@ -89,7 +89,7 @@ export type IssueSubmitValues = {
   eventData?: EventFormValues;
   teamVisibilityIds?: string[];
   assigneeIds?: string[];
-  subIssues?: SubIssueSubmitNode[];
+  children?: IssueSubmitNode[];
 };
 
 export interface EventFormValues {
@@ -110,20 +110,20 @@ export interface EventFormValues {
   points?: number;
   hackathonId?: string;
 }
-export interface TemplateSubIssue {
+export interface IssueTemplate {
   title: string;
   description?: string;
   team?: string;
   assignee?: string;
   dateMs?: number;
-  children?: TemplateSubIssue[];
+  children?: IssueTemplate[];
 }
 
-export interface TemplateSubIssueEditNode {
+export interface IssueTemplateEditNode {
   clientId: string;
   name: string;
   description: string;
   team: string;
   daysOffset?: number;
-  children: TemplateSubIssueEditNode[];
+  children: IssueTemplateEditNode[];
 }

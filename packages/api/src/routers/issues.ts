@@ -23,7 +23,7 @@ const CreateIssueInputSchema = IssueSchema.extend({
   teamVisibilityIds: z.array(z.string().uuid()).optional(),
 });
 
-const baseSubIssueCreateSchema = IssueSchema.omit({
+const baseIssueCreateSchema = IssueSchema.omit({
   creator: true,
   parent: true,
 }).extend({
@@ -31,24 +31,28 @@ const baseSubIssueCreateSchema = IssueSchema.omit({
   teamVisibilityIds: z.array(z.string().uuid()).optional(),
 });
 
-type SubIssueCreateNode = z.infer<typeof baseSubIssueCreateSchema> & {
-  children?: SubIssueCreateNode[];
+type IssueCreateNode = z.infer<typeof baseIssueCreateSchema> & {
+  children?: IssueCreateNode[];
 };
 
-const subIssueCreateSchema: z.ZodType<SubIssueCreateNode> =
-  baseSubIssueCreateSchema.extend({
-    children: z.lazy(() => z.array(subIssueCreateSchema)).optional(),
+const issueCreateSchema: z.ZodType<IssueCreateNode> =
+  baseIssueCreateSchema.extend({
+    children: z.lazy(() => z.array(issueCreateSchema)).optional(),
   });
 
 async function createChildIssues(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  children: SubIssueCreateNode[],
+  children: IssueCreateNode[],
   parentId: string,
   creatorId: string,
 ) {
   for (const child of children) {
-    const { children: grandchildren, assigneeIds, teamVisibilityIds, ...rest } =
-      child;
+    const {
+      children: grandchildren,
+      assigneeIds,
+      teamVisibilityIds,
+      ...rest
+    } = child;
     const [created] = await tx
       .insert(Issue)
       .values({ ...rest, parent: parentId, creator: creatorId })
@@ -90,7 +94,7 @@ async function requireIssue(id: string, label = "Issue") {
   return issue;
 }
 
-const baseTemplateSubIssueSchema = z.object({
+const baseIssueTemplateSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   team: z.string().optional(),
@@ -98,27 +102,27 @@ const baseTemplateSubIssueSchema = z.object({
   dateMs: z.number().int().optional(),
 });
 
-export type TemplateSubIssue = z.infer<typeof baseTemplateSubIssueSchema> & {
-  children?: TemplateSubIssue[];
+export type IssueTemplate = z.infer<typeof baseIssueTemplateSchema> & {
+  children?: IssueTemplate[];
 };
 
-const templateSubIssueSchema: z.ZodType<TemplateSubIssue> =
-  baseTemplateSubIssueSchema.extend({
-    children: z.lazy(() => z.array(templateSubIssueSchema)).optional(),
+const issueTemplateSchema: z.ZodType<IssueTemplate> =
+  baseIssueTemplateSchema.extend({
+    children: z.lazy(() => z.array(issueTemplateSchema)).optional(),
   });
 
 export const issuesRouter = {
   createIssue: permProcedure
     .input(
       CreateIssueInputSchema.omit({ creator: true }).extend({
-        subIssues: z.array(subIssueCreateSchema).optional(),
+        children: z.array(issueCreateSchema).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
 
       return await db.transaction(async (tx) => {
-        const { teamVisibilityIds, assigneeIds, subIssues, ...rest } = input;
+        const { teamVisibilityIds, assigneeIds, children, ...rest } = input;
 
         const [issue] = await tx
           .insert(Issue)
@@ -153,8 +157,8 @@ export const issuesRouter = {
           );
         }
 
-        if (subIssues?.length) {
-          await createChildIssues(tx, subIssues, issue.id, ctx.session.user.id);
+        if (children?.length) {
+          await createChildIssues(tx, children, issue.id, ctx.session.user.id);
         }
 
         return issue;
@@ -371,7 +375,7 @@ export const issuesRouter = {
     .input(
       InsertTemplateSchema.extend({
         name: z.string().min(1, "A template name is required"), // excludes empty strings
-        body: z.array(templateSubIssueSchema),
+        body: z.array(issueTemplateSchema),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -398,7 +402,7 @@ export const issuesRouter = {
         .extend({
           id: z.string().uuid(), // forces ID to not be an optional field
           name: z.string().min(1, "A template name is required").optional(), // excludes empty strings
-          body: z.array(templateSubIssueSchema).optional(),
+          body: z.array(issueTemplateSchema).optional(),
         }),
     )
     .mutation(async ({ ctx, input }) => {

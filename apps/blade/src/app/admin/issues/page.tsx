@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@forge/auth";
 
 import { CreateEditDialog } from "~/app/_components/issues/create-edit-dialog";
-import IssueTemplate from "~/app/_components/issues/issue-template";
+import IssueTemplate from "~/app/_components/issues/issue-template-dialog";
 import { SIGN_IN_PATH } from "~/consts";
 import { api } from "~/trpc/server";
 
