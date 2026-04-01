@@ -78,9 +78,7 @@ export function addChildToIssueNode(
   );
 }
 
-export function validateIssueNodes(
-  nodes: ISSUE.IssueEditNode[],
-): boolean {
+export function validateIssueNodes(nodes: ISSUE.IssueEditNode[]): boolean {
   return nodes.every(
     (n) =>
       n.name.trim().length > 0 &&
@@ -380,8 +378,7 @@ export function validateIssueTemplateNodes(
   nodes: ISSUE.IssueTemplateEditNode[],
 ): boolean {
   return nodes.every(
-    (n) =>
-      n.name.trim().length > 0 && validateIssueTemplateNodes(n.children),
+    (n) => n.name.trim().length > 0 && validateIssueTemplateNodes(n.children),
   );
 }
 

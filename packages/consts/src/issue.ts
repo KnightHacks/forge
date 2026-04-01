@@ -74,7 +74,7 @@ export interface IssueSubmitNode {
   children?: IssueSubmitNode[];
 }
 
-export type IssueSubmitValues = {
+export interface IssueSubmitValues {
   id?: string;
   status: IssueStatus;
   name: string;
@@ -90,7 +90,7 @@ export type IssueSubmitValues = {
   teamVisibilityIds?: string[];
   assigneeIds?: string[];
   children?: IssueSubmitNode[];
-};
+}
 
 export interface EventFormValues {
   discordId: string;

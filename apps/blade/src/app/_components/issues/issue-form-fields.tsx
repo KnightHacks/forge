@@ -288,10 +288,7 @@ export function EventFormFields({
       {/* Tag */}
       <div className="grid grid-cols-4 items-center gap-4">
         <Label className="text-right text-sm">Tag</Label>
-        <Select
-          value={eventData.tag}
-          onValueChange={(v) => onChange("tag", v)}
-        >
+        <Select value={eventData.tag} onValueChange={(v) => onChange("tag", v)}>
           <SelectTrigger className="col-span-3 w-full" aria-label="Tag">
             <SelectValue placeholder="Select a tag" />
           </SelectTrigger>
@@ -428,7 +425,7 @@ export function EventFormFields({
         <Label className="text-right text-sm">Dues Paying?</Label>
         <div className="col-span-3 flex items-center">
           <Checkbox
-            checked={eventData.dues_paying ?? false}
+            checked={eventData.dues_paying}
             onCheckedChange={(checked) =>
               onChange("dues_paying", checked === true)
             }

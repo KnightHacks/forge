@@ -55,15 +55,12 @@ function fromIssueTemplate(
   };
 }
 
-function toIssueTemplate(
-  n: ISSUE.IssueTemplateEditNode,
-): ISSUE.IssueTemplate {
+function toIssueTemplate(n: ISSUE.IssueTemplateEditNode): ISSUE.IssueTemplate {
   const issue: ISSUE.IssueTemplate = { title: n.name };
   if (n.description) issue.description = n.description;
   if (n.team) issue.team = n.team;
   if (n.daysOffset !== undefined) issue.dateMs = n.daysOffset * 86400000;
-  if (n.children.length > 0)
-    issue.children = n.children.map(toIssueTemplate);
+  if (n.children.length > 0) issue.children = n.children.map(toIssueTemplate);
   return issue;
 }
 
@@ -76,9 +73,7 @@ export default function IssueTemplate() {
     null,
   );
   const [templateName, setTemplateName] = useState("");
-  const [rootNodes, setRootNodes] = useState<ISSUE.IssueTemplateEditNode[]>(
-    [],
-  );
+  const [rootNodes, setRootNodes] = useState<ISSUE.IssueTemplateEditNode[]>([]);
 
   const utils = api.useUtils();
 
@@ -173,9 +168,7 @@ export default function IssueTemplate() {
   }
 
   function handleAddChild(parentClientId: string) {
-    setRootNodes((prev) =>
-      addChildToIssueTemplateNode(prev, parentClientId),
-    );
+    setRootNodes((prev) => addChildToIssueTemplateNode(prev, parentClientId));
   }
 
   // ── Root node helpers ──
@@ -347,7 +340,6 @@ export default function IssueTemplate() {
                         }
                       />
                     </div>
-
 
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label className="text-right">Team</Label>

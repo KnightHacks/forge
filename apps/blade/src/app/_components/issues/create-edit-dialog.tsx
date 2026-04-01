@@ -12,7 +12,8 @@ import {
 import { LayoutTemplate, Loader2, Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
 
-import { EVENTS, ISSUE } from "@forge/consts";
+import type { EVENTS } from "@forge/consts";
+import { ISSUE } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -267,21 +268,8 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     team: effectiveTeam,
   }).success;
   const isRolesValid = !rolesError;
-  const isEventStartInFuture =
-    !formValues.isEvent ||
-    Boolean(
-      formValues.eventData &&
-      (parseEventDateTime(
-        formValues.eventData.startDate,
-        formValues.eventData.startTime,
-      )?.getTime() ?? 0) > Date.now(),
-    );
-
   const isSubmitDisabled =
-    !isFormValid ||
-    !isRolesValid ||
-    !isEventStartInFuture ||
-    !validateIssueNodes(childIssues);
+    !isFormValid || !isRolesValid || !validateIssueNodes(childIssues);
   const roleIdSet = useMemo(
     () => new Set((rolesData ?? []).map((role) => role.id)),
     [rolesData],
@@ -342,7 +330,12 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       ...(root?.team ? { team: root.team } : {}),
     }));
 
-    setChildIssues(templateToIssueNodes(root?.children ?? [], formValues.date));
+    setChildIssues(
+      templateToIssueNodes(
+        root?.children ?? [],
+        normalizeTaskDueDate(formValues.date),
+      ),
+    );
   };
 
   async function buildIssueNodes(
@@ -469,7 +462,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         onSubmit?.({
           ...baseIssueFields,
           parent: formValues.parent,
-          date: formValues.date,
+          date: normalizeTaskDueDate(formValues.date),
           isEvent: formValues.isEvent,
           event: formValues.event ?? null,
           eventData: formValues.eventData,
@@ -497,7 +490,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
           ...baseIssueFields,
           id: formValues.id,
           parent: formValues.parent,
-          date: formValues.date,
+          date: normalizeTaskDueDate(formValues.date),
           isEvent: formValues.isEvent,
           event: formValues.event ?? null,
           eventData: formValues.eventData,
@@ -520,7 +513,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         name: formValues.name,
         description: formValues.description,
         links: formValues.links,
-        date: formValues.date,
+        date: normalizeTaskDueDate(formValues.date),
         priority: formValues.priority,
         team: effectiveTeam,
         parent: formValues.parent,
