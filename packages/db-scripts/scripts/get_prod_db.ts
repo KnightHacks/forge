@@ -3,7 +3,7 @@
 
 /**
  * Usage:
- *   pnpm --filter=@forge/db with-env tsx scripts/get_prod_db.ts [--truncate]
+ *   pnpm --filter=@forge/db-scripts with-env tsx scripts/get_prod_db.ts [--truncate]
  *
  * Pass in --truncate if you want to truncate the entire database before
  * pushing the rows from prod.
@@ -29,8 +29,8 @@ import { unlink } from "fs/promises";
 import { pipeline } from "stream/promises";
 import { promisify } from "util";
 
-import { minioClient } from "../../api/src/minio/minio-client";
-import { env } from "../src/env";
+import { minioClient } from "@forge/api/minio/minio-client";
+import { env } from "@forge/db/env";
 
 const execAsync = promisify(exec);
 

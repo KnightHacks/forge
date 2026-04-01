@@ -1008,6 +1008,70 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
+  packages/db-scripts:
+    dependencies:
+      '@discordjs/rest':
+        specifier: ^2.6.0
+        version: 2.6.0
+      '@forge/api':
+        specifier: workspace:*
+        version: link:../api
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../consts
+      '@forge/db':
+        specifier: workspace:*
+        version: link:../db
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../utils
+      discord-api-types:
+        specifier: ^0.38.40
+        version: 0.38.40
+      drizzle-orm:
+        specifier: ^0.45.1
+        version: 0.45.1(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8)
+      minio:
+        specifier: ^8.0.6
+        version: 8.0.6
+      pg-pool:
+        specifier: ^3.12.0
+        version: 3.12.0(pg@8.19.0)
+      superjson:
+        specifier: 2.2.6
+        version: 2.2.6
+    devDependencies:
+      '@forge/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@forge/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
+      '@forge/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@types/pg':
+        specifier: ^8.16.0
+        version: 8.16.0
+      '@types/pg-pool':
+        specifier: ^2.0.7
+        version: 2.0.7
+      dotenv-cli:
+        specifier: ^11.0.0
+        version: 11.0.0
+      eslint:
+        specifier: 'catalog:'
+        version: 10.0.2(jiti@2.6.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.1
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
   packages/email:
     dependencies:
       '@forge/utils':

@@ -8,7 +8,7 @@ import { CronBuilder } from "../structs/CronBuilder";
 const COMMAND = "pnpm";
 const COMMAND_ARGS = [
   "--filter",
-  "@forge/db",
+  "@forge/db-scripts",
   "with-env",
   "tsx",
   "scripts/seed_devdb.ts",

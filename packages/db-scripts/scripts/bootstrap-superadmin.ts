@@ -6,9 +6,9 @@
 // This script creates a superadmin role with all permissions and assigns it to a user.
 // Use this to bootstrap the first admin user who can then manage roles through the UI.
 // Usage:
-//   pnpm --filter @forge/db with-env tsx scripts/bootstrap-superadmin.ts <role-id> <user-id>
+//   pnpm --filter @forge/db-scripts with-env tsx scripts/bootstrap-superadmin.ts <role-id> <user-id>
 // Example:
-//   pnpm --filter @forge/db with-env tsx scripts/bootstrap-superadmin.ts 1321955700540309645 238081392481665025
+//   pnpm --filter @forge/db-scripts with-env tsx scripts/bootstrap-superadmin.ts 1321955700540309645 238081392481665025
 // Arguments:
 //   discord-role-id: The Discord role ID to link to (e.g., an Admin role in your Discord server)
 //   discord-user-id: The Discord user ID of the person to grant superadmin access
@@ -16,9 +16,8 @@
 import { eq } from "drizzle-orm";
 
 import { PERMISSIONS } from "@forge/consts";
-
-import { db } from "../src/client";
-import { Permissions, Roles } from "../src/schemas/auth";
+import { db } from "@forge/db/client";
+import { Permissions, Roles } from "@forge/db/schemas/auth";
 
 async function bootstrapSuperadmin() {
   const args = process.argv.slice(2);
@@ -27,11 +26,11 @@ async function bootstrapSuperadmin() {
     console.error("Error: Invalid arguments");
     console.error("\nUsage:");
     console.error(
-      "  pnpm --filter @forge/db with-env tsx scripts/bootstrap-superadmin.ts <role-id> <user-id>",
+      "  pnpm --filter @forge/db-scripts with-env tsx scripts/bootstrap-superadmin.ts <role-id> <user-id>",
     );
     console.error("\nExample:");
     console.error(
-      "  pnpm --filter @forge/db with-env tsx scripts/bootstrap-superadmin.ts 1321955700540309645 238081392481665025",
+      "  pnpm --filter @forge/db-scripts with-env tsx scripts/bootstrap-superadmin.ts 1321955700540309645 238081392481665025",
     );
     process.exit(1);
   }
