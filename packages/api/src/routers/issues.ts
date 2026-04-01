@@ -23,6 +23,64 @@ const CreateIssueInputSchema = IssueSchema.extend({
   teamVisibilityIds: z.array(z.string().uuid()).optional(),
 });
 
+const baseSubIssueCreateSchema = IssueSchema.omit({
+  creator: true,
+  parent: true,
+}).extend({
+  assigneeIds: z.array(z.string().uuid()).optional(),
+  teamVisibilityIds: z.array(z.string().uuid()).optional(),
+});
+
+type SubIssueCreateNode = z.infer<typeof baseSubIssueCreateSchema> & {
+  children?: SubIssueCreateNode[];
+};
+
+const subIssueCreateSchema: z.ZodType<SubIssueCreateNode> =
+  baseSubIssueCreateSchema.extend({
+    children: z.lazy(() => z.array(subIssueCreateSchema)).optional(),
+  });
+
+async function createChildIssues(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  children: SubIssueCreateNode[],
+  parentId: string,
+  creatorId: string,
+) {
+  for (const child of children) {
+    const { children: grandchildren, assigneeIds, teamVisibilityIds, ...rest } =
+      child;
+    const [created] = await tx
+      .insert(Issue)
+      .values({ ...rest, parent: parentId, creator: creatorId })
+      .returning();
+    if (!created) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create sub-issue.",
+      });
+    }
+    if (teamVisibilityIds?.length) {
+      await tx.insert(IssuesToTeamsVisibility).values(
+        teamVisibilityIds.map((teamId) => ({
+          issueId: created.id,
+          teamId,
+        })),
+      );
+    }
+    if (assigneeIds?.length) {
+      await tx.insert(IssuesToUsersAssignment).values(
+        assigneeIds.map((userId) => ({
+          issueId: created.id,
+          userId,
+        })),
+      );
+    }
+    if (grandchildren?.length) {
+      await createChildIssues(tx, grandchildren, created.id, creatorId);
+    }
+  }
+}
+
 async function requireIssue(id: string, label = "Issue") {
   const issue = await db.query.Issue.findFirst({
     where: (t, { eq }) => eq(t.id, id),
@@ -51,12 +109,16 @@ const templateSubIssueSchema: z.ZodType<TemplateSubIssue> =
 
 export const issuesRouter = {
   createIssue: permProcedure
-    .input(CreateIssueInputSchema.omit({ creator: true }))
+    .input(
+      CreateIssueInputSchema.omit({ creator: true }).extend({
+        subIssues: z.array(subIssueCreateSchema).optional(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
 
       return await db.transaction(async (tx) => {
-        const { teamVisibilityIds, assigneeIds, ...rest } = input;
+        const { teamVisibilityIds, assigneeIds, subIssues, ...rest } = input;
 
         const [issue] = await tx
           .insert(Issue)
@@ -74,7 +136,7 @@ export const issuesRouter = {
         }
 
         if (teamVisibilityIds?.length) {
-          await db.insert(IssuesToTeamsVisibility).values(
+          await tx.insert(IssuesToTeamsVisibility).values(
             teamVisibilityIds.map((teamId) => ({
               issueId: issue.id,
               teamId,
@@ -83,12 +145,16 @@ export const issuesRouter = {
         }
 
         if (assigneeIds?.length) {
-          await db.insert(IssuesToUsersAssignment).values(
+          await tx.insert(IssuesToUsersAssignment).values(
             assigneeIds.map((userId) => ({
               issueId: issue.id,
               userId,
             })),
           );
+        }
+
+        if (subIssues?.length) {
+          await createChildIssues(tx, subIssues, issue.id, ctx.session.user.id);
         }
 
         return issue;
@@ -234,6 +300,8 @@ export const issuesRouter = {
         name: z.string().min(1).optional(),
         description: z.string().min(1).optional(),
         status: z.enum(ISSUE.ISSUE_STATUS).optional(),
+        priority: z.enum(ISSUE.PRIORITY).optional(),
+        parent: z.string().uuid().nullable().optional(),
         date: z.date().nullable().optional(),
         event: z.string().uuid().nullable().optional(),
         links: z.array(z.string().url()).nullable().optional(),

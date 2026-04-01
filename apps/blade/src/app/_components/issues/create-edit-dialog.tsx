@@ -1,13 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { LayoutTemplate, Trash2, X } from "lucide-react";
-import { createPortal } from "react-dom";
-
+import { z } from "zod";
+import { LayoutTemplate, Plus, Trash2 } from "lucide-react";
 import { EVENTS, ISSUE } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@forge/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,128 +21,90 @@ import {
 } from "@forge/ui/dropdown-menu";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@forge/ui/select";
 import { Textarea } from "@forge/ui/textarea";
+import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
+import {
+  defaultEventForm,
+  getTaskDueDateInputValue,
+  normalizeTaskDueDate,
+  parseEventDateTime,
+} from "./issue-dialog-utils";
+import {
+  EventFormFields,
+  PrioritySelect,
+  RoleCheckboxGroup,
+  StatusSelect,
+  TeamSelect,
+} from "./issue-form-fields";
+import {
+  addChildToSubIssueNode,
+  newSubIssueNode,
+  removeSubIssueNode,
+  SubIssueNode,
+  updateSubIssueNode,
+  validateSubIssueNodes,
+} from "./sub-issue-node";
+
 const baseField = "w-full";
 
-function getStatusLabel(status: string) {
-  return status
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
+const issueFormSchema = z
+  .object({
+    name: z.string().min(1),
+    description: z.string().min(1),
+    team: z.string().min(1),
+    isEvent: z.boolean(),
+    date: z.date(),
+    eventData: z
+      .object({
+        location: z.string().min(1),
+        description: z.string().min(1),
+        startDate: z.string().min(1),
+        startTime: z.string().min(1),
+        endDate: z.string().min(1),
+        endTime: z.string().min(1),
+        isOperationsCalendar: z.boolean().optional(),
+        discordChannelId: z.string().optional(),
+      })
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.isEvent) {
+      if (Number.isNaN(data.date.getTime())) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid date", path: ["date"] });
+      }
+      return;
+    }
 
-function normalizeTaskDueDate(dateValue?: string | Date) {
-  const dueDate = dateValue ? new Date(dateValue) : new Date();
-  if (Number.isNaN(dueDate.getTime())) {
-    const fallback = new Date();
-    fallback.setHours(ISSUE.TASK_DUE_HOURS, ISSUE.TASK_DUE_MINUTES, 0, 0);
-    return fallback;
-  }
+    const ed = data.eventData;
+    if (!ed) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Event data required" });
+      return;
+    }
 
-  dueDate.setHours(ISSUE.TASK_DUE_HOURS, ISSUE.TASK_DUE_MINUTES, 0, 0);
-  return dueDate;
-}
+    const start = parseEventDateTime(ed.startDate, ed.startTime);
+    const end = parseEventDateTime(ed.endDate, ed.endTime);
 
-function getTaskDueDateInputValue(dateValue: Date) {
-  return normalizeTaskDueDate(dateValue).toISOString().slice(0, 10);
-}
+    if (!start || !end) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid start or end datetime" });
+      return;
+    }
 
-function parseTimeTo12h(timeValue?: string): {
-  hour: string;
-  minute: string;
-  amPm: (typeof ISSUE.EVENT_TIME_AM_PM_OPTIONS)[number];
-} {
-  const [hRaw, mRaw] = (timeValue ?? "").split(":");
-  const h = Number(hRaw);
-  const m = Number(mRaw);
+    if (end <= start) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "End time must be after start time" });
+    }
 
-  if (Number.isNaN(h) || Number.isNaN(m)) {
-    return {
-      hour: "",
-      minute: "",
-      amPm: "PM" as (typeof ISSUE.EVENT_TIME_AM_PM_OPTIONS)[number],
-    };
-  }
+    if (ed.isOperationsCalendar && !ed.discordChannelId?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Discord channel ID required for internal events",
+        path: ["eventData", "discordChannelId"],
+      });
+    }
+  });
 
-  const amPm: (typeof ISSUE.EVENT_TIME_AM_PM_OPTIONS)[number] =
-    h >= 12 ? "PM" : "AM";
-  const hour24 = h % 12 || 12;
-  return {
-    hour: hour24.toString().padStart(2, "0"),
-    minute: m.toString().padStart(2, "0"),
-    amPm,
-  };
-}
-
-function to24h(
-  hour12: string,
-  amPm: (typeof ISSUE.EVENT_TIME_AM_PM_OPTIONS)[number],
-) {
-  let h = Number(hour12);
-  if (Number.isNaN(h)) {
-    h = 0;
-  }
-  if (amPm === "PM" && h < 12) {
-    h += 12;
-  }
-  if (amPm === "AM" && h === 12) {
-    h = 0;
-  }
-  return h.toString().padStart(2, "0");
-}
-
-function toAmPmValue(
-  value: string,
-): (typeof ISSUE.EVENT_TIME_AM_PM_OPTIONS)[number] {
-  return value === "AM" ? "AM" : "PM";
-}
-
-function parseEventDateTime(dateValue?: string, timeValue?: string) {
-  if (!dateValue || !timeValue) {
-    return null;
-  }
-
-  const [year, month, day] = dateValue.split("-").map(Number);
-  const [hour, minute] = timeValue.split(":").map(Number);
-  if (!year || !month || !day || Number.isNaN(hour) || Number.isNaN(minute)) {
-    return null;
-  }
-
-  const parsed = new Date(year, month - 1, day, hour, minute, 0, 0);
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-
-  return parsed;
-}
-
-interface IssueDialogFormValues {
-  id?: string;
-  status: (typeof ISSUE.ISSUE_STATUS)[number];
-  name: string;
-  description: string;
-  links: string[];
-  date: Date;
-  priority: (typeof ISSUE.PRIORITY)[number];
-  team: string;
-  parent?: string;
-  isEvent: boolean;
-  event?: ISSUE.UUID | null;
-  eventData?: ISSUE.EventFormValues;
-  teamVisibilityIds?: string[];
-  assigneeIds?: string[];
-  roles: string[];
-}
 type CreateEditDialogComponentProps = Omit<
   ISSUE.CreateEditDialogProps,
   "open"
@@ -147,29 +114,9 @@ type CreateEditDialogComponentProps = Omit<
   children?: React.ReactNode;
 };
 
-const defaultEventForm = (): ISSUE.EventFormValues => {
+const defaultForm = (): ISSUE.SubIssueEditNode => {
   return {
-    discordId: "",
-    googleId: "",
-    name: "",
-    tag: EVENTS.EVENT_TAGS[0],
-    description: "",
-    startDate: "",
-    startTime: "",
-    endDate: "",
-    endTime: "",
-    location: "",
-    roles: [],
-    dues_paying: false,
-    isOperationsCalendar: false,
-    discordChannelId: "",
-    points: undefined,
-    hackathonId: undefined,
-  };
-};
-
-const defaultForm = (): IssueDialogFormValues => {
-  return {
+    clientId: crypto.randomUUID(),
     status: ISSUE.ISSUE_STATUS[0],
     name: "",
     description: "",
@@ -182,6 +129,7 @@ const defaultForm = (): IssueDialogFormValues => {
     event: null,
     eventData: undefined,
     roles: [],
+    children: [],
   };
 };
 
@@ -201,21 +149,24 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const isOpen = isControlled ? open : internalOpen;
   const rolesQuery = api.roles.getAllLinks.useQuery();
   const hackathonsQuery = api.hackathon.getHackathons.useQuery();
+  const createIssueMutation = api.issues.createIssue.useMutation();
+  const createEventMutation = api.event.createEvent.useMutation();
+  const updateIssueMutation = api.issues.updateIssue.useMutation();
+  const isPending =
+    createIssueMutation.isPending ||
+    createEventMutation.isPending ||
+    updateIssueMutation.isPending;
   const rolesData = rolesQuery.data;
   const hackathons = hackathonsQuery.data;
   const isRolesLoading = rolesQuery.isLoading;
   const isHackathonsLoading = hackathonsQuery.isLoading;
   const rolesError = rolesQuery.error;
   const hackathonsError = hackathonsQuery.error;
-  const [portalElement, setPortalElement] = React.useState<Element | null>(
-    null,
-  );
   const buildInitialFormValues = React.useCallback(() => {
     const defaults = defaultForm();
-    const initial = (initialValues ?? {}) as Partial<IssueDialogFormValues>;
+    const initial = (initialValues ?? {}) as Partial<ISSUE.IssueSubmitValues>;
     const resolvedEventData = initial.eventData;
-    const resolvedRoles =
-      initial.roles ?? initial.teamVisibilityIds ?? defaults.roles;
+    const resolvedRoles = initial.teamVisibilityIds ?? defaults.roles;
     if (initial.isEvent) {
       return {
         ...defaults,
@@ -239,8 +190,11 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       roles: resolvedRoles,
     };
   }, [initialValues]);
-  const [formValues, setFormValues] = React.useState<IssueDialogFormValues>(
+  const [formValues, setFormValues] = React.useState<ISSUE.SubIssueEditNode>(
     buildInitialFormValues,
+  );
+  const [subIssues, setSubIssues] = React.useState<ISSUE.SubIssueEditNode[]>(
+    [],
   );
 
   const handleClose = React.useCallback(() => {
@@ -277,9 +231,9 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     });
   }, [children, isControlled, onOpenChange]);
 
-  const updateForm = <K extends keyof IssueDialogFormValues>(
+  const updateForm = <K extends keyof ISSUE.SubIssueEditNode>(
     key: K,
-    value: IssueDialogFormValues[K],
+    value: ISSUE.SubIssueEditNode[K],
   ) => {
     setFormValues((previous) => ({
       ...previous,
@@ -288,58 +242,31 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   };
 
   const baseId = React.useId();
-  const startDateTime = parseEventDateTime(
-    formValues.eventData?.startDate,
-    formValues.eventData?.startTime,
-  );
-  const endDateTime = parseEventDateTime(
-    formValues.eventData?.endDate,
-    formValues.eventData?.endTime,
-  );
   const [nowTimestamp, setNowTimestamp] = React.useState<number | null>(null);
   React.useEffect(() => {
     if (isOpen) {
       setNowTimestamp(Date.now());
     }
   }, [isOpen]);
-  const isNameValid = formValues.name.trim().length > 0;
-  const isTeamValid = formValues.team.trim().length > 0;
-  const isDescriptionValid = formValues.description.trim().length > 0;
+
+  const isFormValid = issueFormSchema.safeParse(formValues).success;
   const isRolesValid = !rolesError;
-  const isTaskDateValid = !Number.isNaN(formValues.date.getTime());
-
-  const hasEventData = !!formValues.eventData;
-  const hasEventLocation = !!formValues.eventData?.location.trim();
-  const hasEventDescription = !!formValues.eventData?.description.trim();
-  const hasEventStartTime = !!startDateTime;
-  const hasEventEndTime = !!endDateTime;
-  const isInternalEvent = formValues.eventData?.isOperationsCalendar ?? false;
-  const hasDiscordChannelId =
-    !isInternalEvent || !!(formValues.eventData?.discordChannelId ?? "").trim();
-  const isEventTimingValid =
-    hasEventStartTime && hasEventEndTime && endDateTime > startDateTime;
-  const isEventStartInFuture = Boolean(
-    hasEventStartTime &&
-    nowTimestamp !== null &&
-    startDateTime.getTime() > nowTimestamp,
-  );
-
-  const hasRequiredBaseFields =
-    isNameValid && isTeamValid && isDescriptionValid && isRolesValid;
-  const isTaskValid = isTaskDateValid;
-  const isEventValid =
-    hasEventData &&
-    hasEventLocation &&
-    hasEventDescription &&
-    hasEventStartTime &&
-    hasEventEndTime &&
-    hasDiscordChannelId &&
-    isEventTimingValid &&
-    isEventStartInFuture;
+  const isEventStartInFuture =
+    !formValues.isEvent ||
+    Boolean(
+      formValues.eventData &&
+        nowTimestamp !== null &&
+        (parseEventDateTime(
+          formValues.eventData.startDate,
+          formValues.eventData.startTime,
+        )?.getTime() ?? 0) > nowTimestamp,
+    );
 
   const isSubmitDisabled =
-    !hasRequiredBaseFields ||
-    (formValues.isEvent ? !isEventValid : !isTaskValid);
+    !isFormValid ||
+    !isRolesValid ||
+    !isEventStartInFuture ||
+    !validateSubIssueNodes(subIssues);
   const roleIdSet = React.useMemo(
     () => new Set((rolesData ?? []).map((role) => role.id)),
     [rolesData],
@@ -370,38 +297,21 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     }));
   };
 
-  const updateEventTimePart = (
-    which: "start" | "end",
-    part: "hour" | "minute" | "amPm",
-    value: string,
-  ) => {
-    const key = which === "start" ? "startTime" : "endTime";
-    const parsed = parseTimeTo12h(formValues.eventData?.[key]);
-    const next: {
-      hour: string;
-      minute: string;
-      amPm: (typeof ISSUE.EVENT_TIME_AM_PM_OPTIONS)[number];
-    } = {
-      hour: part === "hour" ? value : parsed.hour,
-      minute: part === "minute" ? value : parsed.minute,
-      amPm: part === "amPm" ? toAmPmValue(value) : parsed.amPm,
-    };
-
-    // Keep time editable when only one selector is changed by filling missing
-    // pieces with the first available option instead of clearing the field.
-    if (!next.hour) {
-      next.hour = ISSUE.EVENT_TIME_HOURS[0] ?? "01";
-    }
-    if (!next.minute) {
-      next.minute = ISSUE.EVENT_TIME_MINUTES[0] ?? "00";
-    }
-
-    updateEventData(key, `${to24h(next.hour, next.amPm)}:${next.minute}`);
-  };
-
-  React.useEffect(() => {
-    setPortalElement(document.body);
-  }, []);
+  const handleUpdateSubIssue = React.useCallback(
+    (clientId: string, patch: Partial<ISSUE.SubIssueEditNode>) =>
+      setSubIssues((prev) => updateSubIssueNode(prev, clientId, patch)),
+    [],
+  );
+  const handleRemoveSubIssue = React.useCallback(
+    (clientId: string) =>
+      setSubIssues((prev) => removeSubIssueNode(prev, clientId)),
+    [],
+  );
+  const handleAddChildSubIssue = React.useCallback(
+    (parentClientId: string) =>
+      setSubIssues((prev) => addChildToSubIssueNode(prev, parentClientId)),
+    [],
+  );
 
   React.useEffect(() => {
     if (!isOpen) {
@@ -409,30 +319,8 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     }
 
     setFormValues(buildInitialFormValues());
+    setSubIssues([]);
   }, [buildInitialFormValues, isOpen]);
-
-  React.useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        handleClose();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeydown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeydown);
-    };
-  }, [handleClose, isOpen]);
 
   React.useEffect(() => {
     if (!isOpen || formValues.team || !rolesData?.length) {
@@ -447,99 +335,199 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     updateForm("team", firstRole.id);
   }, [formValues.team, isOpen, rolesData]);
 
-  const handleOverlayPointerDown = (
-    event: React.MouseEvent<HTMLDivElement>,
-  ) => {
-    if (event.target === event.currentTarget) {
-      handleClose();
-    }
-  };
-
   const { data: templates = [], isLoading: isTemplatesLoading } =
     api.issues.getTemplates.useQuery(undefined, { enabled: isOpen });
+
+  const templateToSubIssueNodes = (
+    items: ISSUE.TemplateSubIssue[],
+  ): ISSUE.SubIssueEditNode[] =>
+    items.map((item) =>
+      newSubIssueNode({
+        name: item.title,
+        description: item.description ?? "",
+        team: item.team ?? "",
+        date: item.dateMs ? new Date(item.dateMs) : normalizeTaskDueDate(),
+        children: item.children ? templateToSubIssueNodes(item.children) : [],
+      }),
+    );
 
   const applyTemplate = (template: {
     name: string;
     body: unknown;
   }) => {
     const body = template.body as ISSUE.TemplateSubIssue[];
-    const first = Array.isArray(body) ? body[0] : undefined;
-    const roles = Array.isArray(body)
-      ? [
-          ...new Set(
-            body.map((s) => s.team).filter((t): t is string => !!t),
-          ),
-        ]
-      : [];
+    const root = Array.isArray(body) ? body[0] : undefined;
 
     setFormValues((prev) => ({
       ...prev,
-      name: template.name,
-      description: first?.description ?? prev.description,
-      ...(roles.length > 0 && { roles }),
+      name: root?.title ?? template.name,
+      description: root?.description ?? prev.description,
+      ...(root?.team ? { team: root.team } : {}),
     }));
+
+    setSubIssues(templateToSubIssueNodes(root?.children ?? []));
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  async function buildSubIssues(
+    nodes: ISSUE.SubIssueEditNode[],
+  ): Promise<ISSUE.SubIssueSubmitNode[]> {
+    const results: ISSUE.SubIssueSubmitNode[] = [];
+    for (const node of nodes) {
+      let eventId: string | null = null;
+
+      if (node.isEvent && node.eventData) {
+        const ed = node.eventData;
+        const startDatetime = parseEventDateTime(ed.startDate, ed.startTime);
+        const endDatetime = parseEventDateTime(ed.endDate, ed.endTime);
+
+        if (startDatetime && endDatetime) {
+          const createdEvent = await createEventMutation.mutateAsync({
+            name: node.name.trim(),
+            tag: ed.tag as (typeof EVENTS.EVENT_TAGS)[number],
+            description: ed.description.trim(),
+            start_datetime: startDatetime,
+            end_datetime: endDatetime,
+            location: ed.location,
+            dues_paying: ed.dues_paying,
+            isOperationsCalendar: ed.isOperationsCalendar ?? false,
+            discordChannelId: ed.discordChannelId,
+            roles: ed.roles ?? [],
+            points: ed.points,
+            hackathonId: ed.hackathonId ?? undefined,
+          });
+          eventId = createdEvent.id;
+        }
+      }
+
+      results.push({
+        status: node.status,
+        name: node.name,
+        description: node.description.trim(),
+        links: node.links,
+        date: eventId
+          ? (parseEventDateTime(
+              node.eventData?.startDate,
+              node.eventData?.startTime,
+            ) ?? normalizeTaskDueDate(node.date))
+          : normalizeTaskDueDate(node.date),
+        priority: node.priority,
+        team: node.team,
+        event: eventId,
+        teamVisibilityIds: node.roles.length > 0 ? node.roles : undefined,
+        assigneeIds: node.assigneeIds,
+        children:
+          node.children.length > 0
+            ? await buildSubIssues(node.children)
+            : undefined,
+      });
+    }
+    return results;
+  }
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (isSubmitDisabled) {
+    if (isSubmitDisabled || isPending) {
       return;
     }
 
-    const toSubmitValues = (
-      date: Date,
-      eventDataValue?: ISSUE.EventFormValues,
-    ): ISSUE.IssueSubmitValues => ({
-      id: formValues.id,
+    const baseIssueFields = {
       status: formValues.status,
-      name: formValues.name,
+      name: formValues.name.trim(),
       description: formValues.description.trim(),
       links: formValues.links,
-      date,
       priority: formValues.priority,
       team: formValues.team,
-      parent: formValues.parent,
-      isEvent: formValues.isEvent,
-      event: formValues.event ?? null,
-      eventData: eventDataValue,
       teamVisibilityIds:
         safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
       assigneeIds: formValues.assigneeIds,
-    });
+    };
 
-    // If not event, clear event field
-    if (!formValues.isEvent) {
-      onSubmit?.(
-        toSubmitValues(normalizeTaskDueDate(formValues.date), undefined),
-      );
-      if (!isControlled) {
-        setInternalOpen(false);
-      }
-    } else {
-      const startDate = formValues.eventData?.startDate;
-      const startTime = formValues.eventData?.startTime;
-      const linkedIssueDate = parseEventDateTime(startDate, startTime);
+    try {
+      if (intent === "create") {
+        const submitSubIssues =
+          subIssues.length > 0 ? await buildSubIssues(subIssues) : undefined;
 
-      if (
-        !linkedIssueDate ||
-        !isEventTimingValid ||
-        linkedIssueDate.getTime() <= Date.now()
-      ) {
-        return;
-      }
+        if (formValues.isEvent) {
+          const ed = formValues.eventData ?? defaultEventForm();
+          const startDatetime = parseEventDateTime(ed.startDate, ed.startTime);
+          const endDatetime = parseEventDateTime(ed.endDate, ed.endTime);
 
-      onSubmit?.(
-        toSubmitValues(linkedIssueDate, {
-          ...(formValues.eventData ?? defaultEventForm()),
+          if (!startDatetime || !endDatetime) return;
+
+          const createdEvent = await createEventMutation.mutateAsync({
+            name: formValues.name.trim(),
+            tag: ed.tag as (typeof EVENTS.EVENT_TAGS)[number],
+            description: ed.description.trim(),
+            start_datetime: startDatetime,
+            end_datetime: endDatetime,
+            location: ed.location,
+            dues_paying: ed.dues_paying,
+            isOperationsCalendar: ed.isOperationsCalendar ?? false,
+            discordChannelId: ed.discordChannelId,
+            roles: safeEventVisibilityIds,
+            points: ed.points,
+            hackathonId: ed.hackathonId ?? undefined,
+          });
+
+          await createIssueMutation.mutateAsync({
+            ...baseIssueFields,
+            date: startDatetime,
+            event: createdEvent.id,
+            subIssues: submitSubIssues,
+          });
+        } else {
+          await createIssueMutation.mutateAsync({
+            ...baseIssueFields,
+            date: normalizeTaskDueDate(formValues.date),
+            event: null,
+            subIssues: submitSubIssues,
+          });
+        }
+
+        toast.success("Issue created successfully");
+        onSubmit?.({
+          ...baseIssueFields,
+          parent: formValues.parent,
+          date: formValues.date,
+          isEvent: formValues.isEvent,
+          event: formValues.event ?? null,
+          eventData: formValues.eventData,
+        });
+      } else if (intent === "edit" && formValues.id) {
+        await updateIssueMutation.mutateAsync({
+          id: formValues.id,
+          status: formValues.status,
           name: formValues.name.trim(),
-          description: (formValues.eventData?.description ?? "").trim(),
-          roles: safeEventVisibilityIds,
-        }),
-      );
-      if (!isControlled) {
-        setInternalOpen(false);
+          description: formValues.description.trim(),
+          priority: formValues.priority,
+          team: formValues.team,
+          parent: formValues.parent ?? null,
+          date: formValues.isEvent
+            ? undefined
+            : normalizeTaskDueDate(formValues.date),
+          teamVisibilityIds:
+            safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
+          assigneeIds: formValues.assigneeIds,
+        });
+
+        toast.success("Issue updated successfully");
+        onSubmit?.({
+          ...baseIssueFields,
+          id: formValues.id,
+          parent: formValues.parent,
+          date: formValues.date,
+          isEvent: formValues.isEvent,
+          event: formValues.event ?? null,
+          eventData: formValues.eventData,
+        });
       }
+
+      handleClose();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong";
+      toast.error(message);
     }
   };
 
@@ -565,54 +553,39 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     }
   };
 
-  if (!portalElement) {
-    return trigger;
-  }
-
   return (
     <>
       {trigger}
-      {isOpen &&
-        createPortal(
-          <div
-            aria-modal
-            role="dialog"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-10"
-            onMouseDown={handleOverlayPointerDown}
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (!open) handleClose();
+        }}
+      >
+        <DialogContent className="flex max-h-[70vh] w-full max-w-[800px] flex-col gap-0 overflow-hidden p-0">
+          <form
+            className="flex min-h-0 flex-1 flex-col"
+            onSubmit={handleSubmit}
           >
-            <form
-              className="relative flex max-h-[70vh] w-full max-w-[800px] flex-col overflow-hidden rounded-lg border bg-background shadow-lg"
-              onSubmit={handleSubmit}
-              onMouseDown={(event) => event.stopPropagation()}
-            >
-              <button
-                type="button"
-                className="absolute right-4 top-4 inline-flex size-8 items-center justify-center rounded-md border border-input text-muted-foreground transition hover:text-foreground"
-                onClick={handleClose}
-                aria-label="Close dialog"
-              >
-                <X className="h-4 w-4" />
-              </button>
+            <DialogHeader className="shrink-0 space-y-0 border-b px-6 py-4 pr-12">
+              <p className="text-xs font-medium text-muted-foreground">
+                {intent === "edit"
+                  ? formValues.isEvent
+                    ? "Edit Event"
+                    : "Edit Task"
+                  : "Create Issue"}
+              </p>
+              <DialogTitle className="mt-1 text-lg font-semibold">
+                {intent === "edit"
+                  ? formValues.isEvent
+                    ? "Update the event details below"
+                    : "Update the task details below"
+                  : "Enter the issue details below"}
+              </DialogTitle>
+            </DialogHeader>
 
-              <header className="border-b px-6 py-4 pr-12">
-                <p className="text-xs font-medium text-muted-foreground">
-                  {intent === "edit"
-                    ? formValues.isEvent
-                      ? "Edit Event"
-                      : "Edit Task"
-                    : "Create Issue"}
-                </p>
-                <h2 className="mt-1 text-lg font-semibold">
-                  {intent === "edit"
-                    ? formValues.isEvent
-                      ? "Update the event details below"
-                      : "Update the task details below"
-                    : "Enter the issue details below"}
-                </h2>
-              </header>
-
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <div className="space-y-6 px-6 py-6">
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="space-y-6 px-6 py-6">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">{"Name"}</Label>
 
@@ -624,6 +597,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                       }
                     />
                   </div>
+
 
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">Is Event?</Label>
@@ -654,349 +628,23 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">Status</Label>
-                    <Select
+                    <StatusSelect
+                      className={cn(baseField, "col-span-3")}
                       value={formValues.status}
-                      onValueChange={(value) =>
-                        updateForm(
-                          "status",
-                          value as (typeof ISSUE.ISSUE_STATUS)[number],
-                        )
-                      }
-                    >
-                      <SelectTrigger
-                        className={cn(baseField, "col-span-3")}
-                        aria-label="Issue status"
-                      >
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ISSUE.ISSUE_STATUS.map((status) => (
-                          <SelectItem key={status} value={status}>
-                            <div className="flex items-center">
-                              <span className="text-sm">
-                                {getStatusLabel(status)}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onValueChange={(v) => updateForm("status", v)}
+                    />
                   </div>
 
                   {/* Date/Time fields */}
-                  {formValues.isEvent ? (
-                    <>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Tag</Label>
-                        <Select
-                          value={
-                            formValues.eventData?.tag ?? EVENTS.EVENT_TAGS[0]
-                          }
-                          onValueChange={(value) =>
-                            updateEventData("tag", value)
-                          }
-                        >
-                          <SelectTrigger
-                            className={cn(baseField, "col-span-3")}
-                            aria-label="Event tag"
-                          >
-                            <SelectValue placeholder="Select a tag" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {EVENTS.EVENT_TAGS.map((tagOption) => (
-                              <SelectItem key={tagOption} value={tagOption}>
-                                {tagOption}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Hackathon</Label>
-                        <Select
-                          value={formValues.eventData?.hackathonId ?? "none"}
-                          onValueChange={(value) =>
-                            updateEventData(
-                              "hackathonId",
-                              value === "none" ? undefined : value,
-                            )
-                          }
-                        >
-                          <SelectTrigger
-                            className={cn(baseField, "col-span-3")}
-                            aria-label="Hackathon"
-                          >
-                            <SelectValue placeholder="Select a hackathon" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
-                            {isHackathonsLoading && (
-                              <SelectItem value="loading" disabled>
-                                Loading hackathons...
-                              </SelectItem>
-                            )}
-                            {hackathonsError && (
-                              <SelectItem value="error" disabled>
-                                Failed to load hackathons
-                              </SelectItem>
-                            )}
-                            {hackathons?.map((h) => (
-                              <SelectItem key={h.id} value={h.id}>
-                                {h.displayName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor={`${baseId}-event-start-date`}
-                          className="text-right"
-                        >
-                          Start Date
-                        </Label>
-                        <Input
-                          id={`${baseId}-event-start-date`}
-                          type="date"
-                          className={cn(baseField, "col-span-3")}
-                          value={formValues.eventData?.startDate ?? ""}
-                          onChange={(e) =>
-                            updateEventData("startDate", e.target.value)
-                          }
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Start Time</Label>
-                        <div className="col-span-3 flex items-center space-x-2">
-                          <Select
-                            value={
-                              parseTimeTo12h(formValues.eventData?.startTime)
-                                .hour
-                            }
-                            onValueChange={(value) =>
-                              updateEventTimePart("start", "hour", value)
-                            }
-                          >
-                            <SelectTrigger className="w-[80px]">
-                              <SelectValue placeholder="HH" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ISSUE.EVENT_TIME_HOURS.map((h) => (
-                                <SelectItem key={h} value={h}>
-                                  {h}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-
-                          <span>:</span>
-
-                          <Select
-                            value={
-                              parseTimeTo12h(formValues.eventData?.startTime)
-                                .minute
-                            }
-                            onValueChange={(value) =>
-                              updateEventTimePart("start", "minute", value)
-                            }
-                          >
-                            <SelectTrigger className="w-[80px]">
-                              <SelectValue placeholder="MM" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ISSUE.EVENT_TIME_MINUTES.map((m) => (
-                                <SelectItem key={m} value={m}>
-                                  {m}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-
-                          <Select
-                            value={
-                              parseTimeTo12h(formValues.eventData?.startTime)
-                                .amPm
-                            }
-                            onValueChange={(value) =>
-                              updateEventTimePart("start", "amPm", value)
-                            }
-                          >
-                            <SelectTrigger className="w-[80px]">
-                              <SelectValue placeholder="AM/PM" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ISSUE.EVENT_TIME_AM_PM_OPTIONS.map((option) => (
-                                <SelectItem key={option} value={option}>
-                                  {option}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor={`${baseId}-event-end-date`}
-                          className="text-right"
-                        >
-                          End Date
-                        </Label>
-                        <Input
-                          id={`${baseId}-event-end-date`}
-                          type="date"
-                          className={cn(baseField, "col-span-3")}
-                          value={formValues.eventData?.endDate ?? ""}
-                          onChange={(e) =>
-                            updateEventData("endDate", e.target.value)
-                          }
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">End Time</Label>
-                        <div className="col-span-3 flex items-center space-x-2">
-                          <Select
-                            value={
-                              parseTimeTo12h(formValues.eventData?.endTime).hour
-                            }
-                            onValueChange={(value) =>
-                              updateEventTimePart("end", "hour", value)
-                            }
-                          >
-                            <SelectTrigger className="w-[80px]">
-                              <SelectValue placeholder="HH" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ISSUE.EVENT_TIME_HOURS.map((h) => (
-                                <SelectItem key={h} value={h}>
-                                  {h}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-
-                          <span>:</span>
-
-                          <Select
-                            value={
-                              parseTimeTo12h(formValues.eventData?.endTime)
-                                .minute
-                            }
-                            onValueChange={(value) =>
-                              updateEventTimePart("end", "minute", value)
-                            }
-                          >
-                            <SelectTrigger className="w-[80px]">
-                              <SelectValue placeholder="MM" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ISSUE.EVENT_TIME_MINUTES.map((m) => (
-                                <SelectItem key={m} value={m}>
-                                  {m}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-
-                          <Select
-                            value={
-                              parseTimeTo12h(formValues.eventData?.endTime).amPm
-                            }
-                            onValueChange={(value) =>
-                              updateEventTimePart("end", "amPm", value)
-                            }
-                          >
-                            <SelectTrigger className="w-[80px]">
-                              <SelectValue placeholder="AM/PM" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ISSUE.EVENT_TIME_AM_PM_OPTIONS.map((option) => (
-                                <SelectItem key={option} value={option}>
-                                  {option}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor={`${baseId}-event-location`}
-                          className="text-right"
-                        >
-                          Room
-                        </Label>
-                        <Input
-                          id={`${baseId}-event-location`}
-                          className={cn(baseField, "col-span-3")}
-                          placeholder="Enter room"
-                          value={formValues.eventData?.location ?? ""}
-                          onChange={(e) =>
-                            updateEventData("location", e.target.value)
-                          }
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Internal Event?</Label>
-                        <div className="col-span-3 flex items-center">
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              checked={
-                                formValues.eventData?.isOperationsCalendar ??
-                                false
-                              }
-                              onCheckedChange={(checked) =>
-                                updateEventData(
-                                  "isOperationsCalendar",
-                                  checked === true,
-                                )
-                              }
-                            />
-                            <span className="text-sm font-normal text-gray-400">
-                              Use Operations Calendar (Hide from public events)
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {(formValues.eventData?.isOperationsCalendar ??
-                        false) && (
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label className="text-right">
-                            Discord Channel ID
-                          </Label>
-                          <Input
-                            className={cn(baseField, "col-span-3")}
-                            placeholder="Paste Discord voice channel ID"
-                            value={formValues.eventData?.discordChannelId ?? ""}
-                            onChange={(event) =>
-                              updateEventData(
-                                "discordChannelId",
-                                event.target.value,
-                              )
-                            }
-                          />
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Dues Paying?</Label>
-                        <div className="col-span-3 flex items-center">
-                          <Checkbox
-                            checked={formValues.eventData?.dues_paying ?? false}
-                            onCheckedChange={(checked) =>
-                              updateEventData("dues_paying", checked === true)
-                            }
-                          />
-                        </div>
-                      </div>
-                    </>
+                  {formValues.isEvent && formValues.eventData ? (
+                    <EventFormFields
+                      eventData={formValues.eventData}
+                      hackathons={hackathons ?? []}
+                      isHackathonsLoading={isHackathonsLoading}
+                      hackathonsError={hackathonsError}
+                      baseId={baseId}
+                      onChange={updateEventData}
+                    />
                   ) : (
                     <>
                       <div className="grid grid-cols-4 items-center gap-4">
@@ -1041,61 +689,23 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">Priority</Label>
-                    <Select
+                    <PrioritySelect
+                      className={cn(baseField, "col-span-3")}
                       value={formValues.priority}
-                      onValueChange={(value) =>
-                        updateForm(
-                          "priority",
-                          value as (typeof ISSUE.PRIORITY)[number],
-                        )
-                      }
-                    >
-                      <SelectTrigger
-                        className={cn(baseField, "col-span-3")}
-                        aria-label="Priority"
-                      >
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ISSUE.PRIORITY.map((priority) => (
-                          <SelectItem key={priority} value={priority}>
-                            {priority}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onValueChange={(v) => updateForm("priority", v)}
+                    />
                   </div>
 
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">Team</Label>
-                    <Select
+                    <TeamSelect
+                      className={cn(baseField, "col-span-3")}
                       value={formValues.team}
-                      onValueChange={(value) => updateForm("team", value)}
-                    >
-                      <SelectTrigger
-                        className={cn(baseField, "col-span-3")}
-                        aria-label="Team"
-                      >
-                        <SelectValue placeholder="Select team" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {isRolesLoading && (
-                          <SelectItem value="loading" disabled>
-                            Loading teams...
-                          </SelectItem>
-                        )}
-                        {rolesError && (
-                          <SelectItem value="error" disabled>
-                            Failed to load teams
-                          </SelectItem>
-                        )}
-                        {rolesData?.map((role) => (
-                          <SelectItem key={role.id} value={role.id}>
-                            {role.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onValueChange={(v) => updateForm("team", v)}
+                      roles={rolesData ?? []}
+                      isLoading={isRolesLoading}
+                      error={rolesError}
+                    />
                   </div>
 
                   <div className="grid grid-cols-4 items-start gap-4">
@@ -1145,168 +755,142 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                   )}
 
                   {/* Issue Visible To Roles */}
-                  <div className="grid grid-cols-4 items-start gap-4">
-                    <Label className="mt-1 text-right">
-                      Issue Visible To Roles
-                    </Label>
-                    <div className="col-span-3 mt-1 grid grid-cols-2 gap-x-2 gap-y-3">
-                      {rolesData?.map((role) => (
-                        <div
-                          key={role.id}
-                          className="flex flex-row items-start space-x-3 space-y-0"
-                        >
-                          <Checkbox
-                            checked={formValues.roles.includes(role.id)}
-                            onCheckedChange={(checked) => {
-                              return checked
-                                ? updateForm(
-                                    "roles",
-                                    Array.from(
-                                      new Set([...formValues.roles, role.id]),
-                                    ),
-                                  )
-                                : updateForm(
-                                    "roles",
-                                    formValues.roles.filter(
-                                      (value) => value !== role.id,
-                                    ),
-                                  );
-                            }}
-                          />
-                          <Label className="cursor-pointer font-normal">
-                            {role.name}
-                          </Label>
-                        </div>
-                      ))}
-                      <p className="col-span-2 text-sm font-normal text-gray-400">
-                        Teams who can see and manage the issue
-                      </p>
-                    </div>
-                  </div>
+                  <RoleCheckboxGroup
+                    label="Issue Visible To Roles"
+                    roles={rolesData ?? []}
+                    selectedIds={formValues.roles}
+                    onChange={(ids) => updateForm("roles", ids)}
+                    description="Teams who can see and manage the issue"
+                  />
 
                   {formValues.isEvent && (
-                    <div className="grid grid-cols-4 items-start gap-4">
-                      <Label className="mt-1 text-right">
-                        Event Visible To Roles
-                      </Label>
-                      <div className="col-span-3 mt-1 grid grid-cols-2 gap-x-2 gap-y-3">
-                        {rolesData?.map((role) => (
-                          <div
-                            key={`event-role-${role.id}`}
-                            className="flex flex-row items-start space-x-3 space-y-0"
-                          >
-                            <Checkbox
-                              checked={
-                                formValues.eventData?.roles?.includes(
-                                  role.id,
-                                ) ?? false
-                              }
-                              onCheckedChange={(checked) => {
-                                const currentRoles =
-                                  formValues.eventData?.roles ?? [];
-                                return checked
-                                  ? updateEventData(
-                                      "roles",
-                                      Array.from(
-                                        new Set([...currentRoles, role.id]),
-                                      ),
-                                    )
-                                  : updateEventData(
-                                      "roles",
-                                      currentRoles.filter(
-                                        (value) => value !== role.id,
-                                      ),
-                                    );
-                              }}
-                            />
-                            <Label className="cursor-pointer font-normal">
-                              {role.name}
-                            </Label>
-                          </div>
-                        ))}
-                        <p className="col-span-2 text-sm font-normal text-gray-400">
-                          Teams who can see and join the event
-                        </p>
+                    <RoleCheckboxGroup
+                      label="Event Visible To Roles"
+                      roles={rolesData ?? []}
+                      selectedIds={formValues.eventData?.roles ?? []}
+                      onChange={(ids) => updateEventData("roles", ids)}
+                      description="Teams who can see and join the event"
+                      keyPrefix="event-role-"
+                    />
+                  )}
+
+                  {/* Sub-issues section (create only) */}
+                  {intent !== "edit" && (
+                    <div className="border-t pt-6">
+                      <div className="mb-4 flex items-center justify-between">
+                        <h3 className="text-sm font-semibold">Sub-issues</h3>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setSubIssues((prev) => [
+                              ...prev,
+                              newSubIssueNode(),
+                            ])
+                          }
+                        >
+                          <Plus className="mr-2 h-3 w-3" />
+                          Add Sub-issue
+                        </Button>
                       </div>
+                      {subIssues.length === 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          No sub-issues yet.
+                        </p>
+                      )}
+                      {subIssues.map((node) => (
+                        <SubIssueNode
+                          key={node.clientId}
+                          node={node}
+                          depth={0}
+                          roles={rolesData ?? []}
+                          hackathons={hackathons ?? []}
+                          onUpdate={handleUpdateSubIssue}
+                          onRemove={handleRemoveSubIssue}
+                          onAddChild={handleAddChildSubIssue}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
               </div>
 
-              <footer className="border-t px-6 py-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-col gap-3 sm:flex-row">
-                    {intent === "edit" && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        className="w-full sm:w-auto"
-                        onClick={handleDelete}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                      </Button>
-                    )}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full sm:w-auto"
-                        >
-                          <LayoutTemplate className="mr-2 h-4 w-4" />
-                          Import Template
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
-                        {isTemplatesLoading && (
-                          <DropdownMenuItem disabled>
-                            Loading…
-                          </DropdownMenuItem>
-                        )}
-                        {!isTemplatesLoading && templates.length === 0 && (
-                          <DropdownMenuItem disabled>
-                            No templates available
-                          </DropdownMenuItem>
-                        )}
-                        {templates.map((t) => (
-                          <DropdownMenuItem
-                            key={t.id}
-                            onClick={() => applyTemplate(t)}
-                          >
-                            {t.name}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  <div className="flex flex-col gap-3 sm:flex-row">
+            <footer className="border-t px-6 py-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  {intent === "edit" && (
                     <Button
                       type="button"
-                      variant="ghost"
-                      className="w-full border sm:w-auto"
-                      onClick={handleClose}
+                      variant="destructive"
+                      className="w-full sm:w-auto"
+                      onClick={handleDelete}
                     >
-                      Cancel
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete
                     </Button>
-                    <Button
-                      type="submit"
-                      className="w-full disabled:opacity-40 sm:w-auto"
-                      disabled={isSubmitDisabled}
-                    >
-                      {intent === "edit"
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                      >
+                        <LayoutTemplate className="mr-2 h-4 w-4" />
+                        Import Template
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {isTemplatesLoading && (
+                        <DropdownMenuItem disabled>Loading…</DropdownMenuItem>
+                      )}
+                      {!isTemplatesLoading && templates.length === 0 && (
+                        <DropdownMenuItem disabled>
+                          No templates available
+                        </DropdownMenuItem>
+                      )}
+                      {templates.map((t) => (
+                        <DropdownMenuItem
+                          key={t.id}
+                          onClick={() => applyTemplate(t)}
+                        >
+                          {t.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full border sm:w-auto"
+                    onClick={handleClose}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="w-full disabled:opacity-40 sm:w-auto"
+                    disabled={isSubmitDisabled || isPending}
+                  >
+                    {isPending
+                      ? intent === "edit"
+                        ? "Saving…"
+                        : "Creating…"
+                      : intent === "edit"
                         ? formValues.isEvent
                           ? "Update Event"
                           : "Update Issue"
                         : "Create Issue"}
-                    </Button>
-                  </div>
+                  </Button>
                 </div>
-              </footer>
-            </form>
-          </div>,
-          portalElement,
-        )}
+              </div>
+            </footer>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

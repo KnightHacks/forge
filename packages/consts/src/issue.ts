@@ -41,25 +41,55 @@ type IssueStatus = (typeof ISSUE_STATUS)[number];
 type IssuePriority = (typeof PRIORITY)[number];
 export type UUID = string;
 
-export interface IssueFormValues {
+export interface SubIssueEditNode {
+  clientId: string;
+  id?: string;
   status: IssueStatus;
   name: string;
   description: string;
   links: string[];
-  date: string; // ISO string
+  date: Date;
   priority: IssuePriority;
   team: string;
   parent?: string;
   isEvent: boolean;
   event?: UUID | null;
   eventData?: EventFormValues;
+  roles: string[];
+  assigneeIds?: string[];
+  children: SubIssueEditNode[];
 }
 
-export type IssueSubmitValues = Omit<IssueFormValues, "date"> & {
-  id?: string;
+export interface SubIssueSubmitNode {
+  status: IssueStatus;
+  name: string;
+  description: string;
+  links: string[];
   date: string | Date;
+  priority: IssuePriority;
+  team: string;
+  event?: string | null;
   teamVisibilityIds?: string[];
   assigneeIds?: string[];
+  children?: SubIssueSubmitNode[];
+}
+
+export type IssueSubmitValues = {
+  id?: string;
+  status: IssueStatus;
+  name: string;
+  description: string;
+  links: string[];
+  date: string | Date;
+  priority: IssuePriority;
+  team: string;
+  parent?: string;
+  isEvent: boolean;
+  event?: UUID | null;
+  eventData?: EventFormValues;
+  teamVisibilityIds?: string[];
+  assigneeIds?: string[];
+  subIssues?: SubIssueSubmitNode[];
 };
 
 export interface EventFormValues {
@@ -87,4 +117,13 @@ export interface TemplateSubIssue {
   assignee?: string;
   dateMs?: number;
   children?: TemplateSubIssue[];
+}
+
+export interface TemplateSubIssueEditNode {
+  clientId: string;
+  name: string;
+  description: string;
+  team: string;
+  daysOffset?: number;
+  children: TemplateSubIssueEditNode[];
 }
