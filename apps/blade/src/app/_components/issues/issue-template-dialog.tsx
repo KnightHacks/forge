@@ -348,26 +348,6 @@ export default function IssueTemplate() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">Days Offset</Label>
-                      <div className="col-span-3 flex items-center gap-3">
-                        <Input
-                          type="number"
-                          className="w-32"
-                          placeholder="e.g. 3"
-                          value={root.daysOffset ?? ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateRoot({
-                              daysOffset: val === "" ? undefined : Number(val),
-                            });
-                          }}
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          days before parent due date
-                        </span>
-                      </div>
-                    </div>
 
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label className="text-right">Team</Label>

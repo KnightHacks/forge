@@ -40,7 +40,8 @@ export function normalizeTaskDueDate(dateValue?: string | Date) {
   return dueDate;
 }
 
-export function getTaskDueDateInputValue(dateValue: Date) {
+export function getTaskDueDateInputValue(dateValue: Date | undefined) {
+  if (!dateValue) return "";
   return normalizeTaskDueDate(dateValue).toISOString().slice(0, 10);
 }
 

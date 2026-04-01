@@ -86,6 +86,7 @@ export function validateIssueNodes(
       n.name.trim().length > 0 &&
       n.team.trim().length > 0 &&
       n.description.trim().length > 0 &&
+      n.date !== undefined &&
       validateIssueNodes(n.children),
   );
 }

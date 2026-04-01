@@ -48,7 +48,7 @@ export interface IssueEditNode {
   name: string;
   description: string;
   links: string[];
-  date: Date;
+  date?: Date;
   priority: IssuePriority;
   team: string;
   parent?: string;

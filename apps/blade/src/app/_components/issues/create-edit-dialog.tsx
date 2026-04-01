@@ -117,14 +117,6 @@ const issueFormSchema = z
         message: "End time must be after start time",
       });
     }
-
-    if (ed.isOperationsCalendar && !ed.discordChannelId?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Discord channel ID required for internal events",
-        path: ["eventData", "discordChannelId"],
-      });
-    }
   });
 
 type CreateEditDialogComponentProps = Omit<
@@ -140,16 +132,23 @@ const defaultForm = (): ISSUE.IssueEditNode => newIssueNode();
 
 function templateToIssueNodes(
   items: ISSUE.IssueTemplate[],
+  parentDate: Date,
 ): ISSUE.IssueEditNode[] {
-  return items.map((item) =>
-    newIssueNode({
+  return items.map((item) => {
+    const date = item.dateMs
+      ? new Date(parentDate.getTime() - item.dateMs)
+      : undefined;
+    return newIssueNode({
       name: item.title,
       description: item.description ?? "",
       team: item.team ?? "",
-      date: item.dateMs ? new Date(item.dateMs) : normalizeTaskDueDate(),
-      children: templateToIssueNodes(item.children ?? []),
-    }),
-  );
+      date,
+      children: templateToIssueNodes(
+        item.children ?? [],
+        date ?? normalizeTaskDueDate(),
+      ),
+    });
+  });
 }
 
 export function CreateEditDialog(props: CreateEditDialogComponentProps) {
@@ -184,7 +183,10 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const hackathonsError = hackathonsQuery.error;
   const buildInitialFormValues = useCallback(() => {
     const defaults = defaultForm();
-    const { children: _children, ...initial }: Partial<ISSUE.IssueSubmitValues> = initialValues ?? {};
+    const {
+      children: _children,
+      ...initial
+    }: Partial<ISSUE.IssueSubmitValues> = initialValues ?? {};
     const resolvedEventData = initial.eventData;
     const resolvedRoles = initial.teamVisibilityIds ?? defaults.roles;
     if (initial.isEvent) {
@@ -260,7 +262,10 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const baseId = useId();
   const effectiveTeam = formValues.team || (rolesData?.[0]?.id ?? "");
 
-  const isFormValid = issueFormSchema.safeParse({ ...formValues, team: effectiveTeam }).success;
+  const isFormValid = issueFormSchema.safeParse({
+    ...formValues,
+    team: effectiveTeam,
+  }).success;
   const isRolesValid = !rolesError;
   const isEventStartInFuture =
     !formValues.isEvent ||
@@ -337,7 +342,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       ...(root?.team ? { team: root.team } : {}),
     }));
 
-    setChildIssues(templateToIssueNodes(root?.children ?? []));
+    setChildIssues(templateToIssueNodes(root?.children ?? [], formValues.date));
   };
 
   async function buildIssueNodes(
@@ -418,7 +423,9 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     try {
       if (intent === "create") {
         const submitIssueNodes =
-          childIssues.length > 0 ? await buildIssueNodes(childIssues) : undefined;
+          childIssues.length > 0
+            ? await buildIssueNodes(childIssues)
+            : undefined;
 
         if (formValues.isEvent) {
           const ed = formValues.eventData ?? defaultEventForm();
