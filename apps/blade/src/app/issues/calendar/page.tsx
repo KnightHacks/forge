@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@forge/auth";
 
 import Calendar from "~/app/_components/calendar/calendar";
+import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
 import { SIGN_IN_PATH } from "~/consts";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -19,10 +20,10 @@ export default async function Events() {
   if (!hasAccess) {
     redirect("/");
   }
-
   return (
     <HydrateClient>
-      <main className="container h-screen">
+      <SessionNavbar />
+      <main className="px-4 pb-4 md:px-6 md:pb-6">
         <Calendar />
       </main>
     </HydrateClient>
