@@ -40,7 +40,7 @@ export default function CalendarView() {
   }
 
   return (
-    <section className="calendar-theme">
+    <section className="calendar-theme h-full">
       <div className="mb-3 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -79,13 +79,17 @@ export default function CalendarView() {
         </Tabs>
       </div>
 
-      <div className="min-w-0 rounded-xl border bg-card p-3 shadow-sm md:p-4">
+      <div className="h-[75vh] min-w-0 overflow-hidden rounded-xl border bg-card p-3 shadow-sm md:p-4">
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin]}
           initialView={view}
           headerToolbar={false}
           datesSet={handleDatesSet}
+          height="100%"
+          stickyHeaderDates={true}
+          handleWindowResize={true}
+          expandRows={true}
         />
       </div>
     </section>
