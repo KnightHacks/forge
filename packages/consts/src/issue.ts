@@ -90,26 +90,56 @@ type IssueStatus = (typeof ISSUE_STATUS)[number];
 type IssuePriority = (typeof PRIORITY)[number];
 export type UUID = string;
 
-export interface IssueFormValues {
+export interface IssueEditNode {
+  clientId: string;
+  id?: string;
   status: IssueStatus;
   name: string;
   description: string;
   links: string[];
-  date: string; // ISO string
+  date?: Date;
   priority: IssuePriority;
   team: string;
   parent?: string;
   isEvent: boolean;
   event?: UUID | null;
   eventData?: EventFormValues;
+  roles: string[];
+  assigneeIds?: string[];
+  children: IssueEditNode[];
 }
 
-export type IssueSubmitValues = Omit<IssueFormValues, "date"> & {
-  id?: string;
+export interface IssueSubmitNode {
+  status: IssueStatus;
+  name: string;
+  description: string;
+  links: string[];
   date: string | Date;
+  priority: IssuePriority;
+  team: string;
+  event?: string | null;
   teamVisibilityIds?: string[];
   assigneeIds?: string[];
-};
+  children?: IssueSubmitNode[];
+}
+
+export interface IssueSubmitValues {
+  id?: string;
+  status: IssueStatus;
+  name: string;
+  description: string;
+  links: string[];
+  date: string | Date;
+  priority: IssuePriority;
+  team: string;
+  parent?: string;
+  isEvent: boolean;
+  event?: UUID | null;
+  eventData?: EventFormValues;
+  teamVisibilityIds?: string[];
+  assigneeIds?: string[];
+  children?: IssueSubmitNode[];
+}
 
 export interface EventFormValues {
   discordId: string;
@@ -128,4 +158,21 @@ export interface EventFormValues {
   discordChannelId?: string;
   points?: number;
   hackathonId?: string;
+}
+export interface IssueTemplate {
+  title: string;
+  description?: string;
+  team?: string;
+  assignee?: string;
+  dateMs?: number;
+  children?: IssueTemplate[];
+}
+
+export interface IssueTemplateEditNode {
+  clientId: string;
+  name: string;
+  description: string;
+  team: string;
+  daysOffset?: number;
+  children: IssueTemplateEditNode[];
 }
