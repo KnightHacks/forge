@@ -2,14 +2,21 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, CircleDot, SlidersHorizontal } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleDot,
+  Pencil,
+  SlidersHorizontal,
+} from "lucide-react";
 
 import type { ISSUE } from "@forge/consts";
 import { Button } from "@forge/ui/button";
+import { toast } from "@forge/ui/toast";
 
 import { CreateEditDialog } from "~/app/_components/issues/create-edit-dialog";
 import { IssueFetcherPane } from "~/app/_components/issues/issue-fetcher-pane";
 import IssueTemplateDialog from "~/app/_components/issues/issue-template-dialog";
+import { api } from "~/trpc/react";
 
 function formatStatus(status: string) {
   return status
@@ -28,6 +35,17 @@ export function IssuesList() {
   const [paneData, setPaneData] = useState<ISSUE.IssueFetcherPaneData | null>(
     null,
   );
+  const utils = api.useUtils();
+  const deleteIssueMutation = api.issues.deleteIssue.useMutation({
+    onSuccess: async () => {
+      await utils.issues.invalidate();
+      paneData?.refresh();
+      toast.success("Issue deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete issue");
+    },
+  });
 
   const issues = paneData?.issues ?? [];
   const isLoading = paneData?.isLoading ?? true;
@@ -98,10 +116,11 @@ export function IssuesList() {
       )}
 
       <div className="overflow-hidden rounded-lg border">
-        <div className="hidden grid-cols-[1fr_auto_auto] gap-3 border-b bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid">
+        <div className="hidden grid-cols-[1fr_auto_auto_auto] gap-3 border-b bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid">
           <span>Issue</span>
           <span>Status</span>
           <span>Due</span>
+          <span className="text-right">Edit</span>
         </div>
 
         {isLoading && (
@@ -123,18 +142,19 @@ export function IssuesList() {
         {!isLoading &&
           !error &&
           issues.map((issue) => (
-            <Link
+            <div
               key={issue.id}
-              href={"/issues/" + issue.id}
-              className="grid gap-2 border-b px-4 py-3 transition-colors hover:bg-muted/30 md:grid-cols-[1fr_auto_auto] md:items-center"
+              className="grid gap-2 border-b px-4 py-3 transition-colors hover:bg-muted/30 md:grid-cols-[1fr_auto_auto_auto] md:items-center"
             >
-              <div className="space-y-1">
-                <div className="font-medium leading-tight">{issue.name}</div>
+              <Link href={"/issues/" + issue.id} className="space-y-1">
+                <div className="font-medium leading-tight hover:underline">
+                  {issue.name}
+                </div>
                 <div className="text-xs text-muted-foreground">
                   {issue.id.slice(0, 8)} • Team{" "}
                   {paneData?.roleNameById.get(issue.team) ?? issue.team}
                 </div>
-              </div>
+              </Link>
 
               <div className="text-sm text-muted-foreground">
                 {formatStatus(issue.status)}
@@ -143,7 +163,40 @@ export function IssuesList() {
               <div className="text-sm text-muted-foreground">
                 {formatDate(issue.date)}
               </div>
-            </Link>
+
+              <div className="flex justify-start md:justify-end">
+                <CreateEditDialog
+                  intent="edit"
+                  initialValues={{
+                    id: issue.id,
+                    status: issue.status,
+                    name: issue.name,
+                    description: issue.description,
+                    links: issue.links ?? [],
+                    date: issue.date ?? new Date(),
+                    priority: issue.priority,
+                    team: issue.team,
+                    parent: issue.parent ?? undefined,
+                    isEvent: issue.event !== null,
+                    event: issue.event,
+                  }}
+                  onDelete={(values) => {
+                    if (!values.id || deleteIssueMutation.isPending) return;
+                    deleteIssueMutation.mutate({ id: values.id });
+                  }}
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-8 shrink-0"
+                    aria-label="Edit issue"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </CreateEditDialog>
+              </div>
+            </div>
           ))}
       </div>
 
