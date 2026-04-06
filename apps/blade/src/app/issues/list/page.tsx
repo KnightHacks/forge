@@ -5,7 +5,7 @@ import { auth } from "@forge/auth";
 import { SIGN_IN_PATH } from "~/consts";
 import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
 import { api, HydrateClient } from "~/trpc/server";
-import { CreateIssueButton } from "~/app/_components/issues/create-issue-button";
+import { IssuesList } from "~/app/_components/issue-list/issues-list";
 
 export default async function IssueListPage() {
   const session = await auth();
@@ -18,7 +18,7 @@ export default async function IssueListPage() {
     <HydrateClient>
       <SessionNavbar />
       <main className="px-4 pb-4 md:px-6 md:pb-6">
-        <CreateIssueButton />
+        <IssuesList />
       </main>
     </HydrateClient>
   );
