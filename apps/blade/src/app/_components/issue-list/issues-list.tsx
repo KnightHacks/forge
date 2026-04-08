@@ -192,17 +192,20 @@ export function IssuesList() {
               key={issue.id}
               className="grid gap-2 border-b px-4 py-3 transition-colors hover:bg-muted/30 md:grid-cols-[minmax(0,1fr)_190px_88px_36px] md:items-center md:gap-2"
             >
-              <Link href={"/issues/" + issue.id} className="space-y-1">
-                <div className="font-medium leading-tight hover:underline">
+              <div className="min-w-0 space-y-1">
+                <Link
+                  href={"/issues/" + issue.id}
+                  className="inline font-medium leading-tight text-foreground hover:underline"
+                >
                   {issue.name}
-                </div>
+                </Link>
                 <div className="text-xs text-muted-foreground">
                   {formatUpdatedAt(issue.updatedAt)} •{" "}
                   {formatTeamLabel(
                     paneData?.roleNameById.get(issue.team) ?? issue.team,
                   )}
                 </div>
-              </Link>
+              </div>
 
               <div className="text-sm text-muted-foreground md:justify-self-start">
                 <span className="mr-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:hidden">
