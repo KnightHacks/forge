@@ -137,11 +137,11 @@ export function IssuesList() {
       )}
 
       <div className="overflow-hidden rounded-lg border">
-        <div className="hidden grid-cols-[1fr_auto_auto_auto] gap-3 border-b bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid">
+        <div className="hidden grid-cols-[minmax(0,1fr)_190px_88px_36px] gap-2 border-b bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid">
           <span>Issue</span>
-          <span>Status</span>
-          <span>Due</span>
-          <span className="text-right">Edit</span>
+          <span className="justify-self-start">Status</span>
+          <span className="justify-self-start">Due</span>
+          <span className="justify-self-center">Edit</span>
         </div>
 
         {isLoading && (
@@ -167,7 +167,7 @@ export function IssuesList() {
           issues.map((issue) => (
             <div
               key={issue.id}
-              className="grid gap-2 border-b px-4 py-3 transition-colors hover:bg-muted/30 md:grid-cols-[1fr_auto_auto_auto] md:items-center"
+              className="grid gap-2 border-b px-4 py-3 transition-colors hover:bg-muted/30 md:grid-cols-[minmax(0,1fr)_190px_88px_36px] md:items-center md:gap-2"
             >
               <Link href={"/issues/" + issue.id} className="space-y-1">
                 <div className="font-medium leading-tight hover:underline">
@@ -179,7 +179,7 @@ export function IssuesList() {
                 </div>
               </Link>
 
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground md:justify-self-start">
                 <span className="mr-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:hidden">
                   Status
                 </span>
@@ -187,35 +187,39 @@ export function IssuesList() {
                   value={statusOverrides[issue.id] ?? issue.status}
                   className="h-8 min-w-[160px]"
                   onValueChange={(nextStatus) => {
-                    const previousStatus = statusOverrides[issue.id] ?? issue.status;
+                    const previousStatus =
+                      statusOverrides[issue.id] ?? issue.status;
                     if (nextStatus === previousStatus) return;
 
                     setStatusOverrides((prev) => ({
                       ...prev,
                       [issue.id]: nextStatus,
                     }));
-                    updateIssueMutation.mutate({
-                      id: issue.id,
-                      status: nextStatus,
-                    }, {
-                      onError: () => {
-                        setStatusOverrides((prev) => ({
-                          ...prev,
-                          [issue.id]: previousStatus,
-                        }));
+                    updateIssueMutation.mutate(
+                      {
+                        id: issue.id,
+                        status: nextStatus,
                       },
-                      onSettled: () => {
-                        setStatusOverrides((prev) => {
-                          const { [issue.id]: _removed, ...rest } = prev;
-                          return rest;
-                        });
+                      {
+                        onError: () => {
+                          setStatusOverrides((prev) => ({
+                            ...prev,
+                            [issue.id]: previousStatus,
+                          }));
+                        },
+                        onSettled: () => {
+                          setStatusOverrides((prev) => {
+                            const { [issue.id]: _removed, ...rest } = prev;
+                            return rest;
+                          });
+                        },
                       },
-                    });
+                    );
                   }}
                 />
               </div>
 
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground md:justify-self-start">
                 <span className="mr-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:hidden">
                   Due
                 </span>
@@ -230,7 +234,7 @@ export function IssuesList() {
                 </span>
               </div>
 
-              <div className="flex items-center justify-start gap-2 md:justify-end">
+              <div className="flex items-center justify-start gap-2 md:justify-center">
                 <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground md:hidden">
                   Edit
                 </span>
