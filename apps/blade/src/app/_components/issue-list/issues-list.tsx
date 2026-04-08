@@ -42,7 +42,7 @@ export function IssuesList() {
       paneData?.refresh();
       toast.success("Issue deleted successfully");
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Failed to delete issue");
     },
   });
@@ -159,14 +159,23 @@ export function IssuesList() {
               </Link>
 
               <div className="text-sm text-muted-foreground">
+                <span className="mr-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:hidden">
+                  Status
+                </span>
                 {formatStatus(issue.status)}
               </div>
 
               <div className="text-sm text-muted-foreground">
+                <span className="mr-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:hidden">
+                  Due
+                </span>
                 {formatDate(issue.date)}
               </div>
 
-              <div className="flex justify-start md:justify-end">
+              <div className="flex items-center justify-start gap-2 md:justify-end">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground md:hidden">
+                  Edit
+                </span>
                 <CreateEditDialog
                   intent="edit"
                   initialValues={{
@@ -192,7 +201,7 @@ export function IssuesList() {
                     variant="outline"
                     size="icon"
                     className="size-8 shrink-0"
-                    aria-label="Edit issue"
+                    aria-label={`Edit issue ${issue.name}`}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
