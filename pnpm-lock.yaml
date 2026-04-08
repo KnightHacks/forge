@@ -141,7 +141,7 @@ importers:
         version: 10.0.2(jiti@2.6.1)
       eslint-config-next:
         specifier: ^16.0.0
-        version: 16.1.6(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3)
+        version: 16.1.6(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3)
       postcss:
         specifier: ^8.5.6
         version: 8.5.6
@@ -243,7 +243,7 @@ importers:
         version: 6.6.0
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       google-auth-library:
         specifier: ^10.6.1
         version: 10.6.1
@@ -370,7 +370,7 @@ importers:
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -457,8 +457,8 @@ importers:
         specifier: ^14.25.1
         version: 14.25.1
       drizzle-orm:
-        specifier: ^0.45.1
-        version: 0.45.1(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8)
+        specifier: ^0.45.2
+        version: 0.45.2(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8)
       jimp:
         specifier: ^1.6.0
         version: 1.6.0
@@ -552,7 +552,7 @@ importers:
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -646,7 +646,7 @@ importers:
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -730,8 +730,8 @@ importers:
         specifier: ^14.25.1
         version: 14.25.1
       drizzle-orm:
-        specifier: ^0.45.1
-        version: 0.45.1(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8)
+        specifier: ^0.45.2
+        version: 0.45.2(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8)
       jimp:
         specifier: ^1.6.0
         version: 1.6.0
@@ -889,7 +889,7 @@ importers:
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       better-auth:
         specifier: ^1.4.19
-        version: 1.4.19(drizzle-kit@0.31.9)(drizzle-orm@0.45.1(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8))(mongodb@6.20.0(socks@2.8.7))(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(pg@8.19.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 1.4.19(drizzle-kit@0.31.9)(drizzle-orm@0.45.2(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8))(mongodb@6.20.0(socks@2.8.7))(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(pg@8.19.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       next:
         specifier: ^16.0.0
         version: 16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -959,11 +959,11 @@ importers:
         specifier: ^0.13.10
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       drizzle-orm:
-        specifier: ^0.45.1
-        version: 0.45.1(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8)
+        specifier: ^0.45.2
+        version: 0.45.2(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8)
       drizzle-zod:
         specifier: ^0.8.3
-        version: 0.8.3(drizzle-orm@0.45.1(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8))(zod@4.3.6)
+        version: 0.8.3(drizzle-orm@0.45.2(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8))(zod@4.3.6)
       minimatch:
         specifier: ^10.2.4
         version: 10.2.4
@@ -1271,7 +1271,7 @@ importers:
         version: 16.1.6
       eslint-plugin-import:
         specifier: ^2.32.0
-        version: 2.32.0(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint@10.0.2(jiti@2.6.1))
+        version: 2.32.0(eslint@10.0.2(jiti@2.6.1))
       eslint-plugin-jsx-a11y:
         specifier: ^6.10.2
         version: 6.10.2(eslint@10.0.2(jiti@2.6.1))
@@ -3194,8 +3194,8 @@ packages:
     bundledDependencies:
       - '@libsql/libsql-wasm-experimental'
 
-  '@libsql/core@0.17.0':
-    resolution: {integrity: sha512-hnZRnJHiS+nrhHKLGYPoJbc78FE903MSDrFJTbftxo+e52X+E0Y0fHOCVYsKWcg6XgB7BbJYUrz/xEkVTSaipw==}
+  '@libsql/core@0.17.2':
+    resolution: {integrity: sha512-L8qv12HZ/jRBcETVR3rscP0uHNxh+K3EABSde6scCw7zfOdiLqO3MAkJaeE1WovPsjXzsN/JBoZED4+7EZVT3g==}
 
   '@maloma/listmonk@1.0.1':
     resolution: {integrity: sha512-oE3IZLZZEonKTUvhuZ0DTy6gOCwSqlay8vLm+wiBMjmXHnE/RrPkszvdVtksB/IGRTxnUJuXbH4X+HaJKh2BeQ==}
@@ -5451,8 +5451,8 @@ packages:
     resolution: {integrity: sha512-GViD3IgsXn7trFyBUUHyTFBpH/FsHTxYJ66qdbVggxef4UBPHRYxQaRzYLTuekYnk9i5FIEL9pbBIwMqX/Uwrg==}
     hasBin: true
 
-  drizzle-orm@0.45.1:
-    resolution: {integrity: sha512-Te0FOdKIistGNPMq2jscdqngBRfBpC8uMFVwqjf6gtTVJHIQ/dosgV/CLBU2N4ZJBsXL5savCba9b0YJskKdcA==}
+  drizzle-orm@0.45.2:
+    resolution: {integrity: sha512-kY0BSaTNYWnoDMVoyY8uxmyHjpJW1geOmBMdSSicKo9CIIWkSxMIj2rkeSR51b8KAPB7m+qysjuHme5nKP+E5Q==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -10490,11 +10490,11 @@ snapshots:
 
   '@libsql/client-wasm@0.17.0':
     dependencies:
-      '@libsql/core': 0.17.0
+      '@libsql/core': 0.17.2
       js-base64: 3.7.8
     optional: true
 
-  '@libsql/core@0.17.0':
+  '@libsql/core@0.17.2':
     dependencies:
       js-base64: 3.7.8
     optional: true
@@ -12316,7 +12316,7 @@ snapshots:
     dependencies:
       safe-buffer: 5.1.2
 
-  better-auth@1.4.19(drizzle-kit@0.31.9)(drizzle-orm@0.45.1(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8))(mongodb@6.20.0(socks@2.8.7))(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(pg@8.19.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  better-auth@1.4.19(drizzle-kit@0.31.9)(drizzle-orm@0.45.2(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8))(mongodb@6.20.0(socks@2.8.7))(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(pg@8.19.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       '@better-auth/core': 1.4.19(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.3.6))(jose@6.1.3)(kysely@0.28.11)(nanostores@1.1.1)
       '@better-auth/telemetry': 1.4.19(@better-auth/core@1.4.19(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.3.6))(jose@6.1.3)(kysely@0.28.11)(nanostores@1.1.1))
@@ -12332,7 +12332,7 @@ snapshots:
       zod: 4.3.6
     optionalDependencies:
       drizzle-kit: 0.31.9
-      drizzle-orm: 0.45.1(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8)
+      drizzle-orm: 0.45.2(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8)
       mongodb: 6.20.0(socks@2.8.7)
       next: 16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       pg: 8.19.0
@@ -12809,7 +12809,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.45.1(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8):
+  drizzle-orm@0.45.2(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8):
     optionalDependencies:
       '@libsql/client-wasm': 0.17.0
       '@types/pg': 8.16.0
@@ -12817,9 +12817,9 @@ snapshots:
       pg: 8.19.0
       postgres: 3.4.8
 
-  drizzle-zod@0.8.3(drizzle-orm@0.45.1(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8))(zod@4.3.6):
+  drizzle-zod@0.8.3(drizzle-orm@0.45.2(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8))(zod@4.3.6):
     dependencies:
-      drizzle-orm: 0.45.1(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8)
+      drizzle-orm: 0.45.2(@libsql/client-wasm@0.17.0)(@types/pg@8.16.0)(kysely@0.28.11)(pg@8.19.0)(postgres@3.4.8)
       zod: 4.3.6
 
   dunder-proto@1.0.1:
@@ -13050,13 +13050,13 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-next@16.1.6(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3):
+  eslint-config-next@16.1.6(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3):
     dependencies:
       '@next/eslint-plugin-next': 16.1.6
       eslint: 10.0.2(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(eslint@10.0.2(jiti@2.6.1)))(eslint@10.0.2(jiti@2.6.1))
-      eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@10.0.2(jiti@2.6.1))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@10.0.2(jiti@2.6.1))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@10.0.2(jiti@2.6.1))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@10.0.2(jiti@2.6.1))
       eslint-plugin-react: 7.37.5(eslint@10.0.2(jiti@2.6.1))
       eslint-plugin-react-hooks: 7.0.1(eslint@10.0.2(jiti@2.6.1))
@@ -13078,7 +13078,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@10.0.2(jiti@2.6.1)))(eslint@10.0.2(jiti@2.6.1)):
+  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@10.0.2(jiti@2.6.1)):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.3
@@ -13089,31 +13089,22 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@10.0.2(jiti@2.6.1))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@10.0.2(jiti@2.6.1))
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@10.0.2(jiti@2.6.1)):
+  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@10.0.2(jiti@2.6.1)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3)
       eslint: 10.0.2(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@10.0.2(jiti@2.6.1))
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.1(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@10.0.2(jiti@2.6.1)))(eslint@10.0.2(jiti@2.6.1)))(eslint@10.0.2(jiti@2.6.1)):
-    dependencies:
-      debug: 3.2.7
-    optionalDependencies:
-      eslint: 10.0.2(jiti@2.6.1)
-      eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(eslint@10.0.2(jiti@2.6.1)))(eslint@10.0.2(jiti@2.6.1))
-    transitivePeerDependencies:
-      - supports-color
-
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint@10.0.2(jiti@2.6.1)):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@10.0.2(jiti@2.6.1)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -13124,7 +13115,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 10.0.2(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@10.0.2(jiti@2.6.1))
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@10.0.2(jiti@2.6.1))
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
@@ -13142,7 +13133,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-import@2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@10.0.2(jiti@2.6.1)):
+  eslint-plugin-import@2.32.0(eslint@10.0.2(jiti@2.6.1)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -13153,7 +13144,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 10.0.2(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.1(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@10.0.2(jiti@2.6.1)))(eslint@10.0.2(jiti@2.6.1)))(eslint@10.0.2(jiti@2.6.1))
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.56.1(eslint@10.0.2(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@10.0.2(jiti@2.6.1))
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
@@ -13462,7 +13453,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  geist@1.7.0(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
+  geist@1.7.0(next@16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
     dependencies:
       next: 16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
