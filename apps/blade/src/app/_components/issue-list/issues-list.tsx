@@ -173,7 +173,7 @@ export function IssuesList() {
                     name: issue.name,
                     description: issue.description,
                     links: issue.links ?? [],
-                    date: issue.date ?? new Date(),
+                    date: issue.date ?? undefined,
                     priority: issue.priority,
                     team: issue.team,
                     parent: issue.parent ?? undefined,

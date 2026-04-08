@@ -2,10 +2,10 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 
-import { SIGN_IN_PATH } from "~/consts";
-import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
-import { api, HydrateClient } from "~/trpc/server";
 import { IssuesList } from "~/app/_components/issue-list/issues-list";
+import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
+import { SIGN_IN_PATH } from "~/consts";
+import { api, HydrateClient } from "~/trpc/server";
 
 export default async function IssueListPage() {
   const session = await auth();
