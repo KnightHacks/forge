@@ -11,7 +11,14 @@ export default async function IssueListPage() {
   const session = await auth();
   if (!session) redirect(SIGN_IN_PATH);
 
-  const hasAccess = await api.roles.hasPermission({ or: ["READ_ISSUES"] });
+  const hasAccess = await api.roles.hasPermission({
+    and: [
+      "READ_ISSUES",
+      "EDIT_ISSUES",
+      "EDIT_ISSUE_TEMPLATES",
+      "READ_ISSUE_TEMPLATES",
+    ],
+  });
   if (!hasAccess) notFound();
 
   return (

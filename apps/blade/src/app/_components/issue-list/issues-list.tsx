@@ -43,7 +43,7 @@ export function IssuesList() {
       toast.success("Issue deleted successfully");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete issue");
+      toast.error("Failed to delete issue");
     },
   });
 
@@ -130,7 +130,9 @@ export function IssuesList() {
         )}
 
         {!isLoading && error && (
-          <div className="px-4 py-8 text-sm text-destructive">{error}</div>
+          <div className="px-4 py-8 text-sm text-destructive">
+            Unable to load issues. Please try again.
+          </div>
         )}
 
         {!isLoading && !error && issues.length === 0 && (
