@@ -31,6 +31,14 @@ function formatDate(value: Date | null) {
   return new Date(value).toLocaleDateString();
 }
 
+function isOverdueIssue(issue: ISSUE.IssueFetcherPaneIssue) {
+  if (issue.status === "FINISHED" || !issue.date) return false;
+  const dueDate = new Date(issue.date);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  return dueDate < todayStart;
+}
+
 export function IssuesList() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [statusOverrides, setStatusOverrides] = useState<
@@ -211,7 +219,15 @@ export function IssuesList() {
                 <span className="mr-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:hidden">
                   Due
                 </span>
-                {formatDate(issue.date)}
+                <span
+                  className={
+                    isOverdueIssue(issue)
+                      ? "font-medium text-red-900 dark:text-red-500"
+                      : undefined
+                  }
+                >
+                  {formatDate(issue.date)}
+                </span>
               </div>
 
               <div className="flex items-center justify-start gap-2 md:justify-end">
