@@ -31,6 +31,29 @@ function formatDate(value: Date | null) {
   return new Date(value).toLocaleDateString();
 }
 
+function formatUpdatedAt(value: Date | string | null | undefined) {
+  const parsed =
+    value instanceof Date
+      ? value
+      : typeof value === "string"
+        ? new Date(value)
+        : null;
+  if (!parsed || Number.isNaN(parsed.getTime())) {
+    return "Unable to load last updated";
+  }
+  return parsed.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatTeamLabel(roleName: string) {
+  const trimmed = roleName.replace(/\s+team$/i, "").trim();
+  return trimmed || roleName;
+}
+
 function isOverdueIssue(issue: ISSUE.IssueFetcherPaneIssue) {
   if (issue.status === "FINISHED" || !issue.date) return false;
   const dueDate = new Date(issue.date);
@@ -174,8 +197,10 @@ export function IssuesList() {
                   {issue.name}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {issue.id.slice(0, 8)} • Team{" "}
-                  {paneData?.roleNameById.get(issue.team) ?? issue.team}
+                  {formatUpdatedAt(issue.updatedAt)} •{" "}
+                  {formatTeamLabel(
+                    paneData?.roleNameById.get(issue.team) ?? issue.team,
+                  )}
                 </div>
               </Link>
 
