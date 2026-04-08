@@ -15,6 +15,7 @@ import { toast } from "@forge/ui/toast";
 
 import { CreateEditDialog } from "~/app/_components/issues/create-edit-dialog";
 import { IssueFetcherPane } from "~/app/_components/issues/issue-fetcher-pane";
+import { StatusSelect } from "~/app/_components/issues/issue-form-fields";
 import IssueTemplateDialog from "~/app/_components/issues/issue-template-dialog";
 import { api } from "~/trpc/react";
 
@@ -32,6 +33,9 @@ function formatDate(value: Date | null) {
 
 export function IssuesList() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [statusOverrides, setStatusOverrides] = useState<
+    Record<string, (typeof ISSUE.ISSUE_STATUS)[number]>
+  >({});
   const [paneData, setPaneData] = useState<ISSUE.IssueFetcherPaneData | null>(
     null,
   );
@@ -46,8 +50,17 @@ export function IssuesList() {
       toast.error("Failed to delete issue");
     },
   });
+  const updateIssueMutation = api.issues.updateIssue.useMutation({
+    onSuccess: async () => {
+      await utils.issues.invalidate();
+      paneData?.refresh();
+    },
+    onError: () => {
+      toast.error("Failed to update issue status");
+    },
+  });
 
-  const issues = paneData?.issues ?? [];
+  const issues = useMemo(() => paneData?.issues ?? [], [paneData?.issues]);
   const isLoading = paneData?.isLoading ?? true;
   const error = paneData?.error ?? null;
 
@@ -162,7 +175,36 @@ export function IssuesList() {
                 <span className="mr-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:hidden">
                   Status
                 </span>
-                {formatStatus(issue.status)}
+                <StatusSelect
+                  value={statusOverrides[issue.id] ?? issue.status}
+                  className="h-8 min-w-[160px]"
+                  onValueChange={(nextStatus) => {
+                    const previousStatus = statusOverrides[issue.id] ?? issue.status;
+                    if (nextStatus === previousStatus) return;
+
+                    setStatusOverrides((prev) => ({
+                      ...prev,
+                      [issue.id]: nextStatus,
+                    }));
+                    updateIssueMutation.mutate({
+                      id: issue.id,
+                      status: nextStatus,
+                    }, {
+                      onError: () => {
+                        setStatusOverrides((prev) => ({
+                          ...prev,
+                          [issue.id]: previousStatus,
+                        }));
+                      },
+                      onSettled: () => {
+                        setStatusOverrides((prev) => {
+                          const { [issue.id]: _removed, ...rest } = prev;
+                          return rest;
+                        });
+                      },
+                    });
+                  }}
+                />
               </div>
 
               <div className="text-sm text-muted-foreground">
