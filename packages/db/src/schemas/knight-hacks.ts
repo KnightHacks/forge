@@ -576,6 +576,12 @@ export const Issue = createTable(
       .notNull()
       .references(() => User.id, { onDelete: "restrict" }),
     parent: t.uuid(),
+    createdAt: t.timestamp().defaultNow().notNull(),
+    updatedAt: t
+      .timestamp()
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
   }),
   (table) => ({
     parentReference: foreignKey({

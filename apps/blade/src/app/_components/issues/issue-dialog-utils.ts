@@ -28,8 +28,22 @@ export function getStatusLabel(status: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function taskDueDateBasis(dateValue: string | Date): Date {
+  if (dateValue instanceof Date) {
+    return new Date(dateValue.getTime());
+  }
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateValue.trim());
+  if (match) {
+    const y = Number(match[1]);
+    const m = Number(match[2]);
+    const d = Number(match[3]);
+    return new Date(y, m - 1, d);
+  }
+  return new Date(dateValue);
+}
+
 export function normalizeTaskDueDate(dateValue?: string | Date) {
-  const dueDate = dateValue ? new Date(dateValue) : new Date();
+  const dueDate = dateValue ? taskDueDateBasis(dateValue) : new Date();
   if (Number.isNaN(dueDate.getTime())) {
     const fallback = new Date();
     fallback.setHours(ISSUE.TASK_DUE_HOURS, ISSUE.TASK_DUE_MINUTES, 0, 0);
@@ -42,7 +56,11 @@ export function normalizeTaskDueDate(dateValue?: string | Date) {
 
 export function getTaskDueDateInputValue(dateValue: Date | undefined) {
   if (!dateValue) return "";
-  return normalizeTaskDueDate(dateValue).toISOString().slice(0, 10);
+  const d = normalizeTaskDueDate(dateValue);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 export function parseTimeTo12h(timeValue?: string): {

@@ -353,6 +353,16 @@ export const issuesRouter = {
         }
       }
 
+      if (
+        Object.keys(updateData).length === 0 &&
+        (teamVisibilityIds !== undefined || assigneeIds !== undefined)
+      ) {
+        await db
+          .update(Issue)
+          .set({ updatedAt: new Date() })
+          .where(eq(Issue.id, id));
+      }
+
       return db.query.Issue.findFirst({
         where: (t, { eq }) => eq(t.id, id),
         with: {

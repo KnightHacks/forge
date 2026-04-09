@@ -41,6 +41,8 @@ export interface IssueFilters {
 
 export interface IssueFetcherPaneIssue {
   id: string;
+  createdAt: Date;
+  updatedAt: Date;
   status: (typeof ISSUE_STATUS)[number];
   name: string;
   description: string;
