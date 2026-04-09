@@ -280,4 +280,11 @@
     color: hsl(var(--primary));
     font-weight: 500;
   }
+  body[data-scroll-locked] {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+  }
+  html {
+    scrollbar-gutter: stable;
+  }
 }
