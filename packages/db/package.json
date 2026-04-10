@@ -33,7 +33,7 @@
   "dependencies": {
     "@forge/consts": "workspace:*",
     "@t3-oss/env-core": "^0.13.10",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
     "minimatch": "^10.2.4",
     "pg": "^8.19.0",
