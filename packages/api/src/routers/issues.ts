@@ -23,6 +23,68 @@ const CreateIssueInputSchema = IssueSchema.extend({
   teamVisibilityIds: z.array(z.string().uuid()).optional(),
 });
 
+const baseIssueCreateSchema = IssueSchema.omit({
+  creator: true,
+  parent: true,
+}).extend({
+  assigneeIds: z.array(z.string().uuid()).optional(),
+  teamVisibilityIds: z.array(z.string().uuid()).optional(),
+});
+
+type IssueCreateNode = z.infer<typeof baseIssueCreateSchema> & {
+  children?: IssueCreateNode[];
+};
+
+const issueCreateSchema: z.ZodType<IssueCreateNode> =
+  baseIssueCreateSchema.extend({
+    children: z.lazy(() => z.array(issueCreateSchema)).optional(),
+  });
+
+async function createChildIssues(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  children: IssueCreateNode[],
+  parentId: string,
+  creatorId: string,
+) {
+  for (const child of children) {
+    const {
+      children: grandchildren,
+      assigneeIds,
+      teamVisibilityIds,
+      ...rest
+    } = child;
+    const [created] = await tx
+      .insert(Issue)
+      .values({ ...rest, parent: parentId, creator: creatorId })
+      .returning();
+    if (!created) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create sub-issue.",
+      });
+    }
+    if (teamVisibilityIds?.length) {
+      await tx.insert(IssuesToTeamsVisibility).values(
+        teamVisibilityIds.map((teamId) => ({
+          issueId: created.id,
+          teamId,
+        })),
+      );
+    }
+    if (assigneeIds?.length) {
+      await tx.insert(IssuesToUsersAssignment).values(
+        assigneeIds.map((userId) => ({
+          issueId: created.id,
+          userId,
+        })),
+      );
+    }
+    if (grandchildren?.length) {
+      await createChildIssues(tx, grandchildren, created.id, creatorId);
+    }
+  }
+}
+
 async function requireIssue(id: string, label = "Issue") {
   const issue = await db.query.Issue.findFirst({
     where: (t, { eq }) => eq(t.id, id),
@@ -32,7 +94,7 @@ async function requireIssue(id: string, label = "Issue") {
   return issue;
 }
 
-const baseTemplateSubIssueSchema = z.object({
+const baseIssueTemplateSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   team: z.string().optional(),
@@ -40,23 +102,27 @@ const baseTemplateSubIssueSchema = z.object({
   dateMs: z.number().int().optional(),
 });
 
-export type TemplateSubIssue = z.infer<typeof baseTemplateSubIssueSchema> & {
-  children?: TemplateSubIssue[];
+export type IssueTemplate = z.infer<typeof baseIssueTemplateSchema> & {
+  children?: IssueTemplate[];
 };
 
-const templateSubIssueSchema: z.ZodType<TemplateSubIssue> =
-  baseTemplateSubIssueSchema.extend({
-    children: z.lazy(() => z.array(templateSubIssueSchema)).optional(),
+const issueTemplateSchema: z.ZodType<IssueTemplate> =
+  baseIssueTemplateSchema.extend({
+    children: z.lazy(() => z.array(issueTemplateSchema)).optional(),
   });
 
 export const issuesRouter = {
   createIssue: permProcedure
-    .input(CreateIssueInputSchema.omit({ creator: true }))
+    .input(
+      CreateIssueInputSchema.omit({ creator: true }).extend({
+        children: z.array(issueCreateSchema).optional(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
 
       return await db.transaction(async (tx) => {
-        const { teamVisibilityIds, assigneeIds, ...rest } = input;
+        const { teamVisibilityIds, assigneeIds, children, ...rest } = input;
 
         const [issue] = await tx
           .insert(Issue)
@@ -74,7 +140,7 @@ export const issuesRouter = {
         }
 
         if (teamVisibilityIds?.length) {
-          await db.insert(IssuesToTeamsVisibility).values(
+          await tx.insert(IssuesToTeamsVisibility).values(
             teamVisibilityIds.map((teamId) => ({
               issueId: issue.id,
               teamId,
@@ -83,12 +149,16 @@ export const issuesRouter = {
         }
 
         if (assigneeIds?.length) {
-          await db.insert(IssuesToUsersAssignment).values(
+          await tx.insert(IssuesToUsersAssignment).values(
             assigneeIds.map((userId) => ({
               issueId: issue.id,
               userId,
             })),
           );
+        }
+
+        if (children?.length) {
+          await createChildIssues(tx, children, issue.id, ctx.session.user.id);
         }
 
         return issue;
@@ -234,6 +304,8 @@ export const issuesRouter = {
         name: z.string().min(1).optional(),
         description: z.string().min(1).optional(),
         status: z.enum(ISSUE.ISSUE_STATUS).optional(),
+        priority: z.enum(ISSUE.PRIORITY).optional(),
+        parent: z.string().uuid().nullable().optional(),
         date: z.date().nullable().optional(),
         event: z.string().uuid().nullable().optional(),
         links: z.array(z.string().url()).nullable().optional(),
@@ -281,6 +353,16 @@ export const issuesRouter = {
         }
       }
 
+      if (
+        Object.keys(updateData).length === 0 &&
+        (teamVisibilityIds !== undefined || assigneeIds !== undefined)
+      ) {
+        await db
+          .update(Issue)
+          .set({ updatedAt: new Date() })
+          .where(eq(Issue.id, id));
+      }
+
       return db.query.Issue.findFirst({
         where: (t, { eq }) => eq(t.id, id),
         with: {
@@ -303,7 +385,7 @@ export const issuesRouter = {
     .input(
       InsertTemplateSchema.extend({
         name: z.string().min(1, "A template name is required"), // excludes empty strings
-        body: z.array(templateSubIssueSchema),
+        body: z.array(issueTemplateSchema),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -330,7 +412,7 @@ export const issuesRouter = {
         .extend({
           id: z.string().uuid(), // forces ID to not be an optional field
           name: z.string().min(1, "A template name is required").optional(), // excludes empty strings
-          body: z.array(templateSubIssueSchema).optional(),
+          body: z.array(issueTemplateSchema).optional(),
         }),
     )
     .mutation(async ({ ctx, input }) => {
