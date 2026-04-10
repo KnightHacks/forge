@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link"; // Added Link import
+import Link from "next/link";
 import { SlidersHorizontal, Pencil, Calendar, Users } from "lucide-react";
 import { ISSUE } from "@forge/consts";
 import { Button } from "@forge/ui/button";
@@ -115,14 +115,15 @@ export function KanbanBoard() {
       {isLoading ? (
         <div className="px-4 py-8 text-sm text-muted-foreground">Loading board...</div>
       ) : (
-        <div className="flex h-[calc(100vh-14rem)] w-full gap-4 overflow-x-auto pb-4">
+        <div className="flex h-[calc(100vh-14rem)] w-full flex-nowrap gap-4 overflow-x-auto overflow-y-hidden pb-4">
           {ISSUE.ISSUE_STATUS.map((status) => {
             const columnIssues = issues.filter((i) => i.status === status);
 
             return (
               <div
                 key={status}
-                className="flex h-full w-80 min-w-[320px] flex-col rounded-lg bg-muted/30 p-3 border"
+                /* FIXED: Mobile gets fixed widths to allow scrolling. Laptops (lg) get flex-1 to squish and fit the screen perfectly */
+                className="flex h-full w-[85vw] max-w-[320px] shrink-0 lg:w-auto lg:min-w-[220px] lg:flex-1 flex-col rounded-lg bg-muted/30 p-3 border"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(e, status)}
               >
@@ -136,7 +137,7 @@ export function KanbanBoard() {
                   </span>
                 </div>
 
-                <div className="flex flex-1 flex-col gap-3 overflow-y-auto pb-2">
+                <div className="flex flex-1 flex-col gap-3 overflow-y-auto pb-2 pr-1">
                   {columnIssues.map((issue) => (
                     <div
                       key={issue.id}
@@ -146,8 +147,6 @@ export function KanbanBoard() {
                     >
                       <div className="p-3">
                         <div className="flex items-start justify-between gap-2">
-                          
-                          {/* UPDATED: Title is now a clickable Link matching the list view */}
                           <Link
                             href={"/issues/" + issue.id}
                             className="text-sm font-medium leading-tight hover:underline"
@@ -202,6 +201,9 @@ export function KanbanBoard() {
               </div>
             );
           })}
+          
+          {/* FIXED: Hide the invisible spacer on large screens so the columns balance perfectly */}
+          <div className="w-1 shrink-0 lg:hidden" aria-hidden="true" />
         </div>
       )}
 
