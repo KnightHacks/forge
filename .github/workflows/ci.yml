@@ -51,6 +51,8 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
 
@@ -79,6 +81,8 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
         with:
@@ -102,7 +106,7 @@ jobs:
           if node -e "const pkg = require('./package.json'); process.exit(pkg.scripts['db:migrate'] ? 0 : 1)"; then
             pnpm db:migrate
           else
-            pnpm db:push
+            pnpm --filter=@forge/db push
           fi
 
       - name: Restore filtered prod-like data
