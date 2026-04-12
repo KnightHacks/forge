@@ -168,7 +168,6 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const isOpen = isControlled ? open : internalOpen;
   const utils = api.useUtils();
   const rolesQuery = api.roles.getAllLinks.useQuery();
-  const usersQuery = api.user.getUsers.useQuery(undefined, { enabled: isOpen });
   const hackathonsQuery = api.hackathon.getHackathons.useQuery();
   const createIssueMutation = api.issues.createIssue.useMutation();
   const createEventMutation = api.event.createEvent.useMutation();
@@ -178,12 +177,10 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     createEventMutation.isPending ||
     updateIssueMutation.isPending;
   const rolesData = rolesQuery.data;
-  const usersData = usersQuery.data;
   const hackathons = hackathonsQuery.data;
   const isRolesLoading = rolesQuery.isLoading;
   const isHackathonsLoading = hackathonsQuery.isLoading;
   const rolesError = rolesQuery.error;
-  const usersError = usersQuery.error;
   const hackathonsError = hackathonsQuery.error;
   const buildInitialFormValues = useCallback(() => {
     const defaults = defaultForm();
@@ -268,25 +265,16 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
   const baseId = useId();
   const effectiveTeam = formValues.team || (rolesData?.[0]?.id ?? "");
-  const assigneesForTeam = useMemo<ISSUE.IssueAssigneeOption[]>(() => {
-    if (!effectiveTeam) {
-      return [];
-    }
-    return (usersData ?? [])
-      .filter((user) =>
-        user.permissions.some(
-          (permission) => permission.roleId === effectiveTeam,
-        ),
-      )
-      .map((user) => ({
-        id: user.id,
-        name: user.name ?? user.email ?? user.discordUserId,
-        email: user.email,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [effectiveTeam, usersData]);
-  const isAssigneesLoading = usersQuery.isLoading;
-  const assigneesError = usersError;
+  const usersOnTeamQuery = api.issues.getUsersOnTeam.useQuery(
+    { teamId: effectiveTeam },
+    { enabled: isOpen && !!effectiveTeam },
+  );
+  const assigneesForTeam = useMemo<ISSUE.IssueAssigneeOption[]>(
+    () => usersOnTeamQuery.data ?? [],
+    [usersOnTeamQuery.data],
+  );
+  const isAssigneesLoading = usersOnTeamQuery.isLoading;
+  const assigneesError = usersOnTeamQuery.error;
 
   const isFormValid = issueFormSchema.safeParse({
     ...formValues,
@@ -316,10 +304,10 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   );
   const safeAssigneeIds = useMemo(
     () =>
-      usersQuery.isSuccess
+      usersOnTeamQuery.isSuccess
         ? formValues.assigneeIds.filter((userId) => assigneeIdSet.has(userId))
         : formValues.assigneeIds,
-    [assigneeIdSet, formValues.assigneeIds, usersQuery.isSuccess],
+    [assigneeIdSet, formValues.assigneeIds, usersOnTeamQuery.isSuccess],
   );
 
   // Helper for event form

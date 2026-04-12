@@ -5,7 +5,7 @@ import { z } from "zod";
 import { ISSUE } from "@forge/consts";
 import { and, eq, exists, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
-import { Permissions } from "@forge/db/schemas/auth";
+import { Permissions, User } from "@forge/db/schemas/auth";
 import {
   InsertTemplateSchema,
   Issue,
@@ -112,6 +112,48 @@ const issueTemplateSchema: z.ZodType<IssueTemplate> =
   });
 
 export const issuesRouter = {
+  getUsersOnTeam: permProcedure
+    .input(
+      z.object({
+        teamId: z.string().uuid(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
+
+      const rows = await db
+        .select({
+          id: User.id,
+          name: User.name,
+          email: User.email,
+          discordUserId: User.discordUserId,
+        })
+        .from(User)
+        .innerJoin(Permissions, eq(User.id, Permissions.userId))
+        .where(eq(Permissions.roleId, input.teamId));
+
+      const userById = new Map<
+        string,
+        {
+          id: string;
+          name: string;
+          email: string | null;
+        }
+      >();
+
+      for (const row of rows) {
+        userById.set(row.id, {
+          id: row.id,
+          name: row.name ?? row.email ?? row.discordUserId,
+          email: row.email,
+        });
+      }
+
+      return [...userById.values()].sort((a, b) =>
+        a.name.localeCompare(b.name),
+      );
+    }),
+
   createIssue: permProcedure
     .input(
       CreateIssueInputSchema.omit({ creator: true }).extend({
