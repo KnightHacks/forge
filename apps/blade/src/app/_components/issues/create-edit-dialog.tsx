@@ -193,6 +193,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     }: Partial<ISSUE.IssueSubmitValues> = initialValues ?? {};
     const resolvedEventData = initial.eventData;
     const resolvedRoles = initial.teamVisibilityIds ?? defaults.roles;
+    const resolvedAssigneeIds = initial.assigneeIds ?? defaults.assigneeIds;
     if (initial.isEvent) {
       return {
         ...defaults,
@@ -203,6 +204,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         links: initial.links ?? defaults.links,
         date: normalizeTaskDueDate(initial.date ?? defaults.date),
         roles: resolvedRoles,
+        assigneeIds: resolvedAssigneeIds,
       };
     }
     return {
@@ -214,6 +216,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       date: normalizeTaskDueDate(initial.date ?? defaults.date),
       links: initial.links ?? defaults.links,
       roles: resolvedRoles,
+      assigneeIds: resolvedAssigneeIds,
     };
   }, [initialValues]);
   const [formValues, setFormValues] = useState<ISSUE.IssueEditNode>(
@@ -265,21 +268,19 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
   const baseId = useId();
   const effectiveTeam = formValues.team || (rolesData?.[0]?.id ?? "");
-  const assigneesForTeam = useMemo(() => {
+  const assigneesForTeam = useMemo<ISSUE.IssueAssigneeOption[]>(() => {
     if (!effectiveTeam) {
       return [];
     }
     return (usersData ?? [])
       .filter((user) =>
-        user.permissions.some((permission) => permission.roleId === effectiveTeam),
+        user.permissions.some(
+          (permission) => permission.roleId === effectiveTeam,
+        ),
       )
       .map((user) => ({
         id: user.id,
-        name:
-          user.name ??
-          user.email ??
-          user.discordUserId ??
-          "Unknown User",
+        name: user.name ?? user.email ?? user.discordUserId ?? "Unknown User",
         email: user.email,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -314,7 +315,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     [assigneesForTeam],
   );
   const safeAssigneeIds = useMemo(
-    () => (formValues.assigneeIds ?? []).filter((userId) => assigneeIdSet.has(userId)),
+    () => formValues.assigneeIds.filter((userId) => assigneeIdSet.has(userId)),
     [assigneeIdSet, formValues.assigneeIds],
   );
 
@@ -723,11 +724,13 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                       </p>
                     )}
 
-                    {!isAssigneesLoading && !assigneesError && assigneesForTeam.length === 0 && (
-                      <p className="col-span-2 text-sm text-muted-foreground">
-                        No team members found for this team
-                      </p>
-                    )}
+                    {!isAssigneesLoading &&
+                      !assigneesError &&
+                      assigneesForTeam.length === 0 && (
+                        <p className="col-span-2 text-sm text-muted-foreground">
+                          No team members found for this team
+                        </p>
+                      )}
 
                     {!isAssigneesLoading &&
                       !assigneesError &&
@@ -737,13 +740,15 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                           className="flex flex-row items-start space-x-3 space-y-0"
                         >
                           <Checkbox
-                            checked={(formValues.assigneeIds ?? []).includes(user.id)}
+                            checked={formValues.assigneeIds.includes(user.id)}
                             onCheckedChange={(checked) => {
-                              const selectedIds = formValues.assigneeIds ?? [];
+                              const selectedIds = formValues.assigneeIds;
                               updateForm(
                                 "assigneeIds",
                                 checked
-                                  ? Array.from(new Set([...selectedIds, user.id]))
+                                  ? Array.from(
+                                      new Set([...selectedIds, user.id]),
+                                    )
                                   : selectedIds.filter((id) => id !== user.id),
                               );
                             }}
