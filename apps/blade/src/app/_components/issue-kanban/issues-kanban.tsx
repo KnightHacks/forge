@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { SlidersHorizontal, Pencil, Calendar, Users } from "lucide-react";
+import { SlidersHorizontal, Pencil, Calendar, Users, CircleDot, CheckCircle2 } from "lucide-react";
 import { ISSUE } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
@@ -63,6 +63,33 @@ export function KanbanBoard() {
 
   const isLoading = paneData?.isLoading ?? true;
 
+  // --- Header Stats Logic ---
+  const openCount = useMemo(
+    () => issues.filter((issue) => issue.status !== "FINISHED").length,
+    [issues],
+  );
+  const closedCount = issues.length - openCount;
+
+  // --- Active Filters Logic ---
+  const filters = paneData?.filters;
+  const activeFilters = useMemo(() => {
+    if (!filters) return [];
+    const tags: string[] = [];
+    if (filters.statusFilter !== "all")
+      tags.push(formatStatus(filters.statusFilter));
+    if (filters.teamFilter !== "all") tags.push("Team selected");
+    if (filters.issueKind !== "all")
+      tags.push(
+        filters.issueKind === "task" ? "Tasks only" : "Event-linked only",
+      );
+    if (filters.rootOnly) tags.push("Root");
+    if (filters.dateFrom) tags.push("From " + filters.dateFrom);
+    if (filters.dateTo) tags.push("To " + filters.dateTo);
+    if (filters.searchTerm.trim())
+      tags.push('Search "' + filters.searchTerm.trim() + '"');
+    return tags;
+  }, [filters]);
+
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, issueId: string) => {
     e.dataTransfer.setData("issueId", issueId);
     e.dataTransfer.effectAllowed = "move";
@@ -99,7 +126,19 @@ export function KanbanBoard() {
 
   return (
     <section className="mx-auto w-full max-w-7xl space-y-4 py-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-end">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-4 rounded-md border bg-muted/20 px-3 py-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <CircleDot className="h-4 w-4 text-emerald-500" />
+            <span>{openCount} Open</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <CheckCircle2 className="h-4 w-4" />
+            <span>{closedCount} Closed</span>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2">
           <CreateEditDialog intent="create">
             <Button>Create issue</Button>
@@ -112,6 +151,21 @@ export function KanbanBoard() {
         </div>
       </div>
 
+      {/* 2. Active Filter Tags */}
+      {activeFilters.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {activeFilters.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* 3. The Board */}
       {isLoading ? (
         <div className="px-4 py-8 text-sm text-muted-foreground">Loading board...</div>
       ) : (
@@ -122,7 +176,6 @@ export function KanbanBoard() {
             return (
               <div
                 key={status}
-                /* FIXED: Mobile gets fixed widths to allow scrolling. Laptops (lg) get flex-1 to squish and fit the screen perfectly */
                 className="flex h-full w-[85vw] max-w-[320px] shrink-0 lg:w-auto lg:min-w-[220px] lg:flex-1 flex-col rounded-lg bg-muted/30 p-3 border"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(e, status)}
@@ -202,11 +255,11 @@ export function KanbanBoard() {
             );
           })}
           
-          {/* FIXED: Hide the invisible spacer on large screens so the columns balance perfectly */}
           <div className="w-1 shrink-0 lg:hidden" aria-hidden="true" />
         </div>
       )}
 
+      {/* 4. Issue Fetcher Pane */}
       <IssueFetcherPane
         open={isFiltersOpen}
         onOpenChange={setIsFiltersOpen}
