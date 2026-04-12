@@ -755,7 +755,9 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                                     ? Array.from(
                                         new Set([...selectedIds, user.id]),
                                       )
-                                    : selectedIds.filter((id) => id !== user.id),
+                                    : selectedIds.filter(
+                                        (id) => id !== user.id,
+                                      ),
                                 );
                               }}
                             />
