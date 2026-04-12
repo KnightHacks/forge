@@ -77,7 +77,7 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: local
         options: >-
-          --health-cmd="pg_isready -U postgres -d forge"
+          --health-cmd="pg_isready -U postgres -d local"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
