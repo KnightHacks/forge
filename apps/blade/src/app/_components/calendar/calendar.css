@@ -1,0 +1,337 @@
+@layer components {
+  .calendar-theme {
+    --fc-border-color: hsl(var(--border));
+    --fc-page-bg-color: hsl(var(--card));
+    --fc-neutral-bg-color: hsl(var(--muted) / 0.45);
+    --fc-neutral-text-color: hsl(var(--muted-foreground));
+    --fc-today-bg-color: hsl(var(--primary) / 0.12);
+    --fc-event-bg-color: hsl(var(--primary));
+    --fc-event-border-color: hsl(var(--primary));
+    --fc-event-text-color: hsl(var(--primary-foreground));
+    --fc-button-bg-color: hsl(var(--primary));
+    --fc-button-border-color: hsl(var(--primary));
+    --fc-button-hover-bg-color: hsl(var(--primary-lighter));
+    --fc-button-hover-border-color: hsl(var(--primary-lighter));
+    --fc-button-active-bg-color: hsl(var(--primary-lighter));
+    --fc-button-active-border-color: hsl(var(--primary-lighter));
+    color: hsl(var(--foreground));
+  }
+
+  .calendar-theme .fc {
+    font-family: inherit;
+    color: hsl(var(--foreground));
+  }
+
+  .calendar-theme .fc-toolbar {
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .calendar-theme .fc-toolbar-chunk {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 1rem;
+  }
+
+  .calendar-theme .fc-toolbar-title {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+
+  .calendar-theme .fc-button {
+    border-radius: 0;
+    box-shadow: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    padding: 0.5rem 0.875rem;
+    text-transform: none;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease,
+      opacity 150ms ease;
+  }
+
+  .calendar-theme .fc-button:focus-visible {
+    box-shadow:
+      0 0 0 2px hsl(var(--background)),
+      0 0 0 4px hsl(var(--ring));
+    outline: none;
+  }
+
+  .calendar-theme .fc-button .fc-icon {
+    font-size: 1rem;
+  }
+
+  .calendar-theme .fc-button-primary:not(:disabled).fc-button-active,
+  .calendar-theme .fc-button-primary:not(:disabled):active {
+    background-color: hsl(var(--primary-lighter));
+    border-color: hsl(var(--primary-lighter));
+  }
+
+  .calendar-theme .fc-button-primary:disabled {
+    opacity: 0.6;
+  }
+
+  .calendar-theme .fc .fc-button-primary {
+    background-color: hsl(var(--secondary));
+    border-color: hsl(var(--border));
+    color: hsl(var(--foreground));
+  }
+
+  .calendar-theme .fc .fc-button-primary:hover {
+    background-color: hsl(var(--accent));
+    border-color: hsl(var(--border));
+    color: hsl(var(--accent-foreground));
+  }
+
+  .calendar-theme .fc-scrollgrid,
+  .calendar-theme .fc-theme-standard td,
+  .calendar-theme .fc-theme-standard th {
+    border-color: hsl(var(--border));
+  }
+
+  .calendar-theme .fc-scrollgrid {
+    overflow: hidden;
+    background-color: hsl(var(--card));
+  }
+
+  /*
+   * Month + time views scroll inside .fc-scroller — style the bar so it reads as part
+   * of the card (avoid duplicating html { scrollbar-gutter: stable } on this node).
+   */
+  .calendar-theme .fc-scroller {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+  }
+
+  .calendar-theme .fc-scroller::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .calendar-theme .fc-scroller::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.35);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .calendar-theme .fc-scroller::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .calendar-theme .fc-view-harness {
+    min-height: 0 !important;
+  }
+
+  .calendar-theme .fc-daygrid-day-top,
+  .calendar-theme .fc-list-day-cushion {
+    background-color: hsl(var(--card));
+  }
+
+  /*
+   * Weekday name row — match issues list table header
+   * (issues-list: border-b bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground)
+   */
+  .calendar-theme .fc-col-header-cell {
+    background-color: hsl(var(--muted) / 0.3);
+    border-color: hsl(var(--border));
+  }
+
+  .calendar-theme .fc-col-header-cell-cushion {
+    padding: 0.5rem 1rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+  }
+
+  .calendar-theme .fc-daygrid-day-number {
+    padding: 0.5rem;
+    color: hsl(var(--foreground));
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .calendar-theme .fc-daygrid-day {
+    background-color: hsl(var(--background));
+  }
+
+  .calendar-theme .fc-day-other .fc-daygrid-day-number {
+    color: hsl(var(--muted-foreground));
+    opacity: 0.65;
+  }
+
+  .calendar-theme .fc-day-today .fc-daygrid-day-number {
+    color: hsl(var(--primary));
+    font-weight: 700;
+  }
+
+  /* Month grid only — .fc-day-today also appears on timeGrid columns; do not tint those here. */
+  .calendar-theme .fc-daygrid-day.fc-day-today {
+    background-color: hsl(var(--primary) / 0.08) !important;
+  }
+
+  .calendar-theme .fc-daygrid-day-frame {
+    min-height: 6.5rem;
+  }
+
+  /*
+   * Month: keep week row heights steadier without using FullCalendar's "+ more" link.
+   * Extra issues scroll inside the cell instead of stretching the whole row.
+   */
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-events {
+    max-height: 6.5rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .calendar-theme .fc-daygrid-event {
+    border-radius: 0;
+    padding-inline: 0.25rem;
+    background-color: hsl(var(--primary));
+    border-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  .calendar-theme .fc-daygrid-event .fc-event-title {
+    font-weight: 500;
+  }
+
+  .calendar-theme .fc-timegrid-event-harness {
+    border-radius: 0;
+  }
+
+  .calendar-theme .fc-timegrid-event,
+  .calendar-theme .fc-v-event {
+    border-radius: 0;
+    background-color: hsl(var(--primary));
+    border-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  /* Ensure timed event chips stay above grid lines */
+  .calendar-theme .fc-timegrid-event-harness {
+    z-index: 1;
+  }
+
+  /*
+   * slotDuration 30m: dotted tops on minor rows + theme borders every row.
+   * Strip half-hour lines; hour boundaries remain from the next hour’s row top border.
+   */
+  .calendar-theme .fc-timegrid-body td.fc-timegrid-slot-minor {
+    border-top-width: 0 !important;
+    border-top-style: none !important;
+  }
+
+  /* Hour label row: remove bottom border on every cell (time gutter + day columns). */
+  .calendar-theme
+    .fc-timegrid-body
+    tr:has(.fc-timegrid-slot-label.fc-scrollgrid-shrink)
+    > td {
+    border-bottom-width: 0 !important;
+    border-bottom-style: none !important;
+  }
+
+  /* Week/day views: uppercase am/pm in slot labels and on events */
+  .calendar-theme .fc-timegrid-slot-label-cushion,
+  .calendar-theme .fc-timegrid-axis-cushion {
+    text-transform: uppercase;
+  }
+
+  /*
+   * Week & day: time gutter — dark column, muted hour labels.
+   * Do not set display/width on .fc-timegrid-slot-label-cushion: it uses
+   * .fc-scrollgrid-shrink-cushion; changing box model breaks column width math and squishes events.
+   */
+  .calendar-theme .fc-timeGridWeek-view .fc-timegrid-axis,
+  .calendar-theme .fc-timeGridDay-view .fc-timegrid-axis {
+    background-color: hsl(var(--background));
+    border-right: 1px solid hsl(var(--border) / 0.4);
+  }
+
+  .calendar-theme
+    .fc-timeGridWeek-view
+    .fc-timegrid-slots
+    td.fc-timegrid-slot-label,
+  .calendar-theme
+    .fc-timeGridDay-view
+    .fc-timegrid-slots
+    td.fc-timegrid-slot-label {
+    background-color: hsl(var(--background));
+  }
+
+  .calendar-theme .fc-timeGridWeek-view .fc-timegrid-slot-label-cushion,
+  .calendar-theme .fc-timeGridDay-view .fc-timegrid-slot-label-cushion {
+    padding: 0 0.625rem 0 0.125rem;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.35;
+    letter-spacing: 0.02em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .calendar-theme .fc-timeGridWeek-view .fc-timegrid-axis-cushion,
+  .calendar-theme .fc-timeGridDay-view .fc-timegrid-axis-cushion {
+    padding: 0.375rem 0.625rem 0.375rem 0.125rem;
+    text-align: right;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .calendar-theme .fc-event-time {
+    display: none;
+  }
+
+  .calendar-theme .fc-list-event-time {
+    text-transform: uppercase;
+  }
+
+  .calendar-theme .fc-daygrid-event-dot {
+    border-color: hsl(var(--primary-foreground));
+  }
+
+  .calendar-theme .fc-daygrid-more-link {
+    color: hsl(var(--primary));
+    font-weight: 500;
+  }
+}
+
+/*
+ * FullCalendar injects its base CSS without @layer. Rules inside @layer components
+ * lose the cascade to those unlayered rules, so timeGrid "today" column styling
+ * must live here. Target .fc-timegrid-col.fc-day-today (see timegrid index.global.css).
+ */
+.calendar-theme
+  .fc-timeGridDay-view
+  .fc-timegrid-body
+  .fc-timegrid-col.fc-day-today,
+.calendar-theme
+  .fc-timeGridWeek-view
+  .fc-timegrid-body
+  .fc-timegrid-col.fc-day-today {
+  background-color: transparent !important;
+}
+
+.calendar-theme .fc-timeGridDay-view .fc-col-header-cell.fc-day-today,
+.calendar-theme .fc-timeGridWeek-view .fc-col-header-cell.fc-day-today {
+  background-color: hsl(var(--primary) / 0.12) !important;
+}
+
+.calendar-theme
+  .fc-timeGridDay-view
+  .fc-col-header-cell.fc-day-today
+  .fc-col-header-cell-cushion,
+.calendar-theme
+  .fc-timeGridWeek-view
+  .fc-col-header-cell.fc-day-today
+  .fc-col-header-cell-cushion {
+  color: hsl(var(--primary));
+  font-weight: 700;
+}

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 
@@ -14,19 +14,25 @@ export default async function Events() {
   }
 
   const hasAccess = await api.roles.hasPermission({
-    or: ["EDIT_ISSUE_TEMPLATES", "READ_ISSUE_TEMPLATES"],
+    and: [
+      "READ_ISSUES",
+      "EDIT_ISSUES",
+      "EDIT_ISSUE_TEMPLATES",
+      "READ_ISSUE_TEMPLATES",
+    ],
   });
-
-  if (!hasAccess) {
-    redirect("/");
-  }
+  if (!hasAccess) notFound();
 
   return (
     <HydrateClient>
-      <SessionNavbar />
-      <main className="px-4 pb-4 md:px-6 md:pb-6">
-        <Calendar />
-      </main>
+      <div className="flex h-dvh flex-col overflow-hidden">
+        <div className="shrink-0">
+          <SessionNavbar />
+        </div>
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 pt-2 md:px-6 md:pb-6">
+          <Calendar />
+        </main>
+      </div>
     </HydrateClient>
   );
 }
