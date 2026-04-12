@@ -1,7 +1,7 @@
 import "server-only";
 
-import { TRPCError } from "@trpc/server";
 import { cookies } from "next/headers";
+import { TRPCError } from "@trpc/server";
 import { and, eq, gt, inArray } from "drizzle-orm";
 
 import { db } from "@forge/db/client";
@@ -67,7 +67,12 @@ interface IssueAssigneeValidationNode {
   children?: IssueAssigneeValidationNode[];
 }
 
+type DbExecutor =
+  | typeof db
+  | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 export const validateAssigneesBelongToTeam = async (
+  executor: DbExecutor,
   teamId: string,
   assigneeIds: string[] | undefined,
 ) => {
@@ -77,7 +82,7 @@ export const validateAssigneesBelongToTeam = async (
 
   const uniqueAssigneeIds = [...new Set(assigneeIds)];
 
-  const rows = await db
+  const rows = await executor
     .select({ userId: Permissions.userId })
     .from(Permissions)
     .where(
@@ -103,12 +108,13 @@ export const validateAssigneesBelongToTeam = async (
 };
 
 export const validateIssueNodeAssignees = async (
+  executor: DbExecutor,
   nodes: IssueAssigneeValidationNode[],
 ) => {
   for (const node of nodes) {
-    await validateAssigneesBelongToTeam(node.team, node.assigneeIds);
+    await validateAssigneesBelongToTeam(executor, node.team, node.assigneeIds);
     if (node.children?.length) {
-      await validateIssueNodeAssignees(node.children);
+      await validateIssueNodeAssignees(executor, node.children);
     }
   }
 };
