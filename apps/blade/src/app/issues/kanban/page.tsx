@@ -1,5 +1,7 @@
 import { notFound, redirect } from "next/navigation";
+
 import { auth } from "@forge/auth";
+
 import { KanbanBoard } from "~/app/_components/issue-kanban/issues-kanban";
 import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
 import { SIGN_IN_PATH } from "~/consts";

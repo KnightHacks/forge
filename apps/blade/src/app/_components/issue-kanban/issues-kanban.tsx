@@ -2,7 +2,15 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { SlidersHorizontal, Pencil, Calendar, Users, CircleDot, CheckCircle2 } from "lucide-react";
+import {
+  Calendar,
+  CheckCircle2,
+  CircleDot,
+  Pencil,
+  SlidersHorizontal,
+  Users,
+} from "lucide-react";
+
 import { ISSUE } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
@@ -20,7 +28,10 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function formatStatus(status: string) {
-  return status.toLowerCase().replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return status
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function formatDate(value: Date | null) {
@@ -30,8 +41,10 @@ function formatDate(value: Date | null) {
 
 export function KanbanBoard() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [paneData, setPaneData] = useState<ISSUE.IssueFetcherPaneData | null>(null);
-  
+  const [paneData, setPaneData] = useState<ISSUE.IssueFetcherPaneData | null>(
+    null,
+  );
+
   const [statusOverrides, setStatusOverrides] = useState<
     Record<string, (typeof ISSUE.ISSUE_STATUS)[number]>
   >({});
@@ -53,13 +66,12 @@ export function KanbanBoard() {
     onError: () => toast.error("Failed to update issue status"),
   });
 
-  const issues = useMemo(() => {
-    if (!paneData?.issues) return [];
-    return paneData.issues.map((issue) => ({
-      ...issue,
-      status: statusOverrides[issue.id] ?? issue.status,
-    }));
-  }, [paneData?.issues, statusOverrides]);
+  const issues = paneData?.issues
+    ? paneData.issues.map((issue) => ({
+        ...issue,
+        status: statusOverrides[issue.id] ?? issue.status,
+      }))
+    : [];
 
   const isLoading = paneData?.isLoading ?? true;
 
@@ -90,12 +102,18 @@ export function KanbanBoard() {
     return tags;
   }, [filters]);
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, issueId: string) => {
+  const handleDragStart = (
+    e: React.DragEvent<HTMLDivElement>,
+    issueId: string,
+  ) => {
     e.dataTransfer.setData("issueId", issueId);
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, newStatus: typeof ISSUE.ISSUE_STATUS[number]) => {
+  const handleDrop = (
+    e: React.DragEvent<HTMLDivElement>,
+    newStatus: (typeof ISSUE.ISSUE_STATUS)[number],
+  ) => {
     e.preventDefault();
     const issueId = e.dataTransfer.getData("issueId");
     if (!issueId) return;
@@ -111,7 +129,10 @@ export function KanbanBoard() {
       { id: issueId, status: newStatus },
       {
         onError: () => {
-          setStatusOverrides((prev) => ({ ...prev, [issueId]: previousStatus }));
+          setStatusOverrides((prev) => ({
+            ...prev,
+            [issueId]: previousStatus,
+          }));
         },
         onSettled: () => {
           setStatusOverrides((prev) => {
@@ -120,7 +141,7 @@ export function KanbanBoard() {
             return copy;
           });
         },
-      }
+      },
     );
   };
 
@@ -167,7 +188,9 @@ export function KanbanBoard() {
 
       {/* 3. The Board */}
       {isLoading ? (
-        <div className="px-4 py-8 text-sm text-muted-foreground">Loading board...</div>
+        <div className="px-4 py-8 text-sm text-muted-foreground">
+          Loading board...
+        </div>
       ) : (
         <div className="flex h-[calc(100vh-14rem)] w-full flex-nowrap gap-4 overflow-x-auto overflow-y-hidden pb-4">
           {ISSUE.ISSUE_STATUS.map((status) => {
@@ -176,16 +199,20 @@ export function KanbanBoard() {
             return (
               <div
                 key={status}
-                className="flex h-full w-[85vw] max-w-[320px] shrink-0 lg:w-auto lg:min-w-[220px] lg:flex-1 flex-col rounded-lg bg-muted/30 p-3 border"
+                className="flex h-full w-[85vw] max-w-[320px] shrink-0 flex-col rounded-lg border bg-muted/30 p-3 lg:w-auto lg:min-w-[220px] lg:flex-1"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(e, status)}
               >
                 <div className="mb-4 flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
-                    <div className={`h-3 w-3 rounded-full ${STATUS_COLORS[status]}`} />
-                    <h3 className="font-semibold text-sm">{formatStatus(status)}</h3>
+                    <div
+                      className={`h-3 w-3 rounded-full ${STATUS_COLORS[status]}`}
+                    />
+                    <h3 className="text-sm font-semibold">
+                      {formatStatus(status)}
+                    </h3>
                   </div>
-                  <span className="text-xs text-muted-foreground font-medium rounded-full bg-muted px-2 py-1">
+                  <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
                     {columnIssues.length}
                   </span>
                 </div>
@@ -196,7 +223,7 @@ export function KanbanBoard() {
                       key={issue.id}
                       draggable={true}
                       onDragStart={(e) => handleDragStart(e, issue.id)}
-                      className="group cursor-grab active:cursor-grabbing rounded-lg border bg-card text-card-foreground shadow-sm transition-colors hover:border-primary/50"
+                      className="group cursor-grab rounded-lg border bg-card text-card-foreground shadow-sm transition-colors hover:border-primary/50 active:cursor-grabbing"
                     >
                       <div className="p-3">
                         <div className="flex items-start justify-between gap-2">
@@ -223,16 +250,17 @@ export function KanbanBoard() {
                               event: issue.event,
                             }}
                             onDelete={(values) => {
-                              if (!values.id || deleteIssueMutation.isPending) return;
+                              if (!values.id || deleteIssueMutation.isPending)
+                                return;
                               deleteIssueMutation.mutate({ id: values.id });
                             }}
                           >
-                            <button className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground">
+                            <button className="text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100">
                               <Pencil className="h-3 w-3" />
                             </button>
                           </CreateEditDialog>
                         </div>
-                        
+
                         <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
                           {issue.date && (
                             <div className="flex items-center gap-1">
@@ -242,8 +270,9 @@ export function KanbanBoard() {
                           )}
                           <div className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            <span className="truncate max-w-[100px]">
-                              {paneData?.roleNameById.get(issue.team) ?? issue.team}
+                            <span className="max-w-[100px] truncate">
+                              {paneData?.roleNameById.get(issue.team) ??
+                                issue.team}
                             </span>
                           </div>
                         </div>
@@ -254,7 +283,7 @@ export function KanbanBoard() {
               </div>
             );
           })}
-          
+
           <div className="w-1 shrink-0 lg:hidden" aria-hidden="true" />
         </div>
       )}
