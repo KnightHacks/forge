@@ -318,14 +318,33 @@ export const eventRouter = {
         const dayBeforeEnd = new Date(endLocalDate);
         dayBeforeEnd.setDate(dayBeforeEnd.getDate() - 1);
 
-        await db.insert(Event).values({
-          ...input,
-          start_datetime: dayBeforeStart,
-          end_datetime: dayBeforeEnd,
-          points: EVENTS.EVENT_POINTS[input.tag] || 0,
-          discordId: discordEventId,
-          googleId: googleEventId,
+        const [createdEvent] = await db
+          .insert(Event)
+          .values({
+            ...input,
+            start_datetime: dayBeforeStart,
+            end_datetime: dayBeforeEnd,
+            points: EVENTS.EVENT_POINTS[input.tag] || 0,
+            discordId: discordEventId,
+            googleId: googleEventId,
+          })
+          .returning();
+
+        if (!createdEvent) {
+          throw new TRPCError({
+            message: "Failed to retrieve created event",
+            code: "BAD_REQUEST",
+          });
+        }
+
+        await discord.log({
+          title: "Event Created",
+          message: `The event **${formattedName}** was created.`,
+          color: "blade_purple",
+          userId: ctx.session.user.discordUserId,
         });
+
+        return createdEvent;
       } catch (error) {
         logger.error(JSON.stringify(error, null, 2));
 
@@ -356,13 +375,6 @@ export const eventRouter = {
           code: "BAD_REQUEST",
         });
       }
-
-      await discord.log({
-        title: "Event Created",
-        message: `The event **${formattedName}** was created.`,
-        color: "blade_purple",
-        userId: ctx.session.user.discordUserId,
-      });
     }),
 
   updateEvent: permProcedure
