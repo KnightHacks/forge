@@ -94,6 +94,43 @@ async function requireIssue(id: string, label = "Issue") {
   return issue;
 }
 
+async function validateAssigneesBelongToTeam(
+  teamId: string,
+  assigneeIds: string[] | undefined,
+) {
+  if (!assigneeIds || assigneeIds.length === 0) {
+    return;
+  }
+
+  const teamMembers = await db
+    .select({ userId: Permissions.userId })
+    .from(Permissions)
+    .where(eq(Permissions.roleId, teamId));
+
+  const teamMemberIdSet = new Set(teamMembers.map((member) => member.userId));
+  const invalidAssigneeIds = assigneeIds.filter(
+    (assigneeId) => !teamMemberIdSet.has(assigneeId),
+  );
+
+  if (invalidAssigneeIds.length > 0) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message:
+        "All assignees must belong to the selected team. Invalid assignee IDs: " +
+        invalidAssigneeIds.join(", "),
+    });
+  }
+}
+
+async function validateIssueNodeAssignees(nodes: IssueCreateNode[]) {
+  for (const node of nodes) {
+    await validateAssigneesBelongToTeam(node.team, node.assigneeIds);
+    if (node.children?.length) {
+      await validateIssueNodeAssignees(node.children);
+    }
+  }
+}
+
 const baseIssueTemplateSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
@@ -162,6 +199,12 @@ export const issuesRouter = {
     )
     .mutation(async ({ ctx, input }) => {
       permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
+
+      const { assigneeIds, children } = input;
+      await validateAssigneesBelongToTeam(input.team, assigneeIds);
+      if (children?.length) {
+        await validateIssueNodeAssignees(children);
+      }
 
       return await db.transaction(async (tx) => {
         const { teamVisibilityIds, assigneeIds, children, ...rest } = input;
@@ -358,7 +401,10 @@ export const issuesRouter = {
     )
     .mutation(async ({ ctx, input }) => {
       permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
-      await requireIssue(input.id);
+      const existingIssue = await requireIssue(input.id);
+
+      const assignmentTeamId = input.team ?? existingIssue.team;
+      await validateAssigneesBelongToTeam(assignmentTeamId, input.assigneeIds);
 
       const { id, assigneeIds, teamVisibilityIds, ...fields } = input;
       const updateData = Object.fromEntries(

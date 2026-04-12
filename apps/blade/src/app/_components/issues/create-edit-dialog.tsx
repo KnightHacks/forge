@@ -726,7 +726,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                     {!isAssigneesLoading &&
                       !assigneesError &&
                       assigneesForTeam.map((user) => {
-                        const assigneeCheckboxId = `assignee-${user.id}`;
+                        const assigneeCheckboxId = `${baseId}-assignee-${user.id}`;
                         return (
                           <div
                             key={user.id}
