@@ -15,6 +15,115 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  migration_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Generate migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+        run: pnpm db:generate
+
+      - name: Verify migrations are committed
+        run: |
+          if [ -n "$(git status --porcelain -- packages/db/drizzle)" ]; then
+            echo "Detected uncommitted migration changes in packages/db/drizzle."
+            echo "Run 'pnpm db:generate' and commit the generated files."
+            git status --short -- packages/db/drizzle
+            exit 1
+          fi
+
+  migration_apply_fresh:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: forge
+        options: >-
+          --health-cmd="pg_isready -U postgres -d forge"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Apply migrations on a fresh database
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forge
+        run: |
+          pnpm db:migrate
+          pnpm db:migrate
+
+  migration_upgrade_smoke:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && vars.ENABLE_DB_UPGRADE_SMOKE == 'true'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: local
+        options: >-
+          --health-cmd="pg_isready -U postgres -d forge"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Create base branch worktree
+        run: git worktree add /tmp/forge-base "${{ github.event.pull_request.base.sha }}"
+
+      - name: Install base branch dependencies
+        working-directory: /tmp/forge-base
+        run: pnpm install --ignore-scripts
+
+      - name: Materialize base branch schema
+        working-directory: /tmp/forge-base
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/local
+        run: |
+          if node -e "const pkg = require('./package.json'); process.exit(pkg.scripts['db:migrate'] ? 0 : 1)"; then
+            pnpm db:migrate
+          else
+            pnpm --filter=@forge/db push
+          fi
+
+      - name: Restore filtered prod-like data
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/local
+          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+          MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+          MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+        run: pnpm db:pull --truncate
+
+      - name: Apply branch migrations on prod-like data
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/local
+        run: |
+          pnpm db:migrate
+          pnpm db:migrate
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -50,7 +159,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [lint, format, typecheck]
+    needs: [migration_check, migration_apply_fresh, lint, format, typecheck]
     permissions:
       contents: read
     steps:
@@ -64,3 +173,23 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  migrate_prod:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.ENABLE_PROD_DB_MIGRATIONS == 'true'
+    runs-on: ubuntu-latest
+    needs: [build]
+    concurrency:
+      group: db-migrate-prod
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Apply database migrations
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: pnpm db:migrate

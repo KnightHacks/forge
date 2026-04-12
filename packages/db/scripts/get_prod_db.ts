@@ -74,23 +74,30 @@ async function main() {
     //We wanna truncate all tables so that it updates already seeded rows too
     //Probably at some point write a sed script that changes all inserts to upserts
     console.log("Truncating all tables in DB");
-    //Imma be real ts was GPT pls lmk if its cooked
-    await execAsync(
-      `psql -h localhost -p ${port} -U ${user} -d local << 'EOF'
-			SET session_replication_role = replica;
-			DO $$ 
-			DECLARE 
-			r RECORD;
-			BEGIN
-			FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') 
-				LOOP
-			EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE';
-			END LOOP;
-			END $$;
-			SET session_replication_role = DEFAULT;
-			EOF`,
-      { env: envN },
-    );
+    const truncateSqlFile = "truncate_local.sql";
+    const truncateSql = `SET session_replication_role = replica;
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public')
+  LOOP
+    EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE';
+  END LOOP;
+END $$;
+SET session_replication_role = DEFAULT;
+`;
+
+    fs.writeFileSync(truncateSqlFile, truncateSql);
+
+    try {
+      await execAsync(
+        `psql -v ON_ERROR_STOP=1 -h localhost -p ${port} -U ${user} -d local -f ${truncateSqlFile}`,
+        { env: envN },
+      );
+    } finally {
+      await unlink(truncateSqlFile);
+    }
   }
 
   console.log("Inserting prod rows into local DB");
