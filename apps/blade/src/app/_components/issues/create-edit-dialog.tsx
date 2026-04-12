@@ -280,7 +280,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       )
       .map((user) => ({
         id: user.id,
-        name: user.name ?? user.email ?? user.discordUserId ?? "Unknown User",
+        name: user.name ?? user.email ?? user.discordUserId,
         email: user.email,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
