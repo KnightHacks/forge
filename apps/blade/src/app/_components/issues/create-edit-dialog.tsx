@@ -315,8 +315,11 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     [assigneesForTeam],
   );
   const safeAssigneeIds = useMemo(
-    () => formValues.assigneeIds.filter((userId) => assigneeIdSet.has(userId)),
-    [assigneeIdSet, formValues.assigneeIds],
+    () =>
+      usersQuery.isSuccess
+        ? formValues.assigneeIds.filter((userId) => assigneeIdSet.has(userId))
+        : formValues.assigneeIds,
+    [assigneeIdSet, formValues.assigneeIds, usersQuery.isSuccess],
   );
 
   // Helper for event form
@@ -734,37 +737,44 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
                     {!isAssigneesLoading &&
                       !assigneesError &&
-                      assigneesForTeam.map((user) => (
-                        <div
-                          key={user.id}
-                          className="flex flex-row items-start space-x-3 space-y-0"
-                        >
-                          <Checkbox
-                            checked={formValues.assigneeIds.includes(user.id)}
-                            onCheckedChange={(checked) => {
-                              const selectedIds = formValues.assigneeIds;
-                              updateForm(
-                                "assigneeIds",
-                                checked
-                                  ? Array.from(
-                                      new Set([...selectedIds, user.id]),
-                                    )
-                                  : selectedIds.filter((id) => id !== user.id),
-                              );
-                            }}
-                          />
-                          <div className="flex flex-col">
-                            <Label className="cursor-pointer font-normal">
-                              {user.name}
-                            </Label>
-                            {user.email && (
-                              <span className="text-xs text-muted-foreground">
-                                {user.email}
-                              </span>
-                            )}
+                      assigneesForTeam.map((user) => {
+                        const assigneeCheckboxId = `assignee-${user.id}`;
+                        return (
+                          <div
+                            key={user.id}
+                            className="flex flex-row items-start space-x-3 space-y-0"
+                          >
+                            <Checkbox
+                              id={assigneeCheckboxId}
+                              checked={formValues.assigneeIds.includes(user.id)}
+                              onCheckedChange={(checked) => {
+                                const selectedIds = formValues.assigneeIds;
+                                updateForm(
+                                  "assigneeIds",
+                                  checked
+                                    ? Array.from(
+                                        new Set([...selectedIds, user.id]),
+                                      )
+                                    : selectedIds.filter((id) => id !== user.id),
+                                );
+                              }}
+                            />
+                            <div className="flex flex-col">
+                              <Label
+                                htmlFor={assigneeCheckboxId}
+                                className="cursor-pointer font-normal"
+                              >
+                                {user.name}
+                              </Label>
+                              {user.email && (
+                                <span className="text-xs text-muted-foreground">
+                                  {user.email}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
 
                     <p className="col-span-2 text-sm font-normal text-gray-400">
                       Select one or more team members responsible for this issue
