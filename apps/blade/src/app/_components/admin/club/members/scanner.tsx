@@ -239,7 +239,7 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
             constraints={{ facingMode: "environment" }}
             formats={["qr_code"]}
             onScan={async (detectedCodes) => {
-              const result = detectedCodes[0];
+              const result = (detectedCodes as { rawValue: string }[])[0];
               if (!result) return;
               if (scanningRef.current) return;
               scanningRef.current = true;

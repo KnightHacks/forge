@@ -23,7 +23,9 @@ If you are not a Knight Hacks dev team member, you can still contribute to Forge
 
 Install Docker Desktop if you don't already have it.
 
-To create a Postgres database locally with docker, you can run `docker compose up`. You will then need to push the schema to the database by running `pnpm db:push`.
+To create a Postgres database locally with Docker, run `docker compose up`. Then apply the committed schema migrations by running `pnpm db:migrate`.
+
+If you change any schema files in `packages/db/src/schemas`, generate and commit a migration with `pnpm db:generate`.
 
 To stop the Postgres container, run `docker compose stop`. To completely reset your database, run `docker compose down --volumes`.
 

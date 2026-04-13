@@ -78,8 +78,10 @@ Database layer using Drizzle ORM with PostgreSQL.
 
 - Contains all database schemas
 - Exports the database client
-- Includes migration scripts
+- Includes committed SQL migrations and migration helper scripts
 - Located in `packages/db/src/schemas/`
+
+Local development applies schema changes with `pnpm db:migrate`. Schema edits should be followed by `pnpm db:generate`, and the generated files in `packages/db/drizzle/` are part of the reviewed source of truth.
 
 ### `@forge/auth`
 
