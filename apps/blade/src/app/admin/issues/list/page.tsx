@@ -11,7 +11,7 @@ export default async function AdminIssuesListPage() {
   if (!session) redirect(SIGN_IN_PATH);
 
   const hasAccess = await api.roles.hasPermission({
-    and: [
+    or: [
       "READ_ISSUES",
       "EDIT_ISSUES",
       "EDIT_ISSUE_TEMPLATES",
