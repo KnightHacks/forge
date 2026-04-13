@@ -137,6 +137,11 @@ type CreateEditDialogComponentProps = Omit<
 
 const defaultForm = (): ISSUE.IssueEditNode => newIssueNode();
 
+function ensureTeamVisible(teamId: string, roleIds: string[] | undefined) {
+  if (!teamId) return roleIds ?? [];
+  return Array.from(new Set([...(roleIds ?? []), teamId]));
+}
+
 function templateToIssueNodes(
   items: ISSUE.IssueTemplate[],
   parentDate: Date,
@@ -301,8 +306,12 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     [rolesData],
   );
   const safeVisibilityIds = useMemo(
-    () => formValues.roles.filter((roleId) => roleIdSet.has(roleId)),
-    [formValues.roles, roleIdSet],
+    () =>
+      ensureTeamVisible(
+        effectiveTeam,
+        formValues.roles.filter((roleId) => roleIdSet.has(roleId)),
+      ),
+    [effectiveTeam, formValues.roles, roleIdSet],
   );
   const safeEventVisibilityIds = useMemo(
     () =>
@@ -447,7 +456,10 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         priority: node.priority,
         team: node.team,
         event: eventId,
-        teamVisibilityIds: node.roles.length > 0 ? node.roles : undefined,
+        teamVisibilityIds:
+          ensureTeamVisible(node.team, node.roles).length > 0
+            ? ensureTeamVisible(node.team, node.roles)
+            : undefined,
         assigneeIds: node.assigneeIds,
         children:
           node.children.length > 0
@@ -872,7 +884,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                 <RoleCheckboxGroup
                   label="Issue Visible To Roles"
                   roles={rolesData ?? []}
-                  selectedIds={formValues.roles}
+                  selectedIds={safeVisibilityIds}
                   onChange={(ids) => updateForm("roles", ids)}
                   description="Teams who can see and manage the issue"
                 />

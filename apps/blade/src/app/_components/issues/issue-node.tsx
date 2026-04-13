@@ -283,7 +283,9 @@ export function IssueNode({
           <RoleCheckboxGroup
             label="Visible To Roles"
             roles={roles}
-            selectedIds={node.roles}
+            selectedIds={Array.from(
+              new Set([node.team, ...node.roles].filter(Boolean)),
+            )}
             onChange={(ids) => update("roles", ids)}
             description="Teams who can see and manage this sub-issue"
           />

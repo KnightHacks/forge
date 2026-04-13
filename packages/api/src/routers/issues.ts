@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { ISSUE } from "@forge/consts";
-import { and, eq, exists, inArray, sql } from "@forge/db";
+import { and, eq, exists, inArray, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, User } from "@forge/db/schemas/auth";
 import {
@@ -36,6 +36,10 @@ type IssueCreateNode = z.infer<typeof baseIssueCreateSchema> & {
   children?: IssueCreateNode[];
 };
 
+function ensureTeamVisible(teamId: string, teamVisibilityIds?: string[]) {
+  return Array.from(new Set([...(teamVisibilityIds ?? []), teamId]));
+}
+
 const issueCreateSchema: z.ZodType<IssueCreateNode> =
   baseIssueCreateSchema.extend({
     children: z.lazy(() => z.array(issueCreateSchema)).optional(),
@@ -64,9 +68,14 @@ async function createChildIssues(
         message: "Failed to create sub-issue.",
       });
     }
-    if (teamVisibilityIds?.length) {
+    const ensuredTeamVisibilityIds = ensureTeamVisible(
+      rest.team,
+      teamVisibilityIds,
+    );
+
+    if (ensuredTeamVisibilityIds.length > 0) {
       await tx.insert(IssuesToTeamsVisibility).values(
-        teamVisibilityIds.map((teamId) => ({
+        ensuredTeamVisibilityIds.map((teamId) => ({
           issueId: created.id,
           teamId,
         })),
@@ -115,6 +124,36 @@ async function collectIssueSubtreeIds(
   }
 
   return allIds;
+}
+
+async function issueVisibilityFilterForUser(
+  userId: string,
+  isOfficer: boolean,
+) {
+  if (isOfficer) {
+    return sql`TRUE`;
+  }
+
+  const userRoles = (
+    await db.query.Permissions.findMany({
+      where: eq(Permissions.userId, userId),
+    })
+  ).map((permission) => permission.roleId);
+
+  if (userRoles.length === 0) {
+    return sql`FALSE`;
+  }
+
+  const visibleIssueIds = await db
+    .select({ issueId: IssuesToTeamsVisibility.issueId })
+    .from(IssuesToTeamsVisibility)
+    .where(inArray(IssuesToTeamsVisibility.teamId, userRoles));
+
+  const visibilityIssueIds = visibleIssueIds.map((row) => row.issueId);
+
+  return visibilityIssueIds.length > 0
+    ? or(inArray(Issue.team, userRoles), inArray(Issue.id, visibilityIssueIds))
+    : inArray(Issue.team, userRoles);
 }
 
 const baseIssueTemplateSchema = z.object({
@@ -188,6 +227,10 @@ export const issuesRouter = {
 
       return await db.transaction(async (tx) => {
         const { teamVisibilityIds, assigneeIds, children, ...rest } = input;
+        const ensuredTeamVisibilityIds = ensureTeamVisible(
+          input.team,
+          teamVisibilityIds,
+        );
 
         await permissionsServer.validateAssigneesBelongToTeam(
           tx,
@@ -213,9 +256,9 @@ export const issuesRouter = {
           });
         }
 
-        if (teamVisibilityIds?.length) {
+        if (ensuredTeamVisibilityIds.length > 0) {
           await tx.insert(IssuesToTeamsVisibility).values(
-            teamVisibilityIds.map((teamId) => ({
+            ensuredTeamVisibilityIds.map((teamId) => ({
               issueId: issue.id,
               teamId,
             })),
@@ -248,31 +291,10 @@ export const issuesRouter = {
     .query(async ({ ctx, input }) => {
       permissions.controlPerms.or(["READ_ISSUES"], ctx);
 
-      let visibilityFilter;
-
-      if (ctx.session.permissions.IS_OFFICER) {
-        visibilityFilter = sql`TRUE`;
-      } else {
-        const userRoles = (
-          await db.query.Permissions.findMany({
-            where: eq(Permissions.userId, ctx.session.user.id),
-          })
-        ).map((p) => p.roleId);
-        visibilityFilter =
-          userRoles.length === 0
-            ? sql`FALSE`
-            : exists(
-                db
-                  .select()
-                  .from(IssuesToTeamsVisibility)
-                  .where(
-                    and(
-                      eq(IssuesToTeamsVisibility.issueId, Issue.id),
-                      inArray(IssuesToTeamsVisibility.teamId, userRoles),
-                    ),
-                  ),
-              );
-      }
+      const visibilityFilter = await issueVisibilityFilterForUser(
+        ctx.session.user.id,
+        Boolean(ctx.session.permissions.IS_OFFICER),
+      );
       const issue = await db.query.Issue.findFirst({
         where: and(eq(Issue.id, input.id), visibilityFilter),
         with: {
@@ -319,31 +341,10 @@ export const issuesRouter = {
         );
       }
 
-      let visibilityFilter;
-
-      if (ctx.session.permissions.IS_OFFICER) {
-        visibilityFilter = sql`TRUE`;
-      } else {
-        const userRoles = (
-          await db.query.Permissions.findMany({
-            where: eq(Permissions.userId, ctx.session.user.id),
-          })
-        ).map((p) => p.roleId);
-        visibilityFilter =
-          userRoles.length === 0
-            ? sql`FALSE`
-            : exists(
-                db
-                  .select()
-                  .from(IssuesToTeamsVisibility)
-                  .where(
-                    and(
-                      eq(IssuesToTeamsVisibility.issueId, Issue.id),
-                      inArray(IssuesToTeamsVisibility.teamId, userRoles),
-                    ),
-                  ),
-              );
-      }
+      const visibilityFilter = await issueVisibilityFilterForUser(
+        ctx.session.user.id,
+        Boolean(ctx.session.permissions.IS_OFFICER),
+      );
 
       if (input?.assigneeIds?.length) {
         filters.push(
@@ -422,6 +423,10 @@ export const issuesRouter = {
         );
 
         const { id, assigneeIds, teamVisibilityIds, ...fields } = input;
+        const ensuredTeamVisibilityIds =
+          teamVisibilityIds !== undefined
+            ? ensureTeamVisible(assignmentTeamId, teamVisibilityIds)
+            : undefined;
         const updateData = Object.fromEntries(
           (Object.entries(fields) as [string, unknown][]).filter(
             ([, v]) => v !== undefined,
@@ -432,15 +437,18 @@ export const issuesRouter = {
           await tx.update(Issue).set(updateData).where(eq(Issue.id, id));
         }
 
-        if (teamVisibilityIds !== undefined) {
+        if (ensuredTeamVisibilityIds !== undefined) {
           await tx
             .delete(IssuesToTeamsVisibility)
             .where(eq(IssuesToTeamsVisibility.issueId, id));
-          if (teamVisibilityIds.length > 0) {
+          if (ensuredTeamVisibilityIds.length > 0) {
             await tx
               .insert(IssuesToTeamsVisibility)
               .values(
-                teamVisibilityIds.map((teamId) => ({ issueId: id, teamId })),
+                ensuredTeamVisibilityIds.map((teamId) => ({
+                  issueId: id,
+                  teamId,
+                })),
               );
           }
         }
@@ -458,7 +466,7 @@ export const issuesRouter = {
 
         if (
           Object.keys(updateData).length === 0 &&
-          (teamVisibilityIds !== undefined || assigneeIds !== undefined)
+          (ensuredTeamVisibilityIds !== undefined || assigneeIds !== undefined)
         ) {
           await tx
             .update(Issue)
