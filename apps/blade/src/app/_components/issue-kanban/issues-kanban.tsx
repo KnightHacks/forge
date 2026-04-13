@@ -82,8 +82,8 @@ export function KanbanBoard() {
   // --- Active Filters Logic ---
   const filters = paneData?.filters;
   const activeFilters = useMemo(() => {
-    return getActiveIssueFilterTags(filters);
-  }, [filters]);
+    return getActiveIssueFilterTags(filters, paneData?.roleNameById);
+  }, [filters, paneData?.roleNameById]);
 
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,

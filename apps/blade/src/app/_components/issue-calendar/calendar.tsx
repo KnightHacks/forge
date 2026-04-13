@@ -169,8 +169,8 @@ export default function CalendarView() {
   const filters = paneData?.filters;
 
   const activeFilters = useMemo(() => {
-    return getActiveIssueFilterTags(filters);
-  }, [filters]);
+    return getActiveIssueFilterTags(filters, paneData?.roleNameById);
+  }, [filters, paneData?.roleNameById]);
 
   const issuesForCurrentView = useMemo(() => {
     if (view === "issueDayAgenda") {
@@ -507,7 +507,7 @@ export default function CalendarView() {
   return (
     <section
       ref={calendarSectionRef}
-      className="calendar-theme mx-auto flex min-h-0 w-full min-w-0 max-w-6xl flex-1 flex-col gap-3 py-1"
+      className="calendar-theme mx-auto flex min-h-0 w-full min-w-0 max-w-7xl flex-1 flex-col gap-4 py-4"
     >
       <IssueViewControlBar
         openCount={openCount}

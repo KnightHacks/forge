@@ -76,7 +76,7 @@ export const DEFAULT_ISSUE_FILTERS: IssueFilters = {
   searchTerm: "",
   dateFrom: "",
   dateTo: "",
-  rootOnly: true,
+  rootOnly: false,
   issueKind: "all",
 };
 

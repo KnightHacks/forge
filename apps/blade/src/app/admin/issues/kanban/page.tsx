@@ -22,7 +22,7 @@ export default async function AdminIssuesKanbanPage() {
 
   return (
     <HydrateClient>
-      <main className="px-4 pb-4 md:px-6 md:pb-6">
+      <main className="flex h-[calc(100dvh-5rem)] min-h-0 flex-col overflow-y-auto px-4 pb-4 md:px-6 md:pb-6">
         <KanbanBoard />
       </main>
     </HydrateClient>

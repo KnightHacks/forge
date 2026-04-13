@@ -95,11 +95,11 @@ export function IssuesList() {
   const filters = paneData?.filters;
 
   const activeFilters = useMemo(() => {
-    return getActiveIssueFilterTags(filters);
-  }, [filters]);
+    return getActiveIssueFilterTags(filters, paneData?.roleNameById);
+  }, [filters, paneData?.roleNameById]);
 
   return (
-    <section className="mx-auto w-full max-w-6xl space-y-4 py-4">
+    <section className="mx-auto w-full max-w-7xl space-y-4 py-4">
       <IssueViewControlBar
         openCount={openCount}
         closedCount={closedCount}

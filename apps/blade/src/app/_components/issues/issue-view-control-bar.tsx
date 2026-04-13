@@ -17,12 +17,16 @@ function formatStatus(status: string) {
 
 export function getActiveIssueFilterTags(
   filters: ISSUE.IssueFilters | null | undefined,
+  roleNameById?: Map<string, string> | null,
 ) {
   if (!filters) return [];
 
   const tags: string[] = [];
   if (filters.statusFilter !== "all") tags.push(formatStatus(filters.statusFilter));
-  if (filters.teamFilter !== "all") tags.push("Team selected");
+  if (filters.teamFilter !== "all") {
+    const teamName = roleNameById?.get(filters.teamFilter) ?? filters.teamFilter;
+    tags.push(`Team Selected: ${teamName}`);
+  }
   if (filters.issueKind !== "all") {
     tags.push(
       filters.issueKind === "task" ? "Tasks only" : "Event-linked only",

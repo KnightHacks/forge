@@ -24,7 +24,7 @@ export default async function AdminIssuesCalendarPage() {
 
   return (
     <HydrateClient>
-      <main className="flex h-[calc(100dvh-5rem)] min-h-0 flex-col px-4 pb-4 pt-2 md:px-6 md:pb-6">
+      <main className="flex h-[calc(100dvh-5rem)] min-h-0 flex-col overflow-y-auto px-4 pb-4 md:px-6 md:pb-6">
         <Calendar />
       </main>
     </HydrateClient>
