@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback } from "react";
-import { AlertCircle, Clock, Copy, Pencil, User, Users } from "lucide-react";
+import { AlertCircle, Copy, Pencil, User, Users } from "lucide-react";
 
-import { ISSUE } from "@forge/consts";
+import type { ISSUE } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
@@ -15,21 +15,6 @@ type Issue = ISSUE.IssueFetcherPaneIssue;
 
 function startOfLocalDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-
-function isDefaultTaskDue(d: Date) {
-  return (
-    d.getHours() === ISSUE.TASK_DUE_HOURS &&
-    d.getMinutes() === ISSUE.TASK_DUE_MINUTES &&
-    d.getSeconds() === 0
-  );
-}
-
-function formatIssueTime(d: Date) {
-  return d.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 function teamLabels(
@@ -83,9 +68,17 @@ export function IssueDayAgenda(props: {
   issues: Issue[];
   isLoading: boolean;
   roleNameById: Map<string, string> | undefined;
+  onIssueSelect?: (issueId: string) => void;
   onIssuesChanged?: () => void;
 }) {
-  const { day, issues, isLoading, roleNameById, onIssuesChanged } = props;
+  const {
+    day,
+    issues,
+    isLoading,
+    roleNameById,
+    onIssueSelect,
+    onIssuesChanged,
+  } = props;
 
   const utils = api.useUtils();
   const deleteIssueMutation = api.issues.deleteIssue.useMutation({
@@ -173,9 +166,6 @@ export function IssueDayAgenda(props: {
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4">
         <ul className="list-none space-y-3">
           {sorted.map((issue) => {
-            const when = issue.date ? new Date(issue.date) : null;
-            const showScheduledTime =
-              when && (Boolean(issue.event) || !isDefaultTaskDue(when));
             const overdue = isOverdueIssue(issue);
             const teams = teamLabels(issue, roleNameById).map(formatTeamLabel);
             const teamsText = teams.join(" · ");
@@ -198,12 +188,24 @@ export function IssueDayAgenda(props: {
                       data-issue-status={issue.status}
                       aria-hidden
                     />
-                    <h3
-                      className="min-w-0 flex-1 text-base font-semibold leading-snug tracking-tight text-foreground"
-                      title={issueStatusForAria(issue.status)}
-                    >
-                      {issue.name}
-                    </h3>
+                    {onIssueSelect ? (
+                      <button
+                        type="button"
+                        className="min-w-0 flex-1 cursor-pointer text-left text-base font-semibold leading-snug tracking-tight text-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        title={issueStatusForAria(issue.status)}
+                        aria-label={`View details: ${issue.name}`}
+                        onClick={() => onIssueSelect(issue.id)}
+                      >
+                        {issue.name}
+                      </button>
+                    ) : (
+                      <h3
+                        className="min-w-0 flex-1 text-base font-semibold leading-snug tracking-tight text-foreground"
+                        title={issueStatusForAria(issue.status)}
+                      >
+                        {issue.name}
+                      </h3>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-1 self-center">
                     <Button
@@ -251,16 +253,6 @@ export function IssueDayAgenda(props: {
                 </div>
 
                 <div className="mt-3 space-y-2 border-t border-border/70 pt-3">
-                  {showScheduledTime && issue.date ? (
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Clock
-                        className="size-3.5 shrink-0 opacity-80"
-                        aria-hidden
-                      />
-                      <span>{formatIssueTime(new Date(issue.date))}</span>
-                    </div>
-                  ) : null}
-
                   {overdue ? (
                     <div
                       className="flex items-center gap-1.5 text-xs font-medium text-red-900 dark:text-red-400"

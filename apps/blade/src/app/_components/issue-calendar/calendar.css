@@ -202,6 +202,29 @@
     background-color: hsl(var(--background));
   }
 
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day,
+  .calendar-theme .fc-dayGridWeek-view .fc-daygrid-day {
+    transition: background-color 140ms ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day,
+    .calendar-theme .fc-dayGridWeek-view .fc-daygrid-day {
+      transition: none;
+    }
+  }
+
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day:hover,
+  .calendar-theme .fc-dayGridWeek-view .fc-daygrid-day:hover {
+    cursor: pointer;
+    background-color: hsl(var(--accent) / 0.28);
+  }
+
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day.fc-day-today:hover,
+  .calendar-theme .fc-dayGridWeek-view .fc-daygrid-day.fc-day-today:hover {
+    background-color: hsl(var(--primary) / 0.22) !important;
+  }
+
   .calendar-theme .fc-day-other .fc-daygrid-day-number {
     color: hsl(var(--muted-foreground));
     opacity: 0.65;

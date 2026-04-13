@@ -11,6 +11,7 @@ import type {
   EventInput,
   MoreLinkArg,
 } from "@fullcalendar/core";
+import type { DateClickArg } from "@fullcalendar/interaction";
 import {
   useCallback,
   useDeferredValue,
@@ -84,6 +85,30 @@ function dateFromDataDate(dateStr: string): Date {
   const d = Number(parts[2]);
   if (![y, m, d].every((n) => Number.isFinite(n))) return new Date(dateStr);
   return new Date(y, m - 1, d, 12, 0, 0, 0);
+}
+
+/** FC day-grid header `date` is often UTC-based; local formatting shifts the weekday. `dow` matches the column (0 = Sunday). */
+function weekdayShortFromFullCalendarDow(dow: number): string {
+  const sun = new Date(2024, 0, 7);
+  const d = new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + dow);
+  return d.toLocaleDateString(undefined, { weekday: "short" });
+}
+
+function dayNumberFromDayHeaderArg(arg: DayHeaderContentArg): number {
+  const raw = (arg as { dateStr?: string }).dateStr;
+  if (typeof raw === "string" && /^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    return Number(raw.slice(8, 10));
+  }
+  const d = arg.date;
+  return new Date(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate(),
+    12,
+    0,
+    0,
+    0,
+  ).getDate();
 }
 
 function elementFromEventTarget(target: EventTarget | null): Element | null {
@@ -339,55 +364,6 @@ export default function CalendarView() {
     });
   }, [view, agendaDay]);
 
-  useEffect(() => {
-    const root = calendarSectionRef.current;
-    if (!root) return;
-
-    function goToAgendaFromDayNumber(e: Event) {
-      const t = e.target;
-      if (!(t instanceof Element)) return;
-      const num = t.closest(".fc-daygrid-day-number");
-      if (!num) return;
-
-      const api = calendarRef.current?.getApi();
-      if (!api) return;
-      const vt = api.view.type;
-      if (vt !== "dayGridMonth" && vt !== "dayGridWeek") return;
-
-      const dayCell = num.closest(".fc-daygrid-day");
-      const dateStr = dayCell?.getAttribute("data-date");
-      if (!dateStr) return;
-
-      suppressNextDateSelectRef.current = true;
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      api.unselect();
-      const d = dateFromDataDate(dateStr);
-      setAgendaDay(startOfLocalDay(d));
-      setView("issueDayAgenda");
-      setVisibleRange({
-        start: startOfLocalDay(d),
-        end: new Date(startOfLocalDay(d).getTime() + 86400000),
-      });
-    }
-
-    function onMouseDownCapture(e: MouseEvent) {
-      goToAgendaFromDayNumber(e);
-    }
-
-    function onPointerDownCapture(e: PointerEvent) {
-      if (e.pointerType === "mouse") return;
-      goToAgendaFromDayNumber(e);
-    }
-
-    root.addEventListener("mousedown", onMouseDownCapture, true);
-    root.addEventListener("pointerdown", onPointerDownCapture, true);
-    return () => {
-      root.removeEventListener("mousedown", onMouseDownCapture, true);
-      root.removeEventListener("pointerdown", onPointerDownCapture, true);
-    };
-  }, [view]);
-
   const headerCreateInitialValues = useMemo<Partial<ISSUE.IssueSubmitValues>>(
     () => ({
       date: view === "issueDayAgenda" ? agendaDay : new Date(),
@@ -399,33 +375,31 @@ export default function CalendarView() {
   function handleDateSelect(selectionInfo: DateSelectArg) {
     selectionInfo.view.calendar.unselect();
 
-    if (suppressNextDateSelectRef.current) {
-      suppressNextDateSelectRef.current = false;
-      return;
-    }
+    const rangeStart = selectionInfo.start;
+    // `select` can run before `dateClick` on the same click; defer so `handleDateClick` can set `suppressNextDateSelectRef`.
+    queueMicrotask(() => {
+      if (suppressNextDateSelectRef.current) {
+        suppressNextDateSelectRef.current = false;
+        return;
+      }
 
-    const origin = selectionInfo.jsEvent?.target;
-    if (origin instanceof Element && origin.closest(".fc-daygrid-day-number")) {
-      return;
-    }
-
-    dismissFullCalendarMorePopovers();
-    setModalIntent("create");
-    setSelectedIssueData({
-      date: selectionInfo.start,
+      dismissFullCalendarMorePopovers();
+      setModalIntent("create");
+      setSelectedIssueData({
+        date: rangeStart,
+      });
+      setIsModalOpen(true);
     });
-    setIsModalOpen(true);
   }
 
   /** Month: weekday only; week: weekday + day number (matches day agenda). */
   const issueDayHeaderContent = useCallback((arg: DayHeaderContentArg) => {
-    const d = arg.date;
-    const wd = d.toLocaleDateString(undefined, { weekday: "short" });
+    const wd = weekdayShortFromFullCalendarDow(arg.dow);
     if (arg.view.type === "dayGridMonth") {
       return { html: wd };
     }
     if (arg.view.type === "dayGridWeek") {
-      return { html: `${wd} ${d.getDate()}` };
+      return { html: `${wd} ${dayNumberFromDayHeaderArg(arg)}` };
     }
     return undefined;
   }, []);
@@ -452,6 +426,21 @@ export default function CalendarView() {
         </span>
       </div>
     );
+  }, []);
+
+  const handleDateClick = useCallback((arg: DateClickArg) => {
+    const vt = arg.view.type;
+    if (vt !== "dayGridMonth" && vt !== "dayGridWeek") return;
+    dismissFullCalendarMorePopovers();
+    const d = startOfLocalDay(arg.date);
+    suppressNextDateSelectRef.current = true;
+    arg.view.calendar.unselect();
+    setAgendaDay(d);
+    setView("issueDayAgenda");
+    setVisibleRange({
+      start: d,
+      end: new Date(d.getTime() + 86400000),
+    });
   }, []);
 
   function handleIssueClick(clickInfo: EventClickArg) {
@@ -668,6 +657,7 @@ export default function CalendarView() {
                 view === "dayGridWeek" ? "dayGridWeek" : "dayGridMonth"
               }
               initialDate={agendaDay}
+              firstDay={0}
               headerToolbar={false}
               displayEventTime={false}
               displayEventEnd={false}
@@ -683,7 +673,9 @@ export default function CalendarView() {
               stickyHeaderDates={true}
               handleWindowResize={true}
               selectable={true}
+              selectMinDistance={10}
               select={handleDateSelect}
+              dateClick={handleDateClick}
               eventClick={handleIssueClick}
               eventContent={issueEventContent}
               dayHeaderContent={issueDayHeaderContent}
@@ -696,6 +688,10 @@ export default function CalendarView() {
                 issues={issuesForCurrentView}
                 isLoading={paneData?.isLoading ?? true}
                 roleNameById={paneData?.roleNameById}
+                onIssueSelect={(issueId: string) => {
+                  setDetailIssueId(issueId);
+                  setIsDetailOpen(true);
+                }}
                 onIssuesChanged={() => {
                   void utils.issues.getAllIssues.invalidate();
                   void utils.issues.invalidate();
