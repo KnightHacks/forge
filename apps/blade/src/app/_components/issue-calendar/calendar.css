@@ -20,7 +20,7 @@
   .calendar-theme .fc {
     font-family: inherit;
     color: hsl(var(--foreground));
-    /* Flex child: prevent grid from overflowing past toolbar/card width */
+    /* Keep calendar inside its card (no sideways overflow). */
     min-width: 0;
     width: 100%;
   }
@@ -98,43 +98,38 @@
   }
 
   .calendar-theme .fc-scrollgrid {
-    /* visible: "+N more" popover is absolutely positioned; hidden clips it to the grid corner */
+    /* So the “+N more” popup isn’t cut off. */
     overflow: visible;
     background-color: hsl(var(--card));
   }
 
-  /*
-   * Month: natural row heights (expandRows off) + vertical scroll inside the grid.
-   * Week/day: scroll the time area (and all-day section grows with content).
-   */
-  .calendar-theme .fc-dayGridMonth-view .fc-scroller,
-  .calendar-theme .fc-timeGridWeek-view .fc-scroller,
-  .calendar-theme .fc-timeGridDay-view .fc-scroller {
+  /* Month view: show the whole month at once (no up/down scroll on the grid). */
+  .calendar-theme .fc-dayGridMonth-view .fc-scroller {
+    overflow-x: hidden;
+    overflow-y: hidden !important;
+  }
+
+  /* Week view: scroll if the window is short. */
+  .calendar-theme .fc-dayGridWeek-view .fc-scroller {
     overflow-x: hidden;
     overflow-y: auto !important;
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
   }
 
-  .calendar-theme .fc-dayGridMonth-view .fc-scroller::-webkit-scrollbar,
-  .calendar-theme .fc-timeGridWeek-view .fc-scroller::-webkit-scrollbar,
-  .calendar-theme .fc-timeGridDay-view .fc-scroller::-webkit-scrollbar {
+  .calendar-theme .fc-dayGridWeek-view .fc-scroller::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
 
-  .calendar-theme .fc-dayGridMonth-view .fc-scroller::-webkit-scrollbar-thumb,
-  .calendar-theme .fc-timeGridWeek-view .fc-scroller::-webkit-scrollbar-thumb,
-  .calendar-theme .fc-timeGridDay-view .fc-scroller::-webkit-scrollbar-thumb {
+  .calendar-theme .fc-dayGridWeek-view .fc-scroller::-webkit-scrollbar-thumb {
     background-color: hsl(var(--muted-foreground) / 0.35);
     border-radius: 9999px;
     border: 2px solid transparent;
     background-clip: padding-box;
   }
 
-  .calendar-theme .fc-dayGridMonth-view .fc-scroller::-webkit-scrollbar-track,
-  .calendar-theme .fc-timeGridWeek-view .fc-scroller::-webkit-scrollbar-track,
-  .calendar-theme .fc-timeGridDay-view .fc-scroller::-webkit-scrollbar-track {
+  .calendar-theme .fc-dayGridWeek-view .fc-scroller::-webkit-scrollbar-track {
     background: transparent;
   }
 
@@ -144,22 +139,13 @@
     max-width: 100%;
   }
 
-  .calendar-theme .fc-daygrid-day-top,
+  /* Day header bar: card color on normal days; today stays clear so the “today” tint shows. */
+  .calendar-theme .fc-daygrid-day:not(.fc-day-today) .fc-daygrid-day-top,
   .calendar-theme .fc-list-day-cushion {
     background-color: hsl(var(--card));
   }
 
-  /* Today tint: sublayers used solid surfaces; make them transparent so one fill covers the cell. */
-  .calendar-theme .fc-daygrid-day.fc-day-today .fc-daygrid-day-top,
-  .calendar-theme .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame,
-  .calendar-theme .fc-daygrid-day.fc-day-today .fc-daygrid-day-events {
-    background-color: transparent;
-  }
-
-  /*
-   * Weekday name row — match issues list table header
-   * (issues-list: border-b bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground)
-   */
+  /* Top row of weekday names — styled like the issues table header. */
   .calendar-theme .fc-col-header-cell {
     background-color: hsl(var(--muted) / 0.3);
     border-color: hsl(var(--border));
@@ -181,8 +167,9 @@
     font-weight: 500;
   }
 
-  /* Month: day number is a hit target → day view; hover = soft circle behind the glyph */
-  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-number {
+  /* Click the day number to open day view; hover adds a light circle. */
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-number,
+  .calendar-theme .fc-dayGridWeek-view .fc-daygrid-day-number {
     position: relative;
     z-index: 1;
     display: inline-flex;
@@ -197,33 +184,20 @@
     transition: background-color 120ms ease;
   }
 
-  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-number:hover {
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-number:hover,
+  .calendar-theme .fc-dayGridWeek-view .fc-daygrid-day-number:hover {
     background-color: hsl(var(--muted-foreground) / 0.16);
   }
 
-  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-number:active {
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-number:active,
+  .calendar-theme .fc-dayGridWeek-view .fc-daygrid-day-number:active {
     background-color: hsl(var(--muted-foreground) / 0.26);
   }
 
-  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-number:focus-visible {
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-number:focus-visible,
+  .calendar-theme .fc-dayGridWeek-view .fc-daygrid-day-number:focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
-  }
-
-  /*
-   * Week/day: due-date band uses .fc-daygrid-body under the time grid.
-   * Label that gutter “Due” (allDayText); style like hour labels; no uppercase.
-   */
-  .calendar-theme .fc-timeGridWeek-view .fc-daygrid-body .fc-timegrid-axis-cushion,
-  .calendar-theme .fc-timeGridDay-view .fc-daygrid-body .fc-timegrid-axis-cushion {
-    padding: 0 0.625rem 0 0.125rem;
-    font-size: 0.8125rem;
-    font-weight: 400;
-    line-height: 1.35;
-    letter-spacing: 0.02em;
-    color: hsl(var(--muted-foreground));
-    text-align: right;
-    text-transform: none;
   }
 
   .calendar-theme .fc-daygrid-day {
@@ -240,20 +214,18 @@
     font-weight: 700;
   }
 
-  /* Month grid only — .fc-day-today also appears on timeGrid columns; do not tint those here. */
-  .calendar-theme .fc-daygrid-day.fc-day-today {
-    background-color: hsl(var(--primary) / 0.08) !important;
-  }
-
-  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-body td {
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-body td,
+  .calendar-theme .fc-dayGridWeek-view .fc-daygrid-body td {
     vertical-align: top;
   }
 
-  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-frame {
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-frame,
+  .calendar-theme .fc-dayGridWeek-view .fc-daygrid-day-frame {
     min-height: 0;
   }
 
-  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-events {
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-day-events,
+  .calendar-theme .fc-dayGridWeek-view .fc-daygrid-day-events {
     padding-bottom: 0.125rem;
   }
 
@@ -265,41 +237,81 @@
     color: hsl(var(--primary-foreground));
   }
 
-  /* Issue chips: slightly shorter than generic FC events */
+  /* Issue rows are a bit shorter than default events. */
   .calendar-theme .fc-daygrid-event.calendar-issue {
     padding-block: 0.125rem;
     line-height: 1.2;
   }
 
-  /* Month only: keep 3 rows + “+N more” inside short cells */
-  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-event {
+  /* Smaller text for issue pills in month/week cells. */
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-event,
+  .calendar-theme .fc-dayGridWeek-view .fc-daygrid-event {
     font-size: 0.6875rem;
     line-height: 1.2;
     padding-block: 0.125rem;
   }
 
+  /* Month: even smaller pills (fits a few + “+N more”). */
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-event,
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-event .fc-event-title {
+    font-size: 0.625rem;
+    line-height: 1.15;
+    font-weight: 500;
+  }
+
   .calendar-theme .fc-dayGridMonth-view .fc-daygrid-event.calendar-issue {
+    padding-block: 0;
+    padding-inline: 0.1875rem;
+    line-height: 1.1;
+    min-height: 0;
+  }
+
+  .calendar-theme .fc-dayGridWeek-view .fc-daygrid-event.calendar-issue {
     line-height: 1.15;
     padding-block: 1px;
   }
 
-  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-event .issue-calendar-status-dot {
+  .calendar-theme
+    .fc-dayGridMonth-view
+    .fc-daygrid-event
+    .issue-calendar-status-dot,
+  .calendar-theme
+    .fc-dayGridWeek-view
+    .fc-daygrid-event
+    .issue-calendar-status-dot {
     width: 0.5rem;
     height: 0.5rem;
+  }
+
+  .calendar-theme
+    .fc-dayGridMonth-view
+    .fc-daygrid-event
+    .issue-calendar-status-dot {
+    width: 0.375rem;
+    height: 0.375rem;
   }
 
   .calendar-theme .fc-daygrid-event .fc-event-title {
     font-weight: 500;
   }
 
-  /* ~1 hairline between stacked issue chips; slight inset from day cell edges (esp. right). */
+  /* Space between stacked issue rows. */
   .calendar-theme .fc-daygrid-event-harness:has(.fc-event.calendar-issue) {
     margin-bottom: 2px;
     margin-right: 0.375rem;
   }
 
-  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-event-harness:has(.fc-event.calendar-issue) {
-    margin-bottom: 1px;
+  .calendar-theme
+    .fc-dayGridMonth-view
+    .fc-daygrid-event-harness:has(.fc-event.calendar-issue) {
+    margin-bottom: 0.1875rem;
+    margin-right: 0.25rem;
+  }
+
+  .calendar-theme
+    .fc-dayGridWeek-view
+    .fc-daygrid-event-harness:has(.fc-event.calendar-issue) {
+    margin-bottom: 0.1875rem;
     margin-right: 0.25rem;
   }
 
@@ -308,7 +320,13 @@
     margin-right: 0.375rem;
   }
 
-  /* Ensure timed issue blocks stay above grid lines */
+  .calendar-theme .fc-dayGridMonth-view .fc-daygrid-more-link {
+    margin-top: 0.125rem;
+    font-size: 0.625rem;
+    line-height: 1.2;
+  }
+
+  /* Timed events sit above the grid lines. */
   .calendar-theme .fc-timegrid-event-harness {
     z-index: 1;
   }
@@ -327,16 +345,13 @@
     line-height: 1.2;
   }
 
-  /*
-   * slotDuration 30m: dotted tops on minor rows + theme borders every row.
-   * Strip half-hour lines; hour boundaries remain from the next hour’s row top border.
-   */
+  /* 30-min slots: hide the extra line between half hours; keep hour lines. */
   .calendar-theme .fc-timegrid-body td.fc-timegrid-slot-minor {
     border-top-width: 0 !important;
     border-top-style: none !important;
   }
 
-  /* Hour label row: remove bottom border on every cell (time gutter + day columns). */
+  /* Time labels row: no extra line under the whole row. */
   .calendar-theme
     .fc-timegrid-body
     tr:has(.fc-timegrid-slot-label.fc-scrollgrid-shrink)
@@ -345,16 +360,11 @@
     border-bottom-style: none !important;
   }
 
-  /* Week/day: uppercase AM/PM in time-slot labels only (not the “Due” axis). */
+  /* AM/PM in the time column (not the left “all‑day” strip). */
   .calendar-theme .fc-timegrid-slot-label-cushion {
     text-transform: uppercase;
   }
 
-  /*
-   * Week & day: time gutter — dark column, muted hour labels.
-   * Do not set display/width on .fc-timegrid-slot-label-cushion: it uses
-   * .fc-scrollgrid-shrink-cushion; changing box model breaks column width math and squishes events.
-   */
   .calendar-theme .fc-timeGridWeek-view .fc-timegrid-axis,
   .calendar-theme .fc-timeGridDay-view .fc-timegrid-axis {
     background-color: hsl(var(--background));
@@ -418,7 +428,7 @@
   }
 }
 
-/* "+N more" popover (month overflow) — align with Blade surfaces */
+/* “+N more” popup */
 .calendar-theme .fc-popover,
 .calendar-theme .fc-more-popover.fc-popover {
   z-index: 60;
@@ -443,21 +453,24 @@
   padding: 0.25rem;
 }
 
-/*
- * Grid borders: FullCalendar’s base CSS is unlayered, so @layer rules above lose.
- * Force the same `border` token as Blade cards (`rounded-lg border border-border`).
- *
- * FC keeps a 1px top+left on `.fc-scrollgrid` while zeroing bottom+right; with our
- * card wrapper also using `border`, that doubles the top/left edge and looks soft
- * or “off” vs other surfaces. Rely on the wrapper for the outer frame only.
- */
 .calendar-theme .fc-scrollgrid {
   border-color: hsl(var(--border));
   border-top-width: 0 !important;
   border-left-width: 0 !important;
-  /* Must stay visible (unlayered) so "+N more" popover is not clipped by @layer losing to FC defaults */
   overflow: visible;
   max-width: 100%;
+}
+
+.calendar-theme .fc-dayGridMonth-view .fc-scroller,
+.calendar-theme .fc-dayGridMonth-view .fc-scroller-harness,
+.calendar-theme .fc-dayGridMonth-view .fc-scroller-liquid-absolute {
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+}
+
+.calendar-theme .fc-dayGridMonth-view .fc-view-harness {
+  overflow: hidden !important;
+  min-height: 0;
 }
 
 .calendar-theme .fc-scrollgrid-section,
@@ -480,11 +493,6 @@
   border-color: hsl(var(--border));
 }
 
-/*
- * Outer vertical grid line on the last column: with scrollgrid top/left zeroed for the
- * card wrapper, FC’s default “frame” border can disappear on the right — restore it so
- * Saturday / last time column matches the other dividers and stays inside the card edge.
- */
 .calendar-theme .fc-col-header .fc-col-header-cell:last-child,
 .calendar-theme .fc-daygrid-body .fc-daygrid-day:last-child {
   border-right-width: 1px !important;
@@ -504,11 +512,11 @@
   border-right-style: solid !important;
 }
 
-/*
- * FullCalendar injects its base CSS without @layer. Rules inside @layer components
- * lose the cascade to those unlayered rules, so timeGrid "today" column styling
- * must live here. Target .fc-timegrid-col.fc-day-today (see timegrid index.global.css).
- */
+.calendar-theme .fc-dayGridMonth-view .fc-daygrid-day.fc-day-today,
+.calendar-theme .fc-dayGridWeek-view .fc-daygrid-day.fc-day-today {
+  background-color: hsl(var(--primary) / 0.12) !important;
+}
+
 .calendar-theme
   .fc-timeGridDay-view
   .fc-timegrid-body
@@ -537,12 +545,24 @@
   font-weight: 700;
 }
 
-/* Issue events: slightly darker on hover (click opens edit dialog). */
+.calendar-theme .fc-dayGridWeek-view .fc-col-header-cell.fc-day-today {
+  background-color: hsl(var(--primary) / 0.12) !important;
+}
+
+.calendar-theme
+  .fc-dayGridWeek-view
+  .fc-col-header-cell.fc-day-today
+  .fc-col-header-cell-cushion {
+  color: hsl(var(--primary));
+  font-weight: 700;
+}
+
+/* Issue bar: a bit darker on hover. */
 .calendar-theme .fc-event.calendar-issue:hover {
   filter: brightness(0.88);
 }
 
-/* Custom React event content: dot + title row */
+/* Issue row: status dot + title. */
 .calendar-theme .fc-daygrid-event .calendar-issue-event-main,
 .calendar-theme .fc-timegrid-event .calendar-issue-event-main,
 .calendar-theme .fc-v-event .calendar-issue-event-main {
@@ -555,15 +575,19 @@
   line-height: 1.2;
 }
 
+.calendar-theme
+  .fc-dayGridMonth-view
+  .fc-daygrid-event
+  .calendar-issue-event-main {
+  gap: 0.125rem;
+  line-height: 1.1;
+}
+
 .calendar-theme .fc-event.calendar-issue--finished .fc-event-title {
   text-decoration: line-through;
   opacity: 0.88;
 }
 
-/*
- * Status dots: colors live here so we do not rely on Tailwind seeing dynamic `bg-*`
- * strings from shared consts (same idea as examples that style dots in plain CSS).
- */
 .calendar-theme .issue-calendar-status-dot[data-issue-status="BACKLOG"] {
   background-color: rgb(148 163 184);
 }

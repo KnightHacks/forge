@@ -5,10 +5,11 @@ import "./calendar.css";
 import type {
   DateSelectArg,
   DatesSetArg,
+  DayHeaderContentArg,
   EventClickArg,
   EventContentArg,
   EventInput,
-  SlotLabelContentArg,
+  MoreLinkArg,
 } from "@fullcalendar/core";
 import {
   useCallback,
@@ -21,7 +22,6 @@ import {
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
-import timeGridPlugin from "@fullcalendar/timegrid";
 import {
   CheckCircle2,
   ChevronLeft,
@@ -41,9 +41,10 @@ import { CreateEditDialog } from "../issues/create-edit-dialog";
 import { IssueFetcherPane } from "../issues/issue-fetcher-pane";
 import IssueTemplateDialog from "../issues/issue-template-dialog";
 import { CalendarIssueDialog } from "./calendar-issue-dialog";
-import { IssueStatusDotLegend } from "./issue-status-dot-legend";
+import { IssueDayAgenda } from "./calendar-day-agenda";
+import { IssueStatusDotLegend } from "./calendar-status-dot-legend";
 
-type CalendarView = "dayGridMonth" | "timeGridWeek" | "timeGridDay";
+type CalendarView = "dayGridMonth" | "dayGridWeek" | "issueDayAgenda";
 
 type IssueCalendarStatus = ISSUE.IssueFetcherPaneIssue["status"];
 
@@ -65,7 +66,7 @@ function issueCalendarSlot(issueDate: Date): { start: Date; end: Date } {
   return { start, end };
 }
 
-/** Matches `normalizeTaskDueDate` — calendar shows these in the all-day row (week/day). */
+/** Default task-due time → all-day band in month/week grid (see normalizeTaskDueDate). */
 function isDefaultTaskDueMoment(d: Date): boolean {
   return (
     d.getHours() === ISSUE.TASK_DUE_HOURS &&
@@ -73,10 +74,6 @@ function isDefaultTaskDueMoment(d: Date): boolean {
     d.getSeconds() === 0 &&
     d.getMilliseconds() === 0
   );
-}
-
-function pad2(n: number) {
-  return String(n).padStart(2, "0");
 }
 
 function dateFromDataDate(dateStr: string): Date {
@@ -89,22 +86,11 @@ function dateFromDataDate(dateStr: string): Date {
   return new Date(y, m - 1, d, 12, 0, 0, 0);
 }
 
-function scrollTimeStrForEarliestIssue(slots: EventInput[]): string | null {
-  let min = Infinity;
-  for (const slot of slots) {
-    if (slot.allDay) continue;
-    if (slot.start == null) continue;
-    const t = +new Date(slot.start as string | Date);
-    if (!Number.isNaN(t)) min = Math.min(min, t);
-  }
-  if (min === Infinity) return null;
-  const d = new Date(min);
-  d.setMinutes(d.getMinutes() - 45, 0, 0);
-  const dayStart = startOfLocalDay(d);
-  if (d.getTime() < dayStart.getTime()) {
-    d.setTime(dayStart.getTime());
-  }
-  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+function elementFromEventTarget(target: EventTarget | null): Element | null {
+  if (!target) return null;
+  if (target instanceof Element) return target;
+  if (target instanceof Text) return target.parentElement;
+  return null;
 }
 
 function dismissFullCalendarMorePopovers() {
@@ -120,16 +106,13 @@ function formatStatus(status: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-/** FC often renders "11AM"; normalize to "11 AM" (keeps existing spaces intact). */
-function slotLabelHtmlFromFullCalendarText(text: string): string {
-  return text.replace(/(\d{1,2}(?::\d{2})?)(AM|PM)/gi, "$1 $2");
-}
-
 export default function CalendarView() {
   const calendarRef = useRef<FullCalendar | null>(null);
   const calendarSectionRef = useRef<HTMLElement | null>(null);
   const suppressNextDateSelectRef = useRef(false);
+  const prevViewRef = useRef<CalendarView>("dayGridMonth");
   const [view, setView] = useState<CalendarView>("dayGridMonth");
+  const [agendaDay, setAgendaDay] = useState(() => startOfLocalDay(new Date()));
   const [title, setTitle] = useState("Calendar");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -189,7 +172,16 @@ export default function CalendarView() {
     return tags;
   }, [filters]);
 
-  const issuesInVisibleRange = useMemo(() => {
+  const issuesForCurrentView = useMemo(() => {
+    if (view === "issueDayAgenda") {
+      const vs = startOfLocalDay(agendaDay).getTime();
+      const ve = vs + 86400000;
+      return issuesForCalendar.filter((issue) => {
+        if (!issue.date) return false;
+        const day = startOfLocalDay(new Date(issue.date)).getTime();
+        return day >= vs && day < ve;
+      });
+    }
     if (!visibleRange) return issuesForCalendar;
     const vs = startOfLocalDay(visibleRange.start).getTime();
     const ve = visibleRange.end.getTime();
@@ -198,7 +190,7 @@ export default function CalendarView() {
       const day = startOfLocalDay(new Date(issue.date)).getTime();
       return day >= vs && day < ve;
     });
-  }, [issuesForCalendar, visibleRange]);
+  }, [view, agendaDay, visibleRange, issuesForCalendar]);
 
   const utils = api.useUtils();
 
@@ -215,7 +207,8 @@ export default function CalendarView() {
   });
 
   const issueCalendarItems = useMemo<EventInput[]>(() => {
-    return issuesInVisibleRange.flatMap((issue): EventInput[] => {
+    if (view === "issueDayAgenda") return [];
+    return issuesForCurrentView.flatMap((issue): EventInput[] => {
       if (!issue.date) return [];
       const d = new Date(issue.date);
       const baseClassNames = [
@@ -224,12 +217,7 @@ export default function CalendarView() {
         ...(issue.status === "FINISHED" ? ["calendar-issue--finished"] : []),
       ] as string[];
 
-      /*
-       * Event-linked issues use real start times. Tasks default to TASK_DUE_* (11pm local);
-       * show those in the all-day band on week/day instead of stacking at the bottom.
-       */
-      const useAllDayBand =
-        !issue.event && isDefaultTaskDueMoment(d);
+      const useAllDayBand = !issue.event && isDefaultTaskDueMoment(d);
 
       if (useAllDayBand) {
         return [
@@ -259,40 +247,81 @@ export default function CalendarView() {
         },
       ];
     });
-  }, [issuesInVisibleRange]);
+  }, [view, issuesForCurrentView]);
 
   const fullCalendarViews = useMemo(
     () => ({
       dayGridMonth: {
-        /* Cap visible chips; overflow uses "+N more" → day view (see moreLinkClick). */
         dayMaxEvents: 3,
+        fixedWeekCount: true,
       },
-      timeGridWeek: {
-        dayHeaderFormat: { weekday: "short" as const, day: "numeric" as const },
-      },
-      timeGridDay: {
-        dayHeaderFormat: {
-          weekday: "long" as const,
-          month: "long" as const,
-          day: "numeric" as const,
-          year: "numeric" as const,
-        },
+      dayGridWeek: {
+        dayMaxEvents: false,
       },
     }),
     [],
   );
 
-  useEffect(() => {
-    if (view !== "timeGridWeek" && view !== "timeGridDay") return;
-    const scrollStr = scrollTimeStrForEarliestIssue(issueCalendarItems);
-    if (!scrollStr) return;
-    const id = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        calendarRef.current?.getApi().scrollToTime(scrollStr);
-      });
+  /** “+more” day: prefer data-date / hiddenSegs; arg.date can drift across TZs. */
+  const dayDateFromMoreLinkArg = useCallback((arg: MoreLinkArg) => {
+    const el = elementFromEventTarget(arg.jsEvent.target ?? null);
+    if (el) {
+      const dayEl = el.closest(".fc-daygrid-day");
+      const ds = dayEl?.getAttribute("data-date");
+      if (ds) return dateFromDataDate(ds);
+    }
+    const hidden = (
+      arg as unknown as {
+        hiddenSegs?: { eventRange?: { range?: { start?: Date } } }[];
+      }
+    ).hiddenSegs;
+    const start = hidden?.[0]?.eventRange?.range?.start;
+    if (start) return startOfLocalDay(start);
+    return startOfLocalDay(arg.date);
+  }, []);
+
+  const goToAgendaForDay = useCallback((d: Date) => {
+    const day = startOfLocalDay(d);
+    dismissFullCalendarMorePopovers();
+    setAgendaDay(day);
+    setView("issueDayAgenda");
+    setVisibleRange({
+      start: day,
+      end: new Date(day.getTime() + 86400000),
     });
-    return () => cancelAnimationFrame(id);
-  }, [view, issueCalendarItems]);
+  }, []);
+
+  const handleMoreLinkClick = useCallback(
+    (arg: MoreLinkArg) => {
+      goToAgendaForDay(dayDateFromMoreLinkArg(arg));
+      return "none" as const;
+    },
+    [dayDateFromMoreLinkArg, goToAgendaForDay],
+  );
+
+  useEffect(() => {
+    const root = calendarSectionRef.current;
+    if (!root) return;
+
+    function onMoreLinkClickCapture(e: MouseEvent) {
+      const section = calendarSectionRef.current;
+      if (!section) return;
+      const el = elementFromEventTarget(e.target);
+      const link = el?.closest(".fc-daygrid-more-link");
+      if (!link || !section.contains(link)) return;
+      const dayEl = link.closest(".fc-daygrid-day");
+      const ds = dayEl?.getAttribute("data-date");
+      if (!ds) return;
+      e.preventDefault();
+      e.stopPropagation();
+      goToAgendaForDay(dateFromDataDate(ds));
+    }
+
+    root.addEventListener("click", onMoreLinkClickCapture, true);
+    return () => {
+      root.removeEventListener("click", onMoreLinkClickCapture, true);
+    };
+  }, [goToAgendaForDay]);
 
   useEffect(() => {
     if (isModalOpen || isDetailOpen || isFiltersOpen) {
@@ -301,17 +330,29 @@ export default function CalendarView() {
   }, [isModalOpen, isDetailOpen, isFiltersOpen]);
 
   useEffect(() => {
+    const prev = prevViewRef.current;
+    prevViewRef.current = view;
+    if (view !== "dayGridMonth" && view !== "dayGridWeek") return;
+    if (prev !== "issueDayAgenda") return;
+    requestAnimationFrame(() => {
+      calendarRef.current?.getApi().gotoDate(agendaDay);
+    });
+  }, [view, agendaDay]);
+
+  useEffect(() => {
     const root = calendarSectionRef.current;
     if (!root) return;
 
-    function goToDayViewFromDayNumber(e: Event) {
+    function goToAgendaFromDayNumber(e: Event) {
       const t = e.target;
       if (!(t instanceof Element)) return;
       const num = t.closest(".fc-daygrid-day-number");
       if (!num) return;
 
       const api = calendarRef.current?.getApi();
-      if (api?.view.type !== "dayGridMonth") return;
+      if (!api) return;
+      const vt = api.view.type;
+      if (vt !== "dayGridMonth" && vt !== "dayGridWeek") return;
 
       const dayCell = num.closest(".fc-daygrid-day");
       const dateStr = dayCell?.getAttribute("data-date");
@@ -321,17 +362,22 @@ export default function CalendarView() {
       e.preventDefault();
       e.stopImmediatePropagation();
       api.unselect();
-      setView("timeGridDay");
-      api.changeView("timeGridDay", dateFromDataDate(dateStr));
+      const d = dateFromDataDate(dateStr);
+      setAgendaDay(startOfLocalDay(d));
+      setView("issueDayAgenda");
+      setVisibleRange({
+        start: startOfLocalDay(d),
+        end: new Date(startOfLocalDay(d).getTime() + 86400000),
+      });
     }
 
     function onMouseDownCapture(e: MouseEvent) {
-      goToDayViewFromDayNumber(e);
+      goToAgendaFromDayNumber(e);
     }
 
     function onPointerDownCapture(e: PointerEvent) {
       if (e.pointerType === "mouse") return;
-      goToDayViewFromDayNumber(e);
+      goToAgendaFromDayNumber(e);
     }
 
     root.addEventListener("mousedown", onMouseDownCapture, true);
@@ -344,10 +390,10 @@ export default function CalendarView() {
 
   const headerCreateInitialValues = useMemo<Partial<ISSUE.IssueSubmitValues>>(
     () => ({
-      date: new Date(),
+      date: view === "issueDayAgenda" ? agendaDay : new Date(),
       isEvent: true,
     }),
-    [],
+    [view, agendaDay],
   );
 
   function handleDateSelect(selectionInfo: DateSelectArg) {
@@ -371,10 +417,17 @@ export default function CalendarView() {
     setIsModalOpen(true);
   }
 
-  const issueSlotLabelContent = useCallback((arg: SlotLabelContentArg) => {
-    return {
-      html: slotLabelHtmlFromFullCalendarText(arg.text),
-    };
+  /** Month: weekday only; week: weekday + day number (matches day agenda). */
+  const issueDayHeaderContent = useCallback((arg: DayHeaderContentArg) => {
+    const d = arg.date;
+    const wd = d.toLocaleDateString(undefined, { weekday: "short" });
+    if (arg.view.type === "dayGridMonth") {
+      return { html: wd };
+    }
+    if (arg.view.type === "dayGridWeek") {
+      return { html: `${wd} ${d.getDate()}` };
+    }
+    return undefined;
   }, []);
 
   const issueEventContent = useCallback((arg: EventContentArg) => {
@@ -403,7 +456,7 @@ export default function CalendarView() {
 
   function handleIssueClick(clickInfo: EventClickArg) {
     const id = String(clickInfo.event.id);
-    const issue = issuesInVisibleRange.find((i) => i.id === id);
+    const issue = issuesForCurrentView.find((i) => i.id === id);
     if (!issue) return;
     dismissFullCalendarMorePopovers();
     setDetailIssueId(id);
@@ -412,41 +465,80 @@ export default function CalendarView() {
 
   function handleDatesSet(arg: DatesSetArg) {
     const t = arg.view.type;
-    if (t === "dayGridMonth" || t === "timeGridWeek" || t === "timeGridDay") {
+    if (t === "dayGridMonth" || t === "dayGridWeek") {
       setView(t);
     }
-    if (t === "timeGridDay") {
-      setTitle(
-        arg.start.toLocaleDateString(undefined, {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        }),
-      );
-    } else {
-      setTitle(arg.view.title);
-    }
+    setTitle(arg.view.title);
     setVisibleRange({ start: arg.start, end: arg.end });
   }
 
   function handleViewChange(nextView: string) {
-    const typedView = nextView as CalendarView;
-    setView(typedView);
-    calendarRef.current?.getApi().changeView(typedView);
+    if (nextView === "issueDayAgenda") {
+      const api = calendarRef.current?.getApi();
+      const d = api?.getDate() ?? new Date();
+      setAgendaDay(startOfLocalDay(d));
+      setView("issueDayAgenda");
+      const start = startOfLocalDay(d);
+      setVisibleRange({ start, end: new Date(start.getTime() + 86400000) });
+      return;
+    }
+    const typed = nextView as "dayGridMonth" | "dayGridWeek";
+    setView(typed);
+    requestAnimationFrame(() => {
+      calendarRef.current?.getApi().changeView(typed);
+    });
   }
 
   function handleToday() {
+    if (view === "issueDayAgenda") {
+      const t = startOfLocalDay(new Date());
+      setAgendaDay(t);
+      setVisibleRange({
+        start: t,
+        end: new Date(t.getTime() + 86400000),
+      });
+      return;
+    }
     calendarRef.current?.getApi().today();
   }
 
   function handlePrev() {
+    if (view === "issueDayAgenda") {
+      setAgendaDay((d) => {
+        const next = new Date(d);
+        next.setDate(next.getDate() - 1);
+        return startOfLocalDay(next);
+      });
+      return;
+    }
     calendarRef.current?.getApi().prev();
   }
 
   function handleNext() {
+    if (view === "issueDayAgenda") {
+      setAgendaDay((d) => {
+        const next = new Date(d);
+        next.setDate(next.getDate() + 1);
+        return startOfLocalDay(next);
+      });
+      return;
+    }
     calendarRef.current?.getApi().next();
   }
+
+  const headingPrimary = useMemo(() => {
+    if (view === "issueDayAgenda") {
+      return agendaDay.toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+    return title;
+  }, [view, agendaDay, title]);
+
+  const showFullCalendar = view === "dayGridMonth" || view === "dayGridWeek";
 
   return (
     <section
@@ -454,7 +546,6 @@ export default function CalendarView() {
       className="calendar-theme mx-auto flex min-h-0 w-full min-w-0 max-w-6xl flex-1 flex-col gap-3 py-1"
     >
       <div className="flex shrink-0 flex-col gap-3">
-        {/* Date nav (left) — view tabs (right), Google Calendar–style */}
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Button
@@ -482,7 +573,7 @@ export default function CalendarView() {
               <ChevronRight className="size-4" />
             </Button>
             <h2 className="min-w-0 text-2xl font-bold tracking-tight sm:text-3xl">
-              {title}
+              {headingPrimary}
             </h2>
           </div>
 
@@ -493,13 +584,12 @@ export default function CalendarView() {
           >
             <TabsList className="flex h-9 w-full justify-start sm:w-auto sm:justify-end">
               <TabsTrigger value="dayGridMonth">Month</TabsTrigger>
-              <TabsTrigger value="timeGridWeek">Week</TabsTrigger>
-              <TabsTrigger value="timeGridDay">Day</TabsTrigger>
+              <TabsTrigger value="dayGridWeek">Week</TabsTrigger>
+              <TabsTrigger value="issueDayAgenda">Day</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
 
-        {/* Row 2: single surface — status + filter pills (one group) | primary actions */}
         <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5">
           <div
             className={cn(
@@ -568,39 +658,53 @@ export default function CalendarView() {
 
       <div className="relative z-0 flex min-h-0 min-w-0 flex-1 flex-col rounded-lg border border-border bg-card shadow-sm">
         <IssueStatusDotLegend />
-        <div className="min-h-0 w-full min-w-0 flex-1">
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView={view}
-            headerToolbar={false}
-            allDaySlot={true}
-            allDayText="Due"
-            displayEventTime={false}
-            displayEventEnd={false}
-            slotMinTime="00:00:00"
-            slotMaxTime="24:00:00"
-            eventMinHeight={22}
-            datesSet={handleDatesSet}
-            events={issueCalendarItems}
-            views={fullCalendarViews}
-            /* Navigate to day view instead of opening the overflow popover. */
-            moreLinkClick="timeGridDay"
-            moreLinkHint="Open this day in day view"
-            moreLinkContent={(arg) => ({
-              html: `+${arg.num} more`,
-            })}
-            height="100%"
-            stickyHeaderDates={true}
-            handleWindowResize={true}
-            expandRows={view !== "dayGridMonth"}
-            selectable={true}
-            select={handleDateSelect}
-            eventClick={handleIssueClick}
-            eventContent={issueEventContent}
-            slotLabelContent={issueSlotLabelContent}
-            selectMirror={true}
-          />
+        <div className="min-h-0 w-full min-w-0 flex-1 overflow-hidden">
+          {showFullCalendar ? (
+            <FullCalendar
+              key="fc-daygrid"
+              ref={calendarRef}
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView={
+                view === "dayGridWeek" ? "dayGridWeek" : "dayGridMonth"
+              }
+              initialDate={agendaDay}
+              headerToolbar={false}
+              displayEventTime={false}
+              displayEventEnd={false}
+              datesSet={handleDatesSet}
+              events={issueCalendarItems}
+              views={fullCalendarViews}
+              moreLinkClick={handleMoreLinkClick}
+              moreLinkHint="Open day view for this date"
+              moreLinkContent={(arg) => ({
+                html: `+${arg.num} more`,
+              })}
+              height="100%"
+              stickyHeaderDates={true}
+              handleWindowResize={true}
+              expandRows={view === "dayGridMonth"}
+              selectable={true}
+              select={handleDateSelect}
+              eventClick={handleIssueClick}
+              eventContent={issueEventContent}
+              dayHeaderContent={issueDayHeaderContent}
+              selectMirror={true}
+            />
+          ) : (
+            <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+              <IssueDayAgenda
+                day={agendaDay}
+                issues={issuesForCurrentView}
+                isLoading={paneData?.isLoading ?? true}
+                roleNameById={paneData?.roleNameById}
+                onIssuesChanged={() => {
+                  void utils.issues.getAllIssues.invalidate();
+                  void utils.issues.invalidate();
+                  paneData?.refresh();
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
 
