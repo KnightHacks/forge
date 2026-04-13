@@ -23,16 +23,9 @@ import {
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
-import {
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  CircleDot,
-  SlidersHorizontal,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { ISSUE } from "@forge/consts";
-import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { toast } from "@forge/ui/toast";
@@ -40,7 +33,10 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 import { CreateEditDialog } from "../issues/create-edit-dialog";
 import { IssueFetcherPane } from "../issues/issue-fetcher-pane";
-import IssueTemplateDialog from "../issues/issue-template-dialog";
+import {
+  getActiveIssueFilterTags,
+  IssueViewControlBar,
+} from "../issues/issue-view-control-bar";
 import { IssueDayAgenda } from "./calendar-day-agenda";
 import { CalendarIssueDialog } from "./calendar-issue-dialog";
 import { IssueStatusDotLegend } from "./calendar-status-dot-legend";
@@ -124,13 +120,6 @@ function dismissFullCalendarMorePopovers() {
   });
 }
 
-function formatStatus(status: string) {
-  return status
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
 export default function CalendarView() {
   const calendarRef = useRef<FullCalendar | null>(null);
   const calendarSectionRef = useRef<HTMLElement | null>(null);
@@ -180,21 +169,7 @@ export default function CalendarView() {
   const filters = paneData?.filters;
 
   const activeFilters = useMemo(() => {
-    if (!filters) return [];
-    const tags: string[] = [];
-    if (filters.statusFilter !== "all")
-      tags.push(formatStatus(filters.statusFilter));
-    if (filters.teamFilter !== "all") tags.push("Team selected");
-    if (filters.issueKind !== "all")
-      tags.push(
-        filters.issueKind === "task" ? "Tasks only" : "Event-linked only",
-      );
-    if (filters.rootOnly) tags.push("Root only");
-    if (filters.dateFrom) tags.push("From " + filters.dateFrom);
-    if (filters.dateTo) tags.push("To " + filters.dateTo);
-    if (filters.searchTerm.trim())
-      tags.push('Search "' + filters.searchTerm.trim() + '"');
-    return tags;
+    return getActiveIssueFilterTags(filters);
   }, [filters]);
 
   const issuesForCurrentView = useMemo(() => {
@@ -534,6 +509,16 @@ export default function CalendarView() {
       ref={calendarSectionRef}
       className="calendar-theme mx-auto flex min-h-0 w-full min-w-0 max-w-6xl flex-1 flex-col gap-3 py-1"
     >
+      <IssueViewControlBar
+        openCount={openCount}
+        closedCount={closedCount}
+        activeFilters={activeFilters}
+        createInitialValues={headerCreateInitialValues}
+        onBeforeCreate={dismissFullCalendarMorePopovers}
+        onBeforeOpenFilters={dismissFullCalendarMorePopovers}
+        onOpenFilters={() => setIsFiltersOpen(true)}
+      />
+
       <div className="flex shrink-0 flex-col gap-3">
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -577,71 +562,6 @@ export default function CalendarView() {
               <TabsTrigger value="issueDayAgenda">Day</TabsTrigger>
             </TabsList>
           </Tabs>
-        </div>
-
-        <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5">
-          <div
-            className={cn(
-              "flex flex-col gap-3",
-              activeFilters.length > 0
-                ? "md:flex-row md:items-start md:justify-between md:gap-6"
-                : "sm:flex-row sm:items-center sm:justify-between sm:gap-4 md:gap-6",
-            )}
-          >
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <CircleDot className="h-4 w-4 shrink-0 text-emerald-500" />
-                  <span>{openCount} Open</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
-                  <span>{closedCount} Closed</span>
-                </div>
-              </div>
-              {activeFilters.length > 0 ? (
-                <div className="flex min-w-0 flex-wrap gap-2 border-t border-border/60 pt-2">
-                  <span className="sr-only">Active filters</span>
-                  {activeFilters.map((tag) => (
-                    <span
-                      key={tag}
-                      className="shrink-0 rounded-full border border-border bg-background/80 px-2.5 py-1 text-xs text-muted-foreground"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-
-            <div className="flex shrink-0 flex-wrap items-center gap-2 md:justify-end">
-              <CreateEditDialog
-                intent="create"
-                initialValues={headerCreateInitialValues}
-              >
-                <Button
-                  type="button"
-                  onClick={() => {
-                    dismissFullCalendarMorePopovers();
-                  }}
-                >
-                  Create issue
-                </Button>
-              </CreateEditDialog>
-              <IssueTemplateDialog />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  dismissFullCalendarMorePopovers();
-                  setIsFiltersOpen(true);
-                }}
-              >
-                <SlidersHorizontal className="mr-2 h-4 w-4" />
-                Filters
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
 

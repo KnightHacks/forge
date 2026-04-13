@@ -2,12 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  CheckCircle2,
-  CircleDot,
-  Pencil,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Pencil } from "lucide-react";
 
 import type { ISSUE } from "@forge/consts";
 import { Button } from "@forge/ui/button";
@@ -16,15 +11,11 @@ import { toast } from "@forge/ui/toast";
 import { CreateEditDialog } from "~/app/_components/issues/create-edit-dialog";
 import { IssueFetcherPane } from "~/app/_components/issues/issue-fetcher-pane";
 import { StatusSelect } from "~/app/_components/issues/issue-form-fields";
-import IssueTemplateDialog from "~/app/_components/issues/issue-template-dialog";
+import {
+  getActiveIssueFilterTags,
+  IssueViewControlBar,
+} from "~/app/_components/issues/issue-view-control-bar";
 import { api } from "~/trpc/react";
-
-function formatStatus(status: string) {
-  return status
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
 
 function formatDate(value: Date | null) {
   if (!value) return "No due date";
@@ -104,60 +95,17 @@ export function IssuesList() {
   const filters = paneData?.filters;
 
   const activeFilters = useMemo(() => {
-    if (!filters) return [];
-    const tags: string[] = [];
-    if (filters.statusFilter !== "all")
-      tags.push(formatStatus(filters.statusFilter));
-    if (filters.teamFilter !== "all") tags.push("Team selected");
-    if (filters.issueKind !== "all")
-      tags.push(
-        filters.issueKind === "task" ? "Tasks only" : "Event-linked only",
-      );
-    if (filters.rootOnly) tags.push("Root only");
-    if (filters.dateFrom) tags.push("From " + filters.dateFrom);
-    if (filters.dateTo) tags.push("To " + filters.dateTo);
-    if (filters.searchTerm.trim())
-      tags.push('Search "' + filters.searchTerm.trim() + '"');
-    return tags;
+    return getActiveIssueFilterTags(filters);
   }, [filters]);
 
   return (
     <section className="mx-auto w-full max-w-6xl space-y-4 py-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-4 rounded-md border bg-muted/20 px-3 py-2">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <CircleDot className="h-4 w-4 text-emerald-500" />
-            <span>{openCount} Open</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <CheckCircle2 className="h-4 w-4" />
-            <span>{closedCount} Closed</span>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <CreateEditDialog intent="create">
-            <Button>Create issue</Button>
-          </CreateEditDialog>
-          <IssueTemplateDialog />
-          <Button variant="outline" onClick={() => setIsFiltersOpen(true)}>
-            <SlidersHorizontal className="mr-2 h-4 w-4" />
-            Filters
-          </Button>
-        </div>
-      </div>
-
-      {activeFilters.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {activeFilters.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
+      <IssueViewControlBar
+        openCount={openCount}
+        closedCount={closedCount}
+        activeFilters={activeFilters}
+        onOpenFilters={() => setIsFiltersOpen(true)}
+      />
 
       <div className="overflow-hidden rounded-lg border">
         <div className="hidden grid-cols-[minmax(0,1fr)_190px_88px_36px] gap-2 border-b bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid">
