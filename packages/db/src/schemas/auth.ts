@@ -1,14 +1,8 @@
-import { pgEnum, pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
+import { ISSUE } from "@forge/consts";
+import { pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 const createTable = pgTableCreator((name) => `auth_${name}`);
-
-export const IssueReminderChannelEnum = pgEnum("issue_reminder_channel", [
-  "Teams",
-  "Directors",
-  "Design",
-  "HackOrg",
-]);
 
 export const User = createTable("user", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -44,7 +38,10 @@ export const Roles = createTable("roles", (t) => ({
   name: t.varchar().notNull().default(""),
   discordRoleId: t.varchar().unique().notNull(),
   permissions: t.varchar().notNull(),
-  issueReminderChannel: IssueReminderChannelEnum(),
+  issueReminderChannel: t
+    .varchar({ length: 32 })
+    .notNull()
+    .default(ISSUE.DEFAULT_ISSUE_REMINDER_CHANNEL_ID),
 }));
 
 export const InsertRolesSchema = createInsertSchema(Roles);

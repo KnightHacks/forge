@@ -1,6 +1,7 @@
 import { Routes } from "discord-api-types/v10";
 import { and, inArray, isNotNull, ne } from "drizzle-orm";
 
+import { IS_PROD, ISSUE } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Roles } from "@forge/db/schemas/auth";
 import { Issue } from "@forge/db/schemas/knight-hacks";
@@ -9,20 +10,6 @@ import { api } from "@forge/utils/discord";
 
 import { env } from "../env";
 import { CronBuilder } from "../structs/CronBuilder";
-
-const ISSUE_REMINDER_CHANNELS = {
-  Teams: "Teams",
-  Directors: "Directors",
-  Design: "Design",
-  HackOrg: "HackOrg",
-} as const;
-
-const ISSUE_REMINDER_DESTINATION_CHANNEL_IDS = {
-  Teams: "1459204271655489567",
-  Directors: "1463407041191088188",
-  HackOrg: "1461565747649187874",
-  Design: "1483901622558920945",
-};
 
 const ISSUE_REMINDER_DAYS = {
   Fourteen: "Fourteen",
@@ -57,20 +44,22 @@ interface IssueReminderTarget {
   teamId: string;
   teamDiscordRoleId: string;
   assigneeDiscordUserIds: string[];
-  channel: keyof typeof ISSUE_REMINDER_CHANNELS;
+  discordChannelId: string;
   day: IssueReminderDay;
   overdueDays: number | null;
 }
 
 type GroupedIssueReminders = Partial<
-  Record<
-    keyof typeof ISSUE_REMINDER_CHANNELS,
-    Partial<Record<IssueReminderDay, IssueReminderTarget[]>>
-  >
+  Record<string, Partial<Record<IssueReminderDay, IssueReminderTarget[]>>>
 >;
 
 const MAX_DISCORD_MESSAGE_LENGTH = 2000;
 const ISSUE_REMINDER_TIMEZONE = "America/New_York";
+
+const resolveDestinationChannelId = (roleChannelId: string): string => {
+  if (!IS_PROD) return ISSUE.DEV_ISSUE_REMINDER_CHANNEL_ID;
+  return roleChannelId || ISSUE.DEFAULT_ISSUE_REMINDER_CHANNEL_ID;
+};
 
 const getTimezoneMidnightTimestamp = (date: Date, timeZone: string): number => {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -115,10 +104,9 @@ const buildIssueReminderTarget = (issue: {
   date: Date | null;
   teamDiscordRoleId: string;
   assigneeDiscordUserIds: string[];
-  channel: keyof typeof ISSUE_REMINDER_CHANNELS | null;
+  discordChannelId: string;
 }): IssueReminderTarget | null => {
   if (!issue.date) return null;
-  if (!issue.channel) return null;
   const day = getIssueReminderDay(issue.date);
   if (!day) return null;
   if (!issue.teamDiscordRoleId) return null;
@@ -128,7 +116,7 @@ const buildIssueReminderTarget = (issue: {
     teamId: issue.team,
     teamDiscordRoleId: issue.teamDiscordRoleId,
     assigneeDiscordUserIds: issue.assigneeDiscordUserIds,
-    channel: issue.channel,
+    discordChannelId: issue.discordChannelId,
     day,
     overdueDays:
       day === ISSUE_REMINDER_DAYS.Overdue
@@ -148,8 +136,8 @@ const groupIssueReminderTargets = (
 ): GroupedIssueReminders => {
   const grouped: GroupedIssueReminders = {};
   for (const t of targets) {
-    grouped[t.channel] ??= {};
-    const channelGroup = grouped[t.channel];
+    grouped[t.discordChannelId] ??= {};
+    const channelGroup = grouped[t.discordChannelId];
     if (!channelGroup) continue;
     channelGroup[t.day] ??= [];
     const dayGroup = channelGroup[t.day];
@@ -291,7 +279,6 @@ const splitChannelReminderMessages = (
 };
 
 const sendIssueReminderChunk = async (
-  channel: keyof typeof ISSUE_REMINDER_CHANNELS,
   channelId: string,
   chunk: { content: string; targets: IssueReminderTarget[] },
 ) => {
@@ -309,7 +296,10 @@ const sendIssueReminderChunk = async (
       },
     });
   } catch (error) {
-    logger.error(`Failed sending issue reminder chunk for ${channel}.`, error);
+    logger.error(
+      `Failed sending issue reminder chunk for channel ${channelId}.`,
+      error,
+    );
   }
 };
 
@@ -343,7 +333,7 @@ export const issueReminders = new CronBuilder({
     string,
     {
       discordRoleId: string;
-      issueReminderChannel: keyof typeof ISSUE_REMINDER_CHANNELS | null;
+      issueReminderChannel: string;
     }
   > = {};
   for (const r of roles) {
@@ -355,41 +345,38 @@ export const issueReminders = new CronBuilder({
   const reminderTargets = issues
     .map((issue) => {
       const role = roleDataByTeamId[issue.team];
-      if (!role?.issueReminderChannel) {
+      if (!role) {
         logger.warn(
-          `Skipping issue reminder: no issue reminder channel configured for team ${issue.team}.`,
+          `Skipping issue reminder: no role row for team ${issue.team}.`,
         );
+        return null;
       }
+      const discordChannelId = resolveDestinationChannelId(
+        role.issueReminderChannel,
+      );
       return buildIssueReminderTarget({
         id: issue.id,
         name: issue.name,
         team: issue.team,
         date: issue.date,
-        teamDiscordRoleId: role?.discordRoleId ?? "",
+        teamDiscordRoleId: role.discordRoleId,
         assigneeDiscordUserIds: issue.userAssignments.map(
           (assignment) => assignment.user.discordUserId,
         ),
-        channel: role?.issueReminderChannel ?? null,
+        discordChannelId,
       });
     })
     .filter(isIssueReminderTarget);
 
   const groupedReminders = groupIssueReminderTargets(reminderTargets);
-  for (const channel of Object.keys(
-    ISSUE_REMINDER_CHANNELS,
-  ) as (keyof typeof ISSUE_REMINDER_CHANNELS)[]) {
-    const groupedChannel = groupedReminders[channel];
+  for (const [channelId, groupedChannel] of Object.entries(groupedReminders)) {
     if (!groupedChannel) continue;
 
     const chunks = splitChannelReminderMessages(groupedChannel);
     if (chunks.length === 0) continue;
 
     for (const chunk of chunks) {
-      await sendIssueReminderChunk(
-        channel,
-        ISSUE_REMINDER_DESTINATION_CHANNEL_IDS[channel],
-        chunk,
-      );
+      await sendIssueReminderChunk(channelId, chunk);
     }
   }
 });

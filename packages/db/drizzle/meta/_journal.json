@@ -15,6 +15,13 @@
       "when": 1776028259336,
       "tag": "0001_careless_eternity",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776104121304,
+      "tag": "0002_dapper_forge",
+      "breakpoints": true
     }
   ]
 }
