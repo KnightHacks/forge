@@ -5,7 +5,7 @@ import { z } from "zod";
 import { ISSUE } from "@forge/consts";
 import { and, eq, exists, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
-import { Permissions } from "@forge/db/schemas/auth";
+import { Permissions, User } from "@forge/db/schemas/auth";
 import {
   InsertTemplateSchema,
   Issue,
@@ -15,6 +15,7 @@ import {
   Template,
 } from "@forge/db/schemas/knight-hacks";
 import { permissions } from "@forge/utils";
+import * as permissionsServer from "@forge/utils/permissions.server";
 
 import { permProcedure } from "../trpc";
 
@@ -112,6 +113,48 @@ const issueTemplateSchema: z.ZodType<IssueTemplate> =
   });
 
 export const issuesRouter = {
+  getUsersOnTeam: permProcedure
+    .input(
+      z.object({
+        teamId: z.string().uuid(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
+
+      const rows = await db
+        .select({
+          id: User.id,
+          name: User.name,
+          email: User.email,
+          discordUserId: User.discordUserId,
+        })
+        .from(User)
+        .innerJoin(Permissions, eq(User.id, Permissions.userId))
+        .where(eq(Permissions.roleId, input.teamId));
+
+      const userById = new Map<
+        string,
+        {
+          id: string;
+          name: string;
+          email: string | null;
+        }
+      >();
+
+      for (const row of rows) {
+        userById.set(row.id, {
+          id: row.id,
+          name: row.name ?? row.email ?? row.discordUserId,
+          email: row.email,
+        });
+      }
+
+      return [...userById.values()].sort((a, b) =>
+        a.name.localeCompare(b.name),
+      );
+    }),
+
   createIssue: permProcedure
     .input(
       CreateIssueInputSchema.omit({ creator: true }).extend({
@@ -123,6 +166,15 @@ export const issuesRouter = {
 
       return await db.transaction(async (tx) => {
         const { teamVisibilityIds, assigneeIds, children, ...rest } = input;
+
+        await permissionsServer.validateAssigneesBelongToTeam(
+          tx,
+          input.team,
+          assigneeIds,
+        );
+        if (children?.length) {
+          await permissionsServer.validateIssueNodeAssignees(tx, children);
+        }
 
         const [issue] = await tx
           .insert(Issue)
@@ -316,59 +368,89 @@ export const issuesRouter = {
     )
     .mutation(async ({ ctx, input }) => {
       permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
-      await requireIssue(input.id);
+      return await db.transaction(async (tx) => {
+        const existingIssue = await tx.query.Issue.findFirst({
+          where: (t, { eq }) => eq(t.id, input.id),
+          with: {
+            userAssignments: true,
+          },
+        });
 
-      const { id, assigneeIds, teamVisibilityIds, ...fields } = input;
-      const updateData = Object.fromEntries(
-        (Object.entries(fields) as [string, unknown][]).filter(
-          ([, v]) => v !== undefined,
-        ),
-      );
-
-      if (Object.keys(updateData).length > 0) {
-        await db.update(Issue).set(updateData).where(eq(Issue.id, id));
-      }
-
-      if (teamVisibilityIds !== undefined) {
-        await db
-          .delete(IssuesToTeamsVisibility)
-          .where(eq(IssuesToTeamsVisibility.issueId, id));
-        if (teamVisibilityIds.length > 0) {
-          await db
-            .insert(IssuesToTeamsVisibility)
-            .values(
-              teamVisibilityIds.map((teamId) => ({ issueId: id, teamId })),
-            );
+        if (!existingIssue) {
+          throw new TRPCError({
+            message: "Issue not found.",
+            code: "NOT_FOUND",
+          });
         }
-      }
 
-      if (assigneeIds !== undefined) {
-        await db
-          .delete(IssuesToUsersAssignment)
-          .where(eq(IssuesToUsersAssignment.issueId, id));
-        if (assigneeIds.length > 0) {
-          await db
-            .insert(IssuesToUsersAssignment)
-            .values(assigneeIds.map((userId) => ({ issueId: id, userId })));
+        const assignmentTeamId = input.team ?? existingIssue.team;
+        const existingAssigneeIds = existingIssue.userAssignments.map(
+          (assignment) => assignment.userId,
+        );
+        const assigneeIdsToValidate =
+          input.assigneeIds ??
+          (input.team !== undefined && input.team !== existingIssue.team
+            ? existingAssigneeIds
+            : undefined);
+
+        await permissionsServer.validateAssigneesBelongToTeam(
+          tx,
+          assignmentTeamId,
+          assigneeIdsToValidate,
+        );
+
+        const { id, assigneeIds, teamVisibilityIds, ...fields } = input;
+        const updateData = Object.fromEntries(
+          (Object.entries(fields) as [string, unknown][]).filter(
+            ([, v]) => v !== undefined,
+          ),
+        );
+
+        if (Object.keys(updateData).length > 0) {
+          await tx.update(Issue).set(updateData).where(eq(Issue.id, id));
         }
-      }
 
-      if (
-        Object.keys(updateData).length === 0 &&
-        (teamVisibilityIds !== undefined || assigneeIds !== undefined)
-      ) {
-        await db
-          .update(Issue)
-          .set({ updatedAt: new Date() })
-          .where(eq(Issue.id, id));
-      }
+        if (teamVisibilityIds !== undefined) {
+          await tx
+            .delete(IssuesToTeamsVisibility)
+            .where(eq(IssuesToTeamsVisibility.issueId, id));
+          if (teamVisibilityIds.length > 0) {
+            await tx
+              .insert(IssuesToTeamsVisibility)
+              .values(
+                teamVisibilityIds.map((teamId) => ({ issueId: id, teamId })),
+              );
+          }
+        }
 
-      return db.query.Issue.findFirst({
-        where: (t, { eq }) => eq(t.id, id),
-        with: {
-          teamVisibility: { with: { team: true } },
-          userAssignments: { with: { user: true } },
-        },
+        if (assigneeIds !== undefined) {
+          await tx
+            .delete(IssuesToUsersAssignment)
+            .where(eq(IssuesToUsersAssignment.issueId, id));
+          if (assigneeIds.length > 0) {
+            await tx
+              .insert(IssuesToUsersAssignment)
+              .values(assigneeIds.map((userId) => ({ issueId: id, userId })));
+          }
+        }
+
+        if (
+          Object.keys(updateData).length === 0 &&
+          (teamVisibilityIds !== undefined || assigneeIds !== undefined)
+        ) {
+          await tx
+            .update(Issue)
+            .set({ updatedAt: new Date() })
+            .where(eq(Issue.id, id));
+        }
+
+        return tx.query.Issue.findFirst({
+          where: (t, { eq }) => eq(t.id, id),
+          with: {
+            teamVisibility: { with: { team: true } },
+            userAssignments: { with: { user: true } },
+          },
+        });
       });
     }),
   deleteIssue: permProcedure

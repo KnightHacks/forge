@@ -190,6 +190,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     }: Partial<ISSUE.IssueSubmitValues> = initialValues ?? {};
     const resolvedEventData = initial.eventData;
     const resolvedRoles = initial.teamVisibilityIds ?? defaults.roles;
+    const resolvedAssigneeIds = initial.assigneeIds ?? defaults.assigneeIds;
     if (initial.isEvent) {
       return {
         ...defaults,
@@ -200,6 +201,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         links: initial.links ?? defaults.links,
         date: normalizeTaskDueDate(initial.date ?? defaults.date),
         roles: resolvedRoles,
+        assigneeIds: resolvedAssigneeIds,
       };
     }
     return {
@@ -211,6 +213,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       date: normalizeTaskDueDate(initial.date ?? defaults.date),
       links: initial.links ?? defaults.links,
       roles: resolvedRoles,
+      assigneeIds: resolvedAssigneeIds,
     };
   }, [initialValues]);
   const [formValues, setFormValues] = useState<ISSUE.IssueEditNode>(
@@ -262,6 +265,16 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
 
   const baseId = useId();
   const effectiveTeam = formValues.team || (rolesData?.[0]?.id ?? "");
+  const usersOnTeamQuery = api.issues.getUsersOnTeam.useQuery(
+    { teamId: effectiveTeam },
+    { enabled: isOpen && !!effectiveTeam },
+  );
+  const assigneesForTeam = useMemo<ISSUE.IssueAssigneeOption[]>(
+    () => usersOnTeamQuery.data ?? [],
+    [usersOnTeamQuery.data],
+  );
+  const isAssigneesLoading = usersOnTeamQuery.isLoading;
+  const assigneesError = usersOnTeamQuery.error;
 
   const isFormValid = issueFormSchema.safeParse({
     ...formValues,
@@ -284,6 +297,17 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         roleIdSet.has(roleId),
       ),
     [formValues.eventData?.roles, roleIdSet],
+  );
+  const assigneeIdSet = useMemo(
+    () => new Set(assigneesForTeam.map((user) => user.id)),
+    [assigneesForTeam],
+  );
+  const safeAssigneeIds = useMemo(
+    () =>
+      usersOnTeamQuery.isSuccess
+        ? formValues.assigneeIds.filter((userId) => assigneeIdSet.has(userId))
+        : formValues.assigneeIds,
+    [assigneeIdSet, formValues.assigneeIds, usersOnTeamQuery.isSuccess],
   );
 
   // Helper for event form
@@ -410,7 +434,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       team: effectiveTeam,
       teamVisibilityIds:
         safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
-      assigneeIds: formValues.assigneeIds,
+      assigneeIds: safeAssigneeIds,
     };
 
     try {
@@ -481,7 +505,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
             : normalizeTaskDueDate(formValues.date),
           teamVisibilityIds:
             safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
-          assigneeIds: formValues.assigneeIds,
+          assigneeIds: safeAssigneeIds,
         });
 
         await utils.issues.invalidate();
@@ -522,7 +546,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         eventData: formValues.eventData,
         teamVisibilityIds:
           safeVisibilityIds.length > 0 ? safeVisibilityIds : undefined,
-        assigneeIds: formValues.assigneeIds,
+        assigneeIds: safeAssigneeIds,
       });
     }
   };
@@ -663,11 +687,89 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                   <TeamSelect
                     className={cn(baseField, "col-span-3")}
                     value={effectiveTeam}
-                    onValueChange={(v) => updateForm("team", v)}
+                    onValueChange={(v) => {
+                      setFormValues((previous) => ({
+                        ...previous,
+                        team: v,
+                        assigneeIds: [],
+                      }));
+                    }}
                     roles={rolesData ?? []}
                     isLoading={isRolesLoading}
                     error={rolesError}
                   />
+                </div>
+
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label className="mt-1 text-right text-sm">Assignees</Label>
+                  <div className="col-span-3 mt-1 grid grid-cols-2 gap-x-2 gap-y-3">
+                    {isAssigneesLoading && (
+                      <p className="col-span-2 text-sm text-muted-foreground">
+                        Loading team members...
+                      </p>
+                    )}
+
+                    {!!assigneesError && (
+                      <p className="col-span-2 text-sm text-destructive">
+                        Failed to load team members
+                      </p>
+                    )}
+
+                    {!isAssigneesLoading &&
+                      !assigneesError &&
+                      assigneesForTeam.length === 0 && (
+                        <p className="col-span-2 text-sm text-muted-foreground">
+                          No team members found for this team
+                        </p>
+                      )}
+
+                    {!isAssigneesLoading &&
+                      !assigneesError &&
+                      assigneesForTeam.map((user) => {
+                        const assigneeCheckboxId = `${baseId}-assignee-${user.id}`;
+                        return (
+                          <div
+                            key={user.id}
+                            className="flex flex-row items-start space-x-3 space-y-0"
+                          >
+                            <Checkbox
+                              id={assigneeCheckboxId}
+                              checked={formValues.assigneeIds.includes(user.id)}
+                              onCheckedChange={(checked) => {
+                                const selectedIds = formValues.assigneeIds;
+                                updateForm(
+                                  "assigneeIds",
+                                  checked
+                                    ? Array.from(
+                                        new Set([...selectedIds, user.id]),
+                                      )
+                                    : selectedIds.filter(
+                                        (id) => id !== user.id,
+                                      ),
+                                );
+                              }}
+                            />
+                            <div className="flex flex-col">
+                              <Label
+                                htmlFor={assigneeCheckboxId}
+                                className="cursor-pointer font-normal"
+                              >
+                                {user.name}
+                              </Label>
+                              {user.email && (
+                                <span className="text-xs text-muted-foreground">
+                                  {user.email}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                    <p className="col-span-2 text-sm font-normal text-gray-400">
+                      Select one or more team members responsible for this issue
+                    </p>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-4 items-start gap-4">
