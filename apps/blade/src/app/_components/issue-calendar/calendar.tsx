@@ -391,7 +391,7 @@ export default function CalendarView() {
   const headerCreateInitialValues = useMemo<Partial<ISSUE.IssueSubmitValues>>(
     () => ({
       date: view === "issueDayAgenda" ? agendaDay : new Date(),
-      isEvent: true,
+      isEvent: false,
     }),
     [view, agendaDay],
   );
