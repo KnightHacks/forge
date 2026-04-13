@@ -1,9 +1,19 @@
 "use client";
 
-import { CheckCircle2, CircleDot, SlidersHorizontal } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  CalendarDays,
+  CheckCircle2,
+  CircleDot,
+  ListTodo,
+  SlidersHorizontal,
+  SquareKanban,
+} from "lucide-react";
 
+import { cn } from "@forge/ui";
 import type { ISSUE } from "@forge/consts";
-import { Button } from "@forge/ui/button";
+import { Button, buttonVariants } from "@forge/ui/button";
 
 import { CreateEditDialog } from "~/app/_components/issues/create-edit-dialog";
 import IssueTemplateDialog from "~/app/_components/issues/issue-template-dialog";
@@ -52,6 +62,24 @@ interface IssueViewControlBarProps {
   onBeforeOpenFilters?: () => void;
 }
 
+const issueViewLinks = [
+  {
+    href: "/admin/issues/kanban",
+    label: "Kanban",
+    icon: SquareKanban,
+  },
+  {
+    href: "/admin/issues/list",
+    label: "List",
+    icon: ListTodo,
+  },
+  {
+    href: "/admin/issues/calendar",
+    label: "Calendar",
+    icon: CalendarDays,
+  },
+] as const;
+
 export function IssueViewControlBar({
   openCount,
   closedCount,
@@ -61,6 +89,8 @@ export function IssueViewControlBar({
   onBeforeCreate,
   onBeforeOpenFilters,
 }: IssueViewControlBarProps) {
+  const pathname = usePathname();
+
   return (
     <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5">
       <div
@@ -71,6 +101,30 @@ export function IssueViewControlBar({
         }
       >
         <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {issueViewLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = pathname === link.href;
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    buttonVariants({
+                      variant: isActive ? "primary" : "outline",
+                      size: "sm",
+                    }),
+                    "gap-2",
+                  )}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+          </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <CircleDot className="h-4 w-4 shrink-0 text-emerald-500" />
