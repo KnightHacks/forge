@@ -103,7 +103,7 @@ export function IssueDayAgenda(props: {
 
   const copyIssueLink = useCallback((issueId: string) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const url = `${origin}/issues/${issueId}`;
+    const url = `${origin}/admin/issues/${issueId}`;
     void navigator.clipboard.writeText(url).then(
       () => {
         toast.success("Issue link copied");

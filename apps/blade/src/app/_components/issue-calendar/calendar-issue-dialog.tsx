@@ -113,7 +113,7 @@ export function CalendarIssueDialog({
 
   async function handleCopyIssueUrl() {
     if (!issue || typeof window === "undefined") return;
-    const url = `${window.location.origin}/issues/${issue.id}`;
+    const url = `${window.location.origin}/admin/issues/${issue.id}`;
     try {
       await navigator.clipboard.writeText(url);
       toast.success("Issue link copied");
@@ -146,7 +146,7 @@ export function CalendarIssueDialog({
                 asChild
               >
                 <Link
-                  href={`/issues/${issue.id}`}
+                  href={`/admin/issues/${issue.id}`}
                   className="block text-left text-foreground underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   {issue.name}

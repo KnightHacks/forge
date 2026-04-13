@@ -241,7 +241,7 @@ export function IssuesList() {
             >
               <div className="min-w-0 space-y-1">
                 <Link
-                  href={"/issues/" + issue.id}
+                  href={"/admin/issues/" + issue.id}
                   className="inline font-medium leading-tight text-foreground hover:underline"
                 >
                   {issue.name}

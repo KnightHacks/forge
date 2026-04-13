@@ -181,7 +181,7 @@ const truncateReminderLine = (line: string, maxLength: number): string => {
 };
 
 const getIssueUrl = (issueId: string): string => {
-  return `${env.BLADE_URL.replace(/\/$/, "")}/issues/${issueId}`;
+  return `${env.BLADE_URL.replace(/\/$/, "")}/admin/issues/${issueId}`;
 };
 
 const getAllowedMentions = (

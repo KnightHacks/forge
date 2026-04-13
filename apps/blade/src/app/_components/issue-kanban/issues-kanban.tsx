@@ -179,7 +179,7 @@ export function KanbanBoard() {
                       <div className="p-3">
                         <div className="flex items-start justify-between gap-2">
                           <Link
-                            href={"/issues/" + issue.id}
+                            href={"/admin/issues/" + issue.id}
                             className="text-sm font-medium leading-tight hover:underline"
                           >
                             {issue.name}
