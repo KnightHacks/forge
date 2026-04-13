@@ -11,8 +11,8 @@ import {
   SquareKanban,
 } from "lucide-react";
 
-import { cn } from "@forge/ui";
 import type { ISSUE } from "@forge/consts";
+import { cn } from "@forge/ui";
 import { Button, buttonVariants } from "@forge/ui/button";
 
 import { CreateEditDialog } from "~/app/_components/issues/create-edit-dialog";
@@ -32,9 +32,11 @@ export function getActiveIssueFilterTags(
   if (!filters) return [];
 
   const tags: string[] = [];
-  if (filters.statusFilter !== "all") tags.push(formatStatus(filters.statusFilter));
+  if (filters.statusFilter !== "all")
+    tags.push(formatStatus(filters.statusFilter));
   if (filters.teamFilter !== "all") {
-    const teamName = roleNameById?.get(filters.teamFilter) ?? filters.teamFilter;
+    const teamName =
+      roleNameById?.get(filters.teamFilter) ?? filters.teamFilter;
     tags.push(`Team Selected: ${teamName}`);
   }
   if (filters.issueKind !== "all") {

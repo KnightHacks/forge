@@ -383,7 +383,10 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
     );
   };
 
-  const handleTemplateSelection = (template: { name: string; body: unknown }) => {
+  const handleTemplateSelection = (template: {
+    name: string;
+    body: unknown;
+  }) => {
     const body = template.body as ISSUE.IssueTemplate[];
     const root = Array.isArray(body) ? body[0] : undefined;
     const rootTitle = root?.title ?? template.name;

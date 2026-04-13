@@ -135,7 +135,8 @@ export function IssuesList() {
           return left.name.localeCompare(right.name);
         case "status":
           return (
-            (statusRank.get(left.status) ?? 0) - (statusRank.get(right.status) ?? 0)
+            (statusRank.get(left.status) ?? 0) -
+            (statusRank.get(right.status) ?? 0)
           );
         case "date":
           return compareNullableDates(left.date, right.date);
@@ -306,7 +307,9 @@ export function IssuesList() {
                 <span className="mr-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:hidden">
                   Team
                 </span>
-                {formatTeamLabel(paneData?.roleNameById.get(issue.team) ?? issue.team)}
+                {formatTeamLabel(
+                  paneData?.roleNameById.get(issue.team) ?? issue.team,
+                )}
               </div>
 
               <div className="text-sm text-muted-foreground md:justify-self-start">

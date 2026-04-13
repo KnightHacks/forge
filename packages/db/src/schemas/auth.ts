@@ -1,6 +1,7 @@
-import { ISSUE } from "@forge/consts";
 import { pgTableCreator, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+
+import { ISSUE } from "@forge/consts";
 
 const createTable = pgTableCreator((name) => `auth_${name}`);
 

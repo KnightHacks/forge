@@ -75,7 +75,10 @@ export function UserDropdown({ permissions }: UserDropdownProps) {
     systemItems,
     permissions,
   );
-  const filteredIssuesItems = filterItemsByPermissions(issuesItems, permissions);
+  const filteredIssuesItems = filterItemsByPermissions(
+    issuesItems,
+    permissions,
+  );
   const filteredClubItems = filterItemsByPermissions(clubItems, permissions);
   const filteredHackathonItems = filterItemsByPermissions(
     hackathonItems,

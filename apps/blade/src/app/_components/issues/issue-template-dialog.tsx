@@ -335,8 +335,8 @@ export default function IssueTemplateDialog({
                           onChange={(e) => updateRoot({ name: e.target.value })}
                         />
                         <p className="text-sm text-muted-foreground">
-                          Root task names can include <code>{`{INPUT}`}</code> to
-                          prompt for a value when the template is applied.
+                          Root task names can include <code>{`{INPUT}`}</code>{" "}
+                          to prompt for a value when the template is applied.
                         </p>
                       </div>
                     </div>
@@ -380,9 +380,9 @@ export default function IssueTemplateDialog({
                         </Button>
                       </div>
                       <p className="mb-4 text-sm text-muted-foreground">
-                        Hint: sub-task names can include <code>{`{PARENT}`}</code>{" "}
-                        to insert the applied parent issue name. Example:{" "}
-                        <code>{`{PARENT} Post`}</code>.
+                        Hint: sub-task names can include{" "}
+                        <code>{`{PARENT}`}</code> to insert the applied parent
+                        issue name. Example: <code>{`{PARENT} Post`}</code>.
                       </p>
                       {root.children.length === 0 && (
                         <p className="text-sm text-muted-foreground">
