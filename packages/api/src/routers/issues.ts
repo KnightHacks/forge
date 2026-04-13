@@ -95,6 +95,28 @@ async function requireIssue(id: string, label = "Issue") {
   return issue;
 }
 
+async function collectIssueSubtreeIds(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  rootId: string,
+) {
+  const allIds = [rootId];
+  let frontier = [rootId];
+
+  while (frontier.length > 0) {
+    const children = await tx
+      .select({ id: Issue.id })
+      .from(Issue)
+      .where(inArray(Issue.parent, frontier));
+
+    if (children.length === 0) break;
+
+    frontier = children.map((child) => child.id);
+    allIds.push(...frontier);
+  }
+
+  return allIds;
+}
+
 const baseIssueTemplateSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
@@ -459,7 +481,10 @@ export const issuesRouter = {
       permissions.controlPerms.or(["EDIT_ISSUES"], ctx);
       await requireIssue(input.id);
 
-      await db.delete(Issue).where(eq(Issue.id, input.id));
+      await db.transaction(async (tx) => {
+        const issueIds = await collectIssueSubtreeIds(tx, input.id);
+        await tx.delete(Issue).where(inArray(Issue.id, issueIds));
+      });
 
       return { success: true };
     }),
