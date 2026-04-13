@@ -88,6 +88,12 @@ export interface CreateEditDialogProps {
   onDelete?: (values: IssueSubmitValues) => void;
 }
 
+export interface IssueAssigneeOption {
+  id: UUID;
+  name: string;
+  email?: string | null;
+}
+
 type IssueStatus = (typeof ISSUE_STATUS)[number];
 type IssuePriority = (typeof PRIORITY)[number];
 export type UUID = string;
@@ -107,7 +113,7 @@ export interface IssueEditNode {
   event?: UUID | null;
   eventData?: EventFormValues;
   roles: string[];
-  assigneeIds?: string[];
+  assigneeIds: UUID[];
   children: IssueEditNode[];
 }
 
