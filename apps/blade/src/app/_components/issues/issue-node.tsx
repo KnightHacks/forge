@@ -435,7 +435,7 @@ export function IssueTemplateNode({
         </button>
         <Input
           className="h-7 flex-1 border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:ring-0"
-          placeholder="Sub-task name (required)"
+          placeholder="Sub-task name (required, e.g. {PARENT} Post)"
           value={node.name}
           onChange={(e) => update("name", e.target.value)}
           onClick={(e) => e.stopPropagation()}

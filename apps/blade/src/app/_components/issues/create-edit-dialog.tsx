@@ -20,6 +20,7 @@ import { Checkbox } from "@forge/ui/checkbox";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -57,6 +58,11 @@ import {
   updateIssueNode,
   validateIssueNodes,
 } from "./issue-node";
+import {
+  hasInputKeyword,
+  resolveChildTemplateName,
+  resolveRootTemplateName,
+} from "./issue-template-keywords";
 
 const baseField = "w-full";
 
@@ -134,19 +140,22 @@ const defaultForm = (): ISSUE.IssueEditNode => newIssueNode();
 function templateToIssueNodes(
   items: ISSUE.IssueTemplate[],
   parentDate: Date,
+  parentName?: string,
 ): ISSUE.IssueEditNode[] {
   return items.map((item) => {
     const date = item.dateMs
       ? new Date(parentDate.getTime() - item.dateMs)
       : undefined;
+    const resolvedName = resolveChildTemplateName(item.title, parentName);
     return newIssueNode({
-      name: item.title,
+      name: resolvedName,
       description: item.description ?? "",
       team: item.team ?? "",
       date,
       children: templateToIssueNodes(
         item.children ?? [],
         date ?? normalizeTaskDueDate(),
+        resolvedName,
       ),
     });
   });
@@ -166,6 +175,10 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : internalOpen;
+  const [templateInputPrompt, setTemplateInputPrompt] = useState<{
+    template: { name: string; body: unknown };
+    value: string;
+  } | null>(null);
   const utils = api.useUtils();
   const rolesQuery = api.roles.getAllLinks.useQuery();
   const hackathonsQuery = api.hackathon.getHackathons.useQuery();
@@ -343,13 +356,20 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
   const { data: templates = [], isLoading: isTemplatesLoading } =
     api.issues.getTemplates.useQuery(undefined, { enabled: isOpen });
 
-  const applyTemplate = (template: { name: string; body: unknown }) => {
+  const applyTemplate = (
+    template: { name: string; body: unknown },
+    rootInput?: string,
+  ) => {
     const body = template.body as ISSUE.IssueTemplate[];
     const root = Array.isArray(body) ? body[0] : undefined;
+    const resolvedRootName = resolveRootTemplateName(
+      root?.title ?? template.name,
+      rootInput?.trim() ?? "",
+    );
 
     setFormValues((prev) => ({
       ...prev,
-      name: root?.title ?? template.name,
+      name: resolvedRootName,
       description: root?.description ?? prev.description,
       ...(root?.team ? { team: root.team } : {}),
     }));
@@ -358,8 +378,25 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       templateToIssueNodes(
         root?.children ?? [],
         normalizeTaskDueDate(formValues.date),
+        resolvedRootName,
       ),
     );
+  };
+
+  const handleTemplateSelection = (template: { name: string; body: unknown }) => {
+    const body = template.body as ISSUE.IssueTemplate[];
+    const root = Array.isArray(body) ? body[0] : undefined;
+    const rootTitle = root?.title ?? template.name;
+
+    if (hasInputKeyword(rootTitle)) {
+      setTemplateInputPrompt({
+        template,
+        value: "",
+      });
+      return;
+    }
+
+    applyTemplate(template);
   };
 
   async function buildIssueNodes(
@@ -549,6 +586,16 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
         assigneeIds: safeAssigneeIds,
       });
     }
+  };
+
+  const handleTemplateInputApply = () => {
+    if (!templateInputPrompt) return;
+
+    const trimmedValue = templateInputPrompt.value.trim();
+    if (!trimmedValue) return;
+
+    applyTemplate(templateInputPrompt.template, trimmedValue);
+    setTemplateInputPrompt(null);
   };
 
   return (
@@ -913,7 +960,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                       {templates.map((t) => (
                         <DropdownMenuItem
                           key={t.id}
-                          onClick={() => applyTemplate(t)}
+                          onClick={() => handleTemplateSelection(t)}
                         >
                           {t.name}
                         </DropdownMenuItem>
@@ -952,6 +999,64 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
               </div>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={templateInputPrompt !== null}
+        onOpenChange={(open) => {
+          if (!open) setTemplateInputPrompt(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Template Input</DialogTitle>
+            <DialogDescription>
+              This template uses <code>{`{INPUT}`}</code> in the parent issue
+              title. Enter the value to substitute before child issues are
+              generated.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor={`${baseId}-template-input`}>Input value</Label>
+            <Input
+              id={`${baseId}-template-input`}
+              value={templateInputPrompt?.value ?? ""}
+              placeholder="e.g. Intro to Unity"
+              onChange={(event) =>
+                setTemplateInputPrompt((previous) =>
+                  previous
+                    ? {
+                        ...previous,
+                        value: event.target.value,
+                      }
+                    : previous,
+                )
+              }
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  handleTemplateInputApply();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              className="border"
+              onClick={() => setTemplateInputPrompt(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleTemplateInputApply}
+              disabled={!templateInputPrompt?.value.trim()}
+            >
+              Apply Template
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
