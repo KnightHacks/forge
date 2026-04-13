@@ -442,14 +442,12 @@ export const issuesRouter = {
             .delete(IssuesToTeamsVisibility)
             .where(eq(IssuesToTeamsVisibility.issueId, id));
           if (ensuredTeamVisibilityIds.length > 0) {
-            await tx
-              .insert(IssuesToTeamsVisibility)
-              .values(
-                ensuredTeamVisibilityIds.map((teamId) => ({
-                  issueId: id,
-                  teamId,
-                })),
-              );
+            await tx.insert(IssuesToTeamsVisibility).values(
+              ensuredTeamVisibilityIds.map((teamId) => ({
+                issueId: id,
+                teamId,
+              })),
+            );
           }
         }
 
