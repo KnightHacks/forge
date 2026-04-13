@@ -52,6 +52,16 @@ function issueStatusLabel(status: IssueCalendarStatus) {
     .join(" ");
 }
 
+function calendarEventTextColor(backgroundColor: string) {
+  const hex = backgroundColor.replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(hex)) return "#ffffff";
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 160 ? "#111827" : "#ffffff";
+}
+
 function startOfLocalDay(isoOrDate: Date): Date {
   const d = new Date(isoOrDate);
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -211,6 +221,14 @@ export default function CalendarView() {
     return issuesForCurrentView.flatMap((issue): EventInput[] => {
       if (!issue.date) return [];
       const d = new Date(issue.date);
+      const teamColor = paneData?.roleColorById.get(issue.team) ?? null;
+      const eventPalette = teamColor
+        ? {
+            backgroundColor: teamColor,
+            borderColor: teamColor,
+            textColor: calendarEventTextColor(teamColor),
+          }
+        : {};
       const baseClassNames = [
         "calendar-issue",
         issue.event ? "calendar-issue--linked" : "calendar-issue--task",
@@ -229,6 +247,7 @@ export default function CalendarView() {
             display: "block" as const,
             extendedProps: { issueStatus: issue.status },
             classNames: baseClassNames,
+            ...eventPalette,
           },
         ];
       }
@@ -244,10 +263,11 @@ export default function CalendarView() {
           display: "block" as const,
           extendedProps: { issueStatus: issue.status },
           classNames: baseClassNames,
+          ...eventPalette,
         },
       ];
     });
-  }, [view, issuesForCurrentView]);
+  }, [paneData?.roleColorById, view, issuesForCurrentView]);
 
   const fullCalendarViews = useMemo(
     () => ({
@@ -608,6 +628,7 @@ export default function CalendarView() {
                 issues={issuesForCurrentView}
                 isLoading={paneData?.isLoading ?? true}
                 roleNameById={paneData?.roleNameById}
+                roleColorById={paneData?.roleColorById}
                 onIssueSelect={(issueId: string) => {
                   setDetailIssueId(issueId);
                   setIsDetailOpen(true);

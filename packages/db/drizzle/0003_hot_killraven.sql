@@ -1,0 +1,1 @@
+ALTER TABLE "auth_roles" ADD COLUMN "team_hexcode_color" varchar(7);

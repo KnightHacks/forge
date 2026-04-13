@@ -68,6 +68,7 @@ export function IssueDayAgenda(props: {
   issues: Issue[];
   isLoading: boolean;
   roleNameById: Map<string, string> | undefined;
+  roleColorById: Map<string, string | null> | undefined;
   onIssueSelect?: (issueId: string) => void;
   onIssuesChanged?: () => void;
 }) {
@@ -76,6 +77,7 @@ export function IssueDayAgenda(props: {
     issues,
     isLoading,
     roleNameById,
+    roleColorById,
     onIssueSelect,
     onIssuesChanged,
   } = props;
@@ -171,6 +173,7 @@ export function IssueDayAgenda(props: {
             const teamsText = teams.join(" · ");
             const showTeamsBlock = teamsText.length > 0;
             const assigneeNames = assigneeDisplayNames(issue);
+            const teamColor = roleColorById?.get(issue.team) ?? null;
             const assigneesText =
               assigneeNames.length > 0
                 ? assigneeNames.join(" · ")
@@ -180,6 +183,14 @@ export function IssueDayAgenda(props: {
               <li
                 key={issue.id}
                 className="rounded-xl border border-border bg-card/80 px-4 py-3.5 shadow-sm ring-1 ring-border/40"
+                style={
+                  teamColor
+                    ? {
+                        borderLeftColor: teamColor,
+                        borderLeftWidth: 4,
+                      }
+                    : undefined
+                }
               >
                 <div className="flex min-h-8 items-center justify-between gap-3">
                   <div className="flex min-w-0 flex-1 items-center gap-2.5">

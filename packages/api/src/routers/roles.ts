@@ -13,6 +13,22 @@ import * as discord from "@forge/utils/discord";
 
 import { permProcedure, protectedProcedure } from "../trpc";
 
+function discordRoleColorToHex(role: APIRole | null) {
+  if (!role || role.color <= 0) return null;
+  return `#${role.color.toString(16).padStart(6, "0")}`;
+}
+
+async function fetchDiscordRoleHexColor(roleId: string) {
+  try {
+    const role = (await discord.api.get(
+      Routes.guildRole(DISCORD.KNIGHTHACKS_GUILD, roleId),
+    )) as APIRole | null;
+    return discordRoleColorToHex(role);
+  } catch {
+    return null;
+  }
+}
+
 export const rolesRouter = {
   // ROLES
 
@@ -37,6 +53,8 @@ export const rolesRouter = {
           code: "CONFLICT",
         });
 
+      const teamHexcodeColor = await fetchDiscordRoleHexColor(input.roleId);
+
       // Create the role link first
       const insertedRoles = await db
         .insert(Roles)
@@ -44,6 +62,7 @@ export const rolesRouter = {
           name: input.name,
           discordRoleId: input.roleId,
           permissions: input.permissions,
+          teamHexcodeColor,
         })
         .returning();
 
@@ -145,12 +164,15 @@ export const rolesRouter = {
           code: "CONFLICT",
         });
 
+      const teamHexcodeColor = await fetchDiscordRoleHexColor(input.roleId);
+
       await db
         .update(Roles)
         .set({
           name: input.name,
           discordRoleId: input.roleId,
           permissions: input.permissions,
+          teamHexcodeColor,
         })
         .where(eq(Roles.id, input.id));
 

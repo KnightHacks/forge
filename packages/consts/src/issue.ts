@@ -64,6 +64,7 @@ export interface IssueFetcherPaneData {
   issues: IssueFetcherPaneIssue[];
   blockedParentIds: Set<string>;
   roleNameById: Map<string, string>;
+  roleColorById: Map<string, string | null>;
   isLoading: boolean;
   error: string | null;
   refresh: () => void;

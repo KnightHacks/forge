@@ -134,6 +134,11 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
     () => new Map(roles.map((role) => [role.id, role.name])),
     [roles],
   );
+  const roleColorById = useMemo(
+    () =>
+      new Map(roles.map((role) => [role.id, role.teamHexcodeColor ?? null])),
+    [roles],
+  );
 
   const allIssues = useMemo(
     () => (issuesData ?? []) as ISSUE.IssueFetcherPaneIssue[],
@@ -184,6 +189,9 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
       issues: isReady ? issues : [],
       blockedParentIds: isReady ? blockedParentIds : new Set<string>(),
       roleNameById: isReady ? roleNameById : new Map<string, string>(),
+      roleColorById: isReady
+        ? roleColorById
+        : new Map<string, string | null>(),
       isLoading: combinedIsLoading,
       error: combinedErrorMessage,
       refresh,
@@ -197,6 +205,7 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
       isReady,
       issues,
       refresh,
+      roleColorById,
       roleNameById,
     ],
   );
