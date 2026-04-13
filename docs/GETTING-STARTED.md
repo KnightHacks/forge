@@ -75,11 +75,19 @@ docker compose up
 
 > IMPORTANT!
 
-You must push the database schema to your local database before running the project. This is a common source of errors for new contributors. The most common error for this will be a "Failed to get current session" error on any page within Blade.
+You must apply the committed migrations to your local database before running the project. This is a common source of errors for new contributors. The most common symptom is a "Failed to get current session" error on Blade pages.
 
 ```bash
-pnpm db:push
+pnpm db:migrate
 ```
+
+When you change files in `packages/db/src/schemas`, generate a new migration and commit it:
+
+```bash
+pnpm db:generate
+```
+
+Pull requests with schema changes are expected to include the generated files in `packages/db/drizzle/`. CI verifies that migrations are committed, that they apply on a fresh database, and that they can upgrade a prod-like sanitized dataset.
 
 **Optional:** View the database contents with Drizzle Studio:
 
@@ -119,7 +127,7 @@ After running this, you'll have full superadmin permissions and can manage other
 
 ### 6. (Optional) Populate Test Data from Production
 
-**Dev Team Members Only:** If you have access to the shared MinIO instance, you can pull a sanitized copy of production data to test with realistic data locally.
+**Dev Team Members Only:** If you have access to the shared MinIO instance, you can pull a sanitized copy of production data to test with realistic data locally. This restores data into the database currently pointed to by `DATABASE_URL`, so make sure you have already run `pnpm db:migrate` first.
 
 ```bash
 pnpm db:pull
@@ -191,11 +199,13 @@ Look for issues labeled [`Onboarding`](https://github.com/KnightHacks/forge/labe
 3. Test your changes locally
 4. Run checks before submitting:
    ```bash
+   pnpm db:migrate
    pnpm format
    pnpm lint
    pnpm typecheck
    pnpm build
    ```
+   If you changed any schema files, also run `pnpm db:generate` and commit the generated migration files.
 5. Commit your changes (use lowercase, descriptive commit messages)
 6. Push your branch and open a pull request
 

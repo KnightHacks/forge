@@ -33,8 +33,9 @@ This could include:
 ## Checklist
 
 <!--
-IMPORTANT: Non-automated step. Make sure to confirm this, or Prod will go down.
+IMPORTANT: Schema changes must include committed migration files.
+If production auto-migrations are still disabled, coordinate the rollout plan before merge.
 -->
 
-- [ ] Database: No schema changes, OR I have contacted the Development Lead to run `db:push` before merging
+- [ ] Database: No schema changes, OR I ran `pnpm db:generate` and committed the generated files in `packages/db/drizzle/`
 - [ ] Environment Variables: No environment variables changed, OR I have contacted the Development Lead to modify them on Coolify BEFORE merging.
