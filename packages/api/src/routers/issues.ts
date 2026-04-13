@@ -377,7 +377,10 @@ export const issuesRouter = {
         });
 
         if (!existingIssue) {
-          throw new TRPCError({ message: "Issue not found.", code: "NOT_FOUND" });
+          throw new TRPCError({
+            message: "Issue not found.",
+            code: "NOT_FOUND",
+          });
         }
 
         const assignmentTeamId = input.team ?? existingIssue.team;
