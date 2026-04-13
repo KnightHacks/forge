@@ -189,9 +189,7 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
       issues: isReady ? issues : [],
       blockedParentIds: isReady ? blockedParentIds : new Set<string>(),
       roleNameById: isReady ? roleNameById : new Map<string, string>(),
-      roleColorById: isReady
-        ? roleColorById
-        : new Map<string, string | null>(),
+      roleColorById: isReady ? roleColorById : new Map<string, string | null>(),
       isLoading: combinedIsLoading,
       error: combinedErrorMessage,
       refresh,
