@@ -40,8 +40,8 @@ import { api } from "~/trpc/react";
 import { CreateEditDialog } from "../issues/create-edit-dialog";
 import { IssueFetcherPane } from "../issues/issue-fetcher-pane";
 import IssueTemplateDialog from "../issues/issue-template-dialog";
-import { CalendarIssueDialog } from "./calendar-issue-dialog";
 import { IssueDayAgenda } from "./calendar-day-agenda";
+import { CalendarIssueDialog } from "./calendar-issue-dialog";
 import { IssueStatusDotLegend } from "./calendar-status-dot-legend";
 
 type CalendarView = "dayGridMonth" | "dayGridWeek" | "issueDayAgenda";
@@ -682,7 +682,6 @@ export default function CalendarView() {
               height="100%"
               stickyHeaderDates={true}
               handleWindowResize={true}
-              expandRows={view === "dayGridMonth"}
               selectable={true}
               select={handleDateSelect}
               eventClick={handleIssueClick}

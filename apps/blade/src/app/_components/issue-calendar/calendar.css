@@ -103,13 +103,8 @@
     background-color: hsl(var(--card));
   }
 
-  /* Month view: show the whole month at once (no up/down scroll on the grid). */
-  .calendar-theme .fc-dayGridMonth-view .fc-scroller {
-    overflow-x: hidden;
-    overflow-y: hidden !important;
-  }
-
-  /* Week view: scroll if the window is short. */
+  /* Month / week: vertical scroll inside the grid when the pane is short. */
+  .calendar-theme .fc-dayGridMonth-view .fc-scroller,
   .calendar-theme .fc-dayGridWeek-view .fc-scroller {
     overflow-x: hidden;
     overflow-y: auto !important;
@@ -117,11 +112,13 @@
     scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
   }
 
+  .calendar-theme .fc-dayGridMonth-view .fc-scroller::-webkit-scrollbar,
   .calendar-theme .fc-dayGridWeek-view .fc-scroller::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
 
+  .calendar-theme .fc-dayGridMonth-view .fc-scroller::-webkit-scrollbar-thumb,
   .calendar-theme .fc-dayGridWeek-view .fc-scroller::-webkit-scrollbar-thumb {
     background-color: hsl(var(--muted-foreground) / 0.35);
     border-radius: 9999px;
@@ -129,6 +126,7 @@
     background-clip: padding-box;
   }
 
+  .calendar-theme .fc-dayGridMonth-view .fc-scroller::-webkit-scrollbar-track,
   .calendar-theme .fc-dayGridWeek-view .fc-scroller::-webkit-scrollbar-track {
     background: transparent;
   }
@@ -461,15 +459,17 @@
   max-width: 100%;
 }
 
-.calendar-theme .fc-dayGridMonth-view .fc-scroller,
+.calendar-theme .fc-dayGridMonth-view .fc-scroller {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
 .calendar-theme .fc-dayGridMonth-view .fc-scroller-harness,
 .calendar-theme .fc-dayGridMonth-view .fc-scroller-liquid-absolute {
-  overflow-y: hidden !important;
   overflow-x: hidden !important;
 }
 
 .calendar-theme .fc-dayGridMonth-view .fc-view-harness {
-  overflow: hidden !important;
   min-height: 0;
 }
 
