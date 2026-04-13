@@ -12,9 +12,7 @@ interface AdminIssuePageProps {
   }>;
 }
 
-export default async function AdminIssuePage({
-  params,
-}: AdminIssuePageProps) {
+export default async function AdminIssuePage({ params }: AdminIssuePageProps) {
   const session = await auth();
   if (!session) redirect(SIGN_IN_PATH);
 
