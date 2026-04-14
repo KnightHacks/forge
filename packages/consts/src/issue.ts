@@ -2,19 +2,19 @@ export const DEFAULT_ISSUE_REMINDER_CHANNEL_ID = "1459204271655489567";
 export const DEV_ISSUE_REMINDER_CHANNEL_ID = "1263902679457992845";
 
 export const ISSUE_STATUS = [
-  "BACKLOG",
-  "PLANNING",
-  "IN_PROGRESS",
-  "FINISHED",
+  "Backlog",
+  "Planning",
+  "In Progress",
+  "Finished",
 ] as const;
 
-export const PRIORITY = ["LOWEST", "LOW", "MEDIUM", "HIGH", "HIGHEST"] as const;
+export const PRIORITY = ["Lowest", "Low", "Medium", "High", "Highest"] as const;
 
 export const STATUS_COLORS: Record<(typeof ISSUE_STATUS)[number], string> = {
-  BACKLOG: "bg-slate-400",
-  PLANNING: "bg-amber-400",
-  IN_PROGRESS: "bg-emerald-400",
-  FINISHED: "bg-rose-400",
+  Backlog: "bg-slate-400",
+  Planning: "bg-amber-400",
+  "In Progress": "bg-emerald-400",
+  Finished: "bg-rose-400",
 };
 
 export const TASK_DUE_HOURS = 23;
