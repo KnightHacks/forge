@@ -20,10 +20,10 @@ const ISSUE_REMINDER_DAYS = {
 } as const;
 
 const ISSUE_REMINDER_DAY_LABELS: Record<IssueReminderDay, string> = {
-  Fourteen: "Due in 14 days",
-  Seven: "Due in 7 days",
-  Three: "Due in 3 days",
-  One: "Due in 1 day",
+  Fourteen: "14 days",
+  Seven: "7 days",
+  Three: "3 days",
+  One: "1 day",
   Overdue: "Overdue",
 };
 
@@ -41,6 +41,9 @@ type IssueReminderDay =
 interface IssueReminderTarget {
   issueId: string;
   issueName: string;
+  issuePriority: (typeof ISSUE.PRIORITY)[number];
+  issueUpdatedAt: Date;
+  issueDueDate: Date;
   teamId: string;
   teamDiscordRoleId: string;
   assigneeDiscordUserIds: string[];
@@ -100,6 +103,8 @@ const getIssueReminderDiffDays = (date: Date, now = new Date()): number => {
 const buildIssueReminderTarget = (issue: {
   id: string;
   name: string;
+  priority: (typeof ISSUE.PRIORITY)[number];
+  updatedAt: Date;
   team: string;
   date: Date | null;
   teamDiscordRoleId: string;
@@ -113,6 +118,9 @@ const buildIssueReminderTarget = (issue: {
   return {
     issueId: issue.id,
     issueName: issue.name,
+    issuePriority: issue.priority,
+    issueUpdatedAt: issue.updatedAt,
+    issueDueDate: issue.date,
     teamId: issue.team,
     teamDiscordRoleId: issue.teamDiscordRoleId,
     assigneeDiscordUserIds: issue.assigneeDiscordUserIds,
@@ -163,15 +171,54 @@ const sanitizeIssueReminderTitle = (title: string): string => {
     .trim();
 };
 
+const formatIssueReminderDate = (date: Date): string => {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: ISSUE_REMINDER_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+};
+
+const formatIssueReminderDateTime = (date: Date): string => {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: ISSUE_REMINDER_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
+
+const ISSUE_PRIORITY_RANK: Record<(typeof ISSUE.PRIORITY)[number], number> =
+  ISSUE.PRIORITY.reduce(
+    (acc, priority, index) => ({
+      ...acc,
+      [priority]: index,
+    }),
+    {} as Record<(typeof ISSUE.PRIORITY)[number], number>,
+  );
+
+const sortIssueReminderTargets = (
+  targets: IssueReminderTarget[],
+): IssueReminderTarget[] => {
+  return [...targets].sort((a, b) => {
+    const priorityDiff =
+      ISSUE_PRIORITY_RANK[b.issuePriority] - ISSUE_PRIORITY_RANK[a.issuePriority];
+    if (priorityDiff !== 0) return priorityDiff;
+    return a.issueName.localeCompare(b.issueName, undefined, {
+      sensitivity: "base",
+    });
+  });
+};
+
 const formatIssueReminder = (target: IssueReminderTarget): string => {
-  const mentions = getIssueMentionTargets(target).join(", ");
+  const mentionTargets = getIssueMentionTargets(target);
+  const assigneeOrTeam = mentionTargets.join(", ");
   const issueUrl = getIssueUrl(target.issueId);
   const issueTitle = sanitizeIssueReminderTitle(target.issueName);
-  const overdueSuffix =
-    target.day === ISSUE_REMINDER_DAYS.Overdue && target.overdueDays !== null
-      ? ` (${target.overdueDays} days)`
-      : "";
-  return `[${issueTitle}](<${issueUrl}>)${overdueSuffix} ${mentions}`;
+  return `[${issueTitle}](<${issueUrl}>) | ${assigneeOrTeam} | ${target.issuePriority} | Updated: ${formatIssueReminderDateTime(target.issueUpdatedAt)} | Due: ${formatIssueReminderDateTime(target.issueDueDate)}`;
 };
 
 const truncateReminderLine = (line: string, maxLength: number): string => {
@@ -206,31 +253,25 @@ const getAllowedMentions = (
   };
 };
 
-const formatIssueReminderEmbedDescription = (content: string): string => {
-  return content
-    .replace(/^# Issue Reminders\n?/, "")
-    .replace(/^## (.+)$/gm, "**$1**")
-    .trim();
-};
-
 const splitChannelReminderMessages = (
   grouped: Partial<Record<IssueReminderDay, IssueReminderTarget[]>>,
 ): { content: string; targets: IssueReminderTarget[] }[] => {
   const chunks: { content: string; targets: IssueReminderTarget[] }[] = [];
-  let currentContent = "# Issue Reminders";
+  let currentContent = `## Issue Reminders - ${formatIssueReminderDate(new Date())}`;
   let currentTargets: IssueReminderTarget[] = [];
 
   for (const day of ISSUE_REMINDER_DAY_ORDER) {
     const targets = grouped[day];
     if (!targets || targets.length === 0) continue;
 
-    const sectionLines = targets.map(formatIssueReminder);
-    const sectionContent = `## ${ISSUE_REMINDER_DAY_LABELS[day]}\n${sectionLines.join("\n")}`;
+    const sortedTargets = sortIssueReminderTargets(targets);
+    const sectionLines = sortedTargets.map(formatIssueReminder);
+    const sectionContent = `### ${ISSUE_REMINDER_DAY_LABELS[day]}\n${sectionLines.join("\n")}`;
     const nextContent = `${currentContent}\n${sectionContent}`;
 
     if (nextContent.length <= MAX_DISCORD_MESSAGE_LENGTH) {
       currentContent = nextContent;
-      currentTargets.push(...targets);
+      currentTargets.push(...sortedTargets);
       continue;
     }
 
@@ -238,7 +279,7 @@ const splitChannelReminderMessages = (
       chunks.push({ content: currentContent, targets: currentTargets });
     }
 
-    let sectionChunkContent = `# Issue Reminders\n\n## ${ISSUE_REMINDER_DAY_LABELS[day]}`;
+    let sectionChunkContent = `## Issue Reminders - ${formatIssueReminderDate(new Date())}\n\n### ${ISSUE_REMINDER_DAY_LABELS[day]}`;
     let sectionChunkTargets: IssueReminderTarget[] = [];
     const sectionHeaderLength = `${sectionChunkContent}\n`.length;
 
@@ -247,7 +288,7 @@ const splitChannelReminderMessages = (
         sectionLines[index] ?? "",
         MAX_DISCORD_MESSAGE_LENGTH - sectionHeaderLength,
       );
-      const target = targets[index];
+      const target = sortedTargets[index];
       if (!target) continue;
       const nextSectionChunkContent = `${sectionChunkContent}\n${line}`;
       if (nextSectionChunkContent.length > MAX_DISCORD_MESSAGE_LENGTH) {
@@ -258,7 +299,7 @@ const splitChannelReminderMessages = (
           });
         }
 
-        sectionChunkContent = `# Issue Reminders\n\n## ${ISSUE_REMINDER_DAY_LABELS[day]}\n${line}`;
+        sectionChunkContent = `## Issue Reminders - ${formatIssueReminderDate(new Date())}\n\n### ${ISSUE_REMINDER_DAY_LABELS[day]}\n${line}`;
         sectionChunkTargets = [target];
         continue;
       }
@@ -285,13 +326,7 @@ const sendIssueReminderChunk = async (
   try {
     await api.post(Routes.channelMessages(channelId), {
       body: {
-        embeds: [
-          {
-            title: "Issue Reminders",
-            description: formatIssueReminderEmbedDescription(chunk.content),
-            color: 0xcca4f4,
-          },
-        ],
+        content: chunk.content,
         allowed_mentions: getAllowedMentions(chunk.targets),
       },
     });
@@ -357,6 +392,8 @@ export const issueReminders = new CronBuilder({
       return buildIssueReminderTarget({
         id: issue.id,
         name: issue.name,
+        priority: issue.priority,
+        updatedAt: issue.updatedAt,
         team: issue.team,
         date: issue.date,
         teamDiscordRoleId: role.discordRoleId,
