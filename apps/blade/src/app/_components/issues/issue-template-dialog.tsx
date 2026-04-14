@@ -327,12 +327,18 @@ export default function IssueTemplateDialog({
                   <>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label className="text-right">Task Name</Label>
-                      <Input
-                        className="col-span-3 w-full"
-                        placeholder="Task name (required)"
-                        value={root.name}
-                        onChange={(e) => updateRoot({ name: e.target.value })}
-                      />
+                      <div className="col-span-3 space-y-2">
+                        <Input
+                          className="w-full"
+                          placeholder="Task name (required, e.g. {INPUT} Workshop)"
+                          value={root.name}
+                          onChange={(e) => updateRoot({ name: e.target.value })}
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Root task names can include <code>{`{INPUT}`}</code>{" "}
+                          to prompt for a value when the template is applied.
+                        </p>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-4 items-start gap-4">
@@ -373,6 +379,11 @@ export default function IssueTemplateDialog({
                           Add Sub-task
                         </Button>
                       </div>
+                      <p className="mb-4 text-sm text-muted-foreground">
+                        Hint: sub-task names can include{" "}
+                        <code>{`{PARENT}`}</code> to insert the applied parent
+                        issue name. Example: <code>{`{PARENT} Post`}</code>.
+                      </p>
                       {root.children.length === 0 && (
                         <p className="text-sm text-muted-foreground">
                           No sub-tasks yet.

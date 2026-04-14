@@ -6,13 +6,13 @@ import { auth } from "@forge/auth";
 import { SIGN_IN_PATH } from "~/consts";
 import { api } from "~/trpc/server";
 
-interface IssuePageProps {
+interface AdminIssuePageProps {
   params: Promise<{
     id: string;
   }>;
 }
 
-export default async function IssuePage({ params }: IssuePageProps) {
+export default async function AdminIssuePage({ params }: AdminIssuePageProps) {
   const session = await auth();
   if (!session) redirect(SIGN_IN_PATH);
 
@@ -21,6 +21,7 @@ export default async function IssuePage({ params }: IssuePageProps) {
 
   const { id } = await params;
   if (!z.string().uuid().safeParse(id).success) notFound();
+
   let issue;
   try {
     issue = await api.issues.getIssue({ id });

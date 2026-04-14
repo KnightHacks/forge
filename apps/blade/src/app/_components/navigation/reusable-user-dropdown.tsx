@@ -3,8 +3,10 @@ import {
   ChartPie,
   FormInput,
   Hotel,
+  ListTodo,
   Settings,
   ShieldCheck,
+  SquareKanban,
   Swords,
   TicketCheck,
   User,
@@ -86,6 +88,48 @@ export const systemItems: roleItems[] = [
     route: "/admin/roles/configure",
     requiredPermissions: {
       or: ["CONFIGURE_ROLES", "IS_OFFICER"],
+    },
+  },
+];
+
+export const issuesItems: roleItems[] = [
+  {
+    name: "Kanban",
+    component: (
+      <SquareKanban
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/issues/kanban",
+    requiredPermissions: {
+      or: ["READ_ISSUES", "EDIT_ISSUES", "IS_OFFICER"],
+    },
+  },
+  {
+    name: "List",
+    component: (
+      <ListTodo
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/issues/list",
+    requiredPermissions: {
+      or: ["READ_ISSUES", "EDIT_ISSUES", "IS_OFFICER"],
+    },
+  },
+  {
+    name: "Calendar",
+    component: (
+      <CalendarDays
+        color={USER_DROPDOWN_ICON_COLOR}
+        size={USER_DROPDOWN_ICON_SIZE}
+      />
+    ),
+    route: "/admin/issues/calendar",
+    requiredPermissions: {
+      or: ["READ_ISSUES", "EDIT_ISSUES", "IS_OFFICER"],
     },
   },
 ];

@@ -1,6 +1,7 @@
 import { Routes } from "discord-api-types/v10";
 import { and, inArray, isNotNull, ne } from "drizzle-orm";
 
+import { IS_PROD, ISSUE } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Roles } from "@forge/db/schemas/auth";
 import { Issue } from "@forge/db/schemas/knight-hacks";
@@ -9,20 +10,6 @@ import { api } from "@forge/utils/discord";
 
 import { env } from "../env";
 import { CronBuilder } from "../structs/CronBuilder";
-
-const ISSUE_REMINDER_CHANNELS = {
-  Teams: "Teams",
-  Directors: "Directors",
-  Design: "Design",
-  HackOrg: "HackOrg",
-} as const;
-
-const ISSUE_REMINDER_DESTINATION_CHANNEL_IDS = {
-  Teams: "1459204271655489567",
-  Directors: "1463407041191088188",
-  HackOrg: "1461565747649187874",
-  Design: "1483901622558920945",
-};
 
 const ISSUE_REMINDER_DAYS = {
   Fourteen: "Fourteen",
@@ -33,10 +20,10 @@ const ISSUE_REMINDER_DAYS = {
 } as const;
 
 const ISSUE_REMINDER_DAY_LABELS: Record<IssueReminderDay, string> = {
-  Fourteen: "Due in 14 days",
-  Seven: "Due in 7 days",
-  Three: "Due in 3 days",
-  One: "Due in 1 day",
+  Fourteen: "14 days",
+  Seven: "7 days",
+  Three: "3 days",
+  One: "1 day",
   Overdue: "Overdue",
 };
 
@@ -54,23 +41,28 @@ type IssueReminderDay =
 interface IssueReminderTarget {
   issueId: string;
   issueName: string;
+  issuePriority: (typeof ISSUE.PRIORITY)[number];
+  issueUpdatedAt: Date;
+  issueDueDate: Date;
   teamId: string;
   teamDiscordRoleId: string;
   assigneeDiscordUserIds: string[];
-  channel: keyof typeof ISSUE_REMINDER_CHANNELS;
+  discordChannelId: string;
   day: IssueReminderDay;
   overdueDays: number | null;
 }
 
 type GroupedIssueReminders = Partial<
-  Record<
-    keyof typeof ISSUE_REMINDER_CHANNELS,
-    Partial<Record<IssueReminderDay, IssueReminderTarget[]>>
-  >
+  Record<string, Partial<Record<IssueReminderDay, IssueReminderTarget[]>>>
 >;
 
 const MAX_DISCORD_MESSAGE_LENGTH = 2000;
 const ISSUE_REMINDER_TIMEZONE = "America/New_York";
+
+const resolveDestinationChannelId = (roleChannelId: string): string => {
+  if (!IS_PROD) return ISSUE.DEV_ISSUE_REMINDER_CHANNEL_ID;
+  return roleChannelId || ISSUE.DEFAULT_ISSUE_REMINDER_CHANNEL_ID;
+};
 
 const getTimezoneMidnightTimestamp = (date: Date, timeZone: string): number => {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -111,24 +103,28 @@ const getIssueReminderDiffDays = (date: Date, now = new Date()): number => {
 const buildIssueReminderTarget = (issue: {
   id: string;
   name: string;
+  priority: (typeof ISSUE.PRIORITY)[number];
+  updatedAt: Date;
   team: string;
   date: Date | null;
   teamDiscordRoleId: string;
   assigneeDiscordUserIds: string[];
-  channel: keyof typeof ISSUE_REMINDER_CHANNELS | null;
+  discordChannelId: string;
 }): IssueReminderTarget | null => {
   if (!issue.date) return null;
-  if (!issue.channel) return null;
   const day = getIssueReminderDay(issue.date);
   if (!day) return null;
   if (!issue.teamDiscordRoleId) return null;
   return {
     issueId: issue.id,
     issueName: issue.name,
+    issuePriority: issue.priority,
+    issueUpdatedAt: issue.updatedAt,
+    issueDueDate: issue.date,
     teamId: issue.team,
     teamDiscordRoleId: issue.teamDiscordRoleId,
     assigneeDiscordUserIds: issue.assigneeDiscordUserIds,
-    channel: issue.channel,
+    discordChannelId: issue.discordChannelId,
     day,
     overdueDays:
       day === ISSUE_REMINDER_DAYS.Overdue
@@ -148,8 +144,8 @@ const groupIssueReminderTargets = (
 ): GroupedIssueReminders => {
   const grouped: GroupedIssueReminders = {};
   for (const t of targets) {
-    grouped[t.channel] ??= {};
-    const channelGroup = grouped[t.channel];
+    grouped[t.discordChannelId] ??= {};
+    const channelGroup = grouped[t.discordChannelId];
     if (!channelGroup) continue;
     channelGroup[t.day] ??= [];
     const dayGroup = channelGroup[t.day];
@@ -175,15 +171,55 @@ const sanitizeIssueReminderTitle = (title: string): string => {
     .trim();
 };
 
+const formatIssueReminderDate = (date: Date): string => {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: ISSUE_REMINDER_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+};
+
+const formatIssueReminderDateTime = (date: Date): string => {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: ISSUE_REMINDER_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
+
+const ISSUE_PRIORITY_RANK: Record<(typeof ISSUE.PRIORITY)[number], number> =
+  ISSUE.PRIORITY.reduce(
+    (acc, priority, index) => ({
+      ...acc,
+      [priority]: index,
+    }),
+    {} as Record<(typeof ISSUE.PRIORITY)[number], number>,
+  );
+
+const sortIssueReminderTargets = (
+  targets: IssueReminderTarget[],
+): IssueReminderTarget[] => {
+  return [...targets].sort((a, b) => {
+    const priorityDiff =
+      ISSUE_PRIORITY_RANK[b.issuePriority] -
+      ISSUE_PRIORITY_RANK[a.issuePriority];
+    if (priorityDiff !== 0) return priorityDiff;
+    return a.issueName.localeCompare(b.issueName, undefined, {
+      sensitivity: "base",
+    });
+  });
+};
+
 const formatIssueReminder = (target: IssueReminderTarget): string => {
-  const mentions = getIssueMentionTargets(target).join(", ");
+  const mentionTargets = getIssueMentionTargets(target);
+  const assigneeOrTeam = mentionTargets.join(", ");
   const issueUrl = getIssueUrl(target.issueId);
   const issueTitle = sanitizeIssueReminderTitle(target.issueName);
-  const overdueSuffix =
-    target.day === ISSUE_REMINDER_DAYS.Overdue && target.overdueDays !== null
-      ? ` (${target.overdueDays} days)`
-      : "";
-  return `[${issueTitle}](<${issueUrl}>)${overdueSuffix} ${mentions}`;
+  return `[${issueTitle}](<${issueUrl}>) | ${assigneeOrTeam} | ${target.issuePriority} | Updated: ${formatIssueReminderDateTime(target.issueUpdatedAt)} | Due: ${formatIssueReminderDateTime(target.issueDueDate)}`;
 };
 
 const truncateReminderLine = (line: string, maxLength: number): string => {
@@ -193,7 +229,7 @@ const truncateReminderLine = (line: string, maxLength: number): string => {
 };
 
 const getIssueUrl = (issueId: string): string => {
-  return `${env.BLADE_URL.replace(/\/$/, "")}/issues/${issueId}`;
+  return `${env.BLADE_URL.replace(/\/$/, "")}/admin/issues/${issueId}`;
 };
 
 const getAllowedMentions = (
@@ -218,31 +254,25 @@ const getAllowedMentions = (
   };
 };
 
-const formatIssueReminderEmbedDescription = (content: string): string => {
-  return content
-    .replace(/^# Issue Reminders\n?/, "")
-    .replace(/^## (.+)$/gm, "**$1**")
-    .trim();
-};
-
 const splitChannelReminderMessages = (
   grouped: Partial<Record<IssueReminderDay, IssueReminderTarget[]>>,
 ): { content: string; targets: IssueReminderTarget[] }[] => {
   const chunks: { content: string; targets: IssueReminderTarget[] }[] = [];
-  let currentContent = "# Issue Reminders";
+  let currentContent = `## Issue Reminders - ${formatIssueReminderDate(new Date())}`;
   let currentTargets: IssueReminderTarget[] = [];
 
   for (const day of ISSUE_REMINDER_DAY_ORDER) {
     const targets = grouped[day];
     if (!targets || targets.length === 0) continue;
 
-    const sectionLines = targets.map(formatIssueReminder);
-    const sectionContent = `## ${ISSUE_REMINDER_DAY_LABELS[day]}\n${sectionLines.join("\n")}`;
+    const sortedTargets = sortIssueReminderTargets(targets);
+    const sectionLines = sortedTargets.map(formatIssueReminder);
+    const sectionContent = `### ${ISSUE_REMINDER_DAY_LABELS[day]}\n${sectionLines.join("\n")}`;
     const nextContent = `${currentContent}\n${sectionContent}`;
 
     if (nextContent.length <= MAX_DISCORD_MESSAGE_LENGTH) {
       currentContent = nextContent;
-      currentTargets.push(...targets);
+      currentTargets.push(...sortedTargets);
       continue;
     }
 
@@ -250,7 +280,7 @@ const splitChannelReminderMessages = (
       chunks.push({ content: currentContent, targets: currentTargets });
     }
 
-    let sectionChunkContent = `# Issue Reminders\n\n## ${ISSUE_REMINDER_DAY_LABELS[day]}`;
+    let sectionChunkContent = `## Issue Reminders - ${formatIssueReminderDate(new Date())}\n\n### ${ISSUE_REMINDER_DAY_LABELS[day]}`;
     let sectionChunkTargets: IssueReminderTarget[] = [];
     const sectionHeaderLength = `${sectionChunkContent}\n`.length;
 
@@ -259,7 +289,7 @@ const splitChannelReminderMessages = (
         sectionLines[index] ?? "",
         MAX_DISCORD_MESSAGE_LENGTH - sectionHeaderLength,
       );
-      const target = targets[index];
+      const target = sortedTargets[index];
       if (!target) continue;
       const nextSectionChunkContent = `${sectionChunkContent}\n${line}`;
       if (nextSectionChunkContent.length > MAX_DISCORD_MESSAGE_LENGTH) {
@@ -270,7 +300,7 @@ const splitChannelReminderMessages = (
           });
         }
 
-        sectionChunkContent = `# Issue Reminders\n\n## ${ISSUE_REMINDER_DAY_LABELS[day]}\n${line}`;
+        sectionChunkContent = `## Issue Reminders - ${formatIssueReminderDate(new Date())}\n\n### ${ISSUE_REMINDER_DAY_LABELS[day]}\n${line}`;
         sectionChunkTargets = [target];
         continue;
       }
@@ -291,25 +321,21 @@ const splitChannelReminderMessages = (
 };
 
 const sendIssueReminderChunk = async (
-  channel: keyof typeof ISSUE_REMINDER_CHANNELS,
   channelId: string,
   chunk: { content: string; targets: IssueReminderTarget[] },
 ) => {
   try {
     await api.post(Routes.channelMessages(channelId), {
       body: {
-        embeds: [
-          {
-            title: "Issue Reminders",
-            description: formatIssueReminderEmbedDescription(chunk.content),
-            color: 0xcca4f4,
-          },
-        ],
+        content: chunk.content,
         allowed_mentions: getAllowedMentions(chunk.targets),
       },
     });
   } catch (error) {
-    logger.error(`Failed sending issue reminder chunk for ${channel}.`, error);
+    logger.error(
+      `Failed sending issue reminder chunk for channel ${channelId}.`,
+      error,
+    );
   }
 };
 
@@ -318,7 +344,7 @@ export const issueReminders = new CronBuilder({
   color: 2,
 }).addCron("0 9 * * *", async () => {
   const issues = await db.query.Issue.findMany({
-    where: and(isNotNull(Issue.date), ne(Issue.status, "FINISHED")),
+    where: and(isNotNull(Issue.date), ne(Issue.status, "Finished")),
     with: {
       userAssignments: {
         with: {
@@ -343,7 +369,7 @@ export const issueReminders = new CronBuilder({
     string,
     {
       discordRoleId: string;
-      issueReminderChannel: keyof typeof ISSUE_REMINDER_CHANNELS | null;
+      issueReminderChannel: string;
     }
   > = {};
   for (const r of roles) {
@@ -355,41 +381,40 @@ export const issueReminders = new CronBuilder({
   const reminderTargets = issues
     .map((issue) => {
       const role = roleDataByTeamId[issue.team];
-      if (!role?.issueReminderChannel) {
+      if (!role) {
         logger.warn(
-          `Skipping issue reminder: no issue reminder channel configured for team ${issue.team}.`,
+          `Skipping issue reminder: no role row for team ${issue.team}.`,
         );
+        return null;
       }
+      const discordChannelId = resolveDestinationChannelId(
+        role.issueReminderChannel,
+      );
       return buildIssueReminderTarget({
         id: issue.id,
         name: issue.name,
+        priority: issue.priority,
+        updatedAt: issue.updatedAt,
         team: issue.team,
         date: issue.date,
-        teamDiscordRoleId: role?.discordRoleId ?? "",
+        teamDiscordRoleId: role.discordRoleId,
         assigneeDiscordUserIds: issue.userAssignments.map(
           (assignment) => assignment.user.discordUserId,
         ),
-        channel: role?.issueReminderChannel ?? null,
+        discordChannelId,
       });
     })
     .filter(isIssueReminderTarget);
 
   const groupedReminders = groupIssueReminderTargets(reminderTargets);
-  for (const channel of Object.keys(
-    ISSUE_REMINDER_CHANNELS,
-  ) as (keyof typeof ISSUE_REMINDER_CHANNELS)[]) {
-    const groupedChannel = groupedReminders[channel];
+  for (const [channelId, groupedChannel] of Object.entries(groupedReminders)) {
     if (!groupedChannel) continue;
 
     const chunks = splitChannelReminderMessages(groupedChannel);
     if (chunks.length === 0) continue;
 
     for (const chunk of chunks) {
-      await sendIssueReminderChunk(
-        channel,
-        ISSUE_REMINDER_DESTINATION_CHANNEL_IDS[channel],
-        chunk,
-      );
+      await sendIssueReminderChunk(channelId, chunk);
     }
   }
 });

@@ -2,22 +2,17 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  Calendar,
-  CheckCircle2,
-  CircleDot,
-  Pencil,
-  SlidersHorizontal,
-  Users,
-} from "lucide-react";
+import { Calendar, Pencil, Users } from "lucide-react";
 
 import { ISSUE } from "@forge/consts";
-import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
 
 import { CreateEditDialog } from "~/app/_components/issues/create-edit-dialog";
 import { IssueFetcherPane } from "~/app/_components/issues/issue-fetcher-pane";
-import IssueTemplateDialog from "~/app/_components/issues/issue-template-dialog";
+import {
+  getActiveIssueFilterTags,
+  IssueViewControlBar,
+} from "~/app/_components/issues/issue-view-control-bar";
 import { api } from "~/trpc/react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -66,18 +61,20 @@ export function KanbanBoard() {
     onError: () => toast.error("Failed to update issue status"),
   });
 
-  const issues = paneData?.issues
-    ? paneData.issues.map((issue) => ({
+  const issues = useMemo(
+    () =>
+      (paneData?.issues ?? []).map((issue) => ({
         ...issue,
         status: statusOverrides[issue.id] ?? issue.status,
-      }))
-    : [];
+      })),
+    [paneData?.issues, statusOverrides],
+  );
 
   const isLoading = paneData?.isLoading ?? true;
 
   // --- Header Stats Logic ---
   const openCount = useMemo(
-    () => issues.filter((issue) => issue.status !== "FINISHED").length,
+    () => issues.filter((issue) => issue.status !== "Finished").length,
     [issues],
   );
   const closedCount = issues.length - openCount;
@@ -85,22 +82,8 @@ export function KanbanBoard() {
   // --- Active Filters Logic ---
   const filters = paneData?.filters;
   const activeFilters = useMemo(() => {
-    if (!filters) return [];
-    const tags: string[] = [];
-    if (filters.statusFilter !== "all")
-      tags.push(formatStatus(filters.statusFilter));
-    if (filters.teamFilter !== "all") tags.push("Team selected");
-    if (filters.issueKind !== "all")
-      tags.push(
-        filters.issueKind === "task" ? "Tasks only" : "Event-linked only",
-      );
-    if (filters.rootOnly) tags.push("Root");
-    if (filters.dateFrom) tags.push("From " + filters.dateFrom);
-    if (filters.dateTo) tags.push("To " + filters.dateTo);
-    if (filters.searchTerm.trim())
-      tags.push('Search "' + filters.searchTerm.trim() + '"');
-    return tags;
-  }, [filters]);
+    return getActiveIssueFilterTags(filters, paneData?.roleNameById);
+  }, [filters, paneData?.roleNameById]);
 
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,
@@ -147,44 +130,12 @@ export function KanbanBoard() {
 
   return (
     <section className="mx-auto w-full max-w-7xl space-y-4 py-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-4 rounded-md border bg-muted/20 px-3 py-2">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <CircleDot className="h-4 w-4 text-emerald-500" />
-            <span>{openCount} Open</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <CheckCircle2 className="h-4 w-4" />
-            <span>{closedCount} Closed</span>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
-          <CreateEditDialog intent="create">
-            <Button>Create issue</Button>
-          </CreateEditDialog>
-          <IssueTemplateDialog />
-          <Button variant="outline" onClick={() => setIsFiltersOpen(true)}>
-            <SlidersHorizontal className="mr-2 h-4 w-4" />
-            Filters
-          </Button>
-        </div>
-      </div>
-
-      {/* 2. Active Filter Tags */}
-      {activeFilters.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {activeFilters.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
+      <IssueViewControlBar
+        openCount={openCount}
+        closedCount={closedCount}
+        activeFilters={activeFilters}
+        onOpenFilters={() => setIsFiltersOpen(true)}
+      />
 
       {/* 3. The Board */}
       {isLoading ? (
@@ -228,7 +179,7 @@ export function KanbanBoard() {
                       <div className="p-3">
                         <div className="flex items-start justify-between gap-2">
                           <Link
-                            href={"/issues/" + issue.id}
+                            href={"/admin/issues/" + issue.id}
                             className="text-sm font-medium leading-tight hover:underline"
                           >
                             {issue.name}
