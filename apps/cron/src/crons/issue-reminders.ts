@@ -205,7 +205,8 @@ const sortIssueReminderTargets = (
 ): IssueReminderTarget[] => {
   return [...targets].sort((a, b) => {
     const priorityDiff =
-      ISSUE_PRIORITY_RANK[b.issuePriority] - ISSUE_PRIORITY_RANK[a.issuePriority];
+      ISSUE_PRIORITY_RANK[b.issuePriority] -
+      ISSUE_PRIORITY_RANK[a.issuePriority];
     if (priorityDiff !== 0) return priorityDiff;
     return a.issueName.localeCompare(b.issueName, undefined, {
       sensitivity: "base",
