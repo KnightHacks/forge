@@ -149,7 +149,7 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
     const blockedParents = new Set<string>();
 
     for (const issue of allIssues) {
-      if (issue.parent && issue.status !== "FINISHED") {
+      if (issue.parent && issue.status !== "Finished") {
         blockedParents.add(issue.parent);
       }
     }

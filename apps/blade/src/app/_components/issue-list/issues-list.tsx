@@ -50,7 +50,7 @@ type SortField = "name" | "status" | "date" | "team" | "updatedAt";
 type SortOrder = "asc" | "desc" | null;
 
 function isOverdueIssue(issue: ISSUE.IssueFetcherPaneIssue) {
-  if (issue.status === "FINISHED" || !issue.date) return false;
+  if (issue.status === "Finished" || !issue.date) return false;
   const dueDate = new Date(issue.date);
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -100,7 +100,7 @@ export function IssuesList() {
   const error = paneData?.error ?? null;
 
   const openCount = useMemo(
-    () => issues.filter((issue) => issue.status !== "FINISHED").length,
+    () => issues.filter((issue) => issue.status !== "Finished").length,
     [issues],
   );
   const closedCount = issues.length - openCount;

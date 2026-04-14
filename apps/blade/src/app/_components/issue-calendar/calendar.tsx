@@ -171,7 +171,7 @@ export default function CalendarView() {
   }, [paneData, rawPaneIssues, deferredPaneIssues]);
 
   const openCount = useMemo(
-    () => rawPaneIssues.filter((issue) => issue.status !== "FINISHED").length,
+    () => rawPaneIssues.filter((issue) => issue.status !== "Finished").length,
     [rawPaneIssues],
   );
   const closedCount = rawPaneIssues.length - openCount;
@@ -232,7 +232,7 @@ export default function CalendarView() {
       const baseClassNames = [
         "calendar-issue",
         issue.event ? "calendar-issue--linked" : "calendar-issue--task",
-        ...(issue.status === "FINISHED" ? ["calendar-issue--finished"] : []),
+        ...(issue.status === "Finished" ? ["calendar-issue--finished"] : []),
       ] as string[];
 
       const useAllDayBand = !issue.event && isDefaultTaskDueMoment(d);
@@ -404,7 +404,7 @@ export default function CalendarView() {
       return undefined;
     }
     const ex = arg.event.extendedProps as { issueStatus?: IssueCalendarStatus };
-    const status: IssueCalendarStatus = ex.issueStatus ?? "BACKLOG";
+    const status: IssueCalendarStatus = ex.issueStatus ?? "Backlog";
     const statusLabel = issueStatusLabel(status);
     return (
       <div

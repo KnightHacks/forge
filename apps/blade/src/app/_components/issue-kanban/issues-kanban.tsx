@@ -74,7 +74,7 @@ export function KanbanBoard() {
 
   // --- Header Stats Logic ---
   const openCount = useMemo(
-    () => issues.filter((issue) => issue.status !== "FINISHED").length,
+    () => issues.filter((issue) => issue.status !== "Finished").length,
     [issues],
   );
   const closedCount = issues.length - openCount;

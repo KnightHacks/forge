@@ -49,7 +49,7 @@ function assigneeDisplayNames(issue: Issue): string[] {
 }
 
 function isOverdueIssue(issue: Issue) {
-  if (issue.status === "FINISHED" || !issue.date) return false;
+  if (issue.status === "Finished" || !issue.date) return false;
   const dueDate = new Date(issue.date);
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);

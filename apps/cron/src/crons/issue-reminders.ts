@@ -344,7 +344,7 @@ export const issueReminders = new CronBuilder({
   color: 2,
 }).addCron("0 9 * * *", async () => {
   const issues = await db.query.Issue.findMany({
-    where: and(isNotNull(Issue.date), ne(Issue.status, "FINISHED")),
+    where: and(isNotNull(Issue.date), ne(Issue.status, "Finished")),
     with: {
       userAssignments: {
         with: {

@@ -43,7 +43,7 @@ function isIssueOverdue(
   status: GetIssueResult["status"],
   date: Date | string | null | undefined,
 ) {
-  if (status === "FINISHED" || !date) return false;
+  if (status === "Finished" || !date) return false;
   const dueDate = new Date(date);
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);

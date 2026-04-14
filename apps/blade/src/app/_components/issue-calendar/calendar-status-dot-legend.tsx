@@ -4,10 +4,10 @@ import { ISSUE } from "@forge/consts";
 
 const STATUS_LEGEND_LABEL: Record<(typeof ISSUE.ISSUE_STATUS)[number], string> =
   {
-    BACKLOG: "Backlog",
-    PLANNING: "Planning",
-    IN_PROGRESS: "In Progress",
-    FINISHED: "Finished",
+    Backlog: "Backlog",
+    Planning: "Planning",
+    "In Progress": "In Progress",
+    Finished: "Finished",
   };
 
 export function IssueStatusDotLegend() {
