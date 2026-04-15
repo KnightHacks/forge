@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
 
 import { ISSUE } from "@forge/consts";
@@ -12,6 +12,7 @@ import { Label } from "@forge/ui/label";
 import { Textarea } from "@forge/ui/textarea";
 
 import type { Hackathon, Role } from "./issue-form-fields";
+import { api } from "~/trpc/react";
 import {
   addChildToTreeNode,
   defaultEventForm,
@@ -112,6 +113,26 @@ export function IssueNode({
 }: IssueNodeProps) {
   const [expanded, setExpanded] = useState(false);
   const baseId = useId();
+  const effectiveTeam = node.team || (roles[0]?.id ?? "");
+  const usersOnTeamQuery = api.issues.getUsersOnTeam.useQuery(
+    { teamId: effectiveTeam },
+    { enabled: expanded && !!effectiveTeam },
+  );
+  const assigneesForTeam = useMemo<ISSUE.IssueAssigneeOption[]>(
+    () => usersOnTeamQuery.data ?? [],
+    [usersOnTeamQuery.data],
+  );
+  const assigneeIdSet = useMemo(
+    () => new Set(assigneesForTeam.map((user) => user.id)),
+    [assigneesForTeam],
+  );
+  const selectedAssigneeIds = useMemo(
+    () =>
+      usersOnTeamQuery.isSuccess
+        ? node.assigneeIds.filter((id) => assigneeIdSet.has(id))
+        : node.assigneeIds,
+    [assigneeIdSet, node.assigneeIds, usersOnTeamQuery.isSuccess],
+  );
 
   const update = <K extends keyof ISSUE.IssueEditNode>(
     key: K,
@@ -192,9 +213,81 @@ export function IssueNode({
             <TeamSelect
               className="col-span-3 w-full"
               value={node.team}
-              onValueChange={(v) => update("team", v)}
+              onValueChange={(v) =>
+                onUpdate(node.clientId, {
+                  team: v,
+                  assigneeIds: [],
+                })
+              }
               roles={roles}
             />
+          </div>
+
+          {/* Assignees */}
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label className="mt-1 text-right text-sm">Assignees</Label>
+            <div className="col-span-3 mt-1 grid grid-cols-2 gap-x-2 gap-y-3">
+              {usersOnTeamQuery.isLoading && (
+                <p className="col-span-2 text-sm text-muted-foreground">
+                  Loading team members...
+                </p>
+              )}
+
+              {!!usersOnTeamQuery.error && (
+                <p className="col-span-2 text-sm text-destructive">
+                  Failed to load team members
+                </p>
+              )}
+
+              {!usersOnTeamQuery.isLoading &&
+                !usersOnTeamQuery.error &&
+                assigneesForTeam.length === 0 && (
+                  <p className="col-span-2 text-sm text-muted-foreground">
+                    No team members found for this team
+                  </p>
+                )}
+
+              {!usersOnTeamQuery.isLoading &&
+                !usersOnTeamQuery.error &&
+                assigneesForTeam.map((user) => {
+                  const assigneeCheckboxId = `${baseId}-assignee-${user.id}`;
+                  return (
+                    <div
+                      key={user.id}
+                      className="flex flex-row items-start space-x-3 space-y-0"
+                    >
+                      <Checkbox
+                        id={assigneeCheckboxId}
+                        checked={selectedAssigneeIds.includes(user.id)}
+                        onCheckedChange={(checked) =>
+                          update(
+                            "assigneeIds",
+                            checked
+                              ? Array.from(
+                                  new Set([...selectedAssigneeIds, user.id]),
+                                )
+                              : selectedAssigneeIds.filter(
+                                  (id) => id !== user.id,
+                                ),
+                          )
+                        }
+                      />
+                      <div className="flex flex-col">
+                        <Label
+                          htmlFor={assigneeCheckboxId}
+                          className="cursor-pointer font-normal"
+                        >
+                          {user.name}
+                        </Label>
+                      </div>
+                    </div>
+                  );
+                })}
+
+              <p className="col-span-2 text-sm font-normal text-gray-400">
+                Select one or more team members responsible for this sub-issue
+              </p>
+            </div>
           </div>
 
           {/* Is Event */}

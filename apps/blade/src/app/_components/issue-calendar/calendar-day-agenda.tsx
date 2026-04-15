@@ -36,12 +36,20 @@ function formatTeamLabel(roleName: string) {
 
 function assigneeDisplayNames(issue: Issue): string[] {
   const rows = issue.userAssignments as unknown as {
-    user?: { name?: string | null; discordUserId?: string | null };
+    user?: {
+      discordUserId?: string | null;
+      member?: {
+        firstName?: string | null;
+        lastName?: string | null;
+      } | null;
+    };
   }[];
   return rows
     .map((a) => {
-      const n = a.user?.name?.trim();
-      if (n) return n;
+      const firstName = a.user?.member?.firstName?.trim() ?? "";
+      const lastName = a.user?.member?.lastName?.trim() ?? "";
+      const fullName = `${firstName} ${lastName}`.trim();
+      if (fullName) return fullName;
       const d = a.user?.discordUserId?.trim();
       return d ?? "";
     })
@@ -243,6 +251,12 @@ export function IssueDayAgenda(props: {
                         parent: issue.parent ?? undefined,
                         isEvent: issue.event !== null,
                         event: issue.event,
+                        teamVisibilityIds: issue.teamVisibility.map(
+                          (visibility) => visibility.teamId,
+                        ),
+                        assigneeIds: issue.userAssignments.map(
+                          (assignment) => assignment.userId,
+                        ),
                       }}
                       onSubmit={handleSubmitEdit}
                       onDelete={(values) => {

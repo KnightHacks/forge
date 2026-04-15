@@ -39,6 +39,17 @@ export interface CalendarIssueDialogProps {
 
 type GetIssueResult = RouterOutputs["issues"]["getIssue"];
 
+function getAssigneeDisplayName(
+  assignment: GetIssueResult["userAssignments"][number],
+) {
+  const member = assignment.user.member;
+  if (member) {
+    const fullName = `${member.firstName.trim()} ${member.lastName.trim()}`.trim();
+    if (fullName.length > 0) return fullName;
+  }
+  return assignment.user.discordUserId;
+}
+
 function isIssueOverdue(
   status: GetIssueResult["status"],
   date: Date | string | null | undefined,
@@ -204,8 +215,7 @@ export function CalendarIssueDialog({
                     <ul className="list-none space-y-1 pl-0">
                       {issue.userAssignments.map((assignment) => (
                         <li key={assignment.userId}>
-                          {assignment.user.name ??
-                            assignment.user.discordUserId}
+                          {getAssigneeDisplayName(assignment)}
                         </li>
                       ))}
                     </ul>

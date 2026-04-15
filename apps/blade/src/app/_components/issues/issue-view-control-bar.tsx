@@ -50,6 +50,9 @@ export function getActiveIssueFilterTags(
   if (filters.searchTerm.trim()) {
     tags.push('Search "' + filters.searchTerm.trim() + '"');
   }
+  if (filters.assigneeSearchTerm.trim()) {
+    tags.push('Assignee "' + filters.assigneeSearchTerm.trim() + '"');
+  }
 
   return tags;
 }

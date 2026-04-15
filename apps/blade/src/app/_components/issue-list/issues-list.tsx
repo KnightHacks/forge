@@ -337,6 +337,12 @@ export function IssuesList() {
                     parent: issue.parent ?? undefined,
                     isEvent: issue.event !== null,
                     event: issue.event,
+                    teamVisibilityIds: issue.teamVisibility.map(
+                      (visibility) => visibility.teamId,
+                    ),
+                    assigneeIds: issue.userAssignments.map(
+                      (assignment) => assignment.userId,
+                    ),
                   }}
                   onDelete={(values) => {
                     if (!values.id || deleteIssueMutation.isPending) return;

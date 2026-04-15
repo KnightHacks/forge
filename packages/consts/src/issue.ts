@@ -36,6 +36,7 @@ export interface IssueFilters {
   statusFilter: StatusFilter;
   teamFilter: string;
   searchTerm: string;
+  assigneeSearchTerm: string;
   dateFrom: string;
   dateTo: string;
   rootOnly: boolean;
@@ -57,7 +58,16 @@ export interface IssueFetcherPaneIssue {
   parent: string | null;
   creator: string;
   teamVisibility: { teamId: string }[];
-  userAssignments: { userId: string }[];
+  userAssignments: {
+    userId: string;
+    user: {
+      discordUserId: string;
+      member: {
+        firstName: string;
+        lastName: string;
+      } | null;
+    };
+  }[];
 }
 
 export interface IssueFetcherPaneData {
@@ -75,6 +85,7 @@ export const DEFAULT_ISSUE_FILTERS: IssueFilters = {
   statusFilter: "all",
   teamFilter: "all",
   searchTerm: "",
+  assigneeSearchTerm: "",
   dateFrom: "",
   dateTo: "",
   rootOnly: false,
@@ -95,7 +106,6 @@ export interface CreateEditDialogProps {
 export interface IssueAssigneeOption {
   id: UUID;
   name: string;
-  email?: string | null;
 }
 
 type IssueStatus = (typeof ISSUE_STATUS)[number];

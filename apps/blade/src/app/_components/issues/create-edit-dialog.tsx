@@ -280,6 +280,26 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       [key]: value,
     }));
   };
+  const addLinkField = () => {
+    setFormValues((previous) => ({
+      ...previous,
+      links: [...previous.links, ""],
+    }));
+  };
+  const updateLinkField = (index: number, value: string) => {
+    setFormValues((previous) => ({
+      ...previous,
+      links: previous.links.map((link, linkIndex) =>
+        linkIndex === index ? value : link,
+      ),
+    }));
+  };
+  const removeLinkField = (index: number) => {
+    setFormValues((previous) => ({
+      ...previous,
+      links: previous.links.filter((_, linkIndex) => linkIndex !== index),
+    }));
+  };
 
   const baseId = useId();
   const effectiveTeam = formValues.team || (rolesData?.[0]?.id ?? "");
@@ -481,7 +501,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
       status: formValues.status,
       name: formValues.name.trim(),
       description: formValues.description.trim(),
-      links: formValues.links,
+      links: formValues.links.map((link) => link.trim()).filter(Boolean),
       priority: formValues.priority,
       team: effectiveTeam,
       teamVisibilityIds:
@@ -549,6 +569,7 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
           status: formValues.status,
           name: formValues.name.trim(),
           description: formValues.description.trim(),
+          links: baseIssueFields.links,
           priority: formValues.priority,
           team: effectiveTeam,
           parent: formValues.parent ?? null,
@@ -818,11 +839,6 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                               >
                                 {user.name}
                               </Label>
-                              {user.email && (
-                                <span className="text-xs text-muted-foreground">
-                                  {user.email}
-                                </span>
-                              )}
                             </div>
                           </div>
                         );
@@ -855,6 +871,50 @@ export function CreateEditDialog(props: CreateEditDialogComponentProps) {
                       updateForm("description", event.target.value)
                     }
                   />
+                </div>
+
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label className="pt-2 text-right">Links (Optional)</Label>
+                  <div className="col-span-3 space-y-2">
+                    {formValues.links.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No links added yet.
+                      </p>
+                    )}
+                    {formValues.links.map((link, index) => (
+                      <div
+                        key={`${baseId}-link-${index}`}
+                        className="flex gap-2"
+                      >
+                        <Input
+                          type="url"
+                          placeholder="https://example.com/resource"
+                          value={link}
+                          onChange={(event) =>
+                            updateLinkField(index, event.target.value)
+                          }
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeLinkField(index)}
+                          aria-label={`Remove link ${index + 1}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addLinkField}
+                    >
+                      <Plus className="mr-2 h-3 w-3" />
+                      Add Link
+                    </Button>
+                  </div>
                 </div>
 
                 {formValues.isEvent && (

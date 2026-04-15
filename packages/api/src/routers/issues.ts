@@ -12,6 +12,7 @@ import {
   IssueSchema,
   IssuesToTeamsVisibility,
   IssuesToUsersAssignment,
+  Member,
   Template,
 } from "@forge/db/schemas/knight-hacks";
 import { permissions } from "@forge/utils";
@@ -186,12 +187,14 @@ export const issuesRouter = {
       const rows = await db
         .select({
           id: User.id,
-          name: User.name,
-          email: User.email,
+          userName: User.name,
           discordUserId: User.discordUserId,
+          memberFirstName: Member.firstName,
+          memberLastName: Member.lastName,
         })
         .from(User)
         .innerJoin(Permissions, eq(User.id, Permissions.userId))
+        .leftJoin(Member, eq(User.id, Member.userId))
         .where(eq(Permissions.roleId, input.teamId));
 
       const userById = new Map<
@@ -199,15 +202,23 @@ export const issuesRouter = {
         {
           id: string;
           name: string;
-          email: string | null;
         }
       >();
 
       for (const row of rows) {
+        const memberFullName =
+          row.memberFirstName && row.memberLastName
+            ? `${row.memberFirstName} ${row.memberLastName}`.trim()
+            : null;
+        const resolvedName =
+          memberFullName && memberFullName.length > 0
+            ? memberFullName
+            : row.userName && row.userName.length > 0
+              ? row.userName
+              : row.discordUserId;
         userById.set(row.id, {
           id: row.id,
-          name: row.name ?? row.email ?? row.discordUserId,
-          email: row.email,
+          name: resolvedName,
         });
       }
 
@@ -300,7 +311,7 @@ export const issuesRouter = {
         with: {
           team: true,
           teamVisibility: { with: { team: true } },
-          userAssignments: { with: { user: true } },
+          userAssignments: { with: { user: { with: { member: true } } } },
         },
       });
       if (!issue)
@@ -366,7 +377,7 @@ export const issuesRouter = {
         where: and(...filters, visibilityFilter),
         with: {
           teamVisibility: { with: { team: true } },
-          userAssignments: { with: { user: true } },
+          userAssignments: { with: { user: { with: { member: true } } } },
         },
       });
       return issues;
@@ -395,7 +406,7 @@ export const issuesRouter = {
         const existingIssue = await tx.query.Issue.findFirst({
           where: (t, { eq }) => eq(t.id, input.id),
           with: {
-            userAssignments: true,
+            userAssignments: { with: { user: true } },
           },
         });
 
@@ -476,7 +487,7 @@ export const issuesRouter = {
           where: (t, { eq }) => eq(t.id, id),
           with: {
             teamVisibility: { with: { team: true } },
-            userAssignments: { with: { user: true } },
+            userAssignments: { with: { user: { with: { member: true } } } },
           },
         });
       });

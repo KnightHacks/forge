@@ -44,6 +44,19 @@ function parseLocalDate(value: string, endOfDay: boolean) {
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
+function getAssigneeDisplayNames(issue: ISSUE.IssueFetcherPaneIssue): string[] {
+  return issue.userAssignments
+    .map((assignment) => {
+      const member = assignment.user.member;
+      if (member) {
+        const fullName = `${member.firstName.trim()} ${member.lastName.trim()}`.trim();
+        if (fullName) return fullName;
+      }
+      return assignment.user.discordUserId.trim();
+    })
+    .filter(Boolean);
+}
+
 export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   const {
     actions,
@@ -64,6 +77,7 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
   const teamSelectId = useId();
   const typeSelectId = useId();
   const searchInputId = useId();
+  const assigneeSearchInputId = useId();
   const dateFromInputId = useId();
   const dateToInputId = useId();
   const rootOnlyCheckboxId = useId();
@@ -159,6 +173,7 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
 
   const issues = useMemo(() => {
     const term = filters.searchTerm.trim().toLowerCase();
+    const assigneeTerm = filters.assigneeSearchTerm.trim().toLowerCase();
 
     return allIssues.filter((issue) => {
       const matchesSearch =
@@ -166,6 +181,11 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
         `${issue.name} ${issue.description} ${issue.id}`
           .toLowerCase()
           .includes(term);
+      const matchesAssignee =
+        !assigneeTerm ||
+        getAssigneeDisplayNames(issue).some((name) =>
+          name.toLowerCase().includes(assigneeTerm),
+        );
 
       const matchesKind =
         filters.issueKind === "all"
@@ -176,9 +196,15 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
 
       const matchesRoot = !filters.rootOnly || !issue.parent;
 
-      return matchesSearch && matchesKind && matchesRoot;
+      return matchesSearch && matchesAssignee && matchesKind && matchesRoot;
     });
-  }, [allIssues, filters.issueKind, filters.rootOnly, filters.searchTerm]);
+  }, [
+    allIssues,
+    filters.assigneeSearchTerm,
+    filters.issueKind,
+    filters.rootOnly,
+    filters.searchTerm,
+  ]);
 
   const refresh = useCallback(() => {
     void Promise.all([rolesRefetch(), issuesRefetch()]);
@@ -354,6 +380,21 @@ export function IssueFetcherPane(props: IssueFetcherPaneProps) {
                   setFilters((previous) => ({
                     ...previous,
                     searchTerm: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor={assigneeSearchInputId}>Assignee</Label>
+              <Input
+                id={assigneeSearchInputId}
+                placeholder="Search assignee name..."
+                value={filters.assigneeSearchTerm}
+                onChange={(event) =>
+                  setFilters((previous) => ({
+                    ...previous,
+                    assigneeSearchTerm: event.target.value,
                   }))
                 }
               />
