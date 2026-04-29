@@ -17,7 +17,7 @@ export default async function Raffle() {
   }
 
   const hasAccess = await api.roles.hasPermission({
-    or: ["ADMIN_BANQUET_RAFFLE"],
+    or: ["IS_OFFICER"],
   });
   if (!hasAccess) {
     redirect("/");
