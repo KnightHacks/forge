@@ -317,9 +317,8 @@ export default function RaffleDraw({ entries }: { entries: RaffleEntry[] }) {
                       {winner.firstName} {winner.lastName}
                     </h3>
                     <p className="mt-2 text-lg font-medium">
-                      {winner.points} points. Congratulations on winning the
-                      $100 Amazon gift card, and thank you for participating in
-                      Knight Hacks events!
+                      {winner.points} points. Congratulations on winning, and
+                      thank you for participating in Knight Hacks events!
                     </p>
                   </div>
                 </div>
