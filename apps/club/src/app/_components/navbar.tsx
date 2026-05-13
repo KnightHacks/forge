@@ -17,7 +17,7 @@ export default function Navbar() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-6 pt-11 md:px-10 lg:px-24">
-      <nav className="flex min-h-[82px] items-center justify-between border-[3px] border-black bg-[#F65C2933] px-6 shadow-[0_8px_0_rgba(39,4,51,0.95)] backdrop-blur-sm md:px-7 lg:px-8">
+      <nav className="flex min-h-[82px] items-center justify-between border-[3px] border-black bg-[#F65C2933] px-6 shadow-[6px_6px_0px_0px_#00000038] backdrop-blur-sm md:px-7 lg:px-8">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-3"
