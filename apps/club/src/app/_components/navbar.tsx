@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Button } from "@forge/ui/button";
 
 const navItems = [
   { label: "Home", href: "#", active: true },
@@ -37,18 +38,20 @@ export default function Navbar() {
         </div>
 
         <div className="hidden shrink-0 items-center gap-3 md:flex">
-          <a
-            href="https://blade.knighthacks.org"
-            className="font-inter border-[3px] border-black bg-[#170d1c] px-6 py-4 text-[13px] font-bold uppercase leading-[19.5px] tracking-[0.57px] text-white shadow-[4px_4px_0_var(--club-gold-soft)] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0_var(--club-gold-soft)]"
+          <Button
+            asChild
+            size="lg"
+            className="font-inter h-auto rounded-none border-[3px] border-black bg-[#170d1c] px-6 py-4 text-[13px] font-bold uppercase leading-[19.5px] tracking-[0.57px] text-white shadow-[4px_4px_0_var(--club-gold-soft)] transition hover:-translate-y-0.5 hover:bg-[#170d1c] hover:text-white hover:shadow-[6px_6px_0_var(--club-gold-soft)]"
           >
-            Sign Up With Blade
-          </a>
-          <a
-            href="https://discord.gg/knighthacks"
-            className="font-inter border-[3px] border-black bg-[linear-gradient(90deg,#FFE1BD_0%,#FE88A4_100%)] px-7 py-4 text-[13px] font-bold uppercase leading-[19.5px] tracking-[0.57px] text-black shadow-[4px_4px_0_#f6a3bb] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#f6a3bb]"
+            <a href="https://blade.knighthacks.org">Sign Up With Blade</a>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            className="font-inter h-auto rounded-none border-[3px] border-black bg-[linear-gradient(90deg,#FFE1BD_0%,#FE88A4_100%)] px-7 py-4 text-[13px] font-bold uppercase leading-[19.5px] tracking-[0.57px] text-black shadow-[4px_4px_0_#f6a3bb] transition hover:-translate-y-0.5 hover:bg-[linear-gradient(90deg,#FFE1BD_0%,#FE88A4_100%)] hover:text-black hover:shadow-[6px_6px_0_#f6a3bb]"
           >
-            Join Discord
-          </a>
+            <a href="https://discord.gg/knighthacks">Join Discord</a>
+          </Button>
         </div>
       </nav>
     </header>
