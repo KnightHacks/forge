@@ -1,5 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Pragati+Narrow:wght@400;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @source "../../../../packages/ui/src";
@@ -20,61 +21,134 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --radius: 0.5rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: 276 79% 7%;
+  --foreground: 48 26% 96%;
+  --border: 281 32% 21%;
+  --input: 281 32% 21%;
+  --ring: 38 100% 58%;
+  --primary: 38 100% 58%;
+  --primary-foreground: 276 79% 7%;
+  --secondary: 282 73% 32%;
+  --secondary-foreground: 48 26% 96%;
+  --muted: 275 19% 15%;
+  --muted-foreground: 220 8% 63%;
+  --accent: 338 92% 64%;
+  --accent-foreground: 48 26% 96%;
+  --popover: 276 79% 7%;
+  --popover-foreground: 48 26% 96%;
+  --card: 276 61% 9%;
+  --card-foreground: 48 26% 96%;
+  --destructive: 346 85% 45%;
+  --destructive-foreground: 48 26% 96%;
+  --radius: 1.25rem;
+  --club-black: #09010d;
+  --club-plum: #140422;
+  --club-plum-deep: #140316;
+  --club-purple: #59168b;
+  --club-purple-soft: #311037;
+  --club-gold: #ffb62b;
+  --club-gold-soft: #f4ca41;
+  --club-rose: #f74f83;
+  --club-cream: #f8f7f3;
+  --club-muted: #d1d5dc;
+  --club-subtle: #99a1af;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: hsl(var(--foreground));
+  min-height: 100vh;
+  background: var(--club-plum);
+  font-family: "Prompt", var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  text-rendering: geometricPrecision;
 }
 
-input[type="checkbox"].custom-checkbox {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+::selection {
+  color: var(--club-plum-deep);
+  background: var(--club-gold);
+}
+
+.club-home-bg {
   position: relative;
-
-  background-color: #f4f4ed;
-  border: 1px solid #000000;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  filter: saturate(200%);
+  isolation: isolate;
+  background:
+    radial-gradient(
+      52rem 36rem at 6% 10%,
+      rgba(255, 182, 43, 0.16),
+      transparent 62%
+    ),
+    radial-gradient(
+      54rem 42rem at 92% 18%,
+      rgba(89, 22, 139, 0.42),
+      transparent 66%
+    ),
+    radial-gradient(
+      46rem 30rem at 50% 100%,
+      rgba(247, 79, 131, 0.14),
+      transparent 68%
+    ),
+    conic-gradient(
+      from 90deg at 18% -8%,
+      #1b0524 0deg,
+      #150423 22deg,
+      #311037 135deg,
+      #120111 212deg,
+      #370340 302deg,
+      #1c0625 357deg,
+      #1b0524 360deg
+    );
 }
 
-input[type="checkbox"].custom-checkbox:checked {
-  background-color: #2563eb;
-  border-color: #2563eb;
-}
-
-input[type="checkbox"].custom-checkbox:checked::after {
-  content: "";
+.club-home-bg::before {
   position: absolute;
-  top: 2px;
-  left: 5px;
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+  inset: 0;
+  z-index: -1;
+  content: "";
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.72), transparent 74%);
 }
-@media (min-width: 1024px) {
-  input[type="checkbox"].custom-checkbox:checked::after {
-    width: 6px;
-    height: 12px;
-    border-width: 0 3px 3px 0;
-    top: 3px;
-    left: 8px;
-  }
+
+.club-home-bg::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  background:
+    linear-gradient(180deg, rgba(20, 4, 34, 0) 0%, var(--club-plum) 100%),
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(255, 245, 245, 0.08),
+      transparent 42%
+    );
+  pointer-events: none;
+}
+
+.club-display {
+  font-family: "Pragati Narrow", "Prompt", var(--font-geist-sans), sans-serif;
+  color: var(--club-cream);
+  letter-spacing: -0.045em;
+}
+
+.club-eyebrow {
+  font-family: "Prompt", var(--font-geist-sans), sans-serif;
+  color: var(--club-gold);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.font-inter {
+  font-family: "Inter", var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+.kh-nav-mark {
+  display: block;
+  width: 46px;
+  height: 46px;
+  background: var(--club-gold);
+  mask: url("/kh-icon.svg") center / contain no-repeat;
+  -webkit-mask: url("/kh-icon.svg") center / contain no-repeat;
 }
 
 @keyframes flicker {
