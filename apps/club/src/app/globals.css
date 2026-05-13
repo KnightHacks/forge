@@ -103,10 +103,15 @@ body {
   inset: 0;
   z-index: -1;
   content: "";
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-  background-size: 72px 72px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 0, 153, 0.14) 4px,
+    rgba(14, 2, 20, 0.58) 4px,
+    transparent 6px
+  );
+  background-size: 10px 10px;
+  background-position: center;
+  opacity: 0.42;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.72), transparent 74%);
 }
 
@@ -140,15 +145,6 @@ body {
 
 .font-inter {
   font-family: "Inter", var(--font-geist-sans), Arial, Helvetica, sans-serif;
-}
-
-.kh-nav-mark {
-  display: block;
-  width: 46px;
-  height: 46px;
-  background: var(--club-gold);
-  mask: url("/kh-icon.svg") center / contain no-repeat;
-  -webkit-mask: url("/kh-icon.svg") center / contain no-repeat;
 }
 
 @keyframes flicker {
