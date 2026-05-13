@@ -147,6 +147,52 @@ body {
   font-family: "Inter", var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+.club-button {
+  border-width: 3px;
+  border-color: #000;
+  border-radius: 0;
+  height: auto;
+  padding: 1rem 1.5rem;
+  font-family: "Inter", var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 19.5px;
+  letter-spacing: 0.57px;
+  text-transform: uppercase;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease;
+}
+
+.club-button:hover {
+  transform: translateY(-2px);
+}
+
+.club-button-dark {
+  background: #170d1c;
+  color: #fff;
+  box-shadow: 4px 4px 0 var(--club-gold-soft);
+}
+
+.club-button-dark:hover {
+  background: #170d1c;
+  color: #fff;
+  box-shadow: 6px 6px 0 var(--club-gold-soft);
+}
+
+.club-button-pink {
+  background: linear-gradient(90deg, #ffe1bd 0%, #fe88a4 100%);
+  color: #000;
+  box-shadow: 4px 4px 0 #f6a3bb;
+}
+
+.club-button-pink:hover {
+  background: linear-gradient(90deg, #ffe1bd 0%, #fe88a4 100%);
+  color: #000;
+  box-shadow: 6px 6px 0 #f6a3bb;
+}
+
 @keyframes flicker {
   0%,
   19%,
