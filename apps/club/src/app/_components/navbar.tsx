@@ -1,19 +1,25 @@
+"use client";
+
+import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Button } from "@forge/ui/button";
 
 const navItems = [
-  { label: "Home", href: "#", active: true },
-  { label: "Teams", href: "#teams" },
-  { label: "Events", href: "#events" },
-  { label: "Sponsors", href: "#sponsors" },
+  { label: "Home", href: "/" },
+  { label: "Teams", href: "/teams" },
+  { label: "Events", href: "/events" },
+  { label: "Sponsors", href: "/sponsors" },
 ];
 
 export default function Navbar() {
+  const pathname = usePathname();
+
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-6 pt-11 md:px-10 lg:px-24">
       <nav className="flex min-h-[82px] items-center justify-between border-[3px] border-black bg-[#F65C2933] px-6 shadow-[0_8px_0_rgba(39,4,51,0.95)] backdrop-blur-sm md:px-7 lg:px-8">
-        <a
-          href="#"
+        <Link
+          href="/"
           className="flex shrink-0 items-center gap-3"
           aria-label="Knight Hacks home"
         >
@@ -21,19 +27,19 @@ export default function Navbar() {
           <span className="font-inter text-[15px] font-bold uppercase leading-[19.5px] tracking-[0.57px] text-white">
             Knight Hacks
           </span>
-        </a>
+        </Link>
 
         <div className="hidden items-center gap-12 lg:flex">
           {navItems.map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className={`font-inter text-[13px] font-bold uppercase leading-[19.5px] tracking-[0.57px] transition hover:text-[var(--club-gold)] ${
-                item.active ? "text-[var(--club-gold)]" : "text-white"
+                pathname === item.href ? "text-[var(--club-gold)]" : "text-white"
               }`}
             >
               {item.label}
-            </a>
+            </Link>
           ))}
         </div>
 
