@@ -72,29 +72,39 @@ body {
   isolation: isolate;
   background:
     radial-gradient(
-      52rem 36rem at 6% 10%,
-      rgba(255, 182, 43, 0.16),
-      transparent 62%
+      52rem 36rem at 88% 46%,
+      rgba(118, 28, 118, 0.28) 0%,
+      rgba(68, 10, 74, 0.18) 34%,
+      rgba(20, 3, 22, 0) 72%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(20, 3, 22, 0.1) 0%,
+      rgba(20, 3, 22, 0.46) 58%,
+      rgba(20, 3, 22, 0.88) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(20, 3, 22, 0.28) 0%,
+      rgba(20, 3, 22, 0.06) 38%,
+      rgba(20, 3, 22, 0.18) 68%,
+      rgba(20, 3, 22, 0.52) 100%
     ),
     radial-gradient(
-      54rem 42rem at 92% 18%,
-      rgba(89, 22, 139, 0.42),
-      transparent 66%
+      34rem 12rem at 18% 8%,
+      rgba(255, 182, 43, 0.09) 0%,
+      rgba(255, 182, 43, 0.03) 28%,
+      rgba(20, 3, 22, 0) 72%
     ),
-    radial-gradient(
-      46rem 30rem at 50% 100%,
-      rgba(247, 79, 131, 0.14),
-      transparent 68%
-    ),
+    #140316,
     conic-gradient(
-      from 90deg at 18% -8%,
-      #1b0524 0deg,
-      #150423 22deg,
-      #311037 135deg,
-      #120111 212deg,
-      #370340 302deg,
-      #1c0625 357deg,
-      #1b0524 360deg
+      from 200deg at 54% 46%,
+      #150423 0deg,
+      #1c0625 92deg,
+      #120111 164deg,
+      #380440 248deg,
+      #321138 320deg,
+      #150423 360deg
     );
 }
 
@@ -106,10 +116,10 @@ body {
   background: radial-gradient(
     circle,
     rgba(255, 0, 153, 0.14) 4px,
-    rgba(14, 2, 20, 0.58) 4px,
+    rgba(14, 2, 20, 0.2) 4px,
     transparent 6px
   );
-  background-size: 10px 10px;
+  background-size: 10.25px 10.25px;
   background-position: center;
   opacity: 0.42;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.72), transparent 74%);
