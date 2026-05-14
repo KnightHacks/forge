@@ -1,6 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Pragati+Narrow:wght@400;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@700;900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @source "../../../../packages/ui/src";
@@ -202,6 +202,19 @@ body {
   color: #000;
   box-shadow: 6px 6px 0 #f6a3bb;
 }
+
+.club-button-light {
+  background: #FFFFFF;
+  color: #000000;
+  box-shadow: 4px 4px 0 var(--club-gold-soft);
+}
+
+.club-button-light:hover {
+  background: #FFFFFF;
+  color: #000000;
+  box-shadow: 6px 6px 0 var(--club-gold-soft);
+}
+
 
 @keyframes flicker {
   0%,
