@@ -1,74 +1,53 @@
-const tier1Sponsors = [
-  { name: "Sponsor A", logo: null },
-  { name: "Sponsor B", logo: null },
-];
-
-const tier2Sponsors = [
-  { name: "Sponsor C", logo: null },
-  { name: "Sponsor D", logo: null },
-  { name: "Sponsor E", logo: null },
-  { name: "Sponsor F", logo: null },
-  { name: "Sponsor G", logo: null },
-  { name: "Sponsor H", logo: null },
-];
-
-const partners = [
-  { name: "Partner A", logo: null },
-  { name: "Partner B", logo: null },
-  { name: "Partner C", logo: null },
-];
+import Image from "next/image";
+import { PARTNERS, SPONSORS } from "./constants";
 
 const Sponsors = () => {
+  const sponsor_list = [...SPONSORS].sort((a, b) => a.name.localeCompare(b.name));
+  const partner_list = [...PARTNERS].sort((a, b) => a.name.localeCompare(b.name));
+
   return (
-    <section>
-      {/* Sponsors subsection */}
-      <h2>Our Sponsors</h2>
+    <div className="font-inter min-h-screen px-30 lg:px-60">
+      <h2 className="text-(--club-gold) text-[40px]">Our Sponsors</h2>
 
-      {/* Tier 1: one card per row (most prominent) */}
-      <div>
-        {tier1Sponsors.map((s) => (
-          <div key={s.name}>
-            {s.logo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={s.logo} alt={s.name} />
-            ) : (
-              <span>LOGO PLACEHOLDER</span>
-            )}
-          </div>
-        ))}
+      <div className="grid grid-cols-4 gap-6 pb-22">
+        {sponsor_list.map(sponsor =>
+          <a
+            key={sponsor.name}
+            href={sponsor.link}
+            className="flex justify-center w-full h-24 bg-[#2A153E66] rounded border-2 border-[#FFFFFF1A] drop-shadow-[#FFFFFF0D]">
+            <Image
+              src={sponsor.logo}
+              alt={`${sponsor.name} logo`}
+              width="75"
+              height="75"
+              className="object-contain"
+            >
+            </Image>
+          </a>)
+        }
       </div>
 
-      {/* Tier 2: three cards per row */}
-      <div>
-        {tier2Sponsors.map((s) => (
-          <div key={s.name}>
-            {s.logo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={s.logo} alt={s.name} />
-            ) : (
-              <span>LOGO PLACEHOLDER</span>
-            )}
-          </div>
-        ))}
+      <h2 className="text-(--club-gold) text-[40px]">Our Partners</h2>
+      <div className="grid grid-cols-4 gap-6 pb-22">
+        {partner_list.map(partner =>
+          <a
+            key={partner.name}
+            href={partner.link}
+            className="flex justify-center w-full h-24 bg-[#2A153E66] rounded border-2 border-[#FFFFFF1A] drop-shadow-[#FFFFFF0D]">
+            <Image
+              src={partner.logo}
+              alt={`${partner.name} logo`}
+              width="75"
+              height="75"
+              className="object-contain"
+            >
+            </Image>
+          </a>)
+        }
       </div>
 
-      {/* Partners subsection */}
-      <h2>Our Partners</h2>
 
-      {/* Partners: three cards per row */}
-      <div>
-        {partners.map((p) => (
-          <div key={p.name}>
-            {p.logo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.logo} alt={p.name} />
-            ) : (
-              <span>LOGO PLACEHOLDER</span>
-            )}
-          </div>
-        ))}
-      </div>
-    </section>
+    </div>
   );
 };
 
