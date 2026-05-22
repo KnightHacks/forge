@@ -400,7 +400,7 @@ export default function HackathonsPage() {
           <BrutalistNav />
 
           <p className="mx-auto mt-[236px] w-full max-w-[1237px] break-words px-6 text-center text-[28px] font-black leading-[34px] tracking-[-1px] text-white sm:text-[48px] sm:leading-[43.2px] sm:tracking-[-2.0484px]">
-            Nighthacks Hackathon Timeline
+            KnightHacks Hackathon Timeline
           </p>
 
           <ol className="relative mx-auto mt-[260px] w-full max-w-[1172px] px-5 pb-36 sm:px-10">
