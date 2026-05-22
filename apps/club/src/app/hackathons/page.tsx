@@ -156,7 +156,7 @@ function BrutalistNav() {
         aria-label="Knight Hacks home"
       >
         <Image
-          src="/hackathons/Logo 130.svg"
+          src="/hackathons/logo-130.svg"
           alt=""
           width={40}
           height={40}
@@ -340,10 +340,9 @@ export default function HackathonsPage() {
     <main className="min-h-screen overflow-x-auto bg-[#140422] font-sans text-white">
       <section className="relative mx-auto h-[6244px] w-[1498px] overflow-hidden">
         <Image
-          src="/hackathons/figma-background.png"
+          src="/hackathons/figma-background.webp"
           alt=""
           fill
-          priority
           sizes="1498px"
           className="object-cover"
         />
@@ -364,11 +363,16 @@ export default function HackathonsPage() {
 
             return (
               <div key={`${row.side}-${row.cardY}`}>
+                <p className="sr-only">
+                  {hackathon.name} was held {hackathon.date} with{" "}
+                  {hackathon.participants} participants and {hackathon.projects}{" "}
+                  project submissions.
+                </p>
                 <Image
                   src={`/hackathons/figma-card-real-${index}.png`}
                   alt=""
-                  width={row.cardWidth}
-                  height={row.cardHeight}
+                  width={Math.round(row.cardWidth)}
+                  height={Math.round(row.cardHeight)}
                   className="absolute"
                   sizes={`${Math.ceil(row.cardWidth)}px`}
                   style={{
