@@ -485,7 +485,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                   </div>
                 </div>
 
-                {/* End Date — NEW */}
+                {/* End Date, NEW */}
                 <FormField
                   control={form.control}
                   name="endDate"
@@ -729,7 +729,7 @@ export function UpdateEventButton({ event }: { event: InsertEvent }) {
                   )}
                 />
 
-                {/* Discord Channel ID — shown only for internal events */}
+                {/* Discord Channel ID, shown only for internal events */}
                 {form.watch("isOperationsCalendar") && (
                   <FormField
                     control={form.control}

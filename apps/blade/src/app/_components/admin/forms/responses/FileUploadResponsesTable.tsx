@@ -90,7 +90,7 @@ export function FileUploadResponsesTable({
                           : "Anonymous"}
                       </TableCell>
                       <TableCell>{response.member?.email ?? "N/A"}</TableCell>
-                      <TableCell className="max-w-[500px]">—</TableCell>
+                      <TableCell className="max-w-[500px]">No response</TableCell>
                     </TableRow>
                   );
                 }

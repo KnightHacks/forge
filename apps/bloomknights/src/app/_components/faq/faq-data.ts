@@ -18,7 +18,7 @@ export const faqSections = [
           "BloomKnights is a shorter 12-hour mini-hackathon focused on fast project building, workshops, mentorship, and beginner-friendly support. The main Knight Hacks hackathon is a larger multi-day event.",
       },
       {
-        question: "My question wasn't answered — where can I ask?",
+        question: "My question was not answered, where can I ask?",
         answer:
           "Check out the Hackers Guide first. If your question still isn't answered, feel free to ask in our Discord!",
       },
@@ -85,7 +85,7 @@ export const faqSections = [
       {
         question: "Can I use past projects or something I've built before?",
         answer:
-          "Nope — projects must be started after the hackathon begins. You're welcome to brainstorm ideas or learn tools ahead of time, but actual work should begin during the event to keep it fair for everyone.",
+          "Nope, projects must be started after the hackathon begins. You're welcome to brainstorm ideas or learn tools ahead of time, but actual work should begin during the event to keep it fair for everyone.",
       },
       {
         question: "How does project submission and judging work?",

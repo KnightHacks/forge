@@ -11,7 +11,7 @@ const discordLink = "https://discord.gg/2W2HCvkKAy";
 
 const NAV_LINKS = [
   { href: "#about", label: "About" },
-  { href: "#faqs", label: "FAQ" },
+  { href: "#faqs", label: "FAQs" },
   { href: "#partners", label: "Partners" },
   { href: hackersGuide, label: "Hackers Guide", external: true },
   { href: discordLink, label: "Discord", external: true },

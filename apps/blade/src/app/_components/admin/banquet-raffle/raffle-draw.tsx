@@ -255,7 +255,7 @@ export default function RaffleDraw({ entries }: { entries: RaffleEntry[] }) {
       >
         <Card className="relative mb-8 w-full overflow-hidden rounded-lg border-2 border-primary bg-card p-1">
           <div className="flex h-[400px] flex-col items-center justify-center overflow-hidden">
-            {/* ————————————————————————   STATES   ———————————————————————— */}
+            {/* STATES */}
             {!isDrawing && !winner ? (
               <div className="flex flex-col items-center justify-center space-y-4 p-8 text-center">
                 <Sparkles className="h-16 w-16 text-primary" />

@@ -110,13 +110,13 @@ export default function HomePage() {
       </div>
 
       <div className="flex w-full flex-col items-center">
-        <div className="relative isolate mt-16 flex w-full items-center justify-center overflow-hidden py-10 sm:mt-20 sm:py-14 md:mt-28 md:min-h-screen md:py-24 lg:mt-32">
+        <div className="relative isolate mt-24 flex w-full items-center justify-center overflow-hidden py-10 sm:mt-32 sm:py-14 md:mt-44 md:min-h-screen md:py-24 lg:mt-52">
           <AboutBirdFlock />
           <div className="relative z-10 w-full">
             <About />
           </div>
         </div>
-        <div className="relative isolate mt-16 flex min-h-[106rem] w-full items-start justify-center overflow-hidden py-10 sm:mt-20 sm:py-14 md:mt-28 md:min-h-[86rem] md:py-24 lg:mt-32 lg:min-h-[84rem] xl:min-h-[84rem]">
+        <div className="relative isolate mt-24 flex min-h-[106rem] w-full items-start justify-center overflow-hidden py-10 sm:mt-32 sm:py-14 md:mt-44 md:min-h-[86rem] md:py-24 lg:mt-52 lg:min-h-[84rem] xl:min-h-[84rem]">
           <FAQBirdFlock />
           <div className="relative z-10 w-full">
             <FAQ />

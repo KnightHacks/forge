@@ -74,7 +74,7 @@ export function ResponsesTable({ question, responses }: ResponsesTableProps) {
 
                 let displayValue: React.ReactNode;
                 if (answer === undefined || answer === null) {
-                  displayValue = "—";
+                  displayValue = "No response";
                 } else if (Array.isArray(answer)) {
                   displayValue = answer.join(", ");
                 } else if (typeof answer === "boolean") {

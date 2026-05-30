@@ -69,8 +69,14 @@ const FAQ = () => {
       viewport={{ once: true, amount: 0.14, margin: "0px 0px 18% 0px" }}
     >
       <motion.div variants={revealItem}>
-        <h2 className="spring-heading animate-float-bob-slow mb-8 text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
-          FAQ
+        <h2
+          className="spring-heading animate-float-bob-slow mb-8 text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
+          aria-label="FAQs"
+        >
+          <span className="faq-heading-f" aria-hidden="true">
+            F
+          </span>
+          <span aria-hidden="true">AQs</span>
         </h2>
       </motion.div>
       <motion.div

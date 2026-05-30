@@ -28,6 +28,15 @@
   --wc-parchment: rgba(248, 243, 232, 0.72);
   --wc-parchment-dk: rgba(232, 224, 206, 0.82);
   --wc-wash: rgba(200, 220, 240, 0.18);
+  --wc-footer-gradient: linear-gradient(
+    90deg,
+    rgba(255, 248, 222, 0.46) 0%,
+    #b9cf83 18%,
+    #6fa04d 38%,
+    #4a8139 62%,
+    #245f35 84%,
+    #173f24 100%
+  );
 
   --animate-first: moveVertical 30s ease infinite;
   --animate-second: moveInCircle 20s reverse infinite;
@@ -399,6 +408,11 @@ html {
     2px -2px 0 rgba(255, 248, 222, 0.82),
     -2px -2px 0 rgba(255, 248, 222, 0.82),
     0 8px 18px rgba(31, 82, 45, 0.42);
+}
+
+.faq-heading-f {
+  display: inline-block;
+  transform: translateX(0.16em);
 }
 
 .wc-panel {
@@ -1226,25 +1240,40 @@ html {
   z-index: 1;
 }
 
+.wc-footer-rule {
+  background: var(--wc-footer-gradient);
+  background-position: left center;
+  background-size: 100% 100%;
+}
+
+.wc-footer-divider {
+  background: linear-gradient(180deg, #9ecd6b 0%, #4d843b 44%, #245f35 100%);
+}
+
+.wc-footer-copy {
+  --wc-footer-color: #3f7835;
+}
+
 .wc-footer-link,
 .wc-footer-message {
   position: relative;
   z-index: 0;
   display: inline-block;
+  isolation: isolate;
   font-family: "Righteous", cursive;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(248, 243, 232, 0.96);
+  color: var(--wc-footer-color);
   text-shadow:
-    0 1px 6px rgba(60, 40, 10, 0.44),
-    0 0 12px rgba(252, 188, 78, 0.34);
+    0 1px 0 rgba(255, 248, 222, 0.86),
+    0 0 6px rgba(255, 248, 222, 0.46),
+    0 2px 6px rgba(23, 63, 36, 0.2);
 }
 
 .wc-footer-link {
   font-size: 1rem;
   transition:
-    color 0.4s ease,
     text-shadow 0.4s ease,
     transform 0.4s ease;
 }
@@ -1258,25 +1287,39 @@ html {
 .wc-footer-message::before {
   content: "";
   position: absolute;
-  inset: -0.24rem -0.42rem;
+  inset: -0.22rem -0.52rem;
   z-index: -1;
-  border-radius: 9999px;
+  border-radius: 999px;
   background: radial-gradient(
-    ellipse,
-    rgba(62, 122, 62, 0.2) 0%,
-    rgba(252, 188, 78, 0.12) 45%,
-    transparent 72%
+    ellipse at center,
+    rgba(255, 248, 222, 0.12) 0%,
+    rgba(255, 248, 222, 0.08) 48%,
+    rgba(255, 248, 222, 0.03) 72%,
+    transparent 100%
   );
-  filter: blur(5px);
+  -webkit-backdrop-filter: blur(2px) saturate(1.04);
+  backdrop-filter: blur(2px) saturate(1.04);
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    #000 0%,
+    rgba(0, 0, 0, 0.78) 58%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse at center,
+    #000 0%,
+    rgba(0, 0, 0, 0.78) 58%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
 .wc-footer-link:hover,
 .wc-footer-link:focus-visible {
-  color: #fff;
   text-shadow:
-    0 1px 2px rgba(18, 69, 35, 0.72),
-    0 0 10px rgba(18, 69, 35, 0.62),
-    0 0 18px rgba(255, 255, 255, 0.58);
+    0 1px 0 rgba(255, 248, 222, 0.92),
+    0 0 7px rgba(255, 248, 222, 0.52),
+    0 0 10px rgba(168, 212, 113, 0.24);
   transform: scale(1.05);
 }
 

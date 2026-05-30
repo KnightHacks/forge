@@ -143,7 +143,7 @@
     background-color: hsl(var(--card));
   }
 
-  /* Top row of weekday names — styled like the issues table header. */
+  /* Top row of weekday names, styled like the issues table header. */
   .calendar-theme .fc-col-header-cell {
     background-color: hsl(var(--muted) / 0.3);
     border-color: hsl(var(--border));

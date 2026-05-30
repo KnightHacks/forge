@@ -144,7 +144,7 @@ const faqData: FaqItem[] = [
     id: "11",
     question: "Is food provided?",
     answer:
-      "We provide free meals, snacks, and drinks throughout the event to keep you energized. We also accommodate dietary restrictions—just let us know during registration.",
+      "We provide free meals, snacks, and drinks throughout the event to keep you energized. We also accommodate dietary restrictions, just let us know during registration.",
     category: "logistics",
   },
   {
@@ -165,7 +165,7 @@ const faqData: FaqItem[] = [
     id: "14",
     question: "Can I use a past project or something I've built before?",
     answer:
-      "Nope—projects must be started after the hackathon begins. You're welcome to brainstorm ideas or learn tools ahead of time, but actual work should begin during the event to keep it fair for everyone.",
+      "Nope, projects must be started after the hackathon begins. You're welcome to brainstorm ideas or learn tools ahead of time, but actual work should begin during the event to keep it fair for everyone.",
     category: "event-details",
   },
   {

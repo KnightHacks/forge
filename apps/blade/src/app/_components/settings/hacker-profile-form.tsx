@@ -364,7 +364,7 @@ export function HackerProfileForm({
                   Phone Number
                   <span className="text-gray-400">
                     {" "}
-                    — <i>Optional</i>
+                    , <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -404,7 +404,7 @@ export function HackerProfileForm({
                   Gender
                   <span className="text-gray-400">
                     {" "}
-                    — <i>Optional</i>
+                    , <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -439,7 +439,7 @@ export function HackerProfileForm({
                   Race or Ethnicity
                   <span className="text-gray-400">
                     {" "}
-                    — <i>Optional</i>
+                    , <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -655,7 +655,7 @@ export function HackerProfileForm({
                   GitHub Profile
                   <span className="text-gray-400">
                     {" "}
-                    — <i>Optional</i>
+                    , <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -677,7 +677,7 @@ export function HackerProfileForm({
                   LinkedIn Profile
                   <span className="text-gray-400">
                     {" "}
-                    — <i>Optional</i>
+                    , <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -699,7 +699,7 @@ export function HackerProfileForm({
                   Personal Website
                   <span className="text-gray-400">
                     {" "}
-                    — <i>Optional</i>
+                    , <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -718,7 +718,7 @@ export function HackerProfileForm({
                   Resume
                   <span className="text-gray-400">
                     {" "}
-                    — <i>Optional</i>
+                    , <i>Optional</i>
                   </span>
                 </FormLabel>
                 <FormControl>
@@ -748,7 +748,7 @@ export function HackerProfileForm({
                     Food Allergies/Restrictions
                     <span className="text-gray-400">
                       {" "}
-                      — <i>Optional</i>
+                      , <i>Optional</i>
                     </span>
                   </FormLabel>
                   <FormControl>
