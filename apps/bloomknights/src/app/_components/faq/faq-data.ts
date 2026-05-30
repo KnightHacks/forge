@@ -1,13 +1,13 @@
 export const faqItems = [
   {
-    question: "What is GemiKnights?",
+    question: "What is BloomKnights?",
     answer:
-      "GemiKnights is a 12-hour hackathon hosted by KnightHacks, focused on building with AI. Participants will use tools like Google's Gemini to create innovative projects in a single day.",
+      "BloomKnights is a 12-hour hackathon hosted by Knight Hacks, where participants will create innovative projects in a single day.",
   },
   {
     question: "When and where is it happening?",
     answer:
-      "GemiKnights will take place in person on June 28th, 2025 at BA1 107 on UCF Main Campus. For the most recent information on check in and schedule, please refer to the Hackers Guide.",
+      "BloomKnights will take place in person on July 11th at BA1 on UCF Main Campus. For the most recent information on check-in and schedule, please refer to the Hackers Guide.",
   },
   {
     question: "Who can attend?",
@@ -17,7 +17,7 @@ export const faqItems = [
   {
     question: "Is it free?",
     answer:
-      "Yes, attending GemiKnights is completely free. Just bring your laptop, charger, and enthusiasm.",
+      "Yes, attending BloomKnights is completely free. Just bring your laptop, charger, and enthusiasm.",
   },
   {
     question: "Do I need a team?",
@@ -25,33 +25,43 @@ export const faqItems = [
       "No team? No problem. You can work solo or form a team at the event. We'll help with team matching at the start of the day.",
   },
   {
-    question: "Do I have to use Gemini?",
-    answer:
-      "You'll be given access to Gemini and encouraged to use it, but you're free to use any AI tools or APIs you'd like.",
-  },
-  {
     question: "Will there be prizes?",
     answer:
-      "Yes. Prizes will be awarded to standout projects based on creativity, technical skill, and effective use of AI.",
+      "Yes! Prizes will be awarded to standout projects based on creativity, technical skill, and effective use of AI. Stay tuned for category announcements.",
   },
   {
     question: "What should I bring?",
     answer:
-      "Bring your laptop, charger, a water bottle, and anything else you need to stay productive and comfortable during the event.",
+      "Bring your laptop, charger, water bottle, and anything else you need to stay productive and comfortable during the event.",
   },
   {
     question: "Will there be food?",
     answer:
-      "Yes, we'll provide meals and snacks throughout the day to keep you fueled.",
+      "Yes, meals and snacks will be provided throughout the day to keep you fueled.",
+  },
+  {
+    question: "How can I participate?",
+    answer:
+      "To participate, you MUST register for the event and join the Discord. Upon doing so, you may be accepted. If you are accepted, you MUST confirm your attendance by checking your dashboard. Failure to confirm will result in your spot being forfeit.",
   },
   {
     question: "Can I show up late?",
     answer:
-      "Yes, we will be allowing for check in for the entirety of the event. However, we recommend arriving early to maximize your time and take advantage of all the resources available.",
+      "Yes, we will be allowing for check-in for the entirety of the event. However, we recommend arriving early to maximize your hacking time and take advantage of all the event resources.",
   },
   {
-    question: "What do I need to do to compete?",
+    question: "Can I use past projects or something I've built before?",
     answer:
-      "To participate, you MUST register for the event and join the Discord. Upon doing so, you may be accepted. If you are accepted, you MUST confirm your attendance by checking your dashboard. Failure to confirm will result in your spot being forfeit.",
+      "Nope — projects must be started after the hackathon begins. You're welcome to brainstorm ideas or learn tools ahead of time, but actual work should begin during the event to keep it fair for everyone.",
+  },
+  {
+    question: "How does project submission and judging work?",
+    answer:
+      "We use Devpost for project submissions, and judging follows a science fair style format where you'll demo your project to judges who visit your table. For more detailed information and deeper explanations of the submission process, check out the Hackers Guide.",
+  },
+  {
+    question: "My question wasn't answered — where can I ask?",
+    answer:
+      "Check out the Hackers Guide first. If your question still isn't answered, feel free to ask in our Discord!",
   },
 ];

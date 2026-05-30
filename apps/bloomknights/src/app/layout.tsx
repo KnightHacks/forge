@@ -2,25 +2,26 @@ import type { Metadata } from "next";
 
 import Footer from "./_components/footer/footer";
 import BgSVG from "./_components/graphics/background";
+import FloatingFlowers from "./_components/graphics/FloatingFlowers";
 import Squiggles from "./_components/graphics/squiggles";
 import Navbar from "./_components/navbar/Navbar";
-
+// @ts-ignore: Allow global stylesheet import without module declarations
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://gemi.knighthacks.org"),
-  title: "GemiKnights",
+  metadataBase: new URL("https://bloom.knighthacks.org"),
+  title: "BloomKnights",
   description:
-    "GemiKnights is a 12-hour mini-Hackathon held by Knight Hacks at the University of Central Florida. Join us on June 28th for a day of building, learning, and innovation with AI!",
+    "BloomKnights is a 12-hour mini-Hackathon held by Knight Hacks at the University of Central Florida. Join us on July 11th for a day of building, learning, and innovation!",
   openGraph: {
-    title: "GemiKnights",
+    title: "BloomKnights",
     description:
-      "GemiKnights is a 12-hour mini-Hackathon held by Knight Hacks at the University of Central Florida. Join us on June 28th for a day of building, learning, and innovation with AI!",
-    url: "https://gemi.knighthacks.org",
-    siteName: "GemiKnights",
+      "BloomKnights is a 12-hour mini-Hackathon held by Knight Hacks at the University of Central Florida. Join us on July 11th for a day of building, learning, and innovation!",
+    url: "https://bloom.knighthacks.org",
+    siteName: "BloomKnights",
     images: [
       {
-        url: "https://gemi.knighthacks.org/event-banner.png",
+        url: "https://bloom.knighthacks.org/event-banner.png",
         alt: "Event Banner",
       },
     ],
@@ -43,10 +44,15 @@ export default function RootLayout({
             />
           </div>
         </div>
-        <span className="tk-peridot-devanagari">
+
+        <FloatingFlowers />
+
+        <span className="font-nunito">
           <Navbar />
         </span>
-        <main className="flex-1">{children}</main>
+
+        <main className="flex-1 pt-8">{children}</main>
+
         <Squiggles />
         <div>
           <Footer />

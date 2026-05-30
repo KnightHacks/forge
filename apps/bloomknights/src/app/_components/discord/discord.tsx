@@ -8,7 +8,7 @@ import { ArrowRight } from "lucide-react";
 gsap.registerPlugin(ScrollTrigger);
 
 export default function DiscordCTAButton({
-  label = "Join Our Discord Community!",
+  label = "Join Our Discord Community! 🌷",
 }: {
   label?: string;
 }) {
@@ -44,7 +44,13 @@ export default function DiscordCTAButton({
         ref={buttonRef}
         className="relative z-0 flex max-w-max items-center overflow-hidden rounded-full p-[3px]"
       >
-        <div className="moving-border absolute inset-0 h-full w-full rounded-full bg-[conic-gradient(from_0deg,#ec38bc_20deg,#f8c255_140deg,transparent_240deg)]" />
+        <div
+          className="moving-border absolute inset-0 h-full w-full rounded-full"
+          style={{
+            background:
+              "conic-gradient(from 0deg, #a8d471 0deg, #fcbc4e 120deg, #fe73fe 240deg, #a8d471 360deg)",
+          }}
+        />
         <div className="relative z-10 flex items-center">
           <button
             onClick={() =>
@@ -54,14 +60,14 @@ export default function DiscordCTAButton({
                 "noopener,noreferrer",
               )
             }
-            className="group relative flex w-[300px] items-center justify-center rounded-full bg-white px-8 py-3 text-sm font-semibold text-[#ec38bc] transition-all duration-300 ease-in-out hover:bg-gradient-to-r hover:from-[#ec38bc] hover:via-[#f8c255] hover:to-[#ec38bc] hover:text-white md:w-[450px] md:text-xl"
+            className="font-fredoka group relative flex w-[280px] items-center justify-center rounded-full bg-white px-8 py-3 text-sm font-semibold uppercase tracking-wide text-[#a8d471] transition-all duration-500 ease-in-out hover:scale-105 hover:bg-gradient-to-r hover:from-[#a8d471] hover:via-[#fcbc4e] hover:to-[#fe73fe] hover:text-white md:w-[460px] md:text-xl"
           >
-            <div className="absolute left-0 top-0 flex h-full w-11 items-center justify-end rounded-full bg-gradient-to-r from-[#ec38bc] via-[#f8c255] to-[#ec38bc] transition-all duration-200 ease-in-out group-hover:w-full">
-              <span className="mr-3 text-white transition-all duration-200 ease-in-out group-hover:text-white">
+            <div className="absolute left-0 top-0 flex h-full w-11 items-center justify-end rounded-full bg-gradient-to-r from-[#a8d471] via-[#fcbc4e] to-[#fe73fe] transition-all duration-500 ease-in-out group-hover:w-full">
+              <span className="mr-3 text-white transition-all duration-500 ease-in-out group-hover:text-white">
                 <ArrowRight size={20} />
               </span>
             </div>
-            <span className="relative left-4 z-10 whitespace-nowrap transition-all duration-200 ease-in-out group-hover:-left-3">
+            <span className="relative left-4 z-10 whitespace-nowrap transition-all duration-500 ease-in-out group-hover:-left-3">
               {label}
             </span>
           </button>

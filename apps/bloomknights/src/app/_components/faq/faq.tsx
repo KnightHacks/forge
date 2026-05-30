@@ -14,27 +14,33 @@ const FAQ = () => {
   return (
     <motion.div
       id="faqs"
-      className="flex w-full scroll-mt-20 flex-col items-center justify-center"
+      className="flex w-full scroll-mt-32 flex-col items-center justify-center"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      viewport={{ once: true, amount: 0.4 }}
+      viewport={{ once: true, amount: 0.3 }}
     >
-      <span className="tk-forma-djr-display mb-6 text-3xl font-bold sm:mb-8 sm:text-4xl md:mb-10 md:text-5xl">
+      <span className="spring-heading animate-float-bob-slow mb-6 text-4xl sm:mb-8 sm:text-5xl md:mb-10 md:text-6xl lg:text-7xl">
         FAQ
       </span>
-      <Accordion type="single" collapsible className="w-3/5">
+      <Accordion
+        type="single"
+        collapsible
+        className="w-full max-w-[90%] sm:max-w-[80%] md:max-w-3xl"
+      >
         {faqItems.map((item, index) => (
           <AccordionItem
             key={index}
             value={`item-${index + 1}`}
-            className="border-b"
+            className="faq-item"
           >
-            <AccordionTrigger className="w-full rounded-lg px-4 py-2 text-left text-base font-semibold transition-all duration-500 hover:scale-[1.02] hover:bg-white/5 sm:px-5 sm:py-3 sm:text-lg md:px-6 md:py-4 md:text-xl">
+            <AccordionTrigger className="font-fredoka w-full rounded-xl px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-white transition-all duration-500 hover:scale-[1.01] hover:text-[#fcbc4e] sm:px-5 sm:py-4 sm:text-base md:px-6 md:text-lg lg:text-xl">
               {item.question}
             </AccordionTrigger>
-            <AccordionContent className="tk-peridot-devanagari overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down sm:text-lg md:text-xl">
-              <div className="p-4 sm:p-5 md:p-6">{item.answer}</div>
+            <AccordionContent className="font-nunito overflow-hidden text-xs text-white/80 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down sm:text-sm md:text-base lg:text-lg">
+              <div className="px-4 pb-4 pt-1 sm:px-6 sm:pb-5 md:px-6 md:pb-6">
+                {item.answer}
+              </div>
             </AccordionContent>
           </AccordionItem>
         ))}

@@ -13,14 +13,11 @@ interface NavContentProps {
   showGlow?: boolean;
 }
 
-function NavContent({ navLinks, showGlow = false }: NavContentProps) {
+function NavContent({ navLinks }: NavContentProps) {
   return (
     <div className="flex h-20 items-center justify-between px-6 md:px-12 lg:px-32">
       <div className="flex items-center">
         <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl">
-          {showGlow && (
-            <div className="absolute inset-0 rounded-2xl bg-[#FBB03B]/30 blur-md" />
-          )}
           <Dargon />
         </div>
       </div>
@@ -29,14 +26,11 @@ function NavContent({ navLinks, showGlow = false }: NavContentProps) {
           <a
             key={link.href}
             href={link.href}
-            className="relative transform rounded-md px-2 py-1 text-lg font-medium text-white transition hover:scale-105 hover:text-[#FBB03B]"
+            className="font-fredoka relative transform rounded-md px-2 py-1 text-base font-semibold uppercase tracking-wide text-white transition-all duration-500 hover:scale-110 hover:text-[#fcbc4e] lg:text-lg"
             {...(link.external
               ? { target: "_blank", rel: "noopener noreferrer" }
               : {})}
           >
-            {showGlow && (
-              <div className="absolute inset-0 rounded-md bg-[#FBB03B]/30 blur-md" />
-            )}
             <span className="relative z-10">{link.label}</span>
           </a>
         ))}

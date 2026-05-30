@@ -7,12 +7,12 @@ import FloatingNav from "./FloatingNav";
 import MainNav from "./MainNav";
 import MLHBadge from "./MLHBadge";
 
-const hackersGuide = "https://knight-hacks.notion.site/gemiknights2025";
+const hackersGuide = "https://knight-hacks.notion.site/bloomknights2025";
 const discordLink = "https://discord.gg/2W2HCvkKAy";
 
 const NAV_LINKS = [
   { href: "#about", label: "About" },
-  { href: "#faqs", label: `FAQ` },
+  { href: "#faqs", label: "FAQ" },
   { href: "#partners", label: "Partners" },
   { href: hackersGuide, label: "Hackers Guide", external: true },
   { href: discordLink, label: "Discord", external: true },
@@ -23,7 +23,6 @@ const Navbar = () => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const handleScroll = () => setShowFloating(window.scrollY > 100);
     window.addEventListener("scroll", handleScroll);
@@ -39,7 +38,7 @@ const Navbar = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <MainNav navLinks={NAV_LINKS} />
+        <MainNav navLinks={NAV_LINKS} showFloating={showFloating} />
       </motion.div>
 
       <FloatingNav navLinks={NAV_LINKS} show={showFloating} />
