@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fredoka+One&family=Righteous&family=DM+Sans:wght@400;500;600&display=swap");
 @import url("https://use.typekit.net/jbe5qai.css");
 @import "tailwindcss";
 @source "../../../../packages/ui/src";
@@ -16,6 +16,18 @@
   --bloom-pink: #fe73fe;
   --bloom-pink-lt: #fdc0fd;
   --bloom-cream: #f8f7f5;
+
+  --wc-sky: #b8d4e8;
+  --wc-sky-lt: #daeaf5;
+  --wc-lavender: #c9b8d8;
+  --wc-sage: #a8c490;
+  --wc-meadow: #7aab5a;
+  --wc-sun: #f5d97a;
+  --wc-earth: #c4a882;
+  --wc-ink: #3d2e1e;
+  --wc-parchment: rgba(248, 243, 232, 0.72);
+  --wc-parchment-dk: rgba(232, 224, 206, 0.82);
+  --wc-wash: rgba(200, 220, 240, 0.18);
 
   --animate-first: moveVertical 30s ease infinite;
   --animate-second: moveInCircle 20s reverse infinite;
@@ -55,30 +67,155 @@
 *,
 *::before,
 *::after {
-  cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='5' fill='%23fe73fe' opacity='0.85'/%3E%3Ccircle cx='12' cy='5' r='3' fill='%23a8d471'/%3E%3Ccircle cx='12' cy='19' r='3' fill='%23a8d471'/%3E%3Ccircle cx='5' cy='12' r='3' fill='%23fcbc4e'/%3E%3Ccircle cx='19' cy='12' r='3' fill='%23fcbc4e'/%3E%3C/svg%3E")
-      12 12,
-    auto;
+  cursor: none !important;
 }
 
-a,
-button,
-[role="button"],
-label,
-select,
-[tabindex] {
-  cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='7' fill='%23fe73fe'/%3E%3Ccircle cx='14' cy='5' r='4' fill='%23fcbc4e'/%3E%3Ccircle cx='14' cy='23' r='4' fill='%23fcbc4e'/%3E%3Ccircle cx='5' cy='14' r='4' fill='%23a8d471'/%3E%3Ccircle cx='23' cy='14' r='4' fill='%23a8d471'/%3E%3C/svg%3E")
-      14 14,
-    pointer;
+.font-fredoka-one {
+  font-family: "Fredoka One", cursive;
 }
-
+.font-righteous {
+  font-family: "Righteous", cursive;
+}
+.font-dm-sans {
+  font-family: "DM Sans", sans-serif;
+}
+.tk-forma-djr-display {
+  font-family: "Fredoka One", cursive;
+}
+.tk-peridot-devanagari {
+  font-family: "DM Sans", sans-serif;
+}
 .font-fredoka {
-  font-family: "Fredoka", sans-serif;
-  font-weight: 600;
+  font-family: "Fredoka One", cursive;
 }
 .font-nunito {
-  font-family: "Nunito", sans-serif;
+  font-family: "DM Sans", sans-serif;
+}
+
+.spring-heading {
+  font-family: "Fredoka One", cursive;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #b87333 0%, #9b4f7e 45%, #5a8a3c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(180, 120, 60, 0.18));
+}
+
+.wc-panel {
+  background: var(--wc-parchment);
+  backdrop-filter: blur(12px) saturate(1.2);
+  border: 1.5px solid rgba(200, 180, 140, 0.38);
+  border-radius: 1.5rem;
+  box-shadow:
+    0 4px 32px rgba(100, 80, 40, 0.1),
+    inset 0 1px 0 rgba(255, 250, 230, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.wc-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse at 15% 20%,
+      rgba(184, 212, 232, 0.22) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse at 85% 80%,
+      rgba(168, 196, 144, 0.18) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(245, 217, 122, 0.1) 0%,
+      transparent 70%
+    );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.wc-ink-text {
+  color: #3d2e1e;
+  text-shadow: 0 1px 3px rgba(100, 70, 30, 0.15);
+}
+
+.wc-ink-soft {
+  color: #5a4535;
+}
+
+.wc-border-brush {
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(168, 196, 144, 0.6) 15%,
+      rgba(180, 120, 60, 0.5) 50%,
+      rgba(155, 79, 126, 0.5) 75%,
+      transparent 100%
+    )
+    1;
+}
+
+.wc-btn {
+  position: relative;
+  font-family: "Fredoka One", cursive;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--wc-parchment-dk);
+  border: 2px solid rgba(180, 140, 80, 0.45);
+  border-radius: 9999px;
+  color: #6b3d14;
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow:
+    0 2px 12px rgba(120, 80, 30, 0.15),
+    inset 0 1px 0 rgba(255, 245, 210, 0.7);
+}
+.wc-btn:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(252, 188, 78, 0.85) 0%,
+    rgba(168, 212, 113, 0.85) 100%
+  );
+  border-color: rgba(150, 180, 100, 0.6);
+  color: #2a1a06;
+  transform: scale(1.05);
+  box-shadow:
+    0 6px 28px rgba(168, 196, 144, 0.35),
+    inset 0 1px 0 rgba(255, 255, 220, 0.5);
+}
+
+.wc-nav-link {
+  font-family: "Righteous", cursive;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(248, 243, 232, 0.92);
+  text-shadow: 0 1px 6px rgba(60, 40, 10, 0.35);
+  transition: all 0.4s ease;
+  position: relative;
+}
+.wc-nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, var(--bloom-gold), var(--bloom-green));
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.wc-nav-link:hover {
+  color: var(--bloom-gold);
+  text-shadow: 0 0 12px rgba(252, 188, 78, 0.4);
+  transform: scale(1.08);
+}
+.wc-nav-link:hover::after {
+  width: 100%;
 }
 
 @keyframes float-bob {
@@ -108,10 +245,10 @@ select,
     opacity: 0;
   }
   10% {
-    opacity: 0.7;
+    opacity: 0.55;
   }
   90% {
-    opacity: 0.5;
+    opacity: 0.35;
   }
   100% {
     transform: translateY(110vh) rotate(720deg);
@@ -123,6 +260,31 @@ select,
   pointer-events: none;
   z-index: 1;
   animation: petal-drift linear infinite;
+  filter: drop-shadow(0 1px 3px rgba(150, 100, 60, 0.2));
+}
+
+@keyframes cursor-flower-pop {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  40% {
+    opacity: 0.9;
+    transform: translate(-50%, -70%) scale(1.2) rotate(90deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -110%) scale(0.5) rotate(200deg);
+  }
+}
+.cursor-trail-flower {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99998;
+  animation: cursor-flower-pop 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform-origin: center center;
+  user-select: none;
+  will-change: transform, opacity;
 }
 
 @keyframes moving-border {
@@ -212,47 +374,25 @@ select,
   }
 }
 
-.tk-forma-djr-display {
-  font-family: "Fredoka", sans-serif;
-  font-weight: 600;
-}
-.tk-peridot-devanagari {
-  font-family: "Nunito", sans-serif;
-}
-
-.spring-heading {
-  font-family: "Fredoka", sans-serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  background: linear-gradient(
-    135deg,
-    var(--bloom-gold) 0%,
-    var(--bloom-pink) 50%,
-    var(--bloom-green) 100%
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 .faq-item {
-  border-bottom: 1.5px solid rgba(168, 212, 113, 0.35);
-  transition: background 0.3s ease;
+  border-bottom: 1.5px solid rgba(168, 196, 144, 0.3);
+  transition: background 0.35s ease;
 }
 .faq-item:hover {
-  background: rgba(168, 212, 113, 0.08);
+  background: rgba(248, 243, 232, 0.28);
   border-radius: 0.75rem;
 }
 
 .partner-card {
   transition:
-    transform 0.4s ease,
-    box-shadow 0.4s ease;
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s ease;
 }
 .partner-card:hover {
-  transform: scale(1.06);
-  box-shadow: 0 8px 32px rgba(252, 188, 78, 0.25);
+  transform: scale(1.08);
+  box-shadow:
+    0 8px 40px rgba(180, 140, 80, 0.28),
+    0 0 0 2px rgba(168, 196, 144, 0.45);
 }
 
 @theme inline {

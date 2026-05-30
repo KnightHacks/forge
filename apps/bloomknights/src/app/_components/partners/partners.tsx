@@ -21,25 +21,23 @@ const Partners = () => {
         PARTNERS
       </span>
 
-      <div className="xs:grid-cols-2 xs:max-w-[90%] grid w-full max-w-[95%] grid-cols-1 gap-3 sm:max-w-[85%] sm:gap-4 md:max-w-[80%] md:grid-cols-2 md:gap-6 lg:max-w-6xl lg:grid-cols-4">
+      <div className="xs:max-w-[90%] xs:grid-cols-2 grid w-full max-w-[95%] grid-cols-1 gap-3 sm:max-w-[85%] sm:gap-4 md:max-w-[80%] md:grid-cols-2 md:gap-6 lg:max-w-6xl lg:grid-cols-4">
         {partnerLogos.map((LogoPair, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.6,
-              delay: idx * 0.2,
-              ease: "easeOut",
-            }}
+            transition={{ duration: 0.6, delay: idx * 0.15, ease: "easeOut" }}
             viewport={{ once: true, amount: 0.2 }}
+            whileHover={{ scale: 1.08 }}
           >
             <Link
               href={LogoPair.link}
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Card className="partner-card group relative w-full overflow-hidden rounded-xl border border-white/10 bg-white/5 px-4 backdrop-blur-sm sm:px-6 md:px-8 lg:px-10">
+              <Card className="partner-card group relative w-full overflow-hidden rounded-2xl border border-[rgba(200,180,140,0.38)] bg-[rgba(248,243,232,0.55)] px-4 backdrop-blur-md transition-all duration-500 hover:border-[rgba(168,196,144,0.6)] hover:bg-[rgba(248,243,232,0.78)] hover:shadow-[0_8px_40px_rgba(180,140,80,0.28)] sm:px-6 md:px-8 lg:px-10">
+                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-[rgba(184,212,232,0.15)] via-transparent to-[rgba(168,196,144,0.12)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 <CardContent>
                   <div className="xs:h-16 relative h-12 w-full sm:h-20 md:h-24 lg:h-28">
                     <LogoPair.white

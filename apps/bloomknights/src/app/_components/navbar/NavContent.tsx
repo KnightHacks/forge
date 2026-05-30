@@ -17,7 +17,7 @@ function NavContent({ navLinks }: NavContentProps) {
   return (
     <div className="flex h-20 items-center justify-between px-6 md:px-12 lg:px-32">
       <div className="flex items-center">
-        <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl">
+        <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl transition-transform duration-500 hover:scale-110">
           <Dargon />
         </div>
       </div>
@@ -26,7 +26,7 @@ function NavContent({ navLinks }: NavContentProps) {
           <a
             key={link.href}
             href={link.href}
-            className="font-fredoka relative transform rounded-md px-2 py-1 text-base font-semibold uppercase tracking-wide text-white transition-all duration-500 hover:scale-110 hover:text-[#fcbc4e] lg:text-lg"
+            className="wc-nav-link rounded-md px-2 py-1 text-base lg:text-lg"
             {...(link.external
               ? { target: "_blank", rel: "noopener noreferrer" }
               : {})}

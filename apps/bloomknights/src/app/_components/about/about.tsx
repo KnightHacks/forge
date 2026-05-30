@@ -9,18 +9,20 @@ const About = () => {
   return (
     <motion.div
       id="about"
-      className="flex scroll-mt-32 flex-col items-center justify-center"
+      className="flex w-full scroll-mt-32 flex-col items-center justify-center px-4"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
+      transition={{ duration: 0.9, ease: "easeOut" }}
       viewport={{ once: true, amount: 0.4 }}
     >
-      <span className="spring-heading animate-float-bob mb-6 text-center text-4xl sm:mb-8 sm:text-5xl md:mb-10 md:text-6xl lg:text-7xl">
+      <span className="spring-heading animate-float-bob mb-8 text-center text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
         ABOUT
       </span>
-      <span className="font-nunito mt-2 max-w-[90%] px-4 text-center text-base font-semibold text-white/90 sm:mt-3 sm:max-w-[80%] sm:px-6 sm:text-lg md:mt-4 md:max-w-5xl md:px-8 md:text-xl lg:text-2xl">
-        {aboutWords}
-      </span>
+      <div className="wc-panel w-full max-w-[90%] px-6 py-8 sm:max-w-[80%] sm:px-10 sm:py-10 md:max-w-4xl md:px-14 md:py-12">
+        <p className="font-dm-sans wc-ink-text text-center text-base font-medium leading-relaxed sm:text-lg md:text-xl lg:text-2xl">
+          {aboutWords}
+        </p>
+      </div>
     </motion.div>
   );
 };

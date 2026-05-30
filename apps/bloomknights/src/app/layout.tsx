@@ -3,9 +3,12 @@ import type { Metadata } from "next";
 import Footer from "./_components/footer/footer";
 import BgSVG from "./_components/graphics/background";
 import FloatingFlowers from "./_components/graphics/FloatingFlowers";
+import FlowerCursor from "./_components/graphics/Flowercursor";
 import Squiggles from "./_components/graphics/squiggles";
 import Navbar from "./_components/navbar/Navbar";
-// @ts-ignore: Allow global stylesheet import without module declarations
+// TypeScript may complain about side-effect CSS imports if no declaration file is present.
+// Suppress the error for this valid Next.js global CSS import.
+// @ts-ignore
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -46,8 +49,9 @@ export default function RootLayout({
         </div>
 
         <FloatingFlowers />
+        <FlowerCursor />
 
-        <span className="font-nunito">
+        <span className="font-dm-sans">
           <Navbar />
         </span>
 
