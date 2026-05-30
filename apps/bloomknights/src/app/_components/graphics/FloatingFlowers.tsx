@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 
 interface Petal {
@@ -8,9 +9,14 @@ interface Petal {
   size: string;
   duration: string;
   delay: string;
+  drift: string;
+  driftReturn: string;
+  spin: string;
   color: string;
   type: "cherry" | "daisy" | "tulip" | "clover" | "star";
 }
+
+type NonEmptyArray<T> = readonly [T, ...T[]];
 
 const PALETTE = [
   "#fcbc4e",
@@ -23,7 +29,7 @@ const PALETTE = [
   "#a8c490",
   "#c4a882",
   "#f5d97a",
-];
+] as const satisfies NonEmptyArray<string>;
 
 function FlowerSVG({
   type,
@@ -204,22 +210,51 @@ function FlowerSVG({
   }
 }
 
-const TYPES: Petal["type"][] = ["cherry", "daisy", "tulip", "clover", "star"];
+const TYPES = [
+  "cherry",
+  "daisy",
+  "tulip",
+  "clover",
+  "star",
+] as const satisfies NonEmptyArray<Petal["type"]>;
+
+function pickFrom<T>(items: NonEmptyArray<T>, index: number): T {
+  return items[index % items.length] ?? items[0];
+}
 
 export default function FloatingFlowers() {
   const [petals, setPetals] = useState<Petal[]>([]);
 
   useEffect(() => {
-    const generated: Petal[] = Array.from({ length: 20 }, (_, i) => ({
-      id: i,
-      left: `${Math.random() * 97}%`,
-      size: `${(1.6 + Math.random() * 1.6) * 16}px`,
-      duration: `${11 + Math.random() * 13}s`,
-      delay: `${Math.random() * 14}s`,
-      color: PALETTE[i % PALETTE.length]!,
-      type: TYPES[i % TYPES.length]!,
-    }));
-    setPetals(generated);
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (prefersReducedMotion) {
+      return;
+    }
+
+    const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    const petalCount = isCoarsePointer ? 9 : 18;
+    const generated: Petal[] = Array.from({ length: petalCount }, (_, i) => {
+      const drift = (Math.random() > 0.5 ? 1 : -1) * (28 + Math.random() * 92);
+
+      return {
+        id: i,
+        left: `${Math.random() * 97}%`,
+        size: `${(0.85 + Math.random() * 0.55) * 16}px`,
+        duration: `${24 + Math.random() * 24}s`,
+        delay: `${Math.random() * 30}s`,
+        drift: `${drift}px`,
+        driftReturn: `${drift * -0.55}px`,
+        spin: `${Math.random() > 0.5 ? 720 : -720}deg`,
+        color: pickFrom(PALETTE, i),
+        type: pickFrom(TYPES, i),
+      };
+    });
+
+    const frame = requestAnimationFrame(() => setPetals(generated));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   return (
@@ -228,15 +263,20 @@ export default function FloatingFlowers() {
         <div
           key={p.id}
           className="petal select-none"
-          style={{
-            left: p.left,
-            top: "-70px",
-            width: p.size,
-            height: p.size,
-            animationDuration: p.duration,
-            animationDelay: p.delay,
-            opacity: 0,
-          }}
+          style={
+            {
+              left: p.left,
+              top: "-70px",
+              width: p.size,
+              height: p.size,
+              animationDuration: p.duration,
+              animationDelay: p.delay,
+              "--petal-drift-x": p.drift,
+              "--petal-drift-return-x": p.driftReturn,
+              "--petal-spin": p.spin,
+              opacity: 0,
+            } as CSSProperties
+          }
           aria-hidden="true"
         >
           <FlowerSVG type={p.type} color={p.color} size={parseInt(p.size)} />

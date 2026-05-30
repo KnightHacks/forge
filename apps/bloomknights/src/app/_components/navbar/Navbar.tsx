@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-import FloatingNav from "./FloatingNav";
-import MainNav from "./MainNav";
 import MLHBadge from "./MLHBadge";
+import NavContent from "./NavContent";
 
 const hackersGuide = "https://knight-hacks.notion.site/bloomknights2025";
 const discordLink = "https://discord.gg/2W2HCvkKAy";
@@ -19,30 +18,28 @@ const NAV_LINKS = [
 ];
 
 const Navbar = () => {
-  const [showFloating, setShowFloating] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    const handleScroll = () => setShowFloating(window.scrollY > 100);
+    const handleScroll = () => setIsScrolled(window.scrollY > 100);
+
+    handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (!mounted) return null;
-
   return (
     <>
-      <motion.div
+      <motion.nav
         initial={{ opacity: 0, y: -40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
+        className="fixed left-0 top-0 z-50 w-full bg-transparent"
       >
-        <MainNav navLinks={NAV_LINKS} showFloating={showFloating} />
-      </motion.div>
+        <NavContent navLinks={NAV_LINKS} showGlow={isScrolled} />
+      </motion.nav>
 
-      <FloatingNav navLinks={NAV_LINKS} show={showFloating} />
-      <MLHBadge showFloating={showFloating} />
+      <MLHBadge showFloating={isScrolled} />
     </>
   );
 };

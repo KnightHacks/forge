@@ -11,7 +11,6 @@ const GeminiSVG = (props: SVGProps<SVGSVGElement>) => {
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-      <title>Gemini Logo</title>
       <mask
         id="mask0_958_15881"
         style={{ maskType: "alpha" }}

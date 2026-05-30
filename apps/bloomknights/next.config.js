@@ -3,6 +3,12 @@ const config = {
   reactStrictMode: true,
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "assets.knighthacks.org",
+      },
+    ],
   },
 
   /** Enables hot reloading for local packages without a build step */

@@ -9,7 +9,6 @@ const OneethosSVGW = (props: SVGProps<SVGSVGElement>) => (
     viewBox="0 0 277.34 51.32"
     {...props}
   >
-    <title>OneEthos Logo</title>
     <g id="Layer_6" data-name="Layer 6">
       <g>
         <path

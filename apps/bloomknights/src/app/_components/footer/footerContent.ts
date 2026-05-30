@@ -22,4 +22,4 @@ export const footerLinks = [
   },
 ];
 
-export const footerMessage = "Made with 💚 by the Knight Hacks team 🌸";
+export const footerMessage = "Made with love 💚 by the Knight Hacks team";

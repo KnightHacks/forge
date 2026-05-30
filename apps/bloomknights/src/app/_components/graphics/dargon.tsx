@@ -3,10 +3,10 @@ import Link from "next/link";
 
 const Dargon = () => {
   return (
-    <Link href="#">
+    <Link href="/" aria-label="BloomKnights home">
       <Image
         src="/BloomKnightsSigil.svg"
-        alt="Knight Hacks BloomKnights Logo"
+        alt="BloomKnights sigil"
         width={100}
         height={100}
         draggable={false}

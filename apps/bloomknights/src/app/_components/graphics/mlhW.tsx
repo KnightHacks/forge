@@ -11,8 +11,6 @@ const MLHWSVG = (props: SVGProps<SVGSVGElement>) => (
     xmlnsXlink="http://www.w3.org/1999/xlink"
     {...props}
   >
-    <title>MLH Logo</title>
-    <desc>Created with Sketch.</desc>
     <defs></defs>
     <g id="Page-1" stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
       <g id="mlh-logo-white" fill="#FFFFFF">

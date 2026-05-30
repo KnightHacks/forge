@@ -7,7 +7,6 @@ const MLHSVG = (props: SVGProps<SVGSVGElement>) => (
     viewBox="0 0 310.59 130.78"
     {...props}
   >
-    <title>MLH Logo</title>
     <defs>
       <style>{`.cls-1{fill:#242425;}.cls-2{fill:#e73427;}.cls-3{fill:#1d539f;}.cls-4{fill:#f8b92a;}`}</style>
     </defs>

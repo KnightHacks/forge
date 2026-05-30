@@ -9,33 +9,13 @@ const PALETTE = [
   "#b8d4e8",
   "#c9b8d8",
   "#f5d97a",
-];
+] as const;
 
 interface TrailFlower {
   id: number;
   x: number;
   y: number;
   color: string;
-}
-
-function CherryBlossomSVG({ color, size }: { color: string; size: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <circle cx="20" cy="8" r="7" fill={color} />
-      <circle cx="32" cy="14" r="7" fill={color} />
-      <circle cx="32" cy="28" r="7" fill={color} />
-      <circle cx="20" cy="34" r="7" fill={color} />
-      <circle cx="8" cy="28" r="7" fill={color} />
-      <circle cx="8" cy="14" r="7" fill={color} />
-      <circle cx="20" cy="20" r="5" fill="white" opacity="0.9" />
-    </svg>
-  );
 }
 
 function TrailFlowerSVG({ color, size }: { color: string; size: number }) {
@@ -94,17 +74,22 @@ function TrailFlowerSVG({ color, size }: { color: string; size: number }) {
 }
 
 export default function FlowerCursor() {
-  const posRef = useRef({ x: -200, y: -200 });
-  const [renderPos, setRenderPos] = useState({ x: -200, y: -200 });
   const [trail, setTrail] = useState<TrailFlower[]>([]);
   const counterRef = useRef(0);
   const lastTrailPos = useRef({ x: -200, y: -200 });
-  const rafRef = useRef<number | null>(null);
+  const cleanupTimers = useRef<number[]>([]);
 
   useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      posRef.current = { x: e.clientX, y: e.clientY };
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
 
+    if (prefersReducedMotion || isCoarsePointer) {
+      return;
+    }
+
+    const onMove = (e: MouseEvent) => {
       const dx = e.clientX - lastTrailPos.current.x;
       const dy = e.clientY - lastTrailPos.current.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -112,47 +97,30 @@ export default function FlowerCursor() {
       if (dist > 36) {
         lastTrailPos.current = { x: e.clientX, y: e.clientY };
         const id = counterRef.current++;
-        const color = PALETTE[id % PALETTE.length]!;
+        const color = PALETTE[id % PALETTE.length] ?? PALETTE[0];
         setTrail((prev) => [
           ...prev.slice(-14),
           { id, x: e.clientX, y: e.clientY, color },
         ]);
-        setTimeout(() => {
+        const cleanupTimer = window.setTimeout(() => {
           setTrail((prev) => prev.filter((f) => f.id !== id));
         }, 900);
+        cleanupTimers.current.push(cleanupTimer);
       }
     };
-
-    const tick = () => {
-      setRenderPos({ ...posRef.current });
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
 
     window.addEventListener("mousemove", onMove);
     return () => {
       window.removeEventListener("mousemove", onMove);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      cleanupTimers.current.forEach((cleanupTimer) => {
+        window.clearTimeout(cleanupTimer);
+      });
+      cleanupTimers.current = [];
     };
   }, []);
 
   return (
     <>
-      <div
-        className="pointer-events-none fixed z-[99999] select-none"
-        style={{
-          left: renderPos.x,
-          top: renderPos.y,
-          transform: "translate(-50%, -50%)",
-          width: "2.2rem",
-          height: "2.2rem",
-          willChange: "left, top",
-        }}
-        aria-hidden="true"
-      >
-        <CherryBlossomSVG color="#fe73fe" size={35} />
-      </div>
-
       {trail.map((f) => (
         <span
           key={f.id}
@@ -161,13 +129,13 @@ export default function FlowerCursor() {
             left: f.x,
             top: f.y,
             transform: "translate(-50%, -50%)",
-            width: "1.6rem",
-            height: "1.6rem",
+            width: "1.1rem",
+            height: "1.1rem",
             display: "inline-block",
           }}
           aria-hidden="true"
         >
-          <TrailFlowerSVG color={f.color} size={26} />
+          <TrailFlowerSVG color={f.color} size={18} />
         </span>
       ))}
     </>
