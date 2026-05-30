@@ -2,13 +2,95 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const TRAIL_FLOWERS = ["🌸", "🌺", "🌼", "🌷", "🌻", "✿"];
+const PALETTE = [
+  "#fcbc4e",
+  "#a8d471",
+  "#fe73fe",
+  "#b8d4e8",
+  "#c9b8d8",
+  "#f5d97a",
+];
 
 interface TrailFlower {
   id: number;
   x: number;
   y: number;
-  emoji: string;
+  color: string;
+}
+
+function CherryBlossomSVG({ color, size }: { color: string; size: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle cx="20" cy="8" r="7" fill={color} />
+      <circle cx="32" cy="14" r="7" fill={color} />
+      <circle cx="32" cy="28" r="7" fill={color} />
+      <circle cx="20" cy="34" r="7" fill={color} />
+      <circle cx="8" cy="28" r="7" fill={color} />
+      <circle cx="8" cy="14" r="7" fill={color} />
+      <circle cx="20" cy="20" r="5" fill="white" opacity="0.9" />
+    </svg>
+  );
+}
+
+function TrailFlowerSVG({ color, size }: { color: string; size: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <ellipse cx="20" cy="7" rx="4.5" ry="7" fill={color} />
+      <ellipse
+        cx="20"
+        cy="7"
+        rx="4.5"
+        ry="7"
+        fill={color}
+        transform="rotate(60 20 20)"
+      />
+      <ellipse
+        cx="20"
+        cy="7"
+        rx="4.5"
+        ry="7"
+        fill={color}
+        transform="rotate(120 20 20)"
+      />
+      <ellipse
+        cx="20"
+        cy="7"
+        rx="4.5"
+        ry="7"
+        fill={color}
+        transform="rotate(180 20 20)"
+      />
+      <ellipse
+        cx="20"
+        cy="7"
+        rx="4.5"
+        ry="7"
+        fill={color}
+        transform="rotate(240 20 20)"
+      />
+      <ellipse
+        cx="20"
+        cy="7"
+        rx="4.5"
+        ry="7"
+        fill={color}
+        transform="rotate(300 20 20)"
+      />
+      <circle cx="20" cy="20" r="5.5" fill="white" opacity="0.9" />
+    </svg>
+  );
 }
 
 export default function FlowerCursor() {
@@ -30,10 +112,10 @@ export default function FlowerCursor() {
       if (dist > 36) {
         lastTrailPos.current = { x: e.clientX, y: e.clientY };
         const id = counterRef.current++;
-        const emoji = TRAIL_FLOWERS[id % TRAIL_FLOWERS.length]!;
+        const color = PALETTE[id % PALETTE.length]!;
         setTrail((prev) => [
           ...prev.slice(-14),
-          { id, x: e.clientX, y: e.clientY, emoji },
+          { id, x: e.clientX, y: e.clientY, color },
         ]);
         setTimeout(() => {
           setTrail((prev) => prev.filter((f) => f.id !== id));
@@ -62,13 +144,13 @@ export default function FlowerCursor() {
           left: renderPos.x,
           top: renderPos.y,
           transform: "translate(-50%, -50%)",
-          fontSize: "2rem",
-          lineHeight: 1,
+          width: "2.2rem",
+          height: "2.2rem",
           willChange: "left, top",
         }}
         aria-hidden="true"
       >
-        🌸
+        <CherryBlossomSVG color="#fe73fe" size={35} />
       </div>
 
       {trail.map((f) => (
@@ -79,11 +161,13 @@ export default function FlowerCursor() {
             left: f.x,
             top: f.y,
             transform: "translate(-50%, -50%)",
-            fontSize: "1.4rem",
+            width: "1.6rem",
+            height: "1.6rem",
+            display: "inline-block",
           }}
           aria-hidden="true"
         >
-          {f.emoji}
+          <TrailFlowerSVG color={f.color} size={26} />
         </span>
       ))}
     </>
