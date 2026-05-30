@@ -5,12 +5,12 @@ const Dargon = () => {
   return (
     <Link href="#">
       <Image
-        src="/dargon.svg"
-        alt="Knight Hacks Gemiknights Logo"
+        src="/BloomKnightsSigil.svg"
+        alt="Knight Hacks BloomKnights Logo"
         width={100}
         height={100}
         draggable={false}
-        className="z-10 brightness-0 invert"
+        className=""
       />
     </Link>
   );
