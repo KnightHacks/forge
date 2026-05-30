@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 323.04 323.04">
+  <defs>
+    <style>
+      .cls-1 {
+        stroke: url(#Analogous_2-3);
+      }
+
+      .cls-1, .cls-2, .cls-3, .cls-4, .cls-5, .cls-6, .cls-7, .cls-8, .cls-9, .cls-10, .cls-11, .cls-12, .cls-13, .cls-14, .cls-15, .cls-16, .cls-17, .cls-18, .cls-19, .cls-20, .cls-21, .cls-22, .cls-23, .cls-24, .cls-25, .cls-26, .cls-27, .cls-28, .cls-29, .cls-30, .cls-31, .cls-32, .cls-33, .cls-34, .cls-35, .cls-36, .cls-37, .cls-38, .cls-39, .cls-40, .cls-41, .cls-42, .cls-43, .cls-44, .cls-45, .cls-46, .cls-47, .cls-48, .cls-49, .cls-50, .cls-51, .cls-52, .cls-53, .cls-54, .cls-55, .cls-56, .cls-57, .cls-58, .cls-59, .cls-60, .cls-61, .cls-62, .cls-63, .cls-64, .cls-65, .cls-66, .cls-67, .cls-68 {
+        fill: none;
+        stroke-miterlimit: 10;
+        stroke-width: .49px;
+      }
+
+      .cls-2 {
+        stroke: url(#Analogous_2-13);
+      }
+
+      .cls-3 {
+        stroke: url(#Analogous_2-10);
+      }
+
+      .cls-4 {
+        stroke: url(#Analogous_2-53);
+      }
+
+      .cls-5 {
+        stroke: url(#Analogous_2-20);
+      }
+
+      .cls-6 {
+        stroke: url(#Analogous_2-6);
+      }
+
+      .cls-7 {
+        stroke: url(#Analogous_2-32);
+      }
+
+      .cls-8 {
+        stroke: url(#Analogous_2-7);
+      }
+
+      .cls-9 {
+        stroke: url(#Analogous_2-55);
+      }
+
+      .cls-10 {
+        stroke: url(#Analogous_2-39);
+      }
+
+      .cls-11 {
+        stroke: url(#Analogous_2-8);
+      }
+
+      .cls-12 {
+        stroke: url(#Analogous_2-30);
+      }
+
+      .cls-13 {
+        stroke: url(#Analogous_2-19);
+      }
+
+      .cls-14 {
+        stroke: url(#Analogous_2-42);
+      }
+
+      .cls-15 {
+        stroke: url(#Analogous_2-15);
+      }
+
+      .cls-16 {
+        stroke: url(#Analogous_2-52);
+      }
+
+      .cls-17 {
+        stroke: url(#Analogous_2-67);
+      }
+
+      .cls-18 {
+        stroke: url(#Analogous_2-46);
+      }
+
+      .cls-19 {
+        stroke: url(#Analogous_2-40);
+      }
+
+      .cls-20 {
+        stroke: url(#Analogous_2-22);
+      }
+
+      .cls-21 {
+        stroke: url(#Analogous_2-58);
+      }
+
+      .cls-22 {
+        stroke: url(#Analogous_2-49);
+      }
+
+      .cls-23 {
+        stroke: url(#Analogous_2-50);
+      }
+
+      .cls-24 {
+        stroke: url(#Analogous_2-57);
+      }
+
+      .cls-25 {
+        stroke: url(#Analogous_2-14);
+      }
+
+      .cls-26 {
+        stroke: url(#Analogous_2-29);
+      }
+
+      .cls-27 {
+        stroke: url(#Analogous_2-5);
+      }
+
+      .cls-28 {
+        stroke: url(#Analogous_2-33);
+      }
+
+      .cls-29 {
+        stroke: url(#Analogous_2-41);
+      }
+
+      .cls-30 {
+        stroke: url(#Analogous_2-56);
+      }
+
+      .cls-31 {
+        stroke: url(#Analogous_2-23);
+      }
+
+      .cls-32 {
+        stroke: url(#Analogous_2-54);
+      }
+
+      .cls-33 {
+        stroke: url(#Analogous_2-65);
+      }
+
+      .cls-34 {
+        stroke: url(#Analogous_2-18);
+      }
+
+      .cls-35 {
+        stroke: url(#Analogous_2-47);
+      }
+
+      .cls-36 {
+        stroke: url(#Analogous_2-62);
+      }
+
+      .cls-37 {
+        stroke: url(#Analogous_2-51);
+      }
+
+      .cls-38 {
+        stroke: url(#Analogous_2-17);
+      }
+
+      .cls-39 {
+        stroke: url(#Analogous_2-34);
+      }
+
+      .cls-40 {
+        stroke: url(#Analogous_2-4);
+      }
+
+      .cls-41 {
+        stroke: url(#Analogous_2-38);
+      }
+
+      .cls-42 {
+        stroke: url(#Analogous_2-25);
+      }
+
+      .cls-43 {
+        stroke: url(#Analogous_2-66);
+      }
+
+      .cls-44 {
+        stroke: url(#Analogous_2-35);
+      }
+
+      .cls-45 {
+        stroke: url(#Analogous_2-61);
+      }
+
+      .cls-46 {
+        stroke: url(#Analogous_2-64);
+      }
+
+      .cls-47 {
+        stroke: url(#Analogous_2-16);
+      }
+
+      .cls-48 {
+        stroke: url(#Analogous_2-27);
+      }
+
+      .cls-49 {
+        stroke: url(#Analogous_2-11);
+      }
+
+      .cls-50 {
+        stroke: url(#Analogous_2-48);
+      }
+
+      .cls-51 {
+        stroke: url(#Analogous_2-21);
+      }
+
+      .cls-52 {
+        stroke: url(#Analogous_2-59);
+      }
+
+      .cls-53 {
+        stroke: url(#Analogous_2-31);
+      }
+
+      .cls-54 {
+        stroke: url(#Analogous_2-9);
+      }
+
+      .cls-55 {
+        stroke: url(#Analogous_2-44);
+      }
+
+      .cls-56 {
+        stroke: url(#Analogous_2-43);
+      }
+
+      .cls-57 {
+        stroke: url(#Analogous_2-60);
+      }
+
+      .cls-58 {
+        stroke: url(#Analogous_2-36);
+      }
+
+      .cls-59 {
+        stroke: url(#Analogous_2-37);
+      }
+
+      .cls-60 {
+        stroke: url(#Analogous_2-2);
+      }
+
+      .cls-61 {
+        stroke: url(#Analogous_2-12);
+      }
+
+      .cls-62 {
+        stroke: url(#Analogous_2-68);
+      }
+
+      .cls-63 {
+        stroke: url(#Analogous_2);
+      }
+
+      .cls-64 {
+        stroke: url(#Analogous_2-24);
+      }
+
+      .cls-65 {
+        stroke: url(#Analogous_2-28);
+      }
+
+      .cls-66 {
+        stroke: url(#Analogous_2-45);
+      }
+
+      .cls-67 {
+        stroke: url(#Analogous_2-26);
+      }
+
+      .cls-68 {
+        stroke: url(#Analogous_2-63);
+      }
+    </style>
+    <linearGradient id="Analogous_2" data-name="Analogous 2" x1="158.87" y1="2.65" x2="161.52" y2="2.65" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00a995"/>
+      <stop offset=".5" stop-color="#006eb9"/>
+      <stop offset="1" stop-color="#00aa4f"/>
+    </linearGradient>
+    <linearGradient id="Analogous_2-2" data-name="Analogous 2" x1="154.05" y1="7.47" y2="7.47" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-3" data-name="Analogous 2" x1="149.24" y1="12.28" y2="12.28" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-4" data-name="Analogous 2" x1="144.42" y1="17.1" y2="17.1" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-5" data-name="Analogous 2" x1="139.61" y1="21.91" y2="21.91" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-6" data-name="Analogous 2" x1="134.8" y1="26.72" y2="26.72" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-7" data-name="Analogous 2" x1="129.98" y1="31.54" y2="31.54" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-8" data-name="Analogous 2" x1="125.17" y1="36.35" y2="36.35" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-9" data-name="Analogous 2" x1="120.35" y1="41.17" y2="41.17" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-10" data-name="Analogous 2" x1="115.54" y1="45.98" y2="45.98" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-11" data-name="Analogous 2" x1="110.72" y1="50.79" y2="50.79" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-12" data-name="Analogous 2" x1="105.91" y1="55.61" y2="55.61" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-13" data-name="Analogous 2" x1="101.1" y1="60.42" y2="60.42" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-14" data-name="Analogous 2" x1="96.28" y1="65.24" y2="65.24" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-15" data-name="Analogous 2" x1="91.47" y1="70.05" y2="70.05" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-16" data-name="Analogous 2" x1="86.65" y1="74.87" y2="74.87" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-17" data-name="Analogous 2" x1="81.84" y1="79.68" y2="79.68" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-18" data-name="Analogous 2" x1="77.03" y1="84.49" y2="84.49" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-19" data-name="Analogous 2" x1="72.21" y1="89.31" y2="89.31" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-20" data-name="Analogous 2" x1="67.4" y1="94.12" y2="94.12" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-21" data-name="Analogous 2" x1="62.58" y1="98.94" y2="98.94" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-22" data-name="Analogous 2" x1="57.77" y1="103.75" y2="103.75" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-23" data-name="Analogous 2" x1="52.96" y1="108.56" y2="108.56" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-24" data-name="Analogous 2" x1="48.14" y1="113.38" y2="113.38" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-25" data-name="Analogous 2" x1="43.33" y1="118.19" y2="118.19" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-26" data-name="Analogous 2" x1="38.51" y1="123.01" y2="123.01" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-27" data-name="Analogous 2" x1="33.7" y1="127.82" y2="127.82" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-28" data-name="Analogous 2" x1="28.88" y1="132.63" y2="132.63" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-29" data-name="Analogous 2" x1="24.07" y1="137.45" y2="137.45" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-30" data-name="Analogous 2" x1="19.26" y1="142.26" y2="142.26" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-31" data-name="Analogous 2" x1="14.44" y1="147.08" y2="147.08" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-32" data-name="Analogous 2" x1="9.63" y1="151.89" y2="151.89" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-33" data-name="Analogous 2" x1="4.81" y1="156.71" y2="156.71" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-34" data-name="Analogous 2" x1="0" y1="161.52" y2="161.52" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-35" data-name="Analogous 2" x1="161.52" x2="164.17" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-36" data-name="Analogous 2" x1="161.52" y1="7.47" x2="168.99" y2="7.47" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-37" data-name="Analogous 2" x1="161.52" y1="12.28" x2="173.8" y2="12.28" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-38" data-name="Analogous 2" x1="161.52" y1="17.1" x2="178.62" y2="17.1" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-39" data-name="Analogous 2" x1="161.52" y1="21.91" x2="183.43" y2="21.91" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-40" data-name="Analogous 2" x1="161.52" y1="26.72" x2="188.24" y2="26.72" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-41" data-name="Analogous 2" x1="161.52" y1="31.54" x2="193.06" y2="31.54" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-42" data-name="Analogous 2" x1="161.52" y1="36.35" x2="197.87" y2="36.35" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-43" data-name="Analogous 2" x1="161.52" y1="41.17" x2="202.69" y2="41.17" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-44" data-name="Analogous 2" x1="161.52" y1="45.98" x2="207.5" y2="45.98" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-45" data-name="Analogous 2" x1="161.52" y1="50.79" x2="212.31" y2="50.79" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-46" data-name="Analogous 2" x1="161.52" y1="55.61" x2="217.13" y2="55.61" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-47" data-name="Analogous 2" x1="161.52" y1="60.42" x2="221.94" y2="60.42" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-48" data-name="Analogous 2" x1="161.52" y1="65.24" x2="226.76" y2="65.24" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-49" data-name="Analogous 2" x1="161.52" y1="70.05" x2="231.57" y2="70.05" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-50" data-name="Analogous 2" x1="161.52" y1="74.87" x2="236.38" y2="74.87" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-51" data-name="Analogous 2" x1="161.52" y1="79.68" x2="241.2" y2="79.68" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-52" data-name="Analogous 2" x1="161.52" y1="84.49" x2="246.01" y2="84.49" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-53" data-name="Analogous 2" x1="161.52" y1="89.31" x2="250.83" y2="89.31" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-54" data-name="Analogous 2" x1="161.52" y1="94.12" x2="255.64" y2="94.12" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-55" data-name="Analogous 2" x1="161.52" y1="98.94" x2="260.46" y2="98.94" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-56" data-name="Analogous 2" x1="161.52" y1="103.75" x2="265.27" y2="103.75" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-57" data-name="Analogous 2" x1="161.52" y1="108.56" x2="270.08" y2="108.56" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-58" data-name="Analogous 2" x1="161.52" y1="113.38" x2="274.9" y2="113.38" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-59" data-name="Analogous 2" x1="161.52" y1="118.19" x2="279.71" y2="118.19" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-60" data-name="Analogous 2" x1="161.52" y1="123.01" x2="284.53" y2="123.01" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-61" data-name="Analogous 2" x1="161.52" y1="127.82" x2="289.34" y2="127.82" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-62" data-name="Analogous 2" x1="161.52" y1="132.63" x2="294.15" y2="132.63" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-63" data-name="Analogous 2" x1="161.52" y1="137.45" x2="298.97" y2="137.45" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-64" data-name="Analogous 2" x1="161.52" y1="142.26" x2="303.78" y2="142.26" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-65" data-name="Analogous 2" x1="161.52" y1="147.08" x2="308.6" y2="147.08" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-66" data-name="Analogous 2" x1="161.52" y1="151.89" x2="313.41" y2="151.89" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-67" data-name="Analogous 2" x1="161.52" y1="156.71" x2="318.22" y2="156.71" xlink:href="#Analogous_2"/>
+    <linearGradient id="Analogous_2-68" data-name="Analogous 2" x1="161.52" y1="161.52" x2="323.04" y2="161.52" xlink:href="#Analogous_2"/>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g>
+      <path class="cls-63" d="M161.52,5.06c-1.33,0-2.41-1.08-2.41-2.41s1.08-2.41,2.41-2.41"/>
+      <path class="cls-60" d="M161.52,14.69c-3.99,0-7.22-3.23-7.22-7.22s3.23-7.22,7.22-7.22"/>
+      <path class="cls-1" d="M161.52,24.32c-6.65,0-12.04-5.39-12.04-12.04S154.87.25,161.52.25"/>
+      <path class="cls-40" d="M161.52,33.95c-9.31,0-16.85-7.54-16.85-16.85S152.21.25,161.52.25"/>
+      <path class="cls-27" d="M161.52,43.57c-11.96,0-21.66-9.7-21.66-21.66S149.55.25,161.52.25"/>
+      <path class="cls-6" d="M161.52,53.2c-14.62,0-26.48-11.85-26.48-26.48S146.9.25,161.52.25"/>
+      <path class="cls-8" d="M161.52,62.83c-17.28,0-31.29-14.01-31.29-31.29S144.24.25,161.52.25"/>
+      <path class="cls-11" d="M161.52,72.46c-19.94,0-36.11-16.17-36.11-36.11S141.58.25,161.52.25"/>
+      <path class="cls-54" d="M161.52,82.09c-22.6,0-40.92-18.32-40.92-40.92S138.92.25,161.52.25"/>
+      <path class="cls-3" d="M161.52,91.71c-25.26,0-45.73-20.48-45.73-45.73S136.26.25,161.52.25"/>
+      <path class="cls-49" d="M161.52,101.34c-27.92,0-50.55-22.63-50.55-50.55S133.6.25,161.52.25"/>
+      <path class="cls-61" d="M161.52,110.97c-30.58,0-55.36-24.79-55.36-55.36S130.94.25,161.52.25"/>
+      <path class="cls-2" d="M161.52,120.6c-33.23,0-60.18-26.94-60.18-60.18S128.28.25,161.52.25"/>
+      <path class="cls-25" d="M161.52,130.23c-35.89,0-64.99-29.1-64.99-64.99S125.63.25,161.52.25"/>
+      <path class="cls-15" d="M161.52,139.86c-38.55,0-69.8-31.25-69.8-69.8S122.97.25,161.52.25"/>
+      <path class="cls-47" d="M161.52,149.48c-41.21,0-74.62-33.41-74.62-74.62S120.31.25,161.52.25"/>
+      <path class="cls-38" d="M161.52,159.11c-43.87,0-79.43-35.56-79.43-79.43S117.65.25,161.52.25"/>
+      <path class="cls-34" d="M161.52,168.74c-46.53,0-84.25-37.72-84.25-84.25S114.99.25,161.52.25"/>
+      <path class="cls-13" d="M161.52,178.37c-49.19,0-89.06-39.87-89.06-89.06S112.33.25,161.52.25"/>
+      <path class="cls-5" d="M161.52,188c-51.85,0-93.88-42.03-93.88-93.88S109.67.25,161.52.25"/>
+      <path class="cls-51" d="M161.52,197.63c-54.5,0-98.69-44.18-98.69-98.69S107.01.25,161.52.25"/>
+      <path class="cls-20" d="M161.52,207.25c-57.16,0-103.5-46.34-103.5-103.5S104.36.25,161.52.25"/>
+      <path class="cls-31" d="M161.52,216.88c-59.82,0-108.32-48.5-108.32-108.32S101.7.25,161.52.25"/>
+      <path class="cls-64" d="M161.52,226.51c-62.48,0-113.13-50.65-113.13-113.13S99.04.25,161.52.25"/>
+      <path class="cls-42" d="M161.52,236.14c-65.14,0-117.95-52.81-117.95-117.95S96.38.25,161.52.25"/>
+      <path class="cls-67" d="M161.52,245.77c-67.8,0-122.76-54.96-122.76-122.76S93.72.25,161.52.25"/>
+      <path class="cls-48" d="M161.52,255.39c-70.46,0-127.57-57.12-127.57-127.57S91.06.25,161.52.25"/>
+      <path class="cls-65" d="M161.52,265.02c-73.12,0-132.39-59.27-132.39-132.39S88.4.25,161.52.25"/>
+      <path class="cls-26" d="M161.52,274.65c-75.77,0-137.2-61.43-137.2-137.2S85.74.25,161.52.25"/>
+      <path class="cls-12" d="M161.52,284.28c-78.43,0-142.02-63.58-142.02-142.02S83.09.25,161.52.25"/>
+      <path class="cls-53" d="M161.52,293.91c-81.09,0-146.83-65.74-146.83-146.83S80.43.25,161.52.25"/>
+      <path class="cls-7" d="M161.52,303.54c-83.75,0-151.64-67.89-151.64-151.64S77.77.25,161.52.25"/>
+      <path class="cls-28" d="M161.52,313.16c-86.41,0-156.46-70.05-156.46-156.46S75.11.25,161.52.25"/>
+      <path class="cls-39" d="M161.52,322.79C72.45,322.79.25,250.59.25,161.52S72.45.25,161.52.25"/>
+      <path class="cls-44" d="M161.52,5.06c1.33,0,2.41-1.08,2.41-2.41,0-1.33-1.08-2.41-2.41-2.41"/>
+      <path class="cls-58" d="M161.52,14.69c3.99,0,7.22-3.23,7.22-7.22,0-3.99-3.23-7.22-7.22-7.22"/>
+      <path class="cls-59" d="M161.52,24.32c6.65,0,12.04-5.39,12.04-12.04,0-6.65-5.39-12.04-12.04-12.04"/>
+      <path class="cls-41" d="M161.52,33.95c9.31,0,16.85-7.54,16.85-16.85,0-9.31-7.54-16.85-16.85-16.85"/>
+      <path class="cls-10" d="M161.52,43.57c11.96,0,21.66-9.7,21.66-21.66,0-11.96-9.7-21.66-21.66-21.66"/>
+      <path class="cls-19" d="M161.52,53.2c14.62,0,26.48-11.85,26.48-26.48,0-14.62-11.85-26.48-26.48-26.48"/>
+      <path class="cls-29" d="M161.52,62.83c17.28,0,31.29-14.01,31.29-31.29,0-17.28-14.01-31.29-31.29-31.29"/>
+      <path class="cls-14" d="M161.52,72.46c19.94,0,36.11-16.17,36.11-36.11,0-19.94-16.17-36.11-36.11-36.11"/>
+      <path class="cls-56" d="M161.52,82.09c22.6,0,40.92-18.32,40.92-40.92,0-22.6-18.32-40.92-40.92-40.92"/>
+      <path class="cls-55" d="M161.52,91.71c25.26,0,45.73-20.48,45.73-45.73,0-25.26-20.48-45.73-45.73-45.73"/>
+      <path class="cls-66" d="M161.52,101.34c27.92,0,50.55-22.63,50.55-50.55,0-27.92-22.63-50.55-50.55-50.55"/>
+      <path class="cls-18" d="M161.52,110.97c30.58,0,55.36-24.79,55.36-55.36,0-30.58-24.79-55.36-55.36-55.36"/>
+      <path class="cls-35" d="M161.52,120.6c33.23,0,60.18-26.94,60.18-60.18,0-33.23-26.94-60.18-60.18-60.18"/>
+      <path class="cls-50" d="M161.52,130.23c35.89,0,64.99-29.1,64.99-64.99,0-35.89-29.1-64.99-64.99-64.99"/>
+      <path class="cls-22" d="M161.52,139.86c38.55,0,69.8-31.25,69.8-69.8,0-38.55-31.25-69.8-69.8-69.8"/>
+      <path class="cls-23" d="M161.52,149.48c41.21,0,74.62-33.41,74.62-74.62,0-41.21-33.41-74.62-74.62-74.62"/>
+      <path class="cls-37" d="M161.52,159.11c43.87,0,79.43-35.56,79.43-79.43,0-43.87-35.56-79.43-79.43-79.43"/>
+      <path class="cls-16" d="M161.52,168.74c46.53,0,84.25-37.72,84.25-84.25,0-46.53-37.72-84.25-84.25-84.25"/>
+      <path class="cls-4" d="M161.52,178.37c49.19,0,89.06-39.87,89.06-89.06,0-49.19-39.87-89.06-89.06-89.06"/>
+      <path class="cls-32" d="M161.52,188c51.85,0,93.88-42.03,93.88-93.88,0-51.85-42.03-93.88-93.88-93.88"/>
+      <path class="cls-9" d="M161.52,197.63c54.5,0,98.69-44.18,98.69-98.69,0-54.5-44.18-98.69-98.69-98.69"/>
+      <path class="cls-30" d="M161.52,207.25c57.16,0,103.5-46.34,103.5-103.5,0-57.16-46.34-103.5-103.5-103.5"/>
+      <path class="cls-24" d="M161.52,216.88c59.82,0,108.32-48.5,108.32-108.32,0-59.82-48.5-108.32-108.32-108.32"/>
+      <path class="cls-21" d="M161.52,226.51c62.48,0,113.13-50.65,113.13-113.13,0-62.48-50.65-113.13-113.13-113.13"/>
+      <path class="cls-52" d="M161.52,236.14c65.14,0,117.95-52.81,117.95-117.95,0-65.14-52.81-117.95-117.95-117.95"/>
+      <path class="cls-57" d="M161.52,245.77c67.8,0,122.76-54.96,122.76-122.76,0-67.8-54.96-122.76-122.76-122.76"/>
+      <path class="cls-45" d="M161.52,255.39c70.46,0,127.57-57.12,127.57-127.57,0-70.46-57.12-127.57-127.57-127.57"/>
+      <path class="cls-36" d="M161.52,265.02c73.12,0,132.39-59.27,132.39-132.39,0-73.12-59.27-132.39-132.39-132.39"/>
+      <path class="cls-68" d="M161.52,274.65c75.77,0,137.2-61.43,137.2-137.2,0-75.77-61.43-137.2-137.2-137.2"/>
+      <path class="cls-46" d="M161.52,284.28c78.43,0,142.02-63.58,142.02-142.02,0-78.43-63.58-142.02-142.02-142.02"/>
+      <path class="cls-33" d="M161.52,293.91c81.09,0,146.83-65.74,146.83-146.83,0-81.09-65.74-146.83-146.83-146.83"/>
+      <path class="cls-43" d="M161.52,303.54c83.75,0,151.64-67.89,151.64-151.64,0-83.75-67.89-151.64-151.64-151.64"/>
+      <path class="cls-17" d="M161.52,313.16c86.41,0,156.46-70.05,156.46-156.46,0-86.41-70.05-156.46-156.46-156.46"/>
+      <path class="cls-62" d="M161.52,322.79c89.07,0,161.27-72.2,161.27-161.27,0-89.07-72.2-161.27-161.27-161.27"/>
+    </g>
+  </g>
+</svg>
