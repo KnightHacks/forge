@@ -24,7 +24,8 @@ function getAssigneeDisplayName(assignment: {
 }) {
   const member = assignment.user.member;
   if (member) {
-    const fullName = `${member.firstName.trim()} ${member.lastName.trim()}`.trim();
+    const fullName =
+      `${member.firstName.trim()} ${member.lastName.trim()}`.trim();
     if (fullName.length > 0) return fullName;
   }
   return assignment.user.discordUserId;

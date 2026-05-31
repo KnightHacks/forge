@@ -128,7 +128,7 @@ export function PerUserResponsesView({
 
   const formatResponseValue = (value: unknown): string => {
     if (value === undefined || value === null) {
-      return "—";
+      return "No response";
     }
     if (Array.isArray(value)) {
       return value.join(", ");

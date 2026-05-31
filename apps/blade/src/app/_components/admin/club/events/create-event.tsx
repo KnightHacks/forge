@@ -691,7 +691,7 @@ export function CreateEventButton() {
                   )}
                 />
 
-                {/* Discord Channel ID — shown only for internal events */}
+                {/* Discord Channel ID, shown only for internal events */}
                 {form.watch("isOperationsCalendar") && (
                   <FormField
                     control={form.control}

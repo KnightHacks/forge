@@ -177,7 +177,7 @@ export function CheckoutForm() {
   return (
     <div className="mx-auto max-w-4xl overflow-hidden rounded-lg border bg-card shadow-sm">
       <div className="grid md:grid-cols-2">
-        {/* Left — order summary */}
+        {/* Left, order summary */}
         <div className="flex flex-col justify-between bg-muted p-8">
           <div>
             <p className="text-sm font-medium text-muted-foreground">
@@ -202,7 +202,7 @@ export function CheckoutForm() {
           </div>
         </div>
 
-        {/* Right — payment form */}
+        {/* Right, payment form */}
         <div className="p-8">
           {intentError && (
             <p className="mb-4 text-sm text-destructive">{intentError}</p>

@@ -370,7 +370,7 @@ export default function ResultsTable() {
                         Devpost
                       </a>
                     ) : (
-                      "—"
+                      "Not rated"
                     )}
                   </TableCell>
                   <TableCell className="text-center">
@@ -487,7 +487,8 @@ export default function ResultsTable() {
                                         project.originality_rating,
                                       )}
                                     >
-                                      {project.originality_rating || "—"}
+                                      {project.originality_rating ||
+                                        "Not rated"}
                                     </Badge>
                                   </div>
 
@@ -503,7 +504,7 @@ export default function ResultsTable() {
                                         project.design_rating,
                                       )}
                                     >
-                                      {project.design_rating || "—"}
+                                      {project.design_rating || "Not rated"}
                                     </Badge>
                                   </div>
 
@@ -520,7 +521,7 @@ export default function ResultsTable() {
                                       )}
                                     >
                                       {project.technical_understanding_rating ||
-                                        "—"}
+                                        "Not rated"}
                                     </Badge>
                                   </div>
                                 </CardContent>
@@ -540,7 +541,8 @@ export default function ResultsTable() {
                                         project.implementation_rating,
                                       )}
                                     >
-                                      {project.implementation_rating || "—"}
+                                      {project.implementation_rating ||
+                                        "Not rated"}
                                     </Badge>
                                   </div>
 
@@ -556,7 +558,7 @@ export default function ResultsTable() {
                                         project.wow_factor_rating,
                                       )}
                                     >
-                                      {project.wow_factor_rating || "—"}
+                                      {project.wow_factor_rating || "Not rated"}
                                     </Badge>
                                   </div>
 
@@ -640,7 +642,7 @@ export default function ResultsTable() {
                                               }
                                             >
                                               {submission.originality_rating ||
-                                                "—"}
+                                                "Not rated"}
                                             </Badge>
                                           </div>
                                           <div className="flex items-center justify-between">
@@ -656,7 +658,8 @@ export default function ResultsTable() {
                                                   : "outline"
                                               }
                                             >
-                                              {submission.design_rating || "—"}
+                                              {submission.design_rating ||
+                                                "Not rated"}
                                             </Badge>
                                           </div>
                                           <div className="flex items-center justify-between">
@@ -673,7 +676,7 @@ export default function ResultsTable() {
                                               }
                                             >
                                               {submission.technical_understanding_rating ||
-                                                "—"}
+                                                "Not rated"}
                                             </Badge>
                                           </div>
                                         </div>
@@ -692,7 +695,7 @@ export default function ResultsTable() {
                                               }
                                             >
                                               {submission.implementation_rating ||
-                                                "—"}
+                                                "Not rated"}
                                             </Badge>
                                           </div>
                                           <div className="flex items-center justify-between">
@@ -709,7 +712,7 @@ export default function ResultsTable() {
                                               }
                                             >
                                               {submission.wow_factor_rating ||
-                                                "—"}
+                                                "Not rated"}
                                             </Badge>
                                           </div>
                                         </div>

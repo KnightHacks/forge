@@ -99,7 +99,7 @@ function DonationDetailsModal({ options }: { options: DonationOption[] }) {
                     href={o.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label={`Donate — ${o.name} (${o.priceLabel})`}
+                    aria-label={`Donate, ${o.name} (${o.priceLabel})`}
                   >
                     Donate
                   </Link>
