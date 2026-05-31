@@ -118,7 +118,7 @@ function assembleLogoPieces(svgText: string) {
 }
 
 const Logo = () => {
-  const [assembledLogo, setAssembledLogo] = useState<string | null>();
+  const [assembledLogo, setAssembledLogo] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -157,8 +157,6 @@ const Logo = () => {
           className="bloom-logo-assembly h-auto w-[325px] sm:w-[390px] md:w-[520px] lg:w-[650px]"
           dangerouslySetInnerHTML={{ __html: assembledLogo }}
         />
-      ) : assembledLogo === undefined ? (
-        <div className="bloom-logo-placeholder w-[325px] sm:w-[390px] md:w-[520px] lg:w-[650px]" />
       ) : (
         <Image
           src="/BloomKnights.svg"
@@ -166,6 +164,9 @@ const Logo = () => {
           width={650}
           height={325}
           draggable="false"
+          preload
+          fetchPriority="high"
+          sizes="(min-width: 1024px) 650px, (min-width: 768px) 520px, (min-width: 640px) 390px, 325px"
           unoptimized
           className="h-auto w-[325px] sm:w-[390px] md:w-[520px] lg:w-[650px]"
         />

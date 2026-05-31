@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 
 import Footer from "./_components/footer/footer";
 import AnimatedBirds from "./_components/graphics/AnimatedBirds";
@@ -9,8 +10,8 @@ import Squiggles from "./_components/graphics/squiggles";
 import Navbar from "./_components/navbar/Navbar";
 import {
   eventJsonLd,
-  OG_IMAGE_HEIGHT,
   OG_IMAGE_ALT,
+  OG_IMAGE_HEIGHT,
   OG_IMAGE_URL,
   OG_IMAGE_WIDTH,
   SEO_DESCRIPTION,
@@ -20,6 +21,30 @@ import {
 } from "./seo";
 
 import "./globals.css";
+
+const fredokaOne = localFont({
+  src: "./fonts/fredoka-one-latin.woff2",
+  variable: "--font-fredoka-one",
+  weight: "400",
+  display: "swap",
+  fallback: ["cursive"],
+});
+
+const righteous = localFont({
+  src: "./fonts/righteous-latin.woff2",
+  variable: "--font-righteous",
+  weight: "400",
+  display: "swap",
+  fallback: ["cursive"],
+});
+
+const dmSans = localFont({
+  src: "./fonts/dm-sans-latin.woff2",
+  variable: "--font-dm-sans",
+  weight: "100 1000",
+  display: "swap",
+  fallback: ["Arial", "sans-serif"],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -80,7 +105,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html
+      lang="en"
+      className={`${fredokaOne.variable} ${righteous.variable} ${dmSans.variable} h-full`}
+    >
       <body className="bloom-site-background flex min-h-screen flex-col antialiased">
         <ParallaxBackground />
         <AnimatedBirds />

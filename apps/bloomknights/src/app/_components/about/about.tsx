@@ -117,7 +117,12 @@ const About = () => {
                   alt={image.alt}
                   width={6000}
                   height={4000}
-                  sizes="(min-width: 1024px) 360px, (min-width: 768px) 34vw, 82vw"
+                  sizes={
+                    imageIndex === 0
+                      ? "(min-width: 1181px) 464px, (min-width: 768px) 520px, 82vw"
+                      : "(min-width: 1181px) 320px, (min-width: 768px) 360px, 62vw"
+                  }
+                  quality={72}
                   className="about-gemiknight-image"
                 />
               </motion.figure>

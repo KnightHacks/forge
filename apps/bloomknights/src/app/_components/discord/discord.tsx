@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
-import { ArrowRight } from "lucide-react";
 
 import BloomButtonEdge from "../ui/BloomButtonEdge";
 
@@ -66,6 +65,7 @@ export default function DiscordCTAButton({
           />
           <div className="relative z-10 flex w-full items-center">
             <button
+              type="button"
               onClick={() =>
                 window.open(
                   "https://discord.gg/2W2HCvkKAy",
@@ -73,16 +73,12 @@ export default function DiscordCTAButton({
                   "noopener,noreferrer",
                 )
               }
-              className="wc-btn bloom-cta-button bloom-cta-button-discord group"
+              className="wc-btn bloom-cta-button group"
             >
-              <div className="bloom-cta-arrow-track">
-                <span className="bloom-cta-arrow transition-all duration-500 ease-in-out">
-                  <ArrowRight size={18} strokeWidth={3} />
-                </span>
-              </div>
               <span className="bloom-cta-label transition-all duration-500 ease-in-out group-hover:text-white">
                 {label}
               </span>
+              <span className="bloom-cta-mark" aria-hidden="true" />
             </button>
           </div>
         </div>

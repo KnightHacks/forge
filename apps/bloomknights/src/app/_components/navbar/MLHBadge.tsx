@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface MLHBadgeProps {
@@ -27,11 +26,14 @@ function MLHBadge({ showFloating }: MLHBadgeProps) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element -- MLH serves this required badge as a remote SVG. */}
+            <img
               src="https://s3.amazonaws.com/logged-assets/trust-badge/2026/mlh-trust-badge-2026-white.svg"
               alt="Major League Hacking 2026 Hackathon Season"
               width={100}
               height={100}
+              loading="eager"
+              fetchPriority="high"
               className="w-full"
             />
           </a>
