@@ -17,28 +17,26 @@ export const contentType = "image/png";
 
 export default function Image() {
   return new ImageResponse(
-    (
-      <div
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        background: "#f5ebd5",
+      }}
+    >
+      <img
+        src={OG_IMAGE_URL}
+        alt=""
+        width={OG_IMAGE_WIDTH}
+        height={OG_IMAGE_HEIGHT}
         style={{
           width: "100%",
           height: "100%",
-          display: "flex",
-          background: "#f5ebd5",
+          objectFit: "cover",
         }}
-      >
-        <img
-          src={OG_IMAGE_URL}
-          alt=""
-          width={OG_IMAGE_WIDTH}
-          height={OG_IMAGE_HEIGHT}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
-      </div>
-    ),
+      />
+    </div>,
     size,
   );
 }

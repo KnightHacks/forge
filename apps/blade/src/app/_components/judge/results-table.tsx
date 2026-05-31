@@ -487,7 +487,8 @@ export default function ResultsTable() {
                                         project.originality_rating,
                                       )}
                                     >
-                                      {project.originality_rating || "Not rated"}
+                                      {project.originality_rating ||
+                                        "Not rated"}
                                     </Badge>
                                   </div>
 
@@ -540,7 +541,8 @@ export default function ResultsTable() {
                                         project.implementation_rating,
                                       )}
                                     >
-                                      {project.implementation_rating || "Not rated"}
+                                      {project.implementation_rating ||
+                                        "Not rated"}
                                     </Badge>
                                   </div>
 
@@ -656,7 +658,8 @@ export default function ResultsTable() {
                                                   : "outline"
                                               }
                                             >
-                                              {submission.design_rating || "Not rated"}
+                                              {submission.design_rating ||
+                                                "Not rated"}
                                             </Badge>
                                           </div>
                                           <div className="flex items-center justify-between">

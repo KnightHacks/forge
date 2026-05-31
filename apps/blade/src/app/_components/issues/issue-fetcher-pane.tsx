@@ -49,7 +49,8 @@ function getAssigneeDisplayNames(issue: ISSUE.IssueFetcherPaneIssue): string[] {
     .map((assignment) => {
       const member = assignment.user.member;
       if (member) {
-        const fullName = `${member.firstName.trim()} ${member.lastName.trim()}`.trim();
+        const fullName =
+          `${member.firstName.trim()} ${member.lastName.trim()}`.trim();
         if (fullName) return fullName;
       }
       return assignment.user.discordUserId.trim();
