@@ -2,6 +2,7 @@
 
 import * as React from "react";
 
+import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import {
   Command,
@@ -24,6 +25,7 @@ interface ResponsiveComboBoxProps<T> {
   buttonPlaceholder?: string;
   inputPlaceholder?: string;
   isDisabled?: boolean;
+  triggerClassName?: string;
 }
 
 /**
@@ -82,6 +84,7 @@ export function ResponsiveComboBox<T>({
   buttonPlaceholder = "Select item",
   inputPlaceholder = "Filter items...",
   isDisabled,
+  triggerClassName,
 }: ResponsiveComboBoxProps<T>) {
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -100,7 +103,7 @@ export function ResponsiveComboBox<T>({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="w-full justify-start font-normal"
+            className={cn("w-full justify-start font-normal", triggerClassName)}
             disabled={isDisabled}
           >
             {selectedItem ? (
@@ -127,7 +130,11 @@ export function ResponsiveComboBox<T>({
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <Button variant="outline" className="w-full justify-start font-normal">
+        <Button
+          variant="outline"
+          className={cn("w-full justify-start font-normal", triggerClassName)}
+          disabled={isDisabled}
+        >
           {selectedItem ? (
             <>{getItemLabel(selectedItem)}</>
           ) : (

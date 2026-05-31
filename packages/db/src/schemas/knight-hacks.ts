@@ -35,6 +35,8 @@ export const Hackathon = createTable("hackathon", (t) => ({
   name: t.varchar({ length: 255 }).notNull(),
   displayName: t.varchar({ length: 255 }).notNull().default(""),
   theme: t.varchar({ length: 255 }).notNull(),
+  applicationBackgroundEnabled: t.boolean().notNull().default(false),
+  applicationBackgroundKey: t.varchar({ length: 255 }),
   applicationOpen: t.timestamp().notNull().defaultNow(),
   applicationDeadline: t.timestamp().notNull().defaultNow(),
   confirmationDeadline: t.timestamp().notNull().defaultNow(),

@@ -1,0 +1,2 @@
+ALTER TABLE "knight_hacks_hackathon" ADD COLUMN "application_background_enabled" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "knight_hacks_hackathon" ADD COLUMN "application_background_key" varchar(255);

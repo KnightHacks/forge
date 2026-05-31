@@ -90,12 +90,15 @@ export default async function HackerApplicationPage(props: {
   }
 
   return (
-    <main className="px-8 py-4">
-      <HackerFormPage
-        hackathonId={params["hackathon-id"]}
-        hackathonName={hackathon.displayName}
-        hackathonStartDate={hackathon.startDate.toISOString()}
-      />
-    </main>
+    <HackerFormPage
+      applicationBackgroundKey={
+        hackathon.applicationBackgroundEnabled
+          ? hackathon.applicationBackgroundKey
+          : null
+      }
+      hackathonId={params["hackathon-id"]}
+      hackathonName={hackathon.displayName}
+      hackathonStartDate={hackathon.startDate.toISOString()}
+    />
   );
 }
