@@ -128,6 +128,7 @@ export const hackathonRouter = {
   getPreviousHacker: protectedProcedure.query(async ({ ctx }) => {
     // Get the most recent hacker profile for this user
     const hacker = await db.query.Hacker.findFirst({
+      orderBy: (t, { desc }) => [desc(t.dateCreated), desc(t.timeCreated)],
       where: (t, { eq }) => eq(t.userId, ctx.session.user.id),
     });
 
