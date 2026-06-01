@@ -1,0 +1,1 @@
+ALTER TABLE "knight_hacks_hackathon" ADD CONSTRAINT "knight_hacks_hackathon_name_unique" UNIQUE("name");

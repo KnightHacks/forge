@@ -22,12 +22,16 @@ export const khixApplicationBackground = {
       id: "khix-lenny",
       animatedSrc: "/hackbackgrounds/khix/lennyAnim_connected.png?v=8fps",
       className:
-        "bottom-[6svh] left-1/2 w-[min(28vw,21rem)] min-w-36 -translate-x-1/2 sm:bottom-[7svh] sm:min-w-44 md:bottom-[8svh]",
+        "khix-lenny bottom-[4svh] left-1/2 w-[clamp(17rem,58vw,24rem)] -translate-x-1/2 sm:bottom-[3svh] sm:w-[clamp(20rem,46vw,29rem)] sm:translate-y-[1%] md:bottom-[-3svh] md:w-[clamp(22rem,34vw,31rem)] md:translate-y-[8%] lg:bottom-[8svh] lg:w-[min(28vw,21rem)] lg:translate-y-0 [@media_(orientation:landscape)_and_(max-height:560px)]:bottom-[-10svh] [@media_(orientation:landscape)_and_(max-height:560px)]:left-[58%] [@media_(orientation:landscape)_and_(max-height:560px)]:w-[clamp(15rem,27vw,20rem)] [@media_(orientation:landscape)_and_(max-height:560px)]:translate-y-[10%]",
       idleSrc: "/hackbackgrounds/khix/lennyIdle.png?v=8fps",
       kind: "image",
       mediaClassName: "h-auto w-full select-none",
       mediaStyle: {
         filter: "saturate(1.08) drop-shadow(0 18px 28px rgba(0,0,0,0.38))",
+      },
+      motion: {
+        facesStepDirection: true,
+        turnDurationMs: 260,
       },
       nativeSize: {
         height: 960,

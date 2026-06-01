@@ -1,7 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Loader2, Send } from "lucide-react";
@@ -138,6 +138,79 @@ const applicationAnimationStyles = `
   transform: translateY(0) scale(0.96);
 }
 
+@media (orientation: landscape) and (max-height: 560px) {
+  .kh-readable-text {
+    min-height: 100svh;
+    padding-block: 0.75rem calc(4.75rem + env(safe-area-inset-bottom));
+    padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
+  }
+
+  .kh-readable-text > div:first-child {
+    font-size: 0.7rem;
+  }
+
+  .kh-application-stage {
+    align-items: center;
+    padding-block: 0.25rem;
+  }
+
+  .kh-application-panel {
+    max-width: min(44rem, 70vw);
+  }
+
+  .kh-step-title {
+    font-size: clamp(2.75rem, 15vh, 4.5rem);
+    line-height: 0.9;
+  }
+
+  .kh-step-content {
+    margin-top: clamp(0.75rem, 3vh, 1.25rem);
+  }
+
+  .kh-step-content :is(input, button) {
+    min-height: 0;
+    height: clamp(2.25rem, 9vh, 2.75rem);
+    font-size: clamp(1rem, 4.4vh, 1.35rem);
+  }
+
+  .kh-step-content textarea {
+    min-height: clamp(4.75rem, 30vh, 7rem);
+    font-size: clamp(1rem, 4.4vh, 1.35rem);
+  }
+
+  .kh-step-content label {
+    font-size: clamp(0.95rem, 3.8vh, 1.15rem);
+  }
+
+  .kh-application-nav {
+    inset-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
+
+  .kh-application-nav .kh-nav-button {
+    width: clamp(3.15rem, 12vh, 3.75rem);
+    height: clamp(3.15rem, 12vh, 3.75rem);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 430px) {
+  .kh-readable-text {
+    padding-block: 0.6rem calc(4.15rem + env(safe-area-inset-bottom));
+  }
+
+  .kh-application-panel {
+    max-width: min(40rem, 68vw);
+  }
+
+  .kh-step-title {
+    font-size: clamp(2.35rem, 14vh, 3.65rem);
+  }
+
+  .kh-step-content {
+    margin-top: 0.65rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .kh-application-sweep,
   .kh-application-grid,
@@ -213,6 +286,20 @@ const APPLICATION_STEPS = [
   },
 ] as const;
 
+type ApplicationFieldName =
+  (typeof APPLICATION_STEPS)[number]["fields"][number];
+
+const MOBILE_ENTER_IGNORED_INPUT_TYPES = new Set([
+  "button",
+  "checkbox",
+  "file",
+  "hidden",
+  "radio",
+  "reset",
+  "search",
+  "submit",
+]);
+
 function FieldLabel({
   children,
   optional = false,
@@ -231,6 +318,73 @@ function FieldLabel({
   );
 }
 
+function getComboBoxDisplayValue(value: unknown, fallback: string) {
+  return typeof value === "string" && value.length > 0 ? value : fallback;
+}
+
+function getDateInputValue(value: Date | string | null | undefined) {
+  if (!value) return "";
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime())
+      ? ""
+      : value.toISOString().slice(0, 10);
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) return "";
+
+  return parsedDate.toISOString().slice(0, 10);
+}
+
+function shouldUseMobileEnterNavigation() {
+  if (typeof window === "undefined") return false;
+
+  return (
+    window.navigator.maxTouchPoints > 0 ||
+    window.matchMedia("(pointer: coarse)").matches ||
+    window.matchMedia("(hover: none)").matches
+  );
+}
+
+function getKeyboardFieldTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLInputElement)) return null;
+
+  if (MOBILE_ENTER_IGNORED_INPUT_TYPES.has(target.type)) return null;
+  if (!target.name) return null;
+  if (target.closest("[cmdk-input-wrapper]")) return null;
+
+  return target;
+}
+
+function focusFieldByName(fieldName: ApplicationFieldName) {
+  const fieldElement = document.querySelector<HTMLElement>(
+    `[name="${fieldName}"]`,
+  );
+
+  if (!fieldElement) return false;
+
+  window.requestAnimationFrame(() => {
+    fieldElement.focus({ preventScroll: true });
+    fieldElement.scrollIntoView({
+      block: "center",
+      inline: "nearest",
+      behavior: "smooth",
+    });
+
+    if (
+      fieldElement instanceof HTMLInputElement &&
+      typeof fieldElement.setSelectionRange === "function" &&
+      ["email", "tel", "text", "url"].includes(fieldElement.type)
+    ) {
+      const cursorPosition = fieldElement.value.length;
+      fieldElement.setSelectionRange(cursorPosition, cursorPosition);
+    }
+  });
+
+  return true;
+}
+
 export function HackerFormPage({
   applicationBackgroundKey,
   hackathonId,
@@ -245,7 +399,6 @@ export function HackerFormPage({
   const router = useRouter();
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [comboBoxKey, setComboBoxKey] = useState(0);
   const [tosAccepted, setTosAccepted] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [transitionStep, setTransitionStep] = useState<number | null>(null);
@@ -253,6 +406,7 @@ export function HackerFormPage({
   const [stepDirection, setStepDirection] = useState<"forward" | "back">(
     "forward",
   );
+  const pendingMobileFocusField = useRef<ApplicationFieldName | null>(null);
   const utils = api.useUtils();
   const applicationVisualConfig = getHackerApplicationBackground(
     applicationBackgroundKey,
@@ -504,8 +658,8 @@ export function HackerFormPage({
         linkedinProfileUrl: previousHacker.linkedinProfileUrl ?? undefined,
         websiteUrl: previousHacker.websiteUrl ?? undefined,
         resumeUrl: previousHacker.resumeUrl, // Keep existing resume URL
-        dob: previousHacker.dob,
-        gradDate: previousHacker.gradDate,
+        dob: getDateInputValue(previousHacker.dob),
+        gradDate: getDateInputValue(previousHacker.gradDate),
         survey1: "", // Keep survey answers empty for new applications
         survey2: "", // Keep survey answers empty for new applications
         isFirstTime: previousHacker.isFirstTime,
@@ -522,9 +676,6 @@ export function HackerFormPage({
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedAllergies(allergies);
       }
-
-      // Force ResponsiveComboBox components to re-render with new values
-      setComboBoxKey((prev) => prev + 1);
     }
   }, [previousHacker, form]);
 
@@ -554,10 +705,7 @@ export function HackerFormPage({
     currentStep.fields.some((fieldName) => fieldName === id);
   const isFinalStep = activeStep === APPLICATION_STEPS.length - 1;
   const progressStep = transitionStep ?? activeStep;
-  const progressRatio =
-    APPLICATION_STEPS.length <= 1
-      ? 1
-      : progressStep / (APPLICATION_STEPS.length - 1);
+  const progressRatio = progressStep / (APPLICATION_STEPS.length - 1);
 
   const goToStep = async (nextStep: number) => {
     const boundedNextStep = Math.min(
@@ -565,7 +713,7 @@ export function HackerFormPage({
       APPLICATION_STEPS.length - 1,
     );
 
-    if (boundedNextStep === activeStep || isStepTransitioning) return;
+    if (boundedNextStep === activeStep || isStepTransitioning) return false;
 
     if (nextStep > activeStep) {
       const isStepValid = await form.trigger(
@@ -573,18 +721,65 @@ export function HackerFormPage({
         { shouldFocus: true },
       );
 
-      if (!isStepValid) return;
+      if (!isStepValid) return false;
     }
 
     setStepDirection(boundedNextStep > activeStep ? "forward" : "back");
 
     if (stepTransitionMs <= 0) {
       setActiveStep(boundedNextStep);
-      return;
+      return true;
     }
 
     setTransitionStep(boundedNextStep);
     setIsStepTransitioning(true);
+    return true;
+  };
+
+  const handleMobileInputEnter = async (
+    event: KeyboardEvent<HTMLFormElement>,
+  ) => {
+    if (event.key !== "Enter") return;
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+      return;
+    }
+    if (event.nativeEvent.isComposing) return;
+    if (!shouldUseMobileEnterNavigation()) return;
+
+    const target = getKeyboardFieldTarget(event.target);
+    if (!target) return;
+
+    const fieldName = target.name as ApplicationFieldName;
+    const currentFieldIndex = currentStep.fields.findIndex(
+      (stepFieldName) => stepFieldName === fieldName,
+    );
+
+    if (currentFieldIndex === -1) return;
+
+    event.preventDefault();
+    if (loading || isStepTransitioning) return;
+
+    const nextFieldName = currentStep.fields[currentFieldIndex + 1];
+
+    if (nextFieldName) {
+      const isFieldValid = await form.trigger(
+        fieldName as Parameters<typeof form.trigger>[0],
+        { shouldFocus: true },
+      );
+
+      if (!isFieldValid) return;
+      focusFieldByName(nextFieldName);
+      return;
+    }
+
+    const nextStep = activeStep + 1;
+    const nextStepFirstField = APPLICATION_STEPS[nextStep]?.fields[0] ?? null;
+    pendingMobileFocusField.current = nextStepFirstField;
+
+    const didAdvance = await goToStep(nextStep);
+    if (!didAdvance) {
+      pendingMobileFocusField.current = null;
+    }
   };
 
   useEffect(() => {
@@ -614,12 +809,33 @@ export function HackerFormPage({
     transitionStep,
   ]);
 
+  useEffect(() => {
+    const fieldToFocus = pendingMobileFocusField.current;
+    if (!fieldToFocus || !shouldUseMobileEnterNavigation()) return;
+    if (!currentStep.fields.some((fieldName) => fieldName === fieldToFocus)) {
+      return;
+    }
+
+    const focusTimeout = window.setTimeout(() => {
+      if (focusFieldByName(fieldToFocus)) {
+        pendingMobileFocusField.current = null;
+      }
+    }, 80);
+
+    return () => {
+      window.clearTimeout(focusTimeout);
+    };
+  }, [activeStep, currentStep.fields]);
+
   return (
     <Form {...form}>
       <style>{applicationAnimationStyles}</style>
       <form
         className="min-h-screen bg-primary/5 text-foreground"
         noValidate
+        onKeyDown={(event) => {
+          void handleMobileInputEnter(event);
+        }}
         onSubmit={form.handleSubmit(async (values) => {
           setLoading(true);
 
@@ -646,7 +862,7 @@ export function HackerFormPage({
               email: values.email,
               dob: values.dob,
               phoneNumber: values.phoneNumber,
-              country: values.country as (typeof FORMS.COUNTRIES)[number],
+              country: values.country,
               school: values.school,
               major: values.major,
               levelOfStudy: values.levelOfStudy,
@@ -693,6 +909,7 @@ export function HackerFormPage({
             backgroundKey={applicationBackgroundKey}
             isTransitioning={isStepTransitioning}
             progress={progressRatio}
+            transitionDirection={stepDirection}
           />
           <div className="kh-readable-text relative z-10 flex min-h-svh w-full flex-col px-5 pb-32 pt-5 sm:px-6 md:px-20 md:pb-28 md:pt-14">
             <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-widest text-white/60">
@@ -708,8 +925,8 @@ export function HackerFormPage({
               </div>
             )}
 
-            <div className="flex flex-1 items-start py-8 md:items-center md:py-10">
-              <div className="w-full max-w-3xl">
+            <div className="kh-application-stage flex flex-1 items-start py-8 md:items-center md:py-10">
+              <div className="kh-application-panel w-full max-w-3xl">
                 <h1
                   key={currentStep.id}
                   className="kh-step-title text-4xl font-black leading-none tracking-normal text-white sm:text-5xl md:text-7xl"
@@ -837,17 +1054,18 @@ export function HackerFormPage({
                           <FieldLabel required>Country of Residence</FieldLabel>
                           <FormControl>
                             <ResponsiveComboBox
-                              key={`country-${comboBoxKey}-${field.value || "empty"}`}
                               items={FORMS.COUNTRIES}
                               renderItem={(country) => <div>{country}</div>}
                               getItemValue={(country) => country}
                               getItemLabel={(country) => country}
+                              value={field.value}
                               onItemSelect={(country) =>
                                 field.onChange(country)
                               }
-                              buttonPlaceholder={
-                                field.value || "Select your country"
-                              }
+                              buttonPlaceholder={getComboBoxDisplayValue(
+                                field.value,
+                                "Select your country",
+                              )}
                               inputPlaceholder="Search for your country"
                               triggerClassName={fieldTriggerClassName}
                             />
@@ -868,11 +1086,11 @@ export function HackerFormPage({
                           <FieldLabel optional>Gender</FieldLabel>
                           <FormControl>
                             <ResponsiveComboBox
-                              key={`gender-${comboBoxKey}-${field.value || "empty"}`}
                               items={FORMS.GENDERS}
                               renderItem={(gender) => <div>{gender}</div>}
                               getItemValue={(gender) => gender}
                               getItemLabel={(gender) => gender}
+                              value={field.value}
                               onItemSelect={(gender) => field.onChange(gender)}
                               buttonPlaceholder={
                                 field.value || "Select your gender"
@@ -897,11 +1115,11 @@ export function HackerFormPage({
                           <FieldLabel optional>Race or Ethnicity</FieldLabel>
                           <FormControl>
                             <ResponsiveComboBox
-                              key={`race-${comboBoxKey}-${field.value || "empty"}`}
                               items={FORMS.RACES_OR_ETHNICITIES}
                               renderItem={(race) => <div>{race}</div>}
                               getItemValue={(race) => race}
                               getItemLabel={(race) => race}
+                              value={field.value}
                               onItemSelect={(race) => field.onChange(race)}
                               buttonPlaceholder={
                                 field.value || "Select your race or ethnicity"
@@ -929,15 +1147,16 @@ export function HackerFormPage({
                           <FieldLabel required>Level of Study</FieldLabel>
                           <FormControl>
                             <ResponsiveComboBox
-                              key={`level-${comboBoxKey}-${field.value || "empty"}`}
                               items={FORMS.LEVELS_OF_STUDY}
                               renderItem={(level) => <div>{level}</div>}
                               getItemValue={(level) => level}
                               getItemLabel={(level) => level}
+                              value={field.value}
                               onItemSelect={(level) => field.onChange(level)}
-                              buttonPlaceholder={
-                                field.value || "Select your level of study"
-                              }
+                              buttonPlaceholder={getComboBoxDisplayValue(
+                                field.value,
+                                "Select your level of study",
+                              )}
                               inputPlaceholder="Search levels of study"
                               triggerClassName={fieldTriggerClassName}
                             />
@@ -958,11 +1177,11 @@ export function HackerFormPage({
                           <FieldLabel required>School</FieldLabel>
                           <FormControl>
                             <ResponsiveComboBox
-                              key={`school-${comboBoxKey}-${field.value}`}
                               items={FORMS.SCHOOLS}
                               renderItem={(school) => <div>{school}</div>}
                               getItemValue={(school) => school}
                               getItemLabel={(school) => school}
+                              value={field.value}
                               onItemSelect={(school) => field.onChange(school)}
                               buttonPlaceholder={field.value}
                               inputPlaceholder="Search for your school"
@@ -983,11 +1202,11 @@ export function HackerFormPage({
                           <FieldLabel required>Major of Study</FieldLabel>
                           <FormControl>
                             <ResponsiveComboBox
-                              key={`major-${comboBoxKey}-${field.value}`}
                               items={FORMS.MAJORS}
                               renderItem={(major) => <div>{major}</div>}
                               getItemValue={(major) => major}
                               getItemLabel={(major) => major}
+                              value={field.value}
                               onItemSelect={(major) => field.onChange(major)}
                               buttonPlaceholder={field.value}
                               inputPlaceholder="Search for your major"
@@ -1028,15 +1247,16 @@ export function HackerFormPage({
                           <FieldLabel required>Shirt Size</FieldLabel>
                           <FormControl>
                             <ResponsiveComboBox
-                              key={`shirt-${comboBoxKey}-${field.value || "empty"}`}
                               items={FORMS.SHIRT_SIZES}
                               renderItem={(size) => <div>{size}</div>}
                               getItemValue={(size) => size}
                               getItemLabel={(size) => size}
+                              value={field.value}
                               onItemSelect={(size) => field.onChange(size)}
-                              buttonPlaceholder={
-                                field.value || "Select your shirt size"
-                              }
+                              buttonPlaceholder={getComboBoxDisplayValue(
+                                field.value,
+                                "Select your shirt size",
+                              )}
                               inputPlaceholder="Search shirt sizes"
                               triggerClassName={fieldTriggerClassName}
                             />
@@ -1468,7 +1688,7 @@ export function HackerFormPage({
                   </section>
                 </div>
 
-                <div className="fixed inset-x-5 bottom-5 z-30 flex items-center justify-between [bottom:calc(1.25rem+env(safe-area-inset-bottom))] md:inset-x-16 md:bottom-10">
+                <div className="kh-application-nav fixed inset-x-5 bottom-5 z-30 flex items-center justify-between [bottom:calc(1.25rem+env(safe-area-inset-bottom))] md:inset-x-16 md:bottom-10">
                   <Button
                     type="button"
                     variant="outline"

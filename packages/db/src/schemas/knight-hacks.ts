@@ -30,19 +30,25 @@ export const hackathonApplicationStateEnum = pgEnum(
 export const issueStatus = pgEnum("issue_status", ISSUE.ISSUE_STATUS);
 export const issuePriority = pgEnum("issue_priority", ISSUE.PRIORITY);
 
-export const Hackathon = createTable("hackathon", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  name: t.varchar({ length: 255 }).notNull(),
-  displayName: t.varchar({ length: 255 }).notNull().default(""),
-  theme: t.varchar({ length: 255 }).notNull(),
-  applicationBackgroundEnabled: t.boolean().notNull().default(false),
-  applicationBackgroundKey: t.varchar({ length: 255 }),
-  applicationOpen: t.timestamp().notNull().defaultNow(),
-  applicationDeadline: t.timestamp().notNull().defaultNow(),
-  confirmationDeadline: t.timestamp().notNull().defaultNow(),
-  startDate: t.timestamp().notNull(),
-  endDate: t.timestamp().notNull(),
-}));
+export const Hackathon = createTable(
+  "hackathon",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    name: t.varchar({ length: 255 }).notNull(),
+    displayName: t.varchar({ length: 255 }).notNull().default(""),
+    theme: t.varchar({ length: 255 }).notNull(),
+    applicationBackgroundEnabled: t.boolean().notNull().default(false),
+    applicationBackgroundKey: t.varchar({ length: 255 }),
+    applicationOpen: t.timestamp().notNull().defaultNow(),
+    applicationDeadline: t.timestamp().notNull().defaultNow(),
+    confirmationDeadline: t.timestamp().notNull().defaultNow(),
+    startDate: t.timestamp().notNull(),
+    endDate: t.timestamp().notNull(),
+  }),
+  (t) => ({
+    uniqueName: unique("knight_hacks_hackathon_name_unique").on(t.name),
+  }),
+);
 
 export type InsertHackathon = typeof Hackathon.$inferInsert;
 export type SelectHackathon = typeof Hackathon.$inferSelect;

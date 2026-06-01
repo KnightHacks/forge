@@ -209,7 +209,7 @@ const Partners = () => {
   return (
     <motion.div
       id="partners"
-      className="relative isolate flex w-full scroll-mt-24 flex-col items-center justify-center gap-2 overflow-hidden px-4 sm:scroll-mt-32 sm:gap-3 sm:px-6 md:min-h-[82vh] md:gap-4 md:px-8"
+      className="relative isolate flex w-full scroll-mt-24 flex-col items-center justify-center gap-2 overflow-visible px-4 sm:scroll-mt-32 sm:gap-3 sm:px-6 md:min-h-[82vh] md:gap-4 md:px-8"
       variants={sectionReveal}
       initial="hidden"
       whileInView="visible"
@@ -222,7 +222,7 @@ const Partners = () => {
       </div>
 
       <motion.div className="relative z-10" variants={revealItem}>
-        <h2 className="spring-heading animate-float-bob-slow mb-6 text-3xl sm:mb-8 sm:text-4xl md:mb-10 md:text-5xl lg:text-6xl">
+        <h2 className="spring-heading animate-float-bob-slow mb-8 text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
           PARTNERS
         </h2>
       </motion.div>

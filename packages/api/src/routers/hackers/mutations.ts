@@ -49,6 +49,22 @@ export const hackerMutationRouter = {
         });
       }
 
+      const now = new Date();
+
+      if (now < hackathon.applicationOpen) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Applications are not open for this hackathon yet.",
+        });
+      }
+
+      if (now > hackathon.applicationDeadline) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Applications are closed for this hackathon.",
+        });
+      }
+
       const existingHacker = await db
         .select()
         .from(Hacker)

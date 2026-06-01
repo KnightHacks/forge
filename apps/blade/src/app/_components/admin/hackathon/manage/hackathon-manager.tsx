@@ -45,29 +45,42 @@ import {
   TableRow,
 } from "@forge/ui/table";
 import { toast } from "@forge/ui/toast";
+import {
+  createHackathonApplicationBackgroundKeySchema,
+  getHackathonBackgroundIssues,
+  getHackathonDateWindowIssues,
+  hackathonDisplayNameSchema,
+  hackathonRouteNameSchema,
+  hackathonThemeSchema,
+} from "@forge/validators";
 
 import { api } from "~/trpc/react";
 
 const BACKGROUND_OPTIONS = HACKATHONS.APPLICATION_BACKGROUND_OPTIONS;
-const DEFAULT_BACKGROUND_KEY = BACKGROUND_OPTIONS[0]?.key ?? "khix";
+const DEFAULT_BACKGROUND_KEY = BACKGROUND_OPTIONS[0].key;
 type ApplicationBackgroundKey = (typeof BACKGROUND_OPTIONS)[number]["key"];
+const hackathonApplicationBackgroundKeySchema =
+  createHackathonApplicationBackgroundKeySchema(
+    HACKATHONS.APPLICATION_BACKGROUND_KEYS,
+  );
+
+function getSafeBackgroundKey(
+  backgroundKey?: string | null,
+): ApplicationBackgroundKey {
+  return BACKGROUND_OPTIONS.some(
+    (background) => background.key === backgroundKey,
+  )
+    ? (backgroundKey as ApplicationBackgroundKey)
+    : DEFAULT_BACKGROUND_KEY;
+}
 
 const formSchema = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .toLowerCase()
-      .min(2, "Use at least 2 characters.")
-      .max(64, "Use 64 characters or fewer.")
-      .regex(
-        /^[a-z0-9][a-z0-9-]*[a-z0-9]$/,
-        "Use lowercase letters, numbers, and hyphens only.",
-      ),
-    displayName: z.string().trim().min(1, "Display name is required."),
-    theme: z.string().trim().min(1, "Theme is required."),
+    name: hackathonRouteNameSchema,
+    displayName: hackathonDisplayNameSchema,
+    theme: hackathonThemeSchema,
     applicationBackgroundEnabled: z.boolean(),
-    applicationBackgroundKey: z.string().optional(),
+    applicationBackgroundKey: hackathonApplicationBackgroundKeySchema,
     applicationOpen: z.string().min(1, "Application open is required."),
     applicationDeadline: z.string().min(1, "Application deadline is required."),
     confirmationDeadline: z
@@ -83,46 +96,25 @@ const formSchema = z
     const startDate = new Date(values.startDate);
     const endDate = new Date(values.endDate);
 
-    if (
-      values.applicationBackgroundEnabled &&
-      !values.applicationBackgroundKey
-    ) {
+    for (const issue of getHackathonBackgroundIssues(values)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Choose a background preset.",
-        path: ["applicationBackgroundKey"],
+        message: issue.message,
+        path: issue.path,
       });
     }
 
-    if (applicationOpen >= applicationDeadline) {
+    for (const issue of getHackathonDateWindowIssues({
+      applicationDeadline,
+      applicationOpen,
+      confirmationDeadline,
+      endDate,
+      startDate,
+    })) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Open must be before deadline.",
-        path: ["applicationOpen"],
-      });
-    }
-
-    if (applicationDeadline > confirmationDeadline) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Must be on or after application deadline.",
-        path: ["confirmationDeadline"],
-      });
-    }
-
-    if (confirmationDeadline > startDate) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Must be on or before hackathon start.",
-        path: ["confirmationDeadline"],
-      });
-    }
-
-    if (startDate >= endDate) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "End must be after start.",
-        path: ["endDate"],
+        message: issue.message,
+        path: issue.path,
       });
     }
   });
@@ -168,8 +160,9 @@ function getDefaultValues(
       displayName: hackathon.displayName,
       theme: hackathon.theme,
       applicationBackgroundEnabled: hackathon.applicationBackgroundEnabled,
-      applicationBackgroundKey:
-        hackathon.applicationBackgroundKey ?? DEFAULT_BACKGROUND_KEY,
+      applicationBackgroundKey: getSafeBackgroundKey(
+        hackathon.applicationBackgroundKey,
+      ),
       applicationOpen: toDateTimeLocalValue(hackathon.applicationOpen),
       applicationDeadline: toDateTimeLocalValue(hackathon.applicationDeadline),
       confirmationDeadline: toDateTimeLocalValue(
@@ -577,7 +570,7 @@ export function HackathonManager() {
                       <FormLabel>Background Preset</FormLabel>
                       <Select
                         disabled={!selectedBackgroundEnabled}
-                        value={field.value}
+                        value={field.value ?? undefined}
                         onValueChange={field.onChange}
                       >
                         <FormControl>

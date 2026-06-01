@@ -407,6 +407,16 @@ html {
 
 @media (max-width: 767px) {
   .bloom-site-background {
+    background-color: #245f35;
+    background-image: none;
+  }
+
+  .bloom-page-background {
+    position: absolute;
+    inset: 0 0 calc(-1 * env(safe-area-inset-bottom, 0px));
+    z-index: -1;
+    display: block;
+    min-height: calc(100% + env(safe-area-inset-bottom, 0px));
     background-image: url("https://assets.knighthacks.org/bloom-background-mobile.webp");
     background-image: image-set(
       url("https://assets.knighthacks.org/bloom-background-mobile.avif")
@@ -414,6 +424,9 @@ html {
       url("https://assets.knighthacks.org/bloom-background-mobile.webp")
         type("image/webp")
     );
+    background-position: top center;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
   }
 }
 
@@ -852,6 +865,45 @@ html {
 
   #faqs > .bloom-focus-field {
     max-width: 100%;
+  }
+}
+
+@media (min-width: 1536px) {
+  .about-story-layout {
+    grid-template-columns: minmax(0, 43%) minmax(32rem, 43%);
+    gap: clamp(4rem, 6vw, 9rem);
+  }
+
+  .about-gemiknight-gallery {
+    width: 100%;
+    min-height: clamp(31rem, 30vw, 42rem);
+  }
+
+  .about-gemiknight-frame-primary {
+    width: min(88%, 48rem);
+  }
+
+  .about-gemiknight-frame-secondary {
+    width: min(64%, 34rem);
+  }
+
+  #faqs {
+    padding-inline: clamp(8rem, 5vw, 12rem);
+  }
+
+  .faq-focus-field {
+    max-width: 86vw;
+  }
+
+  .faq-section-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(3rem, 5vw, 8rem);
+    align-items: start;
+  }
+
+  .faq-focus-section {
+    border-top: 0;
+    padding-top: 0;
   }
 }
 
@@ -1314,7 +1366,7 @@ html {
 }
 
 .wc-footer-copy {
-  --wc-footer-color: #3f7835;
+  --wc-footer-color: #fff7dc;
 }
 
 .wc-footer-link,

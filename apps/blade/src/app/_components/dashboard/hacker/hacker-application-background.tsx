@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@forge/ui";
 
@@ -11,6 +11,8 @@ import type {
 } from "./hackbackgrounds/types";
 import { getHackerApplicationBackground } from "./hackbackgrounds";
 
+type StepDirection = "forward" | "back";
+
 interface BackgroundFrame {
   endX: number;
   height: number;
@@ -18,9 +20,17 @@ interface BackgroundFrame {
   width: number;
 }
 
+interface LayerState {
+  failedLayerIds: Set<string>;
+  layerSizes: Record<string, BackgroundSize>;
+  visualKey: string;
+}
+
 const EMPTY_VISUAL_LAYERS: readonly ApplicationVisualLayer[] = [];
 
-function isValidBackgroundSize(size: BackgroundSize | null | undefined) {
+function isValidBackgroundSize(
+  size: BackgroundSize | null | undefined,
+): size is BackgroundSize {
   return (
     !!size &&
     Number.isFinite(size.width) &&
@@ -65,6 +75,17 @@ function getInitialLayerSizes(layers: readonly ApplicationVisualLayer[]) {
   return sizes;
 }
 
+function getFreshLayerState(
+  visualKey: string,
+  layers: readonly ApplicationVisualLayer[],
+): LayerState {
+  return {
+    failedLayerIds: new Set(),
+    layerSizes: getInitialLayerSizes(layers),
+    visualKey,
+  };
+}
+
 function clampProgress(progress: number) {
   if (!Number.isFinite(progress)) return 0;
   return Math.min(Math.max(progress, 0), 1);
@@ -90,10 +111,12 @@ export function HackerApplicationBackground({
   backgroundKey,
   isTransitioning = false,
   progress,
+  transitionDirection = "forward",
 }: {
   backgroundKey?: string | null;
   isTransitioning?: boolean;
   progress: number;
+  transitionDirection?: StepDirection;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const visualConfig = getHackerApplicationBackground(backgroundKey);
@@ -102,19 +125,15 @@ export function HackerApplicationBackground({
     layers.find((layer) => layer.id === visualConfig.baseLayerId) ??
     layers.find((layer) => (layer.space ?? "scene") === "scene") ??
     layers[0];
-  const [failedLayerIds, setFailedLayerIds] = useState<Set<string>>(
-    () => new Set(),
-  );
-  const [layerSizes, setLayerSizes] = useState<Record<string, BackgroundSize>>(
-    () => getInitialLayerSizes(layers),
+  const [layerState, setLayerState] = useState<LayerState>(() =>
+    getFreshLayerState(visualConfig.key, layers),
   );
   const [viewportSize, setViewportSize] = useState<BackgroundSize | null>(null);
-
-  useEffect(() => {
-    setFailedLayerIds(new Set());
-    setLayerSizes(getInitialLayerSizes(layers));
-    setViewportSize(null);
-  }, [layers]);
+  const activeLayerState =
+    layerState.visualKey === visualConfig.key
+      ? layerState
+      : getFreshLayerState(visualConfig.key, layers);
+  const { failedLayerIds, layerSizes } = activeLayerState;
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -152,19 +171,14 @@ export function HackerApplicationBackground({
   const primaryLayerSize = primaryLayer
     ? (layerSizes[primaryLayer.id] ?? primaryLayer.nativeSize)
     : null;
-  const frame = useMemo(() => {
-    if (
-      !isValidBackgroundSize(primaryLayerSize) ||
-      !isValidBackgroundSize(viewportSize)
-    ) {
-      return null;
-    }
-
-    return getCoverBackgroundFrame({
-      image: primaryLayerSize,
-      viewport: viewportSize,
-    });
-  }, [primaryLayerSize, viewportSize]);
+  const frame =
+    isValidBackgroundSize(primaryLayerSize) &&
+    isValidBackgroundSize(viewportSize)
+      ? getCoverBackgroundFrame({
+          image: primaryLayerSize,
+          viewport: viewportSize,
+        })
+      : null;
   const safeProgress = clampProgress(progress);
   const translateX = frame
     ? getFrameTranslateX({
@@ -178,20 +192,69 @@ export function HackerApplicationBackground({
     !canRenderCustomVisual || visualConfig.showStockEffects === true;
 
   const setLayerSize = (layerId: string, size: BackgroundSize) => {
-    setLayerSizes((current) => ({
-      ...current,
-      [layerId]: size,
-    }));
+    setLayerState((current) => {
+      const baseState =
+        current.visualKey === visualConfig.key
+          ? current
+          : getFreshLayerState(visualConfig.key, layers);
+
+      return {
+        ...baseState,
+        layerSizes: {
+          ...baseState.layerSizes,
+          [layerId]: size,
+        },
+      };
+    });
   };
 
   const markLayerFailed = (layerId: string) => {
-    setFailedLayerIds((current) => {
-      if (current.has(layerId)) return current;
+    setLayerState((current) => {
+      const baseState =
+        current.visualKey === visualConfig.key
+          ? current
+          : getFreshLayerState(visualConfig.key, layers);
 
-      const next = new Set(current);
-      next.add(layerId);
-      return next;
+      if (baseState.failedLayerIds.has(layerId)) return current;
+
+      const failedLayerIds = new Set(baseState.failedLayerIds);
+      failedLayerIds.add(layerId);
+      return {
+        ...baseState,
+        failedLayerIds,
+      };
     });
+  };
+
+  const getLayerMediaStyle = (layer: ApplicationVisualLayer) => {
+    const shouldFaceBackward =
+      isTransitioning &&
+      transitionDirection === "back" &&
+      layer.motion?.facesStepDirection === true;
+    const turnDurationMs = layer.motion?.turnDurationMs ?? 220;
+    const transform = [
+      layer.mediaStyle?.transform,
+      shouldFaceBackward ? "scaleX(-1)" : "scaleX(1)",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const transition = [
+      layer.mediaStyle?.transition,
+      `transform ${turnDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    return {
+      ...layer.mediaStyle,
+      ...(layer.motion?.facesStepDirection
+        ? {
+            transform,
+            transition,
+            willChange: "transform",
+          }
+        : {}),
+    };
   };
 
   const renderLayerMedia = (layer: ApplicationVisualLayer) => {
@@ -199,6 +262,7 @@ export function HackerApplicationBackground({
       isTransitioning && layer.animatedSrc
         ? layer.animatedSrc
         : (layer.idleSrc ?? layer.src);
+    const layerMediaStyle = getLayerMediaStyle(layer);
 
     if (layer.kind === "video") {
       return (
@@ -211,7 +275,7 @@ export function HackerApplicationBackground({
           muted
           playsInline
           preload={layer.preload ?? "metadata"}
-          style={layer.mediaStyle}
+          style={layerMediaStyle}
           onCanPlay={(event) => {
             if (layer.playbackRate) {
               event.currentTarget.playbackRate = layer.playbackRate;
@@ -251,10 +315,9 @@ export function HackerApplicationBackground({
       );
     }
 
-    return (
+    const imageElement = (
       // eslint-disable-next-line @next/next/no-img-element -- Supports arbitrary R2 image URLs while reading natural dimensions for pan math.
       <img
-        key={layerSrc}
         alt={layer.alt ?? ""}
         className={cn(
           "h-full w-full max-w-none select-none",
@@ -263,7 +326,7 @@ export function HackerApplicationBackground({
         decoding="async"
         referrerPolicy="no-referrer"
         src={layerSrc}
-        style={layer.mediaStyle}
+        style={layerMediaStyle}
         onError={() => {
           markLayerFailed(layer.id);
         }}
@@ -281,6 +344,19 @@ export function HackerApplicationBackground({
           });
         }}
       />
+    );
+
+    if (!layer.sources?.length || layerSrc !== layer.src) {
+      return imageElement;
+    }
+
+    return (
+      <picture key={layerSrc} className="block h-full w-full">
+        {layer.sources.map((source) => (
+          <source key={source.src} srcSet={source.src} type={source.mimeType} />
+        ))}
+        {imageElement}
+      </picture>
     );
   };
 

@@ -5,9 +5,9 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 
 const aboutCopy = [
-  "BloomKnights is a 12-hour student hackathon in Orlando, Florida, hosted by Knight Hacks at the University of Central Florida. On July 11, 2026, UCF students will spend the day building software projects, learning new skills, attending workshops, meeting mentors, and collaborating with other hackers.",
-  "Whether you are new to hackathons or already shipping projects, BloomKnights is designed to be a fast, beginner-friendly way to create something real in one day. The event takes place on UCF campus at BA1, and participation is free for UCF students.",
-  "BloomKnights connects the energy of a Florida hackathon with the support of Knight Hacks, UCF's software development and hackathon organization. Bring a laptop, a charger, and an idea you want to explore.",
+  "BloomKnights is a 12-hour student hackathon in Orlando, Florida, hosted by Knight Hacks at the University of Central Florida. On July 11, 2026, UCF students will come together to build software projects, learn practical skills, attend workshops, meet mentors, and collaborate with other hackers.",
+  "The goal is to give students one focused day to make progress on an idea and leave with something they can show. BloomKnights takes place on UCF campus at BA1, and participation is free for all students.",
+  "BloomKnights is our beginner-friendly hackathon leading up to Knight Hacks IX. It gives students a lower-pressure way to try a hackathon, understand how the format works, and get ready for the main event. Bring a laptop, a charger, and an idea to work on.",
 ];
 
 const aboutImages = [
@@ -119,8 +119,8 @@ const About = () => {
                   height={4000}
                   sizes={
                     imageIndex === 0
-                      ? "(min-width: 1181px) 464px, (min-width: 768px) 520px, 82vw"
-                      : "(min-width: 1181px) 320px, (min-width: 768px) 360px, 62vw"
+                      ? "(min-width: 1536px) 768px, (min-width: 1181px) 464px, (min-width: 768px) 520px, 82vw"
+                      : "(min-width: 1536px) 544px, (min-width: 1181px) 320px, (min-width: 768px) 360px, 62vw"
                   }
                   quality={72}
                   className="about-gemiknight-image"

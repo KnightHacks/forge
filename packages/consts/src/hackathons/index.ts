@@ -2,6 +2,10 @@ export * as KNIGHT_HACKS_8 from "./kh8";
 
 export const APPLICATION_BACKGROUND_OPTIONS = [
   {
+    key: "bloomknights",
+    label: "BloomKnights mountain meadow",
+  },
+  {
     key: "khix",
     label: "KHIX forest walk",
   },

@@ -11,27 +11,28 @@ import {
   HackerAttendee,
 } from "@forge/db/schemas/knight-hacks";
 import { permissions } from "@forge/utils";
+import {
+  createHackathonApplicationBackgroundKeySchema,
+  getHackathonBackgroundIssues,
+  getHackathonDateWindowIssues,
+  hackathonDisplayNameSchema,
+  hackathonRouteNameSchema,
+  hackathonThemeSchema,
+} from "@forge/validators";
 
 import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
 
+const hackathonApplicationBackgroundKeySchema =
+  createHackathonApplicationBackgroundKeySchema(
+    HACKATHONS.APPLICATION_BACKGROUND_KEYS,
+  );
+
 const hackathonMutationInput = z.object({
-  name: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .min(2, "Route name must be at least 2 characters.")
-    .max(64, "Route name must be 64 characters or fewer.")
-    .regex(
-      /^[a-z0-9][a-z0-9-]*[a-z0-9]$/,
-      "Use lowercase letters, numbers, and hyphens. Start and end with a letter or number.",
-    ),
-  displayName: z.string().trim().min(1).max(255),
-  theme: z.string().trim().min(1).max(255),
+  name: hackathonRouteNameSchema,
+  displayName: hackathonDisplayNameSchema,
+  theme: hackathonThemeSchema,
   applicationBackgroundEnabled: z.boolean().default(false),
-  applicationBackgroundKey: z
-    .enum(HACKATHONS.APPLICATION_BACKGROUND_KEYS)
-    .nullable()
-    .optional(),
+  applicationBackgroundKey: hackathonApplicationBackgroundKeySchema,
   applicationOpen: z.coerce.date(),
   applicationDeadline: z.coerce.date(),
   confirmationDeadline: z.coerce.date(),
@@ -40,49 +41,12 @@ const hackathonMutationInput = z.object({
 });
 
 function assertValidDateWindow(input: z.infer<typeof hackathonMutationInput>) {
-  const dates = [
-    ["application open", input.applicationOpen],
-    ["application deadline", input.applicationDeadline],
-    ["confirmation deadline", input.confirmationDeadline],
-    ["start date", input.startDate],
-    ["end date", input.endDate],
-  ] as const;
+  const [issue] = getHackathonDateWindowIssues(input);
 
-  for (const [label, date] of dates) {
-    if (!Number.isFinite(date.getTime())) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: `Invalid ${label}.`,
-      });
-    }
-  }
-
-  if (input.applicationOpen >= input.applicationDeadline) {
+  if (issue) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: "Application open must be before the application deadline.",
-    });
-  }
-
-  if (input.applicationDeadline > input.confirmationDeadline) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message:
-        "Confirmation deadline must be on or after the application deadline.",
-    });
-  }
-
-  if (input.confirmationDeadline > input.startDate) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Confirmation deadline must be on or before the start date.",
-    });
-  }
-
-  if (input.startDate >= input.endDate) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Start date must be before the end date.",
+      message: issue.message,
     });
   }
 }
@@ -92,10 +56,12 @@ function getHackathonMutationValues(
 ) {
   assertValidDateWindow(input);
 
-  if (input.applicationBackgroundEnabled && !input.applicationBackgroundKey) {
+  const [backgroundIssue] = getHackathonBackgroundIssues(input);
+
+  if (backgroundIssue) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: "Choose a background preset or disable the background override.",
+      message: backgroundIssue.message,
     });
   }
 
@@ -113,6 +79,27 @@ function getHackathonMutationValues(
     startDate: input.startDate,
     endDate: input.endDate,
   };
+}
+
+function isHackathonNameUniqueError(error: unknown) {
+  if (typeof error !== "object" || error === null) return false;
+
+  const dbError = error as {
+    code?: unknown;
+    constraint?: unknown;
+  };
+
+  return (
+    dbError.code === "23505" &&
+    dbError.constraint === "knight_hacks_hackathon_name_unique"
+  );
+}
+
+function throwHackathonNameConflict(message: string): never {
+  throw new TRPCError({
+    code: "CONFLICT",
+    message,
+  });
 }
 
 export const hackathonRouter = {
@@ -244,7 +231,19 @@ export const hackathonRouter = {
         });
       }
 
-      const [created] = await db.insert(Hackathon).values(values).returning();
+      let created: typeof Hackathon.$inferSelect | undefined;
+
+      try {
+        [created] = await db.insert(Hackathon).values(values).returning();
+      } catch (error) {
+        if (isHackathonNameUniqueError(error)) {
+          throwHackathonNameConflict(
+            "A hackathon with this route name already exists.",
+          );
+        }
+
+        throw error;
+      }
 
       if (!created) {
         throw new TRPCError({
@@ -288,11 +287,23 @@ export const hackathonRouter = {
         });
       }
 
-      const [updated] = await db
-        .update(Hackathon)
-        .set(values)
-        .where(eq(Hackathon.id, input.id))
-        .returning();
+      let updated: typeof Hackathon.$inferSelect | undefined;
+
+      try {
+        [updated] = await db
+          .update(Hackathon)
+          .set(values)
+          .where(eq(Hackathon.id, input.id))
+          .returning();
+      } catch (error) {
+        if (isHackathonNameUniqueError(error)) {
+          throwHackathonNameConflict(
+            "A different hackathon already uses this route name.",
+          );
+        }
+
+        throw error;
+      }
 
       if (!updated) {
         throw new TRPCError({

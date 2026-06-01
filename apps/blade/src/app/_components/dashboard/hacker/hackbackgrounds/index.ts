@@ -1,6 +1,7 @@
 import { HACKATHONS } from "@forge/consts";
 
 import type { ApplicationVisualConfig } from "./types";
+import { bloomknightsApplicationBackground } from "./bloomknights";
 import { khixApplicationBackground } from "./khix";
 
 export const DEFAULT_APPLICATION_VISUAL = {
@@ -11,26 +12,41 @@ export const DEFAULT_APPLICATION_VISUAL = {
 } satisfies ApplicationVisualConfig;
 
 const HACKER_APPLICATION_BACKGROUND_REGISTRY = {
-  [khixApplicationBackground.key]: khixApplicationBackground,
-} satisfies Record<string, ApplicationVisualConfig>;
+  bloomknights: bloomknightsApplicationBackground,
+  khix: khixApplicationBackground,
+} satisfies Record<
+  HACKATHONS.ApplicationBackgroundKey,
+  ApplicationVisualConfig
+>;
 
 export type HackerApplicationBackgroundKey =
-  keyof typeof HACKER_APPLICATION_BACKGROUND_REGISTRY;
+  HACKATHONS.ApplicationBackgroundKey;
 
 export const HACKER_APPLICATION_BACKGROUNDS: Record<
-  string,
+  HackerApplicationBackgroundKey,
   ApplicationVisualConfig
 > = HACKER_APPLICATION_BACKGROUND_REGISTRY;
 
 export const HACKER_APPLICATION_BACKGROUND_OPTIONS =
   HACKATHONS.APPLICATION_BACKGROUND_OPTIONS;
 
-export function getHackerApplicationBackground(backgroundKey?: string | null) {
-  if (!backgroundKey) return DEFAULT_APPLICATION_VISUAL;
-
-  return (
-    HACKER_APPLICATION_BACKGROUNDS[backgroundKey] ?? DEFAULT_APPLICATION_VISUAL
+function isHackerApplicationBackgroundKey(
+  backgroundKey: string,
+): backgroundKey is HackerApplicationBackgroundKey {
+  return HACKATHONS.APPLICATION_BACKGROUND_KEYS.includes(
+    backgroundKey as HackerApplicationBackgroundKey,
   );
+}
+
+export function getHackerApplicationBackground(
+  backgroundKey?: string | null,
+): ApplicationVisualConfig {
+  if (!backgroundKey) return DEFAULT_APPLICATION_VISUAL;
+  if (!isHackerApplicationBackgroundKey(backgroundKey)) {
+    return DEFAULT_APPLICATION_VISUAL;
+  }
+
+  return HACKER_APPLICATION_BACKGROUNDS[backgroundKey];
 }
 
 export type { ApplicationVisualConfig, ApplicationVisualLayer } from "./types";

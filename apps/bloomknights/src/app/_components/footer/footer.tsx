@@ -7,7 +7,7 @@ import { footerLinks, footerMessage } from "./footerContent";
 
 const footerLinkClassName =
   "wc-footer-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff7dc] focus-visible:ring-offset-2 focus-visible:ring-offset-[#245f34]";
-const footerLinkColors = ["#fff7dc", "#6fa04d", "#4a8139", "#245f35"];
+const footerTextColor = "#fff7dc";
 
 export default function Footer() {
   return (
@@ -20,7 +20,7 @@ export default function Footer() {
           <div className="my-3 flex flex-col items-center justify-center gap-3 sm:my-5 sm:flex-row sm:gap-0 md:my-6">
             {footerLinks.map((link, index) => {
               const linkStyle = {
-                "--wc-footer-color": footerLinkColors[index],
+                "--wc-footer-color": footerTextColor,
               } as React.CSSProperties;
 
               return (

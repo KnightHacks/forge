@@ -14,6 +14,11 @@ export interface ApplicationVisualLayerSource {
   src: string;
 }
 
+export interface ApplicationVisualLayerMotion {
+  facesStepDirection?: boolean;
+  turnDurationMs?: number;
+}
+
 export interface ApplicationVisualLayer {
   id: string;
   kind: ApplicationVisualLayerKind;
@@ -25,6 +30,7 @@ export interface ApplicationVisualLayer {
   mediaClassName?: string;
   mediaStyle?: CSSProperties;
   mimeType?: string;
+  motion?: ApplicationVisualLayerMotion;
   nativeSize?: BackgroundSize;
   opacity?: number;
   parallax?: number;
