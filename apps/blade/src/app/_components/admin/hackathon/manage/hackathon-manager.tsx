@@ -219,8 +219,12 @@ export function HackathonManager() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingHackathon, setEditingHackathon] =
     useState<SelectHackathon | null>(null);
-  const { data: hackathons = [], isLoading } =
-    api.hackathon.getManagedHackathons.useQuery();
+  const {
+    data: hackathons = [],
+    error: hackathonsError,
+    isLoading,
+    refetch: refetchHackathons,
+  } = api.hackathon.getManagedHackathons.useQuery();
 
   const form = useForm({
     schema: formSchema,
@@ -314,6 +318,29 @@ export function HackathonManager() {
                   className="h-24 text-center text-muted-foreground"
                 >
                   Loading hackathons...
+                </TableCell>
+              </TableRow>
+            ) : hackathonsError ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24">
+                  <div className="flex flex-col items-center justify-center gap-3 text-center">
+                    <div>
+                      <div className="font-medium">
+                        Failed to load hackathons.
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {hackathonsError.message}
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void refetchHackathons()}
+                    >
+                      Retry
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : hackathons.length === 0 ? (

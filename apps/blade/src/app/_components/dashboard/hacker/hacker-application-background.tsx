@@ -263,6 +263,10 @@ export function HackerApplicationBackground({
         ? layer.animatedSrc
         : (layer.idleSrc ?? layer.src);
     const layerMediaStyle = getLayerMediaStyle(layer);
+    const layerSources =
+      layerSrc === layer.src && layer.sources
+        ? layer.sources
+        : [{ mimeType: layer.mimeType, src: layerSrc }];
 
     if (layer.kind === "video") {
       return (
@@ -302,15 +306,9 @@ export function HackerApplicationBackground({
             });
           }}
         >
-          {(layer.sources ?? [{ mimeType: layer.mimeType, src: layerSrc }]).map(
-            (source) => (
-              <source
-                key={source.src}
-                src={source.src}
-                type={source.mimeType}
-              />
-            ),
-          )}
+          {layerSources.map((source) => (
+            <source key={source.src} src={source.src} type={source.mimeType} />
+          ))}
         </video>
       );
     }

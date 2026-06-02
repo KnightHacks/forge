@@ -123,29 +123,31 @@ export const hackerMutationRouter = {
         ? today.getFullYear() - birthDate.getFullYear()
         : today.getFullYear() - birthDate.getFullYear() - 1;
 
-      const [insertedHacker] = await db
-        .insert(Hacker)
-        .values({
-          ...hackerData,
-          discordUser: ctx.session.user.name,
-          userId,
-          age: newAge,
-          phoneNumber:
-            hackerData.phoneNumber === "" ? null : hackerData.phoneNumber,
-        })
-        .returning({ id: Hacker.id });
+      await db.transaction(async (tx) => {
+        const [insertedHacker] = await tx
+          .insert(Hacker)
+          .values({
+            ...hackerData,
+            discordUser: ctx.session.user.name,
+            userId,
+            age: newAge,
+            phoneNumber:
+              hackerData.phoneNumber === "" ? null : hackerData.phoneNumber,
+          })
+          .returning({ id: Hacker.id });
 
-      if (!insertedHacker) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create hacker.",
+        if (!insertedHacker) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create hacker.",
+          });
+        }
+
+        await tx.insert(HackerAttendee).values({
+          hackerId: insertedHacker.id,
+          hackathonId: hackathon.id,
+          status: "pending",
         });
-      }
-
-      await db.insert(HackerAttendee).values({
-        hackerId: insertedHacker.id,
-        hackathonId: hackathon.id,
-        status: "pending",
       });
 
       await discord.log({

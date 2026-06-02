@@ -17,7 +17,7 @@ function MLHBadge({ showFloating }: MLHBadgeProps) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -40 }}
           transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-          href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2026-season&utm_content=white"
+          href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2027-season&utm_content=white"
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -34,7 +34,7 @@ function MLHBadge({ showFloating }: MLHBadgeProps) {
           {/* eslint-disable-next-line @next/next/no-img-element -- MLH serves this required badge as a remote SVG. */}
           <img
             src="https://logged-assets.s3.amazonaws.com/trust-badge/2027/mlh-trust-badge-2027-white.svg"
-            alt="Major League Hacking 2026 Hackathon Season"
+            alt="Major League Hacking 2027 Hackathon Season"
             loading="eager"
             fetchPriority="high"
             style={{ width: "100%" }}

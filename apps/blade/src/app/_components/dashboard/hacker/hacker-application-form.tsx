@@ -1183,7 +1183,10 @@ export function HackerFormPage({
                               getItemLabel={(school) => school}
                               value={field.value}
                               onItemSelect={(school) => field.onChange(school)}
-                              buttonPlaceholder={field.value}
+                              buttonPlaceholder={getComboBoxDisplayValue(
+                                field.value,
+                                "Select a school",
+                              )}
                               inputPlaceholder="Search for your school"
                               triggerClassName={fieldTriggerClassName}
                             />
@@ -1208,7 +1211,10 @@ export function HackerFormPage({
                               getItemLabel={(major) => major}
                               value={field.value}
                               onItemSelect={(major) => field.onChange(major)}
-                              buttonPlaceholder={field.value}
+                              buttonPlaceholder={getComboBoxDisplayValue(
+                                field.value,
+                                "Select a major",
+                              )}
                               inputPlaceholder="Search for your major"
                               triggerClassName={fieldTriggerClassName}
                             />

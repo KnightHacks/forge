@@ -24,7 +24,7 @@ export const hackathonThemeSchema = z
   .max(255, "Theme must be 255 characters or fewer.");
 
 export function createHackathonApplicationBackgroundKeySchema<
-  T extends [string, ...string[]],
+  T extends readonly [string, ...string[]],
 >(backgroundKeys: T) {
   return z.enum(backgroundKeys).nullable().optional();
 }

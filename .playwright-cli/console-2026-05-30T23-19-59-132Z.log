@@ -1,2 +1,6 @@
 [92787448ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3006/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
 [92787735ms] [LOG] [Fast Refresh] done in 387ms @ http://localhost:3006/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[94479346ms] [LOG] [HMR] connected @ http://localhost:3006/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[95025307ms] [LOG] [HMR] connected @ http://localhost:3006/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[95025414ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3006/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[95025443ms] [LOG] [Fast Refresh] done in 130ms @ http://localhost:3006/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
