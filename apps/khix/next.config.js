@@ -17,7 +17,6 @@ const config = {
     "@forge/ui",
     "@forge/auth",
     "@forge/db",
-    "@forge/ui",
     "@forge/validators",
   ],
 
