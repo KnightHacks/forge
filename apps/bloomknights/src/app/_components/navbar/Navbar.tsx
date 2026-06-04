@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
 
 import MLHBadge from "./MLHBadge";
@@ -26,6 +26,19 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { scrollY } = useScroll();
 
+  useEffect(() => {
+    const desktopQuery = window.matchMedia("(min-width: 768px)");
+    const closeMobileMenuOnDesktop = (event: MediaQueryListEvent) => {
+      if (event.matches) setIsMobileMenuOpen(false);
+    };
+
+    desktopQuery.addEventListener("change", closeMobileMenuOnDesktop);
+
+    return () => {
+      desktopQuery.removeEventListener("change", closeMobileMenuOnDesktop);
+    };
+  }, []);
+
   useMotionValueEvent(scrollY, "change", (current) => {
     const previous = scrollY.getPrevious() ?? current;
     const scrollDelta = current - previous;
@@ -50,9 +63,12 @@ const Navbar = () => {
         animate={{ opacity: isHidden ? 0 : 1, y: isHidden ? -96 : 0 }}
         transition={navChromeTransition}
         className="fixed left-0 top-0 z-50 w-full bg-transparent"
+        aria-hidden={isHidden}
+        inert={isHidden ? true : undefined}
         style={{ pointerEvents: isHidden ? "none" : "auto" }}
       >
         <NavContent
+          isHidden={isHidden}
           isMobileMenuOpen={isMobileMenuOpen}
           navLinks={NAV_LINKS}
           showGlow={isScrolled}

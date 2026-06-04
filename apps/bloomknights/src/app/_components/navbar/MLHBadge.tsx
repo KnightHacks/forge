@@ -20,6 +20,8 @@ function MLHBadge({ isHidden }: MLHBadgeProps) {
       href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2027-season&utm_content=white"
       target="_blank"
       rel="noopener noreferrer"
+      aria-hidden={isHidden}
+      tabIndex={isHidden ? -1 : undefined}
       style={{ pointerEvents: isHidden ? "none" : "auto" }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- MLH serves this required badge as a remote SVG. */}

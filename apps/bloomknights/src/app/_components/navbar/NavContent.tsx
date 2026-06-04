@@ -15,6 +15,7 @@ interface NavLink {
 }
 
 interface NavContentProps {
+  isHidden?: boolean;
   isMobileMenuOpen: boolean;
   navLinks: NavLink[];
   showGlow?: boolean;
@@ -28,6 +29,7 @@ const scrolledLinkGlow: React.CSSProperties = {
 };
 
 function NavContent({
+  isHidden = false,
   isMobileMenuOpen,
   navLinks,
   showGlow = false,
@@ -42,6 +44,7 @@ function NavContent({
         aria-controls="bloom-mobile-nav"
         aria-expanded={isMobileMenuOpen}
         aria-label={isMobileMenuOpen ? "Close navigation" : "Open navigation"}
+        tabIndex={isHidden ? -1 : undefined}
         onClick={onMobileMenuToggle}
       >
         <Image
@@ -76,6 +79,7 @@ function NavContent({
             href={link.href}
             className="wc-nav-link rounded-md px-2 py-1 text-base transition-[color,text-shadow,transform] duration-500 lg:text-lg"
             style={showGlow ? scrolledLinkGlow : undefined}
+            tabIndex={isHidden ? -1 : undefined}
             {...(link.external
               ? { target: "_blank", rel: "noopener noreferrer" }
               : {})}
@@ -102,6 +106,7 @@ function NavContent({
                   key={link.href}
                   href={link.href}
                   className="font-righteous px-5 py-3 text-lg tracking-normal transition-colors duration-300 hover:bg-[#245f34]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#245f34]"
+                  tabIndex={isHidden ? -1 : undefined}
                   onClick={onMobileMenuClose}
                   {...(link.external
                     ? { target: "_blank", rel: "noopener noreferrer" }

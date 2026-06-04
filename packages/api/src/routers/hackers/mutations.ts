@@ -20,7 +20,10 @@ import { logger, permissions } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 
 import { minioClient } from "../../minio/minio-client";
-import { normalizeOwnedResumeObjectName } from "../../resume-security";
+import {
+  normalizeResumeObjectNameForPersistence,
+  removeUnreferencedResumeObjectsForUser,
+} from "../../resume-storage";
 import { permProcedure, protectedProcedure } from "../../trpc";
 
 export const hackerMutationRouter = {
@@ -123,7 +126,7 @@ export const hackerMutationRouter = {
       const newAge = hasBirthdayPassed
         ? today.getFullYear() - birthDate.getFullYear()
         : today.getFullYear() - birthDate.getFullYear() - 1;
-      const resumeUrl = normalizeOwnedResumeObjectName(
+      const resumeUrl = await normalizeResumeObjectNameForPersistence(
         hackerData.resumeUrl,
         userId,
       );
@@ -155,6 +158,8 @@ export const hackerMutationRouter = {
           status: "pending",
         });
       });
+
+      await removeUnreferencedResumeObjectsForUser(userId);
 
       await discord.log({
         title: `Hacker Created for ${hackathon.displayName}`,
@@ -205,10 +210,14 @@ export const hackerMutationRouter = {
       const newAge = hasBirthdayPassed
         ? today.getFullYear() - birthDate.getFullYear()
         : today.getFullYear() - birthDate.getFullYear() - 1;
+      const isResumeChanged =
+        updateData.resumeUrl !== undefined &&
+        updateData.resumeUrl !== hacker.resumeUrl;
       const resumeUrl =
-        updateData.resumeUrl === undefined
+        updateData.resumeUrl === undefined ||
+        updateData.resumeUrl === hacker.resumeUrl
           ? undefined
-          : normalizeOwnedResumeObjectName(
+          : await normalizeResumeObjectNameForPersistence(
               updateData.resumeUrl,
               ctx.session.user.id,
             );
@@ -223,6 +232,9 @@ export const hackerMutationRouter = {
           phoneNumber: normalizedPhone,
         })
         .where(eq(Hacker.userId, ctx.session.user.id));
+      if (isResumeChanged) {
+        await removeUnreferencedResumeObjectsForUser(ctx.session.user.id);
+      }
 
       // Create a log of the changes for logger
       const changes = Object.keys(updateData).reduce(

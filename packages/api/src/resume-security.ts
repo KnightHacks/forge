@@ -10,6 +10,8 @@ export const MAX_RESUME_DATA_URL_LENGTH =
 const PDF_DATA_URL_PREFIX = /^data:application\/pdf;base64,/i;
 const BASE64_CONTENT = /^[A-Za-z0-9+/]*={0,2}$/;
 const PDF_MAGIC = "%PDF-";
+const SERVER_GENERATED_RESUME_FILE_NAME =
+  /^resume-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.pdf$/i;
 
 export function getResumeUserPrefix(userId: string) {
   return `${userId}/`;
@@ -31,6 +33,16 @@ export function isResumeObjectOwnedByUser(objectName: string, userId: string) {
   if (fileName.includes("/") || fileName.includes("..")) return false;
 
   return true;
+}
+
+export function isServerGeneratedResumeObjectName(
+  objectName: string,
+  userId: string,
+) {
+  if (!isResumeObjectOwnedByUser(objectName, userId)) return false;
+
+  const fileName = objectName.slice(getResumeUserPrefix(userId).length);
+  return SERVER_GENERATED_RESUME_FILE_NAME.test(fileName);
 }
 
 export function normalizeOwnedResumeObjectName(

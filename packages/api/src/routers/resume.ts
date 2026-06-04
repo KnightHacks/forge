@@ -1,29 +1,21 @@
-import type { ItemBucketMetadata } from "minio";
 import { TRPCError } from "@trpc/server";
-import { Client } from "minio";
 import { z } from "zod";
 
-import { MINIO } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { logger } from "@forge/utils";
 
-import { env } from "../env";
 import {
   createResumeObjectName,
   decodeAndValidateResumeDataUrl,
-  getResumeUserPrefix,
   MAX_RESUME_DATA_URL_LENGTH,
   normalizeOwnedResumeObjectName,
   RESUME_BUCKET_NAME,
 } from "../resume-security";
+import {
+  ensureResumeBucketExists,
+  resumeStorageClient,
+} from "../resume-storage";
 import { protectedProcedure } from "../trpc";
-
-const s3Client = new Client({
-  endPoint: env.MINIO_ENDPOINT,
-  useSSL: true,
-  accessKey: env.MINIO_ACCESS_KEY,
-  secretKey: env.MINIO_SECRET_KEY,
-});
 
 export const resumeRouter = {
   uploadResume: protectedProcedure
@@ -36,35 +28,11 @@ export const resumeRouter = {
     .mutation(async ({ input, ctx }) => {
       const { fileContent } = input;
       const fileBuffer = decodeAndValidateResumeDataUrl(fileContent);
-      const userDirectory = getResumeUserPrefix(ctx.session.user.id);
       const filePath = createResumeObjectName(ctx.session.user.id);
 
-      // Ensure bucket exists
-      const bucketExists = await s3Client.bucketExists(RESUME_BUCKET_NAME);
-      if (!bucketExists) {
-        await s3Client.makeBucket(RESUME_BUCKET_NAME, MINIO.BUCKET_REGION);
-      }
+      await ensureResumeBucketExists();
 
-      // Overwrite any existing resume associated with the user
-      const existingResumes = [];
-      const objectStream = s3Client.listObjects(
-        RESUME_BUCKET_NAME,
-        userDirectory,
-        true,
-      );
-      for await (const obj of objectStream as AsyncIterable<ItemBucketMetadata>) {
-        existingResumes.push(obj.name);
-      }
-
-      if (existingResumes.length > 0) {
-        await Promise.all(
-          existingResumes.map(async (objectName: string) => {
-            await s3Client.removeObject(RESUME_BUCKET_NAME, objectName);
-          }),
-        );
-      }
-
-      await s3Client.putObject(
+      await resumeStorageClient.putObject(
         RESUME_BUCKET_NAME,
         filePath,
         fileBuffer,
@@ -104,7 +72,7 @@ export const resumeRouter = {
 
     try {
       const expiresIn = 60 * 60; // 1 hour
-      const presignedUrl = await s3Client.presignedUrl(
+      const presignedUrl = await resumeStorageClient.presignedUrl(
         "GET",
         RESUME_BUCKET_NAME,
         filename,
