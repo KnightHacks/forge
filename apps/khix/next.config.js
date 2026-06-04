@@ -14,12 +14,12 @@ const config = {
 
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
-		"@forge/ui",
-		"@forge/auth",
-		"@forge/db",
-		"@forge/ui",
-		"@forge/validators"
-	],
+    "@forge/ui",
+    "@forge/auth",
+    "@forge/db",
+    "@forge/ui",
+    "@forge/validators",
+  ],
 
   /** We already do linting and typechecking as separate tasks in CI */
   typescript: { ignoreBuildErrors: true },
