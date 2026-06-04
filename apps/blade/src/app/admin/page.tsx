@@ -99,6 +99,12 @@ export default async function Admin() {
           show: perms.READ_HACKERS || perms.EDIT_HACKERS || perms.IS_OFFICER,
         },
         {
+          href: "/admin/hackathon/manage",
+          label: "Hackathons",
+          icon: Settings,
+          show: perms.IS_OFFICER,
+        },
+        {
           href: "/admin/hackathon/events",
           label: "Events",
           icon: CalendarDays,

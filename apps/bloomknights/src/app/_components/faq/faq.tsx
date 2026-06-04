@@ -80,10 +80,10 @@ const FAQ = () => {
         </h2>
       </motion.div>
       <motion.div
-        className="bloom-focus-field bloom-focus-field-wide w-full max-w-[92%] px-1 py-5 sm:max-w-[86%] sm:px-2 sm:py-7 md:max-w-5xl md:px-6 md:py-9"
+        className="bloom-focus-field bloom-focus-field-wide faq-focus-field w-full max-w-[92%] px-1 py-5 sm:max-w-[86%] sm:px-2 sm:py-7 md:max-w-5xl md:px-6 md:py-9"
         variants={focusPanelReveal}
       >
-        <div className="relative grid gap-x-10 gap-y-8 md:grid-cols-2">
+        <div className="faq-section-grid relative grid gap-x-10 gap-y-8 md:grid-cols-2">
           {faqSections.map((section, sectionIndex) => (
             <motion.section
               key={section.title}

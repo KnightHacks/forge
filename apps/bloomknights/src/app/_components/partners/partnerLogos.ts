@@ -13,6 +13,12 @@ export const partnerLogos = [
     link: "https://www.oneethos.com/",
   },
   {
+    name: "GitHub Education",
+    white: GithubWSVG,
+    color: GithubBSVG,
+    link: "https://github.com/settings/education/benefits",
+  },
+  {
     name: "Google Gemini",
     white: GeminiWSVG,
     color: GeminiSVG,
@@ -23,11 +29,5 @@ export const partnerLogos = [
     white: MLHWSVG,
     color: MLHWSVG,
     link: "https://mlh.io/",
-  },
-  {
-    name: "GitHub Education",
-    white: GithubWSVG,
-    color: GithubBSVG,
-    link: "https://github.com/settings/education/benefits",
   },
 ];

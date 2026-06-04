@@ -32,6 +32,10 @@ import { logger, permissions } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 
 import { minioClient } from "../minio/minio-client";
+import {
+  normalizeResumeObjectNameForPersistence,
+  removeUnreferencedResumeObjectsForUser,
+} from "../resume-storage";
 import { permProcedure, protectedProcedure } from "../trpc";
 
 export const memberRouter = {
@@ -89,6 +93,10 @@ export const memberRouter = {
       const newAge = hasBirthdayPassed
         ? today.getFullYear() - birthDate.getFullYear()
         : today.getFullYear() - birthDate.getFullYear() - 1;
+      const resumeUrl = await normalizeResumeObjectNameForPersistence(
+        input.resumeUrl,
+        ctx.session.user.id,
+      );
 
       //If the company the user entered doesn't already exist, add it to the other companies db
       const company = input.company;
@@ -110,8 +118,10 @@ export const memberRouter = {
         userId: ctx.session.user.id,
         discordUser: ctx.session.user.name,
         age: newAge,
+        resumeUrl,
         phoneNumber: input.phoneNumber === "" ? null : input.phoneNumber,
       });
+      await removeUnreferencedResumeObjectsForUser(ctx.session.user.id);
 
       await discord.log({
         title: "Member Created",
@@ -153,7 +163,15 @@ export const memberRouter = {
       }
 
       const normalizedPhone = phoneNumber === "" ? null : phoneNumber;
-      const resume = input.resumeUrl ?? member.resumeUrl;
+      const isResumeChanged =
+        input.resumeUrl !== undefined && input.resumeUrl !== member.resumeUrl;
+      const resume =
+        input.resumeUrl === undefined || input.resumeUrl === member.resumeUrl
+          ? member.resumeUrl
+          : await normalizeResumeObjectNameForPersistence(
+              input.resumeUrl,
+              ctx.session.user.id,
+            );
 
       let newAge = member.age;
 
@@ -209,6 +227,9 @@ export const memberRouter = {
           phoneNumber: normalizedPhone,
         })
         .where(eq(Member.userId, ctx.session.user.id));
+      if (isResumeChanged) {
+        await removeUnreferencedResumeObjectsForUser(ctx.session.user.id);
+      }
 
       const changes = Object.keys(updateDataFromInput).reduce(
         (acc, key) => {

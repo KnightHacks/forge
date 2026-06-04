@@ -1,7 +1,7 @@
 const mlhcoc = "https://mlh.io/code-of-conduct";
 const sponsor = "https://blade.knighthacks.org/sponsor";
 const contact = "mailto:hack@knighthacks.org";
-const hackersGuide = "https://knight-hacks.notion.site/bloomknights2025";
+const hackersGuide = "https://knight-hacks.notion.site/bloomknights2026";
 
 export const footerLinks = [
   {
@@ -22,4 +22,4 @@ export const footerLinks = [
   },
 ];
 
-export const footerMessage = "Made with love 💚 by the Knight Hacks team";
+export const footerMessage = "Made with love 🤍 by the Knight Hacks team";

@@ -20,6 +20,10 @@ import { logger, permissions } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 
 import { minioClient } from "../../minio/minio-client";
+import {
+  normalizeResumeObjectNameForPersistence,
+  removeUnreferencedResumeObjectsForUser,
+} from "../../resume-storage";
 import { permProcedure, protectedProcedure } from "../../trpc";
 
 export const hackerMutationRouter = {
@@ -46,6 +50,22 @@ export const hackerMutationRouter = {
         throw new TRPCError({
           message: "Hackathon not found!",
           code: "NOT_FOUND",
+        });
+      }
+
+      const now = new Date();
+
+      if (now < hackathon.applicationOpen) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Applications are not open for this hackathon yet.",
+        });
+      }
+
+      if (now > hackathon.applicationDeadline) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Applications are closed for this hackathon.",
         });
       }
 
@@ -106,25 +126,40 @@ export const hackerMutationRouter = {
       const newAge = hasBirthdayPassed
         ? today.getFullYear() - birthDate.getFullYear()
         : today.getFullYear() - birthDate.getFullYear() - 1;
-
-      await db.insert(Hacker).values({
-        ...hackerData,
-        discordUser: ctx.session.user.name,
+      const resumeUrl = await normalizeResumeObjectNameForPersistence(
+        hackerData.resumeUrl,
         userId,
-        age: newAge,
-        phoneNumber:
-          hackerData.phoneNumber === "" ? null : hackerData.phoneNumber,
+      );
+
+      await db.transaction(async (tx) => {
+        const [insertedHacker] = await tx
+          .insert(Hacker)
+          .values({
+            ...hackerData,
+            discordUser: ctx.session.user.name,
+            userId,
+            age: newAge,
+            resumeUrl,
+            phoneNumber:
+              hackerData.phoneNumber === "" ? null : hackerData.phoneNumber,
+          })
+          .returning({ id: Hacker.id });
+
+        if (!insertedHacker) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create hacker.",
+          });
+        }
+
+        await tx.insert(HackerAttendee).values({
+          hackerId: insertedHacker.id,
+          hackathonId: hackathon.id,
+          status: "pending",
+        });
       });
 
-      const insertedHacker = await db.query.Hacker.findFirst({
-        where: (t, { eq }) => eq(t.userId, userId),
-      });
-
-      await db.insert(HackerAttendee).values({
-        hackerId: insertedHacker?.id ?? "",
-        hackathonId: hackathon.id,
-        status: "pending",
-      });
+      await removeUnreferencedResumeObjectsForUser(userId);
 
       await discord.log({
         title: `Hacker Created for ${hackathon.displayName}`,
@@ -175,17 +210,31 @@ export const hackerMutationRouter = {
       const newAge = hasBirthdayPassed
         ? today.getFullYear() - birthDate.getFullYear()
         : today.getFullYear() - birthDate.getFullYear() - 1;
+      const isResumeChanged =
+        updateData.resumeUrl !== undefined &&
+        updateData.resumeUrl !== hacker.resumeUrl;
+      const resumeUrl =
+        updateData.resumeUrl === undefined ||
+        updateData.resumeUrl === hacker.resumeUrl
+          ? undefined
+          : await normalizeResumeObjectNameForPersistence(
+              updateData.resumeUrl,
+              ctx.session.user.id,
+            );
 
       await db
         .update(Hacker)
         .set({
           ...updateData,
-          resumeUrl: updateData.resumeUrl,
+          resumeUrl,
           dob: dob,
           age: newAge,
           phoneNumber: normalizedPhone,
         })
         .where(eq(Hacker.userId, ctx.session.user.id));
+      if (isResumeChanged) {
+        await removeUnreferencedResumeObjectsForUser(ctx.session.user.id);
+      }
 
       // Create a log of the changes for logger
       const changes = Object.keys(updateData).reduce(

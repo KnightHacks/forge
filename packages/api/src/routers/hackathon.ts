@@ -1,6 +1,8 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { HACKATHONS } from "@forge/consts";
 import { and, count, desc, eq, getTableColumns, lt } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
@@ -8,12 +10,109 @@ import {
   Hacker,
   HackerAttendee,
 } from "@forge/db/schemas/knight-hacks";
+import { permissions } from "@forge/utils";
+import {
+  createHackathonApplicationBackgroundKeySchema,
+  getHackathonBackgroundIssues,
+  getHackathonDateWindowIssues,
+  hackathonDisplayNameSchema,
+  hackathonRouteNameSchema,
+  hackathonThemeSchema,
+} from "@forge/validators";
 
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
+
+const hackathonApplicationBackgroundKeySchema =
+  createHackathonApplicationBackgroundKeySchema(
+    HACKATHONS.APPLICATION_BACKGROUND_KEYS,
+  );
+
+const hackathonMutationInput = z.object({
+  name: hackathonRouteNameSchema,
+  displayName: hackathonDisplayNameSchema,
+  theme: hackathonThemeSchema,
+  applicationBackgroundEnabled: z.boolean().default(false),
+  applicationBackgroundKey: hackathonApplicationBackgroundKeySchema,
+  applicationOpen: z.coerce.date(),
+  applicationDeadline: z.coerce.date(),
+  confirmationDeadline: z.coerce.date(),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
+});
+
+function assertValidDateWindow(input: z.infer<typeof hackathonMutationInput>) {
+  const [issue] = getHackathonDateWindowIssues(input);
+
+  if (issue) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: issue.message,
+    });
+  }
+}
+
+function getHackathonMutationValues(
+  input: z.infer<typeof hackathonMutationInput>,
+) {
+  assertValidDateWindow(input);
+
+  const [backgroundIssue] = getHackathonBackgroundIssues(input);
+
+  if (backgroundIssue) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: backgroundIssue.message,
+    });
+  }
+
+  return {
+    name: input.name,
+    displayName: input.displayName,
+    theme: input.theme,
+    applicationBackgroundEnabled: input.applicationBackgroundEnabled,
+    applicationBackgroundKey: input.applicationBackgroundEnabled
+      ? input.applicationBackgroundKey
+      : null,
+    applicationOpen: input.applicationOpen,
+    applicationDeadline: input.applicationDeadline,
+    confirmationDeadline: input.confirmationDeadline,
+    startDate: input.startDate,
+    endDate: input.endDate,
+  };
+}
+
+function isHackathonNameUniqueError(error: unknown) {
+  if (typeof error !== "object" || error === null) return false;
+
+  const dbError = error as {
+    code?: unknown;
+    constraint?: unknown;
+  };
+
+  return (
+    dbError.code === "23505" &&
+    dbError.constraint === "knight_hacks_hackathon_name_unique"
+  );
+}
+
+function throwHackathonNameConflict(message: string): never {
+  throw new TRPCError({
+    code: "CONFLICT",
+    message,
+  });
+}
 
 export const hackathonRouter = {
   getHackathons: publicProcedure.query(async () => {
     return await db.query.Hackathon.findMany();
+  }),
+
+  getManagedHackathons: permProcedure.query(async ({ ctx }) => {
+    permissions.controlPerms.or(["IS_OFFICER"], ctx);
+
+    return await db.query.Hackathon.findMany({
+      orderBy: (t, { desc }) => desc(t.startDate),
+    });
   }),
 
   getCurrentHackathon: publicProcedure.query(async () => {
@@ -29,6 +128,7 @@ export const hackathonRouter = {
   getPreviousHacker: protectedProcedure.query(async ({ ctx }) => {
     // Get the most recent hacker profile for this user
     const hacker = await db.query.Hacker.findFirst({
+      orderBy: (t, { desc }) => [desc(t.dateCreated), desc(t.timeCreated)],
       where: (t, { eq }) => eq(t.userId, ctx.session.user.id),
     });
 
@@ -113,5 +213,106 @@ export const hackathonRouter = {
       });
 
       return hackers.length;
+    }),
+
+  createHackathon: permProcedure
+    .input(hackathonMutationInput)
+    .mutation(async ({ ctx, input }) => {
+      permissions.controlPerms.or(["IS_OFFICER"], ctx);
+
+      const values = getHackathonMutationValues(input);
+      const duplicate = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.name, values.name),
+      });
+
+      if (duplicate) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "A hackathon with this route name already exists.",
+        });
+      }
+
+      let created: typeof Hackathon.$inferSelect | undefined;
+
+      try {
+        [created] = await db.insert(Hackathon).values(values).returning();
+      } catch (error) {
+        if (isHackathonNameUniqueError(error)) {
+          throwHackathonNameConflict(
+            "A hackathon with this route name already exists.",
+          );
+        }
+
+        throw error;
+      }
+
+      if (!created) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create hackathon.",
+        });
+      }
+
+      return created;
+    }),
+
+  updateHackathon: permProcedure
+    .input(
+      hackathonMutationInput.extend({
+        id: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      permissions.controlPerms.or(["IS_OFFICER"], ctx);
+
+      const existing = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.id, input.id),
+      });
+
+      if (!existing) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Hackathon not found.",
+        });
+      }
+
+      const values = getHackathonMutationValues(input);
+      const duplicate = await db.query.Hackathon.findFirst({
+        where: (t, { eq }) => eq(t.name, values.name),
+      });
+
+      if (duplicate && duplicate.id !== input.id) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "A different hackathon already uses this route name.",
+        });
+      }
+
+      let updated: typeof Hackathon.$inferSelect | undefined;
+
+      try {
+        [updated] = await db
+          .update(Hackathon)
+          .set(values)
+          .where(eq(Hackathon.id, input.id))
+          .returning();
+      } catch (error) {
+        if (isHackathonNameUniqueError(error)) {
+          throwHackathonNameConflict(
+            "A different hackathon already uses this route name.",
+          );
+        }
+
+        throw error;
+      }
+
+      if (!updated) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update hackathon.",
+        });
+      }
+
+      return updated;
     }),
 } satisfies TRPCRouterRecord;

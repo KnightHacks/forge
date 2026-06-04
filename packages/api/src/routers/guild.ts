@@ -12,6 +12,10 @@ import { logger } from "@forge/utils";
 
 import { env } from "../env";
 import { minioClient } from "../minio/minio-client";
+import {
+  normalizeOwnedResumeObjectName,
+  RESUME_BUCKET_NAME,
+} from "../resume-security";
 import { protectedProcedure, publicProcedure } from "../trpc";
 
 const s3Client = new Client({
@@ -220,6 +224,7 @@ export const guildRouter = {
         where: (t, { eq }) => eq(t.id, input.memberId),
         columns: {
           resumeUrl: true,
+          userId: true,
           firstName: true,
           lastName: true,
         },
@@ -227,12 +232,13 @@ export const guildRouter = {
 
       if (!member?.resumeUrl) return { url: null };
 
-      const bucketName = "member-resumes";
+      const resumeObjectName = normalizeOwnedResumeObjectName(
+        member.resumeUrl,
+        member.userId,
+      );
+      if (!resumeObjectName) return { url: null };
 
-      const ext =
-        member.resumeUrl.lastIndexOf(".") > -1
-          ? member.resumeUrl.slice(member.resumeUrl.lastIndexOf("."))
-          : ".pdf";
+      const ext = resumeObjectName.endsWith(".pdf") ? ".pdf" : "";
       const safeName = `${member.firstName}_${member.lastName}`
         .replace(/\s+/g, "_")
         .replace(/[^a-zA-Z0-9_-]/g, "");
@@ -241,8 +247,8 @@ export const guildRouter = {
       try {
         const url = await s3Client.presignedUrl(
           "GET",
-          bucketName,
-          member.resumeUrl,
+          RESUME_BUCKET_NAME,
+          resumeObjectName,
           60 * 60,
           {
             "response-content-disposition": `attachment; filename="${downloadName}"`,

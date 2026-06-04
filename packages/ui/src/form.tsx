@@ -91,11 +91,18 @@ const FormItemContext = React.createContext<FormItemContextValue>(
   {} as FormItemContextValue,
 );
 
+function getFieldId(name: FieldPath<FieldValues>) {
+  return `form-${String(name).replace(/[^a-zA-Z0-9_-]+/g, "-")}`;
+}
+
 const FormItem = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
-  const id = React.useId();
+  const generatedId = React.useId();
+  const fieldContext = React.useContext(FormFieldContext);
+  const id =
+    props.id ?? (fieldContext ? getFieldId(fieldContext.name) : generatedId);
 
   return (
     <FormItemContext.Provider value={{ id }}>

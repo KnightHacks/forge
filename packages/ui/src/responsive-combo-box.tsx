@@ -2,6 +2,7 @@
 
 import * as React from "react";
 
+import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import {
   Command,
@@ -11,7 +12,12 @@ import {
   CommandItem,
   CommandList,
 } from "@forge/ui/command";
-import { Drawer, DrawerContent, DrawerTrigger } from "@forge/ui/drawer";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@forge/ui/drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 import { useMediaQuery } from "@forge/ui/use-media-query";
 
@@ -21,9 +27,13 @@ interface ResponsiveComboBoxProps<T> {
   getItemValue: (item: T) => string;
   getItemLabel: (item: T) => string;
   onItemSelect?: (item: T) => void;
+  onValueChange?: (value: string, item: T) => void;
   buttonPlaceholder?: string;
+  defaultValue?: string | null;
   inputPlaceholder?: string;
   isDisabled?: boolean;
+  triggerClassName?: string;
+  value?: string | null;
 }
 
 /**
@@ -79,19 +89,42 @@ export function ResponsiveComboBox<T>({
   getItemValue,
   getItemLabel,
   onItemSelect,
+  onValueChange,
   buttonPlaceholder = "Select item",
+  defaultValue = null,
   inputPlaceholder = "Filter items...",
   isDisabled,
+  triggerClassName,
+  value,
 }: ResponsiveComboBoxProps<T>) {
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const [selectedItem, setSelectedItem] = React.useState<T | null>(null);
+  const [internalValue, setInternalValue] = React.useState<string | null>(
+    defaultValue,
+  );
+  const selectedValue = value === undefined ? internalValue : value;
+  const selectedItem =
+    selectedValue == null
+      ? null
+      : (items.find((item) => getItemValue(item) === selectedValue) ?? null);
+
+  React.useEffect(() => {
+    if (value === undefined) {
+      setInternalValue(defaultValue);
+    }
+  }, [defaultValue, value]);
 
   const handleSelectItem = (item: T | null) => {
-    setSelectedItem(item);
-    if (item && onItemSelect) {
-      onItemSelect(item);
+    if (!item) return;
+
+    const nextValue = getItemValue(item);
+
+    if (value === undefined) {
+      setInternalValue(nextValue);
     }
+
+    onItemSelect?.(item);
+    onValueChange?.(nextValue, item);
   };
 
   if (isDesktop) {
@@ -100,7 +133,7 @@ export function ResponsiveComboBox<T>({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="w-full justify-start font-normal"
+            className={cn("w-full justify-start font-normal", triggerClassName)}
             disabled={isDisabled}
           >
             {selectedItem ? (
@@ -127,7 +160,11 @@ export function ResponsiveComboBox<T>({
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <Button variant="outline" className="w-full justify-start font-normal">
+        <Button
+          variant="outline"
+          className={cn("w-full justify-start font-normal", triggerClassName)}
+          disabled={isDisabled}
+        >
           {selectedItem ? (
             <>{getItemLabel(selectedItem)}</>
           ) : (
@@ -136,6 +173,7 @@ export function ResponsiveComboBox<T>({
         </Button>
       </DrawerTrigger>
       <DrawerContent>
+        <DrawerTitle className="sr-only">{inputPlaceholder}</DrawerTitle>
         <div className="mt-4 border-t">
           <ItemList
             items={items}
