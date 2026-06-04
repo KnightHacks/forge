@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@forge/ui";
 
 import type {
+  ApplicationVisualAmbientLayer,
   ApplicationVisualLayer,
   ApplicationVisualMode,
   BackgroundSize,
@@ -27,6 +28,7 @@ interface LayerState {
 }
 
 const EMPTY_VISUAL_LAYERS: readonly ApplicationVisualLayer[] = [];
+const EMPTY_AMBIENT_LAYERS: readonly ApplicationVisualAmbientLayer[] = [];
 
 function isValidBackgroundSize(
   size: BackgroundSize | null | undefined,
@@ -121,6 +123,7 @@ export function HackerApplicationBackground({
   const viewportRef = useRef<HTMLDivElement>(null);
   const visualConfig = getHackerApplicationBackground(backgroundKey);
   const layers = visualConfig.layers ?? EMPTY_VISUAL_LAYERS;
+  const ambientLayers = visualConfig.ambientLayers ?? EMPTY_AMBIENT_LAYERS;
   const primaryLayer =
     layers.find((layer) => layer.id === visualConfig.baseLayerId) ??
     layers.find((layer) => (layer.space ?? "scene") === "scene") ??
@@ -395,6 +398,37 @@ export function HackerApplicationBackground({
     </div>
   );
 
+  const renderSceneAmbientLayer = (layer: ApplicationVisualAmbientLayer) => {
+    const parallax = layer.parallax ?? 1;
+
+    return (
+      <div
+        key={layer.id}
+        className={cn("absolute left-0 top-1/2", layer.className)}
+        style={{
+          height: frame?.height ?? "100%",
+          transform: `translate3d(${(translateX * parallax).toFixed(2)}px, -50%, 0)`,
+          transition: `transform ${transition}`,
+          width: frame?.width ?? "100%",
+          willChange: "transform",
+          zIndex: layer.zIndex ?? 0,
+          ...layer.style,
+        }}
+      />
+    );
+  };
+
+  const renderViewportAmbientLayer = (layer: ApplicationVisualAmbientLayer) => (
+    <div
+      key={layer.id}
+      className={cn("absolute inset-0", layer.className)}
+      style={{
+        zIndex: layer.zIndex ?? 0,
+        ...layer.style,
+      }}
+    />
+  );
+
   return (
     <>
       {canRenderCustomVisual && (
@@ -410,6 +444,11 @@ export function HackerApplicationBackground({
                 ? renderViewportLayer(layer)
                 : renderSceneLayer(layer),
             )}
+          {ambientLayers.map((layer) =>
+            (layer.space ?? "viewport") === "scene"
+              ? renderSceneAmbientLayer(layer)
+              : renderViewportAmbientLayer(layer),
+          )}
           <div
             className={cn(
               "absolute inset-0 z-10",

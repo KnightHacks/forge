@@ -71,7 +71,7 @@ export default function ConfirmWithTOS({
           <p>
             By confirming, you agree to follow the{" "}
             <a
-              href="https://knight-hacks.notion.site/kh-25-tos"
+              href="https://knight-hacks.notion.site/knight-hacks-26-tos"
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-purple-500 transition duration-300 hover:text-purple-400 hover:shadow-[0_0_8px_2px_rgba(168,85,247,0.7)]"

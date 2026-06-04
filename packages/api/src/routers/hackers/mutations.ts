@@ -20,6 +20,7 @@ import { logger, permissions } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 
 import { minioClient } from "../../minio/minio-client";
+import { normalizeOwnedResumeObjectName } from "../../resume-security";
 import { permProcedure, protectedProcedure } from "../../trpc";
 
 export const hackerMutationRouter = {
@@ -122,6 +123,10 @@ export const hackerMutationRouter = {
       const newAge = hasBirthdayPassed
         ? today.getFullYear() - birthDate.getFullYear()
         : today.getFullYear() - birthDate.getFullYear() - 1;
+      const resumeUrl = normalizeOwnedResumeObjectName(
+        hackerData.resumeUrl,
+        userId,
+      );
 
       await db.transaction(async (tx) => {
         const [insertedHacker] = await tx
@@ -131,6 +136,7 @@ export const hackerMutationRouter = {
             discordUser: ctx.session.user.name,
             userId,
             age: newAge,
+            resumeUrl,
             phoneNumber:
               hackerData.phoneNumber === "" ? null : hackerData.phoneNumber,
           })
@@ -199,12 +205,19 @@ export const hackerMutationRouter = {
       const newAge = hasBirthdayPassed
         ? today.getFullYear() - birthDate.getFullYear()
         : today.getFullYear() - birthDate.getFullYear() - 1;
+      const resumeUrl =
+        updateData.resumeUrl === undefined
+          ? undefined
+          : normalizeOwnedResumeObjectName(
+              updateData.resumeUrl,
+              ctx.session.user.id,
+            );
 
       await db
         .update(Hacker)
         .set({
           ...updateData,
-          resumeUrl: updateData.resumeUrl,
+          resumeUrl,
           dob: dob,
           age: newAge,
           phoneNumber: normalizedPhone,

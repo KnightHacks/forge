@@ -32,6 +32,7 @@ import { logger, permissions } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 
 import { minioClient } from "../minio/minio-client";
+import { normalizeOwnedResumeObjectName } from "../resume-security";
 import { permProcedure, protectedProcedure } from "../trpc";
 
 export const memberRouter = {
@@ -89,6 +90,10 @@ export const memberRouter = {
       const newAge = hasBirthdayPassed
         ? today.getFullYear() - birthDate.getFullYear()
         : today.getFullYear() - birthDate.getFullYear() - 1;
+      const resumeUrl = normalizeOwnedResumeObjectName(
+        input.resumeUrl,
+        ctx.session.user.id,
+      );
 
       //If the company the user entered doesn't already exist, add it to the other companies db
       const company = input.company;
@@ -110,6 +115,7 @@ export const memberRouter = {
         userId: ctx.session.user.id,
         discordUser: ctx.session.user.name,
         age: newAge,
+        resumeUrl,
         phoneNumber: input.phoneNumber === "" ? null : input.phoneNumber,
       });
 
@@ -153,7 +159,10 @@ export const memberRouter = {
       }
 
       const normalizedPhone = phoneNumber === "" ? null : phoneNumber;
-      const resume = input.resumeUrl ?? member.resumeUrl;
+      const resume = normalizeOwnedResumeObjectName(
+        input.resumeUrl ?? member.resumeUrl,
+        ctx.session.user.id,
+      );
 
       let newAge = member.age;
 

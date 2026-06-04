@@ -42,9 +42,19 @@ export interface ApplicationVisualLayer {
   zIndex?: number;
 }
 
+export interface ApplicationVisualAmbientLayer {
+  id: string;
+  className: string;
+  parallax?: number;
+  space?: ApplicationVisualLayerSpace;
+  style?: CSSProperties;
+  zIndex?: number;
+}
+
 export interface ApplicationVisualConfig {
   key: string;
   label: string;
+  ambientLayers?: readonly ApplicationVisualAmbientLayer[];
   baseLayerId?: string;
   layers?: readonly ApplicationVisualLayer[];
   mode: ApplicationVisualMode;
@@ -52,5 +62,6 @@ export interface ApplicationVisualConfig {
   questionTransitionMs?: number;
   showStockEffects?: boolean;
   stepTransitionMs?: number;
+  styles?: string;
   transitionMs?: number;
 }

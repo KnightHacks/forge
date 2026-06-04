@@ -4,14 +4,20 @@ import type { KeyboardEvent, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Loader2, Send } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Info,
+  Loader2,
+  Search,
+  Send,
+} from "lucide-react";
 import { z } from "zod";
 
 import { FORMS, MINIO } from "@forge/consts";
 import { InsertHackerSchema } from "@forge/db/schemas/knight-hacks";
 import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { cn } from "@forge/ui";
-import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
 import {
@@ -30,7 +36,10 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-import { getHackerApplicationBackground } from "./hackbackgrounds";
+import {
+  getHackerApplicationBackground,
+  getHackerApplicationBackgroundKey,
+} from "./hackbackgrounds";
 import { HackerApplicationBackground } from "./hacker-application-background";
 
 const fieldTriggerClassName =
@@ -45,12 +54,28 @@ const checkboxClassName =
   "mt-0.5 flex h-5 w-5 items-center justify-center border-white/45 bg-white/5 text-white shadow-none data-[state=checked]:border-white data-[state=checked]:bg-white data-[state=checked]:text-[#21103d] focus-visible:ring-white/40 [&>span>svg]:h-5 [&>span>svg]:w-5";
 const checkboxLabelClassName =
   "text-sm font-medium leading-relaxed text-white/75";
+const highlightedCheckboxRowClassName =
+  "flex flex-row items-start gap-3 space-y-0 rounded-md border border-white/18 bg-[#06101b]/58 px-3 py-3 shadow-[0_16px_42px_rgba(0,0,0,0.28)] backdrop-blur-sm";
+const highlightedCheckboxClassName =
+  "h-6 w-6 border-white/70 bg-white/12 shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_0_24px_rgba(255,255,255,0.12)] data-[state=checked]:border-white data-[state=checked]:bg-white";
+const highlightedCheckboxLabelClassName =
+  "text-base font-semibold leading-relaxed text-white/90 drop-shadow-[0_1px_5px_rgba(0,0,0,0.78)]";
+const agreementErrorRowClassName =
+  "rounded-md bg-[#ff2f6d]/14 px-3 py-3 ring-1 ring-[#ff6f9a]/55 shadow-[0_0_30px_rgba(255,47,109,0.22)]";
+const agreementErrorCheckboxClassName =
+  "border-[#ff8aaa] bg-[#ff2f6d]/25 text-white shadow-[0_0_0_4px_rgba(255,111,154,0.24),0_0_24px_rgba(255,47,109,0.45)]";
+const agreementErrorLabelClassName =
+  "text-[#ffd3df] drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)]";
+const agreementErrorMessageClassName =
+  "mt-2 text-sm font-black tracking-wide text-[#ffadc3] drop-shadow-[0_1px_5px_rgba(0,0,0,0.9)] md:text-base";
 const agreementLinkClassName =
   "font-semibold text-white underline underline-offset-4 decoration-white/35 transition-colors hover:text-white/80 hover:decoration-white";
 const actionButtonClassName =
   "kh-nav-button size-14 rounded-full bg-white p-0 text-[#21103d] shadow-[0_18px_46px_rgba(0,0,0,0.42)] hover:bg-white/90 sm:size-16";
 const secondaryActionButtonClassName =
   "kh-nav-button size-14 rounded-full border-white/45 bg-[#12071f]/75 p-0 text-white shadow-[0_18px_46px_rgba(0,0,0,0.42)] hover:bg-[#12071f]/90 hover:text-white disabled:opacity-35 sm:size-16";
+const resumeSponsorDisclosure =
+  "Uploaded resumes will be shared with sponsors for potential internships and outreach.";
 
 const applicationAnimationStyles = `
 @keyframes khLightSweep {
@@ -117,8 +142,53 @@ const applicationAnimationStyles = `
 .kh-step-content > section > div:not(.hidden):nth-child(7) { animation-delay: 270ms; }
 .kh-step-content > section > div:not(.hidden):nth-child(8) { animation-delay: 315ms; }
 
-.kh-step-content :is(input, textarea, button):focus-visible {
+.kh-step-content :is(input, textarea, button:not(.kh-resume-info-trigger)):focus-visible {
   animation: khUnderlinePulse 1.8s ease-in-out infinite;
+}
+
+.kh-resume-info-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.kh-resume-info-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.kh-resume-info-trigger:hover,
+.kh-resume-info-trigger:focus-visible,
+.kh-resume-info-trigger[data-state="open"] {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.72);
+  color: white;
+}
+
+.kh-resume-info-trigger:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 3px;
+}
+
+.kh-resume-info-popover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(18, 7, 31, 0.96);
+  color: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(18px);
 }
 
 .kh-nav-button {
@@ -318,8 +388,79 @@ function FieldLabel({
   );
 }
 
+function ResumeInfoPopover({ visualKey }: { visualKey: string }) {
+  const [open, setOpen] = useState(false);
+  const closeTimeoutRef = useRef<number | null>(null);
+
+  const clearCloseTimeout = () => {
+    if (closeTimeoutRef.current === null) return;
+    window.clearTimeout(closeTimeoutRef.current);
+    closeTimeoutRef.current = null;
+  };
+
+  const openInfo = () => {
+    clearCloseTimeout();
+    setOpen(true);
+  };
+
+  const scheduleClose = () => {
+    clearCloseTimeout();
+    closeTimeoutRef.current = window.setTimeout(() => {
+      setOpen(false);
+      closeTimeoutRef.current = null;
+    }, 140);
+  };
+
+  useEffect(
+    () => () => {
+      if (closeTimeoutRef.current === null) return;
+      window.clearTimeout(closeTimeoutRef.current);
+    },
+    [],
+  );
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label="Resume sharing information"
+          className="kh-resume-info-trigger"
+          onBlur={scheduleClose}
+          onFocus={openInfo}
+          onMouseEnter={openInfo}
+          onMouseLeave={scheduleClose}
+        >
+          <Info aria-hidden="true" className="h-4 w-4" strokeWidth={2.4} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        side="top"
+        sideOffset={10}
+        className="kh-resume-info-popover w-[min(18rem,calc(100vw-2rem))] rounded-lg px-3.5 py-3 text-sm font-medium leading-relaxed"
+        data-application-visual={visualKey}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+        }}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+        }}
+        onMouseEnter={openInfo}
+        onMouseLeave={scheduleClose}
+      >
+        {resumeSponsorDisclosure}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function getComboBoxDisplayValue(value: unknown, fallback: string) {
   return typeof value === "string" && value.length > 0 ? value : fallback;
+}
+
+function getApplicationVisualFallbackKey(hackathonId: string) {
+  return getHackerApplicationBackgroundKey(hackathonId);
 }
 
 function getDateInputValue(value: Date | string | null | undefined) {
@@ -398,8 +539,10 @@ export function HackerFormPage({
 }) {
   const router = useRouter();
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
+  const [allergySearch, setAllergySearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [tosAccepted, setTosAccepted] = useState(false);
+  const [tosError, setTosError] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [transitionStep, setTransitionStep] = useState<number | null>(null);
   const [isStepTransitioning, setIsStepTransitioning] = useState(false);
@@ -407,16 +550,23 @@ export function HackerFormPage({
     "forward",
   );
   const pendingMobileFocusField = useRef<ApplicationFieldName | null>(null);
+  const prefillAppliedRef = useRef(false);
   const utils = api.useUtils();
+  const applicationVisualBackgroundKey =
+    getHackerApplicationBackgroundKey(applicationBackgroundKey) ??
+    getApplicationVisualFallbackKey(hackathonId);
   const applicationVisualConfig = getHackerApplicationBackground(
-    applicationBackgroundKey,
+    applicationVisualBackgroundKey,
   );
+  const applicationVisualKey = applicationVisualConfig.key;
+  const applicationStyles = `${applicationAnimationStyles}\n${applicationVisualConfig.styles ?? ""}`;
   const stepTransitionMs = applicationVisualConfig.stepTransitionMs ?? 0;
   const questionTransitionMs =
     applicationVisualConfig.questionTransitionMs ?? stepTransitionMs;
 
   // Get previous hacker profile to pre-fill form
   const { data: previousHacker } = api.hackathon.getPreviousHacker.useQuery();
+  const { data: memberProfile } = api.member.getMember.useQuery();
 
   const uploadResume = api.resume.uploadResume.useMutation({
     onError() {
@@ -610,6 +760,9 @@ export function HackerFormPage({
       agreesToMLHDataSharing: z.boolean().refine((val) => val === true, {
         message: "You must agree to the MLH data sharing terms",
       }),
+      agreesToReceiveEmailsFromMLH: z.boolean().refine((val) => val === true, {
+        message: "You must authorize MLH email updates",
+      }),
     }),
     defaultValues: {
       firstName: "",
@@ -621,6 +774,8 @@ export function HackerFormPage({
       country: undefined,
       school: undefined,
       levelOfStudy: undefined,
+      major: undefined,
+      raceOrEthnicity: undefined,
       shirtSize: undefined,
       githubProfileUrl: "",
       linkedinProfileUrl: "",
@@ -641,6 +796,8 @@ export function HackerFormPage({
   const fileRef = form.register("resumeUpload");
 
   useEffect(() => {
+    if (prefillAppliedRef.current) return;
+
     if (previousHacker) {
       form.reset({
         firstName: previousHacker.firstName,
@@ -653,19 +810,19 @@ export function HackerFormPage({
         country: previousHacker.country,
         school: previousHacker.school,
         levelOfStudy: previousHacker.levelOfStudy,
+        major: previousHacker.major,
         shirtSize: previousHacker.shirtSize,
         githubProfileUrl: previousHacker.githubProfileUrl ?? undefined,
         linkedinProfileUrl: previousHacker.linkedinProfileUrl ?? undefined,
         websiteUrl: previousHacker.websiteUrl ?? undefined,
-        resumeUrl: previousHacker.resumeUrl, // Keep existing resume URL
+        resumeUrl: previousHacker.resumeUrl ?? "", // Keep existing resume URL
         dob: getDateInputValue(previousHacker.dob),
         gradDate: getDateInputValue(previousHacker.gradDate),
         survey1: "", // Keep survey answers empty for new applications
         survey2: "", // Keep survey answers empty for new applications
         isFirstTime: previousHacker.isFirstTime,
         foodAllergies: previousHacker.foodAllergies,
-        agreesToReceiveEmailsFromMLH:
-          previousHacker.agreesToReceiveEmailsFromMLH,
+        agreesToReceiveEmailsFromMLH: false, // Always require fresh opt-in
         agreesToMLHCodeOfConduct: false, // Always require fresh consent
         agreesToMLHDataSharing: false, // Always require fresh consent
       });
@@ -676,8 +833,44 @@ export function HackerFormPage({
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedAllergies(allergies);
       }
+
+      prefillAppliedRef.current = true;
+      return;
     }
-  }, [previousHacker, form]);
+
+    if (previousHacker === null && memberProfile) {
+      form.reset({
+        firstName: memberProfile.firstName,
+        lastName: memberProfile.lastName,
+        gender: memberProfile.gender,
+        raceOrEthnicity: memberProfile.raceOrEthnicity,
+        discordUser: memberProfile.discordUser,
+        email: memberProfile.email,
+        phoneNumber: memberProfile.phoneNumber ?? undefined,
+        country: undefined,
+        school: memberProfile.school,
+        levelOfStudy: memberProfile.levelOfStudy,
+        major: memberProfile.major,
+        shirtSize: memberProfile.shirtSize,
+        githubProfileUrl: memberProfile.githubProfileUrl ?? undefined,
+        linkedinProfileUrl: memberProfile.linkedinProfileUrl ?? undefined,
+        websiteUrl: memberProfile.websiteUrl ?? undefined,
+        resumeUrl: memberProfile.resumeUrl ?? "",
+        dob: getDateInputValue(memberProfile.dob),
+        gradDate: getDateInputValue(memberProfile.gradDate),
+        survey1: "",
+        survey2: "",
+        isFirstTime: false,
+        foodAllergies: "",
+        agreesToReceiveEmailsFromMLH: false,
+        agreesToMLHCodeOfConduct: false,
+        agreesToMLHDataSharing: false,
+      });
+
+      setSelectedAllergies([]);
+      prefillAppliedRef.current = true;
+    }
+  }, [memberProfile, previousHacker, form]);
 
   // Convert a resume to base64 for client-server transmission
   const fileToBase64 = (file: File): Promise<string> =>
@@ -722,6 +915,15 @@ export function HackerFormPage({
       );
 
       if (!isStepValid) return false;
+
+      if (currentStep.id === "tosAccepted" && !tosAccepted) {
+        setTosError(true);
+        return false;
+      }
+
+      if (currentStep.id === "tosAccepted") {
+        setTosError(false);
+      }
     }
 
     setStepDirection(boundedNextStep > activeStep ? "forward" : "back");
@@ -827,9 +1029,15 @@ export function HackerFormPage({
     };
   }, [activeStep, currentStep.fields]);
 
+  const handleInvalidSubmit = () => {
+    if (!tosAccepted) {
+      setTosError(true);
+    }
+  };
+
   return (
     <Form {...form}>
-      <style>{applicationAnimationStyles}</style>
+      <style>{applicationStyles}</style>
       <form
         className="min-h-screen bg-primary/5 text-foreground"
         noValidate
@@ -840,13 +1048,14 @@ export function HackerFormPage({
           setLoading(true);
 
           if (!tosAccepted) {
+            setTosError(true);
             toast.error("Please Accept the Knight Hacks Terms of Service");
             setLoading(false);
             return;
           }
 
           try {
-            let resumeUrl = "";
+            let resumeUrl = values.resumeUrl ?? "";
             if (values.resumeUpload?.length && values.resumeUpload[0]) {
               const file = values.resumeUpload[0];
               const base64File = await fileToBase64(file);
@@ -902,11 +1111,14 @@ export function HackerFormPage({
               "Something went wrong while processing your application.",
             );
           }
-        })}
+        }, handleInvalidSubmit)}
       >
-        <div className="kh-application-shell relative min-h-svh overflow-x-hidden bg-[linear-gradient(135deg,#10071d_0%,#271148_48%,#0b0614_100%)] text-white">
+        <div
+          className="kh-application-shell relative min-h-svh overflow-x-hidden bg-[linear-gradient(135deg,#10071d_0%,#271148_48%,#0b0614_100%)] text-white"
+          data-application-visual={applicationVisualKey}
+        >
           <HackerApplicationBackground
-            backgroundKey={applicationBackgroundKey}
+            backgroundKey={applicationVisualKey}
             isTransitioning={isStepTransitioning}
             progress={progressRatio}
             transitionDirection={stepDirection}
@@ -1392,7 +1604,12 @@ export function HackerFormPage({
                             !isActiveQuestion("resumeUpload") && "hidden",
                           )}
                         >
-                          <FieldLabel optional>Resume</FieldLabel>
+                          <div className="kh-resume-info-row">
+                            <FieldLabel optional>Resume</FieldLabel>
+                            <ResumeInfoPopover
+                              visualKey={applicationVisualKey}
+                            />
+                          </div>
                           <FormControl>
                             <Input
                               type="file"
@@ -1419,6 +1636,17 @@ export function HackerFormPage({
                       control={form.control}
                       name="foodAllergies"
                       render={() => {
+                        const allergySummary =
+                          selectedAllergies.length > 0
+                            ? selectedAllergies.join(", ")
+                            : "Select allergies";
+                        const filteredAllergies = FORMS.ALLERGIES.filter(
+                          (allergy) =>
+                            allergy
+                              .toLowerCase()
+                              .includes(allergySearch.trim().toLowerCase()),
+                        );
+
                         return (
                           <FormItem
                             className={cn(
@@ -1433,36 +1661,49 @@ export function HackerFormPage({
                                 <PopoverTrigger asChild>
                                   <Button
                                     variant="outline"
-                                    className="flex h-auto min-h-14 w-full flex-wrap items-center justify-start gap-2 rounded-none border-x-0 border-b-2 border-t-0 border-white/75 bg-transparent px-0 py-3 text-left text-white shadow-none transition-colors hover:border-white hover:bg-transparent hover:text-white"
+                                    className={cn(
+                                      fieldTriggerClassName,
+                                      "flex w-full items-center justify-start gap-2",
+                                    )}
                                   >
-                                    <span className="text-sm font-semibold text-white/45">
-                                      Select Allergies:
-                                    </span>
-                                    <div className="flex flex-wrap gap-1">
-                                      {selectedAllergies.length > 0 ? (
-                                        selectedAllergies.map((allergy) => (
-                                          <Badge
-                                            key={allergy}
-                                            variant="secondary"
-                                            className="border border-white/20 bg-white/10 px-2 py-1 text-xs text-white"
-                                          >
-                                            {allergy}
-                                          </Badge>
-                                        ))
-                                      ) : (
-                                        <span className="text-sm font-medium text-white/40">
-                                          None selected
-                                        </span>
+                                    <span
+                                      className={cn(
+                                        "block min-w-0 flex-1 truncate",
+                                        selectedAllergies.length === 0 &&
+                                          "text-white/35",
                                       )}
-                                    </div>
+                                    >
+                                      {allergySummary}
+                                    </span>
                                   </Button>
                                 </PopoverTrigger>
                                 <PopoverContent
                                   align="start"
-                                  className="min-w-(--radix-popover-trigger-width) w-full max-w-none border-white/15 bg-[#160828]/95 p-1 text-white shadow-2xl"
+                                  collisionPadding={16}
+                                  className="bg-[#030713]/98 flex w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-lg border-white/15 p-0 text-white shadow-2xl"
+                                  style={{
+                                    maxHeight:
+                                      "min(22rem, calc(100svh - 2rem), var(--radix-popover-content-available-height))",
+                                  }}
                                 >
-                                  <div className="flex w-full flex-col">
-                                    {FORMS.ALLERGIES.map((allergy) => (
+                                  <div className="border-white/12 flex h-14 items-center border-b px-3">
+                                    <Search
+                                      aria-hidden="true"
+                                      className="mr-3 h-5 w-5 shrink-0 text-white/55"
+                                      strokeWidth={2}
+                                    />
+                                    <input
+                                      aria-label="Search allergies"
+                                      value={allergySearch}
+                                      onChange={(event) =>
+                                        setAllergySearch(event.target.value)
+                                      }
+                                      placeholder="Search allergies"
+                                      className="h-full min-w-0 flex-1 bg-transparent text-base font-medium text-white outline-none placeholder:text-white/45 sm:text-lg"
+                                    />
+                                  </div>
+                                  <div className="flex w-full flex-1 flex-col overflow-y-auto overscroll-contain p-1">
+                                    {filteredAllergies.map((allergy) => (
                                       <div
                                         key={allergy}
                                         onClick={() => {
@@ -1479,7 +1720,11 @@ export function HackerFormPage({
                                         }}
                                         role="button"
                                         tabIndex={0}
-                                        className="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                                        className={cn(
+                                          "flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-base text-white/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:bg-white/10 focus-visible:text-white focus-visible:outline-none sm:text-lg",
+                                          selectedAllergies.includes(allergy) &&
+                                            "bg-[#1f2b3b] text-white",
+                                        )}
                                       >
                                         <Checkbox
                                           checked={selectedAllergies.includes(
@@ -1496,6 +1741,11 @@ export function HackerFormPage({
                                         <span>{allergy}</span>
                                       </div>
                                     ))}
+                                    {filteredAllergies.length === 0 && (
+                                      <div className="px-3 py-6 text-center text-sm font-medium text-white/45">
+                                        No allergies found.
+                                      </div>
+                                    )}
                                   </div>
                                 </PopoverContent>
                               </Popover>
@@ -1511,7 +1761,7 @@ export function HackerFormPage({
                       render={({ field }) => (
                         <FormItem
                           className={cn(
-                            "flex flex-row items-start gap-3 space-y-0",
+                            highlightedCheckboxRowClassName,
                             !isActiveQuestion("isFirstTime") && "hidden",
                           )}
                         >
@@ -1519,11 +1769,16 @@ export function HackerFormPage({
                             <Checkbox
                               checked={!!field.value}
                               onCheckedChange={field.onChange}
-                              className={checkboxClassName}
+                              className={cn(
+                                checkboxClassName,
+                                highlightedCheckboxClassName,
+                              )}
                             />
                           </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className={checkboxLabelClassName}>
+                          <div className="min-w-0 flex-1 space-y-1 leading-none">
+                            <FormLabel
+                              className={highlightedCheckboxLabelClassName}
+                            >
                               This is my first time participating in a
                               Hackathon.
                             </FormLabel>
@@ -1537,10 +1792,11 @@ export function HackerFormPage({
                     <FormField
                       control={form.control}
                       name="agreesToMLHCodeOfConduct"
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <FormItem
                           className={cn(
                             "flex flex-row items-start gap-3 space-y-0",
+                            fieldState.error && agreementErrorRowClassName,
                             !isActiveQuestion("agreesToMLHCodeOfConduct") &&
                               "hidden",
                           )}
@@ -1548,12 +1804,27 @@ export function HackerFormPage({
                           <FormControl>
                             <Checkbox
                               checked={!!field.value}
-                              onCheckedChange={field.onChange}
-                              className={checkboxClassName}
+                              onCheckedChange={(value) => {
+                                field.onChange(value);
+                                if (value) {
+                                  form.clearErrors("agreesToMLHCodeOfConduct");
+                                }
+                              }}
+                              className={cn(
+                                checkboxClassName,
+                                fieldState.error &&
+                                  agreementErrorCheckboxClassName,
+                              )}
                             />
                           </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className={checkboxLabelClassName}>
+                          <div className="min-w-0 flex-1 space-y-1 leading-none">
+                            <FormLabel
+                              className={cn(
+                                checkboxLabelClassName,
+                                fieldState.error &&
+                                  agreementErrorLabelClassName,
+                              )}
+                            >
                               I have read and agree to the{" "}
                               <Link
                                 href="https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md"
@@ -1565,8 +1836,10 @@ export function HackerFormPage({
                               </Link>
                               . <span className={requiredMarkClassName}>*</span>
                             </FormLabel>
+                            <FormMessage
+                              className={agreementErrorMessageClassName}
+                            />
                           </div>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -1574,10 +1847,11 @@ export function HackerFormPage({
                     <FormField
                       control={form.control}
                       name="agreesToMLHDataSharing"
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <FormItem
                           className={cn(
                             "flex flex-row items-start gap-3 space-y-0",
+                            fieldState.error && agreementErrorRowClassName,
                             !isActiveQuestion("agreesToMLHDataSharing") &&
                               "hidden",
                           )}
@@ -1585,12 +1859,27 @@ export function HackerFormPage({
                           <FormControl>
                             <Checkbox
                               checked={!!field.value}
-                              onCheckedChange={field.onChange}
-                              className={checkboxClassName}
+                              onCheckedChange={(value) => {
+                                field.onChange(value);
+                                if (value) {
+                                  form.clearErrors("agreesToMLHDataSharing");
+                                }
+                              }}
+                              className={cn(
+                                checkboxClassName,
+                                fieldState.error &&
+                                  agreementErrorCheckboxClassName,
+                              )}
                             />
                           </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className={checkboxLabelClassName}>
+                          <div className="min-w-0 flex-1 space-y-1 leading-none">
+                            <FormLabel
+                              className={cn(
+                                checkboxLabelClassName,
+                                fieldState.error &&
+                                  agreementErrorLabelClassName,
+                              )}
+                            >
                               I authorize you to share my
                               application/registration information with Major
                               League Hacking for event administration, ranking,
@@ -1623,8 +1912,10 @@ export function HackerFormPage({
                               </Link>
                               . <span className={requiredMarkClassName}>*</span>
                             </FormLabel>
+                            <FormMessage
+                              className={agreementErrorMessageClassName}
+                            />
                           </div>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -1632,10 +1923,11 @@ export function HackerFormPage({
                     <FormField
                       control={form.control}
                       name="agreesToReceiveEmailsFromMLH"
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <FormItem
                           className={cn(
                             "flex flex-row items-start gap-3 space-y-0",
+                            fieldState.error && agreementErrorRowClassName,
                             !isActiveQuestion("agreesToReceiveEmailsFromMLH") &&
                               "hidden",
                           )}
@@ -1643,16 +1935,37 @@ export function HackerFormPage({
                           <FormControl>
                             <Checkbox
                               checked={!!field.value}
-                              onCheckedChange={field.onChange}
-                              className={checkboxClassName}
+                              onCheckedChange={(value) => {
+                                field.onChange(value);
+                                if (value) {
+                                  form.clearErrors(
+                                    "agreesToReceiveEmailsFromMLH",
+                                  );
+                                }
+                              }}
+                              className={cn(
+                                checkboxClassName,
+                                fieldState.error &&
+                                  agreementErrorCheckboxClassName,
+                              )}
                             />
                           </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className={checkboxLabelClassName}>
+                          <div className="min-w-0 flex-1 space-y-1 leading-none">
+                            <FormLabel
+                              className={cn(
+                                checkboxLabelClassName,
+                                fieldState.error &&
+                                  agreementErrorLabelClassName,
+                              )}
+                            >
                               I authorize MLH to send me occasional emails about
                               relevant events, career opportunities, and
-                              community announcements.
+                              community announcements.{" "}
+                              <span className={requiredMarkClassName}>*</span>
                             </FormLabel>
+                            <FormMessage
+                              className={agreementErrorMessageClassName}
+                            />
                           </div>
                         </FormItem>
                       )}
@@ -1660,35 +1973,60 @@ export function HackerFormPage({
 
                     <div
                       className={cn(
-                        "flex flex-row items-start gap-3 space-y-0 py-2",
+                        "flex flex-row items-start gap-3 space-y-0",
+                        tosError ? agreementErrorRowClassName : "py-2",
                         !isActiveQuestion("tosAccepted") && "hidden",
                       )}
                     >
                       <div>
                         <Checkbox
                           checked={tosAccepted}
-                          onCheckedChange={(v) => setTosAccepted(!!v)}
-                          className={checkboxClassName}
+                          onCheckedChange={(v) => {
+                            const isChecked = !!v;
+                            setTosAccepted(isChecked);
+                            if (isChecked) setTosError(false);
+                          }}
+                          className={cn(
+                            checkboxClassName,
+                            tosError && agreementErrorCheckboxClassName,
+                          )}
+                          aria-invalid={tosError}
                           aria-labelledby="tos-visual-label"
+                          aria-describedby={
+                            tosError ? "tos-visual-error" : undefined
+                          }
                         />
                       </div>
 
-                      <div className="space-y-1 leading-none">
+                      <div className="min-w-0 flex-1 space-y-1 leading-none">
                         <div
                           id="tos-visual-label"
-                          className={checkboxLabelClassName}
+                          className={cn(
+                            checkboxLabelClassName,
+                            tosError && agreementErrorLabelClassName,
+                          )}
                         >
                           By checking this box you acknowledge that you agree to
                           the{" "}
                           <Link
-                            href="https://knight-hacks.notion.site/kh-25-tos"
+                            href="https://knight-hacks.notion.site/knight-hacks-26-tos"
                             target="_blank"
                             rel="noopener noreferrer"
                             className={agreementLinkClassName}
                           >
                             Knight Hacks Terms of Service
                           </Link>
+                          . <span className={requiredMarkClassName}>*</span>
                         </div>
+                        {tosError && (
+                          <p
+                            id="tos-visual-error"
+                            className={agreementErrorMessageClassName}
+                            role="alert"
+                          >
+                            You must agree to the Knight Hacks Terms of Service
+                          </p>
+                        )}
                       </div>
                     </div>
                   </section>

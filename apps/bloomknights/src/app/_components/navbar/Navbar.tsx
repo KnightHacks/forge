@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, useMotionValueEvent, useScroll } from "framer-motion";
 
 import MLHBadge from "./MLHBadge";
+import { navChromeTransition } from "./motion";
 import NavContent from "./NavContent";
 
-const hackersGuide = "https://knight-hacks.notion.site/bloomknights2025";
+const hackersGuide = "https://knight-hacks.notion.site/bloomknights2026";
 const discordLink = "https://discord.gg/2W2HCvkKAy";
 
 const NAV_LINKS = [
@@ -18,28 +19,49 @@ const NAV_LINKS = [
 ];
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(
+    () => typeof window !== "undefined" && window.scrollY > 100,
+  );
+  const [isHidden, setIsHidden] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { scrollY } = useScroll();
 
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 100);
+  useMotionValueEvent(scrollY, "change", (current) => {
+    const previous = scrollY.getPrevious() ?? current;
+    const scrollDelta = current - previous;
+    const isPastHeroChrome = current > 120;
 
-    handleScroll();
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    setIsScrolled(current > 100);
+
+    if (isMobileMenuOpen) {
+      setIsHidden(false);
+      return;
+    }
+
+    if (Math.abs(scrollDelta) < 4) return;
+
+    setIsHidden(scrollDelta > 0 && isPastHeroChrome);
+  });
 
   return (
     <>
       <motion.nav
         initial={{ opacity: 0, y: -40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        animate={{ opacity: isHidden ? 0 : 1, y: isHidden ? -96 : 0 }}
+        transition={navChromeTransition}
         className="fixed left-0 top-0 z-50 w-full bg-transparent"
+        style={{ pointerEvents: isHidden ? "none" : "auto" }}
       >
-        <NavContent navLinks={NAV_LINKS} showGlow={isScrolled} />
+        <NavContent
+          isMobileMenuOpen={isMobileMenuOpen}
+          navLinks={NAV_LINKS}
+          showGlow={isScrolled}
+          onMobileMenuClose={() => setIsMobileMenuOpen(false)}
+          onMobileMenuToggle={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
+        />
       </motion.nav>
 
-      <MLHBadge showFloating={isScrolled} />
+      <MLHBadge isHidden={isHidden || isMobileMenuOpen} />
     </>
   );
 };

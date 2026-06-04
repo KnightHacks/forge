@@ -8,6 +8,14 @@ import { db } from "@forge/db/client";
 import { logger } from "@forge/utils";
 
 import { env } from "../env";
+import {
+  createResumeObjectName,
+  decodeAndValidateResumeDataUrl,
+  getResumeUserPrefix,
+  MAX_RESUME_DATA_URL_LENGTH,
+  normalizeOwnedResumeObjectName,
+  RESUME_BUCKET_NAME,
+} from "../resume-security";
 import { protectedProcedure } from "../trpc";
 
 const s3Client = new Client({
@@ -22,60 +30,52 @@ export const resumeRouter = {
     .input(
       z.object({
         fileName: z.string(),
-        fileContent: z.string(), // Base-64 encoded
+        fileContent: z.string().max(MAX_RESUME_DATA_URL_LENGTH), // Base-64 encoded PDF data URL
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const { fileName, fileContent } = input;
+      const { fileContent } = input;
+      const fileBuffer = decodeAndValidateResumeDataUrl(fileContent);
+      const userDirectory = getResumeUserPrefix(ctx.session.user.id);
+      const filePath = createResumeObjectName(ctx.session.user.id);
 
-      // Decode Base64 to Buffer
-      const base64Data = fileContent.split(",")[1]; // Remove metadata prefix
-      if (base64Data) {
-        const fileBuffer = Buffer.from(base64Data, "base64");
-
-        const bucketName = "member-resumes";
-        const userDirectory = `${ctx.session.user.id}/`;
-        const filePath = `${userDirectory}${fileName}`;
-
-        // Ensure bucket exists
-        const bucketExists = await s3Client.bucketExists(bucketName);
-        if (!bucketExists) {
-          await s3Client.makeBucket(bucketName, MINIO.BUCKET_REGION);
-        }
-
-        // Overwrite any existing resume associated with the user
-        const existingResumes = [];
-        const objectStream = s3Client.listObjects(
-          bucketName,
-          userDirectory,
-          true,
-        );
-        for await (const obj of objectStream as AsyncIterable<ItemBucketMetadata>) {
-          existingResumes.push(obj.name);
-        }
-
-        if (existingResumes.length > 0) {
-          await Promise.all(
-            existingResumes.map(async (objectName: string) => {
-              await s3Client.removeObject(bucketName, objectName);
-            }),
-          );
-        }
-
-        await s3Client.putObject(bucketName, filePath, fileBuffer);
-
-        // Path to the resume within the bucket
-        return filePath;
-      } else {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Base64 data is missing or invalid",
-        });
+      // Ensure bucket exists
+      const bucketExists = await s3Client.bucketExists(RESUME_BUCKET_NAME);
+      if (!bucketExists) {
+        await s3Client.makeBucket(RESUME_BUCKET_NAME, MINIO.BUCKET_REGION);
       }
+
+      // Overwrite any existing resume associated with the user
+      const existingResumes = [];
+      const objectStream = s3Client.listObjects(
+        RESUME_BUCKET_NAME,
+        userDirectory,
+        true,
+      );
+      for await (const obj of objectStream as AsyncIterable<ItemBucketMetadata>) {
+        existingResumes.push(obj.name);
+      }
+
+      if (existingResumes.length > 0) {
+        await Promise.all(
+          existingResumes.map(async (objectName: string) => {
+            await s3Client.removeObject(RESUME_BUCKET_NAME, objectName);
+          }),
+        );
+      }
+
+      await s3Client.putObject(
+        RESUME_BUCKET_NAME,
+        filePath,
+        fileBuffer,
+        fileBuffer.length,
+        { "Content-Type": "application/pdf" },
+      );
+
+      // Path to the resume within the bucket
+      return filePath;
     }),
   getResume: protectedProcedure.query(async ({ ctx }) => {
-    const bucketName = "member-resumes";
-
     // Find a member resume
     const member = await db.query.Member.findFirst({
       where: (t, { eq }) => eq(t.userId, ctx.session.user.id),
@@ -92,7 +92,10 @@ export const resumeRouter = {
       return { url: null };
     }
 
-    const filename = member?.resumeUrl ?? hacker?.resumeUrl;
+    const filename = normalizeOwnedResumeObjectName(
+      member?.resumeUrl ?? hacker?.resumeUrl,
+      ctx.session.user.id,
+    );
 
     if (!filename) {
       logger.error("No resume URL found for user");
@@ -103,7 +106,7 @@ export const resumeRouter = {
       const expiresIn = 60 * 60; // 1 hour
       const presignedUrl = await s3Client.presignedUrl(
         "GET",
-        bucketName,
+        RESUME_BUCKET_NAME,
         filename,
         expiresIn,
       );
