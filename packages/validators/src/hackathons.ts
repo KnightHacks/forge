@@ -29,6 +29,12 @@ export function createHackathonApplicationBackgroundKeySchema<
   return z.enum(backgroundKeys).nullable().optional();
 }
 
+export function createHackathonEmailTemplateKeySchema<
+  T extends readonly [string, ...string[]],
+>(emailTemplateKeys: T) {
+  return z.enum(emailTemplateKeys).nullable().optional();
+}
+
 export type HackathonDateWindowField =
   | "applicationOpen"
   | "applicationDeadline"
@@ -46,7 +52,9 @@ export interface HackathonDateWindow {
 
 export interface HackathonValidationIssue {
   message: string;
-  path: [HackathonDateWindowField | "applicationBackgroundKey"];
+  path: [
+    HackathonDateWindowField | "applicationBackgroundKey" | "emailTemplateKey",
+  ];
 }
 
 function isValidDate(date: Date) {
@@ -66,6 +74,23 @@ export function getHackathonBackgroundIssues({
     {
       message: "Choose a background preset or disable the background override.",
       path: ["applicationBackgroundKey"],
+    },
+  ];
+}
+
+export function getHackathonEmailTemplateIssues({
+  emailTemplateEnabled,
+  emailTemplateKey,
+}: {
+  emailTemplateEnabled: boolean;
+  emailTemplateKey?: string | null;
+}): HackathonValidationIssue[] {
+  if (!emailTemplateEnabled || emailTemplateKey) return [];
+
+  return [
+    {
+      message: "Choose an email template preset or disable the email override.",
+      path: ["emailTemplateKey"],
     },
   ];
 }

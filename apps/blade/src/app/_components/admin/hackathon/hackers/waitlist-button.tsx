@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ClipboardList, Loader2 } from "lucide-react";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
-import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -19,20 +18,38 @@ import { api } from "~/trpc/react";
 
 export default function WaitlistButton({
   hacker,
-  hackathonName,
+  hackathonRouteName,
 }: {
   hacker: InsertHacker & { status: string };
-  hackathonName: string;
+  hackathonRouteName: string;
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const utils = api.useUtils();
+  const sendHackathonEmail = api.email.sendHackathonEmail.useMutation({
+    onSuccess: () => {
+      toast.success(
+        `Waitlisting email sent to ${hacker.firstName} ${hacker.lastName}!`,
+      );
+    },
+    onError: (opts) => {
+      toast.error(opts.message);
+    },
+  });
+
   const updateStatus = api.hackerMutation.updateHackerStatus.useMutation({
     onSuccess() {
       toast.success(
         `Waitlisted ${hacker.firstName} ${hacker.lastName} successfully!`,
       );
+      sendHackathonEmail.mutate({
+        from: "donotreply@knighthacks.org",
+        hackathonName: hackathonRouteName,
+        kind: "Waitlist",
+        recipientName: hacker.firstName,
+        to: hacker.email,
+      });
       setIsOpen(false);
     },
     onError(opts) {
@@ -49,34 +66,12 @@ export default function WaitlistButton({
     },
   });
 
-  const sendEmail = api.email.sendEmail.useMutation({
-    onSuccess: () => {
-      toast.success(
-        `Waitlisting email sent to ${hacker.firstName} ${hacker.lastName}!`,
-      );
-    },
-    onError: (opts) => {
-      toast.error(opts.message);
-    },
-  });
-
   const handleUpdateStatus = () => {
     setIsLoading(true);
     updateStatus.mutate({
       id: hacker.id ?? "",
       status: "waitlisted",
-      hackathonName,
-    });
-
-    sendEmail.mutate({
-      from: "donotreply@knighthacks.org",
-      to: hacker.email,
-      subject: `${hackathonName} Waitlist Information`,
-      template_id: HACKATHON_TEMPLATE_IDS.Waitlist,
-      data: {
-        name: hacker.firstName,
-        hackathon: hackathonName,
-      },
+      hackathonName: hackathonRouteName,
     });
   };
 

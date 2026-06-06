@@ -85,32 +85,35 @@ export async function normalizeResumeObjectNameForPersistence(
 }
 
 export async function removeUnreferencedResumeObjectsForUser(userId: string) {
-  const referencedObjects = await getReferencedResumeObjectsForUser(userId);
-
-  const objectsToRemove: string[] = [];
-  const objectStream = resumeStorageClient.listObjects(
-    RESUME_BUCKET_NAME,
-    getResumeUserPrefix(userId),
-    true,
-  );
-
-  for await (const obj of objectStream as AsyncIterable<ItemBucketMetadata>) {
-    const objectName = typeof obj.name === "string" ? obj.name : null;
-    if (!objectName || referencedObjects.has(objectName)) continue;
-    if (!isResumeObjectOwnedByUser(objectName, userId)) continue;
-
-    objectsToRemove.push(objectName);
-  }
-
-  if (objectsToRemove.length === 0) return;
-
   try {
+    const referencedObjects = await getReferencedResumeObjectsForUser(userId);
+
+    const objectsToRemove: string[] = [];
+    const objectStream = resumeStorageClient.listObjects(
+      RESUME_BUCKET_NAME,
+      getResumeUserPrefix(userId),
+      true,
+    );
+
+    for await (const obj of objectStream as AsyncIterable<ItemBucketMetadata>) {
+      const objectName = typeof obj.name === "string" ? obj.name : null;
+      if (!objectName || referencedObjects.has(objectName)) continue;
+      if (!isResumeObjectOwnedByUser(objectName, userId)) continue;
+
+      objectsToRemove.push(objectName);
+    }
+
+    if (objectsToRemove.length === 0) return;
+
     await Promise.all(
       objectsToRemove.map((objectName) =>
         resumeStorageClient.removeObject(RESUME_BUCKET_NAME, objectName),
       ),
     );
   } catch (error) {
-    logger.warn("Unable to remove unreferenced resume objects:", error);
+    logger.warn(
+      "Unable to remove unreferenced resume objects; continuing:",
+      error,
+    );
   }
 }

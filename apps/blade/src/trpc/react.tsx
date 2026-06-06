@@ -3,7 +3,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { loggerLink, unstable_httpBatchStreamLink } from "@trpc/client";
+import { unstable_httpBatchStreamLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import SuperJSON from "superjson";
 
@@ -31,11 +31,6 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const [trpcClient] = useState(() =>
     api.createClient({
       links: [
-        loggerLink({
-          enabled: (op) =>
-            env.NODE_ENV === "development" ||
-            (op.direction === "down" && op.result instanceof Error),
-        }),
         unstable_httpBatchStreamLink({
           transformer: SuperJSON,
           url: getBaseUrl() + "/api/trpc",
@@ -60,6 +55,5 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return window.location.origin;
-  // eslint-disable-next-line no-restricted-properties
-  return `http://localhost:${process.env.PORT ?? 3000}`;
+  return `http://localhost:${env.PORT}`;
 };

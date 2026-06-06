@@ -1,8 +1,10 @@
-export const HACKATHON_TEMPLATE_IDS = {
-  Blacklist: 6,
-  Accepted: 7,
-  Apply: 8,
-  Capacity: 9,
-  Confirmation: 10,
-  Waitlist: 11,
-};
+export {
+  DEFAULT_HACKATHON_EMAIL_TEMPLATE_PRESET_KEY,
+  HACKATHON_EMAIL_KINDS,
+  HACKATHON_EMAIL_TEMPLATE_IDS,
+  HACKATHON_EMAIL_TEMPLATE_PRESET_KEYS,
+  HACKATHON_EMAIL_TEMPLATE_PRESET_OPTIONS,
+  HACKATHON_TEMPLATE_IDS,
+  type HackathonEmailKind,
+  type HackathonEmailTemplatePresetKey,
+} from "./hackathons/templates";

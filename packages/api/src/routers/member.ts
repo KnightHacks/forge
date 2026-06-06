@@ -1,9 +1,8 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import QRCode from "qrcode";
 import { z } from "zod";
 
-import { CLUB, FORMS, MINIO } from "@forge/consts";
+import { CLUB, FORMS } from "@forge/consts";
 import {
   and,
   asc,
@@ -31,7 +30,7 @@ import {
 import { logger, permissions } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 
-import { minioClient } from "../minio/minio-client";
+import { ensureUserQRCode } from "../qr-code";
 import {
   normalizeResumeObjectNameForPersistence,
   removeUnreferencedResumeObjectsForUser,
@@ -60,25 +59,7 @@ export const memberRouter = {
           .where(eq(Member.userId, userId));
 
         if (existingMember.length === 0) {
-          const objectName = `qr-code-${userId}.png`;
-          const bucketExists = await minioClient.bucketExists(
-            MINIO.QR_BUCKET_NAME,
-          );
-          if (!bucketExists) {
-            await minioClient.makeBucket(
-              MINIO.QR_BUCKET_NAME,
-              MINIO.BUCKET_REGION,
-            );
-          }
-          const qrData = `user:${userId}`;
-          const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
-          await minioClient.putObject(
-            MINIO.BUCKET_REGION,
-            objectName,
-            qrBuffer,
-            qrBuffer.length,
-            { "Content-Type": "image/png" },
-          );
+          await ensureUserQRCode(userId);
         }
       } catch (error) {
         logger.error("Error with generating QR code: ", error);

@@ -2,7 +2,6 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { db } from "@forge/db/client";
-import { logger } from "@forge/utils";
 
 import {
   createResumeObjectName,
@@ -56,7 +55,6 @@ export const resumeRouter = {
 
     // If neither member nor hacker found, return null
     if (!member && !hacker) {
-      logger.error("No resume found for user");
       return { url: null };
     }
 
@@ -66,7 +64,6 @@ export const resumeRouter = {
     );
 
     if (!filename) {
-      logger.error("No resume URL found for user");
       return { url: null };
     }
 

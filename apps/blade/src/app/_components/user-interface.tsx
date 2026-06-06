@@ -12,9 +12,14 @@ export async function UserInterface() {
     api.hackerQuery.getHacker({}),
   ]);
 
-  const currentHackathon = await api.hackathon.getCurrentHackathon();
-
-  if (member.status === "rejected" || hacker.status === "rejected") {
+  const currentHackathonResult = await Promise.allSettled([
+    api.hackathon.getCurrentHackathon(),
+  ]);
+  if (
+    member.status === "rejected" ||
+    hacker.status === "rejected" ||
+    currentHackathonResult[0].status === "rejected"
+  ) {
     return (
       <div className="mt-10 flex flex-col items-center justify-center gap-y-6 font-bold">
         Something went wrong. Please try again later.
@@ -22,7 +27,11 @@ export async function UserInterface() {
     );
   }
 
-  if (!member.value && !hacker.value) {
+  const memberValue = member.value;
+  const hackerValue = hacker.value;
+  const currentHackathon = currentHackathonResult[0].value;
+
+  if (!memberValue && !hackerValue) {
     return (
       <div className="flex flex-col items-center justify-center gap-y-6 font-bold">
         <p className="w-full max-w-xl text-center">
@@ -40,11 +49,11 @@ export async function UserInterface() {
     );
   }
 
-  if (member.value && !currentHackathon) {
+  if (memberValue && !currentHackathon) {
     return (
       <div className="flex justify-center">
         <div className="max-w-8xl w-full">
-          <MemberDashboard member={member.value} />
+          <MemberDashboard member={memberValue} />
         </div>
       </div>
     );
@@ -63,7 +72,7 @@ export async function UserInterface() {
                 value="Member"
                 className="whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-white"
               >
-                {!member.value ? (
+                {!memberValue ? (
                   "Become a Member"
                 ) : (
                   <>
@@ -90,15 +99,15 @@ export async function UserInterface() {
         </div>
         <TabsContent value="Member" className="mt-4 w-full">
           <div className="mx-auto w-[95%] max-w-[70rem]">
-            <MemberDashboard member={member.value} />
+            <MemberDashboard member={memberValue} />
           </div>
         </TabsContent>
         <TabsContent value="Hacker" className="mt-4 w-full">
           <div className="mx-auto w-[95%] max-w-[70rem]">
-            {(hacker.value?.status as string) === "checkedin" ? (
-              <HackathonDashboard hacker={hacker.value} />
+            {hackerValue && (hackerValue.status as string) === "checkedin" ? (
+              <HackathonDashboard hacker={hackerValue} />
             ) : (
-              <HackerDashboard hacker={hacker.value} />
+              <HackerDashboard hacker={hackerValue} />
             )}
           </div>
         </TabsContent>

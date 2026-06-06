@@ -12,6 +12,10 @@
       "types": "./dist/client.d.ts",
       "default": "./src/client.ts"
     },
+    "./hackathons": {
+      "types": "./dist/hackathons/index.d.ts",
+      "default": "./src/hackathons/index.ts"
+    },
     "./env": "./src/env.ts"
   },
   "license": "MIT",

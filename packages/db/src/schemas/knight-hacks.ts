@@ -39,6 +39,8 @@ export const Hackathon = createTable(
     theme: t.varchar({ length: 255 }).notNull(),
     applicationBackgroundEnabled: t.boolean().notNull().default(false),
     applicationBackgroundKey: t.varchar({ length: 255 }),
+    emailTemplateEnabled: t.boolean().notNull().default(false),
+    emailTemplateKey: t.varchar({ length: 255 }),
     applicationOpen: t.timestamp().notNull().defaultNow(),
     applicationDeadline: t.timestamp().notNull().defaultNow(),
     confirmationDeadline: t.timestamp().notNull().defaultNow(),

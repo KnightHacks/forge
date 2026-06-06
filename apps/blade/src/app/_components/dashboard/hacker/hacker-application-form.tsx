@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
+  CheckCircle2,
   Info,
   Loader2,
   Search,
@@ -16,7 +17,6 @@ import { z } from "zod";
 
 import { FORMS, MINIO } from "@forge/consts";
 import { InsertHackerSchema } from "@forge/db/schemas/knight-hacks";
-import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -104,6 +104,21 @@ const applicationAnimationStyles = `
   50% { box-shadow: 0 10px 34px rgba(255, 255, 255, 0.14); }
 }
 
+@keyframes khSubmittedMark {
+  from { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.92); filter: blur(8px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+
+@keyframes khSubmittedScreenIn {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); filter: blur(10px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+
+@keyframes khSubmittedActionIn {
+  from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.97); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
 .kh-application-sweep {
   background: linear-gradient(110deg, transparent 0%, transparent 32%, rgba(255,255,255,0.13) 48%, transparent 64%, transparent 100%);
   animation: khLightSweep 8s ease-in-out infinite;
@@ -122,6 +137,18 @@ const applicationAnimationStyles = `
 
 .kh-step-title {
   animation: khTitleRise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.kh-submitted-mark {
+  animation: khSubmittedMark 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.kh-submitted-screen {
+  animation: khSubmittedScreenIn 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.kh-submitted-action {
+  animation: khSubmittedActionIn 620ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both;
 }
 
 .kh-readable-text {
@@ -285,6 +312,9 @@ const applicationAnimationStyles = `
   .kh-application-sweep,
   .kh-application-grid,
   .kh-step-title,
+  .kh-submitted-mark,
+  .kh-submitted-screen,
+  .kh-submitted-action,
   .kh-step-content > section > div:not(.hidden),
   .kh-step-content :is(input, textarea, button):focus-visible {
     animation: none;
@@ -546,11 +576,13 @@ export function HackerFormPage({
   const [activeStep, setActiveStep] = useState(0);
   const [transitionStep, setTransitionStep] = useState<number | null>(null);
   const [isStepTransitioning, setIsStepTransitioning] = useState(false);
+  const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const [stepDirection, setStepDirection] = useState<"forward" | "back">(
     "forward",
   );
   const pendingMobileFocusField = useRef<ApplicationFieldName | null>(null);
   const prefillAppliedRef = useRef(false);
+  const existingApplicationRedirectedRef = useRef(false);
   const utils = api.useUtils();
   const applicationVisualBackgroundKey =
     getHackerApplicationBackgroundKey(applicationBackgroundKey) ??
@@ -567,6 +599,10 @@ export function HackerFormPage({
   // Get previous hacker profile to pre-fill form
   const { data: previousHacker } = api.hackathon.getPreviousHacker.useQuery();
   const { data: memberProfile } = api.member.getMember.useQuery();
+  const { data: existingApplication } = api.hackerQuery.getHacker.useQuery(
+    { hackathonName: hackathonId },
+    { retry: false },
+  );
 
   const uploadResume = api.resume.uploadResume.useMutation({
     onError() {
@@ -579,20 +615,20 @@ export function HackerFormPage({
 
   const createHacker = api.hackerMutation.createHacker.useMutation({
     onSuccess() {
-      toast.success("Application submitted successfully!");
-      // user gets sent back to homepage upon successful form submission
-      router.push("/dashboard");
-      router.refresh();
+      setApplicationSubmitted(true);
+      void utils.hackerQuery.getHacker.invalidate({
+        hackathonName: hackathonId,
+      });
     },
-    onError() {
-      toast.error("Oops! Something went wrong. Please try again later.");
+    onError(error) {
+      toast.error(
+        error.message || "Oops! Something went wrong. Please try again later.",
+      );
     },
     onSettled() {
       setLoading(false);
     },
   });
-
-  const sendEmail = api.email.sendEmail.useMutation();
 
   const toggleAllergy = (allergy: string) => {
     setSelectedAllergies((prev) => {
@@ -794,6 +830,21 @@ export function HackerFormPage({
   });
 
   const fileRef = form.register("resumeUpload");
+
+  useEffect(() => {
+    if (
+      applicationSubmitted ||
+      !existingApplication ||
+      existingApplicationRedirectedRef.current
+    ) {
+      return;
+    }
+
+    existingApplicationRedirectedRef.current = true;
+    toast.info("You already submitted an application for this hackathon.");
+    router.replace("/dashboard");
+    router.refresh();
+  }, [applicationSubmitted, existingApplication, router]);
 
   useEffect(() => {
     if (prefillAppliedRef.current) return;
@@ -1055,6 +1106,22 @@ export function HackerFormPage({
           }
 
           try {
+            const latestApplication =
+              existingApplication ??
+              (await utils.hackerQuery.getHacker.fetch({
+                hackathonName: hackathonId,
+              }));
+
+            if (latestApplication) {
+              toast.info(
+                "You already submitted an application for this hackathon.",
+              );
+              router.push("/dashboard");
+              router.refresh();
+              setLoading(false);
+              return;
+            }
+
             let resumeUrl = values.resumeUrl ?? "";
             if (values.resumeUpload?.length && values.resumeUpload[0]) {
               const file = values.resumeUpload[0];
@@ -1092,24 +1159,13 @@ export function HackerFormPage({
               resumeUrl,
               hackathonName: hackathonId,
             });
-
-            sendEmail.mutate({
-              from: "donotreply@knighthacks.org",
-              to: values.email,
-              subject: "Knight Hacks VIII - We recieved your application!",
-              template_id: HACKATHON_TEMPLATE_IDS.Apply,
-              data: {
-                name: values.firstName,
-                hackathon: hackathonName,
-              },
-            });
           } catch (error) {
-            // TODO: look into not logging into the console
-            // eslint-disable-next-line no-console
-            console.error("Error uploading resume or creating hacker:", error);
             toast.error(
-              "Something went wrong while processing your application.",
+              error instanceof Error
+                ? error.message
+                : "Something went wrong while processing your application.",
             );
+            setLoading(false);
           }
         }, handleInvalidSubmit)}
       >
@@ -1119,975 +1175,1044 @@ export function HackerFormPage({
         >
           <HackerApplicationBackground
             backgroundKey={applicationVisualKey}
-            isTransitioning={isStepTransitioning}
+            isTransitioning={!applicationSubmitted && isStepTransitioning}
             progress={progressRatio}
             transitionDirection={stepDirection}
           />
-          <div className="kh-readable-text relative z-10 flex min-h-svh w-full flex-col px-5 pb-32 pt-5 sm:px-6 md:px-20 md:pb-28 md:pt-14">
-            <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-widest text-white/60">
-              <span>{currentStep.eyebrow}</span>
-              <span>
-                {activeStep + 1}/{APPLICATION_STEPS.length}
-              </span>
-            </div>
-
-            {previousHacker && activeStep === 0 && (
-              <div className="mt-6 max-w-xl border-l-2 border-white/35 pl-4 text-sm font-medium text-white/65">
-                Information from your previous application is pre-filled.
+          {applicationSubmitted ? (
+            <main
+              aria-live="polite"
+              className="kh-readable-text kh-submitted-screen relative z-10 flex min-h-svh w-full flex-col px-5 py-8 sm:px-6 md:px-20 md:py-14"
+            >
+              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-widest text-white/60">
+                <span>{hackathonName}</span>
+                <span>Submitted</span>
               </div>
-            )}
 
-            <div className="kh-application-stage flex flex-1 items-start py-8 md:items-center md:py-10">
-              <div className="kh-application-panel w-full max-w-3xl">
-                <h1
-                  key={currentStep.id}
-                  className="kh-step-title text-4xl font-black leading-none tracking-normal text-white sm:text-5xl md:text-7xl"
-                >
-                  {currentStep.title}
-                </h1>
+              <section className="flex flex-1 items-center py-12">
+                <div className="w-full max-w-4xl">
+                  <div className="kh-submitted-mark bg-white/14 mb-8 inline-flex size-16 items-center justify-center rounded-full border border-white/35 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-md sm:size-20">
+                    <CheckCircle2 className="size-9 text-white sm:size-11" />
+                  </div>
 
-                <div
-                  className={cn(
-                    "kh-step-content",
-                    "animate-in fade-in mt-10 duration-500 sm:mt-14 md:mt-16",
-                    stepDirection === "forward"
-                      ? "slide-in-from-right-4"
-                      : "slide-in-from-left-4",
-                    "[&_input]:h-12 [&_input]:rounded-none [&_input]:border-x-0 [&_input]:border-b-2 [&_input]:border-t-0 [&_input]:border-white/75 [&_input]:bg-transparent [&_input]:px-0 [&_input]:text-lg [&_input]:font-medium [&_input]:text-white [&_input]:shadow-none [&_input]:transition-colors [&_input]:placeholder:text-white/35 [&_input]:focus-visible:border-white [&_input]:focus-visible:ring-0 sm:[&_input]:h-14 sm:[&_input]:text-xl md:[&_input]:text-2xl",
-                    "[&_textarea]:min-h-32 [&_textarea]:rounded-none [&_textarea]:border-x-0 [&_textarea]:border-b-2 [&_textarea]:border-t-0 [&_textarea]:border-white/75 [&_textarea]:bg-transparent [&_textarea]:px-0 [&_textarea]:text-lg [&_textarea]:font-medium [&_textarea]:text-white [&_textarea]:shadow-none [&_textarea]:transition-colors [&_textarea]:placeholder:text-white/35 [&_textarea]:focus-visible:border-white [&_textarea]:focus-visible:ring-0 sm:[&_textarea]:min-h-36 sm:[&_textarea]:text-xl",
-                    "[&_p]:text-sm [&_p]:font-medium [&_p]:text-rose-200",
-                  )}
-                >
-                  <section className="space-y-5">
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("firstName") && "hidden",
-                          )}
-                        >
-                          <FieldLabel required>First Name</FieldLabel>
-                          <FormControl>
-                            <Input type="text" placeholder="Lenny" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("lastName") && "hidden",
-                          )}
-                        >
-                          <FieldLabel required>Last Name</FieldLabel>
-                          <FormControl>
-                            <Input
-                              type="text"
-                              placeholder="Dragonson"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(!isActiveQuestion("email") && "hidden")}
-                        >
-                          <FieldLabel required>Email</FieldLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="tk@knighthacks.org"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="phoneNumber"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("phoneNumber") && "hidden",
-                          )}
-                        >
-                          <FieldLabel optional>Phone Number</FieldLabel>
-                          <FormControl>
-                            <Input
-                              type="tel"
-                              placeholder="123-456-7890"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="dob"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            "flex flex-col",
-                            !isActiveQuestion("dob") && "hidden",
-                          )}
-                        >
-                          <FieldLabel required>Date of Birth</FieldLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="country"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("country") && "hidden",
-                          )}
-                        >
-                          <FieldLabel required>Country of Residence</FieldLabel>
-                          <FormControl>
-                            <ResponsiveComboBox
-                              items={FORMS.COUNTRIES}
-                              renderItem={(country) => <div>{country}</div>}
-                              getItemValue={(country) => country}
-                              getItemLabel={(country) => country}
-                              value={field.value}
-                              onItemSelect={(country) =>
-                                field.onChange(country)
-                              }
-                              buttonPlaceholder={getComboBoxDisplayValue(
-                                field.value,
-                                "Select your country",
-                              )}
-                              inputPlaceholder="Search for your country"
-                              triggerClassName={fieldTriggerClassName}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("gender") && "hidden",
-                          )}
-                        >
-                          <FieldLabel optional>Gender</FieldLabel>
-                          <FormControl>
-                            <ResponsiveComboBox
-                              items={FORMS.GENDERS}
-                              renderItem={(gender) => <div>{gender}</div>}
-                              getItemValue={(gender) => gender}
-                              getItemLabel={(gender) => gender}
-                              value={field.value}
-                              onItemSelect={(gender) => field.onChange(gender)}
-                              buttonPlaceholder={
-                                field.value || "Select your gender"
-                              }
-                              inputPlaceholder="Search for your gender"
-                              triggerClassName={fieldTriggerClassName}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="raceOrEthnicity"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("raceOrEthnicity") && "hidden",
-                          )}
-                        >
-                          <FieldLabel optional>Race or Ethnicity</FieldLabel>
-                          <FormControl>
-                            <ResponsiveComboBox
-                              items={FORMS.RACES_OR_ETHNICITIES}
-                              renderItem={(race) => <div>{race}</div>}
-                              getItemValue={(race) => race}
-                              getItemLabel={(race) => race}
-                              value={field.value}
-                              onItemSelect={(race) => field.onChange(race)}
-                              buttonPlaceholder={
-                                field.value || "Select your race or ethnicity"
-                              }
-                              inputPlaceholder="Search for your race or ethnicity"
-                              triggerClassName={fieldTriggerClassName}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </section>
+                  <p className="mb-4 text-sm font-black uppercase tracking-[0.24em] text-white/65">
+                    Application confirmed
+                  </p>
+                  <h1 className="kh-step-title max-w-4xl text-5xl font-black leading-none tracking-normal text-white sm:text-6xl md:text-8xl">
+                    Application submitted.
+                  </h1>
+                  <p className="text-white/76 mt-7 max-w-2xl text-lg font-medium leading-8 sm:text-xl sm:leading-9">
+                    We received your {hackathonName} application. Keep an eye on
+                    your inbox for status updates and next steps from the Knight
+                    Hacks team.
+                  </p>
 
-                  <section className="space-y-5">
-                    <FormField
-                      control={form.control}
-                      name="levelOfStudy"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("levelOfStudy") && "hidden",
-                          )}
-                        >
-                          <FieldLabel required>Level of Study</FieldLabel>
-                          <FormControl>
-                            <ResponsiveComboBox
-                              items={FORMS.LEVELS_OF_STUDY}
-                              renderItem={(level) => <div>{level}</div>}
-                              getItemValue={(level) => level}
-                              getItemLabel={(level) => level}
-                              value={field.value}
-                              onItemSelect={(level) => field.onChange(level)}
-                              buttonPlaceholder={getComboBoxDisplayValue(
-                                field.value,
-                                "Select your level of study",
-                              )}
-                              inputPlaceholder="Search levels of study"
-                              triggerClassName={fieldTriggerClassName}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="school"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("school") && "hidden",
-                          )}
-                        >
-                          <FieldLabel required>School</FieldLabel>
-                          <FormControl>
-                            <ResponsiveComboBox
-                              items={FORMS.SCHOOLS}
-                              renderItem={(school) => <div>{school}</div>}
-                              getItemValue={(school) => school}
-                              getItemLabel={(school) => school}
-                              value={field.value}
-                              onItemSelect={(school) => field.onChange(school)}
-                              buttonPlaceholder={getComboBoxDisplayValue(
-                                field.value,
-                                "Select a school",
-                              )}
-                              inputPlaceholder="Search for your school"
-                              triggerClassName={fieldTriggerClassName}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="major"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(!isActiveQuestion("major") && "hidden")}
-                        >
-                          <FieldLabel required>Major of Study</FieldLabel>
-                          <FormControl>
-                            <ResponsiveComboBox
-                              items={FORMS.MAJORS}
-                              renderItem={(major) => <div>{major}</div>}
-                              getItemValue={(major) => major}
-                              getItemLabel={(major) => major}
-                              value={field.value}
-                              onItemSelect={(major) => field.onChange(major)}
-                              buttonPlaceholder={getComboBoxDisplayValue(
-                                field.value,
-                                "Select a major",
-                              )}
-                              inputPlaceholder="Search for your major"
-                              triggerClassName={fieldTriggerClassName}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="gradDate"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            "flex flex-col",
-                            !isActiveQuestion("gradDate") && "hidden",
-                          )}
-                        >
-                          <FieldLabel required>Graduation Date</FieldLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="shirtSize"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("shirtSize") && "hidden",
-                          )}
-                        >
-                          <FieldLabel required>Shirt Size</FieldLabel>
-                          <FormControl>
-                            <ResponsiveComboBox
-                              items={FORMS.SHIRT_SIZES}
-                              renderItem={(size) => <div>{size}</div>}
-                              getItemValue={(size) => size}
-                              getItemLabel={(size) => size}
-                              value={field.value}
-                              onItemSelect={(size) => field.onChange(size)}
-                              buttonPlaceholder={getComboBoxDisplayValue(
-                                field.value,
-                                "Select your shirt size",
-                              )}
-                              inputPlaceholder="Search shirt sizes"
-                              triggerClassName={fieldTriggerClassName}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </section>
+                  <div className="kh-submitted-action mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <Button
+                      asChild
+                      className="h-12 rounded-full bg-white px-6 text-base font-black text-[#21103d] shadow-[0_18px_46px_rgba(0,0,0,0.42)] hover:bg-white/90"
+                    >
+                      <Link href="/dashboard">
+                        Go to dashboard
+                        <ArrowRight className="ml-2 size-4" />
+                      </Link>
+                    </Button>
+                    <p className="text-sm font-semibold text-white/55">
+                      Your dashboard will show your current application status.
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </main>
+          ) : (
+            <div className="kh-readable-text relative z-10 flex min-h-svh w-full flex-col px-5 pb-32 pt-5 sm:px-6 md:px-20 md:pb-28 md:pt-14">
+              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-widest text-white/60">
+                <span>{currentStep.eyebrow}</span>
+                <span>
+                  {activeStep + 1}/{APPLICATION_STEPS.length}
+                </span>
+              </div>
 
-                  <section className="space-y-5">
-                    <FormField
-                      control={form.control}
-                      name="survey1"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("survey1") && "hidden",
-                          )}
-                        >
-                          <FieldLabel required>
-                            Why do you want to attend {hackathonName}?
-                          </FieldLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Why do you want to attend?"
-                              {...field}
-                              value={field.value}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="survey2"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("survey2") && "hidden",
-                          )}
-                        >
-                          <FieldLabel required>
-                            What do you hope to achieve at {hackathonName}?
-                          </FieldLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="What are your goals for this event?"
-                              {...field}
-                              value={field.value}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </section>
+              {previousHacker && activeStep === 0 && (
+                <div className="mt-6 max-w-xl border-l-2 border-white/35 pl-4 text-sm font-medium text-white/65">
+                  Information from your previous application is pre-filled.
+                </div>
+              )}
 
-                  <section className="space-y-5">
-                    <FormField
-                      control={form.control}
-                      name="githubProfileUrl"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("githubProfileUrl") && "hidden",
-                          )}
-                        >
-                          <FieldLabel optional>GitHub Profile</FieldLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="https://github.com/knighthacks"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="linkedinProfileUrl"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("linkedinProfileUrl") && "hidden",
-                          )}
-                        >
-                          <FieldLabel optional>LinkedIn Profile</FieldLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="https://www.linkedin.com/company/knight-hacks"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="websiteUrl"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("websiteUrl") && "hidden",
-                          )}
-                        >
-                          <FieldLabel optional>Personal Website</FieldLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="https://knighthacks.org"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="resumeUpload"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            !isActiveQuestion("resumeUpload") && "hidden",
-                          )}
-                        >
-                          <div className="kh-resume-info-row">
-                            <FieldLabel optional>Resume</FieldLabel>
-                            <ResumeInfoPopover
-                              visualKey={applicationVisualKey}
-                            />
-                          </div>
-                          <FormControl>
-                            <Input
-                              type="file"
-                              className="cursor-pointer file:mr-4 file:rounded-full file:border file:border-white/35 file:bg-white/10 file:px-4 file:py-1.5 file:text-sm file:font-semibold file:text-white hover:file:bg-white/15"
-                              {...fileRef}
-                              onChange={(event) => {
-                                field.onChange(
-                                  event.target.files?.[0]
-                                    ? event.target.files
-                                    : undefined,
-                                );
-                              }}
-                            />
-                          </FormControl>
+              <div className="kh-application-stage flex flex-1 items-start py-8 md:items-center md:py-10">
+                <div className="kh-application-panel w-full max-w-3xl">
+                  <h1
+                    key={currentStep.id}
+                    className="kh-step-title text-4xl font-black leading-none tracking-normal text-white sm:text-5xl md:text-7xl"
+                  >
+                    {currentStep.title}
+                  </h1>
 
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </section>
-
-                  <section className="space-y-5">
-                    <FormField
-                      control={form.control}
-                      name="foodAllergies"
-                      render={() => {
-                        const allergySummary =
-                          selectedAllergies.length > 0
-                            ? selectedAllergies.join(", ")
-                            : "Select allergies";
-                        const filteredAllergies = FORMS.ALLERGIES.filter(
-                          (allergy) =>
-                            allergy
-                              .toLowerCase()
-                              .includes(allergySearch.trim().toLowerCase()),
-                        );
-
-                        return (
+                  <div
+                    className={cn(
+                      "kh-step-content",
+                      "animate-in fade-in mt-10 duration-500 sm:mt-14 md:mt-16",
+                      stepDirection === "forward"
+                        ? "slide-in-from-right-4"
+                        : "slide-in-from-left-4",
+                      "[&_input]:h-12 [&_input]:rounded-none [&_input]:border-x-0 [&_input]:border-b-2 [&_input]:border-t-0 [&_input]:border-white/75 [&_input]:bg-transparent [&_input]:px-0 [&_input]:text-lg [&_input]:font-medium [&_input]:text-white [&_input]:shadow-none [&_input]:transition-colors [&_input]:placeholder:text-white/35 [&_input]:focus-visible:border-white [&_input]:focus-visible:ring-0 sm:[&_input]:h-14 sm:[&_input]:text-xl md:[&_input]:text-2xl",
+                      "[&_textarea]:min-h-32 [&_textarea]:rounded-none [&_textarea]:border-x-0 [&_textarea]:border-b-2 [&_textarea]:border-t-0 [&_textarea]:border-white/75 [&_textarea]:bg-transparent [&_textarea]:px-0 [&_textarea]:text-lg [&_textarea]:font-medium [&_textarea]:text-white [&_textarea]:shadow-none [&_textarea]:transition-colors [&_textarea]:placeholder:text-white/35 [&_textarea]:focus-visible:border-white [&_textarea]:focus-visible:ring-0 sm:[&_textarea]:min-h-36 sm:[&_textarea]:text-xl",
+                      "[&_p]:text-sm [&_p]:font-medium [&_p]:text-rose-200",
+                    )}
+                  >
+                    <section className="space-y-5">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
                           <FormItem
                             className={cn(
-                              !isActiveQuestion("foodAllergies") && "hidden",
+                              !isActiveQuestion("firstName") && "hidden",
                             )}
                           >
-                            <FieldLabel optional>
-                              Food Allergies/Restrictions
-                            </FieldLabel>
+                            <FieldLabel required>First Name</FieldLabel>
                             <FormControl>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    className={cn(
-                                      fieldTriggerClassName,
-                                      "flex w-full items-center justify-start gap-2",
-                                    )}
-                                  >
-                                    <span
-                                      className={cn(
-                                        "block min-w-0 flex-1 truncate",
-                                        selectedAllergies.length === 0 &&
-                                          "text-white/35",
-                                      )}
-                                    >
-                                      {allergySummary}
-                                    </span>
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent
-                                  align="start"
-                                  collisionPadding={16}
-                                  className="bg-[#030713]/98 flex w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-lg border-white/15 p-0 text-white shadow-2xl"
-                                  style={{
-                                    maxHeight:
-                                      "min(22rem, calc(100svh - 2rem), var(--radix-popover-content-available-height))",
-                                  }}
-                                >
-                                  <div className="border-white/12 flex h-14 items-center border-b px-3">
-                                    <Search
-                                      aria-hidden="true"
-                                      className="mr-3 h-5 w-5 shrink-0 text-white/55"
-                                      strokeWidth={2}
-                                    />
-                                    <input
-                                      aria-label="Search allergies"
-                                      value={allergySearch}
-                                      onChange={(event) =>
-                                        setAllergySearch(event.target.value)
-                                      }
-                                      placeholder="Search allergies"
-                                      className="h-full min-w-0 flex-1 bg-transparent text-base font-medium text-white outline-none placeholder:text-white/45 sm:text-lg"
-                                    />
-                                  </div>
-                                  <div className="flex w-full flex-1 flex-col overflow-y-auto overscroll-contain p-1">
-                                    {filteredAllergies.map((allergy) => (
-                                      <div
-                                        key={allergy}
-                                        onClick={() => {
-                                          toggleAllergy(allergy);
-                                        }}
-                                        onKeyDown={(event) => {
-                                          if (
-                                            event.key === "Enter" ||
-                                            event.key === " "
-                                          ) {
-                                            event.preventDefault();
-                                            toggleAllergy(allergy);
-                                          }
-                                        }}
-                                        role="button"
-                                        tabIndex={0}
-                                        className={cn(
-                                          "flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-base text-white/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:bg-white/10 focus-visible:text-white focus-visible:outline-none sm:text-lg",
-                                          selectedAllergies.includes(allergy) &&
-                                            "bg-[#1f2b3b] text-white",
-                                        )}
-                                      >
-                                        <Checkbox
-                                          checked={selectedAllergies.includes(
-                                            allergy,
-                                          )}
-                                          onCheckedChange={() =>
-                                            toggleAllergy(allergy)
-                                          }
-                                          className={checkboxClassName}
-                                          onClick={(event) => {
-                                            event.stopPropagation();
-                                          }}
-                                        />
-                                        <span>{allergy}</span>
-                                      </div>
-                                    ))}
-                                    {filteredAllergies.length === 0 && (
-                                      <div className="px-3 py-6 text-center text-sm font-medium text-white/45">
-                                        No allergies found.
-                                      </div>
-                                    )}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
+                              <Input
+                                type="text"
+                                placeholder="Lenny"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
-                        );
-                      }}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="isFirstTime"
-                      render={({ field }) => (
-                        <FormItem
-                          className={cn(
-                            highlightedCheckboxRowClassName,
-                            !isActiveQuestion("isFirstTime") && "hidden",
-                          )}
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={!!field.value}
-                              onCheckedChange={field.onChange}
-                              className={cn(
-                                checkboxClassName,
-                                highlightedCheckboxClassName,
-                              )}
-                            />
-                          </FormControl>
-                          <div className="min-w-0 flex-1 space-y-1 leading-none">
-                            <FormLabel
-                              className={highlightedCheckboxLabelClassName}
-                            >
-                              This is my first time participating in a
-                              Hackathon.
-                            </FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </section>
-
-                  <section className="space-y-5">
-                    <FormField
-                      control={form.control}
-                      name="agreesToMLHCodeOfConduct"
-                      render={({ field, fieldState }) => (
-                        <FormItem
-                          className={cn(
-                            "flex flex-row items-start gap-3 space-y-0",
-                            fieldState.error && agreementErrorRowClassName,
-                            !isActiveQuestion("agreesToMLHCodeOfConduct") &&
-                              "hidden",
-                          )}
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={!!field.value}
-                              onCheckedChange={(value) => {
-                                field.onChange(value);
-                                if (value) {
-                                  form.clearErrors("agreesToMLHCodeOfConduct");
-                                }
-                              }}
-                              className={cn(
-                                checkboxClassName,
-                                fieldState.error &&
-                                  agreementErrorCheckboxClassName,
-                              )}
-                            />
-                          </FormControl>
-                          <div className="min-w-0 flex-1 space-y-1 leading-none">
-                            <FormLabel
-                              className={cn(
-                                checkboxLabelClassName,
-                                fieldState.error &&
-                                  agreementErrorLabelClassName,
-                              )}
-                            >
-                              I have read and agree to the{" "}
-                              <Link
-                                href="https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={agreementLinkClassName}
-                              >
-                                MLH Code of Conduct
-                              </Link>
-                              . <span className={requiredMarkClassName}>*</span>
-                            </FormLabel>
-                            <FormMessage
-                              className={agreementErrorMessageClassName}
-                            />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="agreesToMLHDataSharing"
-                      render={({ field, fieldState }) => (
-                        <FormItem
-                          className={cn(
-                            "flex flex-row items-start gap-3 space-y-0",
-                            fieldState.error && agreementErrorRowClassName,
-                            !isActiveQuestion("agreesToMLHDataSharing") &&
-                              "hidden",
-                          )}
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={!!field.value}
-                              onCheckedChange={(value) => {
-                                field.onChange(value);
-                                if (value) {
-                                  form.clearErrors("agreesToMLHDataSharing");
-                                }
-                              }}
-                              className={cn(
-                                checkboxClassName,
-                                fieldState.error &&
-                                  agreementErrorCheckboxClassName,
-                              )}
-                            />
-                          </FormControl>
-                          <div className="min-w-0 flex-1 space-y-1 leading-none">
-                            <FormLabel
-                              className={cn(
-                                checkboxLabelClassName,
-                                fieldState.error &&
-                                  agreementErrorLabelClassName,
-                              )}
-                            >
-                              I authorize you to share my
-                              application/registration information with Major
-                              League Hacking for event administration, ranking,
-                              and MLH administration in-line with the{" "}
-                              <Link
-                                href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={agreementLinkClassName}
-                              >
-                                MLH Privacy Policy
-                              </Link>
-                              . I further agree to the terms of both the{" "}
-                              <Link
-                                href="https://github.com/MLH/mlh-policies/blob/main/contest-terms.md"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={agreementLinkClassName}
-                              >
-                                MLH Contest Terms and Conditions
-                              </Link>{" "}
-                              and the{" "}
-                              <Link
-                                href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={agreementLinkClassName}
-                              >
-                                MLH Privacy Policy
-                              </Link>
-                              . <span className={requiredMarkClassName}>*</span>
-                            </FormLabel>
-                            <FormMessage
-                              className={agreementErrorMessageClassName}
-                            />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="agreesToReceiveEmailsFromMLH"
-                      render={({ field, fieldState }) => (
-                        <FormItem
-                          className={cn(
-                            "flex flex-row items-start gap-3 space-y-0",
-                            fieldState.error && agreementErrorRowClassName,
-                            !isActiveQuestion("agreesToReceiveEmailsFromMLH") &&
-                              "hidden",
-                          )}
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={!!field.value}
-                              onCheckedChange={(value) => {
-                                field.onChange(value);
-                                if (value) {
-                                  form.clearErrors(
-                                    "agreesToReceiveEmailsFromMLH",
-                                  );
-                                }
-                              }}
-                              className={cn(
-                                checkboxClassName,
-                                fieldState.error &&
-                                  agreementErrorCheckboxClassName,
-                              )}
-                            />
-                          </FormControl>
-                          <div className="min-w-0 flex-1 space-y-1 leading-none">
-                            <FormLabel
-                              className={cn(
-                                checkboxLabelClassName,
-                                fieldState.error &&
-                                  agreementErrorLabelClassName,
-                              )}
-                            >
-                              I authorize MLH to send me occasional emails about
-                              relevant events, career opportunities, and
-                              community announcements.{" "}
-                              <span className={requiredMarkClassName}>*</span>
-                            </FormLabel>
-                            <FormMessage
-                              className={agreementErrorMessageClassName}
-                            />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    <div
-                      className={cn(
-                        "flex flex-row items-start gap-3 space-y-0",
-                        tosError ? agreementErrorRowClassName : "py-2",
-                        !isActiveQuestion("tosAccepted") && "hidden",
-                      )}
-                    >
-                      <div>
-                        <Checkbox
-                          checked={tosAccepted}
-                          onCheckedChange={(v) => {
-                            const isChecked = !!v;
-                            setTosAccepted(isChecked);
-                            if (isChecked) setTosError(false);
-                          }}
-                          className={cn(
-                            checkboxClassName,
-                            tosError && agreementErrorCheckboxClassName,
-                          )}
-                          aria-invalid={tosError}
-                          aria-labelledby="tos-visual-label"
-                          aria-describedby={
-                            tosError ? "tos-visual-error" : undefined
-                          }
-                        />
-                      </div>
-
-                      <div className="min-w-0 flex-1 space-y-1 leading-none">
-                        <div
-                          id="tos-visual-label"
-                          className={cn(
-                            checkboxLabelClassName,
-                            tosError && agreementErrorLabelClassName,
-                          )}
-                        >
-                          By checking this box you acknowledge that you agree to
-                          the{" "}
-                          <Link
-                            href="https://knight-hacks.notion.site/knight-hacks-26-tos"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={agreementLinkClassName}
-                          >
-                            Knight Hacks Terms of Service
-                          </Link>
-                          . <span className={requiredMarkClassName}>*</span>
-                        </div>
-                        {tosError && (
-                          <p
-                            id="tos-visual-error"
-                            className={agreementErrorMessageClassName}
-                            role="alert"
-                          >
-                            You must agree to the Knight Hacks Terms of Service
-                          </p>
                         )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("lastName") && "hidden",
+                            )}
+                          >
+                            <FieldLabel required>Last Name</FieldLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                placeholder="Dragonson"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("email") && "hidden",
+                            )}
+                          >
+                            <FieldLabel required>Email</FieldLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="tk@knighthacks.org"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="phoneNumber"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("phoneNumber") && "hidden",
+                            )}
+                          >
+                            <FieldLabel optional>Phone Number</FieldLabel>
+                            <FormControl>
+                              <Input
+                                type="tel"
+                                placeholder="123-456-7890"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="dob"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              "flex flex-col",
+                              !isActiveQuestion("dob") && "hidden",
+                            )}
+                          >
+                            <FieldLabel required>Date of Birth</FieldLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("country") && "hidden",
+                            )}
+                          >
+                            <FieldLabel required>
+                              Country of Residence
+                            </FieldLabel>
+                            <FormControl>
+                              <ResponsiveComboBox
+                                items={FORMS.COUNTRIES}
+                                renderItem={(country) => <div>{country}</div>}
+                                getItemValue={(country) => country}
+                                getItemLabel={(country) => country}
+                                value={field.value}
+                                onItemSelect={(country) =>
+                                  field.onChange(country)
+                                }
+                                buttonPlaceholder={getComboBoxDisplayValue(
+                                  field.value,
+                                  "Select your country",
+                                )}
+                                inputPlaceholder="Search for your country"
+                                triggerClassName={fieldTriggerClassName}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("gender") && "hidden",
+                            )}
+                          >
+                            <FieldLabel optional>Gender</FieldLabel>
+                            <FormControl>
+                              <ResponsiveComboBox
+                                items={FORMS.GENDERS}
+                                renderItem={(gender) => <div>{gender}</div>}
+                                getItemValue={(gender) => gender}
+                                getItemLabel={(gender) => gender}
+                                value={field.value}
+                                onItemSelect={(gender) =>
+                                  field.onChange(gender)
+                                }
+                                buttonPlaceholder={
+                                  field.value || "Select your gender"
+                                }
+                                inputPlaceholder="Search for your gender"
+                                triggerClassName={fieldTriggerClassName}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="raceOrEthnicity"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("raceOrEthnicity") && "hidden",
+                            )}
+                          >
+                            <FieldLabel optional>Race or Ethnicity</FieldLabel>
+                            <FormControl>
+                              <ResponsiveComboBox
+                                items={FORMS.RACES_OR_ETHNICITIES}
+                                renderItem={(race) => <div>{race}</div>}
+                                getItemValue={(race) => race}
+                                getItemLabel={(race) => race}
+                                value={field.value}
+                                onItemSelect={(race) => field.onChange(race)}
+                                buttonPlaceholder={
+                                  field.value || "Select your race or ethnicity"
+                                }
+                                inputPlaceholder="Search for your race or ethnicity"
+                                triggerClassName={fieldTriggerClassName}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </section>
+
+                    <section className="space-y-5">
+                      <FormField
+                        control={form.control}
+                        name="levelOfStudy"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("levelOfStudy") && "hidden",
+                            )}
+                          >
+                            <FieldLabel required>Level of Study</FieldLabel>
+                            <FormControl>
+                              <ResponsiveComboBox
+                                items={FORMS.LEVELS_OF_STUDY}
+                                renderItem={(level) => <div>{level}</div>}
+                                getItemValue={(level) => level}
+                                getItemLabel={(level) => level}
+                                value={field.value}
+                                onItemSelect={(level) => field.onChange(level)}
+                                buttonPlaceholder={getComboBoxDisplayValue(
+                                  field.value,
+                                  "Select your level of study",
+                                )}
+                                inputPlaceholder="Search levels of study"
+                                triggerClassName={fieldTriggerClassName}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="school"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("school") && "hidden",
+                            )}
+                          >
+                            <FieldLabel required>School</FieldLabel>
+                            <FormControl>
+                              <ResponsiveComboBox
+                                items={FORMS.SCHOOLS}
+                                renderItem={(school) => <div>{school}</div>}
+                                getItemValue={(school) => school}
+                                getItemLabel={(school) => school}
+                                value={field.value}
+                                onItemSelect={(school) =>
+                                  field.onChange(school)
+                                }
+                                buttonPlaceholder={getComboBoxDisplayValue(
+                                  field.value,
+                                  "Select a school",
+                                )}
+                                inputPlaceholder="Search for your school"
+                                triggerClassName={fieldTriggerClassName}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="major"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("major") && "hidden",
+                            )}
+                          >
+                            <FieldLabel required>Major of Study</FieldLabel>
+                            <FormControl>
+                              <ResponsiveComboBox
+                                items={FORMS.MAJORS}
+                                renderItem={(major) => <div>{major}</div>}
+                                getItemValue={(major) => major}
+                                getItemLabel={(major) => major}
+                                value={field.value}
+                                onItemSelect={(major) => field.onChange(major)}
+                                buttonPlaceholder={getComboBoxDisplayValue(
+                                  field.value,
+                                  "Select a major",
+                                )}
+                                inputPlaceholder="Search for your major"
+                                triggerClassName={fieldTriggerClassName}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="gradDate"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              "flex flex-col",
+                              !isActiveQuestion("gradDate") && "hidden",
+                            )}
+                          >
+                            <FieldLabel required>Graduation Date</FieldLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="shirtSize"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("shirtSize") && "hidden",
+                            )}
+                          >
+                            <FieldLabel required>Shirt Size</FieldLabel>
+                            <FormControl>
+                              <ResponsiveComboBox
+                                items={FORMS.SHIRT_SIZES}
+                                renderItem={(size) => <div>{size}</div>}
+                                getItemValue={(size) => size}
+                                getItemLabel={(size) => size}
+                                value={field.value}
+                                onItemSelect={(size) => field.onChange(size)}
+                                buttonPlaceholder={getComboBoxDisplayValue(
+                                  field.value,
+                                  "Select your shirt size",
+                                )}
+                                inputPlaceholder="Search shirt sizes"
+                                triggerClassName={fieldTriggerClassName}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </section>
+
+                    <section className="space-y-5">
+                      <FormField
+                        control={form.control}
+                        name="survey1"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("survey1") && "hidden",
+                            )}
+                          >
+                            <FieldLabel required>
+                              Why do you want to attend {hackathonName}?
+                            </FieldLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Why do you want to attend?"
+                                {...field}
+                                value={field.value}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="survey2"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("survey2") && "hidden",
+                            )}
+                          >
+                            <FieldLabel required>
+                              What do you hope to achieve at {hackathonName}?
+                            </FieldLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="What are your goals for this event?"
+                                {...field}
+                                value={field.value}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </section>
+
+                    <section className="space-y-5">
+                      <FormField
+                        control={form.control}
+                        name="githubProfileUrl"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("githubProfileUrl") && "hidden",
+                            )}
+                          >
+                            <FieldLabel optional>GitHub Profile</FieldLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="https://github.com/knighthacks"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="linkedinProfileUrl"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("linkedinProfileUrl") &&
+                                "hidden",
+                            )}
+                          >
+                            <FieldLabel optional>LinkedIn Profile</FieldLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="https://www.linkedin.com/company/knight-hacks"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="websiteUrl"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("websiteUrl") && "hidden",
+                            )}
+                          >
+                            <FieldLabel optional>Personal Website</FieldLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="https://knighthacks.org"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="resumeUpload"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              !isActiveQuestion("resumeUpload") && "hidden",
+                            )}
+                          >
+                            <div className="kh-resume-info-row">
+                              <FieldLabel optional>Resume</FieldLabel>
+                              <ResumeInfoPopover
+                                visualKey={applicationVisualKey}
+                              />
+                            </div>
+                            <FormControl>
+                              <Input
+                                type="file"
+                                className="cursor-pointer file:mr-4 file:rounded-full file:border file:border-white/35 file:bg-white/10 file:px-4 file:py-1.5 file:text-sm file:font-semibold file:text-white hover:file:bg-white/15"
+                                {...fileRef}
+                                onChange={(event) => {
+                                  field.onChange(
+                                    event.target.files?.[0]
+                                      ? event.target.files
+                                      : undefined,
+                                  );
+                                }}
+                              />
+                            </FormControl>
+
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </section>
+
+                    <section className="space-y-5">
+                      <FormField
+                        control={form.control}
+                        name="foodAllergies"
+                        render={() => {
+                          const allergySummary =
+                            selectedAllergies.length > 0
+                              ? selectedAllergies.join(", ")
+                              : "Select allergies";
+                          const filteredAllergies = FORMS.ALLERGIES.filter(
+                            (allergy) =>
+                              allergy
+                                .toLowerCase()
+                                .includes(allergySearch.trim().toLowerCase()),
+                          );
+
+                          return (
+                            <FormItem
+                              className={cn(
+                                !isActiveQuestion("foodAllergies") && "hidden",
+                              )}
+                            >
+                              <FieldLabel optional>
+                                Food Allergies/Restrictions
+                              </FieldLabel>
+                              <FormControl>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      className={cn(
+                                        fieldTriggerClassName,
+                                        "flex w-full items-center justify-start gap-2",
+                                      )}
+                                    >
+                                      <span
+                                        className={cn(
+                                          "block min-w-0 flex-1 truncate",
+                                          selectedAllergies.length === 0 &&
+                                            "text-white/35",
+                                        )}
+                                      >
+                                        {allergySummary}
+                                      </span>
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent
+                                    align="start"
+                                    collisionPadding={16}
+                                    className="bg-[#030713]/98 flex w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-lg border-white/15 p-0 text-white shadow-2xl"
+                                    style={{
+                                      maxHeight:
+                                        "min(22rem, calc(100svh - 2rem), var(--radix-popover-content-available-height))",
+                                    }}
+                                  >
+                                    <div className="border-white/12 flex h-14 items-center border-b px-3">
+                                      <Search
+                                        aria-hidden="true"
+                                        className="mr-3 h-5 w-5 shrink-0 text-white/55"
+                                        strokeWidth={2}
+                                      />
+                                      <input
+                                        aria-label="Search allergies"
+                                        value={allergySearch}
+                                        onChange={(event) =>
+                                          setAllergySearch(event.target.value)
+                                        }
+                                        placeholder="Search allergies"
+                                        className="h-full min-w-0 flex-1 bg-transparent text-base font-medium text-white outline-none placeholder:text-white/45 sm:text-lg"
+                                      />
+                                    </div>
+                                    <div className="flex w-full flex-1 flex-col overflow-y-auto overscroll-contain p-1">
+                                      {filteredAllergies.map((allergy) => (
+                                        <div
+                                          key={allergy}
+                                          onClick={() => {
+                                            toggleAllergy(allergy);
+                                          }}
+                                          onKeyDown={(event) => {
+                                            if (
+                                              event.key === "Enter" ||
+                                              event.key === " "
+                                            ) {
+                                              event.preventDefault();
+                                              toggleAllergy(allergy);
+                                            }
+                                          }}
+                                          role="button"
+                                          tabIndex={0}
+                                          className={cn(
+                                            "flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-base text-white/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:bg-white/10 focus-visible:text-white focus-visible:outline-none sm:text-lg",
+                                            selectedAllergies.includes(
+                                              allergy,
+                                            ) && "bg-[#1f2b3b] text-white",
+                                          )}
+                                        >
+                                          <Checkbox
+                                            checked={selectedAllergies.includes(
+                                              allergy,
+                                            )}
+                                            onCheckedChange={() =>
+                                              toggleAllergy(allergy)
+                                            }
+                                            className={checkboxClassName}
+                                            onClick={(event) => {
+                                              event.stopPropagation();
+                                            }}
+                                          />
+                                          <span>{allergy}</span>
+                                        </div>
+                                      ))}
+                                      {filteredAllergies.length === 0 && (
+                                        <div className="px-3 py-6 text-center text-sm font-medium text-white/45">
+                                          No allergies found.
+                                        </div>
+                                      )}
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="isFirstTime"
+                        render={({ field }) => (
+                          <FormItem
+                            className={cn(
+                              highlightedCheckboxRowClassName,
+                              !isActiveQuestion("isFirstTime") && "hidden",
+                            )}
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={!!field.value}
+                                onCheckedChange={field.onChange}
+                                className={cn(
+                                  checkboxClassName,
+                                  highlightedCheckboxClassName,
+                                )}
+                              />
+                            </FormControl>
+                            <div className="min-w-0 flex-1 space-y-1 leading-none">
+                              <FormLabel
+                                className={highlightedCheckboxLabelClassName}
+                              >
+                                This is my first time participating in a
+                                Hackathon.
+                              </FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </section>
+
+                    <section className="space-y-5">
+                      <FormField
+                        control={form.control}
+                        name="agreesToMLHCodeOfConduct"
+                        render={({ field, fieldState }) => (
+                          <FormItem
+                            className={cn(
+                              "flex flex-row items-start gap-3 space-y-0",
+                              fieldState.error && agreementErrorRowClassName,
+                              !isActiveQuestion("agreesToMLHCodeOfConduct") &&
+                                "hidden",
+                            )}
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={!!field.value}
+                                onCheckedChange={(value) => {
+                                  field.onChange(value);
+                                  if (value) {
+                                    form.clearErrors(
+                                      "agreesToMLHCodeOfConduct",
+                                    );
+                                  }
+                                }}
+                                className={cn(
+                                  checkboxClassName,
+                                  fieldState.error &&
+                                    agreementErrorCheckboxClassName,
+                                )}
+                              />
+                            </FormControl>
+                            <div className="min-w-0 flex-1 space-y-1 leading-none">
+                              <FormLabel
+                                className={cn(
+                                  checkboxLabelClassName,
+                                  fieldState.error &&
+                                    agreementErrorLabelClassName,
+                                )}
+                              >
+                                I have read and agree to the{" "}
+                                <Link
+                                  href="https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={agreementLinkClassName}
+                                >
+                                  MLH Code of Conduct
+                                </Link>
+                                .{" "}
+                                <span className={requiredMarkClassName}>*</span>
+                              </FormLabel>
+                              <FormMessage
+                                className={agreementErrorMessageClassName}
+                              />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="agreesToMLHDataSharing"
+                        render={({ field, fieldState }) => (
+                          <FormItem
+                            className={cn(
+                              "flex flex-row items-start gap-3 space-y-0",
+                              fieldState.error && agreementErrorRowClassName,
+                              !isActiveQuestion("agreesToMLHDataSharing") &&
+                                "hidden",
+                            )}
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={!!field.value}
+                                onCheckedChange={(value) => {
+                                  field.onChange(value);
+                                  if (value) {
+                                    form.clearErrors("agreesToMLHDataSharing");
+                                  }
+                                }}
+                                className={cn(
+                                  checkboxClassName,
+                                  fieldState.error &&
+                                    agreementErrorCheckboxClassName,
+                                )}
+                              />
+                            </FormControl>
+                            <div className="min-w-0 flex-1 space-y-1 leading-none">
+                              <FormLabel
+                                className={cn(
+                                  checkboxLabelClassName,
+                                  fieldState.error &&
+                                    agreementErrorLabelClassName,
+                                )}
+                              >
+                                I authorize you to share my
+                                application/registration information with Major
+                                League Hacking for event administration,
+                                ranking, and MLH administration in-line with the{" "}
+                                <Link
+                                  href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={agreementLinkClassName}
+                                >
+                                  MLH Privacy Policy
+                                </Link>
+                                . I further agree to the terms of both the{" "}
+                                <Link
+                                  href="https://github.com/MLH/mlh-policies/blob/main/contest-terms.md"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={agreementLinkClassName}
+                                >
+                                  MLH Contest Terms and Conditions
+                                </Link>{" "}
+                                and the{" "}
+                                <Link
+                                  href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={agreementLinkClassName}
+                                >
+                                  MLH Privacy Policy
+                                </Link>
+                                .{" "}
+                                <span className={requiredMarkClassName}>*</span>
+                              </FormLabel>
+                              <FormMessage
+                                className={agreementErrorMessageClassName}
+                              />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="agreesToReceiveEmailsFromMLH"
+                        render={({ field, fieldState }) => (
+                          <FormItem
+                            className={cn(
+                              "flex flex-row items-start gap-3 space-y-0",
+                              fieldState.error && agreementErrorRowClassName,
+                              !isActiveQuestion(
+                                "agreesToReceiveEmailsFromMLH",
+                              ) && "hidden",
+                            )}
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={!!field.value}
+                                onCheckedChange={(value) => {
+                                  field.onChange(value);
+                                  if (value) {
+                                    form.clearErrors(
+                                      "agreesToReceiveEmailsFromMLH",
+                                    );
+                                  }
+                                }}
+                                className={cn(
+                                  checkboxClassName,
+                                  fieldState.error &&
+                                    agreementErrorCheckboxClassName,
+                                )}
+                              />
+                            </FormControl>
+                            <div className="min-w-0 flex-1 space-y-1 leading-none">
+                              <FormLabel
+                                className={cn(
+                                  checkboxLabelClassName,
+                                  fieldState.error &&
+                                    agreementErrorLabelClassName,
+                                )}
+                              >
+                                I authorize MLH to send me occasional emails
+                                about relevant events, career opportunities, and
+                                community announcements.{" "}
+                                <span className={requiredMarkClassName}>*</span>
+                              </FormLabel>
+                              <FormMessage
+                                className={agreementErrorMessageClassName}
+                              />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <div
+                        className={cn(
+                          "flex flex-row items-start gap-3 space-y-0",
+                          tosError ? agreementErrorRowClassName : "py-2",
+                          !isActiveQuestion("tosAccepted") && "hidden",
+                        )}
+                      >
+                        <div>
+                          <Checkbox
+                            checked={tosAccepted}
+                            onCheckedChange={(v) => {
+                              const isChecked = !!v;
+                              setTosAccepted(isChecked);
+                              if (isChecked) setTosError(false);
+                            }}
+                            className={cn(
+                              checkboxClassName,
+                              tosError && agreementErrorCheckboxClassName,
+                            )}
+                            aria-invalid={tosError}
+                            aria-labelledby="tos-visual-label"
+                            aria-describedby={
+                              tosError ? "tos-visual-error" : undefined
+                            }
+                          />
+                        </div>
+
+                        <div className="min-w-0 flex-1 space-y-1 leading-none">
+                          <div
+                            id="tos-visual-label"
+                            className={cn(
+                              checkboxLabelClassName,
+                              tosError && agreementErrorLabelClassName,
+                            )}
+                          >
+                            By checking this box you acknowledge that you agree
+                            to the{" "}
+                            <Link
+                              href="https://knight-hacks.notion.site/knight-hacks-26-tos"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={agreementLinkClassName}
+                            >
+                              Knight Hacks Terms of Service
+                            </Link>
+                            . <span className={requiredMarkClassName}>*</span>
+                          </div>
+                          {tosError && (
+                            <p
+                              id="tos-visual-error"
+                              className={agreementErrorMessageClassName}
+                              role="alert"
+                            >
+                              You must agree to the Knight Hacks Terms of
+                              Service
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </section>
-                </div>
+                    </section>
+                  </div>
 
-                <div className="kh-application-nav fixed inset-x-5 bottom-5 z-30 flex items-center justify-between [bottom:calc(1.25rem+env(safe-area-inset-bottom))] md:inset-x-16 md:bottom-10">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => void goToStep(activeStep - 1)}
-                    disabled={
-                      activeStep === 0 || loading || isStepTransitioning
-                    }
-                    size="icon"
-                    className={secondaryActionButtonClassName}
-                    aria-label="Back"
-                    title="Back"
-                  >
-                    <ArrowLeft className="h-6 w-6 sm:h-7 sm:w-7" />
-                  </Button>
-
-                  {isFinalStep ? (
-                    <Button
-                      type="submit"
-                      disabled={loading || isStepTransitioning}
-                      size="icon"
-                      className={actionButtonClassName}
-                      aria-label={
-                        loading
-                          ? "Submitting application"
-                          : "Submit application"
-                      }
-                      title={
-                        loading
-                          ? "Submitting application"
-                          : "Submit application"
-                      }
-                    >
-                      {loading ? (
-                        <Loader2 className="h-6 w-6 animate-spin sm:h-7 sm:w-7" />
-                      ) : (
-                        <Send className="h-6 w-6 sm:h-7 sm:w-7" />
-                      )}
-                    </Button>
-                  ) : (
+                  <div className="kh-application-nav fixed inset-x-5 bottom-5 z-30 flex items-center justify-between [bottom:calc(1.25rem+env(safe-area-inset-bottom))] md:inset-x-16 md:bottom-10">
                     <Button
                       type="button"
-                      onClick={() => void goToStep(activeStep + 1)}
-                      disabled={loading || isStepTransitioning}
+                      variant="outline"
+                      onClick={() => void goToStep(activeStep - 1)}
+                      disabled={
+                        activeStep === 0 || loading || isStepTransitioning
+                      }
                       size="icon"
-                      className={actionButtonClassName}
-                      aria-label="Next"
-                      title="Next"
+                      className={secondaryActionButtonClassName}
+                      aria-label="Back"
+                      title="Back"
                     >
-                      <ArrowRight className="h-6 w-6 sm:h-7 sm:w-7" />
+                      <ArrowLeft className="h-6 w-6 sm:h-7 sm:w-7" />
                     </Button>
-                  )}
+
+                    {isFinalStep ? (
+                      <Button
+                        type="submit"
+                        disabled={loading || isStepTransitioning}
+                        size="icon"
+                        className={actionButtonClassName}
+                        aria-label={
+                          loading
+                            ? "Submitting application"
+                            : "Submit application"
+                        }
+                        title={
+                          loading
+                            ? "Submitting application"
+                            : "Submit application"
+                        }
+                      >
+                        {loading ? (
+                          <Loader2 className="h-6 w-6 animate-spin sm:h-7 sm:w-7" />
+                        ) : (
+                          <Send className="h-6 w-6 sm:h-7 sm:w-7" />
+                        )}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={() => void goToStep(activeStep + 1)}
+                        disabled={loading || isStepTransitioning}
+                        size="icon"
+                        className={actionButtonClassName}
+                        aria-label="Next"
+                        title="Next"
+                      >
+                        <ArrowRight className="h-6 w-6 sm:h-7 sm:w-7" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </form>
     </Form>

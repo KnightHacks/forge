@@ -1,49 +1,28 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
 
-import { MINIO } from "@forge/consts";
+import { logger } from "@forge/utils";
 
-import { minioClient } from "../minio/minio-client";
+import { getUserQRCodePayload } from "../qr-code";
 import { protectedProcedure } from "../trpc";
 
 export const qrRouter = {
   getQRCode: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
-    const objectName = `qr-code-${userId}.png`;
 
     try {
-      try {
-        await minioClient.statObject(MINIO.QR_BUCKET_NAME, objectName);
-      } catch {
-        const bucketExists = await minioClient.bucketExists(
-          MINIO.QR_BUCKET_NAME,
-        );
-        if (!bucketExists) {
-          await minioClient.makeBucket(
-            MINIO.QR_BUCKET_NAME,
-            MINIO.BUCKET_REGION,
-          );
-        }
-        const qrData = `user:${userId}`;
-        const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
-        await minioClient.putObject(
-          MINIO.QR_BUCKET_NAME,
-          objectName,
-          qrBuffer,
-          qrBuffer.length,
-          { "Content-Type": "image/png" },
-        );
-      }
-
-      const qrCodeUrl = await minioClient.presignedGetObject(
-        MINIO.QR_BUCKET_NAME,
-        objectName,
-        60 * 60 * 24,
-      );
+      const qrCodeUrl = await QRCode.toDataURL(getUserQRCodePayload(userId), {
+        type: "image/png",
+      });
 
       return { qrCodeUrl };
-    } catch {
-      throw new Error("Failed to fetch the QR code URL.");
+    } catch (error) {
+      logger.error("Failed to generate the QR code:", error);
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to generate the QR code.",
+      });
     }
   }),
 } satisfies TRPCRouterRecord;

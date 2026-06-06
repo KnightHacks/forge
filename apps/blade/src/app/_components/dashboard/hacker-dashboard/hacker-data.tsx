@@ -5,7 +5,6 @@ import Image from "next/image";
 import { CircleCheckBig, Loader2 } from "lucide-react";
 
 import { CLUB } from "@forge/consts";
-import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -53,18 +52,15 @@ export function HackerData({
     hackathonName: undefined,
   });
 
-  const { data: numConfirmed } = api.hackathon.getNumConfirmed.useQuery({
-    hackathonId: currentHackathon?.id ?? "",
-  });
-
-  const sendEmail = api.email.sendEmail.useMutation({
-    onSuccess: () => {
-      toast.success("You're Confirmed!");
+  const { data: numConfirmed } = api.hackathon.getNumConfirmed.useQuery(
+    {
+      hackathonId: currentHackathon?.id ?? "",
     },
-    onError: (opts) => {
-      toast.error(opts.message);
+    {
+      enabled: Boolean(currentHackathon?.id),
+      retry: false,
     },
-  });
+  );
 
   const utils = api.useUtils();
 
@@ -72,19 +68,6 @@ export function HackerData({
     setLoading(true);
     confirmHacker.mutate({
       id: hacker?.id ?? "",
-    });
-
-    if (!hacker || !currentHackathon?.displayName) return;
-
-    sendEmail.mutate({
-      from: "donotreply@knighthacks.org",
-      to: hacker.email,
-      subject: `See you at ${currentHackathon.displayName}!`,
-      template_id: HACKATHON_TEMPLATE_IDS.Confirmation,
-      data: {
-        name: hacker.firstName,
-        hackathon: currentHackathon.displayName,
-      },
     });
   };
 
@@ -110,6 +93,7 @@ export function HackerData({
       setHackerStatus("Confirmed");
       setHackerStatusColor(getStatusColor("confirmed"));
       setIsConfirmOpen(true);
+      toast.success("You're Confirmed!");
       await utils.hackerQuery.getHacker.invalidate();
     },
     onError() {

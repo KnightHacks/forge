@@ -83,26 +83,16 @@ export default async function MemberDashboard({
 
   const isAlumni = calcAlumniStatus(member.gradDate, member);
 
-  const [events, dues, hackathons] = await Promise.allSettled([
+  const [eventsValue, dues, hackathonsValue] = await Promise.all([
     api.member.getEvents(),
     api.duesPayment.validatePaidDues(),
     isAlumni ? api.hackathon.getPastHackathons() : Promise.resolve([]),
   ]);
 
-  if (
-    events.status === "rejected" ||
-    dues.status === "rejected" ||
-    hackathons.status === "rejected"
-  ) {
-    return (
-      <div className="mt-10 flex flex-col items-center justify-center gap-y-6 font-bold">
-        Something went wrong. Please try again later.
-      </div>
-    );
-  }
+  const duesPaid = dues.duesPaid;
 
-  await Promise.all(
-    events.value.map((e) => api.event.ensureForm({ eventId: e.id })),
+  await Promise.allSettled(
+    eventsValue.map((e) => api.event.ensureForm({ eventId: e.id })),
   );
 
   // Alumni Dashboard
@@ -124,7 +114,7 @@ export default async function MemberDashboard({
               <div className="grid gap-4 md:min-h-0 md:grid-rows-3">
                 <AlumniDiscord />
                 <EarlyAccessVolunteer />
-                <MemberInfo />
+                <MemberInfo member={member} />
               </div>
 
               <div className="flex flex-col gap-4">
@@ -135,8 +125,8 @@ export default async function MemberDashboard({
               <div className="grid gap-4 md:min-h-0 md:grid-rows-1">
                 <AlumniRecap
                   member={member}
-                  events={events.value}
-                  hackathons={hackathons.value}
+                  events={eventsValue}
+                  hackathons={hackathonsValue}
                 />
               </div>
             </div>
@@ -160,20 +150,20 @@ export default async function MemberDashboard({
         {/* Unified View */}
         <div className="animate-mobile-initial-expand space-y-4">
           <div className="animate-fade-in grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Payment status={dues.value.duesPaid} member={member} />
+            <Payment status={duesPaid} member={member} />
 
-            <MemberInfo />
+            <MemberInfo member={member} />
 
             <Points size={member.points} />
 
-            <EventNumber size={events.value.length} />
+            <EventNumber size={eventsValue.length} />
 
             <div className="lg:col-span-1">
               <FormResponses />
             </div>
 
             <div className="lg:col-span-3">
-              <EventShowcase events={events.value} member={member} />
+              <EventShowcase events={eventsValue} member={member} />
             </div>
           </div>
         </div>
