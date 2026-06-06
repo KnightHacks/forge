@@ -2,7 +2,9 @@ import { Listmonk } from "@maloma/listmonk";
 
 import { logger } from "@forge/utils";
 
+import type { BuildHackathonEmailInput } from "./hackathons";
 import { env } from "./env";
+import { buildHackathonEmail } from "./hackathons";
 
 export const client = new Listmonk({
   url: env.LISTMONK_URL,
@@ -46,3 +48,17 @@ export const sendEmail = async ({
     );
   }
 };
+
+export const sendHackathonEmail = async (
+  input: BuildHackathonEmailInput,
+): Promise<{ success: true }> => {
+  return sendEmail(buildHackathonEmail(input));
+};
+
+export {
+  buildHackathonEmail,
+  getHackathonEmailTemplateId,
+  type BuildHackathonEmailInput,
+  type BuiltHackathonEmail,
+  type HackathonEmailHackathonContext,
+} from "./hackathons";

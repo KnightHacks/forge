@@ -8,6 +8,7 @@
   *,
   ::before,
   ::after {
+    box-sizing: border-box;
     border-color: hsl(var(--border));
   }
 
@@ -58,5 +59,1403 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.khix-site-background {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 100vw;
+  height: 100svh;
+  min-height: 100svh;
+  overflow: hidden;
+  color: #fbfff2;
+  background: #070c10;
+}
+
+.khix-experience-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    filter 1.35s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 1.15s ease,
+    transform 1.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: filter, transform;
+}
+
+.khix-experience-awaiting .khix-experience-stage {
+  filter: blur(1.15rem) saturate(1.22) brightness(0.78);
+  transform: scale(1.035);
+}
+
+.khix-experience-entered .khix-experience-stage {
+  filter: blur(0) saturate(1) brightness(1);
+  transform: scale(1);
+}
+
+.khix-background-layer {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-color: #111827;
+  background-image: url("https://assets.knighthacks.org/ixtempbg.webp");
+  background-image: image-set(
+    url("https://assets.knighthacks.org/ixtempbg.avif") type("image/avif"),
+    url("https://assets.knighthacks.org/ixtempbg.webp") type("image/webp")
+  );
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  transform: none;
+}
+
+.khix-edge-gloom {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse at 50% 48%,
+      transparent 50%,
+      rgba(7, 18, 22, 0.18) 64%,
+      rgba(1, 7, 10, 0.55) 82%,
+      rgba(0, 2, 5, 0.82) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(2, 11, 15, 0.54),
+      transparent 16% 84%,
+      rgba(2, 11, 15, 0.58)
+    ),
+    linear-gradient(
+      0deg,
+      rgba(0, 4, 8, 0.64),
+      transparent 20% 82%,
+      rgba(5, 15, 18, 0.38)
+    );
+  opacity: 0.88;
+}
+
+.khix-edge-gloom::before {
+  position: absolute;
+  inset: 0;
+  display: block;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 4% 12%, rgba(11, 27, 32, 0.42), transparent 33%),
+    radial-gradient(ellipse at 91% 22%, rgba(8, 28, 25, 0.38), transparent 34%),
+    radial-gradient(ellipse at 50% 98%, rgba(5, 17, 24, 0.58), transparent 45%);
+  opacity: 0.5;
+  animation: khix-edge-vignette-pulse 7.4s ease-in-out infinite alternate;
+}
+
+.khix-mlh-badge {
+  position: fixed;
+  top: 0;
+  right: 1.25rem;
+  z-index: 50;
+  display: block;
+  width: 74px;
+  min-width: 60px;
+  max-width: 100px;
+  filter: drop-shadow(0 0.7rem 1.1rem rgba(0, 0, 0, 0.44))
+    drop-shadow(0 0 0.75rem rgba(255, 255, 255, 0.16));
+}
+
+.khix-mlh-badge img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.khix-hero {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  height: 100svh;
+  min-height: 100svh;
+  overflow: hidden;
+  padding: clamp(2.25rem, 4.5vh, 3.25rem) 1.25rem 2rem;
+  text-align: center;
+}
+
+.khix-hero-content {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(48rem, 100%);
+  max-width: calc(100vw - 2.5rem);
+}
+
+.khix-logo-lockup {
+  position: relative;
+  isolation: isolate;
+  width: min(46vw, 30rem);
+  filter: drop-shadow(0 0 0.45rem rgba(255, 255, 255, 0.92))
+    drop-shadow(0 0 1rem rgba(196, 255, 62, 0.5))
+    drop-shadow(0 1rem 2rem rgba(0, 0, 0, 0.52));
+}
+
+.khix-logo-lockup::before {
+  position: absolute;
+  inset: 10% 0;
+  z-index: -1;
+  content: "";
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(214, 255, 86, 0.42),
+    rgba(132, 255, 87, 0.13) 42%,
+    transparent 72%
+  );
+  filter: blur(1.7rem);
+}
+
+.khix-logo-image {
+  width: 100%;
+  height: auto;
+}
+
+.khix-event-date-lockup {
+  width: min(40vw, 26rem);
+  margin: clamp(1rem, 2.1vh, 1.35rem) 0 0;
+  color: #fffff6;
+  font-family:
+    "Arial Rounded MT Bold", "Avenir Next Condensed", "Arial Black",
+    "Trebuchet MS", "Montserrat", var(--font-geist-sans), system-ui, sans-serif;
+  font-weight: 900;
+  font-synthesis-weight: auto;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: uppercase;
+  filter: drop-shadow(0 0 0.45rem rgba(255, 255, 255, 0.86))
+    drop-shadow(0 0 1rem rgba(196, 255, 62, 0.38))
+    drop-shadow(0 0.8rem 1.35rem rgba(0, 0, 0, 0.46));
+  text-shadow:
+    0 0 0.18rem rgba(255, 255, 255, 0.76),
+    0 0 0.55rem rgba(214, 255, 86, 0.28),
+    0 0.65rem 1rem rgba(0, 0, 0, 0.44);
+}
+
+.khix-event-date-text {
+  margin: 0;
+  font-size: clamp(1.45rem, 2.55vw, 2.3rem);
+  line-height: 0.94;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.035em rgba(255, 255, 246, 0.9);
+  paint-order: stroke fill;
+}
+
+.khix-event-location-text {
+  margin: clamp(0.25rem, 0.55vh, 0.42rem) 0 0;
+  font-size: clamp(0.72rem, 1.28vw, 1.2rem);
+  line-height: 1;
+  opacity: 0.92;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.024em rgba(255, 255, 246, 0.86);
+  paint-order: stroke fill;
+  text-shadow:
+    0 0 0.16rem rgba(255, 255, 255, 0.7),
+    0 0 0.5rem rgba(214, 255, 86, 0.24),
+    0 0.45rem 0.85rem rgba(0, 0, 0, 0.42);
+}
+
+.khix-gem-aura {
+  position: absolute;
+  top: 50.8%;
+  left: 50.8%;
+  z-index: 2;
+  width: clamp(10rem, 25vw, 24rem);
+  height: clamp(4.7rem, 10.5vw, 10rem);
+  pointer-events: none;
+  border-radius: 999px;
+  background:
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(255, 245, 224, 0.34),
+      transparent 14%
+    ),
+    radial-gradient(
+      ellipse at 48% 52%,
+      rgba(255, 44, 105, 0.34),
+      rgba(127, 46, 184, 0.24) 44%,
+      transparent 68%
+    );
+  filter: blur(0.95rem);
+  mix-blend-mode: plus-lighter;
+  opacity: 0.78;
+  translate: -50% -50%;
+}
+
+.khix-gem-magic {
+  position: absolute;
+  top: 50.8%;
+  left: 50.8%;
+  z-index: 3;
+  width: clamp(12rem, 27vw, 30rem);
+  height: clamp(5rem, 10.8vw, 11rem);
+  pointer-events: none;
+  mix-blend-mode: normal;
+  opacity: 0.92;
+  translate: -50% -50%;
+}
+
+.khix-gem-magic::before,
+.khix-gem-magic::after,
+.khix-gem-magic-wisp,
+.khix-gem-magic-thread {
+  position: absolute;
+  display: block;
+  content: "";
+  pointer-events: none;
+}
+
+.khix-gem-magic::before {
+  inset: 18% 13% 14%;
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at 48% 52%,
+    rgba(255, 62, 121, 0.26),
+    rgba(155, 58, 216, 0.2) 38%,
+    transparent 70%
+  );
+  filter: blur(0.95rem);
+  opacity: 0.58;
+  animation: khix-gem-magic-breathe 7.4s ease-in-out infinite alternate;
+}
+
+.khix-gem-magic::after {
+  top: 38%;
+  left: 25%;
+  width: 52%;
+  height: 20%;
+  border-radius: 999px;
+  background: linear-gradient(
+    102deg,
+    transparent 0%,
+    rgba(160, 55, 219, 0.2) 24%,
+    rgba(255, 70, 116, 0.22) 50%,
+    rgba(171, 68, 232, 0.16) 70%,
+    transparent 100%
+  );
+  filter: blur(0.35rem);
+  opacity: 0.7;
+  animation: khix-gem-magic-drift-mid 8.6s ease-in-out infinite alternate;
+}
+
+.khix-gem-magic-wisp {
+  height: clamp(0.75rem, 1.1vw, 1.3rem);
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(255, 76, 126, 0.34),
+    rgba(143, 55, 213, 0.26) 46%,
+    transparent 74%
+  );
+  filter: blur(0.22rem);
+}
+
+.khix-gem-magic-wisp-left {
+  top: 53%;
+  left: 11%;
+  width: 34%;
+  opacity: 0.42;
+  transform: rotate(-13deg);
+  animation: khix-gem-magic-drift-left 8.2s ease-in-out infinite alternate;
+}
+
+.khix-gem-magic-wisp-mid {
+  top: 31%;
+  left: 35%;
+  width: 28%;
+  opacity: 0.34;
+  transform: rotate(-8deg);
+  animation: khix-gem-magic-drift-mid 9.8s ease-in-out -1.8s infinite alternate;
+}
+
+.khix-gem-magic-wisp-right {
+  top: 47%;
+  right: 12%;
+  width: 32%;
+  opacity: 0.4;
+  transform: rotate(10deg);
+  animation: khix-gem-magic-drift-right 7.8s ease-in-out -2.6s infinite
+    alternate;
+}
+
+.khix-gem-magic-thread {
+  width: clamp(3.2rem, 7vw, 7.4rem);
+  height: clamp(0.5rem, 0.85vw, 0.9rem);
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(128, 42, 192, 0.34) 24%,
+    rgba(255, 58, 119, 0.46) 52%,
+    rgba(255, 160, 192, 0.22) 68%,
+    transparent
+  );
+  filter: blur(0.16rem);
+  mix-blend-mode: screen;
+  opacity: 0.66;
+  will-change: opacity, transform;
+}
+
+.khix-gem-magic-thread-left {
+  top: 53%;
+  left: 20%;
+  transform: rotate(-18deg);
+  animation: khix-gem-magic-thread-left 4.9s ease-in-out -0.6s infinite
+    alternate;
+}
+
+.khix-gem-magic-thread-right {
+  top: 43%;
+  right: 20%;
+  transform: rotate(12deg);
+  animation: khix-gem-magic-thread-right 5.6s ease-in-out -1.7s infinite
+    alternate;
+}
+
+.khix-gem-shard-shimmer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse at 51% 51%,
+      rgba(255, 53, 109, 0.24),
+      rgba(141, 47, 204, 0.16) 28%,
+      transparent 47%
+    ),
+    linear-gradient(
+      112deg,
+      transparent 0 42%,
+      rgba(255, 70, 124, 0.16) 46%,
+      rgba(255, 235, 211, 0.38) 50%,
+      rgba(174, 64, 220, 0.2) 55%,
+      transparent 62% 100%
+    );
+  background-position:
+    center center,
+    -32vw center;
+  background-repeat: no-repeat;
+  background-size:
+    cover,
+    42vw 100%;
+  filter: blur(0.035rem);
+  mix-blend-mode: screen;
+  opacity: 0.68;
+  -webkit-mask-image: url("/khix-gem-shard-mask.png");
+  mask-image: url("/khix-gem-shard-mask.png");
+  -webkit-mask-position: center center;
+  mask-position: center center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: cover;
+  mask-size: cover;
+  animation: khix-gem-shard-mask-shimmer 4.8s ease-in-out infinite alternate;
+  will-change: background-position, opacity;
+}
+
+.khix-gem-shard-glint {
+  position: absolute;
+  top: 4%;
+  left: 27%;
+  z-index: 2;
+  width: 56%;
+  height: 38%;
+  border-radius: 999px;
+  background: linear-gradient(
+    111deg,
+    transparent 0%,
+    rgba(255, 143, 152, 0.12) 23%,
+    rgba(255, 245, 219, 0.56) 41%,
+    rgba(255, 255, 248, 0.86) 49%,
+    rgba(255, 94, 124, 0.2) 58%,
+    transparent 76%
+  );
+  filter: blur(0.06rem);
+  mix-blend-mode: screen;
+  opacity: 0.72;
+  transform: translate3d(0, 0, 0) skewX(-21deg) rotate(-6deg) scaleX(0.96);
+  animation: khix-gem-shard-glint 4.6s ease-in-out infinite alternate;
+  will-change: opacity, transform;
+}
+
+.khix-gem-shard-spark {
+  position: absolute;
+  z-index: 3;
+  display: block;
+  width: clamp(0.28rem, 0.45vw, 0.52rem);
+  height: clamp(0.28rem, 0.45vw, 0.52rem);
+  border-radius: 999px;
+  background: rgba(255, 250, 219, 0.92);
+  box-shadow:
+    0 0 0.45rem rgba(255, 236, 184, 0.62),
+    0 0 0.95rem rgba(255, 71, 111, 0.38);
+  mix-blend-mode: screen;
+}
+
+.khix-gem-shard-spark-top {
+  top: 12%;
+  left: 56%;
+  opacity: 0.42;
+  animation: khix-gem-shard-spark-top 5.2s ease-in-out -1.2s infinite alternate;
+}
+
+.khix-gem-shard-spark-low {
+  top: 43%;
+  left: 82%;
+  width: clamp(0.18rem, 0.3vw, 0.36rem);
+  height: clamp(0.18rem, 0.3vw, 0.36rem);
+  opacity: 0.32;
+  animation: khix-gem-shard-spark-low 6.4s ease-in-out -2.4s infinite alternate;
+}
+
+.khix-hero-actions {
+  position: absolute;
+  bottom: clamp(4.35rem, 6.3vh, 5.45rem);
+  left: 50%;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: center;
+  justify-content: center;
+  width: min(18.75rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  margin-top: clamp(1rem, 2.4vh, 1.5rem);
+  opacity: 0;
+  translate: -50% 0;
+  animation: khix-control-fade 0.58s ease-out 0.42s forwards;
+}
+
+.khix-social-links {
+  position: absolute;
+  bottom: clamp(0.78rem, 1.35vh, 1.1rem);
+  left: 50%;
+  z-index: 5;
+  display: flex;
+  gap: 0.58rem;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  translate: -50% 0;
+  opacity: 0;
+  animation: khix-control-fade 0.58s ease-out 0.58s forwards;
+}
+
+.khix-social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: rgba(255, 255, 246, 0.76);
+  text-decoration: none;
+  filter: drop-shadow(0 0.48rem 0.72rem rgba(0, 0, 0, 0.44))
+    drop-shadow(0 0 0.5rem rgba(214, 255, 86, 0.12));
+  opacity: 0.84;
+  transition:
+    color 0.18s ease,
+    filter 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.khix-social-link:hover {
+  color: #fff7cf;
+  filter: drop-shadow(0 0.5rem 0.8rem rgba(0, 0, 0, 0.44))
+    drop-shadow(0 0 0.72rem rgba(214, 255, 86, 0.28));
+  opacity: 1;
+}
+
+.khix-button {
+  position: relative;
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 2.72rem;
+  padding: 0.68rem 1rem;
+  border-radius: 0.42rem;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.khix-button-primary {
+  color: #1d090a;
+  background: linear-gradient(135deg, #fff2a3, #d8ff5f 62%, #ff4867);
+  box-shadow:
+    0 0.85rem 1.9rem rgba(13, 24, 9, 0.42),
+    0 0 1.4rem rgba(210, 255, 69, 0.26);
+}
+
+.khix-button-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.khix-button-secondary {
+  color: #fff7d2;
+  border: 1px solid rgba(255, 211, 106, 0.48);
+  background: rgba(18, 13, 22, 0.58);
+  box-shadow: inset 0 0 1.4rem rgba(255, 211, 106, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.khix-button-primary:hover {
+  box-shadow:
+    0 1rem 2.4rem rgba(13, 24, 9, 0.5),
+    0 0 1.9rem rgba(255, 83, 108, 0.3);
+}
+
+.khix-button-secondary:hover {
+  border-color: rgba(255, 211, 106, 0.78);
+  background: rgba(42, 21, 29, 0.72);
+}
+
+.khix-code-link {
+  position: absolute;
+  bottom: 2.75rem;
+  left: 50%;
+  z-index: 5;
+  color: rgba(255, 253, 241, 0.72);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-decoration: none;
+  text-shadow: 0 0.65rem 1.2rem rgba(0, 0, 0, 0.55);
+  text-transform: uppercase;
+  translate: -50% 0;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  opacity: 0;
+  animation: khix-control-fade 0.58s ease-out 0.52s forwards;
+}
+
+.khix-code-link:hover {
+  color: #fff2a3;
+}
+
+.khix-enter-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 2rem);
+  border: 0;
+  color: #fffff6;
+  cursor: pointer;
+  appearance: none;
+  background:
+    radial-gradient(
+      ellipse at 50% 47%,
+      rgba(214, 255, 86, 0.24),
+      rgba(255, 69, 121, 0.11) 22%,
+      rgba(104, 48, 150, 0.08) 39%,
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse at 50% 57%,
+      rgba(255, 70, 120, 0.1),
+      transparent 46%
+    ),
+    rgba(5, 8, 10, 0.28);
+  text-align: center;
+  transition:
+    opacity 0.8s ease,
+    transform 1s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0.8s ease;
+}
+
+.khix-enter-gate::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse at 50% 48%,
+      rgba(255, 255, 230, 0.16),
+      transparent 31%
+    ),
+    linear-gradient(
+      115deg,
+      transparent 0%,
+      rgba(216, 255, 86, 0.08) 44%,
+      rgba(255, 72, 122, 0.1) 51%,
+      transparent 62% 100%
+    );
+  filter: blur(0.22rem);
+  mix-blend-mode: screen;
+  opacity: 0.72;
+  animation: khix-enter-haze 5.8s ease-in-out infinite alternate;
+}
+
+.khix-experience-entered .khix-enter-gate {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(1.04);
+}
+
+.khix-enter-gate-aura {
+  position: absolute;
+  width: clamp(18rem, 48vw, 38rem);
+  aspect-ratio: 1.75;
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(213, 255, 82, 0.26),
+    rgba(255, 73, 122, 0.16) 33%,
+    rgba(117, 48, 160, 0.1) 51%,
+    transparent 76%
+  );
+  filter: blur(2.35rem);
+  opacity: 0.9;
+  animation: khix-enter-aura 3.4s ease-in-out infinite alternate;
+}
+
+.khix-enter-gate-content {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: min(32rem, calc(100vw - 2rem));
+  font-family: var(--font-geist-mono), monospace;
+  font-size: clamp(0.76rem, 1.16vw, 1.02rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-transform: uppercase;
+  text-wrap: balance;
+  text-shadow:
+    0 0 0.28rem rgba(255, 255, 246, 0.9),
+    0 0 0.82rem rgba(214, 255, 86, 0.52),
+    0 0 1.7rem rgba(255, 71, 119, 0.36),
+    0 0.75rem 1.2rem rgba(0, 0, 0, 0.58);
+  filter: drop-shadow(0 0 0.7rem rgba(214, 255, 86, 0.34));
+  animation: khix-enter-text-float 2.9s ease-in-out infinite alternate;
+}
+
+.khix-enter-gate-content::after {
+  position: absolute;
+  inset: -0.75rem -1.5rem;
+  z-index: -1;
+  content: "";
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 238, 0.08),
+    rgba(214, 255, 86, 0.08) 38%,
+    transparent 74%
+  );
+  filter: blur(0.65rem);
+}
+
+.khix-audio-toggle {
+  position: static;
+  flex: 0 0 2rem;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 999px;
+  outline: 0 !important;
+  color: rgba(255, 255, 246, 0.76);
+  cursor: pointer;
+  appearance: none;
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: 0.84;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.khix-audio-toggle svg {
+  filter: drop-shadow(0 0.45rem 0.55rem rgba(0, 0, 0, 0.36))
+    drop-shadow(0 0 0.42rem rgba(204, 255, 75, 0.16));
+}
+
+.khix-audio-toggle:hover,
+.khix-audio-toggle:focus,
+.khix-audio-toggle:focus-visible,
+.khix-audio-toggle:active {
+  opacity: 0.9;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.khix-social-links .khix-audio-toggle-row {
+  position: static !important;
+  flex: 0 0 2rem;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: 2rem;
+  height: 2rem;
+  color: rgba(255, 255, 246, 0.76);
+  line-height: 1;
+}
+
+@keyframes khix-control-fade {
+  to {
+    opacity: 1;
+  }
+}
+
+.khix-cursor-wisp {
+  position: fixed;
+  z-index: 95;
+  display: block;
+  width: var(--wisp-width);
+  height: var(--wisp-height);
+  pointer-events: none;
+  user-select: none;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+  animation: khix-cursor-wisp-drift 1.42s cubic-bezier(0.19, 1, 0.22, 1)
+    forwards;
+  filter: drop-shadow(0 0 0.7rem var(--wisp-glow))
+    drop-shadow(0 0 1.55rem var(--wisp-edge));
+  mix-blend-mode: normal;
+  will-change: opacity, transform;
+}
+
+.khix-cursor-wisp::before {
+  position: absolute;
+  inset: -145% -175%;
+  content: "";
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at 50% 58%,
+    var(--wisp-glow) 0%,
+    var(--wisp-edge) 24%,
+    transparent 66%
+  );
+  filter: blur(1.35rem);
+  opacity: 0.42;
+  animation: khix-cursor-wisp-aura 1.42s ease-out forwards;
+}
+
+.khix-cursor-wisp::after {
+  position: absolute;
+  inset: 18% -68% -18%;
+  content: "";
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 35% 55%, var(--wisp-edge) 0%, transparent 48%),
+    radial-gradient(ellipse at 70% 44%, var(--wisp-glow) 0%, transparent 42%);
+  filter: blur(0.95rem);
+  opacity: 0.34;
+  transform: rotate(var(--wisp-tail-rotate-end));
+  animation: khix-cursor-wisp-fog 1.42s ease-out forwards;
+}
+
+.khix-cursor-wisp-tail {
+  position: absolute;
+  right: 24%;
+  bottom: -4%;
+  width: 156%;
+  height: 72%;
+  border-radius: 999px;
+  background:
+    linear-gradient(96deg, transparent, var(--wisp-edge) 32%, transparent 74%),
+    radial-gradient(ellipse at 76% 50%, var(--wisp-glow), transparent 58%);
+  filter: blur(0.62rem);
+  opacity: 0.38;
+  transform: rotate(var(--wisp-tail-rotate)) scaleX(0.84);
+  transform-origin: 88% 50%;
+  animation: khix-cursor-wisp-tail 1.42s ease-out forwards;
+}
+
+.khix-cursor-wisp-core {
+  position: absolute;
+  inset: 0 4% 4%;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 52% 68%, var(--wisp-glow) 0%, transparent 54%),
+    radial-gradient(ellipse at 50% 88%, var(--wisp-edge) 0%, transparent 62%);
+  box-shadow: 0 0 1.15rem var(--wisp-glow);
+  opacity: 0.9;
+  transform: rotate(2deg) skewX(-10deg) scale(0.92, 1);
+  animation: khix-cursor-wisp-flicker 0.58s ease-in-out infinite alternate;
+}
+
+.khix-cursor-wisp-core::before,
+.khix-cursor-wisp-core::after {
+  position: absolute;
+  bottom: 10%;
+  content: "";
+  border-radius: 999px;
+  pointer-events: none;
+  transform-origin: 50% 92%;
+}
+
+.khix-cursor-wisp-core::before {
+  left: 34%;
+  width: 34%;
+  height: 88%;
+  background:
+    radial-gradient(ellipse at 50% 12%, var(--wisp-core) 0%, transparent 20%),
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      var(--wisp-glow) 24%,
+      var(--wisp-edge) 63%,
+      transparent 100%
+    );
+  filter: blur(0.12rem);
+  opacity: 0.86;
+  transform: rotate(8deg) scaleY(0.94);
+  animation: khix-cursor-wisp-thread-main 0.68s ease-in-out infinite alternate;
+}
+
+.khix-cursor-wisp-core::after {
+  left: 18%;
+  width: 54%;
+  height: 72%;
+  background:
+    radial-gradient(ellipse at 42% 20%, var(--wisp-core) 0%, transparent 18%),
+    linear-gradient(
+      178deg,
+      transparent 0%,
+      var(--wisp-glow) 28%,
+      var(--wisp-edge) 66%,
+      transparent 100%
+    );
+  filter: blur(0.22rem);
+  opacity: 0.56;
+  transform: rotate(-14deg) scaleY(0.86);
+  animation: khix-cursor-wisp-thread-side 0.78s ease-in-out infinite alternate;
+}
+
+@keyframes khix-cursor-wisp-drift {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.78) rotate(0deg);
+  }
+
+  16% {
+    opacity: 0.72;
+  }
+
+  54% {
+    opacity: 0.48;
+    transform: translate(
+        calc(-50% + var(--wisp-drift-x-mid)),
+        calc(-50% + var(--wisp-drift-y-mid))
+      )
+      scale(1.05) rotate(var(--wisp-rotate-mid));
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(
+        calc(-50% + var(--wisp-drift-x)),
+        calc(-50% + var(--wisp-drift-y))
+      )
+      scale(0.42) rotate(var(--wisp-rotate));
+  }
+}
+
+@keyframes khix-cursor-wisp-aura {
+  0% {
+    opacity: 0.28;
+    transform: scale(0.8);
+  }
+
+  38% {
+    opacity: 0.46;
+    transform: scale(1.16);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.62);
+  }
+}
+
+@keyframes khix-cursor-wisp-tail {
+  0% {
+    opacity: 0.36;
+    transform: rotate(var(--wisp-tail-rotate)) scaleX(0.55);
+  }
+
+  52% {
+    opacity: 0.32;
+    transform: rotate(var(--wisp-tail-rotate-mid)) scaleX(1.26);
+  }
+
+  100% {
+    opacity: 0;
+    transform: rotate(var(--wisp-tail-rotate-end)) scaleX(0.2);
+  }
+}
+
+@keyframes khix-cursor-wisp-fog {
+  0% {
+    opacity: 0.2;
+    transform: translate3d(0, 0.12rem, 0) rotate(var(--wisp-tail-rotate));
+  }
+
+  45% {
+    opacity: 0.34;
+    transform: translate3d(var(--wisp-fog-drift-x-mid), -0.18rem, 0)
+      rotate(var(--wisp-tail-rotate-mid)) scale(1.18);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--wisp-fog-drift-x-end), -0.5rem, 0)
+      rotate(var(--wisp-tail-rotate-end)) scale(1.42);
+  }
+}
+
+@keyframes khix-cursor-wisp-flicker {
+  from {
+    filter: blur(0.08rem);
+    transform: rotate(-3deg) skewX(-12deg) scale(0.86, 0.94);
+  }
+
+  to {
+    filter: blur(0.16rem);
+    transform: rotate(5deg) skewX(8deg) scale(1.04, 1.12);
+  }
+}
+
+@keyframes khix-cursor-wisp-thread-main {
+  from {
+    opacity: 0.58;
+    transform: translate3d(-0.04rem, 0.08rem, 0) rotate(5deg) scale(0.82, 0.9);
+  }
+
+  to {
+    opacity: 0.9;
+    transform: translate3d(0.08rem, -0.08rem, 0) rotate(13deg) scale(1, 1.12);
+  }
+}
+
+@keyframes khix-cursor-wisp-thread-side {
+  from {
+    opacity: 0.36;
+    transform: translate3d(0.06rem, 0.08rem, 0) rotate(-18deg) scale(0.84, 0.88);
+  }
+
+  to {
+    opacity: 0.68;
+    transform: translate3d(-0.08rem, -0.1rem, 0) rotate(-8deg) scale(1.05, 1.08);
+  }
+}
+
+@keyframes khix-enter-haze {
+  from {
+    opacity: 0.52;
+    transform: translate3d(-0.3rem, 0.1rem, 0) scale(0.98);
+  }
+
+  to {
+    opacity: 0.86;
+    transform: translate3d(0.35rem, -0.2rem, 0) scale(1.03);
+  }
+}
+
+@keyframes khix-enter-aura {
+  from {
+    opacity: 0.62;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 0.98;
+    transform: scale(1.07);
+  }
+}
+
+@keyframes khix-enter-text-float {
+  from {
+    opacity: 0.82;
+    transform: translate3d(0, 0.12rem, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, -0.12rem, 0);
+  }
+}
+
+@keyframes khix-edge-vignette-pulse {
+  from {
+    opacity: 0.38;
+  }
+
+  to {
+    opacity: 0.62;
+  }
+}
+
+@keyframes khix-gem-magic-breathe {
+  from {
+    opacity: 0.42;
+    transform: translate3d(0, 0, 0) scale(0.96);
+  }
+
+  to {
+    opacity: 0.64;
+    transform: translate3d(0.25rem, -0.16rem, 0) scale(1.04);
+  }
+}
+
+@keyframes khix-gem-magic-drift-left {
+  from {
+    opacity: 0.3;
+    transform: translate3d(0.2rem, 0.1rem, 0) rotate(-13deg) scaleX(0.92);
+  }
+
+  to {
+    opacity: 0.5;
+    transform: translate3d(-1.1rem, -0.45rem, 0) rotate(-18deg) scaleX(1.08);
+  }
+}
+
+@keyframes khix-gem-magic-drift-mid {
+  from {
+    opacity: 0.26;
+    transform: translate3d(-0.25rem, 0.08rem, 0) rotate(-8deg) scaleX(0.96);
+  }
+
+  to {
+    opacity: 0.44;
+    transform: translate3d(0.45rem, -0.35rem, 0) rotate(-5deg) scaleX(1.08);
+  }
+}
+
+@keyframes khix-gem-magic-drift-right {
+  from {
+    opacity: 0.28;
+    transform: translate3d(-0.1rem, 0.08rem, 0) rotate(10deg) scaleX(0.94);
+  }
+
+  to {
+    opacity: 0.48;
+    transform: translate3d(1rem, -0.48rem, 0) rotate(15deg) scaleX(1.08);
+  }
+}
+
+@keyframes khix-gem-magic-thread-left {
+  from {
+    opacity: 0.36;
+    transform: translate3d(0.35rem, 0.12rem, 0) rotate(-18deg) scaleX(0.78);
+  }
+
+  to {
+    opacity: 0.72;
+    transform: translate3d(-0.45rem, -0.26rem, 0) rotate(-24deg) scaleX(1.05);
+  }
+}
+
+@keyframes khix-gem-magic-thread-right {
+  from {
+    opacity: 0.32;
+    transform: translate3d(-0.2rem, 0.08rem, 0) rotate(12deg) scaleX(0.82);
+  }
+
+  to {
+    opacity: 0.7;
+    transform: translate3d(0.55rem, -0.24rem, 0) rotate(18deg) scaleX(1.08);
+  }
+}
+
+@keyframes khix-gem-shard-mask-shimmer {
+  from {
+    opacity: 0.48;
+    background-position:
+      center center,
+      -28vw center;
+  }
+
+  to {
+    opacity: 0.74;
+    background-position:
+      center center,
+      28vw center;
+  }
+}
+
+@keyframes khix-gem-shard-glint {
+  from {
+    opacity: 0.52;
+    transform: translate3d(-0.18rem, 0.04rem, 0) skewX(-21deg) rotate(-6deg)
+      scaleX(0.9);
+  }
+
+  to {
+    opacity: 0.86;
+    transform: translate3d(0.22rem, -0.1rem, 0) skewX(-21deg) rotate(-6deg)
+      scaleX(1.06);
+  }
+}
+
+@keyframes khix-gem-shard-spark-top {
+  from {
+    opacity: 0.36;
+    transform: scale(0.72);
+  }
+
+  to {
+    opacity: 0.74;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes khix-gem-shard-spark-low {
+  from {
+    opacity: 0.26;
+    transform: scale(0.7);
+  }
+
+  to {
+    opacity: 0.56;
+    transform: scale(1.04);
+  }
+}
+
+.khix-experience-awaiting .khix-experience-stage *,
+.khix-experience-awaiting .khix-experience-stage *::before,
+.khix-experience-awaiting .khix-experience-stage *::after {
+  animation: none !important;
+}
+
+.khix-experience-awaiting .khix-enter-gate::before,
+.khix-experience-awaiting .khix-enter-gate-aura,
+.khix-experience-awaiting .khix-enter-gate-content {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .khix-gem-magic::before,
+  .khix-gem-magic::after,
+  .khix-gem-magic-wisp,
+  .khix-gem-magic-thread,
+  .khix-gem-shard-shimmer,
+  .khix-gem-shard-glint,
+  .khix-gem-shard-spark,
+  .khix-edge-gloom::before,
+  .khix-enter-gate::before,
+  .khix-enter-gate-aura,
+  .khix-enter-gate-content,
+  .khix-cursor-wisp,
+  .khix-cursor-wisp::before,
+  .khix-cursor-wisp-tail,
+  .khix-cursor-wisp-core {
+    animation: none;
+  }
+
+  .khix-cursor-wisp {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .khix-mlh-badge {
+    right: 3.125rem;
+    width: 92px;
+  }
+}
+
+@media (max-width: 900px) {
+  .khix-background-layer {
+    background-position: center center;
+  }
+
+  .khix-logo-lockup {
+    width: min(64vw, 23rem);
+  }
+
+  .khix-event-date-lockup {
+    width: min(56vw, 20rem);
+  }
+
+  .khix-event-date-text {
+    font-size: clamp(1.25rem, 2.45vw, 1.75rem);
+  }
+
+  .khix-gem-aura {
+    top: 51%;
+    width: 15rem;
+    height: 8rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .khix-mlh-badge {
+    right: 0.75rem;
+    width: 60px;
+  }
+
+  .khix-audio-toggle {
+    position: static;
+    flex: 0 0 2.75rem;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: 2.75rem;
+    height: 2.75rem;
+    color: rgba(255, 255, 246, 0.76);
+    opacity: 0.84;
+    line-height: 1;
+  }
+
+  .khix-social-links .khix-audio-toggle-row {
+    position: static !important;
+    flex: 0 0 2.75rem;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: 2.75rem;
+    height: 2.75rem;
+    color: rgba(255, 255, 246, 0.76);
+    line-height: 1;
+  }
+
+  .khix-hero {
+    padding: 5.35rem 1rem 1.25rem;
+  }
+
+  .khix-background-layer {
+    background-position: center center;
+  }
+
+  .khix-logo-lockup {
+    width: min(70vw, 18rem);
+  }
+
+  .khix-event-date-lockup {
+    width: min(62vw, 15.5rem);
+    margin-top: clamp(1.1rem, 2.5vh, 1.4rem);
+  }
+
+  .khix-event-date-text {
+    font-size: clamp(0.95rem, 4.2vw, 1.15rem);
+  }
+
+  .khix-hero-actions {
+    bottom: calc(max(0.75rem, env(safe-area-inset-bottom)) + 5.65rem);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(18rem, calc(100vw - 2.5rem));
+    gap: 0.55rem;
+  }
+
+  .khix-social-links {
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    gap: clamp(0.25rem, 1.8vw, 0.55rem);
+  }
+
+  .khix-social-link {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .khix-code-link {
+    bottom: calc(max(0.75rem, env(safe-area-inset-bottom)) + 2.9rem);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.9rem;
+    padding: 0 0.45rem;
+    line-height: 1;
+  }
+
+  .khix-button {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.58rem 0.65rem;
+    font-size: 0.62rem;
+  }
+
+  .khix-code-link {
+    font-size: 0.62rem;
+  }
+}
+
+@media (max-width: 520px) and (max-height: 720px) {
+  .khix-hero {
+    padding-top: 4.35rem;
+  }
+
+  .khix-logo-lockup {
+    width: min(62vw, 16rem);
+  }
+
+  .khix-event-date-lockup {
+    width: min(56vw, 14.5rem);
+    margin-top: 0.82rem;
+  }
+
+  .khix-event-date-text {
+    font-size: clamp(0.9rem, 4vw, 1.08rem);
+  }
+
+  .khix-hero-actions {
+    bottom: calc(max(0.62rem, env(safe-area-inset-bottom)) + 5.35rem);
+    gap: 0.5rem;
+  }
+
+  .khix-social-links {
+    bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  .khix-code-link {
+    bottom: calc(max(0.5rem, env(safe-area-inset-bottom)) + 2.65rem);
+  }
+
+  .khix-audio-toggle {
+    bottom: auto;
   }
 }

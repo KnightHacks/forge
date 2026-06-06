@@ -1,9 +1,8 @@
 import { TRPCError } from "@trpc/server";
-import QRCode from "qrcode";
 import { z } from "zod";
 
 import type { HackerClass } from "@forge/db/schemas/knight-hacks";
-import { HACKATHONS, MINIO } from "@forge/consts";
+import { HACKATHONS } from "@forge/consts";
 import { and, count, eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
@@ -16,10 +15,11 @@ import {
   HackerEventAttendee,
   InsertHackerSchema,
 } from "@forge/db/schemas/knight-hacks";
+import { sendHackathonEmail } from "@forge/email";
 import { logger, permissions } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 
-import { minioClient } from "../../minio/minio-client";
+import { ensureUserQRCode } from "../../qr-code";
 import {
   normalizeResumeObjectNameForPersistence,
   removeUnreferencedResumeObjectsForUser,
@@ -81,9 +81,10 @@ export const hackerMutationRouter = {
         );
 
       if (existingHacker.length > 0) {
-        throw new Error(
-          "Hacker already exists for this user in this hackathon.",
-        );
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "You already submitted an application for this hackathon.",
+        });
       }
 
       try {
@@ -93,28 +94,10 @@ export const hackerMutationRouter = {
           .where(eq(Hacker.userId, userId));
 
         if (existingHackerProfile.length === 0) {
-          const objectName = `qr-code-${userId}.png`;
-          const bucketExists = await minioClient.bucketExists(
-            MINIO.QR_BUCKET_NAME,
-          );
-          if (!bucketExists) {
-            await minioClient.makeBucket(
-              MINIO.QR_BUCKET_NAME,
-              MINIO.BUCKET_REGION,
-            );
-          }
-          const qrData = `user:${userId}`;
-          const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
-          await minioClient.putObject(
-            MINIO.QR_BUCKET_NAME,
-            objectName,
-            qrBuffer,
-            qrBuffer.length,
-            { "Content-Type": "image/png" },
-          );
+          await ensureUserQRCode(userId);
         }
       } catch (error) {
-        logger.error("Error with generating QR code: ", error);
+        logger.warn("Error with generating QR code: ", error);
       }
 
       const today = new Date();
@@ -161,12 +144,38 @@ export const hackerMutationRouter = {
 
       await removeUnreferencedResumeObjectsForUser(userId);
 
-      await discord.log({
-        title: `Hacker Created for ${hackathon.displayName}`,
-        message: `${hackerData.firstName} ${hackerData.lastName} has signed up for the upcoming hackathon: ${hackathon.name.toUpperCase()}!`,
-        color: "tk_blue",
-        userId: ctx.session.user.discordUserId,
-      });
+      try {
+        await sendHackathonEmail({
+          from: "donotreply@knighthacks.org",
+          hackathon: {
+            applicationBackgroundKey: hackathon.applicationBackgroundKey,
+            displayName: hackathon.displayName,
+            emailTemplateKey: hackathon.emailTemplateEnabled
+              ? hackathon.emailTemplateKey
+              : null,
+            routeName: hackathon.name,
+            theme: hackathon.theme,
+          },
+          kind: "Apply",
+          recipient: {
+            name: hackerData.firstName,
+            to: hackerData.email,
+          },
+        });
+      } catch (error) {
+        logger.warn("Failed to send hackathon application email:", error);
+      }
+
+      try {
+        await discord.log({
+          title: `Hacker Created for ${hackathon.displayName}`,
+          message: `${hackerData.firstName} ${hackerData.lastName} has signed up for the upcoming hackathon: ${hackathon.name.toUpperCase()}!`,
+          color: "tk_blue",
+          userId: ctx.session.user.discordUserId,
+        });
+      } catch (error) {
+        logger.warn("Failed to log hackathon application to Discord:", error);
+      }
     }),
 
   updateHacker: protectedProcedure
@@ -323,7 +332,7 @@ export const hackerMutationRouter = {
         id: z.string(), // This is the hacker ID
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       if (!input.id) {
         throw new TRPCError({
           message: "Hacker ID is required to update a member!",
@@ -334,7 +343,8 @@ export const hackerMutationRouter = {
       const hackerId = input.id;
 
       const hacker = await db.query.Hacker.findFirst({
-        where: (t, { eq }) => eq(t.id, hackerId),
+        where: (t, { and, eq }) =>
+          and(eq(t.id, hackerId), eq(t.userId, ctx.session.user.id)),
       });
 
       if (!hacker) {
@@ -398,12 +408,38 @@ export const hackerMutationRouter = {
           ),
         );
 
-      await discord.log({
-        title: "Hacker Confirmed",
-        message: `${hacker.firstName} ${hacker.lastName} has confirmed their attendance!`,
-        color: "success_green",
-        userId: hacker.userId,
-      });
+      try {
+        await sendHackathonEmail({
+          from: "donotreply@knighthacks.org",
+          hackathon: {
+            applicationBackgroundKey: hackathon.applicationBackgroundKey,
+            displayName: hackathon.displayName,
+            emailTemplateKey: hackathon.emailTemplateEnabled
+              ? hackathon.emailTemplateKey
+              : null,
+            routeName: hackathon.name,
+            theme: hackathon.theme,
+          },
+          kind: "Confirmation",
+          recipient: {
+            name: hacker.firstName,
+            to: hacker.email,
+          },
+        });
+      } catch (error) {
+        logger.warn("Failed to send hackathon confirmation email:", error);
+      }
+
+      try {
+        await discord.log({
+          title: "Hacker Confirmed",
+          message: `${hacker.firstName} ${hacker.lastName} has confirmed their attendance!`,
+          color: "success_green",
+          userId: hacker.userId,
+        });
+      } catch (error) {
+        logger.warn("Failed to log hacker confirmation to Discord:", error);
+      }
     }),
 
   withdrawHacker: protectedProcedure
@@ -412,7 +448,7 @@ export const hackerMutationRouter = {
         id: z.string(), // This is the hacker ID
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       if (!input.id) {
         throw new TRPCError({
           message: "Hacker ID is required to update a member!",
@@ -423,7 +459,8 @@ export const hackerMutationRouter = {
       const hackerId = input.id;
 
       const hacker = await db.query.Hacker.findFirst({
-        where: (t, { eq }) => eq(t.id, hackerId),
+        where: (t, { and, eq }) =>
+          and(eq(t.id, hackerId), eq(t.userId, ctx.session.user.id)),
       });
 
       if (!hacker) {
@@ -473,7 +510,7 @@ export const hackerMutationRouter = {
         .update(HackerAttendee)
         .set({
           status: "withdrawn",
-          timeConfirmed: undefined,
+          timeConfirmed: null,
         })
         .where(
           and(
@@ -885,11 +922,15 @@ export const hackerMutationRouter = {
           ),
         );
 
-      await discord.log({
-        title: `Hacker Status Updated ${hackathon.displayName ? `for ${hackathon.displayName}` : ""}`,
-        message: `Hacker status for ${hacker.firstName} ${hacker.lastName} has changed to ${input.status}!`,
-        color: "tk_blue",
-        userId: ctx.session.user.discordUserId,
-      });
+      try {
+        await discord.log({
+          title: `Hacker Status Updated ${hackathon.displayName ? `for ${hackathon.displayName}` : ""}`,
+          message: `Hacker status for ${hacker.firstName} ${hacker.lastName} has changed to ${input.status}!`,
+          color: "tk_blue",
+          userId: ctx.session.user.discordUserId,
+        });
+      } catch (error) {
+        logger.warn("Failed to log hacker status update to Discord:", error);
+      }
     }),
 };

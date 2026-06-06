@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 
 import type { InsertHacker } from "@forge/db/schemas/knight-hacks";
-import { HACKATHON_TEMPLATE_IDS } from "@forge/email/client";
 import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
 
@@ -10,18 +9,36 @@ import { api } from "~/trpc/react";
 
 export default function AcceptButton({
   hacker,
-  hackathonName,
+  hackathonRouteName,
 }: {
   hacker: InsertHacker & { status: string };
-  hackathonName: string;
+  hackathonRouteName: string;
 }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const utils = api.useUtils();
 
+  const sendHackathonEmail = api.email.sendHackathonEmail.useMutation({
+    onSuccess: () => {
+      toast.success(
+        `Acceptance email sent to ${hacker.firstName} ${hacker.lastName}!`,
+      );
+    },
+    onError: (opts) => {
+      toast.error(opts.message);
+    },
+  });
+
   const updateStatus = api.hackerMutation.updateHackerStatus.useMutation({
     onSuccess() {
       toast.success(`Accepted ${hacker.firstName} ${hacker.lastName}!`);
+      sendHackathonEmail.mutate({
+        from: "donotreply@knighthacks.org",
+        hackathonName: hackathonRouteName,
+        kind: "Accepted",
+        recipientName: hacker.firstName,
+        to: hacker.email,
+      });
     },
     onError: (opts) => {
       toast.error(opts.message);
@@ -37,35 +54,13 @@ export default function AcceptButton({
     },
   });
 
-  const sendEmail = api.email.sendEmail.useMutation({
-    onSuccess: () => {
-      toast.success(
-        `Acceptance email sent to ${hacker.firstName} ${hacker.lastName}!`,
-      );
-    },
-    onError: (opts) => {
-      toast.error(opts.message);
-    },
-  });
-
   const handleUpdateStatus = () => {
     setIsLoading(true);
 
     updateStatus.mutate({
       id: hacker.id ?? "",
       status: "accepted",
-      hackathonName,
-    });
-
-    sendEmail.mutate({
-      from: "donotreply@knighthacks.org",
-      to: hacker.email,
-      subject: `[ACTION REQUIRED] ${hackathonName} Acceptance Information!`,
-      template_id: HACKATHON_TEMPLATE_IDS.Accepted,
-      data: {
-        name: hacker.firstName,
-        hackathon: hackathonName,
-      },
+      hackathonName: hackathonRouteName,
     });
   };
 

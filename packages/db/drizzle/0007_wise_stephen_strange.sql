@@ -1,0 +1,2 @@
+ALTER TABLE "knight_hacks_hackathon" ADD COLUMN "email_theme_enabled" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "knight_hacks_hackathon" ADD COLUMN "email_theme_key" varchar(255);

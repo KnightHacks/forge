@@ -13,6 +13,9 @@ import { time } from "@forge/utils";
 
 import type { api } from "~/trpc/server";
 
+const triggerClassName =
+  "relative flex h-14 w-full cursor-pointer items-center justify-center gap-x-2 border border-[#1F2937] bg-transparent transition-all duration-200 ease-in-out hover:bg-[#E5E7EB] dark:hover:bg-[#1F2937]";
+
 export function PastHackathonButton({
   hackathons,
 }: {
@@ -24,11 +27,9 @@ export function PastHackathonButton({
     return (
       <Dialog>
         <div className="flex w-full flex-row justify-between">
-          <DialogTrigger asChild>
-            <div className="relative flex h-14 w-full cursor-pointer items-center justify-center gap-x-2 border border-[#1F2937] transition-all duration-200 ease-in-out hover:bg-[#E5E7EB] dark:hover:bg-[#1F2937]">
-              <Eye />
-              <div className="text-lg font-bold">View Past Hackathons</div>
-            </div>
+          <DialogTrigger className={triggerClassName}>
+            <Eye />
+            <span className="text-lg font-bold">View Past Hackathons</span>
           </DialogTrigger>
         </div>
         <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto !border-0">
@@ -47,11 +48,9 @@ export function PastHackathonButton({
   return (
     <Dialog>
       <div className="flex w-full flex-row justify-between">
-        <DialogTrigger asChild>
-          <div className="relative flex h-14 w-full cursor-pointer items-center justify-center gap-x-2 border border-[#1F2937] transition-all duration-200 ease-in-out hover:bg-[#E5E7EB] dark:hover:bg-[#1F2937]">
-            <Eye />
-            <div className="text-lg font-bold">View Past Hackathons</div>
-          </div>
+        <DialogTrigger className={triggerClassName}>
+          <Eye />
+          <span className="text-lg font-bold">View Past Hackathons</span>
         </DialogTrigger>
       </div>
       <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto !border-0">

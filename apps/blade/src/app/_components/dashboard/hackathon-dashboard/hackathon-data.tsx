@@ -154,7 +154,7 @@ export function HackathonData({
           {/* QR Code and Apple Wallet */}
           <div className="flex flex-row items-center justify-between gap-3 sm:flex-row sm:justify-start sm:gap-3">
             <HackerQRCodePopup />
-            <DownloadQRPass />
+            <DownloadQRPass profile={hacker} />
           </div>
 
           {/* Hacker Guide Link */}

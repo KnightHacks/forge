@@ -7,6 +7,10 @@ import { z } from "zod";
 
 import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
 import { HACKATHONS } from "@forge/consts";
+import {
+  HACKATHON_EMAIL_TEMPLATE_PRESET_KEYS,
+  HACKATHON_EMAIL_TEMPLATE_PRESET_OPTIONS,
+} from "@forge/email/hackathons";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import {
@@ -47,8 +51,10 @@ import {
 import { toast } from "@forge/ui/toast";
 import {
   createHackathonApplicationBackgroundKeySchema,
+  createHackathonEmailTemplateKeySchema,
   getHackathonBackgroundIssues,
   getHackathonDateWindowIssues,
+  getHackathonEmailTemplateIssues,
   hackathonDisplayNameSchema,
   hackathonRouteNameSchema,
   hackathonThemeSchema,
@@ -59,10 +65,16 @@ import { api } from "~/trpc/react";
 const BACKGROUND_OPTIONS = HACKATHONS.APPLICATION_BACKGROUND_OPTIONS;
 const DEFAULT_BACKGROUND_KEY = BACKGROUND_OPTIONS[0].key;
 type ApplicationBackgroundKey = (typeof BACKGROUND_OPTIONS)[number]["key"];
+const EMAIL_TEMPLATE_OPTIONS = HACKATHON_EMAIL_TEMPLATE_PRESET_OPTIONS;
+const DEFAULT_EMAIL_TEMPLATE_KEY = EMAIL_TEMPLATE_OPTIONS[0].key;
+type EmailTemplateKey = (typeof EMAIL_TEMPLATE_OPTIONS)[number]["key"];
 const hackathonApplicationBackgroundKeySchema =
   createHackathonApplicationBackgroundKeySchema(
     HACKATHONS.APPLICATION_BACKGROUND_KEYS,
   );
+const hackathonEmailTemplateKeySchema = createHackathonEmailTemplateKeySchema(
+  HACKATHON_EMAIL_TEMPLATE_PRESET_KEYS,
+);
 
 function getSafeBackgroundKey(
   backgroundKey?: string | null,
@@ -74,6 +86,16 @@ function getSafeBackgroundKey(
     : DEFAULT_BACKGROUND_KEY;
 }
 
+function getSafeEmailTemplateKey(
+  emailTemplateKey?: string | null,
+): EmailTemplateKey {
+  return EMAIL_TEMPLATE_OPTIONS.some(
+    (template) => template.key === emailTemplateKey,
+  )
+    ? (emailTemplateKey as EmailTemplateKey)
+    : DEFAULT_EMAIL_TEMPLATE_KEY;
+}
+
 const formSchema = z
   .object({
     name: hackathonRouteNameSchema,
@@ -81,6 +103,8 @@ const formSchema = z
     theme: hackathonThemeSchema,
     applicationBackgroundEnabled: z.boolean(),
     applicationBackgroundKey: hackathonApplicationBackgroundKeySchema,
+    emailTemplateEnabled: z.boolean(),
+    emailTemplateKey: hackathonEmailTemplateKeySchema,
     applicationOpen: z.string().min(1, "Application open is required."),
     applicationDeadline: z.string().min(1, "Application deadline is required."),
     confirmationDeadline: z
@@ -97,6 +121,14 @@ const formSchema = z
     const endDate = new Date(values.endDate);
 
     for (const issue of getHackathonBackgroundIssues(values)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: issue.message,
+        path: issue.path,
+      });
+    }
+
+    for (const issue of getHackathonEmailTemplateIssues(values)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: issue.message,
@@ -163,6 +195,8 @@ function getDefaultValues(
       applicationBackgroundKey: getSafeBackgroundKey(
         hackathon.applicationBackgroundKey,
       ),
+      emailTemplateEnabled: hackathon.emailTemplateEnabled,
+      emailTemplateKey: getSafeEmailTemplateKey(hackathon.emailTemplateKey),
       applicationOpen: toDateTimeLocalValue(hackathon.applicationOpen),
       applicationDeadline: toDateTimeLocalValue(hackathon.applicationDeadline),
       confirmationDeadline: toDateTimeLocalValue(
@@ -187,6 +221,8 @@ function getDefaultValues(
     theme: "",
     applicationBackgroundEnabled: false,
     applicationBackgroundKey: DEFAULT_BACKGROUND_KEY,
+    emailTemplateEnabled: false,
+    emailTemplateKey: DEFAULT_EMAIL_TEMPLATE_KEY,
     applicationOpen: toDateTimeLocalValue(applicationOpen),
     applicationDeadline: toDateTimeLocalValue(applicationDeadline),
     confirmationDeadline: toDateTimeLocalValue(confirmationDeadline),
@@ -205,6 +241,10 @@ function toMutationPayload(values: HackathonFormValues) {
       ? (values.applicationBackgroundKey as
           | ApplicationBackgroundKey
           | undefined)
+      : null,
+    emailTemplateEnabled: values.emailTemplateEnabled,
+    emailTemplateKey: values.emailTemplateEnabled
+      ? (values.emailTemplateKey as EmailTemplateKey | undefined)
       : null,
     applicationOpen: new Date(values.applicationOpen),
     applicationDeadline: new Date(values.applicationDeadline),
@@ -232,6 +272,7 @@ export function HackathonManager() {
   });
 
   const selectedBackgroundEnabled = form.watch("applicationBackgroundEnabled");
+  const selectedEmailTemplateEnabled = form.watch("emailTemplateEnabled");
 
   const closeDialog = () => {
     setDialogOpen(false);
@@ -290,7 +331,7 @@ export function HackathonManager() {
           <h1 className="text-3xl font-bold tracking-tight">Hackathons</h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
             Create application routes, control deadlines, and choose the
-            application background preset for each hackathon.
+            application and email presets for each hackathon.
           </p>
         </div>
         <Button onClick={openCreateDialog}>
@@ -307,6 +348,7 @@ export function HackathonManager() {
               <TableHead>Application</TableHead>
               <TableHead>Event Dates</TableHead>
               <TableHead>Background</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -314,7 +356,7 @@ export function HackathonManager() {
             {isLoading ? (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="h-24 text-center text-muted-foreground"
                 >
                   Loading hackathons...
@@ -322,7 +364,7 @@ export function HackathonManager() {
               </TableRow>
             ) : hackathonsError ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24">
+                <TableCell colSpan={6} className="h-24">
                   <div className="flex flex-col items-center justify-center gap-3 text-center">
                     <div>
                       <div className="font-medium">
@@ -346,7 +388,7 @@ export function HackathonManager() {
             ) : hackathons.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No hackathons yet.
@@ -381,6 +423,16 @@ export function HackathonManager() {
                       </Badge>
                     ) : (
                       <Badge variant="outline">Default</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {hackathon.emailTemplateEnabled &&
+                    hackathon.emailTemplateKey ? (
+                      <Badge variant="secondary">
+                        {hackathon.emailTemplateKey}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">Stock</Badge>
                     )}
                   </TableCell>
                   <TableCell>
@@ -612,6 +664,59 @@ export function HackathonManager() {
                               value={background.key}
                             >
                               {background.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="space-y-4 rounded-lg border p-4">
+                <FormField
+                  control={form.control}
+                  name="emailTemplateEnabled"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between gap-4 space-y-0">
+                      <div className="space-y-1">
+                        <FormLabel>Listmonk Template Override</FormLabel>
+                        <FormDescription>
+                          Leave off to use the current Knight Hacks VIII
+                          Listmonk templates.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="emailTemplateKey"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Listmonk Template Preset</FormLabel>
+                      <Select
+                        disabled={!selectedEmailTemplateEnabled}
+                        value={field.value ?? undefined}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a template preset" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {EMAIL_TEMPLATE_OPTIONS.map((template) => (
+                            <SelectItem key={template.key} value={template.key}>
+                              {template.label}
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -10,11 +10,14 @@ import {
   Hacker,
   HackerAttendee,
 } from "@forge/db/schemas/knight-hacks";
+import { HACKATHON_EMAIL_TEMPLATE_PRESET_KEYS } from "@forge/email/hackathons";
 import { permissions } from "@forge/utils";
 import {
   createHackathonApplicationBackgroundKeySchema,
+  createHackathonEmailTemplateKeySchema,
   getHackathonBackgroundIssues,
   getHackathonDateWindowIssues,
+  getHackathonEmailTemplateIssues,
   hackathonDisplayNameSchema,
   hackathonRouteNameSchema,
   hackathonThemeSchema,
@@ -26,6 +29,9 @@ const hackathonApplicationBackgroundKeySchema =
   createHackathonApplicationBackgroundKeySchema(
     HACKATHONS.APPLICATION_BACKGROUND_KEYS,
   );
+const hackathonEmailTemplateKeySchema = createHackathonEmailTemplateKeySchema(
+  HACKATHON_EMAIL_TEMPLATE_PRESET_KEYS,
+);
 
 const hackathonMutationInput = z.object({
   name: hackathonRouteNameSchema,
@@ -33,6 +39,8 @@ const hackathonMutationInput = z.object({
   theme: hackathonThemeSchema,
   applicationBackgroundEnabled: z.boolean().default(false),
   applicationBackgroundKey: hackathonApplicationBackgroundKeySchema,
+  emailTemplateEnabled: z.boolean().default(false),
+  emailTemplateKey: hackathonEmailTemplateKeySchema,
   applicationOpen: z.coerce.date(),
   applicationDeadline: z.coerce.date(),
   confirmationDeadline: z.coerce.date(),
@@ -65,6 +73,15 @@ function getHackathonMutationValues(
     });
   }
 
+  const [emailTemplateIssue] = getHackathonEmailTemplateIssues(input);
+
+  if (emailTemplateIssue) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: emailTemplateIssue.message,
+    });
+  }
+
   return {
     name: input.name,
     displayName: input.displayName,
@@ -72,6 +89,10 @@ function getHackathonMutationValues(
     applicationBackgroundEnabled: input.applicationBackgroundEnabled,
     applicationBackgroundKey: input.applicationBackgroundEnabled
       ? input.applicationBackgroundKey
+      : null,
+    emailTemplateEnabled: input.emailTemplateEnabled,
+    emailTemplateKey: input.emailTemplateEnabled
+      ? input.emailTemplateKey
       : null,
     applicationOpen: input.applicationOpen,
     applicationDeadline: input.applicationDeadline,

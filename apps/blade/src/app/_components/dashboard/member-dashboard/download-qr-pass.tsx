@@ -8,10 +8,12 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
-export function DownloadQRPass() {
+export function DownloadQRPass({
+  profile,
+}: {
+  profile?: { firstName?: string | null; lastName?: string | null } | null;
+}) {
   const [isDownloading, setIsDownloading] = useState(false);
-
-  const { data: member } = api.member.getMember.useQuery();
 
   const generatePass = api.passkit.generatePass.useMutation({
     onSuccess: (data) => {
@@ -61,8 +63,8 @@ export function DownloadQRPass() {
   });
 
   const handleDownload = () => {
-    if (!member?.firstName || !member.lastName) {
-      toast.error("Missing member information");
+    if (profile && (!profile.firstName || !profile.lastName)) {
+      toast.error("Missing profile information");
       return;
     }
 
@@ -70,7 +72,8 @@ export function DownloadQRPass() {
     generatePass.mutate();
   };
 
-  const canDownload = member?.firstName && member.lastName;
+  const canDownload =
+    !profile || Boolean(profile.firstName && profile.lastName);
 
   return (
     <Button
@@ -90,7 +93,7 @@ export function DownloadQRPass() {
           Apple Wallet
         </>
       ) : (
-        "No member information found"
+        "No profile information found"
       )}
     </Button>
   );

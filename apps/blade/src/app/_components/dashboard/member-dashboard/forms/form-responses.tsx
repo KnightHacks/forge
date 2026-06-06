@@ -8,7 +8,27 @@ import { DASHBOARD_ICON_SIZE } from "~/consts";
 import { api } from "~/trpc/server";
 
 export async function FormResponses() {
-  const userFormResponeses = await api.forms.getUserResponse({});
+  const userFormResponeses = await api.forms
+    .getUserResponse({})
+    .catch(() => null);
+
+  if (!userFormResponeses) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Form Submissions
+          </CardTitle>
+          <Info color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
+        </CardHeader>
+        <CardHeader>
+          <CardTitle>
+            <div className="text-sm text-gray-600">No form submissions yet</div>
+          </CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   const hasResponses = userFormResponeses.length > 0;
 

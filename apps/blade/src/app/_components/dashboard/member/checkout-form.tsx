@@ -10,12 +10,12 @@ import {
   useStripe,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { useTheme } from "next-themes";
 import { FaStripe } from "react-icons/fa";
 
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { useTheme } from "@forge/ui/theme";
 import { toast } from "@forge/ui/toast";
 
 import { env } from "~/env";

@@ -1,12 +1,62 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { sendEmail } from "@forge/email";
+import { eq } from "@forge/db";
+import { db } from "@forge/db/client";
+import { Hackathon } from "@forge/db/schemas/knight-hacks";
+import { sendEmail, sendHackathonEmail } from "@forge/email";
+import { HACKATHON_EMAIL_KINDS } from "@forge/email/hackathons";
 import { logger, permissions } from "@forge/utils";
 
 import { permProcedure } from "../trpc";
 
 export const emailRouter = {
+  sendHackathonEmail: permProcedure
+    .input(
+      z.object({
+        data: z.record(z.string(), z.string()).optional(),
+        from: z.string().min(1).optional(),
+        hackathonName: z.string().min(1),
+        kind: z.enum(HACKATHON_EMAIL_KINDS),
+        recipientName: z.string().min(1),
+        to: z.string().email(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      permissions.controlPerms.or(["EMAIL_PORTAL"], ctx);
+
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: eq(Hackathon.name, input.hackathonName),
+      });
+
+      if (!hackathon) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Hackathon not found: ${input.hackathonName}`,
+        });
+      }
+
+      return sendHackathonEmail({
+        data: input.data,
+        from: input.from,
+        hackathon: {
+          applicationBackgroundKey: hackathon.applicationBackgroundKey,
+          displayName: hackathon.displayName,
+          emailTemplateKey: hackathon.emailTemplateEnabled
+            ? hackathon.emailTemplateKey
+            : null,
+          routeName: hackathon.name,
+          theme: hackathon.theme,
+        },
+        kind: input.kind,
+        recipient: {
+          name: input.recipientName,
+          to: input.to,
+        },
+      });
+    }),
+
   sendEmail: permProcedure
     .input(
       z.object({
@@ -19,7 +69,6 @@ export const emailRouter = {
     )
     .mutation(async ({ input, ctx }) => {
       permissions.controlPerms.or(["EMAIL_PORTAL"], ctx);
-      logger.log(input.data);
       try {
         const response = await sendEmail({
           to: input.to,

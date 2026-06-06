@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { Loader2, QrCode } from "lucide-react";
 
@@ -25,7 +26,15 @@ import { useMediaQuery } from "@forge/ui/use-media-query";
 import { api } from "~/trpc/react";
 
 export function HackerQRCodePopup() {
-  const { data: userQR, isLoading, isError } = api.qr.getQRCode.useQuery();
+  const [isOpen, setIsOpen] = useState(false);
+  const {
+    data: userQR,
+    isLoading,
+    isError,
+  } = api.qr.getQRCode.useQuery(undefined, {
+    enabled: isOpen,
+    retry: false,
+  });
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const qrInner = isError ? (
@@ -63,7 +72,7 @@ export function HackerQRCodePopup() {
 
   if (isDesktop) {
     return (
-      <Dialog>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>{qrTrigger}</DialogTrigger>
         <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
           <DialogHeader>
@@ -81,7 +90,7 @@ export function HackerQRCodePopup() {
 
   return (
     <div className="w-full sm:w-auto">
-      <Drawer>
+      <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>{qrTrigger}</DrawerTrigger>
         <DrawerContent className="mx-auto w-full max-w-sm">
           <DrawerHeader>

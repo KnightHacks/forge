@@ -7,17 +7,20 @@ import WaitlistButton from "./waitlist-button";
 
 export default function HackerStatusToggle({
   hacker,
-  hackathonName,
+  hackathonRouteName,
 }: {
   hacker: InsertHacker & { status: string };
-  hackathonName: string;
+  hackathonRouteName: string;
 }) {
   return (
     <div className="flex flex-row items-center justify-center">
-      <AcceptButton hacker={hacker} hackathonName={hackathonName} />
-      <WaitlistButton hacker={hacker} hackathonName={hackathonName} />
-      <DenyButton hacker={hacker} hackathonName={hackathonName} />
-      <BlacklistButton hacker={hacker} hackathonName={hackathonName} />
+      <AcceptButton hacker={hacker} hackathonRouteName={hackathonRouteName} />
+      <WaitlistButton hacker={hacker} hackathonRouteName={hackathonRouteName} />
+      <DenyButton hacker={hacker} hackathonRouteName={hackathonRouteName} />
+      <BlacklistButton
+        hacker={hacker}
+        hackathonRouteName={hackathonRouteName}
+      />
     </div>
   );
 }

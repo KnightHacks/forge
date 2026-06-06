@@ -559,7 +559,7 @@ export default function HackerTable({
                     <TableCell className="hidden md:table-cell">
                       <HackerStatusToggle
                         hacker={hacker}
-                        hackathonName={activeHackathon?.displayName ?? ""}
+                        hackathonRouteName={activeHackathon?.name ?? ""}
                       />
                     </TableCell>
                     <TableCell className="hidden text-center md:table-cell">
