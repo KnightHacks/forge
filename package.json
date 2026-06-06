@@ -35,7 +35,7 @@
     "@forge/tsconfig": "workspace:*",
     "@turbo/gen": "^2.8.11",
     "prettier": "catalog:",
-    "turbo": "^2.8.11",
+    "turbo": "^2.9.14",
     "typescript": "catalog:"
   },
   "prettier": "@forge/prettier-config",
