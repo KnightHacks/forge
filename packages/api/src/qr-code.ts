@@ -8,6 +8,10 @@ export function getUserQRCodeObjectName(userId: string) {
   return `qr-code-${userId}.png`;
 }
 
+export function getUserQRCodePayload(userId: string) {
+  return `user:${userId}`;
+}
+
 export async function ensureUserQRCode(userId: string) {
   const objectName = getUserQRCodeObjectName(userId);
 
@@ -20,7 +24,7 @@ export async function ensureUserQRCode(userId: string) {
     await minioClient.statObject(MINIO.QR_BUCKET_NAME, objectName);
     return objectName;
   } catch {
-    const qrData = `user:${userId}`;
+    const qrData = getUserQRCodePayload(userId);
     const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
     await minioClient.putObject(
       MINIO.QR_BUCKET_NAME,

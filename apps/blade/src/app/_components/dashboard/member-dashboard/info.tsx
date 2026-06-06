@@ -22,7 +22,7 @@ export function MemberInfo({
       <CardContent>
         <div className="grid grid-cols-1 gap-4">
           <QRCodePopup />
-          <DownloadQRPass profile={member} />
+          <DownloadQRPass profile={member} profileKind="member" />
           <ResumeButton />
         </div>
       </CardContent>

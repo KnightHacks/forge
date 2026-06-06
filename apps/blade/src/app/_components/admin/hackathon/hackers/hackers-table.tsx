@@ -574,7 +574,7 @@ export default function HackerTable({
                     <TableCell className="hidden text-center md:table-cell">
                       <DeleteHackerButton
                         hacker={hacker}
-                        hackathonName={activeHackathon?.displayName ?? ""}
+                        hackathonName={activeHackathon?.name ?? ""}
                       />
                     </TableCell>
                   </TableRow>

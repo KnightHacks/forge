@@ -83,16 +83,13 @@ export default async function MemberDashboard({
 
   const isAlumni = calcAlumniStatus(member.gradDate, member);
 
-  const [events, dues, hackathons] = await Promise.allSettled([
+  const [eventsValue, dues, hackathonsValue] = await Promise.all([
     api.member.getEvents(),
     api.duesPayment.validatePaidDues(),
     isAlumni ? api.hackathon.getPastHackathons() : Promise.resolve([]),
   ]);
 
-  const eventsValue = events.status === "fulfilled" ? events.value : [];
-  const duesPaid = dues.status === "fulfilled" ? dues.value.duesPaid : null;
-  const hackathonsValue =
-    hackathons.status === "fulfilled" ? hackathons.value : [];
+  const duesPaid = dues.duesPaid;
 
   await Promise.allSettled(
     eventsValue.map((e) => api.event.ensureForm({ eventId: e.id })),
@@ -153,7 +150,7 @@ export default async function MemberDashboard({
         {/* Unified View */}
         <div className="animate-mobile-initial-expand space-y-4">
           <div className="animate-fade-in grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {duesPaid !== null && <Payment status={duesPaid} member={member} />}
+            <Payment status={duesPaid} member={member} />
 
             <MemberInfo member={member} />
 

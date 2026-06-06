@@ -44,6 +44,52 @@ const ThemeContext = React.createContext<UseThemeProps>({
   themes: [],
 });
 
+function getThemeList(themes: string[]) {
+  const configuredThemes = themes.filter((theme) => theme !== "system");
+  return configuredThemes.length > 0 ? configuredThemes : DEFAULT_THEMES;
+}
+
+function getFallbackTheme(themes: string[]) {
+  return getThemeList(themes)[0] ?? "light";
+}
+
+function getAvailableThemes(themes: string[], enableSystem: boolean) {
+  const themeList = getThemeList(themes);
+  return enableSystem ? [...themeList, "system"] : themeList;
+}
+
+function normalizeThemeValue({
+  defaultTheme,
+  enableSystem,
+  fallbackTheme,
+  theme,
+  themes,
+}: {
+  defaultTheme?: string;
+  enableSystem: boolean;
+  fallbackTheme: string;
+  theme?: string | null;
+  themes: string[];
+}) {
+  if (theme === "system") {
+    return enableSystem ? "system" : fallbackTheme;
+  }
+
+  if (theme && themes.includes(theme)) {
+    return theme;
+  }
+
+  if (defaultTheme === "system") {
+    return enableSystem ? "system" : fallbackTheme;
+  }
+
+  if (defaultTheme && themes.includes(defaultTheme)) {
+    return defaultTheme;
+  }
+
+  return fallbackTheme;
+}
+
 function getSystemTheme(): SystemTheme {
   return window.matchMedia(MEDIA_QUERY).matches ? "dark" : "light";
 }
@@ -121,17 +167,63 @@ function ThemeProvider({
   themes = DEFAULT_THEMES,
   value,
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = React.useState(defaultTheme);
+  const themeList = React.useMemo(() => getThemeList(themes), [themes]);
+  const fallbackTheme = React.useMemo(() => getFallbackTheme(themes), [themes]);
+  const normalizedDefaultTheme = React.useMemo(
+    () =>
+      normalizeThemeValue({
+        defaultTheme,
+        enableSystem,
+        fallbackTheme,
+        themes: themeList,
+      }),
+    [defaultTheme, enableSystem, fallbackTheme, themeList],
+  );
+  const normalizedForcedTheme = React.useMemo(
+    () =>
+      forcedTheme === undefined
+        ? undefined
+        : normalizeThemeValue({
+            defaultTheme: normalizedDefaultTheme,
+            enableSystem,
+            fallbackTheme,
+            theme: forcedTheme,
+            themes: themeList,
+          }),
+    [
+      enableSystem,
+      fallbackTheme,
+      forcedTheme,
+      normalizedDefaultTheme,
+      themeList,
+    ],
+  );
+  const [theme, setThemeState] = React.useState(normalizedDefaultTheme);
   const [systemTheme, setSystemTheme] = React.useState<SystemTheme>("dark");
 
   React.useEffect(() => {
     try {
       const storedTheme = window.localStorage.getItem(storageKey);
-      if (storedTheme) setThemeState(storedTheme);
+      setThemeState(
+        normalizeThemeValue({
+          defaultTheme: normalizedDefaultTheme,
+          enableSystem,
+          fallbackTheme,
+          theme: storedTheme,
+          themes: themeList,
+        }),
+      );
     } catch {
       // Ignore storage failures and keep the configured default.
+      setThemeState(normalizedDefaultTheme);
     }
-  }, [storageKey]);
+  }, [
+    enableSystem,
+    fallbackTheme,
+    normalizedDefaultTheme,
+    storageKey,
+    themeList,
+  ]);
 
   React.useEffect(() => {
     const media = window.matchMedia(MEDIA_QUERY);
@@ -154,23 +246,44 @@ function ThemeProvider({
       setThemeState((currentTheme) => {
         const resolvedNextTheme =
           typeof nextTheme === "function" ? nextTheme(currentTheme) : nextTheme;
+        const normalizedNextTheme = normalizeThemeValue({
+          defaultTheme: normalizedDefaultTheme,
+          enableSystem,
+          fallbackTheme,
+          theme: resolvedNextTheme,
+          themes: themeList,
+        });
 
         try {
-          window.localStorage.setItem(storageKey, resolvedNextTheme);
+          window.localStorage.setItem(storageKey, normalizedNextTheme);
         } catch {
           // Ignore storage failures; the in-memory theme still updates.
         }
 
-        return resolvedNextTheme;
+        return normalizedNextTheme;
       });
     },
-    [storageKey],
+    [
+      enableSystem,
+      fallbackTheme,
+      normalizedDefaultTheme,
+      storageKey,
+      themeList,
+    ],
   );
 
   React.useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
       if (event.key !== storageKey) return;
-      setThemeState(event.newValue ?? defaultTheme);
+      setThemeState(
+        normalizeThemeValue({
+          defaultTheme: normalizedDefaultTheme,
+          enableSystem,
+          fallbackTheme,
+          theme: event.newValue,
+          themes: themeList,
+        }),
+      );
     };
 
     window.addEventListener("storage", handleStorage);
@@ -178,7 +291,13 @@ function ThemeProvider({
     return () => {
       window.removeEventListener("storage", handleStorage);
     };
-  }, [defaultTheme, storageKey]);
+  }, [
+    enableSystem,
+    fallbackTheme,
+    normalizedDefaultTheme,
+    storageKey,
+    themeList,
+  ]);
 
   React.useEffect(() => {
     const enableTransitions = disableTransitionOnChange
@@ -188,8 +307,12 @@ function ThemeProvider({
     applyTheme({
       attribute,
       enableColorScheme,
-      theme: resolveTheme(forcedTheme ?? theme, enableSystem, systemTheme),
-      themes,
+      theme: resolveTheme(
+        normalizedForcedTheme ?? theme,
+        enableSystem,
+        systemTheme,
+      ),
+      themes: themeList,
       value,
     });
 
@@ -199,23 +322,20 @@ function ThemeProvider({
     disableTransitionOnChange,
     enableColorScheme,
     enableSystem,
-    forcedTheme,
+    normalizedForcedTheme,
     systemTheme,
     theme,
-    themes,
+    themeList,
     value,
   ]);
 
   const themeContext = React.useMemo<UseThemeProps>(() => {
-    const availableThemes =
-      enableSystem && !themes.includes("system")
-        ? [...themes, "system"]
-        : themes;
+    const availableThemes = getAvailableThemes(themeList, enableSystem);
 
     return {
-      forcedTheme,
+      forcedTheme: normalizedForcedTheme,
       resolvedTheme: resolveTheme(
-        forcedTheme ?? theme,
+        normalizedForcedTheme ?? theme,
         enableSystem,
         systemTheme,
       ),
@@ -224,7 +344,14 @@ function ThemeProvider({
       theme,
       themes: availableThemes,
     };
-  }, [enableSystem, forcedTheme, setTheme, systemTheme, theme, themes]);
+  }, [
+    enableSystem,
+    normalizedForcedTheme,
+    setTheme,
+    systemTheme,
+    theme,
+    themeList,
+  ]);
 
   return (
     <ThemeContext.Provider value={themeContext}>
@@ -234,7 +361,7 @@ function ThemeProvider({
 }
 
 function ThemeToggle() {
-  const { setTheme } = useTheme();
+  const { setTheme, themes } = useTheme();
 
   return (
     <DropdownMenu>
@@ -252,9 +379,11 @@ function ThemeToggle() {
         <DropdownMenuItem onClick={() => setTheme("dark")}>
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
+        {themes.includes("system") && (
+          <DropdownMenuItem onClick={() => setTheme("system")}>
+            System
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -8,10 +8,14 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
+type PassProfileKind = "member" | "hacker";
+
 export function DownloadQRPass({
   profile,
+  profileKind = "member",
 }: {
   profile?: { firstName?: string | null; lastName?: string | null } | null;
+  profileKind?: PassProfileKind;
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -69,9 +73,10 @@ export function DownloadQRPass({
     }
 
     setIsDownloading(true);
-    generatePass.mutate();
+    generatePass.mutate({ kind: profileKind });
   };
 
+  // canDownload allows !profile because handleDownload delegates validation to generatePass.mutate.
   const canDownload =
     !profile || Boolean(profile.firstName && profile.lastName);
 

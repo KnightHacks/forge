@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 
 import { logger } from "@forge/utils";
 
+import { getUserQRCodePayload } from "../qr-code";
 import { protectedProcedure } from "../trpc";
 
 export const qrRouter = {
@@ -11,7 +12,7 @@ export const qrRouter = {
     const userId = ctx.session.user.id;
 
     try {
-      const qrCodeUrl = await QRCode.toDataURL(`user:${userId}`, {
+      const qrCodeUrl = await QRCode.toDataURL(getUserQRCodePayload(userId), {
         type: "image/png",
       });
 

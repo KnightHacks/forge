@@ -185,9 +185,9 @@ export default function Page() {
     const secondaryTracks = [
       prepareAudioTrack(birdsAudioRef.current, birdsVolume),
     ].filter((track): track is HTMLAudioElement => Boolean(track));
-    const tracks = [musicTrack, ...secondaryTracks].filter(
-      (track): track is HTMLAudioElement => Boolean(track),
-    );
+    const tracks = musicTrack
+      ? [musicTrack, ...secondaryTracks]
+      : [...secondaryTracks];
 
     if (tracks.length === 0) {
       return;

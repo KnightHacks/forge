@@ -435,7 +435,7 @@ export const hackerMutationRouter = {
           title: "Hacker Confirmed",
           message: `${hacker.firstName} ${hacker.lastName} has confirmed their attendance!`,
           color: "success_green",
-          userId: hacker.userId,
+          userId: ctx.session.user.discordUserId,
         });
       } catch (error) {
         logger.warn("Failed to log hacker confirmation to Discord:", error);

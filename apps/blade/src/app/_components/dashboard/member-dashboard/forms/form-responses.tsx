@@ -8,11 +8,9 @@ import { DASHBOARD_ICON_SIZE } from "~/consts";
 import { api } from "~/trpc/server";
 
 export async function FormResponses() {
-  const userFormResponeses = await api.forms
-    .getUserResponse({})
-    .catch(() => null);
+  const userFormResponses = await api.forms.getUserResponse({});
 
-  if (!userFormResponeses) {
+  if (userFormResponses.length === 0) {
     return (
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -30,8 +28,6 @@ export async function FormResponses() {
     );
   }
 
-  const hasResponses = userFormResponeses.length > 0;
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -39,49 +35,41 @@ export async function FormResponses() {
         <Info color="hsl(263.4 70% 50.4%)" size={DASHBOARD_ICON_SIZE} />
       </CardHeader>
 
-      {hasResponses ? (
-        <CardContent className="flex-1">
-          <div className="flex max-h-80 flex-col gap-3 overflow-y-auto">
-            {userFormResponeses.map((formResponse) => (
-              <div
-                key={`view-response-button-${formResponse.id}`}
-                className="rounded-lg border bg-muted/50 p-3 text-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="font-medium">{formResponse.formName}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(formResponse.submittedAt).toLocaleString()}
-                    </span>
-                  </div>
-                  {formResponse.isClosed && (
-                    <span className="rounded-full bg-red-100 px-2 py-1 text-xs text-red-800">
-                      Closed
-                    </span>
-                  )}
-                  {formResponse.formSlug && (
-                    <Button asChild size="sm">
-                      <Link
-                        href={`/forms/${encodeURIComponent(formResponse.formSlug)}/${formResponse.id}`}
-                      >
-                        {formResponse.allowEdit && !formResponse.isClosed
-                          ? "Edit"
-                          : "View"}
-                      </Link>
-                    </Button>
-                  )}
+      <CardContent className="flex-1">
+        <div className="flex max-h-80 flex-col gap-3 overflow-y-auto">
+          {userFormResponses.map((formResponse) => (
+            <div
+              key={`view-response-button-${formResponse.id}`}
+              className="rounded-lg border bg-muted/50 p-3 text-sm"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="font-medium">{formResponse.formName}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(formResponse.submittedAt).toLocaleString()}
+                  </span>
                 </div>
+                {formResponse.isClosed && (
+                  <span className="rounded-full bg-red-100 px-2 py-1 text-xs text-red-800">
+                    Closed
+                  </span>
+                )}
+                {formResponse.formSlug && (
+                  <Button asChild size="sm">
+                    <Link
+                      href={`/forms/${encodeURIComponent(formResponse.formSlug)}/${formResponse.id}`}
+                    >
+                      {formResponse.allowEdit && !formResponse.isClosed
+                        ? "Edit"
+                        : "View"}
+                    </Link>
+                  </Button>
+                )}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      ) : (
-        <CardHeader>
-          <CardTitle>
-            <div className="text-sm text-gray-600">No form submissions yet</div>
-          </CardTitle>
-        </CardHeader>
-      )}
+            </div>
+          ))}
+        </div>
+      </CardContent>
     </Card>
   );
 }

@@ -57,6 +57,13 @@
       "when": 1780685772602,
       "tag": "0007_wise_stephen_strange",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1780732576741,
+      "tag": "0008_email_template_columns",
+      "breakpoints": true
     }
   ]
 }

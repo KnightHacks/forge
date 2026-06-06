@@ -50,7 +50,7 @@ function cleanTemplateData(data: Record<string, string | null | undefined>) {
 function getHackathonEmailSubject({
   hackathon,
   kind,
-}: Pick<BuildHackathonEmailInput, "hackathon" | "kind">) {
+}: Pick<BuildHackathonEmailInput, "hackathon" | "kind">): string {
   switch (kind) {
     case "Accepted":
       return `[ACTION REQUIRED] ${hackathon.displayName} Acceptance Information!`;
@@ -63,6 +63,12 @@ function getHackathonEmailSubject({
       return `See you at ${hackathon.displayName}!`;
     case "Waitlist":
       return `${hackathon.displayName} Waitlist Information`;
+    default: {
+      const exhaustiveKind: never = kind;
+      throw new Error(
+        `Unhandled hackathon email kind: ${String(exhaustiveKind)}`,
+      );
+    }
   }
 }
 

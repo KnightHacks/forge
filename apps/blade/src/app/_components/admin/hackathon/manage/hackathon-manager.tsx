@@ -681,10 +681,10 @@ export function HackathonManager() {
                   render={({ field }) => (
                     <FormItem className="flex items-center justify-between gap-4 space-y-0">
                       <div className="space-y-1">
-                        <FormLabel>Listmonk Template Override</FormLabel>
+                        <FormLabel>Email Template Override</FormLabel>
                         <FormDescription>
-                          Leave off to use the current Knight Hacks VIII
-                          Listmonk templates.
+                          Leave off to use the current Knight Hacks VIII email
+                          templates.
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -702,7 +702,7 @@ export function HackathonManager() {
                   name="emailTemplateKey"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Listmonk Template Preset</FormLabel>
+                      <FormLabel>Email Template Preset</FormLabel>
                       <Select
                         disabled={!selectedEmailTemplateEnabled}
                         value={field.value ?? undefined}

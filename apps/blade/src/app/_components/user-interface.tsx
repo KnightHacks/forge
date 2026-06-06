@@ -15,12 +15,11 @@ export async function UserInterface() {
   const currentHackathonResult = await Promise.allSettled([
     api.hackathon.getCurrentHackathon(),
   ]);
-  const currentHackathon =
-    currentHackathonResult[0].status === "fulfilled"
-      ? currentHackathonResult[0].value
-      : null;
-
-  if (member.status === "rejected" && hacker.status === "rejected") {
+  if (
+    member.status === "rejected" ||
+    hacker.status === "rejected" ||
+    currentHackathonResult[0].status === "rejected"
+  ) {
     return (
       <div className="mt-10 flex flex-col items-center justify-center gap-y-6 font-bold">
         Something went wrong. Please try again later.
@@ -28,8 +27,9 @@ export async function UserInterface() {
     );
   }
 
-  const memberValue = member.status === "fulfilled" ? member.value : null;
-  const hackerValue = hacker.status === "fulfilled" ? hacker.value : null;
+  const memberValue = member.value;
+  const hackerValue = hacker.value;
+  const currentHackathon = currentHackathonResult[0].value;
 
   if (!memberValue && !hackerValue) {
     return (
