@@ -35,7 +35,7 @@ export const faqSections = [
       {
         question: "Is it free?",
         answer:
-          "Yes, attending BloomKnights is completely free. Registration, workshops, mentorship, and event programming are free for accepted UCF students. Just bring your laptop, charger, and enthusiasm.",
+          "Yes, attending BloomKnights is completely free. Registration, workshops, mentorship, and event programming are free for accepted university students. Just bring your laptop, charger, and enthusiasm.",
       },
       {
         question: "How can I participate?",

@@ -9,7 +9,7 @@ export const SEO_TITLE =
   "BloomKnights 2026 | 12-Hour UCF Hackathon in Orlando, Florida";
 
 export const SEO_DESCRIPTION =
-  "BloomKnights is a 12-hour beginner-friendly hackathon hosted by Knight Hacks at the University of Central Florida in Orlando. Join UCF students on July 11, 2026 for coding, workshops, mentorship, prizes, and project building.";
+  "BloomKnights is a 12-hour beginner-friendly hackathon hosted by Knight Hacks at the University of Central Florida in Orlando. Join university students on July 11, 2026 for coding, workshops, mentorship, prizes, and project building.";
 
 export const OG_IMAGE_URL =
   "https://assets.knighthacks.org/EventBannerBloom.png";
@@ -36,7 +36,7 @@ export const eventJsonLd = {
   "@type": "Event",
   name: EVENT_NAME,
   description:
-    "BloomKnights is a 12-hour student hackathon hosted by Knight Hacks at the University of Central Florida in Orlando, Florida. Participants build projects, attend workshops, learn new skills, meet mentors, and collaborate with other UCF students.",
+    "BloomKnights is a 12-hour student hackathon hosted by Knight Hacks at the University of Central Florida in Orlando, Florida. Participants build projects, attend workshops, learn new skills, meet mentors, and collaborate with other university students.",
   url: SITE_URL,
   image: OG_IMAGE_URL,
   startDate: EVENT_START_DATE,

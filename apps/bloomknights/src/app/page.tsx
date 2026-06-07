@@ -67,7 +67,7 @@ export default function HomePage() {
     <div className="font-fredoka-one flex w-full flex-col items-center justify-center text-4xl">
       <div className="flex min-h-screen w-full flex-col items-center justify-center gap-6 px-4 pt-24">
         <motion.div
-          className="bloom-depth-layer"
+          className="bloom-depth-layer -mt-45 sm:mt-0"
           style={{ y: logoY, scale: logoScale }}
         >
           <motion.div
@@ -97,7 +97,10 @@ export default function HomePage() {
             </h2>
           </motion.div>
         </motion.div>
-        <motion.div className="bloom-depth-layer" style={{ y: ctaY }}>
+        <motion.div
+          className="bloom-depth-layer -mt-15 sm:mt-0"
+          style={{ y: ctaY }}
+        >
           <motion.div
             variants={heroReveal}
             initial={prefersReducedMotion ? false : "hidden"}

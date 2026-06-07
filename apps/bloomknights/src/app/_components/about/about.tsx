@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 
 const aboutCopy = [
-  "BloomKnights is a 12-hour student hackathon in Orlando, Florida, hosted by Knight Hacks at the University of Central Florida. On July 11, 2026, UCF students will come together to build software projects, learn practical skills, attend workshops, meet mentors, and collaborate with other hackers.",
+  "BloomKnights is a 12-hour student hackathon in Orlando, Florida, hosted by Knight Hacks at the University of Central Florida. On July 11, 2026, university students will come together to build software projects, learn practical skills, attend workshops, meet mentors, and collaborate with other hackers.",
   "The goal is to give students one focused day to make progress on an idea and leave with something they can show. BloomKnights takes place on UCF campus at BA1, and participation is free for all students.",
   "BloomKnights is our beginner-friendly hackathon leading up to Knight Hacks IX. It gives students a lower-pressure way to try a hackathon, understand how the format works, and get ready for the main event. Bring a laptop, a charger, and an idea to work on.",
 ];
