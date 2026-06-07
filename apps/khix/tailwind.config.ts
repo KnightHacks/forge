@@ -77,12 +77,12 @@ export default {
       },
       fontFamily: {
         sans: [
+          "var(--font-marcellus)",
           "Poppins",
           "Montserrat",
-          "var(--font-geist-sans)",
           ...fontFamily.sans,
         ],
-        mono: ["var(--font-geist-mono)", ...fontFamily.mono],
+        mono: [...fontFamily.mono],
         narrow: ["Pragati Narrow", ...fontFamily.sans],
         prompt: ["Prompt", ...fontFamily.sans],
       },

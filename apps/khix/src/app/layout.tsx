@@ -1,8 +1,13 @@
 import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
-import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
+import { Faculty_Glyphic } from "next/font/google";
+
+const font = Faculty_Glyphic({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-khix",
+});
 
 import WispCursor from "./_components/WispCursor";
 import {
@@ -72,6 +77,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#070c10",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -82,7 +88,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
+        className={`${font.className} ${font.variable} antialiased`}
       >
         {children}
         <WispCursor />

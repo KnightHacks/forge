@@ -3,15 +3,17 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+
 import {
-  Facebook,
-  Instagram,
-  Link as LinkIcon,
-  MessageCircle,
-  Twitter,
-  Volume2,
-  VolumeX,
-} from "lucide-react";
+  FaDiscord,
+  FaTwitter,
+  FaFacebook,
+  FaInstagram,
+  FaLink,
+  FaVolumeUp,
+  FaVolumeMute
+
+} from "react-icons/fa";
 
 import {
   APPLICATION_URL,
@@ -42,27 +44,27 @@ const socialLinks = [
   {
     label: "Discord",
     href: DISCORD_URL,
-    Icon: MessageCircle,
+    Icon: FaDiscord,
   },
   {
     label: "Instagram",
     href: INSTAGRAM_URL,
-    Icon: Instagram,
+    Icon: FaInstagram,
   },
   {
     label: "Facebook",
     href: FACEBOOK_URL,
-    Icon: Facebook,
+    Icon: FaFacebook,
   },
   {
     label: "Twitter",
     href: TWITTER_URL,
-    Icon: Twitter,
+    Icon: FaTwitter,
   },
   {
     label: "Linktree",
     href: LINKTREE_URL,
-    Icon: LinkIcon,
+    Icon: FaLink,
   },
 ];
 
@@ -254,8 +256,6 @@ export default function Page() {
                 width: "clamp(7.8rem, 13vw, 12.8rem)",
                 height: "auto",
                 opacity: 0.88,
-                filter:
-                  "drop-shadow(0 0 0.85rem rgba(216, 255, 92, 0.36)) drop-shadow(0 0.75rem 1.15rem rgba(0, 0, 0, 0.42))",
                 transformOrigin: "50% 95%",
                 userSelect: "none",
               }}
@@ -288,8 +288,6 @@ export default function Page() {
                 width: "clamp(3rem, 5.4vw, 5.2rem)",
                 height: "auto",
                 opacity: 0.82,
-                filter:
-                  "drop-shadow(0 0 0.6rem rgba(255, 128, 92, 0.22)) drop-shadow(0 0.65rem 1rem rgba(0, 0, 0, 0.38))",
                 transformOrigin: "52% 82%",
                 userSelect: "none",
               }}
@@ -323,8 +321,6 @@ export default function Page() {
                 width: "clamp(1.45rem, 1.9vw, 2.25rem)",
                 height: "auto",
                 opacity: 0.94,
-                filter:
-                  "drop-shadow(0 0.5rem 0.55rem rgba(0, 0, 0, 0.34)) drop-shadow(0 0 0.45rem rgba(255, 224, 54, 0.18))",
                 transformOrigin: "45% 80%",
                 userSelect: "none",
               }}
@@ -428,9 +424,9 @@ export default function Page() {
                 whileTap={{ scale: 0.96 }}
               >
                 {isMusicPlaying ? (
-                  <Volume2 aria-hidden="true" size={17} strokeWidth={2.3} />
+                  <FaVolumeUp aria-hidden="true" size={17} strokeWidth={2.3} />
                 ) : (
-                  <VolumeX aria-hidden="true" size={17} strokeWidth={2.3} />
+                  <FaVolumeMute aria-hidden="true" size={17} strokeWidth={2.3} />
                 )}
               </motion.button>
             ) : null}
