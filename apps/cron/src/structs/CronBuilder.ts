@@ -83,7 +83,6 @@ export class CronBuilder {
 
   public schedule(): void {
     for (const { expression, executor } of this.crons) {
-       
       cron.schedule(expression, this._executor.bind(this, executor));
       currentCron.run(this, () => logger.log(`scheduled @ ${expression}`));
     }
