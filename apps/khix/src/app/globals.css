@@ -212,24 +212,6 @@ body {
   position: relative;
   isolation: isolate;
   width: min(60vw, 40rem);
-  /*filter: drop-shadow(0 0 0.45rem rgba(255, 255, 255, 0.92))
-    drop-shadow(0 0 1rem rgba(196, 255, 62, 0.5))
-    drop-shadow(0 1rem 2rem rgba(0, 0, 0, 0.52));*/
-}
-
-.khix-logo-lockup::before {
-  position: absolute;
-  inset: 10% 0;
-  z-index: -1;
-  content: "";
-  border-radius: 999px;
-  /*background: radial-gradient(
-    ellipse at center,
-    rgba(214, 255, 86, 0.42),
-    rgba(132, 255, 87, 0.13) 42%,
-    transparent 0%
-  );
-  /*filter: blur(1.7rem);*/
 }
 
 .khix-logo-image {
@@ -252,13 +234,6 @@ body {
   letter-spacing: 0;
   text-align: center;
   text-transform: uppercase;
-  /*filter: drop-shadow(0 0 0.45rem rgba(255, 255, 255, 0.86))
-    drop-shadow(0 0 1rem rgba(196, 255, 62, 0.38))
-    drop-shadow(0 0.8rem 1.35rem rgba(0, 0, 0, 0.46));
-  text-shadow:
-    0 0 0.18rem rgba(255, 255, 255, 0.76),
-    0 0 0.55rem rgba(214, 255, 86, 0.28),
-    0 0.65rem 1rem rgba(0, 0, 0, 0.44);*/
 }
 
 .khix-event-date-text {
@@ -651,6 +626,11 @@ body {
   transition:
     background 0.2s ease,
     opacity 0.2s ease;
+}
+
+.khix-button:focus-visible {
+  outline: 2px solid rgba(255, 242, 163, 0.96);
+  outline-offset: 0.35rem;
 }
 
 .khix-button-primary {

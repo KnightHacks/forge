@@ -265,7 +265,7 @@ export const bloomknightsApplicationBackground = {
       className: "kh-bloom-godrays",
       space: "viewport",
       style: {
-        contain: "paint",
+        contain: "layout style",
         overflow: "visible",
       },
       zIndex: 2,
