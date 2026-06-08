@@ -1,5 +1,6 @@
 "use client";
 
+import type { Variants } from "framer-motion";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -30,9 +31,21 @@ const mlhTrustBadgeUrl =
 const mlhTrustBadgeImage =
   "https://logged-assets.s3.amazonaws.com/trust-badge/2027/mlh-trust-badge-2027-white.svg";
 
-const reveal = {
+const reveal: Variants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "tween", duration: 0.58, ease: "easeOut" },
+  },
+};
+
+const fadeReveal: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { type: "tween", duration: 0.5, ease: "easeOut" },
+  },
 };
 
 const musicVolume = 0.16;
@@ -369,7 +382,10 @@ export default function Page() {
             </motion.div>
             <h1 className="sr-only">Knight Hacks IX</h1>
             <p className="sr-only">{SEO_DESCRIPTION}</p>
-            <motion.div className="khix-event-date-lockup" variants={reveal}>
+            <motion.div
+              className="khix-event-date-lockup"
+              variants={fadeReveal}
+            >
               <p className="khix-event-date-text">October 9-11th, 2026</p>
               <p className="khix-event-location-text">
                 University of Central Florida

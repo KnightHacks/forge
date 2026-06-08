@@ -91,19 +91,16 @@ body {
   isolation: isolate;
   transition:
     filter 1.35s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 1.15s ease,
-    transform 1.35s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: filter, transform;
+    opacity 1.15s ease;
+  will-change: filter;
 }
 
 .khix-experience-awaiting .khix-experience-stage {
   filter: blur(1.15rem) saturate(1.22) brightness(0.78);
-  transform: scale(1.035);
 }
 
 .khix-experience-entered .khix-experience-stage {
   filter: blur(0) saturate(1) brightness(1);
-  transform: scale(1);
 }
 
 .khix-background-layer {
@@ -120,7 +117,14 @@ body {
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
-  transform: none;
+  transform: scale(1.035);
+  transform-origin: center;
+  transition: transform 1.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.khix-experience-entered .khix-background-layer {
+  transform: scale(1);
 }
 
 .khix-edge-gloom {
@@ -226,9 +230,7 @@ body {
   flex-direction: column;
   align-items: center;
   color: #fffff6;
-  font-family:
-    "Arial Rounded MT Bold", "Avenir Next Condensed", "Arial Black",
-    "Trebuchet MS", "Montserrat", var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-khix), system-ui, sans-serif;
   font-weight: 900;
   font-synthesis-weight: auto;
   letter-spacing: 0;
@@ -701,7 +703,9 @@ body {
   left: 50%;
   z-index: 5;
   color: rgba(255, 253, 241, 0.72);
-  font-family: var(--font-geist-mono), monospace;
+  font-family:
+    ui-monospace, "SFMono-Regular", "Cascadia Code", "Liberation Mono", Menlo,
+    Monaco, Consolas, monospace;
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0;
@@ -810,7 +814,9 @@ body {
   align-items: center;
   justify-content: center;
   width: min(32rem, calc(100vw - 2rem));
-  font-family: var(--font-geist-mono), monospace;
+  font-family:
+    ui-monospace, "SFMono-Regular", "Cascadia Code", "Liberation Mono", Menlo,
+    Monaco, Consolas, monospace;
   font-size: clamp(0.76rem, 1.16vw, 1.02rem);
   font-weight: 900;
   letter-spacing: 0;

@@ -35,7 +35,7 @@ export const faqSections = [
       {
         question: "Is it free?",
         answer:
-          "Yes, attending BloomKnights is completely free. Registration, workshops, mentorship, and event programming are free for accepted university students. Just bring your laptop, charger, and enthusiasm.",
+          "Yes, attending BloomKnights is completely free. Registration, workshops, mentorship, and event programming are free for current university students who are accepted. Just bring your laptop, charger, and enthusiasm.",
       },
       {
         question: "How can I participate?",
@@ -55,7 +55,7 @@ export const faqSections = [
       {
         question: "Do I need coding experience?",
         answer:
-          "No coding experience is required. BloomKnights is a beginner-friendly UCF hackathon with workshops, mentors, and teammates who can help you learn as you build.",
+          "No coding experience is required. BloomKnights is a beginner-friendly hackathon at UCF with workshops, mentors, and teammates who can help you learn as you build.",
       },
       {
         question: "What should I bring?",
