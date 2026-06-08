@@ -3,12 +3,6 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Faculty_Glyphic } from "next/font/google";
 
-const font = Faculty_Glyphic({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-khix",
-});
-
 import WispCursor from "./_components/WispCursor";
 import {
   eventJsonLd,
@@ -21,6 +15,12 @@ import {
   SEO_TITLE,
   SITE_URL,
 } from "./seo";
+
+const font = Faculty_Glyphic({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-khix",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -89,9 +89,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body
-        className={`${font.className} ${font.variable} antialiased`}
-      >
+      <body className={`${font.className} ${font.variable} antialiased`}>
         {children}
         <WispCursor />
         <script

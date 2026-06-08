@@ -3,16 +3,14 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-
 import {
   FaDiscord,
-  FaTwitter,
   FaFacebook,
   FaInstagram,
   FaLink,
+  FaTwitter,
+  FaVolumeMute,
   FaVolumeUp,
-  FaVolumeMute
-
 } from "react-icons/fa";
 
 import {
@@ -252,8 +250,7 @@ export default function Page() {
               style={{
                 position: "absolute",
                 top: "44.5%",
-                left:
-                  "var(--khix-mushroom-left, calc(50% - clamp(6rem, 22vw, 34rem)))",
+                left: "var(--khix-mushroom-left, calc(50% - clamp(6rem, 22vw, 34rem)))",
                 translate: "-50% -50%",
                 width:
                   "var(--khix-mushroom-width, clamp(7.8rem, 13vw, 12.8rem))",
@@ -431,7 +428,11 @@ export default function Page() {
                 {isMusicPlaying ? (
                   <FaVolumeUp aria-hidden="true" size={17} strokeWidth={2.3} />
                 ) : (
-                  <FaVolumeMute aria-hidden="true" size={17} strokeWidth={2.3} />
+                  <FaVolumeMute
+                    aria-hidden="true"
+                    size={17}
+                    strokeWidth={2.3}
+                  />
                 )}
               </motion.button>
             ) : null}

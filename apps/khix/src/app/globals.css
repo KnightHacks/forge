@@ -621,7 +621,10 @@ body {
   border: none;
   outline: none;
   z-index: 1;
-  transition: filter 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  transition:
+    filter 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .khix-button::before {
@@ -629,9 +632,25 @@ body {
   position: absolute;
   inset: 0;
   z-index: -1;
-  -webkit-clip-path: polygon(1rem 0, calc(100% - 1rem) 0, 100% 50%, calc(100% - 1rem) 100%, 1rem 100%, 0 50%);
-  clip-path: polygon(1rem 0, calc(100% - 1rem) 0, 100% 50%, calc(100% - 1rem) 100%, 1rem 100%, 0 50%);
-  transition: background 0.2s ease, opacity 0.2s ease;
+  -webkit-clip-path: polygon(
+    1rem 0,
+    calc(100% - 1rem) 0,
+    100% 50%,
+    calc(100% - 1rem) 100%,
+    1rem 100%,
+    0 50%
+  );
+  clip-path: polygon(
+    1rem 0,
+    calc(100% - 1rem) 0,
+    100% 50%,
+    calc(100% - 1rem) 100%,
+    1rem 100%,
+    0 50%
+  );
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .khix-button-primary {
@@ -663,8 +682,22 @@ body {
   position: absolute;
   inset: 1px;
   z-index: -1;
-  -webkit-clip-path: polygon(calc(1rem - 1px) 0, calc(100% - 1rem + 1px) 0, 100% 50%, calc(100% - 1rem + 1px) 100%, calc(1rem - 1px) 100%, 0 50%);
-  clip-path: polygon(calc(1rem - 1px) 0, calc(100% - 1rem + 1px) 0, 100% 50%, calc(100% - 1rem + 1px) 100%, calc(1rem - 1px) 100%, 0 50%);
+  -webkit-clip-path: polygon(
+    calc(1rem - 1px) 0,
+    calc(100% - 1rem + 1px) 0,
+    100% 50%,
+    calc(100% - 1rem + 1px) 100%,
+    calc(1rem - 1px) 100%,
+    0 50%
+  );
+  clip-path: polygon(
+    calc(1rem - 1px) 0,
+    calc(100% - 1rem + 1px) 0,
+    100% 50%,
+    calc(100% - 1rem + 1px) 100%,
+    calc(1rem - 1px) 100%,
+    0 50%
+  );
   background: rgba(18, 13, 22, 0.8);
   backdrop-filter: blur(12px);
   transition: background 0.2s ease;
