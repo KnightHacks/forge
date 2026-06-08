@@ -64,6 +64,13 @@ form[data-application-visual="bloomknights"],
 .kh-application-shell[data-application-visual="bloomknights"] {
   background-color: #0f2f32;
   background-image:
+    linear-gradient(
+      to bottom,
+      rgba(4, 13, 17, 0.26) 0%,
+      rgba(5, 18, 22, 0.14) 44%,
+      rgba(5, 20, 22, 0.56) 78%,
+      rgba(3, 13, 15, 0.78) 100%
+    ),
     linear-gradient(90deg, rgba(5, 18, 22, 0.36), rgba(8, 32, 42, 0.18)),
     image-set(
       url("${BLOOMKNIGHTS_APPLICATION_TABLET_WEBP}") type("image/webp"),
@@ -72,6 +79,28 @@ form[data-application-visual="bloomknights"],
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
+}
+
+.kh-application-shell[data-application-visual="bloomknights"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(3, 11, 14, 0.18) 0%,
+      rgba(5, 18, 22, 0.08) 42%,
+      rgba(5, 20, 22, 0.42) 76%,
+      rgba(3, 13, 15, 0.72) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(5, 18, 22, 0.28) 0%,
+      rgba(8, 32, 42, 0.14) 54%,
+      rgba(8, 23, 31, 0.08) 100%
+    );
 }
 
 .kh-application-shell[data-application-visual="bloomknights"] .kh-readable-text {
