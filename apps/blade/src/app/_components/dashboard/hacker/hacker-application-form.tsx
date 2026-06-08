@@ -253,6 +253,12 @@ const applicationAnimationStyles = `
   transform: translateY(0) scale(0.96);
 }
 
+.kh-application-form {
+  height: 100svh;
+  min-height: 100svh;
+  overflow: hidden;
+}
+
 .kh-application-nav {
   inset-inline: 1.25rem;
   bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
@@ -267,16 +273,20 @@ const applicationAnimationStyles = `
 }
 
 @media (max-width: 767px) {
-  .kh-application-shell {
+  .kh-application-form {
     height: 100svh;
     height: 100dvh;
     min-height: 100svh;
   }
 
+  .kh-application-shell {
+    height: 100%;
+    min-height: 100%;
+  }
+
   .kh-application-shell .kh-readable-text {
-    height: 100svh;
-    height: 100dvh;
-    min-height: 100svh;
+    height: 100%;
+    min-height: 100%;
     padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
     padding-bottom: calc(7.25rem + env(safe-area-inset-bottom, 0px));
   }
@@ -1148,7 +1158,7 @@ export function HackerFormPage({
     <Form {...form}>
       <style>{applicationStyles}</style>
       <form
-        className="min-h-screen bg-primary/5 text-foreground"
+        className="kh-application-form bg-primary/5 text-foreground"
         data-application-visual={applicationVisualKey}
         aria-busy={loading}
         noValidate
