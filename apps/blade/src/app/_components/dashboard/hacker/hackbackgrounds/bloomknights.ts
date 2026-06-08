@@ -60,8 +60,18 @@ export const bloomknightsApplicationStyles = `
   52% { transform: translate3d(-1%, -0.9%, 0) scale(1.045); }
 }
 
+form[data-application-visual="bloomknights"],
 .kh-application-shell[data-application-visual="bloomknights"] {
-  background: #0f2f32;
+  background-color: #0f2f32;
+  background-image:
+    linear-gradient(90deg, rgba(5, 18, 22, 0.36), rgba(8, 32, 42, 0.18)),
+    image-set(
+      url("${BLOOMKNIGHTS_APPLICATION_TABLET_WEBP}") type("image/webp"),
+      url("${BLOOMKNIGHTS_APPLICATION_WEBP}") type("image/webp")
+    );
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .kh-application-shell[data-application-visual="bloomknights"] .kh-readable-text {
