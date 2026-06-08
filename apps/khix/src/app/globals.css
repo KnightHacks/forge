@@ -1447,6 +1447,17 @@ body {
 
   .khix-event-date-text {
     font-size: clamp(0.95rem, 4.2vw, 1.15rem);
+    text-shadow:
+      0 0 0.1rem rgba(255, 255, 255, 0.4),
+      0 0 0.3rem rgba(214, 255, 86, 0.15),
+      0 0.5rem 1rem rgba(0, 0, 0, 0.5);
+  }
+
+  .khix-event-location-text {
+    text-shadow:
+      0 0 0.08rem rgba(255, 255, 255, 0.35),
+      0 0 0.25rem rgba(214, 255, 86, 0.12),
+      0 0.45rem 0.85rem rgba(0, 0, 0, 0.42);
   }
 
   .khix-hero-actions {

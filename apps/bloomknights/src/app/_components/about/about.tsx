@@ -123,6 +123,8 @@ const About = () => {
                       : "(min-width: 1536px) 544px, (min-width: 1181px) 320px, (min-width: 768px) 360px, 62vw"
                   }
                   quality={72}
+                  loading="eager"
+                  fetchPriority={imageIndex === 0 ? "high" : "auto"}
                   className="about-gemiknight-image"
                 />
               </motion.figure>
