@@ -261,6 +261,7 @@ export function HackerApplicationBackground({
   };
 
   const renderLayerMedia = (layer: ApplicationVisualLayer) => {
+    const isPrimaryLayer = layer.id === primaryLayer?.id;
     const layerSrc =
       isTransitioning && layer.animatedSrc
         ? layer.animatedSrc
@@ -325,6 +326,8 @@ export function HackerApplicationBackground({
           layer.mediaClassName,
         )}
         decoding="async"
+        fetchPriority={isPrimaryLayer ? "high" : "auto"}
+        loading={isPrimaryLayer ? "eager" : "lazy"}
         referrerPolicy="no-referrer"
         src={layerSrc}
         style={layerMediaStyle}
@@ -354,7 +357,12 @@ export function HackerApplicationBackground({
     return (
       <picture key={layerSrc} className="block h-full w-full">
         {layer.sources.map((source) => (
-          <source key={source.src} srcSet={source.src} type={source.mimeType} />
+          <source
+            key={source.src}
+            media={source.media}
+            srcSet={source.src}
+            type={source.mimeType}
+          />
         ))}
         {imageElement}
       </picture>
@@ -374,7 +382,7 @@ export function HackerApplicationBackground({
           transform: `translate3d(${(translateX * parallax).toFixed(2)}px, -50%, 0)`,
           transition: `transform ${transition}`,
           width: frame?.width ?? "100%",
-          willChange: "transform",
+          willChange: isTransitioning ? "transform" : undefined,
           zIndex: layer.zIndex ?? 0,
           ...layer.style,
         }}
@@ -410,7 +418,7 @@ export function HackerApplicationBackground({
           transform: `translate3d(${(translateX * parallax).toFixed(2)}px, -50%, 0)`,
           transition: `transform ${transition}`,
           width: frame?.width ?? "100%",
-          willChange: "transform",
+          willChange: isTransitioning ? "transform" : undefined,
           zIndex: layer.zIndex ?? 0,
           ...layer.style,
         }}

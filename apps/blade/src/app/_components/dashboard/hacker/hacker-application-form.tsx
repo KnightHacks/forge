@@ -104,19 +104,25 @@ const applicationAnimationStyles = `
   50% { box-shadow: 0 10px 34px rgba(255, 255, 255, 0.14); }
 }
 
-@keyframes khSubmittedMark {
-  from { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.92); filter: blur(8px); }
-  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+@keyframes khSubmitLoadingIn {
+  from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.98); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
 }
 
 @keyframes khSubmittedScreenIn {
-  from { opacity: 0; transform: translate3d(0, 16px, 0); filter: blur(10px); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
-@keyframes khSubmittedActionIn {
-  from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.97); }
-  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+@keyframes khSubmittedMarkPop {
+  0% { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.88); }
+  58% { opacity: 1; transform: translate3d(0, 0, 0) scale(1.08); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes khSubmittedContentIn {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 .kh-application-sweep {
@@ -139,16 +145,28 @@ const applicationAnimationStyles = `
   animation: khTitleRise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.kh-submitted-mark {
-  animation: khSubmittedMark 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.kh-submit-loading {
+  animation: khSubmitLoadingIn 180ms ease-out both;
 }
 
 .kh-submitted-screen {
-  animation: khSubmittedScreenIn 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: khSubmittedScreenIn 220ms ease-out both;
+}
+
+.kh-submitted-mark {
+  animation: khSubmittedMarkPop 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.kh-submitted-copy {
+  animation: khSubmittedContentIn 280ms cubic-bezier(0.22, 1, 0.36, 1) 45ms both;
 }
 
 .kh-submitted-action {
-  animation: khSubmittedActionIn 620ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both;
+  animation: khSubmittedContentIn 260ms cubic-bezier(0.22, 1, 0.36, 1) 90ms both;
+}
+
+.kh-submitted-screen .kh-step-title {
+  animation: none;
 }
 
 .kh-readable-text {
@@ -312,8 +330,10 @@ const applicationAnimationStyles = `
   .kh-application-sweep,
   .kh-application-grid,
   .kh-step-title,
+  .kh-submit-loading,
   .kh-submitted-mark,
   .kh-submitted-screen,
+  .kh-submitted-copy,
   .kh-submitted-action,
   .kh-step-content > section > div:not(.hidden),
   .kh-step-content :is(input, textarea, button):focus-visible {
@@ -1091,6 +1111,7 @@ export function HackerFormPage({
       <style>{applicationStyles}</style>
       <form
         className="min-h-screen bg-primary/5 text-foreground"
+        aria-busy={loading}
         noValidate
         onKeyDown={(event) => {
           void handleMobileInputEnter(event);
@@ -1195,17 +1216,19 @@ export function HackerFormPage({
                     <CheckCircle2 className="size-9 text-white sm:size-11" />
                   </div>
 
-                  <p className="mb-4 text-sm font-black uppercase tracking-[0.24em] text-white/65">
-                    Application confirmed
-                  </p>
-                  <h1 className="kh-step-title max-w-4xl text-5xl font-black leading-none tracking-normal text-white sm:text-6xl md:text-8xl">
-                    Application submitted.
-                  </h1>
-                  <p className="text-white/76 mt-7 max-w-2xl text-lg font-medium leading-8 sm:text-xl sm:leading-9">
-                    We received your {hackathonName} application. Keep an eye on
-                    your inbox for status updates and next steps from the Knight
-                    Hacks team.
-                  </p>
+                  <div className="kh-submitted-copy">
+                    <p className="mb-4 text-sm font-black uppercase tracking-[0.24em] text-white/65">
+                      Application confirmed
+                    </p>
+                    <h1 className="kh-step-title max-w-4xl text-5xl font-black leading-none tracking-normal text-white sm:text-6xl md:text-8xl">
+                      Application submitted.
+                    </h1>
+                    <p className="text-white/76 mt-7 max-w-2xl text-lg font-medium leading-8 sm:text-xl sm:leading-9">
+                      We received your {hackathonName} application. Keep an eye
+                      on your inbox for status updates and next steps from the
+                      Knight Hacks team.
+                    </p>
+                  </div>
 
                   <div className="kh-submitted-action mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
                     <Button
@@ -2156,7 +2179,7 @@ export function HackerFormPage({
                     </section>
                   </div>
 
-                  <div className="kh-application-nav fixed inset-x-5 bottom-5 z-30 flex items-center justify-between [bottom:calc(1.25rem+env(safe-area-inset-bottom))] md:inset-x-16 md:bottom-10">
+                  <div className="kh-application-nav fixed inset-x-5 bottom-5 z-30 flex items-center justify-between gap-3 [bottom:calc(1.25rem+env(safe-area-inset-bottom))] md:inset-x-16 md:bottom-10">
                     <Button
                       type="button"
                       variant="outline"
@@ -2173,28 +2196,46 @@ export function HackerFormPage({
                     </Button>
 
                     {isFinalStep ? (
-                      <Button
-                        type="submit"
-                        disabled={loading || isStepTransitioning}
-                        size="icon"
-                        className={actionButtonClassName}
-                        aria-label={
-                          loading
-                            ? "Submitting application"
-                            : "Submit application"
-                        }
-                        title={
-                          loading
-                            ? "Submitting application"
-                            : "Submit application"
-                        }
-                      >
-                        {loading ? (
-                          <Loader2 className="h-6 w-6 animate-spin sm:h-7 sm:w-7" />
-                        ) : (
-                          <Send className="h-6 w-6 sm:h-7 sm:w-7" />
+                      <div className="flex min-w-0 items-center gap-3">
+                        {loading && (
+                          <div
+                            aria-live="polite"
+                            className="kh-submit-loading bg-[#12071f]/72 flex items-center gap-2 rounded-full border border-white/30 px-3 py-2 text-xs font-black uppercase tracking-[0.16em] text-white/85 shadow-[0_16px_42px_rgba(0,0,0,0.32)] backdrop-blur-md sm:text-sm"
+                            role="status"
+                          >
+                            <Loader2
+                              aria-hidden="true"
+                              className="size-4 animate-spin"
+                            />
+                            <span>Submitting</span>
+                          </div>
                         )}
-                      </Button>
+                        <Button
+                          type="submit"
+                          disabled={loading || isStepTransitioning}
+                          size="icon"
+                          className={cn(
+                            actionButtonClassName,
+                            loading && "cursor-wait disabled:opacity-100",
+                          )}
+                          aria-label={
+                            loading
+                              ? "Submitting application"
+                              : "Submit application"
+                          }
+                          title={
+                            loading
+                              ? "Submitting application"
+                              : "Submit application"
+                          }
+                        >
+                          {loading ? (
+                            <Loader2 className="h-6 w-6 animate-spin sm:h-7 sm:w-7" />
+                          ) : (
+                            <Send className="h-6 w-6 sm:h-7 sm:w-7" />
+                          )}
+                        </Button>
+                      </div>
                     ) : (
                       <Button
                         type="button"

@@ -7,6 +7,8 @@ const BLOOMKNIGHTS_SCENE_SIZE = {
 
 const BLOOMKNIGHTS_APPLICATION_WEBP =
   "https://assets.knighthacks.org/bloomknightsApplication.webp";
+const BLOOMKNIGHTS_APPLICATION_TABLET_WEBP =
+  "https://assets.knighthacks.org/bloomknights-application-6400.webp";
 
 const BLOOMKNIGHTS_BIRD_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 36'%3E%3Cpath d='M4 26c17-24 31-24 44 0 13-24 27-24 44 0' fill='none' stroke='%23eff8ff' stroke-width='7' stroke-linecap='round'/%3E%3Cpath d='M4 26c17-24 31-24 44 0 13-24 27-24 44 0' fill='none' stroke='%232c5b62' stroke-width='3' stroke-linecap='round' opacity='.45'/%3E%3C/svg%3E";
@@ -261,9 +263,9 @@ export const bloomknightsApplicationBackground = {
     {
       id: "bloomknights-godrays",
       className: "kh-bloom-godrays",
-      space: "scene",
+      space: "viewport",
       style: {
-        contain: "layout style",
+        contain: "paint",
         overflow: "visible",
       },
       zIndex: 2,
@@ -271,25 +273,25 @@ export const bloomknightsApplicationBackground = {
     {
       id: "bloomknights-leaves-a",
       className: "kh-bloom-leaf-field kh-bloom-leaves-a",
-      space: "scene",
+      space: "viewport",
       zIndex: 3,
     },
     {
       id: "bloomknights-leaves-b",
       className: "kh-bloom-leaf-field kh-bloom-leaves-b",
-      space: "scene",
+      space: "viewport",
       zIndex: 3,
     },
     {
       id: "bloomknights-leaves-c",
       className: "kh-bloom-leaf-field kh-bloom-leaves-c",
-      space: "scene",
+      space: "viewport",
       zIndex: 3,
     },
     {
       id: "bloomknights-leaves-d",
       className: "kh-bloom-leaf-field kh-bloom-leaves-d",
-      space: "scene",
+      space: "viewport",
       zIndex: 3,
     },
   ],
@@ -301,6 +303,11 @@ export const bloomknightsApplicationBackground = {
       kind: "image",
       nativeSize: BLOOMKNIGHTS_SCENE_SIZE,
       sources: [
+        {
+          media: "(max-width: 1024px)",
+          mimeType: "image/webp",
+          src: BLOOMKNIGHTS_APPLICATION_TABLET_WEBP,
+        },
         {
           mimeType: "image/webp",
           src: BLOOMKNIGHTS_APPLICATION_WEBP,

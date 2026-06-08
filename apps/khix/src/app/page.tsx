@@ -245,15 +245,18 @@ export default function Page() {
             <motion.img
               src="/mushroom.png"
               alt=""
+              className="khix-stage-accent-mushroom"
               width={372}
               height={295}
               draggable={false}
               style={{
                 position: "absolute",
                 top: "44.5%",
-                left: "calc(50% - clamp(6rem, 22vw, 34rem))",
+                left:
+                  "var(--khix-mushroom-left, calc(50% - clamp(6rem, 22vw, 34rem)))",
                 translate: "-50% -50%",
-                width: "clamp(7.8rem, 13vw, 12.8rem)",
+                width:
+                  "var(--khix-mushroom-width, clamp(7.8rem, 13vw, 12.8rem))",
                 height: "auto",
                 opacity: 0.88,
                 transformOrigin: "50% 95%",
@@ -310,6 +313,7 @@ export default function Page() {
             <motion.img
               src="/ladybug.png"
               alt=""
+              className="khix-stage-accent-ladybug"
               width={68}
               height={55}
               draggable={false}
@@ -318,7 +322,8 @@ export default function Page() {
                 top: "44.5%",
                 left: "calc(50% + clamp(5.2rem, 19vw, 27rem))",
                 translate: "-50% -50%",
-                width: "clamp(1.45rem, 1.9vw, 2.25rem)",
+                width:
+                  "var(--khix-ladybug-width, clamp(1.45rem, 1.9vw, 2.25rem))",
                 height: "auto",
                 opacity: 0.94,
                 transformOrigin: "45% 80%",
