@@ -579,6 +579,7 @@ body {
 
 .khix-button {
   position: relative;
+  isolation: isolate;
   display: inline-flex;
   flex: 1 1 0;
   align-items: center;
@@ -608,7 +609,8 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
+  pointer-events: none;
   -webkit-clip-path: polygon(
     1rem 0,
     calc(100% - 1rem) 0,
@@ -645,8 +647,11 @@ body {
 }
 
 .khix-button-label {
+  position: relative;
+  z-index: 2;
   display: block;
   width: 100%;
+  color: inherit;
   text-align: center;
 }
 
@@ -663,7 +668,8 @@ body {
   content: "";
   position: absolute;
   inset: 1px;
-  z-index: -1;
+  z-index: 1;
+  pointer-events: none;
   -webkit-clip-path: polygon(
     calc(1rem - 1px) 0,
     calc(100% - 1rem + 1px) 0,
