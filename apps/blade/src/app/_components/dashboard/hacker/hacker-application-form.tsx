@@ -253,11 +253,37 @@ const applicationAnimationStyles = `
   transform: translateY(0) scale(0.96);
 }
 
+@media (max-width: 767px) {
+  .kh-application-shell {
+    height: 100svh;
+    height: 100dvh;
+    min-height: 100svh;
+  }
+
+  .kh-application-shell .kh-readable-text {
+    height: 100svh;
+    height: 100dvh;
+    min-height: 100svh;
+    padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(7.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .kh-application-stage {
+    padding-top: clamp(1.5rem, 3.4vh, 2rem);
+    padding-bottom: clamp(1.25rem, 3vh, 1.75rem);
+  }
+
+  .kh-application-nav {
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0;
+  }
+}
+
 @media (orientation: landscape) and (max-height: 560px) {
   .kh-readable-text {
     min-height: 100svh;
-    padding-block: 0.75rem calc(4.75rem + env(safe-area-inset-bottom));
-    padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
+    padding-block: 0.75rem calc(4.75rem + env(safe-area-inset-bottom, 0px));
+    padding-inline: max(1rem, env(safe-area-inset-left, 0px)) max(1rem, env(safe-area-inset-right, 0px));
   }
 
   .kh-readable-text > div:first-child {
@@ -298,8 +324,9 @@ const applicationAnimationStyles = `
   }
 
   .kh-application-nav {
-    inset-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
-    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    inset-inline: max(1rem, env(safe-area-inset-left, 0px)) max(1rem, env(safe-area-inset-right, 0px));
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0;
   }
 
   .kh-application-nav .kh-nav-button {
@@ -310,7 +337,7 @@ const applicationAnimationStyles = `
 
 @media (orientation: landscape) and (max-height: 430px) {
   .kh-readable-text {
-    padding-block: 0.6rem calc(4.15rem + env(safe-area-inset-bottom));
+    padding-block: 0.6rem calc(4.15rem + env(safe-area-inset-bottom, 0px));
   }
 
   .kh-application-panel {

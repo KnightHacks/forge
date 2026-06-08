@@ -60,6 +60,10 @@ export const bloomknightsApplicationStyles = `
   52% { transform: translate3d(-1%, -0.9%, 0) scale(1.045); }
 }
 
+.kh-application-shell[data-application-visual="bloomknights"] {
+  background: #0f2f32;
+}
+
 .kh-application-shell[data-application-visual="bloomknights"] .kh-readable-text {
   text-shadow:
     0 1px 8px rgba(14, 54, 35, 0.34),

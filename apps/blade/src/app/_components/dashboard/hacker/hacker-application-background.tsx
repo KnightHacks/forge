@@ -443,7 +443,7 @@ export function HackerApplicationBackground({
         <div
           ref={viewportRef}
           aria-hidden="true"
-          className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+          className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
         >
           {layers
             .filter((layer) => !failedLayerIds.has(layer.id))
