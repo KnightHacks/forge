@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 
 import Footer from "./_components/footer/footer";
 import AnimatedBirds from "./_components/graphics/AnimatedBirds";
+import BloomAssetPreloads from "./_components/graphics/BloomAssetPreloads";
 import FloatingFlowers from "./_components/graphics/FloatingFlowers";
 import FlowerCursor from "./_components/graphics/Flowercursor";
 import ParallaxBackground from "./_components/graphics/ParallaxBackground";
@@ -110,6 +111,7 @@ export default function RootLayout({
       className={`${fredokaOne.variable} ${righteous.variable} ${dmSans.variable} h-full`}
     >
       <body className="bloom-site-background flex min-h-screen flex-col antialiased">
+        <BloomAssetPreloads />
         <ParallaxBackground />
         <AnimatedBirds />
         <FloatingFlowers />

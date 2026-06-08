@@ -142,7 +142,7 @@ const applicationAnimationStyles = `
 }
 
 .kh-step-title {
-  animation: khTitleRise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: khTitleRise 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .kh-submit-loading {
@@ -176,16 +176,16 @@ const applicationAnimationStyles = `
 }
 
 .kh-step-content > section > div:not(.hidden) {
-  animation: khFieldIn 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: khFieldIn 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.kh-step-content > section > div:not(.hidden):nth-child(2) { animation-delay: 45ms; }
-.kh-step-content > section > div:not(.hidden):nth-child(3) { animation-delay: 90ms; }
-.kh-step-content > section > div:not(.hidden):nth-child(4) { animation-delay: 135ms; }
-.kh-step-content > section > div:not(.hidden):nth-child(5) { animation-delay: 180ms; }
-.kh-step-content > section > div:not(.hidden):nth-child(6) { animation-delay: 225ms; }
-.kh-step-content > section > div:not(.hidden):nth-child(7) { animation-delay: 270ms; }
-.kh-step-content > section > div:not(.hidden):nth-child(8) { animation-delay: 315ms; }
+.kh-step-content > section > div:not(.hidden):nth-child(2) { animation-delay: 20ms; }
+.kh-step-content > section > div:not(.hidden):nth-child(3) { animation-delay: 40ms; }
+.kh-step-content > section > div:not(.hidden):nth-child(4) { animation-delay: 60ms; }
+.kh-step-content > section > div:not(.hidden):nth-child(5) { animation-delay: 80ms; }
+.kh-step-content > section > div:not(.hidden):nth-child(6) { animation-delay: 100ms; }
+.kh-step-content > section > div:not(.hidden):nth-child(7) { animation-delay: 120ms; }
+.kh-step-content > section > div:not(.hidden):nth-child(8) { animation-delay: 140ms; }
 
 .kh-step-content :is(input, textarea, button:not(.kh-resume-info-trigger)):focus-visible {
   animation: khUnderlinePulse 1.8s ease-in-out infinite;
@@ -1191,7 +1191,7 @@ export function HackerFormPage({
         }, handleInvalidSubmit)}
       >
         <div
-          className="kh-application-shell relative min-h-svh overflow-x-hidden bg-[linear-gradient(135deg,#10071d_0%,#271148_48%,#0b0614_100%)] text-white"
+          className="kh-application-shell relative h-svh min-h-svh overflow-hidden bg-[linear-gradient(135deg,#10071d_0%,#271148_48%,#0b0614_100%)] text-white"
           data-application-visual={applicationVisualKey}
         >
           <HackerApplicationBackground
@@ -1203,7 +1203,7 @@ export function HackerFormPage({
           {applicationSubmitted ? (
             <main
               aria-live="polite"
-              className="kh-readable-text kh-submitted-screen relative z-10 flex min-h-svh w-full flex-col px-5 py-8 sm:px-6 md:px-20 md:py-14"
+              className="kh-readable-text kh-submitted-screen relative z-10 flex h-svh min-h-svh w-full flex-col overflow-y-auto overscroll-contain px-5 py-8 sm:px-6 md:px-20 md:py-14"
             >
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-widest text-white/60">
                 <span>{hackathonName}</span>
@@ -1248,7 +1248,7 @@ export function HackerFormPage({
               </section>
             </main>
           ) : (
-            <div className="kh-readable-text relative z-10 flex min-h-svh w-full flex-col px-5 pb-32 pt-5 sm:px-6 md:px-20 md:pb-28 md:pt-14">
+            <div className="kh-readable-text relative z-10 flex h-svh min-h-svh w-full flex-col overflow-y-auto overscroll-contain px-5 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 md:px-20 md:pb-[calc(7.5rem+env(safe-area-inset-bottom))] md:pt-14">
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-widest text-white/60">
                 <span>{currentStep.eyebrow}</span>
                 <span>
@@ -1274,7 +1274,7 @@ export function HackerFormPage({
                   <div
                     className={cn(
                       "kh-step-content",
-                      "animate-in fade-in mt-10 duration-500 sm:mt-14 md:mt-16",
+                      "animate-in fade-in mt-10 duration-200 sm:mt-14 md:mt-16",
                       stepDirection === "forward"
                         ? "slide-in-from-right-4"
                         : "slide-in-from-left-4",
@@ -2179,7 +2179,7 @@ export function HackerFormPage({
                     </section>
                   </div>
 
-                  <div className="kh-application-nav fixed inset-x-5 bottom-5 z-30 flex items-center justify-between gap-3 [bottom:calc(1.25rem+env(safe-area-inset-bottom))] md:inset-x-16 md:bottom-10">
+                  <div className="kh-application-nav pointer-events-none fixed inset-x-5 bottom-0 z-30 flex items-center justify-between gap-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:inset-x-16 md:pb-10">
                     <Button
                       type="button"
                       variant="outline"
@@ -2188,7 +2188,10 @@ export function HackerFormPage({
                         activeStep === 0 || loading || isStepTransitioning
                       }
                       size="icon"
-                      className={secondaryActionButtonClassName}
+                      className={cn(
+                        secondaryActionButtonClassName,
+                        "pointer-events-auto",
+                      )}
                       aria-label="Back"
                       title="Back"
                     >
@@ -2196,7 +2199,7 @@ export function HackerFormPage({
                     </Button>
 
                     {isFinalStep ? (
-                      <div className="flex min-w-0 items-center gap-3">
+                      <div className="pointer-events-auto flex min-w-0 items-center gap-3">
                         {loading && (
                           <div
                             aria-live="polite"
@@ -2216,6 +2219,7 @@ export function HackerFormPage({
                           size="icon"
                           className={cn(
                             actionButtonClassName,
+                            "pointer-events-auto",
                             loading && "cursor-wait disabled:opacity-100",
                           )}
                           aria-label={
@@ -2242,7 +2246,10 @@ export function HackerFormPage({
                         onClick={() => void goToStep(activeStep + 1)}
                         disabled={loading || isStepTransitioning}
                         size="icon"
-                        className={actionButtonClassName}
+                        className={cn(
+                          actionButtonClassName,
+                          "pointer-events-auto",
+                        )}
                         aria-label="Next"
                         title="Next"
                       >

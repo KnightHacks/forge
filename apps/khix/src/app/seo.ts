@@ -10,8 +10,8 @@ export const APPLICATION_URL = "https://blade.knighthacks.org/";
 export const SPONSOR_URL = "https://blade.knighthacks.org/sponsor";
 export const DISCORD_URL = "https://discord.knighthacks.org/";
 export const INSTAGRAM_URL = "https://www.instagram.com/knighthacks/";
-export const FACEBOOK_URL = "https://www.facebook.com/KnightHacks/";
-export const TWITTER_URL = "https://www.twitter.com/KnightHacks/";
+export const LINKEDIN_URL = "https://www.linkedin.com/company/knight-hacks";
+export const GITHUB_URL = "https://github.com/knighthacks";
 export const LINKTREE_URL = "https://linktr.ee/knighthacks";
 
 export const SEO_TITLE =
@@ -48,8 +48,8 @@ export const SEO_KEYWORDS = [
 export const SOCIAL_PROFILE_URLS = [
   DISCORD_URL,
   INSTAGRAM_URL,
-  FACEBOOK_URL,
-  TWITTER_URL,
+  LINKEDIN_URL,
+  GITHUB_URL,
   LINKTREE_URL,
 ];
 

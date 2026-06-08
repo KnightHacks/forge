@@ -6,10 +6,10 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   FaDiscord,
-  FaFacebook,
+  FaGithub,
   FaInstagram,
   FaLink,
-  FaTwitter,
+  FaLinkedin,
   FaVolumeMute,
   FaVolumeUp,
 } from "react-icons/fa";
@@ -17,12 +17,12 @@ import {
 import {
   APPLICATION_URL,
   DISCORD_URL,
-  FACEBOOK_URL,
+  GITHUB_URL,
   INSTAGRAM_URL,
+  LINKEDIN_URL,
   LINKTREE_URL,
   SEO_DESCRIPTION,
   SPONSOR_URL,
-  TWITTER_URL,
 } from "./seo";
 
 const mlhCodeOfConductUrl = "https://mlh.io/code-of-conduct";
@@ -63,14 +63,14 @@ const socialLinks = [
     Icon: FaInstagram,
   },
   {
-    label: "Facebook",
-    href: FACEBOOK_URL,
-    Icon: FaFacebook,
+    label: "LinkedIn",
+    href: LINKEDIN_URL,
+    Icon: FaLinkedin,
   },
   {
-    label: "Twitter",
-    href: TWITTER_URL,
-    Icon: FaTwitter,
+    label: "GitHub",
+    href: GITHUB_URL,
+    Icon: FaGithub,
   },
   {
     label: "Linktree",
