@@ -10,6 +10,7 @@ export interface BackgroundSize {
 }
 
 export interface ApplicationVisualLayerSource {
+  media?: string;
   mimeType?: string;
   src: string;
 }

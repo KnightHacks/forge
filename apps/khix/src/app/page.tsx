@@ -1,17 +1,18 @@
 "use client";
 
+import type { Variants } from "framer-motion";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
-  Facebook,
-  Instagram,
-  Link as LinkIcon,
-  MessageCircle,
-  Twitter,
-  Volume2,
-  VolumeX,
-} from "lucide-react";
+  FaDiscord,
+  FaFacebook,
+  FaInstagram,
+  FaLink,
+  FaTwitter,
+  FaVolumeMute,
+  FaVolumeUp,
+} from "react-icons/fa";
 
 import {
   APPLICATION_URL,
@@ -30,9 +31,21 @@ const mlhTrustBadgeUrl =
 const mlhTrustBadgeImage =
   "https://logged-assets.s3.amazonaws.com/trust-badge/2027/mlh-trust-badge-2027-white.svg";
 
-const reveal = {
+const reveal: Variants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "tween", duration: 0.58, ease: "easeOut" },
+  },
+};
+
+const fadeReveal: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { type: "tween", duration: 0.5, ease: "easeOut" },
+  },
 };
 
 const musicVolume = 0.16;
@@ -42,27 +55,27 @@ const socialLinks = [
   {
     label: "Discord",
     href: DISCORD_URL,
-    Icon: MessageCircle,
+    Icon: FaDiscord,
   },
   {
     label: "Instagram",
     href: INSTAGRAM_URL,
-    Icon: Instagram,
+    Icon: FaInstagram,
   },
   {
     label: "Facebook",
     href: FACEBOOK_URL,
-    Icon: Facebook,
+    Icon: FaFacebook,
   },
   {
     label: "Twitter",
     href: TWITTER_URL,
-    Icon: Twitter,
+    Icon: FaTwitter,
   },
   {
     label: "Linktree",
     href: LINKTREE_URL,
-    Icon: LinkIcon,
+    Icon: FaLink,
   },
 ];
 
@@ -243,19 +256,19 @@ export default function Page() {
             <motion.img
               src="/mushroom.png"
               alt=""
+              className="khix-stage-accent-mushroom"
               width={372}
               height={295}
               draggable={false}
               style={{
                 position: "absolute",
                 top: "44.5%",
-                left: "calc(50% - clamp(6rem, 22vw, 34rem))",
+                left: "var(--khix-mushroom-left, calc(50% - clamp(6rem, 22vw, 34rem)))",
                 translate: "-50% -50%",
-                width: "clamp(7.8rem, 13vw, 12.8rem)",
+                width:
+                  "var(--khix-mushroom-width, clamp(7.8rem, 13vw, 12.8rem))",
                 height: "auto",
                 opacity: 0.88,
-                filter:
-                  "drop-shadow(0 0 0.85rem rgba(216, 255, 92, 0.36)) drop-shadow(0 0.75rem 1.15rem rgba(0, 0, 0, 0.42))",
                 transformOrigin: "50% 95%",
                 userSelect: "none",
               }}
@@ -288,8 +301,6 @@ export default function Page() {
                 width: "clamp(3rem, 5.4vw, 5.2rem)",
                 height: "auto",
                 opacity: 0.82,
-                filter:
-                  "drop-shadow(0 0 0.6rem rgba(255, 128, 92, 0.22)) drop-shadow(0 0.65rem 1rem rgba(0, 0, 0, 0.38))",
                 transformOrigin: "52% 82%",
                 userSelect: "none",
               }}
@@ -312,6 +323,7 @@ export default function Page() {
             <motion.img
               src="/ladybug.png"
               alt=""
+              className="khix-stage-accent-ladybug"
               width={68}
               height={55}
               draggable={false}
@@ -320,11 +332,10 @@ export default function Page() {
                 top: "44.5%",
                 left: "calc(50% + clamp(5.2rem, 19vw, 27rem))",
                 translate: "-50% -50%",
-                width: "clamp(1.45rem, 1.9vw, 2.25rem)",
+                width:
+                  "var(--khix-ladybug-width, clamp(1.45rem, 1.9vw, 2.25rem))",
                 height: "auto",
                 opacity: 0.94,
-                filter:
-                  "drop-shadow(0 0.5rem 0.55rem rgba(0, 0, 0, 0.34)) drop-shadow(0 0 0.45rem rgba(255, 224, 54, 0.18))",
                 transformOrigin: "45% 80%",
                 userSelect: "none",
               }}
@@ -371,7 +382,10 @@ export default function Page() {
             </motion.div>
             <h1 className="sr-only">Knight Hacks IX</h1>
             <p className="sr-only">{SEO_DESCRIPTION}</p>
-            <motion.div className="khix-event-date-lockup" variants={reveal}>
+            <motion.div
+              className="khix-event-date-lockup"
+              variants={fadeReveal}
+            >
               <p className="khix-event-date-text">October 9-11th, 2026</p>
               <p className="khix-event-location-text">
                 University of Central Florida
@@ -428,9 +442,13 @@ export default function Page() {
                 whileTap={{ scale: 0.96 }}
               >
                 {isMusicPlaying ? (
-                  <Volume2 aria-hidden="true" size={17} strokeWidth={2.3} />
+                  <FaVolumeUp aria-hidden="true" size={17} strokeWidth={2.3} />
                 ) : (
-                  <VolumeX aria-hidden="true" size={17} strokeWidth={2.3} />
+                  <FaVolumeMute
+                    aria-hidden="true"
+                    size={17}
+                    strokeWidth={2.3}
+                  />
                 )}
               </motion.button>
             ) : null}
