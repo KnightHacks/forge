@@ -665,11 +665,18 @@ export function HackathonManager() {
                     render={({ field }) => (
                       <FormItem className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                           <FormLabel>Background</FormLabel>
                         </div>
                         <FormControl>
-                          <Input type="color" disabled={!form.watch("backgroundColorEnabled")} {...field} />
+                          <Input
+                            type="color"
+                            disabled={!field.value}
+                            {...form.register("backgroundColor")}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -677,15 +684,22 @@ export function HackathonManager() {
                   />
                   <FormField
                     control={form.control}
-                    name="foregroundColor"
+                    name="foregroundColorEnabled"
                     render={({ field }) => (
                       <FormItem className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
-                          <Switch checked={form.watch("foregroundColorEnabled")} onCheckedChange={(checked) => form.setValue("foregroundColorEnabled", checked)} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                           <FormLabel>Foreground</FormLabel>
                         </div>
                         <FormControl>
-                          <Input type="color" disabled={!form.watch("foregroundColorEnabled")} {...field} />
+                          <Input
+                            type="color"
+                            disabled={!field.value}
+                            {...form.register("foregroundColor")}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -693,15 +707,22 @@ export function HackathonManager() {
                   />
                   <FormField
                     control={form.control}
-                    name="accentColor"
+                    name="accentColorEnabled"
                     render={({ field }) => (
                       <FormItem className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
-                          <Switch checked={form.watch("accentColorEnabled")} onCheckedChange={(checked) => form.setValue("accentColorEnabled", checked)} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                           <FormLabel>Accent</FormLabel>
                         </div>
                         <FormControl>
-                          <Input type="color" disabled={!form.watch("accentColorEnabled")} {...field} />
+                          <Input
+                            type="color"
+                            disabled={!field.value}
+                            {...form.register("accentColor")}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
