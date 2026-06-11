@@ -268,8 +268,12 @@ function toMutationPayload(values: HackathonFormValues) {
       ? (values.emailTemplateKey as EmailTemplateKey | undefined)
       : null,
     backgroundImageName: values.backgroundImageName ?? null,
-    backgroundColor: values.backgroundColorEnabled ? values.backgroundColor : null,
-    foregroundColor: values.foregroundColorEnabled ? values.foregroundColor : null,
+    backgroundColor: values.backgroundColorEnabled
+      ? values.backgroundColor
+      : null,
+    foregroundColor: values.foregroundColorEnabled
+      ? values.foregroundColor
+      : null,
     accentColor: values.accentColorEnabled ? values.accentColor : null,
     applicationOpen: new Date(values.applicationOpen),
     applicationDeadline: new Date(values.applicationDeadline),
@@ -652,7 +656,11 @@ export function HackathonManager() {
                     <FormItem>
                       <FormLabel>Background Image Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="site/name.png" {...field} value={field.value ?? ""} />
+                        <Input
+                          placeholder="site/name.png"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
