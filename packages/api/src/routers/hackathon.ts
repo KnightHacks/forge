@@ -41,6 +41,10 @@ const hackathonMutationInput = z.object({
   applicationBackgroundKey: hackathonApplicationBackgroundKeySchema,
   emailTemplateEnabled: z.boolean().default(false),
   emailTemplateKey: hackathonEmailTemplateKeySchema,
+  backgroundImageName: z.string().optional().nullable(),
+  backgroundColor: z.string().optional().nullable(),
+  foregroundColor: z.string().optional().nullable(),
+  accentColor: z.string().optional().nullable(),
   applicationOpen: z.coerce.date(),
   applicationDeadline: z.coerce.date(),
   confirmationDeadline: z.coerce.date(),
@@ -94,6 +98,10 @@ function getHackathonMutationValues(
     emailTemplateKey: input.emailTemplateEnabled
       ? input.emailTemplateKey
       : null,
+    backgroundImageName: input.backgroundImageName,
+    backgroundColor: input.backgroundColor,
+    foregroundColor: input.foregroundColor,
+    accentColor: input.accentColor,
     applicationOpen: input.applicationOpen,
     applicationDeadline: input.applicationDeadline,
     confirmationDeadline: input.confirmationDeadline,

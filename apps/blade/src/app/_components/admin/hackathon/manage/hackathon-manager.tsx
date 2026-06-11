@@ -103,6 +103,13 @@ const formSchema = z
     theme: hackathonThemeSchema,
     applicationBackgroundEnabled: z.boolean(),
     applicationBackgroundKey: hackathonApplicationBackgroundKeySchema,
+    backgroundImageName: z.string().optional(),
+    backgroundColorEnabled: z.boolean(),
+    backgroundColor: z.string().optional(),
+    foregroundColorEnabled: z.boolean(),
+    foregroundColor: z.string().optional(),
+    accentColorEnabled: z.boolean(),
+    accentColor: z.string().optional(),
     emailTemplateEnabled: z.boolean(),
     emailTemplateKey: hackathonEmailTemplateKeySchema,
     applicationOpen: z.string().min(1, "Application open is required."),
@@ -195,6 +202,13 @@ function getDefaultValues(
       applicationBackgroundKey: getSafeBackgroundKey(
         hackathon.applicationBackgroundKey,
       ),
+      backgroundImageName: hackathon.backgroundImageName ?? undefined,
+      backgroundColorEnabled: !!hackathon.backgroundColor,
+      backgroundColor: hackathon.backgroundColor ?? "#ffffff",
+      foregroundColorEnabled: !!hackathon.foregroundColor,
+      foregroundColor: hackathon.foregroundColor ?? "#000000",
+      accentColorEnabled: !!hackathon.accentColor,
+      accentColor: hackathon.accentColor ?? "#ff0000",
       emailTemplateEnabled: hackathon.emailTemplateEnabled,
       emailTemplateKey: getSafeEmailTemplateKey(hackathon.emailTemplateKey),
       applicationOpen: toDateTimeLocalValue(hackathon.applicationOpen),
@@ -221,6 +235,13 @@ function getDefaultValues(
     theme: "",
     applicationBackgroundEnabled: false,
     applicationBackgroundKey: DEFAULT_BACKGROUND_KEY,
+    backgroundImageName: undefined,
+    backgroundColorEnabled: false,
+    backgroundColor: "#ffffff",
+    foregroundColorEnabled: false,
+    foregroundColor: "#000000",
+    accentColorEnabled: false,
+    accentColor: "#ff0000",
     emailTemplateEnabled: false,
     emailTemplateKey: DEFAULT_EMAIL_TEMPLATE_KEY,
     applicationOpen: toDateTimeLocalValue(applicationOpen),
@@ -246,6 +267,10 @@ function toMutationPayload(values: HackathonFormValues) {
     emailTemplateKey: values.emailTemplateEnabled
       ? (values.emailTemplateKey as EmailTemplateKey | undefined)
       : null,
+    backgroundImageName: values.backgroundImageName ?? null,
+    backgroundColor: values.backgroundColorEnabled ? values.backgroundColor : null,
+    foregroundColor: values.foregroundColorEnabled ? values.foregroundColor : null,
+    accentColor: values.accentColorEnabled ? values.accentColor : null,
     applicationOpen: new Date(values.applicationOpen),
     applicationDeadline: new Date(values.applicationDeadline),
     confirmationDeadline: new Date(values.confirmationDeadline),
@@ -616,6 +641,73 @@ export function HackathonManager() {
                     </FormItem>
                   )}
                 />
+              </div>
+
+              <div className="space-y-4 rounded-lg border p-4">
+                <h3 className="font-medium">Visuals</h3>
+                <FormField
+                  control={form.control}
+                  name="backgroundImageName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Background Image Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="site/name.png" {...field} value={field.value ?? ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="backgroundColorEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <FormLabel>Background</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Input type="color" disabled={!form.watch("backgroundColorEnabled")} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="foregroundColor"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <Switch checked={form.watch("foregroundColorEnabled")} onCheckedChange={(checked) => form.setValue("foregroundColorEnabled", checked)} />
+                          <FormLabel>Foreground</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Input type="color" disabled={!form.watch("foregroundColorEnabled")} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="accentColor"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <Switch checked={form.watch("accentColorEnabled")} onCheckedChange={(checked) => form.setValue("accentColorEnabled", checked)} />
+                          <FormLabel>Accent</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Input type="color" disabled={!form.watch("accentColorEnabled")} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
               <div className="space-y-4 rounded-lg border p-4">
