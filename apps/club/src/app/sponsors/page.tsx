@@ -1,11 +1,23 @@
+import type { Metadata } from "next";
+
+import { env } from "~/env";
+import { createPageMetadata } from "../seo";
+import SponsorsClient from "./sponsors-client";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Sponsors",
+  description:
+    "Meet the sponsors and partners supporting Knight Hacks students, hackathons, workshops, and builder communities at UCF.",
+  path: "/sponsors",
+});
+
+const sponsorsEndpoint = new URL("/api/public/club-sponsors", env.BLADE_URL);
+
 export default function SponsorsPage() {
   return (
-    <main className="min-h-screen">
-      <section className="container flex min-h-screen items-center justify-center pt-40">
-        <h1 className="font-inter text-5xl font-bold uppercase tracking-[0.57px] text-white md:text-7xl">
-          Sponsors
-        </h1>
-      </section>
-    </main>
+    <SponsorsClient
+      bladeUrl={env.BLADE_URL}
+      sponsorsEndpoint={sponsorsEndpoint.toString()}
+    />
   );
 }

@@ -1,37 +1,95 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
+import type { Metadata, Viewport } from "next";
+import { Montserrat } from "next/font/google";
 
+import { env } from "~/env";
+import ClubMotionRuntime from "./_components/club-motion-runtime";
+import Footer from "./_components/footer";
+import JsonLd from "./_components/json-ld";
 import Navbar from "./_components/navbar";
+import {
+  OG_IMAGE_ALT,
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_URL,
+  OG_IMAGE_WIDTH,
+  SEO_DESCRIPTION,
+  SEO_KEYWORDS,
+  SEO_TITLE,
+  SITE_NAME,
+  SITE_URL,
+  siteJsonLd,
+} from "./seo";
+
 import "./globals.css";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-montserrat",
+  display: "swap",
 });
 
+const bladeUrl = env.BLADE_URL;
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://club.knighthacks.org"),
-  title: "Knight Hacks",
-  description: "UCF's largest hackathon and software engineering organization",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SEO_TITLE,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SEO_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: SEO_KEYWORDS,
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  icons: {
+    icon: [{ url: "/sigilKH.svg", type: "image/svg+xml" }],
+    shortcut: [{ url: "/sigilKH.svg", type: "image/svg+xml" }],
+  },
   openGraph: {
-    title: "Knight Hacks",
-    description:
-      "UCF's largest hackathon and software engineering organization",
-    url: "https://club.knighthacks.org",
-    siteName: "Knight Hacks",
+    type: "website",
+    locale: "en_US",
+    title: SEO_TITLE,
+    description: SEO_DESCRIPTION,
+    url: SITE_URL,
+    siteName: SITE_NAME,
     images: [
       {
-        url: "https://blade.knighthacks.org/banner.png",
-        alt: "Knight Hacks Banner",
+        url: OG_IMAGE_URL,
+        width: OG_IMAGE_WIDTH,
+        height: OG_IMAGE_HEIGHT,
+        alt: OG_IMAGE_ALT,
       },
     ],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: SEO_TITLE,
+    description: SEO_DESCRIPTION,
+    images: [
+      {
+        url: OG_IMAGE_URL,
+        alt: OG_IMAGE_ALT,
+      },
+    ],
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#140316",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -41,13 +99,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <div className="club-home-bg min-h-screen overflow-hidden">
-          <Navbar />
-          {children}
+      <body className={`${montserrat.variable} antialiased`}>
+        <ClubMotionRuntime />
+        <div className="club-home-bg flex min-h-screen flex-col overflow-hidden">
+          <Navbar bladeUrl={bladeUrl} />
+          <div className="flex-1">{children}</div>
+          <Footer bladeUrl={bladeUrl} />
         </div>
+        <JsonLd data={siteJsonLd} />
       </body>
     </html>
   );

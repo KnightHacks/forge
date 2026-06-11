@@ -1,11 +1,23 @@
+import type { Metadata } from "next";
+
+import { env } from "~/env";
+import { createPageMetadata } from "../seo";
+import TeamsClient from "./teams-client";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Teams",
+  description:
+    "Meet the Knight Hacks officers and club teams that build events, workshops, outreach, and hackathons at UCF.",
+  path: "/teams",
+});
+
+const teamsEndpoint = new URL("/api/public/club-teams", env.BLADE_URL);
+
 export default function TeamsPage() {
   return (
-    <main className="min-h-screen">
-      <section className="container flex min-h-screen items-center justify-center pt-40">
-        <h1 className="font-inter text-5xl font-bold uppercase tracking-[0.57px] text-white md:text-7xl">
-          Teams
-        </h1>
-      </section>
-    </main>
+    <TeamsClient
+      bladeUrl={env.BLADE_URL}
+      teamsEndpoint={teamsEndpoint.toString()}
+    />
   );
 }

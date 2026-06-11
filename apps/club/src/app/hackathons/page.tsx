@@ -1,30 +1,16 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
-const navLinks = ["Home", "Teams", "Events", "Sponsors"];
+import JsonLd from "../_components/json-ld";
+import { createBreadcrumbJsonLd, createPageMetadata, SITE_URL } from "../seo";
 
-const socialLinks = [
-  {
-    href: "https://twitter.com/knighthacks",
-    label: "Knight Hacks X",
-    icon: "/hackathons/icon-twitter.png",
-  },
-  {
-    href: "mailto:team@knighthacks.org",
-    label: "Email Knight Hacks",
-    icon: "/hackathons/icon-email.png",
-  },
-  {
-    href: "https://instagram.com/knighthacks",
-    label: "Knight Hacks Instagram",
-    icon: "/hackathons/icon-instagram.png",
-  },
-  {
-    href: "https://linkedin.com/company/knight-hacks",
-    label: "Knight Hacks LinkedIn",
-    icon: "/hackathons/icon-linkedin.png",
-  },
-] as const;
+export const metadata: Metadata = createPageMetadata({
+  title: "Hackathon History",
+  description:
+    "Explore the Knight Hacks hackathon archive, including past UCF hackathon dates, participant counts, project submissions, and Devpost links.",
+  path: "/hackathons",
+});
 
 const hackathons = [
   {
@@ -77,6 +63,47 @@ const hackathons = [
     siteUrl: "https://knight-hacks.devpost.com/",
   },
 ] as const;
+
+const hackathonArchiveJsonLd = [
+  createBreadcrumbJsonLd([
+    { name: "Knight Hacks", path: "/" },
+    { name: "Hackathons", path: "/hackathons" },
+  ]),
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Knight Hacks Hackathon History",
+    url: `${SITE_URL}/hackathons`,
+    description:
+      "Archive of past Knight Hacks hackathons at the University of Central Florida.",
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: hackathons.map((hackathon, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: hackathon.name,
+        url: hackathon.siteUrl,
+        additionalProperty: [
+          {
+            "@type": "PropertyValue",
+            name: "Date",
+            value: hackathon.date,
+          },
+          {
+            "@type": "PropertyValue",
+            name: "Participants",
+            value: hackathon.participants,
+          },
+          {
+            "@type": "PropertyValue",
+            name: "Project submissions",
+            value: hackathon.projects,
+          },
+        ],
+      })),
+    },
+  },
+];
 
 const timelineRows = [
   {
@@ -144,62 +171,6 @@ const timelineRows = [
   },
 ] as const;
 
-function BrutalistNav() {
-  return (
-    <nav
-      aria-label="Primary"
-      className="absolute left-[74px] top-[45px] flex h-[81px] w-[1354px] items-center border-[3px] border-black bg-[#6f203a]/70 shadow-[6px_6px_0_rgba(0,0,0,0.22)]"
-    >
-      <Link
-        href="/"
-        className="absolute left-[26.777px] top-[20.5px] flex items-center gap-[11.969px]"
-        aria-label="Knight Hacks home"
-      >
-        <Image
-          src="/hackathons/logo-130.svg"
-          alt=""
-          width={40}
-          height={40}
-          className="h-10 w-10"
-          priority
-        />
-        <span className="text-[16px] font-black uppercase leading-6 tracking-[1.2875px] text-white">
-          Knight Hacks
-        </span>
-      </Link>
-
-      <div className="absolute left-[400px] top-[22px] flex h-9 w-[526px] items-center gap-4">
-        {navLinks.map((link) => (
-          <Link
-            key={link}
-            href={link === "Home" ? "/" : `/${link.toLowerCase()}`}
-            className="px-4 py-2 text-[13px] font-bold uppercase leading-[19.5px] tracking-[0.5738px] text-white"
-          >
-            {link}
-          </Link>
-        ))}
-      </div>
-
-      <Link
-        href="https://blade.knighthacks.org"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute left-[986px] top-[19px] flex h-[43px] w-[186px] items-center justify-center border-[2.5px] border-black bg-[#1a0b21] text-center text-[12px] font-bold uppercase leading-[18px] tracking-[0.6px] text-white shadow-[4px_4px_0_#f4ca41]"
-      >
-        Sign up with Blade
-      </Link>
-      <Link
-        href="https://discord.gg/knighthacks"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute left-[1184px] top-[19px] flex h-[43px] w-[142px] items-center justify-center border-[2.5px] border-black bg-gradient-to-r from-[#ffe1bd] to-[#fe88a4] text-center text-[12px] font-bold uppercase leading-[18px] tracking-[0.6px] text-black shadow-[4px_4px_0_white]"
-      >
-        Join Discord
-      </Link>
-    </nav>
-  );
-}
-
 function HackathonDetails({
   x,
   y,
@@ -210,7 +181,11 @@ function HackathonDetails({
   hackathon: (typeof hackathons)[number];
 }) {
   return (
-    <div className="absolute h-[204px] w-[440px]" style={{ left: x, top: y }}>
+    <div
+      className="club-history-details absolute h-[204px] w-[440px]"
+      style={{ left: x, top: y }}
+      data-reveal={x > 700 ? "right" : "left"}
+    >
       <div className="absolute left-0 top-0 flex flex-col items-start gap-2">
         <div className="-rotate-2 bg-[#de2868] px-3 py-1">
           <p className="text-[24px] font-black uppercase leading-[43.2px] tracking-[-0.18px] text-white">
@@ -228,7 +203,7 @@ function HackathonDetails({
         href={hackathon.siteUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute top-[137px] flex h-12 w-[308px] items-center justify-center border-2 border-white bg-transparent text-center text-[14px] font-bold uppercase leading-[21px] tracking-[0.3992px] text-white shadow-[4px_4px_0_rgba(255,255,255,0.3)]"
+        className="club-history-link absolute top-[137px] flex h-12 w-[308px] items-center justify-center border-2 border-white bg-transparent text-center text-[14px] font-bold uppercase leading-[21px] tracking-[0.3992px] text-white shadow-[4px_4px_0_rgba(255,255,255,0.3)]"
       >
         View Hackathon Site{" "}
         <span aria-hidden="true" className="pl-2 text-[18px]">
@@ -247,152 +222,113 @@ function Timeline() {
       width={37}
       height={4910}
       className="absolute left-[738px] top-[705px] h-[4910px] w-[37px]"
+      data-reveal="photo"
     />
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="absolute left-[1px] top-[5800px] h-[444px] w-[1498px] bg-[#140316] text-white">
-      <div className="absolute left-[138px] top-[81px] h-[206px] w-[348px]">
-        <Image
-          src="/hackathons/figma-footer-logo.png"
-          alt=""
-          width={43}
-          height={43}
-          className="h-[43px] w-[43px]"
-        />
-        <p className="mt-[21px] w-[336px] text-[16px] leading-[24.375px] tracking-[-0.2344px] text-[#99a1af]">
-          Empowering students to grow as developers and leaders in tech through
-          hands-on creation.
-        </p>
-        <div
-          className="absolute left-0 top-[169.125px]"
-          aria-label="Social links"
-        >
-          {socialLinks.map((social, index) => (
-            <a
-              key={social.label}
-              href={social.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={social.label}
-              className="absolute h-10 w-10"
-              style={{ left: index * 48 - 8, top: -8 }}
-            >
-              <Image
-                src={social.icon}
-                alt=""
-                width={24}
-                height={24}
-                className="absolute left-2 top-2 h-6 w-6"
-              />
-            </a>
-          ))}
-        </div>
-      </div>
-
-      <div className="absolute left-[1064px] top-[81px]">
-        <h2 className="text-[18px] font-semibold leading-7 tracking-[-0.4395px]">
-          Quick Links
-        </h2>
-        <div className="mt-7 flex flex-col gap-5 text-[16px] leading-[22.5px] tracking-[-0.2344px] text-[#d1d5dc]">
-          <Link href="/">Home</Link>
-          <Link href="/teams">Teams</Link>
-          <Link href="/events">Events</Link>
-          <Link href="/sponsors">Sponsors</Link>
-        </div>
-      </div>
-
-      <div className="absolute left-[1256px] top-[81px]">
-        <h2 className="text-[18px] font-semibold leading-7 tracking-[-0.4395px]">
-          Resources
-        </h2>
-        <div className="mt-7 flex flex-col gap-5 text-[16px] leading-[22.5px] tracking-[-0.2344px] text-[#d1d5dc]">
-          <Link
-            href="https://blade.knighthacks.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Blade
-          </Link>
-          <Link
-            href="https://discord.gg/knighthacks"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Discord
-          </Link>
-          <span>idk</span>
-        </div>
-      </div>
-
-      <div className="absolute left-[138px] top-[351px] h-px w-[1222px] bg-white/10" />
-      <p className="absolute left-[138px] top-[384px] text-[14px] leading-5 tracking-[-0.1504px] text-[#99a1af]">
-        © Copyright 2026, All Rights Reserved by Knight Hacks
-      </p>
-    </footer>
   );
 }
 
 export default function HackathonsPage() {
   return (
-    <main className="min-h-screen overflow-x-auto bg-[#140422] font-sans text-white">
-      <section className="relative mx-auto h-[6244px] w-[1498px] overflow-hidden">
+    <main className="relative min-h-screen overflow-x-auto bg-[#110214] font-sans text-white">
+      <JsonLd data={hackathonArchiveJsonLd} />
+      <div className="absolute inset-x-0 top-0 h-[980px] overflow-hidden">
         <Image
-          src="/hackathons/figma-background.webp"
+          src="/hackathons/kh-history-hero.webp"
           alt=""
           fill
-          sizes="1498px"
-          className="object-cover"
+          priority
+          sizes="100vw"
+          className="object-cover object-[center_46%] brightness-[0.76] contrast-[1.06] saturate-[1.08]"
         />
-        <div className="relative h-full w-full">
-          <BrutalistNav />
-          <h1 className="absolute left-[153px] top-[387px] w-[1237px] text-center text-[48px] font-black uppercase leading-[43.2px] tracking-[-2.0484px] text-white">
-            Knight Hacks History
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,0,14,0.22)_0%,rgba(11,0,14,0.12)_40%,rgba(11,0,14,0.62)_70%,rgba(11,0,14,0.94)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,0,14,0.64)_0%,rgba(11,0,14,0.06)_30%,rgba(17,2,20,0.38)_72%,#110214_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_34%_48%,rgba(255,182,43,0.12)_0%,rgba(247,79,131,0.08)_28%,transparent_58%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-[#110214]" />
+      </div>
+
+      <section className="relative z-10 mx-auto h-[5620px] w-[1498px] overflow-hidden bg-transparent">
+        <div
+          className="absolute left-1/2 top-[170px] z-20 flex w-[1060px] -translate-x-1/2 flex-col items-center text-center"
+          data-stagger
+        >
+          <div className="mb-6 flex items-center gap-5 text-[13px] font-black uppercase tracking-[0.18em] text-[#f4ca41]">
+            <span className="text-white [text-shadow:3px_3px_0_rgba(0,0,0,0.45)]">
+              2016-2025
+            </span>
+            <span className="h-px w-16 bg-[#f4ca41]" aria-hidden="true" />
+            <span>Seven hackathons</span>
+          </div>
+          <h1
+            aria-label="Knight Hacks History"
+            className="text-[96px] font-black uppercase leading-none tracking-normal text-white [text-shadow:7px_7px_0_rgba(0,0,0,0.48)]"
+            data-reveal="headline-flicker"
+          >
+            <span className="club-line">
+              <span className="whitespace-nowrap">Knight Hacks</span>
+            </span>
+            <span className="club-line">
+              <span className="whitespace-nowrap">History</span>
+            </span>
           </h1>
-
-          <Timeline />
-
-          {timelineRows.map((row, index) => {
-            const hackathon = hackathons[index];
-
-            if (!hackathon) {
-              return null;
-            }
-
-            return (
-              <div key={`${row.side}-${row.cardY}`}>
-                <p className="sr-only">
-                  {hackathon.name} was held {hackathon.date} with{" "}
-                  {hackathon.participants} participants and {hackathon.projects}{" "}
-                  project submissions.
-                </p>
-                <Image
-                  src={`/hackathons/figma-card-real-${index}.png`}
-                  alt=""
-                  width={Math.round(row.cardWidth)}
-                  height={Math.round(row.cardHeight)}
-                  className="absolute"
-                  sizes={`${Math.ceil(row.cardWidth)}px`}
-                  style={{
-                    left: row.cardX,
-                    top: row.cardY,
-                    width: row.cardWidth,
-                    height: row.cardHeight,
-                  }}
-                />
-                <HackathonDetails
-                  x={row.detailsX}
-                  y={row.detailsY}
-                  hackathon={hackathon}
-                />
-              </div>
-            );
-          })}
-
-          <Footer />
+          <p className="text-white/86 mt-7 max-w-[650px] text-[21px] font-bold leading-[34px]">
+            Past Knight Hacks events, project counts, and Devpost links from
+            UCF&apos;s student-built hackathons.
+          </p>
+          <Link
+            href="#history-timeline"
+            className="club-button mt-10 inline-flex bg-[#f4ca41] px-8 text-black shadow-[5px_5px_0_rgba(255,255,255,0.85)]"
+          >
+            Enter The Timeline
+            <span aria-hidden="true" className="pl-2 text-[18px]">
+              ↓
+            </span>
+          </Link>
         </div>
+
+        <div
+          id="history-timeline"
+          className="absolute left-0 top-[640px] h-px w-px"
+        />
+
+        <Timeline />
+
+        {timelineRows.map((row, index) => {
+          const hackathon = hackathons[index];
+
+          if (!hackathon) {
+            return null;
+          }
+
+          return (
+            <div key={`${row.side}-${row.cardY}`}>
+              <p className="sr-only">
+                {hackathon.name} was held {hackathon.date} with{" "}
+                {hackathon.participants} participants and {hackathon.projects}{" "}
+                project submissions.
+              </p>
+              <Image
+                src={`/hackathons/figma-card-real-${index}.png`}
+                alt=""
+                width={Math.round(row.cardWidth)}
+                height={Math.round(row.cardHeight)}
+                className="club-history-card absolute"
+                sizes={`${Math.ceil(row.cardWidth)}px`}
+                data-reveal="photo"
+                style={{
+                  left: row.cardX,
+                  top: row.cardY,
+                  width: row.cardWidth,
+                  height: row.cardHeight,
+                }}
+              />
+              <HackathonDetails
+                x={row.detailsX}
+                y={row.detailsY}
+                hackathon={hackathon}
+              />
+            </div>
+          );
+        })}
       </section>
     </main>
   );

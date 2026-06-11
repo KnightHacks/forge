@@ -84,15 +84,10 @@ export default {
           "0 0 20px rgba(50, 255, 50, 0.7), 0 0 40px rgba(20, 200, 20, 0.5), 0 0 60px rgba(5, 150, 5, 0.3)",
       },
       fontFamily: {
-        sans: [
-          "Poppins",
-          "Montserrat",
-          "var(--font-geist-sans)",
-          ...fontFamily.sans,
-        ],
-        mono: ["var(--font-geist-mono)", ...fontFamily.mono],
-        narrow: ["Pragati Narrow", ...fontFamily.sans],
-        prompt: ["Prompt", ...fontFamily.sans],
+        sans: ["var(--font-montserrat)", "Montserrat", ...fontFamily.sans],
+        mono: [...fontFamily.mono],
+        narrow: ["var(--font-montserrat)", "Montserrat", ...fontFamily.sans],
+        prompt: ["var(--font-montserrat)", "Montserrat", ...fontFamily.sans],
       },
       animation: {
         "infinite-scroll": "infinite-scroll 160s linear infinite",
