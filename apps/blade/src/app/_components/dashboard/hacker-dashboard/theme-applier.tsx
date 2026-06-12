@@ -5,19 +5,9 @@ import { useEffect } from "react";
 import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
 
 function hexToHsl(hex: string): string {
-  let r = 0,
-    g = 0,
-    b = 0;
-  // Parse hex
-  if (hex.length === 4) {
-    r = parseInt(hex[1] + hex[1], 16);
-    g = parseInt(hex[2] + hex[2], 16);
-    b = parseInt(hex[3] + hex[3], 16);
-  } else if (hex.length === 7) {
-    r = parseInt(hex[1] + hex[2], 16);
-    g = parseInt(hex[3] + hex[4], 16);
-    b = parseInt(hex[5] + hex[6], 16);
-  }
+  let r = parseInt(hex.slice(1, 3), 16);
+  let g = parseInt(hex.slice(3, 5), 16);
+  let b = parseInt(hex.slice(5, 7), 16);
 
   r /= 255;
   g /= 255;
