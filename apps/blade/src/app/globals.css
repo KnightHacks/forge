@@ -11,6 +11,13 @@
 }
 
 @layer base {
+  body {
+    background-image: var(--background-image, none);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
   *,
   ::before,
   ::after {

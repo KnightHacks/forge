@@ -47,7 +47,7 @@ export default async function HackerDashboard({
             </h2>
             <p className="text-muted-foreground">Hackathon Dashboard</p>
           </div>
-          <div className="animate-mobile-initial-expand relative mx-auto flex h-0 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:py-0 sm:pb-0 lg:max-h-56">
+          <div className="animate-mobile-initial-expand relative mx-auto flex h-0 bg-background sm:py-0 sm:pb-0 lg:max-h-56">
             {/* Main content */}
             <HackerData data={hacker} />
 
@@ -64,12 +64,12 @@ export default async function HackerDashboard({
             ></div>
 
             {/* Top rectangle */}
-            <div className="absolute -top-[1.4rem] right-0 h-6 w-40 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:w-96">
+            <div className="absolute -top-[1.4rem] right-0 h-6 w-40 bg-primary sm:w-96">
               <div className="border-t-solid border-r-solid absolute left-0 top-0 h-0 w-0 border-r-[23px] border-t-[23px] border-r-transparent border-t-background"></div>
             </div>
 
             {/* Bottom rectangle */}
-            <div className="absolute -bottom-[1.46rem] left-0 h-6 w-40 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:w-48">
+            <div className="absolute -bottom-[1.46rem] left-0 h-6 w-40 bg-primary sm:w-48">
               <div className="border-b-solid border-l-solid absolute bottom-0 right-0 h-0 w-0 border-b-[24px] border-l-[24px] border-b-background border-l-transparent"></div>
             </div>
 

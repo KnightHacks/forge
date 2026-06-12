@@ -68,6 +68,9 @@ export function HackathonThemeApplier({
       theme["--primary"] = hexToHsl(hackathon.accentColor);
       theme["--ring"] = hexToHsl(hackathon.accentColor);
     }
+    if (hackathon.backgroundImageName) {
+      theme["--background-image"] = `url(${hackathon.backgroundImageName})`;
+    }
 
     Object.entries(theme).forEach(([k, v]) => {
       document.documentElement.style.setProperty(k, v);

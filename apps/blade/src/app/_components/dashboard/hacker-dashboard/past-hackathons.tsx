@@ -14,7 +14,7 @@ import { time } from "@forge/utils";
 import type { api } from "~/trpc/server";
 
 const triggerClassName =
-  "relative flex h-14 w-full cursor-pointer items-center justify-center gap-x-2 border border-[#1F2937] bg-transparent transition-all duration-200 ease-in-out hover:bg-[#E5E7EB] dark:hover:bg-[#1F2937]";
+  "relative flex h-14 w-full cursor-pointer items-center justify-center gap-x-2 border border-[#1F2937] bg-background transition-all duration-200 ease-in-out hover:bg-[#E5E7EB] dark:hover:bg-[#1F2937]";
 
 export function PastHackathonButton({
   hackathons,
