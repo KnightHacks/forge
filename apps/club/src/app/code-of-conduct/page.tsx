@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ClubContentPage from "../_components/club-content-page";
 import JsonLd from "../_components/json-ld";
+import { CLUB_ASSETS } from "../_lib/assets";
 import {
   createBreadcrumbJsonLd,
   createPageMetadata,
@@ -38,7 +39,7 @@ export default function CodeOfConductPage() {
         headlineReveal="headline-flicker"
         description="Knight Hacks expects every member, hacker, mentor, volunteer, sponsor, and organizer to help create a respectful environment across workshops, programs, hackathons, socials, and online spaces."
         image={{
-          src: "/community.jpg",
+          src: CLUB_ASSETS.clubCommunityEvent,
           alt: "Knight Hacks community members at an event",
         }}
         primaryAction={{

@@ -1,10 +1,12 @@
 import Image from "next/image";
+import { ExternalLink } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 
 import { env } from "~/env";
 import { HomeCommunityCarousel } from "./_components/home-community-carousel";
 import { HomeEvents } from "./_components/home-events";
+import { CLUB_ASSETS } from "./_lib/assets";
 
 const eventsEndpoint = new URL("/api/public/club-events", env.BLADE_URL);
 eventsEndpoint.searchParams.set("limit", "6");
@@ -124,7 +126,41 @@ function MascotsSection() {
           </div>
         </div>
 
-        <div className="club-mascot-image-space" aria-hidden="true" />
+        <div
+          className="club-mascot-image-space group"
+          tabIndex={0}
+          aria-describedby="mascot-credit"
+        >
+          <Image
+            src="https://assets.knighthacks.org/tklenny.png"
+            alt="T.K. and Lenny"
+            width={3000}
+            height={3000}
+            className="club-mascot-image"
+          />
+          <div
+            id="mascot-credit"
+            role="dialog"
+            aria-label="Mascot artist credit"
+            className="club-mascot-credit"
+          >
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8f3157]">
+              Mascot art
+            </p>
+            <p className="mt-1 text-sm font-black leading-5 text-[#23051d] md:text-base">
+              Made with love by Design Team member Lena Tran.
+            </p>
+            <a
+              href="https://www.linkedin.com/in/lena-tran-/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-1 text-xs font-black uppercase tracking-[0.08em] text-[#7a2451] transition hover:text-[#120313]"
+            >
+              LinkedIn
+              <ExternalLink aria-hidden="true" className="size-3" />
+            </a>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -196,7 +232,7 @@ export default function HomePage() {
         style={{ height: "clamp(34rem, 68svh, 46rem)", minHeight: 0 }}
       >
         <Image
-          src="/knight-hacks-sets-you-apart.png"
+          src={CLUB_ASSETS.knightHacksSetsYouApart}
           alt=""
           fill
           sizes="100vw"

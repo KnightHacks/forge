@@ -261,7 +261,7 @@ export default function HackathonsPage() {
           <h1
             aria-label="Knight Hacks History"
             className="text-[96px] font-black uppercase leading-none tracking-normal text-white [text-shadow:7px_7px_0_rgba(0,0,0,0.48)]"
-            data-reveal="headline-flicker"
+            data-reveal="headline"
           >
             <span className="club-line">
               <span className="whitespace-nowrap">Knight Hacks</span>

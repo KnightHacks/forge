@@ -6,6 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import { Button } from "@forge/ui/button";
 
 import { env } from "~/env";
+import { CLUB_ASSETS } from "../_lib/assets";
 import { createPageMetadata } from "../seo";
 
 export const metadata: Metadata = createPageMetadata({
@@ -20,37 +21,22 @@ const PROGRAMS = [
     label: "Fall Program",
     title: "Kickstart Mentorship",
     body: "Kickstart runs every fall during recruiting season, pairing newer technologists with mentors by interests, goals, and experience so students can learn with a small group instead of starting alone.",
-    image: "/workshop.jpg",
-    alt: "Knight Hacks members working through a mentorship workshop together",
+    image: CLUB_ASSETS.kickstartWorkshopSession,
+    alt: "Knight Hacks member presenting a workshop session",
   },
   {
     label: "Spring Program",
     title: "Project Launch",
     body: "Project Launch is a spring build program where teams scope, build, and demo a project with lab hours, checkpoints, mentorship, and an end-of-semester expo.",
-    image: "/projects1.JPG",
+    image: CLUB_ASSETS.projectLaunchPresentations,
     alt: "Knight Hacks members presenting project work",
   },
   {
     label: "Events",
     title: "Build all year",
     body: "Around those programs, Knight Hacks runs GBMs, weekly workshops, socials, Operations Meetings, sponsor events, Hack Day in the spring or summer, and an annual 36-hour hackathon every fall.",
-    image: "/hackathon.JPG",
+    image: CLUB_ASSETS.hackathonMainRoom,
     alt: "Knight Hacks hackathon attendees gathered in a large room",
-  },
-] as const;
-
-const HIGHLIGHTS = [
-  {
-    value: "2015",
-    label: "Founded as a UCF student organization",
-  },
-  {
-    value: "700+",
-    label: "Annual club members",
-  },
-  {
-    value: "1,000+",
-    label: "Technologists served at the annual hackathon",
   },
 ] as const;
 
@@ -98,27 +84,28 @@ function AboutButton({
 export default function AboutPage() {
   return (
     <main className="relative overflow-hidden text-white">
-      <section className="relative isolate overflow-visible border-b border-white/10 bg-[#120313] px-6 pb-10 pt-28 md:px-10 md:pb-14 md:pt-36 lg:px-24">
+      <section className="relative isolate min-h-[100svh] overflow-hidden bg-[#110214] px-6 pt-20 text-center md:px-10 lg:px-24">
         <Image
-          src="/members.JPG"
+          src={CLUB_ASSETS.clubMembersGathering}
           alt=""
           fill
           priority
           sizes="100vw"
-          className="absolute inset-0 z-0 object-cover object-[center_42%] brightness-[0.86] saturate-[1.02]"
+          className="absolute inset-0 z-0 object-cover object-[center_42%] brightness-[0.92] contrast-[1.03] saturate-[1.02]"
         />
-        <div className="absolute inset-0 z-[1] bg-[radial-gradient(circle_at_center,rgba(18,3,19,0.72)_0%,rgba(18,3,19,0.62)_38%,rgba(18,3,19,0.9)_100%)]" />
-        <div className="absolute inset-x-0 bottom-0 z-[1] h-32 bg-gradient-to-t from-[var(--club-plum)] to-transparent" />
+        <div className="absolute inset-0 z-[1] bg-[linear-gradient(180deg,rgba(11,0,14,0.72)_0%,rgba(11,0,14,0.18)_34%,rgba(17,2,20,0.12)_58%,#140422_100%)]" />
+        <div className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_50%_32%,rgba(255,182,43,0.16)_0%,rgba(247,79,131,0.08)_30%,transparent_58%)]" />
+        <div className="absolute inset-x-0 bottom-0 z-[1] h-56 bg-gradient-to-b from-transparent to-[var(--club-plum)]" />
 
         <div
-          className="relative z-10 mx-auto w-full max-w-[1120px] text-center"
+          className="relative z-10 mx-auto flex min-h-[calc(100svh-5rem)] w-full max-w-[1060px] flex-col items-center justify-start pb-16 pt-24 text-center md:pt-[112px]"
           data-stagger
         >
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--club-gold)] md:text-sm">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--club-gold)] [text-shadow:3px_3px_0_rgba(0,0,0,0.52)] md:text-sm">
             About Knight Hacks
           </p>
           <h1
-            className="mx-auto mt-5 text-5xl font-black uppercase leading-none tracking-normal text-white [text-shadow:5px_5px_0_rgba(0,0,0,0.48)] md:text-7xl lg:text-8xl"
+            className="mx-auto mt-5 text-[56px] font-black uppercase leading-none tracking-normal text-white [text-shadow:7px_7px_0_rgba(0,0,0,0.48)] md:text-[88px] lg:text-[96px]"
             data-reveal="headline-flicker"
           >
             <span className="club-line">
@@ -128,7 +115,7 @@ export default function AboutPage() {
               <span>to builders</span>
             </span>
           </h1>
-          <p className="text-white/78 mx-auto mt-6 max-w-[39rem] text-base font-semibold leading-8 md:text-lg">
+          <p className="text-white/86 mx-auto mt-7 max-w-[650px] text-base font-bold leading-8 md:text-[21px] md:leading-[34px]">
             Knight Hacks is UCF&apos;s student-run software engineering RSO and
             nonprofit, serving hundreds of annual members through programs,
             community events, and hackathons.
@@ -138,22 +125,6 @@ export default function AboutPage() {
             <AboutButton href="https://discord.gg/knighthacks" variant="dark">
               Join Discord
             </AboutButton>
-          </div>
-
-          <div
-            className="border-white/12 mt-9 grid gap-4 border-t pt-5 sm:grid-cols-3 sm:gap-6 md:mt-16 md:pt-7"
-            data-stagger
-          >
-            {HIGHLIGHTS.map((highlight) => (
-              <div key={highlight.label}>
-                <p className="text-2xl font-black leading-none text-[var(--club-gold)] md:text-3xl">
-                  {highlight.value}
-                </p>
-                <p className="text-white/68 mx-auto mt-2 max-w-[15rem] text-[11px] font-black uppercase leading-4 md:leading-5">
-                  {highlight.label}
-                </p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -241,7 +212,7 @@ export default function AboutPage() {
             data-scroll-drift="16"
           >
             <Image
-              src="/projects2.jpg"
+              src={CLUB_ASSETS.projectCollaboration}
               alt="Knight Hacks members collaborating on project work"
               fill
               sizes="(min-width: 1024px) 44rem, 92vw"

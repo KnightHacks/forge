@@ -6,6 +6,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@forge/ui";
 
+import { CLUB_ASSETS } from "../_lib/assets";
+
 interface CommunitySlide {
   id: string;
   eyebrow: string;
@@ -25,7 +27,7 @@ const COMMUNITY_SLIDES: [CommunitySlide, ...CommunitySlide[]] = [
     eyebrow: "Community",
     title: "of builders",
     body: "We're more than just a club. Knight Hacks is a community of builders, innovators, and creators who turn ideas into reality. Through hands-on hackathons, skill-building workshops, and a supportive network, we empower students to grow as developers and leaders in tech.",
-    image: "/community-card.webp",
+    image: CLUB_ASSETS.clubCommunityEvent,
     imageAlt: "Knight Hacks builders gathered at an event",
     caption: "Find your people. Build the future.",
     imageSide: "left",
@@ -36,8 +38,8 @@ const COMMUNITY_SLIDES: [CommunitySlide, ...CommunitySlide[]] = [
     id: "workshops",
     eyebrow: "Workshop series",
     body: "Whether you're writing your first line of code or building full-stack applications, our workshops provide the hands-on experience you need. Learn from industry professionals and peers in a collaborative environment.",
-    image: "/workshop-card.webp",
-    imageAlt: "Knight Hacks workshop attendees learning together",
+    image: CLUB_ASSETS.memberNetworkingSession,
+    imageAlt: "Knight Hacks members networking after a club event",
     caption: "Learn it by building.",
     imageSide: "right",
     accentClassName: "bg-[var(--club-gold)] text-black",
@@ -48,7 +50,7 @@ const COMMUNITY_SLIDES: [CommunitySlide, ...CommunitySlide[]] = [
     eyebrow: "Career",
     title: "opportunities",
     body: "Connect with top tech companies, network with recruiters, and land internships or full-time roles. Our sponsors are always looking for the bright minds that emerge from the Knight Hacks community.",
-    image: "/projects-card.webp",
+    image: CLUB_ASSETS.projectLaunchPresentations,
     imageAlt: "Knight Hacks members presenting project work",
     caption: "Securing the bag.",
     imageSide: "left",

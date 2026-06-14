@@ -5,9 +5,19 @@ export const TEAM_DEFINITIONS = [
     heading: "Executive Officers",
   },
   {
+    slug: "directors",
+    label: "Directors",
+    heading: "Directors",
+  },
+  {
     slug: "hackathon",
     label: "Hackathon",
     heading: "Hackathon Team",
+  },
+  {
+    slug: "sponsorship",
+    label: "Sponsorship",
+    heading: "Sponsorship Team",
   },
   {
     slug: "workshop",

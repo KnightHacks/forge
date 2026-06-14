@@ -18,12 +18,22 @@ const TEAM_DEFINITIONS = [
   {
     slug: "executive",
     label: "Executive",
-    terms: ["executive", "director", "officer", "officers", "super admin"],
+    terms: ["executive", "officer", "officers", "super admin"],
+  },
+  {
+    slug: "directors",
+    label: "Directors",
+    terms: ["director", "directors"],
   },
   {
     slug: "hackathon",
     label: "Hackathon",
     terms: ["hackathon", "hack org", "hackorg", "kh ix", "khix"],
+  },
+  {
+    slug: "sponsorship",
+    label: "Sponsorship",
+    terms: ["sponsor", "sponsorship"],
   },
   {
     slug: "workshop",
@@ -47,7 +57,28 @@ const TEAM_DEFINITIONS = [
   },
 ] as const;
 
+const EXECUTIVE_ROLE_OVERRIDES = new Map([
+  ["Jason Sacerio", "Treasurer"],
+  ["Kai Sprunger", "Hack Lead"],
+  ["Dylan Vidal", "Dev Lead"],
+]);
+
+const EXECUTIVE_SORT_ORDER = new Map([
+  ["Adrian Osorio Blanchard", 0],
+  ["Carlos Catala", 1],
+  ["Jason Sacerio", 2],
+  ["Natalia Cano", 3],
+  ["Kai Sprunger", 4],
+  ["Dylan Vidal", 5],
+]);
+
+const DIRECTOR_ROLE_OVERRIDES = new Map([
+  ["Chris Ho", "Outreach Director"],
+  ["Michael Rusu", "Workshop Director"],
+]);
+
 type TeamSlug = (typeof TEAM_DEFINITIONS)[number]["slug"];
+type TeamDefinition = (typeof TEAM_DEFINITIONS)[number];
 
 interface PublicTeamMember {
   id: string;
@@ -84,19 +115,81 @@ function getGuildProfilePictureUrl(profilePictureUrl: string | null) {
   return profilePictureUrl?.trim() || null;
 }
 
-function getMatchingTeams(roleName: string) {
+function getMatchingTeam(roleName: string): TeamDefinition | null {
   const normalizedRoleName = roleName.toLowerCase();
 
-  return TEAM_DEFINITIONS.filter((team) =>
-    team.terms.some((term) => normalizedRoleName.includes(term)),
+  return (
+    TEAM_DEFINITIONS.find((team) =>
+      team.terms.some((term) => normalizedRoleName.includes(term)),
+    ) ?? null
   );
+}
+
+function getSpecificDirectorRole(roleNames: string[]) {
+  return roleNames.find((roleName) => {
+    const normalizedRoleName = roleName.toLowerCase();
+
+    return (
+      normalizedRoleName.includes("director") &&
+      normalizedRoleName !== "directors"
+    );
+  });
+}
+
+function getExecutiveRoleLabel(tagline: string | null) {
+  const normalizedTagline = tagline?.toLowerCase() ?? "";
+
+  if (normalizedTagline.includes("president")) return "President";
+  if (
+    normalizedTagline.includes("vice president") ||
+    /\bvp\b/.test(normalizedTagline)
+  ) {
+    return "Vice President";
+  }
+  if (normalizedTagline.includes("treasurer")) return "Treasurer";
+  if (normalizedTagline.includes("secretary")) return "Secretary";
+
+  return "Executive Officer";
+}
+
+function getTeamRoleLabel({
+  name,
+  roleNames,
+  tagline,
+  team,
+}: {
+  name: string;
+  roleNames: string[];
+  tagline: string | null;
+  team: TeamDefinition;
+}) {
+  if (team.slug === "executive") {
+    return EXECUTIVE_ROLE_OVERRIDES.get(name) ?? getExecutiveRoleLabel(tagline);
+  }
+
+  if (team.slug === "directors") {
+    return (
+      DIRECTOR_ROLE_OVERRIDES.get(name) ??
+      getSpecificDirectorRole(roleNames) ??
+      "Director"
+    );
+  }
+
+  return team.label;
 }
 
 function sortRoster(roster: PublicTeamRoster) {
   for (const team of TEAM_DEFINITIONS) {
-    roster[team.slug].sort((first, second) =>
-      first.name.localeCompare(second.name),
-    );
+    roster[team.slug].sort((first, second) => {
+      if (team.slug === "executive") {
+        const firstOrder = EXECUTIVE_SORT_ORDER.get(first.name) ?? 999;
+        const secondOrder = EXECUTIVE_SORT_ORDER.get(second.name) ?? 999;
+
+        if (firstOrder !== secondOrder) return firstOrder - secondOrder;
+      }
+
+      return first.name.localeCompare(second.name);
+    });
   }
 
   return roster;
@@ -128,27 +221,45 @@ async function getPublicClubRoster() {
     .orderBy(Roles.name, Member.firstName, Member.lastName, User.name);
 
   const roster = createEmptyRoster();
-  const seen = new Set<string>();
+  const rowsByUserId = new Map<string, typeof rows>();
 
   for (const row of rows) {
-    const matchingTeams = getMatchingTeams(row.roleName);
+    rowsByUserId.set(row.userId, [...(rowsByUserId.get(row.userId) ?? []), row]);
+  }
 
-    for (const team of matchingTeams) {
-      const teamSlug = team.slug;
-      const uniqueKey = `${teamSlug}:${row.userId}`;
+  for (const userRows of rowsByUserId.values()) {
+    const rankedRoles = userRows
+      .map((row) => ({ row, team: getMatchingTeam(row.roleName) }))
+      .filter(
+        (entry): entry is { row: (typeof rows)[number]; team: TeamDefinition } =>
+          entry.team !== null,
+      )
+      .sort(
+        (first, second) =>
+          TEAM_DEFINITIONS.findIndex((team) => team.slug === first.team.slug) -
+          TEAM_DEFINITIONS.findIndex((team) => team.slug === second.team.slug),
+      );
+    const primaryRole = rankedRoles[0];
 
-      if (seen.has(uniqueKey)) continue;
+    if (!primaryRole) continue;
 
-      roster[teamSlug].push({
-        id: `${row.roleId}-${row.userId}`,
-        name: getFullName(row.firstName, row.lastName, row.displayName),
-        teamRole: team.label,
-        quote: row.tagline?.trim() || null,
-        imageUrl: getGuildProfilePictureUrl(row.guildProfilePictureUrl),
-        color: row.roleColor,
-      });
-      seen.add(uniqueKey);
-    }
+    const roleNames = userRows.map((row) => row.roleName);
+    const { row, team } = primaryRole;
+    const name = getFullName(row.firstName, row.lastName, row.displayName);
+
+    roster[team.slug].push({
+      id: `${row.roleId}-${row.userId}`,
+      name,
+      teamRole: getTeamRoleLabel({
+        name,
+        roleNames,
+        tagline: row.tagline,
+        team,
+      }),
+      quote: row.tagline?.trim() || null,
+      imageUrl: getGuildProfilePictureUrl(row.guildProfilePictureUrl),
+      color: row.roleColor,
+    });
   }
 
   return sortRoster(roster);

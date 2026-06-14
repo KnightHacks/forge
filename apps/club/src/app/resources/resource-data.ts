@@ -1,3 +1,5 @@
+import { CLUB_ASSETS } from "../_lib/assets";
+
 export interface ResourceSection {
   title: string;
   body: string;
@@ -24,7 +26,7 @@ export const RESOURCE_ARTICLES = [
     eyebrow: "Hackathon prep",
     audience: "First-time hackers",
     readTime: "7 min",
-    image: "/hackathon.JPG",
+    image: CLUB_ASSETS.hackathonMainRoom,
     sections: [
       {
         title: "A hackathon is a short build sprint, not a test.",
@@ -66,7 +68,7 @@ export const RESOURCE_ARTICLES = [
     eyebrow: "Build plan",
     audience: "Hackathon teams",
     readTime: "8 min",
-    image: "/projects1.JPG",
+    image: CLUB_ASSETS.projectLaunchPresentations,
     sections: [
       {
         title: "Write the one-sentence project before writing code.",
@@ -108,7 +110,7 @@ export const RESOURCE_ARTICLES = [
     eyebrow: "Dev workflow",
     audience: "New project teams",
     readTime: "6 min",
-    image: "/workshop.jpg",
+    image: CLUB_ASSETS.gameDevKnightsTabling,
     sections: [
       {
         title: "Keep the workflow boring.",
@@ -150,17 +152,12 @@ export const RESOURCE_ARTICLES = [
     eyebrow: "Submission",
     audience: "Hackathon presenters",
     readTime: "5 min",
-    image: "/projects2.jpg",
+    image: CLUB_ASSETS.projectCollaboration,
     sections: [
       {
         title: "Lead with what changed for the user.",
         body: "Judges do not need every implementation detail first. They need to know what problem you chose, who it affects, and how your project makes the situation better.",
-        bullets: [
-          "Problem",
-          "Audience",
-          "Solution",
-          "Live demo path",
-        ],
+        bullets: ["Problem", "Audience", "Solution", "Live demo path"],
       },
       {
         title: "Make the Devpost page skimmable.",
@@ -192,7 +189,7 @@ export const RESOURCE_ARTICLES = [
     eyebrow: "Club building",
     audience: "Student leaders",
     readTime: "9 min",
-    image: "/community.jpg",
+    image: CLUB_ASSETS.clubCommunityEvent,
     sections: [
       {
         title: "Do not start with a logo. Start with a recurring room.",
@@ -234,17 +231,12 @@ export const RESOURCE_ARTICLES = [
     eyebrow: "Workshop outline",
     audience: "Workshop hosts",
     readTime: "6 min",
-    image: "/workshops.jpg",
+    image: CLUB_ASSETS.memberNetworkingSession,
     sections: [
       {
         title: "Start from the shape of a web app.",
         body: "Before installing tools, explain the basic parts: a page the user sees, state the app remembers, an action the user takes, and an optional server route or database call.",
-        bullets: [
-          "Page",
-          "State",
-          "Action",
-          "Result",
-        ],
+        bullets: ["Page", "State", "Action", "Result"],
       },
       {
         title: "Give students a working local project fast.",

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 import JsonLd from "../_components/json-ld";
+import { CLUB_ASSETS } from "../_lib/assets";
 import {
   createBreadcrumbJsonLd,
   createPageMetadata,
@@ -48,7 +49,7 @@ export default function ResourcesPage() {
       <main className="relative overflow-hidden text-white">
         <section className="relative isolate overflow-hidden px-6 pb-24 pt-32 md:px-10 md:pb-28 md:pt-40 lg:px-24">
           <Image
-            src="/projects2.jpg"
+            src={CLUB_ASSETS.projectCollaboration}
             alt=""
             fill
             priority

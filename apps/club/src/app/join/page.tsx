@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ClubContentPage from "../_components/club-content-page";
 import JsonLd from "../_components/json-ld";
+import { CLUB_ASSETS } from "../_lib/assets";
 import {
   BLADE_URL,
   createBreadcrumbJsonLd,
@@ -39,7 +40,7 @@ export default function JoinPage() {
         headlineReveal="headline-wipe"
         description="Knight Hacks membership starts with a Blade profile and the Discord community. From there, students can follow events, attend workshops, join programs, meet teammates, and build toward hackathon weekend."
         image={{
-          src: "/members.JPG",
+          src: CLUB_ASSETS.clubMembersGathering,
           alt: "Knight Hacks members gathered at a club event",
         }}
         primaryAction={{

@@ -54,6 +54,7 @@ export default function ClubMotionRuntime() {
       if (observedElements.has(element)) return;
 
       observedElements.add(element);
+      element.classList.add("is-motion-observed");
       revealElements.add(element);
 
       if (isInsideRevealRange(element)) {

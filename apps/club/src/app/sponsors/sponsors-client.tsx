@@ -13,10 +13,14 @@ import type {
   SponsorRecord,
   SponsorTier,
 } from "./sponsors-config";
+import { CLUB_ASSETS } from "../_lib/assets";
 import {
+  FALLBACK_SPONSOR_LOGO_CDN_ROOT,
   FAQ_ITEMS,
   FEATURED_SUPPORTER_SLIDES,
+  ONLINE_SPONSOR_LOGOS,
   PARTNER_SECTION,
+  PAST_SPONSORS,
   SPONSOR_SECTIONS,
 } from "./sponsors-config";
 
@@ -33,6 +37,18 @@ const emptyPayload: SponsorsPayload = {
 };
 
 const sponsorLogoLoader = ({ src }: ImageLoaderProps) => src;
+const textOnlySponsorLogoKeys = new Set([
+  "gamer development knights",
+  "gdk",
+  "morgan",
+  "morgan and morgan",
+]);
+
+interface SponsorLogoRecord {
+  id: string;
+  logoUrl?: string;
+  name: string;
+}
 
 function isSponsorTier(value: unknown): value is SponsorTier {
   return (
@@ -43,18 +59,60 @@ function isSponsorTier(value: unknown): value is SponsorTier {
   );
 }
 
-function normalizeSponsorLogoUrl(logoUrl: string) {
+function normalizeSponsorKey(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/@/g, " at ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function getSponsorLogoFileName(logoUrl: string) {
   const trimmedLogoUrl = logoUrl.trim();
 
-  if (
-    trimmedLogoUrl.startsWith("/") ||
-    trimmedLogoUrl.startsWith("https://") ||
-    trimmedLogoUrl.startsWith("http://")
-  ) {
-    return trimmedLogoUrl;
+  try {
+    return new URL(trimmedLogoUrl).pathname.split("/").pop() ?? "";
+  } catch {
+    return trimmedLogoUrl.split("/").pop() ?? "";
+  }
+}
+
+function isSvgLogoUrl(logoUrl: string) {
+  return /\.svg(?:[?#].*)?$/i.test(logoUrl.trim());
+}
+
+function normalizeSponsorLogoUrl(sponsor: SponsorLogoRecord) {
+  const sponsorKey = normalizeSponsorKey(sponsor.name);
+
+  if (textOnlySponsorLogoKeys.has(sponsorKey)) {
+    return undefined;
   }
 
-  return `/logos/${trimmedLogoUrl}`;
+  const sponsorLogoUrl = ONLINE_SPONSOR_LOGOS[sponsorKey];
+
+  if (sponsorLogoUrl) {
+    return sponsorLogoUrl;
+  }
+
+  const rawLogoUrl = sponsor.logoUrl ?? "";
+  const logoFileName = getSponsorLogoFileName(rawLogoUrl);
+  const logoName = logoFileName.replace(/\.[^.]+$/, "");
+  const logoUrl = ONLINE_SPONSOR_LOGOS[normalizeSponsorKey(logoName)];
+
+  if (logoUrl) {
+    return logoUrl;
+  }
+
+  if (isSvgLogoUrl(rawLogoUrl)) {
+    if (/^https?:\/\//i.test(rawLogoUrl)) {
+      return rawLogoUrl.trim();
+    }
+
+    return encodeURI(`${FALLBACK_SPONSOR_LOGO_CDN_ROOT}/${logoFileName}`);
+  }
+
+  return undefined;
 }
 
 function normalizeSponsorsPayload(value: unknown): SponsorsPayload {
@@ -100,19 +158,31 @@ function SponsorLogo({
   sponsor,
   priority = false,
 }: {
-  sponsor: SponsorRecord;
+  sponsor: SponsorLogoRecord;
   priority?: boolean;
 }) {
+  const [failedLogoSrc, setFailedLogoSrc] = useState<string | undefined>();
+  const logoSrc = normalizeSponsorLogoUrl(sponsor);
+
+  if (!logoSrc || failedLogoSrc === logoSrc) {
+    return (
+      <span className="flex h-12 w-full max-w-[11rem] items-center justify-center px-3 text-center text-xs font-black uppercase leading-tight text-white md:text-sm">
+        {sponsor.name}
+      </span>
+    );
+  }
+
   return (
     <Image
-      src={normalizeSponsorLogoUrl(sponsor.logoUrl)}
+      src={logoSrc}
       alt={`${sponsor.name} logo`}
       width={360}
       height={140}
       loader={sponsorLogoLoader}
       unoptimized
       priority={priority}
-      className="max-h-full w-full object-contain p-5 transition duration-200 group-hover:scale-[1.03]"
+      onError={() => setFailedLogoSrc(logoSrc)}
+      className="h-12 w-full max-w-[11rem] object-contain p-0 brightness-0 invert transition duration-200 group-hover:scale-[1.03]"
       sizes="(min-width: 1024px) 260px, (min-width: 640px) 42vw, 78vw"
     />
   );
@@ -169,37 +239,39 @@ function EmptySponsorSection({
 
 function Hero({ sponsorUrl }: { sponsorUrl: string }) {
   return (
-    <section className="relative isolate overflow-hidden px-6 pb-24 pt-28 text-center md:px-10 md:pb-28 md:pt-36 lg:px-24">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_48%,rgba(247,79,131,0.24)_0%,rgba(91,13,73,0.14)_34%,transparent_72%)]"
+    <section className="relative isolate min-h-[100svh] overflow-hidden bg-[#110214] px-6 pt-20 text-center md:px-10 lg:px-24">
+      <Image
+        src={CLUB_ASSETS.sponsorSessionStudents}
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="absolute inset-0 z-0 object-cover object-[67%_center] brightness-[0.88] contrast-[1.04] saturate-[1.02]"
       />
-      <div className="relative z-10 mx-auto max-w-5xl" data-stagger>
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--club-gold)] md:text-sm">
+      <div className="absolute inset-0 z-[1] bg-[linear-gradient(90deg,rgba(11,0,14,0.46)_0%,rgba(11,0,14,0.34)_30%,rgba(11,0,14,0.18)_62%,rgba(11,0,14,0.28)_100%)]" />
+      <div className="absolute inset-0 z-[1] bg-[linear-gradient(180deg,rgba(11,0,14,0.72)_0%,rgba(11,0,14,0.1)_32%,rgba(17,2,20,0.12)_64%,#140422_100%)]" />
+      <div className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_26%_42%,rgba(255,182,43,0.16)_0%,rgba(247,79,131,0.08)_32%,transparent_62%)]" />
+      <div className="absolute inset-x-0 bottom-0 z-[1] h-56 bg-gradient-to-b from-transparent to-[var(--club-plum)]" />
+
+      <div
+        className="relative z-10 mx-auto flex min-h-[calc(100svh-5rem)] w-full max-w-[1060px] flex-col items-center justify-start pb-16 pt-24 text-center md:pt-[112px]"
+        data-stagger
+      >
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--club-gold)] [text-shadow:3px_3px_0_rgba(0,0,0,0.52)] md:text-sm">
           Sponsors & Partners
         </p>
         <h1
-          className="mt-5 text-5xl font-black uppercase leading-none text-white [text-shadow:5px_5px_0_rgba(0,0,0,0.38)] md:text-7xl lg:text-8xl"
+          className="mx-auto mt-5 text-[56px] font-black uppercase leading-none tracking-normal text-white [text-shadow:7px_7px_0_rgba(0,0,0,0.48)] md:text-[88px] lg:text-[96px]"
           data-reveal="headline-ladder"
         >
           <span className="club-line">
             <span>Our Supporters</span>
           </span>
         </h1>
-
-        <div
-          className="relative mx-auto mt-12 max-w-3xl border-[3px] border-white/85 px-7 py-8 text-left shadow-[8px_9px_0_rgba(0,0,0,0.28)] md:px-10"
-          data-reveal="pop"
-        >
-          <span className="absolute left-2 top-2 h-8 w-8 border-l-[4px] border-t-[4px] border-white" />
-          <span className="absolute bottom-2 right-2 h-8 w-8 border-b-[4px] border-r-[4px] border-white" />
-          <p className="text-sm font-black uppercase leading-7 text-white md:text-base">
-            Our sponsors make it possible for us to unite developers, designers,
-            and builders across Florida and beyond. Hacker communities grow
-            stronger when students can learn, ship, and meet teams building the
-            future.
-          </p>
-        </div>
+        <p className="text-white/86 mx-auto mt-7 max-w-[650px] text-base font-bold leading-8 md:text-[21px] md:leading-[34px]">
+          Sponsors help students learn, ship, meet teams, and turn campus space
+          into a real builder community.
+        </p>
 
         <Button asChild className="club-button club-button-pink mt-10 px-8">
           <a href={sponsorUrl}>
@@ -411,6 +483,41 @@ function PartnerGrid({
   );
 }
 
+function PastSponsorGrid() {
+  return (
+    <section
+      className="container pb-24 md:pb-32"
+      aria-labelledby="past-sponsors"
+    >
+      <div className="mx-auto max-w-6xl">
+        <h2
+          id="past-sponsors"
+          className="text-3xl font-black leading-none text-[var(--club-gold)] md:text-4xl"
+          data-reveal="headline"
+        >
+          <span className="club-line">
+            <span>Past Supporters</span>
+          </span>
+        </h2>
+
+        <div
+          className="mt-9 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5"
+          data-stagger
+        >
+          {PAST_SPONSORS.map((sponsor) => (
+            <div
+              key={sponsor.id}
+              className="club-sponsor-tile bg-[#2b0d35]/64 border-white/12 group flex min-h-24 items-center justify-center border-[2px] shadow-[4px_4px_0_rgba(0,0,0,0.2)]"
+            >
+              <SponsorLogo sponsor={sponsor} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function SponsorFaq() {
   const [openQuestion, setOpenQuestion] = useState<string | undefined>(
     FAQ_ITEMS[0].question,
@@ -563,6 +670,7 @@ export default function SponsorsClient({
       />
       <SponsorGrid sponsors={sponsorRecords} status={status} />
       <PartnerGrid partners={partnerRecords} status={status} />
+      <PastSponsorGrid />
       <SponsorFaq />
     </main>
   );

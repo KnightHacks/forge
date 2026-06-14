@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ClubContentPage from "../_components/club-content-page";
 import JsonLd from "../_components/json-ld";
+import { CLUB_ASSETS } from "../_lib/assets";
 import {
   BLADE_URL,
   createBreadcrumbJsonLd,
@@ -39,7 +40,7 @@ export default function KickstartPage() {
         headlineReveal="headline-punch"
         description="Kickstart runs every fall during recruiting season. Knight Hacks pairs mentees and mentors by interests, goals, and prior experience so students can grow in smaller, more personal groups."
         image={{
-          src: "/workshops2.jpg",
+          src: CLUB_ASSETS.kickstartWorkshopSession,
           alt: "Knight Hacks students participating in a mentorship workshop",
         }}
         primaryAction={{

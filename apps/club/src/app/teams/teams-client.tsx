@@ -1,19 +1,23 @@
 "use client";
 
+import type { Transition } from "framer-motion";
 import type { ImageLoaderProps } from "next/image";
 import type { CSSProperties } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, ChevronDown } from "lucide-react";
 
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 
 import type { TeamMember, TeamRoster, TeamSlug } from "./teams-config";
+import { CLUB_ASSETS } from "../_lib/assets";
 import { createEmptyRoster, TEAM_DEFINITIONS } from "./teams-config";
 
 const CARD_ROTATIONS = ["-1.8deg", "1.7deg", "-1.4deg", "1.2deg", "-1deg"];
 const STATIC_BACKGROUND_STYLE_ID = "club-teams-static-background";
+const TEAM_COUNT_LABEL = "82 team members";
 
 type RosterStatus = "loading" | "ready" | "error";
 
@@ -173,6 +177,7 @@ export default function TeamsClient({
   teamsEndpoint: string;
 }) {
   const pendingScrollPosition = useRef<{ x: number; y: number } | null>(null);
+  const prefersReducedMotion = useReducedMotion();
   const [roster, setRoster] = useState<TeamRoster>(() => createEmptyRoster());
   const [status, setStatus] = useState<RosterStatus>("loading");
   const [activeTeam, setActiveTeam] = useState<TeamSlug>(
@@ -185,16 +190,9 @@ export default function TeamsClient({
     [activeTeam],
   );
   const activeMembers = roster[activeTeam];
-  const totalMembers = TEAM_DEFINITIONS.reduce(
-    (total, team) => total + roster[team.slug].length,
-    0,
-  );
-  const rosterLabel =
-    status === "loading"
-      ? "Loading Blade profiles"
-      : status === "error"
-        ? "Blade roster unavailable"
-        : `${totalMembers} Blade-linked profiles`;
+  const teamTransition: Transition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.28, ease: "easeOut" };
 
   useEffect(() => {
     const root = document.documentElement;
@@ -275,102 +273,187 @@ export default function TeamsClient({
 
   return (
     <main className="min-h-screen">
-      <section className="relative overflow-hidden px-6 pb-28 pt-28 text-center md:px-10 md:pb-32 md:pt-36 lg:px-24">
-        <div className="absolute inset-x-0 bottom-0 h-8 bg-[#f7f1e9] shadow-[0_-5px_0_rgba(0,0,0,0.18)] [clip-path:polygon(0_34%,5%_18%,12%_28%,18%_10%,24%_28%,31%_18%,39%_34%,48%_14%,57%_30%,66%_16%,75%_32%,83%_15%,91%_30%,100%_18%,100%_100%,0_100%)]" />
-        <div className="relative z-10 mx-auto max-w-5xl" data-stagger>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--club-gold)] md:text-sm">
+      <section className="relative isolate min-h-[100svh] overflow-hidden bg-[#110214] px-6 pt-20 text-center md:px-10 lg:px-24">
+        <Image
+          src={CLUB_ASSETS.clubTeamWaterfrontGroup}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="absolute inset-0 z-0 object-cover object-[center_72%] brightness-[0.94] contrast-[1.02] saturate-[1.04]"
+        />
+        <div className="absolute inset-0 z-[1] bg-[linear-gradient(180deg,rgba(11,0,14,0.72)_0%,rgba(11,0,14,0.18)_34%,rgba(17,2,20,0.12)_58%,#140422_100%)]" />
+        <div className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_50%_26%,rgba(255,182,43,0.16)_0%,rgba(247,79,131,0.08)_30%,transparent_58%)]" />
+        <div className="absolute inset-x-0 bottom-0 z-[1] h-56 bg-gradient-to-b from-transparent to-[var(--club-plum)]" />
+
+        <div
+          className="relative z-10 mx-auto flex min-h-[calc(100svh-5rem)] w-full max-w-[1060px] flex-col items-center justify-start pb-16 pt-24 text-center md:pt-[112px]"
+          data-stagger
+        >
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--club-gold)] [text-shadow:3px_3px_0_rgba(0,0,0,0.5)] md:text-sm">
             Club Leadership
           </p>
           <h1
-            className="mt-5 text-5xl font-black uppercase leading-none text-white md:text-7xl lg:text-8xl"
+            className="mx-auto mt-5 text-[56px] font-black uppercase leading-none tracking-normal text-white [text-shadow:7px_7px_0_rgba(0,0,0,0.48)] md:text-[88px] lg:text-[96px]"
             data-reveal="headline-punch"
           >
             <span className="club-line">
               <span>Our Team</span>
             </span>
           </h1>
-          <p className="text-white/78 mx-auto mt-7 max-w-3xl text-base font-semibold leading-8 md:text-lg">
+          <p className="text-white/86 mx-auto mt-7 max-w-[650px] text-base font-bold leading-8 md:text-[21px] md:leading-[34px]">
             The builders, organizers, and mentors behind every Knight Hacks
             event.
           </p>
-        </div>
-      </section>
-
-      <section className="container py-24 md:py-28" aria-labelledby="teams-nav">
-        <div className="mx-auto max-w-5xl text-center">
-          <p className="text-sm font-black uppercase tracking-[0.28em] text-[#f7b5cc]">
-            {rosterLabel}
-          </p>
-          <h2
-            id="teams-nav"
-            className="mt-4 text-4xl font-black leading-tight text-[#ffef9b] md:text-5xl"
-          >
-            The Teams
-          </h2>
-          <div
-            className="is-visible mx-auto mt-9 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            data-stagger
-          >
-            {TEAM_DEFINITIONS.map((team) => {
-              const isActive = activeTeam === team.slug;
-
-              return (
-                <button
-                  key={team.slug}
-                  type="button"
-                  className={cn(
-                    "club-team-filter border-[3px] border-black px-6 py-4 text-sm font-black uppercase tracking-[0.08em] shadow-[5px_6px_0_rgba(0,0,0,0.42)] transition hover:-translate-y-1",
-                    isActive
-                      ? "bg-[#ffd0de] text-black shadow-[5px_6px_0_var(--club-gold-soft)]"
-                      : "bg-[#3b1955] text-white hover:bg-[#522070]",
-                  )}
-                  aria-pressed={isActive}
-                  onClick={() => selectTeam(team.slug)}
-                >
-                  {team.label}
-                  <span className="ml-2 text-[var(--club-gold)]">
-                    {roster[team.slug].length}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <p className="sr-only">Knight Hacks team members by the water.</p>
         </div>
       </section>
 
       <section
-        className="container pb-28 md:pb-36"
+        className="container py-10 md:py-12"
         aria-labelledby="team-members"
       >
-        <div className="mx-auto max-w-6xl text-center">
-          <h2
-            id="team-members"
-            className="text-4xl font-black leading-tight text-[#ffef9b] md:text-5xl"
-            data-reveal="headline"
-          >
-            <span className="club-line">
-              <span>Meet Our Team</span>
-            </span>
-          </h2>
-          <p className="mt-5 text-lg font-black text-white">
-            {activeDefinition.heading}
-          </p>
-        </div>
+        <div className="mx-auto max-w-6xl">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-xl text-left">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#f7b5cc] md:text-xs">
+                {TEAM_COUNT_LABEL}
+              </p>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.h2
+                  key={activeTeam}
+                  id="team-members"
+                  className="mt-2 text-3xl font-black leading-tight text-[#ffef9b] md:text-4xl"
+                  initial={
+                    prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 8 }
+                  }
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={
+                    prefersReducedMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, y: -8 }
+                  }
+                  transition={teamTransition}
+                >
+                  {activeDefinition.heading}
+                </motion.h2>
+              </AnimatePresence>
+            </div>
 
-        {activeMembers.length > 0 ? (
-          <div
-            className="is-visible mx-auto mt-12 grid max-w-6xl grid-cols-1 gap-x-9 gap-y-28 sm:grid-cols-2 lg:grid-cols-3"
-            data-stagger
-          >
-            {activeMembers.map((member, index) => (
-              <TeamCard key={member.id} member={member} index={index} />
-            ))}
+            <div className="relative md:hidden">
+              <select
+                value={activeTeam}
+                onChange={(event) => selectTeam(event.target.value as TeamSlug)}
+                aria-label="Choose team"
+                className="h-11 w-full appearance-none border-2 border-black bg-[#ffd0de] px-3 pr-10 text-xs font-black uppercase tracking-[0.08em] text-black shadow-[3px_4px_0_var(--club-gold-soft)] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[var(--club-gold)]"
+              >
+                {TEAM_DEFINITIONS.map((team) => (
+                  <option key={team.slug} value={team.slug}>
+                    {team.label} ({roster[team.slug].length})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                aria-hidden="true"
+                className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-black"
+              />
+            </div>
+
+            <div
+              className="hidden max-w-[44rem] flex-wrap items-center justify-end gap-x-4 gap-y-2 md:flex"
+              aria-label="Team filters"
+            >
+              {TEAM_DEFINITIONS.map((team) => {
+                const isActive = activeTeam === team.slug;
+
+                return (
+                  <button
+                    key={team.slug}
+                    type="button"
+                    className={cn(
+                      "border-b-2 pb-1 text-xs font-black uppercase leading-none tracking-[0.08em] transition-colors hover:border-white/35 hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[var(--club-gold)] lg:text-[13px]",
+                      isActive
+                        ? "border-[#ffef9b] text-[#ffef9b]"
+                        : "text-white/58 border-transparent",
+                    )}
+                    aria-pressed={isActive}
+                    onClick={() => selectTeam(team.slug)}
+                  >
+                    {team.label}
+                    <span
+                      className={cn(
+                        "ml-1 text-[var(--club-gold)]",
+                        isActive ? "opacity-100" : "opacity-85",
+                      )}
+                    >
+                      {roster[team.slug].length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        ) : (
-          <div className="mt-12">
-            <EmptyTeam label={activeDefinition.label} status={status} />
-          </div>
-        )}
+
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={`${activeTeam}-${status}`}
+              initial={
+                prefersReducedMotion
+                  ? { opacity: 1 }
+                  : { opacity: 0, scale: 0.985, y: 14 }
+              }
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={
+                prefersReducedMotion
+                  ? { opacity: 0 }
+                  : { opacity: 0, scale: 0.99, y: -10 }
+              }
+              transition={teamTransition}
+            >
+              {activeMembers.length > 0 ? (
+                <motion.div
+                  className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-x-7 gap-y-16 sm:grid-cols-2 md:mt-12 lg:grid-cols-3 lg:gap-y-20"
+                  variants={{
+                    show: prefersReducedMotion
+                      ? {}
+                      : {
+                          transition: {
+                            delayChildren: 0.03,
+                            staggerChildren: 0.045,
+                          },
+                        },
+                  }}
+                  initial="hidden"
+                  animate="show"
+                  exit="hidden"
+                >
+                  {activeMembers.map((member, index) => (
+                    <motion.div
+                      key={member.id}
+                      variants={{
+                        hidden: prefersReducedMotion
+                          ? { opacity: 1 }
+                          : { opacity: 0, scale: 0.97, y: 16 },
+                        show: { opacity: 1, scale: 1, y: 0 },
+                      }}
+                      transition={
+                        prefersReducedMotion
+                          ? { duration: 0 }
+                          : { duration: 0.26, ease: "easeOut" }
+                      }
+                    >
+                      <TeamCard member={member} index={index} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              ) : (
+                <div className="mt-10">
+                  <EmptyTeam label={activeDefinition.label} status={status} />
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </section>
 
       <section className="relative overflow-hidden px-6 py-28 md:py-36">

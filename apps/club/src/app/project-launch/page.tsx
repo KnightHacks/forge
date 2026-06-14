@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ClubContentPage from "../_components/club-content-page";
 import JsonLd from "../_components/json-ld";
+import { CLUB_ASSETS } from "../_lib/assets";
 import {
   BLADE_URL,
   createBreadcrumbJsonLd,
@@ -38,7 +39,7 @@ export default function ProjectLaunchPage() {
         headlineReveal="headline-ladder"
         description="Project Launch gives curious builders a spring structure for scoping, building, debugging, and presenting a real project before finals."
         image={{
-          src: "/projects1.JPG",
+          src: CLUB_ASSETS.projectLaunchPresentations,
           alt: "Knight Hacks members presenting project work",
         }}
         primaryAction={{
