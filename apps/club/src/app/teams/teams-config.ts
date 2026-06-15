@@ -47,8 +47,8 @@ export interface TeamMember {
   id: string;
   name: string;
   teamRole: string;
-  quote: string | null;
   imageUrl: string | null;
+  linkedinUrl: string | null;
   color: string | null;
 }
 

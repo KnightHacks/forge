@@ -84,8 +84,8 @@ interface PublicTeamMember {
   id: string;
   name: string;
   teamRole: string;
-  quote: string | null;
   imageUrl: string | null;
+  linkedinUrl: string | null;
   color: string | null;
 }
 
@@ -212,6 +212,7 @@ async function getPublicClubRoster() {
       lastName: Member.lastName,
       tagline: Member.tagline,
       guildProfilePictureUrl: Member.profilePictureUrl,
+      linkedinProfileUrl: Member.linkedinProfileUrl,
     })
     .from(Roles)
     .innerJoin(Permissions, eq(Permissions.roleId, Roles.id))
@@ -224,14 +225,19 @@ async function getPublicClubRoster() {
   const rowsByUserId = new Map<string, typeof rows>();
 
   for (const row of rows) {
-    rowsByUserId.set(row.userId, [...(rowsByUserId.get(row.userId) ?? []), row]);
+    rowsByUserId.set(row.userId, [
+      ...(rowsByUserId.get(row.userId) ?? []),
+      row,
+    ]);
   }
 
   for (const userRows of rowsByUserId.values()) {
     const rankedRoles = userRows
       .map((row) => ({ row, team: getMatchingTeam(row.roleName) }))
       .filter(
-        (entry): entry is { row: (typeof rows)[number]; team: TeamDefinition } =>
+        (
+          entry,
+        ): entry is { row: (typeof rows)[number]; team: TeamDefinition } =>
           entry.team !== null,
       )
       .sort(
@@ -256,8 +262,8 @@ async function getPublicClubRoster() {
         tagline: row.tagline,
         team,
       }),
-      quote: row.tagline?.trim() || null,
       imageUrl: getGuildProfilePictureUrl(row.guildProfilePictureUrl),
+      linkedinUrl: row.linkedinProfileUrl?.trim() || null,
       color: row.roleColor,
     });
   }

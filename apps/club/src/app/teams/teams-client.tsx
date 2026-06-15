@@ -6,7 +6,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, ChevronDown, Linkedin } from "lucide-react";
 
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
@@ -95,31 +95,86 @@ function MemberPortrait({ member }: { member: TeamMember }) {
 
 function TeamCard({ member, index }: { member: TeamMember; index: number }) {
   const rotation = CARD_ROTATIONS[index % CARD_ROTATIONS.length] ?? "0deg";
-
-  return (
+  const cardContent = (
     <article
-      className="club-team-card group relative min-h-[19.25rem] border-[3px] border-black bg-[#301743] p-3.5 shadow-[8px_10px_0_rgba(0,0,0,0.48)] transition duration-200 hover:shadow-[11px_13px_0_rgba(0,0,0,0.55)]"
+      className={cn(
+        "club-team-card group relative min-h-[19.25rem] border-[3px] border-black bg-[#301743] p-3.5 shadow-[8px_10px_0_rgba(0,0,0,0.48)] transition duration-200",
+        member.linkedinUrl
+          ? "hover:-translate-y-1 hover:shadow-[11px_13px_0_rgba(0,0,0,0.55)]"
+          : "hover:shadow-[11px_13px_0_rgba(0,0,0,0.55)]",
+      )}
       style={{ "--team-rotate": rotation } as CSSProperties}
     >
       <div className="relative aspect-[1.45/1] overflow-hidden border-[2px] border-black bg-[#c5b8d2]">
         <MemberPortrait member={member} />
       </div>
 
-      <div className="px-1 pb-1 pt-5">
-        <h3 className="text-base font-black leading-5 text-white">
-          {member.name}
-        </h3>
-        <p className="mt-1 text-[10px] font-black uppercase leading-4 tracking-[0.16em] text-[#ffd0de]">
-          {member.teamRole}
-        </p>
-        {member.quote ? (
-          <p className="mt-3 line-clamp-2 text-xs italic leading-4 text-[#f1e7f6]">
-            {member.quote}
+      <div className="flex items-start justify-between gap-4 px-1 pb-1 pt-5">
+        <div className="min-w-0">
+          <h3 className="text-base font-black leading-5 text-white">
+            {member.name}
+          </h3>
+          <p className="mt-1 text-[10px] font-black uppercase leading-4 tracking-[0.16em] text-[#ffd0de]">
+            {member.teamRole}
           </p>
+        </div>
+
+        {member.linkedinUrl ? (
+          <span className="flex size-9 shrink-0 items-center justify-center border-[2px] border-black bg-[#ffd0de] text-black shadow-[3px_4px_0_var(--club-gold-soft)] transition group-hover:-translate-y-0.5 group-hover:bg-[var(--club-gold)]">
+            <Linkedin aria-hidden="true" className="size-4" strokeWidth={3} />
+          </span>
         ) : null}
       </div>
     </article>
   );
+
+  if (member.linkedinUrl) {
+    return (
+      <a
+        href={member.linkedinUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Open ${member.name}'s LinkedIn profile`}
+        className="block focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-8 focus-visible:outline-[var(--club-gold)]"
+      >
+        {cardContent}
+      </a>
+    );
+  }
+
+  return cardContent;
+}
+
+function normalizeLinkedinUrl(value: unknown) {
+  if (typeof value !== "string") return null;
+
+  const trimmedValue = value.trim();
+
+  return trimmedValue.length > 0 ? trimmedValue : null;
+}
+
+function normalizeTeamMember(member: unknown): TeamMember | null {
+  if (!member || typeof member !== "object") return null;
+
+  const teamMember = member as Partial<TeamMember>;
+
+  if (
+    typeof teamMember.id !== "string" ||
+    typeof teamMember.name !== "string" ||
+    typeof teamMember.teamRole !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    id: teamMember.id,
+    name: teamMember.name,
+    teamRole: teamMember.teamRole,
+    imageUrl:
+      typeof teamMember.imageUrl === "string" ? teamMember.imageUrl : null,
+    linkedinUrl: normalizeLinkedinUrl(teamMember.linkedinUrl),
+    color: typeof teamMember.color === "string" ? teamMember.color : null,
+  };
 }
 
 function EmptyTeam({ label, status }: { label: string; status: RosterStatus }) {
@@ -156,14 +211,9 @@ function normalizeRoster(value: unknown): TeamRoster {
 
     if (!Array.isArray(members)) continue;
 
-    emptyRoster[team.slug] = members.filter(
-      (member): member is TeamMember =>
-        !!member &&
-        typeof member === "object" &&
-        typeof (member as TeamMember).id === "string" &&
-        typeof (member as TeamMember).name === "string" &&
-        typeof (member as TeamMember).teamRole === "string",
-    );
+    emptyRoster[team.slug] = members
+      .map(normalizeTeamMember)
+      .filter((member): member is TeamMember => member !== null);
   }
 
   return emptyRoster;
