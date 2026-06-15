@@ -1,7 +1,7 @@
 "use client";
 
 import type { ImageLoaderProps } from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ArrowRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
@@ -15,6 +15,7 @@ import {
   FEATURED_SUPPORTER_SLIDES,
   ONLINE_SPONSOR_LOGOS,
   PAST_SPONSORS,
+  SPONSOR_WEBSITE_URLS,
 } from "./sponsors-config";
 
 const sponsorLogoLoader = ({ src }: ImageLoaderProps) => src;
@@ -219,8 +220,6 @@ function SponsorHighlight({
               "bg-[#1d1325]/88 relative aspect-[1.62] overflow-hidden border-[3px] transition duration-300",
               selectedSlide.frameClassName,
             )}
-            data-reveal="photo"
-            data-scroll-drift="14"
           >
             <div
               key={selectedSlide.id}
@@ -295,6 +294,9 @@ function SponsorHighlight({
 }
 
 function PastSponsorGrid() {
+  const sponsorTileClassName =
+    "club-sponsor-tile bg-[#2b0d35]/64 border-white/12 group flex min-h-24 items-center justify-center border-[2px] shadow-[4px_4px_0_rgba(0,0,0,0.2)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--club-gold)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--club-plum)]";
+
   return (
     <section
       className="container pb-24 md:pb-32"
@@ -315,14 +317,30 @@ function PastSponsorGrid() {
           className="mt-9 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5"
           data-stagger
         >
-          {sortSponsorsByName(PAST_SPONSORS).map((sponsor) => (
-            <div
-              key={sponsor.id}
-              className="club-sponsor-tile bg-[#2b0d35]/64 border-white/12 group flex min-h-24 items-center justify-center border-[2px] shadow-[4px_4px_0_rgba(0,0,0,0.2)]"
-            >
-              <SponsorLogo sponsor={sponsor} />
-            </div>
-          ))}
+          {sortSponsorsByName(PAST_SPONSORS).map((sponsor) => {
+            const websiteUrl = SPONSOR_WEBSITE_URLS[sponsor.id];
+
+            if (websiteUrl) {
+              return (
+                <a
+                  key={sponsor.id}
+                  href={websiteUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Visit ${sponsor.name} website`}
+                  className={sponsorTileClassName}
+                >
+                  <SponsorLogo sponsor={sponsor} />
+                </a>
+              );
+            }
+
+            return (
+              <div key={sponsor.id} className={sponsorTileClassName}>
+                <SponsorLogo sponsor={sponsor} />
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -390,15 +408,10 @@ function SponsorFaq() {
 
 export default function SponsorsClient({ bladeUrl }: { bladeUrl: string }) {
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
-  const lastManualSlideChangeRef = useRef(0);
   const sponsorUrl = new URL("/sponsor", bladeUrl).toString();
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
-      if (Date.now() - lastManualSlideChangeRef.current < 1000) {
-        return;
-      }
-
       setSelectedSlideIndex(
         (index) => (index + 1) % FEATURED_SUPPORTER_SLIDES.length,
       );
@@ -408,7 +421,6 @@ export default function SponsorsClient({ bladeUrl }: { bladeUrl: string }) {
   }, [selectedSlideIndex]);
 
   function showPreviousSlide() {
-    lastManualSlideChangeRef.current = Date.now();
     setSelectedSlideIndex(
       (index) =>
         (index - 1 + FEATURED_SUPPORTER_SLIDES.length) %
@@ -417,7 +429,6 @@ export default function SponsorsClient({ bladeUrl }: { bladeUrl: string }) {
   }
 
   function showNextSlide() {
-    lastManualSlideChangeRef.current = Date.now();
     setSelectedSlideIndex(
       (index) => (index + 1) % FEATURED_SUPPORTER_SLIDES.length,
     );
