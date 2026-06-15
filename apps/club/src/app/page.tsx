@@ -44,7 +44,7 @@ function HomeButton({
 
 function HeroVideoBackground() {
   return (
-    <div className="club-hero-media" aria-hidden="true">
+    <div className="club-hero-media" aria-hidden="true" data-hero-media>
       <video
         autoPlay
         disablePictureInPicture
@@ -169,10 +169,16 @@ function MascotsSection() {
 export default function HomePage() {
   return (
     <main className="club-home-bg relative overflow-hidden text-white">
-      <section className="club-hero-section relative flex items-center justify-center overflow-hidden px-6 py-24 md:px-10 lg:px-24">
+      <section
+        className="club-page-hero club-hero-section relative flex items-center justify-center overflow-hidden px-6 py-24 md:px-10 lg:px-24"
+        data-hero
+      >
         <HeroVideoBackground />
 
-        <div className="club-hero-copy relative z-10 mx-auto flex max-w-[900px] flex-col items-center text-center">
+        <div
+          className="club-hero-copy relative z-10 mx-auto flex max-w-[900px] flex-col items-center text-center"
+          data-hero-content
+        >
           <div className="club-hero-logo-shell">
             <Image
               src="/knighthacks.svg"

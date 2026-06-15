@@ -89,7 +89,10 @@ export default function ClubContentPage({
 }: ClubContentPageProps) {
   return (
     <main className="relative overflow-hidden text-white">
-      <section className="relative isolate min-h-[38rem] overflow-hidden px-6 pb-16 pt-32 md:px-10 md:pb-20 md:pt-40 lg:px-24">
+      <section
+        className="club-page-hero relative isolate min-h-[38rem] overflow-hidden px-6 pb-16 pt-32 md:px-10 md:pb-20 md:pt-40 lg:px-24"
+        data-hero
+      >
         <Image
           src={image.src}
           alt=""
@@ -97,11 +100,22 @@ export default function ClubContentPage({
           priority
           sizes="100vw"
           className="absolute inset-0 z-0 object-cover object-center brightness-[0.62] saturate-[0.9]"
+          data-hero-media
         />
-        <div className="absolute inset-0 z-[1] bg-[linear-gradient(90deg,rgba(10,1,13,0.94)_0%,rgba(20,3,22,0.72)_42%,rgba(20,3,22,0.22)_100%)]" />
-        <div className="absolute inset-x-0 bottom-0 z-[1] h-36 bg-gradient-to-t from-[var(--club-plum)] to-transparent" />
+        <div
+          className="absolute inset-0 z-[1] bg-[linear-gradient(90deg,rgba(10,1,13,0.94)_0%,rgba(20,3,22,0.72)_42%,rgba(20,3,22,0.22)_100%)]"
+          data-hero-overlay
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 z-[1] h-36 bg-gradient-to-t from-[var(--club-plum)] to-transparent"
+          data-hero-overlay
+        />
 
-        <div className="relative z-10 mx-auto max-w-[1120px]" data-stagger>
+        <div
+          className="relative z-10 mx-auto max-w-[1120px]"
+          data-hero-content
+          data-stagger
+        >
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--club-gold)] md:text-sm">
             {eyebrow}
           </p>

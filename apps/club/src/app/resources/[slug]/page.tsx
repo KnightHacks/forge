@@ -14,11 +14,11 @@ import {
 } from "../../seo";
 import { getResourceArticle, RESOURCE_ARTICLES } from "../resource-data";
 
-type ResourcePageProps = {
+interface ResourcePageProps {
   params: Promise<{
     slug: string;
   }>;
-};
+}
 
 export function generateStaticParams() {
   return RESOURCE_ARTICLES.map((article) => ({
@@ -69,7 +69,10 @@ export default async function ResourceArticlePage({
   return (
     <>
       <main className="relative overflow-hidden text-white">
-        <section className="relative isolate min-h-[34rem] overflow-hidden px-6 pb-16 pt-32 md:px-10 md:pb-20 md:pt-40 lg:px-24">
+        <section
+          className="club-page-hero relative isolate min-h-[34rem] overflow-hidden px-6 pb-16 pt-32 md:px-10 md:pb-20 md:pt-40 lg:px-24"
+          data-hero
+        >
           <Image
             src={article.image}
             alt=""
@@ -77,11 +80,22 @@ export default async function ResourceArticlePage({
             priority
             sizes="100vw"
             className="absolute inset-0 z-0 object-cover object-center brightness-[0.56] saturate-[0.86]"
+            data-hero-media
           />
-          <div className="absolute inset-0 z-[1] bg-[linear-gradient(90deg,rgba(10,1,13,0.96)_0%,rgba(20,3,22,0.76)_44%,rgba(20,3,22,0.18)_100%)]" />
-          <div className="absolute inset-x-0 bottom-0 z-[1] h-36 bg-gradient-to-t from-[var(--club-plum)] to-transparent" />
+          <div
+            className="absolute inset-0 z-[1] bg-[linear-gradient(90deg,rgba(10,1,13,0.96)_0%,rgba(20,3,22,0.76)_44%,rgba(20,3,22,0.18)_100%)]"
+            data-hero-overlay
+          />
+          <div
+            className="absolute inset-x-0 bottom-0 z-[1] h-36 bg-gradient-to-t from-[var(--club-plum)] to-transparent"
+            data-hero-overlay
+          />
 
-          <div className="relative z-10 mx-auto max-w-[1120px]" data-stagger>
+          <div
+            className="relative z-10 mx-auto max-w-[1120px]"
+            data-hero-content
+            data-stagger
+          >
             <Link
               href="/resources"
               className="inline-flex items-center text-xs font-black uppercase tracking-normal text-[var(--club-gold)] transition-colors hover:text-white"
@@ -98,10 +112,10 @@ export default async function ResourceArticlePage({
             >
               {article.title}
             </h1>
-            <p className="mt-6 max-w-[44rem] text-base font-semibold leading-8 text-white/82 md:text-lg">
+            <p className="text-white/82 mt-6 max-w-[44rem] text-base font-semibold leading-8 md:text-lg">
               {article.description}
             </p>
-            <p className="mt-5 text-xs font-bold uppercase text-white/58">
+            <p className="text-white/58 mt-5 text-xs font-bold uppercase">
               {article.audience} | {article.readTime}
             </p>
           </div>
@@ -123,18 +137,16 @@ export default async function ResourceArticlePage({
                 <p className="mt-5 max-w-[50rem] text-base font-semibold leading-8 text-[var(--club-muted)] md:text-lg">
                   {section.body}
                 </p>
-                {section.bullets ? (
-                  <ul className="mt-8 grid gap-4 text-sm font-bold leading-6 text-white/82 md:grid-cols-2">
-                    {section.bullets.map((bullet) => (
-                      <li
-                        key={bullet}
-                        className="border-l-2 border-[var(--club-gold)] pl-4"
-                      >
-                        {bullet}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
+                <ul className="text-white/82 mt-8 grid gap-4 text-sm font-bold leading-6 md:grid-cols-2">
+                  {section.bullets.map((bullet) => (
+                    <li
+                      key={bullet}
+                      className="border-l-2 border-[var(--club-gold)] pl-4"
+                    >
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
               </article>
             ))}
           </div>
@@ -149,9 +161,9 @@ export default async function ResourceArticlePage({
               Build with Knight Hacks.
             </h2>
             <p className="mx-auto mt-6 max-w-[36rem] text-base font-semibold leading-8 text-[var(--club-muted)]">
-              Use this guide at your next workshop, project night, or
-              hackathon. The fastest path is still showing up and building with
-              other students.
+              Use this guide at your next workshop, project night, or hackathon.
+              The fastest path is still showing up and building with other
+              students.
             </p>
             <div className="mt-9 flex flex-wrap justify-center gap-4">
               <Button

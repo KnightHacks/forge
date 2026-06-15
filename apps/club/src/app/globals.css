@@ -322,6 +322,27 @@ html[data-club-static-background="true"] .club-home-bg::before {
   animation: club-video-breathe 18s ease-in-out infinite alternate;
 }
 
+.club-page-hero {
+  --club-hero-progress: 0;
+}
+
+html[data-motion="ready"] .club-page-hero [data-hero-media] {
+  transform: translate3d(0, calc(var(--club-hero-progress, 0) * 18px), 0)
+    scale(calc(1.035 + var(--club-hero-progress, 0) * 0.035));
+  transform-origin: center;
+  animation: club-hero-media-enter 1280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform;
+}
+
+html[data-motion="ready"] .club-page-hero [data-hero-overlay] {
+  animation: club-hero-overlay-enter 1060ms ease both;
+}
+
+html[data-motion="ready"] .club-page-hero [data-hero-content] {
+  animation: club-hero-content-enter 860ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform;
+}
+
 .club-mascots-section {
   isolation: isolate;
 }
@@ -1036,6 +1057,45 @@ html[data-motion="ready"] .club-history-card.is-visible:hover {
   }
 }
 
+@keyframes club-hero-media-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0) scale(1.08);
+  }
+
+  58% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, calc(var(--club-hero-progress, 0) * 18px), 0)
+      scale(calc(1.035 + var(--club-hero-progress, 0) * 0.035));
+  }
+}
+
+@keyframes club-hero-overlay-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes club-hero-content-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 @keyframes club-polaroid-enter {
   from {
     opacity: 0;
@@ -1258,6 +1318,9 @@ html[data-motion="ready"] .club-history-card.is-visible:hover {
   .club-nav-action,
   .club-button,
   .club-button::before,
+  [data-hero-content],
+  [data-hero-media],
+  [data-hero-overlay],
   [data-reveal],
   [data-stagger] > *,
   [data-scroll-drift],
@@ -1267,6 +1330,9 @@ html[data-motion="ready"] .club-history-card.is-visible:hover {
   }
 
   [data-reveal],
+  [data-hero-content],
+  [data-hero-media],
+  [data-hero-overlay],
   [data-stagger] > *,
   [data-scroll-drift],
   [data-tilt] {
@@ -1278,6 +1344,9 @@ html[data-motion="ready"] .club-history-card.is-visible:hover {
 }
 
 html[data-motion="reduced"] [data-reveal],
+html[data-motion="reduced"] [data-hero-content],
+html[data-motion="reduced"] [data-hero-media],
+html[data-motion="reduced"] [data-hero-overlay],
 html[data-motion="reduced"] [data-stagger] > *,
 html[data-motion="reduced"] [data-scroll-drift],
 html[data-motion="reduced"] [data-tilt] {

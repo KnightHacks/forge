@@ -231,7 +231,10 @@ export default function HackathonsPage() {
   return (
     <main className="relative min-h-screen overflow-x-auto bg-[#110214] font-sans text-white">
       <JsonLd data={hackathonArchiveJsonLd} />
-      <div className="absolute inset-x-0 top-0 h-[980px] overflow-hidden">
+      <div
+        className="club-page-hero absolute inset-x-0 top-0 h-[980px] overflow-hidden"
+        data-hero
+      >
         <Image
           src="/hackathons/kh-history-hero.webp"
           alt=""
@@ -239,16 +242,30 @@ export default function HackathonsPage() {
           priority
           sizes="100vw"
           className="object-cover object-[center_46%] brightness-[0.76] contrast-[1.06] saturate-[1.08]"
+          data-hero-media
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,0,14,0.22)_0%,rgba(11,0,14,0.12)_40%,rgba(11,0,14,0.62)_70%,rgba(11,0,14,0.94)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,0,14,0.64)_0%,rgba(11,0,14,0.06)_30%,rgba(17,2,20,0.38)_72%,#110214_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_34%_48%,rgba(255,182,43,0.12)_0%,rgba(247,79,131,0.08)_28%,transparent_58%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-[#110214]" />
+        <div
+          className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,0,14,0.22)_0%,rgba(11,0,14,0.12)_40%,rgba(11,0,14,0.62)_70%,rgba(11,0,14,0.94)_100%)]"
+          data-hero-overlay
+        />
+        <div
+          className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,0,14,0.64)_0%,rgba(11,0,14,0.06)_30%,rgba(17,2,20,0.38)_72%,#110214_100%)]"
+          data-hero-overlay
+        />
+        <div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_34%_48%,rgba(255,182,43,0.12)_0%,rgba(247,79,131,0.08)_28%,transparent_58%)]"
+          data-hero-overlay
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-[#110214]"
+          data-hero-overlay
+        />
       </div>
 
       <section className="relative z-10 mx-auto h-[5620px] w-[1498px] overflow-hidden bg-transparent">
         <div
           className="absolute left-1/2 top-[170px] z-20 flex w-[1060px] -translate-x-1/2 flex-col items-center text-center"
+          data-hero-content
           data-stagger
         >
           <div className="mb-6 flex items-center gap-5 text-[13px] font-black uppercase tracking-[0.18em] text-[#f4ca41]">

@@ -98,8 +98,7 @@ export const ONLINE_SPONSOR_LOGOS: Record<string, string> = {
   "nextera energy": kh2025SponsorLogo("nextera-energy.svg"),
   nvidia: kh2025SponsorLogo("nvidia.svg"),
   oneethos: kh2025SponsorLogo("oneethos.svg"),
-  oracle:
-    "https://upload.wikimedia.org/wikipedia/commons/5/50/Oracle_logo.svg",
+  oracle: "https://upload.wikimedia.org/wikipedia/commons/5/50/Oracle_logo.svg",
   pwc: "https://upload.wikimedia.org/wikipedia/commons/c/c3/PwC_Company_Logo.svg",
   qualcomm: simpleIcon("qualcomm"),
   rbc: clubLogo("rbc.svg"),
@@ -123,11 +122,6 @@ export const ONLINE_SPONSOR_LOGOS: Record<string, string> = {
 } as const;
 
 export const PAST_SPONSORS = [
-  {
-    id: "google-cloud",
-    name: "Google Cloud",
-    logoUrl: ONLINE_SPONSOR_LOGOS["google cloud"],
-  },
   {
     id: "google",
     name: "Google",
@@ -284,36 +278,6 @@ export const PAST_SPONSORS = [
     logoUrl: ONLINE_SPONSOR_LOGOS.facebook,
   },
   {
-    id: "ucf-cecs",
-    name: "UCF CECS",
-    logoUrl: ONLINE_SPONSOR_LOGOS["ucf cecs"],
-  },
-  {
-    id: "ai-at-ucf",
-    name: "AI @ UCF",
-    logoUrl: ONLINE_SPONSOR_LOGOS["ai at ucf"],
-  },
-  {
-    id: "acm",
-    name: "ACM",
-    logoUrl: ONLINE_SPONSOR_LOGOS.acm,
-  },
-  {
-    id: "ieee",
-    name: "IEEE",
-    logoUrl: ONLINE_SPONSOR_LOGOS.ieee,
-  },
-  {
-    id: "sase",
-    name: "SASE",
-    logoUrl: ONLINE_SPONSOR_LOGOS.sase,
-  },
-  {
-    id: "gdk",
-    name: "Game Dev Knights",
-    logoUrl: ONLINE_SPONSOR_LOGOS.gdk,
-  },
-  {
     id: "pheratech-systems",
     name: "Pheratech Systems",
     logoUrl: "",
@@ -336,11 +300,6 @@ export const PAST_SPONSORS = [
   {
     id: "domain-com",
     name: "Domain.com",
-    logoUrl: "",
-  },
-  {
-    id: "castle",
-    name: "Castle",
     logoUrl: "",
   },
 ] as const;

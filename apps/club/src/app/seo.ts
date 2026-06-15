@@ -164,7 +164,7 @@ export const siteJsonLd = {
 };
 
 export function createBreadcrumbJsonLd(
-  items: Array<{ name: string; path: string }>,
+  items: { name: string; path: string }[],
 ) {
   return {
     "@context": "https://schema.org",

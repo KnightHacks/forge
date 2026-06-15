@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 const REVEAL_SELECTOR = "[data-reveal], [data-stagger], [data-motion-scope]";
 const DRIFT_SELECTOR = "[data-scroll-drift]";
+const HERO_SELECTOR = "[data-hero]";
 const TILT_SELECTOR = "[data-tilt]";
 
 function clamp(value: number, min: number, max: number) {
@@ -138,6 +139,14 @@ export default function ClubMotionRuntime() {
             `${(normalizedDistance * depth).toFixed(2)}px`,
           );
         });
+
+      document.querySelectorAll<HTMLElement>(HERO_SELECTOR).forEach((hero) => {
+        const rect = hero.getBoundingClientRect();
+        const heroHeight = Math.max(rect.height, 1);
+        const heroProgress = clamp(-rect.top / heroHeight, 0, 1);
+
+        hero.style.setProperty("--club-hero-progress", heroProgress.toFixed(3));
+      });
     }
 
     function scheduleScrollMotion() {

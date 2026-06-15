@@ -323,7 +323,10 @@ export default function TeamsClient({
 
   return (
     <main className="min-h-screen">
-      <section className="relative isolate min-h-[100svh] overflow-hidden bg-[#110214] px-6 pt-20 text-center md:px-10 lg:px-24">
+      <section
+        className="club-page-hero relative isolate min-h-[100svh] overflow-hidden bg-[#110214] px-6 pt-20 text-center md:px-10 lg:px-24"
+        data-hero
+      >
         <Image
           src={CLUB_ASSETS.clubTeamWaterfrontGroup}
           alt=""
@@ -331,13 +334,24 @@ export default function TeamsClient({
           priority
           sizes="100vw"
           className="absolute inset-0 z-0 object-cover object-[center_72%] brightness-[0.94] contrast-[1.02] saturate-[1.04]"
+          data-hero-media
         />
-        <div className="absolute inset-0 z-[1] bg-[linear-gradient(180deg,rgba(11,0,14,0.72)_0%,rgba(11,0,14,0.18)_34%,rgba(17,2,20,0.12)_58%,#140422_100%)]" />
-        <div className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_50%_26%,rgba(255,182,43,0.16)_0%,rgba(247,79,131,0.08)_30%,transparent_58%)]" />
-        <div className="absolute inset-x-0 bottom-0 z-[1] h-56 bg-gradient-to-b from-transparent to-[var(--club-plum)]" />
+        <div
+          className="absolute inset-0 z-[1] bg-[linear-gradient(180deg,rgba(11,0,14,0.72)_0%,rgba(11,0,14,0.18)_34%,rgba(17,2,20,0.12)_58%,#140422_100%)]"
+          data-hero-overlay
+        />
+        <div
+          className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_50%_26%,rgba(255,182,43,0.16)_0%,rgba(247,79,131,0.08)_30%,transparent_58%)]"
+          data-hero-overlay
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 z-[1] h-56 bg-gradient-to-b from-transparent to-[var(--club-plum)]"
+          data-hero-overlay
+        />
 
         <div
           className="relative z-10 mx-auto flex min-h-[calc(100svh-5rem)] w-full max-w-[1060px] flex-col items-center justify-start pb-16 pt-24 text-center md:pt-[112px]"
+          data-hero-content
           data-stagger
         >
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--club-gold)] [text-shadow:3px_3px_0_rgba(0,0,0,0.5)] md:text-sm">
