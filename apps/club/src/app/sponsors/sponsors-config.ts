@@ -56,6 +56,8 @@ export const ONLINE_SPONSOR_LOGOS: Record<string, string> = {
   aws: clubLogo("aws.svg"),
   auritas: kh2025SponsorLogo("auritas.svg"),
   azure: clubLogo("azure.svg"),
+  bloomberg:
+    "https://upload.wikimedia.org/wikipedia/commons/5/56/Bloomberg_logo.svg",
   bny: kh2025SponsorLogo("bny.svg"),
   "bny mellon": kh2025SponsorLogo("bny.svg"),
   "capital one": clubLogo("c1.svg"),
@@ -84,6 +86,7 @@ export const ONLINE_SPONSOR_LOGOS: Record<string, string> = {
   ieee: kh2025PartnerLogo("ieee.svg"),
   "j p morgan": clubLogo("chase.svg"),
   "j p morgan chase": clubLogo("chase.svg"),
+  jpmc: clubLogo("chase.svg"),
   "jp morgan": clubLogo("chase.svg"),
   "jp morgan chase": clubLogo("chase.svg"),
   "major league hacking": kh2025PartnerLogo("mlh.svg"),
@@ -173,6 +176,11 @@ export const PAST_SPONSORS = [
     logoUrl: ONLINE_SPONSOR_LOGOS.bny,
   },
   {
+    id: "bloomberg",
+    name: "Bloomberg",
+    logoUrl: ONLINE_SPONSOR_LOGOS.bloomberg,
+  },
+  {
     id: "servicenow",
     name: "ServiceNow",
     logoUrl: ONLINE_SPONSOR_LOGOS.servicenow,
@@ -226,6 +234,26 @@ export const PAST_SPONSORS = [
     id: "rbc",
     name: "RBC",
     logoUrl: ONLINE_SPONSOR_LOGOS.rbc,
+  },
+  {
+    id: "jpmc",
+    name: "JPMorgan Chase",
+    logoUrl: ONLINE_SPONSOR_LOGOS.jpmc,
+  },
+  {
+    id: "qualcomm",
+    name: "Qualcomm",
+    logoUrl: ONLINE_SPONSOR_LOGOS.qualcomm,
+  },
+  {
+    id: "roblox",
+    name: "Roblox",
+    logoUrl: ONLINE_SPONSOR_LOGOS.roblox,
+  },
+  {
+    id: "snapchat",
+    name: "Snapchat",
+    logoUrl: ONLINE_SPONSOR_LOGOS.snapchat,
   },
   {
     id: "american-express",
