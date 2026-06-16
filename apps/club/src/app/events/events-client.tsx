@@ -214,9 +214,7 @@ function CalendarPanel({
   const cells = buildCalendarCells({ eventCounts, month, selectedDateKey });
 
   return (
-    <div
-      className="w-full border-[3px] border-black bg-[#f4eff5] p-5 text-[#371640] shadow-[8px_8px_0_rgba(0,0,0,0.38)] md:p-7"
-    >
+    <div className="w-full border-[3px] border-black bg-[#f4eff5] p-5 text-[#371640] shadow-[8px_8px_0_rgba(0,0,0,0.38)] md:p-7">
       <div className="flex items-center justify-between gap-4">
         <h3 className="text-xl font-black">{formatMonthLabel(month)}</h3>
         <div className="flex items-center gap-2">

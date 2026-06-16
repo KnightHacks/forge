@@ -95,10 +95,7 @@ function ActionLinks({
       )}
     >
       {ACTION_LINKS.map((action) => {
-        const href =
-          action.hrefKey === "blade"
-            ? bladeUrl
-            : action.href;
+        const href = action.hrefKey === "blade" ? bladeUrl : action.href;
 
         return (
           <Button

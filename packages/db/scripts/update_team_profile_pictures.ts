@@ -390,9 +390,7 @@ function normalizeProfilePictureUrl(rawUrl: string, displayName: string) {
     }
 
     if (
-      !parsedUrl.pathname.startsWith(
-        `/${MINIO.PROFILE_PICTURES_BUCKET_NAME}/`,
-      )
+      !parsedUrl.pathname.startsWith(`/${MINIO.PROFILE_PICTURES_BUCKET_NAME}/`)
     ) {
       throw new Error(
         `profile_picture_url for ${displayName} must point at the ${MINIO.PROFILE_PICTURES_BUCKET_NAME} bucket.`,

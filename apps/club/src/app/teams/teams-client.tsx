@@ -391,10 +391,7 @@ export default function TeamsClient({
             size="lg"
             className="club-button mt-8 bg-[var(--club-gold)] px-8 text-black shadow-[5px_5px_0_rgba(255,255,255,0.85)] md:mt-10"
           >
-            <a
-              href={`#${TEAM_APPLICATIONS_ID}`}
-              onClick={scrollToApplications}
-            >
+            <a href={`#${TEAM_APPLICATIONS_ID}`} onClick={scrollToApplications}>
               View Applications
               <ChevronDown aria-hidden="true" className="ml-2 size-4" />
             </a>

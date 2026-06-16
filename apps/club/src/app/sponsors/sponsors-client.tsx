@@ -2,11 +2,6 @@
 
 import type { ImageLoaderProps } from "next/image";
 import type { CSSProperties } from "react";
-import type {
-  SponsorHackathon,
-  SponsorRecord,
-  SponsorTier,
-} from "./sponsors-config";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ArrowRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -14,6 +9,11 @@ import { ArrowRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 
+import type {
+  SponsorHackathon,
+  SponsorRecord,
+  SponsorTier,
+} from "./sponsors-config";
 import { CLUB_ASSETS } from "../_lib/assets";
 import {
   FALLBACK_SPONSOR_LOGO_CDN_ROOT,
@@ -70,7 +70,9 @@ function sortSponsorsByName<T extends { name: string }>(
 function normalizeSponsorTier(value: unknown): SponsorTier | null {
   if (typeof value !== "string") return null;
 
-  return SPONSOR_TIERS.has(value as SponsorTier) ? (value as SponsorTier) : null;
+  return SPONSOR_TIERS.has(value as SponsorTier)
+    ? (value as SponsorTier)
+    : null;
 }
 
 function normalizeSponsorRecord(value: unknown): SponsorRecord | null {
