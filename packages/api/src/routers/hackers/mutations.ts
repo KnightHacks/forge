@@ -19,11 +19,11 @@ import { sendHackathonEmail } from "@forge/email";
 import { logger, permissions } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 
-import { ensureUserQRCode } from "../../qr-code";
 import {
   normalizeResumeObjectNameForPersistence,
   removeUnreferencedResumeObjectsForUser,
 } from "../../resume-storage";
+import { ensureUserQRCode } from "../../services/qr-code";
 import { permProcedure, protectedProcedure } from "../../trpc";
 
 export const hackerMutationRouter = {

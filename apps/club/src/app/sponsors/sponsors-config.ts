@@ -27,13 +27,14 @@ export const PARTNER_SECTION = {
   heading: "Our Partners",
 } as const;
 
-const FORGE_CDN_ROOT = "https://cdn.jsdelivr.net/gh/KnightHacks/forge@main";
-const CLUB_LOGO_CDN_ROOT = `${FORGE_CDN_ROOT}/apps/club/public/logos`;
+const FORGE_CDN_REF = "5cbe2dcdb841048094e83ca2cb51630777a35765";
+const FORGE_CDN_ROOT = `https://cdn.jsdelivr.net/gh/KnightHacks/forge@${FORGE_CDN_REF}`;
+const CLUB_LOGO_ROOT = "/logos";
 const KH2025_SPONSOR_LOGO_CDN_ROOT = `${FORGE_CDN_ROOT}/apps/2025/public/sponsorSectionSvgs`;
 const KH2025_PARTNER_LOGO_CDN_ROOT = `${FORGE_CDN_ROOT}/apps/2025/public/partnersSection`;
 const GEMIKNIGHTS_LOGO_CDN_ROOT = `${FORGE_CDN_ROOT}/apps/gemiknights/public`;
 
-const clubLogo = (fileName: string) => `${CLUB_LOGO_CDN_ROOT}/${fileName}`;
+const clubLogo = (fileName: string) => `${CLUB_LOGO_ROOT}/${fileName}`;
 const kh2025SponsorLogo = (fileName: string) =>
   `${KH2025_SPONSOR_LOGO_CDN_ROOT}/${fileName}`;
 const kh2025PartnerLogo = (fileName: string) =>
@@ -43,7 +44,7 @@ const gemiknightsLogo = (fileName: string) =>
 const simpleIcon = (slug: string, color?: string) =>
   `https://cdn.simpleicons.org/${slug}${color ? `/${color}` : ""}`;
 
-export const FALLBACK_SPONSOR_LOGO_CDN_ROOT = CLUB_LOGO_CDN_ROOT;
+export const FALLBACK_SPONSOR_LOGO_CDN_ROOT = CLUB_LOGO_ROOT;
 
 export const ONLINE_SPONSOR_LOGOS: Record<string, string> = {
   acm: kh2025PartnerLogo("acm.svg"),
@@ -401,6 +402,7 @@ export const FEATURED_SUPPORTER_SLIDES = [
     description:
       "Supporters help turn campus space into a full weekend of building, mentorship, food, prizes, and demos.",
     accentClassName: "bg-[#de2868] text-white",
+    eyebrowTilt: "-2deg",
     lineClassName: "border-[var(--club-gold)]",
     dotClassName: "bg-[var(--club-gold)]",
     frameClassName:
@@ -414,7 +416,8 @@ export const FEATURED_SUPPORTER_SLIDES = [
     title: "Backing Real Projects",
     description:
       "Every workshop, challenge, and sponsor conversation gives students more ways to ship work they can be proud of.",
-    accentClassName: "bg-[var(--club-gold)] text-black",
+    accentClassName: "bg-[var(--club-gold)] text-white",
+    eyebrowTilt: "1.8deg",
     lineClassName: "border-[#de2868]",
     dotClassName: "bg-[#de2868]",
     frameClassName:
@@ -429,6 +432,7 @@ export const FEATURED_SUPPORTER_SLIDES = [
     description:
       "Our partners make hands-on learning possible through technical sessions, recruiting touchpoints, and community support.",
     accentClassName: "bg-[#8e4ed6] text-white",
+    eyebrowTilt: "-1.2deg",
     lineClassName: "border-[#8e4ed6]",
     dotClassName: "bg-[#8e4ed6]",
     frameClassName:
@@ -443,6 +447,7 @@ export const FEATURED_SUPPORTER_SLIDES = [
     description:
       "Sponsors help keep Knight Hacks accessible for students discovering software, design, hardware, and product work.",
     accentClassName: "bg-[#2c9fbc] text-white",
+    eyebrowTilt: "2.6deg",
     lineClassName: "border-[#2c9fbc]",
     dotClassName: "bg-[#2c9fbc]",
     frameClassName:

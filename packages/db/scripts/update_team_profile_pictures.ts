@@ -29,7 +29,6 @@ const CSV_HEADERS = [
   "first_name",
   "last_name",
   "display_name",
-  "email",
   "current_profile_picture_url",
   "suggested_file_names",
   "local_file",
@@ -46,8 +45,6 @@ interface RosterRow {
   firstName: string | null;
   lastName: string | null;
   displayName: string | null;
-  memberEmail: string | null;
-  userEmail: string | null;
   currentProfilePictureUrl: string | null;
 }
 
@@ -243,7 +240,6 @@ function toCsvRow(row: RosterRow): CsvRow {
     first_name: row.firstName ?? "",
     last_name: row.lastName ?? "",
     display_name: row.displayName ?? "",
-    email: row.memberEmail ?? row.userEmail ?? "",
     current_profile_picture_url: row.currentProfilePictureUrl ?? "",
     suggested_file_names: getNameSuggestions(row.firstName, row.lastName).join(
       ";",
@@ -263,8 +259,6 @@ async function getRosterRows(teamTerms: string[]) {
       firstName: Member.firstName,
       lastName: Member.lastName,
       displayName: User.name,
-      memberEmail: Member.email,
-      userEmail: User.email,
       currentProfilePictureUrl: Member.profilePictureUrl,
     })
     .from(Roles)
@@ -302,6 +296,10 @@ function getRequiredEnv(name: string) {
   }
 
   return value;
+}
+
+function getOptionalEnv(name: string) {
+  return process.env[name];
 }
 
 function getContentType(filePath: string) {
@@ -342,6 +340,69 @@ async function ensureUploadableImage(filePath: string) {
   return { absolutePath, contentType };
 }
 
+function getConfiguredMinioHost() {
+  const endpoint = getOptionalEnv("MINIO_ENDPOINT")?.trim();
+
+  if (!endpoint) return null;
+
+  try {
+    return new URL(endpoint.includes("://") ? endpoint : `https://${endpoint}`)
+      .host;
+  } catch {
+    throw new Error("MINIO_ENDPOINT must be a valid host.");
+  }
+}
+
+function normalizeProfilePictureUrl(rawUrl: string, displayName: string) {
+  const trimmedUrl = rawUrl.trim();
+
+  if (trimmedUrl.length === 0) return "";
+
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(trimmedUrl);
+  } catch {
+    throw new Error(
+      `profile_picture_url for ${displayName} must be a valid absolute URL.`,
+    );
+  }
+
+  if (parsedUrl.protocol !== "https:") {
+    throw new Error(`profile_picture_url for ${displayName} must use HTTPS.`);
+  }
+
+  const extension = path.extname(parsedUrl.pathname).slice(1).toLowerCase();
+
+  if (!MINIO.ALLOWED_PROFILE_PICTURE_EXTENSIONS.includes(extension)) {
+    throw new Error(
+      `profile_picture_url for ${displayName} must end with one of these extensions: ${MINIO.ALLOWED_PROFILE_PICTURE_EXTENSIONS.join(", ")}`,
+    );
+  }
+
+  const configuredMinioHost = getConfiguredMinioHost();
+
+  if (configuredMinioHost) {
+    if (parsedUrl.host !== configuredMinioHost) {
+      throw new Error(
+        `profile_picture_url for ${displayName} must use ${configuredMinioHost}.`,
+      );
+    }
+
+    if (
+      !parsedUrl.pathname.startsWith(
+        `/${MINIO.PROFILE_PICTURES_BUCKET_NAME}/`,
+      )
+    ) {
+      throw new Error(
+        `profile_picture_url for ${displayName} must point at the ${MINIO.PROFILE_PICTURES_BUCKET_NAME} bucket.`,
+      );
+    }
+  }
+
+  return parsedUrl.toString();
+}
+
 function createMinioClient() {
   return new Client({
     endPoint: getRequiredEnv("MINIO_ENDPOINT"),
@@ -368,6 +429,7 @@ async function ensureProfilePicturesBucket(minioClient: Client) {
 async function removeExistingProfilePictures(
   minioClient: Client,
   userId: string,
+  keepObjectName?: string,
 ) {
   const userDirectory = `${userId}/`;
   const existingObjects: string[] = [];
@@ -378,7 +440,7 @@ async function removeExistingProfilePictures(
   ) as AsyncIterable<BucketItem>;
 
   for await (const obj of stream) {
-    if (obj.name) {
+    if (obj.name && obj.name !== keepObjectName) {
       existingObjects.push(obj.name);
     }
   }
@@ -404,7 +466,6 @@ async function uploadProfilePicture(
   const objectName = `${userId}/${Date.now()}-${safeFileName}`;
 
   await ensureProfilePicturesBucket(minioClient);
-  await removeExistingProfilePictures(minioClient, userId);
   await minioClient.putObject(
     MINIO.PROFILE_PICTURES_BUCKET_NAME,
     objectName,
@@ -413,7 +474,10 @@ async function uploadProfilePicture(
     { "Content-Type": contentType },
   );
 
-  return `https://${getRequiredEnv("MINIO_ENDPOINT")}/${MINIO.PROFILE_PICTURES_BUCKET_NAME}/${objectName}`;
+  return {
+    objectName,
+    profilePictureUrl: `https://${getRequiredEnv("MINIO_ENDPOINT")}/${MINIO.PROFILE_PICTURES_BUCKET_NAME}/${objectName}`,
+  };
 }
 
 async function buildPictureDirectoryIndex(directory: string | undefined) {
@@ -517,11 +581,15 @@ async function applyProfilePictures({
         : row.display_name.length > 0
           ? row.display_name
           : row.user_id;
+    const profilePictureUrl = normalizeProfilePictureUrl(
+      row.profile_picture_url,
+      displayName,
+    );
 
     const update = {
       displayName,
       localFile: inferredLocalFile,
-      profilePictureUrl: row.profile_picture_url,
+      profilePictureUrl,
       userId: row.user_id,
     };
     const existingUpdate = updates.get(row.member_id);
@@ -555,6 +623,7 @@ async function applyProfilePictures({
 
   for (const [memberId, update] of updates) {
     let finalProfilePictureUrl = update.profilePictureUrl;
+    let uploadedObjectName: string | undefined;
 
     if (update.localFile) {
       if (dryRun) {
@@ -564,11 +633,13 @@ async function applyProfilePictures({
           throw new Error("MinIO client was not initialized.");
         }
 
-        finalProfilePictureUrl = await uploadProfilePicture(
+        const upload = await uploadProfilePicture(
           minioClient,
           update.userId,
           update.localFile,
         );
+        finalProfilePictureUrl = upload.profilePictureUrl;
+        uploadedObjectName = upload.objectName;
       }
     }
 
@@ -587,6 +658,14 @@ async function applyProfilePictures({
           .update(User)
           .set({ image: finalProfilePictureUrl })
           .where(eq(User.id, update.userId));
+      }
+
+      if (minioClient && uploadedObjectName) {
+        await removeExistingProfilePictures(
+          minioClient,
+          update.userId,
+          uploadedObjectName,
+        );
       }
     }
 

@@ -21,7 +21,7 @@ import {
   hackathonDisplayNameSchema,
   hackathonRouteNameSchema,
   hackathonThemeSchema,
-} from "@forge/validators";
+} from "@forge/validators/hackathons";
 
 import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
 

@@ -16,6 +16,8 @@ import {
   formatEventDate,
   formatEventTime,
   formatMonthLabel,
+  getClubCurrentMonth,
+  getClubDateKey,
   getEventDateKey,
   getEventMonth,
   loadClubEvents,
@@ -37,11 +39,11 @@ const EVENT_FILTERS = [
       "Tech Exploration",
     ],
   },
-  { key: "ops", label: "Ops", tags: ["OPS"] },
+  { key: "ops", label: "Operations", tags: ["OPS"] },
   { key: "gbms", label: "GBMs", tags: ["GBM"] },
   {
     key: "sponsor",
-    label: "Sponsor?",
+    label: "Sponsors",
     tags: ["CAREER-FAIR", "RSO-FAIR", "Sponsorship"],
   },
 ] as const;
@@ -67,12 +69,7 @@ interface CalendarCell {
 }
 
 function getCurrentMonth(): MonthCursor {
-  const now = new Date();
-
-  return {
-    year: now.getFullYear(),
-    monthIndex: now.getMonth(),
-  };
+  return getClubCurrentMonth();
 }
 
 function shiftMonth(month: MonthCursor, offset: number): MonthCursor {
@@ -93,13 +90,7 @@ function getLocalDateKey(year: number, monthIndex: number, day: number) {
 }
 
 function getTodayKey() {
-  const today = new Date();
-
-  return getLocalDateKey(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
+  return getClubDateKey();
 }
 
 function buildCalendarCells({
@@ -193,8 +184,8 @@ function EventMeta({ event }: { event: PublicClubEvent }) {
 
 function CalendarSkeleton() {
   return (
-    <div className="grid gap-10 lg:grid-cols-[24rem_1fr]">
-      <div className="h-[25rem] animate-pulse border-[3px] border-black bg-white/80 shadow-[8px_8px_0_rgba(0,0,0,0.38)]" />
+    <div className="grid gap-8 lg:grid-cols-[minmax(20rem,24rem)_minmax(0,1fr)] lg:items-start">
+      <div className="h-[25rem] w-full animate-pulse border-[3px] border-black bg-white/80 shadow-[8px_8px_0_rgba(0,0,0,0.38)]" />
       <div className="space-y-5">
         {Array.from({ length: 3 }).map((_, index) => (
           <div
@@ -224,8 +215,7 @@ function CalendarPanel({
 
   return (
     <div
-      className="border-[3px] border-black bg-[#f4eff5] p-5 text-[#371640] shadow-[8px_8px_0_rgba(0,0,0,0.38)] md:p-7"
-      data-reveal="photo"
+      className="w-full border-[3px] border-black bg-[#f4eff5] p-5 text-[#371640] shadow-[8px_8px_0_rgba(0,0,0,0.38)] md:p-7"
     >
       <div className="flex items-center justify-between gap-4">
         <h3 className="text-xl font-black">{formatMonthLabel(month)}</h3>
@@ -538,7 +528,7 @@ export function EventsClient({
   );
 
   return (
-    <section className="relative px-6 pb-28 pt-24 md:px-10 lg:px-24">
+    <section className="club-post-hero-section relative px-6 pb-28 md:px-10 lg:px-24">
       <div className="mx-auto max-w-[1040px]">
         <h2
           className="text-center text-4xl font-black uppercase leading-none text-white [text-shadow:4px_4px_0_rgba(0,0,0,0.5)] md:text-5xl"
@@ -549,11 +539,11 @@ export function EventsClient({
           </span>
         </h2>
 
-        <div className="mt-16">
+        <div className="mt-12 md:mt-14">
           {status === "loading" ? (
             <CalendarSkeleton />
           ) : (
-            <div className="grid items-start gap-12 lg:grid-cols-[24rem_1fr]">
+            <div className="grid gap-8 lg:grid-cols-[minmax(20rem,24rem)_minmax(0,1fr)] lg:items-start">
               <CalendarPanel
                 eventCounts={eventCounts}
                 month={calendarMonth}
@@ -569,7 +559,10 @@ export function EventsClient({
                 }
               />
 
-              <div className="min-h-[25rem]" data-stagger>
+              <div
+                className="min-h-[25rem] border-y border-white/10"
+                data-stagger
+              >
                 {calendarEvents.length > 0 ? (
                   calendarEvents
                     .slice(0, 4)
@@ -577,7 +570,7 @@ export function EventsClient({
                       <CalendarEventCard key={event.id} event={event} />
                     ))
                 ) : (
-                  <div className="flex min-h-[18rem] items-center justify-center border-y border-white/10 text-center text-sm font-bold text-[var(--club-muted)]">
+                  <div className="flex min-h-[25rem] items-center justify-center bg-white/[0.025] px-6 text-center text-sm font-bold text-[var(--club-muted)]">
                     No events in this view.
                   </div>
                 )}

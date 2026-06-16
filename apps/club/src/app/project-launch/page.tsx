@@ -39,8 +39,8 @@ export default function ProjectLaunchPage() {
         headlineReveal="headline-ladder"
         description="Project Launch gives curious builders a spring structure for scoping, building, debugging, and presenting a real project before finals."
         image={{
-          src: CLUB_ASSETS.projectLaunchPresentations,
-          alt: "Knight Hacks members presenting project work",
+          src: CLUB_ASSETS.projectLaunchExpoFloor,
+          alt: "Knight Hacks members sharing project demos on the expo floor",
         }}
         primaryAction={{
           href: BLADE_URL,

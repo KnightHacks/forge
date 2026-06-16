@@ -58,6 +58,8 @@ export default async function ResourceArticlePage({
       path: `/resources/${article.slug}`,
       title: article.title,
       description: article.description,
+      datePublished: article.publishedAt,
+      dateModified: article.updatedAt,
     }),
     createBreadcrumbJsonLd([
       { name: "Knight Hacks", path: "/" },
@@ -70,7 +72,7 @@ export default async function ResourceArticlePage({
     <>
       <main className="relative overflow-hidden text-white">
         <section
-          className="club-page-hero relative isolate min-h-[34rem] overflow-hidden px-6 pb-16 pt-32 md:px-10 md:pb-20 md:pt-40 lg:px-24"
+          className="club-page-hero club-hero-logo-aligned-section relative isolate min-h-[34rem] overflow-hidden px-6 pb-16 md:px-10 md:pb-20 lg:px-24"
           data-hero
         >
           <Image
@@ -121,6 +123,8 @@ export default async function ResourceArticlePage({
           </div>
         </section>
 
+        <div className="club-hero-transition-layer" aria-hidden="true" />
+
         <section className="px-6 py-24 md:px-10 md:py-28 lg:px-24">
           <div className="mx-auto max-w-[980px] divide-y divide-white/10 border-y border-white/10">
             {article.sections.map((section, index) => (
@@ -137,16 +141,18 @@ export default async function ResourceArticlePage({
                 <p className="mt-5 max-w-[50rem] text-base font-semibold leading-8 text-[var(--club-muted)] md:text-lg">
                   {section.body}
                 </p>
-                <ul className="text-white/82 mt-8 grid gap-4 text-sm font-bold leading-6 md:grid-cols-2">
-                  {section.bullets.map((bullet) => (
-                    <li
-                      key={bullet}
-                      className="border-l-2 border-[var(--club-gold)] pl-4"
-                    >
-                      {bullet}
-                    </li>
-                  ))}
-                </ul>
+                {section.bullets?.length ? (
+                  <ul className="text-white/82 mt-8 grid gap-4 text-sm font-bold leading-6 md:grid-cols-2">
+                    {section.bullets.map((bullet) => (
+                      <li
+                        key={bullet}
+                        className="border-l-2 border-[var(--club-gold)] pl-4"
+                      >
+                        {bullet}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </article>
             ))}
           </div>

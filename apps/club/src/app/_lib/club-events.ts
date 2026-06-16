@@ -8,33 +8,10 @@ export interface PublicClubEvent {
   tag: string;
 }
 
-interface BladeRouterEvent {
-  id: string;
-  name: string;
-  description: string;
-  start_datetime: string;
-  end_datetime: string;
-  location: string;
-  tag: string;
-  isOperationsCalendar: boolean;
-  hackathonId: string | null;
-}
-
-interface EventQueryPayloadItem {
-  result?: {
-    data?: {
-      json?: unknown;
-    };
-  };
-}
-
 export type EventsStatus = "loading" | "ready" | "error";
 
 export const CLUB_TIME_ZONE = "America/New_York";
-
-const EVENT_QUERY_INPUT = encodeURIComponent(
-  JSON.stringify({ 0: { json: null } }),
-);
+const EVENT_FETCH_TIMEOUT_MS = 8_000;
 
 export function normalizeEvents(value: unknown): PublicClubEvent[] {
   if (!Array.isArray(value)) return [];
@@ -53,109 +30,50 @@ export function normalizeEvents(value: unknown): PublicClubEvent[] {
   );
 }
 
-function normalizeBladeRouterEvents(value: unknown): PublicClubEvent[] {
-  if (!Array.isArray(value)) return [];
+function createBoundedSignal(signal: AbortSignal) {
+  const abortController = new AbortController();
+  const timeoutId = globalThis.setTimeout(
+    () => abortController.abort(),
+    EVENT_FETCH_TIMEOUT_MS,
+  );
+  const abort = () => abortController.abort();
 
-  const now = Date.now();
-
-  return value
-    .filter(
-      (event): event is BladeRouterEvent =>
-        !!event &&
-        typeof event === "object" &&
-        typeof (event as BladeRouterEvent).id === "string" &&
-        typeof (event as BladeRouterEvent).name === "string" &&
-        typeof (event as BladeRouterEvent).description === "string" &&
-        typeof (event as BladeRouterEvent).start_datetime === "string" &&
-        typeof (event as BladeRouterEvent).end_datetime === "string" &&
-        typeof (event as BladeRouterEvent).location === "string" &&
-        typeof (event as BladeRouterEvent).tag === "string" &&
-        typeof (event as BladeRouterEvent).isOperationsCalendar === "boolean",
-    )
-    .filter((event) => {
-      const startsAt = new Date(event.start_datetime).getTime();
-
-      return (
-        Number.isFinite(startsAt) &&
-        startsAt > now &&
-        !event.isOperationsCalendar &&
-        event.hackathonId == null
-      );
-    })
-    .sort(
-      (first, second) =>
-        new Date(first.start_datetime).getTime() -
-        new Date(second.start_datetime).getTime(),
-    )
-    .map((event) => ({
-      id: event.id,
-      name: event.name,
-      description: event.description,
-      startDateTime: event.start_datetime,
-      endDateTime: event.end_datetime,
-      location: event.location,
-      tag: event.tag,
-    }));
-}
-
-function getEventQueryEndpoint(eventsEndpoint: string) {
-  const bladeUrl = new URL(eventsEndpoint);
-
-  return `${bladeUrl.origin}/api/trpc/event.getEvents?batch=1&input=${EVENT_QUERY_INPUT}`;
-}
-
-function getRouterEventsFromPayload(value: unknown) {
-  if (!Array.isArray(value)) return undefined;
-
-  const [firstItem] = value as EventQueryPayloadItem[];
-
-  return firstItem?.result?.data?.json;
-}
-
-async function loadPublicEvents(
-  eventsEndpoint: string,
-  signal: AbortSignal,
-): Promise<PublicClubEvent[]> {
-  const response = await fetch(eventsEndpoint, {
-    cache: "no-store",
-    signal,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Blade returned ${response.status}`);
+  if (signal.aborted) {
+    abort();
+  } else {
+    signal.addEventListener("abort", abort, { once: true });
   }
 
-  const payload = (await response.json()) as { events?: unknown };
-
-  return normalizeEvents(payload.events);
-}
-
-async function loadRouterEvents(
-  eventsEndpoint: string,
-  signal: AbortSignal,
-): Promise<PublicClubEvent[]> {
-  const response = await fetch(getEventQueryEndpoint(eventsEndpoint), {
-    cache: "no-store",
-    signal,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Blade returned ${response.status}`);
-  }
-
-  const payload = (await response.json()) as unknown;
-
-  return normalizeBladeRouterEvents(getRouterEventsFromPayload(payload));
+  return {
+    signal: abortController.signal,
+    clear: () => {
+      globalThis.clearTimeout(timeoutId);
+      signal.removeEventListener("abort", abort);
+    },
+  };
 }
 
 export async function loadClubEvents(
   eventsEndpoint: string,
   signal: AbortSignal,
 ): Promise<PublicClubEvent[]> {
+  const boundedSignal = createBoundedSignal(signal);
+
   try {
-    return await loadPublicEvents(eventsEndpoint, signal);
-  } catch {
-    return loadRouterEvents(eventsEndpoint, signal);
+    const response = await fetch(eventsEndpoint, {
+      cache: "no-store",
+      signal: boundedSignal.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Blade returned ${response.status}`);
+    }
+
+    const payload = (await response.json()) as { events?: unknown };
+
+    return normalizeEvents(payload.events);
+  } finally {
+    boundedSignal.clear();
   }
 }
 
@@ -219,6 +137,10 @@ export function getEventDateKey(value: string) {
 
   if (Number.isNaN(date.getTime())) return "";
 
+  return getClubDateKey(date);
+}
+
+export function getClubDateKey(date = new Date()) {
   const parts = getDateParts(date, {
     day: "2-digit",
     month: "2-digit",
@@ -226,6 +148,24 @@ export function getEventDateKey(value: string) {
   });
 
   return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+export function getClubCurrentMonth() {
+  const parts = getDateParts(new Date(), {
+    month: "2-digit",
+    year: "numeric",
+  });
+  const year = Number(parts.year);
+  const monthIndex = Number(parts.month) - 1;
+
+  if (!Number.isFinite(year) || !Number.isFinite(monthIndex)) {
+    return {
+      year: new Date().getFullYear(),
+      monthIndex: new Date().getMonth(),
+    };
+  }
+
+  return { year, monthIndex };
 }
 
 export function getEventMonth(value: string) {
@@ -256,6 +196,7 @@ export function formatMonthLabel({
 }) {
   return new Intl.DateTimeFormat("en-US", {
     month: "long",
+    timeZone: "UTC",
     year: "numeric",
-  }).format(new Date(year, monthIndex, 1));
+  }).format(new Date(Date.UTC(year, monthIndex, 1)));
 }

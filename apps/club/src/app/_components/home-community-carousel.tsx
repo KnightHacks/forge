@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import type { CSSProperties, PointerEvent } from "react";
+import { useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -15,11 +16,23 @@ interface CommunitySlide {
   body: string;
   image: string;
   imageAlt: string;
+  imagePosition?: CSSProperties["objectPosition"];
   caption: string;
   imageSide: "left" | "right";
   accentClassName: string;
   rotationClassName: string;
 }
+
+interface SwipeState {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  lastX: number;
+  lastY: number;
+}
+
+const MIN_SWIPE_DISTANCE = 44;
+const SWIPE_AXIS_LOCK_RATIO = 1.25;
 
 const COMMUNITY_SLIDES: [CommunitySlide, ...CommunitySlide[]] = [
   {
@@ -36,8 +49,9 @@ const COMMUNITY_SLIDES: [CommunitySlide, ...CommunitySlide[]] = [
   },
   {
     id: "workshops",
-    eyebrow: "Workshop series",
-    body: "Whether you're writing your first line of code or building full-stack applications, our workshops provide the hands-on experience you need. Learn from industry professionals and peers in a collaborative environment.",
+    eyebrow: "Workshop",
+    title: "series",
+    body: "Learn coding in a practical, project based environment. Our workshops combine instructor guidance, peer collaboration, and exercises you can do in the moment so you can practice new concepts right away. You’ll leave with a better understanding of programming fundamentals, development tools, and the process of turning an idea into a project.",
     image: CLUB_ASSETS.memberNetworkingSession,
     imageAlt: "Knight Hacks members networking after a club event",
     caption: "Learn it by building.",
@@ -50,8 +64,9 @@ const COMMUNITY_SLIDES: [CommunitySlide, ...CommunitySlide[]] = [
     eyebrow: "Career",
     title: "opportunities",
     body: "Connect with top tech companies, network with recruiters, and land internships or full-time roles. Our sponsors are always looking for the bright minds that emerge from the Knight Hacks community.",
-    image: CLUB_ASSETS.projectLaunchPresentations,
-    imageAlt: "Knight Hacks members presenting project work",
+    image: CLUB_ASSETS.clubMemberTrio,
+    imageAlt: "Knight Hacks members gathered outside together",
+    imagePosition: "35% center",
     caption: "Securing the bag.",
     imageSide: "left",
     accentClassName: "bg-[#8e4ed6]",
@@ -80,7 +95,8 @@ function Polaroid({ slide }: { slide: CommunitySlide }) {
             fill
             priority
             sizes="(min-width: 1024px) 27rem, (min-width: 768px) 42vw, 84vw"
-            className="object-cover object-center grayscale transition duration-300"
+            className="object-cover grayscale transition duration-300"
+            style={{ objectPosition: slide.imagePosition ?? "center" }}
           />
         </div>
         <p className="absolute bottom-5 left-0 right-0 px-6 text-center text-[10px] font-black uppercase text-black">
@@ -130,6 +146,7 @@ function SlideCopy({ slide }: { slide: CommunitySlide }) {
 
 export function HomeCommunityCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const swipeState = useRef<SwipeState | null>(null);
   const activeSlide = COMMUNITY_SLIDES[activeIndex] ?? COMMUNITY_SLIDES[0];
   const slideCount = COMMUNITY_SLIDES.length;
   const slideNumber = useMemo(
@@ -149,16 +166,75 @@ export function HomeCommunityCarousel() {
     );
   }
 
+  function handleSwipeStart(event: PointerEvent<HTMLElement>) {
+    if (
+      !event.isPrimary ||
+      (event.pointerType === "mouse" && event.button !== 0)
+    ) {
+      swipeState.current = null;
+      return;
+    }
+
+    swipeState.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      lastX: event.clientX,
+      lastY: event.clientY,
+    };
+  }
+
+  function handleSwipeMove(event: PointerEvent<HTMLElement>) {
+    if (swipeState.current?.pointerId !== event.pointerId) return;
+
+    swipeState.current.lastX = event.clientX;
+    swipeState.current.lastY = event.clientY;
+  }
+
+  function handleSwipeEnd(event: PointerEvent<HTMLElement>) {
+    const swipe = swipeState.current;
+    swipeState.current = null;
+
+    if (swipe?.pointerId !== event.pointerId) return;
+
+    const endX = event.clientX;
+    const endY = event.clientY;
+    const deltaX = endX - swipe.startX;
+    const deltaY = endY - swipe.startY;
+    const absoluteDeltaX = Math.abs(deltaX);
+    const absoluteDeltaY = Math.abs(deltaY);
+
+    if (
+      absoluteDeltaX < MIN_SWIPE_DISTANCE ||
+      absoluteDeltaX < absoluteDeltaY * SWIPE_AXIS_LOCK_RATIO
+    ) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      goToNextSlide();
+    } else {
+      goToPreviousSlide();
+    }
+  }
+
   return (
     <section
-      className="club-community-carousel relative px-5 pb-24 sm:px-6 md:px-10 md:pb-28 lg:px-24"
+      className="club-community-carousel club-post-hero-section relative px-5 pb-24 sm:px-6 md:px-10 md:pb-28 lg:px-24"
       data-community-carousel
     >
       <div
         key={activeSlide.id}
         data-motion-scope
         data-community-carousel-grid
+        data-community-swipe-target
         className="mx-auto grid min-h-[34rem] w-full max-w-[1120px] grid-cols-1 items-center gap-12 py-10 md:min-h-[38rem] md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:gap-12 lg:gap-16"
+        onPointerDown={handleSwipeStart}
+        onPointerMove={handleSwipeMove}
+        onPointerUp={handleSwipeEnd}
+        onPointerCancel={() => {
+          swipeState.current = null;
+        }}
       >
         <div
           className={cn(
@@ -178,29 +254,35 @@ export function HomeCommunityCarousel() {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-center gap-5 md:mt-8">
+      <div className="mx-auto mt-3 grid w-full max-w-[20rem] grid-cols-[3.5rem_1fr_3.5rem] items-center gap-4 md:mt-8 md:flex md:w-auto md:max-w-none md:justify-center md:gap-5">
         <button
           type="button"
           aria-label="Previous community slide"
-          className="club-carousel-control flex size-10 items-center justify-center border-[3px] border-black bg-white text-black shadow-[4px_4px_0_var(--club-gold)] transition hover:-translate-y-0.5"
+          className="club-carousel-control flex size-14 items-center justify-center border-[3px] border-black bg-white text-black shadow-[5px_5px_0_var(--club-gold)] transition hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 md:size-10 md:shadow-[4px_4px_0_var(--club-gold)]"
           onClick={goToPreviousSlide}
         >
-          <ChevronLeft aria-hidden="true" className="size-5" />
+          <ChevronLeft aria-hidden="true" className="size-6 md:size-5" />
         </button>
-        <span className="text-xs font-black text-[var(--club-gold)]">
-          {slideNumber}
-        </span>
-        <span className="text-xs font-black text-white/40">/</span>
-        <span className="text-xs font-black text-white/55">
-          {formatSlideNumber(slideCount - 1)}
-        </span>
+        <div
+          className="flex min-w-0 items-center justify-center gap-4"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <span className="text-sm font-black text-[var(--club-gold)] md:text-xs">
+            {slideNumber}
+          </span>
+          <span className="text-sm font-black text-white/40 md:text-xs">/</span>
+          <span className="text-sm font-black text-white/55 md:text-xs">
+            {formatSlideNumber(slideCount - 1)}
+          </span>
+        </div>
         <button
           type="button"
           aria-label="Next community slide"
-          className="club-carousel-control flex size-10 items-center justify-center border-[3px] border-black bg-white text-black shadow-[4px_4px_0_var(--club-gold)] transition hover:-translate-y-0.5"
+          className="club-carousel-control flex size-14 items-center justify-center border-[3px] border-black bg-white text-black shadow-[5px_5px_0_var(--club-gold)] transition hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 md:size-10 md:shadow-[4px_4px_0_var(--club-gold)]"
           onClick={goToNextSlide}
         >
-          <ChevronRight aria-hidden="true" className="size-5" />
+          <ChevronRight aria-hidden="true" className="size-6 md:size-5" />
         </button>
       </div>
     </section>

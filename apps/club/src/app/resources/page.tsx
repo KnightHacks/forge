@@ -6,6 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import JsonLd from "../_components/json-ld";
 import { CLUB_ASSETS } from "../_lib/assets";
 import {
+  absoluteUrl,
   createBreadcrumbJsonLd,
   createPageMetadata,
   createWebPageJsonLd,
@@ -38,7 +39,7 @@ const jsonLd = [
       "@type": "ListItem",
       position: index + 1,
       name: article.title,
-      url: `https://club.knighthacks.org/resources/${article.slug}`,
+      url: absoluteUrl(`/resources/${article.slug}`),
     })),
   },
 ];
@@ -48,7 +49,7 @@ export default function ResourcesPage() {
     <>
       <main className="relative overflow-hidden text-white">
         <section
-          className="club-page-hero relative isolate overflow-hidden px-6 pb-24 pt-32 md:px-10 md:pb-28 md:pt-40 lg:px-24"
+          className="club-page-hero club-hero-logo-aligned-section relative isolate overflow-hidden px-6 pb-24 md:px-10 md:pb-28 lg:px-24"
           data-hero
         >
           <Image
@@ -91,6 +92,8 @@ export default function ResourcesPage() {
             </p>
           </div>
         </section>
+
+        <div className="club-hero-transition-layer" aria-hidden="true" />
 
         <section className="px-6 py-24 md:px-10 md:py-28 lg:px-24">
           <div className="mx-auto max-w-[1120px] divide-y divide-white/10 border-y border-white/10">

@@ -18,7 +18,7 @@ const TEAM_DEFINITIONS = [
   {
     slug: "executive",
     label: "Executive",
-    terms: ["executive", "officer", "officers", "super admin"],
+    terms: ["executive", "officer", "officers"],
   },
   {
     slug: "directors",
@@ -57,25 +57,15 @@ const TEAM_DEFINITIONS = [
   },
 ] as const;
 
-const EXECUTIVE_ROLE_OVERRIDES = new Map([
-  ["Jason Sacerio", "Treasurer"],
-  ["Kai Sprunger", "Hack Lead"],
-  ["Dylan Vidal", "Dev Lead"],
-]);
-
-const EXECUTIVE_SORT_ORDER = new Map([
-  ["Adrian Osorio Blanchard", 0],
-  ["Carlos Catala", 1],
-  ["Jason Sacerio", 2],
-  ["Natalia Cano", 3],
-  ["Kai Sprunger", 4],
-  ["Dylan Vidal", 5],
-]);
-
-const DIRECTOR_ROLE_OVERRIDES = new Map([
-  ["Chris Ho", "Outreach Director"],
-  ["Michael Rusu", "Workshop Director"],
-]);
+const EXECUTIVE_ROLE_ORDER = [
+  "President",
+  "Vice President",
+  "Treasurer",
+  "Secretary",
+  "Hack Lead",
+  "Development Lead",
+  "Executive Officer",
+] as const;
 
 type TeamSlug = (typeof TEAM_DEFINITIONS)[number]["slug"];
 type TeamDefinition = (typeof TEAM_DEFINITIONS)[number];
@@ -136,43 +126,74 @@ function getSpecificDirectorRole(roleNames: string[]) {
   });
 }
 
-function getExecutiveRoleLabel(tagline: string | null) {
-  const normalizedTagline = tagline?.toLowerCase() ?? "";
+function includesAny(value: string, terms: string[]) {
+  return terms.some((term) => value.includes(term));
+}
 
-  if (normalizedTagline.includes("president")) return "President";
+function getExecutiveRoleLabel({
+  roleNames,
+  tagline,
+}: {
+  roleNames: string[];
+  tagline: string | null;
+}) {
+  const sources = [tagline ?? "", ...roleNames].map((value) =>
+    value.toLowerCase(),
+  );
+
   if (
-    normalizedTagline.includes("vice president") ||
-    /\bvp\b/.test(normalizedTagline)
+    sources.some(
+      (value) => value.includes("vice president") || /\bvp\b/.test(value),
+    )
   ) {
     return "Vice President";
   }
-  if (normalizedTagline.includes("treasurer")) return "Treasurer";
-  if (normalizedTagline.includes("secretary")) return "Secretary";
+  if (sources.some((value) => value.includes("president"))) {
+    return "President";
+  }
+  if (sources.some((value) => value.includes("treasurer"))) {
+    return "Treasurer";
+  }
+  if (sources.some((value) => value.includes("secretary"))) {
+    return "Secretary";
+  }
+  if (
+    sources.some((value) => includesAny(value, ["hack lead", "hackathon lead"]))
+  ) {
+    return "Hack Lead";
+  }
+  if (
+    sources.some((value) =>
+      includesAny(value, ["dev lead", "development lead"]),
+    )
+  ) {
+    return "Development Lead";
+  }
 
   return "Executive Officer";
 }
 
+function getExecutiveSortOrder(roleLabel: string) {
+  const index = EXECUTIVE_ROLE_ORDER.findIndex((label) => label === roleLabel);
+
+  return index === -1 ? EXECUTIVE_ROLE_ORDER.length : index;
+}
+
 function getTeamRoleLabel({
-  name,
   roleNames,
   tagline,
   team,
 }: {
-  name: string;
   roleNames: string[];
   tagline: string | null;
   team: TeamDefinition;
 }) {
   if (team.slug === "executive") {
-    return EXECUTIVE_ROLE_OVERRIDES.get(name) ?? getExecutiveRoleLabel(tagline);
+    return getExecutiveRoleLabel({ roleNames, tagline });
   }
 
   if (team.slug === "directors") {
-    return (
-      DIRECTOR_ROLE_OVERRIDES.get(name) ??
-      getSpecificDirectorRole(roleNames) ??
-      "Director"
-    );
+    return getSpecificDirectorRole(roleNames) ?? "Director";
   }
 
   return team.label;
@@ -182,8 +203,8 @@ function sortRoster(roster: PublicTeamRoster) {
   for (const team of TEAM_DEFINITIONS) {
     roster[team.slug].sort((first, second) => {
       if (team.slug === "executive") {
-        const firstOrder = EXECUTIVE_SORT_ORDER.get(first.name) ?? 999;
-        const secondOrder = EXECUTIVE_SORT_ORDER.get(second.name) ?? 999;
+        const firstOrder = getExecutiveSortOrder(first.teamRole);
+        const secondOrder = getExecutiveSortOrder(second.teamRole);
 
         if (firstOrder !== secondOrder) return firstOrder - secondOrder;
       }
@@ -257,7 +278,6 @@ async function getPublicClubRoster() {
       id: `${row.roleId}-${row.userId}`,
       name,
       teamRole: getTeamRoleLabel({
-        name,
         roleNames,
         tagline: row.tagline,
         team,

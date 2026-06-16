@@ -197,7 +197,7 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
                   disabled={judgesLoading}
                 >
                   {selectedJudge
-                    ? `${selectedJudge.name}, ${selectedJudge.challengeTitle}${
+                    ? `${selectedJudge.name} — ${selectedJudge.challengeTitle}${
                         selectedJudge.roomName
                           ? ` (${selectedJudge.roomName})`
                           : ""

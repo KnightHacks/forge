@@ -44,12 +44,6 @@ import { HackerApplicationBackground } from "./hacker-application-background";
 
 const fieldTriggerClassName =
   "h-12 overflow-hidden rounded-none border-x-0 border-b-2 border-t-0 border-white/75 bg-transparent px-0 text-left text-lg font-medium text-white shadow-none transition-colors hover:border-white hover:bg-transparent hover:text-white focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 data-[placeholder]:text-white/35 [&>span]:block [&>span]:max-w-[calc(100%-2rem)] [&>span]:truncate [&>svg]:text-white/55 sm:h-14 sm:text-xl md:text-2xl";
-const fieldLabelClassName =
-  "text-base font-semibold leading-none text-white/85 md:text-lg";
-const optionalTextClassName =
-  "ml-2 text-sm font-medium italic text-white/45 md:text-base";
-const requiredMarkClassName =
-  "text-xl font-black text-[#ff4fd8] drop-shadow-[0_0_10px_rgba(255,79,216,0.85)] md:text-2xl";
 const checkboxClassName =
   "mt-0.5 flex h-5 w-5 items-center justify-center border-white/45 bg-white/5 text-white shadow-none data-[state=checked]:border-white data-[state=checked]:bg-white data-[state=checked]:text-[#21103d] focus-visible:ring-white/40 [&>span>svg]:h-5 [&>span>svg]:w-5";
 const checkboxLabelClassName =
@@ -468,6 +462,23 @@ const MOBILE_ENTER_IGNORED_INPUT_TYPES = new Set([
   "submit",
 ]);
 
+function RequiredFieldMark() {
+  return (
+    <span className="text-xl font-black text-[#ff4fd8] drop-shadow-[0_0_10px_rgba(255,79,216,0.85)] md:text-2xl">
+      {" "}
+      *
+    </span>
+  );
+}
+
+function OptionalFieldText() {
+  return (
+    <span className="ml-2 text-sm font-medium italic text-white/45 md:text-base">
+      Optional
+    </span>
+  );
+}
+
 function FieldLabel({
   children,
   optional = false,
@@ -478,10 +489,10 @@ function FieldLabel({
   required?: boolean;
 }) {
   return (
-    <FormLabel className={fieldLabelClassName}>
+    <FormLabel className="text-base font-semibold leading-none text-white/85 md:text-lg">
       {children}
-      {required && <span className={requiredMarkClassName}> *</span>}
-      {optional && <span className={optionalTextClassName}>Optional</span>}
+      {required && <RequiredFieldMark />}
+      {optional && <OptionalFieldText />}
     </FormLabel>
   );
 }
@@ -2037,10 +2048,7 @@ export function HackerFormPage({
                                   >
                                     MLH Code of Conduct
                                   </Link>
-                                  .{" "}
-                                  <span className={requiredMarkClassName}>
-                                    *
-                                  </span>
+                                  . <RequiredFieldMark />
                                 </FormLabel>
                                 <FormMessage
                                   className={agreementErrorMessageClassName}
@@ -2119,10 +2127,7 @@ export function HackerFormPage({
                                   >
                                     MLH Privacy Policy
                                   </Link>
-                                  .{" "}
-                                  <span className={requiredMarkClassName}>
-                                    *
-                                  </span>
+                                  . <RequiredFieldMark />
                                 </FormLabel>
                                 <FormMessage
                                   className={agreementErrorMessageClassName}
@@ -2174,9 +2179,7 @@ export function HackerFormPage({
                                   I authorize MLH to send me occasional emails
                                   about relevant events, career opportunities,
                                   and community announcements.{" "}
-                                  <span className={requiredMarkClassName}>
-                                    *
-                                  </span>
+                                  <RequiredFieldMark />
                                 </FormLabel>
                                 <FormMessage
                                   className={agreementErrorMessageClassName}
@@ -2231,7 +2234,7 @@ export function HackerFormPage({
                               >
                                 Knight Hacks Terms of Service
                               </Link>
-                              . <span className={requiredMarkClassName}>*</span>
+                              . <RequiredFieldMark />
                             </div>
                             {tosError && (
                               <p

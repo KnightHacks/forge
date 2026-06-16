@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
+    },
+    "./hackathons": {
+      "types": "./dist/hackathons.d.ts",
+      "default": "./src/hackathons.ts"
     }
   },
   "license": "MIT",

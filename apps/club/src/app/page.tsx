@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ExternalLink } from "lucide-react";
+import { FaLinkedin } from "react-icons/fa";
 
 import { Button } from "@forge/ui/button";
 
@@ -7,6 +7,7 @@ import { env } from "~/env";
 import { HomeCommunityCarousel } from "./_components/home-community-carousel";
 import { HomeEvents } from "./_components/home-events";
 import { CLUB_ASSETS } from "./_lib/assets";
+import { PUBLIC_LINKS } from "./_lib/site-config";
 
 const eventsEndpoint = new URL("/api/public/club-events", env.BLADE_URL);
 eventsEndpoint.searchParams.set("limit", "6");
@@ -95,14 +96,17 @@ function SetApartHeadline() {
 
 function MascotsSection() {
   return (
-    <section className="club-mascots-section relative overflow-hidden px-6 py-24 md:px-10 lg:px-24">
-      <div className="mx-auto grid max-w-[1120px] items-center gap-12 lg:grid-cols-[0.82fr_1.18fr]">
-        <div className="relative z-10 max-w-[34rem]" data-stagger>
+    <section className="club-mascots-section relative overflow-hidden px-5 py-14 sm:px-6 md:px-10 md:py-24 lg:px-24">
+      <div className="mx-auto grid max-w-[1120px] items-center gap-8 md:gap-12 lg:grid-cols-[0.82fr_1.18fr]">
+        <div
+          className="relative z-10 max-w-[30rem] md:max-w-[34rem]"
+          data-stagger
+        >
           <p className="text-sm font-black uppercase tracking-normal text-[var(--club-gold)]">
             Mascots
           </p>
           <h2
-            className="mt-4 text-5xl font-black leading-none tracking-normal text-white [text-shadow:4px_4px_0_rgba(0,0,0,0.55)] md:text-7xl"
+            className="mt-3 text-[clamp(2.85rem,12.8vw,3.65rem)] font-black leading-none tracking-normal text-white [text-shadow:4px_4px_0_rgba(0,0,0,0.55)] md:mt-4 md:text-7xl"
             data-reveal="headline"
           >
             <span className="club-line">
@@ -112,15 +116,15 @@ function MascotsSection() {
               <span>and Lenny</span>
             </span>
           </h2>
-          <p className="text-white/78 mt-6 text-lg font-bold leading-8 md:text-xl">
+          <p className="text-white/78 mt-5 max-w-[21rem] text-base font-bold leading-7 md:mt-6 md:max-w-none md:text-xl md:leading-8">
             Our mascots bring the club energy to workshops, project nights, and
             hackathon weekends.
           </p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <HomeButton href="https://discord.gg/knighthacks" variant="gold">
+          <div className="club-mascot-actions mt-7 hidden flex-wrap gap-4 md:mt-8 md:flex">
+            <HomeButton href={PUBLIC_LINKS.discord} variant="gold">
               Join Discord
             </HomeButton>
-            <HomeButton href="https://blade.knighthacks.org" variant="dark">
+            <HomeButton href={env.BLADE_URL} variant="dark">
               Sign Up With Blade
             </HomeButton>
           </div>
@@ -131,35 +135,61 @@ function MascotsSection() {
           tabIndex={0}
           aria-describedby="mascot-credit"
         >
+          <div
+            className="club-mascot-hotspot club-mascot-hotspot-lenny"
+            aria-hidden="true"
+          >
+            <span>Lenny</span>
+          </div>
+          <div
+            className="club-mascot-hotspot club-mascot-hotspot-tk"
+            aria-hidden="true"
+          >
+            <span>T.K.</span>
+          </div>
+          <div
+            className="club-mascot-highlight club-mascot-highlight-lenny"
+            aria-hidden="true"
+          />
+          <div
+            className="club-mascot-highlight club-mascot-highlight-tk"
+            aria-hidden="true"
+          />
           <Image
-            src="https://assets.knighthacks.org/tklenny.png"
-            alt="T.K. and Lenny"
+            src={CLUB_ASSETS.tklenny}
+            alt="Lenny, the green dragon mascot, standing next to T.K., the knight mascot"
             width={3000}
             height={3000}
             className="club-mascot-image"
           />
           <div
             id="mascot-credit"
-            role="dialog"
+            role="note"
             aria-label="Mascot artist credit"
             className="club-mascot-credit"
           >
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8f3157]">
-              Mascot art
-            </p>
-            <p className="mt-1 text-sm font-black leading-5 text-[#23051d] md:text-base">
-              Made with love by Design Team member Lena Tran.
+            <p className="text-xs font-black leading-4 text-[#23051d] md:text-sm md:leading-5">
+              Made with love by Lena Tran, Design Team.
             </p>
             <a
-              href="https://www.linkedin.com/in/lena-tran-/"
+              href={PUBLIC_LINKS.mascotArtistLinkedIn}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-flex items-center gap-1 text-xs font-black uppercase tracking-[0.08em] text-[#7a2451] transition hover:text-[#120313]"
+              className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#7a2451] transition hover:text-[#120313]"
             >
               LinkedIn
-              <ExternalLink aria-hidden="true" className="size-3" />
+              <FaLinkedin aria-hidden="true" className="size-2.5" />
             </a>
           </div>
+        </div>
+
+        <div className="club-mascot-actions grid grid-cols-2 gap-3 md:hidden">
+          <HomeButton href={PUBLIC_LINKS.discord} variant="gold">
+            Join Discord
+          </HomeButton>
+          <HomeButton href={env.BLADE_URL} variant="dark">
+            Sign Up With Blade
+          </HomeButton>
         </div>
       </div>
     </section>
@@ -174,6 +204,11 @@ export default function HomePage() {
         data-hero
       >
         <HeroVideoBackground />
+        <div
+          className="club-page-hero-fade absolute inset-x-0 bottom-0 z-[2]"
+          aria-hidden="true"
+          data-hero-overlay
+        />
 
         <div
           className="club-hero-copy relative z-10 mx-auto flex max-w-[900px] flex-col items-center text-center"
@@ -190,26 +225,27 @@ export default function HomePage() {
             />
           </div>
           <p
-            className="club-hero-subline mt-8 text-xl font-medium leading-8 text-white/90 md:text-3xl md:leading-10"
+            className="club-hero-subline mt-6 text-[15px] font-medium leading-7 text-white/90 sm:text-base sm:leading-8 md:mt-8 md:text-[21px] md:leading-[34px]"
             data-stagger
           >
-            <span>UCF&apos;s largest</span>
-            <span>software engineering</span>
+            <span>UCF&apos;s largest</span> <span>software engineering</span>{" "}
             <span>organization and nonprofit.</span>
           </p>
           <div
-            className="club-hero-actions mt-10 flex flex-wrap justify-center gap-4"
+            className="club-hero-actions mt-8 grid w-full max-w-[21.5rem] grid-cols-2 gap-3 sm:mt-10 sm:flex sm:w-auto sm:max-w-none sm:flex-wrap sm:justify-center sm:gap-4"
             data-stagger
           >
-            <HomeButton href="https://blade.knighthacks.org" variant="gold">
+            <HomeButton href={env.BLADE_URL} variant="gold">
               Sign Up With Blade
             </HomeButton>
-            <HomeButton href="https://discord.gg/knighthacks" variant="dark">
+            <HomeButton href={PUBLIC_LINKS.discord} variant="dark">
               Join Discord
             </HomeButton>
           </div>
         </div>
       </section>
+
+      <div className="club-hero-transition-layer" aria-hidden="true" />
 
       <HomeCommunityCarousel />
 
@@ -246,21 +282,22 @@ export default function HomePage() {
           data-scroll-drift="28"
           style={{ objectPosition: "var(--club-set-apart-image-position)" }}
         />
+        <div
+          className="club-set-apart-top-fade absolute inset-x-0 top-0 z-20"
+          aria-hidden="true"
+        />
         <div className="absolute inset-0 z-10 bg-[linear-gradient(180deg,rgba(6,0,9,0.92)_0%,rgba(9,1,13,0.78)_14%,rgba(14,2,18,0.42)_34%,rgba(14,2,18,0.08)_58%,rgba(9,1,13,0.32)_100%)]" />
         <div className="absolute inset-0 z-10 bg-[linear-gradient(90deg,rgba(6,0,9,0.46)_0%,rgba(9,1,13,0.22)_38%,rgba(9,1,13,0.12)_72%,rgba(9,1,13,0.34)_100%)]" />
 
         <div className="absolute inset-0 z-20 flex px-6 py-14 md:px-10 md:py-20 lg:px-24">
-          <div className="mx-auto flex w-full max-w-[1120px] items-start pt-2 md:pt-0">
+          <div className="mx-auto flex w-full max-w-[1120px] items-start pt-14 md:pt-20 lg:pt-24">
             <div className="max-w-[38rem]" data-stagger>
               <SetApartHeadline />
               <div className="mt-7 flex flex-wrap gap-4">
-                <HomeButton href="https://blade.knighthacks.org" variant="gold">
+                <HomeButton href={env.BLADE_URL} variant="gold">
                   Sign Up With Blade
                 </HomeButton>
-                <HomeButton
-                  href="https://discord.gg/knighthacks"
-                  variant="dark"
-                >
+                <HomeButton href={PUBLIC_LINKS.discord} variant="dark">
                   Join Discord
                 </HomeButton>
               </div>

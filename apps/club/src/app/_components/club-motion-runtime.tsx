@@ -5,6 +5,8 @@ import { useEffect } from "react";
 const REVEAL_SELECTOR = "[data-reveal], [data-stagger], [data-motion-scope]";
 const DRIFT_SELECTOR = "[data-scroll-drift]";
 const HERO_SELECTOR = "[data-hero]";
+const HISTORY_TIMELINE_SELECTOR = "[data-history-timeline]";
+const HISTORY_MARKER_SELECTOR = "[data-history-marker]";
 const TILT_SELECTOR = "[data-tilt]";
 
 function clamp(value: number, min: number, max: number) {
@@ -147,6 +149,48 @@ export default function ClubMotionRuntime() {
 
         hero.style.setProperty("--club-hero-progress", heroProgress.toFixed(3));
       });
+
+      document
+        .querySelectorAll<HTMLElement>(HISTORY_TIMELINE_SELECTOR)
+        .forEach((timeline) => {
+          const viewportAnchor = window.innerHeight * 0.5;
+          const timelineHeight = Math.max(timeline.offsetHeight, 1);
+          const viewportAnchorDocument = window.scrollY + viewportAnchor;
+          let timelineDocumentTop = 0;
+          let offsetElement: HTMLElement | null = timeline;
+
+          while (offsetElement) {
+            timelineDocumentTop += offsetElement.offsetTop;
+            offsetElement = offsetElement.offsetParent as HTMLElement | null;
+          }
+
+          const scrubberY = clamp(
+            viewportAnchorDocument - timelineDocumentTop,
+            0,
+            timelineHeight,
+          );
+          const timelineProgress = scrubberY / timelineHeight;
+
+          timeline.style.setProperty(
+            "--history-timeline-progress",
+            timelineProgress.toFixed(4),
+          );
+          timeline.style.setProperty(
+            "--history-timeline-scrubber-y",
+            `${scrubberY.toFixed(2)}px`,
+          );
+
+          timeline
+            .querySelectorAll<HTMLElement>(HISTORY_MARKER_SELECTOR)
+            .forEach((marker) => {
+              const markerProgress = Number(marker.dataset.historyMarker ?? 0);
+
+              marker.classList.toggle(
+                "is-history-marker-active",
+                timelineProgress + 0.018 >= markerProgress,
+              );
+            });
+        });
     }
 
     function scheduleScrollMotion() {

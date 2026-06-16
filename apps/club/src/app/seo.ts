@@ -1,16 +1,37 @@
 import type { Metadata } from "next";
 
-export const SITE_URL = "https://club.knighthacks.org";
-export const SITE_NAME = "Knight Hacks";
-export const ORGANIZATION_NAME = "Knight Hacks";
-export const ORGANIZER_EMAIL = "team@knighthacks.org";
-export const PRESIDENT_EMAIL = "president@knighthacks.org";
-export const BLADE_URL = "https://blade.knighthacks.org";
-export const DISCORD_URL = "https://discord.gg/knighthacks";
-export const INSTAGRAM_URL = "https://www.instagram.com/knighthacks/";
-export const LINKEDIN_URL = "https://www.linkedin.com/company/knight-hacks";
-export const GITHUB_URL = "https://github.com/KnightHacks";
-export const X_URL = "https://twitter.com/knighthacks";
+import {
+  ORGANIZATION_NAME,
+  ORGANIZER_EMAIL,
+  PUBLIC_LINKS,
+  RESOURCE_LIBRARY_PUBLISHED_AT,
+  RESOURCE_LIBRARY_UPDATED_AT,
+  SITE_NAME,
+  SITE_URL,
+  SOCIAL_PROFILE_URLS,
+} from "./_lib/site-config";
+
+export {
+  CANONICAL_ROUTES,
+  ORGANIZATION_NAME,
+  ORGANIZER_EMAIL,
+  PRESIDENT_EMAIL,
+  PUBLIC_LINKS,
+  RESOURCE_LIBRARY_PUBLISHED_AT,
+  RESOURCE_LIBRARY_UPDATED_AT,
+  SITE_LAST_MODIFIED,
+  SITE_NAME,
+  SITE_URL,
+  SOCIAL_PROFILE_URLS,
+} from "./_lib/site-config";
+
+export const BLADE_URL = PUBLIC_LINKS.blade;
+export const DISCORD_URL = PUBLIC_LINKS.discord;
+export const INSTAGRAM_URL = PUBLIC_LINKS.instagram;
+export const LINKEDIN_URL = PUBLIC_LINKS.linkedin;
+export const GITHUB_URL = PUBLIC_LINKS.github;
+export const LINKTREE_URL = PUBLIC_LINKS.linktree;
+export const X_URL = PUBLIC_LINKS.x;
 
 export const SEO_TITLE =
   "Knight Hacks | UCF Software Engineering Club and Hackathon";
@@ -39,28 +60,6 @@ export const SEO_KEYWORDS = [
   "student project showcase",
   "college coding club",
 ];
-
-export const SOCIAL_PROFILE_URLS = [
-  DISCORD_URL,
-  INSTAGRAM_URL,
-  LINKEDIN_URL,
-  GITHUB_URL,
-  X_URL,
-];
-
-export const CANONICAL_ROUTES = [
-  "/",
-  "/about",
-  "/join",
-  "/events",
-  "/kickstart",
-  "/project-launch",
-  "/hackathons",
-  "/teams",
-  "/sponsors",
-  "/resources",
-  "/code-of-conduct",
-] as const;
 
 export function absoluteUrl(path = "/") {
   return new URL(path, SITE_URL).toString();
@@ -208,12 +207,14 @@ export function createArticleJsonLd({
   path,
   title,
   description,
-  datePublished = "2026-06-11",
+  datePublished = RESOURCE_LIBRARY_PUBLISHED_AT,
+  dateModified = RESOURCE_LIBRARY_UPDATED_AT,
 }: {
   path: string;
   title: string;
   description: string;
   datePublished?: string;
+  dateModified?: string;
 }) {
   return {
     "@context": "https://schema.org",
@@ -222,7 +223,7 @@ export function createArticleJsonLd({
     description,
     url: absoluteUrl(path),
     datePublished,
-    dateModified: "2026-06-11",
+    dateModified,
     author: {
       "@id": `${SITE_URL}/#organization`,
     },

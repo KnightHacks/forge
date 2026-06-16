@@ -58,7 +58,7 @@ import {
   hackathonDisplayNameSchema,
   hackathonRouteNameSchema,
   hackathonThemeSchema,
-} from "@forge/validators";
+} from "@forge/validators/hackathons";
 
 import { api } from "~/trpc/react";
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { ArrowUpRight, Instagram } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { FaInstagram } from "react-icons/fa";
 
 import { Button } from "@forge/ui/button";
 
@@ -108,12 +109,12 @@ export default function EventsPage() {
           data-hero-overlay
         />
         <div
-          className="absolute inset-x-0 bottom-0 z-[1] h-56 bg-gradient-to-b from-transparent to-[var(--club-plum)]"
+          className="club-page-hero-fade absolute inset-x-0 bottom-0 z-[1]"
           data-hero-overlay
         />
 
         <div
-          className="relative z-10 mx-auto flex min-h-[calc(100svh-5rem)] w-full max-w-[1060px] flex-col items-center justify-start pb-16 pt-24 text-center md:pt-[112px]"
+          className="club-hero-logo-aligned-content relative z-10 mx-auto flex min-h-[calc(100svh-5rem)] w-full max-w-[1060px] flex-col items-center justify-start pb-16 text-center"
           data-hero-content
           data-stagger
         >
@@ -128,12 +129,24 @@ export default function EventsPage() {
               <span>Events</span>
             </span>
           </h1>
-          <p className="text-white/86 mx-auto mt-7 max-w-[650px] text-base font-bold leading-8 md:text-[21px] md:leading-[34px]">
+          <p className="text-white/86 mx-auto mt-7 max-w-[650px] text-base font-medium leading-8 md:text-[21px] md:leading-[34px]">
             Workshops, GBMs, socials, and build nights pulled from the Blade
             calendar.
           </p>
+          <Button
+            asChild
+            size="lg"
+            className="club-button mt-10 bg-[var(--club-gold)] px-8 text-black shadow-[5px_5px_0_rgba(255,255,255,0.85)]"
+          >
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
+              Follow On Instagram
+              <FaInstagram aria-hidden="true" className="ml-2 size-4" />
+            </a>
+          </Button>
         </div>
       </section>
+
+      <div className="club-hero-transition-layer" aria-hidden="true" />
 
       <EventsClient
         bladeUrl={env.BLADE_URL}
@@ -152,9 +165,6 @@ export default function EventsPage() {
               <span>Get Notified</span>
             </span>
           </h2>
-          <p className="mt-5 text-lg font-black text-[var(--club-gold)] md:text-xl">
-            Email and text notifications
-          </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Button
               asChild
@@ -173,7 +183,7 @@ export default function EventsPage() {
             >
               <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
                 Follow On Instagram
-                <Instagram aria-hidden="true" className="ml-2 size-4" />
+                <FaInstagram aria-hidden="true" className="ml-2 size-4" />
               </a>
             </Button>
           </div>

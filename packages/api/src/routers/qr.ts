@@ -4,7 +4,7 @@ import QRCode from "qrcode";
 
 import { logger } from "@forge/utils";
 
-import { getUserQRCodePayload } from "../qr-code";
+import { getUserQRCodePayload } from "../services/qr-code";
 import { protectedProcedure } from "../trpc";
 
 export const qrRouter = {

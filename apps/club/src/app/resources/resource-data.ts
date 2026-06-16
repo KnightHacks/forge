@@ -14,10 +14,12 @@ export interface ResourceArticle {
   audience: string;
   readTime: string;
   image: string;
+  publishedAt?: string;
+  updatedAt?: string;
   sections: ResourceSection[];
 }
 
-export const RESOURCE_ARTICLES = [
+export const RESOURCE_ARTICLES: readonly ResourceArticle[] = [
   {
     slug: "first-hackathon-guide",
     title: "First Hackathon Guide for UCF Students",
@@ -68,7 +70,7 @@ export const RESOURCE_ARTICLES = [
     eyebrow: "Build plan",
     audience: "Hackathon teams",
     readTime: "8 min",
-    image: CLUB_ASSETS.projectLaunchPresentations,
+    image: CLUB_ASSETS.bitcampTeamPhoto,
     sections: [
       {
         title: "Write the one-sentence project before writing code.",
@@ -260,7 +262,7 @@ export const RESOURCE_ARTICLES = [
       },
     ],
   },
-] as const satisfies readonly ResourceArticle[];
+];
 
 export function getResourceArticle(slug: string) {
   return RESOURCE_ARTICLES.find((article) => article.slug === slug);

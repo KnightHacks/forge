@@ -1,20 +1,34 @@
 import type { MetadataRoute } from "next";
 
 import { RESOURCE_ARTICLES } from "./resources/resource-data";
-import { CANONICAL_ROUTES, SITE_URL } from "./seo";
+import {
+  absoluteUrl,
+  CANONICAL_ROUTES,
+  RESOURCE_LIBRARY_UPDATED_AT,
+  SITE_LAST_MODIFIED,
+} from "./seo";
 
-const LAST_MODIFIED = new Date("2026-06-11T00:00:00-04:00");
+export const dynamic = "force-static";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const resourceRoutes = RESOURCE_ARTICLES.map(
-    (article) => `/resources/${article.slug}`,
-  );
+  const pageLastModified = new Date(`${SITE_LAST_MODIFIED}T00:00:00-04:00`);
+  const resourceRoutes = RESOURCE_ARTICLES.map((article) => ({
+    route: `/resources/${article.slug}`,
+    lastModified: new Date(
+      `${article.updatedAt ?? RESOURCE_LIBRARY_UPDATED_AT}T00:00:00-04:00`,
+    ),
+  }));
 
-  return [...CANONICAL_ROUTES, ...resourceRoutes].map((route) => ({
-    url: `${SITE_URL}${route === "/" ? "" : route}`,
-    lastModified: LAST_MODIFIED,
-    changeFrequency:
-      route === "/" || route === "/events" ? "weekly" : "monthly",
+  return [
+    ...CANONICAL_ROUTES.map((route) => ({
+      route,
+      lastModified: pageLastModified,
+    })),
+    ...resourceRoutes,
+  ].map(({ route, lastModified }) => ({
+    url: absoluteUrl(route),
+    lastModified,
+    changeFrequency: route === "/" || route === "/events" ? "weekly" : "monthly",
     priority:
       route === "/"
         ? 1

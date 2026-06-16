@@ -1,46 +1,44 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Instagram, Linkedin, Mail, Twitter } from "lucide-react";
+import {
+  FaDiscord,
+  FaGithub,
+  FaInstagram,
+  FaLink,
+  FaLinkedin,
+} from "react-icons/fa";
 
-const QUICK_LINKS = [
-  { label: "Home", href: "/" },
-  { label: "About", href: "/about" },
-  { label: "Join", href: "/join" },
-  { label: "Events", href: "/events" },
-  { label: "Hackathons", href: "/hackathons" },
-  { label: "Teams", href: "/teams" },
-  { label: "Sponsors", href: "/sponsors" },
-] as const;
-
-const RESOURCE_LINKS = [
-  { label: "Resources", href: "/resources" },
-  { label: "Kickstart", href: "/kickstart" },
-  { label: "Project Launch", href: "/project-launch" },
-  { label: "Code of Conduct", href: "/code-of-conduct" },
-  { label: "Discord", href: "https://discord.gg/knighthacks" },
-  { label: "GitHub", href: "https://github.com/KnightHacks" },
-] as const;
+import {
+  FOOTER_QUICK_LINKS,
+  FOOTER_RESOURCE_LINKS,
+  PUBLIC_LINKS,
+} from "../_lib/site-config";
 
 const SOCIAL_LINKS = [
   {
-    label: "Knight Hacks on X",
-    href: "https://twitter.com/knighthacks",
-    icon: Twitter,
-  },
-  {
-    label: "Email Knight Hacks",
-    href: "mailto:team@knighthacks.org",
-    icon: Mail,
+    label: "Knight Hacks Discord",
+    href: PUBLIC_LINKS.discord,
+    icon: FaDiscord,
   },
   {
     label: "Knight Hacks on Instagram",
-    href: "https://instagram.com/knighthacks",
-    icon: Instagram,
+    href: PUBLIC_LINKS.instagram,
+    icon: FaInstagram,
   },
   {
     label: "Knight Hacks on LinkedIn",
-    href: "https://linkedin.com/company/knight-hacks",
-    icon: Linkedin,
+    href: PUBLIC_LINKS.linkedin,
+    icon: FaLinkedin,
+  },
+  {
+    label: "Knight Hacks on GitHub",
+    href: PUBLIC_LINKS.github,
+    icon: FaGithub,
+  },
+  {
+    label: "Knight Hacks Linktree",
+    href: PUBLIC_LINKS.linktree,
+    icon: FaLink,
   },
 ] as const;
 
@@ -80,12 +78,8 @@ function FooterSocialLinks({
           <a
             key={social.href}
             href={social.href}
-            target={social.href.startsWith("mailto:") ? undefined : "_blank"}
-            rel={
-              social.href.startsWith("mailto:")
-                ? undefined
-                : "noopener noreferrer"
-            }
+            target="_blank"
+            rel="noopener noreferrer"
             aria-label={social.label}
             className="club-social-link text-[var(--club-subtle)] transition-colors hover:text-white"
           >
@@ -98,7 +92,10 @@ function FooterSocialLinks({
 }
 
 export default function Footer({ bladeUrl }: { bladeUrl: string }) {
-  const resourceLinks = [{ label: "Blade", href: bladeUrl }, ...RESOURCE_LINKS];
+  const resourceLinks = [
+    { label: "Blade", href: bladeUrl },
+    ...FOOTER_RESOURCE_LINKS,
+  ];
 
   return (
     <footer className="relative bg-[linear-gradient(180deg,rgba(20,3,22,0.92)_0%,var(--club-plum-deep)_34%)] text-white">
@@ -140,7 +137,7 @@ export default function Footer({ bladeUrl }: { bladeUrl: string }) {
               Quick Links
             </h2>
             <ul className="mt-3 flex flex-col gap-2.5 text-sm leading-5 text-[var(--club-muted)] md:mt-7 md:gap-5 md:text-base md:leading-6">
-              {QUICK_LINKS.map((link) => (
+              {FOOTER_QUICK_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

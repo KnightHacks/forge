@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { and, asc, eq, gt, isNull } from "@forge/db";
+import { and, asc, eq, gt, isNull, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Event } from "@forge/db/schemas/knight-hacks";
 
@@ -56,6 +56,8 @@ async function getUpcomingClubEvents(
       and(
         gt(Event.start_datetime, new Date()),
         eq(Event.isOperationsCalendar, false),
+        eq(Event.dues_paying, false),
+        sql<boolean>`cardinality(${Event.roles}) = 0`,
         isNull(Event.hackathonId),
       ),
     )

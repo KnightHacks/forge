@@ -11,6 +11,13 @@ export const metadata: Metadata = createPageMetadata({
   path: "/sponsors",
 });
 
+const sponsorsEndpoint = new URL("/api/public/club-sponsors", env.BLADE_URL);
+
 export default function SponsorsPage() {
-  return <SponsorsClient bladeUrl={env.BLADE_URL} />;
+  return (
+    <SponsorsClient
+      bladeUrl={env.BLADE_URL}
+      sponsorsEndpoint={sponsorsEndpoint.toString()}
+    />
+  );
 }

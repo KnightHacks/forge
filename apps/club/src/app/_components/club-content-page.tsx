@@ -90,7 +90,7 @@ export default function ClubContentPage({
   return (
     <main className="relative overflow-hidden text-white">
       <section
-        className="club-page-hero relative isolate min-h-[38rem] overflow-hidden px-6 pb-16 pt-32 md:px-10 md:pb-20 md:pt-40 lg:px-24"
+        className="club-page-hero club-hero-logo-aligned-section relative isolate min-h-[38rem] overflow-hidden px-6 pb-16 md:px-10 md:pb-20 lg:px-24"
         data-hero
       >
         <Image
@@ -137,6 +137,8 @@ export default function ClubContentPage({
           <p className="sr-only">{image.alt}</p>
         </div>
       </section>
+
+      <div className="club-hero-transition-layer" aria-hidden="true" />
 
       {stats && stats.length > 0 ? (
         <section className="border-y border-white/10 px-6 py-8 md:px-10 lg:px-24">

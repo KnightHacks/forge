@@ -9,13 +9,17 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 
 type PassProfileKind = "member" | "hacker";
+interface PassProfile {
+  firstName: string | null;
+  lastName: string | null;
+}
 
 export function DownloadQRPass({
   profile,
-  profileKind = "member",
+  profileKind,
 }: {
-  profile?: { firstName?: string | null; lastName?: string | null } | null;
-  profileKind?: PassProfileKind;
+  profile: PassProfile;
+  profileKind: PassProfileKind;
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -67,7 +71,7 @@ export function DownloadQRPass({
   });
 
   const handleDownload = () => {
-    if (profile && (!profile.firstName || !profile.lastName)) {
+    if (!profile.firstName || !profile.lastName) {
       toast.error("Missing profile information");
       return;
     }
@@ -76,9 +80,7 @@ export function DownloadQRPass({
     generatePass.mutate({ kind: profileKind });
   };
 
-  // canDownload allows !profile because handleDownload delegates validation to generatePass.mutate.
-  const canDownload =
-    !profile || Boolean(profile.firstName && profile.lastName);
+  const canDownload = Boolean(profile.firstName && profile.lastName);
 
   return (
     <Button
