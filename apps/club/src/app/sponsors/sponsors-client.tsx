@@ -242,7 +242,7 @@ function SponsorTile({
       <a
         href={sponsor.websiteUrl}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         aria-label={`Visit ${sponsor.name} website`}
         className={sponsorTileClassName}
       >

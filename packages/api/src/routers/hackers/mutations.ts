@@ -911,6 +911,18 @@ export const hackerMutationRouter = {
         });
       }
 
+      const attendee = await db.query.HackerAttendee.findFirst({
+        where: (t, { and, eq }) =>
+          and(eq(t.hackerId, input.id), eq(t.hackathonId, hackathon.id)),
+      });
+
+      if (!attendee) {
+        throw new TRPCError({
+          message: `Attendee not found for ${hacker.firstName} ${hacker.lastName}`,
+          code: "NOT_FOUND",
+        });
+      }
+
       // Update status in HackerAttendee table
       await db
         .update(HackerAttendee)
@@ -921,6 +933,60 @@ export const hackerMutationRouter = {
             eq(HackerAttendee.hackathonId, hackathon.id),
           ),
         );
+
+      if (input.status === "accepted") {
+        try {
+          await sendHackathonEmail({
+            from: "donotreply@knighthacks.org",
+            hackathon: {
+              applicationBackgroundKey: hackathon.applicationBackgroundKey,
+              displayName: hackathon.displayName,
+              emailTemplateKey: hackathon.emailTemplateEnabled
+                ? hackathon.emailTemplateKey
+                : null,
+              routeName: hackathon.name,
+              theme: hackathon.theme,
+            },
+            kind: "Accepted",
+            recipient: {
+              name: hacker.firstName,
+              to: hacker.email,
+            },
+          });
+        } catch (error) {
+          logger.error("Failed to send acceptance email:", error);
+
+          try {
+            await db
+              .update(HackerAttendee)
+              .set({ status: attendee.status })
+              .where(
+                and(
+                  eq(HackerAttendee.hackerId, input.id),
+                  eq(HackerAttendee.hackathonId, hackathon.id),
+                ),
+              );
+          } catch (rollbackError) {
+            logger.error("Failed to roll back accepted hacker status:", {
+              error: rollbackError,
+              hackerId: input.id,
+              hackathonId: hackathon.id,
+            });
+
+            throw new TRPCError({
+              message:
+                "Failed to send acceptance email, and the status rollback failed. Please review this hacker manually.",
+              code: "INTERNAL_SERVER_ERROR",
+            });
+          }
+
+          throw new TRPCError({
+            message:
+              "Failed to send acceptance email. Hacker status was not changed.",
+            code: "INTERNAL_SERVER_ERROR",
+          });
+        }
+      }
 
       try {
         await discord.log({

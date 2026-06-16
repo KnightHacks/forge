@@ -102,8 +102,20 @@ export default function RootLayout({
       <body className={`${montserrat.variable} antialiased`}>
         <ClubMotionRuntime />
         <div className="club-home-bg flex min-h-screen flex-col overflow-hidden">
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-white focus:px-4 focus:py-3 focus:text-sm focus:font-black focus:text-[#140316] focus:outline-none focus:ring-2 focus:ring-[var(--club-gold)]"
+          >
+            Skip to main content
+          </a>
           <Navbar bladeUrl={bladeUrl} />
-          <div className="flex-1">{children}</div>
+          <div
+            id="main-content"
+            tabIndex={-1}
+            className="flex-1 focus:outline-none"
+          >
+            {children}
+          </div>
           <Footer bladeUrl={bladeUrl} />
         </div>
         <JsonLd data={siteJsonLd} />

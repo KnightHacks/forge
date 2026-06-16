@@ -196,14 +196,18 @@ export default function Navbar({ bladeUrl }: { bladeUrl: string }) {
     return () => window.cancelAnimationFrame(animationFrameId);
   }, [pathname]);
 
+  const isNavHidden = isClickDisabled && !isMobileOpen;
+
   return (
     <motion.header
       style={navStyle}
       className={cn(
         "club-nav-shell fixed inset-x-0 top-0 z-50",
         isMobileOpen && "club-nav-shell-open",
-        isClickDisabled && !isMobileOpen && "pointer-events-none",
+        isNavHidden && "pointer-events-none",
       )}
+      aria-hidden={isNavHidden}
+      inert={isNavHidden ? true : undefined}
     >
       <nav className="relative mx-auto flex h-20 w-full max-w-[1440px] items-center justify-between gap-4 px-5 md:px-8 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-6 lg:px-8 xl:px-10">
         <Link

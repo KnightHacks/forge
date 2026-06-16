@@ -240,7 +240,7 @@ export function ProjectsTable({ hackathonId }: { hackathonId?: string }) {
                           />
                           <div className="flex flex-col">
                             <span className="font-medium">
-                              {judge.name}, {judge.challengeTitle}
+                              {judge.name} - {judge.challengeTitle}
                             </span>
                             {judge.roomName ? (
                               <span className="text-sm text-muted-foreground">

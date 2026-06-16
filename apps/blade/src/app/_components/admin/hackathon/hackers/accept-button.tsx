@@ -18,27 +18,11 @@ export default function AcceptButton({
 
   const utils = api.useUtils();
 
-  const sendHackathonEmail = api.email.sendHackathonEmail.useMutation({
-    onSuccess: () => {
-      toast.success(
-        `Acceptance email sent to ${hacker.firstName} ${hacker.lastName}!`,
-      );
-    },
-    onError: (opts) => {
-      toast.error(opts.message);
-    },
-  });
-
   const updateStatus = api.hackerMutation.updateHackerStatus.useMutation({
     onSuccess() {
-      toast.success(`Accepted ${hacker.firstName} ${hacker.lastName}!`);
-      sendHackathonEmail.mutate({
-        from: "donotreply@knighthacks.org",
-        hackathonName: hackathonRouteName,
-        kind: "Accepted",
-        recipientName: hacker.firstName,
-        to: hacker.email,
-      });
+      toast.success(
+        `Accepted ${hacker.firstName} ${hacker.lastName} and sent their acceptance email!`,
+      );
     },
     onError: (opts) => {
       toast.error(opts.message);

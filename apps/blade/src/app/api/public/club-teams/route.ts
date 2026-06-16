@@ -13,6 +13,10 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 } as const;
+const PUBLIC_ROUTE_HEADERS = {
+  ...CORS_HEADERS,
+  "X-Robots-Tag": "noindex, nofollow",
+} as const;
 
 const TEAM_DEFINITIONS = [
   {
@@ -294,7 +298,7 @@ async function getPublicClubRoster() {
 export function OPTIONS() {
   return new Response(null, {
     status: 204,
-    headers: CORS_HEADERS,
+    headers: PUBLIC_ROUTE_HEADERS,
   });
 }
 
@@ -309,7 +313,7 @@ export async function GET() {
       },
       {
         headers: {
-          ...CORS_HEADERS,
+          ...PUBLIC_ROUTE_HEADERS,
           "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
         },
       },
@@ -322,7 +326,7 @@ export async function GET() {
       },
       {
         status: 500,
-        headers: CORS_HEADERS,
+        headers: PUBLIC_ROUTE_HEADERS,
       },
     );
   }

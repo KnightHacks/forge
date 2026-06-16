@@ -83,12 +83,31 @@ export default async function MemberDashboard({
 
   const isAlumni = calcAlumniStatus(member.gradDate, member);
 
-  const [eventsValue, dues, hackathonsValue] = await Promise.all([
-    api.member.getEvents(),
-    api.duesPayment.validatePaidDues(),
-    isAlumni ? api.hackathon.getPastHackathons() : Promise.resolve([]),
-  ]);
+  const [eventsResult, duesResult, hackathonsResult] = await Promise.allSettled(
+    [
+      api.member.getEvents(),
+      api.duesPayment.validatePaidDues(),
+      isAlumni ? api.hackathon.getPastHackathons() : Promise.resolve([]),
+    ],
+  );
 
+  if (
+    eventsResult.status === "rejected" ||
+    duesResult.status === "rejected" ||
+    hackathonsResult.status === "rejected"
+  ) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-y-6 text-xl font-semibold">
+        <div className="w-full max-w-xl text-center">
+          Something went wrong. Please try again later.
+        </div>
+      </div>
+    );
+  }
+
+  const eventsValue = eventsResult.value;
+  const dues = duesResult.value;
+  const hackathonsValue = hackathonsResult.value;
   const duesPaid = dues.duesPaid;
 
   await Promise.allSettled(

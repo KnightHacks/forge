@@ -462,12 +462,30 @@ const MOBILE_ENTER_IGNORED_INPUT_TYPES = new Set([
   "submit",
 ]);
 
-function RequiredFieldMark() {
+const requiredControlProps = {
+  "aria-required": true,
+  required: true,
+} as const;
+const requiredTriggerProps = {
+  "aria-required": true,
+} as const;
+
+function RequiredFieldMark({
+  includeScreenReaderText = false,
+}: {
+  includeScreenReaderText?: boolean;
+}) {
   return (
-    <span className="text-xl font-black text-[#ff4fd8] drop-shadow-[0_0_10px_rgba(255,79,216,0.85)] md:text-2xl">
-      {" "}
-      *
-    </span>
+    <>
+      <span
+        aria-hidden="true"
+        className="text-xl font-black text-[#ff4fd8] drop-shadow-[0_0_10px_rgba(255,79,216,0.85)] md:text-2xl"
+      >
+        {" "}
+        *
+      </span>
+      {includeScreenReaderText && <span className="sr-only"> (required)</span>}
+    </>
   );
 }
 
@@ -491,7 +509,7 @@ function FieldLabel({
   return (
     <FormLabel className="text-base font-semibold leading-none text-white/85 md:text-lg">
       {children}
-      {required && <RequiredFieldMark />}
+      {required && <RequiredFieldMark includeScreenReaderText />}
       {optional && <OptionalFieldText />}
     </FormLabel>
   );
@@ -1360,6 +1378,7 @@ export function HackerFormPage({
                                   type="text"
                                   placeholder="Lenny"
                                   {...field}
+                                  {...requiredControlProps}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1381,6 +1400,7 @@ export function HackerFormPage({
                                   type="text"
                                   placeholder="Dragonson"
                                   {...field}
+                                  {...requiredControlProps}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1401,6 +1421,7 @@ export function HackerFormPage({
                                 <Input
                                   placeholder="tk@knighthacks.org"
                                   {...field}
+                                  {...requiredControlProps}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1440,7 +1461,11 @@ export function HackerFormPage({
                             >
                               <FieldLabel required>Date of Birth</FieldLabel>
                               <FormControl>
-                                <Input type="date" {...field} />
+                                <Input
+                                  type="date"
+                                  {...field}
+                                  {...requiredControlProps}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1474,6 +1499,7 @@ export function HackerFormPage({
                                   )}
                                   inputPlaceholder="Search for your country"
                                   triggerClassName={fieldTriggerClassName}
+                                  triggerProps={requiredTriggerProps}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1573,6 +1599,7 @@ export function HackerFormPage({
                                   )}
                                   inputPlaceholder="Search levels of study"
                                   triggerClassName={fieldTriggerClassName}
+                                  triggerProps={requiredTriggerProps}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1605,6 +1632,7 @@ export function HackerFormPage({
                                   )}
                                   inputPlaceholder="Search for your school"
                                   triggerClassName={fieldTriggerClassName}
+                                  triggerProps={requiredTriggerProps}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1637,6 +1665,7 @@ export function HackerFormPage({
                                   )}
                                   inputPlaceholder="Search for your major"
                                   triggerClassName={fieldTriggerClassName}
+                                  triggerProps={requiredTriggerProps}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1655,7 +1684,11 @@ export function HackerFormPage({
                             >
                               <FieldLabel required>Graduation Date</FieldLabel>
                               <FormControl>
-                                <Input type="date" {...field} />
+                                <Input
+                                  type="date"
+                                  {...field}
+                                  {...requiredControlProps}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1685,6 +1718,7 @@ export function HackerFormPage({
                                   )}
                                   inputPlaceholder="Search shirt sizes"
                                   triggerClassName={fieldTriggerClassName}
+                                  triggerProps={requiredTriggerProps}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1711,6 +1745,7 @@ export function HackerFormPage({
                                   placeholder="Why do you want to attend?"
                                   {...field}
                                   value={field.value}
+                                  {...requiredControlProps}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1734,6 +1769,7 @@ export function HackerFormPage({
                                   placeholder="What are your goals for this event?"
                                   {...field}
                                   value={field.value}
+                                  {...requiredControlProps}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -2029,6 +2065,7 @@ export function HackerFormPage({
                                     fieldState.error &&
                                       agreementErrorCheckboxClassName,
                                   )}
+                                  {...requiredControlProps}
                                 />
                               </FormControl>
                               <div className="min-w-0 flex-1 space-y-1 leading-none">
@@ -2048,7 +2085,8 @@ export function HackerFormPage({
                                   >
                                     MLH Code of Conduct
                                   </Link>
-                                  . <RequiredFieldMark />
+                                  .{" "}
+                                  <RequiredFieldMark includeScreenReaderText />
                                 </FormLabel>
                                 <FormMessage
                                   className={agreementErrorMessageClassName}
@@ -2086,6 +2124,7 @@ export function HackerFormPage({
                                     fieldState.error &&
                                       agreementErrorCheckboxClassName,
                                   )}
+                                  {...requiredControlProps}
                                 />
                               </FormControl>
                               <div className="min-w-0 flex-1 space-y-1 leading-none">
@@ -2127,7 +2166,8 @@ export function HackerFormPage({
                                   >
                                     MLH Privacy Policy
                                   </Link>
-                                  . <RequiredFieldMark />
+                                  .{" "}
+                                  <RequiredFieldMark includeScreenReaderText />
                                 </FormLabel>
                                 <FormMessage
                                   className={agreementErrorMessageClassName}
@@ -2166,6 +2206,7 @@ export function HackerFormPage({
                                     fieldState.error &&
                                       agreementErrorCheckboxClassName,
                                   )}
+                                  {...requiredControlProps}
                                 />
                               </FormControl>
                               <div className="min-w-0 flex-1 space-y-1 leading-none">
@@ -2179,7 +2220,7 @@ export function HackerFormPage({
                                   I authorize MLH to send me occasional emails
                                   about relevant events, career opportunities,
                                   and community announcements.{" "}
-                                  <RequiredFieldMark />
+                                  <RequiredFieldMark includeScreenReaderText />
                                 </FormLabel>
                                 <FormMessage
                                   className={agreementErrorMessageClassName}
@@ -2213,6 +2254,7 @@ export function HackerFormPage({
                               aria-describedby={
                                 tosError ? "tos-visual-error" : undefined
                               }
+                              {...requiredControlProps}
                             />
                           </div>
 
@@ -2234,7 +2276,7 @@ export function HackerFormPage({
                               >
                                 Knight Hacks Terms of Service
                               </Link>
-                              . <RequiredFieldMark />
+                              . <RequiredFieldMark includeScreenReaderText />
                             </div>
                             {tosError && (
                               <p

@@ -7,12 +7,7 @@ import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
-
-type PassProfileKind = "member" | "hacker";
-interface PassProfile {
-  firstName: string | null;
-  lastName: string | null;
-}
+import type { PassProfile, PassProfileKind } from "./types";
 
 export function DownloadQRPass({
   profile,

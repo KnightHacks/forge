@@ -53,7 +53,7 @@ function HeroVideoBackground() {
         muted
         playsInline
         poster="/hero/club-hero-poster.webp"
-        preload="auto"
+        preload="metadata"
       >
         <source src="/hero/club-hero.webm" type="video/webm" />
         <source src="/hero/club-hero.mp4" type="video/mp4" />
@@ -214,16 +214,17 @@ export default function HomePage() {
           className="club-hero-copy relative z-10 mx-auto flex max-w-[900px] flex-col items-center text-center"
           data-hero-content
         >
-          <div className="club-hero-logo-shell">
+          <h1 className="club-hero-logo-shell">
+            <span className="sr-only">Knight Hacks</span>
             <Image
               src="/knighthacks.svg"
-              alt="Knight Hacks"
+              alt=""
               width={1500}
               height={504}
               priority
               className="club-hero-logo h-auto w-[17rem] md:w-[30rem] lg:w-[35rem]"
             />
-          </div>
+          </h1>
           <p
             className="club-hero-subline mt-6 text-[15px] font-medium leading-7 text-white/90 sm:text-base sm:leading-8 md:mt-8 md:text-[21px] md:leading-[34px]"
             data-stagger

@@ -1,3 +1,4 @@
+import type { Readable } from "stream";
 import QRCode from "qrcode";
 
 import { MINIO } from "@forge/consts";
@@ -12,6 +13,26 @@ export function getUserQRCodePayload(userId: string) {
   return `user:${userId}`;
 }
 
+function isObjectNotFoundError(error: unknown) {
+  if (typeof error !== "object" || error === null) return false;
+
+  const { code } = error as { code?: unknown };
+
+  return code === "NotFound" || code === "NoSuchKey";
+}
+
+async function streamToBuffer(stream: Readable) {
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of stream as AsyncIterable<
+    Buffer | string | Uint8Array
+  >) {
+    chunks.push(Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks);
+}
+
 export async function ensureUserQRCode(userId: string) {
   const objectName = getUserQRCodeObjectName(userId);
 
@@ -23,7 +44,11 @@ export async function ensureUserQRCode(userId: string) {
   try {
     await minioClient.statObject(MINIO.QR_BUCKET_NAME, objectName);
     return objectName;
-  } catch {
+  } catch (error) {
+    if (!isObjectNotFoundError(error)) {
+      throw error;
+    }
+
     const qrData = getUserQRCodePayload(userId);
     const qrBuffer = await QRCode.toBuffer(qrData, { type: "png" });
     await minioClient.putObject(
@@ -36,4 +61,15 @@ export async function ensureUserQRCode(userId: string) {
 
     return objectName;
   }
+}
+
+export async function getUserQRCodeDataUrl(userId: string) {
+  const objectName = await ensureUserQRCode(userId);
+  const qrStream = await minioClient.getObject(
+    MINIO.QR_BUCKET_NAME,
+    objectName,
+  );
+  const qrBuffer = await streamToBuffer(qrStream);
+
+  return `data:${MINIO.QR_CONTENT_TYPE};base64,${qrBuffer.toString("base64")}`;
 }

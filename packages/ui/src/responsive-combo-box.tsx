@@ -21,7 +21,14 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 import { useMediaQuery } from "@forge/ui/use-media-query";
 
-interface ResponsiveComboBoxProps<T> {
+type ResponsiveComboBoxTriggerSlotProps = Pick<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "aria-describedby" | "aria-invalid" | "id"
+>;
+
+interface ResponsiveComboBoxProps<
+  T,
+> extends ResponsiveComboBoxTriggerSlotProps {
   items: readonly T[];
   renderItem: (item: T) => React.ReactNode;
   getItemValue: (item: T) => string;
@@ -33,6 +40,7 @@ interface ResponsiveComboBoxProps<T> {
   inputPlaceholder?: string;
   isDisabled?: boolean;
   triggerClassName?: string;
+  triggerProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
   value?: string | null;
 }
 
@@ -95,7 +103,9 @@ export function ResponsiveComboBox<T>({
   inputPlaceholder = "Filter items...",
   isDisabled,
   triggerClassName,
+  triggerProps,
   value,
+  ...triggerSlotProps
 }: ResponsiveComboBoxProps<T>) {
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -135,6 +145,8 @@ export function ResponsiveComboBox<T>({
             variant="outline"
             className={cn("w-full justify-start font-normal", triggerClassName)}
             disabled={isDisabled}
+            {...triggerSlotProps}
+            {...triggerProps}
           >
             {selectedItem ? (
               <>{getItemLabel(selectedItem)}</>
@@ -164,6 +176,8 @@ export function ResponsiveComboBox<T>({
           variant="outline"
           className={cn("w-full justify-start font-normal", triggerClassName)}
           disabled={isDisabled}
+          {...triggerSlotProps}
+          {...triggerProps}
         >
           {selectedItem ? (
             <>{getItemLabel(selectedItem)}</>
