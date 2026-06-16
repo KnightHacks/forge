@@ -6,8 +6,8 @@ import { Loader2, WalletCards } from "lucide-react";
 import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
 
-import { api } from "~/trpc/react";
 import type { PassProfile, PassProfileKind } from "./types";
+import { api } from "~/trpc/react";
 
 export function DownloadQRPass({
   profile,
