@@ -35,10 +35,7 @@ interface PublicClubTeamMember {
   color: string | null;
 }
 
-type PublicClubTeamRoster = Record<
-  TEAM.ClubTeamSlug,
-  PublicClubTeamMember[]
->;
+type PublicClubTeamRoster = Record<TEAM.ClubTeamSlug, PublicClubTeamMember[]>;
 
 function createEmptyPublicClubRoster(): PublicClubTeamRoster {
   return TEAM.CLUB_TEAM_DEFINITIONS.reduce((roster, team) => {

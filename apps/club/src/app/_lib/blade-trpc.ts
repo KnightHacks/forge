@@ -1,6 +1,7 @@
-import type { AppRouter } from "@forge/api";
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import SuperJSON from "superjson";
+
+import type { AppRouter } from "@forge/api";
 
 const trpcClients = new Map<
   string,

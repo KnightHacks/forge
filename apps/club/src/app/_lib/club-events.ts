@@ -118,11 +118,12 @@ export async function loadClubEvents({
   const boundedSignal = createBoundedSignal(signal);
 
   try {
-    const events =
-      await getBladeTrpcClient(bladeUrl).event.getPublicClubEvents.query(
-        { limit },
-        { signal: boundedSignal.signal },
-      );
+    const events = await getBladeTrpcClient(
+      bladeUrl,
+    ).event.getPublicClubEvents.query(
+      { limit },
+      { signal: boundedSignal.signal },
+    );
 
     return normalizeBladeEvents(events, limit);
   } finally {

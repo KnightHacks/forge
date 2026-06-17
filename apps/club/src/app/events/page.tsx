@@ -145,10 +145,7 @@ export default function EventsPage() {
 
       <div className="club-hero-transition-layer" aria-hidden="true" />
 
-      <EventsClient
-        bladeUrl={env.BLADE_URL}
-        eventLimit={48}
-      />
+      <EventsClient bladeUrl={env.BLADE_URL} eventLimit={48} />
       <JsonLd data={eventsPageJsonLd} />
 
       <section className="relative overflow-hidden px-6 py-28 text-center md:px-10 lg:px-24">
