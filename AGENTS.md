@@ -12,9 +12,11 @@ Read the relevant project context first:
 - `CONTRIBUTING.md`
 - `docs/GETTING-STARTED.md`
 - `docs/GITHUB-ETIQUETTE.md`
+- `docs/REPO-CONVENTIONS.md` for Blade and `packages/*` placement/boundary rules
+- `docs/DATABASE-USAGE.md` before changing DB schemas, DB queries, or table semantics
 - Any task-relevant files in `docs/`
 
-Search for existing patterns before adding new helpers, components, dependencies, routes, schema fields, or workflows.
+Search for existing patterns before adding new helpers, components, dependencies, routes, schema fields, or workflows. Follow `docs/REPO-CONVENTIONS.md` when deciding where constants, utilities, tRPC routers, DB code, and UI components belong. Follow `docs/DATABASE-USAGE.md` when deciding what a table or ambiguous column represents.
 
 ## Reverse-prompt and branch first
 
