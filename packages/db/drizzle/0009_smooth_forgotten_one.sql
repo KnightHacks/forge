@@ -1,0 +1,1 @@
+ALTER TABLE "knight_hacks_hacker" ALTER COLUMN "phone_number" SET NOT NULL;
