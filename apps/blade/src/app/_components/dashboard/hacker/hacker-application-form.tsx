@@ -1405,7 +1405,7 @@ export function HackerFormPage({
                                 !isActiveQuestion("phoneNumber") && "hidden",
                               )}
                             >
-                              <FieldLabel optional>Phone Number</FieldLabel>
+                              <FieldLabel required>Phone Number</FieldLabel>
                               <FormControl>
                                 <Input
                                   type="tel"
@@ -2091,17 +2091,18 @@ export function HackerFormPage({
                                   I authorize you to share my
                                   application/registration information with
                                   Major League Hacking for event administration,
-                                  ranking, and MLH administration in-line with
-                                  the{" "}
+                                  ranking, and administration (including the
+                                  creation of linked accounts on MLH and{" "}
                                   <Link
-                                    href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
+                                    href="https://dev.to/"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className={agreementLinkClassName}
                                   >
-                                    MLH Privacy Policy
+                                    DEV
                                   </Link>
-                                  . I further agree to the terms of both the{" "}
+                                  ) in line with the MLH Privacy Policy. I
+                                  further agree to the terms of both the{" "}
                                   <Link
                                     href="https://github.com/MLH/mlh-policies/blob/main/contest-terms.md"
                                     target="_blank"
@@ -2139,7 +2140,6 @@ export function HackerFormPage({
                             <FormItem
                               className={cn(
                                 "flex flex-row items-start gap-3 space-y-0",
-                                fieldState.error && agreementErrorRowClassName,
                                 !isActiveQuestion(
                                   "agreesToReceiveEmailsFromMLH",
                                 ) && "hidden",
@@ -2148,39 +2148,19 @@ export function HackerFormPage({
                               <FormControl>
                                 <Checkbox
                                   checked={!!field.value}
-                                  onCheckedChange={(value) => {
-                                    field.onChange(value);
-                                    if (value) {
-                                      form.clearErrors(
-                                        "agreesToReceiveEmailsFromMLH",
-                                      );
-                                    }
-                                  }}
-                                  className={cn(
-                                    checkboxClassName,
-                                    fieldState.error &&
-                                      agreementErrorCheckboxClassName,
-                                  )}
+                                  onCheckedChange={field.onChange}
+                                  className={cn(checkboxClassName)}
                                 />
                               </FormControl>
                               <div className="min-w-0 flex-1 space-y-1 leading-none">
                                 <FormLabel
-                                  className={cn(
-                                    checkboxLabelClassName,
-                                    fieldState.error &&
-                                      agreementErrorLabelClassName,
-                                  )}
+                                  className={cn(checkboxLabelClassName)}
                                 >
-                                  I authorize MLH to send me occasional emails
-                                  about relevant events, career opportunities,
-                                  and community announcements.{" "}
-                                  <span className={requiredMarkClassName}>
-                                    *
-                                  </span>
+                                  I authorize MLH + DEV to send me occasional
+                                  emails about relevant events, career
+                                  opportunities, and community
+                                  announcements.{" "}
                                 </FormLabel>
-                                <FormMessage
-                                  className={agreementErrorMessageClassName}
-                                />
                               </div>
                             </FormItem>
                           )}
