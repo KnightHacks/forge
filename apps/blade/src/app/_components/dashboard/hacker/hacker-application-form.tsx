@@ -734,7 +734,8 @@ export function HackerFormPage({
       email: z.string().email("Invalid email").min(1, "Required"),
       phoneNumber: z
         .string()
-        .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number"),
+        .min(1, "Required")
+        .regex(/^\d{10}$|^\d{3}-\d{3}-\d{4}$/, "Invalid phone number"),
       country: z.enum(FORMS.COUNTRIES, {
         error: "Select your country",
       }),
@@ -864,9 +865,7 @@ export function HackerFormPage({
       agreesToMLHDataSharing: z.boolean().refine((val) => val === true, {
         message: "You must agree to the MLH data sharing terms",
       }),
-      agreesToReceiveEmailsFromMLH: z.boolean().refine((val) => val === true, {
-        message: "You must authorize MLH email updates",
-      }),
+      agreesToReceiveEmailsFromMLH: z.boolean(),
     }),
     defaultValues: {
       firstName: "",
@@ -925,7 +924,7 @@ export function HackerFormPage({
         raceOrEthnicity: previousHacker.raceOrEthnicity,
         discordUser: previousHacker.discordUser,
         email: previousHacker.email,
-        phoneNumber: previousHacker.phoneNumber ?? undefined,
+        phoneNumber: previousHacker.phoneNumber ?? "",
         country: previousHacker.country,
         school: previousHacker.school,
         levelOfStudy: previousHacker.levelOfStudy,
