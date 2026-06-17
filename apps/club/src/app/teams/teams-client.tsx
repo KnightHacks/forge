@@ -14,6 +14,7 @@ import { Button } from "@forge/ui/button";
 
 import type { TeamMember, TeamRoster, TeamSlug } from "./teams-config";
 import { CLUB_ASSETS } from "../_lib/assets";
+import { loadClubTeamRoster } from "./team-roster";
 import { createEmptyRoster, TEAM_DEFINITIONS } from "./teams-config";
 
 const CARD_ROTATIONS = ["-1.8deg", "1.7deg", "-1.4deg", "1.2deg", "-1deg"];
@@ -145,38 +146,6 @@ function TeamCard({ member, index }: { member: TeamMember; index: number }) {
   return cardContent;
 }
 
-function normalizeLinkedinUrl(value: unknown) {
-  if (typeof value !== "string") return null;
-
-  const trimmedValue = value.trim();
-
-  return trimmedValue.length > 0 ? trimmedValue : null;
-}
-
-function normalizeTeamMember(member: unknown): TeamMember | null {
-  if (!member || typeof member !== "object") return null;
-
-  const teamMember = member as Partial<TeamMember>;
-
-  if (
-    typeof teamMember.id !== "string" ||
-    typeof teamMember.name !== "string" ||
-    typeof teamMember.teamRole !== "string"
-  ) {
-    return null;
-  }
-
-  return {
-    id: teamMember.id,
-    name: teamMember.name,
-    teamRole: teamMember.teamRole,
-    imageUrl:
-      typeof teamMember.imageUrl === "string" ? teamMember.imageUrl : null,
-    linkedinUrl: normalizeLinkedinUrl(teamMember.linkedinUrl),
-    color: typeof teamMember.color === "string" ? teamMember.color : null,
-  };
-}
-
 function EmptyTeam({ label, status }: { label: string; status: RosterStatus }) {
   const message =
     status === "loading"
@@ -197,35 +166,7 @@ function EmptyTeam({ label, status }: { label: string; status: RosterStatus }) {
   );
 }
 
-function normalizeRoster(value: unknown): TeamRoster {
-  const emptyRoster = createEmptyRoster();
-
-  if (!value || typeof value !== "object") {
-    return emptyRoster;
-  }
-
-  const incomingRoster = value as Partial<Record<TeamSlug, unknown>>;
-
-  for (const team of TEAM_DEFINITIONS) {
-    const members = incomingRoster[team.slug];
-
-    if (!Array.isArray(members)) continue;
-
-    emptyRoster[team.slug] = members
-      .map(normalizeTeamMember)
-      .filter((member): member is TeamMember => member !== null);
-  }
-
-  return emptyRoster;
-}
-
-export default function TeamsClient({
-  bladeUrl,
-  teamsEndpoint,
-}: {
-  bladeUrl: string;
-  teamsEndpoint: string;
-}) {
+export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
   const pendingScrollPosition = useRef<{ x: number; y: number } | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const [roster, setRoster] = useState<TeamRoster>(() => createEmptyRoster());
@@ -289,18 +230,7 @@ export default function TeamsClient({
       setStatus("loading");
 
       try {
-        const response = await fetch(teamsEndpoint, {
-          cache: "no-store",
-          signal: abortController.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Blade returned ${response.status}`);
-        }
-
-        const payload = (await response.json()) as { roster?: unknown };
-
-        setRoster(normalizeRoster(payload.roster));
+        setRoster(await loadClubTeamRoster(bladeUrl, abortController.signal));
         setStatus("ready");
       } catch {
         if (abortController.signal.aborted) return;
@@ -313,7 +243,7 @@ export default function TeamsClient({
     void loadRoster();
 
     return () => abortController.abort();
-  }, [teamsEndpoint]);
+  }, [bladeUrl]);
 
   function selectTeam(team: TeamSlug) {
     if (team === activeTeam) return;

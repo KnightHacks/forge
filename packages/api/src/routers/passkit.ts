@@ -9,7 +9,7 @@ import { db } from "@forge/db/client";
 import { logger } from "@forge/utils";
 
 import { env } from "../env";
-import { getUserQRCodePayload } from "../services/qr-code";
+import { getUserQRCodePayload } from "../qr-code";
 import { protectedProcedure } from "../trpc";
 
 const passProfileKindSchema = z.enum(["member", "hacker"]);

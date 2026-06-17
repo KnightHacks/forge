@@ -9,9 +9,6 @@ import { HomeEvents } from "./_components/home-events";
 import { CLUB_ASSETS } from "./_lib/assets";
 import { PUBLIC_LINKS } from "./_lib/site-config";
 
-const eventsEndpoint = new URL("/api/public/club-events", env.BLADE_URL);
-eventsEndpoint.searchParams.set("limit", "6");
-
 const setApartWords = [
   { text: "Knight", tone: "gold" },
   { text: "Hacks", tone: "gold" },
@@ -265,7 +262,8 @@ export default function HomePage() {
 
           <HomeEvents
             allEventsHref="/events"
-            eventsEndpoint={eventsEndpoint.toString()}
+            bladeUrl={env.BLADE_URL}
+            eventLimit={6}
           />
         </div>
       </section>

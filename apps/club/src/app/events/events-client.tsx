@@ -436,10 +436,10 @@ function EmptyState({ status }: { status: EventsStatus }) {
 
 export function EventsClient({
   bladeUrl,
-  eventsEndpoint,
+  eventLimit,
 }: {
   bladeUrl: string;
-  eventsEndpoint: string;
+  eventLimit: number;
 }) {
   const [events, setEvents] = useState<PublicClubEvent[]>([]);
   const [status, setStatus] = useState<EventsStatus>("loading");
@@ -456,10 +456,11 @@ export function EventsClient({
       setStatus("loading");
 
       try {
-        const bladeEvents = await loadClubEvents(
-          eventsEndpoint,
-          abortController.signal,
-        );
+        const bladeEvents = await loadClubEvents({
+          bladeUrl,
+          limit: eventLimit,
+          signal: abortController.signal,
+        });
 
         setEvents(bladeEvents);
         setStatus("ready");
@@ -482,7 +483,7 @@ export function EventsClient({
     void loadEvents();
 
     return () => abortController.abort();
-  }, [eventsEndpoint]);
+  }, [bladeUrl, eventLimit]);
 
   const filteredEvents = useMemo(
     () => events.filter((event) => eventMatchesFilter(event, activeFilter)),

@@ -77,3 +77,67 @@ export const TEAMS = [
     director_role: "1244790444626280550",
   },
 ];
+
+export const CLUB_TEAM_DEFINITIONS = [
+  {
+    slug: "executive",
+    label: "Executive",
+    heading: "Executive Officers",
+    terms: ["executive", "officer", "officers"],
+  },
+  {
+    slug: "directors",
+    label: "Directors",
+    heading: "Directors",
+    terms: ["director", "directors"],
+  },
+  {
+    slug: "hackathon",
+    label: "Hackathon",
+    heading: "Hackathon Team",
+    terms: ["hackathon", "hack org", "hackorg", "kh ix", "khix"],
+  },
+  {
+    slug: "sponsorship",
+    label: "Sponsorship",
+    heading: "Sponsorship Team",
+    terms: ["sponsor", "sponsorship"],
+  },
+  {
+    slug: "workshop",
+    label: "Workshop",
+    heading: "Workshop Team",
+    terms: ["workshop"],
+  },
+  {
+    slug: "design",
+    label: "Design",
+    heading: "Design Team",
+    terms: ["design"],
+  },
+  {
+    slug: "outreach",
+    label: "Outreach",
+    heading: "Outreach Team",
+    terms: ["outreach"],
+  },
+  {
+    slug: "development",
+    label: "Development",
+    heading: "Development Team",
+    terms: ["development", "developer", "dev team"],
+  },
+] as const;
+
+export type ClubTeamDefinition = (typeof CLUB_TEAM_DEFINITIONS)[number];
+export type ClubTeamSlug = ClubTeamDefinition["slug"];
+
+export const CLUB_EXECUTIVE_ROLE_ORDER = [
+  "President",
+  "Vice President",
+  "Treasurer",
+  "Secretary",
+  "Hack Lead",
+  "Development Lead",
+  "Executive Officer",
+] as const;

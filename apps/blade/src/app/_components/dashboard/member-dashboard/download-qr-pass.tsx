@@ -6,15 +6,16 @@ import { Loader2, WalletCards } from "lucide-react";
 import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
 
-import type { PassProfile, PassProfileKind } from "./types";
 import { api } from "~/trpc/react";
+
+type PassProfileKind = "member" | "hacker";
 
 export function DownloadQRPass({
   profile,
-  profileKind,
+  profileKind = "member",
 }: {
-  profile: PassProfile;
-  profileKind: PassProfileKind;
+  profile?: { firstName?: string | null; lastName?: string | null } | null;
+  profileKind?: PassProfileKind;
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -66,7 +67,7 @@ export function DownloadQRPass({
   });
 
   const handleDownload = () => {
-    if (!profile.firstName || !profile.lastName) {
+    if (profile && (!profile.firstName || !profile.lastName)) {
       toast.error("Missing profile information");
       return;
     }
@@ -75,7 +76,9 @@ export function DownloadQRPass({
     generatePass.mutate({ kind: profileKind });
   };
 
-  const canDownload = Boolean(profile.firstName && profile.lastName);
+  // canDownload allows !profile because handleDownload delegates validation to generatePass.mutate.
+  const canDownload =
+    !profile || Boolean(profile.firstName && profile.lastName);
 
   return (
     <Button

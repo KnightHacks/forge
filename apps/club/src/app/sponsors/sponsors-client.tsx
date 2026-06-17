@@ -9,20 +9,14 @@ import { ArrowRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 
-import type {
-  SponsorHackathon,
-  SponsorRecord,
-  SponsorTier,
-} from "./sponsors-config";
 import { CLUB_ASSETS } from "../_lib/assets";
+import { PUBLIC_LINKS } from "../_lib/site-config";
 import {
   FALLBACK_SPONSOR_LOGO_CDN_ROOT,
   FAQ_ITEMS,
   FEATURED_SUPPORTER_SLIDES,
   ONLINE_SPONSOR_LOGOS,
-  PARTNER_SECTION,
   PAST_SPONSORS,
-  SPONSOR_SECTIONS,
   SPONSOR_WEBSITE_URLS,
 } from "./sponsors-config";
 
@@ -32,10 +26,6 @@ const textOnlySponsorLogoKeys = new Set([
   "gdk",
   "morgan",
   "morgan and morgan",
-]);
-const SPONSOR_TIERS: ReadonlySet<SponsorTier> = new Set([
-  ...SPONSOR_SECTIONS.map((section) => section.tier),
-  PARTNER_SECTION.tier,
 ]);
 const sponsorTileClassName =
   "club-sponsor-tile bg-[#2b0d35]/64 border-white/12 group flex min-h-24 items-center justify-center border-[2px] shadow-[4px_4px_0_rgba(0,0,0,0.2)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--club-gold)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--club-plum)]";
@@ -65,84 +55,6 @@ function sortSponsorsByName<T extends { name: string }>(
       sensitivity: "base",
     }),
   );
-}
-
-function normalizeSponsorTier(value: unknown): SponsorTier | null {
-  if (typeof value !== "string") return null;
-
-  return SPONSOR_TIERS.has(value as SponsorTier)
-    ? (value as SponsorTier)
-    : null;
-}
-
-function normalizeSponsorRecord(value: unknown): SponsorRecord | null {
-  if (!value || typeof value !== "object") return null;
-
-  const sponsor = value as Partial<SponsorRecord>;
-  const tier = normalizeSponsorTier(sponsor.tier);
-
-  if (
-    typeof sponsor.id !== "string" ||
-    typeof sponsor.name !== "string" ||
-    typeof sponsor.logoUrl !== "string" ||
-    typeof sponsor.websiteUrl !== "string" ||
-    !tier
-  ) {
-    return null;
-  }
-
-  return {
-    id: sponsor.id,
-    name: sponsor.name,
-    logoUrl: sponsor.logoUrl,
-    websiteUrl: sponsor.websiteUrl,
-    tier,
-  };
-}
-
-function normalizeSponsorHackathon(value: unknown): SponsorHackathon | null {
-  if (!value || typeof value !== "object") return null;
-
-  const hackathon = value as Partial<SponsorHackathon>;
-
-  if (
-    typeof hackathon.id !== "string" ||
-    typeof hackathon.name !== "string" ||
-    typeof hackathon.displayName !== "string" ||
-    typeof hackathon.startDate !== "string"
-  ) {
-    return null;
-  }
-
-  return {
-    id: hackathon.id,
-    name: hackathon.name,
-    displayName: hackathon.displayName,
-    startDate: hackathon.startDate,
-  };
-}
-
-function normalizeSponsorPayload(value: unknown) {
-  if (!value || typeof value !== "object") {
-    return {
-      hackathon: null,
-      sponsors: [],
-    };
-  }
-
-  const payload = value as {
-    hackathon?: unknown;
-    sponsors?: unknown;
-  };
-
-  return {
-    hackathon: normalizeSponsorHackathon(payload.hackathon),
-    sponsors: Array.isArray(payload.sponsors)
-      ? payload.sponsors
-          .map(normalizeSponsorRecord)
-          .filter((sponsor): sponsor is SponsorRecord => sponsor !== null)
-      : [],
-  };
 }
 
 function getSponsorLogoFileName(logoUrl: string) {
@@ -418,83 +330,6 @@ function SponsorHighlight({
   );
 }
 
-function CurrentSponsorTier({
-  heading,
-  sponsors,
-}: {
-  heading: string;
-  sponsors: SponsorRecord[];
-}) {
-  if (sponsors.length === 0) return null;
-
-  return (
-    <div className="mt-10">
-      <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#f7b5cc]">
-        {heading}
-      </h3>
-      <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-        {sortSponsorsByName(sponsors).map((sponsor, index) => (
-          <SponsorTile
-            key={sponsor.id}
-            sponsor={sponsor}
-            priority={index < 4}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CurrentSponsorGrid({
-  hackathon,
-  sponsors,
-}: {
-  hackathon: SponsorHackathon | null;
-  sponsors: SponsorRecord[];
-}) {
-  if (sponsors.length === 0) return null;
-
-  const partnerSponsors = sponsors.filter(
-    (sponsor) => sponsor.tier === PARTNER_SECTION.tier,
-  );
-
-  return (
-    <section
-      className="container pb-24 md:pb-32"
-      aria-labelledby="current-sponsors"
-    >
-      <div className="mx-auto max-w-6xl">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--club-gold)]">
-          {hackathon ? hackathon.displayName : "Latest Hackathon"}
-        </p>
-        <h2
-          id="current-sponsors"
-          className="mt-3 text-3xl font-black uppercase leading-none text-white md:text-4xl"
-          data-reveal="headline"
-        >
-          <span className="club-line">
-            <span>Current Supporters</span>
-          </span>
-        </h2>
-
-        {SPONSOR_SECTIONS.map((section) => (
-          <CurrentSponsorTier
-            key={section.tier}
-            heading={section.heading}
-            sponsors={sponsors.filter(
-              (sponsor) => sponsor.tier === section.tier,
-            )}
-          />
-        ))}
-        <CurrentSponsorTier
-          heading={PARTNER_SECTION.heading}
-          sponsors={partnerSponsors}
-        />
-      </div>
-    </section>
-  );
-}
-
 function PastSponsorGrid() {
   return (
     <section
@@ -590,49 +425,9 @@ function SponsorFaq() {
   );
 }
 
-export default function SponsorsClient({
-  bladeUrl,
-  sponsorsEndpoint,
-}: {
-  bladeUrl: string;
-  sponsorsEndpoint: string;
-}) {
+export default function SponsorsClient() {
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
-  const [currentSponsors, setCurrentSponsors] = useState<SponsorRecord[]>([]);
-  const [currentHackathon, setCurrentHackathon] =
-    useState<SponsorHackathon | null>(null);
-  const sponsorUrl = new URL("/sponsor", bladeUrl).toString();
-
-  useEffect(() => {
-    const abortController = new AbortController();
-
-    async function loadSponsors() {
-      try {
-        const response = await fetch(sponsorsEndpoint, {
-          cache: "no-store",
-          signal: abortController.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Blade returned ${response.status}`);
-        }
-
-        const payload = normalizeSponsorPayload(await response.json());
-
-        setCurrentSponsors(payload.sponsors);
-        setCurrentHackathon(payload.hackathon);
-      } catch {
-        if (abortController.signal.aborted) return;
-
-        setCurrentSponsors([]);
-        setCurrentHackathon(null);
-      }
-    }
-
-    void loadSponsors();
-
-    return () => abortController.abort();
-  }, [sponsorsEndpoint]);
+  const sponsorUrl = new URL("/sponsor", PUBLIC_LINKS.blade).toString();
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -667,10 +462,6 @@ export default function SponsorsClient({
         selectedIndex={selectedSlideIndex}
         onPrevious={showPreviousSlide}
         onNext={showNextSlide}
-      />
-      <CurrentSponsorGrid
-        hackathon={currentHackathon}
-        sponsors={currentSponsors}
       />
       <PastSponsorGrid />
       <SponsorFaq />

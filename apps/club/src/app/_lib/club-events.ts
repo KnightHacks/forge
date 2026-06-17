@@ -1,3 +1,5 @@
+import { getBladeTrpcClient } from "./blade-trpc";
+
 export interface PublicClubEvent {
   id: string;
   name: string;
@@ -11,23 +13,74 @@ export interface PublicClubEvent {
 export type EventsStatus = "loading" | "ready" | "error";
 
 export const CLUB_TIME_ZONE = "America/New_York";
+const DEFAULT_EVENT_LIMIT = 24;
 const EVENT_FETCH_TIMEOUT_MS = 8_000;
 
-export function normalizeEvents(value: unknown): PublicClubEvent[] {
+interface BladeEventRecord {
+  id?: unknown;
+  name?: unknown;
+  description?: unknown;
+  startDateTime?: unknown;
+  endDateTime?: unknown;
+  location?: unknown;
+  tag?: unknown;
+}
+
+function toDate(value: unknown) {
+  if (value instanceof Date) return value;
+  if (typeof value !== "string" && typeof value !== "number") return null;
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function normalizeBladeEvents(
+  value: unknown,
+  limit = DEFAULT_EVENT_LIMIT,
+): PublicClubEvent[] {
   if (!Array.isArray(value)) return [];
 
-  return value.filter(
-    (event): event is PublicClubEvent =>
-      !!event &&
-      typeof event === "object" &&
-      typeof (event as PublicClubEvent).id === "string" &&
-      typeof (event as PublicClubEvent).name === "string" &&
-      typeof (event as PublicClubEvent).description === "string" &&
-      typeof (event as PublicClubEvent).startDateTime === "string" &&
-      typeof (event as PublicClubEvent).endDateTime === "string" &&
-      typeof (event as PublicClubEvent).location === "string" &&
-      typeof (event as PublicClubEvent).tag === "string",
-  );
+  const now = new Date();
+
+  return value
+    .map((event): PublicClubEvent | null => {
+      if (!event || typeof event !== "object") return null;
+
+      const bladeEvent = event as BladeEventRecord;
+      const startDate = toDate(bladeEvent.startDateTime);
+      const endDate = toDate(bladeEvent.endDateTime);
+
+      if (
+        !startDate ||
+        !endDate ||
+        startDate <= now ||
+        typeof bladeEvent.id !== "string" ||
+        typeof bladeEvent.name !== "string" ||
+        typeof bladeEvent.description !== "string" ||
+        typeof bladeEvent.location !== "string" ||
+        typeof bladeEvent.tag !== "string"
+      ) {
+        return null;
+      }
+
+      return {
+        id: bladeEvent.id,
+        name: bladeEvent.name,
+        description: bladeEvent.description,
+        startDateTime: startDate.toISOString(),
+        endDateTime: endDate.toISOString(),
+        location: bladeEvent.location,
+        tag: bladeEvent.tag,
+      };
+    })
+    .filter((event): event is PublicClubEvent => event !== null)
+    .sort(
+      (first, second) =>
+        new Date(first.startDateTime).getTime() -
+        new Date(second.startDateTime).getTime(),
+    )
+    .slice(0, limit);
 }
 
 function createBoundedSignal(signal: AbortSignal) {
@@ -53,25 +106,25 @@ function createBoundedSignal(signal: AbortSignal) {
   };
 }
 
-export async function loadClubEvents(
-  eventsEndpoint: string,
-  signal: AbortSignal,
-): Promise<PublicClubEvent[]> {
+export async function loadClubEvents({
+  bladeUrl,
+  limit = DEFAULT_EVENT_LIMIT,
+  signal,
+}: {
+  bladeUrl: string;
+  limit?: number;
+  signal: AbortSignal;
+}): Promise<PublicClubEvent[]> {
   const boundedSignal = createBoundedSignal(signal);
 
   try {
-    const response = await fetch(eventsEndpoint, {
-      cache: "no-store",
-      signal: boundedSignal.signal,
-    });
+    const events =
+      await getBladeTrpcClient(bladeUrl).event.getPublicClubEvents.query(
+        { limit },
+        { signal: boundedSignal.signal },
+      );
 
-    if (!response.ok) {
-      throw new Error(`Blade returned ${response.status}`);
-    }
-
-    const payload = (await response.json()) as { events?: unknown };
-
-    return normalizeEvents(payload.events);
+    return normalizeBladeEvents(events, limit);
   } finally {
     boundedSignal.clear();
   }

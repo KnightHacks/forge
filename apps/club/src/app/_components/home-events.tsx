@@ -81,11 +81,13 @@ function EventRow({ event }: { event: PublicClubEvent }) {
 export function HomeEvents({
   allEventsHref,
   allEventsLabel = "View All Events",
-  eventsEndpoint,
+  bladeUrl,
+  eventLimit = HOME_EVENT_LIMIT,
 }: {
   allEventsHref: string;
   allEventsLabel?: string;
-  eventsEndpoint: string;
+  bladeUrl: string;
+  eventLimit?: number;
 }) {
   const [events, setEvents] = useState<PublicClubEvent[]>([]);
   const [status, setStatus] = useState<EventsStatus>("loading");
@@ -97,10 +99,11 @@ export function HomeEvents({
       setStatus("loading");
 
       try {
-        const bladeEvents = await loadClubEvents(
-          eventsEndpoint,
-          abortController.signal,
-        );
+        const bladeEvents = await loadClubEvents({
+          bladeUrl,
+          limit: eventLimit,
+          signal: abortController.signal,
+        });
 
         setEvents(bladeEvents);
         setStatus("ready");
@@ -115,7 +118,7 @@ export function HomeEvents({
     void loadEvents();
 
     return () => abortController.abort();
-  }, [eventsEndpoint]);
+  }, [bladeUrl, eventLimit]);
 
   const homeEvents = useMemo(() => events.slice(0, HOME_EVENT_LIMIT), [events]);
 

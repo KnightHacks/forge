@@ -4,9 +4,10 @@ import { TRPCError } from "@trpc/server";
 import { Client } from "minio";
 import { z } from "zod";
 
-import { MINIO } from "@forge/consts";
-import { and, count, sql } from "@forge/db";
+import { MINIO, TEAM } from "@forge/consts";
+import { and, count, eq, ilike, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
+import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import { Member } from "@forge/db/schemas/knight-hacks";
 import { logger } from "@forge/utils";
 
@@ -24,6 +25,250 @@ const s3Client = new Client({
   accessKey: env.MINIO_ACCESS_KEY,
   secretKey: env.MINIO_SECRET_KEY,
 });
+
+interface PublicClubTeamMember {
+  id: string;
+  name: string;
+  teamRole: string;
+  imageUrl: string | null;
+  linkedinUrl: string | null;
+  color: string | null;
+}
+
+type PublicClubTeamRoster = Record<
+  TEAM.ClubTeamSlug,
+  PublicClubTeamMember[]
+>;
+
+function createEmptyPublicClubRoster(): PublicClubTeamRoster {
+  return TEAM.CLUB_TEAM_DEFINITIONS.reduce((roster, team) => {
+    roster[team.slug] = [];
+    return roster;
+  }, {} as PublicClubTeamRoster);
+}
+
+function getFullName({
+  firstName,
+  lastName,
+  displayName,
+}: {
+  firstName: string | null;
+  lastName: string | null;
+  displayName: string | null;
+}) {
+  const memberName = [firstName, lastName].filter(Boolean).join(" ").trim();
+
+  if (memberName.length > 0) return memberName;
+  if (displayName?.trim()) return displayName.trim();
+
+  return "Knight Hacks Member";
+}
+
+function toNonEmptyString(value: string | null) {
+  const trimmedValue = value?.trim();
+
+  return trimmedValue && trimmedValue.length > 0 ? trimmedValue : null;
+}
+
+function getMatchingClubTeam(roleName: string) {
+  const normalizedRoleName = roleName.toLowerCase();
+
+  return (
+    TEAM.CLUB_TEAM_DEFINITIONS.find((team) =>
+      team.terms.some((term) => normalizedRoleName.includes(term)),
+    ) ?? null
+  );
+}
+
+function getSpecificDirectorRole(roleNames: string[]) {
+  return roleNames.find((roleName) => {
+    const normalizedRoleName = roleName.toLowerCase();
+
+    return (
+      normalizedRoleName.includes("director") &&
+      normalizedRoleName !== "directors"
+    );
+  });
+}
+
+function includesAny(value: string, terms: string[]) {
+  return terms.some((term) => value.includes(term));
+}
+
+function getExecutiveRoleLabel({
+  roleNames,
+  tagline,
+}: {
+  roleNames: string[];
+  tagline: string | null;
+}) {
+  const sources = [tagline ?? "", ...roleNames].map((value) =>
+    value.toLowerCase(),
+  );
+
+  if (
+    sources.some(
+      (value) => value.includes("vice president") || /\bvp\b/.test(value),
+    )
+  ) {
+    return "Vice President";
+  }
+  if (sources.some((value) => value.includes("president"))) {
+    return "President";
+  }
+  if (sources.some((value) => value.includes("treasurer"))) {
+    return "Treasurer";
+  }
+  if (sources.some((value) => value.includes("secretary"))) {
+    return "Secretary";
+  }
+  if (
+    sources.some((value) => includesAny(value, ["hack lead", "hackathon lead"]))
+  ) {
+    return "Hack Lead";
+  }
+  if (
+    sources.some((value) =>
+      includesAny(value, ["dev lead", "development lead"]),
+    )
+  ) {
+    return "Development Lead";
+  }
+
+  return "Executive Officer";
+}
+
+function getExecutiveSortOrder(roleLabel: string) {
+  const index = TEAM.CLUB_EXECUTIVE_ROLE_ORDER.findIndex(
+    (label) => label === roleLabel,
+  );
+
+  return index === -1 ? TEAM.CLUB_EXECUTIVE_ROLE_ORDER.length : index;
+}
+
+function getTeamRoleLabel({
+  roleNames,
+  tagline,
+  team,
+}: {
+  roleNames: string[];
+  tagline: string | null;
+  team: TEAM.ClubTeamDefinition;
+}) {
+  if (team.slug === "executive") {
+    return getExecutiveRoleLabel({ roleNames, tagline });
+  }
+
+  if (team.slug === "directors") {
+    return getSpecificDirectorRole(roleNames) ?? "Director";
+  }
+
+  return team.label;
+}
+
+function sortPublicClubRoster(roster: PublicClubTeamRoster) {
+  for (const team of TEAM.CLUB_TEAM_DEFINITIONS) {
+    roster[team.slug].sort((first, second) => {
+      if (team.slug === "executive") {
+        const firstOrder = getExecutiveSortOrder(first.teamRole);
+        const secondOrder = getExecutiveSortOrder(second.teamRole);
+
+        if (firstOrder !== secondOrder) return firstOrder - secondOrder;
+      }
+
+      return first.name.localeCompare(second.name);
+    });
+  }
+
+  return roster;
+}
+
+async function getPublicClubRoster() {
+  const roleFilters = TEAM.CLUB_TEAM_DEFINITIONS.flatMap((team) =>
+    team.terms.map((term) => ilike(Roles.name, `%${term}%`)),
+  );
+  const roleWhereClause =
+    roleFilters.length === 1 ? roleFilters[0] : or(...roleFilters);
+
+  if (!roleWhereClause) return createEmptyPublicClubRoster();
+
+  const rows = await db
+    .select({
+      roleName: Roles.name,
+      roleColor: Roles.teamHexcodeColor,
+      userId: User.id,
+      displayName: User.name,
+      memberId: Member.id,
+      firstName: Member.firstName,
+      lastName: Member.lastName,
+      tagline: Member.tagline,
+      guildProfilePictureUrl: Member.profilePictureUrl,
+      linkedinProfileUrl: Member.linkedinProfileUrl,
+    })
+    .from(Roles)
+    .innerJoin(Permissions, eq(Permissions.roleId, Roles.id))
+    .innerJoin(User, eq(User.id, Permissions.userId))
+    .innerJoin(Member, eq(Member.userId, User.id))
+    .where(and(roleWhereClause, eq(Member.guildProfileVisible, true)))
+    .orderBy(Roles.name, Member.firstName, Member.lastName, User.name);
+
+  const roster = createEmptyPublicClubRoster();
+  const rowsByUserId = new Map<string, typeof rows>();
+
+  for (const row of rows) {
+    rowsByUserId.set(row.userId, [
+      ...(rowsByUserId.get(row.userId) ?? []),
+      row,
+    ]);
+  }
+
+  for (const userRows of rowsByUserId.values()) {
+    const rankedRoles = userRows
+      .map((row) => ({ row, team: getMatchingClubTeam(row.roleName) }))
+      .filter(
+        (
+          entry,
+        ): entry is {
+          row: (typeof rows)[number];
+          team: TEAM.ClubTeamDefinition;
+        } => entry.team !== null,
+      )
+      .sort(
+        (first, second) =>
+          TEAM.CLUB_TEAM_DEFINITIONS.findIndex(
+            (team) => team.slug === first.team.slug,
+          ) -
+          TEAM.CLUB_TEAM_DEFINITIONS.findIndex(
+            (team) => team.slug === second.team.slug,
+          ),
+      );
+    const primaryRole = rankedRoles[0];
+
+    if (!primaryRole) continue;
+
+    const roleNames = userRows.map((row) => row.roleName);
+    const { row, team } = primaryRole;
+
+    roster[team.slug].push({
+      id: `${team.slug}-${row.memberId}`,
+      name: getFullName({
+        firstName: row.firstName,
+        lastName: row.lastName,
+        displayName: row.displayName,
+      }),
+      teamRole: getTeamRoleLabel({
+        roleNames,
+        tagline: row.tagline,
+        team,
+      }),
+      imageUrl: toNonEmptyString(row.guildProfilePictureUrl),
+      linkedinUrl: toNonEmptyString(row.linkedinProfileUrl),
+      color: row.roleColor,
+    });
+  }
+
+  return sortPublicClubRoster(roster);
+}
 
 export const guildRouter = {
   uploadProfilePicture: protectedProcedure
@@ -216,6 +461,10 @@ export const guildRouter = {
 
       return { members, total };
     }),
+
+  getPublicClubTeamRoster: publicProcedure.query(async () => {
+    return await getPublicClubRoster();
+  }),
 
   getGuildResume: publicProcedure
     .input(z.object({ memberId: z.string().uuid() }))

@@ -1,32 +1,5 @@
 import { CLUB_ASSETS } from "../_lib/assets";
 
-export const SPONSOR_SECTIONS = [
-  {
-    tier: "gold",
-    label: "Gold",
-    heading: "Gold Sponsors",
-    tileClassName: "md:col-span-2",
-  },
-  {
-    tier: "silver",
-    label: "Silver",
-    heading: "Silver Sponsors",
-    tileClassName: "",
-  },
-  {
-    tier: "bronze",
-    label: "Bronze",
-    heading: "Bronze Sponsors",
-    tileClassName: "",
-  },
-] as const;
-
-export const PARTNER_SECTION = {
-  tier: "other",
-  label: "Partner",
-  heading: "Our Partners",
-} as const;
-
 const FORGE_CDN_REF = "5cbe2dcdb841048094e83ca2cb51630777a35765";
 const FORGE_CDN_ROOT = `https://cdn.jsdelivr.net/gh/KnightHacks/forge@${FORGE_CDN_REF}`;
 const CLUB_LOGO_ROOT = "/logos";
@@ -477,24 +450,5 @@ export const FAQ_ITEMS = [
       "Reach out through the sponsor form and our sponsorship team will follow up with options for the current season.",
   },
 ] as const;
-
-export type SponsorTier =
-  | (typeof SPONSOR_SECTIONS)[number]["tier"]
-  | typeof PARTNER_SECTION.tier;
-
-export interface SponsorRecord {
-  id: string;
-  name: string;
-  logoUrl: string;
-  websiteUrl: string;
-  tier: SponsorTier;
-}
-
-export interface SponsorHackathon {
-  id: string;
-  name: string;
-  displayName: string;
-  startDate: string;
-}
 
 export type FeaturedSupporterSlide = (typeof FEATURED_SUPPORTER_SLIDES)[number];

@@ -11,13 +11,6 @@ export const metadata: Metadata = createPageMetadata({
   path: "/teams",
 });
 
-const teamsEndpoint = new URL("/api/public/club-teams", env.BLADE_URL);
-
 export default function TeamsPage() {
-  return (
-    <TeamsClient
-      bladeUrl={env.BLADE_URL}
-      teamsEndpoint={teamsEndpoint.toString()}
-    />
-  );
+  return <TeamsClient bladeUrl={env.BLADE_URL} />;
 }

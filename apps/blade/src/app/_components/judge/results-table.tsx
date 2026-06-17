@@ -40,8 +40,6 @@ import SortButton from "~/app/_components/shared/SortButton";
 import { api } from "~/trpc/react";
 import ResultsFilter from "./results-filter";
 
-const EMPTY_RESULT_PLACEHOLDER = "—";
-
 export default function ResultsTable() {
   const [filters, setFilters] = useState({
     judge: null as { id: string; name: string } | null,
@@ -372,7 +370,7 @@ export default function ResultsTable() {
                         Devpost
                       </a>
                     ) : (
-                      EMPTY_RESULT_PLACEHOLDER
+                      "Not rated"
                     )}
                   </TableCell>
                   <TableCell className="text-center">
@@ -490,7 +488,7 @@ export default function ResultsTable() {
                                       )}
                                     >
                                       {project.originality_rating ||
-                                        EMPTY_RESULT_PLACEHOLDER}
+                                        "Not rated"}
                                     </Badge>
                                   </div>
 
@@ -506,8 +504,7 @@ export default function ResultsTable() {
                                         project.design_rating,
                                       )}
                                     >
-                                      {project.design_rating ||
-                                        EMPTY_RESULT_PLACEHOLDER}
+                                      {project.design_rating || "Not rated"}
                                     </Badge>
                                   </div>
 
@@ -524,7 +521,7 @@ export default function ResultsTable() {
                                       )}
                                     >
                                       {project.technical_understanding_rating ||
-                                        EMPTY_RESULT_PLACEHOLDER}
+                                        "Not rated"}
                                     </Badge>
                                   </div>
                                 </CardContent>
@@ -545,7 +542,7 @@ export default function ResultsTable() {
                                       )}
                                     >
                                       {project.implementation_rating ||
-                                        EMPTY_RESULT_PLACEHOLDER}
+                                        "Not rated"}
                                     </Badge>
                                   </div>
 
@@ -561,8 +558,7 @@ export default function ResultsTable() {
                                         project.wow_factor_rating,
                                       )}
                                     >
-                                      {project.wow_factor_rating ||
-                                        EMPTY_RESULT_PLACEHOLDER}
+                                      {project.wow_factor_rating || "Not rated"}
                                     </Badge>
                                   </div>
 
@@ -646,7 +642,7 @@ export default function ResultsTable() {
                                               }
                                             >
                                               {submission.originality_rating ||
-                                                EMPTY_RESULT_PLACEHOLDER}
+                                                "Not rated"}
                                             </Badge>
                                           </div>
                                           <div className="flex items-center justify-between">
@@ -663,7 +659,7 @@ export default function ResultsTable() {
                                               }
                                             >
                                               {submission.design_rating ||
-                                                EMPTY_RESULT_PLACEHOLDER}
+                                                "Not rated"}
                                             </Badge>
                                           </div>
                                           <div className="flex items-center justify-between">
@@ -680,7 +676,7 @@ export default function ResultsTable() {
                                               }
                                             >
                                               {submission.technical_understanding_rating ||
-                                                EMPTY_RESULT_PLACEHOLDER}
+                                                "Not rated"}
                                             </Badge>
                                           </div>
                                         </div>
@@ -699,7 +695,7 @@ export default function ResultsTable() {
                                               }
                                             >
                                               {submission.implementation_rating ||
-                                                EMPTY_RESULT_PLACEHOLDER}
+                                                "Not rated"}
                                             </Badge>
                                           </div>
                                           <div className="flex items-center justify-between">
@@ -716,7 +712,7 @@ export default function ResultsTable() {
                                               }
                                             >
                                               {submission.wow_factor_rating ||
-                                                EMPTY_RESULT_PLACEHOLDER}
+                                                "Not rated"}
                                             </Badge>
                                           </div>
                                         </div>

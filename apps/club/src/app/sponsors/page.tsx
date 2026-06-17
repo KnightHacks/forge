@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import { env } from "~/env";
 import { createPageMetadata } from "../seo";
 import SponsorsClient from "./sponsors-client";
 
@@ -11,13 +10,6 @@ export const metadata: Metadata = createPageMetadata({
   path: "/sponsors",
 });
 
-const sponsorsEndpoint = new URL("/api/public/club-sponsors", env.BLADE_URL);
-
 export default function SponsorsPage() {
-  return (
-    <SponsorsClient
-      bladeUrl={env.BLADE_URL}
-      sponsorsEndpoint={sponsorsEndpoint.toString()}
-    />
-  );
+  return <SponsorsClient />;
 }

@@ -2,40 +2,16 @@ import type {
   HackathonEmailKind,
   HackathonEmailTemplatePresetKey,
 } from "./templates";
+import type {
+  BuildHackathonEmailInput,
+  BuiltHackathonEmail,
+  HackathonEmailHackathonContext,
+} from "./types";
 import {
   DEFAULT_HACKATHON_EMAIL_TEMPLATE_PRESET_KEY,
   HACKATHON_EMAIL_TEMPLATE_IDS,
   HACKATHON_EMAIL_TEMPLATE_PRESET_KEYS,
 } from "./templates";
-
-export interface HackathonEmailHackathonContext {
-  applicationBackgroundKey?: string | null;
-  displayName: string;
-  emailTemplateKey?: string | null;
-  routeName?: string | null;
-  theme?: string | null;
-}
-
-export interface HackathonEmailRecipientContext {
-  name: string;
-  to: string | string[];
-}
-
-export interface BuildHackathonEmailInput {
-  data?: Record<string, string | null | undefined>;
-  from?: string;
-  hackathon: HackathonEmailHackathonContext;
-  kind: HackathonEmailKind;
-  recipient: HackathonEmailRecipientContext;
-}
-
-export interface BuiltHackathonEmail {
-  data: Record<string, string>;
-  from?: string;
-  subject: string;
-  template_id: number;
-  to: string | string[];
-}
 
 function getKnownHackathonEmailTemplatePresetKey(
   presetKey?: string | null,
@@ -131,6 +107,12 @@ export function buildHackathonEmail({
     to: recipient.to,
   };
 }
+
+export type {
+  BuildHackathonEmailInput,
+  BuiltHackathonEmail,
+  HackathonEmailHackathonContext,
+} from "./types";
 
 export {
   DEFAULT_HACKATHON_EMAIL_TEMPLATE_PRESET_KEY,

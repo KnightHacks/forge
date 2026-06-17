@@ -4,8 +4,6 @@ import {
   ORGANIZATION_NAME,
   ORGANIZER_EMAIL,
   PUBLIC_LINKS,
-  RESOURCE_LIBRARY_PUBLISHED_AT,
-  RESOURCE_LIBRARY_UPDATED_AT,
   SITE_NAME,
   SITE_URL,
   SOCIAL_PROFILE_URLS,
@@ -17,8 +15,6 @@ export {
   ORGANIZER_EMAIL,
   PRESIDENT_EMAIL,
   PUBLIC_LINKS,
-  RESOURCE_LIBRARY_PUBLISHED_AT,
-  RESOURCE_LIBRARY_UPDATED_AT,
   SITE_LAST_MODIFIED,
   SITE_NAME,
   SITE_URL,
@@ -26,6 +22,7 @@ export {
 } from "./_lib/site-config";
 
 export const BLADE_URL = PUBLIC_LINKS.blade;
+export const CODE_OF_CONDUCT_URL = PUBLIC_LINKS.codeOfConduct;
 export const DISCORD_URL = PUBLIC_LINKS.discord;
 export const INSTAGRAM_URL = PUBLIC_LINKS.instagram;
 export const LINKEDIN_URL = PUBLIC_LINKS.linkedin;
@@ -199,38 +196,6 @@ export function createWebPageJsonLd({
     about: {
       "@id": `${SITE_URL}/#organization`,
     },
-    inLanguage: "en-US",
-  };
-}
-
-export function createArticleJsonLd({
-  path,
-  title,
-  description,
-  datePublished = RESOURCE_LIBRARY_PUBLISHED_AT,
-  dateModified = RESOURCE_LIBRARY_UPDATED_AT,
-}: {
-  path: string;
-  title: string;
-  description: string;
-  datePublished?: string;
-  dateModified?: string;
-}) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: title,
-    description,
-    url: absoluteUrl(path),
-    datePublished,
-    dateModified,
-    author: {
-      "@id": `${SITE_URL}/#organization`,
-    },
-    publisher: {
-      "@id": `${SITE_URL}/#organization`,
-    },
-    image: OG_IMAGE_URL,
     inLanguage: "en-US",
   };
 }

@@ -18,9 +18,6 @@ import {
 } from "../seo";
 import { EventsClient } from "./events-client";
 
-const eventsEndpoint = new URL("/api/public/club-events", env.BLADE_URL);
-eventsEndpoint.searchParams.set("limit", "48");
-
 export const metadata: Metadata = createPageMetadata({
   title: "Events",
   description:
@@ -150,7 +147,7 @@ export default function EventsPage() {
 
       <EventsClient
         bladeUrl={env.BLADE_URL}
-        eventsEndpoint={eventsEndpoint.toString()}
+        eventLimit={48}
       />
       <JsonLd data={eventsPageJsonLd} />
 

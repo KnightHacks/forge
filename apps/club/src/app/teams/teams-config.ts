@@ -1,47 +1,8 @@
-export const TEAM_DEFINITIONS = [
-  {
-    slug: "executive",
-    label: "Executive",
-    heading: "Executive Officers",
-  },
-  {
-    slug: "directors",
-    label: "Directors",
-    heading: "Directors",
-  },
-  {
-    slug: "hackathon",
-    label: "Hackathon",
-    heading: "Hackathon Team",
-  },
-  {
-    slug: "sponsorship",
-    label: "Sponsorship",
-    heading: "Sponsorship Team",
-  },
-  {
-    slug: "workshop",
-    label: "Workshop",
-    heading: "Workshop Team",
-  },
-  {
-    slug: "design",
-    label: "Design",
-    heading: "Design Team",
-  },
-  {
-    slug: "outreach",
-    label: "Outreach",
-    heading: "Outreach Team",
-  },
-  {
-    slug: "development",
-    label: "Development",
-    heading: "Development Team",
-  },
-] as const;
+import { TEAM } from "@forge/consts";
 
-export type TeamSlug = (typeof TEAM_DEFINITIONS)[number]["slug"];
+export const TEAM_DEFINITIONS = TEAM.CLUB_TEAM_DEFINITIONS;
+
+export type TeamSlug = TEAM.ClubTeamSlug;
 
 export interface TeamMember {
   id: string;
