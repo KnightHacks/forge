@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+Follow the repository-level agent instructions in `AGENTS.md`. Treat `AGENTS.md` as the canonical source for Forge agent behavior, scope control, checks, commit hygiene, and PR expectations.
