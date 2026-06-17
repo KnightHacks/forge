@@ -114,7 +114,7 @@ export const Hacker = createTable("hacker", (t) => ({
     .notNull()
     .default("United States of America"),
   email: t.varchar({ length: 255 }).notNull(),
-  phoneNumber: t.varchar({ length: 255 }),
+  phoneNumber: t.varchar({ length: 255 }).notNull(),
   school: t.text({ enum: FORMS.SCHOOLS }).notNull(),
   levelOfStudy: t.text({ enum: FORMS.LEVELS_OF_STUDY }).notNull(),
   major: t.text({ enum: FORMS.MAJORS }).notNull().default("Computer Science"),
