@@ -4519,6 +4519,7 @@ export const SCHOOLS = [
   "Troy High School",
   "Union County Magnet High School",
   "Unionville High School",
+  "Valencia College",
   "Valencia Elementary",
   "Washington High School",
   "Webb Bridge Middle School",

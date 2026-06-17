@@ -2135,7 +2135,7 @@ export function HackerFormPage({
                         <FormField
                           control={form.control}
                           name="agreesToReceiveEmailsFromMLH"
-                          render={({ field, fieldState }) => (
+                          render={({ field }) => (
                             <FormItem
                               className={cn(
                                 "flex flex-row items-start gap-3 space-y-0",

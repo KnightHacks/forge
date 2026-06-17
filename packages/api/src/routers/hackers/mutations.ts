@@ -268,7 +268,7 @@ export const hackerMutationRouter = {
         >,
       );
 
-      if ((hacker.phoneNumber ?? "") !== (normalizedPhone ?? "")) {
+      if (hacker.phoneNumber !== normalizedPhone) {
         changes.phoneNumber = {
           before: hacker.phoneNumber,
           after: normalizedPhone,
