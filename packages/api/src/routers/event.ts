@@ -160,7 +160,7 @@ export const eventRouter = {
         .from(Event)
         .where(
           and(
-            gt(Event.start_datetime, new Date()),
+            gt(Event.end_datetime, new Date()),
             eq(Event.isOperationsCalendar, false),
             eq(Event.dues_paying, false),
             sql<boolean>`cardinality(${Event.roles}) = 0`,

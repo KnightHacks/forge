@@ -101,7 +101,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${montserrat.variable} antialiased`}>
         <ClubMotionRuntime />
-        <div className="club-home-bg flex min-h-screen flex-col overflow-hidden">
+        <div className="club-home-bg flex min-h-screen flex-col">
           <a
             href="#main-content"
             className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-white focus:px-4 focus:py-3 focus:text-sm focus:font-black focus:text-[#140316] focus:outline-none focus:ring-2 focus:ring-[var(--club-gold)]"

@@ -54,7 +54,8 @@ function normalizeBladeEvents(
       if (
         !startDate ||
         !endDate ||
-        startDate <= now ||
+        endDate <= now ||
+        endDate <= startDate ||
         typeof bladeEvent.id !== "string" ||
         typeof bladeEvent.name !== "string" ||
         typeof bladeEvent.description !== "string" ||

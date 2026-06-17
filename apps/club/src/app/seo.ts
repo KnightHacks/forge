@@ -81,7 +81,7 @@ export function createPageMetadata({
     title,
     description,
     alternates: {
-      canonical: path,
+      canonical: url,
     },
     openGraph: {
       type: "website",

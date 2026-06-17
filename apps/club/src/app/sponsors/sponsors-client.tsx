@@ -220,7 +220,7 @@ function Hero({ sponsorUrl }: { sponsorUrl: string }) {
         </p>
 
         <Button asChild className="club-button club-button-pink mt-10 px-8">
-          <a href={sponsorUrl}>
+          <a href={sponsorUrl} target="_blank" rel="noopener noreferrer">
             Become a Sponsor
             <ArrowRight aria-hidden="true" className="ml-2 size-4" />
           </a>

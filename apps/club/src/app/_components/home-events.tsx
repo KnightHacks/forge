@@ -19,10 +19,16 @@ function ExternalArrow() {
   return <ArrowUpRight aria-hidden="true" className="ml-2 size-4" />;
 }
 
-function LoadingRows() {
+function getSafeEventLimit(limit: number) {
+  if (!Number.isFinite(limit)) return HOME_EVENT_LIMIT;
+
+  return Math.max(1, Math.floor(limit));
+}
+
+function LoadingRows({ eventLimit }: { eventLimit: number }) {
   return (
     <div className="mt-14" aria-hidden="true">
-      {Array.from({ length: HOME_EVENT_LIMIT }).map((_, index) => (
+      {Array.from({ length: eventLimit }).map((_, index) => (
         <article
           key={index}
           className="grid grid-cols-[4rem_4.5rem_1fr] items-center gap-4 border-b border-white/10 py-8 md:grid-cols-[5rem_5.5rem_1fr_15rem] md:gap-6"
@@ -91,6 +97,7 @@ export function HomeEvents({
 }) {
   const [events, setEvents] = useState<PublicClubEvent[]>([]);
   const [status, setStatus] = useState<EventsStatus>("loading");
+  const safeEventLimit = getSafeEventLimit(eventLimit);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -101,7 +108,7 @@ export function HomeEvents({
       try {
         const bladeEvents = await loadClubEvents({
           bladeUrl,
-          limit: eventLimit,
+          limit: safeEventLimit,
           signal: abortController.signal,
         });
 
@@ -118,14 +125,17 @@ export function HomeEvents({
     void loadEvents();
 
     return () => abortController.abort();
-  }, [bladeUrl, eventLimit]);
+  }, [bladeUrl, safeEventLimit]);
 
-  const homeEvents = useMemo(() => events.slice(0, HOME_EVENT_LIMIT), [events]);
+  const homeEvents = useMemo(
+    () => events.slice(0, safeEventLimit),
+    [events, safeEventLimit],
+  );
 
   return (
     <>
       {status === "loading" ? (
-        <LoadingRows />
+        <LoadingRows eventLimit={safeEventLimit} />
       ) : homeEvents.length > 0 ? (
         <div className="mt-14" data-stagger>
           {homeEvents.map((event) => (
