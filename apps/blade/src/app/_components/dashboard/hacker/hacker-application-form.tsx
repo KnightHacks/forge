@@ -924,7 +924,7 @@ export function HackerFormPage({
         raceOrEthnicity: previousHacker.raceOrEthnicity,
         discordUser: previousHacker.discordUser,
         email: previousHacker.email,
-        phoneNumber: previousHacker.phoneNumber ?? "",
+        phoneNumber: previousHacker.phoneNumber,
         country: previousHacker.country,
         school: previousHacker.school,
         levelOfStudy: previousHacker.levelOfStudy,
