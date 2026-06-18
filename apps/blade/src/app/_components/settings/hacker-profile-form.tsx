@@ -225,7 +225,7 @@ export function HackerProfileForm({
       raceOrEthnicity: hacker.raceOrEthnicity,
       discordUser: hacker.discordUser,
       email: hacker.email,
-      phoneNumber: hacker.phoneNumber,
+      phoneNumber: hacker.phoneNumber || "",
       school: hacker.school,
       major: hacker.major,
       levelOfStudy: hacker.levelOfStudy,

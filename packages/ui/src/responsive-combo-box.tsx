@@ -36,6 +36,63 @@ interface ResponsiveComboBoxProps<T> {
   value?: string | null;
 }
 
+const MAX_SEARCH_RESULTS = 20;
+const SEARCH_ACRONYM_STOP_WORDS = new Set([
+  "and",
+  "at",
+  "for",
+  "in",
+  "of",
+  "the",
+]);
+
+function normalizeSearchText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
+function getSearchAcronym(value: string) {
+  return value
+    .split(/[^a-z0-9]+/i)
+    .filter(
+      (part) => part && !SEARCH_ACRONYM_STOP_WORDS.has(part.toLowerCase()),
+    )
+    .map((part) => part[0])
+    .join("")
+    .toLowerCase();
+}
+
+function getSearchScore(label: string, query: string) {
+  const normalizedLabel = normalizeSearchText(label);
+  const normalizedQuery = normalizeSearchText(query);
+
+  if (!normalizedQuery) return 0;
+  if (normalizedLabel === normalizedQuery) return 0;
+  if (normalizedLabel.startsWith(normalizedQuery)) return 1;
+
+  const phraseIndex = normalizedLabel.indexOf(normalizedQuery);
+  if (phraseIndex >= 0) return 10 + phraseIndex;
+
+  const acronym = getSearchAcronym(normalizedLabel);
+  if (acronym === normalizedQuery) return 15;
+  if (acronym.startsWith(normalizedQuery)) return 20;
+
+  const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return 0;
+
+  let totalPosition = 0;
+  for (const token of tokens) {
+    const tokenIndex = normalizedLabel.indexOf(token);
+    if (tokenIndex < 0) return null;
+    totalPosition += tokenIndex;
+  }
+
+  return 30 + totalPosition;
+}
+
 /**
  * A responsive combo box component that adapts its UI based on the screen size.
  * On desktop screens, it uses a popover for item selection, while on mobile screens,
@@ -150,6 +207,7 @@ export function ResponsiveComboBox<T>({
             setSelectedItem={handleSelectItem}
             renderItem={renderItem}
             getItemValue={getItemValue}
+            getItemLabel={getItemLabel}
             inputPlaceholder={inputPlaceholder}
           />
         </PopoverContent>
@@ -181,6 +239,7 @@ export function ResponsiveComboBox<T>({
             setSelectedItem={handleSelectItem}
             renderItem={renderItem}
             getItemValue={getItemValue}
+            getItemLabel={getItemLabel}
             inputPlaceholder={inputPlaceholder}
           />
         </div>
@@ -195,6 +254,7 @@ function ItemList<T>({
   setSelectedItem,
   renderItem,
   getItemValue,
+  getItemLabel,
   inputPlaceholder,
 }: {
   items: readonly T[];
@@ -202,16 +262,40 @@ function ItemList<T>({
   setSelectedItem: (item: T | null) => void;
   renderItem: (item: T) => React.ReactNode;
   getItemValue: (item: T) => string;
+  getItemLabel: (item: T) => string;
   inputPlaceholder: string;
 }) {
   const [inputValue, setInputValue] = React.useState("");
 
-  const filteredItems = items.filter((item) =>
-    getItemValue(item).toLowerCase().includes(inputValue.toLowerCase()),
-  );
+  const filteredItems = React.useMemo(() => {
+    const normalizedInputValue = inputValue.trim();
+
+    if (!normalizedInputValue) {
+      return items.slice(0, MAX_SEARCH_RESULTS);
+    }
+
+    return items
+      .map((item, index) => ({
+        index,
+        item,
+        score: getSearchScore(getItemLabel(item), normalizedInputValue),
+      }))
+      .filter(
+        (
+          result,
+        ): result is {
+          index: number;
+          item: T;
+          score: number;
+        } => result.score !== null,
+      )
+      .sort((a, b) => a.score - b.score || a.index - b.index)
+      .slice(0, MAX_SEARCH_RESULTS)
+      .map((result) => result.item);
+  }, [getItemLabel, inputValue, items]);
 
   return (
-    <Command>
+    <Command shouldFilter={false}>
       <CommandInput
         placeholder={inputPlaceholder}
         value={inputValue}
@@ -220,9 +304,9 @@ function ItemList<T>({
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup>
-          {filteredItems.slice(0, 5).map((item) => (
+          {filteredItems.map((item, index) => (
             <CommandItem
-              key={getItemValue(item)}
+              key={`${getItemValue(item)}-${index}`}
               value={getItemValue(item)}
               onSelect={(value) => {
                 const selectedItem =

@@ -644,6 +644,7 @@ export function HackerFormPage({
   const [activeStep, setActiveStep] = useState(0);
   const [transitionStep, setTransitionStep] = useState<number | null>(null);
   const [isStepTransitioning, setIsStepTransitioning] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const [stepDirection, setStepDirection] = useState<"forward" | "back">(
     "forward",
@@ -899,6 +900,16 @@ export function HackerFormPage({
   const fileRef = form.register("resumeUpload");
 
   useEffect(() => {
+    const hydrationTimeout = window.setTimeout(() => {
+      setHasHydrated(true);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(hydrationTimeout);
+    };
+  }, []);
+
+  useEffect(() => {
     if (
       applicationSubmitted ||
       !existingApplication ||
@@ -924,7 +935,7 @@ export function HackerFormPage({
         raceOrEthnicity: previousHacker.raceOrEthnicity,
         discordUser: previousHacker.discordUser,
         email: previousHacker.email,
-        phoneNumber: previousHacker.phoneNumber,
+        phoneNumber: previousHacker.phoneNumber || "",
         country: previousHacker.country,
         school: previousHacker.school,
         levelOfStudy: previousHacker.levelOfStudy,
@@ -964,7 +975,7 @@ export function HackerFormPage({
         raceOrEthnicity: memberProfile.raceOrEthnicity,
         discordUser: memberProfile.discordUser,
         email: memberProfile.email,
-        phoneNumber: memberProfile.phoneNumber ?? undefined,
+        phoneNumber: memberProfile.phoneNumber ?? "",
         country: undefined,
         school: memberProfile.school,
         levelOfStudy: memberProfile.levelOfStudy,
@@ -1017,6 +1028,10 @@ export function HackerFormPage({
   const isFinalStep = activeStep === APPLICATION_STEPS.length - 1;
   const progressStep = transitionStep ?? activeStep;
   const progressRatio = progressStep / (APPLICATION_STEPS.length - 1);
+  const navigationLocked = loading || isStepTransitioning;
+  const backButtonDisabled =
+    hasHydrated && (activeStep === 0 || navigationLocked);
+  const forwardButtonDisabled = hasHydrated && navigationLocked;
 
   const goToStep = async (nextStep: number) => {
     const boundedNextStep = Math.min(
@@ -1024,6 +1039,7 @@ export function HackerFormPage({
       APPLICATION_STEPS.length - 1,
     );
 
+    if (!hasHydrated) return false;
     if (boundedNextStep === activeStep || isStepTransitioning) return false;
 
     if (nextStep > activeStep) {
@@ -2234,7 +2250,7 @@ export function HackerFormPage({
                   type="button"
                   variant="outline"
                   onClick={() => void goToStep(activeStep - 1)}
-                  disabled={activeStep === 0 || loading || isStepTransitioning}
+                  disabled={backButtonDisabled}
                   size="icon"
                   className={cn(
                     secondaryActionButtonClassName,
@@ -2263,7 +2279,7 @@ export function HackerFormPage({
                     )}
                     <Button
                       type="submit"
-                      disabled={loading || isStepTransitioning}
+                      disabled={forwardButtonDisabled}
                       size="icon"
                       className={cn(
                         actionButtonClassName,
@@ -2292,7 +2308,7 @@ export function HackerFormPage({
                   <Button
                     type="button"
                     onClick={() => void goToStep(activeStep + 1)}
-                    disabled={loading || isStepTransitioning}
+                    disabled={forwardButtonDisabled}
                     size="icon"
                     className={cn(actionButtonClassName, "pointer-events-auto")}
                     aria-label="Next"
