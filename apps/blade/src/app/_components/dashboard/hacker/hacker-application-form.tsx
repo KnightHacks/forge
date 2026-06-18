@@ -644,6 +644,7 @@ export function HackerFormPage({
   const [activeStep, setActiveStep] = useState(0);
   const [transitionStep, setTransitionStep] = useState<number | null>(null);
   const [isStepTransitioning, setIsStepTransitioning] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const [stepDirection, setStepDirection] = useState<"forward" | "back">(
     "forward",
@@ -734,7 +735,8 @@ export function HackerFormPage({
       email: z.string().email("Invalid email").min(1, "Required"),
       phoneNumber: z
         .string()
-        .regex(/^\d{10}|\d{3}-\d{3}-\d{4}$|^$/, "Invalid phone number"),
+        .min(1, "Required")
+        .regex(/^\d{10}$|^\d{3}-\d{3}-\d{4}$/, "Invalid phone number"),
       country: z.enum(FORMS.COUNTRIES, {
         error: "Select your country",
       }),
@@ -864,9 +866,7 @@ export function HackerFormPage({
       agreesToMLHDataSharing: z.boolean().refine((val) => val === true, {
         message: "You must agree to the MLH data sharing terms",
       }),
-      agreesToReceiveEmailsFromMLH: z.boolean().refine((val) => val === true, {
-        message: "You must authorize MLH email updates",
-      }),
+      agreesToReceiveEmailsFromMLH: z.boolean(),
     }),
     defaultValues: {
       firstName: "",
@@ -900,6 +900,16 @@ export function HackerFormPage({
   const fileRef = form.register("resumeUpload");
 
   useEffect(() => {
+    const hydrationTimeout = window.setTimeout(() => {
+      setHasHydrated(true);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(hydrationTimeout);
+    };
+  }, []);
+
+  useEffect(() => {
     if (
       applicationSubmitted ||
       !existingApplication ||
@@ -925,7 +935,7 @@ export function HackerFormPage({
         raceOrEthnicity: previousHacker.raceOrEthnicity,
         discordUser: previousHacker.discordUser,
         email: previousHacker.email,
-        phoneNumber: previousHacker.phoneNumber ?? undefined,
+        phoneNumber: previousHacker.phoneNumber || "",
         country: previousHacker.country,
         school: previousHacker.school,
         levelOfStudy: previousHacker.levelOfStudy,
@@ -965,7 +975,7 @@ export function HackerFormPage({
         raceOrEthnicity: memberProfile.raceOrEthnicity,
         discordUser: memberProfile.discordUser,
         email: memberProfile.email,
-        phoneNumber: memberProfile.phoneNumber ?? undefined,
+        phoneNumber: memberProfile.phoneNumber ?? "",
         country: undefined,
         school: memberProfile.school,
         levelOfStudy: memberProfile.levelOfStudy,
@@ -1018,6 +1028,9 @@ export function HackerFormPage({
   const isFinalStep = activeStep === APPLICATION_STEPS.length - 1;
   const progressStep = transitionStep ?? activeStep;
   const progressRatio = progressStep / (APPLICATION_STEPS.length - 1);
+  const navigationLocked = !hasHydrated || loading || isStepTransitioning;
+  const backButtonDisabled = activeStep === 0 || navigationLocked;
+  const forwardButtonDisabled = navigationLocked;
 
   const goToStep = async (nextStep: number) => {
     const boundedNextStep = Math.min(
@@ -1025,6 +1038,7 @@ export function HackerFormPage({
       APPLICATION_STEPS.length - 1,
     );
 
+    if (!hasHydrated) return false;
     if (boundedNextStep === activeStep || isStepTransitioning) return false;
 
     if (nextStep > activeStep) {
@@ -1405,7 +1419,7 @@ export function HackerFormPage({
                                 !isActiveQuestion("phoneNumber") && "hidden",
                               )}
                             >
-                              <FieldLabel optional>Phone Number</FieldLabel>
+                              <FieldLabel required>Phone Number</FieldLabel>
                               <FormControl>
                                 <Input
                                   type="tel"
@@ -2091,17 +2105,18 @@ export function HackerFormPage({
                                   I authorize you to share my
                                   application/registration information with
                                   Major League Hacking for event administration,
-                                  ranking, and MLH administration in-line with
-                                  the{" "}
+                                  ranking, and administration (including the
+                                  creation of linked accounts on MLH and{" "}
                                   <Link
-                                    href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
+                                    href="https://dev.to/"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className={agreementLinkClassName}
                                   >
-                                    MLH Privacy Policy
+                                    DEV
                                   </Link>
-                                  . I further agree to the terms of both the{" "}
+                                  ) in line with the MLH Privacy Policy. I
+                                  further agree to the terms of both the{" "}
                                   <Link
                                     href="https://github.com/MLH/mlh-policies/blob/main/contest-terms.md"
                                     target="_blank"
@@ -2135,11 +2150,10 @@ export function HackerFormPage({
                         <FormField
                           control={form.control}
                           name="agreesToReceiveEmailsFromMLH"
-                          render={({ field, fieldState }) => (
+                          render={({ field }) => (
                             <FormItem
                               className={cn(
                                 "flex flex-row items-start gap-3 space-y-0",
-                                fieldState.error && agreementErrorRowClassName,
                                 !isActiveQuestion(
                                   "agreesToReceiveEmailsFromMLH",
                                 ) && "hidden",
@@ -2148,39 +2162,19 @@ export function HackerFormPage({
                               <FormControl>
                                 <Checkbox
                                   checked={!!field.value}
-                                  onCheckedChange={(value) => {
-                                    field.onChange(value);
-                                    if (value) {
-                                      form.clearErrors(
-                                        "agreesToReceiveEmailsFromMLH",
-                                      );
-                                    }
-                                  }}
-                                  className={cn(
-                                    checkboxClassName,
-                                    fieldState.error &&
-                                      agreementErrorCheckboxClassName,
-                                  )}
+                                  onCheckedChange={field.onChange}
+                                  className={cn(checkboxClassName)}
                                 />
                               </FormControl>
                               <div className="min-w-0 flex-1 space-y-1 leading-none">
                                 <FormLabel
-                                  className={cn(
-                                    checkboxLabelClassName,
-                                    fieldState.error &&
-                                      agreementErrorLabelClassName,
-                                  )}
+                                  className={cn(checkboxLabelClassName)}
                                 >
-                                  I authorize MLH to send me occasional emails
-                                  about relevant events, career opportunities,
-                                  and community announcements.{" "}
-                                  <span className={requiredMarkClassName}>
-                                    *
-                                  </span>
+                                  I authorize MLH + DEV to send me occasional
+                                  emails about relevant events, career
+                                  opportunities, and community
+                                  announcements.{" "}
                                 </FormLabel>
-                                <FormMessage
-                                  className={agreementErrorMessageClassName}
-                                />
                               </div>
                             </FormItem>
                           )}
@@ -2255,7 +2249,7 @@ export function HackerFormPage({
                   type="button"
                   variant="outline"
                   onClick={() => void goToStep(activeStep - 1)}
-                  disabled={activeStep === 0 || loading || isStepTransitioning}
+                  disabled={backButtonDisabled}
                   size="icon"
                   className={cn(
                     secondaryActionButtonClassName,
@@ -2284,7 +2278,7 @@ export function HackerFormPage({
                     )}
                     <Button
                       type="submit"
-                      disabled={loading || isStepTransitioning}
+                      disabled={forwardButtonDisabled}
                       size="icon"
                       className={cn(
                         actionButtonClassName,
@@ -2313,7 +2307,7 @@ export function HackerFormPage({
                   <Button
                     type="button"
                     onClick={() => void goToStep(activeStep + 1)}
-                    disabled={loading || isStepTransitioning}
+                    disabled={forwardButtonDisabled}
                     size="icon"
                     className={cn(actionButtonClassName, "pointer-events-auto")}
                     aria-label="Next"

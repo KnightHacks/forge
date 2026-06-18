@@ -64,6 +64,13 @@
       "when": 1780732576741,
       "tag": "0008_email_template_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781733366922,
+      "tag": "0009_smooth_forgotten_one",
+      "breakpoints": true
     }
   ]
 }
