@@ -124,7 +124,7 @@ export const hackerMutationRouter = {
             age: newAge,
             resumeUrl,
             phoneNumber:
-              hackerData.phoneNumber === "" ? null : hackerData.phoneNumber,
+              hackerData.phoneNumber === "" ? "" : hackerData.phoneNumber,
           })
           .returning({ id: Hacker.id });
 
@@ -207,7 +207,7 @@ export const hackerMutationRouter = {
         });
       }
 
-      const normalizedPhone = phoneNumber === "" ? null : phoneNumber;
+      const normalizedPhone = phoneNumber === "" ? "" : phoneNumber;
 
       // Check if the age has been updated
       const today = new Date();
@@ -268,7 +268,7 @@ export const hackerMutationRouter = {
         >,
       );
 
-      if ((hacker.phoneNumber ?? "") !== (normalizedPhone ?? "")) {
+      if (hacker.phoneNumber !== normalizedPhone) {
         changes.phoneNumber = {
           before: hacker.phoneNumber,
           after: normalizedPhone,
