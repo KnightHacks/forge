@@ -1028,10 +1028,9 @@ export function HackerFormPage({
   const isFinalStep = activeStep === APPLICATION_STEPS.length - 1;
   const progressStep = transitionStep ?? activeStep;
   const progressRatio = progressStep / (APPLICATION_STEPS.length - 1);
-  const navigationLocked = loading || isStepTransitioning;
-  const backButtonDisabled =
-    hasHydrated && (activeStep === 0 || navigationLocked);
-  const forwardButtonDisabled = hasHydrated && navigationLocked;
+  const navigationLocked = !hasHydrated || loading || isStepTransitioning;
+  const backButtonDisabled = activeStep === 0 || navigationLocked;
+  const forwardButtonDisabled = navigationLocked;
 
   const goToStep = async (nextStep: number) => {
     const boundedNextStep = Math.min(
