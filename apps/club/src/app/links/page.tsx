@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { LegacyRedirectPage } from "../_components/legacy-redirect-page";
+import { Redirect } from "../_components/redirect";
 import { PUBLIC_LINKS } from "../_lib/site-config";
 
 export const metadata: Metadata = {
@@ -12,5 +12,5 @@ export const metadata: Metadata = {
 };
 
 export default function LinksRedirectPage() {
-  return <LegacyRedirectPage label="Links" target={PUBLIC_LINKS.linktree} />;
+  return <Redirect label="Links" target={PUBLIC_LINKS.linktree} />;
 }

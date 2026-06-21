@@ -66,6 +66,7 @@ interface CalendarCell {
   isSelected: boolean;
   isToday: boolean;
   key: string;
+  label: string;
 }
 
 function getCurrentMonth(): MonthCursor {
@@ -91,6 +92,19 @@ function getLocalDateKey(year: number, monthIndex: number, day: number) {
 
 function getTodayKey() {
   return getClubDateKey();
+}
+
+function formatCalendarCellLabel(dateKey: string) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(Date.UTC(year ?? 0, (month ?? 1) - 1, day ?? 1));
+
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+    weekday: "long",
+    year: "numeric",
+  }).format(date);
 }
 
 function buildCalendarCells({
@@ -138,6 +152,7 @@ function buildCalendarCells({
       isSelected: selectedDateKey === dateKey,
       isToday: todayKey === dateKey,
       key: `${dateKey}-${index}`,
+      label: formatCalendarCellLabel(dateKey),
     };
   });
 }
@@ -253,6 +268,13 @@ function CalendarPanel({
             <button
               key={cell.key}
               type="button"
+              aria-current={cell.isToday ? "date" : undefined}
+              aria-label={`${cell.label}${
+                hasVisibleEvent
+                  ? `, ${cell.eventCount} event${cell.eventCount === 1 ? "" : "s"}`
+                  : ", no events"
+              }${cell.isSelected ? ", selected" : ""}`}
+              aria-pressed={cell.isSelected}
               disabled={!cell.inMonth}
               className={cn(
                 "relative aspect-square border-b border-r border-[#371640]/35 text-sm font-bold transition-colors disabled:cursor-default",
@@ -400,17 +422,23 @@ function Pagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center gap-4 text-sm font-black text-white/60">
+    <nav
+      aria-label="Event pages"
+      className="flex items-center gap-4 text-sm font-black text-white/60"
+    >
       {Array.from({ length: totalPages }).map((_, index) => {
         const page = index + 1;
+        const isCurrentPage = page === currentPage;
 
         return (
           <button
             key={page}
             type="button"
+            aria-current={isCurrentPage ? "page" : undefined}
+            aria-label={`Go to events page ${page}`}
             className={cn(
               "underline-offset-4 transition-colors hover:text-white",
-              page === currentPage && "text-white underline",
+              isCurrentPage && "text-white underline",
             )}
             onClick={() => onPageChange(page)}
           >
@@ -418,7 +446,7 @@ function Pagination({
           </button>
         );
       })}
-    </div>
+    </nav>
   );
 }
 

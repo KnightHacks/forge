@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { LegacyRedirectPage } from "../_components/legacy-redirect-page";
+import { Redirect } from "../_components/redirect";
 
 export const metadata: Metadata = {
   title: "Contact | Knight Hacks",
@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function ContactRedirectPage() {
-  return <LegacyRedirectPage label="Contact" target="/about" />;
+  return <Redirect label="Contact" target="/about" />;
 }

@@ -4,6 +4,8 @@ import type { TeamRoster } from "./teams-config";
 import { getBladeTrpcClient } from "../_lib/blade-trpc";
 import { TEAM_DEFINITIONS } from "./teams-config";
 
+// Election-cycle workaround for source role data gaps. Review and update this
+// list after every Knight Hacks election so the public team page stays current.
 const TEAM_ROLE_OVERRIDES = new Map([
   ["jason sacerio", "Treasurer"],
   ["michael rusu", "Workshop Director"],

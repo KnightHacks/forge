@@ -3,14 +3,11 @@ import Link from "next/link";
 
 import { Button } from "@forge/ui/button";
 
-import NotFoundRedirect from "./_components/not-found-redirect";
 import { CLUB_ASSETS } from "./_lib/assets";
 
 export default function NotFound() {
   return (
     <main className="flex min-h-[calc(100svh-var(--club-nav-height))] items-center justify-center px-5 pb-12 pt-[calc(var(--club-nav-height)+2rem)] text-white">
-      <NotFoundRedirect />
-
       <div className="mx-auto flex w-full max-w-[28rem] flex-col items-center text-center">
         <Image
           src={CLUB_ASSETS.tklenny}
@@ -26,7 +23,7 @@ export default function NotFound() {
           Page not found.
         </h1>
         <p className="text-white/72 mt-4 text-base font-semibold leading-7">
-          Lenny and T.K. are redirecting you home.
+          Lenny and T.K. could not find that page.
         </p>
         <Button
           asChild

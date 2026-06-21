@@ -26,6 +26,8 @@ const s3Client = new Client({
   secretKey: env.MINIO_SECRET_KEY,
 });
 
+// Public Club site roster contract: only opted-in Guild profiles are returned,
+// and the payload is limited to fields intentionally shown on the team page.
 interface PublicClubTeamMember {
   id: string;
   name: string;
@@ -180,7 +182,7 @@ function sortPublicClubRoster(roster: PublicClubTeamRoster) {
   return roster;
 }
 
-async function getPublicClubRoster() {
+async function getVisiblePublicClubRoster() {
   const roleFilters = TEAM.CLUB_TEAM_DEFINITIONS.flatMap((team) =>
     team.terms.map((term) => ilike(Roles.name, `%${term}%`)),
   );
@@ -460,7 +462,7 @@ export const guildRouter = {
     }),
 
   getPublicClubTeamRoster: publicProcedure.query(async () => {
-    return await getPublicClubRoster();
+    return await getVisiblePublicClubRoster();
   }),
 
   getGuildResume: publicProcedure
