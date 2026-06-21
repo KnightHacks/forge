@@ -1,12 +1,6 @@
 import Link from "next/link";
 
-export function Redirect({
-  label,
-  target,
-}: {
-  label: string;
-  target: string;
-}) {
+export function Redirect({ label, target }: { label: string; target: string }) {
   const isExternal = /^https?:\/\//i.test(target);
 
   return (
