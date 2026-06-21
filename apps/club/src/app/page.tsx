@@ -1,181 +1,351 @@
-// import { env } from "~/env";
-// import About from "./_components/landing/about";
-// import CalendarPage from "./_components/landing/calendar";
-// import Discover from "./_components/landing/discover";
-// import Hero from "./_components/landing/hero";
-// import Impact from "./_components/landing/impact";
-// import Sponsors from "./_components/landing/sponsors";
-// import { api } from "./trpc/server";
-// import { redirect } from "next/navigation";
+import Image from "next/image";
 
-// export default async function HomePage() {
-//   const [events, memberCount] = await Promise.all([
-//     api.event.getEvents.query(),
-//     api.member.getMemberCount.query(),
-//   ]);
+import { Button } from "@forge/ui/button";
 
-//   return (
-//     <main className="relative z-10 text-white">
-//       <div className="bg-gradient-to-b from-purple-900 to-[#1d1a2e]">
-//         <Hero bladeUrl={env.BLADE_URL} />
-//       </div>
-//       <div className="-mt-1 bg-gradient-to-b from-[#1d1a2e] to-[#24162e] pt-1 md:pb-64">
-//         <About />
-//       </div>
-//       <div className="-mt-1 bg-gradient-to-b from-[#24162e] via-[#1c182b] to-[#12101c] pt-1 md:pb-64">
-//         <Impact />
-//       </div>
-//       <div className="-mt-1 bg-gradient-to-b from-[#12101c] via-[#1d1530] to-[#281a37] pt-1 md:pb-64">
-//         <Sponsors />
-//       </div>
-//       <div className="-mt-1 bg-gradient-to-b from-[#281a37] via-[#2a1c3c] to-[#1b112b] pt-1 md:pb-64">
-//         <CalendarPage events={events} />
-//       </div>
-//       <div className="bg-gradient-to-b from-[#1b112b] to-[#4c1d95]">
-//         <Discover memberCount={memberCount} />
-//       </div>
-//     </main>
-//   );
-// }
+import { env } from "~/env";
+import { HomeCommunityCarousel } from "./_components/home-community-carousel";
+import { HomeEvents } from "./_components/home-events";
+import { CLUB_ASSETS } from "./_lib/assets";
+import { PUBLIC_LINKS } from "./_lib/site-config";
 
-import React from "react";
-import { Calendar, Users, Wrench } from "lucide-react";
+const setApartWords = [
+  { text: "Knight", tone: "gold" },
+  { text: "Hacks", tone: "gold" },
+  { text: "sets", tone: "white" },
+  { text: "you", tone: "white" },
+  { text: "apart.", tone: "white" },
+] as const;
 
-import { env } from "../env";
+function HomeButton({
+  href,
+  children,
+  variant,
+}: {
+  href: string;
+  children: React.ReactNode;
+  variant: "gold" | "dark";
+}) {
+  const className =
+    variant === "gold"
+      ? "club-button bg-[var(--club-gold)] text-black shadow-[4px_4px_0_#ffffff]"
+      : "club-button bg-[#170d1c] text-white shadow-[4px_4px_0_rgba(255,255,255,0.35)]";
 
-const WIPPage = () => {
   return (
-    <div className="overflow-hidden bg-gradient-to-br from-black via-black to-purple-950 px-4 py-12">
-      <div className="absolute inset-0 opacity-25">
-        <div className="absolute left-10 top-20 h-72 w-72 animate-pulse rounded-full bg-purple-700 blur-3xl" />
-        <div
-          className="absolute bottom-20 right-10 h-96 w-96 animate-pulse rounded-full bg-purple-800 blur-3xl"
-          style={{ animationDelay: "1s" }}
-        />
-      </div>
+    <Button asChild size="lg" className={className}>
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    </Button>
+  );
+}
 
-      <div className="relative z-10 mx-auto max-w-4xl">
-        <div className="flex min-h-[calc(100vh-6rem)] flex-col items-center justify-center text-center">
-          <div className="relative mb-8">
-            <div className="absolute inset-0 animate-ping rounded-full bg-purple-600 opacity-30" />
-            <Wrench
-              className="relative h-24 w-24 text-purple-400"
-              style={{ filter: "drop-shadow(0 0 30px #a855f7)" }}
-            />
-          </div>
+function MascotCreditLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="club-mascot-credit-link"
+    >
+      {children}
+    </a>
+  );
+}
 
-          <h1
-            className="mb-6 text-5xl font-bold leading-tight tracking-tight text-white md:text-7xl"
-            style={{
-              textShadow:
-                "0px 0px 40px #6B21A8, 0px 0px 20px #6B21A8, 0px 0px 10px #6B21A8",
-            }}
-          >
-            Coming Soon
-          </h1>
-
-          <p className="mb-12 max-w-2xl text-xl text-gray-300 md:text-2xl">
-            Our club site is currenty under construction. Register for Knight
-            Hacks VIII or join our growing community.
-          </p>
-
-          <div className="flex w-full max-w-3xl flex-col gap-6 sm:flex-row">
-            <a
-              href="https://2025.knighthacks.org"
-              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-700/20 to-purple-900/20 p-[2px] transition-all duration-300 hover:scale-105"
-            >
-              <div
-                className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                style={{ filter: "blur(30px)" }}
-              />
-              <div className="relative flex items-center gap-6 rounded-2xl bg-gray-900 p-8 transition-all duration-300">
-                <Calendar
-                  className="h-16 w-16 flex-shrink-0 text-purple-400"
-                  style={{ filter: "drop-shadow(0 0 25px #a855f7)" }}
-                />
-                <div className="flex-1 text-left">
-                  <h2 className="mb-2 text-2xl font-bold text-white">
-                    Hackathon
-                  </h2>
-                  <p className="text-gray-400">
-                    Join our upcoming hackathon and showcase your skills
-                  </p>
-                </div>
-                <div className="flex items-center font-semibold text-purple-400">
-                  <svg
-                    className="h-6 w-6 transition-transform group-hover:translate-x-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 8l4 4m0 0l-4 4m4-4H3"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </a>
-            <a
-              href={env.BLADE_URL}
-              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-700/20 to-purple-900/20 p-[2px] transition-all duration-300 hover:scale-105"
-            >
-              <div
-                className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                style={{ filter: "blur(30px)" }}
-              />
-              <div className="relative flex items-center gap-6 rounded-2xl bg-gray-900 p-8 transition-all duration-300">
-                <Users
-                  className="h-16 w-16 flex-shrink-0 text-purple-400"
-                  style={{ filter: "drop-shadow(0 0 25px #a855f7)" }}
-                />
-                <div className="flex-1 text-left">
-                  <h2 className="mb-2 text-2xl font-bold text-white">
-                    Our Club
-                  </h2>
-                  <p className="text-gray-400">
-                    Discover our community and what we're all about
-                  </p>
-                </div>
-                <div className="flex items-center font-semibold text-purple-400">
-                  <svg
-                    className="h-6 w-6 transition-transform group-hover:translate-x-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 8l4 4m0 0l-4 4m4-4H3"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </a>
-          </div>
-
-          <div className="mt-16">
-            <div className="flex items-center justify-center gap-2">
-              <div className="h-2 w-2 animate-bounce rounded-full bg-purple-400" />
-              <div
-                className="h-2 w-2 animate-bounce rounded-full bg-purple-400"
-                style={{ animationDelay: "0.2s" }}
-              />
-              <div
-                className="h-2 w-2 animate-bounce rounded-full bg-purple-400"
-                style={{ animationDelay: "0.4s" }}
-              />
-            </div>
-            <p className="mt-4 text-sm text-gray-500">Road Work Ahead</p>
-          </div>
-        </div>
-      </div>
+function HeroVideoBackground() {
+  return (
+    <div className="club-hero-media" aria-hidden="true" data-hero-media>
+      <video
+        autoPlay
+        disablePictureInPicture
+        loop
+        muted
+        playsInline
+        poster="/hero/club-hero-poster.webp"
+        preload="metadata"
+      >
+        <source src="/hero/club-hero.webm" type="video/webm" />
+        <source src="/hero/club-hero.mp4" type="video/mp4" />
+      </video>
     </div>
   );
-};
+}
 
-export default WIPPage;
+function SetApartHeadline() {
+  return (
+    <h2
+      aria-label="Knight Hacks sets you apart."
+      className="club-set-apart-headline text-5xl font-black leading-tight tracking-normal md:text-7xl"
+      data-reveal="kinetic-headline"
+    >
+      {setApartWords.map((word, wordIndex) => (
+        <span
+          key={word.text}
+          className={`club-kinetic-word club-kinetic-word-${word.tone}`}
+          style={{ "--word-index": wordIndex } as React.CSSProperties}
+        >
+          {word.text.split("").map((character, characterIndex) => (
+            <span
+              key={`${word.text}-${characterIndex}`}
+              className="club-kinetic-letter"
+              style={
+                {
+                  "--letter-index": characterIndex,
+                } as React.CSSProperties
+              }
+            >
+              {character}
+            </span>
+          ))}
+        </span>
+      ))}
+    </h2>
+  );
+}
+
+function MascotsSection() {
+  return (
+    <section className="club-mascots-section relative overflow-hidden px-5 py-14 sm:px-6 md:px-10 md:py-24 lg:px-24">
+      <div className="mx-auto grid max-w-[1120px] items-center gap-8 md:gap-12 lg:grid-cols-[0.82fr_1.18fr]">
+        <div
+          className="relative z-10 max-w-[30rem] md:max-w-[34rem]"
+          data-stagger
+        >
+          <p className="text-sm font-black uppercase tracking-normal text-[var(--club-gold)]">
+            Mascots
+          </p>
+          <h2
+            className="mt-3 text-[clamp(2.85rem,12.8vw,3.65rem)] font-black leading-none tracking-normal text-white [text-shadow:4px_4px_0_rgba(0,0,0,0.55)] md:mt-4 md:text-7xl"
+            data-reveal="headline"
+          >
+            <span className="club-line">
+              <span>Meet T.K.</span>
+            </span>
+            <span className="club-line">
+              <span>and Lenny</span>
+            </span>
+          </h2>
+          <p className="text-white/78 mt-5 max-w-[21rem] text-base font-bold leading-7 md:mt-6 md:max-w-none md:text-xl md:leading-8">
+            Our mascots bring the club energy to workshops, project nights, and
+            hackathon weekends.
+          </p>
+          <div className="club-mascot-actions mt-7 hidden flex-wrap gap-4 md:mt-8 md:flex">
+            <HomeButton href={PUBLIC_LINKS.discord} variant="gold">
+              Join Discord
+            </HomeButton>
+            <HomeButton href={env.BLADE_URL} variant="dark">
+              Sign Up With Blade
+            </HomeButton>
+          </div>
+        </div>
+
+        <div className="club-mascot-image-space group" tabIndex={0}>
+          <div
+            className="club-mascot-hotspot club-mascot-hotspot-lenny"
+            aria-hidden="true"
+          >
+            <span>Lenny</span>
+          </div>
+          <div
+            className="club-mascot-hotspot club-mascot-hotspot-tk"
+            aria-hidden="true"
+          >
+            <span>T.K.</span>
+          </div>
+          <div
+            className="club-mascot-highlight club-mascot-highlight-lenny"
+            aria-hidden="true"
+          />
+          <div
+            className="club-mascot-highlight club-mascot-highlight-tk"
+            aria-hidden="true"
+          />
+          <Image
+            src={CLUB_ASSETS.tklenny}
+            alt="Lenny, the green dragon mascot, standing next to T.K., the knight mascot"
+            width={3000}
+            height={3000}
+            className="club-mascot-image"
+          />
+          <div className="club-mascot-credit-wrap">
+            <button
+              type="button"
+              aria-describedby="mascot-credit-panel"
+              className="club-mascot-credit-trigger"
+            >
+              Credits
+            </button>
+            <div
+              id="mascot-credit-panel"
+              role="note"
+              aria-label="Mascot artist credit"
+              className="club-mascot-credit-panel"
+            >
+              <p className="club-mascot-credit-kicker">Made with love</p>
+              <dl className="club-mascot-credit-list">
+                <div className="club-mascot-credit-row">
+                  <dt>Lenny</dt>
+                  <dd>
+                    <MascotCreditLink
+                      href={PUBLIC_LINKS.mascotLennyCreatorLinkedIn}
+                    >
+                      Maria
+                    </MascotCreditLink>
+                  </dd>
+                </div>
+                <div className="club-mascot-credit-row">
+                  <dt>T.K.</dt>
+                  <dd>
+                    <MascotCreditLink
+                      href={PUBLIC_LINKS.mascotTkCreatorLinkedIn}
+                    >
+                      David
+                    </MascotCreditLink>
+                  </dd>
+                </div>
+                <div className="club-mascot-credit-row">
+                  <dt>Artwork</dt>
+                  <dd>
+                    <MascotCreditLink href={PUBLIC_LINKS.mascotArtistLinkedIn}>
+                      Lena
+                    </MascotCreditLink>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <div className="club-mascot-actions grid grid-cols-2 gap-3 md:hidden">
+          <HomeButton href={PUBLIC_LINKS.discord} variant="gold">
+            Join Discord
+          </HomeButton>
+          <HomeButton href={env.BLADE_URL} variant="dark">
+            Sign Up With Blade
+          </HomeButton>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <main className="club-home-bg relative overflow-hidden text-white">
+      <section
+        className="club-page-hero club-hero-section relative flex items-center justify-center overflow-hidden px-6 py-24 md:px-10 lg:px-24"
+        data-hero
+      >
+        <HeroVideoBackground />
+        <div
+          className="club-page-hero-fade absolute inset-x-0 bottom-0 z-[2]"
+          aria-hidden="true"
+          data-hero-overlay
+        />
+
+        <div
+          className="club-hero-copy relative z-10 mx-auto flex max-w-[900px] flex-col items-center text-center"
+          data-hero-content
+        >
+          <h1 className="club-hero-logo-shell">
+            <span className="sr-only">Knight Hacks</span>
+            <Image
+              src="/knighthacks.svg"
+              alt=""
+              width={1500}
+              height={504}
+              priority
+              className="club-hero-logo h-auto w-[17rem] md:w-[30rem] lg:w-[35rem]"
+            />
+          </h1>
+          <p
+            className="club-hero-subline mt-6 text-[15px] font-medium leading-7 text-white/90 sm:text-base sm:leading-8 md:mt-8 md:text-[21px] md:leading-[34px]"
+            data-stagger
+          >
+            <span>UCF&apos;s largest</span> <span>software engineering</span>{" "}
+            <span>organization and nonprofit.</span>
+          </p>
+          <div
+            className="club-hero-actions mt-8 grid w-full max-w-[21.5rem] grid-cols-2 gap-3 sm:mt-10 sm:flex sm:w-auto sm:max-w-none sm:flex-wrap sm:justify-center sm:gap-4"
+            data-stagger
+          >
+            <HomeButton href={env.BLADE_URL} variant="gold">
+              Sign Up With Blade
+            </HomeButton>
+            <HomeButton href={PUBLIC_LINKS.discord} variant="dark">
+              Join Discord
+            </HomeButton>
+          </div>
+        </div>
+      </section>
+
+      <div className="club-hero-transition-layer" aria-hidden="true" />
+
+      <HomeCommunityCarousel />
+
+      <MascotsSection />
+
+      <section className="relative flex min-h-[42rem] items-center px-6 py-24 md:min-h-[48rem] md:px-10 lg:px-24">
+        <div className="mx-auto w-full max-w-[860px] text-center">
+          <h2
+            className="text-4xl font-black leading-tight tracking-normal text-white [text-shadow:4px_4px_0_rgba(0,0,0,0.55)] md:text-5xl"
+            data-reveal="headline"
+          >
+            <span className="club-line">
+              <span>Upcoming Events</span>
+            </span>
+          </h2>
+
+          <HomeEvents
+            allEventsHref="/events"
+            bladeUrl={env.BLADE_URL}
+            eventLimit={6}
+          />
+        </div>
+      </section>
+
+      <section
+        className="club-set-apart-section relative isolate overflow-hidden bg-[#09010d]"
+        style={{ height: "clamp(34rem, 68svh, 46rem)", minHeight: 0 }}
+      >
+        <Image
+          src={CLUB_ASSETS.knightHacksSetsYouApart}
+          alt=""
+          fill
+          sizes="100vw"
+          className="club-set-apart-image object-cover brightness-[0.86] contrast-[1.12] saturate-[0.82]"
+          data-scroll-drift="28"
+          style={{ objectPosition: "var(--club-set-apart-image-position)" }}
+        />
+        <div
+          className="club-set-apart-top-fade absolute inset-x-0 top-0 z-20"
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 z-10 bg-[linear-gradient(180deg,rgba(6,0,9,0.92)_0%,rgba(9,1,13,0.78)_14%,rgba(14,2,18,0.42)_34%,rgba(14,2,18,0.08)_58%,rgba(9,1,13,0.32)_100%)]" />
+        <div className="absolute inset-0 z-10 bg-[linear-gradient(90deg,rgba(6,0,9,0.46)_0%,rgba(9,1,13,0.22)_38%,rgba(9,1,13,0.12)_72%,rgba(9,1,13,0.34)_100%)]" />
+
+        <div className="absolute inset-0 z-20 flex px-6 py-14 md:px-10 md:py-20 lg:px-24">
+          <div className="mx-auto flex w-full max-w-[1120px] items-start pt-14 md:pt-20 lg:pt-24">
+            <div className="max-w-[38rem]" data-stagger>
+              <SetApartHeadline />
+              <div className="mt-7 flex flex-wrap gap-4">
+                <HomeButton href={env.BLADE_URL} variant="gold">
+                  Sign Up With Blade
+                </HomeButton>
+                <HomeButton href={PUBLIC_LINKS.discord} variant="dark">
+                  Join Discord
+                </HomeButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}

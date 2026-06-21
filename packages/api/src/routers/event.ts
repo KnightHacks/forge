@@ -8,6 +8,7 @@ import { z } from "zod";
 import { DISCORD, EVENTS } from "@forge/consts";
 import {
   and,
+  asc,
   count,
   desc,
   eq,
@@ -16,6 +17,7 @@ import {
   inArray,
   isNull,
   lt,
+  sql,
 } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
@@ -35,6 +37,9 @@ import * as forms from "@forge/utils/forms";
 import * as google from "@forge/utils/google";
 
 import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
+
+const DEFAULT_PUBLIC_CLUB_EVENT_LIMIT = 24;
+const MAX_PUBLIC_CLUB_EVENT_LIMIT = 60;
 
 export const eventRouter = {
   getEvents: publicProcedure.query(async () => {
@@ -126,6 +131,52 @@ export const eventRouter = {
       };
     });
   }),
+
+  getPublicClubEvents: publicProcedure
+    .input(
+      z
+        .object({
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(MAX_PUBLIC_CLUB_EVENT_LIMIT)
+            .default(DEFAULT_PUBLIC_CLUB_EVENT_LIMIT),
+        })
+        .optional(),
+    )
+    .query(async ({ input }) => {
+      const limit = input?.limit ?? DEFAULT_PUBLIC_CLUB_EVENT_LIMIT;
+      const events = await db
+        .select({
+          id: Event.id,
+          name: Event.name,
+          description: Event.description,
+          tag: Event.tag,
+          startDateTime: Event.start_datetime,
+          endDateTime: Event.end_datetime,
+          location: Event.location,
+        })
+        .from(Event)
+        .where(
+          and(
+            gt(Event.end_datetime, new Date()),
+            eq(Event.isOperationsCalendar, false),
+            eq(Event.dues_paying, false),
+            sql<boolean>`cardinality(${Event.roles}) = 0`,
+            isNull(Event.hackathonId),
+          ),
+        )
+        .orderBy(asc(Event.start_datetime))
+        .limit(limit);
+
+      return events.map((event) => ({
+        ...event,
+        startDateTime: event.startDateTime.toISOString(),
+        endDateTime: event.endDateTime.toISOString(),
+      }));
+    }),
+
   getAttendees: permProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {

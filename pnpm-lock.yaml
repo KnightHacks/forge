@@ -462,36 +462,18 @@ importers:
       '@forge/api':
         specifier: workspace:*
         version: link:../../packages/api
-      '@forge/auth':
-        specifier: workspace:*
-        version: link:../../packages/auth
       '@forge/consts':
         specifier: workspace:*
         version: link:../../packages/consts
-      '@forge/db':
-        specifier: workspace:*
-        version: link:../../packages/db
       '@forge/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      '@forge/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
-      '@gsap/react':
-        specifier: ^2.1.2
-        version: 2.1.2(gsap@3.14.2)(react@19.2.4)
-      '@svgr/webpack':
-        specifier: ^8.1.0
-        version: 8.1.0(typescript@5.9.3)
+      '@trpc/client':
+        specifier: 'catalog:'
+        version: 11.10.0(@trpc/server@11.10.0(typescript@5.9.3))(typescript@5.9.3)
       framer-motion:
         specifier: ^12.34.3
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      geist:
-        specifier: ^1.7.0
-        version: 1.7.0(next@16.2.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
-      gsap:
-        specifier: ^3.14.2
-        version: 3.14.2
       lucide-react:
         specifier: ^0.575.0
         version: 0.575.0(react@19.2.4)
@@ -504,9 +486,12 @@ importers:
       react-dom:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
-      rsuite:
-        specifier: ^6.1.2
-        version: 6.1.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-icons:
+        specifier: ^5.5.0
+        version: 5.5.0(react@19.2.4)
+      superjson:
+        specifier: 2.2.6
+        version: 2.2.6
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0

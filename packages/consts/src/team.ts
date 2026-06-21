@@ -1,50 +1,3 @@
-export const OFFICERS = [
-  {
-    name: "Dylan Vidal",
-    position: "President",
-    image: "/officers/dylan.png",
-    linkedin: "https://www.linkedin.com/in/dylanvidal1204/",
-    major: "Computer Science",
-  },
-  {
-    name: "Leonard Gofman",
-    position: "Vice President",
-    image: "/officers/leo.png",
-    linkedin: "https://www.linkedin.com/in/leonard-gofman-208578236/",
-    major: "Computer Science",
-  },
-  {
-    name: "Adrian Osorio",
-    position: "Treasurer",
-    image: "/officers/adrian.png",
-    linkedin: "https://www.linkedin.com/in/adrianosoriob/",
-    major: "Computer Engineering",
-  },
-  {
-    name: "Lewin Bobda",
-    position: "Dev Lead",
-    image: "/officers/bobda.png",
-    linkedin: "https://www.linkedin.com/in/lewin-bobda-08ba2325a/",
-    major: "Computer Science",
-  },
-  {
-    name: "Daniel Efres",
-    position: "Secretary",
-    image: "/officers/daniel.png",
-    linkedin: "https://www.linkedin.com/in/daniel-efres/",
-    major: "Computer Science",
-  },
-  {
-    name: "Richard Phillips",
-    position: "Hack Lead",
-    image: "/officers/ricky.png",
-    linkedin: "https://www.linkedin.com/in/rphillipscs/",
-    major: "Computer Science",
-  },
-] as const;
-
-export type Officer = (typeof OFFICERS)[number];
-
 export const TEAMS = [
   {
     team: "Outreach",
@@ -77,3 +30,120 @@ export const TEAMS = [
     director_role: "1244790444626280550",
   },
 ];
+
+export const CLUB_TEAM_DEFINITIONS = [
+  {
+    slug: "executive",
+    label: "Executive",
+    heading: "Executive Officers",
+  },
+  {
+    slug: "directors",
+    label: "Directors",
+    heading: "Directors",
+  },
+  {
+    slug: "hackathon",
+    label: "Hackathon",
+    heading: "Hackathon Team",
+  },
+  {
+    slug: "sponsorship",
+    label: "Sponsorship",
+    heading: "Sponsorship Team",
+  },
+  {
+    slug: "workshop",
+    label: "Workshop",
+    heading: "Workshop Team",
+  },
+  {
+    slug: "design",
+    label: "Design",
+    heading: "Design Team",
+  },
+  {
+    slug: "outreach",
+    label: "Outreach",
+    heading: "Outreach Team",
+  },
+  {
+    slug: "development",
+    label: "Development",
+    heading: "Development Team",
+  },
+] as const;
+
+export type ClubTeamDefinition = (typeof CLUB_TEAM_DEFINITIONS)[number];
+export type ClubTeamSlug = ClubTeamDefinition["slug"];
+
+export const CLUB_EXECUTIVE_ROLE_ORDER = [
+  "President",
+  "Vice President",
+  "Treasurer",
+  "Secretary",
+  "Hack Lead",
+  "Dev Lead",
+] as const;
+
+export const CLUB_AGGREGATE_EXECUTIVE_ROLE = "Officers" as const;
+
+export const CLUB_DIRECTOR_ROLE_ORDER = [
+  "Design Director",
+  "Sponsorship Director",
+  "Mentorship Director",
+  "Outreach Director",
+  "Workshop Director",
+  "Director",
+] as const;
+
+export const CLUB_AGGREGATE_DIRECTOR_ROLE = "Directors" as const;
+
+export const CLUB_TEAM_ROLE_CONFIG = {
+  hackathon: {
+    label: "Hackathon",
+    teamRoleName: "KH IX Team",
+    leadRoleName: "Hack Lead",
+  },
+  sponsorship: {
+    label: "Sponsorship",
+    teamRoleName: "Sponsorship Team",
+    leadRoleName: "Sponsorship Director",
+  },
+  workshop: {
+    label: "Workshop",
+    teamRoleName: "Workshop Team",
+    leadRoleName: "Workshop Director",
+  },
+  design: {
+    label: "Design",
+    teamRoleName: "Design Team",
+    leadRoleName: "Design Director",
+  },
+  outreach: {
+    label: "Outreach",
+    teamRoleName: "Outreach Team",
+    leadRoleName: "Outreach Director",
+  },
+  development: {
+    label: "Development",
+    teamRoleName: "Dev Team",
+    leadRoleName: "Dev Lead",
+  },
+} as const;
+
+export type ClubTeamRoleSlug = keyof typeof CLUB_TEAM_ROLE_CONFIG;
+
+const CLUB_TEAM_ROLE_SLUGS = Object.keys(
+  CLUB_TEAM_ROLE_CONFIG,
+) as ClubTeamRoleSlug[];
+
+export const CLUB_ROSTER_ROLE_NAMES = [
+  ...CLUB_EXECUTIVE_ROLE_ORDER,
+  CLUB_AGGREGATE_EXECUTIVE_ROLE,
+  ...CLUB_DIRECTOR_ROLE_ORDER.filter((role) => role !== "Director"),
+  CLUB_AGGREGATE_DIRECTOR_ROLE,
+  ...CLUB_TEAM_ROLE_SLUGS.map(
+    (slug) => CLUB_TEAM_ROLE_CONFIG[slug].teamRoleName,
+  ),
+] as const;
