@@ -15,6 +15,8 @@ export const PUBLIC_LINKS = {
   linkedin: "https://www.linkedin.com/company/knight-hacks",
   linktree: "https://linktr.ee/knighthacks",
   mascotArtistLinkedIn: "https://www.linkedin.com/in/lena-tran-/",
+  mascotLennyCreatorLinkedIn: "https://www.linkedin.com/in/mariachm/",
+  mascotTkCreatorLinkedIn: "https://www.linkedin.com/in/david-navarrete-/",
   x: "https://twitter.com/knighthacks",
 } as const;
 

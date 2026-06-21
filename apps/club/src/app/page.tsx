@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { FaLinkedin } from "react-icons/fa";
 
 import { Button } from "@forge/ui/button";
 
@@ -37,6 +36,25 @@ function HomeButton({
         {children}
       </a>
     </Button>
+  );
+}
+
+function MascotCreditLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="club-mascot-credit-link"
+    >
+      {children}
+    </a>
   );
 }
 
@@ -127,11 +145,7 @@ function MascotsSection() {
           </div>
         </div>
 
-        <div
-          className="club-mascot-image-space group"
-          tabIndex={0}
-          aria-describedby="mascot-credit"
-        >
+        <div className="club-mascot-image-space group" tabIndex={0}>
           <div
             className="club-mascot-hotspot club-mascot-hotspot-lenny"
             aria-hidden="true"
@@ -159,24 +173,52 @@ function MascotsSection() {
             height={3000}
             className="club-mascot-image"
           />
-          <div
-            id="mascot-credit"
-            role="note"
-            aria-label="Mascot artist credit"
-            className="club-mascot-credit"
-          >
-            <p className="text-xs font-black leading-4 text-[#23051d] md:text-sm md:leading-5">
-              Made with love by Lena Tran, Design Team.
-            </p>
-            <a
-              href={PUBLIC_LINKS.mascotArtistLinkedIn}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#7a2451] transition hover:text-[#120313]"
+          <div className="club-mascot-credit-wrap">
+            <button
+              type="button"
+              aria-describedby="mascot-credit-panel"
+              className="club-mascot-credit-trigger"
             >
-              LinkedIn
-              <FaLinkedin aria-hidden="true" className="size-2.5" />
-            </a>
+              Credits
+            </button>
+            <div
+              id="mascot-credit-panel"
+              role="note"
+              aria-label="Mascot artist credit"
+              className="club-mascot-credit-panel"
+            >
+              <p className="club-mascot-credit-kicker">Made with love</p>
+              <dl className="club-mascot-credit-list">
+                <div className="club-mascot-credit-row">
+                  <dt>Lenny</dt>
+                  <dd>
+                    <MascotCreditLink
+                      href={PUBLIC_LINKS.mascotLennyCreatorLinkedIn}
+                    >
+                      Maria
+                    </MascotCreditLink>
+                  </dd>
+                </div>
+                <div className="club-mascot-credit-row">
+                  <dt>T.K.</dt>
+                  <dd>
+                    <MascotCreditLink
+                      href={PUBLIC_LINKS.mascotTkCreatorLinkedIn}
+                    >
+                      David
+                    </MascotCreditLink>
+                  </dd>
+                </div>
+                <div className="club-mascot-credit-row">
+                  <dt>Artwork</dt>
+                  <dd>
+                    <MascotCreditLink href={PUBLIC_LINKS.mascotArtistLinkedIn}>
+                      Lena
+                    </MascotCreditLink>
+                  </dd>
+                </div>
+              </dl>
+            </div>
           </div>
         </div>
 
