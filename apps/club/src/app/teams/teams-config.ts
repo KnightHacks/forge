@@ -21,3 +21,19 @@ export function createEmptyRoster(): TeamRoster {
     return roster;
   }, {} as TeamRoster);
 }
+
+function getMemberProfileId(member: TeamMember) {
+  return member.id.slice(member.id.indexOf("-") + 1);
+}
+
+export function countUniqueTeamMembers(roster: TeamRoster) {
+  const uniqueMemberIds = new Set<string>();
+
+  for (const team of TEAM_DEFINITIONS) {
+    for (const member of roster[team.slug]) {
+      uniqueMemberIds.add(getMemberProfileId(member));
+    }
+  }
+
+  return uniqueMemberIds.size;
+}

@@ -15,7 +15,11 @@ import { Button } from "@forge/ui/button";
 import type { TeamMember, TeamRoster, TeamSlug } from "./teams-config";
 import { CLUB_ASSETS } from "../_lib/assets";
 import { loadClubTeamRoster } from "./team-roster";
-import { createEmptyRoster, TEAM_DEFINITIONS } from "./teams-config";
+import {
+  countUniqueTeamMembers,
+  createEmptyRoster,
+  TEAM_DEFINITIONS,
+} from "./teams-config";
 
 const CARD_ROTATIONS = ["-1.8deg", "1.7deg", "-1.4deg", "1.2deg", "-1deg"];
 const TEAM_APPLICATIONS_ID = "team-applications";
@@ -181,14 +185,7 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
     [activeTeam],
   );
   const activeMembers = roster[activeTeam];
-  const totalMembers = useMemo(
-    () =>
-      TEAM_DEFINITIONS.reduce(
-        (total, team) => total + roster[team.slug].length,
-        0,
-      ),
-    [roster],
-  );
+  const totalMembers = useMemo(() => countUniqueTeamMembers(roster), [roster]);
   const teamCountLabel =
     status === "loading"
       ? "Loading team members"

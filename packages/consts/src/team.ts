@@ -36,49 +36,41 @@ export const CLUB_TEAM_DEFINITIONS = [
     slug: "executive",
     label: "Executive",
     heading: "Executive Officers",
-    terms: ["executive", "officer", "officers"],
   },
   {
     slug: "directors",
     label: "Directors",
     heading: "Directors",
-    terms: ["director", "directors"],
   },
   {
     slug: "hackathon",
     label: "Hackathon",
     heading: "Hackathon Team",
-    terms: ["hackathon", "hack org", "hackorg", "kh ix", "khix"],
   },
   {
     slug: "sponsorship",
     label: "Sponsorship",
     heading: "Sponsorship Team",
-    terms: ["sponsor", "sponsorship"],
   },
   {
     slug: "workshop",
     label: "Workshop",
     heading: "Workshop Team",
-    terms: ["workshop"],
   },
   {
     slug: "design",
     label: "Design",
     heading: "Design Team",
-    terms: ["design"],
   },
   {
     slug: "outreach",
     label: "Outreach",
     heading: "Outreach Team",
-    terms: ["outreach"],
   },
   {
     slug: "development",
     label: "Development",
     heading: "Development Team",
-    terms: ["development", "developer", "dev team"],
   },
 ] as const;
 
@@ -91,6 +83,67 @@ export const CLUB_EXECUTIVE_ROLE_ORDER = [
   "Treasurer",
   "Secretary",
   "Hack Lead",
-  "Development Lead",
-  "Executive Officer",
+  "Dev Lead",
+] as const;
+
+export const CLUB_AGGREGATE_EXECUTIVE_ROLE = "Officers" as const;
+
+export const CLUB_DIRECTOR_ROLE_ORDER = [
+  "Design Director",
+  "Sponsorship Director",
+  "Mentorship Director",
+  "Outreach Director",
+  "Workshop Director",
+  "Director",
+] as const;
+
+export const CLUB_AGGREGATE_DIRECTOR_ROLE = "Directors" as const;
+
+export const CLUB_TEAM_ROLE_CONFIG = {
+  hackathon: {
+    label: "Hackathon",
+    teamRoleName: "KH IX Team",
+    leadRoleName: "Hack Lead",
+  },
+  sponsorship: {
+    label: "Sponsorship",
+    teamRoleName: "Sponsorship Team",
+    leadRoleName: "Sponsorship Director",
+  },
+  workshop: {
+    label: "Workshop",
+    teamRoleName: "Workshop Team",
+    leadRoleName: "Workshop Director",
+  },
+  design: {
+    label: "Design",
+    teamRoleName: "Design Team",
+    leadRoleName: "Design Director",
+  },
+  outreach: {
+    label: "Outreach",
+    teamRoleName: "Outreach Team",
+    leadRoleName: "Outreach Director",
+  },
+  development: {
+    label: "Development",
+    teamRoleName: "Dev Team",
+    leadRoleName: "Dev Lead",
+  },
+} as const;
+
+export type ClubTeamRoleSlug = keyof typeof CLUB_TEAM_ROLE_CONFIG;
+
+const CLUB_TEAM_ROLE_SLUGS = Object.keys(
+  CLUB_TEAM_ROLE_CONFIG,
+) as ClubTeamRoleSlug[];
+
+export const CLUB_ROSTER_ROLE_NAMES = [
+  ...CLUB_EXECUTIVE_ROLE_ORDER,
+  CLUB_AGGREGATE_EXECUTIVE_ROLE,
+  ...CLUB_DIRECTOR_ROLE_ORDER.filter((role) => role !== "Director"),
+  CLUB_AGGREGATE_DIRECTOR_ROLE,
+  ...CLUB_TEAM_ROLE_SLUGS.map(
+    (slug) => CLUB_TEAM_ROLE_CONFIG[slug].teamRoleName,
+  ),
 ] as const;
