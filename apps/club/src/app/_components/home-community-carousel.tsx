@@ -45,7 +45,7 @@ const COMMUNITY_SLIDES: [CommunitySlide, ...CommunitySlide[]] = [
     caption: "Find your people. Build the future.",
     imageSide: "left",
     accentClassName: "bg-[#de2868]",
-    rotationClassName: "-rotate-6",
+    rotationClassName: "-rotate-2 md:-rotate-6",
   },
   {
     id: "workshops",
@@ -57,7 +57,7 @@ const COMMUNITY_SLIDES: [CommunitySlide, ...CommunitySlide[]] = [
     caption: "Learn it by building.",
     imageSide: "right",
     accentClassName: "bg-[var(--club-gold)] text-black",
-    rotationClassName: "rotate-6",
+    rotationClassName: "rotate-2 md:rotate-6",
   },
   {
     id: "career",
@@ -70,7 +70,7 @@ const COMMUNITY_SLIDES: [CommunitySlide, ...CommunitySlide[]] = [
     caption: "Securing the bag.",
     imageSide: "left",
     accentClassName: "bg-[#8e4ed6]",
-    rotationClassName: "rotate-3",
+    rotationClassName: "rotate-1 md:rotate-3",
   },
 ];
 
@@ -109,10 +109,11 @@ function Polaroid({ slide }: { slide: CommunitySlide }) {
 
 function SlideCopy({ slide }: { slide: CommunitySlide }) {
   const isSingleLineHeadline = !slide.title;
+  const hasLongTitle = (slide.title?.length ?? 0) > 10;
 
   return (
     <div
-      className="w-full min-w-0 max-w-[32rem]"
+      className="mx-auto w-full min-w-0 max-w-[calc(100vw-2.5rem)] text-center md:mx-0 md:max-w-[32rem] md:text-left"
       data-community-copy
       data-stagger
     >
@@ -120,7 +121,7 @@ function SlideCopy({ slide }: { slide: CommunitySlide }) {
         className={
           isSingleLineHeadline
             ? "text-[clamp(1.75rem,6.7vw,2.85rem)] font-black uppercase leading-none tracking-normal"
-            : "text-4xl font-black uppercase leading-none tracking-normal md:text-5xl lg:text-6xl"
+            : "text-[clamp(2.05rem,9vw,2.7rem)] font-black uppercase leading-none tracking-normal md:text-5xl lg:text-6xl"
         }
       >
         <span
@@ -131,13 +132,20 @@ function SlideCopy({ slide }: { slide: CommunitySlide }) {
         {slide.title ? (
           <>
             <br />
-            <span className="text-white [text-shadow:4px_4px_0_rgba(0,0,0,0.45)]">
+            <span
+              className={cn(
+                "text-white [text-shadow:4px_4px_0_rgba(0,0,0,0.45)]",
+                hasLongTitle
+                  ? "inline-block max-w-full whitespace-nowrap text-[clamp(1.85rem,7.6vw,2.35rem)] md:text-5xl lg:text-6xl"
+                  : "",
+              )}
+            >
               {slide.title}
             </span>
           </>
         ) : null}
       </h2>
-      <p className="mt-8 border-l-2 border-[var(--club-gold)] bg-black/20 py-1 pl-5 text-sm leading-7 text-[var(--club-muted)] md:text-base md:leading-8">
+      <p className="mx-auto mt-6 max-w-none border-l-2 border-[var(--club-gold)] bg-black/20 py-1 pl-5 text-left text-sm leading-7 text-[var(--club-muted)] md:mx-0 md:mt-8 md:text-base md:leading-8">
         {slide.body}
       </p>
     </div>
@@ -220,7 +228,7 @@ export function HomeCommunityCarousel() {
 
   return (
     <section
-      className="club-community-carousel club-post-hero-section relative px-5 pb-24 sm:px-6 md:px-10 md:pb-28 lg:px-24"
+      className="club-community-carousel club-post-hero-section relative px-5 pb-20 sm:px-6 md:px-10 md:pb-28 lg:px-24"
       data-community-carousel
     >
       <div
@@ -228,7 +236,7 @@ export function HomeCommunityCarousel() {
         data-motion-scope
         data-community-carousel-grid
         data-community-swipe-target
-        className="mx-auto grid min-h-[34rem] w-full max-w-[1120px] grid-cols-1 items-center gap-12 py-10 md:min-h-[38rem] md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:gap-12 lg:gap-16"
+        className="mx-auto grid min-h-[34rem] w-full max-w-[1120px] grid-cols-1 items-center gap-9 py-8 md:min-h-[38rem] md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:gap-12 md:py-10 lg:gap-16"
         onPointerDown={handleSwipeStart}
         onPointerMove={handleSwipeMove}
         onPointerUp={handleSwipeEnd}

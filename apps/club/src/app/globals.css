@@ -818,6 +818,14 @@ html[data-motion="ready"] .club-page-hero [data-hero-content] {
 }
 
 @media (max-width: 767px) {
+  .club-polaroid-wrap {
+    width: min(78vw, 20rem);
+  }
+
+  .club-polaroid {
+    box-shadow: 7px 9px 0 rgba(0, 0, 0, 0.36);
+  }
+
   .club-hero-actions .club-button {
     width: 100%;
     min-height: 3.25rem;
