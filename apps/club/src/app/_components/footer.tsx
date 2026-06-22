@@ -42,6 +42,17 @@ const SOCIAL_LINKS = [
   },
 ] as const;
 
+const UX_CREDIT_LINKS = [
+  {
+    label: "Tory",
+    href: "https://www.linkedin.com/in/tory-deutsch-967021200/",
+  },
+  {
+    label: "Thashin",
+    href: "https://www.linkedin.com/in/thashin04/",
+  },
+] as const;
+
 function FooterAnchor({
   href,
   children,
@@ -169,7 +180,7 @@ export default function Footer({ bladeUrl }: { bladeUrl: string }) {
         </div>
 
         <div
-          className="mt-8 border-t border-white/10 pt-5 md:mt-14 md:pt-8"
+          className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-5 md:mt-14 md:flex-row md:items-center md:justify-between md:gap-8 md:pt-8"
           data-reveal
         >
           <p className="text-xs leading-5 text-[var(--club-subtle)] md:text-sm">
@@ -177,6 +188,24 @@ export default function Footer({ bladeUrl }: { bladeUrl: string }) {
             <span className="hidden md:inline">
               © Copyright 2026, All Rights Reserved by Knight Hacks
             </span>
+          </p>
+          <p className="club-footer-credit whitespace-nowrap text-[0.5rem] leading-4 text-[var(--club-subtle)] min-[375px]:text-[0.625rem] sm:text-xs sm:leading-5 md:text-right md:text-sm">
+            Made with love by the{" "}
+            <span className="club-footer-dev-team">Dev Team</span>. UX by{" "}
+            {UX_CREDIT_LINKS.map((credit, index) => (
+              <span key={credit.href}>
+                {index > 0 ? " and " : ""}
+                <a
+                  href={credit.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-[var(--club-muted)] transition-colors hover:text-white"
+                >
+                  {credit.label}
+                </a>
+              </span>
+            ))}
+            .
           </p>
         </div>
       </div>
