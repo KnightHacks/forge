@@ -142,7 +142,6 @@ export default function ClubMotionRuntime() {
     observeTree(document);
     refreshScrollTargets();
     root.dataset.motion = "ready";
-    const hasTiltTargets = document.querySelector(TILT_SELECTOR) !== null;
 
     const mutationObserver = new MutationObserver((mutations) => {
       let shouldRefreshScrollTargets = false;
@@ -162,6 +161,7 @@ export default function ClubMotionRuntime() {
 
       if (shouldRefreshScrollTargets) {
         refreshScrollTargets();
+        syncTiltListeners();
       }
     });
 
@@ -171,6 +171,7 @@ export default function ClubMotionRuntime() {
     });
 
     let scrollFrameId: number | null = null;
+    let resizeRefreshFrameId: number | null = null;
 
     function updateScrollMotion() {
       scrollFrameId = null;
@@ -273,7 +274,18 @@ export default function ClubMotionRuntime() {
       scrollFrameId = window.requestAnimationFrame(updateScrollMotion);
     }
 
+    function scheduleScrollTargetRefresh() {
+      if (resizeRefreshFrameId !== null) return;
+
+      resizeRefreshFrameId = window.requestAnimationFrame(() => {
+        resizeRefreshFrameId = null;
+        refreshScrollTargets();
+        scheduleScrollMotion();
+      });
+    }
+
     let tiltFrameId: number | null = null;
+    let tiltListenersAttached = false;
     let pendingTilt: {
       element: HTMLElement;
       x: number;
@@ -330,6 +342,38 @@ export default function ClubMotionRuntime() {
       target.style.removeProperty("--tilt-glow-y");
     }
 
+    function attachTiltListeners() {
+      if (tiltListenersAttached) return;
+
+      window.addEventListener("pointermove", handlePointerMove, {
+        passive: true,
+      });
+      window.addEventListener("pointerout", handlePointerOut);
+      tiltListenersAttached = true;
+    }
+
+    function detachTiltListeners() {
+      if (!tiltListenersAttached) return;
+
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerout", handlePointerOut);
+      tiltListenersAttached = false;
+      pendingTilt = null;
+
+      if (tiltFrameId !== null) {
+        window.cancelAnimationFrame(tiltFrameId);
+        tiltFrameId = null;
+      }
+    }
+
+    function syncTiltListeners() {
+      if (document.querySelector(TILT_SELECTOR)) {
+        attachTiltListeners();
+      } else {
+        detachTiltListeners();
+      }
+    }
+
     window.addEventListener("scroll", scheduleScrollMotion, { passive: true });
     function handleResize() {
       refreshScrollTargets();
@@ -337,31 +381,29 @@ export default function ClubMotionRuntime() {
     }
 
     window.addEventListener("resize", handleResize);
-    if (hasTiltTargets) {
-      window.addEventListener("pointermove", handlePointerMove, {
-        passive: true,
-      });
-      window.addEventListener("pointerout", handlePointerOut);
-    }
+    const resizeObserver =
+      "ResizeObserver" in window
+        ? new ResizeObserver(scheduleScrollTargetRefresh)
+        : null;
+    resizeObserver?.observe(document.documentElement);
+    resizeObserver?.observe(document.body);
+    syncTiltListeners();
     scheduleScrollMotion();
 
     return () => {
       revealObserver.disconnect();
       mutationObserver.disconnect();
+      resizeObserver?.disconnect();
       window.removeEventListener("scroll", scheduleScrollMotion);
       window.removeEventListener("resize", handleResize);
-
-      if (hasTiltTargets) {
-        window.removeEventListener("pointermove", handlePointerMove);
-        window.removeEventListener("pointerout", handlePointerOut);
-      }
+      detachTiltListeners();
 
       if (scrollFrameId !== null) {
         window.cancelAnimationFrame(scrollFrameId);
       }
 
-      if (tiltFrameId !== null) {
-        window.cancelAnimationFrame(tiltFrameId);
+      if (resizeRefreshFrameId !== null) {
+        window.cancelAnimationFrame(resizeRefreshFrameId);
       }
     };
   }, []);
