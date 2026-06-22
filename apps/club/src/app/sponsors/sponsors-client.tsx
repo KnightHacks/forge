@@ -261,7 +261,6 @@ function SponsorHighlight({
                 src={selectedSlide.imageSrc}
                 alt={selectedSlide.alt}
                 fill
-                priority={selectedIndex === 0}
                 sizes="(min-width: 1024px) 30rem, (min-width: 768px) 42vw, 88vw"
                 className="object-cover transition duration-300"
               />

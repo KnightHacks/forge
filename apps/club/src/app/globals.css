@@ -114,8 +114,9 @@ body {
   );
   box-shadow: 0 0 18px rgba(255, 182, 43, 0.48);
   pointer-events: none;
-  transform: scaleX(var(--club-scroll-progress, 0));
+  transform: translateZ(0) scaleX(var(--club-scroll-progress, 0));
   transform-origin: left;
+  will-change: transform;
 }
 
 .club-home-bg {
@@ -1655,12 +1656,8 @@ html[data-motion="ready"] .club-page-hero [data-hero-content] {
     0 0 22px rgba(255, 123, 137, 0.12);
 }
 
-.club-history-timeline-fill,
-.club-history-timeline-scrubber,
 .club-history-timeline-marker {
   transition:
-    height 140ms linear,
-    top 90ms linear,
     background-color 180ms ease,
     border-color 180ms ease,
     box-shadow 180ms ease,
@@ -1669,6 +1666,7 @@ html[data-motion="ready"] .club-page-hero [data-hero-content] {
 
 .club-history-timeline-fill {
   bottom: auto;
+  height: 100%;
   width: 6px;
   border-radius: 999px;
   background: linear-gradient(180deg, #f4ca41 0%, #ff7b89 52%, #7dd3fc 100%);
@@ -1676,6 +1674,8 @@ html[data-motion="ready"] .club-page-hero [data-hero-content] {
     0 0 0 1px rgba(255, 255, 255, 0.54),
     0 0 20px rgba(255, 123, 137, 0.34),
     0 0 42px rgba(244, 202, 65, 0.1);
+  transform-origin: top center;
+  will-change: transform;
 }
 
 .club-history-timeline-marker {
@@ -1704,11 +1704,12 @@ html[data-motion="ready"] .club-page-hero [data-hero-content] {
 
 .club-history-timeline-scrubber {
   position: absolute;
+  top: 0;
   left: 50%;
   z-index: 24;
   width: 30px;
   height: 42px;
-  transform: translate(-50%, -50%);
+  will-change: transform;
 }
 
 .club-history-timeline-scrubber::before {
@@ -2154,7 +2155,7 @@ html[data-motion="ready"] [data-stagger].is-visible > .club-team-card:hover {
 
 html[data-motion="ready"] [data-scroll-drift]:not([data-reveal]) {
   transform: translate3d(0, var(--club-scroll-drift, 0px), 0);
-  transition: transform 120ms linear;
+  transition: none;
   will-change: transform;
 }
 

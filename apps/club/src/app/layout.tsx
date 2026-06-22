@@ -6,6 +6,7 @@ import ClubMotionRuntime from "./_components/club-motion-runtime";
 import Footer from "./_components/footer";
 import JsonLd from "./_components/json-ld";
 import Navbar from "./_components/navbar";
+import { CLUB_ASSET_BASE_URL } from "./_lib/assets";
 import {
   OG_IMAGE_ALT,
   OG_IMAGE_HEIGHT,
@@ -28,6 +29,7 @@ const montserrat = Montserrat({
 });
 
 const bladeUrl = env.BLADE_URL;
+const clubAssetOrigin = new URL(CLUB_ASSET_BASE_URL).origin;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -99,6 +101,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href={clubAssetOrigin} />
+      </head>
       <body className={`${montserrat.variable} antialiased`}>
         <ClubMotionRuntime />
         <div className="club-home-bg flex min-h-screen flex-col">

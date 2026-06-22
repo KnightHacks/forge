@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
@@ -95,11 +95,45 @@ export function HomeEvents({
   bladeUrl: string;
   eventLimit?: number;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [events, setEvents] = useState<PublicClubEvent[]>([]);
   const [status, setStatus] = useState<EventsStatus>("loading");
+  const [shouldLoadEvents, setShouldLoadEvents] = useState(false);
   const safeEventLimit = getSafeEventLimit(eventLimit);
 
   useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container || shouldLoadEvents) return;
+
+    if (!("IntersectionObserver" in window)) {
+      const fallbackId = globalThis.setTimeout(() => {
+        setShouldLoadEvents(true);
+      }, 0);
+
+      return () => globalThis.clearTimeout(fallbackId);
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+
+        setShouldLoadEvents(true);
+        observer.disconnect();
+      },
+      {
+        rootMargin: "700px 0px",
+      },
+    );
+
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [shouldLoadEvents]);
+
+  useEffect(() => {
+    if (!shouldLoadEvents) return;
+
     const abortController = new AbortController();
 
     async function loadEvents() {
@@ -125,7 +159,7 @@ export function HomeEvents({
     void loadEvents();
 
     return () => abortController.abort();
-  }, [bladeUrl, safeEventLimit]);
+  }, [bladeUrl, safeEventLimit, shouldLoadEvents]);
 
   const homeEvents = useMemo(
     () => events.slice(0, safeEventLimit),
@@ -133,7 +167,7 @@ export function HomeEvents({
   );
 
   return (
-    <>
+    <div ref={containerRef}>
       {status === "loading" ? (
         <LoadingRows eventLimit={safeEventLimit} />
       ) : homeEvents.length > 0 ? (
@@ -158,12 +192,12 @@ export function HomeEvents({
           size="lg"
           className="club-button bg-white text-black shadow-[4px_4px_0_var(--club-gold)]"
         >
-          <Link href={allEventsHref}>
+          <Link href={allEventsHref} prefetch={false}>
             {allEventsLabel}
             <ExternalArrow />
           </Link>
         </Button>
       </div>
-    </>
+    </div>
   );
 }

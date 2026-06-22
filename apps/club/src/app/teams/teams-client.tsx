@@ -171,10 +171,12 @@ function EmptyTeam({ label, status }: { label: string; status: RosterStatus }) {
 }
 
 export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
+  const rosterSectionRef = useRef<HTMLElement>(null);
   const pendingScrollPosition = useRef<{ x: number; y: number } | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const [roster, setRoster] = useState<TeamRoster>(() => createEmptyRoster());
   const [status, setStatus] = useState<RosterStatus>("loading");
+  const [shouldLoadRoster, setShouldLoadRoster] = useState(false);
   const [activeTeam, setActiveTeam] = useState<TeamSlug>(
     TEAM_DEFINITIONS[0].slug,
   );
@@ -215,12 +217,46 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
 
     pendingScrollPosition.current = null;
     window.scrollTo(scrollPosition.x, scrollPosition.y);
-    window.requestAnimationFrame(() => {
+    const animationFrameId = window.requestAnimationFrame(() => {
       window.scrollTo(scrollPosition.x, scrollPosition.y);
     });
+
+    return () => window.cancelAnimationFrame(animationFrameId);
   }, [activeTeam]);
 
   useEffect(() => {
+    const rosterSection = rosterSectionRef.current;
+
+    if (!rosterSection || shouldLoadRoster) return;
+
+    if (!("IntersectionObserver" in window)) {
+      const fallbackId = globalThis.setTimeout(() => {
+        setShouldLoadRoster(true);
+      }, 0);
+
+      return () => globalThis.clearTimeout(fallbackId);
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+
+        setShouldLoadRoster(true);
+        observer.disconnect();
+      },
+      {
+        rootMargin: "0px",
+      },
+    );
+
+    observer.observe(rosterSection);
+
+    return () => observer.disconnect();
+  }, [shouldLoadRoster]);
+
+  useEffect(() => {
+    if (!shouldLoadRoster) return;
+
     const abortController = new AbortController();
 
     async function loadRoster() {
@@ -240,7 +276,7 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
     void loadRoster();
 
     return () => abortController.abort();
-  }, [bladeUrl]);
+  }, [bladeUrl, shouldLoadRoster]);
 
   function selectTeam(team: TeamSlug) {
     if (team === activeTeam) return;
@@ -330,6 +366,7 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
       <div className="club-teams-hero-transition" aria-hidden="true" />
 
       <section
+        ref={rosterSectionRef}
         className="club-teams-post-section container pb-10 md:pb-12"
         aria-labelledby="team-members"
       >

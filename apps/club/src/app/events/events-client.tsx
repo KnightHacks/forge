@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
   ChevronLeft,
@@ -469,8 +469,10 @@ export function EventsClient({
   bladeUrl: string;
   eventLimit: number;
 }) {
+  const eventsSectionRef = useRef<HTMLElement>(null);
   const [events, setEvents] = useState<PublicClubEvent[]>([]);
   const [status, setStatus] = useState<EventsStatus>("loading");
+  const [shouldLoadEvents, setShouldLoadEvents] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [calendarMonth, setCalendarMonth] =
     useState<MonthCursor>(getCurrentMonth);
@@ -478,6 +480,38 @@ export function EventsClient({
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    const eventsSection = eventsSectionRef.current;
+
+    if (!eventsSection || shouldLoadEvents) return;
+
+    if (!("IntersectionObserver" in window)) {
+      const fallbackId = globalThis.setTimeout(() => {
+        setShouldLoadEvents(true);
+      }, 0);
+
+      return () => globalThis.clearTimeout(fallbackId);
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+
+        setShouldLoadEvents(true);
+        observer.disconnect();
+      },
+      {
+        rootMargin: "0px",
+      },
+    );
+
+    observer.observe(eventsSection);
+
+    return () => observer.disconnect();
+  }, [shouldLoadEvents]);
+
+  useEffect(() => {
+    if (!shouldLoadEvents) return;
+
     const abortController = new AbortController();
 
     async function loadEvents() {
@@ -511,7 +545,7 @@ export function EventsClient({
     void loadEvents();
 
     return () => abortController.abort();
-  }, [bladeUrl, eventLimit]);
+  }, [bladeUrl, eventLimit, shouldLoadEvents]);
 
   const filteredEvents = useMemo(
     () => events.filter((event) => eventMatchesFilter(event, activeFilter)),
@@ -555,7 +589,10 @@ export function EventsClient({
   );
 
   return (
-    <section className="club-post-hero-section relative px-6 pb-28 md:px-10 lg:px-24">
+    <section
+      ref={eventsSectionRef}
+      className="club-post-hero-section relative px-6 pb-28 md:px-10 lg:px-24"
+    >
       <div className="mx-auto max-w-[1040px]">
         <h2
           className="text-center text-4xl font-black uppercase leading-none text-white [text-shadow:4px_4px_0_rgba(0,0,0,0.5)] md:text-5xl"
