@@ -3,7 +3,7 @@ export const EVENT_NAME = "BloomKnights";
 export const EVENT_DATE_LABEL = "July 11, 2026";
 export const EVENT_START_DATE = "2026-07-11T09:00:00-04:00";
 export const EVENT_END_DATE = "2026-07-11T21:00:00-04:00";
-export const DISCORD_URL = "https://discord.gg/2W2HCvkKAy";
+export const DISCORD_URL = "https://discord.gg/TPYGbdgyaQ";
 
 export const SEO_TITLE =
   "BloomKnights 2026 | 12-Hour UCF Hackathon in Orlando, Florida";
