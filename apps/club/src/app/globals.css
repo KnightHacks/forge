@@ -1234,6 +1234,24 @@ html[data-motion="ready"] .club-page-hero [data-hero-content] {
   transform: translate3d(0, -3px, 0) rotate(-4deg);
 }
 
+.club-footer-dev-team::after {
+  display: inline-block;
+  margin-left: 0.28rem;
+  color: #de2868;
+  content: "❤";
+  font-size: clamp(0.8rem, 3.2vw, 1rem);
+  line-height: 1;
+  text-shadow: 1px 1px 0 rgba(255, 182, 43, 0.72);
+  transform: rotate(-8deg);
+  vertical-align: -0.08em;
+}
+
+@media (max-width: 374px) {
+  .club-footer-dev-team::after {
+    margin-left: 0.2rem;
+  }
+}
+
 .club-history-card,
 .club-history-details,
 .club-history-link {
