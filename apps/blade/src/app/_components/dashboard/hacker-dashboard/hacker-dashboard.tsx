@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 
-import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
-
 import type { api as serverCall } from "~/trpc/server";
-import { HackerAppCard } from "~/app/_components/option-cards";
+import { BaseHackathonRegistrationPrompt } from "~/app/_components/dashboard/hackathon-dashboard/components";
 import { api } from "~/trpc/server";
 import { HackerData } from "./hacker-data";
 import { HackerResumeButton } from "./hacker-resume-button";
@@ -15,10 +13,8 @@ export const metadata: Metadata = {
 };
 
 export default async function HackerDashboard({
-  hackathon,
   hacker,
 }: {
-  hackathon?: SelectHackathon | null;
   hacker: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
 }) {
   const [resume, pastHackathons] = await Promise.allSettled([
@@ -26,26 +22,8 @@ export default async function HackerDashboard({
     api.hackathon.getPastHackathons(),
   ]);
 
-  const activeHackathon =
-    hackathon ??
-    (await api.hackathon.getHackathon({ hackathonName: undefined }));
-
   if (!hacker) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-y-6 text-xl font-semibold">
-        <p className="w-full max-w-xl text-center text-2xl">
-          Register for Knight Hacks today!
-        </p>
-        <div className="flex flex-wrap justify-center gap-5">
-          {
-            //if there is no current hackathon then this page is never rendered anyway
-            activeHackathon && (
-              <HackerAppCard hackathonName={activeHackathon.name} />
-            )
-          }
-        </div>
-      </div>
-    );
+    return <BaseHackathonRegistrationPrompt />;
   }
 
   return (
@@ -58,7 +36,7 @@ export default async function HackerDashboard({
       </div>
       <div className="animate-mobile-initial-expand relative mx-auto flex h-0 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:py-0 sm:pb-0 lg:max-h-56">
         {/* Main content */}
-        <HackerData data={hacker} hackathon={activeHackathon} />
+        <HackerData data={hacker} />
 
         {/* Transparent Triangle overlay in bottom right corner */}
         <div className="border-b-solid border-l-solid absolute bottom-0 right-0 h-0 w-0 border-b-[30px] border-l-[30px] border-b-background border-l-transparent"></div>

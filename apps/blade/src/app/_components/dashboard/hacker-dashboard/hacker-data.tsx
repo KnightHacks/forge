@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { CircleCheckBig, Loader2 } from "lucide-react";
 
-import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
 import { CLUB } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
@@ -20,6 +19,7 @@ import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
 
 import type { api as serverCall } from "~/trpc/server";
+import { useCurrentHackathon } from "~/app/_components/dashboard/hackathon-dashboard/components";
 import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
 import ConfirmWithTOS from "./confirm-button";
@@ -29,11 +29,10 @@ type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
 
 export function HackerData({
   data,
-  hackathon,
 }: {
   data: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
-  hackathon?: SelectHackathon | null;
 }) {
+  const hackathon = useCurrentHackathon();
   const [hackerStatus, setHackerStatus] = useState<string | null>("");
   const [hackerStatusColor, setHackerStatusColor] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -41,29 +40,18 @@ export function HackerData({
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  const { data: fallbackHackathon } = api.hackathon.getHackathon.useQuery(
-    { hackathonName: undefined },
-    {
-      enabled: !hackathon,
-    },
-  );
-
-  const hackathonData = hackathon ?? fallbackHackathon ?? null;
-
   const { data: hacker, isError } = api.hackerQuery.getHacker.useQuery(
-    { hackathonName: hackathonData?.name },
+    { hackathonName: hackathon.name },
     {
-      enabled: Boolean(hackathonData?.name),
       initialData: data,
     },
   );
 
   const { data: numConfirmed } = api.hackathon.getNumConfirmed.useQuery(
     {
-      hackathonId: hackathonData?.id ?? "",
+      hackathonId: hackathon.id,
     },
     {
-      enabled: Boolean(hackathonData?.id),
       retry: false,
     },
   );
@@ -159,7 +147,7 @@ export function HackerData({
             </div>
           )}
           <div className="animate-fade-in text-lg font-bold">
-            Status for {hackathonData?.displayName}
+            Status for {hackathon.displayName}
           </div>
           <div className="flex gap-x-2">
             <div
@@ -186,23 +174,21 @@ export function HackerData({
         <HackerQRCodePopup />
         {/* Confirm Button */}
 
-        {hackerStatus === "Accepted" &&
-          hackathonData?.confirmationDeadline != null && (
-            <ConfirmWithTOS
-              isLoading={loading}
-              hackathonData={hackathonData}
-              handleConfirm={handleConfirm}
-              numConfirmed={numConfirmed ?? 0}
-            />
-          )}
+        {hackerStatus === "Accepted" && (
+          <ConfirmWithTOS
+            isLoading={loading}
+            hackathonData={hackathon}
+            handleConfirm={handleConfirm}
+            numConfirmed={numConfirmed ?? 0}
+          />
+        )}
 
         <div>
-          {hackathonData?.confirmationDeadline &&
-            hackathonData.confirmationDeadline < new Date() && (
-              <div className="w-full py-2 pl-4 text-center text-gray-500">
-                The confirmation deadline has passed.
-              </div>
-            )}
+          {hackathon.confirmationDeadline < new Date() && (
+            <div className="w-full py-2 pl-4 text-center text-gray-500">
+              The confirmation deadline has passed.
+            </div>
+          )}
         </div>
 
         {/* Confirm Dialog */}

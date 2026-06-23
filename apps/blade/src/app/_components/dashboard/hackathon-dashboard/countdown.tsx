@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 
 import { Card, CardContent } from "@forge/ui/card";
 
-export function BaseHackathonCountdown({ endDate }: { endDate: Date }) {
+import { useCurrentHackathon } from "./provider";
+
+export function BaseHackathonCountdown() {
+  const hackathon = useCurrentHackathon();
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -13,7 +16,7 @@ export function BaseHackathonCountdown({ endDate }: { endDate: Date }) {
   });
 
   useEffect(() => {
-    const targetDate = endDate.getTime();
+    const targetDate = hackathon.endDate.getTime();
 
     const updateCountdown = () => {
       const now = new Date().getTime();
@@ -38,7 +41,7 @@ export function BaseHackathonCountdown({ endDate }: { endDate: Date }) {
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
-  }, [endDate]);
+  }, [hackathon.endDate]);
 
   const formatNumber = (num: number) => String(num).padStart(2, "0");
 

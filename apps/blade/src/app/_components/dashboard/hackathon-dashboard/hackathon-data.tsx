@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, CircleCheckBig, Trophy } from "lucide-react";
 
-import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +20,7 @@ import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
 import { BaseHackathonIssueButton } from "./issue-dialog";
 import { BaseHackathonPointLeaderboard } from "./point-leaderboard";
+import { useCurrentHackathon } from "./provider";
 
 type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
 type HackerProfile = Awaited<
@@ -54,18 +54,17 @@ export function BaseHackathonGuideButton({ href }: { href: string }) {
 export function BaseHackathonData({
   data,
   guideHref,
-  hackathon,
   teamColor,
   team,
   classPfp,
 }: {
   data: HackerProfile;
   guideHref: string;
-  hackathon: SelectHackathon;
   teamColor: string;
   team: string;
   classPfp: string;
 }) {
+  const hackathon = useCurrentHackathon();
   const [hackerStatus, setHackerStatus] = useState<string | null>("");
   const [hackerStatusColor, setHackerStatusColor] = useState<string>("");
 
@@ -268,10 +267,7 @@ export function BaseHackathonData({
                   <DialogHeader>
                     <DialogTitle>Leaderboard</DialogTitle>
                   </DialogHeader>
-                  <BaseHackathonPointLeaderboard
-                    hacker={hacker}
-                    hId={hackathon.name}
-                  />
+                  <BaseHackathonPointLeaderboard hacker={hacker} />
                 </DialogContent>
               </Dialog>
             </div>

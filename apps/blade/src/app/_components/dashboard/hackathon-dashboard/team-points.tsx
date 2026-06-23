@@ -9,16 +9,12 @@ import { Card, CardContent, CardHeader } from "@forge/ui/card";
 import { hackathons } from "@forge/utils";
 
 import { api } from "~/trpc/react";
+import { useCurrentHackathon } from "./provider";
 
-export function BaseHackathonTeamPoints({
-  hId,
-  hClass,
-}: {
-  hId: string;
-  hClass: HackerClass;
-}) {
+export function BaseHackathonTeamPoints({ hClass }: { hClass: HackerClass }) {
+  const hackathon = useCurrentHackathon();
   const { data: classPoints } = api.hackerQuery.getPointsByClass.useQuery({
-    hackathonName: hId,
+    hackathonName: hackathon.name,
   });
   const [byTeam, setByTeam] = useState<number[]>([0, 0]);
   const team = hackathons.getClassTeam(hClass);

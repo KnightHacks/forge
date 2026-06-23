@@ -1,3 +1,5 @@
+"use client";
+
 import { Star } from "lucide-react";
 
 import { Badge } from "@forge/ui/badge";
@@ -10,25 +12,23 @@ import {
 } from "@forge/ui/card";
 import { time } from "@forge/utils";
 
-import { api } from "~/trpc/server";
+import { api } from "~/trpc/react";
+import { useCurrentHackathon } from "./provider";
 
-export async function BaseHackathonUpcomingEvents({
-  hackathonId,
-}: {
-  hackathonId: string;
-}) {
-  const events = await api.event.getEvents();
+export function BaseHackathonUpcomingEvents() {
+  const hackathon = useCurrentHackathon();
+  const { data: events, isError } = api.event.getEvents.useQuery();
 
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
   const fiveHoursLater = now + 5 * 60 * 60 * 1000;
 
-  const upcomingEvents = events
+  const upcomingEvents = (events ?? [])
     .filter((event) => {
       const oneDayOffset = 24 * 60 * 60 * 1000;
       const start = new Date(event.start_datetime).getTime() + oneDayOffset;
       return (
-        event.hackathonId === hackathonId &&
+        event.hackathonId === hackathon.id &&
         start >= now &&
         start <= fiveHoursLater
       );
@@ -38,6 +38,14 @@ export async function BaseHackathonUpcomingEvents({
         new Date(a.start_datetime).getTime() -
         new Date(b.start_datetime).getTime(),
     );
+
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center rounded-lg border bg-gradient-to-tr from-background/50 to-primary/5 p-6 text-center text-muted-foreground shadow-lg backdrop-blur-sm">
+        Unable to load upcoming events. Please refresh and try again.
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center rounded-lg border bg-gradient-to-tr from-background/50 to-primary/5 p-3 shadow-lg backdrop-blur-sm sm:p-4">

@@ -1,10 +1,12 @@
-import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
+"use client";
+
 import { HACKATHONS } from "@forge/consts";
 
 import type { api as serverCall } from "~/trpc/server";
 import { HackerAppCard } from "~/app/_components/option-cards";
 import { BaseHackathonCountdown } from "./countdown";
 import { BaseHackathonData } from "./hackathon-data";
+import { useCurrentHackathon } from "./provider";
 import { BaseHackathonTeamPoints } from "./team-points";
 import { BaseHackathonUpcomingEvents } from "./upcoming-events";
 
@@ -16,6 +18,11 @@ export {
 export { BaseHackathonCountdown } from "./countdown";
 export * from "./issue-dialog";
 export { BaseHackathonPointLeaderboard } from "./point-leaderboard";
+export {
+  BaseHackathonMissingError,
+  HackathonProvider,
+  useCurrentHackathon,
+} from "./provider";
 export { BaseHackathonTeamPoints } from "./team-points";
 export { BaseHackathonUpcomingEvents } from "./upcoming-events";
 
@@ -60,11 +67,9 @@ export function BaseHackathonClassError({
   );
 }
 
-export function BaseHackathonRegistrationPrompt({
-  hackathon,
-}: {
-  hackathon: SelectHackathon;
-}) {
+export function BaseHackathonRegistrationPrompt() {
+  const hackathon = useCurrentHackathon();
+
   return (
     <div className="flex flex-col items-center justify-center gap-y-6 text-xl font-semibold">
       <p className="w-full max-w-xl text-center text-2xl">
@@ -80,16 +85,16 @@ export function BaseHackathonRegistrationPrompt({
 export function BaseHackathonDashboard({
   classInfoByClass = DEFAULT_CLASS_INFO,
   guideHref = DEFAULT_HACKER_GUIDE_HREF,
-  hackathon,
   hacker,
 }: {
   classInfoByClass?: Record<string, BaseHackathonClassInfo>;
   guideHref?: string;
-  hackathon: SelectHackathon;
   hacker: BaseHackathonHacker;
 }) {
+  const hackathon = useCurrentHackathon();
+
   if (!hacker) {
-    return <BaseHackathonRegistrationPrompt hackathon={hackathon} />;
+    return <BaseHackathonRegistrationPrompt />;
   }
 
   if (!hacker.class || !(hacker.class in classInfoByClass)) {
@@ -130,7 +135,6 @@ export function BaseHackathonDashboard({
           classPfp={classPfp}
           data={hacker}
           guideHref={guideHref}
-          hackathon={hackathon}
           team={team}
           teamColor={teamColor}
         />
@@ -156,13 +160,13 @@ export function BaseHackathonDashboard({
         <div className="absolute -left-3 top-0 hidden h-full w-[0.4rem] bg-primary sm:block"></div>
       </div>
       <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
-        <BaseHackathonTeamPoints hClass={hacker.class} hId={hackathon.name} />
+        <BaseHackathonTeamPoints hClass={hacker.class} />
       </div>
       <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
-        <BaseHackathonCountdown endDate={hackathon.endDate} />
+        <BaseHackathonCountdown />
       </div>
       <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
-        <BaseHackathonUpcomingEvents hackathonId={hackathon.id} />
+        <BaseHackathonUpcomingEvents />
       </div>
     </>
   );

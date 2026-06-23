@@ -9,6 +9,7 @@ import { hackathons } from "@forge/utils";
 
 import type { api as serverCall } from "~/trpc/server";
 import { api } from "~/trpc/react";
+import { useCurrentHackathon } from "./provider";
 
 interface LeaderboardEntry {
   firstName: string;
@@ -20,11 +21,10 @@ interface LeaderboardEntry {
 
 export function BaseHackathonPointLeaderboard({
   hacker,
-  hId,
 }: {
   hacker: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
-  hId: string;
 }) {
+  const hackathon = useCurrentHackathon();
   const dummy: HackerClass[] = [
     "Operator",
     "Harbinger",
@@ -34,7 +34,7 @@ export function BaseHackathonPointLeaderboard({
   ];
 
   const { data: data } = api.hackerQuery.getTopHackers.useQuery({
-    hackathonName: hId,
+    hackathonName: hackathon.name,
     hPoints: hacker?.points || 0,
     hClass: hacker?.class || "Alchemist",
   });

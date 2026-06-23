@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 
+import { HackathonProvider } from "~/app/_components/dashboard/hackathon-dashboard/components";
 import HackerDashboard from "~/app/_components/dashboard/hacker-dashboard/hacker-dashboard";
 import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
 import { api, HydrateClient } from "~/trpc/server";
@@ -20,31 +21,33 @@ export default async function BloomKnightsHackathonPage() {
     redirect("/");
   }
 
-  const hackathon = await api.hackathon.getHackathon({
+  const hackathon = await api.hackathon.getCurrentHackathonByName({
     hackathonName: "bloomknights",
   });
 
-  if (!hackathon) {
-    notFound();
-  }
-
-  const hacker = await api.hackerQuery.getHacker({
-    hackathonName: hackathon.name,
-  });
+  const hacker = hackathon
+    ? await api.hackerQuery.getHacker({
+        hackathonName: hackathon.name,
+      })
+    : null;
 
   return (
     <HydrateClient>
       <SessionNavbar />
       <main className="container min-h-screen py-16">
-        <div className="flex justify-center">
-          <div className="max-w-8xl w-full">
-            {hacker && (hacker.status as string) === "checkedin" ? (
-              <BKHackathonDashboard hackathon={hackathon} hacker={hacker} />
-            ) : (
-              <HackerDashboard hackathon={hackathon} hacker={hacker} />
-            )}
-          </div>
-        </div>
+        <HackathonProvider hackathon={hackathon}>
+          {hackathon ? (
+            <div className="flex justify-center">
+              <div className="max-w-8xl w-full">
+                {hacker && (hacker.status as string) === "checkedin" ? (
+                  <BKHackathonDashboard hacker={hacker} />
+                ) : (
+                  <HackerDashboard hacker={hacker} />
+                )}
+              </div>
+            </div>
+          ) : null}
+        </HackathonProvider>
       </main>
     </HydrateClient>
   );

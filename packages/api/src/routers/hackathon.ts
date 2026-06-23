@@ -146,6 +146,25 @@ export const hackathonRouter = {
     return hackathon ?? null;
   }),
 
+  getCurrentHackathonByName: publicProcedure
+    .input(
+      z.object({
+        hackathonName: hackathonRouteNameSchema,
+      }),
+    )
+    .query(async ({ input }) => {
+      const now = new Date();
+      const hackathon = await db.query.Hackathon.findFirst({
+        where: and(
+          eq(Hackathon.name, input.hackathonName),
+          lte(Hackathon.startDate, now),
+          gte(Hackathon.endDate, now),
+        ),
+      });
+
+      return hackathon ?? null;
+    }),
+
   getPreviousHacker: protectedProcedure.query(async ({ ctx }) => {
     // Get the most recent hacker profile for this user
     const hacker = await db.query.Hacker.findFirst({
