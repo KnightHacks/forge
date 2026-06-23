@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { HACKATHONS } from "@forge/consts";
-import { and, count, desc, eq, getTableColumns, lt } from "@forge/db";
+import { and, count, desc, eq, getTableColumns, gte, lt, lte } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Hackathon,
@@ -137,12 +137,12 @@ export const hackathonRouter = {
   }),
 
   getCurrentHackathon: publicProcedure.query(async () => {
-    // Find first hackathon that hasnt ended yet
+    const now = new Date();
     const hackathon = await db.query.Hackathon.findFirst({
       orderBy: (t, { asc }) => asc(t.endDate),
-      where: (t, { and, gte, lte }) =>
-        and(gte(t.endDate, new Date()), lte(t.applicationOpen, new Date())),
+      where: and(lte(Hackathon.startDate, now), gte(Hackathon.endDate, now)),
     });
+
     return hackathon ?? null;
   }),
 

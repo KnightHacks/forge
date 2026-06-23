@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { AlertCircle } from "lucide-react";
 
@@ -17,7 +19,7 @@ import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
 
-export default function AlertButton() {
+export function BaseHackathonIssueButton() {
   const [open, setOpen] = useState(false);
   const [issue, setIssue] = useState("");
 

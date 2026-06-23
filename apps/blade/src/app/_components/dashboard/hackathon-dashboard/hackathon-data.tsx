@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, CircleCheckBig, Trophy } from "lucide-react";
 
+import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
 import {
   Dialog,
   DialogContent,
@@ -18,18 +19,49 @@ import { HackerQRCodePopup } from "~/app/_components/dashboard/hacker-dashboard/
 import { DownloadQRPass } from "~/app/_components/dashboard/member-dashboard/download-qr-pass";
 import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
-import AlertButton from "./issue-dialog";
-import { PointLeaderboard } from "./point-leaderboard";
+import { BaseHackathonIssueButton } from "./issue-dialog";
+import { BaseHackathonPointLeaderboard } from "./point-leaderboard";
 
 type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
+type HackerProfile = Awaited<
+  ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>
+>;
 
-export function HackathonData({
+export function BaseHackathonQRCodeButton() {
+  return <HackerQRCodePopup />;
+}
+
+export function BaseHackathonWalletButton({
+  profile,
+}: {
+  profile: HackerProfile;
+}) {
+  return <DownloadQRPass profile={profile} profileKind="hacker" />;
+}
+
+export function BaseHackathonGuideButton({ href }: { href: string }) {
+  return (
+    <Link
+      href={href}
+      className="group flex w-full items-center gap-3 rounded-lg border bg-card px-5 py-3 text-base font-semibold shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md sm:w-auto sm:px-5 sm:py-3 sm:text-sm"
+    >
+      <BookOpen className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
+      <span>Hacker's Guide</span>
+    </Link>
+  );
+}
+
+export function BaseHackathonData({
   data,
+  guideHref,
+  hackathon,
   teamColor,
   team,
   classPfp,
 }: {
-  data: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
+  data: HackerProfile;
+  guideHref: string;
+  hackathon: SelectHackathon;
   teamColor: string;
   team: string;
   classPfp: string;
@@ -38,15 +70,11 @@ export function HackathonData({
   const [hackerStatusColor, setHackerStatusColor] = useState<string>("");
 
   const { data: hacker, isError } = api.hackerQuery.getHacker.useQuery(
-    {},
+    { hackathonName: hackathon.name },
     {
       initialData: data,
     },
   );
-
-  const { data: hackathonData } = api.hackathon.getHackathon.useQuery({
-    hackathonName: undefined,
-  });
 
   function getStatusName(status: StatusKey) {
     if (!status) return "";
@@ -114,7 +142,7 @@ export function HackathonData({
               {/* Status Badge */}
               <div className="animate-fade-in flex flex-col items-center space-y-3 md:items-start md:justify-start">
                 <p className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px] md:text-start">
-                  Status for {hackathonData?.displayName}
+                  Status for {hackathon.displayName}
                 </p>
                 <div className="inline-flex items-center gap-2.5 rounded-full bg-background shadow-sm">
                   <span
@@ -153,20 +181,14 @@ export function HackathonData({
 
           {/* QR Code and Apple Wallet */}
           <div className="flex flex-row items-center justify-between gap-3 sm:flex-row sm:justify-start sm:gap-3">
-            <HackerQRCodePopup />
-            <DownloadQRPass profile={hacker} profileKind="hacker" />
+            <BaseHackathonQRCodeButton />
+            <BaseHackathonWalletButton profile={hacker} />
           </div>
 
           {/* Hacker Guide Link */}
           <div className="flex flex-col items-center gap-3 sm:flex-row md:justify-start">
-            <Link
-              href={"https://knight-hacks.notion.site/knight-hacks-viii"}
-              className="group flex w-full items-center gap-3 rounded-lg border bg-card px-5 py-3 text-base font-semibold shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md sm:w-auto sm:px-5 sm:py-3 sm:text-sm"
-            >
-              <BookOpen className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
-              <span>Hacker's Guide</span>
-            </Link>
-            <AlertButton />
+            <BaseHackathonGuideButton href={guideHref} />
+            <BaseHackathonIssueButton />
           </div>
         </div>
       </div>
@@ -246,9 +268,9 @@ export function HackathonData({
                   <DialogHeader>
                     <DialogTitle>Leaderboard</DialogTitle>
                   </DialogHeader>
-                  <PointLeaderboard
+                  <BaseHackathonPointLeaderboard
                     hacker={hacker}
-                    hId={hackathonData?.name ?? ""}
+                    hId={hackathon.name}
                   />
                 </DialogContent>
               </Dialog>

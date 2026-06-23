@@ -12,7 +12,11 @@ import { time } from "@forge/utils";
 
 import { api } from "~/trpc/server";
 
-export default async function UpcomingEvents() {
+export async function BaseHackathonUpcomingEvents({
+  hackathonId,
+}: {
+  hackathonId: string;
+}) {
   const events = await api.event.getEvents();
 
   // eslint-disable-next-line react-hooks/purity
@@ -24,7 +28,9 @@ export default async function UpcomingEvents() {
       const oneDayOffset = 24 * 60 * 60 * 1000;
       const start = new Date(event.start_datetime).getTime() + oneDayOffset;
       return (
-        event.hackathonId != null && start >= now && start <= fiveHoursLater
+        event.hackathonId === hackathonId &&
+        start >= now &&
+        start <= fiveHoursLater
       );
     })
     .sort(

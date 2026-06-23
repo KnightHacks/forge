@@ -10,7 +10,7 @@ import { hackathons } from "@forge/utils";
 
 import { api } from "~/trpc/react";
 
-export function TeamPoints({
+export function BaseHackathonTeamPoints({
   hId,
   hClass,
 }: {

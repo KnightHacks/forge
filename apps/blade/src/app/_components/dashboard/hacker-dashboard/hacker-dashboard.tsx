@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
+
 import type { api as serverCall } from "~/trpc/server";
 import { HackerAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
@@ -13,8 +15,10 @@ export const metadata: Metadata = {
 };
 
 export default async function HackerDashboard({
+  hackathon,
   hacker,
 }: {
+  hackathon?: SelectHackathon | null;
   hacker: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
 }) {
   const [resume, pastHackathons] = await Promise.allSettled([
@@ -22,7 +26,9 @@ export default async function HackerDashboard({
     api.hackathon.getPastHackathons(),
   ]);
 
-  const currentHackathon = await api.hackathon.getCurrentHackathon();
+  const activeHackathon =
+    hackathon ??
+    (await api.hackathon.getHackathon({ hackathonName: undefined }));
 
   if (!hacker) {
     return (
@@ -33,8 +39,8 @@ export default async function HackerDashboard({
         <div className="flex flex-wrap justify-center gap-5">
           {
             //if there is no current hackathon then this page is never rendered anyway
-            currentHackathon && (
-              <HackerAppCard hackathonName={currentHackathon.name} />
+            activeHackathon && (
+              <HackerAppCard hackathonName={activeHackathon.name} />
             )
           }
         </div>
@@ -52,7 +58,7 @@ export default async function HackerDashboard({
       </div>
       <div className="animate-mobile-initial-expand relative mx-auto flex h-0 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:py-0 sm:pb-0 lg:max-h-56">
         {/* Main content */}
-        <HackerData data={hacker} />
+        <HackerData data={hacker} hackathon={activeHackathon} />
 
         {/* Transparent Triangle overlay in bottom right corner */}
         <div className="border-b-solid border-l-solid absolute bottom-0 right-0 h-0 w-0 border-b-[30px] border-l-[30px] border-b-background border-l-transparent"></div>

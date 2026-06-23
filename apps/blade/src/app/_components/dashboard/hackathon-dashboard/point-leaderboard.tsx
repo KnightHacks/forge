@@ -18,7 +18,7 @@ interface LeaderboardEntry {
   id: string;
 }
 
-export function PointLeaderboard({
+export function BaseHackathonPointLeaderboard({
   hacker,
   hId,
 }: {
