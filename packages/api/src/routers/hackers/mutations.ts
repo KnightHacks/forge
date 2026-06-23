@@ -529,11 +529,7 @@ export const hackerMutationRouter = {
         hackathonId: z.string().uuid(),
         assignedClassCheckin: z.string().superRefine((v, ctx) => {
           //Idk man leave me alone
-          if (
-            !(
-              AssignedClassCheckinSchema.options as unknown as string[]
-            ).includes(v)
-          ) {
+          if (!AssignedClassCheckinSchema.safeParse(v).success) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: "Invalid assignedClassCheckin",
