@@ -1,0 +1,320 @@
+.page {
+  min-height: 160svh;
+  background: #eef6cf;
+}
+
+.scrollZone {
+  position: relative;
+  min-height: 160svh;
+}
+
+.stage {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+  contain: paint;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(247, 253, 213, 0.96),
+      rgba(219, 240, 226, 0.9)
+    ),
+    #eef6cf;
+}
+
+.art {
+  position: absolute;
+  inset: -38vh -34vw;
+  z-index: 1;
+  pointer-events: none;
+  transform: translate3d(0, 0, 0) scale(0.64);
+  transform-style: preserve-3d;
+}
+
+.introVeil {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(228, 238, 214, 0.58),
+      rgba(191, 215, 211, 0.34)
+    ),
+    rgba(42, 56, 70, 0.08);
+  backdrop-filter: blur(26px) saturate(1.04);
+}
+
+.layer {
+  --khix-layer-x: 0px;
+  --khix-layer-y: 0px;
+  --khix-layer-scale: 1;
+
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  transform: translate3d(var(--khix-layer-x), var(--khix-layer-y), 0)
+    scale(var(--khix-layer-scale));
+  backface-visibility: hidden;
+  contain: paint;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.layerImage {
+  object-fit: cover;
+  object-position: 24% 50%;
+  user-select: none;
+  pointer-events: none;
+}
+
+.distantLayer .layerImage {
+  opacity: 0.92;
+}
+
+.glowLayer {
+  --khix-hero-glow-opacity: 0;
+
+  opacity: var(--khix-hero-glow-opacity);
+  will-change: opacity, transform;
+}
+
+.waterLayer {
+  overflow: hidden;
+}
+
+.pondLayer::before,
+.pondLayer::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  content: "";
+}
+
+.pondLayer::before {
+  background-image: linear-gradient(
+    112deg,
+    transparent 36%,
+    rgba(226, 255, 249, 0.28) 48%,
+    rgba(255, 255, 255, 0.34) 50%,
+    transparent 62%
+  );
+  background-size: 220% 100%;
+  opacity: 0.38;
+  -webkit-mask-image: radial-gradient(
+    ellipse at 54% 88%,
+    rgba(0, 0, 0, 0.88) 0 18%,
+    transparent 34%
+  );
+  mask-image: radial-gradient(
+    ellipse at 54% 88%,
+    rgba(0, 0, 0, 0.88) 0 18%,
+    transparent 34%
+  );
+}
+
+.pondLayer::after {
+  background: radial-gradient(
+    ellipse at 51% 88%,
+    rgba(190, 230, 255, 0.2),
+    transparent 18%
+  );
+  opacity: 0.42;
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 72%,
+    #000 88%,
+    transparent
+  );
+  mask-image: linear-gradient(180deg, transparent 72%, #000 88%, transparent);
+}
+
+.pondLayer .layerImage {
+  transform-origin: 52% 78%;
+}
+
+.waterfallLayer .layerImage {
+  z-index: 1;
+  transform-origin: 4% 56%;
+}
+
+.waterfallSourceImage {
+  opacity: 0;
+}
+
+.waterfallFrameSequence {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  pointer-events: none;
+  background-image: url("/KHIXHero/optimized/waterfall-frames/waterfall-animated.webp");
+  background-repeat: no-repeat;
+  background-position: 24% 50%;
+  background-size: cover;
+  transform-origin: 4% 56%;
+}
+
+.leafField {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.leaf {
+  position: absolute;
+  top: -9svh;
+  left: var(--leaf-x);
+  width: var(--leaf-size);
+  aspect-ratio: 0.62;
+  border-radius: 100% 0 100% 0;
+  background:
+    linear-gradient(135deg, rgba(239, 217, 255, 0.44), transparent 38%),
+    var(--leaf-fill);
+  box-shadow: inset -0.08rem -0.1rem 0.16rem rgba(58, 31, 93, 0.22);
+  opacity: 0;
+  transform: translate3d(0, -8svh, 0) rotate(-18deg);
+  animation: leafFall var(--leaf-duration) linear var(--leaf-delay) infinite;
+}
+
+.leaf::after {
+  position: absolute;
+  inset: 13% 46% 8% auto;
+  width: 1px;
+  content: "";
+  background: rgba(64, 38, 102, 0.3);
+  transform: rotate(10deg);
+  transform-origin: bottom;
+}
+
+.shade {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(12, 20, 35, 0.15),
+      rgba(35, 50, 58, 0.04) 46%,
+      rgba(5, 18, 24, 0.1)
+    ),
+    radial-gradient(
+      ellipse at 60% 18%,
+      rgba(208, 224, 236, 0.1),
+      transparent 42%
+    );
+  box-shadow:
+    inset 0 -24svh 34svh rgba(7, 28, 23, 0.2),
+    inset 0 18svh 30svh rgba(247, 253, 213, 0.16);
+}
+
+.titleLockup {
+  --khix-title-glow-opacity: 0.62;
+
+  position: absolute;
+  top: 31%;
+  left: 10%;
+  z-index: 30;
+  width: min(52vw, 58rem);
+  pointer-events: none;
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  transform-origin: 50% 55%;
+}
+
+.titleLogo {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  filter: brightness(1.06)
+    drop-shadow(0 0 0.1rem rgb(255 255 255 / var(--khix-title-glow-opacity)))
+    drop-shadow(
+      0 0 0.42rem rgb(235 249 255 / calc(var(--khix-title-glow-opacity) * 0.58))
+    )
+    drop-shadow(
+      0 0 0.9rem rgb(103 228 255 / calc(var(--khix-title-glow-opacity) * 0.3))
+    )
+    drop-shadow(
+      0 0 1.65rem rgb(103 228 255 / calc(var(--khix-title-glow-opacity) * 0.13))
+    );
+}
+
+@media (max-width: 700px) {
+  .layerImage {
+    object-position: 94% 50%;
+  }
+
+  .waterfallFrameSequence {
+    background-position: 94% 50%;
+  }
+
+  .titleLockup {
+    top: 20%;
+    left: 6%;
+    width: 88vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .scrollZone {
+    min-height: 100svh;
+  }
+
+  .stage {
+    position: relative;
+  }
+
+  .layer {
+    transform: none !important;
+  }
+
+  .leaf {
+    display: none;
+  }
+
+  .pondLayer::before,
+  .pondLayer::after,
+  .waterfallFrameSequence {
+    display: none;
+  }
+
+  .waterfallSourceImage {
+    opacity: 1;
+  }
+}
+
+@keyframes leafFall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -8svh, 0) rotate(-18deg) scale(0.86);
+  }
+
+  12% {
+    opacity: var(--leaf-opacity);
+  }
+
+  58% {
+    opacity: var(--leaf-opacity);
+    transform: translate3d(var(--leaf-drift), 54svh, 0)
+      rotate(var(--leaf-rotate)) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--leaf-drift), 106svh, 0)
+      rotate(var(--leaf-rotate)) scale(0.9);
+  }
+}
