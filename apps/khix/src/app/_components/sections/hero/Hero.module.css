@@ -1,21 +1,30 @@
-.page {
-  min-height: 160svh;
+@property --khix-scroll-progress {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow-anchor: none;
   background: #eef6cf;
 }
 
-.scrollZone {
-  position: relative;
-  min-height: 160svh;
-}
-
 .stage {
-  position: sticky;
-  top: 0;
-  min-height: 100vh;
-  min-height: 100svh;
+  --khix-pointer-x: var(--khix-hero-pointer-x, 0);
+  --khix-pointer-y: var(--khix-hero-pointer-y, 0);
+  --khix-scroll-progress: var(--khix-hero-scroll-progress, 0);
+
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  height: 100dvh;
   overflow: hidden;
+  overflow-anchor: none;
   isolation: isolate;
-  contain: paint;
   background:
     linear-gradient(
       180deg,
@@ -29,9 +38,9 @@
   position: absolute;
   inset: -38vh -34vw;
   z-index: 1;
-  pointer-events: none;
+  pointer-events: auto;
+  overflow-anchor: none;
   transform: translate3d(0, 0, 0) scale(0.64);
-  transform-style: preserve-3d;
 }
 
 .introVeil {
@@ -47,22 +56,30 @@
     ),
     rgba(42, 56, 70, 0.08);
   backdrop-filter: blur(26px) saturate(1.04);
+  animation: introVeilRelease 1.45s ease-out forwards;
 }
 
 .layer {
-  --khix-layer-x: 0px;
-  --khix-layer-y: 0px;
+  --khix-layer-depth-x: 0;
+  --khix-layer-depth-y: 0;
   --khix-layer-scale: 1;
+  --khix-layer-scroll-y: 0px;
 
   position: absolute;
   inset: 0;
   display: block;
   overflow: hidden;
-  transform: translate3d(var(--khix-layer-x), var(--khix-layer-y), 0)
+  overflow-anchor: none;
+  transform: translate3d(
+      calc(var(--khix-pointer-x) * var(--khix-layer-depth-x) * 1px),
+      calc(
+        (var(--khix-pointer-y) * var(--khix-layer-depth-y) * 1px) +
+          (var(--khix-scroll-progress) * var(--khix-layer-scroll-y))
+      ),
+      0
+    )
     scale(var(--khix-layer-scale));
   backface-visibility: hidden;
-  contain: paint;
-  transform-style: preserve-3d;
   will-change: transform;
 }
 
@@ -78,64 +95,33 @@
 }
 
 .glowLayer {
-  --khix-hero-glow-opacity: 0;
+  --khix-hero-glow-opacity: 0.14;
 
   opacity: var(--khix-hero-glow-opacity);
-  will-change: opacity, transform;
 }
 
 .waterLayer {
   overflow: hidden;
 }
 
-.pondLayer::before,
-.pondLayer::after {
+.pondLayer .layerImage {
+  transform-origin: 52% 78%;
+}
+
+.pondSourceImage {
+  opacity: 1;
+}
+
+.pondFrameSequence {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  display: block;
   pointer-events: none;
-  content: "";
-}
-
-.pondLayer::before {
-  background-image: linear-gradient(
-    112deg,
-    transparent 36%,
-    rgba(226, 255, 249, 0.28) 48%,
-    rgba(255, 255, 255, 0.34) 50%,
-    transparent 62%
-  );
-  background-size: 220% 100%;
-  opacity: 0.38;
-  -webkit-mask-image: radial-gradient(
-    ellipse at 54% 88%,
-    rgba(0, 0, 0, 0.88) 0 18%,
-    transparent 34%
-  );
-  mask-image: radial-gradient(
-    ellipse at 54% 88%,
-    rgba(0, 0, 0, 0.88) 0 18%,
-    transparent 34%
-  );
-}
-
-.pondLayer::after {
-  background: radial-gradient(
-    ellipse at 51% 88%,
-    rgba(190, 230, 255, 0.2),
-    transparent 18%
-  );
-  opacity: 0.42;
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    transparent 72%,
-    #000 88%,
-    transparent
-  );
-  mask-image: linear-gradient(180deg, transparent 72%, #000 88%, transparent);
-}
-
-.pondLayer .layerImage {
+  background-image: url("/KHIXHero/optimized/pond-frames/pond-animated.webp");
+  background-repeat: no-repeat;
+  background-position: 24% 50%;
+  background-size: cover;
+  opacity: 0.5;
   transform-origin: 52% 78%;
 }
 
@@ -179,7 +165,7 @@
   background:
     linear-gradient(135deg, rgba(239, 217, 255, 0.44), transparent 38%),
     var(--leaf-fill);
-  box-shadow: inset -0.08rem -0.1rem 0.16rem rgba(58, 31, 93, 0.22);
+  box-shadow: inset -1px -2px 3px rgba(58, 31, 93, 0.22);
   opacity: 0;
   transform: translate3d(0, -8svh, 0) rotate(-18deg);
   animation: leafFall var(--leaf-duration) linear var(--leaf-delay) infinite;
@@ -218,17 +204,39 @@
 }
 
 .titleLockup {
+  --khix-title-aura-opacity: 0.42;
   --khix-title-glow-opacity: 0.62;
 
   position: absolute;
-  top: 31%;
-  left: 10%;
+  top: 29%;
+  left: 14%;
   z-index: 30;
-  width: min(52vw, 58rem);
-  pointer-events: none;
+  width: min(78vw, 90rem);
+  pointer-events: auto;
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1);
   transform-origin: 50% 55%;
+}
+
+.titleLockup::before {
+  position: absolute;
+  inset: -18% -8% -10%;
+  z-index: 0;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(
+      ellipse at 42% 52%,
+      rgb(203 255 224 / calc(var(--khix-title-aura-opacity) * 0.38)),
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 68% 48%,
+      rgb(133 234 255 / calc(var(--khix-title-aura-opacity) * 0.2)),
+      transparent 54%
+    );
+  filter: blur(18px);
+  opacity: var(--khix-title-aura-opacity);
 }
 
 .titleLogo {
@@ -256,6 +264,7 @@
     object-position: 94% 50%;
   }
 
+  .pondFrameSequence,
   .waterfallFrameSequence {
     background-position: 94% 50%;
   }
@@ -268,13 +277,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .page,
-  .scrollZone {
+  .hero {
     min-height: 100svh;
   }
 
   .stage {
     position: relative;
+  }
+
+  .introVeil {
+    display: none;
   }
 
   .layer {
@@ -285,14 +297,27 @@
     display: none;
   }
 
-  .pondLayer::before,
-  .pondLayer::after,
+  .pondFrameSequence,
   .waterfallFrameSequence {
     display: none;
   }
 
+  .pondSourceImage,
   .waterfallSourceImage {
     opacity: 1;
+  }
+}
+
+@keyframes introVeilRelease {
+  0% {
+    opacity: 1;
+    backdrop-filter: blur(26px) saturate(1.04);
+  }
+
+  100% {
+    opacity: 0;
+    backdrop-filter: blur(0) saturate(1);
+    visibility: hidden;
   }
 }
 

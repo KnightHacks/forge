@@ -21,6 +21,7 @@ export function HeroLayerImage({ layer, index, zIndex }: HeroLayerImageProps) {
   const hasAmbientImageMotion = !(isGlow || isPond || isTk || isWaterfall);
   const imageClassName = [
     styles.layerImage,
+    isPond ? styles.pondSourceImage : "",
     isWaterfall ? styles.waterfallSourceImage : "",
   ]
     .filter(Boolean)
@@ -39,7 +40,10 @@ export function HeroLayerImage({ layer, index, zIndex }: HeroLayerImageProps) {
     .join(" ");
 
   const layerStyle = {
+    "--khix-layer-depth-x": layer.depthX,
+    "--khix-layer-depth-y": layer.depthY,
     "--khix-layer-scale": layer.scale,
+    "--khix-layer-scroll-y": `${layer.scrollY}px`,
     zIndex: zIndex ?? index + 1,
   } as CSSProperties;
 
@@ -71,6 +75,9 @@ export function HeroLayerImage({ layer, index, zIndex }: HeroLayerImageProps) {
         data-hero-layer-image={!isWaterfall ? true : undefined}
         data-hero-ambient-image={hasAmbientImageMotion ? true : undefined}
       />
+      {isPond ? (
+        <span className={styles.pondFrameSequence} data-hero-layer-image />
+      ) : null}
       {isWaterfall ? (
         <span className={styles.waterfallFrameSequence} data-hero-layer-image />
       ) : null}

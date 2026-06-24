@@ -19,45 +19,40 @@ export default function Hero() {
   }
 
   return (
-    <main className={styles.page}>
-      <section
-        ref={sectionRef}
-        className={styles.scrollZone}
-        aria-labelledby="khix-hero-title"
+    <section
+      id="home"
+      ref={sectionRef}
+      className={styles.hero}
+      aria-labelledby="khix-hero-title"
+    >
+      <div
+        ref={stageRef}
+        className={styles.stage}
+        onPointerMove={handlePointerMove}
+        onPointerLeave={handlePointerLeave}
       >
-        <div
-          ref={stageRef}
-          className={styles.stage}
-          onPointerMove={handlePointerMove}
-          onPointerLeave={handlePointerLeave}
-        >
-          <h1 id="khix-hero-title" className="sr-only">
-            Knight Hacks IX
-          </h1>
-          <div className={styles.art} data-hero-art aria-hidden="true">
-            {backgroundLayers.map((layer, index) => (
-              <HeroLayerImage
-                key={layer.filename}
-                layer={layer}
-                index={index}
-              />
-            ))}
-            <div className={styles.shade} aria-hidden="true" />
-            <HeroTitle />
-            <HeroLayerImage
-              layer={foregroundLayer}
-              index={foregroundLayerIndex}
-              zIndex={12}
-            />
-            <FallingLeaves />
-          </div>
-          <div
-            className={styles.introVeil}
-            data-hero-intro-veil
-            aria-hidden="true"
+        <h1 id="khix-hero-title" className="sr-only">
+          Knight Hacks IX
+        </h1>
+        <div className={styles.art} data-hero-art aria-hidden="true">
+          {backgroundLayers.map((layer, index) => (
+            <HeroLayerImage key={layer.filename} layer={layer} index={index} />
+          ))}
+          <div className={styles.shade} aria-hidden="true" />
+          <HeroTitle />
+          <HeroLayerImage
+            layer={foregroundLayer}
+            index={foregroundLayerIndex}
+            zIndex={12}
           />
+          <FallingLeaves />
         </div>
-      </section>
-    </main>
+        <div
+          className={styles.introVeil}
+          data-hero-intro-veil
+          aria-hidden="true"
+        />
+      </div>
+    </section>
   );
 }

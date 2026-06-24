@@ -1,0 +1,6 @@
+.afterHero {
+  min-height: 100vh;
+  min-height: 100svh;
+  background:
+    linear-gradient(180deg, rgba(238, 246, 207, 0), #eef6cf 18%), #eef6cf;
+}
