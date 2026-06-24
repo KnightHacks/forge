@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
@@ -12,8 +12,10 @@ import {
   formatEventTime,
   loadClubEvents,
 } from "../_lib/club-events";
+import { useDeferredSectionLoad } from "./use-deferred-section-load";
 
 const HOME_EVENT_LIMIT = 3;
+const HOME_EVENTS_LOAD_AHEAD_VIEWPORTS = 0.875;
 
 function ExternalArrow() {
   return <ArrowUpRight aria-hidden="true" className="ml-2 size-4" />;
@@ -95,41 +97,13 @@ export function HomeEvents({
   bladeUrl: string;
   eventLimit?: number;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { ref: containerRef, shouldLoad: shouldLoadEvents } =
+    useDeferredSectionLoad<HTMLDivElement>({
+      leadViewports: HOME_EVENTS_LOAD_AHEAD_VIEWPORTS,
+    });
   const [events, setEvents] = useState<PublicClubEvent[]>([]);
   const [status, setStatus] = useState<EventsStatus>("loading");
-  const [shouldLoadEvents, setShouldLoadEvents] = useState(false);
   const safeEventLimit = getSafeEventLimit(eventLimit);
-
-  useEffect(() => {
-    const container = containerRef.current;
-
-    if (!container || shouldLoadEvents) return;
-
-    if (!("IntersectionObserver" in window)) {
-      const fallbackId = globalThis.setTimeout(() => {
-        setShouldLoadEvents(true);
-      }, 0);
-
-      return () => globalThis.clearTimeout(fallbackId);
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) return;
-
-        setShouldLoadEvents(true);
-        observer.disconnect();
-      },
-      {
-        rootMargin: "700px 0px",
-      },
-    );
-
-    observer.observe(container);
-
-    return () => observer.disconnect();
-  }, [shouldLoadEvents]);
 
   useEffect(() => {
     if (!shouldLoadEvents) return;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowUpRight,
   ChevronLeft,
@@ -12,6 +12,7 @@ import {
 import { cn } from "@forge/ui";
 
 import type { EventsStatus, PublicClubEvent } from "../_lib/club-events";
+import { useDeferredSectionLoad } from "../_components/use-deferred-section-load";
 import {
   formatEventDate,
   formatEventTime,
@@ -469,45 +470,15 @@ export function EventsClient({
   bladeUrl: string;
   eventLimit: number;
 }) {
-  const eventsSectionRef = useRef<HTMLElement>(null);
+  const { ref: eventsSectionRef, shouldLoad: shouldLoadEvents } =
+    useDeferredSectionLoad<HTMLElement>();
   const [events, setEvents] = useState<PublicClubEvent[]>([]);
   const [status, setStatus] = useState<EventsStatus>("loading");
-  const [shouldLoadEvents, setShouldLoadEvents] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [calendarMonth, setCalendarMonth] =
     useState<MonthCursor>(getCurrentMonth);
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    const eventsSection = eventsSectionRef.current;
-
-    if (!eventsSection || shouldLoadEvents) return;
-
-    if (!("IntersectionObserver" in window)) {
-      const fallbackId = globalThis.setTimeout(() => {
-        setShouldLoadEvents(true);
-      }, 0);
-
-      return () => globalThis.clearTimeout(fallbackId);
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) return;
-
-        setShouldLoadEvents(true);
-        observer.disconnect();
-      },
-      {
-        rootMargin: "0px",
-      },
-    );
-
-    observer.observe(eventsSection);
-
-    return () => observer.disconnect();
-  }, [shouldLoadEvents]);
 
   useEffect(() => {
     if (!shouldLoadEvents) return;

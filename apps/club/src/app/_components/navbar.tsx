@@ -36,7 +36,9 @@ const ACTION_LINKS = [
 ] as const;
 
 const MOBILE_MENU_ID = "club-mobile-menu";
-const NAV_FADE_DISTANCE = 120;
+const NAV_FADE_DISTANCE_VIEWPORT_RATIO = 0.15;
+const NAV_TOP_RESET_THRESHOLD_PX = 4;
+const NAV_SCROLL_DELTA_THRESHOLD_PX = 1;
 
 type NavStyle = MotionStyle & {
   opacity: number | MotionValue<number>;
@@ -49,6 +51,13 @@ type NavStyle = MotionStyle & {
 
 function isActivePath(pathname: string, href: string) {
   return href === "/" ? pathname === href : pathname.startsWith(href);
+}
+
+function getNavFadeDistance() {
+  return Math.max(
+    window.innerHeight * NAV_FADE_DISTANCE_VIEWPORT_RATIO,
+    NAV_TOP_RESET_THRESHOLD_PX,
+  );
 }
 
 function NavLink({
@@ -173,16 +182,19 @@ export default function Navbar({ bladeUrl }: { bladeUrl: string }) {
       const scrollDelta = currentScrollY - previousScrollY.current;
       previousScrollY.current = currentScrollY;
 
-      if (currentScrollY <= 4 || scrollDelta < -1) {
+      if (
+        currentScrollY <= NAV_TOP_RESET_THRESHOLD_PX ||
+        scrollDelta < -NAV_SCROLL_DELTA_THRESHOLD_PX
+      ) {
         rawNavFadeProgress.set(0);
         return;
       }
 
-      if (scrollDelta > 1) {
+      if (scrollDelta > NAV_SCROLL_DELTA_THRESHOLD_PX) {
         rawNavFadeProgress.set(
           Math.min(
             1,
-            rawNavFadeProgress.get() + scrollDelta / NAV_FADE_DISTANCE,
+            rawNavFadeProgress.get() + scrollDelta / getNavFadeDistance(),
           ),
         );
       }

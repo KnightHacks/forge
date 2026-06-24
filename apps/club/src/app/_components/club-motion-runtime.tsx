@@ -7,7 +7,11 @@ const DRIFT_SELECTOR = "[data-scroll-drift]";
 const HERO_SELECTOR = "[data-hero]";
 const HISTORY_TIMELINE_SELECTOR = "[data-history-timeline]";
 const HISTORY_MARKER_SELECTOR = "[data-history-marker]";
+const HISTORY_SCRUBBER_SELECTOR = ".club-history-timeline-scrubber";
 const TILT_SELECTOR = "[data-tilt]";
+const DEFAULT_DRIFT_DEPTH_PX = 12;
+const DRIFT_OVERSCAN_VIEWPORT_RATIO = 0.25;
+const TIMELINE_VIEWPORT_ANCHOR_RATIO = 0.5;
 
 interface DriftState {
   element: HTMLElement;
@@ -27,6 +31,8 @@ interface TimelineState {
   markers: HTMLElement[];
   documentTop: number;
   height: number;
+  scrubberHalfHeight: number;
+  markerLeadProgress: number;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -45,7 +51,6 @@ export default function ClubMotionRuntime() {
     }
 
     const observedElements = new WeakSet<Element>();
-    const revealElements = new Set<Element>();
     let driftElements: DriftState[] = [];
     let heroElements: HeroState[] = [];
     let timelines: TimelineState[] = [];
@@ -78,7 +83,7 @@ export default function ClubMotionRuntime() {
         element,
         documentTop: getDocumentTop(element),
         height: Math.max(element.offsetHeight, 1),
-        depth: Number(element.dataset.scrollDrift ?? 12),
+        depth: Number(element.dataset.scrollDrift ?? DEFAULT_DRIFT_DEPTH_PX),
       }));
       heroElements = Array.from(
         document.querySelectorAll<HTMLElement>(HERO_SELECTOR),
@@ -89,20 +94,29 @@ export default function ClubMotionRuntime() {
       }));
       timelines = Array.from(
         document.querySelectorAll<HTMLElement>(HISTORY_TIMELINE_SELECTOR),
-      ).map((timeline) => ({
-        element: timeline,
-        markers: Array.from(
-          timeline.querySelectorAll<HTMLElement>(HISTORY_MARKER_SELECTOR),
-        ),
-        documentTop: getDocumentTop(timeline),
-        height: Math.max(timeline.offsetHeight, 1),
-      }));
+      ).map((timeline) => {
+        const height = Math.max(timeline.offsetHeight, 1);
+        const scrubber = timeline.querySelector<HTMLElement>(
+          HISTORY_SCRUBBER_SELECTOR,
+        );
+        const scrubberHalfHeight = (scrubber?.offsetHeight ?? 0) / 2;
+
+        return {
+          element: timeline,
+          markers: Array.from(
+            timeline.querySelectorAll<HTMLElement>(HISTORY_MARKER_SELECTOR),
+          ),
+          documentTop: getDocumentTop(timeline),
+          height,
+          scrubberHalfHeight,
+          markerLeadProgress: scrubberHalfHeight / height,
+        };
+      });
     }
 
     function revealElement(element: Element) {
       element.classList.add("is-visible");
       revealObserver.unobserve(element);
-      revealElements.delete(element);
     }
 
     const revealObserver = new IntersectionObserver(
@@ -124,7 +138,6 @@ export default function ClubMotionRuntime() {
 
       observedElements.add(element);
       element.classList.add("is-motion-observed");
-      revealElements.add(element);
 
       revealObserver.observe(element);
     }
@@ -185,13 +198,17 @@ export default function ClubMotionRuntime() {
       );
 
       const viewportCenter = window.innerHeight / 2;
+      const driftOverscan = window.innerHeight * DRIFT_OVERSCAN_VIEWPORT_RATIO;
       const scrollY = window.scrollY;
 
       for (const drift of driftElements) {
         const top = drift.documentTop - scrollY;
         const bottom = top + drift.height;
 
-        if (bottom < -200 || top > window.innerHeight + 200) {
+        if (
+          bottom < -driftOverscan ||
+          top > window.innerHeight + driftOverscan
+        ) {
           continue;
         }
 
@@ -225,7 +242,8 @@ export default function ClubMotionRuntime() {
       }
 
       for (const timeline of timelines) {
-        const viewportAnchor = window.innerHeight * 0.5;
+        const viewportAnchor =
+          window.innerHeight * TIMELINE_VIEWPORT_ANCHOR_RATIO;
         const viewportAnchorDocument = scrollY + viewportAnchor;
 
         if (
@@ -243,8 +261,11 @@ export default function ClubMotionRuntime() {
         );
         const scrubberY = clamp(
           progressY,
-          21,
-          Math.max(timeline.height - 21, 21),
+          timeline.scrubberHalfHeight,
+          Math.max(
+            timeline.height - timeline.scrubberHalfHeight,
+            timeline.scrubberHalfHeight,
+          ),
         );
         const timelineProgress = progressY / timeline.height;
 
@@ -262,7 +283,7 @@ export default function ClubMotionRuntime() {
 
           marker.classList.toggle(
             "is-history-marker-active",
-            timelineProgress + 0.018 >= markerProgress,
+            timelineProgress + timeline.markerLeadProgress >= markerProgress,
           );
         }
       }

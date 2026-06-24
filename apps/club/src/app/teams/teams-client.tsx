@@ -13,6 +13,7 @@ import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 
 import type { TeamMember, TeamRoster, TeamSlug } from "./teams-config";
+import { useDeferredSectionLoad } from "../_components/use-deferred-section-load";
 import { CLUB_ASSETS } from "../_lib/assets";
 import { loadClubTeamRoster } from "./team-roster";
 import {
@@ -171,12 +172,12 @@ function EmptyTeam({ label, status }: { label: string; status: RosterStatus }) {
 }
 
 export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
-  const rosterSectionRef = useRef<HTMLElement>(null);
+  const { ref: rosterSectionRef, shouldLoad: shouldLoadRoster } =
+    useDeferredSectionLoad<HTMLElement>();
   const pendingScrollPosition = useRef<{ x: number; y: number } | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const [roster, setRoster] = useState<TeamRoster>(() => createEmptyRoster());
   const [status, setStatus] = useState<RosterStatus>("loading");
-  const [shouldLoadRoster, setShouldLoadRoster] = useState(false);
   const [activeTeam, setActiveTeam] = useState<TeamSlug>(
     TEAM_DEFINITIONS[0].slug,
   );
@@ -223,36 +224,6 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
 
     return () => window.cancelAnimationFrame(animationFrameId);
   }, [activeTeam]);
-
-  useEffect(() => {
-    const rosterSection = rosterSectionRef.current;
-
-    if (!rosterSection || shouldLoadRoster) return;
-
-    if (!("IntersectionObserver" in window)) {
-      const fallbackId = globalThis.setTimeout(() => {
-        setShouldLoadRoster(true);
-      }, 0);
-
-      return () => globalThis.clearTimeout(fallbackId);
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) return;
-
-        setShouldLoadRoster(true);
-        observer.disconnect();
-      },
-      {
-        rootMargin: "0px",
-      },
-    );
-
-    observer.observe(rosterSection);
-
-    return () => observer.disconnect();
-  }, [shouldLoadRoster]);
 
   useEffect(() => {
     if (!shouldLoadRoster) return;
