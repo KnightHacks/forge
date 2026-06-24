@@ -38,7 +38,7 @@ export default async function BloomKnightsHackathonPage() {
       <main className="container min-h-screen py-16">
         <div className="flex justify-center">
           <div className="max-w-8xl w-full">
-            {hacker && (hacker.status as string) === "checkedin" ? (
+            {hacker?.status === "checkedin" ? (
               <BKHackathonDashboard hackathon={hackathon} hacker={hacker} />
             ) : (
               <HackerDashboard hackathon={hackathon} hacker={hacker} />

@@ -103,14 +103,6 @@ export default async function MemberDashboard({
     return (
       <div className="flex-col md:flex">
         <div className="flex-1 space-y-4">
-          <div className="animate-fade-in mb-8 flex items-center justify-between space-y-2">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight">
-                Hello, {member.firstName}!
-              </h2>
-              <p className="text-muted-foreground">Alumni Dashboard</p>
-            </div>
-          </div>
           {currentHackathon && (
             <CurrentHackathonNotice
               hackathonDisplayName={currentHackathon.displayName}
@@ -147,14 +139,6 @@ export default async function MemberDashboard({
   return (
     <div className="flex-col md:flex">
       <div className="flex-1 space-y-4">
-        <div className="animate-fade-in mb-8 flex items-center justify-between space-y-2">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight">
-              Hello, {member.firstName}!
-            </h2>
-            <p className="text-muted-foreground">Member Dashboard</p>
-          </div>
-        </div>
         {currentHackathon && (
           <CurrentHackathonNotice
             hackathonDisplayName={currentHackathon.displayName}

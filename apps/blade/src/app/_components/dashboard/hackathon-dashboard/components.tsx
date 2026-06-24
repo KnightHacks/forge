@@ -19,27 +19,12 @@ export { BaseHackathonPointLeaderboard } from "./point-leaderboard";
 export { BaseHackathonTeamPoints } from "./team-points";
 export { BaseHackathonUpcomingEvents } from "./upcoming-events";
 
-export interface BaseHackathonClassInfo {
-  classPfp: string;
-  team: string;
-  teamColor: string;
-}
-
-type BaseHackathonHacker = Awaited<
-  ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>
->;
-
 const DEFAULT_HACKER_GUIDE_HREF =
   "https://knight-hacks.notion.site/knight-hacks-viii";
 
-const DEFAULT_CLASS_INFO = HACKATHONS.KNIGHT_HACKS_8
-  .HACKER_CLASS_INFO as Record<string, BaseHackathonClassInfo>;
+const DEFAULT_CLASS_INFO = HACKATHONS.KNIGHT_HACKS_8.HACKER_CLASS_INFO;
 
-export function BaseHackathonClassError({
-  hackerClass,
-}: {
-  hackerClass?: string | null;
-}) {
+export function BaseHackathonClassError() {
   return (
     <div className="flex flex-col items-center justify-center gap-y-6 px-4 py-12 text-center">
       <div className="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950">
@@ -50,11 +35,6 @@ export function BaseHackathonClassError({
           Unable to load your team information. Please contact support or try
           refreshing the page.
         </p>
-        {hackerClass && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-            Class: {hackerClass}
-          </p>
-        )}
       </div>
     </div>
   );
@@ -83,48 +63,36 @@ export function BaseHackathonDashboard({
   hackathon,
   hacker,
 }: {
-  classInfoByClass?: Record<string, BaseHackathonClassInfo>;
+  classInfoByClass?: Record<
+    string,
+    {
+      classPfp: string;
+      team: string;
+      teamColor: string;
+    }
+  >;
   guideHref?: string;
   hackathon: SelectHackathon;
-  hacker: BaseHackathonHacker;
+  hacker: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
 }) {
   if (!hacker) {
     return <BaseHackathonRegistrationPrompt hackathon={hackathon} />;
   }
 
   if (!hacker.class || !(hacker.class in classInfoByClass)) {
-    return <BaseHackathonClassError hackerClass={hacker.class} />;
+    return <BaseHackathonClassError />;
   }
 
   const classInfo = classInfoByClass[hacker.class];
 
   if (!classInfo) {
-    return <BaseHackathonClassError hackerClass={hacker.class} />;
+    return <BaseHackathonClassError />;
   }
 
   const { classPfp, team, teamColor } = classInfo;
 
   return (
     <>
-      <div className="animate-fade-in mb-4 px-4 sm:mb-8 sm:px-0">
-        <h2 className="flex flex-wrap items-center gap-2 text-lg font-bold tracking-tight sm:text-xl">
-          <span>Hello,</span>
-          <span
-            className="font-bold"
-            style={{
-              color: teamColor,
-              textShadow: `0 0 10px ${teamColor}, 0 0 20px ${teamColor}`,
-            }}
-          >
-            {hacker.class}
-          </span>
-          <span>{hacker.firstName}!</span>
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {hackathon.displayName} Dashboard
-        </p>
-      </div>
-
       <div className="animate-mobile-initial-expand mx-auto flex min-h-[900px] rounded-lg bg-[#E5E7EB] px-2 py-4 dark:bg-[#0A0F1D] sm:relative sm:px-0 sm:py-6 lg:min-h-[380px]">
         <BaseHackathonData
           classPfp={classPfp}
