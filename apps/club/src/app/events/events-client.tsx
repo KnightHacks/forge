@@ -12,6 +12,7 @@ import {
 import { cn } from "@forge/ui";
 
 import type { EventsStatus, PublicClubEvent } from "../_lib/club-events";
+import { useDeferredSectionLoad } from "../_components/use-deferred-section-load";
 import {
   formatEventDate,
   formatEventTime,
@@ -469,6 +470,8 @@ export function EventsClient({
   bladeUrl: string;
   eventLimit: number;
 }) {
+  const { ref: eventsSectionRef, shouldLoad: shouldLoadEvents } =
+    useDeferredSectionLoad<HTMLElement>();
   const [events, setEvents] = useState<PublicClubEvent[]>([]);
   const [status, setStatus] = useState<EventsStatus>("loading");
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
@@ -478,6 +481,8 @@ export function EventsClient({
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    if (!shouldLoadEvents) return;
+
     const abortController = new AbortController();
 
     async function loadEvents() {
@@ -511,7 +516,7 @@ export function EventsClient({
     void loadEvents();
 
     return () => abortController.abort();
-  }, [bladeUrl, eventLimit]);
+  }, [bladeUrl, eventLimit, shouldLoadEvents]);
 
   const filteredEvents = useMemo(
     () => events.filter((event) => eventMatchesFilter(event, activeFilter)),
@@ -555,7 +560,10 @@ export function EventsClient({
   );
 
   return (
-    <section className="club-post-hero-section relative px-6 pb-28 md:px-10 lg:px-24">
+    <section
+      ref={eventsSectionRef}
+      className="club-post-hero-section relative px-6 pb-28 md:px-10 lg:px-24"
+    >
       <div className="mx-auto max-w-[1040px]">
         <h2
           className="text-center text-4xl font-black uppercase leading-none text-white [text-shadow:4px_4px_0_rgba(0,0,0,0.5)] md:text-5xl"

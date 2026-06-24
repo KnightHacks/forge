@@ -70,7 +70,11 @@ function FooterAnchor({
     );
   }
 
-  return <Link href={href}>{children}</Link>;
+  return (
+    <Link href={href} prefetch={false}>
+      {children}
+    </Link>
+  );
 }
 
 function FooterSocialLinks({
@@ -152,6 +156,7 @@ export default function Footer({ bladeUrl }: { bladeUrl: string }) {
                 <li key={link.href}>
                   <Link
                     href={link.href}
+                    prefetch={false}
                     className="transition-colors hover:text-white"
                   >
                     {link.label}

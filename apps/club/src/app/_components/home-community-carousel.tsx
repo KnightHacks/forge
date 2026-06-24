@@ -93,7 +93,6 @@ function Polaroid({ slide }: { slide: CommunitySlide }) {
             src={slide.image}
             alt={slide.imageAlt}
             fill
-            priority
             sizes="(min-width: 1024px) 27rem, (min-width: 768px) 42vw, 84vw"
             className="object-cover grayscale transition duration-300"
             style={{ objectPosition: slide.imagePosition ?? "center" }}

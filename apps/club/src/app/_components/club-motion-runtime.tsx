@@ -7,7 +7,33 @@ const DRIFT_SELECTOR = "[data-scroll-drift]";
 const HERO_SELECTOR = "[data-hero]";
 const HISTORY_TIMELINE_SELECTOR = "[data-history-timeline]";
 const HISTORY_MARKER_SELECTOR = "[data-history-marker]";
+const HISTORY_SCRUBBER_SELECTOR = ".club-history-timeline-scrubber";
 const TILT_SELECTOR = "[data-tilt]";
+const DEFAULT_DRIFT_DEPTH_PX = 12;
+const DRIFT_OVERSCAN_VIEWPORT_RATIO = 0.25;
+const TIMELINE_VIEWPORT_ANCHOR_RATIO = 0.5;
+
+interface DriftState {
+  element: HTMLElement;
+  documentTop: number;
+  height: number;
+  depth: number;
+}
+
+interface HeroState {
+  element: HTMLElement;
+  documentTop: number;
+  height: number;
+}
+
+interface TimelineState {
+  element: HTMLElement;
+  markers: HTMLElement[];
+  documentTop: number;
+  height: number;
+  scrubberHalfHeight: number;
+  markerLeadProgress: number;
+}
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -25,12 +51,72 @@ export default function ClubMotionRuntime() {
     }
 
     const observedElements = new WeakSet<Element>();
-    const revealElements = new Set<Element>();
+    let driftElements: DriftState[] = [];
+    let heroElements: HeroState[] = [];
+    let timelines: TimelineState[] = [];
+    let scrollableHeight = 0;
+
+    function getDocumentTop(element: HTMLElement) {
+      let documentTop = 0;
+      let offsetElement: HTMLElement | null = element;
+
+      while (offsetElement) {
+        documentTop += offsetElement.offsetTop;
+        offsetElement = offsetElement.offsetParent as HTMLElement | null;
+      }
+
+      return documentTop;
+    }
+
+    function refreshDocumentMetrics() {
+      scrollableHeight = Math.max(
+        document.documentElement.scrollHeight - window.innerHeight,
+        0,
+      );
+    }
+
+    function refreshScrollTargets() {
+      refreshDocumentMetrics();
+      driftElements = Array.from(
+        document.querySelectorAll<HTMLElement>(DRIFT_SELECTOR),
+      ).map((element) => ({
+        element,
+        documentTop: getDocumentTop(element),
+        height: Math.max(element.offsetHeight, 1),
+        depth: Number(element.dataset.scrollDrift ?? DEFAULT_DRIFT_DEPTH_PX),
+      }));
+      heroElements = Array.from(
+        document.querySelectorAll<HTMLElement>(HERO_SELECTOR),
+      ).map((element) => ({
+        element,
+        documentTop: getDocumentTop(element),
+        height: Math.max(element.offsetHeight, 1),
+      }));
+      timelines = Array.from(
+        document.querySelectorAll<HTMLElement>(HISTORY_TIMELINE_SELECTOR),
+      ).map((timeline) => {
+        const height = Math.max(timeline.offsetHeight, 1);
+        const scrubber = timeline.querySelector<HTMLElement>(
+          HISTORY_SCRUBBER_SELECTOR,
+        );
+        const scrubberHalfHeight = (scrubber?.offsetHeight ?? 0) / 2;
+
+        return {
+          element: timeline,
+          markers: Array.from(
+            timeline.querySelectorAll<HTMLElement>(HISTORY_MARKER_SELECTOR),
+          ),
+          documentTop: getDocumentTop(timeline),
+          height,
+          scrubberHalfHeight,
+          markerLeadProgress: scrubberHalfHeight / height,
+        };
+      });
+    }
 
     function revealElement(element: Element) {
       element.classList.add("is-visible");
       revealObserver.unobserve(element);
-      revealElements.delete(element);
     }
 
     const revealObserver = new IntersectionObserver(
@@ -47,33 +133,13 @@ export default function ClubMotionRuntime() {
       },
     );
 
-    function isInsideRevealRange(element: Element) {
-      const rect = element.getBoundingClientRect();
-
-      return rect.top < window.innerHeight * 1.05 && rect.bottom > 0;
-    }
-
     function observeElement(element: Element) {
       if (observedElements.has(element)) return;
 
       observedElements.add(element);
       element.classList.add("is-motion-observed");
-      revealElements.add(element);
-
-      if (isInsideRevealRange(element)) {
-        revealElement(element);
-        return;
-      }
 
       revealObserver.observe(element);
-    }
-
-    function revealVisibleElements() {
-      for (const element of [...revealElements]) {
-        if (isInsideRevealRange(element)) {
-          revealElement(element);
-        }
-      }
     }
 
     function observeTree(rootNode: ParentNode) {
@@ -87,18 +153,29 @@ export default function ClubMotionRuntime() {
     }
 
     observeTree(document);
+    refreshScrollTargets();
     root.dataset.motion = "ready";
 
     const mutationObserver = new MutationObserver((mutations) => {
+      let shouldRefreshScrollTargets = false;
+
       for (const mutation of mutations) {
+        if (mutation.removedNodes.length > 0) {
+          shouldRefreshScrollTargets = true;
+        }
+
         for (const node of mutation.addedNodes) {
           if (node instanceof Element) {
             observeTree(node);
+            shouldRefreshScrollTargets = true;
           }
         }
       }
 
-      revealVisibleElements();
+      if (shouldRefreshScrollTargets) {
+        refreshScrollTargets();
+        syncTiltListeners();
+      }
     });
 
     mutationObserver.observe(document.body, {
@@ -107,13 +184,11 @@ export default function ClubMotionRuntime() {
     });
 
     let scrollFrameId: number | null = null;
+    let resizeRefreshFrameId: number | null = null;
 
     function updateScrollMotion() {
       scrollFrameId = null;
-      revealVisibleElements();
 
-      const scrollableHeight =
-        document.documentElement.scrollHeight - window.innerHeight;
       const scrollProgress =
         scrollableHeight > 0 ? window.scrollY / scrollableHeight : 1;
 
@@ -123,74 +198,95 @@ export default function ClubMotionRuntime() {
       );
 
       const viewportCenter = window.innerHeight / 2;
+      const driftOverscan = window.innerHeight * DRIFT_OVERSCAN_VIEWPORT_RATIO;
+      const scrollY = window.scrollY;
 
-      document
-        .querySelectorAll<HTMLElement>(DRIFT_SELECTOR)
-        .forEach((element) => {
-          const rect = element.getBoundingClientRect();
-          const elementCenter = rect.top + rect.height / 2;
-          const depth = Number(element.dataset.scrollDrift ?? 12);
-          const normalizedDistance = clamp(
-            (viewportCenter - elementCenter) / viewportCenter,
-            -1,
-            1,
+      for (const drift of driftElements) {
+        const top = drift.documentTop - scrollY;
+        const bottom = top + drift.height;
+
+        if (
+          bottom < -driftOverscan ||
+          top > window.innerHeight + driftOverscan
+        ) {
+          continue;
+        }
+
+        const elementCenter = top + drift.height / 2;
+        const normalizedDistance = clamp(
+          (viewportCenter - elementCenter) / viewportCenter,
+          -1,
+          1,
+        );
+
+        drift.element.style.setProperty(
+          "--club-scroll-drift",
+          `${(normalizedDistance * drift.depth).toFixed(2)}px`,
+        );
+      }
+
+      for (const hero of heroElements) {
+        const top = hero.documentTop - scrollY;
+        const bottom = top + hero.height;
+
+        if (bottom < 0 || top > window.innerHeight) {
+          continue;
+        }
+
+        const heroProgress = clamp(-top / hero.height, 0, 1);
+
+        hero.element.style.setProperty(
+          "--club-hero-progress",
+          heroProgress.toFixed(3),
+        );
+      }
+
+      for (const timeline of timelines) {
+        const viewportAnchor =
+          window.innerHeight * TIMELINE_VIEWPORT_ANCHOR_RATIO;
+        const viewportAnchorDocument = scrollY + viewportAnchor;
+
+        if (
+          viewportAnchorDocument < timeline.documentTop - window.innerHeight ||
+          viewportAnchorDocument >
+            timeline.documentTop + timeline.height + window.innerHeight
+        ) {
+          continue;
+        }
+
+        const progressY = clamp(
+          viewportAnchorDocument - timeline.documentTop,
+          0,
+          timeline.height,
+        );
+        const scrubberY = clamp(
+          progressY,
+          timeline.scrubberHalfHeight,
+          Math.max(
+            timeline.height - timeline.scrubberHalfHeight,
+            timeline.scrubberHalfHeight,
+          ),
+        );
+        const timelineProgress = progressY / timeline.height;
+
+        timeline.element.style.setProperty(
+          "--history-timeline-progress",
+          timelineProgress.toFixed(4),
+        );
+        timeline.element.style.setProperty(
+          "--history-timeline-scrubber-y",
+          `${scrubberY.toFixed(2)}px`,
+        );
+
+        for (const marker of timeline.markers) {
+          const markerProgress = Number(marker.dataset.historyMarker ?? 0);
+
+          marker.classList.toggle(
+            "is-history-marker-active",
+            timelineProgress + timeline.markerLeadProgress >= markerProgress,
           );
-
-          element.style.setProperty(
-            "--club-scroll-drift",
-            `${(normalizedDistance * depth).toFixed(2)}px`,
-          );
-        });
-
-      document.querySelectorAll<HTMLElement>(HERO_SELECTOR).forEach((hero) => {
-        const rect = hero.getBoundingClientRect();
-        const heroHeight = Math.max(rect.height, 1);
-        const heroProgress = clamp(-rect.top / heroHeight, 0, 1);
-
-        hero.style.setProperty("--club-hero-progress", heroProgress.toFixed(3));
-      });
-
-      document
-        .querySelectorAll<HTMLElement>(HISTORY_TIMELINE_SELECTOR)
-        .forEach((timeline) => {
-          const viewportAnchor = window.innerHeight * 0.5;
-          const timelineHeight = Math.max(timeline.offsetHeight, 1);
-          const viewportAnchorDocument = window.scrollY + viewportAnchor;
-          let timelineDocumentTop = 0;
-          let offsetElement: HTMLElement | null = timeline;
-
-          while (offsetElement) {
-            timelineDocumentTop += offsetElement.offsetTop;
-            offsetElement = offsetElement.offsetParent as HTMLElement | null;
-          }
-
-          const scrubberY = clamp(
-            viewportAnchorDocument - timelineDocumentTop,
-            0,
-            timelineHeight,
-          );
-          const timelineProgress = scrubberY / timelineHeight;
-
-          timeline.style.setProperty(
-            "--history-timeline-progress",
-            timelineProgress.toFixed(4),
-          );
-          timeline.style.setProperty(
-            "--history-timeline-scrubber-y",
-            `${scrubberY.toFixed(2)}px`,
-          );
-
-          timeline
-            .querySelectorAll<HTMLElement>(HISTORY_MARKER_SELECTOR)
-            .forEach((marker) => {
-              const markerProgress = Number(marker.dataset.historyMarker ?? 0);
-
-              marker.classList.toggle(
-                "is-history-marker-active",
-                timelineProgress + 0.018 >= markerProgress,
-              );
-            });
-        });
+        }
+      }
     }
 
     function scheduleScrollMotion() {
@@ -199,7 +295,18 @@ export default function ClubMotionRuntime() {
       scrollFrameId = window.requestAnimationFrame(updateScrollMotion);
     }
 
+    function scheduleScrollTargetRefresh() {
+      if (resizeRefreshFrameId !== null) return;
+
+      resizeRefreshFrameId = window.requestAnimationFrame(() => {
+        resizeRefreshFrameId = null;
+        refreshScrollTargets();
+        scheduleScrollMotion();
+      });
+    }
+
     let tiltFrameId: number | null = null;
+    let tiltListenersAttached = false;
     let pendingTilt: {
       element: HTMLElement;
       x: number;
@@ -256,28 +363,68 @@ export default function ClubMotionRuntime() {
       target.style.removeProperty("--tilt-glow-y");
     }
 
+    function attachTiltListeners() {
+      if (tiltListenersAttached) return;
+
+      window.addEventListener("pointermove", handlePointerMove, {
+        passive: true,
+      });
+      window.addEventListener("pointerout", handlePointerOut);
+      tiltListenersAttached = true;
+    }
+
+    function detachTiltListeners() {
+      if (!tiltListenersAttached) return;
+
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerout", handlePointerOut);
+      tiltListenersAttached = false;
+      pendingTilt = null;
+
+      if (tiltFrameId !== null) {
+        window.cancelAnimationFrame(tiltFrameId);
+        tiltFrameId = null;
+      }
+    }
+
+    function syncTiltListeners() {
+      if (document.querySelector(TILT_SELECTOR)) {
+        attachTiltListeners();
+      } else {
+        detachTiltListeners();
+      }
+    }
+
     window.addEventListener("scroll", scheduleScrollMotion, { passive: true });
-    window.addEventListener("resize", scheduleScrollMotion);
-    window.addEventListener("pointermove", handlePointerMove, {
-      passive: true,
-    });
-    window.addEventListener("pointerout", handlePointerOut);
+    function handleResize() {
+      refreshScrollTargets();
+      scheduleScrollMotion();
+    }
+
+    window.addEventListener("resize", handleResize);
+    const resizeObserver =
+      "ResizeObserver" in window
+        ? new ResizeObserver(scheduleScrollTargetRefresh)
+        : null;
+    resizeObserver?.observe(document.documentElement);
+    resizeObserver?.observe(document.body);
+    syncTiltListeners();
     scheduleScrollMotion();
 
     return () => {
       revealObserver.disconnect();
       mutationObserver.disconnect();
+      resizeObserver?.disconnect();
       window.removeEventListener("scroll", scheduleScrollMotion);
-      window.removeEventListener("resize", scheduleScrollMotion);
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerout", handlePointerOut);
+      window.removeEventListener("resize", handleResize);
+      detachTiltListeners();
 
       if (scrollFrameId !== null) {
         window.cancelAnimationFrame(scrollFrameId);
       }
 
-      if (tiltFrameId !== null) {
-        window.cancelAnimationFrame(tiltFrameId);
+      if (resizeRefreshFrameId !== null) {
+        window.cancelAnimationFrame(resizeRefreshFrameId);
       }
     };
   }, []);

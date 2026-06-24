@@ -69,7 +69,9 @@ function ContentButton({ href, label, variant = "gold" }: ContentLink) {
           {content}
         </a>
       ) : (
-        <Link href={href}>{content}</Link>
+        <Link href={href} prefetch={false}>
+          {content}
+        </Link>
       )}
     </Button>
   );
