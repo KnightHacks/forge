@@ -8,45 +8,25 @@ interface HeroMotion {
   handlePointerLeave: () => void;
 }
 
-const HERO_MOTION_STYLE_ID = "khix-hero-motion-vars";
-
 const clamp = (value: number, min = 0, max = 1) =>
   Math.min(max, Math.max(min, value));
 
 const getViewportHeight = () =>
   window.visualViewport?.height ?? window.innerHeight;
 
-const createMotionRule = () => {
-  let style = document.getElementById(
-    HERO_MOTION_STYLE_ID,
-  ) as HTMLStyleElement | null;
-
-  if (!style) {
-    style = document.createElement("style");
-    style.id = HERO_MOTION_STYLE_ID;
-    style.textContent =
-      ":root{--khix-hero-pointer-x:0;--khix-hero-pointer-y:0;--khix-hero-scroll-progress:0;}";
-    document.head.append(style);
-  }
-
-  return Array.from(style.sheet?.cssRules ?? []).find(
-    (rule): rule is CSSStyleRule =>
-      "selectorText" in rule && rule.selectorText === ":root",
-  );
-};
-
-const setMotionRuleNumber = (
-  rule: CSSStyleRule | null,
+const setStageMotionNumber = (
+  stage: HTMLDivElement | null,
   property: string,
   value: number,
 ) => {
-  rule?.style.setProperty(property, value.toFixed(4));
+  stage?.style.setProperty(property, value.toFixed(4));
 };
 
 export function useHeroMotion(): HeroMotion {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const motionRuleRef = useRef<CSSStyleRule | null>(null);
+  const pointerFrameRef = useRef(0);
+  const pendingPointerRef = useRef({ x: 0, y: 0 });
   const shouldReduceMotionRef = useRef(false);
   const motionValuesRef = useRef({
     pointerX: 0,
@@ -55,7 +35,7 @@ export function useHeroMotion(): HeroMotion {
   });
 
   const setPointerVars = (x: number, y: number) => {
-    const motionRule = motionRuleRef.current;
+    const stage = stageRef.current;
     const motionValues = motionValuesRef.current;
 
     if (
@@ -67,12 +47,33 @@ export function useHeroMotion(): HeroMotion {
 
     motionValues.pointerX = x;
     motionValues.pointerY = y;
-    setMotionRuleNumber(motionRule, "--khix-hero-pointer-x", x);
-    setMotionRuleNumber(motionRule, "--khix-hero-pointer-y", y);
+    setStageMotionNumber(stage, "--khix-hero-pointer-x", x);
+    setStageMotionNumber(stage, "--khix-hero-pointer-y", y);
+  };
+
+  const cancelPointerFrame = () => {
+    if (!pointerFrameRef.current) {
+      return;
+    }
+
+    window.cancelAnimationFrame(pointerFrameRef.current);
+    pointerFrameRef.current = 0;
+  };
+
+  const schedulePointerVars = (x: number, y: number) => {
+    pendingPointerRef.current = { x, y };
+
+    if (pointerFrameRef.current) {
+      return;
+    }
+
+    pointerFrameRef.current = window.requestAnimationFrame(() => {
+      pointerFrameRef.current = 0;
+      setPointerVars(pendingPointerRef.current.x, pendingPointerRef.current.y);
+    });
   };
 
   useEffect(() => {
-    const motionRule = createMotionRule();
     const reduceMotionQuery = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     );
@@ -86,8 +87,8 @@ export function useHeroMotion(): HeroMotion {
       }
 
       motionValues.scrollProgress = progress;
-      setMotionRuleNumber(
-        motionRuleRef.current,
+      setStageMotionNumber(
+        stageRef.current,
         "--khix-hero-scroll-progress",
         progress,
       );
@@ -121,7 +122,6 @@ export function useHeroMotion(): HeroMotion {
       });
     };
 
-    motionRuleRef.current = motionRule ?? null;
     shouldReduceMotionRef.current = reduceMotionQuery.matches;
     setPointerVars(0, 0);
     updateScrollProgress();
@@ -130,6 +130,7 @@ export function useHeroMotion(): HeroMotion {
       shouldReduceMotionRef.current = reduceMotionQuery.matches;
 
       if (reduceMotionQuery.matches) {
+        cancelPointerFrame();
         setPointerVars(0, 0);
       }
 
@@ -157,6 +158,7 @@ export function useHeroMotion(): HeroMotion {
       if (frame) {
         window.cancelAnimationFrame(frame);
       }
+      cancelPointerFrame();
       setPointerVars(0, 0);
       setScrollProgressVar(0);
     };
@@ -164,6 +166,7 @@ export function useHeroMotion(): HeroMotion {
 
   const handlePointerMove = (event: PointerEvent<HTMLElement>) => {
     if (shouldReduceMotionRef.current) {
+      cancelPointerFrame();
       setPointerVars(0, 0);
       return;
     }
@@ -172,11 +175,11 @@ export function useHeroMotion(): HeroMotion {
     const nextX = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
     const nextY = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
 
-    setPointerVars(nextX, nextY);
+    schedulePointerVars(nextX, nextY);
   };
 
   const handlePointerLeave = () => {
-    setPointerVars(0, 0);
+    schedulePointerVars(0, 0);
   };
 
   return {

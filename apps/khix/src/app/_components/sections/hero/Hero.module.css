@@ -21,7 +21,6 @@
   width: 100%;
   height: 100vh;
   height: 100svh;
-  height: 100dvh;
   overflow: hidden;
   overflow-anchor: none;
   isolation: isolate;
@@ -35,12 +34,12 @@
 }
 
 .art {
+  --khix-art-motion-scale: 0.64;
   position: absolute;
-  inset: -38vh -34vw;
+  inset: -6.32svh -3.76vw;
   z-index: 1;
   pointer-events: auto;
   overflow-anchor: none;
-  transform: translate3d(0, 0, 0) scale(0.64);
 }
 
 .introVeil {
@@ -71,10 +70,19 @@
   overflow: hidden;
   overflow-anchor: none;
   transform: translate3d(
-      calc(var(--khix-pointer-x) * var(--khix-layer-depth-x) * 1px),
       calc(
-        (var(--khix-pointer-y) * var(--khix-layer-depth-y) * 1px) +
-          (var(--khix-scroll-progress) * var(--khix-layer-scroll-y))
+        var(--khix-pointer-x) * var(--khix-layer-depth-x) *
+          var(--khix-art-motion-scale) * 1px
+      ),
+      calc(
+        (
+            var(--khix-pointer-y) * var(--khix-layer-depth-y) *
+              var(--khix-art-motion-scale) * 1px
+          ) +
+          (
+            var(--khix-scroll-progress) * var(--khix-layer-scroll-y) *
+              var(--khix-art-motion-scale)
+          )
       ),
       0
     )
