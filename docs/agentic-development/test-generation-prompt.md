@@ -1,36 +1,51 @@
 # Test Generation Prompt
 
-Use this prompt for agents that generate tests from specs.
+Use this for agents that generate tests from `test-cases.md`.
 
 ## Goal
 
-Generate tests from behavioral test cases without implementing product behavior.
+Create tests that prove observable behavior described in `test-cases.md`. Do not implement product code.
 
 ## Required inputs
 
-Read the relevant:
+Read:
 
-- `requirements.md`
-- `design.md`
-- `interfaces.md`
-- `migration.md` if persistence/data migration is involved
+- `spec.md`
+- `srd.md`
 - `test-cases.md`
-- existing test utilities and patterns
+- existing test patterns/utilities in the affected app/package
+- relevant Forge docs from `docs/REPO-CONVENTIONS.md` and `docs/DATABASE-USAGE.md` when applicable
+
+## Test placement
+
+Place tests at the boundary that owns the behavior:
+
+- UI/user flow behavior → app-level tests near the app or established e2e location once one exists.
+- API behavior → API/package-level integration tests near `packages/api` or the established test harness.
+- Shared package behavior → tests in the owning package.
+- DB/migration behavior → DB package tests or migration validation scripts.
+- Cross-app contract behavior → contract tests that exercise the documented public interface.
+
+If Forge does not yet have an established harness for the needed level, propose the smallest harness in the owning package/app and document the command in the PR. Do not scatter ad-hoc tests in unrelated locations.
 
 ## Rules
 
-- Do not implement product code.
-- Do not change requirements to make tests easier.
+- Do not implement product behavior.
+- Do not change specs to make tests easier.
 - Do not rewrite or weaken existing valid tests.
 - Prefer public interfaces over private implementation details.
-- Use isolated fixtures and temporary state.
-- Do not mock the behavior being tested unless the interface explicitly requires a mock boundary.
+- Avoid asserting private file layout, exact implementation helpers, or private DB details unless the SRD defines them as contracts.
+- Use deterministic isolated fixtures.
 - Each important test should reference a test-case ID.
-- Negative tests should assert the failure class or observable failure, not merely “something failed.”
+- Negative tests should assert a specific failure class or observable result.
 
-## Completion criteria
+## Failure check
 
-- Tests map back to test-case IDs.
-- Tests are black-box where appropriate.
-- Tests fail clearly for the intended reason before implementation when practical.
-- The required validation command is documented and has been run or the blocker is reported.
+When practical, run the new tests before implementation and confirm they fail for the intended reason. If they pass immediately, explain whether behavior already exists or the test is too weak.
+
+## Output expected
+
+- Test files or a clearly scoped test harness proposal.
+- Mapping from test files to test-case IDs.
+- Exact commands run and results.
+- Any blockers preventing reliable test generation.

@@ -1,72 +1,44 @@
-# Agentic Development Framework Audit Guide
+# Agentic Framework Audit Guide
 
-This document is for reviewing the Blade Reforge agentic development framework before any feature work begins.
+Use this before any Blade Reforge feature work begins.
 
-## Review goal
+## Reading order
 
-Confirm that the workflow, prompts, branch policy, and spec framework are sound enough to use for Blade Reforge.
+1. [`README.md`](./README.md)
+2. [`engineering-guidelines.md`](./engineering-guidelines.md)
+3. [`test-generation-prompt.md`](./test-generation-prompt.md)
+4. [`implementation-prompt.md`](./implementation-prompt.md)
+5. [`agent-skills.md`](./agent-skills.md)
 
-Do **not** begin feature specs or implementation until this audit is complete.
+## Main audit question
 
-## Recommended reading order
+Is this framework lean enough for student contributors but strict enough to keep agents from inventing scope or weakening tests?
 
-1. [`README.md`](./README.md) — philosophy, loop, truth ownership, lightweight-change rules.
-2. [`engineering-guidelines.md`](./engineering-guidelines.md) — shared quality floor and monorepo safety rules.
-3. [`test-generation-prompt.md`](./test-generation-prompt.md) — constraints for agents that write tests.
-4. [`implementation-prompt.md`](./implementation-prompt.md) — constraints for agents that write code.
-5. [`review-prompt.md`](./review-prompt.md) — constraints for agents that review diffs.
-6. [`bugfix-prompt.md`](./bugfix-prompt.md) — repair loop for bugs/regressions.
-7. [`agent-skills.md`](./agent-skills.md) — proposed reusable skill roles and when to use them.
-8. [`../../specs/blade-reforge/README.md`](../../specs/blade-reforge/README.md) — how this framework maps to Blade Reforge.
-9. [`../../specs/blade-reforge/development-flow.md`](../../specs/blade-reforge/development-flow.md) — Reforge-specific development loop.
-10. [`../../specs/blade-reforge/tasks.md`](../../specs/blade-reforge/tasks.md) — current framework-first tasks.
+## Specific questions
 
-## Audit questions
+### Artifact model
 
-### Workflow
+- Is `spec.md` clearly non-technical/user-facing?
+- Is `srd.md` the right place for technical design, interfaces, data, rollout, and migration notes?
+- Are separate `design.md`, `interfaces.md`, and `migration.md` intentionally optional rather than default?
+- Is `test-cases.md` clear as the behavioral oracle?
 
-- Is the order correct: specs → test cases → generated tests → implementation → review?
-- Does the process make bugs update specs/tests before code?
-- Is the lightweight-change policy clear enough to avoid ceremony?
+### Prompts
 
-### Truth ownership
+- Does the test-generation prompt say where tests should be placed and how they should be validated?
+- Does the implementation prompt include enough git/diff mechanics?
+- Are we correct to defer separate bugfix/review prompts until we see real repeated friction?
 
-- Is it clear which artifact owns each kind of truth?
-- Are any truths duplicated across multiple docs?
-- Are any important truths missing an owning artifact?
+### Forge fit
 
-### Agent constraints
+- Do guidelines reference real Forge commands and docs?
+- Do guidelines allow changing old patterns through an SRD instead of blindly preserving current debt?
+- Does branch policy keep Reforge off `main` until cutover?
 
-- Are test-writing agents sufficiently blocked from implementing product code?
-- Are implementation agents sufficiently blocked from changing tests to fit code?
-- Are review agents checking the right risks?
-- Are bugfix agents forced to create regression coverage?
+## Approval checklist
 
-### Monorepo safety
-
-- Does the process protect current `main` delivery?
-- Does it prevent confusing Reforge implementation with production Blade?
-- Does it require shared package consumer analysis?
-- Does it provide a sane final cutover model?
-
-### Readiness to proceed
-
-Before feature work begins, these should be true:
-
-- [ ] Dylan has reviewed the agentic development docs.
-- [ ] The dev lead agrees with branch policy.
-- [ ] The team agrees that Reforge PRs target `reforge/main`, not `main`.
-- [ ] The prompt docs are accepted or revised.
-- [ ] The first pilot feature is intentionally selected.
-
-## Feedback format
-
-When reviewing, leave notes as:
-
-```md
-File: <path>
-Section: <heading>
-Concern: <what feels wrong or missing>
-Suggestion: <proposed change>
-Severity: blocker | should-fix | nice-to-have
-```
+- [ ] Dylan approves the artifact model.
+- [ ] Dylan approves the maintained prompt set.
+- [ ] Dylan approves branch/cutover policy.
+- [ ] Dylan approves initial agent skills or marks them for revision.
+- [ ] Only then do we create the first Reforge change folder.
