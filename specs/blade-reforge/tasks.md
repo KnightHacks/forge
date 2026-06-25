@@ -2,36 +2,39 @@
 
 Status: Draft.
 
-## Phase 0: Process and branch setup
+Current priority: audit and approve the agentic development framework before starting feature specs or implementation.
 
-- [ ] Create `reforge/main` branch.
-- [ ] Add branch-local Reforge instructions.
-- [ ] Add agentic development docs.
-- [ ] Add Blade Reforge spec skeleton.
+## Phase 0: Framework and branch setup
 
-## Phase 1: Inventory and characterization
+- [x] Create `reforge/main` branch.
+- [x] Add branch-local Reforge instructions.
+- [x] Add agentic development docs.
+- [x] Add Blade Reforge spec skeleton.
+- [ ] Dylan reviews `docs/agentic-development/*`.
+- [ ] Revise prompts/guidelines based on review.
+- [ ] Decide which agent skills should become reusable commands/skills.
+- [ ] Confirm branch policy and cutover model.
 
+## Phase 1: Inventory and characterization planning
+
+Do not start until Phase 0 is accepted.
+
+- [ ] Create an inventory task branch from `reforge/main`.
 - [ ] Map current Blade workflows.
 - [ ] Map shared package consumers.
 - [ ] Identify production data dependencies.
-- [ ] Write current behavior notes for pilot feature.
+- [ ] Propose first pilot feature after framework approval.
 
-## Phase 2: Pilot feature spec
+## Phase 2: First pilot feature
 
-- [ ] Draft hackathon applications requirements.
-- [ ] Draft hackathon applications design.
-- [ ] Draft hackathon applications interfaces.
-- [ ] Draft hackathon applications test cases.
+Do not start until the framework is accepted and the pilot feature is intentionally selected.
 
-## Phase 3: Pilot tests and implementation
-
-- [ ] Generate tests from test cases.
-- [ ] Confirm tests fail/pass for intended reasons.
-- [ ] Implement pilot slice.
+- [ ] Create feature spec folder.
+- [ ] Draft current behavior if legacy behavior exists.
+- [ ] Draft requirements.
+- [ ] Draft design.
+- [ ] Draft interfaces.
+- [ ] Draft test cases.
+- [ ] Generate tests.
+- [ ] Implement smallest pilot slice.
 - [ ] Review against specs.
-
-## Phase 4: Cutover planning
-
-- [ ] Define migration dry-run requirements.
-- [ ] Define rollback plan.
-- [ ] Prepare final cutover checklist.
