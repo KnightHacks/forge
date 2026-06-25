@@ -26,7 +26,9 @@
     "lint:ws": "pnpm dlx sherif@latest",
     "postinstall": "pnpm lint:ws",
     "typecheck": "turbo run typecheck",
-    "ui-add": "turbo run ui-add"
+    "ui-add": "turbo run ui-add",
+    "analyze:react": "tsx scripts/analyze-react.ts",
+    "verify:push": "pnpm format && pnpm lint && pnpm typecheck"
   },
   "devDependencies": {
     "@forge/eslint-config": "workspace:*",
@@ -34,9 +36,13 @@
     "@forge/tailwind-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
     "@turbo/gen": "^2.8.11",
+    "playwright": "^1.61.1",
     "prettier": "catalog:",
+    "react-analyzer": "github:azer/react-analyzer",
+    "tsx": "^4.21.0",
     "turbo": "^2.8.11",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "^4.1.9"
   },
   "prettier": "@forge/prettier-config",
   "pnpm": {

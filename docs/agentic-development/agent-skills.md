@@ -56,3 +56,8 @@ Rules:
 - Review Agent, if reviews repeatedly miss spec drift, test gaps, or contract changes.
 - Bugfix Agent, if bug repairs repeatedly skip regression/spec updates.
 - Main Sync Auditor, once `reforge/main` diverges and recurring merge triage becomes meaningful.
+
+## Repo-level installed skills
+
+- `.claude/skills/deslop` — use for prose/comment review to remove AI-sounding filler and keep writing human-readable.
+- `.claude/skills/react-analyzer` — use with `pnpm analyze:react <path>` for React component surface analysis before frontend refactors or UI SRDs.

@@ -69,6 +69,7 @@ Before editing, read:
 Choose validation based on touched areas. Common commands:
 
 ```bash
+pnpm verify:push
 pnpm format
 pnpm lint
 pnpm typecheck
@@ -78,4 +79,4 @@ pnpm --filter=@forge/api typecheck
 pnpm --filter=@forge/db typecheck
 ```
 
-Before pushing Reforge work, `pnpm format`, `pnpm lint`, and `pnpm typecheck` should pass unless a blocker is explicitly documented. Do not claim a command passed unless it actually ran and passed.
+Before pushing Reforge work, `pnpm verify:push` should pass unless a blocker is explicitly documented. Use `pnpm analyze:react <path>` for meaningful frontend changes. Do not claim a command passed unless it actually ran and passed.

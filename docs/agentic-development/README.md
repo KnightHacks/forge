@@ -103,13 +103,13 @@ We are intentionally not maintaining separate bugfix/review prompts yet. Bugfix 
 
 Do not update every Markdown file for every change.
 
-| Changed truth | Update |
-|---|---|
-| User-visible behavior, scope, vocabulary | `spec.md` |
-| Technical architecture, contracts, data behavior, rollout constraints | `srd.md` |
-| Observable behavior, bug/regression, acceptance proof | `test-cases.md` |
-| Progress, task state, open questions, PR links | `status.md` |
-| Agent mechanics or validation expectations | prompt/guideline docs |
+| Changed truth                                                         | Update                |
+| --------------------------------------------------------------------- | --------------------- |
+| User-visible behavior, scope, vocabulary                              | `spec.md`             |
+| Technical architecture, contracts, data behavior, rollout constraints | `srd.md`              |
+| Observable behavior, bug/regression, acceptance proof                 | `test-cases.md`       |
+| Progress, task state, open questions, PR links                        | `status.md`           |
+| Agent mechanics or validation expectations                            | prompt/guideline docs |
 
 Tiny non-behavioral changes may not need this workflow.
 

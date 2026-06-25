@@ -221,11 +221,27 @@ Testing strategy should mix integration, unit, and selected UI/E2E coverage.
 - Tests should be written/generated from `test-cases.md` before implementation when practical.
 - Tests should live per app/package rather than in one global tests package, so targeted package/app commands can run them.
 
+## Comments and human readability
+
+Code should be readable to future student contributors, not just agents.
+
+- Add comments for non-obvious decisions, platform boundaries, permission assumptions, data migration caveats, Discord side effects, and tricky React/data-flow behavior.
+- Prefer comments that explain **why** over comments that restate **what** the next line does.
+- Public package exports, complex validators, tricky tRPC procedures, and operational scripts should have enough context for a new contributor to understand the intent.
+- Do not add noisy comments, AI-sounding filler, or generic narration.
+- Use the repo-level `deslop` skill/checklist on meaningful prose and comments when drafting or reviewing agent-written work.
+
 ## Static analysis and CLI verification
 
 Agent verification should use more than tests when useful. Prefer cheap static checks and purpose-built CLI verification before broad manual review.
 
 Baseline push gate for Reforge work:
+
+```bash
+pnpm verify:push
+```
+
+Equivalent commands:
 
 ```bash
 pnpm format
@@ -234,6 +250,15 @@ pnpm typecheck
 ```
 
 These should pass before pushing unless the PR explicitly documents a blocker. For release/cutover readiness, `pnpm build` should also pass.
+
+React/UI analysis:
+
+```bash
+pnpm analyze:react apps/blade/src
+pnpm analyze:react <component-file-or-directory>
+```
+
+Use React analysis before broad frontend refactors or when an SRD needs component-surface context.
 
 Future SRDs may add feature-specific CLIs or static analyzers, especially for React/Next patterns, accessibility, route conventions, dependency boundaries, or forbidden hard-coded configuration. Do not add a new analyzer casually; document why it is useful, how to run it, and what failure means.
 
