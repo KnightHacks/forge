@@ -159,7 +159,7 @@ export function HackerData({
             </div>
           )}
           <div className="animate-fade-in text-lg font-bold">
-            Status for {hackathonData?.displayName}
+            Application Status
           </div>
           <div className="flex gap-x-2">
             <div

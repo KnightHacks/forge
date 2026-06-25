@@ -1,18 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, CircleCheckBig, Trophy } from "lucide-react";
 
 import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@forge/ui/dialog";
+import { Dialog, DialogTrigger } from "@forge/ui/dialog";
 
 import type { api as serverCall } from "~/trpc/server";
 import { HackerQRCodePopup } from "~/app/_components/dashboard/hacker-dashboard/hacker-qr-button";
@@ -20,7 +13,6 @@ import { DownloadQRPass } from "~/app/_components/dashboard/member-dashboard/dow
 import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
 import { BaseHackathonIssueButton } from "./issue-dialog";
-import { BaseHackathonPointLeaderboard } from "./point-leaderboard";
 
 type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
 type HackerProfile = Awaited<
@@ -55,16 +47,10 @@ export function BaseHackathonData({
   data,
   guideHref,
   hackathon,
-  teamColor,
-  team,
-  classPfp,
 }: {
   data: HackerProfile;
   guideHref: string;
   hackathon: SelectHackathon;
-  teamColor: string;
-  team: string;
-  classPfp: string;
 }) {
   const [hackerStatus, setHackerStatus] = useState<string | null>("");
   const [hackerStatusColor, setHackerStatusColor] = useState<string>("");
@@ -117,32 +103,10 @@ export function BaseHackathonData({
                 </h1>
               )}
 
-              <div className="animate-fade-in flex flex-wrap items-center justify-center gap-2 text-base text-muted-foreground sm:text-base md:justify-start">
-                <span
-                  className="font-medium"
-                  style={{
-                    color: teamColor,
-                    textShadow: `0 0 10px ${teamColor}, 0 0 20px ${teamColor}`,
-                  }}
-                >
-                  {hacker?.class}
-                </span>
-                <span className="text-border">•</span>
-                <span
-                  className="font-semibold text-foreground"
-                  style={{
-                    color: teamColor,
-                    textShadow: `0 0 10px ${teamColor}, 0 0 20px ${teamColor}`,
-                  }}
-                >
-                  {"Team " + team}
-                </span>
-              </div>
-
               {/* Status Badge */}
               <div className="animate-fade-in flex flex-col items-center space-y-3 md:items-start md:justify-start">
                 <p className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px] md:text-start">
-                  Status for {hackathon.displayName}
+                  Application Status
                 </p>
                 <div className="inline-flex items-center gap-2.5 rounded-full bg-background shadow-sm">
                   <span
@@ -157,18 +121,6 @@ export function BaseHackathonData({
                   )}
                 </div>
               </div>
-            </div>
-
-            {/* TK Image */}
-            <div className="animate-fade-in relative h-28 w-28 flex-shrink-0 self-center overflow-hidden shadow-sm sm:h-32 sm:w-32 sm:self-start">
-              <Image
-                src={classPfp}
-                alt="Team Mascot Image"
-                fill
-                className="rounded-full object-cover"
-                priority
-                sizes="(max-width: 800px) 112px, 128px"
-              />
             </div>
           </div>
         </div>
@@ -200,7 +152,7 @@ export function BaseHackathonData({
             {/* Decorative gradient overlay */}
             <div
               className="absolute right-0 top-0 h-24 w-24 -translate-y-8 translate-x-8 rounded-full blur-3xl sm:h-32 sm:w-32 sm:-translate-y-10 sm:translate-x-10"
-              style={{ backgroundColor: `${teamColor}20` }}
+              style={{ backgroundColor: `primary` }}
             />
 
             <div className="relative">
@@ -208,11 +160,11 @@ export function BaseHackathonData({
               <div className="mb-2 flex justify-center sm:mb-3">
                 <div
                   className="rounded-full p-2 sm:p-2.5"
-                  style={{ backgroundColor: `${teamColor}20` }}
+                  style={{ backgroundColor: `primary` }}
                 >
                   <Trophy
                     className="h-6 w-6 sm:h-7 sm:w-7"
-                    style={{ color: teamColor }}
+                    style={{ color: "primary" }}
                   />
                 </div>
               </div>
@@ -231,15 +183,15 @@ export function BaseHackathonData({
                 <div
                   className="rounded-xl px-4 py-3 sm:px-6 sm:py-5"
                   style={{
-                    background: `linear-gradient(to bottom right, ${teamColor}33, ${teamColor}0d)`,
-                    boxShadow: `0 0 20px ${teamColor}40`,
+                    background: `linear-gradient(to bottom right, primary, primary)`,
+                    boxShadow: `0 0 20px primary`,
                   }}
                 >
                   <div
                     className="text-center text-4xl font-bold tabular-nums tracking-tight sm:text-6xl"
                     style={{
-                      color: teamColor,
-                      textShadow: `0 0 10px ${teamColor}80`,
+                      color: "primary",
+                      textShadow: `0 0 10px primary`,
                     }}
                   >
                     {hacker?.points || 0}
@@ -251,28 +203,19 @@ export function BaseHackathonData({
                   <button
                     className="w-full rounded-lg py-2 text-sm font-semibold transition-all hover:shadow-md sm:py-2.5"
                     style={{
-                      backgroundColor: `${teamColor}20`,
-                      color: teamColor,
+                      backgroundColor: `primary`,
+                      color: "secondary",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = `${teamColor}33`;
+                      e.currentTarget.style.backgroundColor = `primary`;
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = `${teamColor}20`;
+                      e.currentTarget.style.backgroundColor = `primary`;
                     }}
                   >
                     View Leaderboard
                   </button>
                 </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Leaderboard</DialogTitle>
-                  </DialogHeader>
-                  <BaseHackathonPointLeaderboard
-                    hacker={hacker}
-                    hId={hackathon.name}
-                  />
-                </DialogContent>
               </Dialog>
             </div>
           </div>

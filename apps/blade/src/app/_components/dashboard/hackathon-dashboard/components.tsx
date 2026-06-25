@@ -1,11 +1,9 @@
 import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
-import { HACKATHONS } from "@forge/consts";
 
 import type { api as serverCall } from "~/trpc/server";
 import { HackerAppCard } from "~/app/_components/option-cards";
 import { BaseHackathonCountdown } from "./countdown";
 import { BaseHackathonData } from "./hackathon-data";
-import { BaseHackathonTeamPoints } from "./team-points";
 import { BaseHackathonUpcomingEvents } from "./upcoming-events";
 
 export {
@@ -15,30 +13,10 @@ export {
 } from "./hackathon-data";
 export { BaseHackathonCountdown } from "./countdown";
 export * from "./issue-dialog";
-export { BaseHackathonPointLeaderboard } from "./point-leaderboard";
-export { BaseHackathonTeamPoints } from "./team-points";
 export { BaseHackathonUpcomingEvents } from "./upcoming-events";
 
 const DEFAULT_HACKER_GUIDE_HREF =
   "https://knight-hacks.notion.site/knight-hacks-viii";
-
-const DEFAULT_CLASS_INFO = HACKATHONS.KNIGHT_HACKS_8.HACKER_CLASS_INFO;
-
-export function BaseHackathonClassError() {
-  return (
-    <div className="flex flex-col items-center justify-center gap-y-6 px-4 py-12 text-center">
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950">
-        <h3 className="mb-2 text-xl font-semibold text-red-800 dark:text-red-200">
-          Configuration Error
-        </h3>
-        <p className="text-red-700 dark:text-red-300">
-          Unable to load your team information. Please contact support or try
-          refreshing the page.
-        </p>
-      </div>
-    </div>
-  );
-}
 
 export function BaseHackathonRegistrationPrompt({
   hackathon,
@@ -58,7 +36,6 @@ export function BaseHackathonRegistrationPrompt({
 }
 
 export function BaseHackathonDashboard({
-  classInfoByClass = DEFAULT_CLASS_INFO,
   guideHref = DEFAULT_HACKER_GUIDE_HREF,
   hackathon,
   hacker,
@@ -79,28 +56,13 @@ export function BaseHackathonDashboard({
     return <BaseHackathonRegistrationPrompt hackathon={hackathon} />;
   }
 
-  if (!hacker.class || !(hacker.class in classInfoByClass)) {
-    return <BaseHackathonClassError />;
-  }
-
-  const classInfo = classInfoByClass[hacker.class];
-
-  if (!classInfo) {
-    return <BaseHackathonClassError />;
-  }
-
-  const { classPfp, team, teamColor } = classInfo;
-
   return (
     <>
       <div className="animate-mobile-initial-expand mx-auto flex min-h-[900px] rounded-lg bg-[#E5E7EB] px-2 py-4 dark:bg-[#0A0F1D] sm:relative sm:px-0 sm:py-6 lg:min-h-[380px]">
         <BaseHackathonData
-          classPfp={classPfp}
           data={hacker}
           guideHref={guideHref}
           hackathon={hackathon}
-          team={team}
-          teamColor={teamColor}
         />
 
         <div className="border-b-solid border-l-solid absolute bottom-0 right-0 hidden h-0 w-0 border-b-[30px] border-l-[30px] border-b-background border-l-transparent sm:block"></div>
@@ -122,9 +84,6 @@ export function BaseHackathonDashboard({
         </div>
 
         <div className="absolute -left-3 top-0 hidden h-full w-[0.4rem] bg-primary sm:block"></div>
-      </div>
-      <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
-        <BaseHackathonTeamPoints hClass={hacker.class} hId={hackathon.name} />
       </div>
       <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
         <BaseHackathonCountdown endDate={hackathon.endDate} />

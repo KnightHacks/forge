@@ -18,7 +18,7 @@ export default async function HackerDashboard({
   hackathon,
   hacker,
 }: {
-  hackathon?: SelectHackathon | null;
+  hackathon: SelectHackathon;
   hacker: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
 }) {
   const [resume, pastHackathons] = await Promise.allSettled([
@@ -26,22 +26,16 @@ export default async function HackerDashboard({
     api.hackathon.getPastHackathons(),
   ]);
 
-  const activeHackathon =
-    hackathon ??
-    (await api.hackathon.getHackathon({ hackathonName: undefined }));
-
   if (!hacker) {
     return (
       <div className="flex flex-col items-center justify-center gap-y-6 text-xl font-semibold">
         <p className="w-full max-w-xl text-center text-2xl">
-          Register for Knight Hacks today!
+          Register for {hackathon.displayName} today!
         </p>
         <div className="flex flex-wrap justify-center gap-5">
           {
             //if there is no current hackathon then this page is never rendered anyway
-            activeHackathon && (
-              <HackerAppCard hackathonName={activeHackathon.name} />
-            )
+            <HackerAppCard hackathonName={hackathon.name} />
           }
         </div>
       </div>
@@ -50,15 +44,9 @@ export default async function HackerDashboard({
 
   return (
     <>
-      <div className="animate-fade-in mb-8">
-        <h2 className="text-xl font-bold tracking-tight">
-          Hello, {hacker.firstName}!
-        </h2>
-        <p className="text-muted-foreground">Hackathon Dashboard</p>
-      </div>
       <div className="animate-mobile-initial-expand relative mx-auto flex h-0 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:py-0 sm:pb-0 lg:max-h-56">
         {/* Main content */}
-        <HackerData data={hacker} hackathon={activeHackathon} />
+        <HackerData data={hacker} hackathon={hackathon} />
 
         {/* Transparent Triangle overlay in bottom right corner */}
         <div className="border-b-solid border-l-solid absolute bottom-0 right-0 h-0 w-0 border-b-[30px] border-l-[30px] border-b-background border-l-transparent"></div>

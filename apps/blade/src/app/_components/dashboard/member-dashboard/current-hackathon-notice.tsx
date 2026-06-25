@@ -17,8 +17,6 @@ import {
   DialogTitle,
 } from "@forge/ui/dialog";
 
-const CURRENT_HACKATHON_HREF = "/hackathon/current";
-
 export function CurrentHackathonNotice({
   hackathonDisplayName,
 }: {
@@ -37,7 +35,7 @@ export function CurrentHackathonNotice({
             live events, and event-specific info.
           </span>
           <Link
-            href={CURRENT_HACKATHON_HREF}
+            href="/hackathon"
             className={cn(
               buttonVariants({ variant: "primary", size: "sm" }),
               "w-full shrink-0 sm:w-auto",
@@ -62,7 +60,7 @@ export function CurrentHackathonNotice({
               Stay Here
             </DialogClose>
             <Link
-              href={CURRENT_HACKATHON_HREF}
+              href="/hackathon"
               className={cn(buttonVariants({ variant: "primary" }))}
             >
               Open Hackathon Dashboard

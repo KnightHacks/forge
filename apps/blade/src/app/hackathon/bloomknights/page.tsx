@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 
+import { BaseHackathonDashboard } from "~/app/_components/dashboard/hackathon-dashboard/components";
 import HackerDashboard from "~/app/_components/dashboard/hacker-dashboard/hacker-dashboard";
 import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
+import NotFoundPage from "~/app/[...not-found]/page";
 import { api, HydrateClient } from "~/trpc/server";
-import { BKHackathonDashboard } from "./components/bk-hackathon-dashboard";
 
 export const metadata: Metadata = {
   title: "Blade | BloomKnights Dashboard",
@@ -25,7 +26,7 @@ export default async function BloomKnightsHackathonPage() {
   });
 
   if (!hackathon) {
-    notFound();
+    return <NotFoundPage />;
   }
 
   const hacker = await api.hackerQuery.getHacker({
@@ -39,7 +40,7 @@ export default async function BloomKnightsHackathonPage() {
         <div className="flex justify-center">
           <div className="max-w-8xl w-full">
             {hacker?.status === "checkedin" ? (
-              <BKHackathonDashboard hackathon={hackathon} hacker={hacker} />
+              <BaseHackathonDashboard hackathon={hackathon} hacker={hacker} />
             ) : (
               <HackerDashboard hackathon={hackathon} hacker={hacker} />
             )}
