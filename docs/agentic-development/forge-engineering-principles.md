@@ -94,6 +94,7 @@ Shared code is expensive. Move code to a package only when reuse is real, the bo
 - `@forge/db` owns schemas, the DB client, migrations, relations/types, and Drizzle exports. It must not own product queries or business workflows.
 - Product queries and mutations live in `@forge/api`, near the tRPC routers that need them.
 - Discord bots and cron jobs should use the same platform APIs/capabilities as web apps where practical. Wire tRPC access for non-web clients rather than duplicating business logic.
+- Non-web clients inside the monorepo/runtime should prefer server-side tRPC callers. Use HTTP clients only when crossing process/deployment boundaries or when an SRD explicitly requires it.
 - `@forge/validators` owns reusable validators and form/API schemas.
 - `@forge/ui` owns app-agnostic primitives.
 - Blade app components own Blade-specific composition and feature UI.
@@ -124,9 +125,13 @@ Shared code is expensive. Move code to a package only when reuse is real, the bo
 
 Knight Hacks' production Discord guild is a first-class operational hub. Blade is not merely a web app; it is also a Discord-integrated management plane.
 
-Blade/Future Forge should treat Discord integration as core platform behavior, including patterns like:
+Blade/Future Forge should treat Discord integration as core platform behavior. Reuse Discord logic where applicable and integrate Discord side effects intentionally through the platform rather than scattering one-off calls.
 
-- role sync
+Examples include:
+
+- role sync between Discord roles and Blade auth/permission tables
+- role assignment on event/check-in or hackathon participation flows
+- configurable hackathon role hashes/role mappings instead of hard-coded yearly role IDs
 - permission/capability management
 - alumni management
 - thread creation
@@ -155,13 +160,15 @@ A core Reforge review question:
 
 If yes, the SRD should explain why hard-coding is acceptable or define a path to admin-configurable data.
 
+Hard rule of thumb: if a value changes by semester, hackathon, officer team, sponsor cycle, role, event, season, or Discord server configuration, it should not be hard-coded unless the SRD explicitly justifies it.
+
 Configuration should primarily live in DB tables managed through Blade admin UI, not scattered constants, YAML files, or environment variables. Env vars should be reserved for deployment/runtime secrets and infrastructure configuration, not routine organizational state.
 
 Baseline configurable domains include:
 
 - member management
 - hacker management
-- hackathon management: theme, start/end dates, team classes/counts, registration/application settings, judging/results configuration
+- hackathon management: theme, start/end dates, team classes/counts, registration/application settings, judging/results configuration, Discord role hashes/role mappings
 - role and permission management
 - guild profile management
 - Discord-integrated issues/Jira-style workflows
@@ -197,16 +204,38 @@ packages/validators/src/application.ts
 - Error messages shown to users should be safe and centralized where practical.
 - Agents should consider loading, empty, success, and error states for every client component that performs user interaction.
 
+## Frontend design-system principles
+
+Frontend work should consult the Blade design system/design guidance when available. If a feature changes visual patterns, layout primitives, component styling, or user interaction conventions, the SRD should reference the relevant design-system doc or note that one is missing.
+
+Agents should use existing UI primitives and Blade conventions before inventing new visual patterns.
+
 ## Testing principles
 
 Testing strategy should mix integration, unit, and selected UI/E2E coverage.
 
 - Default proof for business behavior should be integration and unit tests at the owning app/package boundary.
+- Vitest is the intended default for unit and package/app integration tests.
 - Playwright should be used for important end-to-end/user-path coverage.
-- Vitest is a likely unit/integration runner, but the exact unit test harness still needs a final decision.
 - UI E2E should be reserved for high-value paths rather than every component.
 - Tests should be written/generated from `test-cases.md` before implementation when practical.
 - Tests should live per app/package rather than in one global tests package, so targeted package/app commands can run them.
+
+## Static analysis and CLI verification
+
+Agent verification should use more than tests when useful. Prefer cheap static checks and purpose-built CLI verification before broad manual review.
+
+Baseline push gate for Reforge work:
+
+```bash
+pnpm format
+pnpm lint
+pnpm typecheck
+```
+
+These should pass before pushing unless the PR explicitly documents a blocker. For release/cutover readiness, `pnpm build` should also pass.
+
+Future SRDs may add feature-specific CLIs or static analyzers, especially for React/Next patterns, accessibility, route conventions, dependency boundaries, or forbidden hard-coded configuration. Do not add a new analyzer casually; document why it is useful, how to run it, and what failure means.
 
 ## Real Forge commands
 

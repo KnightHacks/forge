@@ -15,7 +15,7 @@ Before editing, read:
 - `test-cases.md`
 - `status.md`
 - generated tests
-- `docs/agentic-development/engineering-guidelines.md`
+- `docs/agentic-development/forge-engineering-principles.md`
 - relevant Forge docs and nearby code patterns
 
 ## Work sequence
@@ -78,4 +78,4 @@ pnpm --filter=@forge/api typecheck
 pnpm --filter=@forge/db typecheck
 ```
 
-Do not claim a command passed unless it actually ran and passed.
+Before pushing Reforge work, `pnpm format`, `pnpm lint`, and `pnpm typecheck` should pass unless a blocker is explicitly documented. Do not claim a command passed unless it actually ran and passed.

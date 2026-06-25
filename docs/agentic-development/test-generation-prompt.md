@@ -29,7 +29,7 @@ Place tests at the boundary that owns the behavior. Prefer per-app/per-package t
 - Shared package behavior → tests in the owning package.
 - Cross-app contract behavior → contract/integration tests that exercise the documented public interface.
 
-Default to unit/integration tests for normal business behavior. Use Playwright for critical user paths, not every component.
+Default to Vitest unit/integration tests for normal business behavior. Use Playwright for critical user paths, not every component.
 
 If Forge does not yet have an established harness for the needed level, propose the smallest harness in the owning package/app and document the command in `status.md` or the PR. Do not scatter ad-hoc tests in unrelated locations.
 
