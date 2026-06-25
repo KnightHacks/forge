@@ -15,6 +15,7 @@ Read:
 - `test-cases.md`
 - `status.md`
 - access policy section in the SRD
+- generated or planned tRPC/API manifest when available
 - existing test patterns/utilities in the affected app/package
 - relevant Forge docs from `docs/REPO-CONVENTIONS.md` and `docs/DATABASE-USAGE.md` when applicable
 

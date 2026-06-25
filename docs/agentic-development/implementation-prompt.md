@@ -61,6 +61,7 @@ Before editing, read:
 - Every SRD-backed operation must implement the documented access policy.
 - Mutations should include responsive UX handling: pending/loading, success, error, and safe user-facing messages where applicable.
 - If a change hard-codes routine organizational state, stop and ask whether it should be admin-configurable instead.
+- If a change adds or reshapes tRPC procedures, consider whether Zod descriptions/JSDoc/procedure naming should be improved for generated API/LLM context.
 - Do not change DB schema, auth, permissions, payment, email, uploads, or deployment behavior without explicit SRD coverage and human approval.
 - If specs conflict with code reality, stop and report the mismatch instead of guessing.
 

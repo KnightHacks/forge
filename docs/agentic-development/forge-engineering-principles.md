@@ -112,6 +112,25 @@ Shared code is expensive. Move code to a package only when reuse is real, the bo
 - Business logic should primarily live in `@forge/api` and tRPC procedures unless an SRD justifies a reusable platform package.
 - Multi-step/multi-table mutations should use transactions when consistency requires it. The API layer owns that decision.
 
+## tRPC API documentation and LLM context
+
+Forge should eventually generate machine-readable API context from tRPC, similar in spirit to OpenAPI/Swagger, without turning our business API into REST.
+
+Useful reference points:
+
+- `@trpc/openapi` can generate an OpenAPI 3.1 document from a tRPC router by statically analyzing TypeScript types. It is currently alpha and version-aligned with newer tRPC versions than Forge currently uses, so treat it as a future/candidate tool rather than a required dependency today.
+- The older `trpc-openapi` project generated OpenAPI docs and REST handlers, but that repository is archived and is not the direction we want.
+
+Desired Reforge direction:
+
+- keep business logic in tRPC
+- do not expose REST for internal business APIs
+- generate an API/spec manifest for humans and LLMs from tRPC routers, validators, procedure names, access policy, and JSDoc/Zod descriptions
+- use generated docs as context for agents, SRDs, test-case generation, and non-web clients
+- avoid hand-maintaining duplicated API docs when the router/schema can be the source
+
+SRDs that create or reshape routers should consider whether the router needs documentation metadata, Zod `.describe()` strings, or comments that improve generated API context.
+
 ## Database principles
 
 - `@forge/db` is schemas plus DB client plus migration machinery.
