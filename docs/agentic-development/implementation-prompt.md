@@ -4,7 +4,7 @@ Use this for agents that implement code after specs and tests exist.
 
 ## Goal
 
-Implement the smallest scoped diff that satisfies `spec.md`, `srd.md`, `test-cases.md`, and generated tests.
+Implement the smallest scoped diff that satisfies `spec.md`, `srd.md`, `test-cases.md`, generated tests, and `status.md`.
 
 ## Required reading
 
@@ -13,6 +13,7 @@ Before editing, read:
 - `spec.md`
 - `srd.md`
 - `test-cases.md`
+- `status.md`
 - generated tests
 - `docs/agentic-development/engineering-guidelines.md`
 - relevant Forge docs and nearby code patterns
@@ -29,6 +30,7 @@ Before editing, read:
 2. Restate:
    - goal
    - scope/non-scope
+   - current phase from `status.md`
    - files/packages likely involved
    - tests/checks to run
    - ambiguities or blockers
@@ -45,7 +47,8 @@ Before editing, read:
    ```
 
 6. Run narrow validation first, then broader validation as required.
-7. Summarize changed files, spec/test IDs satisfied, commands run, and remaining risks.
+7. Update `status.md` with completed tasks, validation status, and follow-ups.
+8. Summarize changed files, spec/test IDs satisfied, commands run, and remaining risks.
 
 ## Rules
 
@@ -53,6 +56,8 @@ Before editing, read:
 - Do not invent behavior outside the spec/SRD.
 - Do not silently change public contracts.
 - Do not do broad cleanup or refactors unless the SRD calls for it.
+- Do not create separate service files just for architectural purity; tRPC procedures may own focused workflow logic unless the SRD says otherwise.
+- Do not add REST routes unless the SRD explicitly identifies an external protocol boundary.
 - Do not change DB schema, auth, permissions, payment, email, uploads, or deployment behavior without explicit SRD coverage and human approval.
 - If specs conflict with code reality, stop and report the mismatch instead of guessing.
 

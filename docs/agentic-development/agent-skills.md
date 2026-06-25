@@ -1,8 +1,10 @@
 # Proposed Agent Skills
 
-These are candidate reusable operating modes. We should not turn all of them into permanent skills immediately. Promote a skill only after the pattern repeats.
+Skills are paused for now. Do not configure or expand permanent skills until the core framework and engineering principles are approved.
 
-## Core skills to start with
+This file only records likely future operating modes.
+
+## Likely core skills later
 
 ### Spec/SRD Writer
 
@@ -51,14 +53,6 @@ Rules:
 
 ## Possible later skills
 
-### Review Agent
-
-Do not maintain a separate prompt yet. If reviews repeatedly miss spec drift, test gaps, or contract changes, extract a review skill later.
-
-### Bugfix Agent
-
-Do not maintain a separate prompt yet. For now, bugfix behavior is part of the normal loop: update spec/SRD/test-cases, add regression, then implement.
-
-### Main Sync Auditor
-
-Likely useful once `reforge/main` diverges. It would document merges from `main` into `reforge/main`, conflict decisions, and production fixes that need to be ported.
+- Review Agent, if reviews repeatedly miss spec drift, test gaps, or contract changes.
+- Bugfix Agent, if bug repairs repeatedly skip regression/spec updates.
+- Main Sync Auditor, once `reforge/main` diverges and recurring merge triage becomes meaningful.

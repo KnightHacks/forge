@@ -13,6 +13,7 @@ Read:
 - `spec.md`
 - `srd.md`
 - `test-cases.md`
+- `status.md`
 - existing test patterns/utilities in the affected app/package
 - relevant Forge docs from `docs/REPO-CONVENTIONS.md` and `docs/DATABASE-USAGE.md` when applicable
 
@@ -21,12 +22,12 @@ Read:
 Place tests at the boundary that owns the behavior:
 
 - UI/user flow behavior → app-level tests near the app or established e2e location once one exists.
-- API behavior → API/package-level integration tests near `packages/api` or the established test harness.
+- API/tRPC behavior → API/package-level integration tests near `packages/api` or the established test harness.
 - Shared package behavior → tests in the owning package.
 - DB/migration behavior → DB package tests or migration validation scripts.
 - Cross-app contract behavior → contract tests that exercise the documented public interface.
 
-If Forge does not yet have an established harness for the needed level, propose the smallest harness in the owning package/app and document the command in the PR. Do not scatter ad-hoc tests in unrelated locations.
+If Forge does not yet have an established harness for the needed level, propose the smallest harness in the owning package/app and document the command in `status.md` or the PR. Do not scatter ad-hoc tests in unrelated locations.
 
 ## Rules
 
@@ -49,3 +50,4 @@ When practical, run the new tests before implementation and confirm they fail fo
 - Mapping from test files to test-case IDs.
 - Exact commands run and results.
 - Any blockers preventing reliable test generation.
+- `status.md` updated with test generation progress and validation status.
