@@ -1,3 +1,9 @@
+# Reforge Branch Notice
+
+This branch is the Blade Reforge development branch. Do not assume files here match production `main`. Current production Blade maintenance should happen on `main`, not this branch. Reforge work follows `docs/agentic-development/README.md`. When changing shared packages, document compatibility with current `main`.
+
+---
+
 # Forge Agent Instructions
 
 Instructions for AI coding agents working in Forge, including Codex, Claude Code, and similar tools.
