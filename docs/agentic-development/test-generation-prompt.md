@@ -14,18 +14,22 @@ Read:
 - `srd.md`
 - `test-cases.md`
 - `status.md`
+- access policy section in the SRD
 - existing test patterns/utilities in the affected app/package
 - relevant Forge docs from `docs/REPO-CONVENTIONS.md` and `docs/DATABASE-USAGE.md` when applicable
 
 ## Test placement
 
-Place tests at the boundary that owns the behavior:
+Place tests at the boundary that owns the behavior. Prefer per-app/per-package test locations over one global tests package so targeted `pnpm --filter` commands can run relevant checks.
 
-- UI/user flow behavior → app-level tests near the app or established e2e location once one exists.
-- API/tRPC behavior → API/package-level integration tests near `packages/api` or the established test harness.
-- Shared package behavior → tests in the owning package.
+- API/tRPC business behavior → integration tests near `packages/api` or its established test harness.
+- Validator behavior → unit tests near `packages/validators`.
 - DB/migration behavior → DB package tests or migration validation scripts.
-- Cross-app contract behavior → contract tests that exercise the documented public interface.
+- UI/user flow behavior → app-level tests near the owning app, plus Playwright for important end-to-end paths.
+- Shared package behavior → tests in the owning package.
+- Cross-app contract behavior → contract/integration tests that exercise the documented public interface.
+
+Default to unit/integration tests for normal business behavior. Use Playwright for critical user paths, not every component.
 
 If Forge does not yet have an established harness for the needed level, propose the smallest harness in the owning package/app and document the command in `status.md` or the PR. Do not scatter ad-hoc tests in unrelated locations.
 
@@ -38,6 +42,8 @@ If Forge does not yet have an established harness for the needed level, propose 
 - Avoid asserting private file layout, exact implementation helpers, or private DB details unless the SRD defines them as contracts.
 - Use deterministic isolated fixtures.
 - Each important test should reference a test-case ID.
+- Tests covering protected behavior should assert the SRD access policy: unauthenticated, logged-in user, and/or permission-based officer/admin access as applicable.
+- Mutation tests should cover success, loading/pending behavior where testable, validation failure, and safe user-facing error behavior where appropriate.
 - Negative tests should assert a specific failure class or observable result.
 
 ## Failure check

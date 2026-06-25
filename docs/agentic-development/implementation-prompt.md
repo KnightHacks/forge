@@ -57,7 +57,10 @@ Before editing, read:
 - Do not silently change public contracts.
 - Do not do broad cleanup or refactors unless the SRD calls for it.
 - Do not create separate service files just for architectural purity; tRPC procedures may own focused workflow logic unless the SRD says otherwise.
-- Do not add REST routes unless the SRD explicitly identifies an external protocol boundary.
+- Do not add REST routes for business logic; use tRPC. Route handlers are only for protocol-mandated external boundaries.
+- Every SRD-backed operation must implement the documented access policy.
+- Mutations should include responsive UX handling: pending/loading, success, error, and safe user-facing messages where applicable.
+- If a change hard-codes routine organizational state, stop and ask whether it should be admin-configurable instead.
 - Do not change DB schema, auth, permissions, payment, email, uploads, or deployment behavior without explicit SRD coverage and human approval.
 - If specs conflict with code reality, stop and report the mismatch instead of guessing.
 

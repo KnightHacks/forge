@@ -10,6 +10,18 @@ Forge should be a durable platform, not a set of yearly one-off apps.
 
 Ideal-world `apps/*` are thin clients that ingest platform logic from `packages/*`. Clients may be web apps, Discord bots, cron jobs, MCP servers, or other surfaces. Apps should orchestrate user interaction and rendering; durable product capabilities should live in packages where they can be reused safely.
 
+The ideal package set is intentionally small:
+
+```txt
+packages/api          # main platform capability layer and tRPC routers
+packages/db           # Drizzle schemas, DB client, migrations; no product queries
+packages/validators   # reusable Zod validators derived from/compatible with DB schemas
+packages/ui           # app-agnostic UI primitives
+packages/auth         # auth/session integration and shared auth helpers
+```
+
+Domain concepts like hackathons, members, hackers, forms, issues, judging, Discord operations, and guild profiles are primarily owned by `@forge/api`, not by a proliferation of domain packages. Create new packages only when an SRD proves a stable cross-client boundary is needed.
+
 The platform should optimize for durability and maintainability outside of Dev. A non-dev officer should be able to configure recurring organizational changes where practical instead of requiring code edits every time.
 
 Examples of the desired direction:
@@ -21,11 +33,12 @@ Examples of the desired direction:
 ## Architectural sins to avoid
 
 - Requiring developer changes for behavior that should be configurable by officers/admins.
-- Hard-coding yearly hackathon constants, team lists, role mappings, or operational state in many places.
+- Hard-coding yearly hackathon constants, team lists, role mappings, Discord IDs, or operational state in many places.
 - Making apps own platform behavior that should be reusable by other clients.
 - Letting `@forge/utils` become a junk drawer.
 - Copying current debt just because it exists.
 - Adding shared abstractions before there is a stable interface and real reuse.
+- Creating new packages for every domain just because the domain exists.
 
 ## What is already good
 
@@ -59,6 +72,8 @@ Before editing code, read the relevant current Forge docs:
 - Pass server-read data down into rendered components instead of forcing client refetches.
 - Client components are for user interactivity, hooks, dynamic form behavior, optimistic/responsive UI, and browser-only APIs.
 - Isolate client logic to rendered components. Prefer skeletons and Suspense/loading states so users get immediate page feedback while client pieces hydrate or data streams in.
+- Prefer good hook usage for interactive/client state: focused hooks such as `useHacker`, `useHackathon`, or `useHackerApplication` are better than scattered `useState`/`useEffect` spam.
+- Use memoization intentionally for derived values or expensive computations. Do not cargo-cult `useMemo`/`useCallback`, but do avoid repeated ad-hoc derivations that make components noisy.
 - Keep the current app-router `_components` style unless an SRD justifies a different structure.
 - Organize Blade components by usage/intent, for example:
 
@@ -75,44 +90,123 @@ apps/blade/src/app/_components/shared/...
 Shared code is expensive. Move code to a package only when reuse is real, the boundary is stable, and the SRD explains why the code belongs there.
 
 - `apps/*` should ingest platform capabilities, not duplicate them.
+- `@forge/api` is the main platform capability layer.
+- `@forge/db` owns schemas, the DB client, migrations, relations/types, and Drizzle exports. It must not own product queries or business workflows.
+- Product queries and mutations live in `@forge/api`, near the tRPC routers that need them.
+- Discord bots and cron jobs should use the same platform APIs/capabilities as web apps where practical. Wire tRPC access for non-web clients rather than duplicating business logic.
+- `@forge/validators` owns reusable validators and form/API schemas.
 - `@forge/ui` owns app-agnostic primitives.
 - Blade app components own Blade-specific composition and feature UI.
 - `@forge/utils` should not collect random helpers. Adding to shared utilities requires a stable cross-app reason.
-- Product/platform capabilities that multiple clients need should move toward explicit package APIs.
 
 ## tRPC and API principles
 
-- tRPC remains the main API paradigm. Do not add REST by default.
-- Use REST only if a future SRD explicitly identifies an unavoidable external protocol boundary. Otherwise, prefer tRPC.
+- tRPC remains the main API paradigm for business logic.
+- Do not add REST for internal business APIs.
+- REST/route handlers are acceptable only for protocol-mandated external boundaries such as OAuth callbacks, webhooks, file downloads/uploads, or ingesting external REST APIs like Discord REST.
 - Routers should be as light as possible while remaining readable.
 - Organize routers by product intent/domain, often close to DB objects but not mechanically one-router-per-table. Examples: hackers, hackathons, members, forms.
 - It is acceptable for tRPC procedures to contain business workflow logic directly. Do not create separate service files just for architectural purity.
 - Keep procedures maintainable: auth/permission gate, input validation, focused DB/workflow logic, standardized error handling, typed output.
 - Business logic should primarily live in `@forge/api` and tRPC procedures unless an SRD justifies a reusable platform package.
+- Multi-step/multi-table mutations should use transactions when consistency requires it. The API layer owns that decision.
 
-## Auth and permission tiers
+## Database principles
 
-Model access as tiers:
+- `@forge/db` is schemas plus DB client plus migration machinery.
+- Do not put product queries, business workflows, Discord calls, email sends, auth gates, or UI-oriented helpers in `@forge/db`.
+- Queries should live in `@forge/api`, close to the router/procedure that needs them.
+- Migration commands live in the DB package, but migration planning belongs in the feature/change `srd.md` by default.
+- SRDs that touch production data should include data-change flows, caveats, validation expectations, and rollback/cutover notes.
+- Create a separate `migration.md` only if the migration plan becomes too large or operationally complex for the SRD.
+
+## Auth, Discord, and permission principles
+
+Knight Hacks' production Discord guild is a first-class operational hub. Blade is not merely a web app; it is also a Discord-integrated management plane.
+
+Blade/Future Forge should treat Discord integration as core platform behavior, including patterns like:
+
+- role sync
+- permission/capability management
+- alumni management
+- thread creation
+- announcements
+- Discord-driven operational workflows
+- guild profile management
+- Discord bot/client workflows
+
+Access policy must be explicit in every SRD. Model access as tiers:
 
 1. unauthenticated/public
 2. logged-in user
-3. role/permission-based admin or organizer
+3. role/permission-based officer/admin/organizer
 
-Internal gates should use the established control-permissions style for admin/organizer access. Client-side hiding is UX only; server/API boundaries must enforce permissions.
+The existing permissions system is conceptually strong and should be preserved as a system model, even if the code is refactored. Permission names/capabilities are already configurable through Discord/Blade dashboard flows and should remain admin-manageable.
+
+Use the established control-permissions style for officer/admin/organizer access. Client-side hiding is UX only; server/API boundaries must enforce permissions.
+
+Prefer permission-aware procedures/mutations over ad-hoc admin mutations. Each protected mutation should make its required access tier/permission obvious near the top of the procedure.
+
+## Configurability principles
+
+A core Reforge review question:
+
+> Would this require a developer change next year?
+
+If yes, the SRD should explain why hard-coding is acceptable or define a path to admin-configurable data.
+
+Configuration should primarily live in DB tables managed through Blade admin UI, not scattered constants, YAML files, or environment variables. Env vars should be reserved for deployment/runtime secrets and infrastructure configuration, not routine organizational state.
+
+Baseline configurable domains include:
+
+- member management
+- hacker management
+- hackathon management: theme, start/end dates, team classes/counts, registration/application settings, judging/results configuration
+- role and permission management
+- guild profile management
+- Discord-integrated issues/Jira-style workflows
+- judging magic-link auth state
+- CSV imports/exports
+- results tabs and operational reporting
+
+Avoid generic config blobs unless an SRD proves they are safer than domain-specific tables. Domain-specific admin-managed tables are preferred.
 
 ## Validation principles
 
 - Use Zod as the default validation tool.
-- Validate tRPC inputs in procedures.
+- tRPC procedure input schemas should come from `@forge/validators` by default.
 - Frontend forms should use form objects/schemas that infer types directly from database-backed validators where practical.
-- Prefer `@forge/validators` as the shared home for reusable validation schemas. Validators may import from `@forge/db` and may compose/extend other validators.
+- `@forge/validators` should ingest/derive from `@forge/db` schemas and hold reusable validators.
+- Prefer patterns like:
+
+```txt
+packages/validators/src/member.ts
+packages/validators/src/hackathon.ts
+packages/validators/src/application.ts
+```
+
+- Local one-off schemas should be rare and justified by the SRD or kept truly local if not reusable.
 - Do not infer validation rules from UI alone.
 
-## Error-handling principles
+## Error-handling and UX principles
 
 - Prefer standardized `TRPCError` usage and consistent error classes/messages over ad-hoc failure behavior.
+- Avoid typed result-object patterns everywhere unless an SRD explains why they are better for that boundary.
+- Every mutation should consider a standard responsive UX pattern: pending/loading state, success state, error state, safe user-facing messages, and accessible feedback.
 - Use tRPC/react-query mutation hooks such as `onSuccess`, `onError`, `onSettled`, and completion states to build responsive, accessible user feedback.
-- Do not introduce typed result-object patterns everywhere unless an SRD explains why they are better for that boundary.
+- Error messages shown to users should be safe and centralized where practical.
+- Agents should consider loading, empty, success, and error states for every client component that performs user interaction.
+
+## Testing principles
+
+Testing strategy should mix integration, unit, and selected UI/E2E coverage.
+
+- Default proof for business behavior should be integration and unit tests at the owning app/package boundary.
+- Playwright should be used for important end-to-end/user-path coverage.
+- Vitest is a likely unit/integration runner, but the exact unit test harness still needs a final decision.
+- UI E2E should be reserved for high-value paths rather than every component.
+- Tests should be written/generated from `test-cases.md` before implementation when practical.
+- Tests should live per app/package rather than in one global tests package, so targeted package/app commands can run them.
 
 ## Real Forge commands
 
