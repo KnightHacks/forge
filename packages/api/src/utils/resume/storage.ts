@@ -169,11 +169,14 @@ export async function getResumeDownloadUrlForSession(session: Session) {
 
   try {
     return {
-      url: await resumeStorageClient.presignedUrl(
-        "GET",
+      url: await resumeStorageClient.presignedGetObject(
         RESUME_BUCKET_NAME,
         filename,
         60 * 60,
+        {
+          "response-content-disposition": 'inline; filename="Resume.pdf"',
+          "response-content-type": "application/pdf",
+        },
       ),
     };
   } catch {

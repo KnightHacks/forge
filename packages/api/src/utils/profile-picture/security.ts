@@ -79,6 +79,47 @@ export function isProfilePictureObjectOwnedByUser(
   return true;
 }
 
+export function getProfilePictureObjectNameFromLegacyUrl(
+  profilePictureUrl: string,
+) {
+  let url: URL;
+
+  try {
+    url = new URL(profilePictureUrl);
+  } catch {
+    return null;
+  }
+
+  const bucketPath = `/${PROFILE_PICTURE_BUCKET_NAME}/`;
+  if (!url.pathname.startsWith(bucketPath)) return null;
+
+  const objectName = decodeURIComponent(url.pathname.slice(bucketPath.length));
+  return objectName || null;
+}
+
+export function resolveProfilePictureObjectName(
+  profilePictureReference: string,
+  userId: string,
+) {
+  const trimmedReference = profilePictureReference.trim();
+  if (trimmedReference === "") return null;
+
+  if (isProfilePictureObjectOwnedByUser(trimmedReference, userId)) {
+    return trimmedReference;
+  }
+
+  const legacyObjectName =
+    getProfilePictureObjectNameFromLegacyUrl(trimmedReference);
+  if (
+    legacyObjectName &&
+    isProfilePictureObjectOwnedByUser(legacyObjectName, userId)
+  ) {
+    return legacyObjectName;
+  }
+
+  return null;
+}
+
 export function isServerGeneratedProfilePictureObjectName(
   objectName: string,
   userId: string,

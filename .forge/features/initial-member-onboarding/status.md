@@ -40,6 +40,7 @@ Current phase: Implemented / validation
 - 2026-06-26: Removed dashboard entrance animations entirely after skeleton review. The loaded dashboard now replaces the skeleton immediately, and the skeleton header/Guild profile placeholders were adjusted to match the loaded layout more closely.
 - 2026-06-26: Added `architecture-review.md` to map the full feature diff for human review, including file placement, runtime flow, package boundaries, transaction behavior, upload ownership, validation history, and review caveats.
 - 2026-06-26: Added `apps/blade/DESIGN_SYSTEM.md` from the Blade design-system draft and wired the frontend-design guidance for Codex, Claude, and Cursor to read it for meaningful Blade UI work. The doc includes the current dashboard surface hierarchy: lighter top-level panels with darker gray/purple nested tiles/link rows and top-aligned dashboard panel content.
+- 2026-06-26: Added `legacy-comparison.md` to inventory the current member onboarding feature logic and compare it against legacy Blade/API behavior across efficiency, readability, and maintainability.
 
 ## Resolved implementation choices
 
@@ -81,6 +82,7 @@ Current phase: Implemented / validation
 - [x] Update status after implementation.
 - [x] Add human-review architecture document for the feature diff.
 - [x] Add Blade design-system document and wire frontend agent guidance to it.
+- [x] Add legacy comparison document for the implemented member onboarding slice.
 
 ## Validation / commands
 

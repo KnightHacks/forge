@@ -47,9 +47,10 @@ export const auth = betterAuth({
       clientId: env.DISCORD_CLIENT_ID,
       clientSecret: env.DISCORD_CLIENT_SECRET,
       scope: ["guilds.join"],
+      // Keep Discord's stable profile id for the OAuth account link;
+      // database.generateId below owns our auth_user UUIDs.
       mapProfileToUser: (profile) => {
         return {
-          id: randomUUID(),
           name: profile.username,
           email: profile.id + "@blade.org",
           image: profile.avatar ?? "",

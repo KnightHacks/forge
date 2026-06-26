@@ -97,13 +97,16 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
         </DashboardContent>
 
         <DashboardContent
-          className={cn(dashboardNestedSurfaceClass, "min-h-0 p-4 lg:flex-1")}
+          className={cn(
+            dashboardNestedSurfaceClass,
+            "min-h-0 overflow-y-auto p-4 lg:flex-1",
+          )}
         >
           <div className="mb-2 flex items-center gap-2 text-sm font-medium">
             <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
             About
           </div>
-          <p className="line-clamp-[8] text-sm leading-6 text-muted-foreground xl:line-clamp-[11]">
+          <p className="break-words text-sm leading-6 text-muted-foreground">
             {member.about || <EmptyValue>No Guild bio yet</EmptyValue>}
           </p>
         </DashboardContent>
@@ -111,7 +114,7 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
         <DashboardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
           <div className={cn(dashboardNestedSurfaceClass, "p-4")}>
             <div className="mb-2 flex items-center gap-2 text-xs uppercase text-muted-foreground">
-              <Building2 className="h-4 w-4" aria-hidden="true" />
+              <Building2 className="h-4 w-4 text-primary" aria-hidden="true" />
               Company
             </div>
             <p className="break-words text-sm font-medium">
@@ -121,9 +124,9 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
           <div className={cn(dashboardNestedSurfaceClass, "p-4")}>
             <div className="mb-2 flex items-center gap-2 text-xs uppercase text-muted-foreground">
               {isPublic ? (
-                <Eye className="h-4 w-4" aria-hidden="true" />
+                <Eye className="h-4 w-4 text-primary" aria-hidden="true" />
               ) : (
-                <EyeOff className="h-4 w-4" aria-hidden="true" />
+                <EyeOff className="h-4 w-4 text-primary" aria-hidden="true" />
               )}
               Visibility
             </div>

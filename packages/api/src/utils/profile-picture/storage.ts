@@ -12,9 +12,9 @@ import { env } from "../../env";
 import {
   createProfilePictureObjectName,
   decodeAndValidateProfilePictureDataUrl,
-  isProfilePictureObjectOwnedByUser,
   isServerGeneratedProfilePictureObjectName,
   PROFILE_PICTURE_BUCKET_NAME,
+  resolveProfilePictureObjectName,
 } from "./security";
 
 export const profilePictureStorageClient = new Client({
@@ -120,12 +120,12 @@ export async function getProfilePictureDownloadUrlForSession(session: Session) {
     return { url: null };
   }
 
-  if (
-    !isProfilePictureObjectOwnedByUser(
-      member.profilePictureUrl,
-      session.user.id,
-    )
-  ) {
+  const objectName = resolveProfilePictureObjectName(
+    member.profilePictureUrl,
+    session.user.id,
+  );
+
+  if (!objectName) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Profile picture does not belong to the current user.",
@@ -137,7 +137,7 @@ export async function getProfilePictureDownloadUrlForSession(session: Session) {
       url: await profilePictureStorageClient.presignedUrl(
         "GET",
         PROFILE_PICTURE_BUCKET_NAME,
-        member.profilePictureUrl,
+        objectName,
         60 * 60,
       ),
     };
