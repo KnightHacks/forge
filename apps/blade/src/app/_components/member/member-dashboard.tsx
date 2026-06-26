@@ -25,6 +25,7 @@ import { MEMBER_SETTINGS_PATH } from "@forge/validators";
 
 import type { CurrentMember } from "~/hooks/use-member";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
+import { MemberQRCodeDialog } from "~/app/_components/member/member-qr-code-dialog";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
 import { MemberRouteTransitionLink } from "~/app/_components/member/member-route-transition-link";
 
@@ -122,6 +123,10 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
               {member.tagline || <EmptyValue>Add a Guild tagline</EmptyValue>}
             </p>
           </div>
+        </DashboardContent>
+
+        <DashboardContent className="lg:hidden">
+          <MemberQRCodeDialog variant="mobile" />
         </DashboardContent>
 
         <DashboardContent
@@ -283,10 +288,11 @@ export function MemberDashboard({ member }: { member: CurrentMember }) {
           )}
         >
           <CardContent className="flex h-full flex-col justify-start gap-4 p-4 md:gap-6 md:p-6 lg:overflow-y-auto lg:p-8">
-            <DashboardContent>
+            <DashboardContent className="flex flex-wrap items-start justify-between gap-3">
               <h1 className="text-2xl font-semibold tracking-normal md:text-5xl">
                 Welcome, {member.firstName}
               </h1>
+              <MemberQRCodeDialog />
             </DashboardContent>
 
             <DashboardContent

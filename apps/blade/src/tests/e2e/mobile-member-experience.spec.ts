@@ -199,6 +199,7 @@ test.describe("mobile member experience", () => {
     await expect(page.getByText("GitHub")).toBeVisible();
     await expect(page.getByText("LinkedIn")).toBeVisible();
     await expect(page.getByText("Portfolio")).toBeVisible();
+    await expect(page.getByRole("button", { name: "QR code" })).toBeVisible();
     await expect(page.getByText("Resume", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "View" })).toBeVisible();
     await expect(page.getByText("PDF resume")).toHaveCount(0);

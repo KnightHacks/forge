@@ -27,8 +27,9 @@ function DashboardSkeleton() {
           )}
         >
           <CardContent className="flex h-full flex-col justify-start gap-4 p-4 md:gap-6 md:p-6 lg:overflow-y-auto lg:p-8">
-            <div className="space-y-2">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <Skeleton className="h-8 w-48 max-w-full md:h-14 md:w-96" />
+              <Skeleton className="h-9 w-24 rounded-md" />
             </div>
 
             {["member", "academics"].map((item) => (
@@ -78,6 +79,7 @@ function DashboardSkeleton() {
                 <Skeleton className="mx-auto h-4 w-56" />
               </div>
             </div>
+            <Skeleton className="h-11 w-full rounded-md lg:hidden" />
             <div className={cn(dashboardNestedSurfaceClass, "p-3 lg:hidden")}>
               <div className="mb-2 flex items-center gap-2">
                 <Skeleton className="h-4 w-4" />

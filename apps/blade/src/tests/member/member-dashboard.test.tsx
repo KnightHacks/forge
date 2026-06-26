@@ -20,6 +20,11 @@ vi.mock("~/app/_components/member/member-profile-picture-upload", () => ({
   }) => `Profile picture widget for ${displayName}`,
 }));
 
+vi.mock("~/app/_components/member/member-qr-code-dialog", () => ({
+  MemberQRCodeDialog: ({ variant = "desktop" }: { variant?: string }) =>
+    `QR widget (${variant})`,
+}));
+
 vi.mock("~/app/_components/member/member-resume-upload", () => ({
   MemberResumeUpload: ({
     initialResumeUrl,
@@ -77,6 +82,8 @@ describe("MemberDashboard", () => {
     expect(html).toContain("LinkedIn");
     expect(html).toContain("Portfolio");
     expect(html).toContain("Profile picture widget for Dylan Vidal");
+    expect(html).toContain("QR widget (desktop)");
+    expect(html).toContain("QR widget (mobile)");
     expect(html).toContain("Resume widget for user-id/Resume.pdf (compact)");
     expect(html).toContain('href="/member/settings"');
     expect(html).toContain('aria-label="Edit profile"');

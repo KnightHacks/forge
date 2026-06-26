@@ -481,6 +481,15 @@ test.describe("initial member onboarding", () => {
     await expect(page.getByText("Member profile active")).toHaveCount(0);
     await expect(page.getByText("MEMBER PROFILE")).toHaveCount(0);
 
+    await page.getByRole("button", { name: "QR code" }).click();
+    await expect(
+      page.getByRole("dialog", { name: "Your QR code" }),
+    ).toBeVisible();
+    await expect(
+      page.getByAltText("Knight Hacks account QR code"),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Close" }).click();
+
     await page.goto(`/form/${MEMBER_SIGNUP_FORM_SLUG}`);
     await expect(page).toHaveURL(routeURL(MEMBER_DASHBOARD_PATH));
     await expect(
