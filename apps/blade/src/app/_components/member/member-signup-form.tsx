@@ -1,18 +1,14 @@
 "use client";
 
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ExternalLink,
-  FileCheck2,
   GraduationCap,
-  ImageIcon,
   Loader2,
   Sparkles,
-  UploadCloud,
   UserRound,
-  X,
 } from "lucide-react";
 
 import type {
@@ -55,8 +51,9 @@ import {
   memberFormSchema,
 } from "@forge/validators";
 
-import { ResumePreview } from "~/app/_components/member/resume-preview";
-import { useObjectPreviewUrl } from "~/hooks/use-object-preview-url";
+import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-dashboard";
+import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
+import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
 import { api } from "~/trpc/react";
 
 type SignupFormDefinition = typeof memberSignupFormDefinition;
@@ -64,14 +61,6 @@ type SignupField = SignupFormDefinition["fields"][number];
 type SignupSection = SignupField["section"];
 
 const sectionOrder: SignupSection[] = ["Personal", "Academics", "Guild"];
-const MAX_RESUME_SIZE = 5 * 1000000;
-const MAX_PROFILE_PICTURE_SIZE = 2 * 1024 * 1024;
-const PROFILE_PICTURE_TYPES = [
-  "image/gif",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-];
 
 const sectionMeta = {
   Personal: {
@@ -193,299 +182,6 @@ function getDefaultValues(): MemberFormValues {
   };
 }
 
-function fileToDataUrl(file: File, errorMessage: string) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error(errorMessage));
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-        return;
-      }
-
-      reject(new Error(errorMessage));
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-const ResumeUploadControl = forwardRef<
-  HTMLDivElement,
-  Omit<ComponentPropsWithoutRef<"div">, "onChange"> & {
-    onChange: (value: string) => void;
-    value?: string;
-  }
->(({ className, onChange, value, ...props }, ref) => {
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [previewUrl, setPreviewFile] = useObjectPreviewUrl();
-  const uploadResume = api.resume.uploadResume.useMutation({
-    onError(error) {
-      setUploadError(error.message || "Resume upload failed.");
-      setPreviewFile(null);
-      onChange("");
-    },
-  });
-
-  const handleFile = async (file: File | undefined) => {
-    setUploadError(null);
-
-    if (!file) {
-      setFileName(null);
-      setPreviewFile(null);
-      onChange("");
-      return;
-    }
-
-    const extension = file.name.split(".").pop()?.toLowerCase();
-    if (file.type !== "application/pdf" && extension !== "pdf") {
-      setUploadError("Resume must be a PDF.");
-      setFileName(null);
-      setPreviewFile(null);
-      onChange("");
-      return;
-    }
-
-    if (file.size > MAX_RESUME_SIZE) {
-      setUploadError("Resume must be 5MB or smaller.");
-      setFileName(null);
-      setPreviewFile(null);
-      onChange("");
-      return;
-    }
-
-    setFileName(file.name);
-    setPreviewFile(file);
-    try {
-      const fileContent = await fileToDataUrl(
-        file,
-        "Resume could not be read.",
-      );
-      const objectName = await uploadResume.mutateAsync({
-        fileContent,
-        fileName: file.name,
-      });
-      onChange(objectName);
-    } catch (error) {
-      setUploadError(
-        error instanceof Error ? error.message : "Resume upload failed.",
-      );
-      setFileName(null);
-      setPreviewFile(null);
-      onChange("");
-    }
-  };
-
-  return (
-    <div ref={ref} className={cn("space-y-3", className)} {...props}>
-      <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-primary/40 bg-background/70 px-4 py-5 text-center transition hover:border-primary hover:bg-primary/5">
-        <UploadCloud className="h-7 w-7 text-primary" aria-hidden="true" />
-        <span className="mt-3 text-sm font-medium">
-          {uploadResume.isPending ? "Uploading resume" : "Upload PDF resume"}
-        </span>
-        <span className="mt-1 text-xs text-muted-foreground">
-          PDF only, 5MB max
-        </span>
-        <Input
-          type="file"
-          accept="application/pdf,.pdf"
-          className="sr-only"
-          disabled={uploadResume.isPending}
-          onChange={(event) => {
-            void handleFile(event.target.files?.[0]);
-          }}
-        />
-      </label>
-
-      {uploadResume.isPending && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          Uploading before profile creation
-        </div>
-      )}
-
-      {value && fileName && !uploadResume.isPending && (
-        <div className="flex items-center justify-between gap-3 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm">
-          <span className="flex min-w-0 items-center gap-2">
-            <FileCheck2 className="h-4 w-4 shrink-0 text-primary" />
-            <span className="truncate">{fileName}</span>
-          </span>
-          <button
-            type="button"
-            className="rounded-sm p-1 text-muted-foreground hover:bg-background hover:text-foreground"
-            onClick={() => {
-              setFileName(null);
-              setPreviewFile(null);
-              onChange("");
-            }}
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-            <span className="sr-only">Remove resume</span>
-          </button>
-        </div>
-      )}
-
-      {previewUrl && fileName && (
-        <ResumePreview fileName={fileName} src={previewUrl} />
-      )}
-
-      {uploadError && (
-        <p className="text-sm font-medium text-destructive">{uploadError}</p>
-      )}
-    </div>
-  );
-});
-ResumeUploadControl.displayName = "ResumeUploadControl";
-
-const ProfilePictureUploadControl = forwardRef<
-  HTMLDivElement,
-  Omit<ComponentPropsWithoutRef<"div">, "onChange"> & {
-    onChange: (value: string) => void;
-    value?: string;
-  }
->(({ className, onChange, value, ...props }, ref) => {
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [previewUrl, setPreviewFile] = useObjectPreviewUrl();
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const uploadProfilePicture =
-    api.profilePicture.uploadProfilePicture.useMutation({
-      onError(error) {
-        setUploadError(error.message || "Profile picture upload failed.");
-        setPreviewFile(null);
-        onChange("");
-      },
-    });
-
-  const handleFile = async (file: File | undefined) => {
-    setUploadError(null);
-
-    if (!file) {
-      setFileName(null);
-      setPreviewFile(null);
-      onChange("");
-      return;
-    }
-
-    if (!PROFILE_PICTURE_TYPES.includes(file.type)) {
-      setUploadError(
-        "Profile picture must be a JPEG, PNG, GIF, or WebP image.",
-      );
-      setFileName(null);
-      setPreviewFile(null);
-      onChange("");
-      return;
-    }
-
-    if (file.size > MAX_PROFILE_PICTURE_SIZE) {
-      setUploadError("Profile picture must be 2MB or smaller.");
-      setFileName(null);
-      setPreviewFile(null);
-      onChange("");
-      return;
-    }
-
-    setFileName(file.name);
-    setPreviewFile(file);
-
-    try {
-      const fileContent = await fileToDataUrl(
-        file,
-        "Profile picture could not be read.",
-      );
-      const objectName = await uploadProfilePicture.mutateAsync({
-        fileContent,
-        fileName: file.name,
-      });
-      onChange(objectName);
-    } catch (error) {
-      setUploadError(
-        error instanceof Error
-          ? error.message
-          : "Profile picture upload failed.",
-      );
-      setFileName(null);
-      setPreviewFile(null);
-      onChange("");
-    }
-  };
-
-  return (
-    <div ref={ref} className={cn("space-y-3", className)} {...props}>
-      <label className="flex min-h-28 cursor-pointer items-center gap-4 rounded-md border border-dashed border-primary/40 bg-background/70 px-4 py-5 transition hover:border-primary hover:bg-primary/5">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-card">
-          {previewUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={previewUrl}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <ImageIcon className="h-7 w-7 text-primary" aria-hidden="true" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <span className="block text-sm font-medium">
-            {uploadProfilePicture.isPending
-              ? "Uploading profile picture"
-              : "Upload profile picture"}
-          </span>
-          <span className="mt-1 block text-xs text-muted-foreground">
-            JPEG, PNG, GIF, or WebP, 2MB max
-          </span>
-          {fileName && (
-            <span className="mt-2 block truncate text-xs text-muted-foreground">
-              {fileName}
-            </span>
-          )}
-        </div>
-        <Input
-          type="file"
-          accept="image/jpeg,image/png,image/gif,image/webp"
-          className="sr-only"
-          disabled={uploadProfilePicture.isPending}
-          onChange={(event) => {
-            void handleFile(event.target.files?.[0]);
-          }}
-        />
-      </label>
-
-      {uploadProfilePicture.isPending && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          Uploading before profile creation
-        </div>
-      )}
-
-      {value && fileName && !uploadProfilePicture.isPending && (
-        <div className="flex items-center justify-between gap-3 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm">
-          <span className="flex min-w-0 items-center gap-2">
-            <FileCheck2 className="h-4 w-4 shrink-0 text-primary" />
-            <span className="truncate">{fileName}</span>
-          </span>
-          <button
-            type="button"
-            className="rounded-sm p-1 text-muted-foreground hover:bg-background hover:text-foreground"
-            onClick={() => {
-              setFileName(null);
-              setPreviewFile(null);
-              onChange("");
-            }}
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-            <span className="sr-only">Remove profile picture</span>
-          </button>
-        </div>
-      )}
-
-      {uploadError && (
-        <p className="text-sm font-medium text-destructive">{uploadError}</p>
-      )}
-    </div>
-  );
-});
-ProfilePictureUploadControl.displayName = "ProfilePictureUploadControl";
-
 function FieldControl({
   fieldConfig,
   value,
@@ -496,16 +192,6 @@ function FieldControl({
   value: boolean | number | string | undefined;
 }) {
   const stringValue = typeof value === "string" ? value : "";
-
-  if (fieldConfig.kind === "file") {
-    return <ResumeUploadControl value={stringValue} onChange={onChange} />;
-  }
-
-  if (fieldConfig.kind === "image") {
-    return (
-      <ProfilePictureUploadControl value={stringValue} onChange={onChange} />
-    );
-  }
 
   if (fieldConfig.kind === "textarea") {
     return (
@@ -687,6 +373,10 @@ export function MemberSignupForm({
     schema: memberFormSchema,
     defaultValues: getDefaultValues(),
   });
+  const displayName =
+    [form.watch("firstName"), form.watch("lastName")]
+      .filter(Boolean)
+      .join(" ") || "Knight Hacks";
 
   const submitSignup = api.forms.createResponse.useMutation({
     async onSuccess() {
@@ -729,10 +419,13 @@ export function MemberSignupForm({
             {fieldsBySection.map(({ section, fields }, sectionIndex) => {
               const meta = sectionMeta[section];
               const Icon = meta.icon;
+              const visibleFields = fields.filter(
+                (field) => field.kind !== "file" && field.kind !== "image",
+              );
 
               return (
                 <RevealOnView key={section} delay={sectionIndex * 60}>
-                  <Card className="border-white/10 bg-card/95 shadow-xl shadow-black/20 transition-transform duration-200 hover:-translate-y-0.5">
+                  <Card className="border-white/10 bg-card/95 shadow-xl shadow-black/20">
                     <CardHeader className="border-b border-border/70">
                       <div className="flex items-center gap-4">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
@@ -748,9 +441,55 @@ export function MemberSignupForm({
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="py-4">
+                    <CardContent className="space-y-5 py-4">
+                      {section === "Guild" && (
+                        <div
+                          className={cn(
+                            dashboardNestedSurfaceClass,
+                            "grid gap-5 p-4",
+                          )}
+                        >
+                          <div className="grid gap-5 lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-center">
+                            <FormField
+                              control={form.control}
+                              name="profilePictureUrl"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <div className="flex justify-center lg:justify-start">
+                                      <MemberProfilePictureUpload
+                                        displayName={displayName}
+                                        initialProfilePictureUrl={null}
+                                        saveMode="deferred"
+                                        onChange={field.onChange}
+                                      />
+                                    </div>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="resumeUrl"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <MemberResumeUpload
+                                      initialResumeUrl={null}
+                                      saveMode="deferred"
+                                      onChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </div>
+                      )}
                       <div className="grid gap-x-4 gap-y-5 md:grid-cols-2">
-                        {fields.map((fieldConfig) => (
+                        {visibleFields.map((fieldConfig) => (
                           <FormField
                             key={fieldConfig.name}
                             control={form.control}

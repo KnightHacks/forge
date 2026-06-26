@@ -17,11 +17,13 @@ export const MEMBER_SIGNUP_CONNECTION_ID =
   "f0000000-0000-4000-8000-000000000002";
 export const MEMBER_SIGNUP_FORM_SLUG = "member-signup";
 export const MEMBER_SIGNUP_CALLBACK_PROC = "member.createMember";
-export const MEMBER_SIGNUP_COMPLETION_REDIRECT_URL = "/dashboard";
+export const MEMBER_DASHBOARD_PATH = "/member/dashboard";
+export const MEMBER_SETTINGS_PATH = "/member/settings";
+export const MEMBER_SIGNUP_COMPLETION_REDIRECT_URL = MEMBER_DASHBOARD_PATH;
 export const MEMBER_CODE_OF_CONDUCT_URL =
   "https://knight-hacks.notion.site/code-of-conduct";
 
-const GRAD_TERMS = ["Spring", "Summer", "Fall"] as const;
+export const GRAD_TERMS = ["Spring", "Summer", "Fall"] as const;
 
 export function calculateMemberAge(dob: string, referenceDate = new Date()) {
   const birthDate = new Date(`${dob}T00:00:00Z`);
@@ -49,7 +51,25 @@ function graduationDateFromTerm(
   )}`;
 }
 
-export const memberFormSchema = z.object({
+export function graduationTermYearFromDate(gradDate: string | Date) {
+  const value =
+    gradDate instanceof Date ? gradDate.toISOString().slice(0, 10) : gradDate;
+  const [year = "", month = "", day = ""] = value.split("-");
+  const monthIndex = Number(month) - 1;
+  const dayNumber = Number(day);
+  const gradTerm =
+    GRAD_TERMS.find((term) => {
+      const termDate = FORMS.TERM_TO_DATE[term];
+      return termDate.month === monthIndex && termDate.day === dayNumber;
+    }) ?? "Spring";
+
+  return {
+    gradTerm,
+    gradYear: Number(year) || new Date().getFullYear(),
+  };
+}
+
+export const memberProfileFormSchema = z.object({
   firstName: requiredText("First name"),
   lastName: requiredText("Last name"),
   email: requiredText("Email").email("Enter a valid email address."),
@@ -92,37 +112,86 @@ export const memberFormSchema = z.object({
   tagline: optionalText("Tagline", 80),
   about: optionalText("About", 500),
   guildProfileVisible: z.boolean().default(true),
+});
+
+export const memberFormSchema = memberProfileFormSchema.extend({
   codeOfConductAccepted: z.boolean().refine((accepted) => accepted, {
     message: "You must accept the Knight Hacks Code of Conduct.",
   }),
 });
 
-export const memberSchema = memberFormSchema.transform((input) => ({
-  firstName: input.firstName,
-  lastName: input.lastName,
-  email: input.email.toLowerCase(),
-  phoneNumber: emptyToNull(input.phoneNumber),
-  dob: input.dob,
-  school: input.school,
-  levelOfStudy: input.levelOfStudy,
-  major: input.major,
-  gender: input.gender,
-  raceOrEthnicity: input.raceOrEthnicity,
-  shirtSize: input.shirtSize,
-  gradDate: graduationDateFromTerm(input.gradTerm, input.gradYear),
-  company: emptyToNull(input.company),
-  githubProfileUrl: emptyToNull(input.githubProfileUrl),
-  linkedinProfileUrl: emptyToNull(input.linkedinProfileUrl),
-  websiteUrl: emptyToNull(input.websiteUrl),
-  profilePictureUrl: emptyToNull(input.profilePictureUrl),
-  resumeUrl: emptyToNull(input.resumeUrl),
-  tagline: emptyToNull(input.tagline),
-  about: emptyToNull(input.about),
-  guildProfileVisible: input.guildProfileVisible,
-}));
+function toMemberInput(input: z.output<typeof memberProfileFormSchema>) {
+  return {
+    firstName: input.firstName,
+    lastName: input.lastName,
+    email: input.email.toLowerCase(),
+    phoneNumber: emptyToNull(input.phoneNumber),
+    dob: input.dob,
+    school: input.school,
+    levelOfStudy: input.levelOfStudy,
+    major: input.major,
+    gender: input.gender,
+    raceOrEthnicity: input.raceOrEthnicity,
+    shirtSize: input.shirtSize,
+    gradDate: graduationDateFromTerm(input.gradTerm, input.gradYear),
+    company: emptyToNull(input.company),
+    githubProfileUrl: emptyToNull(input.githubProfileUrl),
+    linkedinProfileUrl: emptyToNull(input.linkedinProfileUrl),
+    websiteUrl: emptyToNull(input.websiteUrl),
+    profilePictureUrl: emptyToNull(input.profilePictureUrl),
+    resumeUrl: emptyToNull(input.resumeUrl),
+    tagline: emptyToNull(input.tagline),
+    about: emptyToNull(input.about),
+    guildProfileVisible: input.guildProfileVisible,
+  };
+}
+
+export const memberSchema = memberFormSchema.transform((input) =>
+  toMemberInput(input),
+);
+
+export const memberUpdateFormSchema = memberProfileFormSchema;
+export const memberUpdateSchema = memberUpdateFormSchema.transform((input) =>
+  toMemberInput(input),
+);
 
 export type MemberFormValues = z.input<typeof memberFormSchema>;
 export type MemberInput = z.output<typeof memberSchema>;
+export type MemberUpdateFormValues = z.input<typeof memberUpdateFormSchema>;
+export type MemberUpdateInput = z.output<typeof memberUpdateSchema>;
+
+export function memberResponseDataFromInput(
+  input: MemberInput,
+  options: { codeOfConductAccepted: boolean },
+) {
+  const { gradTerm, gradYear } = graduationTermYearFromDate(input.gradDate);
+
+  return {
+    firstName: input.firstName,
+    lastName: input.lastName,
+    email: input.email,
+    phoneNumber: input.phoneNumber ?? "",
+    dob: input.dob,
+    school: input.school,
+    levelOfStudy: input.levelOfStudy,
+    major: input.major,
+    gender: input.gender,
+    raceOrEthnicity: input.raceOrEthnicity,
+    shirtSize: input.shirtSize,
+    gradTerm,
+    gradYear,
+    company: input.company ?? "",
+    githubProfileUrl: input.githubProfileUrl ?? "",
+    linkedinProfileUrl: input.linkedinProfileUrl ?? "",
+    websiteUrl: input.websiteUrl ?? "",
+    profilePictureUrl: input.profilePictureUrl ?? "",
+    resumeUrl: input.resumeUrl ?? "",
+    tagline: input.tagline ?? "",
+    about: input.about ?? "",
+    guildProfileVisible: input.guildProfileVisible,
+    codeOfConductAccepted: options.codeOfConductAccepted,
+  } satisfies MemberFormValues;
+}
 
 export interface GuildProfileLinks {
   github: MemberInput["githubProfileUrl"];
@@ -163,6 +232,19 @@ export interface MemberSignupFieldDefinition {
   placeholder?: string;
   required?: boolean;
   section: "Personal" | "Academics" | "Guild";
+}
+
+export type MemberSettingsFieldKind = Exclude<
+  MemberSignupFieldKind,
+  "checkbox" | "file" | "image"
+>;
+
+export interface MemberSettingsFieldDefinition extends Omit<
+  MemberSignupFieldDefinition,
+  "kind" | "name"
+> {
+  kind: MemberSettingsFieldKind;
+  name: keyof MemberUpdateFormValues;
 }
 
 export const memberSignupFields: readonly MemberSignupFieldDefinition[] = [
@@ -343,6 +425,13 @@ export const memberSignupFields: readonly MemberSignupFieldDefinition[] = [
     description: "Upload a PDF resume, up to 5MB.",
   },
 ] as const satisfies readonly MemberSignupFieldDefinition[];
+
+export const memberSettingsFields = memberSignupFields.filter(
+  (field): field is MemberSettingsFieldDefinition =>
+    field.name !== "codeOfConductAccepted" &&
+    field.name !== "profilePictureUrl" &&
+    field.name !== "resumeUrl",
+);
 
 const formQuestionTypeByKind = {
   boolean: "BOOLEAN",

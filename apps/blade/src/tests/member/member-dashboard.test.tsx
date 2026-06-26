@@ -5,6 +5,12 @@ import { describe, expect, it, vi } from "vitest";
 import type { CurrentMember } from "~/hooks/use-member";
 import { MemberDashboard } from "~/app/_components/member/member-dashboard";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
+
 vi.mock("~/app/_components/member/member-profile-picture-upload", () => ({
   MemberProfilePictureUpload: ({
     displayName,
@@ -17,9 +23,12 @@ vi.mock("~/app/_components/member/member-profile-picture-upload", () => ({
 vi.mock("~/app/_components/member/member-resume-upload", () => ({
   MemberResumeUpload: ({
     initialResumeUrl,
+    variant,
   }: {
     initialResumeUrl: string | null;
-  }) => `Resume widget for ${initialResumeUrl ?? "empty resume"}`,
+    variant?: string;
+  }) =>
+    `Resume widget for ${initialResumeUrl ?? "empty resume"} (${variant ?? "panel"})`,
 }));
 
 const member: CurrentMember = {
@@ -68,7 +77,9 @@ describe("MemberDashboard", () => {
     expect(html).toContain("LinkedIn");
     expect(html).toContain("Portfolio");
     expect(html).toContain("Profile picture widget for Dylan Vidal");
-    expect(html).toContain("Resume widget for user-id/Resume.pdf");
+    expect(html).toContain("Resume widget for user-id/Resume.pdf (compact)");
+    expect(html).toContain('href="/member/settings"');
+    expect(html).toContain('aria-label="Edit profile"');
     expect(html).not.toContain("Member profile active");
     expect(html).not.toContain("MEMBER PROFILE");
   });

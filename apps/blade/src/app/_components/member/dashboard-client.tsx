@@ -11,6 +11,7 @@ import {
   dashboardPanelClass,
   MemberDashboard,
 } from "~/app/_components/member/member-dashboard";
+import { useDebugLatency } from "~/hooks/use-debug-latency";
 import { useMember } from "~/hooks/use-member";
 
 function DashboardSkeleton() {
@@ -137,12 +138,19 @@ function DashboardErrorState() {
   );
 }
 
-export function DashboardClient() {
+export function DashboardClient({
+  debugLatencyMs = 0,
+}: {
+  debugLatencyMs?: number;
+}) {
+  const isDebugDelayPending = useDebugLatency(debugLatencyMs);
   const { isError, isLoading, isRedirecting, member } = useMember({
     redirectNoMemberTo: `/form/${MEMBER_SIGNUP_FORM_SLUG}`,
   });
 
-  if (isLoading || isRedirecting) return <DashboardSkeleton />;
+  if (isLoading || isRedirecting || isDebugDelayPending) {
+    return <DashboardSkeleton />;
+  }
 
   if (isError) return <DashboardErrorState />;
 

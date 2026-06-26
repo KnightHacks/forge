@@ -1,13 +1,15 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
+import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
+
 import { DiscordSignInLink } from "~/app/_components/auth/discord-sign-in-link";
 import { auth } from "~/server/auth";
 
 export default async function HomePage() {
   const session = await auth();
 
-  if (session) redirect("/dashboard");
+  if (session) redirect(MEMBER_DASHBOARD_PATH);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background">

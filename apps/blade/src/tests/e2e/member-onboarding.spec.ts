@@ -7,6 +7,7 @@ import { User } from "@forge/db/schemas/auth";
 import { FormResponse, Member } from "@forge/db/schemas/knight-hacks";
 import {
   MEMBER_CODE_OF_CONDUCT_URL,
+  MEMBER_DASHBOARD_PATH,
   MEMBER_SIGNUP_FORM_ID,
   MEMBER_SIGNUP_FORM_SLUG,
 } from "@forge/validators";
@@ -146,7 +147,7 @@ async function seedE2EData() {
 async function signInAs(
   page: Page,
   userId = DEFAULT_USER_ID,
-  callbackURL = "/dashboard",
+  callbackURL = MEMBER_DASHBOARD_PATH,
 ) {
   await page.goto(
     `/api/e2e/signin?userId=${encodeURIComponent(
@@ -300,7 +301,7 @@ test.describe("initial member onboarding", () => {
       await route.continue();
     });
 
-    await page.goto("/dashboard");
+    await page.goto(MEMBER_DASHBOARD_PATH);
 
     await expect(page.locator(".animate-pulse").first()).toBeVisible();
     await expect(page.locator("section").first()).toHaveClass(
@@ -393,7 +394,7 @@ test.describe("initial member onboarding", () => {
     await submitSignup(page);
     await createResponseRequest;
 
-    await expect(page).toHaveURL(routeURL("/dashboard"));
+    await expect(page).toHaveURL(routeURL(MEMBER_DASHBOARD_PATH));
     await expect(page.getByText("Welcome, Ada")).toBeVisible();
     await expect(page.getByText("Ada Lovelace")).toBeVisible();
 
@@ -454,7 +455,7 @@ test.describe("initial member onboarding", () => {
 
     await fillSignupForm(page);
     await submitSignup(page);
-    await expect(page).toHaveURL(routeURL("/dashboard"));
+    await expect(page).toHaveURL(routeURL(MEMBER_DASHBOARD_PATH));
 
     const member = await getMember(DEFAULT_USER_ID);
     expect(member).toMatchObject({
@@ -468,7 +469,7 @@ test.describe("initial member onboarding", () => {
   }) => {
     await signInAs(page, EXISTING_MEMBER_USER_ID, "/");
 
-    await expect(page).toHaveURL(routeURL("/dashboard"));
+    await expect(page).toHaveURL(routeURL(MEMBER_DASHBOARD_PATH));
     await expect(page.getByText("Welcome, Casey")).toBeVisible();
     await expect(page.getByText("Casey Member")).toBeVisible();
     await expect(page.getByText("Seeded Guild profile")).toBeVisible();
@@ -476,7 +477,7 @@ test.describe("initial member onboarding", () => {
     await expect(page.getByText("MEMBER PROFILE")).toHaveCount(0);
 
     await page.goto(`/form/${MEMBER_SIGNUP_FORM_SLUG}`);
-    await expect(page).toHaveURL(routeURL("/dashboard"));
+    await expect(page).toHaveURL(routeURL(MEMBER_DASHBOARD_PATH));
     await expect(
       page.getByRole("heading", { name: "Build your Knight Hacks profile." }),
     ).toHaveCount(0);

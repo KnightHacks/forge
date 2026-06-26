@@ -2,15 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import {
   calculateMemberAge,
+  graduationTermYearFromDate,
   MEMBER_CODE_OF_CONDUCT_URL,
+  MEMBER_DASHBOARD_PATH,
   MEMBER_SIGNUP_CALLBACK_PROC,
   MEMBER_SIGNUP_COMPLETION_REDIRECT_URL,
   MEMBER_SIGNUP_FORM_SLUG,
+  memberResponseDataFromInput,
   memberSchema,
+  memberSettingsFields,
   memberSignupCallbackConnections,
   memberSignupFields,
   memberSignupFormDefinition,
   memberSignupFormJsonSchema,
+  memberUpdateSchema,
 } from "../member";
 
 const validResponse = {
@@ -102,6 +107,16 @@ describe("member onboarding validation", () => {
     expect(result.success).toBe(false);
   });
 
+  it("validates profile edits without requiring Code of Conduct again", () => {
+    const result = memberUpdateSchema.parse({
+      ...validResponse,
+      codeOfConductAccepted: false,
+    });
+
+    expect(result.email).toBe("lenny@knighthacks.org");
+    expect(result.gradDate).toBe("2027-05-02");
+  });
+
   it("defines signup fields from editable member data only", () => {
     const fieldNames = new Set<string>(
       memberSignupFields.map((field) => field.name),
@@ -125,6 +140,18 @@ describe("member onboarding validation", () => {
     }
   });
 
+  it("defines settings fields without signup-only or immediate-upload fields", () => {
+    const fieldNames = new Set<string>(
+      memberSettingsFields.map((field) => field.name),
+    );
+
+    expect(fieldNames).toContain("firstName");
+    expect(fieldNames).toContain("guildProfileVisible");
+    expect(fieldNames).not.toContain("codeOfConductAccepted");
+    expect(fieldNames).not.toContain("profilePictureUrl");
+    expect(fieldNames).not.toContain("resumeUrl");
+  });
+
   it("keeps the code-owned form definition wired to the member callback", () => {
     expect(memberSignupFormDefinition.slugName).toBe(MEMBER_SIGNUP_FORM_SLUG);
     expect(memberSignupFormDefinition.callbackProc).toBe(
@@ -132,6 +159,9 @@ describe("member onboarding validation", () => {
     );
     expect(memberSignupFormDefinition.completionRedirectUrl).toBe(
       MEMBER_SIGNUP_COMPLETION_REDIRECT_URL,
+    );
+    expect(memberSignupFormDefinition.completionRedirectUrl).toBe(
+      MEMBER_DASHBOARD_PATH,
     );
     expect(memberSignupCallbackConnections).toHaveLength(
       memberSignupFields.length,
@@ -165,5 +195,26 @@ describe("member onboarding validation", () => {
 
     expect(calculateMemberAge("2000-06-24", referenceDate)).toBe(26);
     expect(calculateMemberAge("2000-06-26", referenceDate)).toBe(25);
+  });
+
+  it("serializes saved member data back into signup response shape", () => {
+    const member = memberSchema.parse(validResponse);
+    const responseData = memberResponseDataFromInput(member, {
+      codeOfConductAccepted: true,
+    });
+
+    expect(responseData).toMatchObject({
+      codeOfConductAccepted: true,
+      gradTerm: "Spring",
+      gradYear: 2027,
+      phoneNumber: "123-456-7890",
+    });
+  });
+
+  it("derives graduation term and year from stored graduation dates", () => {
+    expect(graduationTermYearFromDate("2027-12-10")).toEqual({
+      gradTerm: "Fall",
+      gradYear: 2027,
+    });
   });
 });

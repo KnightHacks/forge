@@ -11,17 +11,21 @@ import {
   Linkedin,
   Mail,
   School,
+  Settings,
   Shirt,
   Sparkles,
 } from "lucide-react";
 
 import { cn } from "@forge/ui";
 import { Badge } from "@forge/ui/badge";
+import { Button } from "@forge/ui/button";
 import { Card, CardContent } from "@forge/ui/card";
+import { MEMBER_SETTINGS_PATH } from "@forge/validators";
 
 import type { CurrentMember } from "~/hooks/use-member";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
+import { MemberRouteTransitionLink } from "~/app/_components/member/member-route-transition-link";
 
 export const dashboardGridClass =
   "grid w-full gap-6 lg:min-h-[calc(100svh-8rem)] lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-stretch xl:grid-cols-[minmax(0,1fr)_28rem]";
@@ -224,10 +228,28 @@ export function MemberDashboard({ member }: { member: CurrentMember }) {
         <Card className={dashboardPanelClass}>
           <CardContent className="flex h-full flex-col justify-start gap-6 p-6 lg:overflow-y-auto lg:p-8">
             <DashboardContent>
-              <div className="space-y-2">
-                <h1 className="text-3xl font-semibold tracking-normal md:text-5xl">
-                  Welcome, {member.firstName}
-                </h1>
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-semibold tracking-normal md:text-5xl">
+                    Welcome, {member.firstName}
+                  </h1>
+                </div>
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0 text-muted-foreground hover:text-foreground"
+                >
+                  <MemberRouteTransitionLink
+                    href={MEMBER_SETTINGS_PATH}
+                    aria-label="Edit profile"
+                  >
+                    <Settings
+                      className="h-5 w-5 transition-transform duration-200 group-hover:rotate-45 group-data-[exiting=true]:-rotate-90 motion-reduce:transition-none"
+                      aria-hidden="true"
+                    />
+                  </MemberRouteTransitionLink>
+                </Button>
               </div>
             </DashboardContent>
 
@@ -289,7 +311,10 @@ export function MemberDashboard({ member }: { member: CurrentMember }) {
                     </p>
                   </div>
                 </div>
-                <MemberResumeUpload initialResumeUrl={member.resumeUrl} />
+                <MemberResumeUpload
+                  initialResumeUrl={member.resumeUrl}
+                  variant="compact"
+                />
               </DashboardContent>
             </div>
           </CardContent>

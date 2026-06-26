@@ -5,6 +5,7 @@ import { auth as realAuth } from "@forge/auth/server";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
+import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import { env } from "~/env";
 
@@ -15,17 +16,19 @@ export function isE2EAuthEnabled() {
 }
 
 export function sanitizeE2ECallbackURL(callbackURL?: string | null) {
-  if (!callbackURL) return "/dashboard";
+  if (!callbackURL) return MEMBER_DASHBOARD_PATH;
 
   try {
     const resolved = new URL(callbackURL, "http://blade-e2e.local");
 
-    if (resolved.origin !== "http://blade-e2e.local") return "/dashboard";
-    if (!resolved.pathname.startsWith("/")) return "/dashboard";
+    if (resolved.origin !== "http://blade-e2e.local") {
+      return MEMBER_DASHBOARD_PATH;
+    }
+    if (!resolved.pathname.startsWith("/")) return MEMBER_DASHBOARD_PATH;
 
     return `${resolved.pathname}${resolved.search}`;
   } catch {
-    return "/dashboard";
+    return MEMBER_DASHBOARD_PATH;
   }
 }
 

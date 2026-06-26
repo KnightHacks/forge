@@ -70,6 +70,10 @@ export const createResponseInputSchema = z.object({
   responseData: z.record(z.string(), z.unknown()),
 });
 
+export const updateResponseInputSchema = createResponseInputSchema.extend({
+  upsert: z.boolean().default(false),
+});
+
 const formConnectionMappingSchema = z.object({
   customValue: z.unknown().optional(),
   formField: z.string().optional(),
@@ -451,4 +455,99 @@ export async function createResponse({
       formResponseId: response.id,
     };
   });
+}
+
+export async function updateResponse({
+  codeOwnedForms,
+  database = db,
+  enforceAllowEdit = true,
+  input,
+  session,
+}: {
+  codeOwnedForms: readonly CodeOwnedFormConfig[];
+  database?: WriteDb;
+  enforceAllowEdit?: boolean;
+  input: z.infer<typeof updateResponseInputSchema>;
+  session: Session;
+}) {
+  const form = await getFormForResponse(database, input.form, codeOwnedForms);
+
+  if (form.isClosed) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "This form is closed and cannot be edited.",
+    });
+  }
+
+  if (enforceAllowEdit && !form.allowEdit) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "This form response cannot be edited.",
+    });
+  }
+
+  await assertCanRespondToForm(database, form.id, session.user.id);
+
+  const responseData = validateResponseData(
+    form.formValidatorJson,
+    input.responseData,
+  );
+  const existingResponse = await database.query.FormResponse.findFirst({
+    where: and(
+      eq(FormResponse.form, form.id),
+      eq(FormResponse.userId, session.user.id),
+    ),
+    columns: { id: true },
+  });
+
+  if (!existingResponse && !input.upsert) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Form response does not exist.",
+    });
+  }
+
+  if (existingResponse) {
+    const [response] = await database
+      .update(FormResponse)
+      .set({
+        editedAt: new Date(),
+        responseData,
+      })
+      .where(eq(FormResponse.id, existingResponse.id))
+      .returning({ id: FormResponse.id });
+
+    if (!response) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Form response could not be updated.",
+      });
+    }
+
+    return {
+      formResponseId: response.id,
+      responseData,
+    };
+  }
+
+  const [response] = await database
+    .insert(FormResponse)
+    .values({
+      form: form.id,
+      responseData,
+      userId: session.user.id,
+    })
+    .returning({ id: FormResponse.id });
+
+  if (!response) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Form response could not be backfilled.",
+    });
+  }
+
+  return {
+    formResponseId: response.id,
+    responseData,
+  };
 }

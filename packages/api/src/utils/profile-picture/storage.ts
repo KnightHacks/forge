@@ -1,3 +1,4 @@
+import type { ItemBucketMetadata } from "minio";
 import { TRPCError } from "@trpc/server";
 import { Client } from "minio";
 
@@ -6,12 +7,15 @@ import { MINIO } from "@forge/consts";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
+import { logger } from "@forge/utils";
 
 import type { WriteDb } from "../db";
 import { env } from "../../env";
 import {
   createProfilePictureObjectName,
   decodeAndValidateProfilePictureDataUrl,
+  getProfilePictureUserPrefix,
+  isProfilePictureObjectOwnedByUser,
   isServerGeneratedProfilePictureObjectName,
   PROFILE_PICTURE_BUCKET_NAME,
   resolveProfilePictureObjectName,
@@ -146,5 +150,37 @@ export async function getProfilePictureDownloadUrlForSession(session: Session) {
       code: "INTERNAL_SERVER_ERROR",
       message: "Could not generate profile picture URL.",
     });
+  }
+}
+
+export async function removeProfilePictureObjectsForUser(userId: string) {
+  try {
+    const objectsToRemove: string[] = [];
+    const objectStream = profilePictureStorageClient.listObjects(
+      PROFILE_PICTURE_BUCKET_NAME,
+      getProfilePictureUserPrefix(userId),
+      true,
+    );
+
+    for await (const obj of objectStream as AsyncIterable<ItemBucketMetadata>) {
+      const objectName = typeof obj.name === "string" ? obj.name : null;
+      if (!objectName) continue;
+      if (!isProfilePictureObjectOwnedByUser(objectName, userId)) continue;
+
+      objectsToRemove.push(objectName);
+    }
+
+    if (objectsToRemove.length === 0) return;
+
+    await Promise.all(
+      objectsToRemove.map((objectName) =>
+        profilePictureStorageClient.removeObject(
+          PROFILE_PICTURE_BUCKET_NAME,
+          objectName,
+        ),
+      ),
+    );
+  } catch (error) {
+    logger.warn("Unable to remove profile picture objects; continuing:", error);
   }
 }

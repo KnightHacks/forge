@@ -40,9 +40,15 @@ function fileToDataUrl(file: File) {
 export function MemberResumeUpload({
   className,
   initialResumeUrl,
+  onChange,
+  saveMode = "member",
+  variant = "panel",
 }: {
   className?: string;
   initialResumeUrl: string | null;
+  onChange?: (resumeUrl: string) => void;
+  saveMode?: "deferred" | "member";
+  variant?: "compact" | "panel";
 }) {
   const [resumeUrl, setResumeUrl] = useState(initialResumeUrl ?? "");
   const [fileName, setFileName] = useState<string | null>(null);
@@ -51,7 +57,11 @@ export function MemberResumeUpload({
   const [previewUrl, setPreviewFile] = useObjectPreviewUrl();
 
   const savedResume = api.resume.getResume.useQuery(undefined, {
-    enabled: isViewerOpen && Boolean(resumeUrl) && !previewUrl,
+    enabled:
+      saveMode === "member" &&
+      isViewerOpen &&
+      Boolean(resumeUrl) &&
+      !previewUrl,
     staleTime: 60 * 1000,
   });
   const uploadResume = api.resume.uploadResume.useMutation();
@@ -64,7 +74,8 @@ export function MemberResumeUpload({
     },
   });
 
-  const isPending = uploadResume.isPending || updateResume.isPending;
+  const isPending =
+    uploadResume.isPending || (saveMode === "member" && updateResume.isPending);
 
   const handleFile = async (file: File | undefined) => {
     setUploadError(null);
@@ -91,6 +102,14 @@ export function MemberResumeUpload({
         fileContent,
         fileName: file.name,
       });
+
+      if (saveMode === "deferred") {
+        setResumeUrl(objectName);
+        onChange?.(objectName);
+        setIsViewerOpen(true);
+        return;
+      }
+
       await updateResume.mutateAsync({ resumeUrl: objectName });
       setIsViewerOpen(true);
     } catch (error) {
@@ -106,6 +125,113 @@ export function MemberResumeUpload({
   const previewSource = previewUrl ?? savedResume.data?.url ?? null;
   const previewFileName = fileName ?? "Resume";
   const canViewResume = Boolean(resumeUrl || previewUrl);
+  const controls = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
+        <DialogTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!canViewResume}
+          >
+            View
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-h-[calc(100svh-0.5rem)] w-[calc(100svw-0.5rem)] max-w-5xl overflow-hidden p-0 sm:max-h-[88svh]">
+          <DialogHeader className="border-b px-5 py-4 pr-12">
+            <DialogTitle>Resume</DialogTitle>
+            <DialogDescription>
+              Preview the PDF attached to your member profile.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[calc(100svh-5.5rem)] overflow-y-auto p-2 sm:max-h-[calc(88svh-5rem)] sm:p-4">
+            {resumeUrl && savedResume.isFetching && !previewUrl && (
+              <div className="flex h-80 items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Loading resume preview
+              </div>
+            )}
+
+            {previewSource && (
+              <ResumePreview fileName={previewFileName} src={previewSource} />
+            )}
+
+            {resumeUrl && savedResume.isError && !previewUrl && (
+              <p className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+                Preview unavailable. Your resume is still saved.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <label
+        className="inline-flex h-8 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground shadow transition hover:bg-primary/90 aria-disabled:pointer-events-none aria-disabled:opacity-50"
+        aria-disabled={isPending}
+      >
+        {isPending ? (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+        ) : (
+          <UploadCloud className="h-4 w-4" aria-hidden="true" />
+        )}
+        {resumeUrl ? "Replace" : "Upload"}
+        <Input
+          type="file"
+          accept="application/pdf,.pdf"
+          className="sr-only"
+          disabled={isPending}
+          onChange={(event) => {
+            void handleFile(event.target.files?.[0]);
+          }}
+        />
+      </label>
+
+      {resumeUrl && !isPending && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="gap-2 text-muted-foreground"
+          onClick={async () => {
+            setUploadError(null);
+            try {
+              if (saveMode === "deferred") {
+                setFileName(null);
+                setResumeUrl("");
+                setPreviewFile(null);
+                setIsViewerOpen(false);
+                onChange?.("");
+                return;
+              }
+
+              await updateResume.mutateAsync({ resumeUrl: "" });
+              setFileName(null);
+              setResumeUrl("");
+              setPreviewFile(null);
+              setIsViewerOpen(false);
+            } catch {
+              setUploadError("Resume could not be removed.");
+            }
+          }}
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+          Remove
+        </Button>
+      )}
+    </div>
+  );
+
+  if (variant === "compact") {
+    return (
+      <div className={cn("space-y-3", className)}>
+        {controls}
+        {uploadError && (
+          <p className="text-sm font-medium text-destructive">{uploadError}</p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -122,102 +248,8 @@ export function MemberResumeUpload({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
-            <DialogTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={!canViewResume}
-              >
-                View
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[calc(100svh-0.5rem)] w-[calc(100svw-0.5rem)] max-w-5xl overflow-hidden p-0 sm:max-h-[88svh]">
-              <DialogHeader className="border-b px-5 py-4 pr-12">
-                <DialogTitle>Resume</DialogTitle>
-                <DialogDescription>
-                  Preview the PDF attached to your member profile.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="max-h-[calc(100svh-5.5rem)] overflow-y-auto p-2 sm:max-h-[calc(88svh-5rem)] sm:p-4">
-                {resumeUrl && savedResume.isFetching && !previewUrl && (
-                  <div className="flex h-80 items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <Loader2
-                      className="h-4 w-4 animate-spin"
-                      aria-hidden="true"
-                    />
-                    Loading resume preview
-                  </div>
-                )}
-
-                {previewSource && (
-                  <ResumePreview
-                    fileName={previewFileName}
-                    src={previewSource}
-                  />
-                )}
-
-                {resumeUrl && savedResume.isError && !previewUrl && (
-                  <p className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-                    Preview unavailable. Your resume is still saved.
-                  </p>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <label className="inline-flex h-8 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground shadow transition hover:bg-primary/90 aria-disabled:pointer-events-none aria-disabled:opacity-50">
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <UploadCloud className="h-4 w-4" aria-hidden="true" />
-            )}
-            {resumeUrl ? "Replace" : "Upload"}
-            <Input
-              type="file"
-              accept="application/pdf,.pdf"
-              className="sr-only"
-              disabled={isPending}
-              onChange={(event) => {
-                void handleFile(event.target.files?.[0]);
-              }}
-            />
-          </label>
-
-          {resumeUrl && !isPending && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="gap-2 text-muted-foreground"
-              onClick={async () => {
-                setUploadError(null);
-                try {
-                  await updateResume.mutateAsync({ resumeUrl: "" });
-                  setFileName(null);
-                  setResumeUrl("");
-                  setPreviewFile(null);
-                  setIsViewerOpen(false);
-                } catch {
-                  setUploadError("Resume could not be removed.");
-                }
-              }}
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-              Remove
-            </Button>
-          )}
-        </div>
+        {controls}
       </div>
-
-      {isPending && (
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          Saving resume
-        </p>
-      )}
 
       {uploadError && (
         <p className="text-sm font-medium text-destructive">{uploadError}</p>

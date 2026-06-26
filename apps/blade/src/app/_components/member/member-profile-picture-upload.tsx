@@ -39,10 +39,14 @@ export function MemberProfilePictureUpload({
   className,
   displayName,
   initialProfilePictureUrl,
+  onChange,
+  saveMode = "member",
 }: {
   className?: string;
   displayName: string;
   initialProfilePictureUrl: string | null;
+  onChange?: (profilePictureUrl: string) => void;
+  saveMode?: "deferred" | "member";
 }) {
   const [profilePictureUrl, setProfilePictureUrl] = useState(
     initialProfilePictureUrl ?? "",
@@ -53,7 +57,8 @@ export function MemberProfilePictureUpload({
   const savedProfilePicture = api.profilePicture.getProfilePicture.useQuery(
     undefined,
     {
-      enabled: Boolean(profilePictureUrl) && !previewUrl,
+      enabled:
+        saveMode === "member" && Boolean(profilePictureUrl) && !previewUrl,
       staleTime: 60 * 1000,
     },
   );
@@ -70,7 +75,8 @@ export function MemberProfilePictureUpload({
     });
 
   const isPending =
-    uploadProfilePicture.isPending || updateProfilePicture.isPending;
+    uploadProfilePicture.isPending ||
+    (saveMode === "member" && updateProfilePicture.isPending);
   const savedPreviewSource = profilePictureUrl
     ? (savedProfilePicture.data?.url ?? null)
     : null;
@@ -107,6 +113,13 @@ export function MemberProfilePictureUpload({
         fileContent,
         fileName: file.name,
       });
+
+      if (saveMode === "deferred") {
+        setProfilePictureUrl(objectName);
+        onChange?.(objectName);
+        return;
+      }
+
       await updateProfilePicture.mutateAsync({
         profilePictureUrl: objectName,
       });
@@ -165,6 +178,13 @@ export function MemberProfilePictureUpload({
             onClick={async () => {
               setUploadError(null);
               try {
+                if (saveMode === "deferred") {
+                  setProfilePictureUrl("");
+                  setPreviewFile(null);
+                  onChange?.("");
+                  return;
+                }
+
                 await updateProfilePicture.mutateAsync({
                   profilePictureUrl: "",
                 });

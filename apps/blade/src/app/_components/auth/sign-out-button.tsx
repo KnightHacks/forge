@@ -4,10 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 
-import { authClient } from "@forge/auth";
 import { Button } from "@forge/ui/button";
 
-import { env } from "~/env";
+import { signOutFromBlade } from "./sign-out-flow";
 
 export function SignOutButton() {
   const router = useRouter();
@@ -21,13 +20,12 @@ export function SignOutButton() {
       disabled={isPending}
       onClick={async () => {
         setIsPending(true);
-        if (env.NEXT_PUBLIC_BLADE_E2E_AUTH === "true") {
-          await fetch("/api/e2e/signout", { method: "POST" });
-        } else {
-          await authClient.signOut();
+        try {
+          await signOutFromBlade();
+        } finally {
+          router.replace("/");
+          router.refresh();
         }
-        router.replace("/");
-        router.refresh();
       }}
     >
       <LogOut className="h-4 w-4" aria-hidden="true" />

@@ -3,6 +3,7 @@ import Image from "next/image";
 
 import type { Session } from "~/server/auth";
 import { SignOutButton } from "~/app/_components/auth/sign-out-button";
+import { MemberRouteTransitionSurface } from "~/app/_components/member/member-route-transition-link";
 
 export function AuthenticatedShell({
   children,
@@ -33,7 +34,9 @@ export function AuthenticatedShell({
           <SignOutButton />
         </div>
       </header>
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10">
+        <MemberRouteTransitionSurface>{children}</MemberRouteTransitionSurface>
+      </div>
     </div>
   );
 }

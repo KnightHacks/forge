@@ -4,7 +4,7 @@ import { MessageCircle } from "lucide-react";
 import { Button } from "@forge/ui/button";
 
 export function DiscordSignInLink({
-  callbackURL = "/dashboard",
+  callbackURL = "/member/dashboard",
   children = "Sign in with Discord",
   className,
 }: {
