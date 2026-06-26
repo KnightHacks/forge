@@ -72,3 +72,17 @@ The framework should work across Claude, Codex, Cursor, and other agents.
 - Cursor rules live in `.cursor/rules/*` and point back to the same canonical docs.
 
 Do not encode unique process truth in only one agent surface. Agent-specific files should route back to the shared Markdown framework.
+
+## Vendored third-party skills
+
+Installed from `Jeffallan/claude-skills` as supporting expertise, not canonical process truth:
+
+- `.claude/skills/react-expert`
+- `.claude/skills/nextjs-developer`
+- `.claude/skills/typescript-pro`
+- `.claude/skills/test-master`
+- `.claude/skills/playwright-expert`
+- `.claude/skills/spec-miner`
+- `.claude/skills/architecture-designer`
+
+These skills are useful for React/Next/TypeScript/testing/architecture support, but they must follow Forge's canonical docs and any local `FORGE_NOTES.md` inside the skill directory. Forge-native spec/SRD/test-case skills should be used first for Reforge artifact creation.
