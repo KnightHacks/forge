@@ -40,14 +40,6 @@ export function BaseHackathonDashboard({
   hackathon,
   hacker,
 }: {
-  classInfoByClass?: Record<
-    string,
-    {
-      classPfp: string;
-      team: string;
-      teamColor: string;
-    }
-  >;
   guideHref?: string;
   hackathon: SelectHackathon;
   hacker: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;

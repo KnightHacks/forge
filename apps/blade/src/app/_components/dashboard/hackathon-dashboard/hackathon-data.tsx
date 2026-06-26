@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpen, CircleCheckBig, Trophy } from "lucide-react";
+import { BookOpen, CircleCheckBig } from "lucide-react";
 
 import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
-import { Dialog, DialogTrigger } from "@forge/ui/dialog";
 
 import type { api as serverCall } from "~/trpc/server";
 import { HackerQRCodePopup } from "~/app/_components/dashboard/hacker-dashboard/hacker-qr-button";
@@ -89,9 +88,9 @@ export function BaseHackathonData({
   }
 
   return (
-    <div className="flex h-full w-full flex-col gap-3 p-2 sm:gap-4 sm:p-4 lg:flex-row lg:gap-6 lg:p-6">
-      {/* Left Section - Name, Status, Image, and Actions */}
-      <div className="flex flex-1 flex-col justify-evenly gap-4 lg:border-r lg:border-border lg:pr-8">
+    <div className="flex h-full w-full flex-col gap-3 p-2 sm:gap-4 sm:p-4 lg:gap-6 lg:p-6">
+      {/* Name, Status, and Actions */}
+      <div className="flex flex-col justify-evenly gap-4">
         {/* Profile Card */}
         <div className="rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-6">
@@ -141,83 +140,6 @@ export function BaseHackathonData({
           <div className="flex flex-col items-center gap-3 sm:flex-row md:justify-start">
             <BaseHackathonGuideButton href={guideHref} />
             <BaseHackathonIssueButton />
-          </div>
-        </div>
-      </div>
-
-      {/* Right Section - Hack Points */}
-      <div className="flex flex-1 items-center justify-center lg:pl-8">
-        <div className="w-full max-w-md">
-          <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-background to-accent/10 p-4 shadow-lg transition-transform hover:scale-[1.02] sm:p-6">
-            {/* Decorative gradient overlay */}
-            <div
-              className="absolute right-0 top-0 h-24 w-24 -translate-y-8 translate-x-8 rounded-full blur-3xl sm:h-32 sm:w-32 sm:-translate-y-10 sm:translate-x-10"
-              style={{ backgroundColor: `primary` }}
-            />
-
-            <div className="relative">
-              {/* Icon */}
-              <div className="mb-2 flex justify-center sm:mb-3">
-                <div
-                  className="rounded-full p-2 sm:p-2.5"
-                  style={{ backgroundColor: `primary` }}
-                >
-                  <Trophy
-                    className="h-6 w-6 sm:h-7 sm:w-7"
-                    style={{ color: "primary" }}
-                  />
-                </div>
-              </div>
-
-              <h2 className="mb-2 text-center text-xl font-bold sm:mb-2.5 sm:text-2xl">
-                Hack Points
-              </h2>
-
-              <p className="mb-4 text-center text-xs leading-relaxed text-muted-foreground sm:mb-6 sm:text-sm">
-                Accumulate by attending workshops, socials, meals, sponsor fair,
-                and more!
-              </p>
-
-              {/* Points Display */}
-              <div className="mb-4 flex items-center justify-center sm:mb-6">
-                <div
-                  className="rounded-xl px-4 py-3 sm:px-6 sm:py-5"
-                  style={{
-                    background: `linear-gradient(to bottom right, primary, primary)`,
-                    boxShadow: `0 0 20px primary`,
-                  }}
-                >
-                  <div
-                    className="text-center text-4xl font-bold tabular-nums tracking-tight sm:text-6xl"
-                    style={{
-                      color: "primary",
-                      textShadow: `0 0 10px primary`,
-                    }}
-                  >
-                    {hacker?.points || 0}
-                  </div>
-                </div>
-              </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <button
-                    className="w-full rounded-lg py-2 text-sm font-semibold transition-all hover:shadow-md sm:py-2.5"
-                    style={{
-                      backgroundColor: `primary`,
-                      color: "secondary",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = `primary`;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = `primary`;
-                    }}
-                  >
-                    View Leaderboard
-                  </button>
-                </DialogTrigger>
-              </Dialog>
-            </div>
           </div>
         </div>
       </div>

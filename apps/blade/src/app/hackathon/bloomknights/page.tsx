@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@forge/auth";
 
 import { BaseHackathonDashboard } from "~/app/_components/dashboard/hackathon-dashboard/components";
 import HackerDashboard from "~/app/_components/dashboard/hacker-dashboard/hacker-dashboard";
 import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
-import NotFoundPage from "~/app/[...not-found]/page";
 import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata: Metadata = {
@@ -26,7 +25,7 @@ export default async function BloomKnightsHackathonPage() {
   });
 
   if (!hackathon) {
-    return <NotFoundPage />;
+    notFound();
   }
 
   const hacker = await api.hackerQuery.getHacker({
