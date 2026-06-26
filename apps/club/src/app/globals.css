@@ -2512,47 +2512,76 @@ html[data-motion="ready"] .club-history-card.is-visible:hover {
 }
 
 .club-nav-action {
+  position: relative;
+  isolation: isolate;
   min-height: 2.75rem;
   gap: 0.45rem;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 0.35rem;
-  padding: 0.8rem 1.05rem;
-  box-shadow: none;
+  overflow: hidden;
+  border: 3px solid #000;
+  border-radius: 0;
+  padding: 0.72rem 1.05rem;
   font-family: var(--font-montserrat), Arial, Helvetica, sans-serif;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0;
+  letter-spacing: 0.04em;
   line-height: 1;
   text-transform: uppercase;
   transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
-    color 160ms ease;
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 150ms ease,
+    filter 180ms ease;
+}
+
+.club-nav-action::before {
+  position: absolute;
+  inset: -45% 115% -45% -55%;
+  z-index: -1;
+  background: linear-gradient(
+    110deg,
+    transparent 10%,
+    rgba(255, 255, 255, 0.56) 48%,
+    transparent 86%
+  );
+  content: "";
+  transform: skewX(-20deg);
+  transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .club-nav-action:hover {
-  box-shadow: none;
+  filter: saturate(1.08);
+  transform: translate3d(-1px, -3px, 0);
+}
+
+.club-nav-action:hover::before {
+  transform: translateX(175%) skewX(-20deg);
+}
+
+.club-nav-action:active {
+  transform: translate3d(2px, 2px, 0);
 }
 
 .club-nav-action-primary {
   background: var(--club-gold);
-  border-color: var(--club-gold);
-  color: #120616;
+  box-shadow: 4px 4px 0 #ffffff;
+  color: #000;
 }
 
 .club-nav-action-primary:hover {
-  background: #ffc85f;
-  color: #120616;
+  background: var(--club-gold);
+  box-shadow: 4px 4px 0 #ffffff;
+  color: #000;
 }
 
 .club-nav-action-secondary {
-  background: transparent;
+  background: #170d1c;
+  box-shadow: 4px 4px 0 rgba(255, 255, 255, 0.35);
   color: #fff;
 }
 
 .club-nav-action-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.28);
+  background: #170d1c;
+  box-shadow: 4px 4px 0 rgba(255, 255, 255, 0.35);
   color: #fff;
 }
 
