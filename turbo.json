@@ -48,6 +48,18 @@
     "ui-add": {
       "cache": false,
       "interactive": true
+    },
+    "test": {
+      "dependsOn": ["^topo", "^build"],
+      "outputs": ["coverage/**"]
+    },
+    "e2e": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "analyze:react": {
+      "outputs": [],
+      "outputLogs": "new-only"
     }
   },
   "globalEnv": [

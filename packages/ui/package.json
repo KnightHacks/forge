@@ -21,7 +21,11 @@
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "ui-add": "pnpm dlx shadcn@latest add && prettier src --write --list-different"
+    "ui-add": "pnpm dlx shadcn@latest add && prettier src --write --list-different",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
+    "analyze:react": "tsx ../../scripts/analyze-react.ts src",
+    "analyze:react:changed": "tsx ../../scripts/analyze-react-changed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -12,7 +12,12 @@
     "lint": "eslint",
     "start": "pnpm with-env next start --port 3003",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ../../.env --"
+    "with-env": "dotenv -e ../../.env --",
+    "analyze:react": "tsx ../../scripts/analyze-react.ts src",
+    "analyze:react:changed": "tsx ../../scripts/analyze-react-changed.ts",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
+    "e2e": "playwright test --pass-with-no-tests"
   },
   "dependencies": {
     "@forge/api": "workspace:*",

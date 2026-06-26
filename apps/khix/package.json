@@ -12,7 +12,12 @@
     "lint": "eslint",
     "start": "NODE_ENV=production pnpm with-env next start --port 3007",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ../../.env --"
+    "with-env": "dotenv -e ../../.env --",
+    "analyze:react": "tsx ../../scripts/analyze-react.ts src",
+    "analyze:react:changed": "tsx ../../scripts/analyze-react-changed.ts",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
+    "e2e": "playwright test --pass-with-no-tests"
   },
   "dependencies": {
     "framer-motion": "^12.34.3",

@@ -30,7 +30,10 @@
     "analyze:react": "tsx scripts/analyze-react.ts",
     "verify:push": "pnpm format && pnpm lint && pnpm typecheck",
     "analyze:react:changed": "tsx scripts/analyze-react-changed.ts",
-    "verify:precommit": "pnpm analyze:react:changed && pnpm format && pnpm lint && pnpm typecheck"
+    "verify:precommit": "pnpm analyze:react:changed && pnpm format && pnpm lint && pnpm typecheck",
+    "analyze:react:all": "turbo run analyze:react",
+    "test": "turbo run test",
+    "test:e2e": "turbo run e2e"
   },
   "devDependencies": {
     "@forge/eslint-config": "workspace:*",

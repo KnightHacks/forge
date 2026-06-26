@@ -73,6 +73,8 @@ Before editing code, read the relevant current Forge docs:
 - Client components are for user interactivity, hooks, dynamic form behavior, optimistic/responsive UI, and browser-only APIs.
 - Isolate client logic to rendered components. Prefer skeletons and Suspense/loading states so users get immediate page feedback while client pieces hydrate or data streams in.
 - Prefer good hook usage for interactive/client state: focused hooks such as `useHacker`, `useHackathon`, or `useHackerApplication` are better than scattered `useState`/`useEffect` spam.
+- Create and maintain custom hooks when they express reusable client behavior, data/mutation orchestration, or UI state transitions. Hooks should have product-intent names and hide noisy tRPC/react-query mechanics from components when reuse or clarity warrants it.
+- Avoid `useEffect` for derived state, simple data shaping, or work that can happen in server reads, tRPC/react-query, form handlers, or memoized derivations.
 - Use memoization intentionally for derived values or expensive computations. Do not cargo-cult `useMemo`/`useCallback`, but do avoid repeated ad-hoc derivations that make components noisy.
 - Keep the current app-router `_components` style unless an SRD justifies a different structure.
 - Organize Blade components by usage/intent, for example:
@@ -239,6 +241,8 @@ Testing strategy should mix integration, unit, and selected UI/E2E coverage.
 - UI E2E should be reserved for high-value paths rather than every component.
 - Tests should be written/generated from `test-cases.md` before implementation when practical.
 - Tests should live per app/package rather than in one global tests package, so targeted package/app commands can run them.
+- React apps should expose `test`, `test:watch`, `e2e`, `analyze:react`, and `analyze:react:changed` scripts in their own `package.json` so Turbo/pnpm filters can target them.
+- Core platform packages should expose `test`/`test:watch` scripts as the default place for unit/integration tests.
 
 ## Comments and human readability
 
@@ -282,11 +286,15 @@ React/UI analysis:
 pnpm analyze:react apps/blade/src
 pnpm analyze:react <component-file-or-directory>
 pnpm analyze:react:changed
+pnpm analyze:react:all
+pnpm --filter=@forge/blade analyze:react
 ```
 
-Use React analysis before broad frontend refactors or when an SRD needs component-surface context. For pre-commit checks, prefer `pnpm analyze:react:changed` so Reforge does not inherit all existing React debt at once.
+Use React analysis before broad frontend refactors or when an SRD needs component-surface context. For pre-commit checks, prefer `pnpm analyze:react:changed` so Reforge does not inherit all existing React debt at once. Use `pnpm analyze:react:all` or filtered package scripts when intentionally auditing an app/package.
 
 React analyzer is useful for component-surface context: exported components, props, optionality, and wrapper patterns. It is not a complete React quality linter. Pair it with TypeScript, ESLint/react-hooks, review against these principles, and SRD/test expectations for proper hook design, accessibility, loading/error states, and data flow.
+
+Agent-driven browser verification is supported through the repo-level Playwright skill and package `e2e` scripts. Use it for high-value flows, visual/runtime validation, form workflows, and accessibility/user-state checks that static analysis cannot prove.
 
 Future SRDs may add feature-specific CLIs or static analyzers, especially for React/Next patterns, accessibility, route conventions, dependency boundaries, or forbidden hard-coded configuration. Do not add a new analyzer casually; document why it is useful, how to run it, and what failure means.
 

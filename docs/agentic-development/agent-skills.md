@@ -60,7 +60,8 @@ Rules:
 ## Repo-level installed skills
 
 - `.claude/skills/deslop` — use for prose/comment review to remove AI-sounding filler and keep writing human-readable.
-- `.claude/skills/react-analyzer` — use with `pnpm analyze:react <path>` for React component surface analysis before frontend refactors or UI SRDs.
+- `.claude/skills/react-analyzer` — use with `pnpm analyze:react <path>` and `pnpm analyze:react:changed` for React component surface analysis before frontend refactors or UI SRDs.
+- `.claude/skills/playwright-skill` — use for agent-driven browser verification, high-value user-flow validation, screenshots, forms, responsive behavior, and runtime UX checks.
 
 ## Agent surface compatibility
 

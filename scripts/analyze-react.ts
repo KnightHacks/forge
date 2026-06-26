@@ -3,7 +3,8 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 import { analyzeReactFile } from "react-analyzer/src/index.ts";
 
-const roots = process.argv.slice(2);
+const strict = process.argv.includes("--strict");
+const roots = process.argv.slice(2).filter((arg) => arg !== "--strict");
 const targets = roots.length > 0 ? roots : ["apps/blade/src"];
 const exts = new Set([".tsx", ".jsx"]);
 
@@ -55,6 +56,6 @@ console.log(
   ),
 );
 
-if (failures.length > 0) {
+if (strict && failures.length > 0) {
   process.exitCode = 1;
 }
