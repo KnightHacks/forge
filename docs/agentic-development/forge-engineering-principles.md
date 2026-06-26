@@ -254,13 +254,19 @@ Code should be readable to future student contributors, not just agents.
 
 Agent verification should use more than tests when useful. Prefer cheap static checks and purpose-built CLI verification before broad manual review.
 
-Baseline push gate for Reforge work:
+Baseline pre-commit gate for Reforge work:
+
+```bash
+pnpm verify:precommit
+```
+
+For non-React changes, the baseline push gate remains:
 
 ```bash
 pnpm verify:push
 ```
 
-Equivalent commands:
+Equivalent core commands:
 
 ```bash
 pnpm format
@@ -275,9 +281,12 @@ React/UI analysis:
 ```bash
 pnpm analyze:react apps/blade/src
 pnpm analyze:react <component-file-or-directory>
+pnpm analyze:react:changed
 ```
 
-Use React analysis before broad frontend refactors or when an SRD needs component-surface context.
+Use React analysis before broad frontend refactors or when an SRD needs component-surface context. For pre-commit checks, prefer `pnpm analyze:react:changed` so Reforge does not inherit all existing React debt at once.
+
+React analyzer is useful for component-surface context: exported components, props, optionality, and wrapper patterns. It is not a complete React quality linter. Pair it with TypeScript, ESLint/react-hooks, review against these principles, and SRD/test expectations for proper hook design, accessibility, loading/error states, and data flow.
 
 Future SRDs may add feature-specific CLIs or static analyzers, especially for React/Next patterns, accessibility, route conventions, dependency boundaries, or forbidden hard-coded configuration. Do not add a new analyzer casually; document why it is useful, how to run it, and what failure means.
 

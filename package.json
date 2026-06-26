@@ -28,7 +28,9 @@
     "typecheck": "turbo run typecheck",
     "ui-add": "turbo run ui-add",
     "analyze:react": "tsx scripts/analyze-react.ts",
-    "verify:push": "pnpm format && pnpm lint && pnpm typecheck"
+    "verify:push": "pnpm format && pnpm lint && pnpm typecheck",
+    "analyze:react:changed": "tsx scripts/analyze-react-changed.ts",
+    "verify:precommit": "pnpm analyze:react:changed && pnpm format && pnpm lint && pnpm typecheck"
   },
   "devDependencies": {
     "@forge/eslint-config": "workspace:*",

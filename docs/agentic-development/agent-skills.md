@@ -61,3 +61,13 @@ Rules:
 
 - `.claude/skills/deslop` — use for prose/comment review to remove AI-sounding filler and keep writing human-readable.
 - `.claude/skills/react-analyzer` — use with `pnpm analyze:react <path>` for React component surface analysis before frontend refactors or UI SRDs.
+
+## Agent surface compatibility
+
+The framework should work across Claude, Codex, Cursor, and other agents.
+
+- Claude-compatible skills live in `.claude/skills/*`.
+- Codex and other repo-aware agents should follow `AGENTS.md` plus the prompt docs in `docs/agentic-development/*`.
+- Cursor rules live in `.cursor/rules/*` and point back to the same canonical docs.
+
+Do not encode unique process truth in only one agent surface. Agent-specific files should route back to the shared Markdown framework.

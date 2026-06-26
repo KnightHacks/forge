@@ -80,4 +80,4 @@ pnpm --filter=@forge/api typecheck
 pnpm --filter=@forge/db typecheck
 ```
 
-Before pushing Reforge work, `pnpm verify:push` should pass unless a blocker is explicitly documented. Use `pnpm analyze:react <path>` for meaningful frontend changes. Do not claim a command passed unless it actually ran and passed.
+Before pushing Reforge work, `pnpm verify:push` should pass unless a blocker is explicitly documented. Before committing meaningful React changes, run `pnpm analyze:react:changed`; use `pnpm analyze:react <path>` for broader frontend analysis. Do not claim a command passed unless it actually ran and passed.

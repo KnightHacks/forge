@@ -1,0 +1,9 @@
+---
+alwaysApply: true
+---
+
+On the `reforge/main` branch, follow the agentic development framework in `docs/agentic-development/README.md` and the Forge engineering principles in `docs/agentic-development/forge-engineering-principles.md`.
+
+For frontend work, use `pnpm analyze:react:changed` before committing meaningful React changes and consult the Blade design system when available.
+
+For implementation work, use `docs/agentic-development/implementation-prompt.md` as the operating checklist.
