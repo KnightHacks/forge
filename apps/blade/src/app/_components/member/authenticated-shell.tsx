@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 
-import type { Session } from "@forge/auth/server";
-
+import type { Session } from "~/server/auth";
 import { SignOutButton } from "~/app/_components/auth/sign-out-button";
 
 export function AuthenticatedShell({

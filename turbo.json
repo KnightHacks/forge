@@ -74,7 +74,10 @@
     "DISCORD_DAILY_ANIMAL_WEBHOOK_URL",
     "DISCORD_LEETCODE_DAILY_WEBHOOK_URL",
     "DISCORD_WEATHER_API_KEY",
-    "BLADE_URL"
+    "BLADE_E2E_AUTH",
+    "BLADE_E2E_DEFAULT_USER_ID",
+    "BLADE_URL",
+    "NEXT_PUBLIC_BLADE_E2E_AUTH"
   ],
   "globalPassThroughEnv": ["NODE_ENV", "CI", "npm_lifecycle_event"]
 }

@@ -340,9 +340,18 @@ Test cases are defined in `test-cases.md`.
 
 Expected placement:
 
-- `@forge/api` tests for member read/create auth behavior and validation.
-- `@forge/blade` tests for route gating and signup/dashboard UI behavior.
-- Playwright e2e for the high-value path when an auth test harness or mocked session strategy exists.
+- `@forge/api` tests for member read/create auth behavior and validation under `packages/api/src/tests/**`.
+- `@forge/validators` tests for member form/validator contracts under `packages/validators/src/tests/**`.
+- `@forge/blade` tests for route gating and signup/dashboard UI behavior under `apps/blade/src/tests/**`.
+- Playwright e2e for the high-value path under `apps/blade/src/tests/e2e/**`.
+
+Implemented Playwright auth strategy:
+
+- Production and normal development continue to use real Discord/Better Auth.
+- E2e tests enable `BLADE_E2E_AUTH=true` and use a Blade-local, env-gated session cookie to represent a Discord-authenticated `User`.
+- The e2e sign-in compatibility route still exercises `/api/auth/signin?provider=discord&callbackURL=...`, but redirects into the guarded e2e session route instead of external Discord OAuth.
+- The e2e auth route rejects requests unless the env flag is set and verifies that the requested test user exists in `auth_user`.
+- The Playwright suite seeds deterministic test users/members, asserts DB side effects and rollback behavior, and cleans up its rows after the run.
 
 Expected commands, subject to actual harness availability:
 

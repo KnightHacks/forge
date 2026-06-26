@@ -1,9 +1,8 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
-import { auth } from "@forge/auth/server";
-
 import { DiscordSignInLink } from "~/app/_components/auth/discord-sign-in-link";
+import { auth } from "~/server/auth";
 
 export default async function HomePage() {
   const session = await auth();

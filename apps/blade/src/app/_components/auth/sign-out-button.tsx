@@ -7,6 +7,8 @@ import { LogOut } from "lucide-react";
 import { authClient } from "@forge/auth";
 import { Button } from "@forge/ui/button";
 
+import { env } from "~/env";
+
 export function SignOutButton() {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
@@ -19,7 +21,11 @@ export function SignOutButton() {
       disabled={isPending}
       onClick={async () => {
         setIsPending(true);
-        await authClient.signOut();
+        if (env.NEXT_PUBLIC_BLADE_E2E_AUTH === "true") {
+          await fetch("/api/e2e/signout", { method: "POST" });
+        } else {
+          await authClient.signOut();
+        }
         router.replace("/");
         router.refresh();
       }}

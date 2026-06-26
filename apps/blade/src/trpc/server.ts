@@ -4,8 +4,8 @@ import { createHydrationHelpers } from "@trpc/react-query/rsc";
 
 import type { AppRouter } from "@forge/api";
 import { createCaller, createTRPCContext } from "@forge/api";
-import { auth } from "@forge/auth/server";
 
+import { auth } from "~/server/auth";
 import { createQueryClient } from "./query-client";
 
 const createContext = cache(async () => {

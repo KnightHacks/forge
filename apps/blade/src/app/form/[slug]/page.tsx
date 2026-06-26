@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
-import { auth } from "@forge/auth/server";
 import {
   MEMBER_SIGNUP_FORM_SLUG,
   memberSignupFormDefinition,
@@ -9,6 +8,7 @@ import {
 
 import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { MemberSignupForm } from "~/app/_components/member/member-signup-form";
+import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata: Metadata = {

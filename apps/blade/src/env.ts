@@ -13,12 +13,17 @@ export const env = createEnv({
       .default("development"),
     PORT: z.coerce.number().default(3000),
   },
-  server: {},
+  server: {
+    BLADE_E2E_AUTH: z.enum(["true", "false"]).optional(),
+    BLADE_E2E_DEFAULT_USER_ID: z.string().uuid().optional(),
+  },
   client: {
+    NEXT_PUBLIC_BLADE_E2E_AUTH: z.enum(["true", "false"]).optional(),
     NEXT_PUBLIC_BLADE_URL: z.string().url(),
   },
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_BLADE_E2E_AUTH: process.env.NEXT_PUBLIC_BLADE_E2E_AUTH,
     PORT: process.env.PORT,
     NEXT_PUBLIC_BLADE_URL:
       process.env.NEXT_PUBLIC_BLADE_URL || "http://localhost:3000",

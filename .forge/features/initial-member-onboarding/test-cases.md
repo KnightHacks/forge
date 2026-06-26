@@ -20,10 +20,13 @@ The member form is code-owned for this slice. Submitting it should use the gener
 
 ## Test placement plan
 
-- API member/session behavior: package-level tests near `packages/api`.
-- Member form validation and callback input validation: package-level tests near `packages/validators` and/or `packages/api`.
-- Route/shell behavior: app-level tests near `apps/blade`.
-- End-to-end user flow: Playwright under `apps/blade` once the auth/session test strategy is available.
+- Package/app tests should live under that workspace's `src/tests/` directory, grouped by domain where useful.
+- API member/session behavior: `packages/api/src/tests/**`.
+- Member form validation and callback input validation: `packages/validators/src/tests/**` and/or `packages/api/src/tests/**`.
+- Route/shell behavior and lightweight UI integration: `apps/blade/src/tests/**`.
+- End-to-end user flow: Playwright under `apps/blade/src/tests/e2e/**`, using the env-gated Blade e2e auth seam.
+
+Playwright coverage now includes public routing, e2e Discord-sign-in compatibility, no-member onboarding redirect, dashboard skeleton shape, missing/invalid field validation, Code of Conduct enforcement, valid transactional signup, callback-failure rollback, Guild visibility copy, existing-member dashboard/sign-out, signup upload previews/rejections, dashboard resume/profile-picture replace/clear, and unsupported form slugs.
 
 Candidate commands:
 

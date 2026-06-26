@@ -11,12 +11,16 @@ import type { WriteDb } from "../db";
 import { normalizeProfilePictureObjectNameForPersistence } from "../profile-picture/storage";
 import { normalizeResumeObjectNameForPersistence } from "../resume/storage";
 
-function isUniqueViolation(error: unknown) {
+function isUniqueViolation(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+
+  if ("code" in error && error.code === "23505") return true;
+
   return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    error.code === "23505"
+    "cause" in error &&
+    typeof error.cause === "object" &&
+    error.cause !== null &&
+    isUniqueViolation(error.cause)
   );
 }
 

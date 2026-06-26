@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { calculateMemberAge, memberSchema } from "./member";
+import {
+  calculateMemberAge,
+  MEMBER_CODE_OF_CONDUCT_URL,
+  MEMBER_SIGNUP_CALLBACK_PROC,
+  MEMBER_SIGNUP_COMPLETION_REDIRECT_URL,
+  MEMBER_SIGNUP_FORM_SLUG,
+  memberSchema,
+  memberSignupCallbackConnections,
+  memberSignupFields,
+  memberSignupFormDefinition,
+  memberSignupFormJsonSchema,
+} from "../member";
 
 const validResponse = {
   firstName: "Lenny",
@@ -89,6 +100,64 @@ describe("member onboarding validation", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("defines signup fields from editable member data only", () => {
+    const fieldNames = new Set<string>(
+      memberSignupFields.map((field) => field.name),
+    );
+
+    expect(fieldNames).toContain("firstName");
+    expect(fieldNames).toContain("guildProfileVisible");
+    expect(fieldNames).toContain("profilePictureUrl");
+    expect(fieldNames).toContain("resumeUrl");
+
+    for (const serverOwnedField of [
+      "id",
+      "userId",
+      "discordUser",
+      "age",
+      "points",
+      "dateCreated",
+      "timeCreated",
+    ]) {
+      expect(fieldNames.has(serverOwnedField)).toBe(false);
+    }
+  });
+
+  it("keeps the code-owned form definition wired to the member callback", () => {
+    expect(memberSignupFormDefinition.slugName).toBe(MEMBER_SIGNUP_FORM_SLUG);
+    expect(memberSignupFormDefinition.callbackProc).toBe(
+      MEMBER_SIGNUP_CALLBACK_PROC,
+    );
+    expect(memberSignupFormDefinition.completionRedirectUrl).toBe(
+      MEMBER_SIGNUP_COMPLETION_REDIRECT_URL,
+    );
+    expect(memberSignupCallbackConnections).toHaveLength(
+      memberSignupFields.length,
+    );
+    expect(memberSignupCallbackConnections).toEqual(
+      memberSignupFields.map((field) => ({
+        formField: field.name,
+        procField: field.name,
+      })),
+    );
+  });
+
+  it("requires Code of Conduct acceptance in the form definition", () => {
+    const codeOfConductField = memberSignupFields.find(
+      (field) => field.name === "codeOfConductAccepted",
+    );
+
+    expect(codeOfConductField).toMatchObject({
+      description: MEMBER_CODE_OF_CONDUCT_URL,
+      kind: "checkbox",
+      required: true,
+    });
+    expect(memberSignupFormJsonSchema.required).toContain(
+      "codeOfConductAccepted",
+    );
+    expect(memberSignupFormJsonSchema.additionalProperties).toBe(false);
   });
 
   it("calculates age before and after birthday boundaries", () => {

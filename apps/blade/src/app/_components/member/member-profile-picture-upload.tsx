@@ -123,7 +123,10 @@ export function MemberProfilePictureUpload({
   return (
     <div className={cn("flex flex-col items-center gap-2", className)}>
       <div className="relative">
-        <Avatar className="h-32 w-32 border-4 border-background shadow-2xl shadow-black/40 ring-1 ring-white/15">
+        <Avatar
+          key={previewSource ?? "initials"}
+          className="h-32 w-32 border-4 border-background shadow-2xl shadow-black/40 ring-1 ring-white/15"
+        >
           {previewSource && (
             <AvatarImage
               src={previewSource}

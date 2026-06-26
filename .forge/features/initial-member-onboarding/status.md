@@ -41,6 +41,9 @@ Current phase: Implemented / validation
 - 2026-06-26: Added `architecture-review.md` to map the full feature diff for human review, including file placement, runtime flow, package boundaries, transaction behavior, upload ownership, validation history, and review caveats.
 - 2026-06-26: Added `apps/blade/DESIGN_SYSTEM.md` from the Blade design-system draft and wired the frontend-design guidance for Codex, Claude, and Cursor to read it for meaningful Blade UI work. The doc includes the current dashboard surface hierarchy: lighter top-level panels with darker gray/purple nested tiles/link rows and top-aligned dashboard panel content.
 - 2026-06-26: Added `legacy-comparison.md` to inventory the current member onboarding feature logic and compare it against legacy Blade/API behavior across efficiency, readability, and maintainability.
+- 2026-06-26: Added focused test-spec coverage before push and standardized package/app tests under `src/tests/`: member form definition/CoC/callback wiring, generic forms callback mapping and callback-failure propagation, member creation server-derived fields and duplicate handling, resume/profile-picture object safety, legacy MinIO profile-picture URL support, inline PDF resume preview headers, and Blade dashboard UI integration.
+- 2026-06-26: Added a full Playwright e2e suite for the initial member onboarding path. The suite uses an env-gated Blade e2e auth cookie to stand in for a Discord-authenticated user while preserving real Discord/Better Auth as the production path.
+- 2026-06-26: Playwright surfaced two real implementation bugs that were fixed: wrapped Drizzle unique-constraint errors now translate into safe duplicate-member copy, and the dashboard avatar remounts after clearing a profile picture so initials return reliably.
 
 ## Resolved implementation choices
 
@@ -55,7 +58,7 @@ Current phase: Implemented / validation
 ## Follow-ups / runtime caveats
 
 - `Member.userId` is not schema-unique. The API prevents duplicate profiles in the normal sequential path, but a later DB hardening slice should consider a unique constraint if production data allows it.
-- Authenticated screenshot automation is limited by Better Auth's signed browser cookie. Public landing page screenshots were captured, and authenticated dashboard/form behavior was checked through type/lint/analyzer plus live local server logs.
+- Authenticated Playwright automation is available through the env-gated e2e auth seam. Real external Discord OAuth is still not executed in automated tests.
 
 ## Task list
 
@@ -83,6 +86,9 @@ Current phase: Implemented / validation
 - [x] Add human-review architecture document for the feature diff.
 - [x] Add Blade design-system document and wire frontend agent guidance to it.
 - [x] Add legacy comparison document for the implemented member onboarding slice.
+- [x] Add focused test coverage for the member onboarding test spec's API/validator/storage-critical paths.
+- [x] Consolidate tests under each workspace's `src/tests/` directory and add Blade dashboard UI integration coverage.
+- [x] Add Playwright e2e coverage for the landing -> Discord sign-in compatibility -> member signup -> member dashboard flow.
 
 ## Validation / commands
 
@@ -212,6 +218,27 @@ Current phase: Implemented / validation
 - `npm exec --yes pnpm@9.12.1 -- prettier --write .forge/features/initial-member-onboarding/architecture-review.md`: passed after adding the human-review architecture document.
 - `npm exec --yes pnpm@9.12.1 -- prettier --write apps/blade/DESIGN_SYSTEM.md docs/agentic-development/frontend-design-skill.md AGENTS.md .claude/skills/frontend-design/SKILL.md .forge/features/initial-member-onboarding/architecture-review.md .forge/features/initial-member-onboarding/status.md`: passed after adding and wiring the Blade design-system document.
 - `npm exec --yes pnpm@9.12.1 -- prettier --write --parser markdown .cursor/rules/frontend-design.mdc`: passed after adding and wiring the Blade design-system document.
+- `npm exec --yes pnpm@9.12.1 -- --filter @forge/validators test`: passed after unified `src/tests` layout, 1 test file / 10 tests.
+- `npm exec --yes pnpm@9.12.1 -- --filter @forge/validators lint`: passed after unified `src/tests` layout.
+- `npm exec --yes pnpm@9.12.1 -- --filter @forge/validators typecheck`: passed after unified `src/tests` layout.
+- `npm exec --yes pnpm@9.12.1 -- --filter @forge/api test`: passed after unified `src/tests` layout, 5 test files / 15 tests.
+- `npm exec --yes pnpm@9.12.1 -- --filter @forge/api lint`: passed after unified `src/tests` layout.
+- `npm exec --yes pnpm@9.12.1 -- --filter @forge/api typecheck`: passed after unified `src/tests` layout.
+- `npm exec --yes pnpm@9.12.1 -- --filter @forge/blade test`: passed after adding dashboard UI integration, 1 test file / 3 tests.
+- `npm exec --yes pnpm@9.12.1 -- --filter @forge/blade lint`: passed after adding dashboard UI integration.
+- `npm exec --yes pnpm@9.12.1 -- --filter @forge/blade typecheck`: passed after adding dashboard UI integration.
+- `git diff --check`: passed after unified `src/tests` layout and dashboard UI integration.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade e2e`: passed after Playwright onboarding coverage, 1 e2e file / 13 tests.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api test`: passed after wrapped Drizzle unique-violation coverage, 5 test files / 16 tests.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api lint`: passed after Playwright/duplicate-error follow-up.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api typecheck`: passed after Playwright/duplicate-error follow-up.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed after Playwright auth harness and avatar fallback fix.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed after Playwright auth harness and avatar fallback fix.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade test`: passed after excluding Playwright specs from Vitest, 1 test file / 3 tests.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators test`: passed after Playwright follow-up, 1 test file / 10 tests.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators lint`: passed after Playwright follow-up.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators typecheck`: passed after Playwright follow-up.
+- `git diff --check`: passed after Playwright follow-up and artifact updates.
 
 ## Links
 
