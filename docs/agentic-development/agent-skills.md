@@ -1,67 +1,21 @@
-# Proposed Agent Skills
+# Agent Skills
 
-Skills are paused for now. Do not configure or expand permanent skills until the core framework and engineering principles are approved.
+Forge maintains repo-level skills under `.claude/skills/`. Use them when the task matches; canonical process truth still lives in `docs/agentic-development/*`, `AGENTS.md`, and feature artifacts.
 
-This file only records likely future operating modes.
+Implementation agents should follow the skill registry in [`implementation-prompt.md`](./implementation-prompt.md). Spec/SRD/test-case work uses the Forge-native writer skills below.
 
-## Likely core skills later
+## Forge-native artifact skills
 
-### Spec/SRD Writer
+- `.claude/skills/forge-spec-writer` — reverse-prompt for `spec.md`; do not guess missing product intent.
+- `.claude/skills/forge-srd-writer` — reverse-prompt for `srd.md`; do not guess technical constraints.
+- `.claude/skills/forge-test-case-writer` — reverse-prompt for `test-cases.md`; do not generate implementation tests.
 
-Creates or revises:
+## Repo-level implementation and validation skills
 
-- `spec.md` for non-technical user/product intent
-- `srd.md` for technical requirements, architecture, contracts, data, and rollout constraints
-
-Rules:
-
-- Keep `spec.md` user-facing and non-technical.
-- Put technical decisions and interface details in `srd.md`.
-- Mark assumptions and open questions instead of guessing.
-
-### Test Case Writer
-
-Creates or revises `test-cases.md`.
-
-Rules:
-
-- Use setup/action/expected observations.
-- Prefer black-box behavior.
-- Include negative and regression cases.
-- Reference requirement or contract IDs when useful.
-
-### Test Generator
-
-Uses `test-generation-prompt.md` to create actual tests.
-
-Rules:
-
-- Do not implement product code.
-- Place tests at the owning boundary.
-- Map tests back to test-case IDs.
-
-### Implementation Agent
-
-Uses `implementation-prompt.md` to implement code.
-
-Rules:
-
-- Work from specs and tests.
-- Use git diff mechanics.
-- Keep changes scoped.
-- Report ambiguity instead of inventing behavior.
-
-## Possible later skills
-
-- Review Agent, if reviews repeatedly miss spec drift, test gaps, or contract changes.
-- Bugfix Agent, if bug repairs repeatedly skip regression/spec updates.
-- Main Sync Auditor, once `reforge/main` diverges and recurring merge triage becomes meaningful.
-
-## Repo-level installed skills
-
-- `.claude/skills/deslop` — use for prose/comment review to remove AI-sounding filler and keep writing human-readable.
-- `.claude/skills/react-analyzer` — use with `pnpm analyze:react <path>` and `pnpm analyze:react:changed` for React component surface analysis before frontend refactors or UI SRDs.
-- `.claude/skills/playwright-skill` — use for agent-driven browser verification, high-value user-flow validation, screenshots, forms, responsive behavior, and runtime UX checks.
+- `.claude/skills/deslop` — prose/comment review to remove AI-sounding filler.
+- `.claude/skills/react-analyzer` — React component surface analysis; pair with `pnpm analyze:react` scripts.
+- `.claude/skills/playwright-skill` — agent-driven browser verification for high-value flows.
+- `.claude/skills/spec-miner` — map legacy or undocumented code before changing behavior.
 
 ## Agent surface compatibility
 
