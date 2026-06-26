@@ -1,6 +1,6 @@
 # Initial Member Onboarding Status
 
-Current phase: Draft artifact bundle / reverse-prompting
+Current phase: Implemented / validation
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -14,14 +14,47 @@ Current phase: Draft artifact bundle / reverse-prompting
 - 2026-06-25: Accepted real Discord auth as the authentication path; legacy auth/form code can be used as evidence without inheriting implementation debt.
 - 2026-06-25: Accepted that member fields should come from the existing DB-backed member model and that a member validator may be added/updated.
 - 2026-06-25: Reviewed legacy forms/callback flow and decided not to reuse client-side `handleCallbacks` as-is for member creation; member onboarding needs server-controlled callback execution and visible failure handling.
+- 2026-06-26: Implemented the built-in member signup form as a code-owned definition that is upserted into `FormsSchemas` and paired with a stable `TrpcFormConnection` row at runtime.
+- 2026-06-26: Refined callback execution through generic `forms.createResponse`. The forms manager validates and persists `FormResponse`, then invokes the registered `member.createMember` callback through a server-owned connection map in one database transaction.
+- 2026-06-26: Clarified callback failure semantics: member signup has no background queue yet. `FormResponse` insert and `member.createMember` run synchronously in the same transaction, so callback failure rolls the response back.
+- 2026-06-26: Simplified validator/API readability: renamed long member onboarding schema names to `memberFormSchema` and `memberSchema`, moved reusable form zod helpers into `@forge/validators/forms`, introduced a shared API `WriteDb` type for transaction-capable utilities, and removed noisy `MemberInsert["field"]` casts from member creation.
+- 2026-06-26: Rebalanced router colocation: moved member creation back beside `memberRouter` so the `member.createMember` procedure and its forms callback share a local write path instead of hiding the workflow in a member utility file. Added engineering-principles guidance for comments, naming, colocation, and extraction.
+- 2026-06-26: Split Guild-facing optional profile data into a `GuildProfile` validator type while continuing to persist on the existing `Member` table for this slice. The signup form now uses Personal / Academics / Guild sections, removes the Discord status rail and onboarding pill, and centers the form.
+- 2026-06-26: Deferred QR generation, dues, admin form management, response browsing, Discord logging, and Discord role side effects.
+- 2026-06-26: Added resume PDF upload back into the initial slice because it is part of the existing member model and expected member profile capability.
+- 2026-06-26: Replaced the `next/link` OAuth CTA with a plain anchor so Discord auth starts as browser navigation instead of a Next.js RSC navigation attempt.
+- 2026-06-26: Added repo-wide frontend design guidance for Codex (`AGENTS.md`), Claude (`.claude/skills/frontend-design/SKILL.md`), and Cursor (`.cursor/rules/frontend-design.mdc`).
+- 2026-06-26: Polished the authenticated member signup screen after browser review: left-aligned the intro, increased top spacing, added subtle staggered reveal animation, and kept reduced-motion handling.
+- 2026-06-26: Added member resume PDF preview to both signup and dashboard upload surfaces. Signup/dashboard uploads preview newly selected PDFs from local object URLs; the dashboard can also preview the saved resume through the existing signed `resume.getResume` query.
+- 2026-06-26: Replaced the signup form's page-load reveal with `IntersectionObserver`-triggered section reveals, clarified Guild profile visibility semantics, and tuned card/content spacing.
+- 2026-06-26: Moved member creation/write logic out of `routers/member.ts` into `utils/member/profile.ts`, and moved the member signup form callback/config into `utils/member/onboarding.ts`. The router now stays procedure-shaped while the shared form callback and tRPC path use the same utility.
+- 2026-06-26: Refreshed the feature artifacts to reflect the implemented extras: code-owned generic form response flow, transactional member callback behavior, resume upload/preview/update/clear behavior, Guild visibility semantics, and observer-driven form motion.
+- 2026-06-26: Added `apps/blade/src/hooks/use-member.ts` as the reusable current-member hook and moved the dashboard member/signup branch into a client component that uses the hook while keeping the page-level session guard server-side.
+- 2026-06-26: Moved member signup rendering to `/form/member-signup`; `/dashboard` now shows a dashboard-shaped skeleton while member state loads and redirects no-member users to the form route. Code-owned forms can expose `completionRedirectUrl`, and member signup uses that metadata to return to `/dashboard` after successful completion.
+- 2026-06-26: Added MinIO-backed member profile-picture upload, preview, update, and clear behavior. The flow reuses the existing `Member.profilePictureUrl` column as a server-generated object-name field rather than adding a new table or public URL field.
+- 2026-06-26: Restyled the member dashboard around a Guild social-profile card. Removed the "Member profile active" pill, moved Guild fields into the right card, changed profile-picture upload into an avatar overlay action, and moved dashboard resume preview into a dialog viewer.
+- 2026-06-26: Stabilized the dashboard layout so both desktop panels share the same height/structure, skeletons use the loaded dashboard shell, content fades inside panels, and profile-picture upload pending state no longer changes the Guild card height.
+- 2026-06-26: Added required Knight Hacks Code of Conduct acceptance to member signup. The checkbox links to the Notion Code of Conduct and is validated through the member form/callback flow without adding a `Member` table field.
+- 2026-06-26: Removed the Guild card banner and left-panel "Member profile" eyebrow, switched dashboard content animation to opacity-only, and constrained the resume preview dialog for mobile viewport padding.
+- 2026-06-26: Tightened the Guild avatar controls by replacing the profile-picture remove row with an icon-only destructive circle on the avatar, reclaimed that space for clamped Guild bio copy, top-aligned the left dashboard panel, and standardized nested dashboard surfaces/link rows on the darker inset treatment.
+- 2026-06-26: Removed dashboard entrance animations entirely after skeleton review. The loaded dashboard now replaces the skeleton immediately, and the skeleton header/Guild profile placeholders were adjusted to match the loaded layout more closely.
+- 2026-06-26: Added `architecture-review.md` to map the full feature diff for human review, including file placement, runtime flow, package boundaries, transaction behavior, upload ownership, validation history, and review caveats.
+- 2026-06-26: Added `apps/blade/DESIGN_SYSTEM.md` from the Blade design-system draft and wired the frontend-design guidance for Codex, Claude, and Cursor to read it for meaningful Blade UI work. The doc includes the current dashboard surface hierarchy: lighter top-level panels with darker gray/purple nested tiles/link rows and top-aligned dashboard panel content.
 
-## Open questions
+## Resolved implementation choices
 
-- Should the built-in member signup form live as a DB seed, code-owned form definition, or hybrid?
-- Should callback execution happen inside `forms.createResponse`, an onboarding-specific submit procedure, or a shared server-side callback runner?
-- Should form response persistence and member creation happen in one transaction?
-- Should QR generation be deferred or preserved immediately?
-- Should the first dashboard show only profile confirmation, or also include placeholders for future dues/events/member features?
+- Built-in form strategy: code-owned definition with runtime upsert into existing form tables.
+- Callback strategy: generic `forms.createResponse` mutation that invokes registered server callbacks, including `member.createMember` for member signup.
+- Consistency strategy: form response persistence and member creation are transactional.
+- QR generation: deferred.
+- Dashboard content: member summary, Guild social-profile card, avatar/profile-picture update, and resume upload/update with dialog preview.
+- Guild profile shape: typed separately from core member fields, backed by existing `Member` columns until a future Guild/Profile table is approved.
+- Profile-picture storage: use MinIO with existing `Member.profilePictureUrl`; no Guild profile table split or DB migration in this slice.
+
+## Follow-ups / runtime caveats
+
+- `Member.userId` is not schema-unique. The API prevents duplicate profiles in the normal sequential path, but a later DB hardening slice should consider a unique constraint if production data allows it.
+- Authenticated screenshot automation is limited by Better Auth's signed browser cookie. Public landing page screenshots were captured, and authenticated dashboard/form behavior was checked through type/lint/analyzer plus live local server logs.
 
 ## Task list
 
@@ -31,14 +64,152 @@ Current phase: Draft artifact bundle / reverse-prompting
 - [x] Draft `test-cases.md` with observable behavior cases and negative cases.
 - [x] Human answered initial caveat and form-driven onboarding direction.
 - [x] Incorporate initial caveat, User/Member split, DB-schema reuse, validators, real Discord auth, and form-callback direction into artifacts.
-- [ ] Resolve remaining form runtime architecture questions.
-- [ ] Revise artifacts after remaining architecture/dashboard decisions.
-- [ ] Human approves artifact bundle before implementation/test generation.
+- [x] Resolve remaining form runtime architecture questions.
+- [x] Add `@forge/validators` member onboarding schema and built-in member signup form definition.
+- [x] Add protected member tRPC read/create procedures.
+- [x] Add generic form response manager with runtime code-owned form upsert and transactional callback execution.
+- [x] Reintroduce active Blade Better Auth and tRPC route handlers.
+- [x] Build public landing page with Discord sign-in.
+- [x] Build authenticated dashboard route that gates unauthenticated users and chooses signup vs dashboard server-side.
+- [x] Build dynamic member signup form rendering from the built-in form definition.
+- [x] Build minimal member dashboard and sign-out path.
+- [x] Add PDF resume upload to member signup and existing-member dashboard.
+- [x] Add profile-picture upload to member signup and existing-member dashboard.
+- [x] Restyle dashboard Guild profile card and resume viewer.
+- [x] Add repo-wide frontend-design skill guidance for Claude, Codex, and Cursor.
+- [x] Add focused validator tests.
+- [x] Update status after implementation.
+- [x] Add human-review architecture document for the feature diff.
+- [x] Add Blade design-system document and wire frontend agent guidance to it.
 
 ## Validation / commands
 
 - `pnpm forge:feature initial-member-onboarding "Initial Member Onboarding"`: blocked locally because `pnpm` is not on PATH in this shell.
 - Manual scaffold created with `apply_patch`.
+- `npm exec --yes pnpm@9.12.1 -- install --no-frozen-lockfile`: passed. Updated lockfile for the new `@forge/validators` dependency on `@forge/consts`.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators format`: passed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators lint`: passed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators typecheck`: passed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators test`: passed, 1 test file / 5 tests.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators typecheck`: passed after member validator rename/form helper extraction.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api format`: passed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api lint`: passed after restoring real MinIO client/resume upload path.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api typecheck`: passed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api exec eslint src/root.ts src/trpc.ts src/routers/auth.ts src/routers/forms.ts src/routers/member.ts`: passed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api test`: passed with no test files found.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade format`: passed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade test`: passed with no test files found.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade e2e`: passed with no tests.
+- `npm exec --yes pnpm@9.12.1 -- analyze:react apps/blade/src/app`: passed, 10 files / 7 components / 0 failures.
+- `npm exec --yes pnpm@9.12.1 -- analyze:react:changed`: blocked by analyzer failure in legacy file `legacy/apps/blade/src/trpc/react.tsx` while comparing the reforge branch against `origin/main`.
+- `git diff --check`: passed.
+- `tmux` dev server `forge-blade-dev`: running on `http://localhost:3000`.
+- Local Postgres started with Homebrew `postgresql@17` on `localhost:5432`, database `local`, role `root` / `mysecretpassword`.
+- `npm exec --yes pnpm@9.12.1 -- db:migrate`: passed against the local Postgres instance.
+- Playwright browser check against `http://localhost:3000`: passed for public landing page on desktop and mobile. Verified HTTP 200, `h1` text `Everything Knight Hacks, in one platform.`, and 2 rendered images.
+- Discord sign-in compatibility route checked at `/api/auth/signin?provider=discord&callbackURL=%2Fdashboard`: returns a deliberate `503 Auth database unavailable` while Postgres is offline instead of an opaque 500.
+- After local Postgres startup and migrations, Discord sign-in compatibility route returns `307 Temporary Redirect` to `https://discord.com/api/oauth2/authorize...`.
+- Live server logs show Discord OAuth callback returned 302, `/dashboard` returned 200, and member signup tRPC returned 200.
+- Resume upload path restored from legacy shape: `resume.uploadResume` validates PDF data URLs and stores in MinIO bucket `member-resumes`; `resume.saveMemberResume` persists the owned object path for existing member profiles.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/auth format`: passed after DB-unavailable error handling patch.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/auth lint`: passed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/auth typecheck`: passed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade format`: passed after legacy-style landing refresh.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed.
+- Playwright public landing screenshot/console check passed after UI refresh: h1 `Everything Knight Hacks, in one platform.`, signin href `/api/auth/signin?provider=discord&callbackURL=%2Fdashboard`, no unexpected console warnings. Screenshots captured at `/tmp/blade-landing-redesign-desktop.png` and `/tmp/blade-landing-redesign-mobile.png`.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write apps/blade/src/app/_components/member/member-signup-form.tsx apps/blade/src/app/globals.css`: passed after signup layout polish.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed after signup layout polish.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed after signup layout polish.
+- `npm exec --yes pnpm@9.12.1 -- analyze:react apps/blade/src/app`: passed after signup layout polish, 10 files / 7 components / 0 failures.
+- `git diff --check`: passed after signup layout polish.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write apps/blade/src/app/_components/member/member-signup-form.tsx apps/blade/src/app/_components/member/member-resume-upload.tsx apps/blade/src/app/_components/member/resume-preview.tsx apps/blade/src/app/globals.css packages/validators/src/member.ts .forge/features/initial-member-onboarding/spec.md .forge/features/initial-member-onboarding/srd.md .forge/features/initial-member-onboarding/test-cases.md`: passed after resume preview / observer polish.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed after resume preview / observer polish.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed after resume preview / observer polish.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators lint`: passed after Guild visibility text update.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators typecheck`: passed after Guild visibility text update.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators test`: passed after Guild visibility text update, 1 test file / 5 tests.
+- `npm exec --yes pnpm@9.12.1 -- analyze:react apps/blade/src/app`: passed after resume preview / observer polish, 11 files / 8 components / 0 failures.
+- `git diff --check`: passed after resume preview / observer polish.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write packages/api/src/routers/member.ts packages/api/src/utils/forms/config.ts packages/api/src/utils/member/profile.ts packages/api/src/utils/member/onboarding.ts`: passed after member write-path extraction.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api lint`: passed after member write-path extraction.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api typecheck`: passed after member write-path extraction.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api test`: passed after member write-path extraction; no API test files found.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write .forge/features/initial-member-onboarding/spec.md .forge/features/initial-member-onboarding/srd.md .forge/features/initial-member-onboarding/test-cases.md`: passed after artifact refresh.
+- `git diff --check`: passed after artifact refresh.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write apps/blade/src/hooks/use-member.ts apps/blade/src/app/_components/member/dashboard-client.tsx apps/blade/src/app/dashboard/page.tsx apps/blade/src/app/_components/member/member-dashboard.tsx apps/blade/src/app/_components/member/member-signup-form.tsx`: passed after `useMember` hook extraction.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed after `useMember` hook extraction.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed after `useMember` hook extraction.
+- `npm exec --yes pnpm@9.12.1 -- analyze:react apps/blade/src/app`: passed after `useMember` hook extraction, 12 files / 9 components / 0 failures.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write .forge/features/initial-member-onboarding/spec.md .forge/features/initial-member-onboarding/srd.md .forge/features/initial-member-onboarding/test-cases.md packages/validators/src/member.ts packages/api/src/utils/forms/manager.ts packages/api/src/utils/member/onboarding.ts apps/blade/src/hooks/use-member.ts apps/blade/src/app/_components/member/dashboard-client.tsx apps/blade/src/app/form/[slug]/page.tsx apps/blade/src/app/_components/member/member-signup-form.tsx`: passed after form route/dashboard skeleton work.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators lint`: passed after form route/dashboard skeleton work.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators typecheck`: passed after form route/dashboard skeleton work.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators test`: passed after form route/dashboard skeleton work, 1 test file / 5 tests.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api lint`: passed after form route/dashboard skeleton work.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api typecheck`: passed after form route/dashboard skeleton work.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed after form route/dashboard skeleton work.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed after form route/dashboard skeleton work.
+- `npm exec --yes pnpm@9.12.1 -- analyze:react apps/blade/src/app`: passed after form route/dashboard skeleton work, 13 files / 9 components / 0 failures.
+- `git diff --check`: passed after form route/dashboard skeleton work.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write apps/blade/src/hooks/use-object-preview-url.ts apps/blade/src/app/_components/member/resume-preview.tsx apps/blade/src/app/_components/member/member-resume-upload.tsx apps/blade/src/app/_components/member/member-profile-picture-upload.tsx apps/blade/src/app/_components/member/member-signup-form.tsx .forge/features/initial-member-onboarding/spec.md .forge/features/initial-member-onboarding/srd.md .forge/features/initial-member-onboarding/status.md .forge/features/initial-member-onboarding/test-cases.md`: passed after profile-picture MinIO upload work.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators lint`: passed after profile-picture MinIO upload work.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators typecheck`: passed after profile-picture MinIO upload work.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators test`: passed after profile-picture MinIO upload work, 1 test file / 6 tests.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api lint`: passed after profile-picture MinIO upload work.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api typecheck`: passed after profile-picture MinIO upload work.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed after profile-picture MinIO upload work.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed after profile-picture MinIO upload work.
+- `npm exec --yes pnpm@9.12.1 -- analyze:react apps/blade/src/app`: passed after profile-picture MinIO upload work, 14 files / 10 components / 0 failures.
+- `git diff --check`: passed after profile-picture MinIO upload work.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write apps/blade/src/app/_components/member/member-profile-picture-upload.tsx apps/blade/src/app/_components/member/member-resume-upload.tsx apps/blade/src/app/_components/member/member-dashboard.tsx apps/blade/src/app/_components/member/dashboard-client.tsx`: passed after dashboard Guild-card/resume-dialog restyle.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed after dashboard Guild-card/resume-dialog restyle.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed after dashboard Guild-card/resume-dialog restyle.
+- `npm exec --yes pnpm@9.12.1 -- analyze:react apps/blade/src/app`: passed after dashboard Guild-card/resume-dialog restyle, 14 files / 10 components / 0 failures.
+- `curl -I --max-time 10 http://localhost:3000/dashboard`: passed as an unauthenticated smoke check with the expected `307` redirect to `/`.
+- Live `forge-blade-dev` logs compiled after the dashboard restyle and showed authenticated `/dashboard` plus `profilePicture.getProfilePicture` requests returning `200`.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write .forge/features/initial-member-onboarding/spec.md .forge/features/initial-member-onboarding/srd.md .forge/features/initial-member-onboarding/test-cases.md .forge/features/initial-member-onboarding/status.md`: passed after artifact updates for the dashboard restyle.
+- `git diff --check`: passed after dashboard Guild-card/resume-dialog restyle.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write apps/blade/src/app/_components/member/member-profile-picture-upload.tsx apps/blade/src/app/_components/member/member-dashboard.tsx apps/blade/src/app/_components/member/dashboard-client.tsx`: passed after dashboard stable-panel/skeleton refinement.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed after dashboard stable-panel/skeleton refinement.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed after dashboard stable-panel/skeleton refinement.
+- `npm exec --yes pnpm@9.12.1 -- analyze:react apps/blade/src/app`: passed after dashboard stable-panel/skeleton refinement, 14 files / 10 components / 0 failures.
+- `curl -I --max-time 10 http://localhost:3000/dashboard`: passed as an unauthenticated smoke check with the expected `307` redirect to `/`.
+- Live `forge-blade-dev` logs compiled after the stable-panel update and showed authenticated `/dashboard`, `member.getMember`, and `profilePicture.getProfilePicture` requests returning `200`.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write .forge/features/initial-member-onboarding/spec.md .forge/features/initial-member-onboarding/srd.md .forge/features/initial-member-onboarding/test-cases.md .forge/features/initial-member-onboarding/status.md`: passed after artifact updates for the stable-panel/skeleton refinement.
+- `git diff --check`: passed after dashboard stable-panel/skeleton refinement.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write packages/validators/src/member.ts packages/validators/src/member.test.ts apps/blade/src/app/_components/member/member-signup-form.tsx apps/blade/src/app/_components/member/member-dashboard.tsx apps/blade/src/app/_components/member/dashboard-client.tsx apps/blade/src/app/_components/member/member-resume-upload.tsx`: passed after Code of Conduct/dashboard motion/mobile-dialog update.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators lint`: passed after Code of Conduct/dashboard motion/mobile-dialog update.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators typecheck`: passed after Code of Conduct/dashboard motion/mobile-dialog update.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/validators test`: passed after Code of Conduct/dashboard motion/mobile-dialog update, 1 test file / 7 tests.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api lint`: passed after Code of Conduct/dashboard motion/mobile-dialog update.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/api typecheck`: passed after Code of Conduct/dashboard motion/mobile-dialog update.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed after Code of Conduct/dashboard motion/mobile-dialog update.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed after Code of Conduct/dashboard motion/mobile-dialog update.
+- `npm exec --yes pnpm@9.12.1 -- analyze:react apps/blade/src/app`: passed after Code of Conduct/dashboard motion/mobile-dialog update, 14 files / 10 components / 0 failures.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write .forge/features/initial-member-onboarding/spec.md .forge/features/initial-member-onboarding/srd.md .forge/features/initial-member-onboarding/test-cases.md .forge/features/initial-member-onboarding/status.md`: passed after artifact updates for Code of Conduct/dashboard motion/mobile-dialog update.
+- `curl -I --max-time 10 http://localhost:3000/dashboard`: passed as an unauthenticated smoke check with the expected `307` redirect to `/`.
+- `git diff --check`: passed after Code of Conduct/dashboard motion/mobile-dialog update.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write apps/blade/src/app/_components/member/member-profile-picture-upload.tsx apps/blade/src/app/_components/member/member-dashboard.tsx apps/blade/src/app/_components/member/dashboard-client.tsx docs/agentic-development/frontend-design-skill.md .forge/features/initial-member-onboarding/srd.md .forge/features/initial-member-onboarding/test-cases.md .forge/features/initial-member-onboarding/status.md`: passed after dashboard avatar/top-alignment/surface-hierarchy update.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed after dashboard avatar/top-alignment/surface-hierarchy update.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed after dashboard avatar/top-alignment/surface-hierarchy update.
+- `npm exec --yes pnpm@9.12.1 -- analyze:react apps/blade/src/app`: passed after dashboard avatar/top-alignment/surface-hierarchy update, 14 files / 10 components / 0 failures.
+- `git diff --check`: passed after dashboard avatar/top-alignment/surface-hierarchy update.
+- `curl -I --max-time 10 http://localhost:3000/dashboard`: passed after dashboard avatar/top-alignment/surface-hierarchy update as an unauthenticated smoke check with the expected `307` redirect to `/`.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write apps/blade/src/app/_components/member/member-dashboard.tsx apps/blade/src/app/_components/member/dashboard-client.tsx .forge/features/initial-member-onboarding/spec.md .forge/features/initial-member-onboarding/srd.md .forge/features/initial-member-onboarding/test-cases.md .forge/features/initial-member-onboarding/status.md`: passed after removing dashboard entrance animation and tightening skeleton layout.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed after removing dashboard entrance animation and tightening skeleton layout.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed after removing dashboard entrance animation and tightening skeleton layout.
+- `npm exec --yes pnpm@9.12.1 -- analyze:react apps/blade/src/app`: passed after removing dashboard entrance animation and tightening skeleton layout, 14 files / 10 components / 0 failures.
+- `git diff --check`: passed after removing dashboard entrance animation and tightening skeleton layout.
+- `curl -I --max-time 10 http://localhost:3000/dashboard`: passed after removing dashboard entrance animation and tightening skeleton layout as an unauthenticated smoke check with the expected `307` redirect to `/`.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write apps/blade/src/app/_components/member/member-profile-picture-upload.tsx`: passed after clearing cached saved profile-picture previews when the avatar is removed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade lint`: passed after clearing cached saved profile-picture previews when the avatar is removed.
+- `npm exec --yes pnpm@9.12.1 -- --filter=@forge/blade typecheck`: passed after clearing cached saved profile-picture previews when the avatar is removed.
+- `git diff --check`: passed after clearing cached saved profile-picture previews when the avatar is removed.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write .forge/features/initial-member-onboarding/architecture-review.md`: passed after adding the human-review architecture document.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write apps/blade/DESIGN_SYSTEM.md docs/agentic-development/frontend-design-skill.md AGENTS.md .claude/skills/frontend-design/SKILL.md .forge/features/initial-member-onboarding/architecture-review.md .forge/features/initial-member-onboarding/status.md`: passed after adding and wiring the Blade design-system document.
+- `npm exec --yes pnpm@9.12.1 -- prettier --write --parser markdown .cursor/rules/frontend-design.mdc`: passed after adding and wiring the Blade design-system document.
 
 ## Links
 

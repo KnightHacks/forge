@@ -102,6 +102,19 @@ Shared code is expensive. Move code to a package only when reuse is real, the bo
 - Blade app components own Blade-specific composition and feature UI.
 - `@forge/utils` should not collect random helpers. Adding to shared utilities requires a stable cross-app reason.
 
+## Readability and colocation
+
+Prefer code that a maintainer can read in the place they naturally look first.
+
+- Keep business workflow logic close to the tRPC procedure or route that owns the behavior.
+- Do not create service/helper files solely to make routers look thin. Thin routers are useful only when the extracted code has a clearer home and real reuse.
+- Extract shared code when multiple procedures/routes need the same behavior, when a boundary is truly generic, or when the name of the helper makes the calling code substantially clearer.
+- Feature-specific callback wiring, seed/config objects, and mappings should live near the feature/domain that owns them, even when a generic runtime consumes them.
+- Use short, durable names. Prefer `memberSchema`, `memberFormSchema`, and `createResponse` over names that encode every implementation detail.
+- Comment why a boundary exists, why a transaction is required, why a callback is safe, or why code is intentionally hardcoded for a first slice.
+- Do not comment obvious assignments or line-by-line mechanics. Good names should carry the basic meaning.
+- If a type helper uses advanced TypeScript inference, hide it behind a named alias and leave a short comment explaining the intent.
+
 ## tRPC and API principles
 
 - tRPC remains the main API paradigm for business logic.

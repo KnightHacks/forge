@@ -1,5 +1,11 @@
-export const minioClient = null;
+import { Client } from "minio";
 
-export const createPresignedUrl = async () => {
-  throw new Error("MinIO is not wired in the Reforge API scaffold yet.");
-};
+import { env } from "../env";
+
+export const minioClient = new Client({
+  endPoint: env.MINIO_ENDPOINT,
+  port: 443,
+  useSSL: true,
+  accessKey: env.MINIO_ACCESS_KEY,
+  secretKey: env.MINIO_SECRET_KEY,
+});

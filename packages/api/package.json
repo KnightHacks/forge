@@ -14,8 +14,8 @@
     },
     "./minio/minio-client": "./src/minio/minio-client.ts",
     "./utils": {
-      "types": "./src/utils.ts",
-      "default": "./src/utils.ts"
+      "types": "./src/utils/index.ts",
+      "default": "./src/utils/index.ts"
     }
   },
   "license": "MIT",

@@ -24,6 +24,10 @@ pnpm forge:feature <feature-slug> "<Feature Name>"
 
 Before filling or implementing a bundle, read `docs/agentic-development/README.md`. Keep the feature's `status.md` updated with phase, decisions, open questions, task progress, validation, and PR/issue links. Spec/SRD/test-case work should reverse-prompt and challenge the human rather than guessing missing details.
 
+## Frontend design work
+
+For meaningful UI work, follow `docs/agentic-development/frontend-design-skill.md` before implementation. For Blade UI work, read `apps/blade/DESIGN_SYSTEM.md` as the active design contract before changing layouts, colors, cards, forms, dashboards, navigation, icons, animation, or profile/upload UI. Treat the active design system as a product constraint: use the existing tokens, components, and visual language first, then make one deliberate domain-specific move that fits Knight Hacks. Check real screenshots before calling UI work done.
+
 # Forge Agent Instructions
 
 Instructions for AI coding agents working in Forge, including Codex, Claude Code, and similar tools.

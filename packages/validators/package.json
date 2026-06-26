@@ -21,6 +21,7 @@
     "test:watch": "vitest --passWithNoTests"
   },
   "dependencies": {
+    "@forge/consts": "workspace:*",
     "minimatch": "^10.2.4",
     "zod": "catalog:"
   },

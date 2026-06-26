@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+
+For meaningful UI work, follow `docs/agentic-development/frontend-design-skill.md`. For Blade UI work, read `apps/blade/DESIGN_SYSTEM.md` before changing layouts, colors, cards, forms, dashboards, navigation, icons, animation, or profile/upload UI.
+
+Use the active Forge/Blade design system before inventing new visual language. Make layout decisions from the workflow, keep cards visibly raised from the page background, avoid card-in-card layouts, follow Blade's documented top-level/nested surface hierarchy, and verify meaningful frontend changes with desktop and mobile screenshots.

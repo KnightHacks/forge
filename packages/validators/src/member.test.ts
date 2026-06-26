@@ -1,0 +1,100 @@
+import { describe, expect, it } from "vitest";
+
+import { calculateMemberAge, memberSchema } from "./member";
+
+const validResponse = {
+  firstName: "Lenny",
+  lastName: "Dragonson",
+  email: "LENNY@KNIGHTHACKS.ORG",
+  phoneNumber: "123-456-7890",
+  dob: "2000-02-03",
+  school: "University of Central Florida",
+  levelOfStudy: "Undergraduate University (3+ year)",
+  major: "Computer Science",
+  gender: "Prefer not to answer",
+  raceOrEthnicity: "Prefer not to answer",
+  shirtSize: "M",
+  gradTerm: "Spring",
+  gradYear: 2027,
+  company: "",
+  githubProfileUrl: "",
+  linkedinProfileUrl: "",
+  websiteUrl: "https://knighthacks.org",
+  profilePictureUrl: "",
+  resumeUrl: "",
+  tagline: "Builder",
+  about: "",
+  guildProfileVisible: true,
+  codeOfConductAccepted: true,
+};
+
+describe("member onboarding validation", () => {
+  it("normalizes a valid form response into member-compatible data", () => {
+    const result = memberSchema.parse(validResponse);
+
+    expect(result.email).toBe("lenny@knighthacks.org");
+    expect(result.phoneNumber).toBe("123-456-7890");
+    expect(result.gradDate).toBe("2027-05-02");
+    expect(result.company).toBeNull();
+    expect(result.resumeUrl).toBeNull();
+    expect(result.profilePictureUrl).toBeNull();
+  });
+
+  it("keeps an uploaded resume object path", () => {
+    const result = memberSchema.parse({
+      ...validResponse,
+      resumeUrl: "user-id/resume-00000000-0000-4000-8000-000000000000.pdf",
+    });
+
+    expect(result.resumeUrl).toBe(
+      "user-id/resume-00000000-0000-4000-8000-000000000000.pdf",
+    );
+  });
+
+  it("keeps an uploaded profile picture object path", () => {
+    const result = memberSchema.parse({
+      ...validResponse,
+      profilePictureUrl:
+        "user-id/profile-picture-00000000-0000-4000-8000-000000000000.png",
+    });
+
+    expect(result.profilePictureUrl).toBe(
+      "user-id/profile-picture-00000000-0000-4000-8000-000000000000.png",
+    );
+  });
+
+  it("rejects invalid URLs", () => {
+    const result = memberSchema.safeParse({
+      ...validResponse,
+      websiteUrl: "knighthacks.org",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects underage members", () => {
+    const nextYear = new Date().getUTCFullYear() + 1;
+    const result = memberSchema.safeParse({
+      ...validResponse,
+      dob: `${nextYear}-01-01`,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("requires Code of Conduct acceptance", () => {
+    const result = memberSchema.safeParse({
+      ...validResponse,
+      codeOfConductAccepted: false,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("calculates age before and after birthday boundaries", () => {
+    const referenceDate = new Date("2026-06-25T12:00:00Z");
+
+    expect(calculateMemberAge("2000-06-24", referenceDate)).toBe(26);
+    expect(calculateMemberAge("2000-06-26", referenceDate)).toBe(25);
+  });
+});

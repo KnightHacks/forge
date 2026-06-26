@@ -1411,6 +1411,9 @@ importers:
 
   packages/validators:
     dependencies:
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../consts
       minimatch:
         specifier: ^10.2.4
         version: 10.2.4
