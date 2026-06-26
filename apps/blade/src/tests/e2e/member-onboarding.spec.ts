@@ -303,7 +303,12 @@ test.describe("initial member onboarding", () => {
 
     await page.goto(MEMBER_DASHBOARD_PATH);
 
-    await expect(page.locator(".animate-pulse").first()).toBeVisible();
+    await expect(
+      page
+        .getByRole("region", { name: "Guild profile loading" })
+        .locator(".animate-pulse")
+        .first(),
+    ).toBeVisible();
     await expect(page.locator("section").first()).toHaveClass(
       /lg:grid-cols-\[minmax/,
     );

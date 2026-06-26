@@ -36,12 +36,14 @@ function fileToDataUrl(file: File) {
 }
 
 export function MemberProfilePictureUpload({
+  avatarClassName,
   className,
   displayName,
   initialProfilePictureUrl,
   onChange,
   saveMode = "member",
 }: {
+  avatarClassName?: string;
   className?: string;
   displayName: string;
   initialProfilePictureUrl: string | null;
@@ -138,7 +140,10 @@ export function MemberProfilePictureUpload({
       <div className="relative">
         <Avatar
           key={previewSource ?? "initials"}
-          className="h-32 w-32 border-4 border-background shadow-2xl shadow-black/40 ring-1 ring-white/15"
+          className={cn(
+            "h-32 w-32 border-4 border-background shadow-2xl shadow-black/40 ring-1 ring-white/15",
+            avatarClassName,
+          )}
         >
           {previewSource && (
             <AvatarImage

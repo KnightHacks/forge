@@ -260,8 +260,13 @@ function UploadSettings({ member }: { member: CurrentMember }) {
   const displayName = `${member.firstName} ${member.lastName}`.trim();
 
   return (
-    <div className={cn(dashboardNestedSurfaceClass, "grid gap-5 p-4")}>
-      <div className="grid gap-5 lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-center">
+    <div
+      className={cn(
+        dashboardNestedSurfaceClass,
+        "grid gap-4 p-3 md:gap-5 md:p-4",
+      )}
+    >
+      <div className="grid gap-4 md:gap-5 lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-center">
         <div className="flex justify-center lg:justify-start">
           <MemberProfilePictureUpload
             displayName={displayName}
@@ -292,35 +297,38 @@ export function MemberProfileSettingsForm({
 
 function MemberProfileSettingsSkeleton() {
   return (
-    <main className="container pb-10 pt-8 md:pb-16 md:pt-12">
-      <div className="mx-auto max-w-5xl space-y-8">
-        <div className="space-y-5">
+    <main className="container pb-40 pt-6 md:pb-16 md:pt-12">
+      <div className="mx-auto max-w-5xl space-y-5 md:space-y-8">
+        <div className="space-y-4 md:space-y-5">
           <Skeleton className="h-9 w-32" />
-          <div className="space-y-3">
-            <Skeleton className="h-12 w-full max-w-xl md:h-14" />
-            <Skeleton className="h-5 w-full max-w-2xl" />
-            <Skeleton className="h-5 w-4/5 max-w-xl" />
+          <div className="space-y-2 md:space-y-3">
+            <Skeleton className="h-9 w-full max-w-sm md:h-14 md:max-w-xl" />
+            <Skeleton className="h-4 w-full max-w-2xl md:h-5" />
+            <Skeleton className="h-4 w-4/5 max-w-xl md:h-5" />
           </div>
         </div>
 
         {sectionOrder.map((section) => (
           <Card
             key={section}
-            className="border-white/10 bg-card/95 shadow-xl shadow-black/20"
+            className="gap-0 border-white/10 bg-card/95 py-0 shadow-xl shadow-black/20"
           >
-            <CardHeader className="border-b border-border/70">
-              <div className="flex items-center gap-4">
-                <Skeleton className="h-10 w-10 rounded-md" />
+            <CardHeader className="border-b border-border/70 px-4 py-4 md:px-6">
+              <div className="flex items-center gap-3 md:gap-4">
+                <Skeleton className="h-9 w-9 rounded-md md:h-10 md:w-10" />
                 <div className="min-w-0 flex-1 space-y-2">
                   <Skeleton className="h-6 w-40" />
                   <Skeleton className="h-4 w-full max-w-md" />
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-5 py-4">
+            <CardContent className="space-y-4 px-4 py-4 md:space-y-5 md:px-6">
               {section === "Guild" && (
                 <div
-                  className={cn(dashboardNestedSurfaceClass, "grid gap-5 p-4")}
+                  className={cn(
+                    dashboardNestedSurfaceClass,
+                    "grid gap-4 p-3 md:gap-5 md:p-4",
+                  )}
                 >
                   <div className="grid gap-5 lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-center">
                     <div className="flex justify-center lg:justify-start">
@@ -330,7 +338,7 @@ function MemberProfileSettingsSkeleton() {
                   </div>
                 </div>
               )}
-              <div className="grid gap-x-4 gap-y-5 md:grid-cols-2">
+              <div className="grid gap-x-4 gap-y-4 md:grid-cols-2 md:gap-y-5">
                 {Array.from({ length: section === "Guild" ? 6 : 8 }).map(
                   (_, index) => (
                     <div
@@ -350,7 +358,7 @@ function MemberProfileSettingsSkeleton() {
           </Card>
         ))}
 
-        <div className="sticky bottom-4 z-20 rounded-md border bg-card/95 p-4 shadow-2xl shadow-black/40">
+        <div className="fixed inset-x-3 bottom-2 z-20 rounded-md border bg-card/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-2xl shadow-black/40 md:sticky md:inset-x-auto md:bottom-4 md:p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Skeleton className="h-4 w-56" />
             <div className="flex gap-2">
@@ -471,8 +479,8 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
   };
 
   return (
-    <main className="container pb-10 pt-8 md:pb-16 md:pt-12">
-      <div className="mx-auto max-w-5xl space-y-8">
+    <main className="container pb-28 pt-6 md:pb-16 md:pt-12">
+      <div className="mx-auto max-w-5xl space-y-5 md:space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-3">
             <Button asChild variant="ghost" className="-ml-3 gap-2">
@@ -488,10 +496,10 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
               </MemberRouteTransitionLink>
             </Button>
             <div className="space-y-2">
-              <h1 className="text-4xl font-semibold tracking-normal md:text-5xl">
+              <h1 className="text-3xl font-semibold tracking-normal md:text-5xl">
                 Edit member profile
               </h1>
-              <p className="max-w-2xl text-base leading-7 text-muted-foreground">
+              <p className="max-w-2xl text-sm leading-6 text-muted-foreground md:text-base md:leading-7">
                 Update the same profile details you created during onboarding.
                 Profile picture and resume uploads save immediately.
               </p>
@@ -501,7 +509,7 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
 
         <Form {...form}>
           <form
-            className="space-y-7"
+            className="space-y-4 md:space-y-7"
             noValidate
             onSubmit={form.handleSubmit((values) => {
               setSavedMessage(null);
@@ -516,24 +524,26 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
               return (
                 <Card
                   key={section}
-                  className="border-white/10 bg-card/95 shadow-xl shadow-black/20"
+                  className="gap-0 border-white/10 bg-card/95 py-0 shadow-xl shadow-black/20"
                 >
-                  <CardHeader className="border-b border-border/70">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
+                  <CardHeader className="border-b border-border/70 px-4 py-4 md:px-6">
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary md:h-10 md:w-10">
                         <Icon className="h-5 w-5" aria-hidden="true" />
                       </div>
                       <div className="min-w-0">
-                        <CardTitle className="text-xl">{meta.title}</CardTitle>
-                        <CardDescription className="mt-1">
+                        <CardTitle className="text-lg md:text-xl">
+                          {meta.title}
+                        </CardTitle>
+                        <CardDescription className="mt-1 text-sm">
                           {meta.description}
                         </CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-5 py-4">
+                  <CardContent className="space-y-4 px-4 py-4 md:space-y-5 md:px-6">
                     {section === "Guild" && <UploadSettings member={member} />}
-                    <div className="grid gap-x-4 gap-y-5 md:grid-cols-2">
+                    <div className="grid gap-x-4 gap-y-4 md:grid-cols-2 md:gap-y-5">
                       {fields.map((fieldConfig) => (
                         <FormField
                           key={fieldConfig.name}
@@ -586,9 +596,12 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
               </div>
             )}
 
-            <div className="sticky bottom-4 z-20 rounded-md border bg-card/95 p-4 shadow-2xl shadow-black/40 backdrop-blur">
+            <div className="fixed inset-x-3 bottom-2 z-20 rounded-md border bg-card/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-2xl shadow-black/40 backdrop-blur md:sticky md:inset-x-auto md:bottom-4 md:p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-muted-foreground" aria-live="polite">
+                <p
+                  className="text-xs text-muted-foreground md:text-sm"
+                  aria-live="polite"
+                >
                   {savedMessage ??
                     (isDirty
                       ? "You have unsaved profile changes."
@@ -598,7 +611,7 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
                   <Button
                     type="button"
                     variant="outline"
-                    className="gap-2"
+                    className="w-full gap-2 sm:w-auto"
                     disabled={!isDirty || isSaving || isDeleting}
                     onClick={() => {
                       form.reset(initialValues);
@@ -611,7 +624,7 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
                   </Button>
                   <Button
                     type="submit"
-                    className="gap-2"
+                    className="w-full gap-2 sm:w-auto"
                     disabled={!isDirty || isSaving || isDeleting}
                   >
                     {updateMember.isPending ? (
@@ -626,75 +639,75 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
                   </Button>
                 </div>
               </div>
+            </div>
 
-              <div className="mt-4 flex flex-col gap-3 border-t border-border/70 pt-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-destructive">
+            <div className="mb-28 flex flex-col gap-3 rounded-md border border-destructive/30 bg-card/95 p-3 shadow-xl shadow-black/20 sm:flex-row sm:items-center sm:justify-between md:mb-0 md:p-4">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-destructive">
+                  Delete profile
+                </p>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  Permanently remove your member profile, signup response,
+                  uploads, and auth account.
+                </p>
+              </div>
+              <Dialog
+                open={isDeleteDialogOpen}
+                onOpenChange={(open) => {
+                  if (isDeleting) return;
+                  setIsDeleteDialogOpen(open);
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="gap-2 sm:shrink-0"
+                    disabled={isSaving || isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
                     Delete profile
-                  </p>
-                  <p className="text-xs leading-5 text-muted-foreground">
-                    Permanently remove your member profile, signup response,
-                    uploads, and auth account.
-                  </p>
-                </div>
-                <Dialog
-                  open={isDeleteDialogOpen}
-                  onOpenChange={(open) => {
-                    if (isDeleting) return;
-                    setIsDeleteDialogOpen(open);
-                  }}
-                >
-                  <DialogTrigger asChild>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[calc(100svh-1rem)] w-[calc(100svw-1rem)] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Delete member profile?</DialogTitle>
+                    <DialogDescription>
+                      This removes your member record, onboarding response,
+                      uploads, and login account. This cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <DialogClose asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isDeleting}
+                      >
+                        Cancel
+                      </Button>
+                    </DialogClose>
                     <Button
                       type="button"
                       variant="destructive"
-                      size="sm"
-                      className="gap-2 sm:shrink-0"
-                      disabled={isSaving || isDeleting}
+                      className="gap-2"
+                      disabled={isDeleting}
+                      onClick={handleDeleteProfile}
                     >
-                      <Trash2 className="h-4 w-4" aria-hidden="true" />
-                      Delete profile
+                      {isDeleting ? (
+                        <Loader2
+                          className="h-4 w-4 animate-spin"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      )}
+                      {isDeleting ? "Deleting" : "Delete my profile"}
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="w-[calc(100svw-1rem)]">
-                    <DialogHeader>
-                      <DialogTitle>Delete member profile?</DialogTitle>
-                      <DialogDescription>
-                        This removes your member record, onboarding response,
-                        uploads, and login account. This cannot be undone.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={isDeleting}
-                        >
-                          Cancel
-                        </Button>
-                      </DialogClose>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        className="gap-2"
-                        disabled={isDeleting}
-                        onClick={handleDeleteProfile}
-                      >
-                        {isDeleting ? (
-                          <Loader2
-                            className="h-4 w-4 animate-spin"
-                            aria-hidden="true"
-                          />
-                        ) : (
-                          <Trash2 className="h-4 w-4" aria-hidden="true" />
-                        )}
-                        {isDeleting ? "Deleting" : "Delete my profile"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </form>
         </Form>
@@ -706,7 +719,7 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
             setIsDirtyDialogOpen(open);
           }}
         >
-          <DialogContent className="w-[calc(100svw-1rem)] pt-10 [&>button.absolute]:left-4 [&>button.absolute]:right-auto">
+          <DialogContent className="max-h-[calc(100svh-1rem)] w-[calc(100svw-1rem)] overflow-y-auto pt-10 [&>button.absolute]:left-4 [&>button.absolute]:right-auto">
             <DialogHeader>
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
@@ -721,7 +734,7 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
                 </div>
               </div>
             </DialogHeader>
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button
                 type="button"
                 variant="outline"

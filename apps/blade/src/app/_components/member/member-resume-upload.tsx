@@ -138,14 +138,14 @@ export function MemberResumeUpload({
             View
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-h-[calc(100svh-0.5rem)] w-[calc(100svw-0.5rem)] max-w-5xl overflow-hidden p-0 sm:max-h-[88svh]">
+        <DialogContent className="max-h-[calc(100svh-1rem)] w-[calc(100svw-1rem)] max-w-5xl overflow-hidden rounded-lg p-0 sm:max-h-[88svh]">
           <DialogHeader className="border-b px-5 py-4 pr-12">
             <DialogTitle>Resume</DialogTitle>
             <DialogDescription>
               Preview the PDF attached to your member profile.
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-[calc(100svh-5.5rem)] overflow-y-auto p-2 sm:max-h-[calc(88svh-5rem)] sm:p-4">
+          <div className="max-h-[calc(100svh-6rem)] overflow-y-auto p-1 sm:max-h-[calc(88svh-5rem)] sm:p-4">
             {resumeUrl && savedResume.isFetching && !previewUrl && (
               <div className="flex h-80 items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -235,7 +235,7 @@ export function MemberResumeUpload({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="flex flex-col gap-4 rounded-md border border-dashed border-primary/35 bg-background/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-md border border-dashed border-primary/35 bg-background/70 p-3 sm:flex-row sm:items-center sm:justify-between md:p-4">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
             <FileCheck2 className="h-5 w-5" aria-hidden="true" />

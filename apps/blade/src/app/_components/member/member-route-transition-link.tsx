@@ -49,9 +49,9 @@ export function MemberRouteTransitionSurface({
     <div
       data-member-route-exiting={isExiting}
       className={cn(
-        "animate-in fade-in-0 zoom-in-95 duration-300 ease-out motion-reduce:animate-none",
-        "transition-[opacity,filter] duration-300 ease-out will-change-[opacity,filter] motion-reduce:transition-none",
-        isExiting && "opacity-0 blur-[1px]",
+        "animate-in fade-in-0 duration-300 ease-out motion-reduce:animate-none",
+        "will-change-opacity transition-opacity duration-300 ease-out motion-reduce:transition-none",
+        isExiting && "opacity-0",
       )}
     >
       {children}
@@ -76,7 +76,7 @@ export const MemberRouteTransitionLink = forwardRef<
       data-exiting={isExiting}
       className={cn(
         "group transition-opacity duration-200 ease-out motion-reduce:transition-none",
-        "animate-in fade-in-0 zoom-in-95 motion-reduce:animate-none",
+        "animate-in fade-in-0 motion-reduce:animate-none",
         isExiting && "opacity-70",
         className,
       )}

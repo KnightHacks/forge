@@ -14,6 +14,7 @@ import {
   Settings,
   Shirt,
   Sparkles,
+  UserRound,
 } from "lucide-react";
 
 import { cn } from "@forge/ui";
@@ -28,20 +29,22 @@ import { MemberResumeUpload } from "~/app/_components/member/member-resume-uploa
 import { MemberRouteTransitionLink } from "~/app/_components/member/member-route-transition-link";
 
 export const dashboardGridClass =
-  "grid w-full gap-6 lg:min-h-[calc(100svh-8rem)] lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-stretch xl:grid-cols-[minmax(0,1fr)_28rem]";
+  "grid w-full gap-4 md:gap-6 lg:min-h-[calc(100svh-8rem)] lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-stretch xl:grid-cols-[minmax(0,1fr)_28rem]";
 export const dashboardPanelClass =
-  "h-full min-h-[34rem] overflow-hidden border-white/10 bg-card/95 shadow-2xl shadow-black/25 lg:min-h-[calc(100svh-8rem)] lg:max-h-[calc(100svh-8rem)]";
+  "overflow-hidden border-white/10 bg-card/95 py-0 shadow-2xl shadow-black/25 lg:h-full lg:min-h-[calc(100svh-8rem)] lg:max-h-[calc(100svh-8rem)]";
 export const dashboardNestedSurfaceClass =
   "rounded-md border border-white/10 bg-background/60";
 
 function DashboardContent({
   children,
   className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return <div className={className}>{children}</div>;
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={className} {...props}>
+      {children}
+    </div>
+  );
 }
 
 function EmptyValue({ children = "Not set" }: { children?: string }) {
@@ -70,21 +73,42 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
   ];
 
   return (
-    <Card className={cn(dashboardPanelClass, "flex flex-col")}>
-      <CardContent className="flex flex-1 flex-col gap-6 overflow-y-auto p-6 pt-8">
-        <DashboardContent className="flex flex-col items-center text-center">
+    <Card
+      role="region"
+      aria-label="Guild profile"
+      className={cn(dashboardPanelClass, "order-1 flex flex-col lg:order-2")}
+    >
+      <CardContent className="flex min-h-[calc(100svh-6rem)] flex-1 flex-col gap-4 p-4 pt-5 md:gap-6 md:p-6 md:pt-8 lg:min-h-0 lg:overflow-y-auto">
+        <DashboardContent className="relative flex flex-col items-center text-center">
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="absolute right-0 top-0 shrink-0 text-muted-foreground hover:text-foreground"
+          >
+            <MemberRouteTransitionLink
+              href={MEMBER_SETTINGS_PATH}
+              aria-label="Edit profile"
+            >
+              <Settings
+                className="h-5 w-5 transition-transform duration-200 group-hover:rotate-45 group-data-[exiting=true]:-rotate-90 motion-reduce:transition-none"
+                aria-hidden="true"
+              />
+            </MemberRouteTransitionLink>
+          </Button>
           <MemberProfilePictureUpload
+            avatarClassName="h-[36vw] w-[36vw] min-h-32 min-w-32 max-h-44 max-w-44 lg:h-32 lg:w-32 lg:min-h-0 lg:min-w-0 lg:max-h-none lg:max-w-none"
             displayName={displayName}
             initialProfilePictureUrl={member.profilePictureUrl}
           />
           <div className="mt-2 space-y-2">
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <h2 className="text-2xl font-semibold tracking-normal">
+              <h2 className="text-xl font-semibold tracking-normal md:text-2xl">
                 {displayName}
               </h2>
               <Badge
                 variant="outline"
-                className="gap-1 rounded-full border-primary/30 bg-primary/10 px-2 py-0.5 text-[0.7rem] text-primary"
+                className="hidden gap-1 rounded-full border-primary/30 bg-primary/10 px-2 py-0.5 text-[0.7rem] text-primary sm:inline-flex"
               >
                 {isPublic ? (
                   <Eye className="h-3 w-3" aria-hidden="true" />
@@ -101,9 +125,23 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
         </DashboardContent>
 
         <DashboardContent
+          role="group"
+          aria-label="Company"
+          className={cn(dashboardNestedSurfaceClass, "p-3 lg:hidden")}
+        >
+          <div className="mb-2 flex items-center gap-2 text-xs uppercase text-muted-foreground">
+            <Building2 className="h-4 w-4 text-primary" aria-hidden="true" />
+            Company
+          </div>
+          <p className="break-words text-sm font-medium">
+            {member.company || <EmptyValue>Not listed</EmptyValue>}
+          </p>
+        </DashboardContent>
+
+        <DashboardContent
           className={cn(
             dashboardNestedSurfaceClass,
-            "min-h-0 overflow-y-auto p-4 lg:flex-1",
+            "hidden max-h-36 min-h-0 overflow-y-auto p-3 md:p-4 lg:block lg:flex-1",
           )}
         >
           <div className="mb-2 flex items-center gap-2 text-sm font-medium">
@@ -115,8 +153,8 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
           </p>
         </DashboardContent>
 
-        <DashboardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-          <div className={cn(dashboardNestedSurfaceClass, "p-4")}>
+        <DashboardContent className="hidden gap-3 sm:grid-cols-2 lg:grid lg:grid-cols-1 xl:grid-cols-2">
+          <div className={cn(dashboardNestedSurfaceClass, "p-3 md:p-4")}>
             <div className="mb-2 flex items-center gap-2 text-xs uppercase text-muted-foreground">
               <Building2 className="h-4 w-4 text-primary" aria-hidden="true" />
               Company
@@ -125,7 +163,7 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
               {member.company || <EmptyValue>Not listed</EmptyValue>}
             </p>
           </div>
-          <div className={cn(dashboardNestedSurfaceClass, "p-4")}>
+          <div className={cn(dashboardNestedSurfaceClass, "p-3 md:p-4")}>
             <div className="mb-2 flex items-center gap-2 text-xs uppercase text-muted-foreground">
               {isPublic ? (
                 <Eye className="h-4 w-4 text-primary" aria-hidden="true" />
@@ -188,6 +226,17 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
             })}
           </div>
         </DashboardContent>
+
+        <DashboardContent className={cn(dashboardNestedSurfaceClass, "p-3")}>
+          <div className="mb-3 flex items-center gap-2 text-sm font-medium">
+            <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
+            Resume
+          </div>
+          <MemberResumeUpload
+            initialResumeUrl={member.resumeUrl}
+            variant="compact"
+          />
+        </DashboardContent>
       </CardContent>
     </Card>
   );
@@ -223,47 +272,36 @@ export function MemberDashboard({ member }: { member: CurrentMember }) {
   ];
 
   return (
-    <main className="container py-6 md:py-8 lg:flex lg:min-h-[calc(100svh-4rem)] lg:items-stretch">
+    <main className="container py-4 md:py-8 lg:flex lg:min-h-[calc(100svh-4rem)] lg:items-stretch">
       <section className={dashboardGridClass}>
-        <Card className={dashboardPanelClass}>
-          <CardContent className="flex h-full flex-col justify-start gap-6 p-6 lg:overflow-y-auto lg:p-8">
+        <Card
+          role="region"
+          aria-label="Member details"
+          className={cn(
+            dashboardPanelClass,
+            "order-2 hidden lg:order-1 lg:flex",
+          )}
+        >
+          <CardContent className="flex h-full flex-col justify-start gap-4 p-4 md:gap-6 md:p-6 lg:overflow-y-auto lg:p-8">
             <DashboardContent>
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-semibold tracking-normal md:text-5xl">
-                    Welcome, {member.firstName}
-                  </h1>
-                </div>
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 text-muted-foreground hover:text-foreground"
-                >
-                  <MemberRouteTransitionLink
-                    href={MEMBER_SETTINGS_PATH}
-                    aria-label="Edit profile"
-                  >
-                    <Settings
-                      className="h-5 w-5 transition-transform duration-200 group-hover:rotate-45 group-data-[exiting=true]:-rotate-90 motion-reduce:transition-none"
-                      aria-hidden="true"
-                    />
-                  </MemberRouteTransitionLink>
-                </Button>
-              </div>
+              <h1 className="text-2xl font-semibold tracking-normal md:text-5xl">
+                Welcome, {member.firstName}
+              </h1>
             </DashboardContent>
 
-            <div className="space-y-6">
-              <DashboardContent className="grid gap-3 sm:grid-cols-3">
+            <DashboardContent
+              className={cn(dashboardNestedSurfaceClass, "p-4")}
+            >
+              <div className="mb-4 flex items-center gap-2 text-sm font-medium">
+                <UserRound
+                  className="h-4 w-4 text-primary"
+                  aria-hidden="true"
+                />
+                Member info
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
                 {profileItems.map((item) => (
-                  <div
-                    key={item.label}
-                    className={cn(dashboardNestedSurfaceClass, "p-4")}
-                  >
-                    <item.icon
-                      className="mb-4 h-5 w-5 text-primary"
-                      aria-hidden="true"
-                    />
+                  <div key={item.label}>
                     <p className="text-xs uppercase text-muted-foreground">
                       {item.label}
                     </p>
@@ -272,51 +310,29 @@ export function MemberDashboard({ member }: { member: CurrentMember }) {
                     </p>
                   </div>
                 ))}
-              </DashboardContent>
+              </div>
+            </DashboardContent>
 
-              <DashboardContent
-                className={cn(dashboardNestedSurfaceClass, "p-4")}
-              >
-                <div className="mb-4 flex items-center gap-2 text-sm font-medium">
-                  <School className="h-4 w-4 text-primary" aria-hidden="true" />
-                  Academics
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {academicItems.map((item) => (
-                    <div key={item.label}>
-                      <p className="text-xs uppercase text-muted-foreground">
-                        {item.label}
-                      </p>
-                      <p className="mt-1 break-words text-sm font-medium">
-                        {item.value}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </DashboardContent>
-
-              <DashboardContent
-                className={cn(dashboardNestedSurfaceClass, "p-4")}
-              >
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/15 text-primary">
-                    <FileText className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Resume</p>
-                    <p className="text-sm text-muted-foreground">
-                      {member.resumeUrl
-                        ? "View, replace, or remove the PDF connected to your profile."
-                        : "No resume uploaded yet."}
+            <DashboardContent
+              className={cn(dashboardNestedSurfaceClass, "p-4")}
+            >
+              <div className="mb-4 flex items-center gap-2 text-sm font-medium">
+                <School className="h-4 w-4 text-primary" aria-hidden="true" />
+                Academics
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {academicItems.map((item) => (
+                  <div key={item.label}>
+                    <p className="text-xs uppercase text-muted-foreground">
+                      {item.label}
+                    </p>
+                    <p className="mt-1 break-words text-sm font-medium">
+                      {item.value}
                     </p>
                   </div>
-                </div>
-                <MemberResumeUpload
-                  initialResumeUrl={member.resumeUrl}
-                  variant="compact"
-                />
-              </DashboardContent>
-            </div>
+                ))}
+              </div>
+            </DashboardContent>
           </CardContent>
         </Card>
 

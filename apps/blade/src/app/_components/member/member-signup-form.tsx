@@ -144,7 +144,7 @@ function RevealOnView({
       ref={ref}
       className={cn(
         "transition duration-500 ease-out motion-reduce:transition-none",
-        isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0",
+        isVisible ? "opacity-100" : "opacity-0",
         className,
       )}
       style={{ transitionDelay: isVisible ? `${delay}ms` : "0ms" }}
@@ -393,20 +393,20 @@ export function MemberSignupForm({
   });
 
   return (
-    <main className="container pb-10 pt-14 md:pb-16 md:pt-20 lg:pt-24">
-      <div className="mx-auto max-w-5xl space-y-8">
-        <div className="space-y-3">
-          <h1 className="max-w-3xl text-4xl font-semibold tracking-normal md:text-6xl">
+    <main className="container pb-10 pt-8 md:pb-16 md:pt-20 lg:pt-24">
+      <div className="mx-auto max-w-5xl space-y-5 md:space-y-8">
+        <div className="space-y-2 md:space-y-3">
+          <h1 className="max-w-3xl text-3xl font-semibold tracking-normal md:text-6xl">
             Build your Knight Hacks profile.
           </h1>
-          <p className="max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
+          <p className="max-w-2xl text-sm leading-6 text-muted-foreground md:text-lg md:leading-7">
             {definition.formData.description}
           </p>
         </div>
 
         <Form {...form}>
           <form
-            className="space-y-7"
+            className="space-y-4 md:space-y-7"
             noValidate
             onSubmit={form.handleSubmit((values) => {
               setSubmitError(null);
@@ -425,28 +425,28 @@ export function MemberSignupForm({
 
               return (
                 <RevealOnView key={section} delay={sectionIndex * 60}>
-                  <Card className="border-white/10 bg-card/95 shadow-xl shadow-black/20">
-                    <CardHeader className="border-b border-border/70">
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
+                  <Card className="gap-0 border-white/10 bg-card/95 py-0 shadow-xl shadow-black/20">
+                    <CardHeader className="border-b border-border/70 px-4 py-4 md:px-6">
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary md:h-10 md:w-10">
                           <Icon className="h-5 w-5" aria-hidden="true" />
                         </div>
                         <div className="min-w-0">
-                          <CardTitle className="text-xl">
+                          <CardTitle className="text-lg md:text-xl">
                             {meta.title}
                           </CardTitle>
-                          <CardDescription className="mt-1">
+                          <CardDescription className="mt-1 text-sm">
                             {meta.description}
                           </CardDescription>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-5 py-4">
+                    <CardContent className="space-y-4 px-4 py-4 md:space-y-5 md:px-6">
                       {section === "Guild" && (
                         <div
                           className={cn(
                             dashboardNestedSurfaceClass,
-                            "grid gap-5 p-4",
+                            "grid gap-4 p-3 md:gap-5 md:p-4",
                           )}
                         >
                           <div className="grid gap-5 lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-center">
@@ -488,7 +488,7 @@ export function MemberSignupForm({
                           </div>
                         </div>
                       )}
-                      <div className="grid gap-x-4 gap-y-5 md:grid-cols-2">
+                      <div className="grid gap-x-4 gap-y-4 md:grid-cols-2 md:gap-y-5">
                         {visibleFields.map((fieldConfig) => (
                           <FormField
                             key={fieldConfig.name}
@@ -555,14 +555,14 @@ export function MemberSignupForm({
               </RevealOnView>
             )}
 
-            <div className="sticky bottom-4 z-20 flex flex-col gap-3 rounded-md border bg-card/95 p-4 shadow-2xl shadow-black/40 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col gap-3 rounded-md border bg-card/95 p-3 shadow-xl shadow-black/30 sm:flex-row sm:items-center sm:justify-between md:p-4">
+              <p className="text-xs text-muted-foreground md:text-sm">
                 Your profile is created from this form response.
               </p>
               <Button
                 type="submit"
                 size="lg"
-                className="h-11 gap-2"
+                className="h-11 w-full gap-2 sm:w-auto"
                 disabled={submitSignup.isPending}
               >
                 {submitSignup.isPending && (

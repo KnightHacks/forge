@@ -153,6 +153,20 @@ const panel = "border-white/10 bg-card/95 shadow-2xl shadow-black/25";
 const inset = "rounded-md border border-white/10 bg-background/60";
 ```
 
+### Mobile Member Experience
+
+Member-facing Blade pages should be intentionally mobile-first, not only stacked desktop layouts.
+
+- Prioritize the Guild/social profile on mobile member dashboards. It is the member's identity surface, so it should appear before lower-priority account details on phone viewports.
+- Keep the profile settings action attached to the Guild/profile surface. A small cog inside that profile area is preferred over a detached page-level edit button.
+- Keep mobile member dashboards lightweight. The first mobile screen should focus on profile picture, name, tagline, company, social/profile links, and resume actions; move heavier member/account details to desktop or settings surfaces instead of stacking everything on mobile.
+- Do not use disclosure sections as the default desktop dashboard layout. Desktop member dashboards should show stable, scan-friendly panels and inset surfaces without making ordinary profile details feel hidden.
+- When the mobile member dashboard is intentionally a single Guild/profile card, let that top-level card fill the available screen height. Keep company, links, resume, and status values as nested inset surfaces instead of loose floating text.
+- Mobile signup and settings forms should use tighter card padding than desktop while keeping 44px touch targets for inputs, selects, switches, buttons, and upload controls.
+- Use sticky bottom primary actions for long mobile edit forms where members may change fields across sections. Signup/create forms should keep the final create action at the bottom of the form so users understand there are no more required sections below it.
+- Keep skeletons structurally close to loaded content on both desktop and mobile. Skeleton cards should appear in the same order, width, and approximate height as the loaded cards.
+- Prefer route-level transitions for member dashboard/settings navigation. Avoid card-by-card entrance motion when content replaces skeletons.
+
 ## Iconography
 
 - **Library:** [`lucide-react`](https://lucide.dev) first, `react-icons` when needed.
