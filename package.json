@@ -33,7 +33,8 @@
     "verify:precommit": "pnpm analyze:react:changed && pnpm format && pnpm lint && pnpm typecheck",
     "analyze:react:all": "turbo run analyze:react",
     "test": "turbo run test",
-    "test:e2e": "turbo run e2e"
+    "test:e2e": "turbo run e2e",
+    "forge:feature": "tsx scripts/create-forge-feature.ts"
   },
   "devDependencies": {
     "@forge/eslint-config": "workspace:*",

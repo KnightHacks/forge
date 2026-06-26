@@ -4,6 +4,26 @@ This branch is the Blade Reforge development branch. Do not assume files here ma
 
 ---
 
+## Reforge feature artifacts
+
+For Reforge feature/change planning, use `.forge/features/<feature-slug>/` bundles:
+
+```txt
+.forge/features/<feature-slug>/
+  spec.md
+  srd.md
+  test-cases.md
+  status.md
+```
+
+Instantiate a bundle with:
+
+```bash
+pnpm forge:feature <feature-slug> "<Feature Name>"
+```
+
+Before filling or implementing a bundle, read `docs/agentic-development/README.md`. Keep the feature's `status.md` updated with phase, decisions, open questions, task progress, validation, and PR/issue links. Spec/SRD/test-case work should reverse-prompt and challenge the human rather than guessing missing details.
+
 # Forge Agent Instructions
 
 Instructions for AI coding agents working in Forge, including Codex, Claude Code, and similar tools.

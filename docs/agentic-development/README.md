@@ -14,14 +14,20 @@ The goal is not to maintain many documents. The goal is to make important truths
 
 ## Lean artifact model
 
-For each meaningful feature/change, create only the artifacts it needs:
+For each meaningful feature/change, create a bundle under `.forge/features/`:
 
 ```txt
-<feature-or-change>/
+.forge/features/<feature-or-change>/
   spec.md          # non-technical user/product intent
   srd.md           # technical system requirements and implementation constraints
   test-cases.md    # behavioral oracle
   status.md        # maintained task/progress tracker for this feature/change
+```
+
+Instantiate a bundle from templates with:
+
+```bash
+pnpm forge:feature <feature-slug> "<Feature Name>"
 ```
 
 ### `spec.md` — user-facing product spec
