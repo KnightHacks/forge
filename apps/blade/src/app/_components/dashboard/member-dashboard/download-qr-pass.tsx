@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, WalletCards } from "lucide-react";
 
+import type { ButtonProps } from "@forge/ui/button";
 import { Button } from "@forge/ui/button";
 import { toast } from "@forge/ui/toast";
 
@@ -11,11 +12,17 @@ import { api } from "~/trpc/react";
 type PassProfileKind = "member" | "hacker";
 
 export function DownloadQRPass({
+  buttonClassName,
+  iconClassName,
   profile,
   profileKind = "member",
+  size = "sm",
 }: {
+  buttonClassName?: string;
+  iconClassName?: string;
   profile?: { firstName?: string | null; lastName?: string | null } | null;
   profileKind?: PassProfileKind;
+  size?: ButtonProps["size"];
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -82,19 +89,28 @@ export function DownloadQRPass({
 
   return (
     <Button
-      size="sm"
-      className="w-full gap-2 border bg-card text-card-foreground transition-all hover:scale-[1.02] hover:border-primary/50 hover:bg-card hover:shadow-md group-hover:text-primary"
+      size={size}
+      className={
+        buttonClassName ??
+        "w-full gap-2 border bg-card text-card-foreground transition-all hover:scale-[1.02] hover:border-primary/50 hover:bg-card hover:shadow-md group-hover:text-primary"
+      }
       onClick={handleDownload}
       disabled={!canDownload || isDownloading}
     >
       {isDownloading ? (
         <>
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2
+            className={
+              iconClassName
+                ? `${iconClassName} animate-spin`
+                : "h-4 w-4 animate-spin"
+            }
+          />
           Generating Pass...
         </>
       ) : canDownload ? (
         <>
-          <WalletCards className="h-4 w-4" />
+          <WalletCards className={iconClassName ?? "h-4 w-4"} />
           Apple Wallet
         </>
       ) : (

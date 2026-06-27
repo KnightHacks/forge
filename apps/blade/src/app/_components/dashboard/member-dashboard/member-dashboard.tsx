@@ -5,6 +5,7 @@ import { MemberAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
 import { AlumniDiscord } from "./AlumniDiscord";
 import { AlumniRecap } from "./AlumniRecap";
+import { CurrentHackathonNotice } from "./current-hackathon-notice";
 import DayInHistory from "./day-in-history";
 import EarlyAccessVolunteer from "./early-access-volunteer";
 import { EventNumber } from "./event/event-number";
@@ -83,11 +84,13 @@ export default async function MemberDashboard({
 
   const isAlumni = calcAlumniStatus(member.gradDate, member);
 
-  const [eventsValue, dues, hackathonsValue] = await Promise.all([
-    api.member.getEvents(),
-    api.duesPayment.validatePaidDues(),
-    isAlumni ? api.hackathon.getPastHackathons() : Promise.resolve([]),
-  ]);
+  const [eventsValue, dues, hackathonsValue, currentHackathon] =
+    await Promise.all([
+      api.member.getEvents(),
+      api.duesPayment.validatePaidDues(),
+      isAlumni ? api.hackathon.getPastHackathons() : Promise.resolve([]),
+      api.hackathon.getCurrentHackathon(),
+    ]);
 
   const duesPaid = dues.duesPaid;
 
@@ -100,14 +103,11 @@ export default async function MemberDashboard({
     return (
       <div className="flex-col md:flex">
         <div className="flex-1 space-y-4">
-          <div className="animate-fade-in mb-8 flex items-center justify-between space-y-2">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight">
-                Hello, {member.firstName}!
-              </h2>
-              <p className="text-muted-foreground">Alumni Dashboard</p>
-            </div>
-          </div>
+          {currentHackathon && (
+            <CurrentHackathonNotice
+              hackathonDisplayName={currentHackathon.displayName}
+            />
+          )}
           {/* Unified View */}
           <div className="animate-mobile-initial-expand space-y-4">
             <div className="grid grid-cols-1 gap-4 md:h-[800px] md:grid-cols-3">
@@ -139,14 +139,11 @@ export default async function MemberDashboard({
   return (
     <div className="flex-col md:flex">
       <div className="flex-1 space-y-4">
-        <div className="animate-fade-in mb-8 flex items-center justify-between space-y-2">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight">
-              Hello, {member.firstName}!
-            </h2>
-            <p className="text-muted-foreground">Member Dashboard</p>
-          </div>
-        </div>
+        {currentHackathon && (
+          <CurrentHackathonNotice
+            hackathonDisplayName={currentHackathon.displayName}
+          />
+        )}
         {/* Unified View */}
         <div className="animate-mobile-initial-expand space-y-4">
           <div className="animate-fade-in grid gap-4 md:grid-cols-2 lg:grid-cols-4">

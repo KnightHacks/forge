@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Card, CardContent } from "@forge/ui/card";
 
-export default function HackingCountdown() {
+export function BaseHackathonCountdown({ endDate }: { endDate: Date }) {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -13,8 +13,7 @@ export default function HackingCountdown() {
   });
 
   useEffect(() => {
-    // Set your target end date here
-    const targetDate = new Date("2025-10-26T11:00:00").getTime();
+    const targetDate = endDate.getTime();
 
     const updateCountdown = () => {
       const now = new Date().getTime();
@@ -39,7 +38,7 @@ export default function HackingCountdown() {
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [endDate]);
 
   const formatNumber = (num: number) => String(num).padStart(2, "0");
 

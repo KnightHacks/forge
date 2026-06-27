@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { CircleCheckBig, Loader2 } from "lucide-react";
 
+import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
 import { CLUB } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
@@ -28,8 +29,10 @@ type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
 
 export function HackerData({
   data,
+  hackathon,
 }: {
   data: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
+  hackathon?: SelectHackathon | null;
 }) {
   const [hackerStatus, setHackerStatus] = useState<string | null>("");
   const [hackerStatusColor, setHackerStatusColor] = useState<string>("");
@@ -38,26 +41,29 @@ export function HackerData({
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  const { data: currentHackathon } =
-    api.hackathon.getCurrentHackathon.useQuery();
+  const { data: fallbackHackathon } = api.hackathon.getHackathon.useQuery(
+    { hackathonName: undefined },
+    {
+      enabled: !hackathon,
+    },
+  );
+
+  const hackathonData = hackathon ?? fallbackHackathon ?? null;
 
   const { data: hacker, isError } = api.hackerQuery.getHacker.useQuery(
-    {},
+    { hackathonName: hackathonData?.name },
     {
+      enabled: Boolean(hackathonData?.name),
       initialData: data,
     },
   );
 
-  const { data: hackathonData } = api.hackathon.getHackathon.useQuery({
-    hackathonName: undefined,
-  });
-
   const { data: numConfirmed } = api.hackathon.getNumConfirmed.useQuery(
     {
-      hackathonId: currentHackathon?.id ?? "",
+      hackathonId: hackathonData?.id ?? "",
     },
     {
-      enabled: Boolean(currentHackathon?.id),
+      enabled: Boolean(hackathonData?.id),
       retry: false,
     },
   );
@@ -153,7 +159,7 @@ export function HackerData({
             </div>
           )}
           <div className="animate-fade-in text-lg font-bold">
-            Status for {hackathonData?.displayName}
+            Application Status
           </div>
           <div className="flex gap-x-2">
             <div

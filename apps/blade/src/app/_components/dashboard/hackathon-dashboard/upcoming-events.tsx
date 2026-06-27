@@ -12,7 +12,11 @@ import { time } from "@forge/utils";
 
 import { api } from "~/trpc/server";
 
-export default async function UpcomingEvents() {
+export async function BaseHackathonUpcomingEvents({
+  hackathonId,
+}: {
+  hackathonId: string;
+}) {
   const events = await api.event.getEvents();
 
   // eslint-disable-next-line react-hooks/purity
@@ -24,7 +28,9 @@ export default async function UpcomingEvents() {
       const oneDayOffset = 24 * 60 * 60 * 1000;
       const start = new Date(event.start_datetime).getTime() + oneDayOffset;
       return (
-        event.hackathonId != null && start >= now && start <= fiveHoursLater
+        event.hackathonId === hackathonId &&
+        start >= now &&
+        start <= fiveHoursLater
       );
     })
     .sort(
@@ -42,40 +48,46 @@ export default async function UpcomingEvents() {
           </h1>
 
           <div className="space-y-6">
-            {upcomingEvents.map((event) => (
-              <Card
-                key={event.id}
-                className="border bg-card shadow-lg transition-shadow duration-300 hover:shadow-xl"
-              >
-                <CardHeader className="pb-4">
-                  <CardTitle className="mb-2 text-lg font-bold text-primary text-white sm:mb-4 sm:text-xl lg:text-2xl">
-                    {event.name}
-                  </CardTitle>
-                  <CardDescription className="text-sm font-medium sm:text-base">
-                    {time.formatDateTime(event.start_datetime)} @{" "}
-                    {event.location}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm leading-relaxed text-foreground text-white sm:text-base">
-                    {event.description}
-                  </p>
+            {upcomingEvents.length === 0 ? (
+              <div className="rounded-lg border border-dashed bg-card/60 p-6 text-center text-sm font-medium text-muted-foreground sm:text-base">
+                No events coming up in the next few hours.
+              </div>
+            ) : (
+              upcomingEvents.map((event) => (
+                <Card
+                  key={event.id}
+                  className="border bg-card shadow-lg transition-shadow duration-300 hover:shadow-xl"
+                >
+                  <CardHeader className="pb-4">
+                    <CardTitle className="mb-2 text-lg font-bold text-primary text-white sm:mb-4 sm:text-xl lg:text-2xl">
+                      {event.name}
+                    </CardTitle>
+                    <CardDescription className="text-sm font-medium sm:text-base">
+                      {time.formatDateTime(event.start_datetime)} @{" "}
+                      {event.location}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm leading-relaxed text-foreground text-white sm:text-base">
+                      {event.description}
+                    </p>
 
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="secondary"
-                      className="rounded-lg px-3 py-1 text-sm font-medium sm:px-6 sm:py-2 sm:text-base"
-                    >
-                      {event.tag}
-                    </Badge>
-                    <div className="flex flex-row gap-1 text-sm font-medium text-primary-foreground sm:text-base">
-                      <Star className="my-auto h-4 w-4 text-yellow-500" />
-                      <div className="my-auto">{event.points} Points</div>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="secondary"
+                        className="rounded-lg px-3 py-1 text-sm font-medium sm:px-6 sm:py-2 sm:text-base"
+                      >
+                        {event.tag}
+                      </Badge>
+                      <div className="flex flex-row gap-1 text-sm font-medium text-primary-foreground sm:text-base">
+                        <Star className="my-auto h-4 w-4 text-yellow-500" />
+                        <div className="my-auto">{event.points} Points</div>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
