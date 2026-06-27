@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen, CircleCheckBig } from "lucide-react";
 
@@ -13,7 +12,6 @@ import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
 import { BaseHackathonIssueButton } from "./issue-dialog";
 
-type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
 type HackerProfile = Awaited<
   ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>
 >;
@@ -51,9 +49,6 @@ export function BaseHackathonData({
   guideHref: string;
   hackathon: SelectHackathon;
 }) {
-  const [hackerStatus, setHackerStatus] = useState<string | null>("");
-  const [hackerStatusColor, setHackerStatusColor] = useState<string>("");
-
   const { data: hacker, isError } = api.hackerQuery.getHacker.useQuery(
     { hackathonName: hackathon.name },
     {
@@ -61,23 +56,7 @@ export function BaseHackathonData({
     },
   );
 
-  function getStatusName(status: StatusKey) {
-    if (!status) return "";
-    return HACKER_STATUS_MAP[status].name;
-  }
-
-  function getStatusColor(status: StatusKey) {
-    if (!status) return "";
-    return HACKER_STATUS_MAP[status].color;
-  }
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHackerStatus(getStatusName(hacker?.status));
-    setHackerStatusColor(getStatusColor(hacker?.status));
-  }, [hacker]);
-
-  if (isError) {
+  if (isError || !hacker) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <p className="text-lg text-muted-foreground">
@@ -86,6 +65,9 @@ export function BaseHackathonData({
       </div>
     );
   }
+
+  const hackerStatus = HACKER_STATUS_MAP.checkedin.name;
+  const hackerStatusColor = HACKER_STATUS_MAP.checkedin.color;
 
   return (
     <div className="flex h-full w-full flex-col gap-3 p-2 sm:gap-4 sm:p-4 lg:gap-6 lg:p-6">
@@ -96,28 +78,22 @@ export function BaseHackathonData({
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-6">
             {/* Name and Info Column */}
             <div className="flex-1 space-y-4 sm:space-y-4">
-              {hacker?.firstName && hacker.lastName && (
-                <h1 className="animate-fade-in text-center text-3xl font-bold tracking-tight sm:text-3xl md:text-start">
-                  {hacker.firstName} {hacker.lastName}
-                </h1>
-              )}
+              <h1 className="animate-fade-in text-center text-3xl font-bold tracking-tight sm:text-3xl md:text-start">
+                {hacker.firstName} {hacker.lastName}
+              </h1>
 
               {/* Status Badge */}
               <div className="animate-fade-in flex flex-col items-center space-y-3 md:items-start md:justify-start">
-                <p className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px] md:text-start">
-                  Application Status
-                </p>
                 <div className="inline-flex items-center gap-2.5 rounded-full bg-background shadow-sm">
                   <span
                     className={`text-base font-bold uppercase sm:text-lg ${hackerStatusColor}`}
                   >
                     {hackerStatus}
                   </span>
-                  {hackerStatus === "Checked-in" && (
-                    <CircleCheckBig
-                      className={`h-4 w-4 sm:h-4 sm:w-4 ${hackerStatusColor}`}
-                    />
-                  )}
+
+                  <CircleCheckBig
+                    className={`h-4 w-4 sm:h-4 sm:w-4 ${hackerStatusColor}`}
+                  />
                 </div>
               </div>
             </div>
