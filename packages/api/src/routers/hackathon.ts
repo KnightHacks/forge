@@ -139,8 +139,15 @@ export const hackathonRouter = {
   getCurrentHackathon: publicProcedure.query(async () => {
     const now = new Date();
     const hackathon = await db.query.Hackathon.findFirst({
-      orderBy: (t, { asc }) => asc(t.endDate),
-      where: and(lte(Hackathon.startDate, now), gte(Hackathon.endDate, now)),
+      orderBy: (t, { asc }) => [
+        asc(t.applicationOpen),
+        asc(t.startDate),
+        asc(t.endDate),
+      ],
+      where: and(
+        lte(Hackathon.applicationOpen, now),
+        gte(Hackathon.endDate, now),
+      ),
     });
 
     return hackathon ?? null;

@@ -21,26 +21,56 @@ export default async function HackerDashboard({
   hackathon: SelectHackathon;
   hacker: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
 }) {
-  const [resume, pastHackathons] = await Promise.allSettled([
-    api.resume.getResume(),
-    api.hackathon.getPastHackathons(),
-  ]);
-
   if (!hacker) {
+    const now = new Date();
+
+    if (now < hackathon.applicationOpen) {
+      const applicationOpen = new Intl.DateTimeFormat("en-US", {
+        dateStyle: "long",
+        timeZone: "America/New_York",
+      }).format(hackathon.applicationOpen);
+
+      return (
+        <div className="flex flex-col items-center justify-center gap-y-3 text-center">
+          <p className="text-2xl font-semibold">
+            Applications for {hackathon.displayName} open on {applicationOpen}.
+          </p>
+          <p className="text-muted-foreground">
+            Check back then to submit your hacker application.
+          </p>
+        </div>
+      );
+    }
+
+    if (now > hackathon.applicationDeadline) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-y-3 text-center">
+          <p className="text-2xl font-semibold">
+            Applications for {hackathon.displayName} are closed.
+          </p>
+          <p className="text-muted-foreground">
+            Existing applicants can still view their application status here.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col items-center justify-center gap-y-6 text-xl font-semibold">
         <p className="w-full max-w-xl text-center text-2xl">
           Register for {hackathon.displayName} today!
         </p>
         <div className="flex flex-wrap justify-center gap-5">
-          {
-            //if there is no current hackathon then this page is never rendered anyway
-            <HackerAppCard hackathonName={hackathon.name} />
-          }
+          <HackerAppCard hackathonName={hackathon.name} />
         </div>
       </div>
     );
   }
+
+  const [resume, pastHackathons] = await Promise.allSettled([
+    api.resume.getResume(),
+    api.hackathon.getPastHackathons(),
+  ]);
 
   return (
     <>

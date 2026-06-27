@@ -920,9 +920,9 @@ export function HackerFormPage({
 
     existingApplicationRedirectedRef.current = true;
     toast.info("You already submitted an application for this hackathon.");
-    router.replace("/dashboard");
+    router.replace(`/hackathon/${hackathonId}`);
     router.refresh();
-  }, [applicationSubmitted, existingApplication, router]);
+  }, [applicationSubmitted, existingApplication, hackathonId, router]);
 
   useEffect(() => {
     if (prefillAppliedRef.current) return;
@@ -1200,7 +1200,7 @@ export function HackerFormPage({
               toast.info(
                 "You already submitted an application for this hackathon.",
               );
-              router.push("/dashboard");
+              router.push(`/hackathon/${hackathonId}`);
               router.refresh();
               setLoading(false);
               return;
@@ -1298,13 +1298,14 @@ export function HackerFormPage({
                       asChild
                       className="h-12 rounded-full bg-white px-6 text-base font-black text-[#21103d] shadow-[0_18px_46px_rgba(0,0,0,0.42)] hover:bg-white/90"
                     >
-                      <Link href="/dashboard">
-                        Go to dashboard
+                      <Link href={`/hackathon/${hackathonId}`}>
+                        View {hackathonName} dashboard
                         <ArrowRight className="ml-2 size-4" />
                       </Link>
                     </Button>
                     <p className="text-sm font-semibold text-white/55">
-                      Your dashboard will show your current application status.
+                      Your hackathon dashboard will show your current
+                      application status.
                     </p>
                   </div>
                 </div>

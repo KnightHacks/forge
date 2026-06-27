@@ -8,7 +8,7 @@ import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Hackathon",
-  description: "Open the currently running Knight Hacks hackathon dashboard.",
+  description: "Open the current Knight Hacks hackathon dashboard.",
 };
 
 export default async function CurrentHackathonPage() {
@@ -25,7 +25,7 @@ export default async function CurrentHackathonPage() {
       <div className="flex h-screen w-screen items-center justify-center text-center">
         <div className="flex flex-col items-center justify-center">
           <h1 className="text-2xl font-bold">
-            There's no Hackathon running right now.
+            There&apos;s no upcoming or active hackathon right now.
           </h1>
           <p className="text-sm text-gray-500">
             Stay on the lookout for the next one by joining our{" "}
