@@ -51,7 +51,7 @@ export default async function HackerApplicationPage(props: {
     });
 
     if (isHacker != null) {
-      return redirect("/dashboard");
+      return redirect(`/hackathon/${params["hackathon-id"]}`);
     }
   } catch {
     return redirect("/dashboard");

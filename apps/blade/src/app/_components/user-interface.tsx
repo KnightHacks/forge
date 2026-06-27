@@ -1,10 +1,12 @@
+import type { api as serverCaller } from "~/trpc/server";
 import MemberDashboard from "~/app/_components/dashboard/member-dashboard/member-dashboard";
 import { MemberAppCard } from "~/app/_components/option-cards";
-import { api } from "~/trpc/server";
 
-export async function UserInterface() {
-  const member = await api.member.getMember();
-
+export function UserInterface({
+  member,
+}: {
+  member: Awaited<ReturnType<(typeof serverCaller.member)["getMember"]>>;
+}) {
   if (!member) {
     return (
       <div className="flex flex-col items-center justify-center gap-y-6 font-bold">

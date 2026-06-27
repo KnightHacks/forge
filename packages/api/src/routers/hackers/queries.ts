@@ -28,14 +28,19 @@ export const hackerQueryRouter = {
           });
         }
       } else {
-        // If not provided, grab a FUTURE hackathon with a start date CLOSEST to now
+        // Match the participant lifecycle used by getCurrentHackathon.
         const now = new Date();
-        const futureHackathons = await db.query.Hackathon.findMany({
-          where: (t, { gt }) => gt(t.endDate, now),
-          orderBy: (t, { asc }) => [asc(t.startDate)],
+        const currentHackathons = await db.query.Hackathon.findMany({
+          where: (t, { and, gte, lte }) =>
+            and(lte(t.applicationOpen, now), gte(t.endDate, now)),
+          orderBy: (t, { asc }) => [
+            asc(t.applicationOpen),
+            asc(t.startDate),
+            asc(t.endDate),
+          ],
           limit: 1,
         });
-        hackathon = futureHackathons[0];
+        hackathon = currentHackathons[0];
 
         if (!hackathon) {
           return null;
