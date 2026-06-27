@@ -54,7 +54,7 @@ Notes:
 | --------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Hackathon`           | `knight_hacks_hackathon`             | Central hackathon config used for application routing, current/upcoming/past selection, admin editing, event association, email/background assets, and judging context. |
 | `Hacker`              | `knight_hacks_hacker`                | Stores reusable person-level hacker profile/application data used by dashboards, admin hacker lists, filtering, check-in lookup, updates, and emails.                   |
-| `HackerAttendee`      | `knight_hacks_hacker_attendee`       | Per-hackathon join table for a hacker's application status, confirmation time, points, and assigned class.                                                              |
+| `HackerAttendee`      | `knight_hacks_hacker_attendee`       | Per-hackathon join table for a hacker's application status, confirmation time, and points. Its nullable `class` column is retained only for legacy data.                |
 | `HackerEventAttendee` | `knight_hacks_hacker_event_attendee` | Records hackathon event check-ins and powers duplicate check-in prevention, attendance counts, attendee lists, and point awards.                                        |
 | `Sponsor`             | `knight_hacks_sponsor`               | Reserved for sponsor metadata; current sponsor displays elsewhere are static or unrelated.                                                                              |
 | `HackathonSponsor`    | `knight_hacks_hackathon_sponsor`     | Reserved hackathon-to-sponsor tier join table.                                                                                                                          |
@@ -71,7 +71,7 @@ Notes:
 - Hackathon date semantics vary by query: "current" can mean applications open, not ended, or future-start depending on the router.
 - `Hacker.dateCreated`/`timeCreated` describe profile creation; per-hackathon application timing lives on `HackerAttendee.timeApplied`/`timeConfirmed`.
 - `HackerAttendee.status` is the application/attendance state; keep values aligned with `FORMS.HACKATHON_APPLICATION_STATES`.
-- `HackerAttendee.class` is a nullable game/team class assigned during check-in, not original application profile data.
+- `HackerAttendee.class` is a legacy nullable column. Current check-in flows do not read or assign it.
 - `HackerEventAttendee.hackathonId` duplicates context derivable through `eventId` and `hackerAttId`; no DB-level consistency check was found.
 - `Challenges.sponsor` is plain text and is not linked to `Sponsor`.
 - `Teams.matchKey` is globally unique and derived from Devpost submitter name, created timestamp, and project title, not scoped by hackathon.

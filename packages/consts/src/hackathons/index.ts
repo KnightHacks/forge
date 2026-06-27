@@ -1,4 +1,4 @@
-export * as KNIGHT_HACKS_8 from "./kh8";
+export * as BLOOMKNIGHTS from "./bloomknights";
 
 export const APPLICATION_BACKGROUND_OPTIONS = [
   {
