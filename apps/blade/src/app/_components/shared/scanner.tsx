@@ -5,8 +5,6 @@ import { Scanner } from "@yudiel/react-qr-scanner";
 import { AwardIcon, WrenchIcon } from "lucide-react";
 import { z } from "zod";
 
-import type { HackerClass } from "@forge/db/schemas/knight-hacks";
-import { HACKER_CLASSES } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -26,7 +24,6 @@ import {
 } from "@forge/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { toast } from "@forge/ui/toast";
-import { hackathons } from "@forge/utils";
 
 import ToggleButton from "~/app/_components/admin/hackathon/hackers/toggle-button";
 import { api } from "~/trpc/react";
@@ -43,7 +40,6 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
   const [openPersistentDialog, setOpenPersistentDialog] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [assignedClass, setAssignedClass] = useState("");
   const [checkInMessage, setCheckInMessage] = useState("");
   const [toggleRepeatedCheckIn, setToggleRepeatedCheckIn] = useState(false);
   const [errorColor, setErrorColor] = useState("text-red-500");
@@ -83,7 +79,6 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
       );
       setFirstName(opts.firstName);
       setLastName(opts.lastName);
-      setAssignedClass(opts.class ?? "No class assigned");
       setCheckInMessage(opts.messageforHackers);
       setOpenPersistentDialog(true);
 
@@ -98,7 +93,6 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
         setCheckInMessage(opts.message);
         setFirstName("Error");
         setLastName("Error");
-        setAssignedClass("");
         setOpenPersistentDialog(true);
       }
       toast.error(opts.message, {
@@ -106,17 +100,12 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
       });
     },
   });
-  const AssignedClassCheckinSchema = z.union([
-    z.literal("All"),
-    z.enum(HACKER_CLASSES),
-  ]);
   const form = useForm({
     schema: z.object({
       userId: z.string(),
       eventId: z.string(),
       eventPoints: z.number(),
       hackathonId: z.string(),
-      assignedClassCheckin: AssignedClassCheckinSchema,
       repeatedCheckin: z.boolean(),
     }),
     defaultValues: {
@@ -124,7 +113,6 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
       userId: "",
       eventPoints: 0,
       hackathonId: "",
-      assignedClassCheckin: "All",
       repeatedCheckin: false,
     },
   });
@@ -182,43 +170,6 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
       )}
     />
   );
-  const renderClassCheckinSelect = () => (
-    <FormField
-      name="assignedClassCheckin"
-      control={form.control}
-      render={({ field }) => (
-        <FormItem className="space-y-2">
-          <FormLabel>Check-in class</FormLabel>
-          <FormControl>
-            <select
-              {...field}
-              className="w-full rounded border p-2"
-              defaultValue=""
-              onChange={(e) => {
-                const selectedClass = e.target.value;
-                field.onChange(e);
-                form.setValue("assignedClassCheckin", selectedClass);
-              }}
-            >
-              <option value="" disabled>
-                Select a class
-              </option>
-              <option key="All" value="All">
-                All
-              </option>
-              {HACKER_CLASSES.map((HackerClass) => (
-                <option key={HackerClass} value={HackerClass}>
-                  {HackerClass}
-                </option>
-              ))}
-            </select>
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-
   return (
     <Dialog open={open}>
       <DialogTrigger asChild>
@@ -283,7 +234,6 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               </TabsList>
               <TabsContent value="current" className="space-y-4">
                 {renderEventSelect(currentEvents)}
-                {eventType === "Hacker" && renderClassCheckinSelect()}
                 {eventType === "Hacker" && (
                   <ToggleButton
                     isToggled={toggleRepeatedCheckIn}
@@ -296,7 +246,6 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
               </TabsContent>
               <TabsContent value="previous" className="space-y-4">
                 {renderEventSelect(previousEvents)}
-                {eventType === "Hacker" && renderClassCheckinSelect()}
                 {eventType === "Hacker" && (
                   <ToggleButton
                     isToggled={toggleRepeatedCheckIn}
@@ -333,19 +282,6 @@ const ScannerPopUp = ({ eventType }: { eventType: "Member" | "Hacker" }) => {
             <div className="flex flex-col gap-1">
               <div className="text-sm text-muted-foreground">LAST</div>
               <div>{lastName}</div>
-            </div>
-            <div className="flex flex-col gap-1">
-              <div className="text-sm text-muted-foreground">CLASS</div>
-              <div
-                className="text-2xl"
-                style={{
-                  color: hackathons.getClassTeam(assignedClass as HackerClass)
-                    .teamColor,
-                  textShadow: `0 0 10px ${hackathons.getClassTeam(assignedClass as HackerClass).teamColor}, 0 0 20px ${hackathons.getClassTeam(assignedClass as HackerClass).teamColor}`,
-                }}
-              >
-                {assignedClass}
-              </div>
             </div>
             <div className="-my-2 w-56 border-t" />
             {errorColor != "" ? (
