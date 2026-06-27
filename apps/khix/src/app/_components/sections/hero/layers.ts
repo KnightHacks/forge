@@ -6,7 +6,7 @@ export interface HeroLayer {
   depthY: number;
   scrollY: number;
   scale: number;
-  motionRole?: "glow" | "pond" | "tk" | "waterfall";
+  motionRole?: "foreground" | "glow" | "pond" | "tk" | "waterfall";
 }
 
 export const HERO_LAYERS: HeroLayer[] = [
@@ -78,10 +78,11 @@ export const HERO_LAYERS: HeroLayer[] = [
     motionRole: "glow",
   },
   {
-    filename: "optimized/1_front.webp",
-    depthX: 30,
-    depthY: 15,
-    scrollY: 24,
+    filename: "optimized/1_front.png",
+    depthX: 0,
+    depthY: 0,
+    scrollY: 0,
     scale: 1,
+    motionRole: "foreground",
   },
 ];

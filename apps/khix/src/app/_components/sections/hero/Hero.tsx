@@ -40,11 +40,6 @@ export default function Hero() {
           ))}
           <div className={styles.shade} aria-hidden="true" />
           <HeroTitle />
-          <HeroLayerImage
-            layer={foregroundLayer}
-            index={foregroundLayerIndex}
-            zIndex={12}
-          />
           <FallingLeaves />
         </div>
         <div
@@ -53,6 +48,11 @@ export default function Hero() {
           aria-hidden="true"
         />
       </div>
+      <HeroLayerImage
+        layer={foregroundLayer}
+        index={foregroundLayerIndex}
+        zIndex={12}
+      />
     </section>
   );
 }

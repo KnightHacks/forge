@@ -3,7 +3,15 @@ import { Navbar } from "./_components/navbar";
 import Hero from "./_components/sections/hero";
 import styles from "./page.module.css";
 
-const NAV_LINKS = [{ label: "Home", href: "#home" }] satisfies NavbarLink[];
+const NAV_LINKS = [
+  { label: "Home", href: "#home" },
+  { label: "About Us", href: "#about" },
+  { label: "Tracks", href: "#tracks" },
+  { label: "Speakers", href: "#speakers" },
+  { label: "Sponsors", href: "#sponsors" },
+  { label: "Team", href: "#team" },
+  { label: "FAQ", href: "#faq" },
+] satisfies NavbarLink[];
 
 const SOCIAL_LINKS = [
   {
@@ -21,9 +29,13 @@ export default function Page() {
         <Hero />
         <section
           id="about"
-          className={styles.afterHero}
-          aria-label="About Knight Hacks IX"
-        />
+          className={styles.about}
+          aria-labelledby="about-title"
+        >
+          <h2 id="about-title" className={styles.aboutTitle}>
+            About
+          </h2>
+        </section>
       </main>
     </>
   );
