@@ -87,7 +87,9 @@ function AboutButton({
           {content}
         </a>
       ) : (
-        <Link href={href}>{content}</Link>
+        <Link href={href} prefetch={false}>
+          {content}
+        </Link>
       )}
     </Button>
   );
