@@ -13,6 +13,7 @@ import {
 } from "~/app/_components/member/member-dashboard";
 import { useDebugLatency } from "~/hooks/use-debug-latency";
 import { useMember } from "~/hooks/use-member";
+import { api } from "~/trpc/react";
 
 function DashboardSkeleton() {
   return (
@@ -30,6 +31,20 @@ function DashboardSkeleton() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <Skeleton className="h-8 w-48 max-w-full md:h-14 md:w-96" />
               <Skeleton className="h-9 w-24 rounded-md" />
+            </div>
+
+            <div className={cn(dashboardNestedSurfaceClass, "space-y-3 p-4")}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-4 w-14" />
+                  </div>
+                  <Skeleton className="h-4 w-full max-w-md" />
+                </div>
+                <Skeleton className="h-5 w-14 rounded-full" />
+              </div>
+              <Skeleton className="h-9 w-full rounded-md" />
             </div>
 
             {["member", "academics"].map((item) => (
@@ -80,6 +95,21 @@ function DashboardSkeleton() {
               </div>
             </div>
             <Skeleton className="h-11 w-full rounded-md lg:hidden" />
+            <div
+              className={cn(
+                dashboardNestedSurfaceClass,
+                "space-y-3 p-3 lg:hidden",
+              )}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="mt-3 h-4 w-full" />
+                </div>
+                <Skeleton className="h-5 w-14 rounded-full" />
+              </div>
+              <Skeleton className="h-8 w-full rounded-md" />
+            </div>
             <div className={cn(dashboardNestedSurfaceClass, "p-3 lg:hidden")}>
               <div className="mb-2 flex items-center gap-2">
                 <Skeleton className="h-4 w-4" />
@@ -171,8 +201,21 @@ export function DashboardClient({
   const { isError, isLoading, isRedirecting, member } = useMember({
     redirectNoMemberTo: `/form/${MEMBER_SIGNUP_FORM_SLUG}`,
   });
+  const duesQuery = api.dues.getStatus.useQuery(undefined, {
+    enabled: Boolean(member) && !isRedirecting,
+    retry(failureCount, error) {
+      if (error.data?.code === "NOT_FOUND") return false;
+      if (error.data?.code === "UNAUTHORIZED") return false;
+      return failureCount < 2;
+    },
+  });
 
-  if (isLoading || isRedirecting || isDebugDelayPending) {
+  if (
+    isLoading ||
+    isRedirecting ||
+    isDebugDelayPending ||
+    (member && duesQuery.isPending)
+  ) {
     return <DashboardSkeleton />;
   }
 
@@ -180,5 +223,9 @@ export function DashboardClient({
 
   if (!member) return <DashboardSkeleton />;
 
-  return <MemberDashboard member={member} />;
+  if (duesQuery.isError || !duesQuery.data) {
+    return <DashboardErrorState />;
+  }
+
+  return <MemberDashboard member={member} duesStatus={duesQuery.data} />;
 }

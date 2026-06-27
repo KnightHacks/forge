@@ -1,4 +1,5 @@
 import { authRouter } from "./routers/auth";
+import { duesRouter } from "./routers/dues";
 import { formsRouter } from "./routers/forms";
 import { memberRouter } from "./routers/member";
 import { profilePictureRouter } from "./routers/profile-picture";
@@ -8,6 +9,7 @@ import { createTRPCRouter, publicProcedure } from "./trpc";
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,
+  dues: duesRouter,
   forms: formsRouter,
   health: publicProcedure.query(() => ({
     ok: true,

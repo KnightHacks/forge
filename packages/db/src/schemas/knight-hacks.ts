@@ -313,11 +313,21 @@ export const DuesPayment = createTable(
     amount: t.integer().notNull(),
     paymentDate: t.timestamp().notNull(),
     year: t.integer().notNull(),
+    active: t.boolean().notNull().default(true),
+    stripePaymentIntentId: t.varchar("stripe_payment_intent_id", {
+      length: 255,
+    }),
   }),
   (table) => ({
     uniqueMemberYear: unique().on(table.memberId, table.year),
+    uniqueStripePaymentIntent: unique(
+      "knight_hacks_dues_payment_stripe_payment_intent_id_unique",
+    ).on(table.stripePaymentIntentId),
   }),
 );
+
+export type InsertDuesPayment = typeof DuesPayment.$inferInsert;
+export type SelectDuesPayment = typeof DuesPayment.$inferSelect;
 
 export const DuesPaymentSchema = createInsertSchema(DuesPayment);
 

@@ -71,6 +71,13 @@
       "when": 1781733366922,
       "tag": "0009_smooth_forgotten_one",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1782515137082,
+      "tag": "0010_silent_toxin",
+      "breakpoints": true
     }
   ]
 }

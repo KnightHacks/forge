@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
+import type { CurrentDuesStatus } from "~/app/_components/member/member-dashboard";
 import type { CurrentMember } from "~/hooks/use-member";
 import { MemberDashboard } from "~/app/_components/member/member-dashboard";
 
@@ -68,10 +69,51 @@ const member: CurrentMember = {
   websiteUrl: "https://dvidal.dev",
 };
 
+const paidDuesStatus = {
+  amountDue: 2500,
+  amountDueLabel: "$25.00",
+  amountPaid: 2500,
+  currentAcademicYear: {
+    endYear: 2027,
+    label: "2026-2027 academic school year",
+    shortLabel: "2026-2027",
+    startYear: 2026,
+  },
+  currentYearHasStaleDues: false,
+  lateYearWarning: false,
+  paid: true,
+  paidAt: new Date("2026-08-15T12:00:00Z"),
+  payableAcademicYear: {
+    endYear: 2027,
+    label: "2026-2027 academic school year",
+    shortLabel: "2026-2027",
+    startYear: 2026,
+  },
+  paymentAcademicYear: {
+    endYear: 2027,
+    label: "2026-2027 academic school year",
+    shortLabel: "2026-2027",
+    startYear: 2026,
+  },
+  paymentId: "dues-payment-id",
+  state: "paid",
+  stripePaymentIntentId: "pi_paid",
+} as CurrentDuesStatus;
+
+const unpaidDuesStatus = {
+  ...paidDuesStatus,
+  amountPaid: null,
+  paid: false,
+  paidAt: null,
+  paymentId: null,
+  state: "unpaid",
+  stripePaymentIntentId: null,
+} as CurrentDuesStatus;
+
 describe("MemberDashboard", () => {
   it("renders the Guild social card without legacy member-profile chrome", () => {
     const html = renderToStaticMarkup(
-      createElement(MemberDashboard, { member }),
+      createElement(MemberDashboard, { duesStatus: paidDuesStatus, member }),
     );
 
     expect(html).toContain("Welcome, Dylan");
@@ -85,15 +127,22 @@ describe("MemberDashboard", () => {
     expect(html).toContain("QR widget (desktop)");
     expect(html).toContain("QR widget (mobile)");
     expect(html).toContain("Resume widget for user-id/Resume.pdf (compact)");
+    expect(html).toContain("Dues");
+    expect(html).toContain("Paid for the 2026-2027 academic school year.");
+    expect(html).toContain("Paid");
+    expect(html).toContain("bg-[hsl(var(--chart-2)/0.14)]");
+    expect(html).toContain("text-[hsl(var(--chart-2))]");
+    expect(html).toContain('aria-label="Dues status"');
     expect(html).toContain('href="/member/settings"');
     expect(html).toContain('aria-label="Edit profile"');
+    expect(html).not.toContain('href="/member/dues"');
     expect(html).not.toContain("Member profile active");
     expect(html).not.toContain("MEMBER PROFILE");
   });
 
   it("keeps long Guild bio copy inside an overflow-owned About surface", () => {
     const html = renderToStaticMarkup(
-      createElement(MemberDashboard, { member }),
+      createElement(MemberDashboard, { duesStatus: paidDuesStatus, member }),
     );
 
     expect(html).toContain("About");
@@ -104,6 +153,7 @@ describe("MemberDashboard", () => {
   it("renders private Guild visibility with sponsor-only dashboard copy", () => {
     const html = renderToStaticMarkup(
       createElement(MemberDashboard, {
+        duesStatus: paidDuesStatus,
         member: { ...member, guildProfileVisible: false },
       }),
     );
@@ -111,5 +161,22 @@ describe("MemberDashboard", () => {
     expect(html).toContain("Private");
     expect(html).toContain("Sponsors only");
     expect(html).not.toContain("Members + sponsors");
+  });
+
+  it("renders unpaid dues as a neutral dashboard action", () => {
+    const html = renderToStaticMarkup(
+      createElement(MemberDashboard, {
+        duesStatus: unpaidDuesStatus,
+        member,
+      }),
+    );
+
+    expect(html).toContain(
+      "Dues unpaid for the 2026-2027 academic school year.",
+    );
+    expect(html).toContain("Unpaid");
+    expect(html).toContain("Pay dues");
+    expect(html).toContain('href="/member/dues"');
+    expect(html).toContain("text-muted-foreground");
   });
 });

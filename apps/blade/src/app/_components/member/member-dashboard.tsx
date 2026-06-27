@@ -2,6 +2,7 @@
 
 import {
   Building2,
+  CreditCard,
   ExternalLink,
   Eye,
   EyeOff,
@@ -17,11 +18,12 @@ import {
   UserRound,
 } from "lucide-react";
 
+import type { RouterOutputs } from "@forge/api";
 import { cn } from "@forge/ui";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent } from "@forge/ui/card";
-import { MEMBER_SETTINGS_PATH } from "@forge/validators";
+import { MEMBER_DUES_PATH, MEMBER_SETTINGS_PATH } from "@forge/validators";
 
 import type { CurrentMember } from "~/hooks/use-member";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
@@ -35,6 +37,8 @@ export const dashboardPanelClass =
   "overflow-hidden border-white/10 bg-card/95 py-0 shadow-2xl shadow-black/25 lg:h-full lg:min-h-[calc(100svh-8rem)] lg:max-h-[calc(100svh-8rem)]";
 export const dashboardNestedSurfaceClass =
   "rounded-md border border-white/10 bg-background/60";
+
+export type CurrentDuesStatus = RouterOutputs["dues"]["getStatus"];
 
 function DashboardContent({
   children,
@@ -52,7 +56,85 @@ function EmptyValue({ children = "Not set" }: { children?: string }) {
   return <span className="text-muted-foreground">{children}</span>;
 }
 
-function GuildProfileCard({ member }: { member: CurrentMember }) {
+function DuesStatusBadge({ duesStatus }: { duesStatus: CurrentDuesStatus }) {
+  if (duesStatus.paid) {
+    return (
+      <Badge
+        variant="outline"
+        className="border-[hsl(var(--chart-2)/0.35)] bg-[hsl(var(--chart-2)/0.14)] text-[hsl(var(--chart-2))]"
+      >
+        Paid
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge
+      variant="outline"
+      className="border-white/10 bg-muted/20 text-muted-foreground"
+    >
+      Unpaid
+    </Badge>
+  );
+}
+
+function DuesStatusTile({
+  className,
+  compact = false,
+  duesStatus,
+}: {
+  className?: string;
+  compact?: boolean;
+  duesStatus: CurrentDuesStatus;
+}) {
+  return (
+    <DashboardContent
+      role="group"
+      aria-label="Dues status"
+      className={cn(
+        dashboardNestedSurfaceClass,
+        "space-y-3 p-3 md:p-4",
+        className,
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+            <CreditCard className="h-4 w-4 text-primary" aria-hidden="true" />
+            Dues
+          </div>
+          <p
+            className={cn(
+              "text-sm leading-5 text-muted-foreground",
+              compact && "line-clamp-2",
+            )}
+          >
+            {duesStatus.paid
+              ? `Paid for the ${duesStatus.paymentAcademicYear.label}.`
+              : `Dues unpaid for the ${duesStatus.payableAcademicYear.label}.`}
+          </p>
+        </div>
+        <DuesStatusBadge duesStatus={duesStatus} />
+      </div>
+
+      {!duesStatus.paid && (
+        <Button asChild size={compact ? "sm" : "md"} className="w-full gap-2">
+          <MemberRouteTransitionLink href={MEMBER_DUES_PATH}>
+            Pay dues
+          </MemberRouteTransitionLink>
+        </Button>
+      )}
+    </DashboardContent>
+  );
+}
+
+function GuildProfileCard({
+  duesStatus,
+  member,
+}: {
+  duesStatus: CurrentDuesStatus;
+  member: CurrentMember;
+}) {
   const displayName = `${member.firstName} ${member.lastName}`.trim();
   const isPublic = member.guildProfileVisible;
   const links = [
@@ -128,6 +210,8 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
         <DashboardContent className="lg:hidden">
           <MemberQRCodeDialog variant="mobile" />
         </DashboardContent>
+
+        <DuesStatusTile compact duesStatus={duesStatus} className="lg:hidden" />
 
         <DashboardContent
           role="group"
@@ -247,7 +331,13 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
   );
 }
 
-export function MemberDashboard({ member }: { member: CurrentMember }) {
+export function MemberDashboard({
+  duesStatus,
+  member,
+}: {
+  duesStatus: CurrentDuesStatus;
+  member: CurrentMember;
+}) {
   const profileItems = [
     {
       icon: Mail,
@@ -294,6 +384,8 @@ export function MemberDashboard({ member }: { member: CurrentMember }) {
               </h1>
               <MemberQRCodeDialog />
             </DashboardContent>
+
+            <DuesStatusTile duesStatus={duesStatus} />
 
             <DashboardContent
               className={cn(dashboardNestedSurfaceClass, "p-4")}
@@ -342,7 +434,7 @@ export function MemberDashboard({ member }: { member: CurrentMember }) {
           </CardContent>
         </Card>
 
-        <GuildProfileCard member={member} />
+        <GuildProfileCard member={member} duesStatus={duesStatus} />
       </section>
     </main>
   );
