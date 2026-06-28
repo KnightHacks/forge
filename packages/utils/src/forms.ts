@@ -13,6 +13,15 @@ type OptionalSchema =
   | { success: true; schema: JSONSchema7 }
   | { success: false; msg: string };
 
+function createNonWhitespaceLengthPattern(min?: number, max?: number) {
+  if (min === undefined && max === undefined) return undefined;
+
+  const lowerBound = min ?? 0;
+  const upperBound = max ?? "";
+
+  return `^(?:\\s*\\S){${lowerBound},${upperBound}}\\s*$`;
+}
+
 function createJsonSchemaValidator({
   optional,
   type,
@@ -30,12 +39,16 @@ function createJsonSchemaValidator({
 
   switch (type) {
     case "SHORT_ANSWER":
-    case "PARAGRAPH":
+    case "PARAGRAPH": {
       schema.type = "string";
-      if (max === undefined) {
-        schema.maxLength = type === "SHORT_ANSWER" ? 150 : 750;
-      }
+      const maxNonWhitespaceLength =
+        max ?? (type === "SHORT_ANSWER" ? 150 : 750);
+      schema.pattern = createNonWhitespaceLengthPattern(
+        min,
+        maxNonWhitespaceLength,
+      );
       break;
+    }
     case "EMAIL":
       schema.type = "string";
       schema.format = "email";
@@ -93,7 +106,8 @@ function createJsonSchemaValidator({
   }
 
   if (min !== undefined) {
-    if (schema.type === "string") schema.minLength = min;
+    if (schema.type === "string" && schema.pattern === undefined)
+      schema.minLength = min;
     if (schema.type === "array") schema.minItems = min;
     if (schema.type === "number") schema.minimum = min;
   } else {
@@ -101,7 +115,7 @@ function createJsonSchemaValidator({
   }
 
   if (max !== undefined) {
-    if (schema.type === "string") {
+    if (schema.type === "string" && schema.pattern === undefined) {
       // Explicit max value overrides any defaults
       schema.maxLength = max;
     }

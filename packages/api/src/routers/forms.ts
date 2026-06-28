@@ -1,5 +1,4 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import type { JSONSchema7 } from "json-schema";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import jsonSchemaToZod from "json-schema-to-zod";
@@ -154,6 +153,15 @@ export const formsRouter = {
         minioClient,
       );
 
+      const jsonSchema = forms.generateJsonSchema(formData);
+
+      if (!jsonSchema.success) {
+        throw new TRPCError({
+          message: jsonSchema.msg,
+          code: "BAD_REQUEST",
+        });
+      }
+
       return {
         ...retForm,
         responseRoleIds: responseRoles.map((r) => r.roleId),
@@ -161,7 +169,7 @@ export const formsRouter = {
           ...formData,
           instructions: instructionsWithFreshUrls,
         },
-        zodValidator: jsonSchemaToZod(form.formValidatorJson as JSONSchema7),
+        zodValidator: jsonSchemaToZod(jsonSchema.schema),
       };
     }),
 
