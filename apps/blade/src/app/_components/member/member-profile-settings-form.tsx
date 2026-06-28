@@ -77,6 +77,22 @@ import { useDebugLatency } from "~/hooks/use-debug-latency";
 import { api } from "~/trpc/react";
 
 type SettingsSection = MemberSettingsFieldDefinition["section"];
+type MemberProfileFormSource = Omit<
+  CurrentMember,
+  | "gender"
+  | "levelOfStudy"
+  | "major"
+  | "raceOrEthnicity"
+  | "school"
+  | "shirtSize"
+> & {
+  gender: string;
+  levelOfStudy: string;
+  major: string;
+  raceOrEthnicity: string;
+  school: string;
+  shirtSize: string;
+};
 
 const sectionOrder: SettingsSection[] = ["Personal", "Academics", "Guild"];
 const sectionMeta = {
@@ -101,7 +117,9 @@ const sectionMeta = {
   { description: ReactNode; icon: typeof UserRound; title: string }
 >;
 
-function memberDefaults(member: CurrentMember): MemberUpdateFormValues {
+export function memberProfileFormDefaults(
+  member: MemberProfileFormSource,
+): MemberUpdateFormValues {
   const { gradTerm, gradYear } = graduationTermYearFromDate(member.gradDate);
 
   return {
@@ -130,7 +148,7 @@ function memberDefaults(member: CurrentMember): MemberUpdateFormValues {
   };
 }
 
-function SettingsFieldControl({
+export function MemberSettingsFieldControl({
   fieldConfig,
   onChange,
   value,
@@ -381,7 +399,10 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
     useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const initialValues = useMemo(() => memberDefaults(member), [member]);
+  const initialValues = useMemo(
+    () => memberProfileFormDefaults(member),
+    [member],
+  );
   const form = useForm<MemberUpdateFormValues>({
     schema: memberUpdateFormSchema,
     defaultValues: initialValues,
@@ -401,7 +422,7 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
 
   const updateMember = api.member.updateMember.useMutation({
     async onSuccess(updatedMember) {
-      const nextValues = memberDefaults(updatedMember);
+      const nextValues = memberProfileFormDefaults(updatedMember);
       form.reset(nextValues);
       setSubmitError(null);
       setSavedMessage("Profile saved.");
@@ -567,7 +588,7 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
                                 </FormLabel>
                               )}
                               <FormControl>
-                                <SettingsFieldControl
+                                <MemberSettingsFieldControl
                                   fieldConfig={fieldConfig}
                                   value={field.value}
                                   onChange={field.onChange}

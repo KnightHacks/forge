@@ -203,6 +203,22 @@ describe("duesRouter", () => {
     expect(result.stripePaymentIntentId).toBe("pi_paid");
   });
 
+  it("treats a legacy calendar-year manual grant as paid", async () => {
+    const legacyManualGrant = {
+      ...activeDues,
+      id: "legacy-manual-grant",
+      stripePaymentIntentId: null,
+      year: 2026,
+    };
+    mockDuesRows([legacyManualGrant]);
+
+    const result = await createCaller().dues.getStatus();
+
+    expect(result.paid).toBe(true);
+    expect(result.paymentId).toBe(legacyManualGrant.id);
+    expect(result.paymentAcademicYear.shortLabel).toBe("2026-2027");
+  });
+
   it("treats stale current-year dues as unpaid and payable next year", async () => {
     mockDuesRows([{ ...activeDues, active: false }]);
 

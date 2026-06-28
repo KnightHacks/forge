@@ -74,6 +74,10 @@ export const updateResponseInputSchema = createResponseInputSchema.extend({
   upsert: z.boolean().default(false),
 });
 
+interface ResponseOwnerSession {
+  user: Pick<Session["user"], "id">;
+}
+
 const formConnectionMappingSchema = z.object({
   customValue: z.unknown().optional(),
   formField: z.string().optional(),
@@ -468,7 +472,7 @@ export async function updateResponse({
   database?: WriteDb;
   enforceAllowEdit?: boolean;
   input: z.infer<typeof updateResponseInputSchema>;
-  session: Session;
+  session: ResponseOwnerSession;
 }) {
   const form = await getFormForResponse(database, input.form, codeOwnedForms);
 

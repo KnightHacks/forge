@@ -16,7 +16,8 @@ export function SignOutButton() {
     <Button
       type="button"
       variant="outline"
-      className="gap-2"
+      aria-label={isPending ? "Signing out" : "Sign out"}
+      className="gap-2 px-3 sm:px-4"
       disabled={isPending}
       onClick={async () => {
         setIsPending(true);
@@ -29,7 +30,9 @@ export function SignOutButton() {
       }}
     >
       <LogOut className="h-4 w-4" aria-hidden="true" />
-      {isPending ? "Signing out" : "Sign out"}
+      <span className="hidden sm:inline">
+        {isPending ? "Signing out" : "Sign out"}
+      </span>
     </Button>
   );
 }

@@ -47,8 +47,21 @@ export async function uploadResumeForSession({
   fileContent: string;
   session: Session;
 }) {
+  return await uploadResumeForUser({
+    fileContent,
+    userId: session.user.id,
+  });
+}
+
+export async function uploadResumeForUser({
+  fileContent,
+  userId,
+}: {
+  fileContent: string;
+  userId: string;
+}) {
   const fileBuffer = decodeAndValidateResumeDataUrl(fileContent);
-  const filePath = createResumeObjectName(session.user.id);
+  const filePath = createResumeObjectName(userId);
 
   await ensureResumeBucketExists();
   await resumeStorageClient.putObject(
@@ -121,15 +134,31 @@ export async function saveMemberResumeForSession({
   resumeUrl: string | null | undefined;
   session: Session;
 }) {
+  return await saveMemberResumeForUser({
+    database,
+    resumeUrl,
+    userId: session.user.id,
+  });
+}
+
+export async function saveMemberResumeForUser({
+  database,
+  resumeUrl,
+  userId,
+}: {
+  database: WriteDb;
+  resumeUrl: string | null | undefined;
+  userId: string;
+}) {
   const normalizedResumeUrl = await normalizeResumeObjectNameForPersistence(
     resumeUrl,
-    session.user.id,
+    userId,
   );
 
   const [member] = await database
     .update(Member)
     .set({ resumeUrl: normalizedResumeUrl })
-    .where(eq(Member.userId, session.user.id))
+    .where(eq(Member.userId, userId))
     .returning();
 
   if (!member) {
@@ -143,24 +172,18 @@ export async function saveMemberResumeForSession({
 }
 
 export async function getResumeDownloadUrlForSession(session: Session) {
-  const member = await db.query.Member.findFirst({
-    where: (t, { eq }) => eq(t.userId, session.user.id),
-  });
+  return await getResumeDownloadUrlForUser(session.user.id);
+}
 
-  const hacker = await db.query.Hacker.findFirst({
-    where: (t, { eq }) => eq(t.userId, session.user.id),
-  });
-
-  if (!member && !hacker) {
-    return { url: null };
-  }
-
-  const filename = member?.resumeUrl ?? hacker?.resumeUrl;
+async function getResumeDownloadUrlForObject(
+  filename: string | null | undefined,
+  userId: string,
+) {
   if (!filename) {
     return { url: null };
   }
 
-  if (!isResumeObjectOwnedByUser(filename, session.user.id)) {
+  if (!isResumeObjectOwnedByUser(filename, userId)) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Resume does not belong to the current user.",
@@ -185,6 +208,26 @@ export async function getResumeDownloadUrlForSession(session: Session) {
       message: "Could not generate resume download URL.",
     });
   }
+}
+
+export async function getMemberResumeDownloadUrlForUser(userId: string) {
+  const member = await db.query.Member.findFirst({
+    where: (t, { eq }) => eq(t.userId, userId),
+  });
+
+  return await getResumeDownloadUrlForObject(member?.resumeUrl, userId);
+}
+
+export async function getResumeDownloadUrlForUser(userId: string) {
+  const member = await db.query.Member.findFirst({
+    where: (t, { eq }) => eq(t.userId, userId),
+  });
+  const hacker = await db.query.Hacker.findFirst({
+    where: (t, { eq }) => eq(t.userId, userId),
+  });
+
+  const filename = member?.resumeUrl ?? hacker?.resumeUrl;
+  return await getResumeDownloadUrlForObject(filename, userId);
 }
 
 export async function removeUnreferencedResumeObjectsForUser(userId: string) {

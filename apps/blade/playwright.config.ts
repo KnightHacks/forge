@@ -1,8 +1,9 @@
 import { defineConfig } from "playwright/test";
 
 const port = 3100;
-const baseURL = `http://localhost:${port}`;
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${port}`;
 const defaultE2EUserId = "00000000-0000-4000-8000-000000000101";
+const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER === "true";
 
 export default defineConfig({
   expect: {
@@ -23,20 +24,22 @@ export default defineConfig({
     video: "retain-on-failure",
     viewport: { height: 1000, width: 1440 },
   },
-  webServer: {
-    command: [
-      "BLADE_E2E_AUTH=true",
-      "NEXT_PUBLIC_BLADE_E2E_AUTH=true",
-      `BLADE_E2E_DEFAULT_USER_ID=${defaultE2EUserId}`,
-      `NEXT_PUBLIC_BLADE_URL=${baseURL}`,
-      `BLADE_URL=${baseURL}`,
-      `PORT=${port}`,
-      "npm exec --yes pnpm@9.12.1 -- with-env next dev --hostname 127.0.0.1 --port",
-      String(port),
-    ].join(" "),
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    url: baseURL,
-  },
+  webServer: skipWebServer
+    ? undefined
+    : {
+        command: [
+          "BLADE_E2E_AUTH=true",
+          "NEXT_PUBLIC_BLADE_E2E_AUTH=true",
+          `BLADE_E2E_DEFAULT_USER_ID=${defaultE2EUserId}`,
+          `NEXT_PUBLIC_BLADE_URL=${baseURL}`,
+          `BLADE_URL=${baseURL}`,
+          `PORT=${port}`,
+          "npm exec --yes pnpm@9.12.1 -- with-env next dev --hostname 127.0.0.1 --port",
+          String(port),
+        ].join(" "),
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+        url: baseURL,
+      },
   workers: 1,
 });

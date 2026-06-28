@@ -10,10 +10,6 @@ import {
   buildDuesAcademicYear,
   duesPaymentIntentInputSchema,
   formatDuesAmount,
-  getDuesAcademicYear,
-  getDuesPayableYear,
-  isLateDuesPaymentWindow,
-  MEMBER_DUES_PRICE_CENTS,
 } from "@forge/validators";
 
 import { protectedProcedure } from "../trpc";
@@ -21,52 +17,7 @@ import {
   assertDuesPaymentIntentOwnership,
   recordSucceededDuesPayment,
 } from "../utils/dues/payment";
-
-type DuesRow = Pick<
-  typeof DuesPayment.$inferSelect,
-  "active" | "amount" | "id" | "paymentDate" | "stripePaymentIntentId" | "year"
->;
-
-function buildDuesStatus({
-  duesRows,
-  referenceDate = new Date(),
-}: {
-  duesRows: DuesRow[];
-  referenceDate?: Date;
-}) {
-  const currentAcademicYear = getDuesAcademicYear(referenceDate);
-  const currentYearRows = duesRows.filter(
-    (row) => row.year === currentAcademicYear.startYear,
-  );
-  const activeCurrentYearPayment = currentYearRows.find((row) => row.active);
-  const hasStaleCurrentYearDues = currentYearRows.some((row) => !row.active);
-  const payableYearStart = getDuesPayableYear({
-    currentAcademicYearStart: currentAcademicYear.startYear,
-    hasStaleCurrentYearDues,
-  });
-  const activePayableYearPayment = duesRows.find(
-    (row) => row.year === payableYearStart && row.active,
-  );
-  const paidPayment = activeCurrentYearPayment ?? activePayableYearPayment;
-  const paymentYearStart = paidPayment?.year ?? payableYearStart;
-  const paymentAcademicYear = buildDuesAcademicYear(paymentYearStart);
-
-  return {
-    amountDue: MEMBER_DUES_PRICE_CENTS,
-    amountDueLabel: formatDuesAmount(MEMBER_DUES_PRICE_CENTS),
-    amountPaid: paidPayment?.amount ?? null,
-    currentAcademicYear,
-    currentYearHasStaleDues: hasStaleCurrentYearDues,
-    lateYearWarning: isLateDuesPaymentWindow(referenceDate),
-    paid: Boolean(paidPayment),
-    paidAt: paidPayment?.paymentDate ?? null,
-    payableAcademicYear: buildDuesAcademicYear(payableYearStart),
-    paymentAcademicYear,
-    paymentId: paidPayment?.id ?? null,
-    state: paidPayment ? "paid" : "unpaid",
-    stripePaymentIntentId: paidPayment?.stripePaymentIntentId ?? null,
-  } as const;
-}
+import { buildDuesStatus } from "../utils/dues/status";
 
 async function getMemberForSession(userId: string) {
   const member = await db.query.Member.findFirst({

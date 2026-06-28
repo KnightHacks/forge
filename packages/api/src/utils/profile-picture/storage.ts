@@ -49,9 +49,22 @@ export async function uploadProfilePictureForSession({
   fileContent: string;
   session: Session;
 }) {
+  return await uploadProfilePictureForUser({
+    fileContent,
+    userId: session.user.id,
+  });
+}
+
+export async function uploadProfilePictureForUser({
+  fileContent,
+  userId,
+}: {
+  fileContent: string;
+  userId: string;
+}) {
   const { contentType, fileBuffer } =
     decodeAndValidateProfilePictureDataUrl(fileContent);
-  const filePath = createProfilePictureObjectName(session.user.id, contentType);
+  const filePath = createProfilePictureObjectName(userId, contentType);
 
   await ensureProfilePictureBucketExists();
   await profilePictureStorageClient.putObject(
@@ -93,16 +106,29 @@ export async function saveMemberProfilePictureForSession({
   profilePictureUrl: string | null | undefined;
   session: Session;
 }) {
+  return await saveMemberProfilePictureForUser({
+    database,
+    profilePictureUrl,
+    userId: session.user.id,
+  });
+}
+
+export async function saveMemberProfilePictureForUser({
+  database,
+  profilePictureUrl,
+  userId,
+}: {
+  database: WriteDb;
+  profilePictureUrl: string | null | undefined;
+  userId: string;
+}) {
   const normalizedProfilePictureUrl =
-    normalizeProfilePictureObjectNameForPersistence(
-      profilePictureUrl,
-      session.user.id,
-    );
+    normalizeProfilePictureObjectNameForPersistence(profilePictureUrl, userId);
 
   const [member] = await database
     .update(Member)
     .set({ profilePictureUrl: normalizedProfilePictureUrl })
-    .where(eq(Member.userId, session.user.id))
+    .where(eq(Member.userId, userId))
     .returning();
 
   if (!member) {
@@ -116,8 +142,12 @@ export async function saveMemberProfilePictureForSession({
 }
 
 export async function getProfilePictureDownloadUrlForSession(session: Session) {
+  return await getProfilePictureDownloadUrlForUser(session.user.id);
+}
+
+export async function getProfilePictureDownloadUrlForUser(userId: string) {
   const member = await db.query.Member.findFirst({
-    where: (t, { eq }) => eq(t.userId, session.user.id),
+    where: (t, { eq }) => eq(t.userId, userId),
   });
 
   if (!member?.profilePictureUrl) {
@@ -126,7 +156,7 @@ export async function getProfilePictureDownloadUrlForSession(session: Session) {
 
   const objectName = resolveProfilePictureObjectName(
     member.profilePictureUrl,
-    session.user.id,
+    userId,
   );
 
   if (!objectName) {
@@ -153,7 +183,10 @@ export async function getProfilePictureDownloadUrlForSession(session: Session) {
   }
 }
 
-export async function removeProfilePictureObjectsForUser(userId: string) {
+export async function removeProfilePictureObjectsForUser(
+  userId: string,
+  preservedObjectNames: readonly string[] = [],
+) {
   try {
     const objectsToRemove: string[] = [];
     const objectStream = profilePictureStorageClient.listObjects(
@@ -166,6 +199,7 @@ export async function removeProfilePictureObjectsForUser(userId: string) {
       const objectName = typeof obj.name === "string" ? obj.name : null;
       if (!objectName) continue;
       if (!isProfilePictureObjectOwnedByUser(objectName, userId)) continue;
+      if (preservedObjectNames.includes(objectName)) continue;
 
       objectsToRemove.push(objectName);
     }

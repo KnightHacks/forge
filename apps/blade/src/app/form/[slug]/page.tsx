@@ -6,6 +6,7 @@ import {
   memberSignupFormDefinition,
 } from "@forge/validators";
 
+import { canAccessMemberAdmin } from "~/app/_components/admin/access";
 import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { MemberSignupForm } from "~/app/_components/member/member-signup-form";
 import { auth } from "~/server/auth";
@@ -27,18 +28,23 @@ export default async function FormPage({
   if (!session) redirect("/");
   if (slug !== MEMBER_SIGNUP_FORM_SLUG) notFound();
 
-  const form = await api.forms.getForm({ slugName: slug });
+  const [form, member, effectivePermissions] = await Promise.all([
+    api.forms.getForm({ slugName: slug }),
+    api.member.getMember(),
+    api.roles.getPermissions(),
+  ]);
   const completionRedirectUrl =
     form.completionRedirectUrl ??
     memberSignupFormDefinition.completionRedirectUrl;
-
-  const member = await api.member.getMember();
 
   if (member) redirect(completionRedirectUrl);
 
   return (
     <HydrateClient>
-      <AuthenticatedShell session={session}>
+      <AuthenticatedShell
+        canAccessAdmin={canAccessMemberAdmin(effectivePermissions)}
+        session={session}
+      >
         <MemberSignupForm
           definition={{
             ...memberSignupFormDefinition,

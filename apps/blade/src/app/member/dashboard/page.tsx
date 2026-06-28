@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { canAccessMemberAdmin } from "~/app/_components/admin/access";
 import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { DashboardClient } from "~/app/_components/member/dashboard-client";
 import { getMemberDebugLatencyMs } from "~/app/_components/member/debug-latency";
 import { auth } from "~/server/auth";
-import { HydrateClient } from "~/trpc/server";
+import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Member Dashboard",
@@ -22,10 +23,14 @@ export default async function MemberDashboardPage({
   if (!session) redirect("/");
 
   const debugLatencyMs = getMemberDebugLatencyMs(await searchParams);
+  const effectivePermissions = await api.roles.getPermissions();
 
   return (
     <HydrateClient>
-      <AuthenticatedShell session={session}>
+      <AuthenticatedShell
+        canAccessAdmin={canAccessMemberAdmin(effectivePermissions)}
+        session={session}
+      >
         <DashboardClient debugLatencyMs={debugLatencyMs} />
       </AuthenticatedShell>
     </HydrateClient>

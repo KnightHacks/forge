@@ -1,0 +1,85 @@
+"use client";
+
+import Link from "next/link";
+import { LayoutDashboard, Menu, UsersRound } from "lucide-react";
+
+import { cn } from "@forge/ui";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@forge/ui/dropdown-menu";
+
+const mobileNavigationItems = [
+  {
+    href: "/member/dashboard",
+    icon: LayoutDashboard,
+    id: "dashboard",
+    label: "Dashboard",
+  },
+  {
+    href: "/admin/members",
+    icon: UsersRound,
+    id: "members",
+    label: "Members",
+  },
+] as const;
+
+export function MobileAdminNavigation({
+  activeNavigation,
+}: {
+  activeNavigation: "dashboard" | "members";
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          data-testid="mobile-admin-menu-trigger"
+          aria-label="Open navigation menu"
+          className="flex h-11 w-11 items-center justify-center rounded-md border border-primary/25 bg-primary/15 text-primary transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+        >
+          <Menu className="h-5 w-5" aria-hidden="true" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-52 border-border/70 bg-card/95 p-1.5 shadow-xl shadow-black/25 md:hidden"
+      >
+        <DropdownMenuLabel className="px-2 py-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+          Navigate
+        </DropdownMenuLabel>
+        {mobileNavigationItems.map((item) => {
+          const Icon = item.icon;
+          const active = activeNavigation === item.id;
+          return (
+            <DropdownMenuItem
+              key={item.id}
+              asChild
+              className={cn(
+                "h-11 cursor-pointer gap-3 rounded-md px-3 font-medium",
+                active && "bg-primary/15 text-foreground focus:bg-primary/15",
+              )}
+            >
+              <Link href={item.href} aria-current={active ? "page" : undefined}>
+                <Icon
+                  className={cn("h-4 w-4", active && "text-primary")}
+                  aria-hidden="true"
+                />
+                <span>{item.label}</span>
+                {active && (
+                  <span
+                    className="ml-auto h-1.5 w-1.5 rounded-full bg-primary"
+                    aria-hidden="true"
+                  />
+                )}
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

@@ -4,6 +4,7 @@ export * from "./hackathons";
 export * from "./forms";
 export * from "./member";
 export * from "./dues";
+export * from "./admin-member";
 
 export const unused = z.string().describe(
   `This lib is currently not used as we use drizzle-zod for simple schemas

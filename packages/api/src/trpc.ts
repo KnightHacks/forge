@@ -4,6 +4,8 @@ import { ZodError } from "zod";
 
 import type { Session } from "@forge/auth/server";
 
+import { loadPermissionsForUser } from "./utils/permissions-db";
+
 export const createTRPCContext = (opts: {
   headers: Headers;
   session?: Session | null;
@@ -45,5 +47,17 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   });
 });
 
-export const permProcedure = protectedProcedure;
+export const permProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const permissions = await loadPermissionsForUser(ctx.session.user.id);
+
+  return next({
+    ctx: {
+      ...ctx,
+      session: {
+        ...ctx.session,
+        permissions,
+      },
+    },
+  });
+});
 export const judgeProcedure = protectedProcedure;

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_SIGNUP_FORM_SLUG } from "@forge/validators";
 
+import { canAccessMemberAdmin } from "~/app/_components/admin/access";
 import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { getMemberDebugLatencyMs } from "~/app/_components/member/debug-latency";
 import { MemberProfileSettingsForm } from "~/app/_components/member/member-profile-settings-form";
@@ -24,13 +25,19 @@ export default async function MemberSettingsPage({
   if (!session) redirect("/");
 
   const debugLatencyMs = getMemberDebugLatencyMs(await searchParams);
-  const member = await api.member.getMember();
+  const [member, effectivePermissions] = await Promise.all([
+    api.member.getMember(),
+    api.roles.getPermissions(),
+  ]);
 
   if (!member) redirect(`/form/${MEMBER_SIGNUP_FORM_SLUG}`);
 
   return (
     <HydrateClient>
-      <AuthenticatedShell session={session}>
+      <AuthenticatedShell
+        canAccessAdmin={canAccessMemberAdmin(effectivePermissions)}
+        session={session}
+      >
         <MemberProfileSettingsForm
           member={member}
           debugLatencyMs={debugLatencyMs}

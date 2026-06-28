@@ -4,7 +4,7 @@ export interface PermissionDataObj {
   desc: string;
 }
 
-export const PERMISSION_DATA: Record<string, PermissionDataObj> = {
+export const PERMISSION_DATA = {
   IS_OFFICER: {
     idx: 0,
     name: "Is Officer",

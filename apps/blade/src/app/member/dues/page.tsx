@@ -6,6 +6,7 @@ import {
   MEMBER_SIGNUP_FORM_SLUG,
 } from "@forge/validators";
 
+import { canAccessMemberAdmin } from "~/app/_components/admin/access";
 import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { MemberDuesPayment } from "~/app/_components/member/member-dues-payment";
 import { env } from "~/env";
@@ -22,7 +23,10 @@ export default async function MemberDuesPage() {
 
   if (!session) redirect("/");
 
-  const member = await api.member.getMember();
+  const [member, effectivePermissions] = await Promise.all([
+    api.member.getMember(),
+    api.roles.getPermissions(),
+  ]);
 
   if (!member) redirect(`/form/${MEMBER_SIGNUP_FORM_SLUG}`);
 
@@ -48,7 +52,10 @@ export default async function MemberDuesPage() {
 
   return (
     <HydrateClient>
-      <AuthenticatedShell session={session}>
+      <AuthenticatedShell
+        canAccessAdmin={canAccessMemberAdmin(effectivePermissions)}
+        session={session}
+      >
         <MemberDuesPayment
           duesStatus={duesStatus}
           initialPaymentIntent={paymentIntent}
