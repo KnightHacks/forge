@@ -1,13 +1,11 @@
 import { z } from "zod";
 
-import { FORMS, PERMISSIONS } from "@forge/consts";
+import { FORMS } from "@forge/consts";
 
 import { memberProfileFormSchema } from "./member";
 
-const permissionKeys = Object.keys(PERMISSIONS.PERMISSION_DATA) as [
-  PERMISSIONS.PermissionKey,
-  ...PERMISSIONS.PermissionKey[],
-];
+export { permissionExpressionSchema, permissionKeySchema } from "./permissions";
+export type { PermissionExpression } from "./permissions";
 
 const strictDateString = z
   .string()
@@ -34,18 +32,6 @@ export const ADMIN_MEMBER_DUES_SECOND_CONFIRMATION =
   "I am absolutely sure that I would like to invalidate all effective dues.";
 export const ADMIN_MEMBER_DUES_INVALIDATION_CONFIRMATION =
   "I am aware of the consequences regarding this action if it were by mistake. I am absolutely sure that I want to invalidate all effective dues.";
-
-export const permissionKeySchema = z.enum(permissionKeys);
-export const permissionExpressionSchema = z.union([
-  z.object({
-    and: z.array(permissionKeySchema).min(1),
-    or: z.never().optional(),
-  }),
-  z.object({
-    and: z.never().optional(),
-    or: z.array(permissionKeySchema).min(1),
-  }),
-]);
 
 export const adminMemberListSchema = z
   .object({
@@ -126,4 +112,3 @@ export type AdminMemberEditableProfileValues = z.input<
 export type AdminMemberPageSize = (typeof adminMemberPageSizes)[number];
 export type AdminMemberSortField = (typeof adminMemberSortFields)[number];
 export type AdminMemberUpdateInput = z.infer<typeof adminMemberUpdateSchema>;
-export type PermissionExpression = z.infer<typeof permissionExpressionSchema>;

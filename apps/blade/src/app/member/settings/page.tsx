@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_SIGNUP_FORM_SLUG } from "@forge/validators";
 
-import { canAccessMemberAdmin } from "~/app/_components/admin/access";
+import { getAdminNavigationAccess } from "~/app/_components/admin/access";
 import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { getMemberDebugLatencyMs } from "~/app/_components/member/debug-latency";
 import { MemberProfileSettingsForm } from "~/app/_components/member/member-profile-settings-form";
@@ -35,7 +35,7 @@ export default async function MemberSettingsPage({
   return (
     <HydrateClient>
       <AuthenticatedShell
-        canAccessAdmin={canAccessMemberAdmin(effectivePermissions)}
+        adminNavigation={getAdminNavigationAccess(effectivePermissions)}
         session={session}
       >
         <MemberProfileSettingsForm

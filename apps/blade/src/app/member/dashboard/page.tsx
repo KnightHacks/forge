@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { canAccessMemberAdmin } from "~/app/_components/admin/access";
+import { getAdminNavigationAccess } from "~/app/_components/admin/access";
 import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { DashboardClient } from "~/app/_components/member/dashboard-client";
 import { getMemberDebugLatencyMs } from "~/app/_components/member/debug-latency";
@@ -28,7 +28,7 @@ export default async function MemberDashboardPage({
   return (
     <HydrateClient>
       <AuthenticatedShell
-        canAccessAdmin={canAccessMemberAdmin(effectivePermissions)}
+        adminNavigation={getAdminNavigationAccess(effectivePermissions)}
         session={session}
       >
         <DashboardClient debugLatencyMs={debugLatencyMs} />

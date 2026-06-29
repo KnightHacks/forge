@@ -6,7 +6,7 @@ import {
   memberSignupFormDefinition,
 } from "@forge/validators";
 
-import { canAccessMemberAdmin } from "~/app/_components/admin/access";
+import { getAdminNavigationAccess } from "~/app/_components/admin/access";
 import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { MemberSignupForm } from "~/app/_components/member/member-signup-form";
 import { auth } from "~/server/auth";
@@ -42,7 +42,7 @@ export default async function FormPage({
   return (
     <HydrateClient>
       <AuthenticatedShell
-        canAccessAdmin={canAccessMemberAdmin(effectivePermissions)}
+        adminNavigation={getAdminNavigationAccess(effectivePermissions)}
         session={session}
       >
         <MemberSignupForm

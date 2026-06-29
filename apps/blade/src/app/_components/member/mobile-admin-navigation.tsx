@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, Menu, UsersRound } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
 
 import { cn } from "@forge/ui";
 import {
@@ -12,26 +13,18 @@ import {
   DropdownMenuTrigger,
 } from "@forge/ui/dropdown-menu";
 
-const mobileNavigationItems = [
-  {
-    href: "/member/dashboard",
-    icon: LayoutDashboard,
-    id: "dashboard",
-    label: "Dashboard",
-  },
-  {
-    href: "/admin/members",
-    icon: UsersRound,
-    id: "members",
-    label: "Members",
-  },
-] as const;
+import type { AdminNavigationAccess } from "./admin-navigation";
+import {
+  getVisibleAdminNavigation,
+  isAdminNavigationActive,
+} from "./admin-navigation";
 
 export function MobileAdminNavigation({
-  activeNavigation,
+  access,
 }: {
-  activeNavigation: "dashboard" | "members";
+  access: AdminNavigationAccess;
 }) {
+  const pathname = usePathname();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -51,9 +44,9 @@ export function MobileAdminNavigation({
         <DropdownMenuLabel className="px-2 py-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
           Navigate
         </DropdownMenuLabel>
-        {mobileNavigationItems.map((item) => {
+        {getVisibleAdminNavigation(access).map((item) => {
           const Icon = item.icon;
-          const active = activeNavigation === item.id;
+          const active = isAdminNavigationActive(item.id, pathname);
           return (
             <DropdownMenuItem
               key={item.id}

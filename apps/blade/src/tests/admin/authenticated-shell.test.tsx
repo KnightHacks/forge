@@ -10,6 +10,10 @@ vi.mock("next/image", () => ({
     createElement("img", props),
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/member/dashboard",
+}));
+
 vi.mock("~/app/_components/auth/sign-out-button", () => ({
   SignOutButton: () => createElement("button", null, "Sign out"),
 }));
@@ -31,7 +35,7 @@ describe("AuthenticatedShell", () => {
     const html = renderToStaticMarkup(
       createElement(AuthenticatedShell, {
         activeNavigation: "dashboard",
-        canAccessAdmin: true,
+        adminNavigation: { members: true, roles: true },
         children: createElement("main", null, "Dashboard content"),
         session,
       }),
@@ -42,14 +46,27 @@ describe("AuthenticatedShell", () => {
     expect(html).toContain('data-testid="mobile-admin-menu-trigger"');
     expect(html).toContain('aria-label="Open navigation menu"');
     expect(html).toContain('href="/admin/members"');
+    expect(html).toContain('href="/admin/roles"');
     expect(html).toContain('href="/member/dashboard"');
     expect(html).toContain('aria-current="page"');
+  });
+
+  it("shows only permission-available admin destinations", () => {
+    const html = renderToStaticMarkup(
+      createElement(AuthenticatedShell, {
+        adminNavigation: { members: false, roles: true },
+        children: createElement("main", null, "Dashboard content"),
+        session,
+      }),
+    );
+
+    expect(html).toContain('href="/admin/roles"');
+    expect(html).not.toContain('href="/admin/members"');
   });
 
   it("does not expose admin navigation to ordinary members", () => {
     const html = renderToStaticMarkup(
       createElement(AuthenticatedShell, {
-        canAccessAdmin: false,
         children: createElement("main", null, "Dashboard content"),
         session,
       }),

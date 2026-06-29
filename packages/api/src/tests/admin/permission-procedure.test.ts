@@ -18,12 +18,24 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@forge/db/client", () => ({ db: mocks.db }));
 
 const testRouter = createTRPCRouter({
+  assignRoles: permProcedure.query(({ ctx }) => {
+    permissions.controlPerms.or(["ASSIGN_ROLES"], ctx);
+    return true;
+  }),
+  configureRoles: permProcedure.query(({ ctx }) => {
+    permissions.controlPerms.or(["CONFIGURE_ROLES"], ctx);
+    return true;
+  }),
   editMembers: permProcedure.query(({ ctx }) => {
     permissions.controlPerms.or(["EDIT_MEMBERS"], ctx);
     return true;
   }),
   readMembers: permProcedure.query(({ ctx }) => {
     permissions.controlPerms.or(["READ_MEMBERS", "EDIT_MEMBERS"], ctx);
+    return true;
+  }),
+  readRoles: permProcedure.query(({ ctx }) => {
+    permissions.controlPerms.or(["CONFIGURE_ROLES", "ASSIGN_ROLES"], ctx);
     return true;
   }),
 });
@@ -106,4 +118,32 @@ describe("permProcedure", () => {
       await expect(createCaller().editMembers()).resolves.toBe(true);
     },
   );
+
+  it("keeps configure and assignment role capabilities separate", async () => {
+    mocks.permissionRows = [
+      { permissions: permissionBitstring("CONFIGURE_ROLES") },
+    ];
+    await expect(createCaller().readRoles()).resolves.toBe(true);
+    await expect(createCaller().configureRoles()).resolves.toBe(true);
+    await expect(createCaller().assignRoles()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+
+    mocks.permissionRows = [
+      { permissions: permissionBitstring("ASSIGN_ROLES") },
+    ];
+    await expect(createCaller().readRoles()).resolves.toBe(true);
+    await expect(createCaller().assignRoles()).resolves.toBe(true);
+    await expect(createCaller().configureRoles()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+  });
+
+  it("lets officers through both role-management gates", async () => {
+    mocks.permissionRows = [{ permissions: permissionBitstring("IS_OFFICER") }];
+
+    await expect(createCaller().readRoles()).resolves.toBe(true);
+    await expect(createCaller().configureRoles()).resolves.toBe(true);
+    await expect(createCaller().assignRoles()).resolves.toBe(true);
+  });
 });

@@ -6,7 +6,7 @@ import {
   MEMBER_SIGNUP_FORM_SLUG,
 } from "@forge/validators";
 
-import { canAccessMemberAdmin } from "~/app/_components/admin/access";
+import { getAdminNavigationAccess } from "~/app/_components/admin/access";
 import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { MemberDuesPayment } from "~/app/_components/member/member-dues-payment";
 import { env } from "~/env";
@@ -53,7 +53,7 @@ export default async function MemberDuesPage() {
   return (
     <HydrateClient>
       <AuthenticatedShell
-        canAccessAdmin={canAccessMemberAdmin(effectivePermissions)}
+        adminNavigation={getAdminNavigationAccess(effectivePermissions)}
         session={session}
       >
         <MemberDuesPayment
