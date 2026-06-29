@@ -1015,6 +1015,7 @@ describe.runIf(runDatabaseContract)(
             projection: {
               appliedDestination: "external",
               appliedRevision: event.revision,
+              attemptRevision: null,
               attemptToken: null,
               id: "stale-write",
               state: "synced",

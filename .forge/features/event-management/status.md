@@ -191,6 +191,10 @@ Current phase: Implementation complete
   deduplicated before identity recovery, and deletion intent is established
   only after the shared sync lease plus a transactional Event/attendance
   recheck. An expired update can no longer be mistaken for a deletion attempt.
+- 2026-06-29: Post-handoff development startup exposed one stale disposable-DB
+  test fixture that omitted the newly required provider attempt revision. The
+  fixture now uses the complete projection shape, restoring the DB package
+  build used by the root development task.
 
 ## Open questions
 
@@ -289,6 +293,11 @@ Current phase: Implementation complete
   Blade built successfully with `/admin/events` and `/member/events`, and the
   monorepo completed 15/16 build tasks before stopping only at the same
   pre-existing Club `api.guild` type error.
+- Post-handoff DB startup regression: `@forge/db` build and typecheck passed,
+  and the disposable migration/runtime suite passed 8/8. Root `pnpm dev`
+  progressed beyond DB/API compilation into application startup; the probe was
+  then stopped because an existing local dev stack already occupied ports
+  3000-3007.
 - Club TypeScript reaches the confirmed pre-existing `api.guild` absence in
   `apps/club/src/app/teams/team-roster.ts`; event-specific Club tests remain
   green and the unchanged consumer has no diff from `reforge/main`.
