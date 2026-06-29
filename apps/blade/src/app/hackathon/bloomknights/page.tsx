@@ -7,6 +7,7 @@ import { BaseHackathonDashboard } from "~/app/_components/dashboard/hackathon-da
 import HackerDashboard from "~/app/_components/dashboard/hacker-dashboard/hacker-dashboard";
 import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
 import { api, HydrateClient } from "~/trpc/server";
+import { BloomKnightsDashboardShell } from "./components/bloomknights-dashboard-shell";
 
 export const metadata: Metadata = {
   title: "Blade | BloomKnights Dashboard",
@@ -35,17 +36,13 @@ export default async function BloomKnightsHackathonPage() {
   return (
     <HydrateClient>
       <SessionNavbar />
-      <main className="container min-h-screen py-16">
-        <div className="flex justify-center">
-          <div className="max-w-8xl w-full">
-            {hacker?.status === "checkedin" ? (
-              <BaseHackathonDashboard hackathon={hackathon} hacker={hacker} />
-            ) : (
-              <HackerDashboard hackathon={hackathon} hacker={hacker} />
-            )}
-          </div>
-        </div>
-      </main>
+      <BloomKnightsDashboardShell>
+        {hacker?.status === "checkedin" ? (
+          <BaseHackathonDashboard hackathon={hackathon} hacker={hacker} />
+        ) : (
+          <HackerDashboard hackathon={hackathon} hacker={hacker} />
+        )}
+      </BloomKnightsDashboardShell>
     </HydrateClient>
   );
 }
