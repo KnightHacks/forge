@@ -1,6 +1,6 @@
 # Event Management Status
 
-Current phase: Artifact complete / awaiting human approval
+Current phase: Implementation
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -159,21 +159,49 @@ Current phase: Artifact complete / awaiting human approval
   synchronized policy, so narrowing is immediate and broadening waits for both
   providers. Legacy dues-plus-role rows retain AND semantics. DST gaps are
   rejected and repeated-hour edits require an explicit offset choice.
+- 2026-06-29: Human approved the complete implementation plan. The artifact
+  bundle was committed first on `reforge/event-management` as `47d1bc68`; test
+  generation now precedes product implementation.
+- 2026-06-29: Generated the approved validator, migration, API, Blade, Club,
+  Cron, and focused Playwright contracts before product code. The aggregate
+  red checkpoint failed only at the planned missing event modules, migration,
+  shell access, public payload fields, reminder executor, and gated E2E fixture
+  route; no unexpected baseline regression appeared.
 
 ## Open questions
 
-- None. The completed artifact bundle still requires human approval before
-  test generation or implementation planning.
+- None.
 
 ## Task list
 
 - [x] Complete reverse-prompting for `spec.md`.
 - [x] Complete reverse-prompting for `srd.md`.
 - [x] Complete reverse-prompting for `test-cases.md`.
-- [ ] Human approves artifact bundle before implementation/test generation.
+- [x] Human approves artifact bundle before implementation/test generation.
+- [x] Commit the approved artifact bundle before implementation.
+- [x] Generate tests from all approved test-case boundaries.
+- [ ] Implement database, API, provider, Blade, Club, and cron behavior.
+- [ ] Complete targeted, migration, React, E2E, and repository verification.
 
 ## Validation / commands
 
+- Pre-generation baseline with repo-pinned pnpm 9.12.1: Validators 30/30,
+  API 83/83, and Blade 32/32 tests passed. Club had no tests and exited cleanly.
+  Node emitted the existing non-blocking `module.register()` deprecation for
+  Blade/Club Vitest.
+- Test-first red checkpoint with repo-pinned pnpm 9.12.1:
+  - Validator suite: missing `event-management` module, as expected.
+  - API suite: all six event suites stopped at their missing workflow modules,
+    as expected.
+  - DB suite: migration-discovery assertion failed and four disposable-
+    PostgreSQL cases skipped because no loopback `DATABASE_URL` was available.
+  - Blade suite: five missing event modules and the event-only shell access
+    assertion failed, as expected.
+  - Club suite: missing dues badge and missing safe `requiresDues` / `tagColor`
+    fields, as expected.
+  - Cron suite: missing shared reminder executor, as expected.
+  - Focused Playwright discovery found four flows; the generator's red run
+    reached the intentionally absent `/api/e2e/events` route and received 404.
 - `pnpm forge:feature event-management "Event Management"`: created the
   feature bundle from repository templates.
 - `git status --short --branch`: confirmed work is isolated on
