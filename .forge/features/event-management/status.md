@@ -1,6 +1,6 @@
 # Event Management Status
 
-Current phase: Implementation
+Current phase: Implementation complete
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -167,6 +167,30 @@ Current phase: Implementation
   red checkpoint failed only at the planned missing event modules, migration,
   shell access, public payload fields, reminder executor, and gated E2E fixture
   route; no unexpected baseline regression appeared.
+- 2026-06-29: Implemented the responsive Blade event shell, admin list,
+  calendar, check-in, tags, detail and create/edit surfaces; member event and
+  attendance views; dashboard/admin navigation; Club safe-payload rendering;
+  bounded reminder execution; and the production-gated Playwright fixture.
+  Server pages now enforce the event permission tiers before loading data.
+- 2026-06-29: Cross-package integration review identified and handed back API
+  contract gaps for event-audience role choices, live Discord channel choices,
+  list date-range filtering, member attendance tag colors, full attendee names,
+  and public field-name compatibility. These are implementation gaps, not
+  product questions, and are being closed against the approved artifacts.
+- 2026-06-29: Blade/consumer review closed the remaining interaction gaps:
+  provider-specific repair, known-ID versus no-ID Discord ambiguity, Legacy
+  history treatment, defensive attendance deletion gating, newest-first past
+  ordering, focus restoration, strict browser-draft validation, explicit
+  estimated-attendance acknowledgement, and accurate Blade-only Legacy edit
+  feedback. A real SQL repro also exposed an unqualified correlated attendance
+  count; the API now qualifies the outer Event ID and returns the correct
+  aggregate.
+- 2026-06-29: Final provider-fencing review closed three release-blocking
+  recovery races. Known-ID attempts now retain their durable revision and stay
+  Unknown after inconclusive readback, configured Google calendars are
+  deduplicated before identity recovery, and deletion intent is established
+  only after the shared sync lease plus a transactional Event/attendance
+  recheck. An expired update can no longer be mistaken for a deletion attempt.
 
 ## Open questions
 
@@ -180,8 +204,8 @@ Current phase: Implementation
 - [x] Human approves artifact bundle before implementation/test generation.
 - [x] Commit the approved artifact bundle before implementation.
 - [x] Generate tests from all approved test-case boundaries.
-- [ ] Implement database, API, provider, Blade, Club, and cron behavior.
-- [ ] Complete targeted, migration, React, E2E, and repository verification.
+- [x] Implement database, API, provider, Blade, Club, and cron behavior.
+- [x] Complete targeted, migration, React, E2E, and repository verification.
 
 ## Validation / commands
 
@@ -200,12 +224,78 @@ Current phase: Implementation
   - Club suite: missing dues badge and missing safe `requiresDues` / `tagColor`
     fields, as expected.
   - Cron suite: missing shared reminder executor, as expected.
-  - Focused Playwright discovery found four flows; the generator's red run
-    reached the intentionally absent `/api/e2e/events` route and received 404.
+- Focused Playwright discovery found four flows; the generator's red run
+  reached the intentionally absent `/api/e2e/events` route and received 404.
+- Blade event/component checkpoint: 6 files, 16 tests passed.
+- Club event contract checkpoint: 2 files, 4 tests passed.
+- Cron reminder checkpoint: 1 file, 5 tests passed, including bounded weekday
+  windows and Next Week suppression for OPS and Project Launch lab/hours;
+  Cron TypeScript passed.
+- Event API checkpoint: 7 focused files, 78 tests passed. API TypeScript and
+  focused event-source ESLint passed. Coverage includes permission policy,
+  public/member/admin discovery, provider orchestration and reconciliation,
+  fenced leases, attendance idempotency/correction, role/tag dependencies,
+  CSV safety, and reminder selection.
+- Disposable PostgreSQL event checkpoint: 8 tests passed against a loopback
+  database. The suite applies the full migration chain over production-shaped
+  legacy fixtures and exercises the production attendance/workflow adapters,
+  concurrent check-in locking, stale lease fencing, accent-tolerant fuzzy
+  lookup, public/member visibility, admin compound filtering/count/order/page,
+  and calendar-window intersection. DB TypeScript and ESLint passed.
+- The live SQL-loader proof exposed and fixed role-array parameter binding in
+  member visibility and admin role filters by constructing explicit typed
+  PostgreSQL arrays; the final live database and focused API suites are green.
+- Blade final consumer checkpoint: 19 files and 58 Vitest cases passed; Blade
+  TypeScript, ESLint, and Prettier passed. The focused event Playwright file
+  passed all 7 flows, including permission tiers, URL sharing and focus return,
+  local draft/edit/duplicate state, provider-specific repair, idempotent
+  check-in, member eligibility/history, Discord ambiguity resolution, safe
+  deletion, and desktop/320px layouts.
+- Desktop and 320px Playwright captures were inspected with animations disabled
+  at viewport size. The detail hierarchy is sectioned and opaque at both
+  widths, the 320px page has no document overflow, its dialog scrolls
+  internally, and its Close target is at least 44px.
+- Targeted React analysis covered 11 event/member/Club files and 12 components
+  with zero failures. Changed-file analysis covered 12 files and 5 components
+  with zero failures.
+- Club event consumers passed 4/4 Vitest cases and Prettier. Workspace ESLint
+  passed; Club TypeScript still fails only in the pre-existing
+  `apps/club/src/app/teams/team-roster.ts` call to the absent `api.guild`
+  router; event sources and tests are unaffected.
+- Cron passed 7/7 reminder cases plus TypeScript, ESLint, and Prettier,
+  including spring-forward/fall-back local-date boundaries.
+- Final provider-fencing checkpoint: all 81 focused Event API cases and all
+  164 API cases passed. The disposable PostgreSQL migration/runtime suite
+  passed 8/8 after the final changes. API TypeScript, ESLint, and Prettier
+  remained green.
+- Full Blade Playwright passed 57/57. The focused Event file passed 7/7 again
+  after the final deletion-serialization change.
+- `pnpm db:generate` reported no schema drift after the hand-reviewed 0011
+  migration; Drizzle consistency and `git diff --check` passed.
+- `pnpm verify:precommit` stops in its default changed-React analysis because
+  it compares this Reforge branch with unrelated `origin/main` and includes
+  two unchanged analyzer failures in `apps/blade/src/trpc/react.tsx` and
+  `legacy/apps/blade/src/trpc/react.tsx`. Running the same analysis against
+  the actual branch base, `reforge/main`, covered 12 files / 5 components with
+  zero failures; targeted Event analysis covered 11 files / 12 components with
+  zero failures.
+- `pnpm verify:push` completed workspace formatting and linting, then stopped
+  at the pre-existing missing `api.guild` router used by unchanged Club/Guild
+  consumers. The same router is absent on `reforge/main`; no Event source is
+  implicated.
+- The literal `pnpm build` inherits the local `.env` value
+  `NODE_ENV=development`, causing the pre-existing Next `_global-error`
+  prerender failure in unchanged applications. With `NODE_ENV=production`,
+  Blade built successfully with `/admin/events` and `/member/events`, and the
+  monorepo completed 15/16 build tasks before stopping only at the same
+  pre-existing Club `api.guild` type error.
+- Club TypeScript reaches the confirmed pre-existing `api.guild` absence in
+  `apps/club/src/app/teams/team-roster.ts`; event-specific Club tests remain
+  green and the unchanged consumer has no diff from `reforge/main`.
 - `pnpm forge:feature event-management "Event Management"`: created the
   feature bundle from repository templates.
-- `git status --short --branch`: confirmed work is isolated on
-  `reforge/event-management` with only the new artifact bundle untracked.
+- Initial `git status --short --branch` checkpoint confirmed artifact work was
+  isolated on `reforge/event-management` before implementation began.
 - Production/legacy hash comparison: confirmed exact matches for the event
   router, club event page, club check-in page, and club create-event UI.
 - Legacy/current search covered event CRUD, public listing, member/hacker
@@ -217,9 +307,9 @@ Current phase: Implementation
   independently blocked because the desktop pnpm is 11.7.0 while this repo
   declares pnpm `^9.6.0`; the checked-in Prettier binary completed normally.
 - `git diff --check`: passed after artifact formatting.
-- Final independent read-only data/concurrency and integration/access audits:
-  artifact-green with every reported edge encoded in the SRD and observable
-  test cases.
+- Artifact-stage independent data/concurrency and integration/access audits
+  were green with every reported edge encoded in the SRD and observable test
+  cases; the final implementation audit is recorded above.
 
 ## Links
 

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import {
+  canAccessEventAdmin,
   canAccessMemberAdmin,
   canAccessRoleAdmin,
   getAdminNavigationAccess,
@@ -22,6 +23,7 @@ export default async function AdminLayout({
 
   const effectivePermissions = await api.roles.getPermissions();
   if (
+    !canAccessEventAdmin(effectivePermissions) &&
     !canAccessMemberAdmin(effectivePermissions) &&
     !canAccessRoleAdmin(effectivePermissions)
   ) {

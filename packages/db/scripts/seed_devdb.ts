@@ -165,13 +165,16 @@ async function cleanTable(name: string, userIdsToKeep: string[]) {
   } else if (name === "knight_hacks_event") {
     const all_rows = await backupDb.query.Event.findMany();
     for (const row of all_rows) {
-      if (!eventIdMappings[row.discordId]) continue;
+      const sourceDiscordId = row.discordId;
+      if (!sourceDiscordId) continue;
+      const mappedDiscordId = eventIdMappings[sourceDiscordId];
+      if (!mappedDiscordId) continue;
       const id = row.id;
       await backupDb.execute(sql`
-				UPDATE "knight_hacks_event" 
-  			SET discord_id = ${eventIdMappings[row.discordId]} 
-  			WHERE id = ${id}
-			`);
+        UPDATE "knight_hacks_event"
+        SET discord_id = ${mappedDiscordId}
+        WHERE id = ${id}
+      `);
     }
   }
 }

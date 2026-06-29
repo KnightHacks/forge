@@ -12,6 +12,7 @@ import {
   formatEventTime,
   loadClubEvents,
 } from "../_lib/club-events";
+import { ClubEventAccessBadge } from "./club-event-access-badge";
 import { useDeferredSectionLoad } from "./use-deferred-section-load";
 
 const HOME_EVENT_LIMIT = 3;
@@ -70,6 +71,9 @@ function EventRow({ event }: { event: PublicClubEvent }) {
         <p className="text-xs font-bold uppercase text-[var(--club-gold)]">
           {meta}
         </p>
+        <div className="mt-2">
+          <ClubEventAccessBadge requiresDues={event.requiresDues} />
+        </div>
         <h3 className="mt-2 text-2xl font-black leading-tight text-white">
           {event.name}
         </h3>
@@ -77,7 +81,10 @@ function EventRow({ event }: { event: PublicClubEvent }) {
           {event.description}
         </p>
       </div>
-      <div className="club-event-tag-card col-span-3 hidden aspect-[1.65] items-center justify-center rounded-lg bg-[#59168b]/55 px-5 text-center md:col-span-1 md:flex">
+      <div
+        className="club-event-tag-card col-span-3 hidden aspect-[1.65] items-center justify-center rounded-lg px-5 text-center md:col-span-1 md:flex"
+        style={{ backgroundColor: `${event.tagColor}55` }}
+      >
         <span className="text-white/72 text-xs font-black uppercase">
           {event.tag}
         </span>

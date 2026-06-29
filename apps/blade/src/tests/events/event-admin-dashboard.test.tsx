@@ -2,7 +2,10 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-import { EventAdminDashboard } from "~/app/_components/admin/events/event-admin-dashboard";
+import {
+  EventAdminDashboard,
+  eventUpdateFeedback,
+} from "~/app/_components/admin/events/event-admin-dashboard";
 import { parseAdminEventSearchParams } from "~/app/_components/admin/events/params";
 
 vi.mock("next/navigation", () => ({
@@ -90,6 +93,14 @@ const readerAccess = {
 };
 
 describe("EventAdminDashboard", () => {
+  it("reports Legacy edits as successful Blade-only history updates", () => {
+    expect(eventUpdateFeedback("legacy")).toEqual({
+      message:
+        "Legacy event updated in Blade. Historical calendars were not changed.",
+      tone: "success",
+    });
+  });
+
   it("TC-005 TC-006 renders the read-only list without mutation controls", () => {
     const html = renderToStaticMarkup(
       createElement(EventAdminDashboard, {
@@ -150,6 +161,7 @@ describe("EventAdminDashboard", () => {
 
     expect(html).toContain("Check-in");
     expect(html).toContain("Select event");
+    expect(html).toContain("Find an older event");
     expect(html).toContain("[WORKSHOP] Current Workshop");
     expect(html).not.toContain("Calendar");
     expect(html).not.toContain("Tags");

@@ -7,7 +7,9 @@ export interface PublicClubEvent {
   startDateTime: string;
   endDateTime: string;
   location: string;
+  requiresDues: boolean;
   tag: string;
+  tagColor: string;
 }
 
 export type EventsStatus = "loading" | "ready" | "error";
@@ -23,7 +25,9 @@ interface BladeEventRecord {
   startDateTime?: unknown;
   endDateTime?: unknown;
   location?: unknown;
+  requiresDues?: unknown;
   tag?: unknown;
+  tagColor?: unknown;
 }
 
 function toDate(value: unknown) {
@@ -60,7 +64,10 @@ function normalizeBladeEvents(
         typeof bladeEvent.name !== "string" ||
         typeof bladeEvent.description !== "string" ||
         typeof bladeEvent.location !== "string" ||
-        typeof bladeEvent.tag !== "string"
+        typeof bladeEvent.requiresDues !== "boolean" ||
+        typeof bladeEvent.tag !== "string" ||
+        typeof bladeEvent.tagColor !== "string" ||
+        !/^#[\dA-Fa-f]{6}$/.test(bladeEvent.tagColor)
       ) {
         return null;
       }
@@ -72,7 +79,9 @@ function normalizeBladeEvents(
         startDateTime: startDate.toISOString(),
         endDateTime: endDate.toISOString(),
         location: bladeEvent.location,
+        requiresDues: bladeEvent.requiresDues,
         tag: bladeEvent.tag,
+        tagColor: bladeEvent.tagColor,
       };
     })
     .filter((event): event is PublicClubEvent => event !== null)

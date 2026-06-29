@@ -1,11 +1,16 @@
 import type { APIRequestContext, Page } from "playwright/test";
 import { expect, test } from "playwright/test";
 
+import { EVENT_DISCORD_NO_PROJECTION_CONFIRMATION } from "@forge/validators";
+
 const ADMIN_PATH = "/admin/events";
 
 interface EventManagementFixture {
   events: {
+    ambiguousId: string;
     attendedId: string;
+    deletableId: string;
+    duesId: string;
     partialId: string;
     publishedId: string;
   };
@@ -16,6 +21,7 @@ interface EventManagementFixture {
   users: {
     checkInId: string;
     editorId: string;
+    memberId: string;
     readerId: string;
     unauthorizedId: string;
   };
@@ -141,17 +147,36 @@ test.describe("event management", () => {
     await expect(
       detail.getByRole("heading", { name: "Attendance" }),
     ).toBeVisible();
+    await page.screenshot({
+      animations: "disabled",
+      path: testInfo.outputPath("event-detail-desktop.png"),
+    });
 
     await page.reload();
     await expect(detail).toBeVisible();
-    await expect(page.getByRole("combobox", { name: "Page size" })).toHaveValue(
+    await detail.getByRole("button", { name: "Close", exact: true }).click();
+    const pageSize = page.getByLabel("Page size");
+    await expect(pageSize).toHaveValue("50");
+    await expect(pageSize.locator("option")).toHaveText([
+      "25",
       "50",
-    );
-    await expect(
-      page.getByRole("combobox", { name: "Page size" }).getByRole("option"),
-    ).toHaveText(["25", "50", "100", "250", "500"]);
+      "100",
+      "250",
+      "500",
+    ]);
+    const detailOpener = page
+      .getByRole("button", { name: "View Current Workshop" })
+      .first();
+    await detailOpener.click();
+    await expect(detail).toBeVisible();
+    await detail.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(detailOpener).toBeFocused();
 
     await page.setViewportSize({ height: 780, width: 320 });
+    await page.goto(
+      `${ADMIN_PATH}?view=list&q=workshop&tag=Workshop&pageSize=50&event=${fixture.events.publishedId}`,
+    );
+    await expect(detail).toBeVisible();
     await expect
       .poll(() =>
         page.evaluate(
@@ -162,10 +187,23 @@ test.describe("event management", () => {
       )
       .toBe(true);
     await expect(detail).toBeVisible();
+    const closeButton = detail.getByRole("button", {
+      name: "Close",
+      exact: true,
+    });
+    await expect
+      .poll(async () => (await closeButton.boundingBox())?.width ?? 0)
+      .toBeGreaterThanOrEqual(44);
     await page.screenshot({
-      fullPage: true,
+      animations: "disabled",
       path: testInfo.outputPath("event-detail-320.png"),
     });
+    await detail
+      .getByRole("heading", { name: "Attendance" })
+      .scrollIntoViewIfNeeded();
+    await expect(
+      detail.getByRole("heading", { name: "Attendance" }),
+    ).toBeVisible();
   });
 
   test("TC-008 TC-012 restores a local draft and repairs only the failed provider", async ({
@@ -178,7 +216,9 @@ test.describe("event management", () => {
     const createDialog = page.getByRole("dialog", { name: "Create event" });
     await createDialog.getByLabel("Event name").fill("Draft Workshop");
     await createDialog.getByLabel("Description").fill("Unsaved browser draft");
-    await createDialog.getByRole("button", { name: "Close" }).click();
+    await createDialog
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
 
     await page.reload();
     await page.getByRole("button", { name: "Create event" }).click();
@@ -186,7 +226,35 @@ test.describe("event management", () => {
     await expect(createDialog.getByLabel("Event name")).toHaveValue(
       "Draft Workshop",
     );
-    await createDialog.getByRole("button", { name: "Close" }).click();
+    await createDialog
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
+
+    const currentRow = page.getByRole("row").filter({
+      has: page.getByText("Current Workshop", { exact: true }),
+    });
+    await currentRow.getByRole("button", { name: "Edit event" }).click();
+    const editDialog = page.getByRole("dialog", { name: "Edit event" });
+    await expect(editDialog.getByLabel("Event name")).toHaveValue(
+      "Current Workshop",
+    );
+    await expect(editDialog.getByLabel("Description")).toHaveValue(
+      "Build a typed API client with the Knight Hacks community.",
+    );
+    await editDialog
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
+
+    await currentRow.getByRole("button", { name: "Duplicate event" }).click();
+    const duplicateDialog = page.getByRole("dialog", {
+      name: "Duplicate event",
+    });
+    await expect(duplicateDialog.getByLabel("Event name")).toHaveValue(
+      "Current Workshop",
+    );
+    await duplicateDialog
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
 
     const detail = await events.openEvent(fixture.events.partialId);
     await expect(detail.getByText("Needs attention")).toBeVisible();
@@ -236,5 +304,70 @@ test.describe("event management", () => {
     await expect(
       detail.getByRole("button", { name: "Confirm delete event" }),
     ).toHaveCount(0);
+  });
+
+  test("TC-002 TC-003 TC-004 TC-029 shows eligible, dues-locked, and estimated member history", async ({
+    page,
+  }) => {
+    const events = new EventManagementPage(page);
+    await events.signIn(fixture.users.memberId, "/member/events");
+
+    const upcoming = page.getByRole("region", { name: "Upcoming events" });
+    await expect(upcoming.getByText("Current Workshop")).toBeVisible();
+    await expect(upcoming.getByText("Dues Member Workshop")).toBeVisible();
+    await expect(upcoming.getByText("Dues required")).toBeVisible();
+    await expect(
+      upcoming.getByRole("link", { name: "Pay dues" }),
+    ).toBeVisible();
+
+    const history = page.getByRole("region", { name: "Attendance history" });
+    await expect(history.getByText("Current Workshop")).toBeVisible();
+    await expect(history.getByText("Estimated")).toBeVisible();
+    await expect(history.getByText("10 points")).toBeVisible();
+  });
+
+  test("TC-012 resolves an ambiguous Discord create before retrying publication", async ({
+    page,
+  }) => {
+    const events = new EventManagementPage(page);
+    await events.signIn(fixture.users.editorId);
+    const detail = await events.openEvent(fixture.events.ambiguousId);
+
+    await expect(detail.getByText("Discord status unknown")).toBeVisible();
+    await detail
+      .getByRole("button", { name: "Review Discord candidates" })
+      .click();
+    await expect(
+      detail.getByText("No matching live Discord events were found."),
+    ).toBeVisible();
+
+    const noProjection = detail.getByRole("button", {
+      name: "Confirm no projection",
+    });
+    await expect(noProjection).toBeDisabled();
+    await detail
+      .getByLabel(new RegExp(EVENT_DISCORD_NO_PROJECTION_CONFIRMATION))
+      .fill(EVENT_DISCORD_NO_PROJECTION_CONFIRMATION);
+    await noProjection.click();
+    await expect(page.getByText("Discord absence acknowledged.")).toBeVisible();
+
+    await detail.getByRole("button", { name: "Confirm create new" }).click();
+    await expect(detail.getByText("Discord synchronized")).toBeVisible();
+    await expect(
+      detail.getByText("Google Calendar synchronized"),
+    ).toBeVisible();
+  });
+
+  test("TC-025 deletes an empty event only after provider cleanup", async ({
+    page,
+  }) => {
+    const events = new EventManagementPage(page);
+    await events.signIn(fixture.users.editorId);
+    const detail = await events.openEvent(fixture.events.deletableId);
+
+    await detail.getByRole("button", { name: "Confirm delete event" }).click();
+    await expect(detail).toHaveCount(0);
+    await expect(page).not.toHaveURL(/event=/);
+    await expect(page.getByText("Deletable Workshop")).toHaveCount(0);
   });
 });

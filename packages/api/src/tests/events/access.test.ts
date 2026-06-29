@@ -87,7 +87,10 @@ function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
     ...Object.values(PERMISSIONS.PERMISSION_DATA).map(({ idx }) => idx),
   );
   const bits = Array.from({ length: maxIndex + 1 }, () => "0");
-  for (const key of keys) bits[PERMISSIONS.PERMISSION_DATA[key].idx] = "1";
+  for (const key of keys) {
+    const permission = PERMISSIONS.PERMISSION_DATA[key];
+    if (permission) bits[permission.idx] = "1";
+  }
   return bits.join("");
 }
 

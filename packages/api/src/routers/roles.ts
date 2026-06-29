@@ -382,16 +382,29 @@ export const rolesRouter = {
           message: "This role is the final assigned role administrator.",
         });
       }
-      const dependencies = await getDependencyCounts(role.id);
-      if (dependencies.total > 0) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "This role is still used by another Blade feature.",
-        });
-      }
       await db.transaction(async (tx) => {
-        await tx.delete(Permissions).where(eq(Permissions.roleId, role.id));
-        await tx.delete(Roles).where(eq(Roles.id, role.id));
+        const [lockedRole] = await tx
+          .select({ id: Roles.id })
+          .from(Roles)
+          .where(eq(Roles.id, role.id))
+          .for("update");
+        if (!lockedRole) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Role not found.",
+          });
+        }
+        const dependencies = await getDependencyCounts(role.id, tx);
+        if (dependencies.total > 0) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "This role is still used by another Blade feature.",
+          });
+        }
+        await tx
+          .delete(Permissions)
+          .where(eq(Permissions.roleId, lockedRole.id));
+        await tx.delete(Roles).where(eq(Roles.id, lockedRole.id));
       });
       return { id: role.id };
     }),

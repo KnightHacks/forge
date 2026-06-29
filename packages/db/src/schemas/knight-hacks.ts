@@ -1,4 +1,6 @@
+import { sql } from "drizzle-orm";
 import {
+  check,
   foreignKey,
   index,
   pgEnum,
@@ -16,7 +18,18 @@ import { Roles, User } from "./auth";
 const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
 export const shirtSizeEnum = pgEnum("shirt_size", FORMS.SHIRT_SIZES);
-export const eventTagEnum = pgEnum("event_tag", EVENTS.EVENT_TAGS);
+export const eventSyncStateEnum = pgEnum(
+  "event_sync_state",
+  EVENTS.EVENT_SYNC_STATES,
+);
+export const eventGoogleDestinationEnum = pgEnum(
+  "event_google_destination",
+  EVENTS.EVENT_GOOGLE_DESTINATIONS,
+);
+export const eventDiscordEntityTypeEnum = pgEnum(
+  "event_discord_entity_type",
+  EVENTS.EVENT_DISCORD_ENTITY_TYPES,
+);
 export const genderEnum = pgEnum("gender", FORMS.GENDERS);
 export const raceOrEthnicityEnum = pgEnum(
   "race_or_ethnicity",
@@ -177,26 +190,183 @@ export const HackathonSponsor = createTable("hackathon_sponsor", (t) => ({
   tier: sponsorTierEnum().notNull(),
 }));
 
-export const Event = createTable("event", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  discordId: t.varchar({ length: 255 }).notNull(),
-  googleId: t.varchar({ length: 255 }).notNull(),
-  name: t.varchar({ length: 255 }).notNull(),
-  tag: eventTagEnum().notNull(),
-  description: t.text().notNull(),
-  start_datetime: t.timestamp().notNull(),
-  end_datetime: t.timestamp().notNull(),
-  location: t.varchar({ length: 255 }).notNull(),
-  dues_paying: t.boolean().notNull().default(false),
-  isOperationsCalendar: t.boolean().notNull().default(false),
-  roles: t.varchar({ length: 255 }).array().notNull().default([]),
-  points: t.integer(),
-  // Can be null if the event is not associated with a hackathon (e.g. club events)
-  hackathonId: t.uuid().references(() => Hackathon.id, {
-    onDelete: "cascade",
+export const EventTag = createTable(
+  "event_tag",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    name: t.varchar({ length: 64 }).notNull(),
+    normalizedName: t.varchar({ length: 64 }).notNull().unique(),
+    defaultPoints: t.integer().notNull().default(0),
+    color: t.varchar({ length: 7 }).notNull(),
+    active: t.boolean().notNull().default(true),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   }),
-  discordChannelId: t.varchar({ length: 255 }),
-}));
+  (table) => ({
+    nonNegativePoints: check(
+      "knight_hacks_event_tag_default_points_check",
+      sql`${table.defaultPoints} >= 0`,
+    ),
+    validColor: check(
+      "knight_hacks_event_tag_color_check",
+      sql`${table.color} ~ '^#[0-9A-Fa-f]{6}$'`,
+    ),
+  }),
+);
+
+export type InsertEventTag = typeof EventTag.$inferInsert;
+export type SelectEventTag = typeof EventTag.$inferSelect;
+export const InsertEventTagSchema = createInsertSchema(EventTag);
+
+export const Event = createTable(
+  "event",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    discordId: t.varchar({ length: 255 }),
+    googleId: t.varchar({ length: 255 }),
+    name: t.varchar({ length: 255 }).notNull(),
+    tag: t.text().notNull(),
+    tagColor: t.varchar({ length: 7 }).notNull(),
+    description: t.text().notNull(),
+    start_datetime: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+    end_datetime: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+    location: t.varchar({ length: 255 }).notNull(),
+    dues_paying: t.boolean().notNull().default(false),
+    isOperationsCalendar: t.boolean().notNull().default(false),
+    roles: t.varchar({ length: 255 }).array().notNull().default([]),
+    points: t.integer(),
+    // Can be null if the event is not associated with a hackathon (e.g. club events)
+    hackathonId: t.uuid().references(() => Hackathon.id, {
+      onDelete: "cascade",
+    }),
+    discordChannelId: t.varchar({ length: 255 }),
+    legacy: t.boolean().notNull().default(false),
+    discordSyncState: eventSyncStateEnum().default("pending"),
+    googleSyncState: eventSyncStateEnum().default("pending"),
+    discordLastError: t.text(),
+    googleLastError: t.text(),
+    publishedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    deletionIntentAt: t.timestamp({ mode: "date", withTimezone: true }),
+    creationKey: t.uuid().unique(),
+    creationPayloadHash: t.varchar({ length: 64 }),
+    syncRevision: t.integer().notNull().default(1),
+    syncLeaseToken: t.uuid(),
+    syncLeaseExpiresAt: t.timestamp({ mode: "date", withTimezone: true }),
+    syncLeaseRevision: t.integer(),
+    discordOutboundAttemptToken: t.uuid(),
+    discordOutboundAttemptedAt: t.timestamp({
+      mode: "date",
+      withTimezone: true,
+    }),
+    discordOutboundAttemptRevision: t.integer(),
+    googleOutboundAttemptToken: t.uuid(),
+    googleOutboundAttemptedAt: t.timestamp({
+      mode: "date",
+      withTimezone: true,
+    }),
+    googleOutboundAttemptRevision: t.integer(),
+    discordAppliedRevision: t.integer(),
+    discordAppliedEntityType: eventDiscordEntityTypeEnum(),
+    discordAppliedChannelId: t.varchar({ length: 255 }),
+    googleAppliedRevision: t.integer(),
+    googleAppliedDestination: eventGoogleDestinationEnum(),
+    googleAppliedCalendarId: t.varchar({ length: 255 }),
+    visibilityRevision: t.integer(),
+    visibilityDuesPaying: t.boolean(),
+    visibilityRoles: t.varchar({ length: 255 }).array(),
+    visibilityInternal: t.boolean(),
+    discordNoProjectionAcknowledgedAt: t.timestamp({
+      mode: "date",
+      withTimezone: true,
+    }),
+    discordNoProjectionAcknowledgedBy: t
+      .uuid()
+      .references(() => User.id, { onDelete: "set null" }),
+  }),
+  (table) => ({
+    startIdx: index("knight_hacks_event_start_datetime_idx").on(
+      table.start_datetime,
+    ),
+    clubScopeIdx: index("knight_hacks_event_hackathon_id_idx").on(
+      table.hackathonId,
+    ),
+    validTagColor: check(
+      "knight_hacks_event_tag_color_check",
+      sql`${table.tagColor} ~ '^#[0-9A-Fa-f]{6}$'`,
+    ),
+    validSyncRevision: check(
+      "knight_hacks_event_sync_revision_check",
+      sql`${table.syncRevision} >= 0`,
+    ),
+    validNewClubPoints: check(
+      "knight_hacks_event_new_club_points_check",
+      sql`${table.legacy} OR ${table.hackathonId} IS NOT NULL OR (${table.points} IS NOT NULL AND ${table.points} >= 0)`,
+    ),
+    nonLegacySyncStates: check(
+      "knight_hacks_event_nonlegacy_sync_states_check",
+      sql`${table.legacy} OR (${table.discordSyncState} IS NOT NULL AND ${table.googleSyncState} IS NOT NULL)`,
+    ),
+    creationIdentityPair: check(
+      "knight_hacks_event_creation_identity_pair_check",
+      sql`(${table.creationKey} IS NULL) = (${table.creationPayloadHash} IS NULL)`,
+    ),
+    newClubCreationIdentity: check(
+      "knight_hacks_event_new_club_creation_identity_check",
+      sql`${table.legacy} OR ${table.hackathonId} IS NOT NULL OR (${table.creationKey} IS NOT NULL AND ${table.creationPayloadHash} IS NOT NULL)`,
+    ),
+    syncLeaseSet: check(
+      "knight_hacks_event_sync_lease_set_check",
+      sql`(${table.syncLeaseToken} IS NULL AND ${table.syncLeaseExpiresAt} IS NULL AND ${table.syncLeaseRevision} IS NULL) OR (${table.syncLeaseToken} IS NOT NULL AND ${table.syncLeaseExpiresAt} IS NOT NULL AND ${table.syncLeaseRevision} IS NOT NULL)`,
+    ),
+    discordAttemptSet: check(
+      "knight_hacks_event_discord_attempt_set_check",
+      sql`(${table.discordOutboundAttemptToken} IS NULL AND ${table.discordOutboundAttemptedAt} IS NULL AND ${table.discordOutboundAttemptRevision} IS NULL) OR (${table.discordOutboundAttemptToken} IS NOT NULL AND ${table.discordOutboundAttemptedAt} IS NOT NULL AND ${table.discordOutboundAttemptRevision} IS NOT NULL)`,
+    ),
+    googleAttemptSet: check(
+      "knight_hacks_event_google_attempt_set_check",
+      sql`(${table.googleOutboundAttemptToken} IS NULL AND ${table.googleOutboundAttemptedAt} IS NULL AND ${table.googleOutboundAttemptRevision} IS NULL) OR (${table.googleOutboundAttemptToken} IS NOT NULL AND ${table.googleOutboundAttemptedAt} IS NOT NULL AND ${table.googleOutboundAttemptRevision} IS NOT NULL)`,
+    ),
+    visibilitySet: check(
+      "knight_hacks_event_visibility_set_check",
+      sql`(${table.visibilityRevision} IS NULL AND ${table.visibilityDuesPaying} IS NULL AND ${table.visibilityRoles} IS NULL AND ${table.visibilityInternal} IS NULL) OR (${table.visibilityRevision} IS NOT NULL AND ${table.visibilityDuesPaying} IS NOT NULL AND ${table.visibilityRoles} IS NOT NULL AND ${table.visibilityInternal} IS NOT NULL)`,
+    ),
+    visibilityRevisionBound: check(
+      "knight_hacks_event_visibility_revision_check",
+      sql`${table.visibilityRevision} IS NULL OR ${table.visibilityRevision} <= ${table.syncRevision}`,
+    ),
+    discordAppliedRevisionBound: check(
+      "knight_hacks_event_discord_applied_revision_check",
+      sql`${table.discordAppliedRevision} IS NULL OR ${table.discordAppliedRevision} <= ${table.syncRevision}`,
+    ),
+    googleAppliedRevisionBound: check(
+      "knight_hacks_event_google_applied_revision_check",
+      sql`${table.googleAppliedRevision} IS NULL OR ${table.googleAppliedRevision} <= ${table.syncRevision}`,
+    ),
+    discordSyncedState: check(
+      "knight_hacks_event_discord_synced_state_check",
+      sql`${table.discordSyncState} IS DISTINCT FROM 'synced' OR (${table.discordId} IS NOT NULL AND ${table.discordAppliedRevision} IS NOT NULL AND ${table.discordAppliedRevision} = ${table.syncRevision} AND ${table.discordAppliedEntityType} IS NOT NULL AND ((${table.discordAppliedEntityType} = 'external' AND ${table.discordAppliedChannelId} IS NULL) OR (${table.discordAppliedEntityType} IN ('voice', 'stage') AND ${table.discordAppliedChannelId} IS NOT NULL)))`,
+    ),
+    googleSyncedState: check(
+      "knight_hacks_event_google_synced_state_check",
+      sql`${table.googleSyncState} IS DISTINCT FROM 'synced' OR (${table.googleId} IS NOT NULL AND ${table.googleAppliedRevision} IS NOT NULL AND ${table.googleAppliedRevision} = ${table.syncRevision} AND ${table.googleAppliedDestination} IS NOT NULL AND ${table.googleAppliedCalendarId} IS NOT NULL)`,
+    ),
+    publishedVisibility: check(
+      "knight_hacks_event_published_visibility_check",
+      sql`${table.publishedAt} IS NULL OR (${table.visibilityRevision} IS NOT NULL AND ${table.visibilityDuesPaying} IS NOT NULL AND ${table.visibilityRoles} IS NOT NULL AND ${table.visibilityInternal} IS NOT NULL)`,
+    ),
+    acknowledgementTime: check(
+      "knight_hacks_event_discord_acknowledgement_time_check",
+      sql`${table.discordNoProjectionAcknowledgedBy} IS NULL OR ${table.discordNoProjectionAcknowledgedAt} IS NOT NULL`,
+    ),
+  }),
+);
 
 export type InsertEvent = typeof Event.$inferInsert;
 export type SelectEvent = typeof Event.$inferSelect;
@@ -223,7 +393,14 @@ export const EventAttendee = createTable("event_attendee", (t) => ({
     .references(() => Event.id, {
       onDelete: "cascade",
     }),
+  checkedInAt: t.timestamp({ mode: "date", withTimezone: true }),
+  checkedInBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+  pointsAwarded: t.integer(),
+  pointsAwardedEstimated: t.boolean().notNull().default(false),
 }));
+
+export type InsertEventAttendee = typeof EventAttendee.$inferInsert;
+export type SelectEventAttendee = typeof EventAttendee.$inferSelect;
 
 export const HACKER_TEAMS = ["Humanity", "Monstrosity"] as const;
 export const HACKER_CLASSES = [

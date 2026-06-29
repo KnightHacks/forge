@@ -6,6 +6,7 @@ export * from "./member";
 export * from "./dues";
 export * from "./admin-member";
 export * from "./role-management";
+export * from "./event-management";
 
 export const unused = z.string().describe(
   `This lib is currently not used as we use drizzle-zod for simple schemas

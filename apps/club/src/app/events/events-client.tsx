@@ -12,6 +12,7 @@ import {
 import { cn } from "@forge/ui";
 
 import type { EventsStatus, PublicClubEvent } from "../_lib/club-events";
+import { ClubEventAccessBadge } from "../_components/club-event-access-badge";
 import { useDeferredSectionLoad } from "../_components/use-deferred-section-load";
 import {
   formatEventDate,
@@ -194,6 +195,7 @@ function EventMeta({ event }: { event: PublicClubEvent }) {
         </span>
       ) : null}
       {meta.length === 0 ? <span>{event.tag}</span> : null}
+      <ClubEventAccessBadge requiresDues={event.requiresDues} />
     </div>
   );
 }
@@ -402,7 +404,10 @@ function UpcomingEventRow({ event }: { event: PublicClubEvent }) {
           {event.description}
         </p>
       </div>
-      <div className="club-event-tag-card flex min-h-24 items-center justify-center rounded-lg bg-[radial-gradient(circle_at_30%_20%,rgba(247,79,131,0.42),transparent_40%),linear-gradient(135deg,#321138,#59168b)] px-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] md:min-h-28">
+      <div
+        className="club-event-tag-card flex min-h-24 items-center justify-center rounded-lg px-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] md:min-h-28"
+        style={{ backgroundColor: `${event.tagColor}77` }}
+      >
         <span className="text-xs font-black uppercase text-white/75">
           {event.tag}
         </span>

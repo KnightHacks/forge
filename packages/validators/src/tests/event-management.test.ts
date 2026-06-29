@@ -116,6 +116,20 @@ describe("event management validators", () => {
   });
 
   it("TC-006 rejects malformed query state and reversed calendar windows", () => {
+    expect(
+      eventAdminQuerySchema.parse({
+        calendarEnd: "2026-08-01T04:00:00.000Z",
+        calendarStart: "2026-07-01T04:00:00.000Z",
+        endDate: "2026-08-31",
+        startDate: "2026-08-01",
+        view: "calendar",
+      }),
+    ).toMatchObject({
+      calendarEnd: "2026-08-01T04:00:00.000Z",
+      calendarStart: "2026-07-01T04:00:00.000Z",
+      endDate: "2026-08-31",
+      startDate: "2026-08-01",
+    });
     expect(() =>
       eventAdminQuerySchema.parse({ roleIds: ["not-a-role"] }),
     ).toThrow();
@@ -123,6 +137,13 @@ describe("event management validators", () => {
       eventAdminQuerySchema.parse({ sortField: "provider-id" }),
     ).toThrow();
     expect(() => eventAdminQuerySchema.parse({ view: "unknown" })).toThrow();
+    expect(() => eventAdminQuerySchema.parse({ view: "calendar" })).toThrow();
+    expect(() =>
+      eventAdminQuerySchema.parse({ internal: [true, true] }),
+    ).toThrow();
+    expect(() =>
+      eventAdminQuerySchema.parse({ audiences: ["dues", "dues"] }),
+    ).toThrow();
     expect(() =>
       eventAdminQuerySchema.parse({
         calendarEnd: "2026-07-01T00:00:00-04:00",
@@ -141,6 +162,22 @@ describe("event management validators", () => {
         calendarStart: "2026-07-01T00:00:00-04:00",
         view: "calendar",
       }),
+    ).toThrow();
+    expect(() =>
+      eventAdminQuerySchema.parse({
+        calendarEnd: "2027-01-01T00:00:00Z",
+        calendarStart: "2026-07-01T00:00:00Z",
+        view: "calendar",
+      }),
+    ).toThrow();
+    expect(() =>
+      eventAdminQuerySchema.parse({
+        endDate: "2026-07-01",
+        startDate: "2026-08-01",
+      }),
+    ).toThrow();
+    expect(() =>
+      eventAdminQuerySchema.parse({ startDate: "2026-02-30" }),
     ).toThrow();
   });
 
@@ -325,6 +362,12 @@ describe("event management validators", () => {
     expect(() =>
       eventCreateSchema.parse({ ...validCreateInput, pointsOverride: 2.5 }),
     ).toThrow();
+    expect(() =>
+      eventCreateSchema.parse({
+        ...validCreateInput,
+        pointsOverride: 2_147_483_648,
+      }),
+    ).toThrow();
   });
 
   it("TC-010 validates voice and stage internal targets", () => {
@@ -389,6 +432,11 @@ describe("event management validators", () => {
       { color: "purple", defaultPoints: 10, name: "Workshop" },
       { color: "#A855F7", defaultPoints: -1, name: "Workshop" },
       { color: "#A855F7", defaultPoints: 1.5, name: "Workshop" },
+      {
+        color: "#A855F7",
+        defaultPoints: 2_147_483_648,
+        name: "Workshop",
+      },
       { color: "#A855F7", defaultPoints: 10, name: "   " },
       {
         color: "#A855F7",

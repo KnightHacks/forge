@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   AlertTriangle,
   Loader2,
@@ -78,6 +79,8 @@ export function RoleDetailDialog({
   });
   const changed = permissions.join("|") !== detail.permissions.join("|");
   const hasDependencies = (detail.dependencies?.total ?? 0) > 0;
+  const eventDependencies = detail.dependencies?.events ?? 0;
+  const eventBlockers = detail.dependencies?.eventBlockers ?? [];
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -154,6 +157,7 @@ export function RoleDetailDialog({
               </div>
               <dl className="grid gap-2 sm:grid-cols-2">
                 {[
+                  ["Events", eventDependencies],
                   ["Form sections", detail.dependencies.formSections],
                   ["Form response rules", detail.dependencies.formResponses],
                   ["Issues", detail.dependencies.issues],
@@ -171,6 +175,30 @@ export function RoleDetailDialog({
                   </div>
                 ))}
               </dl>
+              {eventBlockers.length > 0 && (
+                <div className="grid gap-2 rounded-md border border-white/10 bg-background/60 p-3">
+                  <h4 className="text-sm font-medium">Event references</h4>
+                  {eventBlockers.map((blocker) =>
+                    blocker.kind === "club" ? (
+                      <Link
+                        key={blocker.eventId}
+                        href={`/admin/events?event=${blocker.eventId}`}
+                        className="break-all text-sm text-primary underline-offset-4 hover:underline"
+                      >
+                        Open club event {blocker.eventId}
+                      </Link>
+                    ) : (
+                      <p
+                        key={blocker.eventId}
+                        className="break-all text-sm text-muted-foreground"
+                      >
+                        Hackathon event {blocker.eventId} requires maintenance;
+                        hackathon event editing is not available in Reforge yet.
+                      </p>
+                    ),
+                  )}
+                </div>
+              )}
             </section>
           )}
 

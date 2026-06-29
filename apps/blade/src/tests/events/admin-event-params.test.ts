@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildAdminEventSearchParams,
+  defaultAdminCalendarWindow,
   parseAdminEventSearchParams,
 } from "~/app/_components/admin/events/params";
 
@@ -9,6 +10,24 @@ const EVENT_ID = "00000000-0000-4000-8000-000000000101";
 const ROLE_ID = "00000000-0000-4000-8000-000000000201";
 
 describe("admin event URL state", () => {
+  it("builds a deterministic bounded default calendar window", () => {
+    expect(
+      defaultAdminCalendarWindow(new Date("2026-08-15T12:00:00.000Z")),
+    ).toEqual({
+      calendarEnd: "2026-09-15T12:00:00.000Z",
+      calendarStart: "2026-07-15T12:00:00.000Z",
+    });
+  });
+
+  it("defaults past event lists to newest first", () => {
+    const parsed = parseAdminEventSearchParams({ timing: "past" });
+
+    expect(parsed.input.direction).toBe("desc");
+    expect(
+      buildAdminEventSearchParams(parsed.input, null).get("direction"),
+    ).toBeNull();
+  });
+
   it("TC-006 parses list filters, paging, sorting, and a shareable detail", () => {
     const result = parseAdminEventSearchParams({
       audience: ["public", "dues"],

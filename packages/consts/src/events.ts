@@ -22,7 +22,7 @@ export const EVENT_TAGS = [
 
 export const EVENT_FEEDBACK_SIMILAR_EVENT = ["Yes", "No"] as const;
 
-type EventTag = (typeof EVENT_TAGS)[number];
+export type EventTag = (typeof EVENT_TAGS)[number];
 
 export const EVENT_POINTS: Record<EventTag, number> = {
   GBM: 35,
@@ -43,6 +43,45 @@ export const EVENT_POINTS: Record<EventTag, number> = {
   "CAREER-FAIR": 100,
   "RSO-FAIR": 50,
 } as const;
+
+/** Stable seed colors for legacy tags and immutable Event snapshots. */
+export const EVENT_TAG_COLORS: Record<EventTag, string> = {
+  GBM: "#2563EB",
+  Social: "#DB2777",
+  Kickstart: "#16A34A",
+  "Project Launch": "#9333EA",
+  "Hello World": "#CA8A04",
+  Sponsorship: "#EA580C",
+  "Tech Exploration": "#0891B2",
+  "Class Support": "#4F46E5",
+  Workshop: "#0D9488",
+  OPS: "#7E22CE",
+  Collabs: "#DC2626",
+  "Check-in": "#4B5563",
+  Merch: "#65A30D",
+  Food: "#E11D48",
+  Ceremony: "#D97706",
+  "CAREER-FAIR": "#4D7C0F",
+  "RSO-FAIR": "#84CC16",
+} as const;
+
+export const EVENT_SYNC_STATES = [
+  "pending",
+  "synced",
+  "error",
+  "unknown",
+] as const;
+export const EVENT_GOOGLE_DESTINATIONS = ["public", "internal"] as const;
+export const EVENT_DISCORD_ENTITY_TYPES = [
+  "external",
+  "voice",
+  "stage",
+] as const;
+
+export type EventSyncState = (typeof EVENT_SYNC_STATES)[number];
+export type EventGoogleDestination = (typeof EVENT_GOOGLE_DESTINATIONS)[number];
+export type EventDiscordEntityType =
+  (typeof EVENT_DISCORD_ENTITY_TYPES)[number];
 
 export type EventTagsColor =
   | "GBM"

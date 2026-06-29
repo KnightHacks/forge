@@ -436,7 +436,7 @@ describe.runIf(runDatabaseContract)(
         expect(row.default_points, tag).toBe(LEGACY_DEFAULT_POINTS[tag]);
         expect(row.active, tag).toBe(true);
         expect(row.normalized_name, tag).toBe(tag.toLowerCase());
-        expect(row.color, tag).toMatch(/^#[0-9A-F]{6}$/i);
+        expect(row.color, tag).toBe(EVENTS.EVENT_TAG_COLORS[tag]);
       }
 
       const events = await db().query<EventTagColorRow>(
@@ -507,10 +507,11 @@ describe.runIf(runDatabaseContract)(
         `INSERT INTO "knight_hacks_event"
           ("name", "tag", "tag_color", "description", "start_datetime",
            "end_datetime", "location", "dues_paying", "is_operations_calendar",
-           "roles", "points")
+           "roles", "points", "creation_key", "creation_payload_hash")
          VALUES ('New Event', 'Community Night', '#A855F7', 'New event',
            '2027-01-15T18:00:00-05:00', '2027-01-15T20:00:00-05:00',
-           'BA1 107', false, false, '{}', 0)
+           'BA1 107', false, false, '{}', 0,
+           '00000000-0000-4000-8000-000000000199', repeat('a', 64))
          RETURNING *`,
       );
       expect(inserted.rows[0]).toMatchObject({
@@ -531,6 +532,525 @@ describe.runIf(runDatabaseContract)(
           [requireRow(inserted.rows[0], "inserted Reforge event").id],
         ),
       ).rejects.toThrow();
+
+      await expect(
+        db().query(
+          `UPDATE "knight_hacks_event"
+              SET "discord_id" = 'missing-applied-entity',
+                  "discord_applied_revision" = "sync_revision",
+                  "discord_sync_state" = 'synced'
+            WHERE "id" = $1`,
+          [requireRow(inserted.rows[0], "inserted Reforge event").id],
+        ),
+      ).rejects.toThrow();
+
+      await expect(
+        db().query(
+          `UPDATE "knight_hacks_event"
+              SET "discord_id" = 'missing-applied-revision',
+                  "discord_applied_revision" = NULL,
+                  "discord_applied_entity_type" = 'external',
+                  "discord_sync_state" = 'synced'
+            WHERE "id" = $1`,
+          [requireRow(inserted.rows[0], "inserted Reforge event").id],
+        ),
+      ).rejects.toThrow();
+
+      await expect(
+        db().query(
+          `UPDATE "knight_hacks_event"
+              SET "google_id" = 'missing-applied-revision',
+                  "google_applied_revision" = NULL,
+                  "google_applied_destination" = 'public',
+                  "google_applied_calendar_id" = 'public-calendar',
+                  "google_sync_state" = 'synced'
+            WHERE "id" = $1`,
+          [requireRow(inserted.rows[0], "inserted Reforge event").id],
+        ),
+      ).rejects.toThrow();
+
+      await expect(
+        db().query(
+          `INSERT INTO "knight_hacks_event"
+            ("name", "tag", "tag_color", "description", "start_datetime",
+             "end_datetime", "location", "dues_paying",
+             "is_operations_calendar", "roles", "points")
+           VALUES ('Missing identity', 'Workshop', '#0D9488', 'Invalid new row',
+             '2027-02-01T18:00:00-05:00', '2027-02-01T19:00:00-05:00',
+             'BA1 107', false, false, '{}', 0)`,
+        ),
+      ).rejects.toThrow();
+    });
+
+    it("serializes check-in, deletion, role, and tag reference races with PostgreSQL locks", async () => {
+      if (!migrationTestDatabaseUrl || !databaseName) {
+        throw new Error("Disposable database is unavailable");
+      }
+      const connectionString = databaseUrlFor(
+        migrationTestDatabaseUrl,
+        databaseName,
+      );
+      const first = new Client({ connectionString });
+      const second = new Client({ connectionString });
+      await Promise.all([first.connect(), second.connect()]);
+
+      const expectBlocked = async (
+        heldStatement: string,
+        contenderStatement: string,
+        values: unknown[],
+      ) => {
+        await Promise.all([first.query("BEGIN"), second.query("BEGIN")]);
+        await first.query(heldStatement, values);
+        let settled = false;
+        const contender = second.query(contenderStatement, values).then(() => {
+          settled = true;
+        });
+        await new Promise((resolve) => setTimeout(resolve, 40));
+        expect(settled).toBe(false);
+        await first.query("COMMIT");
+        await contender;
+        await second.query("ROLLBACK");
+      };
+
+      try {
+        await expectBlocked(
+          `SELECT "id" FROM "knight_hacks_event"
+            WHERE "id" = $1 FOR SHARE`,
+          `SELECT "id" FROM "knight_hacks_event"
+            WHERE "id" = $1 FOR UPDATE`,
+          [CLUB_EVENT_ID],
+        );
+        await expectBlocked(
+          `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+          `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+          [`${MEMBER_ID}:${CLUB_EVENT_ID}`],
+        );
+
+        const tagTable = await findTagTable(db());
+        const tag = await db().query<{ id: string }>(
+          `SELECT "id" FROM ${quoteIdentifier(tagTable)} ORDER BY "id" LIMIT 1`,
+        );
+        await expectBlocked(
+          `SELECT "id" FROM ${quoteIdentifier(tagTable)}
+            WHERE "id" = $1 FOR SHARE`,
+          `SELECT "id" FROM ${quoteIdentifier(tagTable)}
+            WHERE "id" = $1 FOR UPDATE`,
+          [requireRow(tag.rows[0], "event tag").id],
+        );
+
+        const lockRoleId = "00000000-0000-4000-8000-000000000197";
+        await db().query(
+          `INSERT INTO "auth_roles"
+            ("id", "name", "discord_role_id", "permissions")
+           VALUES ($1, 'Lock proof', 'event-lock-proof', '00000000000000000')
+           ON CONFLICT ("id") DO NOTHING`,
+          [lockRoleId],
+        );
+        await expectBlocked(
+          `SELECT "id" FROM "auth_roles" WHERE "id" = $1 FOR SHARE`,
+          `SELECT "id" FROM "auth_roles" WHERE "id" = $1 FOR UPDATE`,
+          [lockRoleId],
+        );
+      } finally {
+        await Promise.allSettled([
+          first.query("ROLLBACK"),
+          second.query("ROLLBACK"),
+        ]);
+        await Promise.all([first.end(), second.end()]);
+      }
+    });
+
+    it("fences stale lease owners from publication and Blade deletion", async () => {
+      const activeToken = "00000000-0000-4000-8000-000000000196";
+      const staleToken = "00000000-0000-4000-8000-000000000195";
+      await db().query(
+        `UPDATE "knight_hacks_event"
+            SET "sync_lease_token" = $2,
+                "sync_lease_revision" = "sync_revision",
+                "sync_lease_expires_at" = NOW() + INTERVAL '1 minute'
+          WHERE "id" = $1`,
+        [CLUB_EVENT_ID, activeToken],
+      );
+
+      const stalePublication = await db().query(
+        `UPDATE "knight_hacks_event"
+            SET "description" = "description"
+          WHERE "id" = $1
+            AND "sync_lease_token" = $2
+            AND "sync_lease_revision" = "sync_revision"
+            AND "sync_lease_expires_at" > NOW()
+          RETURNING "id"`,
+        [CLUB_EVENT_ID, staleToken],
+      );
+      expect(stalePublication.rowCount).toBe(0);
+
+      await db().query("BEGIN");
+      try {
+        const staleDelete = await db().query(
+          `DELETE FROM "knight_hacks_event"
+            WHERE "id" = $1
+              AND "sync_lease_token" = $2
+              AND "sync_lease_revision" = "sync_revision"
+              AND "sync_lease_expires_at" > NOW()
+            RETURNING "id"`,
+          [CLUB_EVENT_ID, staleToken],
+        );
+        expect(staleDelete.rowCount).toBe(0);
+        const activeDelete = await db().query(
+          `DELETE FROM "knight_hacks_event"
+            WHERE "id" = $1
+              AND "sync_lease_token" = $2
+              AND "sync_lease_revision" = "sync_revision"
+              AND "sync_lease_expires_at" > NOW()
+            RETURNING "id"`,
+          [CLUB_EVENT_ID, activeToken],
+        );
+        expect(activeDelete.rowCount).toBe(1);
+      } finally {
+        await db().query("ROLLBACK");
+        await db().query(
+          `UPDATE "knight_hacks_event"
+              SET "sync_lease_token" = NULL,
+                  "sync_lease_revision" = NULL,
+                  "sync_lease_expires_at" = NULL
+            WHERE "id" = $1`,
+          [CLUB_EVENT_ID],
+        );
+      }
+    });
+
+    it("runs production attendance and workflow state against the disposable database", async () => {
+      if (!migrationTestDatabaseUrl || !databaseName) {
+        throw new Error("Disposable database is unavailable");
+      }
+      const runtimeUrl = databaseUrlFor(migrationTestDatabaseUrl, databaseName);
+      const runtimeEventId = "00000000-0000-4000-8000-000000000194";
+      await db().query(
+        `INSERT INTO "knight_hacks_event"
+          ("id", "name", "tag", "tag_color", "description",
+           "start_datetime", "end_datetime", "location", "dues_paying",
+           "is_operations_calendar", "roles", "points", "legacy")
+         VALUES ($1, 'Runtime lock proof', 'GBM', '#3B82F6', 'Runtime proof',
+           NOW() - INTERVAL '1 hour', NOW() + INTERVAL '1 hour', 'BA1 107',
+           false, false, '{}', 7, true)`,
+        [runtimeEventId],
+      );
+      const before = await db().query<{ points: number }>(
+        `SELECT "points" FROM "knight_hacks_member" WHERE "id" = $1`,
+        [MEMBER_ID],
+      );
+      const runtimeEnvironment = Reflect.get(process, "env");
+      const originalDatabaseUrl = runtimeEnvironment.DATABASE_URL;
+      runtimeEnvironment.DATABASE_URL = runtimeUrl;
+      const dbModule = await import("../client");
+      try {
+        const [{ createAttendanceService }, { createDbAttendanceState }] =
+          await Promise.all([
+            import("../../../api/src/utils/events/attendance"),
+            import("../../../api/src/utils/events/database-attendance"),
+          ]);
+        const attendance = createAttendanceService({
+          audit: () => Promise.resolve(),
+          clock: () => new Date(),
+          state: createDbAttendanceState(),
+        });
+        const outcomes = await Promise.all(
+          Array.from({ length: 5 }, () =>
+            attendance.checkIn({
+              actorId: USER_ID,
+              eventId: runtimeEventId,
+              memberId: MEMBER_ID,
+            }),
+          ),
+        );
+        expect(
+          outcomes.filter(({ status }) => status === "checked_in"),
+        ).toHaveLength(1);
+        expect(
+          outcomes.filter(({ status }) => status === "already_checked_in"),
+        ).toHaveLength(4);
+
+        const stored = await db().query<{ attendance: number; points: number }>(
+          `SELECT
+             (SELECT count(*)::int FROM "knight_hacks_event_attendee"
+               WHERE "event_id" = $1) AS "attendance",
+             (SELECT "points" FROM "knight_hacks_member"
+               WHERE "id" = $2) AS "points"`,
+          [runtimeEventId, MEMBER_ID],
+        );
+        expect(stored.rows[0]).toEqual({
+          attendance: 1,
+          points: (before.rows[0]?.points ?? 0) + 7,
+        });
+        const {
+          loadClubEventDiscoveryRecord,
+          loadMemberClubEventRecords,
+          loadPublicClubEventRecords,
+          queryAdminEventRecords,
+          searchCheckInMemberCandidates,
+        } = await import("../../../api/src/utils/events/queries");
+        await expect(
+          loadClubEventDiscoveryRecord(runtimeEventId),
+        ).resolves.toMatchObject({ attendanceCount: 1 });
+
+        await db().query(
+          `INSERT INTO "auth_user"
+            ("id", "discord_user_id", "name", "email")
+           SELECT
+             ('10000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+             'fuzzy-user-' || g,
+             'Fuzzy ' || g,
+             'fuzzy-user-' || g || '@example.test'
+           FROM generate_series(1, 320) AS g`,
+        );
+        await db().query(
+          `INSERT INTO "knight_hacks_member"
+            ("id", "user_id", "first_name", "last_name", "discord_user",
+             "age", "email", "school", "level_of_study", "shirt_size",
+             "dob", "grad_date")
+           SELECT
+             ('20000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+             ('10000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+             CASE
+               WHEN g = 320 THEN 'Zada'
+               WHEN g = 319 THEN 'Áda'
+               WHEN g = 318 THEN 'Jo'
+               ELSE 'Aazada' || g
+             END,
+             'Candidate',
+             'fuzzy-' || g,
+             21,
+             'fuzzy-' || g || '@example.test',
+             'University of Central Florida',
+             'Undergraduate University (3+ year)',
+             'M',
+             '2004-01-01',
+             '2027-05-01'
+           FROM generate_series(1, 320) AS g`,
+        );
+        const exactFuzzy = await searchCheckInMemberCandidates({
+          limit: 5,
+          query: "zada",
+        });
+        expect(exactFuzzy[0]).toMatchObject({
+          memberId: "20000000-0000-4000-8000-000000000320",
+        });
+        const accentTypo = await searchCheckInMemberCandidates({
+          limit: 5,
+          query: "Adq",
+        });
+        expect(accentTypo[0]).toMatchObject({
+          memberId: "20000000-0000-4000-8000-000000000319",
+        });
+        const shortTypo = await searchCheckInMemberCandidates({
+          limit: 5,
+          query: "Jp",
+        });
+        expect(shortTypo[0]).toMatchObject({
+          memberId: "20000000-0000-4000-8000-000000000318",
+        });
+
+        const queryNow = new Date();
+        const queryEventIds = {
+          dues: "00000000-0000-4000-8000-000000000182",
+          internal: "00000000-0000-4000-8000-000000000184",
+          public: "00000000-0000-4000-8000-000000000181",
+          role: "00000000-0000-4000-8000-000000000183",
+        } as const;
+        await db().query(
+          `INSERT INTO "knight_hacks_event"
+            ("id", "discord_id", "google_id", "name", "tag", "tag_color",
+             "description", "start_datetime", "end_datetime", "location",
+             "dues_paying", "is_operations_calendar", "roles", "points",
+             "discord_channel_id", "legacy", "discord_sync_state",
+             "google_sync_state", "published_at", "creation_key",
+             "creation_payload_hash", "sync_revision",
+             "discord_applied_revision", "discord_applied_entity_type",
+             "discord_applied_channel_id", "google_applied_revision",
+             "google_applied_destination", "google_applied_calendar_id",
+             "visibility_revision", "visibility_dues_paying",
+             "visibility_roles", "visibility_internal")
+           VALUES
+            ($1, 'discord-query-public', 'google-query-public',
+             'Alpha Public', 'GBM', '#3B82F6', 'Public query proof',
+             $6::timestamptz + INTERVAL '1 day',
+             $6::timestamptz + INTERVAL '1 day 2 hours', 'BA1 107', false,
+             false, '{}', 10, NULL, false, 'synced', 'synced', $6,
+             '00000000-0000-4000-8000-000000000181', repeat('a', 64), 1,
+             1, 'external', NULL, 1, 'public', 'public-calendar',
+             1, false, '{}', false),
+            ($2, 'discord-query-dues', 'google-query-dues',
+             'Beta Dues', 'GBM', '#3B82F6', 'Dues query proof',
+             $6::timestamptz + INTERVAL '2 days',
+             $6::timestamptz + INTERVAL '2 days 2 hours', 'BA1 107', true,
+             false, '{}', 20, NULL, false, 'synced', 'synced', $6,
+             '00000000-0000-4000-8000-000000000182', repeat('b', 64), 1,
+             1, 'external', NULL, 1, 'public', 'public-calendar',
+             1, true, '{}', false),
+            ($3, 'discord-query-role', 'google-query-role',
+             'Gamma Role', 'GBM', '#3B82F6', 'Role query proof',
+             $6::timestamptz + INTERVAL '3 days',
+             $6::timestamptz + INTERVAL '3 days 2 hours', 'BA1 107', false,
+             false, ARRAY[$5]::varchar[], 30, NULL, false, 'synced', 'synced',
+             $6, '00000000-0000-4000-8000-000000000183', repeat('c', 64), 1,
+             1, 'external', NULL, 1, 'public', 'public-calendar',
+             1, false, ARRAY[$5]::varchar[], false),
+            ($4, 'discord-query-internal', 'google-query-internal',
+             'Delta Internal', 'GBM', '#3B82F6', 'Internal query proof',
+             $6::timestamptz + INTERVAL '4 days',
+             $6::timestamptz + INTERVAL '4 days 2 hours', 'BA1 107', false,
+             true, '{}', 40, '990000000000000101', false, 'synced', 'synced',
+             $6, '00000000-0000-4000-8000-000000000184', repeat('d', 64), 1,
+             1, 'voice', '990000000000000101', 1, 'internal',
+             'internal-calendar', 1, false, '{}', true)`,
+          [
+            queryEventIds.public,
+            queryEventIds.dues,
+            queryEventIds.role,
+            queryEventIds.internal,
+            ROLE_ID,
+            queryNow,
+          ],
+        );
+
+        const publicRows = await loadPublicClubEventRecords({
+          limit: 10,
+          now: queryNow,
+        });
+        expect(publicRows.map(({ id }) => id)).toEqual([
+          queryEventIds.public,
+          queryEventIds.dues,
+        ]);
+        const memberRows = await loadMemberClubEventRecords({
+          memberRoleIds: [ROLE_ID],
+          now: queryNow,
+        });
+        expect(memberRows.map(({ id }) => id)).toEqual([
+          queryEventIds.public,
+          queryEventIds.dues,
+          queryEventIds.role,
+          queryEventIds.internal,
+        ]);
+
+        const adminBase = {
+          audiences: [] as ("dues" | "public" | "roles")[],
+          integrationStates: ["synced" as const],
+          internal: [] as boolean[],
+          page: 1,
+          pageSize: 25 as const,
+          roleIds: [] as string[],
+          search: "query proof",
+          sortDirection: "asc" as const,
+          sortField: "start" as const,
+          tags: ["GBM"],
+          timing: "upcoming" as const,
+        };
+        const adminList = await queryAdminEventRecords(
+          { ...adminBase, view: "list" },
+          queryNow,
+        );
+        expect(adminList).toMatchObject({
+          pagination: { page: 1, pageCount: 1, totalCount: 4 },
+        });
+        expect(adminList.rows.map(({ id }) => id)).toEqual([
+          queryEventIds.public,
+          queryEventIds.dues,
+          queryEventIds.role,
+          queryEventIds.internal,
+        ]);
+        const compound = await queryAdminEventRecords(
+          {
+            ...adminBase,
+            audiences: ["roles"],
+            roleIds: [ROLE_ID],
+            view: "list",
+          },
+          queryNow,
+        );
+        expect(compound).toMatchObject({
+          pagination: { totalCount: 1 },
+          rows: [expect.objectContaining({ id: queryEventIds.role })],
+        });
+        const calendar = await queryAdminEventRecords(
+          {
+            ...adminBase,
+            calendarEnd: new Date(
+              queryNow.getTime() + 3.5 * 24 * 60 * 60 * 1_000,
+            ).toISOString(),
+            calendarStart: new Date(
+              queryNow.getTime() + 1.5 * 24 * 60 * 60 * 1_000,
+            ).toISOString(),
+            timing: "all",
+            view: "calendar",
+          },
+          queryNow,
+        );
+        expect(calendar.rows.map(({ id }) => id)).toEqual([
+          queryEventIds.dues,
+          queryEventIds.role,
+        ]);
+
+        const { createDbEventWorkflowState } =
+          await import("../../../api/src/utils/events/database-state");
+        const workflow = createDbEventWorkflowState({
+          googleCalendars: {
+            internal: "internal-calendar",
+            public: "public-calendar",
+          },
+        });
+        const activeToken = "00000000-0000-4000-8000-000000000193";
+        await db().query(
+          `UPDATE "knight_hacks_event"
+              SET "sync_lease_token" = $2,
+                  "sync_lease_revision" = "sync_revision",
+                  "sync_lease_expires_at" = NOW() + INTERVAL '1 minute'
+            WHERE "id" = $1`,
+          [runtimeEventId, activeToken],
+        );
+        const event = await workflow.getEvent(runtimeEventId);
+        if (!event) throw new Error("Expected runtime event");
+        await expect(
+          workflow.saveProviderProjection({
+            eventId: runtimeEventId,
+            projection: {
+              appliedDestination: "external",
+              appliedRevision: event.revision,
+              attemptToken: null,
+              id: "stale-write",
+              state: "synced",
+            },
+            provider: "discord",
+            revision: event.revision,
+            token: "00000000-0000-4000-8000-000000000192",
+          }),
+        ).resolves.toBe(false);
+        await expect(
+          workflow.deleteEvent(runtimeEventId, {
+            revision: event.revision,
+            token: "00000000-0000-4000-8000-000000000192",
+          }),
+        ).resolves.toBe(false);
+        const untouched = await db().query<{
+          discord_id: string | null;
+          id: string;
+        }>(
+          `SELECT "id", "discord_id" FROM "knight_hacks_event"
+            WHERE "id" = $1`,
+          [runtimeEventId],
+        );
+        expect(untouched.rows[0]).toEqual({
+          discord_id: null,
+          id: runtimeEventId,
+        });
+      } finally {
+        const client = (
+          dbModule.db as unknown as {
+            $client: { end: () => Promise<void> };
+          }
+        ).$client;
+        await client.end();
+        runtimeEnvironment.DATABASE_URL = originalDatabaseUrl;
+      }
     });
   },
 );

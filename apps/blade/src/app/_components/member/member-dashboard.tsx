@@ -2,6 +2,7 @@
 
 import {
   Building2,
+  CalendarDays,
   CreditCard,
   ExternalLink,
   Eye,
@@ -128,6 +129,25 @@ function DuesStatusTile({
   );
 }
 
+function EventsLinkTile({ className }: { className?: string }) {
+  return (
+    <MemberRouteTransitionLink
+      href="/member/events"
+      className={cn(
+        dashboardNestedSurfaceClass,
+        "flex min-h-11 items-center justify-between gap-3 p-3 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        className,
+      )}
+    >
+      <span className="flex items-center gap-2">
+        <CalendarDays className="h-4 w-4 text-primary" aria-hidden="true" />
+        Events
+      </span>
+      <span className="text-sm text-muted-foreground">View schedule</span>
+    </MemberRouteTransitionLink>
+  );
+}
+
 function GuildProfileCard({
   duesStatus,
   member,
@@ -212,6 +232,8 @@ function GuildProfileCard({
         </DashboardContent>
 
         <DuesStatusTile compact duesStatus={duesStatus} className="lg:hidden" />
+
+        <EventsLinkTile className="lg:hidden" />
 
         <DashboardContent
           role="group"
@@ -386,6 +408,8 @@ export function MemberDashboard({
             </DashboardContent>
 
             <DuesStatusTile duesStatus={duesStatus} />
+
+            <EventsLinkTile />
 
             <DashboardContent
               className={cn(dashboardNestedSurfaceClass, "p-4")}

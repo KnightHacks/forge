@@ -1,5 +1,6 @@
 import { authRouter } from "./routers/auth";
 import { duesRouter } from "./routers/dues";
+import { eventRouter } from "./routers/event";
 import { formsRouter } from "./routers/forms";
 import { memberRouter } from "./routers/member";
 import { profilePictureRouter } from "./routers/profile-picture";
@@ -16,6 +17,7 @@ const healthProcedure = publicProcedure.query(() => ({
 export interface AppRouterShape {
   auth: typeof authRouter;
   dues: typeof duesRouter;
+  event: typeof eventRouter;
   forms: typeof formsRouter;
   health: typeof healthProcedure;
   member: typeof memberRouter;
@@ -32,6 +34,7 @@ export type AppRouterRecord = {
 const appRouterRecord: AppRouterRecord = {
   auth: authRouter,
   dues: duesRouter,
+  event: eventRouter,
   forms: formsRouter,
   health: healthProcedure,
   member: memberRouter,

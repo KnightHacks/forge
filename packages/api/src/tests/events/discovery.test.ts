@@ -164,18 +164,25 @@ describe("event discovery policy", () => {
       pointsAwardedEstimated: true,
     });
 
-    const result = listMemberAttendance([attendance], [event], {
+    const duplicate = attendanceRecord({
+      eventId: event.id,
+      id: "00000000-0000-4000-8000-000000000602",
+    });
+    const result = listMemberAttendance([attendance, duplicate], [event], {
       memberId: MEMBER_IDS.member,
     });
 
-    expect(result).toEqual([
-      expect.objectContaining({
-        eventId: event.id,
-        legacy: true,
-        pointsAwarded: 35,
-        pointsAwardedEstimated: true,
-      }),
+    expect(result).toHaveLength(2);
+    expect(result.map(({ attendanceId }) => attendanceId)).toEqual([
+      attendance.id,
+      duplicate.id,
     ]);
+    expect(result[0]).toMatchObject({
+      eventId: event.id,
+      legacy: true,
+      pointsAwarded: 35,
+      pointsAwardedEstimated: true,
+    });
   });
 
   it("[TC-006] combines normalized search and filter categories deterministically", () => {
@@ -387,6 +394,36 @@ describe("event discovery policy", () => {
     }
   });
 
+  it("ranks bounded fuzzy and accent-normalized identity matches", () => {
+    const ada = memberRecord({
+      discordUsername: "ada-l",
+      email: "ada@example.test",
+      firstName: "Áda",
+      id: MEMBER_IDS.other,
+      lastName: "Lovelace",
+    });
+    const jo = memberRecord({
+      discordUsername: "jo",
+      email: "jo@example.test",
+      firstName: "Jo",
+      id: "00000000-0000-4000-8000-000000000203",
+      lastName: "Li",
+    });
+
+    expect(
+      searchCheckInMembers([memberRecord(), ada, jo], {
+        limit: 5,
+        query: "Adq",
+      }).map(({ memberId }) => memberId),
+    ).toEqual([ada.id]);
+    expect(
+      searchCheckInMembers([memberRecord(), ada, jo], {
+        limit: 5,
+        query: "Jp",
+      }).map(({ memberId }) => memberId),
+    ).toEqual([jo.id]);
+  });
+
   it("[TC-032] prioritizes current/recent choices while keeping older and Legacy Club events searchable", () => {
     const current = eventRecord({ id: EVENT_IDS.public, name: "Current" });
     const recent = eventRecord({
@@ -452,5 +489,25 @@ describe("event discovery policy", () => {
     expect(JSON.stringify(olderChoices)).not.toContain(
       EVENT_IDS.deletionPending,
     );
+  });
+
+  it("orders ongoing before upcoming check-in choices with stable UUID ties", () => {
+    const upcoming = eventRecord({
+      id: "00000000-0000-4000-8000-000000000129",
+      name: "Upcoming",
+      startAt: new Date("2026-07-01T20:00:00.000Z"),
+    });
+    const ongoing = eventRecord({
+      id: "00000000-0000-4000-8000-000000000128",
+      name: "Ongoing",
+      startAt: new Date("2026-07-01T15:00:00.000Z"),
+    });
+
+    expect(
+      listCheckInEvents([upcoming, ongoing], {
+        now: NOW,
+        olderSearch: "",
+      }).current.map(({ id }) => id),
+    ).toEqual([ongoing.id, upcoming.id]);
   });
 });

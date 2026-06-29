@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createEventSyncOrchestrator } from "../../utils/events/orchestration";
+import type { EventProjectionRequest } from "../../utils/events/orchestration";
+import {
+  assertEventProviderPayloadLimits,
+  createEventSyncOrchestrator,
+} from "../../utils/events/orchestration";
 import { createTestClock } from "../support/events/fake-clock";
 import {
   deferredProviderResult,
@@ -19,6 +23,7 @@ function pendingEvent(overrides: Parameters<typeof eventRecord>[0] = {}) {
     discord: {
       appliedDestination: null,
       appliedRevision: null,
+      attemptRevision: null,
       attemptToken: null,
       id: null,
       state: "pending",
@@ -26,6 +31,7 @@ function pendingEvent(overrides: Parameters<typeof eventRecord>[0] = {}) {
     google: {
       appliedDestination: null,
       appliedRevision: null,
+      attemptRevision: null,
       attemptToken: null,
       id: null,
       state: "pending",
@@ -34,6 +40,46 @@ function pendingEvent(overrides: Parameters<typeof eventRecord>[0] = {}) {
     synchronizedVisibility: null,
     ...overrides,
   });
+}
+
+function requestFor(
+  event: ReturnType<typeof eventRecord>,
+  provider: "discord" | "google",
+): EventProjectionRequest {
+  const destination =
+    provider === "google"
+      ? event.internal
+        ? "internal-calendar"
+        : "public-calendar"
+      : event.internal
+        ? `${event.discordChannel?.type}:${event.discordChannel?.id}`
+        : "external";
+  return {
+    channelId:
+      provider === "discord" ? (event.discordChannel?.id ?? null) : null,
+    creationKey: event.creationKey ?? "",
+    description: `${event.description}\n\nLocation: ${event.location}\nPoints: ${event.points}`,
+    destination,
+    endAt: event.endAt,
+    entityType:
+      provider === "discord"
+        ? (event.discordChannel?.type ?? "external")
+        : "external",
+    eventId: event.id,
+    location: event.location,
+    points: event.points,
+    ...(provider === "google"
+      ? {
+          privateProperties: {
+            bladeCreationKey: event.creationKey ?? "",
+            bladeEventId: event.id,
+          },
+        }
+      : {}),
+    revision: event.revision,
+    startAt: event.startAt,
+    title: `[${event.tag}] ${event.name}`,
+  };
 }
 
 function setup(events = [pendingEvent()]) {
@@ -99,6 +145,38 @@ describe("event provider orchestration", () => {
     expect(state.events.size).toBe(1);
   });
 
+  it("resumes a same-key durable create after mutable tag defaults change", async () => {
+    const first = pendingEvent({ id: "00000000-0000-4000-8000-000000000164" });
+    const retried = pendingEvent({
+      id: "00000000-0000-4000-8000-000000000165",
+      points: 99,
+      tag: "Renamed tag",
+      tagColor: "#111111",
+    });
+    const { discord, google, orchestrator, state } = setup([]);
+
+    await orchestrator.create(first, {
+      actorId: USER_IDS.operator,
+      payloadHash: "submitted-payload",
+    });
+    discord.resetCalls();
+    google.resetCalls();
+    await expect(
+      orchestrator.create(retried, {
+        actorId: USER_IDS.operator,
+        payloadHash: "submitted-payload",
+      }),
+    ).resolves.toMatchObject({ eventId: first.id });
+
+    expect(discord.calls).toEqual([]);
+    expect(google.calls).toEqual([]);
+    expect(await state.getEvent(first.id)).toMatchObject({
+      points: first.points,
+      tag: first.tag,
+      tagColor: first.tagColor,
+    });
+  });
+
   it("[TC-009] publishes only after both initial projections are durable", async () => {
     const { discord, google, orchestrator, state } = setup();
 
@@ -112,13 +190,13 @@ describe("event provider orchestration", () => {
       discord: {
         appliedDestination: "external",
         appliedRevision: 1,
-        id: expect.any(String),
+        id: expect.any(String) as string,
         state: "synced",
       },
       google: {
         appliedDestination: "public-calendar",
         appliedRevision: 1,
-        id: expect.any(String),
+        id: expect.any(String) as string,
         state: "synced",
       },
       publishedAt: NOW,
@@ -204,7 +282,7 @@ describe("event provider orchestration", () => {
       orchestrator.sync(EVENT_IDS.public, { actorId: USER_IDS.operator }),
     ).resolves.toMatchObject({ status: "needs_attention" });
     expect(await state.getEvent(EVENT_IDS.public)).toMatchObject({
-      discord: { id: expect.any(String), state: "synced" },
+      discord: { id: expect.any(String) as string, state: "synced" },
       google: { id: null, state: "error" },
       publishedAt: null,
     });
@@ -219,7 +297,7 @@ describe("event provider orchestration", () => {
     expect(google.calls).toHaveLength(1);
     expect(google.calls[0]?.operation).toBe("create");
     expect(await state.getEvent(EVENT_IDS.public)).toMatchObject({
-      google: { id: expect.any(String), state: "synced" },
+      google: { id: expect.any(String) as string, state: "synced" },
       publishedAt: NOW,
     });
   });
@@ -240,10 +318,177 @@ describe("event provider orchestration", () => {
     google.resetCalls();
     await orchestrator.sync(EVENT_IDS.public, { actorId: USER_IDS.operator });
 
-    expect(google.calls.map(({ operation }) => operation)).toEqual(["list"]);
+    expect(google.calls.map(({ operation }) => operation)).toEqual([
+      "list",
+      "update",
+    ]);
     expect(await state.getEvent(EVENT_IDS.public)).toMatchObject({
       google: { id: "accepted-google-id", state: "synced" },
     });
+  });
+
+  it("reads back an ambiguous known-ID update before deciding whether to retry", async () => {
+    const ambiguous = eventRecord({
+      discord: {
+        appliedDestination: "external",
+        appliedRevision: 1,
+        attemptRevision: 1,
+        attemptToken: "prior-attempt",
+        id: "ambiguous-discord-id",
+        state: "unknown",
+      },
+    });
+    const { discord, orchestrator, state } = setup([ambiguous]);
+    discord.seed({
+      id: "ambiguous-discord-id",
+      request: requestFor(ambiguous, "discord"),
+    });
+
+    await orchestrator.sync(ambiguous.id, { actorId: USER_IDS.operator });
+
+    expect(discord.calls.map(({ operation }) => operation)).toEqual(["get"]);
+    expect(await state.getEvent(ambiguous.id)).toMatchObject({
+      discord: {
+        attemptRevision: null,
+        attemptToken: null,
+        state: "synced",
+      },
+    });
+  });
+
+  it("does not overlap a durable known-ID update after lease expiry", async () => {
+    const changed = eventRecord({
+      discord: {
+        appliedDestination: "external",
+        appliedRevision: 1,
+        id: "in-flight-discord-id",
+        state: "pending",
+      },
+      google: {
+        appliedDestination: "public-calendar",
+        appliedRevision: 2,
+        id: "current-google-id",
+        state: "synced",
+      },
+      name: "Updated Workshop",
+      revision: 2,
+    });
+    const { promise, resolve } = deferredProviderResult();
+    const { clock, discord, orchestrator, state } = setup([changed]);
+    discord.seed({
+      id: "in-flight-discord-id",
+      request: {
+        ...requestFor(changed, "discord"),
+        revision: 1,
+        title: "[Workshop] Original Workshop",
+      },
+    });
+    discord.enqueue("update", promise);
+
+    const oldOwner = orchestrator.sync(changed.id, {
+      actorId: USER_IDS.operator,
+    });
+    await vi.waitFor(() => expect(state.attempts).toHaveLength(1));
+    clock.advance(31_000);
+
+    await expect(
+      orchestrator.sync(changed.id, { actorId: USER_IDS.operator }),
+    ).resolves.toMatchObject({ status: "needs_attention" });
+
+    expect(discord.calls.map(({ operation }) => operation)).toEqual([
+      "update",
+      "get",
+    ]);
+    expect(await state.getEvent(changed.id)).toMatchObject({
+      discord: {
+        attemptRevision: 2,
+        attemptToken: "sync-token-1",
+        state: "unknown",
+      },
+    });
+
+    resolve({ id: "in-flight-discord-id", kind: "success" });
+    await oldOwner;
+
+    discord.resetCalls();
+    await expect(
+      orchestrator.sync(changed.id, { actorId: USER_IDS.operator }),
+    ).resolves.toMatchObject({ status: "published" });
+    expect(discord.calls.map(({ operation }) => operation)).toEqual(["get"]);
+    expect(await state.getEvent(changed.id)).toMatchObject({
+      discord: {
+        attemptRevision: null,
+        attemptToken: null,
+        state: "synced",
+      },
+    });
+  });
+
+  it("does not mistake a pre-deletion update attempt for a deletion", async () => {
+    const changed = eventRecord({
+      discord: {
+        appliedDestination: "external",
+        appliedRevision: 1,
+        id: "in-flight-before-delete",
+        state: "pending",
+      },
+      google: {
+        appliedDestination: "public-calendar",
+        appliedRevision: 2,
+        id: "current-google-id",
+        state: "synced",
+      },
+      name: "Updated Before Delete",
+      revision: 2,
+    });
+    const { promise, resolve } = deferredProviderResult();
+    const { clock, discord, orchestrator, state } = setup([changed]);
+    discord.enqueue("update", promise);
+
+    const oldOwner = orchestrator.sync(changed.id, {
+      actorId: USER_IDS.operator,
+    });
+    await vi.waitFor(() => expect(state.attempts).toHaveLength(1));
+    clock.advance(31_000);
+
+    await expect(
+      orchestrator.delete(changed.id, { actorId: USER_IDS.operator }),
+    ).resolves.toMatchObject({ status: "needs_attention" });
+
+    expect(discord.calls.map(({ operation }) => operation)).toEqual(["update"]);
+    expect(await state.getEvent(changed.id)).toMatchObject({
+      deletionIntentAt: null,
+      discord: {
+        attemptRevision: 2,
+        attemptToken: "sync-token-1",
+        id: "in-flight-before-delete",
+        state: "unknown",
+      },
+    });
+
+    resolve({ id: "in-flight-before-delete", kind: "success" });
+    await oldOwner;
+  });
+
+  it("forces only the selected healthy provider during deliberate Repair", async () => {
+    const event = eventRecord();
+    const { discord, google, orchestrator } = setup([event]);
+    discord.seed({
+      id: event.discord.id ?? "",
+      request: { ...requestFor(event, "discord"), title: "Externally edited" },
+    });
+
+    await orchestrator.sync(event.id, {
+      actorId: USER_IDS.operator,
+      auditAction: "repair",
+      forceProviders: ["discord"],
+    });
+
+    expect(discord.calls.map(({ operation }) => operation)).toEqual([
+      "get",
+      "update",
+    ]);
+    expect(google.calls).toEqual([]);
   });
 
   it("[TC-013] leaves ambiguous Discord creation Unknown until explicit reviewed resolution", async () => {
@@ -540,6 +785,153 @@ describe("event provider orchestration", () => {
     expect(await state.getEvent(published.id)).toBeNull();
   });
 
+  it("proves an ambiguous no-ID Google create before deleting Blade state", async () => {
+    const event = eventRecord({
+      discord: {
+        appliedDestination: null,
+        appliedRevision: null,
+        attemptToken: null,
+        id: null,
+        state: "pending",
+      },
+      google: {
+        appliedDestination: null,
+        appliedRevision: null,
+        attemptToken: "google-attempt",
+        id: null,
+        state: "unknown",
+      },
+    });
+    const { discord, google, orchestrator, state } = setup([event]);
+    google.seed({
+      id: "accepted-google-id",
+      request: requestFor(event, "google"),
+    });
+
+    await expect(
+      orchestrator.delete(event.id, { actorId: USER_IDS.operator }),
+    ).resolves.toMatchObject({ status: "deleted" });
+    expect(discord.calls).toEqual([]);
+    expect(google.calls.map(({ operation }) => operation)).toEqual([
+      "list",
+      "delete",
+    ]);
+    expect(await state.getEvent(event.id)).toBeNull();
+  });
+
+  it("publishes and advances visibility after a successful Discord link", async () => {
+    const event = pendingEvent({
+      discord: {
+        appliedDestination: null,
+        appliedRevision: null,
+        attemptToken: "discord-attempt",
+        id: null,
+        state: "unknown",
+      },
+      google: eventRecord().google,
+    });
+    const { discord, orchestrator, state } = setup([event]);
+    discord.seed({
+      id: "accepted-discord-id",
+      request: requestFor(event, "discord"),
+    });
+
+    await orchestrator.resolveDiscordProjection(event.id, {
+      actorId: USER_IDS.operator,
+      candidateId: "accepted-discord-id",
+      mode: "link_existing",
+    });
+
+    expect(await state.getEvent(event.id)).toMatchObject({
+      publishedAt: NOW,
+      synchronizedVisibility: {
+        audience: "public",
+        internal: false,
+        roleIds: [],
+      },
+    });
+  });
+
+  it("revalidates a Discord candidate entity type after acquiring the lease", async () => {
+    const event = pendingEvent({
+      discord: {
+        appliedDestination: null,
+        appliedRevision: null,
+        attemptToken: "discord-attempt",
+        id: null,
+        state: "unknown",
+      },
+    });
+    const { discord, orchestrator } = setup([event]);
+    discord.seed({
+      id: "changed-discord-id",
+      request: {
+        ...requestFor(event, "discord"),
+        channelId: "stage-channel",
+        destination: "stage:stage-channel",
+        entityType: "stage",
+      },
+    });
+
+    await expect(
+      orchestrator.resolveDiscordProjection(event.id, {
+        actorId: USER_IDS.operator,
+        candidateId: "changed-discord-id",
+        mode: "link_existing",
+      }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(discord.calls.map(({ operation }) => operation)).toEqual(["get"]);
+  });
+
+  it("attempts deletion audit after an unexpected provider exception", async () => {
+    const event = eventRecord();
+    const fixture = setup([event]);
+    vi.spyOn(fixture.discord, "delete").mockRejectedValue(
+      new Error("provider exploded"),
+    );
+
+    await expect(
+      fixture.orchestrator.delete(event.id, {
+        actorId: USER_IDS.operator,
+      }),
+    ).rejects.toThrow("provider exploded");
+    expect(fixture.audit).toHaveBeenCalledWith({
+      action: "delete",
+      actorId: USER_IDS.operator,
+      eventId: event.id,
+    });
+  });
+
+  it("validates exact composed provider payload limits", () => {
+    expect(() =>
+      assertEventProviderPayloadLimits({
+        description: "d".repeat(977),
+        location: "x",
+        name: "n".repeat(96),
+        points: 1,
+        tag: "t",
+      }),
+    ).not.toThrow();
+    expect(() =>
+      assertEventProviderPayloadLimits({
+        description: "short",
+        location: "x",
+        name: "n".repeat(97),
+        points: 1,
+        tag: "t",
+      }),
+    ).toThrow();
+    expect(() =>
+      assertEventProviderPayloadLimits({
+        description: "d".repeat(978),
+        location: "x",
+        name: "safe",
+        points: 1,
+        tag: "t",
+      }),
+    ).toThrow();
+  });
+
   it("[TC-029] edits Legacy events locally without provider synchronization", async () => {
     const legacy = eventRecord({
       id: EVENT_IDS.legacy,
@@ -549,11 +941,14 @@ describe("event provider orchestration", () => {
     });
     const { discord, google, orchestrator, state } = setup([legacy]);
 
-    await orchestrator.updateLegacy(legacy.id, {
+    const result = await orchestrator.updateLegacy(legacy.id, {
       actorId: USER_IDS.operator,
       patch: { name: "Corrected historical name" },
     });
 
+    expect(result).toEqual({ eventId: legacy.id, status: "legacy" });
+    expect(result).not.toHaveProperty("creationKey");
+    expect(result).not.toHaveProperty("discord");
     expect(await state.getEvent(legacy.id)).toMatchObject({
       name: "Corrected historical name",
     });

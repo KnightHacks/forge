@@ -1,6 +1,12 @@
-import { LayoutDashboard, ShieldCheck, UsersRound } from "lucide-react";
+import {
+  CalendarDays,
+  LayoutDashboard,
+  ShieldCheck,
+  UsersRound,
+} from "lucide-react";
 
 export interface AdminNavigationAccess {
+  events?: boolean;
   members: boolean;
   roles: boolean;
 }
@@ -11,6 +17,13 @@ export const adminNavigationItems = [
     icon: LayoutDashboard,
     id: "dashboard",
     label: "Dashboard",
+  },
+  {
+    access: "events",
+    href: "/admin/events",
+    icon: CalendarDays,
+    id: "events",
+    label: "Events",
   },
   {
     access: "members",
@@ -35,6 +48,7 @@ export function getVisibleAdminNavigation(access: AdminNavigationAccess) {
 }
 
 export function isAdminNavigationActive(id: string, pathname: string) {
+  if (id === "events") return pathname.startsWith("/admin/events");
   if (id === "members") return pathname.startsWith("/admin/members");
   if (id === "roles") return pathname.startsWith("/admin/roles");
   return !pathname.startsWith("/admin/");

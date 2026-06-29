@@ -18,8 +18,18 @@ export function canAccessRoleAdmin(permissions: EffectivePermissions) {
   );
 }
 
+export function canAccessEventAdmin(permissions: EffectivePermissions) {
+  return (
+    permissions.IS_OFFICER === true ||
+    permissions.READ_CLUB_EVENT === true ||
+    permissions.EDIT_CLUB_EVENT === true ||
+    permissions.CHECKIN_CLUB_EVENT === true
+  );
+}
+
 export function getAdminNavigationAccess(permissions: EffectivePermissions) {
   return {
+    events: canAccessEventAdmin(permissions),
     members: canAccessMemberAdmin(permissions),
     roles: canAccessRoleAdmin(permissions),
   };

@@ -1,7 +1,7 @@
 export type ProviderOperation = "create" | "delete" | "get" | "list" | "update";
 
 export type ProviderResult =
-  | { id: string; kind: "success" }
+  | { id: string; kind: "success"; request?: ProviderProjectionRequest }
   | { kind: "not_found" }
   | { kind: "transient_error"; message: string }
   | { acceptedId?: string; kind: "unknown"; message: string };
@@ -35,7 +35,7 @@ export interface LiveProjection {
 
 export interface DeferredProviderResult {
   promise: Promise<ProviderResult>;
-  resolve(result: ProviderResult): void;
+  resolve: (result: ProviderResult) => void;
 }
 
 export function deferredProviderResult(): DeferredProviderResult {
@@ -45,7 +45,7 @@ export function deferredProviderResult(): DeferredProviderResult {
   });
   return {
     promise,
-    resolve(result) {
+    resolve: (result) => {
       if (!resolvePromise)
         throw new Error("Deferred provider result is unavailable.");
       resolvePromise(result);
@@ -116,16 +116,22 @@ export class FakeEventProviderGateway {
     return queued;
   }
 
-  async get(id: string): Promise<ProviderResult> {
+  async get(
+    id: string,
+    _appliedDestination?: string | null,
+  ): Promise<ProviderResult> {
     this.calls.push({ id, operation: "get" });
     const queued = await this.shiftQueued("get");
     if (queued) return queued;
-    return this.live.has(id) ? { id, kind: "success" } : { kind: "not_found" };
+    const live = this.live.get(id);
+    return live
+      ? { id, kind: "success", request: live.request }
+      : { kind: "not_found" };
   }
 
-  async list(): Promise<LiveProjection[]> {
+  list(): Promise<LiveProjection[]> {
     this.calls.push({ operation: "list" });
-    return [...this.live.values()];
+    return Promise.resolve([...this.live.values()]);
   }
 
   findByPrivateIdentity(eventId: string, creationKey: string) {
@@ -133,7 +139,7 @@ export class FakeEventProviderGateway {
     return [...this.live.values()].filter(
       ({ request }) =>
         request.privateProperties?.bladeEventId === eventId &&
-        request.privateProperties?.bladeCreationKey === creationKey,
+        request.privateProperties.bladeCreationKey === creationKey,
     );
   }
 

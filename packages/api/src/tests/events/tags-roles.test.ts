@@ -126,6 +126,27 @@ describe("configurable event tags", () => {
     });
   });
 
+  it("merges partial tag updates from the row locked current value", async () => {
+    const { service } = setup();
+
+    await service.update({
+      actorId: USER_IDS.operator,
+      color: "#16a34a",
+      tagId: TAG_IDS.workshop,
+    });
+    await expect(
+      service.update({
+        actorId: USER_IDS.operator,
+        name: "Workshop Lab",
+        tagId: TAG_IDS.workshop,
+      }),
+    ).resolves.toMatchObject({
+      color: "#16a34a",
+      defaultPoints: 25,
+      name: "Workshop Lab",
+    });
+  });
+
   it("[TC-NEG-006] rejects missing and archived tags before an event snapshot", async () => {
     const archived = tagRecord({ active: false });
     const { service } = setup([archived]);

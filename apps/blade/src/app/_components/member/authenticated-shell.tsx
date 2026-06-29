@@ -11,7 +11,7 @@ import { DesktopAdminNavigation } from "~/app/_components/member/desktop-admin-n
 import { MemberRouteTransitionSurface } from "~/app/_components/member/member-route-transition-link";
 import { MobileAdminNavigation } from "~/app/_components/member/mobile-admin-navigation";
 
-type NavigationItem = "dashboard" | "members" | "roles";
+type NavigationItem = "dashboard" | "events" | "members" | "roles";
 
 export function AuthenticatedShell({
   activeNavigation = "dashboard",
@@ -30,11 +30,15 @@ export function AuthenticatedShell({
     sectionLabel ??
     (activeNavigation === "members"
       ? "Member admin"
-      : activeNavigation === "roles"
-        ? "Role admin"
-        : "Member dashboard");
+      : activeNavigation === "events"
+        ? "Event admin"
+        : activeNavigation === "roles"
+          ? "Role admin"
+          : "Member dashboard");
   const hasAdminNavigation =
-    adminNavigation?.members === true || adminNavigation?.roles === true;
+    adminNavigation?.events === true ||
+    adminNavigation?.members === true ||
+    adminNavigation?.roles === true;
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background">

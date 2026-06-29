@@ -48,10 +48,22 @@ const events = [
 
 const attendance = [
   {
+    attendanceId: "00000000-0000-4000-8000-000000000801",
     checkedInAt: null,
     eventId: "00000000-0000-4000-8000-000000000704",
     eventName: "Legacy GBM",
     estimated: true,
+    pointsAwarded: 5,
+    startDateTime: "2025-02-10T18:00:00-05:00",
+    tag: "GBM",
+    tagColor: "#F59E0B",
+  },
+  {
+    attendanceId: "00000000-0000-4000-8000-000000000802",
+    checkedInAt: "2025-02-10T18:05:00-05:00",
+    eventId: "00000000-0000-4000-8000-000000000704",
+    eventName: "Legacy GBM",
+    estimated: false,
     pointsAwarded: 5,
     startDateTime: "2025-02-10T18:00:00-05:00",
     tag: "GBM",
@@ -85,5 +97,8 @@ describe("MemberEventsDashboard", () => {
     expect(html).toContain("Legacy GBM");
     expect(html).toContain("5 points");
     expect(html).toContain("Estimated");
+    expect(html).toContain("Legacy check-in time unavailable");
+    expect(html).toContain("Checked in");
+    expect(html.match(/Legacy GBM/g)).toHaveLength(2);
   });
 });

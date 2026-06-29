@@ -2,6 +2,8 @@ import { relations } from "drizzle-orm";
 
 import { Account, Permissions, Roles, Session, User } from "./auth";
 import {
+  Event,
+  EventAttendee,
   Issue,
   IssuesToTeamsVisibility,
   IssuesToUsersAssignment,
@@ -16,6 +18,9 @@ export const UserRelations = relations(User, ({ many, one }) => ({
     relationName: "userPermissionRel",
   }),
   assignedIssues: many(IssuesToUsersAssignment),
+  operatedEventCheckIns: many(EventAttendee, {
+    relationName: "eventCheckInOperator",
+  }),
 }));
 
 export const RoleRelations = relations(Roles, ({ many }) => ({
@@ -79,8 +84,29 @@ export const AccountRelations = relations(Account, ({ one }) => ({
   user: one(User, { fields: [Account.userId], references: [User.id] }),
 }));
 
-export const MemberRelations = relations(Member, ({ one }) => ({
+export const MemberRelations = relations(Member, ({ many, one }) => ({
   user: one(User, { fields: [Member.userId], references: [User.id] }),
+  eventAttendance: many(EventAttendee),
+}));
+
+export const EventRelations = relations(Event, ({ many }) => ({
+  attendees: many(EventAttendee),
+}));
+
+export const EventAttendeeRelations = relations(EventAttendee, ({ one }) => ({
+  event: one(Event, {
+    fields: [EventAttendee.eventId],
+    references: [Event.id],
+  }),
+  member: one(Member, {
+    fields: [EventAttendee.memberId],
+    references: [Member.id],
+  }),
+  operator: one(User, {
+    fields: [EventAttendee.checkedInBy],
+    references: [User.id],
+    relationName: "eventCheckInOperator",
+  }),
 }));
 
 export const SessionRelations = relations(Session, ({ one }) => ({

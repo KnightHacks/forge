@@ -44,6 +44,7 @@ export interface TestVisibility {
 export interface TestProviderProjection {
   appliedDestination: string | null;
   appliedRevision: number | null;
+  attemptRevision: number | null;
   attemptToken: string | null;
   id: string | null;
   state: TestProviderState | null;
@@ -57,6 +58,8 @@ export interface TestEventRecord {
   description: string;
   discord: TestProviderProjection;
   discordChannel: { id: string; type: "stage" | "voice" } | null;
+  discordNoProjectionAcknowledgedAt?: Date | null;
+  discordNoProjectionAcknowledgedBy?: string | null;
   endAt: Date;
   google: TestProviderProjection;
   hackathonId: string | null;
@@ -105,6 +108,7 @@ const synchronizedProjection = (
 ): TestProviderProjection => ({
   appliedDestination: destination,
   appliedRevision: 1,
+  attemptRevision: null,
   attemptToken: null,
   id,
   state: "synced",

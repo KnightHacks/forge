@@ -2,10 +2,11 @@ import type { APIGuildMember, APIRole } from "discord-api-types/v10";
 import { TRPCError } from "@trpc/server";
 
 import { DISCORD } from "@forge/consts";
-import { eq, inArray } from "@forge/db";
+import { eq, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import {
+  Event,
   FormResponseRoles,
   FormSectionRoles,
   Issue,
@@ -51,32 +52,51 @@ export function assertEligibleDiscordRole(role: APIRole | null) {
   return role;
 }
 
-export async function getDependencyCounts(roleId: string) {
-  const [formResponses, formSections, issues, issueVisibility] =
+type DbExecutor =
+  | typeof db
+  | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+export async function getDependencyCounts(
+  roleId: string,
+  executor: DbExecutor = db,
+) {
+  const [eventRows, formResponses, formSections, issues, issueVisibility] =
     await Promise.all([
-      db
+      executor
+        .select({ hackathonId: Event.hackathonId, id: Event.id })
+        .from(Event)
+        .where(sql`${roleId} = ANY(${Event.roles})`),
+      executor
         .select({ roleId: FormResponseRoles.roleId })
         .from(FormResponseRoles)
         .where(eq(FormResponseRoles.roleId, roleId)),
-      db
+      executor
         .select({ roleId: FormSectionRoles.roleId })
         .from(FormSectionRoles)
         .where(eq(FormSectionRoles.roleId, roleId)),
-      db
+      executor
         .select({ roleId: Issue.team })
         .from(Issue)
         .where(eq(Issue.team, roleId)),
-      db
+      executor
         .select({ roleId: IssuesToTeamsVisibility.teamId })
         .from(IssuesToTeamsVisibility)
         .where(eq(IssuesToTeamsVisibility.teamId, roleId)),
     ]);
   return {
+    events: eventRows.length,
+    eventBlockers: eventRows.map((event) => ({
+      eventId: event.id,
+      kind: event.hackathonId
+        ? ("hackathon_maintenance" as const)
+        : ("club" as const),
+    })),
     formResponses: formResponses.length,
     formSections: formSections.length,
     issueVisibility: issueVisibility.length,
     issues: issues.length,
     total:
+      eventRows.length +
       formResponses.length +
       formSections.length +
       issues.length +

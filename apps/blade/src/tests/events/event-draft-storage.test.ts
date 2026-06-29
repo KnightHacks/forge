@@ -73,5 +73,27 @@ describe("event create draft storage", () => {
       JSON.stringify({ version: 999, draft }),
     );
     expect(loadEventCreateDraft(storage)).toBeNull();
+
+    for (const malformedDraft of [
+      { creationKey: draft.creationKey, values: {} },
+      {
+        ...draft,
+        values: { ...draft.values, audience: "everyone" },
+      },
+      {
+        ...draft,
+        values: { ...draft.values, roleIds: "not-an-array" },
+      },
+      {
+        ...draft,
+        values: { ...draft.values, startOffset: "UTC-ish" },
+      },
+    ]) {
+      storage.setItem(
+        EVENT_CREATE_DRAFT_STORAGE_KEY,
+        JSON.stringify({ draft: malformedDraft, version: 1 }),
+      );
+      expect(loadEventCreateDraft(storage)).toBeNull();
+    }
   });
 });

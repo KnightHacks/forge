@@ -92,4 +92,35 @@ describe("Club reminder candidate selection", () => {
       startDateTime: "2026-11-01T05:30:00.000Z",
     });
   });
+
+  it("uses desired-and-synchronized visibility while an update is partial", () => {
+    const internalToPublic = eventRecord({
+      audience: "public",
+      discord: { appliedRevision: 2, state: "synced" },
+      internal: false,
+      revision: 2,
+      synchronizedVisibility: {
+        audience: "public",
+        internal: true,
+        roleIds: [],
+      },
+    });
+    const rolesToPublic = eventRecord({
+      audience: "public",
+      discord: { appliedRevision: 2, state: "synced" },
+      id: "00000000-0000-4000-8000-000000000119",
+      revision: 2,
+      synchronizedVisibility: {
+        audience: "roles",
+        internal: false,
+        roleIds: ["00000000-0000-4000-8000-000000000401"],
+      },
+    });
+
+    expect(
+      selectClubReminderCandidates([internalToPublic, rolesToPublic], {
+        now: NOW,
+      }),
+    ).toEqual([]);
+  });
 });

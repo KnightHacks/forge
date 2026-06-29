@@ -52,6 +52,7 @@ const detail = {
     attendanceCount: 1,
     audience: "roles" as const,
     description: "Build a typed API client.",
+    deletionPending: false,
     endDateTime: "2026-08-12T20:00:00-04:00",
     id: "00000000-0000-4000-8000-000000000501",
     internal: true,
@@ -114,7 +115,122 @@ describe("EventDetailDialog", () => {
     expect(html).toContain("Repair Google Calendar");
     expect(html).toContain("Remove Ada Builder");
     expect(html).toContain("Estimated points acknowledgement");
+    expect(html).toContain("Checked in");
+    expect(html).toContain("Operator Event Operator");
+    expect(html).toContain("Reapply Discord");
     expect(html).toContain("Events with attendance cannot be deleted");
     expect(html).not.toContain("Confirm delete event");
+  });
+
+  it("blocks deletion when loaded attendees expose a stale aggregate", () => {
+    const html = renderToStaticMarkup(
+      createElement(EventDetailDialog, {
+        access: { canEdit: true, canRead: true, isOfficer: false },
+        detail: {
+          ...detail,
+          event: { ...detail.event, attendanceCount: 0 },
+        },
+        onChanged: vi.fn(),
+        onClose: vi.fn(),
+      }),
+    );
+
+    expect(html).toContain("1 checked in");
+    expect(html).toContain("Events with attendance cannot be deleted");
+    expect(html).not.toContain("Confirm delete event");
+  });
+
+  it("labels Legacy history and hides provider mutation controls", () => {
+    const html = renderToStaticMarkup(
+      createElement(EventDetailDialog, {
+        access: { canEdit: true, canRead: true, isOfficer: false },
+        detail: {
+          ...detail,
+          attendees: [],
+          event: {
+            ...detail.event,
+            attendanceCount: 0,
+            deletionPending: true,
+            legacy: true,
+          },
+          integrations: {
+            discord: { health: "unknown" as const, url: null },
+            google: { health: "unknown" as const, url: null },
+          },
+        },
+        onChanged: vi.fn(),
+        onClose: vi.fn(),
+      }),
+    );
+
+    expect(html).toContain("Legacy history");
+    expect(html).toContain("Historical Legacy event");
+    expect(html).toContain("Retry deletion cleanup");
+    expect(html).not.toContain("Repair Discord");
+    expect(html).not.toContain("Reapply Discord");
+    expect(html).not.toContain("Review Discord candidates");
+    expect(html).not.toContain("Discord status unknown");
+    expect(html).not.toContain("Google Calendar status unknown");
+  });
+
+  it("routes unknown Discord creation through explicit resolution", () => {
+    const html = renderToStaticMarkup(
+      createElement(EventDetailDialog, {
+        access: { canEdit: true, canRead: true, isOfficer: false },
+        detail: {
+          ...detail,
+          event: { ...detail.event, deletionPending: false, legacy: false },
+          integrations: {
+            ...detail.integrations,
+            discord: { health: "unknown" as const, url: null },
+          },
+        },
+        onChanged: vi.fn(),
+        onClose: vi.fn(),
+      }),
+    );
+
+    expect(html).toContain("Review Discord candidates");
+    expect(html).not.toContain("Repair Discord");
+  });
+
+  it("repairs an unknown Discord projection when Blade has a trusted ID", () => {
+    const html = renderToStaticMarkup(
+      createElement(EventDetailDialog, {
+        access: { canEdit: true, canRead: true, isOfficer: false },
+        detail: {
+          ...detail,
+          event: { ...detail.event, deletionPending: false, legacy: false },
+          integrations: {
+            ...detail.integrations,
+            discord: {
+              health: "unknown" as const,
+              url: "https://discord.com/events/486628710443778071/1234",
+            },
+          },
+        },
+        onChanged: vi.fn(),
+        onClose: vi.fn(),
+      }),
+    );
+
+    expect(html).toContain("Open Discord event");
+    expect(html).toContain("Repair Discord");
+    expect(html).not.toContain("Review Discord candidates");
+  });
+
+  it("does not misrepresent an attendee transport failure as empty", () => {
+    const html = renderToStaticMarkup(
+      createElement(EventDetailDialog, {
+        access: { canEdit: false, canRead: true, isOfficer: false },
+        detail: { ...detail, attendees: [], attendeesError: true },
+        onChanged: vi.fn(),
+        onClose: vi.fn(),
+      }),
+    );
+
+    expect(html).toContain("Attendance could not be loaded");
+    expect(html).toContain("Retry attendance");
+    expect(html).not.toContain("No members have checked in");
   });
 });

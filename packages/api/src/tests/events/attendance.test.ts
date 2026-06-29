@@ -163,6 +163,40 @@ describe("event check-in and attendance", () => {
     expect(ineligible.state.attendance.size).toBe(0);
   });
 
+  it("rechecks dues and roles after acquiring the check-in lock", async () => {
+    const event = eventRecord({
+      audience: "dues",
+      id: EVENT_IDS.dues,
+      synchronizedVisibility: {
+        audience: "dues",
+        internal: false,
+        roleIds: [],
+      },
+    });
+    const fixture = setup({
+      event,
+      member: memberRecord({ duesActive: true }),
+    });
+    const originalLock = fixture.state.withCheckInLock.bind(fixture.state);
+    vi.spyOn(fixture.state, "withCheckInLock").mockImplementation(
+      (eventId, memberId, operation) => {
+        const member = fixture.state.members.get(memberId);
+        if (member)
+          fixture.state.members.set(memberId, { ...member, duesActive: false });
+        return originalLock(eventId, memberId, operation);
+      },
+    );
+
+    await expect(
+      fixture.service.checkIn({
+        actorId: USER_IDS.operator,
+        eventId: event.id,
+        memberId: MEMBER_IDS.member,
+      }),
+    ).resolves.toEqual({ status: "dues_required" });
+    expect(fixture.state.attendance.size).toBe(0);
+  });
+
   it("[TC-029] preserves AND eligibility for malformed Legacy dues-plus-role rows", async () => {
     const legacy = eventRecord({
       audience: "roles",
@@ -239,10 +273,10 @@ describe("event check-in and attendance", () => {
         checkedInAt: null,
         discordUsername: "legacy",
         memberId: MEMBER_IDS.other,
-        name: "Legacy Member",
+        name: "\t =2+2",
         operatorId: null,
         operatorName: null,
-        pointsAwarded: 35,
+        pointsAwarded: null,
         pointsAwardedEstimated: true,
       },
     ]);
@@ -253,7 +287,8 @@ describe("event check-in and attendance", () => {
     expect(csv).toContain("'=HYPERLINK");
     expect(csv).toContain("'+cmd");
     expect(csv).toContain("'@operator");
-    expect(csv).toContain(",35,Yes");
+    expect(csv).toContain("'\t =2+2");
+    expect(csv).toContain(",,Yes");
     expect(csv).not.toContain("Email");
     expect(csv).not.toContain("Phone");
   });
@@ -277,6 +312,24 @@ describe("event check-in and attendance", () => {
     expect(await state.getMember(MEMBER_IDS.member)).toMatchObject({
       points: 10,
     });
+  });
+
+  it("does not report or audit success when concurrent removal already won", async () => {
+    const row = attendanceRecord({ pointsAwarded: 25 });
+    const fixture = setup({ attendance: [row] });
+    vi.spyOn(
+      fixture.state,
+      "removeAttendanceAndDecrementPoints",
+    ).mockResolvedValue(false);
+
+    await expect(
+      fixture.service.removeAttendance({
+        actorId: USER_IDS.operator,
+        attendanceId: row.id,
+        acknowledgeEstimated: false,
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(fixture.audit).not.toHaveBeenCalled();
   });
 
   it("[TC-024, TC-NEG-009] requires acknowledgement for estimates and blocks null awards", async () => {

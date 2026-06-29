@@ -17,18 +17,20 @@ export class InMemoryEventTagState {
     for (const tag of tags) this.tags.set(tag.id, structuredClone(tag));
   }
 
-  async listTags() {
-    return [...this.tags.values()].map((tag) => structuredClone(tag));
+  listTags() {
+    return Promise.resolve(
+      [...this.tags.values()].map((tag) => structuredClone(tag)),
+    );
   }
 
-  async getTag(tagId: string) {
+  getTag(tagId: string) {
     const tag = this.tags.get(tagId);
-    return tag ? structuredClone(tag) : null;
+    return Promise.resolve(tag ? structuredClone(tag) : null);
   }
 
-  async saveTag(tag: TestEventTagRecord) {
+  saveTag(tag: TestEventTagRecord) {
     this.tags.set(tag.id, structuredClone(tag));
-    return structuredClone(tag);
+    return Promise.resolve(structuredClone(tag));
   }
 
   async withTagLock<T>(tagId: string, operation: () => Promise<T>): Promise<T> {

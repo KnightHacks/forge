@@ -27,34 +27,34 @@ export class InMemoryAttendanceState {
       this.members.set(member.id, structuredClone(member));
   }
 
-  async getEvent(eventId: string) {
+  getEvent(eventId: string) {
     const event = this.events.get(eventId);
-    return event ? structuredClone(event) : null;
+    return Promise.resolve(event ? structuredClone(event) : null);
   }
 
-  async getMember(memberId: string) {
+  getMember(memberId: string) {
     const member = this.members.get(memberId);
-    return member ? structuredClone(member) : null;
+    return Promise.resolve(member ? structuredClone(member) : null);
   }
 
-  async getMemberByUserId(userId: string) {
+  getMemberByUserId(userId: string) {
     const member = [...this.members.values()].find(
       (candidate) => candidate.userId === userId,
     );
-    return member ? structuredClone(member) : null;
+    return Promise.resolve(member ? structuredClone(member) : null);
   }
 
-  async findAttendance(eventId: string, memberId: string) {
+  findAttendance(eventId: string, memberId: string) {
     const row = [...this.attendance.values()].find(
       (candidate) =>
         candidate.eventId === eventId && candidate.memberId === memberId,
     );
-    return row ? structuredClone(row) : null;
+    return Promise.resolve(row ? structuredClone(row) : null);
   }
 
-  async getAttendance(attendanceId: string) {
+  getAttendance(attendanceId: string) {
     const row = this.attendance.get(attendanceId);
-    return row ? structuredClone(row) : null;
+    return Promise.resolve(row ? structuredClone(row) : null);
   }
 
   async withCheckInLock<T>(
@@ -79,7 +79,7 @@ export class InMemoryAttendanceState {
     }
   }
 
-  async insertAttendanceAndIncrementPoints(
+  insertAttendanceAndIncrementPoints(
     row: TestAttendanceRecord,
     points: number,
   ) {
@@ -87,19 +87,17 @@ export class InMemoryAttendanceState {
     const member = this.requireMember(row.memberId);
     member.points += points;
     this.members.set(member.id, member);
+    return Promise.resolve();
   }
 
-  async removeAttendanceAndDecrementPoints(
-    attendanceId: string,
-    points: number,
-  ) {
+  removeAttendanceAndDecrementPoints(attendanceId: string, points: number) {
     const row = this.attendance.get(attendanceId);
-    if (!row) return false;
+    if (!row) return Promise.resolve(false);
     const member = this.requireMember(row.memberId);
     member.points -= points;
     this.members.set(member.id, member);
     this.attendance.delete(attendanceId);
-    return true;
+    return Promise.resolve(true);
   }
 
   private requireMember(memberId: string) {

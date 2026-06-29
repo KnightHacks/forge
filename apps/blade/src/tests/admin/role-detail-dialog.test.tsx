@@ -42,6 +42,8 @@ const detail = {
   assignmentCount: 7,
   canRemoveAdmin: true,
   dependencies: {
+    eventBlockers: [],
+    events: 0,
     formResponses: 2,
     formSections: 1,
     issueVisibility: 4,
