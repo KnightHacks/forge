@@ -1,0 +1,255 @@
+.teamCascade {
+  --cascade-box-height: var(--team-cascade-height, 32rem);
+  --fall-duration: var(--team-cascade-fall-duration, 13.75s);
+  --fall-easing: var(
+    --team-cascade-fall-easing,
+    cubic-bezier(0.72, 0, 0.86, 0.42)
+  );
+  --fall-distance: calc(var(--cascade-box-height) + 10rem);
+  --fall-exit-distance: calc(var(--fall-distance) + 2.5rem);
+
+  position: relative;
+  width: 100%;
+  height: var(--cascade-box-height);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.teamCascadeStream {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+}
+
+.teamCascadeItem {
+  --fall-scale: 1;
+  --fall-static-y: 50%;
+  --fall-sway: 0px;
+  --fall-x: 50%;
+
+  position: absolute;
+  left: clamp(6rem, var(--fall-x), calc(100% - 6rem));
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  animation: teamCascadeFall var(--fall-duration) var(--fall-easing) forwards;
+  transform: translate3d(-50%, -8rem, 0) scale(var(--fall-scale));
+  will-change: transform, opacity;
+}
+
+.teamCascadeItem[data-static="true"] {
+  animation: none;
+  opacity: 1;
+  top: var(--fall-static-y);
+  transform: translate3d(-50%, -50%, 0) scale(var(--fall-scale));
+}
+
+.teamCascadeItem:hover,
+.teamCascadeItem:focus-within {
+  animation-play-state: paused;
+  z-index: 3;
+}
+
+.teamAvatar {
+  position: relative;
+  display: inline-flex;
+  width: clamp(4.45rem, 7vw, 6.35rem);
+  aspect-ratio: 1;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(219, 255, 255, 0.95);
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(145deg, #0e88a4 0%, #5dd8e6 55%, #d7ffe9 100%);
+  box-shadow:
+    0 0 0 0.26rem rgba(205, 255, 255, 0.34),
+    0 0.85rem 1.8rem rgba(17, 86, 116, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.36);
+  overflow: visible;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.teamAvatar::before {
+  position: absolute;
+  inset: -0.42rem;
+  z-index: -1;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: inherit;
+  content: "";
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72),
+    rgba(109, 225, 239, 0.16)
+  );
+  opacity: 0.82;
+}
+
+.teamAvatar:hover,
+.teamAvatar:focus-visible {
+  border-color: #ffffff;
+  box-shadow:
+    0 0 0 0.36rem rgba(225, 255, 255, 0.58),
+    0 0 2.4rem rgba(102, 228, 244, 0.48),
+    0 1.2rem 2.4rem rgba(17, 86, 116, 0.24);
+  outline: none;
+  transform: translateY(-3px) scale(1.035);
+}
+
+.teamAvatarStatic {
+  cursor: default;
+}
+
+.teamAvatarImage,
+.teamAvatarInitials {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.teamAvatarImage {
+  object-fit: cover;
+}
+
+.teamAvatarInitials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: clamp(1.25rem, 2vw, 1.8rem);
+  font-weight: 950;
+}
+
+.teamAvatarTooltip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 4;
+  display: grid;
+  min-width: max-content;
+  max-width: min(11rem, 78vw);
+  justify-items: center;
+  gap: 0.2rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(85, 209, 226, 0.36);
+  border-radius: 8px;
+  color: #103247;
+  background: rgba(239, 255, 255, 0.95);
+  box-shadow: 0 0.8rem 1.8rem rgba(17, 86, 116, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.96);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.teamAvatar:hover .teamAvatarTooltip,
+.teamAvatar:focus-visible .teamAvatarTooltip {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.teamAvatarTooltip strong {
+  color: #103247;
+  font-size: 0.84rem;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.teamAvatarTooltip span {
+  color: #15758e;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.teamStatus {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 1rem;
+  color: rgba(16, 50, 71, 0.74);
+  font-size: 0.95rem;
+  font-weight: 750;
+  line-height: 1.5;
+  text-align: center;
+}
+
+@media (max-width: 920px) {
+  .teamCascade {
+    --cascade-box-height: var(--team-cascade-height, 30rem);
+  }
+}
+
+@media (max-width: 620px) {
+  .teamCascade {
+    --cascade-box-height: var(--team-cascade-height, 29rem);
+  }
+
+  .teamCascadeItem {
+    left: clamp(4rem, var(--fall-x), calc(100% - 4rem));
+  }
+
+  .teamAvatar {
+    width: clamp(3.75rem, 17vw, 4.7rem);
+  }
+}
+
+@media (max-width: 380px) {
+  .teamCascade {
+    --cascade-box-height: var(--team-cascade-height, 27rem);
+  }
+
+  .teamCascadeItem {
+    left: clamp(3.55rem, var(--fall-x), calc(100% - 3.55rem));
+  }
+
+  .teamAvatar {
+    width: 3.55rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teamAvatar,
+  .teamAvatarTooltip {
+    transition: none;
+  }
+
+  .teamCascadeItem {
+    animation: none;
+    opacity: 1;
+    top: var(--fall-static-y);
+    transform: translate3d(-50%, -50%, 0) scale(var(--fall-scale));
+  }
+}
+
+@keyframes teamCascadeFall {
+  0% {
+    opacity: 1;
+    transform: translate3d(-50%, -9rem, 0) scale(var(--fall-scale));
+  }
+
+  94% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(
+        calc(-50% + var(--fall-sway)),
+        var(--fall-exit-distance),
+        0
+      )
+      scale(var(--fall-scale));
+  }
+}
