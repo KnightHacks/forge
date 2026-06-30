@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
 import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
+import { cn } from "@forge/ui";
 
+import type { DashboardFrameTheme } from "~/app/_components/dashboard/dashboard-frame-theme";
 import type { api as serverCall } from "~/trpc/server";
 import { HackerAppCard } from "~/app/_components/option-cards";
 import { api } from "~/trpc/server";
@@ -15,9 +17,11 @@ export const metadata: Metadata = {
 };
 
 export default async function HackerDashboard({
+  dashboardFrameTheme,
   hackathon,
   hacker,
 }: {
+  dashboardFrameTheme?: DashboardFrameTheme;
   hackathon: SelectHackathon;
   hacker: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
 }) {
@@ -74,34 +78,62 @@ export default async function HackerDashboard({
 
   return (
     <>
-      <div className="animate-mobile-initial-expand relative mx-auto flex h-0 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:py-0 sm:pb-0 lg:max-h-56">
+      <div
+        className={cn(
+          "animate-mobile-initial-expand relative mx-auto flex h-0 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:py-0 sm:pb-0 lg:max-h-56",
+          dashboardFrameTheme?.frameClassName,
+        )}
+      >
         {/* Main content */}
-        <HackerData data={hacker} hackathon={hackathon} />
+        <HackerData
+          dashboardFrameTheme={dashboardFrameTheme}
+          data={hacker}
+          hackathon={hackathon}
+        />
 
-        {/* Transparent Triangle overlay in bottom right corner */}
-        <div className="border-b-solid border-l-solid absolute bottom-0 right-0 h-0 w-0 border-b-[30px] border-l-[30px] border-b-background border-l-transparent"></div>
+        {!dashboardFrameTheme?.hideFrameCutouts && (
+          <>
+            {/* Transparent Triangle overlay in bottom right corner */}
+            <div className="border-b-solid border-l-solid absolute bottom-0 right-0 h-0 w-0 border-b-[30px] border-l-[30px] border-b-background border-l-transparent"></div>
 
-        {/* Triangle in bottom right corner */}
-        <div
-          className="absolute bottom-0 right-0 h-0 w-0"
-          style={{
-            borderBottom: "20px solid #6C26D9", // Change to bg color
-            borderLeft: "20px solid transparent",
-          }}
-        ></div>
+            {/* Triangle in bottom right corner */}
+            <div
+              className="absolute bottom-0 right-0 h-0 w-0"
+              style={{
+                borderBottom: `20px solid ${dashboardFrameTheme?.cornerAccentColor ?? "#6C26D9"}`,
+                borderLeft: "20px solid transparent",
+              }}
+            ></div>
 
-        {/* Top rectangle */}
-        <div className="absolute -top-[1.4rem] right-0 h-6 w-40 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:w-96">
-          <div className="border-t-solid border-r-solid absolute left-0 top-0 h-0 w-0 border-r-[23px] border-t-[23px] border-r-transparent border-t-background"></div>
-        </div>
+            {/* Top rectangle */}
+            <div
+              className={cn(
+                "absolute -top-[1.4rem] right-0 h-6 w-40 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:w-96",
+                dashboardFrameTheme?.topTabClassName,
+              )}
+            >
+              <div className="border-t-solid border-r-solid absolute left-0 top-0 h-0 w-0 border-r-[23px] border-t-[23px] border-r-transparent border-t-background"></div>
+            </div>
 
-        {/* Bottom rectangle */}
-        <div className="absolute -bottom-[1.46rem] left-0 h-6 w-40 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:w-48">
-          <div className="border-b-solid border-l-solid absolute bottom-0 right-0 h-0 w-0 border-b-[24px] border-l-[24px] border-b-background border-l-transparent"></div>
-        </div>
+            {/* Bottom rectangle */}
+            <div
+              className={cn(
+                "absolute -bottom-[1.46rem] left-0 h-6 w-40 bg-[#E5E7EB] dark:bg-[#0A0F1D] sm:w-48",
+                dashboardFrameTheme?.bottomTabClassName,
+              )}
+            >
+              <div className="border-b-solid border-l-solid absolute bottom-0 right-0 h-0 w-0 border-b-[24px] border-l-[24px] border-b-background border-l-transparent"></div>
+            </div>
+          </>
+        )}
 
         {/* Left side rectangle */}
-        <div className="absolute -left-3 top-0 h-full w-[0.4rem] bg-primary"></div>
+        <div
+          className={cn(
+            "absolute -left-3 top-0 h-full w-[0.4rem] bg-primary",
+            dashboardFrameTheme?.leftAccentClassName,
+          )}
+        ></div>
       </div>
       <div className="mx-auto mb-10 mt-20 flex flex-col justify-center gap-x-2 gap-y-4 sm:flex-row">
         {resume.status === "rejected" ||

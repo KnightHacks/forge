@@ -6,6 +6,7 @@ import { CircleCheckBig, Loader2 } from "lucide-react";
 
 import type { SelectHackathon } from "@forge/db/schemas/knight-hacks";
 import { CLUB } from "@forge/consts";
+import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -19,6 +20,7 @@ import {
 import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
 
+import type { DashboardFrameTheme } from "~/app/_components/dashboard/dashboard-frame-theme";
 import type { api as serverCall } from "~/trpc/server";
 import { HACKER_STATUS_MAP } from "~/consts";
 import { api } from "~/trpc/react";
@@ -28,9 +30,11 @@ import { HackerQRCodePopup } from "./hacker-qr-button";
 type StatusKey = keyof typeof HACKER_STATUS_MAP | null | undefined;
 
 export function HackerData({
+  dashboardFrameTheme,
   data,
   hackathon,
 }: {
+  dashboardFrameTheme?: DashboardFrameTheme;
   data: Awaited<ReturnType<(typeof serverCall.hackerQuery)["getHacker"]>>;
   hackathon?: SelectHackathon | null;
 }) {
@@ -163,14 +167,22 @@ export function HackerData({
           </div>
           <div className="flex gap-x-2">
             <div
-              className={`text-xl font-bold ${hackerStatusColor} animate-fade-in`}
+              className={cn(
+                "animate-fade-in text-xl font-bold",
+                hackerStatus === "Confirmed" &&
+                  dashboardFrameTheme?.confirmedStatusClassName
+                  ? dashboardFrameTheme.confirmedStatusClassName
+                  : hackerStatusColor,
+              )}
             >
               {hackerStatus}
             </div>
             {hackerStatus === "Confirmed" && (
               <CircleCheckBig
                 className="animate-fade-in mt-[2px]"
-                color="#00C9A7"
+                color={
+                  dashboardFrameTheme?.confirmedStatusIconColor ?? "#00C9A7"
+                }
               />
             )}
           </div>
@@ -183,7 +195,10 @@ export function HackerData({
         </div> */}
       </div>
       <div className="mt-6 flex w-full items-center justify-center gap-x-1 sm:ml-7 md:mt-5 lg:mt-0">
-        <HackerQRCodePopup />
+        <HackerQRCodePopup
+          actionButtonClassName={dashboardFrameTheme?.actionButtonClassName}
+          actionIconClassName={dashboardFrameTheme?.actionIconClassName}
+        />
         {/* Confirm Button */}
 
         {hackerStatus === "Accepted" &&

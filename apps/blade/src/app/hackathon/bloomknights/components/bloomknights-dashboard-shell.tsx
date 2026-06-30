@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { BloomKnightsFlowerCursor } from "./bloomknights-flower-cursor";
+
 const BLOOMKNIGHTS_DASHBOARD_BACKGROUND =
   "https://assets.knighthacks.org/bloomknights-application-6400.webp";
 
@@ -20,7 +22,8 @@ export function BloomKnightsDashboardShell({
         ), url("${BLOOMKNIGHTS_DASHBOARD_BACKGROUND}")`,
       }}
     >
-      <div className="mx-auto w-full max-w-8xl">{children}</div>
+      <BloomKnightsFlowerCursor />
+      <div className="max-w-8xl mx-auto w-full">{children}</div>
     </main>
   );
 }

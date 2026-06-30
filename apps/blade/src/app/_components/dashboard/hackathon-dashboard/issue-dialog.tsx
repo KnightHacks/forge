@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AlertCircle } from "lucide-react";
 
+import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -17,9 +18,14 @@ import { Label } from "@forge/ui/label";
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
+import type { DashboardFrameTheme } from "~/app/_components/dashboard/dashboard-frame-theme";
 import { api } from "~/trpc/react";
 
-export function BaseHackathonIssueButton() {
+export function BaseHackathonIssueButton({
+  dashboardFrameTheme,
+}: {
+  dashboardFrameTheme?: DashboardFrameTheme;
+}) {
   const [open, setOpen] = useState(false);
   const [issue, setIssue] = useState("");
 
@@ -47,8 +53,18 @@ export function BaseHackathonIssueButton() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="group flex w-full items-center gap-3 rounded-lg border bg-card px-5 py-3 text-base font-semibold shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md sm:w-auto sm:px-5 sm:py-3 sm:text-sm">
-          <AlertCircle className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
+        <button
+          className={cn(
+            "group flex w-full items-center gap-3 rounded-lg border bg-card px-5 py-3 text-base font-semibold shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md sm:w-auto sm:px-5 sm:py-3 sm:text-sm",
+            dashboardFrameTheme?.actionButtonClassName,
+          )}
+        >
+          <AlertCircle
+            className={cn(
+              "h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary",
+              dashboardFrameTheme?.actionIconClassName,
+            )}
+          />
           <span>Report an Issue</span>
         </button>
       </DialogTrigger>

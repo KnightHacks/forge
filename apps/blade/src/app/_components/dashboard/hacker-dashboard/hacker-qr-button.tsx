@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Loader2, QrCode } from "lucide-react";
 
+import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -25,7 +26,13 @@ import { useMediaQuery } from "@forge/ui/use-media-query";
 
 import { api } from "~/trpc/react";
 
-export function HackerQRCodePopup() {
+export function HackerQRCodePopup({
+  actionButtonClassName,
+  actionIconClassName,
+}: {
+  actionButtonClassName?: string;
+  actionIconClassName?: string;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const {
     data: userQR,
@@ -56,10 +63,23 @@ export function HackerQRCodePopup() {
   const qrTrigger = (
     <Button
       size="lg"
-      className="animate-fade-in group w-full gap-2 rounded-lg border border-[#1F2937] bg-card px-5 py-3 shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:bg-card hover:shadow-md sm:px-8"
+      className={cn(
+        "animate-fade-in group w-full gap-2 rounded-lg border border-[#1F2937] bg-card px-5 py-3 shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:bg-card hover:shadow-md sm:px-8",
+        actionButtonClassName,
+      )}
     >
-      <QrCode className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary dark:hidden" />
-      <QrCode className="hidden h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary dark:block" />
+      <QrCode
+        className={cn(
+          "h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary dark:hidden",
+          actionIconClassName,
+        )}
+      />
+      <QrCode
+        className={cn(
+          "hidden h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary dark:block",
+          actionIconClassName,
+        )}
+      />
       <span className="text-base font-bold text-black dark:text-white">QR</span>
     </Button>
   );
