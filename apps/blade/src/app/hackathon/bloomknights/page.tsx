@@ -5,7 +5,6 @@ import { auth } from "@forge/auth";
 
 import { BaseHackathonDashboard } from "~/app/_components/dashboard/hackathon-dashboard/components";
 import HackerDashboard from "~/app/_components/dashboard/hacker-dashboard/hacker-dashboard";
-import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
 import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata: Metadata = {
@@ -34,7 +33,6 @@ export default async function BloomKnightsHackathonPage() {
 
   return (
     <HydrateClient>
-      <SessionNavbar />
       <main className="container min-h-screen py-16">
         <div className="flex justify-center">
           <div className="max-w-8xl w-full">
