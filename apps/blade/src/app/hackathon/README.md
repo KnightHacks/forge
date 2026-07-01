@@ -41,7 +41,8 @@ the attendee reaches `checkedin` status.
    hackers. The tag controls attendee status changes and later event access.
 
 At this point `/hackathon/<slug>` works through the generic route. No dashboard
-code is required.
+code is required. The `hackathon/layout.tsx` route layout intentionally renders
+only its children, keeping hackathon pages free of Blade dashboard chrome.
 
 ## Add a custom dashboard
 
@@ -57,7 +58,9 @@ responsibilities:
 - Fetch the attendee record with the same hackathon slug.
 - Render the application and status experience before check-in.
 - Render the event dashboard only for a `checkedin` attendee.
-- Keep the shared session navigation and tRPC hydration boundary.
+- Keep the tRPC hydration boundary. The `/hackathon` layout is intentionally
+  chrome-free so event dashboards do not inherit Blade dashboard navigation; add
+  event-specific navigation inside the page only when the event needs it.
 
 Compose the exports from
 `apps/blade/src/app/_components/dashboard/hackathon-dashboard/components.tsx`

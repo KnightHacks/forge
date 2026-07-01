@@ -6,7 +6,6 @@ import { auth } from "@forge/auth";
 import type { DashboardFrameTheme } from "~/app/_components/dashboard/dashboard-frame-theme";
 import { BaseHackathonDashboard } from "~/app/_components/dashboard/hackathon-dashboard/components";
 import HackerDashboard from "~/app/_components/dashboard/hacker-dashboard/hacker-dashboard";
-import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
 import { api, HydrateClient } from "~/trpc/server";
 import { BloomKnightsDashboardShell } from "./components/bloomknights-dashboard-shell";
 
@@ -53,7 +52,6 @@ export default async function BloomKnightsHackathonPage() {
 
   return (
     <HydrateClient>
-      <SessionNavbar />
       <BloomKnightsDashboardShell>
         {hacker?.status === "checkedin" ? (
           <BaseHackathonDashboard
