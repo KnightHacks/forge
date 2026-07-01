@@ -450,11 +450,11 @@ export default function HackerTable({
 
       <div className="space-y-2">
         <p className="text-center text-xs text-muted-foreground md:hidden">
-          Swipe left or right on the table to review Discord, email, status, and
-          admit/waitlist actions.
+          Swipe left or right on the table to review Discord, email, status,
+          reminder, and admit/waitlist actions.
         </p>
         <div className="w-full overflow-x-auto overscroll-x-contain rounded-md border [-webkit-overflow-scrolling:touch] md:border-0">
-          <Table className="min-w-[1120px]">
+          <Table className="min-w-[1200px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="text-center">
@@ -505,7 +505,7 @@ export default function HackerTable({
                   <Label>Status</Label>
                 </TableHead>
                 <TableHead className="text-center">
-                  <Label>Status Toggle</Label>
+                  <Label>Status Actions</Label>
                 </TableHead>
                 <TableHead className="text-center">
                   <Label>Hacker Profile</Label>
