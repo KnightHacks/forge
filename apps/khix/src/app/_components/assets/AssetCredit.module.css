@@ -1,0 +1,76 @@
+.assetCredit {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  pointer-events: auto;
+}
+
+.creditText {
+  position: absolute;
+  right: 0;
+  bottom: -0.15rem;
+  z-index: 2;
+  max-width: min(24rem, calc(100vw - 2rem));
+  border: 0;
+  color: rgba(255, 255, 255, 0.68);
+  background: transparent;
+  box-shadow: none;
+  font-size: clamp(0.62rem, 1.2vw, 0.72rem);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.15;
+  text-align: right;
+  text-shadow:
+    0 1px 0.45rem rgba(0, 0, 0, 0.34),
+    0 0 0.7rem rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(0, 0.16rem, 0);
+  transform-origin: 100% 100%;
+  transition:
+    opacity 180ms ease,
+    transform 220ms ease;
+}
+
+.creditLabel {
+  color: rgba(255, 255, 255, 0.44);
+  font-weight: 600;
+}
+
+.creditName,
+.creditLink {
+  color: inherit;
+}
+
+.creditLink {
+  text-decoration: none;
+  text-underline-offset: 0.18em;
+  transition: color 160ms ease;
+}
+
+.creditLink:hover,
+.creditLink:focus-visible {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+  outline: none;
+}
+
+.creditSeparator {
+  margin: 0 0.32rem;
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.assetCredit:hover .creditText,
+.assetCredit:focus-within .creditText {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate3d(0, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creditText,
+  .creditLink {
+    transition: none;
+  }
+}
