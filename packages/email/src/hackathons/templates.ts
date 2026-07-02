@@ -47,7 +47,7 @@ export const HACKATHON_EMAIL_TEMPLATE_IDS = {
   bloomknights: {
     Blacklist: 14,
     Accepted: 15,
-    AcceptedReminder: 20,
+    AcceptedReminder: 21,
     Apply: 16,
     Capacity: 17,
     Confirmation: 18,
