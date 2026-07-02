@@ -1,5 +1,7 @@
 import type { NavbarLink, NavbarSocialLink } from "./_components/navbar";
+import { Footer } from "./_components/footer";
 import { Navbar } from "./_components/navbar";
+import FAQ from "./_components/sections/faq/faq";
 import Hero from "./_components/sections/hero";
 import styles from "./page.module.css";
 
@@ -25,7 +27,7 @@ export default function Page() {
   return (
     <>
       <Navbar links={NAV_LINKS} socialLinks={SOCIAL_LINKS} />
-      <main>
+      <main className={styles.page}>
         <Hero />
         <section
           id="about"
@@ -36,7 +38,9 @@ export default function Page() {
             About
           </h2>
         </section>
+        <FAQ />
       </main>
+      <Footer />
     </>
   );
 }

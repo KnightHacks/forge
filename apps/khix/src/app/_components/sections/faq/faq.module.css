@@ -1,0 +1,496 @@
+.faq {
+  --faq-light-x: 50%;
+  --faq-light-y: 36%;
+
+  position: relative;
+  width: 100%;
+  max-width: 100vw;
+  min-height: 150vh;
+  min-height: 150svh;
+  overflow: hidden;
+  overflow-x: clip;
+  background: #15192d;
+}
+
+.background {
+  position: absolute;
+  inset: -1.25rem 0;
+  z-index: 0;
+  background-image: url("/faq/faq background 1.png");
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: 100% auto;
+  filter: saturate(1.08) brightness(0.86);
+  transform: translateZ(0) scale(1.02);
+  will-change: transform;
+}
+
+.shadowVeil,
+.lightVeil,
+.flashlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.shadowVeil {
+  z-index: 3;
+  background:
+    radial-gradient(
+      circle at var(--faq-light-x) var(--faq-light-y),
+      transparent 0,
+      rgba(14, 17, 34, 0.08) 9rem,
+      rgba(6, 7, 18, 0.42) 25rem,
+      rgba(4, 4, 12, 0.68) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(6, 7, 16, 0.32),
+      rgba(10, 13, 29, 0.08) 42%,
+      rgba(5, 6, 14, 0.5)
+    );
+}
+
+.lightVeil {
+  z-index: 4;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(
+      circle at var(--faq-light-x) var(--faq-light-y),
+      rgba(255, 255, 244, 0.28) 0,
+      rgba(180, 244, 255, 0.12) 8rem,
+      rgba(239, 133, 255, 0.045) 14rem,
+      transparent 23rem
+    ),
+    radial-gradient(
+      ellipse at 52% 12%,
+      rgba(139, 249, 255, 0.16),
+      transparent 38%
+    );
+}
+
+.flashlight {
+  z-index: 20;
+  width: clamp(8rem, 17vw, 14rem);
+  height: clamp(8rem, 17vw, 14rem);
+  inset: auto;
+  left: var(--faq-light-x);
+  top: var(--faq-light-y);
+  border-radius: 999rem;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 252, 0.2),
+    rgba(202, 243, 255, 0.075) 42%,
+    transparent 76%
+  );
+  filter: blur(15px);
+  transform: translate3d(-50%, -50%, 0);
+  opacity: 0.9;
+}
+
+.content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  min-height: 150vh;
+  min-height: 150svh;
+  width: min(100%, 52rem);
+  margin: 0 auto;
+  padding: clamp(8rem, 13svh, 11rem) clamp(1rem, 4vw, 2.5rem)
+    clamp(20rem, 39svh, 31rem);
+  flex-direction: column;
+  align-items: center;
+}
+
+.title {
+  margin: 0;
+  color: rgba(255, 252, 245, 0.96);
+  font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
+  font-size: clamp(3.4rem, 8vw, 6.8rem);
+  font-weight: 400;
+  line-height: 0.84;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 0.5rem rgba(235, 251, 255, 0.54),
+    0 0 2.2rem rgba(129, 225, 255, 0.3);
+}
+
+.categoryList {
+  display: grid;
+  width: min(100%, 43rem);
+  margin-top: clamp(1.25rem, 2.8svh, 2.15rem);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(0.25rem, 0.8vw, 0.6rem);
+}
+
+.gemButton {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: clamp(6.8rem, 11vw, 9rem);
+  padding: clamp(0.6rem, 1.2vw, 1rem) 0;
+  place-items: center;
+  border: 0;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.96);
+  font-family: "Faculty Glyphic", sans-serif;
+  font-size: clamp(1rem, 1.9vw, 1.4rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  background: transparent;
+}
+
+.gemButton::after {
+  position: absolute;
+  inset: 19% 16% 24%;
+  z-index: -1;
+  content: "";
+  border-radius: 999rem;
+  background: rgba(108, 243, 255, 0.18);
+  filter: blur(1rem);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.gemButton[data-active="true"]::after,
+.gemButton:hover::after {
+  opacity: 1;
+}
+
+.gemButton:focus-visible {
+  outline: 0.14rem solid rgba(255, 255, 255, 0.86);
+  outline-offset: -0.9rem;
+}
+
+.gemImage {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+  transform: translate(-50%, -50%) scale(1.25);
+  user-select: none;
+  pointer-events: none;
+}
+
+.gemButton span {
+  position: relative;
+  z-index: 1;
+  display: block;
+  max-width: 140%;
+  white-space: nowrap;
+}
+
+@media (min-width: 821px) {
+  .gemImage {
+    transform: translate(-50%, -50%) scale(1.65);
+  }
+}
+
+.questionStack {
+  display: grid;
+  width: min(100%, 45rem);
+  margin-top: clamp(1.1rem, 2.2svh, 1.65rem);
+  gap: clamp(0.7rem, 1.7vw, 1.15rem);
+}
+
+.questionItem {
+  display: grid;
+  justify-items: center;
+}
+
+.questionButton {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-height: clamp(4rem, 7.5vw, 5.75rem);
+  padding: clamp(0.35rem, 1vw, 0.7rem) clamp(3rem, 8.5vw, 5.8rem);
+  place-items: center;
+  border: 0;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.97);
+  font-family: "Faculty Glyphic", sans-serif;
+  font-size: clamp(0.86rem, 1.5vw, 1.05rem);
+  font-weight: 500;
+  line-height: 1.18;
+  letter-spacing: 0;
+  text-align: center;
+  background: transparent;
+  transition: transform 180ms ease;
+}
+
+.questionButton:hover {
+  z-index: 2;
+  transform: translateY(-0.08rem) scale(1.045);
+}
+
+.questionButton[aria-expanded="true"] {
+  transform: scale(1.018);
+}
+
+.questionButton:focus-visible {
+  outline: 0.14rem solid rgba(255, 255, 255, 0.84);
+  outline-offset: -0.7rem;
+}
+
+.questionRock {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  transform: translate(-50%, -50%);
+  user-select: none;
+  pointer-events: none;
+}
+
+.questionButton span {
+  position: relative;
+  z-index: 1;
+  max-width: 94%;
+}
+
+.answerWrap {
+  width: min(100%, 43rem);
+  overflow: hidden;
+}
+
+.answerRock {
+  position: relative;
+  display: grid;
+  min-height: clamp(14rem, 29vw, 21rem);
+  margin: -0.1rem auto 0.15rem;
+  padding: clamp(3rem, 6vw, 4.25rem) clamp(3.6rem, 8vw, 5.4rem)
+    clamp(3.4rem, 7vw, 4.8rem);
+  place-items: center;
+  color: rgba(255, 255, 255, 0.96);
+  font-family: "Faculty Glyphic", sans-serif;
+}
+
+.answerRockImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+  pointer-events: none;
+}
+
+.answerRock p {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: clamp(0.9rem, 1.4vw, 1.08rem);
+  line-height: 1.22;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.floatingAsset {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.floatingAsset img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  filter: drop-shadow(0 0 1.15rem rgba(92, 226, 255, 0.18));
+}
+
+.gemHotspot {
+  position: absolute;
+  z-index: 2;
+  padding: 0;
+  cursor: pointer;
+  border: 0;
+  clip-path: var(--hotspot-shape);
+  background: transparent;
+  pointer-events: auto;
+  transition:
+    background-color 160ms ease,
+    filter 160ms ease,
+    transform 160ms ease;
+}
+
+.gemHotspot:hover {
+  background: rgba(205, 250, 255, 0.14);
+  filter: drop-shadow(0 0 0.8rem rgba(135, 239, 255, 0.9));
+  transform: scale(1.04);
+}
+
+.gemHotspot:focus-visible {
+  outline: 0.16rem solid rgba(255, 255, 255, 0.96);
+  outline-offset: 0.1rem;
+  background: rgba(205, 250, 255, 0.16);
+  filter: drop-shadow(0 0 0.8rem rgba(135, 239, 255, 0.9));
+}
+
+.caveCeilingPrimary {
+  top: -8%;
+  left: -13%;
+  z-index: 2;
+  width: min(84rem, 132vw);
+  opacity: 0.96;
+}
+
+.caveCeilingSecondary {
+  top: -12%;
+  right: -18%;
+  z-index: 2;
+  width: min(70rem, 108vw);
+  opacity: 0.7;
+}
+
+.caveCeilingSecondary img {
+  transform: scaleX(-1);
+}
+
+.leftColumn {
+  top: 0;
+  left: 0;
+  width: clamp(21rem, 36vw, 35rem);
+  animation: faqWallBreathe 7.1s ease-in-out infinite;
+}
+
+.rightColumn {
+  top: 0;
+  right: 0;
+  width: clamp(27rem, 46vw, 45rem);
+  animation: faqWallBreathe 7.4s ease-in-out 0.3s infinite reverse;
+}
+
+.caveFloor {
+  position: absolute;
+  inset: auto 0 0;
+  height: clamp(23rem, 42vw, 40rem);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.floorRocks {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.floorRock {
+  position: absolute;
+  bottom: -43%;
+  left: -11%;
+  width: clamp(31rem, 52vw, 52rem);
+  height: auto;
+  user-select: none;
+}
+
+@media (max-width: 820px) {
+  .content {
+    width: min(100%, 38rem);
+    padding-top: clamp(6rem, 10svh, 7.5rem);
+  }
+
+  .categoryList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(100%, 35rem);
+  }
+
+  .questionButton {
+    padding-inline: clamp(1.4rem, 7vw, 2.4rem);
+  }
+
+  .answerWrap {
+    width: min(98%, 34rem);
+  }
+
+  .leftColumn {
+    left: -10%;
+    width: 62vw;
+  }
+
+  .rightColumn {
+    right: -14%;
+    width: 78vw;
+  }
+
+  .floorRock {
+    bottom: -38%;
+    left: -24%;
+    width: 82vw;
+  }
+}
+
+@media (max-width: 520px) {
+  .faq {
+    cursor: auto;
+  }
+
+  .background {
+    inset: -1.25rem;
+    background-size: auto 100%;
+  }
+
+  .flashlight {
+    display: none;
+  }
+
+  .title {
+    font-size: clamp(3.1rem, 19vw, 5rem);
+  }
+
+  .questionStack {
+    gap: 0.45rem;
+  }
+
+  .questionButton {
+    min-height: 3.9rem;
+    font-size: 0.78rem;
+  }
+
+  .answerRock {
+    min-height: 14.5rem;
+  }
+
+  .answerRock p {
+    font-size: 0.82rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq {
+    cursor: auto;
+  }
+
+  .background,
+  .floatingAsset {
+    transform: none !important;
+  }
+
+  .flashlight {
+    display: none;
+  }
+
+  .leftColumn,
+  .rightColumn {
+    animation: none;
+  }
+}
+
+@keyframes faqWallBreathe {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+
+  50% {
+    translate: 0 -0.38rem;
+    scale: 1.012;
+  }
+}

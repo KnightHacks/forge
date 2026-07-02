@@ -1,0 +1,114 @@
+.footerWrap {
+  position: relative;
+  z-index: 30;
+}
+
+.footer {
+  position: relative;
+  z-index: 1;
+  margin-top: clamp(-3rem, -4vw, -2rem);
+  padding: clamp(4.4rem, 7vw, 6rem) clamp(1.25rem, 7vw, 6rem)
+    clamp(2rem, 4vw, 3rem);
+  clip-path: polygon(0 2.3rem, 91% 0, 100% 2.8rem, 100% 100%, 0 100%);
+  color: rgba(255, 255, 255, 0.94);
+  background: #0d091d;
+  font-family: "Faculty Glyphic", sans-serif;
+}
+
+.lennyPlacement {
+  position: absolute;
+  top: clamp(-14.5rem, -19vw, -10.5rem);
+  right: clamp(1.5rem, 6vw, 6rem);
+  z-index: 100;
+  width: clamp(11rem, 20vw, 19rem);
+}
+
+.links {
+  display: grid;
+  width: min(100%, 70rem);
+  margin: 0 auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.links a {
+  display: inline-block;
+  color: inherit;
+  font-size: clamp(0.72rem, 1.15vw, 0.94rem);
+  letter-spacing: 0;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  text-shadow: 0 0 0 transparent;
+  transition:
+    color 160ms ease,
+    filter 180ms ease,
+    text-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.links a:hover,
+.links a:focus-visible {
+  color: #c6f8ff;
+  filter: brightness(1.2);
+  outline: none;
+  text-decoration: none;
+  text-shadow:
+    0 0 0.45rem rgba(121, 239, 255, 0.92),
+    0 0 1.15rem rgba(202, 91, 255, 0.68);
+  transform: scale(1.07);
+}
+
+.bottomRow {
+  display: flex;
+  width: min(100%, 38rem);
+  margin: clamp(1.7rem, 3vw, 2.5rem) auto 0;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1rem, 3vw, 2rem);
+}
+
+.copyright {
+  font-size: clamp(0.68rem, 1.2vw, 0.84rem);
+  line-height: 1.35;
+  text-align: center;
+}
+
+.copyright p {
+  margin: 0;
+}
+
+.copyright span {
+  color: #ef3b68;
+}
+
+.logo {
+  width: clamp(3.3rem, 7vw, 5rem);
+  height: auto;
+  filter: brightness(0) saturate(100%) invert(24%) sepia(91%) saturate(3200%)
+    hue-rotate(267deg) brightness(95%) contrast(102%);
+}
+
+@media (max-width: 820px) {
+  .footer {
+    margin-top: -5rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .lennyPlacement {
+    top: -12.5rem;
+    right: 2vw;
+    width: 34vw;
+  }
+
+  .links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.2rem 0.8rem;
+  }
+
+  .bottomRow {
+    flex-direction: column;
+  }
+}

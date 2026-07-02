@@ -1,0 +1,11 @@
+.lenny {
+  cursor: default;
+}
+
+.frame {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0.6rem 0.5rem rgba(5, 8, 24, 0.35));
+  user-select: none;
+}

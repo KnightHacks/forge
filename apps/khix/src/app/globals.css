@@ -3,6 +3,14 @@
 @config "../../tailwind.config.ts";
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: "Faculty Glyphic";
+  src: url("/fonts/FacultyGlyphic-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 @layer base {
   *,
   ::before,
@@ -67,11 +75,47 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 5.5rem;
+    scrollbar-color: #9ca3af #ffffff;
+    scrollbar-width: auto;
   }
 
   body {
     @apply bg-background text-foreground;
   }
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  min-height: 2.5rem;
+  border: 0.3rem solid #4b5563;
+  border-radius: 999rem;
+  background: linear-gradient(90deg, #7f8792 0%, #b7bdc6 50%, #858d98 100%);
+  box-shadow:
+    inset 0 0 0.3rem rgba(255, 255, 255, 0.65),
+    inset 0 0 0.65rem rgba(229, 231, 235, 0.65),
+    0 0 0.85rem rgba(209, 213, 219, 0.9),
+    0 0 1.35rem rgba(156, 163, 175, 0.65);
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  border-color: #374151;
+  background: #b7bdc6;
+  box-shadow:
+    inset 0 0 0.38rem rgba(255, 255, 255, 0.8),
+    inset 0 0 0.8rem rgba(229, 231, 235, 0.75),
+    0 0 1rem rgba(156, 163, 175, 0.95);
 }
 
 @media (prefers-reduced-motion: reduce) {
