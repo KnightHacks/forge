@@ -90,9 +90,15 @@
     hue-rotate(267deg) brightness(95%) contrast(102%);
 }
 
+@media (max-width: 820px) {
+  .footer {
+    margin-top: -5rem;
+  }
+}
+
 @media (max-width: 680px) {
   .lennyPlacement {
-    top: -9.5rem;
+    top: -12.5rem;
     right: 2vw;
     width: 34vw;
   }
