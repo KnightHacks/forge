@@ -47,8 +47,7 @@ export const HACKATHON_EMAIL_TEMPLATE_IDS = {
   bloomknights: {
     Blacklist: 14,
     Accepted: 15,
-    // TODO: replace with the dedicated reminder template ID when it is ready.
-    AcceptedReminder: 15,
+    AcceptedReminder: 20,
     Apply: 16,
     Capacity: 17,
     Confirmation: 18,
