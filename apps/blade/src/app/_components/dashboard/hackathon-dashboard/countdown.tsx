@@ -2,9 +2,18 @@
 
 import { useEffect, useState } from "react";
 
+import { cn } from "@forge/ui";
 import { Card, CardContent } from "@forge/ui/card";
 
-export function BaseHackathonCountdown({ endDate }: { endDate: Date }) {
+import type { DashboardFrameTheme } from "~/app/_components/dashboard/dashboard-frame-theme";
+
+export function BaseHackathonCountdown({
+  dashboardFrameTheme,
+  endDate,
+}: {
+  dashboardFrameTheme?: DashboardFrameTheme;
+  endDate: Date;
+}) {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -43,25 +52,65 @@ export function BaseHackathonCountdown({ endDate }: { endDate: Date }) {
   const formatNumber = (num: number) => String(num).padStart(2, "0");
 
   return (
-    <div className="flex items-center justify-center rounded-lg border bg-gradient-to-tr from-background/50 to-primary/5 p-3 shadow-lg backdrop-blur-sm sm:p-4">
-      <Card className="w-full max-w-3xl border-0 bg-transparent">
+    <div
+      className={cn(
+        "flex items-center justify-center rounded-lg border bg-gradient-to-tr from-background/50 to-primary/5 p-3 shadow-lg backdrop-blur-sm sm:p-4",
+        dashboardFrameTheme?.sectionShellClassName,
+      )}
+    >
+      <Card
+        className={cn(
+          "w-full max-w-3xl border-0 bg-transparent",
+          dashboardFrameTheme?.sectionCardClassName,
+        )}
+      >
         <CardContent className="p-3 sm:p-4 lg:p-6">
-          <h1 className="mb-3 text-center text-xl font-bold tracking-wider text-muted-foreground sm:mb-4 sm:text-2xl lg:text-3xl">
+          <h1
+            className={cn(
+              "mb-3 text-center text-xl font-bold tracking-wider text-muted-foreground sm:mb-4 sm:text-2xl lg:text-3xl",
+              dashboardFrameTheme?.sectionHeadingClassName,
+            )}
+          >
             HACKING ENDS IN
           </h1>
 
-          <div className="flex flex-wrap items-center justify-center gap-1.5 shadow-lg sm:gap-2 lg:gap-3">
+          <div
+            className={cn(
+              "flex flex-wrap items-center justify-center gap-1.5 shadow-lg sm:gap-2 lg:gap-3",
+              dashboardFrameTheme?.countdownGroupClassName,
+            )}
+          >
             {/* Days */}
-            <div className="flex items-center gap-1 sm:gap-2">
-              <Card className="p-0 shadow-md">
+            <div
+              className={cn(
+                "flex items-center gap-1 sm:gap-2",
+                dashboardFrameTheme?.countdownUnitWrapperClassName,
+              )}
+            >
+              <Card
+                className={cn(
+                  "p-0 shadow-md",
+                  dashboardFrameTheme?.countdownUnitCardClassName,
+                )}
+              >
                 <CardContent className="flex flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
                   <div className="text-xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
                     {formatNumber(timeLeft.days)}
                   </div>
-                  <div className="mt-1 hidden text-xs font-semibold text-muted-foreground sm:block sm:text-sm lg:text-base">
+                  <div
+                    className={cn(
+                      "mt-1 hidden text-xs font-semibold text-muted-foreground sm:block sm:text-sm lg:text-base",
+                      dashboardFrameTheme?.countdownUnitLabelClassName,
+                    )}
+                  >
                     Days
                   </div>
-                  <div className="mt-1 block text-xs font-semibold text-muted-foreground sm:hidden sm:text-sm lg:text-base">
+                  <div
+                    className={cn(
+                      "mt-1 block text-xs font-semibold text-muted-foreground sm:hidden sm:text-sm lg:text-base",
+                      dashboardFrameTheme?.countdownUnitLabelClassName,
+                    )}
+                  >
                     D
                   </div>
                 </CardContent>
@@ -70,16 +119,36 @@ export function BaseHackathonCountdown({ endDate }: { endDate: Date }) {
             </div>
 
             {/* Hours */}
-            <div className="flex items-center gap-1 shadow-lg sm:gap-2">
-              <Card className="p-0 shadow-md">
+            <div
+              className={cn(
+                "flex items-center gap-1 shadow-lg sm:gap-2",
+                dashboardFrameTheme?.countdownUnitWrapperClassName,
+              )}
+            >
+              <Card
+                className={cn(
+                  "p-0 shadow-md",
+                  dashboardFrameTheme?.countdownUnitCardClassName,
+                )}
+              >
                 <CardContent className="flex flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
                   <div className="text-xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
                     {formatNumber(timeLeft.hours)}
                   </div>
-                  <div className="mt-1 hidden text-xs font-semibold text-muted-foreground sm:block sm:text-sm lg:text-base">
+                  <div
+                    className={cn(
+                      "mt-1 hidden text-xs font-semibold text-muted-foreground sm:block sm:text-sm lg:text-base",
+                      dashboardFrameTheme?.countdownUnitLabelClassName,
+                    )}
+                  >
                     Hours
                   </div>
-                  <div className="mt-1 block text-xs font-semibold text-muted-foreground sm:hidden sm:text-sm lg:text-base">
+                  <div
+                    className={cn(
+                      "mt-1 block text-xs font-semibold text-muted-foreground sm:hidden sm:text-sm lg:text-base",
+                      dashboardFrameTheme?.countdownUnitLabelClassName,
+                    )}
+                  >
                     H
                   </div>
                 </CardContent>
@@ -88,16 +157,36 @@ export function BaseHackathonCountdown({ endDate }: { endDate: Date }) {
             </div>
 
             {/* Minutes */}
-            <div className="flex items-center gap-1 shadow-lg sm:gap-2">
-              <Card className="p-0 shadow-md">
+            <div
+              className={cn(
+                "flex items-center gap-1 shadow-lg sm:gap-2",
+                dashboardFrameTheme?.countdownUnitWrapperClassName,
+              )}
+            >
+              <Card
+                className={cn(
+                  "p-0 shadow-md",
+                  dashboardFrameTheme?.countdownUnitCardClassName,
+                )}
+              >
                 <CardContent className="flex flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
                   <div className="text-xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
                     {formatNumber(timeLeft.minutes)}
                   </div>
-                  <div className="mt-1 hidden text-xs font-semibold text-muted-foreground sm:block sm:text-sm lg:text-base">
+                  <div
+                    className={cn(
+                      "mt-1 hidden text-xs font-semibold text-muted-foreground sm:block sm:text-sm lg:text-base",
+                      dashboardFrameTheme?.countdownUnitLabelClassName,
+                    )}
+                  >
                     Minutes
                   </div>
-                  <div className="mt-1 block text-xs font-semibold text-muted-foreground sm:hidden sm:text-sm lg:text-base">
+                  <div
+                    className={cn(
+                      "mt-1 block text-xs font-semibold text-muted-foreground sm:hidden sm:text-sm lg:text-base",
+                      dashboardFrameTheme?.countdownUnitLabelClassName,
+                    )}
+                  >
                     M
                   </div>
                 </CardContent>
@@ -106,15 +195,30 @@ export function BaseHackathonCountdown({ endDate }: { endDate: Date }) {
             </div>
 
             {/* Seconds */}
-            <Card className="p-0 shadow-lg">
+            <Card
+              className={cn(
+                "p-0 shadow-lg",
+                dashboardFrameTheme?.countdownUnitCardClassName,
+              )}
+            >
               <CardContent className="flex flex-col items-center justify-center p-2 sm:min-w-[90px] sm:p-3 lg:min-w-[110px] lg:p-4">
                 <div className="text-xl font-bold tabular-nums sm:text-4xl lg:text-5xl">
                   {formatNumber(timeLeft.seconds)}
                 </div>
-                <div className="mt-1 hidden text-xs font-semibold text-muted-foreground sm:block sm:text-sm lg:text-base">
+                <div
+                  className={cn(
+                    "mt-1 hidden text-xs font-semibold text-muted-foreground sm:block sm:text-sm lg:text-base",
+                    dashboardFrameTheme?.countdownUnitLabelClassName,
+                  )}
+                >
                   Seconds
                 </div>
-                <div className="mt-1 block text-xs font-semibold text-muted-foreground sm:hidden sm:text-sm lg:text-base">
+                <div
+                  className={cn(
+                    "mt-1 block text-xs font-semibold text-muted-foreground sm:hidden sm:text-sm lg:text-base",
+                    dashboardFrameTheme?.countdownUnitLabelClassName,
+                  )}
+                >
                   S
                 </div>
               </CardContent>

@@ -107,10 +107,16 @@ export function BaseHackathonDashboard({
         ></div>
       </div>
       <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
-        <BaseHackathonCountdown endDate={hackathon.endDate} />
+        <BaseHackathonCountdown
+          dashboardFrameTheme={dashboardFrameTheme}
+          endDate={hackathon.endDate}
+        />
       </div>
       <div className="animate-fade-in mb-8 mt-8 px-0 sm:mt-12 sm:px-4">
-        <BaseHackathonUpcomingEvents hackathonId={hackathon.id} />
+        <BaseHackathonUpcomingEvents
+          dashboardFrameTheme={dashboardFrameTheme}
+          hackathonId={hackathon.id}
+        />
       </div>
     </>
   );

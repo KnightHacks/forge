@@ -31,6 +31,10 @@ export function BaseHackathonQRCodeButton({
         dashboardFrameTheme?.actionBloomClassName,
       )}
       actionIconClassName={dashboardFrameTheme?.actionIconClassName}
+      actionTextClassName={dashboardFrameTheme?.actionTextClassName}
+      qrDialogAccentClassName={dashboardFrameTheme?.qrDialogAccentClassName}
+      qrDialogContentClassName={dashboardFrameTheme?.qrDialogContentClassName}
+      qrDialogTitleClassName={dashboardFrameTheme?.qrDialogTitleClassName}
     />
   );
 }
@@ -53,6 +57,7 @@ export function BaseHackathonWalletButton({
         "h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary",
         dashboardFrameTheme?.actionIconClassName,
       )}
+      textClassName={dashboardFrameTheme?.actionTextClassName}
       profile={profile}
       profileKind="hacker"
     />
@@ -83,7 +88,12 @@ export function BaseHackathonGuideButton({
             dashboardFrameTheme?.actionIconClassName,
           )}
         />
-        <span className="text-base font-bold text-black dark:text-white">
+        <span
+          className={cn(
+            "text-base font-bold text-black transition-colors dark:text-white",
+            dashboardFrameTheme?.actionTextClassName,
+          )}
+        >
           Hacker's Guide
         </span>
       </Link>
@@ -129,7 +139,12 @@ export function BaseHackathonData({
       {/* Name, Status, and Actions */}
       <div className="flex flex-col justify-evenly gap-4">
         {/* Profile Card */}
-        <div className="rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6">
+        <div
+          className={cn(
+            "rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6",
+            dashboardFrameTheme?.contentCardClassName,
+          )}
+        >
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-6">
             {/* Name and Info Column */}
             <div className="flex-1 space-y-4 sm:space-y-4">
@@ -139,16 +154,18 @@ export function BaseHackathonData({
 
               {/* Status Badge */}
               <div className="animate-fade-in flex flex-col items-center space-y-3 md:items-start md:justify-start">
-                <div className="inline-flex items-center gap-2.5 rounded-full bg-background shadow-sm">
-                  <span
-                    className={`text-base font-bold uppercase sm:text-lg ${hackerStatusColor}`}
-                  >
+                <div
+                  className={cn(
+                    "inline-flex items-center gap-2.5 rounded-full bg-background shadow-sm",
+                    hackerStatusColor,
+                    dashboardFrameTheme?.statusBadgeClassName,
+                  )}
+                >
+                  <span className="text-base font-bold uppercase sm:text-lg">
                     {hackerStatus}
                   </span>
 
-                  <CircleCheckBig
-                    className={`h-4 w-4 sm:h-4 sm:w-4 ${hackerStatusColor}`}
-                  />
+                  <CircleCheckBig className="h-4 w-4 text-current sm:h-4 sm:w-4" />
                 </div>
               </div>
             </div>

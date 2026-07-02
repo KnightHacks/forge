@@ -29,9 +29,17 @@ import { api } from "~/trpc/react";
 export function HackerQRCodePopup({
   actionButtonClassName,
   actionIconClassName,
+  actionTextClassName,
+  qrDialogAccentClassName,
+  qrDialogContentClassName,
+  qrDialogTitleClassName,
 }: {
   actionButtonClassName?: string;
   actionIconClassName?: string;
+  actionTextClassName?: string;
+  qrDialogAccentClassName?: string;
+  qrDialogContentClassName?: string;
+  qrDialogTitleClassName?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const {
@@ -80,7 +88,14 @@ export function HackerQRCodePopup({
           actionIconClassName,
         )}
       />
-      <span className="text-base font-bold text-black dark:text-white">QR</span>
+      <span
+        className={cn(
+          "text-base font-bold text-black transition-colors dark:text-white",
+          actionTextClassName,
+        )}
+      >
+        QR
+      </span>
     </Button>
   );
 
@@ -94,11 +109,24 @@ export function HackerQRCodePopup({
     return (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>{qrTrigger}</DialogTrigger>
-        <DialogContent className="!max-h-[96vw] !max-w-[96vw] overflow-y-auto">
+        <DialogContent
+          className={cn(
+            "!max-h-[96vw] !max-w-[96vw] overflow-y-auto",
+            qrDialogContentClassName,
+          )}
+        >
           <DialogHeader>
-            <DialogTitle>
-              Your <span className="font-bold text-primary">HACKER</span> QR
-              Code
+            <DialogTitle className={qrDialogTitleClassName}>
+              Your{" "}
+              <span
+                className={cn(
+                  "font-bold text-primary",
+                  qrDialogAccentClassName,
+                )}
+              >
+                HACKER
+              </span>{" "}
+              QR Code
             </DialogTitle>
           </DialogHeader>
           {qrContent}
@@ -112,11 +140,21 @@ export function HackerQRCodePopup({
     <div className="w-full sm:w-auto">
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>{qrTrigger}</DrawerTrigger>
-        <DrawerContent className="mx-auto w-full max-w-sm">
+        <DrawerContent
+          className={cn("mx-auto w-full max-w-sm", qrDialogContentClassName)}
+        >
           <DrawerHeader>
-            <DrawerTitle>
-              Your <span className="font-bold text-primary">HACKER</span> QR
-              Code
+            <DrawerTitle className={qrDialogTitleClassName}>
+              Your{" "}
+              <span
+                className={cn(
+                  "font-bold text-primary",
+                  qrDialogAccentClassName,
+                )}
+              >
+                HACKER
+              </span>{" "}
+              QR Code
             </DrawerTitle>
           </DrawerHeader>
           {qrContent}

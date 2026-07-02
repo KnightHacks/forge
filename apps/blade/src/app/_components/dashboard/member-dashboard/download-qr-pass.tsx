@@ -17,12 +17,14 @@ export function DownloadQRPass({
   profile,
   profileKind = "member",
   size = "sm",
+  textClassName,
 }: {
   buttonClassName?: string;
   iconClassName?: string;
   profile?: { firstName?: string | null; lastName?: string | null } | null;
   profileKind?: PassProfileKind;
   size?: ButtonProps["size"];
+  textClassName?: string;
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -106,15 +108,15 @@ export function DownloadQRPass({
                 : "h-4 w-4 animate-spin"
             }
           />
-          Generating Pass...
+          <span className={textClassName}>Generating Pass...</span>
         </>
       ) : canDownload ? (
         <>
           <WalletCards className={iconClassName ?? "h-4 w-4"} />
-          Apple Wallet
+          <span className={textClassName}>Apple Wallet</span>
         </>
       ) : (
-        "No profile information found"
+        <span className={textClassName}>No profile information found</span>
       )}
     </Button>
   );

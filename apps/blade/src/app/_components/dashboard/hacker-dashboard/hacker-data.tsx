@@ -201,16 +201,40 @@ export function HackerData({
             dashboardFrameTheme?.actionBloomClassName,
           )}
           actionIconClassName={dashboardFrameTheme?.actionIconClassName}
+          actionTextClassName={dashboardFrameTheme?.actionTextClassName}
+          qrDialogAccentClassName={dashboardFrameTheme?.qrDialogAccentClassName}
+          qrDialogContentClassName={
+            dashboardFrameTheme?.qrDialogContentClassName
+          }
+          qrDialogTitleClassName={dashboardFrameTheme?.qrDialogTitleClassName}
         />
         {/* Confirm Button */}
 
         {hackerStatus === "Accepted" &&
           hackathonData?.confirmationDeadline != null && (
             <ConfirmWithTOS
+              buttonClassName={dashboardFrameTheme?.confirmButtonClassName}
+              cancelButtonClassName={
+                dashboardFrameTheme?.confirmDialogCancelButtonClassName
+              }
+              contentClassName={
+                dashboardFrameTheme?.confirmDialogContentClassName
+              }
+              descriptionClassName={
+                dashboardFrameTheme?.confirmDialogDescriptionClassName
+              }
               isLoading={loading}
               hackathonData={hackathonData}
               handleConfirm={handleConfirm}
               numConfirmed={numConfirmed ?? 0}
+              submitButtonClassName={
+                dashboardFrameTheme?.confirmDialogSubmitButtonClassName
+              }
+              termsClassName={dashboardFrameTheme?.confirmDialogTermsClassName}
+              termsLinkClassName={
+                dashboardFrameTheme?.confirmDialogTermsLinkClassName
+              }
+              titleClassName={dashboardFrameTheme?.confirmDialogTitleClassName}
             />
           )}
 
@@ -225,9 +249,19 @@ export function HackerData({
 
         {/* Confirm Dialog */}
         <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent
+            className={cn(
+              "sm:max-w-md",
+              dashboardFrameTheme?.confirmSuccessDialogContentClassName,
+            )}
+          >
             <DialogHeader>
-              <DialogTitle className="text-center">
+              <DialogTitle
+                className={cn(
+                  "text-center",
+                  dashboardFrameTheme?.confirmSuccessDialogTitleClassName,
+                )}
+              >
                 Congratulations!
               </DialogTitle>
             </DialogHeader>
@@ -243,13 +277,25 @@ export function HackerData({
                 width={100}
                 height={100}
               />
-              <DialogDescription className="text-md text-center">
+              <DialogDescription
+                className={cn(
+                  "text-md text-center",
+                  dashboardFrameTheme?.confirmSuccessDialogDescriptionClassName,
+                )}
+              >
                 You've successfully confirmed for the hackathon. We're excited
                 to see you there!
               </DialogDescription>
             </div>
             <DialogFooter className="sm:justify-center">
-              <Button onClick={() => setIsConfirmOpen(false)}>Close</Button>
+              <Button
+                className={
+                  dashboardFrameTheme?.confirmSuccessDialogButtonClassName
+                }
+                onClick={() => setIsConfirmOpen(false)}
+              >
+                Close
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -265,23 +311,36 @@ export function HackerData({
               </Button>
             </DialogTrigger>
 
-            <DialogContent>
+            <DialogContent
+              className={dashboardFrameTheme?.withdrawDialogContentClassName}
+            >
               <DialogHeader>
-                <DialogTitle>Are you sure?</DialogTitle>
-                <DialogDescription>
+                <DialogTitle
+                  className={dashboardFrameTheme?.withdrawDialogTitleClassName}
+                >
+                  Are you sure?
+                </DialogTitle>
+                <DialogDescription
+                  className={
+                    dashboardFrameTheme?.withdrawDialogDescriptionClassName
+                  }
+                >
                   You are about to withdraw from this hackathon. This action
                   cannot be undone. Please proceed with caution.
                 </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 py-2">
-                <p>
+                <p
+                  className={dashboardFrameTheme?.withdrawDialogPromptClassName}
+                >
                   Please type <strong>"I am absolutely sure"</strong> to
                   confirm:
                 </p>
                 <Input
                   placeholder='Type "I am absolutely sure"'
                   value={confirmationText}
+                  className={dashboardFrameTheme?.withdrawDialogInputClassName}
                   onChange={(e) => setConfirmationText(e.target.value)}
                   onPaste={(e) => {
                     e.preventDefault();
@@ -293,6 +352,9 @@ export function HackerData({
               <DialogFooter>
                 <Button
                   variant="outline"
+                  className={
+                    dashboardFrameTheme?.withdrawDialogCancelButtonClassName
+                  }
                   onClick={() => {
                     setIsOpen(false);
                     setConfirmationText("");

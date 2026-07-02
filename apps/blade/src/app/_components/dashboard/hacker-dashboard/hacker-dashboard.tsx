@@ -146,6 +146,7 @@ export default async function HackerDashboard({
             <PastHackathonButton
               actionButtonClassName={dashboardFrameTheme?.actionButtonClassName}
               actionIconClassName={dashboardFrameTheme?.actionIconClassName}
+              dashboardFrameTheme={dashboardFrameTheme}
               hackathons={pastHackathons.value}
             />
             <HackerResumeButton

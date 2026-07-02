@@ -66,27 +66,53 @@ export function BaseHackathonIssueButton({
               dashboardFrameTheme?.actionIconClassName,
             )}
           />
-          <span>Report an Issue</span>
+          <span
+            className={cn(
+              "transition-colors",
+              dashboardFrameTheme?.actionTextClassName,
+            )}
+          >
+            Report an Issue
+          </span>
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent
+        className={cn(
+          "sm:max-w-[525px]",
+          dashboardFrameTheme?.issueDialogContentClassName,
+        )}
+      >
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Report an Issue</DialogTitle>
-            <DialogDescription>
+            <DialogTitle
+              className={dashboardFrameTheme?.issueDialogTitleClassName}
+            >
+              Report an Issue
+            </DialogTitle>
+            <DialogDescription
+              className={dashboardFrameTheme?.issueDialogDescriptionClassName}
+            >
               Describe the issue you're experiencing. We'll look into it as soon
               as possible.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="issue">Issue Description</Label>
+              <Label
+                htmlFor="issue"
+                className={dashboardFrameTheme?.issueDialogLabelClassName}
+              >
+                Issue Description
+              </Label>
               <Textarea
                 id="issue"
                 placeholder="Please describe the issue in detail..."
                 value={issue}
                 onChange={(e) => setIssue(e.target.value)}
-                className="min-h-[120px]"
+                className={cn(
+                  "min-h-[120px]",
+                  dashboardFrameTheme?.issueDialogTextareaClassName,
+                )}
                 required
               />
             </div>
@@ -95,12 +121,14 @@ export function BaseHackathonIssueButton({
             <Button
               type="button"
               variant="outline"
+              className={dashboardFrameTheme?.issueDialogCancelButtonClassName}
               onClick={() => setOpen(false)}
             >
               Cancel
             </Button>
             <Button
               type="submit"
+              className={dashboardFrameTheme?.issueDialogSubmitButtonClassName}
               disabled={!issue.trim() || reportIssueMutation.isPending}
             >
               {reportIssueMutation.isPending ? "Submitting..." : "Submit"}
