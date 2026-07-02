@@ -1183,9 +1183,6 @@ importers:
       '@forge/utils':
         specifier: workspace:*
         version: link:../utils
-      '@maloma/listmonk':
-        specifier: ^1.0.1
-        version: 1.0.1
       '@t3-oss/env-core':
         specifier: ^0.13.10
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
@@ -3383,11 +3380,6 @@ packages:
 
   '@libsql/core@0.17.0':
     resolution: {integrity: sha512-hnZRnJHiS+nrhHKLGYPoJbc78FE903MSDrFJTbftxo+e52X+E0Y0fHOCVYsKWcg6XgB7BbJYUrz/xEkVTSaipw==}
-
-  '@maloma/listmonk@1.0.1':
-    resolution: {integrity: sha512-oE3IZLZZEonKTUvhuZ0DTy6gOCwSqlay8vLm+wiBMjmXHnE/RrPkszvdVtksB/IGRTxnUJuXbH4X+HaJKh2BeQ==}
-    engines: {bun: '>=1.3.0', node: '>=22.0.0'}
-    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@mongodb-js/saslprep@1.4.6':
     resolution: {integrity: sha512-y+x3H1xBZd38n10NZF/rEBlvDOOMQ6LKUTHqr8R9VkJ+mmQOYtJFxIlkkK8fZrtOiL6VixbOBWMbZGBdal3Z1g==}
@@ -10713,10 +10705,6 @@ snapshots:
     dependencies:
       js-base64: 3.7.8
     optional: true
-
-  '@maloma/listmonk@1.0.1':
-    dependencies:
-      zod: 4.3.6
 
   '@mongodb-js/saslprep@1.4.6':
     dependencies:
