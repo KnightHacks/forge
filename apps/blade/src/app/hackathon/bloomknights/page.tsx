@@ -21,6 +21,7 @@ const BLOOMKNIGHTS_HACKERS_GUIDE =
 const bloomKnightsDashboardFrameTheme: DashboardFrameTheme = {
   frameClassName:
     "border border-[#aad163]/70 bg-[#aad163] shadow-xl shadow-[#aad163]/20 backdrop-blur-sm dark:bg-[#aad163]",
+  checkedInFrameClassName: "min-h-0 lg:min-h-[380px]",
   topTabClassName: "bg-[#aad163] dark:bg-[#aad163]",
   bottomTabClassName: "bg-[#aad163] dark:bg-[#aad163]",
   leftAccentClassName: "bg-[#f384d4]",

@@ -58,6 +58,7 @@ export function BaseHackathonDashboard({
         className={cn(
           "animate-mobile-initial-expand mx-auto flex min-h-[900px] rounded-lg bg-[#E5E7EB] px-2 py-4 dark:bg-[#0A0F1D] sm:relative sm:px-0 sm:py-6 lg:min-h-[380px]",
           dashboardFrameTheme?.frameClassName,
+          dashboardFrameTheme?.checkedInFrameClassName,
         )}
       >
         <BaseHackathonData

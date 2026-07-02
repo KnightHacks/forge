@@ -1,5 +1,6 @@
 export interface DashboardFrameTheme {
   frameClassName?: string;
+  checkedInFrameClassName?: string;
   topTabClassName?: string;
   bottomTabClassName?: string;
   leftAccentClassName?: string;
