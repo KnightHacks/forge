@@ -1,6 +1,7 @@
 export const HACKATHON_EMAIL_KINDS = [
   "Blacklist",
   "Accepted",
+  "AcceptedReminder",
   "Apply",
   "Capacity",
   "Confirmation",
@@ -36,6 +37,8 @@ export const HACKATHON_EMAIL_TEMPLATE_IDS = {
   "knight-hacks-viii": {
     Blacklist: 6,
     Accepted: 7,
+    // TODO: replace with the dedicated reminder template ID when it is ready.
+    AcceptedReminder: 7,
     Apply: 8,
     Capacity: 9,
     Confirmation: 10,
@@ -44,6 +47,7 @@ export const HACKATHON_EMAIL_TEMPLATE_IDS = {
   bloomknights: {
     Blacklist: 14,
     Accepted: 15,
+    AcceptedReminder: 21,
     Apply: 16,
     Capacity: 17,
     Confirmation: 18,

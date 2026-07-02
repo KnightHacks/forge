@@ -448,141 +448,147 @@ export default function HackerTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-center">
-                <SortButton
-                  field="firstName"
-                  label="First Name"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  setSortField={setSortField}
-                  setSortOrder={setSortOrder}
-                  setActiveSort={toggleFieldSort}
-                />
-              </TableHead>
-              <TableHead className="text-center">
-                <SortButton
-                  field="lastName"
-                  label="Last Name"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  setSortField={setSortField}
-                  setSortOrder={setSortOrder}
-                  setActiveSort={toggleFieldSort}
-                />
-              </TableHead>
-              <TableHead className="hidden md:table-cell">
-                <SortButton
-                  field="discordUser"
-                  label="Discord"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  setSortField={setSortField}
-                  setSortOrder={setSortOrder}
-                  setActiveSort={toggleFieldSort}
-                />
-              </TableHead>
-              <TableHead className="hidden md:table-cell">
-                <SortButton
-                  field="email"
-                  label="Email"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  setSortField={setSortField}
-                  setSortOrder={setSortOrder}
-                  setActiveSort={toggleFieldSort}
-                />
-              </TableHead>
-              <TableHead className="hidden text-center md:table-cell">
-                <Label>Status</Label>
-              </TableHead>
-              <TableHead className="hidden text-center md:table-cell">
-                <Label>Status Toggle</Label>
-              </TableHead>
-              <TableHead className="hidden text-center md:table-cell">
-                <Label>Hacker Profile</Label>
-              </TableHead>
-              <TableHead className="hidden text-center md:table-cell">
-                <Label>Survey Responses</Label>
-              </TableHead>
-              <TableHead className="hidden text-center md:table-cell">
-                <Label>Update</Label>
-              </TableHead>
-              <TableHead className="hidden text-center md:table-cell">
-                <Label>Delete</Label>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isTableLoading ? (
+      <div className="space-y-2">
+        <p className="text-center text-xs text-muted-foreground md:hidden">
+          Swipe left or right on the table to review Discord, email, status,
+          reminder, and admit/waitlist actions.
+        </p>
+        <div className="w-full overflow-x-auto overscroll-x-contain rounded-md border [-webkit-overflow-scrolling:touch] md:border-0">
+          <Table className="min-w-[1200px]">
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={10} className="py-8 text-center">
-                  Loading Hackers ...
-                </TableCell>
+                <TableHead className="text-center">
+                  <SortButton
+                    field="firstName"
+                    label="First Name"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    setSortField={setSortField}
+                    setSortOrder={setSortOrder}
+                    setActiveSort={toggleFieldSort}
+                  />
+                </TableHead>
+                <TableHead className="text-center">
+                  <SortButton
+                    field="lastName"
+                    label="Last Name"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    setSortField={setSortField}
+                    setSortOrder={setSortOrder}
+                    setActiveSort={toggleFieldSort}
+                  />
+                </TableHead>
+                <TableHead className="text-center">
+                  <SortButton
+                    field="discordUser"
+                    label="Discord"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    setSortField={setSortField}
+                    setSortOrder={setSortOrder}
+                    setActiveSort={toggleFieldSort}
+                  />
+                </TableHead>
+                <TableHead className="text-center">
+                  <SortButton
+                    field="email"
+                    label="Email"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    setSortField={setSortField}
+                    setSortOrder={setSortOrder}
+                    setActiveSort={toggleFieldSort}
+                  />
+                </TableHead>
+                <TableHead className="text-center">
+                  <Label>Status</Label>
+                </TableHead>
+                <TableHead className="text-center">
+                  <Label>Status Actions</Label>
+                </TableHead>
+                <TableHead className="text-center">
+                  <Label>Hacker Profile</Label>
+                </TableHead>
+                <TableHead className="text-center">
+                  <Label>Survey Responses</Label>
+                </TableHead>
+                <TableHead className="text-center">
+                  <Label>Update</Label>
+                </TableHead>
+                <TableHead className="text-center">
+                  <Label>Delete</Label>
+                </TableHead>
               </TableRow>
-            ) : tableError ? (
-              <TableRow>
-                <TableCell colSpan={10} className="py-8 text-center">
-                  Failed to load hackers!
-                </TableCell>
-              </TableRow>
-            ) : (
-              hackers.map((hacker) => {
-                const statusMeta =
-                  hacker.status in HACKER_STATUS_MAP
-                    ? HACKER_STATUS_MAP[
-                        hacker.status as keyof typeof HACKER_STATUS_MAP
-                      ]
-                    : DEFAULT_STATUS_META;
-                return (
-                  <TableRow key={hacker.id}>
-                    <TableCell className="text-center font-medium">
-                      {hacker.firstName}
-                    </TableCell>
-                    <TableCell className="text-center font-medium">
-                      {hacker.lastName}
-                    </TableCell>
-                    <TableCell className="hidden text-center font-medium md:table-cell">
-                      {hacker.discordUser}
-                    </TableCell>
-                    <TableCell className="hidden font-medium md:table-cell">
-                      {hacker.email}
-                    </TableCell>
-                    <TableCell
-                      className={`hidden break-keep text-center font-bold md:table-cell ${statusMeta.color}`}
-                    >
-                      {statusMeta.name}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <HackerStatusToggle
-                        hacker={hacker}
-                        hackathonRouteName={activeHackathon?.name ?? ""}
-                      />
-                    </TableCell>
-                    <TableCell className="hidden text-center md:table-cell">
-                      <HackerProfileButton hacker={hacker} />
-                    </TableCell>
-                    <TableCell className="hidden text-center md:table-cell">
-                      <HackerSurveyResponsesButton hacker={hacker} />
-                    </TableCell>
-                    <TableCell className="hidden text-center md:table-cell">
-                      <UpdateHackerButton hacker={hacker} />
-                    </TableCell>
-                    <TableCell className="hidden text-center md:table-cell">
-                      <DeleteHackerButton
-                        hacker={hacker}
-                        hackathonName={activeHackathon?.name ?? ""}
-                      />
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {isTableLoading ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="py-8 text-center">
+                    Loading Hackers ...
+                  </TableCell>
+                </TableRow>
+              ) : tableError ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="py-8 text-center">
+                    Failed to load hackers!
+                  </TableCell>
+                </TableRow>
+              ) : (
+                hackers.map((hacker) => {
+                  const statusMeta =
+                    hacker.status in HACKER_STATUS_MAP
+                      ? HACKER_STATUS_MAP[
+                          hacker.status as keyof typeof HACKER_STATUS_MAP
+                        ]
+                      : DEFAULT_STATUS_META;
+                  return (
+                    <TableRow key={hacker.id}>
+                      <TableCell className="text-center font-medium">
+                        {hacker.firstName}
+                      </TableCell>
+                      <TableCell className="text-center font-medium">
+                        {hacker.lastName}
+                      </TableCell>
+                      <TableCell className="text-center font-medium">
+                        {hacker.discordUser}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {hacker.email}
+                      </TableCell>
+                      <TableCell
+                        className={`break-keep text-center font-bold ${statusMeta.color}`}
+                      >
+                        {statusMeta.name}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <HackerStatusToggle
+                          hacker={hacker}
+                          hackathonRouteName={activeHackathon?.name ?? ""}
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <HackerProfileButton hacker={hacker} />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <HackerSurveyResponsesButton hacker={hacker} />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <UpdateHackerButton hacker={hacker} />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <DeleteHackerButton
+                          hacker={hacker}
+                          hackathonName={activeHackathon?.name ?? ""}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       <CustomPagination
         className="mt-4"
