@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { BloomKnightsActionBlooms } from "./bloomknights-action-blooms";
+import { BloomKnightsAmbientBackground } from "./bloomknights-ambient-background";
 import { BloomKnightsFlowerCursor } from "./bloomknights-flower-cursor";
 
 const BLOOMKNIGHTS_DASHBOARD_BACKGROUND =
@@ -12,7 +14,7 @@ export function BloomKnightsDashboardShell({
 }) {
   return (
     <main
-      className="min-h-screen bg-emerald-950 bg-cover bg-center bg-no-repeat px-4 py-16"
+      className="relative isolate min-h-screen overflow-hidden bg-emerald-950 bg-cover bg-center bg-no-repeat px-4 py-16"
       style={{
         backgroundImage: `linear-gradient(
           to bottom,
@@ -22,8 +24,10 @@ export function BloomKnightsDashboardShell({
         ), url("${BLOOMKNIGHTS_DASHBOARD_BACKGROUND}")`,
       }}
     >
+      <BloomKnightsAmbientBackground />
+      <BloomKnightsActionBlooms />
       <BloomKnightsFlowerCursor />
-      <div className="max-w-8xl mx-auto w-full">{children}</div>
+      <div className="max-w-8xl relative z-10 mx-auto w-full">{children}</div>
     </main>
   );
 }

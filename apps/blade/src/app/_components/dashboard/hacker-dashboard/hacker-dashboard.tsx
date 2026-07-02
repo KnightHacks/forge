@@ -143,8 +143,16 @@ export default async function HackerDashboard({
           </div>
         ) : (
           <>
-            <PastHackathonButton hackathons={pastHackathons.value} />
-            <HackerResumeButton resume={resume.value} />
+            <PastHackathonButton
+              actionButtonClassName={dashboardFrameTheme?.actionButtonClassName}
+              actionIconClassName={dashboardFrameTheme?.actionIconClassName}
+              hackathons={pastHackathons.value}
+            />
+            <HackerResumeButton
+              actionButtonClassName={dashboardFrameTheme?.actionButtonClassName}
+              actionIconClassName={dashboardFrameTheme?.actionIconClassName}
+              resume={resume.value}
+            />
           </>
         )}
       </div>

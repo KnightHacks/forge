@@ -26,7 +26,10 @@ export function BaseHackathonQRCodeButton({
 }) {
   return (
     <HackerQRCodePopup
-      actionButtonClassName={dashboardFrameTheme?.actionButtonClassName}
+      actionButtonClassName={cn(
+        dashboardFrameTheme?.actionButtonClassName,
+        dashboardFrameTheme?.actionBloomClassName,
+      )}
       actionIconClassName={dashboardFrameTheme?.actionIconClassName}
     />
   );
@@ -44,6 +47,7 @@ export function BaseHackathonWalletButton({
       buttonClassName={cn(
         "group flex h-auto w-full items-center gap-3 rounded-lg border bg-card px-5 py-3 text-base font-semibold text-card-foreground shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:bg-card hover:shadow-md sm:w-auto sm:px-5 sm:py-3 sm:text-sm",
         dashboardFrameTheme?.actionButtonClassName,
+        dashboardFrameTheme?.actionBloomClassName,
       )}
       iconClassName={cn(
         "h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary",
@@ -69,6 +73,7 @@ export function BaseHackathonGuideButton({
       className={cn(
         "animate-fade-in group w-full gap-2 rounded-lg border border-[#1F2937] bg-card px-5 py-3 shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:bg-card hover:shadow-md sm:px-8",
         dashboardFrameTheme?.actionButtonClassName,
+        dashboardFrameTheme?.actionBloomClassName,
       )}
     >
       <Link href={href}>

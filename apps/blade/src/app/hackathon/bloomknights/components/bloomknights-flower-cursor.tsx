@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const FLOWER_COLORS = [
+export const BLOOMKNIGHTS_FLOWER_COLORS = [
   "#fcbc4e",
   "#a8d471",
   "#fe73fe",
@@ -16,13 +16,19 @@ const MAX_FLOWERS = 15;
 const MIN_DISTANCE_BETWEEN_FLOWERS = 36;
 
 interface TrailFlower {
-  color: (typeof FLOWER_COLORS)[number];
+  color: (typeof BLOOMKNIGHTS_FLOWER_COLORS)[number];
   id: number;
   x: number;
   y: number;
 }
 
-function TrailFlowerSvg({ color, size }: { color: string; size: number }) {
+export function BloomKnightsFlowerSvg({
+  color,
+  size,
+}: {
+  color: string;
+  size: number;
+}) {
   return (
     <svg
       width={size}
@@ -108,7 +114,8 @@ export function BloomKnightsFlowerCursor() {
 
       const id = counterRef.current++;
       const color =
-        FLOWER_COLORS[id % FLOWER_COLORS.length] ?? FLOWER_COLORS[0];
+        BLOOMKNIGHTS_FLOWER_COLORS[id % BLOOMKNIGHTS_FLOWER_COLORS.length] ??
+        BLOOMKNIGHTS_FLOWER_COLORS[0];
 
       setTrail((currentTrail) => [
         ...currentTrail.slice(-(MAX_FLOWERS - 1)),
@@ -189,7 +196,7 @@ export function BloomKnightsFlowerCursor() {
             top: flower.y,
           }}
         >
-          <TrailFlowerSvg color={flower.color} size={18} />
+          <BloomKnightsFlowerSvg color={flower.color} size={18} />
         </span>
       ))}
     </>

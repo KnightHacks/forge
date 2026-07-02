@@ -23,7 +23,9 @@ const bloomKnightsDashboardFrameTheme: DashboardFrameTheme = {
   leftAccentClassName: "bg-[#F6B6D2]",
   cornerAccentColor: "#F6B6D2",
   hideFrameCutouts: true,
-  actionButtonClassName: "hover:border-[#F6B6D2]/70",
+  actionButtonClassName:
+    "transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:border-[#F6B6D2]/70 hover:bg-[#F6B6D2]/10 hover:shadow-lg hover:shadow-[#F6B6D2]/15 active:translate-y-0 active:shadow-none motion-reduce:transform-none motion-reduce:transition-none",
+  actionBloomClassName: "bk-bloom-cta-action",
   actionIconClassName: "group-hover:text-[#F6B6D2]",
   checkedInStatusClassName: "text-[#F6B6D2]",
   confirmedStatusClassName: "text-[#F6B6D2]",

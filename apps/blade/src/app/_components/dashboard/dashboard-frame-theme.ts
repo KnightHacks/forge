@@ -6,6 +6,7 @@ export interface DashboardFrameTheme {
   cornerAccentColor?: string;
   hideFrameCutouts?: boolean;
   actionButtonClassName?: string;
+  actionBloomClassName?: string;
   actionIconClassName?: string;
   checkedInStatusClassName?: string;
   confirmedStatusClassName?: string;

@@ -1,5 +1,6 @@
 import { Eye, Users } from "lucide-react";
 
+import { cn } from "@forge/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import {
   Dialog,
@@ -17,8 +18,12 @@ const triggerClassName =
   "relative flex h-14 w-full cursor-pointer items-center justify-center gap-x-2 border border-[#1F2937] bg-transparent transition-all duration-200 ease-in-out hover:bg-[#E5E7EB] dark:hover:bg-[#1F2937]";
 
 export function PastHackathonButton({
+  actionButtonClassName,
+  actionIconClassName,
   hackathons,
 }: {
+  actionButtonClassName?: string;
+  actionIconClassName?: string;
   hackathons: Awaited<ReturnType<(typeof api.hackathon)["getPastHackathons"]>>;
 }) {
   const mostRecent = hackathons[0];
@@ -27,8 +32,10 @@ export function PastHackathonButton({
     return (
       <Dialog>
         <div className="flex w-full flex-row justify-between">
-          <DialogTrigger className={triggerClassName}>
-            <Eye />
+          <DialogTrigger
+            className={cn(triggerClassName, actionButtonClassName)}
+          >
+            <Eye className={actionIconClassName} />
             <span className="text-lg font-bold">View Past Hackathons</span>
           </DialogTrigger>
         </div>
@@ -48,8 +55,8 @@ export function PastHackathonButton({
   return (
     <Dialog>
       <div className="flex w-full flex-row justify-between">
-        <DialogTrigger className={triggerClassName}>
-          <Eye />
+        <DialogTrigger className={cn(triggerClassName, actionButtonClassName)}>
+          <Eye className={actionIconClassName} />
           <span className="text-lg font-bold">View Past Hackathons</span>
         </DialogTrigger>
       </div>

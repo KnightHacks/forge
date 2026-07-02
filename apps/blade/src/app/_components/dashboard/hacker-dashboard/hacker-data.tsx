@@ -196,7 +196,10 @@ export function HackerData({
       </div>
       <div className="mt-6 flex w-full items-center justify-center gap-x-1 sm:ml-7 md:mt-5 lg:mt-0">
         <HackerQRCodePopup
-          actionButtonClassName={dashboardFrameTheme?.actionButtonClassName}
+          actionButtonClassName={cn(
+            dashboardFrameTheme?.actionButtonClassName,
+            dashboardFrameTheme?.actionBloomClassName,
+          )}
           actionIconClassName={dashboardFrameTheme?.actionIconClassName}
         />
         {/* Confirm Button */}
