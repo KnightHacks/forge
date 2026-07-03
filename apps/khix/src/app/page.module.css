@@ -1,3 +1,10 @@
+.page {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
 .sectionStack {
   --khix-about-overlap: clamp(2rem, 7svh, 4.75rem);
   --khix-foreground-join: 60vw;

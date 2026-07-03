@@ -1,6 +1,8 @@
 import type { NavbarLink, NavbarSocialLink } from "./_components/navbar";
+import { Footer } from "./_components/footer";
 import { Navbar } from "./_components/navbar";
 import { AboutCorruption, AboutSection } from "./_components/sections/about";
+import FAQ from "./_components/sections/faq/faq";
 import { SectionGrass } from "./_components/sections/grass";
 import Hero from "./_components/sections/hero";
 import styles from "./page.module.css";
@@ -27,7 +29,7 @@ export default function Page() {
   return (
     <>
       <Navbar links={NAV_LINKS} socialLinks={SOCIAL_LINKS} />
-      <main>
+      <main className={styles.page}>
         <Hero />
         <div className={styles.sectionStack}>
           <AboutCorruption />
@@ -69,17 +71,10 @@ export default function Page() {
               Team
             </h2>
           </section>
-          <section
-            id="faq"
-            className={styles.openSection}
-            aria-labelledby="faq-title"
-          >
-            <h2 id="faq-title" className={styles.openSectionTitle}>
-              FAQ
-            </h2>
-          </section>
+          <FAQ />
         </div>
       </main>
+      <Footer />
     </>
   );
 }
