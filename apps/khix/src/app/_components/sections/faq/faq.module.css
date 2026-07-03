@@ -167,20 +167,17 @@
 }
 
 .questionItem {
-  position: relative;
   display: grid;
   justify-items: center;
   width: 100%;
-  isolation: isolate;
 }
 
 .questionButton {
   position: relative;
   display: grid;
-  z-index: 2;
   width: min(100%, 54rem);
   min-height: clamp(5.8rem, 9vw, 8.25rem);
-  aspect-ratio: 1066 / 172;
+  aspect-ratio: 1034 / 140;
   padding: clamp(0.74rem, 1.3vw, 1rem) clamp(4.6rem, 10vw, 8rem)
     clamp(0.9rem, 1.6vw, 1.15rem);
   place-items: center;
@@ -192,7 +189,7 @@
   font-weight: 700;
   line-height: 1.14;
   letter-spacing: 0;
-  text-align: left;
+  text-align: center;
   background: transparent;
   transition: transform 180ms ease;
 }
@@ -202,7 +199,7 @@
 }
 
 .questionButton[aria-expanded="true"] {
-  transform: translateY(0.04rem) scale(1.012);
+  transform: none;
 }
 
 .questionButton:focus-visible {
@@ -224,18 +221,14 @@
 .questionButton span {
   position: relative;
   z-index: 1;
-  justify-self: stretch;
-  width: 100%;
   max-width: min(100%, 39rem);
   text-wrap: balance;
   transform: translateY(-0.1rem);
 }
 
 .answerWrap {
-  position: relative;
-  z-index: 1;
   width: min(100%, 52rem);
-  margin-top: clamp(-3.8rem, -4vw, -2.35rem);
+  margin-top: 0;
   overflow: hidden;
   transform-origin: top center;
 }
@@ -244,10 +237,10 @@
   position: relative;
   display: grid;
   width: min(100%, 52rem);
-  min-height: clamp(18rem, 34vw, 24rem);
+  min-height: clamp(16rem, 30vw, 21rem);
   margin: 0 auto 0.2rem;
-  padding: clamp(4.1rem, 6.6vw, 5.35rem) clamp(4.5rem, 9vw, 6.6rem)
-    clamp(3.85rem, 6.6vw, 5.35rem);
+  padding: clamp(3.15rem, 5.3vw, 4.35rem) clamp(4.5rem, 9vw, 6.6rem)
+    clamp(3.05rem, 5.8vw, 4.5rem);
   place-items: center;
   color: rgba(32, 24, 73, 0.95);
   font-family: var(--faq-body-font);
@@ -443,7 +436,7 @@
   }
 
   .questionButton {
-    min-height: 4.95rem;
+    min-height: 4.45rem;
     padding-inline: clamp(1.7rem, 7vw, 2.35rem);
     font-size: 0.78rem;
   }
@@ -454,12 +447,12 @@
   }
 
   .answerWrap {
-    margin-top: -2.25rem;
+    margin-top: 0;
   }
 
   .answerRock {
-    min-height: 20rem;
-    padding: 4.05rem 2.2rem 3.1rem;
+    min-height: 18rem;
+    padding: 3.1rem 2.2rem 2.55rem;
   }
 
   .answerRock p {

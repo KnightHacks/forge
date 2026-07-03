@@ -624,10 +624,10 @@ function FaqQuestion({
         onClick={onToggle}
       >
         <Image
-          src="/faq/question-rock.png"
+          src="/faq/question-rock-cut.png"
           alt=""
-          width={1066}
-          height={172}
+          width={1034}
+          height={140}
           className={styles.questionRock}
         />
         <span>{item.question}</span>
@@ -644,10 +644,10 @@ function FaqQuestion({
           >
             <div className={styles.answerRock}>
               <Image
-                src="/faq/answer-rock.png"
+                src="/faq/answer-rock-cut.png"
                 alt=""
                 width={1066}
-                height={456}
+                height={376}
                 className={styles.answerRockImage}
               />
               <p>{item.answer}</p>
