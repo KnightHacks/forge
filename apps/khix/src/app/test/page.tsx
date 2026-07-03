@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import type { SponsorShowcaseSponsor } from "../_components/sponsor-showcase";
 import { AssetCredit } from "../_components/assets";
+import { SponsorShowcase } from "../_components/sponsor-showcase";
 import { TeamCascade } from "../_components/team-cascade";
 import styles from "./page.module.css";
 
@@ -31,6 +33,69 @@ const SWATCHES = [
   { name: "Ink", value: "#172033" },
 ];
 
+const SAMPLE_SPONSORS = [
+  {
+    name: "NVIDIA",
+    websiteUrl: "https://www.nvidia.com",
+    logoSrc: "/assets/sponsor-logos/nvidia.svg",
+    tier: "forest-sovereign",
+  },
+  {
+    name: "Google",
+    websiteUrl: "https://google.com",
+    logoSrc: "/assets/sponsor-logos/google.svg",
+    tier: "platinum-crown",
+  },
+  {
+    name: "AMD",
+    websiteUrl: "https://www.amd.com",
+    logoSrc: "/assets/sponsor-logos/amd.svg",
+    tier: "golden-dawn",
+  },
+  {
+    name: "Roblox",
+    websiteUrl: "https://www.roblox.com",
+    logoSrc: "/assets/sponsor-logos/roblox.svg",
+    tier: "silver-moon",
+  },
+  {
+    name: "ServiceNow",
+    websiteUrl: "https://www.servicenow.com",
+    logoSrc: "/assets/sponsor-logos/servicenow.svg",
+    tier: "silver-moon",
+  },
+  {
+    name: "Synopsys",
+    websiteUrl: "https://www.synopsys.com",
+    logoSrc: "/assets/sponsor-logos/synopsys.svg",
+    tier: "silver-moon",
+  },
+  {
+    name: "BNY",
+    websiteUrl: "https://www.bny.com",
+    logoSrc: "/assets/sponsor-logos/bny.svg",
+    tier: "bronze-ember",
+  },
+  {
+    name: "Statsig",
+    websiteUrl: "https://www.statsig.com",
+    logoSrc: "/assets/sponsor-logos/statsig.svg",
+    tier: "bronze-ember",
+  },
+  {
+    name: "Lockheed Martin",
+    websiteUrl: "https://www.lockheedmartin.com",
+    logoSrc: "/assets/sponsor-logos/lockheed-martin.svg",
+    tier: "bronze-ember",
+  },
+  {
+    name: "Auritas",
+    websiteUrl: "https://www.auritas.com",
+    logoSrc: "/assets/sponsor-logos/auritas.svg",
+    tier: "bronze-ember",
+  },
+] satisfies SponsorShowcaseSponsor[];
+
 export default function TestPage() {
   return (
     <main className={styles.testPage}>
@@ -40,6 +105,16 @@ export default function TestPage() {
           <h1 id="test-title">Component test page</h1>
         </div>
       </section>
+
+      <div
+        id="sponsor-showcase"
+        className={`${styles.section} ${styles.sponsorSection}`}
+      >
+        <SponsorShowcase
+          sponsors={SAMPLE_SPONSORS}
+          className={styles.sponsorShowcaseBox}
+        />
+      </div>
 
       <section
         id="team-cascade"

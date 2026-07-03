@@ -22,7 +22,6 @@
 }
 
 .teamCascadeItem {
-  --fall-scale: 1;
   --fall-static-y: 50%;
   --fall-sway: 0px;
   --fall-x: 50%;
@@ -35,7 +34,7 @@
   justify-content: center;
   opacity: 0;
   animation: teamCascadeFall var(--fall-duration) var(--fall-easing) forwards;
-  transform: translate3d(-50%, -8rem, 0) scale(var(--fall-scale));
+  transform: translate3d(-50%, -8rem, 0);
   will-change: transform, opacity;
 }
 
@@ -43,13 +42,16 @@
   animation: none;
   opacity: 1;
   top: var(--fall-static-y);
-  transform: translate3d(-50%, -50%, 0) scale(var(--fall-scale));
+  transform: translate3d(-50%, -50%, 0);
 }
 
-.teamCascadeItem:hover,
-.teamCascadeItem:focus-within {
+.teamCascadeItem:hover {
   animation-play-state: paused;
   z-index: 3;
+}
+
+.teamCascadeItem[data-resume-after-click="true"] {
+  animation-play-state: running;
 }
 
 .teamAvatar {
@@ -62,32 +64,40 @@
   border: 2px solid rgba(219, 255, 255, 0.95);
   border-radius: 999px;
   color: #ffffff;
-  background: linear-gradient(145deg, #0e88a4 0%, #5dd8e6 55%, #d7ffe9 100%);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(109, 225, 239, 0.16)
+    ),
+    linear-gradient(145deg, #0e88a4 0%, #5dd8e6 55%, #d7ffe9 100%);
   box-shadow:
-    0 0 0 0.26rem rgba(205, 255, 255, 0.34),
+    0 0 0 0.42rem rgba(205, 255, 255, 0.34),
+    0 0 0 0.54rem rgba(255, 255, 255, 0.5),
     0 0.85rem 1.8rem rgba(17, 86, 116, 0.22),
     inset 0 0 0 1px rgba(255, 255, 255, 0.36);
   overflow: visible;
+  isolation: isolate;
   text-decoration: none;
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease,
     transform 180ms ease;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
 }
 
 .teamAvatar::before {
   position: absolute;
-  inset: -0.42rem;
-  z-index: -1;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  inset: 0;
+  z-index: 0;
   border-radius: inherit;
   content: "";
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.72),
-    rgba(109, 225, 239, 0.16)
-  );
-  opacity: 0.82;
+  background: rgba(255, 255, 255, 0.18);
+  opacity: 1;
+  pointer-events: none;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .teamAvatar:hover,
@@ -98,19 +108,32 @@
     0 0 2.4rem rgba(102, 228, 244, 0.48),
     0 1.2rem 2.4rem rgba(17, 86, 116, 0.24);
   outline: none;
-  transform: translateY(-3px) scale(1.035);
+  transform: translate3d(0, -3px, 0) scale(1.035);
 }
 
 .teamAvatarStatic {
   cursor: default;
 }
 
+.teamAvatarMedia {
+  position: absolute;
+  inset: 0.14rem;
+  z-index: 1;
+  border-radius: inherit;
+  background: #103247;
+  overflow: hidden;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+}
+
 .teamAvatarImage,
 .teamAvatarInitials {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 2;
   border-radius: inherit;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .teamAvatarImage {
@@ -128,23 +151,23 @@
 
 .teamAvatarTooltip {
   position: absolute;
-  top: 50%;
+  top: calc(100% + 0.55rem);
   left: 50%;
-  z-index: 4;
+  z-index: 5;
   display: grid;
   min-width: max-content;
   max-width: min(11rem, 78vw);
   justify-items: center;
-  gap: 0.2rem;
   padding: 0.55rem 0.7rem;
-  border: 1px solid rgba(85, 209, 226, 0.36);
+  border: 1px solid rgba(174, 208, 255, 0.34);
   border-radius: 8px;
-  color: #103247;
-  background: rgba(239, 255, 255, 0.95);
-  box-shadow: 0 0.8rem 1.8rem rgba(17, 86, 116, 0.18);
+  color: #ffffff;
+  background: linear-gradient(135deg, #202940 0%, #5475a6 100%);
+  box-shadow: 0 0.8rem 1.8rem rgba(32, 41, 64, 0.24);
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, -50%) scale(0.96);
+  transform: translate(-50%, 0.35rem) scale(0.96);
+  transform-origin: top center;
   transition:
     opacity 160ms ease,
     transform 160ms ease;
@@ -153,22 +176,14 @@
 .teamAvatar:hover .teamAvatarTooltip,
 .teamAvatar:focus-visible .teamAvatarTooltip {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  transform: translate(-50%, 0) scale(1);
 }
 
 .teamAvatarTooltip strong {
-  color: #103247;
+  color: #ffffff;
   font-size: 0.84rem;
   line-height: 1.05;
   text-align: center;
-}
-
-.teamAvatarTooltip span {
-  color: #15758e;
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0;
-  text-transform: uppercase;
 }
 
 .teamStatus {
@@ -229,14 +244,14 @@
     animation: none;
     opacity: 1;
     top: var(--fall-static-y);
-    transform: translate3d(-50%, -50%, 0) scale(var(--fall-scale));
+    transform: translate3d(-50%, -50%, 0);
   }
 }
 
 @keyframes teamCascadeFall {
   0% {
     opacity: 1;
-    transform: translate3d(-50%, -9rem, 0) scale(var(--fall-scale));
+    transform: translate3d(-50%, -9rem, 0);
   }
 
   94% {
@@ -246,10 +261,9 @@
   100% {
     opacity: 0;
     transform: translate3d(
-        calc(-50% + var(--fall-sway)),
-        var(--fall-exit-distance),
-        0
-      )
-      scale(var(--fall-scale));
+      calc(-50% + var(--fall-sway)),
+      var(--fall-exit-distance),
+      0
+    );
   }
 }
