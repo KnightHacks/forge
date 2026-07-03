@@ -78,7 +78,7 @@ export function BloomKnightsFlowerSvg({
         fill={color}
         transform="rotate(300 20 20)"
       />
-      <circle cx="20" cy="20" r="5.5" fill="white" opacity="0.9" />
+      <circle cx="20" cy="20" r="5.5" fill="#FFFDF1" opacity="0.9" />
     </svg>
   );
 }

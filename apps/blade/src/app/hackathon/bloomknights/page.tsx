@@ -57,13 +57,13 @@ const bloomKnightsDashboardFrameTheme: DashboardFrameTheme = {
   actionButtonClassName:
     "border-[#FFFDF1]/80 bg-[#FFFDF1] text-[#42602A] shadow-sm shadow-[#B9D79A]/15 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:border-[#42602A]/40 hover:bg-[#FFFDF1] hover:shadow-lg hover:shadow-[#B9D79A]/20 active:translate-y-0 active:shadow-none dark:bg-[#FFFDF1] dark:hover:bg-[#FFFDF1] motion-reduce:transform-none motion-reduce:transition-none",
   actionBloomClassName: "bk-bloom-cta-action",
-  hackerQrButtonClassName: "-translate-x-0.5",
+  hackerQrButtonClassName: "hover:scale-100",
   actionIconClassName:
     "text-[#42602A] group-hover:text-[#42602A] dark:group-hover:text-[#42602A]",
   actionTextClassName: "text-[#42602A] dark:text-[#42602A]",
   qrDialogContentClassName:
-    "border-[#B9D79A]/70 bg-[#B9D79A] text-white dark:bg-[#B9D79A] [&>button:last-child]:text-[#f384d4] [&>button:last-child]:hover:bg-transparent [&>button:last-child]:focus:bg-transparent [&>button:last-child]:focus:ring-[#f384d4] [&>button:last-child]:focus:ring-offset-[#B9D79A] [&>button:last-child]:data-[state=open]:bg-transparent",
-  qrDialogTitleClassName: "text-white",
+    "border-[#B9D79A]/70 bg-[#B9D79A] text-[#FFFDF1] dark:bg-[#B9D79A] [&>button:last-child]:text-[#f384d4] [&>button:last-child]:hover:bg-transparent [&>button:last-child]:focus:bg-transparent [&>button:last-child]:focus:ring-[#f384d4] [&>button:last-child]:focus:ring-offset-[#B9D79A] [&>button:last-child]:data-[state=open]:bg-transparent",
+  qrDialogTitleClassName: "text-[#FFFDF1]",
   qrDialogAccentClassName: "text-[#42602A]",
   issueDialogContentClassName:
     "border-[#B9D79A]/70 bg-[#B9D79A] text-[#53634A] dark:bg-[#B9D79A] [&>button:last-child]:text-[#53634A] [&>button:last-child]:hover:bg-transparent [&>button:last-child]:focus:bg-transparent [&>button:last-child]:focus:ring-[#f384d4] [&>button:last-child]:focus:ring-offset-[#B9D79A] [&>button:last-child]:data-[state=open]:bg-transparent",
@@ -75,7 +75,7 @@ const bloomKnightsDashboardFrameTheme: DashboardFrameTheme = {
   issueDialogCancelButtonClassName:
     "border-[#FFFDF1]/80 bg-[#FFFDF1] text-[#53634A] hover:bg-[#FFFDF1]/90 hover:text-[#53634A]",
   issueDialogSubmitButtonClassName:
-    "bg-[#f384d4] text-white hover:bg-[#f384d4]/90 disabled:bg-[#f384d4]/60 disabled:text-white/80",
+    "bg-[#f384d4] text-[#FFFDF1] hover:bg-[#f384d4]/90 disabled:bg-[#f384d4]/60 disabled:text-[#FFFDF1]/80",
   pastHackathonsDialogContentClassName:
     "border-[#B9D79A]/70 bg-[#B9D79A] text-[#2F8B57] dark:bg-[#B9D79A] [&>button:last-child]:text-[#42602A] [&>button:last-child]:hover:bg-transparent [&>button:last-child]:focus:bg-transparent [&>button:last-child]:focus:ring-[#42602A] [&>button:last-child]:focus:ring-offset-[#B9D79A] [&>button:last-child]:data-[state=open]:bg-transparent",
   pastHackathonsDialogTitleClassName: "text-[#42602A]",
@@ -86,24 +86,26 @@ const bloomKnightsDashboardFrameTheme: DashboardFrameTheme = {
   pastHackathonsValueClassName: "text-[#2F8B57]",
   pastHackathonsIconClassName: "text-[#42602A]",
   hidePastHackathonsCardCutout: true,
-  confirmButtonClassName: "bg-[#f384d4] text-white hover:bg-[#f384d4]/90",
+  confirmButtonClassName:
+    "bg-[#f384d4] text-[#FFFDF1] hover:bg-[#f384d4]/90 [&_span]:text-[#FFFDF1]",
   confirmDialogContentClassName:
-    "border-[#aad163]/70 bg-[#aad163] text-white dark:bg-[#aad163] [&>button:last-child]:text-white [&>button:last-child]:hover:bg-transparent [&>button:last-child]:focus:bg-transparent [&>button:last-child]:focus:ring-[#f384d4] [&>button:last-child]:focus:ring-offset-[#aad163] [&>button:last-child]:data-[state=open]:bg-transparent",
-  confirmDialogTitleClassName: "text-white",
-  confirmDialogDescriptionClassName: "text-[#f384d4]",
-  confirmDialogTermsClassName: "border-white/50 text-white",
+    "border-[#B9D79A]/70 bg-[#B9D79A] text-[#42602A] dark:bg-[#B9D79A] [&>button:last-child]:text-[#42602A] [&>button:last-child]:hover:bg-transparent [&>button:last-child]:focus:bg-transparent [&>button:last-child]:focus:ring-[#42602A] [&>button:last-child]:focus:ring-offset-[#B9D79A] [&>button:last-child]:data-[state=open]:bg-transparent",
+  confirmDialogTitleClassName: "text-[#42602A]",
+  confirmDialogDescriptionClassName: "text-[#42602A]",
+  confirmDialogTermsClassName:
+    "border-[#FFFDF1]/80 bg-[#FFFDF1] text-[#42602A]",
   confirmDialogTermsLinkClassName:
     "text-[#f384d4] hover:text-[#f384d4] hover:shadow-none",
   confirmDialogCancelButtonClassName:
-    "border-white/80 bg-transparent text-white hover:bg-white/15 hover:text-white",
+    "border-[#FFFDF1]/80 bg-[#FFFDF1] text-destructive hover:bg-[#FFFDF1]/90 hover:text-destructive",
   confirmDialogSubmitButtonClassName:
-    "bg-[#f384d4] text-white hover:bg-[#f384d4]/90 disabled:bg-[#f384d4]/60 disabled:text-white/80",
+    "bg-[#f384d4] text-[#FFFDF1] hover:bg-[#f384d4]/90 disabled:bg-[#f384d4]/60 disabled:text-[#FFFDF1]/80",
   confirmSuccessDialogContentClassName:
-    "border-[#aad163]/70 bg-[#aad163] text-white dark:bg-[#aad163] [&>button:last-child]:text-white [&>button:last-child]:hover:bg-transparent [&>button:last-child]:focus:bg-transparent [&>button:last-child]:focus:ring-[#f384d4] [&>button:last-child]:focus:ring-offset-[#aad163] [&>button:last-child]:data-[state=open]:bg-transparent",
-  confirmSuccessDialogTitleClassName: "text-[#f384d4]",
-  confirmSuccessDialogDescriptionClassName: "text-white",
+    "border-[#B9D79A]/70 bg-[#B9D79A] text-[#FFFDF1] dark:bg-[#B9D79A] [&>button:last-child]:text-[#FFFDF1] [&>button:last-child]:hover:bg-transparent [&>button:last-child]:focus:bg-transparent [&>button:last-child]:focus:ring-[#42602A] [&>button:last-child]:focus:ring-offset-[#B9D79A] [&>button:last-child]:data-[state=open]:bg-transparent",
+  confirmSuccessDialogTitleClassName: "text-[#42602A]",
+  confirmSuccessDialogDescriptionClassName: "text-[#42602A]",
   confirmSuccessDialogButtonClassName:
-    "bg-[#f384d4] text-white hover:bg-[#f384d4]/90",
+    "bg-[#f384d4] text-[#FFFDF1] hover:bg-[#f384d4]/90",
   withdrawDialogContentClassName:
     "border-[#B9D79A]/70 bg-[#B9D79A] text-[#42602A] dark:bg-[#B9D79A] [&>button:last-child]:text-[#42602A] [&>button:last-child]:hover:bg-transparent [&>button:last-child]:focus:bg-transparent [&>button:last-child]:focus:ring-[#42602A] [&>button:last-child]:focus:ring-offset-[#B9D79A] [&>button:last-child]:data-[state=open]:bg-transparent",
   withdrawDialogTitleClassName: "text-[#42602A]",

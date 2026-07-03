@@ -79,7 +79,7 @@ const flowerStyles: Record<BloomPosition, FlowerStyle> = {
     "--bk-bloom-rotate": "64deg",
     "--bk-bloom-rotate-end": "18deg",
     "--bk-bloom-size": "1.6rem",
-    left: "98%",
+    left: "99%",
     top: "50%",
   },
   "bottom-right": {
