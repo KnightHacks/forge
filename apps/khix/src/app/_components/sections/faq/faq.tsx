@@ -1,16 +1,12 @@
 "use client";
 
-import type { CSSProperties, PointerEvent } from "react";
-import { useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
-import {
-  AnimatePresence,
-  motion,
-  useSpring,
-  useTransform,
-} from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 import styles from "./faq.module.css";
+import { useFaqMotion } from "./useFaqMotion";
 
 const faqSections = [
   {
@@ -445,40 +441,12 @@ function playCaveNote(frequency: number) {
 export default function FAQ() {
   const [activeSectionId, setActiveSectionId] =
     useState<FaqSectionId>("general");
-  const [openQuestion, setOpenQuestion] = useState(0);
-  const pointerX = useSpring(0, { stiffness: 190, damping: 22, mass: 0.18 });
-  const pointerY = useSpring(0, { stiffness: 190, damping: 22, mass: 0.18 });
-  const stageRef = useRef<HTMLElement>(null);
+  const [openQuestion, setOpenQuestion] = useState<number | null>(null);
+  const { sectionRef, handlePointerMove, handlePointerLeave } = useFaqMotion();
   const activeSection = useMemo(
     () => faqSections.find((section) => section.id === activeSectionId),
     [activeSectionId],
   );
-  const backgroundX = useTransform(pointerX, [-1, 1], [18, -18]);
-  const backgroundY = useTransform(pointerY, [-1, 1], [10, -10]);
-
-  const handlePointerMove = (event: PointerEvent<HTMLElement>) => {
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const x = (event.clientX - bounds.left) / bounds.width;
-    const y = (event.clientY - bounds.top) / bounds.height;
-
-    pointerX.set((x - 0.5) * 2);
-    pointerY.set((y - 0.5) * 2);
-    event.currentTarget.style.setProperty(
-      "--faq-light-x",
-      `${Math.max(0, Math.min(100, x * 100))}%`,
-    );
-    event.currentTarget.style.setProperty(
-      "--faq-light-y",
-      `${Math.max(0, Math.min(100, y * 100))}%`,
-    );
-  };
-
-  const handlePointerLeave = () => {
-    pointerX.set(0);
-    pointerY.set(0);
-    stageRef.current?.style.setProperty("--faq-light-x", "50%");
-    stageRef.current?.style.setProperty("--faq-light-y", "36%");
-  };
 
   if (!activeSection) {
     return null;
@@ -487,28 +455,17 @@ export default function FAQ() {
   return (
     <section
       id="faq"
-      ref={stageRef}
+      ref={sectionRef}
       className={styles.faq}
       aria-labelledby="faq-title"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      <motion.div
-        className={styles.background}
-        style={{ x: backgroundX, y: backgroundY }}
-        aria-hidden="true"
-      />
-      <div className={styles.shadowVeil} aria-hidden="true" />
-      <div className={styles.lightVeil} aria-hidden="true" />
-      <div className={styles.flashlight} aria-hidden="true" />
+      <div className={styles.background} aria-hidden="true" />
+      <div className={styles.atmosphereVeil} aria-hidden="true" />
 
       {floatingAssets.map((asset) => (
-        <ParallaxAsset
-          key={asset.className}
-          asset={asset}
-          x={pointerX}
-          y={pointerY}
-        />
+        <ParallaxAsset key={asset.className} asset={asset} />
       ))}
 
       <div className={styles.caveFloor}>
@@ -536,15 +493,14 @@ export default function FAQ() {
         </motion.h2>
 
         <div className={styles.categoryList} aria-label="FAQ sections">
-          {faqSections.map((section, index) => (
+          {faqSections.map((section) => (
             <GemstoneButton
               key={section.id}
               section={section}
-              index={index}
               isActive={section.id === activeSectionId}
               onSelect={() => {
                 setActiveSectionId(section.id);
-                setOpenQuestion(0);
+                setOpenQuestion(null);
                 playCaveNote(section.note);
               }}
             />
@@ -563,7 +519,11 @@ export default function FAQ() {
               key={item.question}
               item={item}
               isOpen={index === openQuestion}
-              onToggle={() => setOpenQuestion(index)}
+              onToggle={() =>
+                setOpenQuestion((currentQuestion) =>
+                  currentQuestion === index ? null : index,
+                )
+              }
             />
           ))}
         </motion.div>
@@ -572,26 +532,17 @@ export default function FAQ() {
   );
 }
 
-function ParallaxAsset({
-  asset,
-  x,
-  y,
-}: {
-  asset: FloatingAsset;
-  x: ReturnType<typeof useSpring>;
-  y: ReturnType<typeof useSpring>;
-}) {
-  const translateX = useTransform(x, [-1, 1], [-asset.depth, asset.depth]);
-  const translateY = useTransform(
-    y,
-    [-1, 1],
-    [-asset.depth * 0.55, asset.depth * 0.55],
-  );
-
+function ParallaxAsset({ asset }: { asset: FloatingAsset }) {
   return (
-    <motion.div
+    <div
       className={`${styles.floatingAsset} ${asset.className}`}
-      style={{ x: translateX, y: translateY }}
+      style={
+        {
+          "--faq-layer-depth-x": asset.depth,
+          "--faq-layer-depth-y": asset.depth * 0.55,
+          "--faq-layer-scroll-y": `${asset.depth * -0.45}px`,
+        } as CSSProperties
+      }
       aria-hidden={asset.hotspots ? undefined : true}
     >
       <Image
@@ -618,52 +569,40 @@ function ParallaxAsset({
           onClick={() => playCaveNote(hotspot.note)}
         />
       ))}
-    </motion.div>
+    </div>
   );
 }
 
 function GemstoneButton({
   section,
-  index,
   isActive,
   onSelect,
 }: {
   section: (typeof faqSections)[number];
-  index: number;
   isActive: boolean;
   onSelect: () => void;
 }) {
   return (
-    <motion.button
+    <button
       type="button"
       className={styles.gemButton}
       data-active={isActive}
       onClick={onSelect}
       aria-pressed={isActive}
-      whileHover={{ y: -4, scale: 1.04 }}
-      whileTap={{ scale: 0.94 }}
-      animate={{ y: [0, index % 2 === 0 ? -5 : 5, 0] }}
-      transition={{
-        y: {
-          duration: 4.4 + index * 0.35,
-          repeat: Infinity,
-          ease: "easeInOut",
-        },
-      }}
     >
       <Image
         src={
           isActive
-            ? "/faq/section selected faq rocks 1.png"
-            : "/faq/section faq rocks 4.png"
+            ? "/faq/selection-selected-faq-rock.png"
+            : "/faq/selection-faq-rock.png"
         }
         alt=""
-        width={isActive ? 569 : 584}
-        height={isActive ? 315 : 303}
-        className={`${styles.gemImage} motion-safe:animate-pulse`}
+        width={364}
+        height={202}
+        className={styles.gemImage}
       />
       <span>{section.label}</span>
-    </motion.button>
+    </button>
   );
 }
 
@@ -685,10 +624,10 @@ function FaqQuestion({
         onClick={onToggle}
       >
         <Image
-          src="/faq/question faq rocks 12.png"
+          src="/faq/question-rock.png"
           alt=""
-          width={996}
-          height={219}
+          width={1066}
+          height={172}
           className={styles.questionRock}
         />
         <span>{item.question}</span>
@@ -698,17 +637,17 @@ function FaqQuestion({
         {isOpen ? (
           <motion.div
             className={styles.answerWrap}
-            initial={{ opacity: 0, height: 0, y: -10 }}
+            initial={{ opacity: 0, height: 0, y: -24 }}
             animate={{ opacity: 1, height: "auto", y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -8 }}
-            transition={{ duration: 0.28, ease: "easeOut" }}
+            exit={{ opacity: 0, height: 0, y: -24 }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className={styles.answerRock}>
               <Image
-                src="/faq/answer faq rocks 2.png"
+                src="/faq/answer-rock.png"
                 alt=""
-                width={799}
-                height={551}
+                width={1066}
+                height={456}
                 className={styles.answerRockImage}
               />
               <p>{item.answer}</p>
