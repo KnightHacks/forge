@@ -25,7 +25,6 @@ type TeamCascadeStatus = "loading" | "ready" | "error";
 interface ActiveFall {
   id: string;
   person: TeamCascadePerson;
-  scale: number;
   sway: number;
   x: number;
 }
@@ -38,7 +37,6 @@ interface TeamCascadePerson {
 
 type NumberRange = readonly [number, number];
 type TeamCascadeItemStyle = CSSProperties & {
-  "--fall-scale": string;
   "--fall-static-y": string;
   "--fall-sway": string;
   "--fall-x": string;
@@ -54,7 +52,6 @@ const cascadeMotion = {
   minimumDropGapMs: 2300,
   randomDropJitterMs: 1600,
   reducedMotionMemberCount: 8,
-  scaleRange: [0.94, 1.04],
   staticStartPercent: 8,
   staticStepPercent: 12,
   swayRange: [-14, 14],
@@ -141,7 +138,9 @@ function TeamAvatar({
         aria-label={`Open ${member.name}'s LinkedIn profile`}
         onPointerUp={onPointerUp}
       >
-        <ProfileImage member={member} />
+        <span className={styles.teamAvatarMedia}>
+          <ProfileImage member={member} />
+        </span>
         {tooltip}
       </a>
     );
@@ -154,7 +153,9 @@ function TeamAvatar({
       onPointerUp={onPointerUp}
       role="img"
     >
-      <ProfileImage member={member} />
+      <span className={styles.teamAvatarMedia}>
+        <ProfileImage member={member} />
+      </span>
       {tooltip}
     </span>
   );
@@ -209,10 +210,6 @@ function getCascadeItemStyle(
   const fallSway = fall?.sway ?? 0;
 
   return {
-    "--fall-scale": `${(
-      fall?.scale ??
-      getSeededRange(profileKey, "scale", cascadeMotion.scaleRange)
-    ).toFixed(3)}`,
     "--fall-static-y": `${getStaticYPercent(index).toFixed(2)}%`,
     "--fall-sway": `${fallSway.toFixed(2)}px`,
     "--fall-x": `${(
@@ -258,7 +255,6 @@ function createActiveFall(person: TeamCascadePerson, id: string): ActiveFall {
   return {
     id,
     person,
-    scale: getRandomRange(cascadeMotion.scaleRange),
     sway: getRandomRange(cascadeMotion.swayRange),
     x: getRandomRange(cascadeMotion.xRange),
   };
