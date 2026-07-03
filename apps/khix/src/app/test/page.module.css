@@ -67,6 +67,23 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.sponsorSection {
+  overflow: hidden;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.22),
+      transparent 18%,
+      transparent 82%,
+      rgba(255, 255, 255, 0.16)
+    ),
+    linear-gradient(180deg, #dff0d8 0%, #c9f4d8 100%);
+}
+
+.sponsorShowcaseBox {
+  --sponsor-showcase-width: 70rem;
+}
+
 .teamSection {
   background:
     radial-gradient(

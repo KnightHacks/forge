@@ -1,0 +1,320 @@
+.sponsorShowcase {
+  width: min(100%, var(--sponsor-showcase-width, 54rem));
+  margin: 0 auto;
+  padding: 3.25rem 1rem 3.75rem;
+  color: #091923;
+  background: transparent;
+  isolation: isolate;
+}
+
+.sponsorTitle {
+  margin: 0 0 1.9rem;
+  color: #091923;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 3.25rem;
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: none;
+}
+
+.sponsorField {
+  display: grid;
+  justify-items: center;
+  gap: 1.75rem;
+}
+
+.slabStack {
+  display: grid;
+  width: 100%;
+  justify-items: center;
+  gap: 1.25rem;
+}
+
+.mediumStoneGrid,
+.smallStoneGrid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.mediumStoneGrid {
+  width: min(100%, 42rem);
+  gap: 1.55rem 2rem;
+  padding-top: 0.35rem;
+}
+
+.smallStoneGrid {
+  width: min(100%, 42rem);
+  gap: 1.35rem 1.8rem;
+}
+
+.sponsorLink {
+  --logo-height: 3rem;
+  --logo-width: 12rem;
+  --sponsor-height: 7rem;
+  --sponsor-width: 20rem;
+  --tier-color-rgb: 255 255 255;
+
+  position: relative;
+  display: block;
+  width: var(--sponsor-width);
+  height: var(--sponsor-height);
+  text-decoration: none;
+  outline: none;
+  isolation: isolate;
+}
+
+.sponsorLink[data-size="x-large"] {
+  --logo-height: 3.65rem;
+  --logo-width: 15.6rem;
+  --sponsor-height: 8.6rem;
+  --sponsor-width: clamp(24rem, 76vw, 35rem);
+}
+
+.sponsorLink[data-size="large"] {
+  --logo-height: 3.25rem;
+  --logo-width: 13.8rem;
+  --sponsor-height: 7.9rem;
+  --sponsor-width: clamp(21rem, 66vw, 30.5rem);
+}
+
+.sponsorLink[data-size="medium"] {
+  --logo-height: 2.4rem;
+  --logo-width: 8.25rem;
+  --sponsor-height: 12rem;
+  --sponsor-width: clamp(13.4rem, 36vw, 16rem);
+}
+
+.sponsorLink[data-size="small"] {
+  --logo-height: 2.05rem;
+  --logo-width: 7.25rem;
+  --sponsor-height: 8.75rem;
+  --sponsor-width: clamp(9.4rem, 24vw, 11.2rem);
+}
+
+.sponsorVisual {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform: translate3d(0, 0, 0);
+  transform-origin: 50% 58%;
+}
+
+.rockFrame {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translate3d(-50%, 0, 0);
+  filter: drop-shadow(0 1.05rem 0.92rem rgb(4 24 35 / 0.18));
+}
+
+.rockFrame::before {
+  position: absolute;
+  display: block;
+  aspect-ratio: 1;
+  content: "";
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+  user-select: none;
+  pointer-events: none;
+}
+
+.sponsorLink[data-size="medium"] .rockFrame,
+.sponsorLink[data-size="small"] .rockFrame {
+  width: 100%;
+  aspect-ratio: 400 / 292;
+}
+
+.sponsorLink[data-size="medium"] .rockFrame::before,
+.sponsorLink[data-size="small"] .rockFrame::before {
+  top: -209.59%;
+  left: -56.5%;
+  width: 375%;
+  background-image: url("/assets/small-sponsor-rock.png");
+}
+
+.sponsorLink[data-size="x-large"] .rockFrame,
+.sponsorLink[data-size="large"] .rockFrame {
+  bottom: 8%;
+  width: 100%;
+  aspect-ratio: 1196 / 262;
+}
+
+.sponsorLink[data-size="x-large"] .rockFrame::before,
+.sponsorLink[data-size="large"] .rockFrame::before {
+  top: -85.12%;
+  left: -11.96%;
+  width: 125.42%;
+  background-image: url("/assets/large-sponsor-rock.png");
+}
+
+.sponsorLogo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  display: block;
+  width: min(var(--logo-width), 76%);
+  height: var(--logo-height);
+  filter: drop-shadow(0 1px 0 rgb(4 18 28 / 0.35));
+  opacity: 0.94;
+  transform: translate3d(-50%, -50%, 0);
+  transition:
+    filter 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.sponsorLogo::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  content: "";
+  background: rgb(var(--tier-color-rgb));
+  mask: var(--sponsor-logo-src) center / contain no-repeat;
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    filter 180ms ease,
+    opacity 180ms ease;
+  -webkit-mask: var(--sponsor-logo-src) center / contain no-repeat;
+}
+
+.sponsorLogoImage {
+  z-index: 1;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  transition: filter 180ms ease;
+  user-select: none;
+}
+
+.sponsorLink[data-size="small"] .sponsorLogo {
+  width: min(var(--logo-width), 78%);
+}
+
+.sponsorLink:hover .sponsorVisual,
+.sponsorLink:focus-visible .sponsorVisual {
+  animation: sponsorHoverFloat 2.4s ease-in-out var(--float-delay) infinite
+    alternate;
+  will-change: transform;
+}
+
+.sponsorLink:hover .sponsorLogo,
+.sponsorLink:focus-visible .sponsorLogo {
+  filter: drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
+    drop-shadow(0 0 0.16rem rgb(var(--tier-color-rgb) / 0.54))
+    drop-shadow(0 0 0.38rem rgb(var(--tier-color-rgb) / 0.28));
+  opacity: 1;
+  transform: translate3d(-50%, -50%, 0) scale(1.035);
+}
+
+.sponsorLink:hover .sponsorLogo::after,
+.sponsorLink:focus-visible .sponsorLogo::after {
+  filter: drop-shadow(0 0 0.18rem rgb(var(--tier-color-rgb) / 0.76))
+    drop-shadow(0 0 0.4rem rgb(var(--tier-color-rgb) / 0.48));
+  opacity: 0.12;
+}
+
+.sponsorLink:hover .sponsorLogoImage,
+.sponsorLink:focus-visible .sponsorLogoImage {
+  filter: brightness(1.1) saturate(1.12)
+    drop-shadow(0 0 0.12rem rgb(var(--tier-color-rgb) / 0.92))
+    drop-shadow(0 0 0.3rem rgb(var(--tier-color-rgb) / 0.68))
+    drop-shadow(0 0 0.56rem rgb(var(--tier-color-rgb) / 0.34));
+}
+
+@media (max-width: 760px) {
+  .sponsorShowcase {
+    padding-top: 2.6rem;
+    padding-bottom: 3rem;
+  }
+
+  .sponsorTitle {
+    margin-bottom: 1.45rem;
+    font-size: 2.55rem;
+  }
+
+  .slabStack {
+    gap: 0.95rem;
+  }
+
+  .mediumStoneGrid {
+    width: min(100%, 28rem);
+    gap: 1.1rem 0.9rem;
+  }
+
+  .smallStoneGrid {
+    width: min(100%, 25rem);
+    gap: 0.95rem 0.85rem;
+  }
+
+  .sponsorLink[data-size="x-large"],
+  .sponsorLink[data-size="large"] {
+    --logo-height: 2.65rem;
+    --logo-width: 11.25rem;
+    --sponsor-height: 6.8rem;
+    --sponsor-width: min(86vw, 24rem);
+  }
+
+  .sponsorLink[data-size="medium"] {
+    --logo-height: 2.12rem;
+    --logo-width: 7.25rem;
+    --sponsor-height: 10.7rem;
+    --sponsor-width: min(56vw, 13.8rem);
+  }
+
+  .sponsorLink[data-size="small"] {
+    --logo-height: 1.85rem;
+    --logo-width: 6.6rem;
+    --sponsor-height: 7.45rem;
+    --sponsor-width: min(42vw, 9.6rem);
+  }
+}
+
+@media (max-width: 420px) {
+  .sponsorTitle {
+    font-size: 2.15rem;
+  }
+
+  .sponsorLink[data-size="small"] {
+    --sponsor-width: min(43vw, 8.6rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sponsorLogo {
+    transition: none;
+  }
+
+  .sponsorLogo::after,
+  .sponsorLogoImage {
+    transition: none;
+  }
+
+  .sponsorVisual,
+  .sponsorLink:hover .sponsorVisual,
+  .sponsorLink:focus-visible .sponsorVisual {
+    animation: none;
+  }
+}
+
+@keyframes sponsorHoverFloat {
+  0% {
+    transform: translate3d(0, -0.12rem, 0) rotate(-0.24deg);
+  }
+
+  100% {
+    transform: translate3d(0, 0.14rem, 0) rotate(0.2deg);
+  }
+}
