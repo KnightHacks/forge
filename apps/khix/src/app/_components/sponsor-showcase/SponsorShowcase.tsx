@@ -23,6 +23,8 @@ export interface SponsorShowcaseSponsor {
 export interface SponsorShowcaseProps {
   sponsors: readonly SponsorShowcaseSponsor[];
   className?: string;
+  title?: string;
+  titleId?: string;
 }
 
 type SponsorSize = "small" | "medium" | "large" | "x-large";
@@ -214,7 +216,12 @@ function SponsorRockCard({
   );
 }
 
-export function SponsorShowcase({ className, sponsors }: SponsorShowcaseProps) {
+export function SponsorShowcase({
+  className,
+  sponsors,
+  title = "Sponsors",
+  titleId = "khix-sponsors-title",
+}: SponsorShowcaseProps) {
   const orderedSponsors = getOrderedSponsors(sponsors);
   const slabSponsors = orderedSponsors.filter(
     (sponsor) =>
@@ -236,12 +243,9 @@ export function SponsorShowcase({ className, sponsors }: SponsorShowcaseProps) {
   }
 
   return (
-    <section
-      className={sponsorShowcaseClassName}
-      aria-labelledby="khix-sponsors-title"
-    >
-      <h2 id="khix-sponsors-title" className={styles.sponsorTitle}>
-        Sponsors
+    <section className={sponsorShowcaseClassName} aria-labelledby={titleId}>
+      <h2 id={titleId} className={styles.sponsorTitle}>
+        {title}
       </h2>
 
       <div className={styles.sponsorField}>

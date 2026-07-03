@@ -5,6 +5,7 @@ import { AboutCorruption, AboutSection } from "./_components/sections/about";
 import FAQ from "./_components/sections/faq/faq";
 import { SectionGrass } from "./_components/sections/grass";
 import Hero from "./_components/sections/hero";
+import { SponsorTeamSection } from "./_components/sections/sponsor-team";
 import styles from "./page.module.css";
 
 const NAV_LINKS = [
@@ -53,24 +54,7 @@ export default function Page() {
               Speakers
             </h2>
           </section>
-          <section
-            id="sponsors"
-            className={styles.openSection}
-            aria-labelledby="sponsors-title"
-          >
-            <h2 id="sponsors-title" className={styles.openSectionTitle}>
-              Sponsors
-            </h2>
-          </section>
-          <section
-            id="team"
-            className={styles.openSection}
-            aria-labelledby="team-title"
-          >
-            <h2 id="team-title" className={styles.openSectionTitle}>
-              Team
-            </h2>
-          </section>
+          <SponsorTeamSection />
           <FAQ />
         </div>
       </main>

@@ -7,6 +7,8 @@
   );
   --fall-distance: calc(var(--cascade-box-height) + 10rem);
   --fall-exit-distance: calc(var(--fall-distance) + 2.5rem);
+  --team-cascade-edge-pad: 6rem;
+  --team-avatar-size: clamp(4.45rem, 7vw, 6.35rem);
 
   position: relative;
   width: 100%;
@@ -27,7 +29,11 @@
   --fall-x: 50%;
 
   position: absolute;
-  left: clamp(6rem, var(--fall-x), calc(100% - 6rem));
+  left: clamp(
+    var(--team-cascade-edge-pad),
+    var(--fall-x),
+    calc(100% - var(--team-cascade-edge-pad))
+  );
   top: 0;
   display: flex;
   align-items: center;
@@ -57,7 +63,7 @@
 .teamAvatar {
   position: relative;
   display: inline-flex;
-  width: clamp(4.45rem, 7vw, 6.35rem);
+  width: var(--team-avatar-size);
   aspect-ratio: 1;
   align-items: center;
   justify-content: center;
@@ -193,7 +199,7 @@
   place-items: center;
   margin: 0;
   padding: 1rem;
-  color: rgba(16, 50, 71, 0.74);
+  color: var(--team-status-color, rgba(16, 50, 71, 0.74));
   font-size: 0.95rem;
   font-weight: 750;
   line-height: 1.5;
@@ -212,11 +218,11 @@
   }
 
   .teamCascadeItem {
-    left: clamp(4rem, var(--fall-x), calc(100% - 4rem));
+    --team-cascade-edge-pad: 4rem;
   }
 
   .teamAvatar {
-    width: clamp(3.75rem, 17vw, 4.7rem);
+    --team-avatar-size: clamp(3.75rem, 17vw, 4.7rem);
   }
 }
 
@@ -226,11 +232,11 @@
   }
 
   .teamCascadeItem {
-    left: clamp(3.55rem, var(--fall-x), calc(100% - 3.55rem));
+    --team-cascade-edge-pad: 3.55rem;
   }
 
   .teamAvatar {
-    width: 3.55rem;
+    --team-avatar-size: 3.55rem;
   }
 }
 

@@ -1,35 +1,36 @@
 .sponsorShowcase {
   width: min(100%, var(--sponsor-showcase-width, 54rem));
   margin: 0 auto;
-  padding: 3.25rem 1rem 3.75rem;
-  color: #091923;
+  padding: var(--sponsor-showcase-padding, 3.25rem 1rem 3.75rem);
+  color: var(--sponsor-showcase-color, #091923);
   background: transparent;
   isolation: isolate;
 }
 
 .sponsorTitle {
-  margin: 0 0 1.9rem;
-  color: #091923;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 3.25rem;
-  font-weight: 400;
-  line-height: 0.95;
+  margin: var(--sponsor-title-margin, 0 0 1.9rem);
+  color: var(--sponsor-title-color, #091923);
+  font-family: var(--sponsor-title-font, Georgia, "Times New Roman", serif);
+  font-size: var(--sponsor-title-size, 3.25rem);
+  font-weight: var(--sponsor-title-weight, 400);
+  line-height: var(--sponsor-title-line-height, 0.95);
   letter-spacing: 0;
   text-align: center;
-  text-transform: none;
+  text-shadow: var(--sponsor-title-shadow, none);
+  text-transform: var(--sponsor-title-transform, none);
 }
 
 .sponsorField {
   display: grid;
   justify-items: center;
-  gap: 1.75rem;
+  gap: var(--sponsor-field-gap, 1.75rem);
 }
 
 .slabStack {
   display: grid;
   width: 100%;
   justify-items: center;
-  gap: 1.25rem;
+  gap: var(--sponsor-slab-gap, 1.25rem);
 }
 
 .mediumStoneGrid,
@@ -41,21 +42,21 @@
 }
 
 .mediumStoneGrid {
-  width: min(100%, 42rem);
-  gap: 1.55rem 2rem;
-  padding-top: 0.35rem;
+  width: min(100%, var(--sponsor-medium-grid-width, 42rem));
+  gap: var(--sponsor-medium-grid-gap, 1.55rem 2rem);
+  padding-top: var(--sponsor-medium-grid-padding-top, 0.35rem);
 }
 
 .smallStoneGrid {
-  width: min(100%, 42rem);
-  gap: 1.35rem 1.8rem;
+  width: min(100%, var(--sponsor-small-grid-width, 42rem));
+  gap: var(--sponsor-small-grid-gap, 1.35rem 1.8rem);
 }
 
 .sponsorLink {
-  --logo-height: 3rem;
-  --logo-width: 12rem;
-  --sponsor-height: 7rem;
-  --sponsor-width: 20rem;
+  --logo-height: var(--sponsor-base-logo-height, 3rem);
+  --logo-width: var(--sponsor-base-logo-width, 12rem);
+  --sponsor-height: var(--sponsor-base-height, 7rem);
+  --sponsor-width: var(--sponsor-base-width, 20rem);
   --tier-glow-end-rgb: 255 255 255;
   --tier-glow-hover-end-alpha: 0.62;
   --tier-glow-hover-start-alpha: 0.9;
@@ -76,31 +77,31 @@
 }
 
 .sponsorLink[data-size="x-large"] {
-  --logo-height: 3.65rem;
-  --logo-width: 15.6rem;
-  --sponsor-height: 8.6rem;
-  --sponsor-width: clamp(24rem, 76vw, 35rem);
+  --logo-height: var(--sponsor-xl-logo-height, 3.65rem);
+  --logo-width: var(--sponsor-xl-logo-width, 15.6rem);
+  --sponsor-height: var(--sponsor-xl-height, 8.6rem);
+  --sponsor-width: var(--sponsor-xl-width, clamp(24rem, 76vw, 35rem));
 }
 
 .sponsorLink[data-size="large"] {
-  --logo-height: 3.25rem;
-  --logo-width: 13.8rem;
-  --sponsor-height: 7.9rem;
-  --sponsor-width: clamp(21rem, 66vw, 30.5rem);
+  --logo-height: var(--sponsor-large-logo-height, 3.25rem);
+  --logo-width: var(--sponsor-large-logo-width, 13.8rem);
+  --sponsor-height: var(--sponsor-large-height, 7.9rem);
+  --sponsor-width: var(--sponsor-large-width, clamp(21rem, 66vw, 30.5rem));
 }
 
 .sponsorLink[data-size="medium"] {
-  --logo-height: 2.4rem;
-  --logo-width: 8.25rem;
-  --sponsor-height: 12rem;
-  --sponsor-width: clamp(13.4rem, 36vw, 16rem);
+  --logo-height: var(--sponsor-medium-logo-height, 2.4rem);
+  --logo-width: var(--sponsor-medium-logo-width, 8.25rem);
+  --sponsor-height: var(--sponsor-medium-height, 12rem);
+  --sponsor-width: var(--sponsor-medium-width, clamp(13.4rem, 36vw, 16rem));
 }
 
 .sponsorLink[data-size="small"] {
-  --logo-height: 2.05rem;
-  --logo-width: 7.25rem;
-  --sponsor-height: 8.75rem;
-  --sponsor-width: clamp(9.4rem, 24vw, 11.2rem);
+  --logo-height: var(--sponsor-small-logo-height, 2.05rem);
+  --logo-width: var(--sponsor-small-logo-width, 7.25rem);
+  --sponsor-height: var(--sponsor-small-height, 8.75rem);
+  --sponsor-width: var(--sponsor-small-width, clamp(9.4rem, 24vw, 11.2rem));
 }
 
 .sponsorVisual {
@@ -120,7 +121,10 @@
   overflow: hidden;
   pointer-events: none;
   transform: translate3d(-50%, 0, 0);
-  filter: drop-shadow(0 1.05rem 0.92rem rgb(4 24 35 / 0.18));
+  filter: var(
+    --sponsor-rock-shadow,
+    drop-shadow(0 1.05rem 0.92rem rgb(4 24 35 / 0.18))
+  );
 }
 
 .rockFrame::before {

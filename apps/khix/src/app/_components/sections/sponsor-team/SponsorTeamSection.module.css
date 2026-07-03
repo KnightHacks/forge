@@ -1,0 +1,194 @@
+.waterfallShowcase {
+  --composition-width: min(92vw, 72rem);
+  --waterfall-width: 100vw;
+  --waterfall-height: calc(var(--waterfall-width) * 4.1667);
+
+  position: relative;
+  z-index: 2;
+  min-height: var(--waterfall-height);
+  margin-top: clamp(-2rem, -3vw, -0.75rem);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(17, 57, 75, 0.55), transparent 28%),
+    linear-gradient(180deg, #07100f 0%, #05090d 52%, #07100f 100%);
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: var(--waterfall-width);
+  height: 100%;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.34),
+      transparent 12%,
+      transparent 88%,
+      rgba(0, 0, 0, 0.34)
+    ),
+    url("/assets/rocks%20waterfall.png") center top / 100% auto no-repeat,
+    url("/assets/waterfall-animated.webp") center top / 100% auto no-repeat;
+  box-shadow:
+    0 0 0 1px rgba(83, 232, 255, 0.16),
+    0 0 3rem rgba(20, 238, 231, 0.18);
+}
+
+.bridge {
+  position: absolute;
+  top: 50.4%;
+  left: 50%;
+  z-index: 3;
+  width: 110vw;
+  height: calc(var(--waterfall-width) * 0.31);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04), transparent 28%),
+    linear-gradient(180deg, #151a2a 0%, #0c111d 58%, #070b13 100%);
+  clip-path: polygon(0 18%, 48% 4%, 100% 17%, 100% 82%, 50% 70%, 0 88%);
+  filter: drop-shadow(0 -0.45rem 0.75rem rgba(3, 7, 12, 0.24))
+    drop-shadow(0 0.6rem 0.7rem rgba(2, 4, 8, 0.3));
+  transform: translateX(-50%);
+}
+
+.content {
+  position: relative;
+  z-index: 4;
+  width: min(100%, 58rem);
+  min-height: var(--waterfall-height);
+  margin: 0 auto;
+}
+
+.sponsorPanel {
+  min-height: calc(var(--waterfall-height) * 0.5);
+  padding: calc(var(--waterfall-height) * 0.038)
+    calc(var(--composition-width) * 0.14) 0;
+}
+
+.sponsorShowcase {
+  --sponsor-showcase-width: calc(var(--composition-width) * 0.72);
+  --sponsor-showcase-padding: 0;
+  --sponsor-title-color: #081820;
+  --sponsor-title-font: var(--font-cormorant-garamond, Georgia), Georgia, serif;
+  --sponsor-title-line-height: 1;
+  --sponsor-title-margin: 0 0 calc(var(--composition-width) * 0.02);
+  --sponsor-title-shadow: 0 1px 0 rgba(255, 255, 255, 0.38);
+  --sponsor-title-size: clamp(
+    1rem,
+    calc(var(--composition-width) * 0.026),
+    1.55rem
+  );
+  --sponsor-title-transform: uppercase;
+  --sponsor-field-gap: calc(var(--composition-width) * 0.015);
+  --sponsor-slab-gap: calc(var(--composition-width) * 0.004);
+  --sponsor-medium-grid-gap: calc(var(--composition-width) * 0.005)
+    calc(var(--composition-width) * 0.028);
+  --sponsor-medium-grid-padding-top: 0;
+  --sponsor-medium-grid-width: calc(var(--composition-width) * 0.48);
+  --sponsor-small-grid-gap: calc(var(--composition-width) * 0.005)
+    calc(var(--composition-width) * 0.015);
+  --sponsor-small-grid-width: calc(var(--composition-width) * 0.54);
+  --sponsor-xl-height: calc(var(--composition-width) * 0.155);
+  --sponsor-xl-logo-height: calc(var(--composition-width) * 0.032);
+  --sponsor-xl-logo-width: calc(var(--composition-width) * 0.28);
+  --sponsor-xl-width: calc(var(--composition-width) * 0.43);
+  --sponsor-large-height: calc(var(--composition-width) * 0.135);
+  --sponsor-large-logo-height: calc(var(--composition-width) * 0.028);
+  --sponsor-large-logo-width: calc(var(--composition-width) * 0.24);
+  --sponsor-large-width: calc(var(--composition-width) * 0.39);
+  --sponsor-medium-height: calc(var(--composition-width) * 0.142);
+  --sponsor-medium-logo-height: calc(var(--composition-width) * 0.024);
+  --sponsor-medium-logo-width: calc(var(--composition-width) * 0.15);
+  --sponsor-medium-width: calc(var(--composition-width) * 0.17);
+  --sponsor-small-height: calc(var(--composition-width) * 0.105);
+  --sponsor-small-logo-height: calc(var(--composition-width) * 0.02);
+  --sponsor-small-logo-width: calc(var(--composition-width) * 0.12);
+  --sponsor-small-width: calc(var(--composition-width) * 0.122);
+  --sponsor-rock-shadow: drop-shadow(0 0.28rem 0.2rem rgb(5 28 35 / 0.28));
+}
+
+.sectionTitle {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  color: #081820;
+  font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
+  font-size: clamp(1rem, calc(var(--composition-width) * 0.026), 1.55rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.38);
+  text-transform: uppercase;
+}
+
+.partnerGroup {
+  width: calc(var(--composition-width) * 0.54);
+  margin: calc(var(--composition-width) * 0.105) auto 0;
+}
+
+.partnerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(var(--composition-width) * 0.018)
+    calc(var(--composition-width) * 0.035);
+  margin-top: calc(var(--composition-width) * 0.03);
+}
+
+.partnerStone {
+  display: block;
+  height: calc(var(--composition-width) * 0.11);
+  background: url("/assets/large-sponsor-rock.png") center / contain no-repeat;
+  filter: drop-shadow(0 0.28rem 0.2rem rgb(5 28 35 / 0.28));
+}
+
+.teamPanel {
+  position: absolute;
+  top: calc(var(--waterfall-height) * 0.58);
+  left: 50%;
+  width: calc(var(--composition-width) * 0.7);
+  transform: translateX(-50%);
+}
+
+.teamPanel .sectionTitle {
+  margin-bottom: calc(var(--composition-width) * 0.015);
+}
+
+.teamCascade {
+  --team-cascade-edge-pad: calc(var(--composition-width) * 0.11);
+  --team-cascade-height: calc(var(--waterfall-height) * 0.32);
+  --team-avatar-size: clamp(
+    3rem,
+    calc(var(--composition-width) * 0.09),
+    5.2rem
+  );
+  --team-status-color: rgba(235, 255, 255, 0.78);
+
+  width: 100%;
+  margin: 0 auto;
+}
+
+.teamCascade::before {
+  position: absolute;
+  inset: 0 12% auto;
+  height: 26%;
+  content: "";
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent);
+  filter: blur(0.4rem);
+  pointer-events: none;
+}
+
+@media (max-width: 420px) {
+  .sponsorPanel {
+    padding-right: calc(var(--composition-width) * 0.1);
+    padding-left: calc(var(--composition-width) * 0.1);
+  }
+
+  .teamCascade {
+    --team-avatar-size: clamp(
+      2rem,
+      calc(var(--composition-width) * 0.092),
+      2.45rem
+    );
+  }
+}
