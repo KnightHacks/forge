@@ -117,7 +117,13 @@ function ProfileImage({ member }: { member: TeamCascadeMember }) {
   );
 }
 
-function TeamAvatar({ person }: { person: TeamCascadePerson }) {
+function TeamAvatar({
+  onPointerUp,
+  person,
+}: {
+  onPointerUp?: () => void;
+  person: TeamCascadePerson;
+}) {
   const { member } = person;
   const tooltip = (
     <span className={styles.teamAvatarTooltip}>
@@ -134,6 +140,7 @@ function TeamAvatar({ person }: { person: TeamCascadePerson }) {
         target="_blank"
         rel="noopener noreferrer"
         aria-label={`Open ${member.name}'s LinkedIn profile`}
+        onPointerUp={onPointerUp}
       >
         <ProfileImage member={member} />
         {tooltip}
@@ -145,6 +152,7 @@ function TeamAvatar({ person }: { person: TeamCascadePerson }) {
     <span
       className={`${styles.teamAvatar} ${styles.teamAvatarStatic}`}
       aria-label={member.name}
+      onPointerUp={onPointerUp}
       role="img"
     >
       <ProfileImage member={member} />
@@ -156,13 +164,19 @@ function TeamAvatar({ person }: { person: TeamCascadePerson }) {
 function TeamCascadeItem({
   fall,
   index,
+  isResumingAfterClick,
+  onAvatarPointerUp,
   person,
   onFallEnd,
+  onResumeAfterClickEnd,
 }: {
   fall?: ActiveFall;
   index: number;
+  isResumingAfterClick?: boolean;
+  onAvatarPointerUp?: (id: string) => void;
   person: TeamCascadePerson;
   onFallEnd?: (id: string) => void;
+  onResumeAfterClickEnd?: (id: string) => void;
 }) {
   const { profileKey } = person;
   const style = getCascadeItemStyle(fall, index, profileKey);
@@ -170,11 +184,20 @@ function TeamCascadeItem({
   return (
     <div
       className={styles.teamCascadeItem}
+      data-resume-after-click={isResumingAfterClick ? true : undefined}
       data-static={!fall ? true : undefined}
       onAnimationEnd={fall ? () => onFallEnd?.(fall.id) : undefined}
+      onPointerLeave={
+        fall && isResumingAfterClick
+          ? () => onResumeAfterClickEnd?.(fall.id)
+          : undefined
+      }
       style={style}
     >
-      <TeamAvatar person={person} />
+      <TeamAvatar
+        person={person}
+        onPointerUp={fall ? () => onAvatarPointerUp?.(fall.id) : undefined}
+      />
     </div>
   );
 }
@@ -330,6 +353,9 @@ export function TeamCascadeClient({
   const lastDropAtRef = useRef(0);
   const [activeFalls, setActiveFalls] = useState<ActiveFall[]>([]);
   const [groups, setGroups] = useState<TeamCascadeGroup[]>([]);
+  const [resumeAfterClickFallIds, setResumeAfterClickFallIds] = useState<
+    Set<string>
+  >(() => new Set());
   const [status, setStatus] = useState<TeamCascadeStatus>(
     bladeUrl ? "loading" : "error",
   );
@@ -346,6 +372,34 @@ export function TeamCascadeClient({
     setActiveFalls((currentFalls) =>
       currentFalls.filter((fall) => fall.id !== id),
     );
+    setResumeAfterClickFallIds((currentFallIds) => {
+      if (!currentFallIds.has(id)) return currentFallIds;
+
+      const nextFallIds = new Set(currentFallIds);
+      nextFallIds.delete(id);
+
+      return nextFallIds;
+    });
+  }, []);
+  const handleAvatarPointerUp = useCallback((id: string) => {
+    setResumeAfterClickFallIds((currentFallIds) => {
+      if (currentFallIds.has(id)) return currentFallIds;
+
+      const nextFallIds = new Set(currentFallIds);
+      nextFallIds.add(id);
+
+      return nextFallIds;
+    });
+  }, []);
+  const handleResumeAfterClickEnd = useCallback((id: string) => {
+    setResumeAfterClickFallIds((currentFallIds) => {
+      if (!currentFallIds.has(id)) return currentFallIds;
+
+      const nextFallIds = new Set(currentFallIds);
+      nextFallIds.delete(id);
+
+      return nextFallIds;
+    });
   }, []);
 
   useEffect(() => {
@@ -471,9 +525,12 @@ export function TeamCascadeClient({
               <TeamCascadeItem
                 key={fall.id}
                 fall={fall}
+                isResumingAfterClick={resumeAfterClickFallIds.has(fall.id)}
                 person={fall.person}
                 index={index}
+                onAvatarPointerUp={handleAvatarPointerUp}
                 onFallEnd={handleFallEnd}
+                onResumeAfterClickEnd={handleResumeAfterClickEnd}
               />
             ))}
       </div>

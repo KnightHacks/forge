@@ -46,10 +46,13 @@
   transform: translate3d(-50%, -50%, 0) scale(var(--fall-scale));
 }
 
-.teamCascadeItem:hover,
-.teamCascadeItem:focus-within {
+.teamCascadeItem:hover {
   animation-play-state: paused;
   z-index: 3;
+}
+
+.teamCascadeItem[data-resume-after-click="true"] {
+  animation-play-state: running;
 }
 
 .teamAvatar {
