@@ -1,0 +1,56 @@
+.grassLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.grass {
+  position: absolute;
+  top: var(--grass-top);
+  right: var(--grass-right, auto);
+  left: var(--grass-left, auto);
+  display: block;
+  width: var(--grass-width);
+  max-width: none;
+  height: auto;
+  opacity: var(--grass-opacity, 0.7);
+  user-select: none;
+  filter: brightness(1.14) saturate(1.03) contrast(1.05)
+    drop-shadow(0 1rem 1.8rem rgba(0, 0, 0, 0.22));
+  transform: var(--grass-transform, none);
+  transform-origin: 50% 100%;
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .grass {
+    top: var(--grass-tablet-top, var(--grass-top));
+    right: var(--grass-tablet-right, var(--grass-right, auto));
+    left: var(--grass-tablet-left, var(--grass-left, auto));
+    width: var(--grass-tablet-width, var(--grass-width));
+    opacity: var(--grass-tablet-opacity, var(--grass-opacity, 0.68));
+  }
+}
+
+@media (max-width: 760px) {
+  .grass {
+    top: var(--grass-mobile-top, var(--grass-tablet-top, var(--grass-top)));
+    right: var(
+      --grass-mobile-right,
+      var(--grass-tablet-right, var(--grass-right, auto))
+    );
+    left: var(
+      --grass-mobile-left,
+      var(--grass-tablet-left, var(--grass-left, auto))
+    );
+    width: var(
+      --grass-mobile-width,
+      var(--grass-tablet-width, var(--grass-width))
+    );
+    opacity: var(
+      --grass-mobile-opacity,
+      var(--grass-tablet-opacity, var(--grass-opacity, 0.58))
+    );
+  }
+}

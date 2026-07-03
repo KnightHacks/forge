@@ -5,10 +5,17 @@
 }
 
 .hero {
+  --khix-hero-height: 112svh;
+  --khix-hero-pointer-x: 0;
+  --khix-hero-pointer-y: 0;
+  --khix-hero-scroll-progress: 0;
+
   position: relative;
   z-index: 1;
-  min-height: 100vh;
-  min-height: 100svh;
+  min-height: 112vh;
+  min-height: var(--khix-hero-height);
+  overflow-x: hidden;
+  overflow-x: clip;
   overflow-anchor: none;
   background: #eef6cf;
 }
@@ -20,8 +27,8 @@
 
   position: relative;
   width: 100%;
-  height: 100vh;
-  height: 100svh;
+  height: 112vh;
+  height: var(--khix-hero-height);
   overflow: hidden;
   overflow-anchor: none;
   isolation: isolate;
@@ -35,9 +42,9 @@
 }
 
 .art {
-  --khix-art-motion-scale: 0.64;
+  --khix-art-motion-scale: 0.46;
   position: absolute;
-  inset: -6.32svh -3.76vw;
+  inset: -1.6svh -1.2vw;
   z-index: 1;
   pointer-events: auto;
   overflow-anchor: none;
@@ -104,9 +111,9 @@
 }
 
 .foregroundLayer {
-  inset: -6.32svh -3.76vw;
+  inset: 0;
   z-index: 12;
-  overflow: visible;
+  overflow: hidden;
   pointer-events: none;
   transform: none;
   will-change: auto;
@@ -114,11 +121,12 @@
 
 .foregroundImage {
   position: absolute;
-  top: clamp(14rem, 36svh, 24rem);
+  top: calc(var(--khix-hero-height) - 60vw);
   left: 0;
   width: 100%;
+  max-width: 100%;
   height: auto;
-  filter: saturate(0.92) brightness(0.86);
+  transform-origin: 50% 100%;
 }
 
 .glowLayer {
@@ -287,19 +295,30 @@
 }
 
 @media (max-width: 700px) {
+  .hero {
+    --khix-hero-height: 108svh;
+    min-height: 108vh;
+    min-height: var(--khix-hero-height);
+  }
+
+  .art {
+    --khix-art-motion-scale: 0.42;
+    inset: -1.4svh -2vw;
+  }
+
   .layerImage {
     object-position: 94% 50%;
   }
 
   .foregroundLayer {
-    inset: -6.32svh -3.76vw;
+    inset: 0;
   }
 
   .foregroundImage {
-    top: clamp(16rem, 42svh, 25rem);
+    top: calc(var(--khix-hero-height) - 66vw);
     left: 0;
     width: 100%;
-    max-width: none;
+    max-width: 100%;
     transform: none;
   }
 
@@ -317,7 +336,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .hero {
-    min-height: 100svh;
+    min-height: var(--khix-hero-height);
   }
 
   .stage {

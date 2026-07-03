@@ -14,12 +14,12 @@ const clamp = (value: number, min = 0, max = 1) =>
 const getViewportHeight = () =>
   window.visualViewport?.height ?? window.innerHeight;
 
-const setStageMotionNumber = (
-  stage: HTMLDivElement | null,
+const setElementMotionNumber = (
+  element: HTMLElement | null,
   property: string,
   value: number,
 ) => {
-  stage?.style.setProperty(property, value.toFixed(4));
+  element?.style.setProperty(property, value.toFixed(4));
 };
 
 export function useHeroMotion(): HeroMotion {
@@ -36,6 +36,7 @@ export function useHeroMotion(): HeroMotion {
 
   const setPointerVars = (x: number, y: number) => {
     const stage = stageRef.current;
+    const section = sectionRef.current;
     const motionValues = motionValuesRef.current;
 
     if (
@@ -47,8 +48,10 @@ export function useHeroMotion(): HeroMotion {
 
     motionValues.pointerX = x;
     motionValues.pointerY = y;
-    setStageMotionNumber(stage, "--khix-hero-pointer-x", x);
-    setStageMotionNumber(stage, "--khix-hero-pointer-y", y);
+    setElementMotionNumber(stage, "--khix-hero-pointer-x", x);
+    setElementMotionNumber(stage, "--khix-hero-pointer-y", y);
+    setElementMotionNumber(section, "--khix-hero-pointer-x", x);
+    setElementMotionNumber(section, "--khix-hero-pointer-y", y);
   };
 
   const cancelPointerFrame = () => {
@@ -87,8 +90,13 @@ export function useHeroMotion(): HeroMotion {
       }
 
       motionValues.scrollProgress = progress;
-      setStageMotionNumber(
+      setElementMotionNumber(
         stageRef.current,
+        "--khix-hero-scroll-progress",
+        progress,
+      );
+      setElementMotionNumber(
+        sectionRef.current,
         "--khix-hero-scroll-progress",
         progress,
       );
