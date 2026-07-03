@@ -19,8 +19,10 @@ interface NavContentProps {
   isMobileMenuOpen: boolean;
   navLinks: NavLink[];
   showGlow?: boolean;
+  showSignOut?: boolean;
   onMobileMenuClose: () => void;
   onMobileMenuToggle: () => void;
+  onSignOut?: () => void;
 }
 
 const scrolledLinkGlow: React.CSSProperties = {
@@ -33,8 +35,10 @@ function NavContent({
   isMobileMenuOpen,
   navLinks,
   showGlow = false,
+  showSignOut = false,
   onMobileMenuClose,
   onMobileMenuToggle,
+  onSignOut,
 }: NavContentProps) {
   return (
     <div className="relative flex h-20 items-center px-4 md:justify-between md:px-12 lg:px-32">
@@ -87,6 +91,17 @@ function NavContent({
             <span className="relative z-10">{link.label}</span>
           </a>
         ))}
+        {showSignOut && (
+          <button
+            type="button"
+            className="wc-nav-link rounded-md px-2 py-1 text-base transition-[color,text-shadow,transform] duration-500 lg:text-lg"
+            style={showGlow ? scrolledLinkGlow : undefined}
+            tabIndex={isHidden ? -1 : undefined}
+            onClick={onSignOut}
+          >
+            Sign out
+          </button>
+        )}
       </div>
       <div className="hidden w-12 md:block" />
 
@@ -115,6 +130,19 @@ function NavContent({
                   {link.label}
                 </a>
               ))}
+              {showSignOut && (
+                <button
+                  type="button"
+                  className="font-righteous px-5 py-3 text-left text-lg tracking-normal transition-colors duration-300 hover:bg-[#245f34]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#245f34]"
+                  tabIndex={isHidden ? -1 : undefined}
+                  onClick={() => {
+                    onMobileMenuClose();
+                    onSignOut?.();
+                  }}
+                >
+                  Sign out
+                </button>
+              )}
             </div>
           </motion.div>
         )}

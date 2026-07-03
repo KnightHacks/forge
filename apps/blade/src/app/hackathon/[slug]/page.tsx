@@ -1,55 +1,26 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
-import { auth } from "@forge/auth";
-
-import { BaseHackathonDashboard } from "~/app/_components/dashboard/hackathon-dashboard/components";
-import HackerDashboard from "~/app/_components/dashboard/hacker-dashboard/hacker-dashboard";
-import { SessionNavbar } from "~/app/_components/navigation/session-navbar";
-import { api, HydrateClient } from "~/trpc/server";
+import { PortalUnavailable } from "~/app/_components/hackathon/portal-unavailable";
+import { buildParticipantPortalUrl } from "~/lib/hackathon-portal";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
-  title: "Blade | Hackathon Dashboard",
-  description: "The official hackathon dashboard.",
+  title: "Hackathon Portal",
 };
 
-export default async function HackathonSlugPage(props: {
+export default async function LegacyHackathonDashboardPage({
+  params,
+}: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await props.params;
-
-  const session = await auth();
-
-  if (!session) {
-    redirect("/");
-  }
-
-  const hackathon = await api.hackathon.getHackathon({
-    hackathonName: slug,
-  });
-
-  if (!hackathon) {
-    notFound();
-  }
-
-  const hacker = await api.hackerQuery.getHacker({
-    hackathonName: hackathon.name,
-  });
-
-  return (
-    <HydrateClient>
-      <SessionNavbar />
-      <main className="container min-h-screen py-16">
-        <div className="flex justify-center">
-          <div className="max-w-8xl w-full">
-            {hacker?.status === "checkedin" ? (
-              <BaseHackathonDashboard hackathon={hackathon} hacker={hacker} />
-            ) : (
-              <HackerDashboard hackathon={hackathon} hacker={hacker} />
-            )}
-          </div>
-        </div>
-      </main>
-    </HydrateClient>
+  const { slug } = await params;
+  const hackathon = await api.hackathon.getHackathon({ hackathonName: slug });
+  const portalUrl = buildParticipantPortalUrl(
+    hackathon?.portalBaseUrl,
+    "/dashboard",
   );
+
+  if (portalUrl) redirect(portalUrl);
+  return <PortalUnavailable displayName={hackathon?.displayName} />;
 }

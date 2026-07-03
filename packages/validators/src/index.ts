@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export * from "./hackathons";
+export * from "./hacker";
 
 export const unused = z.string().describe(
   `This lib is currently not used as we use drizzle-zod for simple schemas

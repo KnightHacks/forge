@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { ExternalLink, Loader2, Pencil, Plus, ShieldCheck } from "lucide-react";
 import { z } from "zod";
 
@@ -55,7 +54,9 @@ import {
   getHackathonBackgroundIssues,
   getHackathonDateWindowIssues,
   getHackathonEmailTemplateIssues,
+  hackathonConfirmationCapacitySchema,
   hackathonDisplayNameSchema,
+  hackathonPortalBaseUrlSchema,
   hackathonRouteNameSchema,
   hackathonThemeSchema,
 } from "@forge/validators";
@@ -105,6 +106,8 @@ const formSchema = z
     applicationBackgroundKey: hackathonApplicationBackgroundKeySchema,
     emailTemplateEnabled: z.boolean(),
     emailTemplateKey: hackathonEmailTemplateKeySchema,
+    portalBaseUrl: z.string(),
+    confirmationCapacity: z.string(),
     applicationOpen: z.string().min(1, "Application open is required."),
     applicationDeadline: z.string().min(1, "Application deadline is required."),
     confirmationDeadline: z
@@ -119,6 +122,28 @@ const formSchema = z
     const confirmationDeadline = new Date(values.confirmationDeadline);
     const startDate = new Date(values.startDate);
     const endDate = new Date(values.endDate);
+    const portalResult = hackathonPortalBaseUrlSchema.safeParse(
+      values.portalBaseUrl,
+    );
+    const capacityResult = hackathonConfirmationCapacitySchema.safeParse(
+      values.confirmationCapacity,
+    );
+
+    if (!portalResult.success) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: portalResult.error.issues[0]?.message ?? "Invalid portal URL.",
+        path: ["portalBaseUrl"],
+      });
+    }
+
+    if (!capacityResult.success) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: capacityResult.error.issues[0]?.message ?? "Invalid capacity.",
+        path: ["confirmationCapacity"],
+      });
+    }
 
     for (const issue of getHackathonBackgroundIssues(values)) {
       ctx.addIssue({
@@ -197,6 +222,8 @@ function getDefaultValues(
       ),
       emailTemplateEnabled: hackathon.emailTemplateEnabled,
       emailTemplateKey: getSafeEmailTemplateKey(hackathon.emailTemplateKey),
+      portalBaseUrl: hackathon.portalBaseUrl ?? "",
+      confirmationCapacity: hackathon.confirmationCapacity?.toString() ?? "",
       applicationOpen: toDateTimeLocalValue(hackathon.applicationOpen),
       applicationDeadline: toDateTimeLocalValue(hackathon.applicationDeadline),
       confirmationDeadline: toDateTimeLocalValue(
@@ -223,6 +250,8 @@ function getDefaultValues(
     applicationBackgroundKey: DEFAULT_BACKGROUND_KEY,
     emailTemplateEnabled: false,
     emailTemplateKey: DEFAULT_EMAIL_TEMPLATE_KEY,
+    portalBaseUrl: "",
+    confirmationCapacity: "",
     applicationOpen: toDateTimeLocalValue(applicationOpen),
     applicationDeadline: toDateTimeLocalValue(applicationDeadline),
     confirmationDeadline: toDateTimeLocalValue(confirmationDeadline),
@@ -246,6 +275,10 @@ function toMutationPayload(values: HackathonFormValues) {
     emailTemplateKey: values.emailTemplateEnabled
       ? (values.emailTemplateKey as EmailTemplateKey | undefined)
       : null,
+    portalBaseUrl: hackathonPortalBaseUrlSchema.parse(values.portalBaseUrl),
+    confirmationCapacity: hackathonConfirmationCapacitySchema.parse(
+      values.confirmationCapacity,
+    ),
     applicationOpen: new Date(values.applicationOpen),
     applicationDeadline: new Date(values.applicationDeadline),
     confirmationDeadline: new Date(values.confirmationDeadline),
@@ -401,8 +434,15 @@ export function HackathonManager() {
                     <div className="space-y-1">
                       <div className="font-medium">{hackathon.displayName}</div>
                       <div className="text-xs text-muted-foreground">
-                        /hacker/application/{hackathon.name}
+                        {hackathon.portalBaseUrl ??
+                          "No participant portal configured"}
                       </div>
+                      {hackathon.confirmationCapacity != null && (
+                        <div className="text-xs text-muted-foreground">
+                          Capacity:{" "}
+                          {hackathon.confirmationCapacity.toLocaleString()}
+                        </div>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
@@ -437,12 +477,20 @@ export function HackathonManager() {
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/hacker/application/${hackathon.name}`}>
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          Open
-                        </Link>
-                      </Button>
+                      {hackathon.portalBaseUrl ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <a
+                            href={`${hackathon.portalBaseUrl}/dashboard`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            Open
+                          </a>
+                        </Button>
+                      ) : (
+                        <Badge variant="destructive">Portal missing</Badge>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -477,8 +525,8 @@ export function HackathonManager() {
               {editingHackathon ? "Edit Hackathon" : "Create Hackathon"}
             </DialogTitle>
             <DialogDescription>
-              Dates are saved from your local timezone. Route names become the
-              public application URL.
+              Dates are saved from your local timezone. The route name is the
+              stable API identifier; the portal origin controls public links.
             </DialogDescription>
           </DialogHeader>
 
@@ -511,7 +559,7 @@ export function HackathonManager() {
                         <Input placeholder="knight-hacks-ix" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Used in /hacker/application/[route-name].
+                        Used by event apps and participant API requests.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -544,6 +592,50 @@ export function HackathonManager() {
                           {...field}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="portalBaseUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Participant Portal Origin</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="url"
+                          placeholder="https://event.knighthacks.org"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Leave blank for archived events without an external
+                        participant portal.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="confirmationCapacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirmation Capacity</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          inputMode="numeric"
+                          placeholder="Unlimited"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Accepted hackers cannot confirm after this limit is
+                        reached. Leave blank for unlimited.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

@@ -15,6 +15,7 @@ import {
 import { sendHackathonEmail } from "@forge/email";
 import { logger, permissions } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
+import { hackerApplicationWireSchema } from "@forge/validators";
 
 import { ensureUserQRCode } from "../../qr-code";
 import {
@@ -25,16 +26,7 @@ import { permProcedure, protectedProcedure } from "../../trpc";
 
 export const hackerMutationRouter = {
   createHacker: protectedProcedure
-    .input(
-      z.object({
-        ...InsertHackerSchema.omit({
-          userId: true,
-          age: true,
-          discordUser: true,
-        }).shape,
-        hackathonName: z.string(),
-      }),
-    )
+    .input(hackerApplicationWireSchema.extend({ hackathonName: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const userId = ctx.session.user.id;
       const { hackathonName, ...hackerData } = input;
@@ -175,7 +167,7 @@ export const hackerMutationRouter = {
       }
     }),
 
-  updateHacker: protectedProcedure
+  updateHacker: permProcedure
     .input(
       InsertHackerSchema.omit({
         userId: true,
@@ -184,6 +176,8 @@ export const hackerMutationRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      permissions.controlPerms.or(["EDIT_HACKERS"], ctx);
+
       if (!input.id) {
         throw new TRPCError({
           message: "Hacker ID is required to update a member!",
@@ -225,7 +219,7 @@ export const hackerMutationRouter = {
           ? undefined
           : await normalizeResumeObjectNameForPersistence(
               updateData.resumeUrl,
-              ctx.session.user.id,
+              hacker.userId,
             );
 
       await db
@@ -237,9 +231,9 @@ export const hackerMutationRouter = {
           age: newAge,
           phoneNumber: normalizedPhone,
         })
-        .where(eq(Hacker.userId, ctx.session.user.id));
+        .where(eq(Hacker.id, id));
       if (isResumeChanged) {
-        await removeUnreferencedResumeObjectsForUser(ctx.session.user.id);
+        await removeUnreferencedResumeObjectsForUser(hacker.userId);
       }
 
       // Create a log of the changes for logger
@@ -309,6 +303,11 @@ export const hackerMutationRouter = {
         });
       }
 
+      const hacker = await db.query.Hacker.findFirst({
+        columns: { userId: true },
+        where: (table, { eq }) => eq(table.id, input.id ?? ""),
+      });
+
       await db.delete(Hacker).where(eq(Hacker.id, input.id));
 
       await discord.log({
@@ -318,8 +317,8 @@ export const hackerMutationRouter = {
         userId: ctx.session.user.discordUserId,
       });
 
-      if (ctx.session.user.id) {
-        await db.delete(Session).where(eq(Session.userId, ctx.session.user.id));
+      if (hacker?.userId) {
+        await db.delete(Session).where(eq(Session.userId, hacker.userId));
       }
     }),
 

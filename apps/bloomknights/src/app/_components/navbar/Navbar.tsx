@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
 
+import { authClient, signOut } from "~/auth/client";
 import MLHBadge from "./MLHBadge";
 import { navChromeTransition } from "./motion";
 import NavContent from "./NavContent";
@@ -19,12 +20,25 @@ const NAV_LINKS = [
 ];
 
 const Navbar = () => {
+  const { data: session } = authClient.useSession();
   const [isScrolled, setIsScrolled] = useState(
     () => typeof window !== "undefined" && window.scrollY > 100,
   );
   const [isHidden, setIsHidden] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { scrollY } = useScroll();
+  const authLinks = session
+    ? [{ href: "/dashboard", label: "Dashboard" }]
+    : [
+        {
+          href: "/api/auth/signin?provider=discord&callbackURL=%2Fdashboard",
+          label: "Sign up",
+        },
+        {
+          href: "/api/auth/signin?provider=discord&callbackURL=%2Fdashboard",
+          label: "Log in",
+        },
+      ];
 
   useEffect(() => {
     const desktopQuery = window.matchMedia("(min-width: 768px)");
@@ -70,10 +84,12 @@ const Navbar = () => {
         <NavContent
           isHidden={isHidden}
           isMobileMenuOpen={isMobileMenuOpen}
-          navLinks={NAV_LINKS}
+          navLinks={[...NAV_LINKS, ...authLinks]}
+          showSignOut={Boolean(session)}
           showGlow={isScrolled}
           onMobileMenuClose={() => setIsMobileMenuOpen(false)}
           onMobileMenuToggle={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
+          onSignOut={() => void signOut({ redirectTo: "/" })}
         />
       </motion.nav>
 

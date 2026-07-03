@@ -6,6 +6,18 @@ This guide covers how to work with the tRPC API in Forge, including our permissi
 
 We have four types of procedures. Choose the right one based on authentication and permission requirements.
 
+### Participant router
+
+Active hackathon apps mount `participantRouter` from
+`@forge/api/participant` on their own origin. This router exposes only the
+`portal` workflow; it does not import or expose Blade admin procedures.
+
+Participant procedures must accept an explicit `hackathonName`, derive the
+user from `ctx.session`, and resolve the hacker/attendee row on the server.
+Never accept a client-supplied user or hacker ID for self-service operations.
+The host app is responsible for validating its local Better Auth session and
+passing it to `createTRPCContext`.
+
 ### `publicProcedure`
 
 Use when the endpoint doesn't require authentication.

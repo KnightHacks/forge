@@ -41,6 +41,8 @@ export const Hackathon = createTable(
     applicationBackgroundKey: t.varchar({ length: 255 }),
     emailTemplateEnabled: t.boolean().notNull().default(false),
     emailTemplateKey: t.varchar({ length: 255 }),
+    portalBaseUrl: t.varchar({ length: 512 }),
+    confirmationCapacity: t.integer(),
     applicationOpen: t.timestamp().notNull().defaultNow(),
     applicationDeadline: t.timestamp().notNull().defaultNow(),
     confirmationDeadline: t.timestamp().notNull().defaultNow(),

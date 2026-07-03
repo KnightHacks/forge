@@ -14,10 +14,12 @@ import { db } from "@forge/db/client";
 import { Account } from "@forge/db/schemas/auth";
 
 import { TEAMS } from "../../consts/src/team";
-import { env } from "./env";
+import { discordEnv } from "./discord-env";
 import { logger } from "./logger";
 
-export const api = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
+export const api = new REST({ version: "10" }).setToken(
+  discordEnv.DISCORD_BOT_TOKEN,
+);
 
 export async function sendRecruitingApplication(
   teamName: string,

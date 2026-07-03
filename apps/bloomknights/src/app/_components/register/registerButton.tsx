@@ -15,12 +15,7 @@ const Register = () => {
             }}
           />
           <div className="relative z-10 flex w-full items-center">
-            <Link
-              href="https://blade.knighthacks.org/hacker/application/bloomknights"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="wc-btn bloom-cta-button group"
-            >
+            <Link href="/apply" className="wc-btn bloom-cta-button group">
               <span className="bloom-cta-label transition-all duration-500 group-hover:text-white">
                 Register Now!
               </span>

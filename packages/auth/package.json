@@ -9,6 +9,9 @@
       "default": "./src/index.ts"
     },
     "./server": "./src/index.rsc.ts",
+    "./factory": "./src/factory.ts",
+    "./server-factory": "./src/server-factory.ts",
+    "./client-factory": "./src/client-factory.ts",
     "./env": "./src/env.ts"
   },
   "license": "MIT",

@@ -8,6 +8,10 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
+    "./participant": {
+      "types": "./dist/participant.d.ts",
+      "default": "./src/participant.ts"
+    },
     "./env": {
       "types": "./dist/env.d.ts",
       "default": "./src/env.ts"
