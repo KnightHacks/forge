@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
 
 import { signOut } from "~/auth/client";
 
@@ -10,16 +10,17 @@ export function PortalHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="bk-portal-nav mb-5 overflow-hidden rounded-2xl sm:mb-6">
+    <header className="bk-portal-nav bk-dashboard-nav mb-5 overflow-hidden rounded-2xl sm:mb-6">
       <div className="flex min-h-16 items-stretch justify-between">
         <Link
           href="/"
-          className="font-righteous hidden items-center border-r border-[#245f35]/15 px-5 text-sm uppercase tracking-[0.04em] text-[#245f35] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7aab5a] sm:flex"
+          aria-label="Go back to the BK site"
+          title="Go back to the BK site"
+          className="font-righteous flex min-h-16 shrink-0 items-center gap-2 whitespace-nowrap border-r border-[#245f35]/15 px-3 text-xs uppercase tracking-[0.04em] text-[#245f35] transition-colors hover:bg-[#daeaf5]/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7aab5a] sm:px-5 sm:text-sm"
         >
-          BloomKnights
-          <span className="font-dm-sans ml-2 text-xs font-bold normal-case tracking-normal text-[#5a4535]/75">
-            Portal
-          </span>
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          <span className="hidden sm:inline">Back to BloomKnights site</span>
+          <span className="sm:hidden">Site</span>
         </Link>
         <nav
           aria-label="Participant navigation"

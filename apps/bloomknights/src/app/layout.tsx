@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 
 import {
   OG_IMAGE_ALT,
@@ -99,7 +101,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fredokaOne.variable} ${righteous.variable} ${dmSans.variable} h-full`}
+      className={`dark ${GeistSans.variable} ${GeistMono.variable} ${fredokaOne.variable} ${righteous.variable} ${dmSans.variable} h-full`}
+      suppressHydrationWarning
     >
       <body className="min-h-screen antialiased">{children}</body>
     </html>

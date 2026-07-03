@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { db } from "@forge/db/client";
+import { createHackathonPortalServerCaller } from "@forge/hackathon/server";
 
 import { auth, signIn } from "~/auth/server";
 import { HackerFormPage } from "../_components/application/hacker-application-form";
@@ -29,6 +31,16 @@ export default async function ApplyPage({
     where: (table, { eq }) => eq(table.name, "bloomknights"),
   });
   if (!hackathon) notFound();
+
+  const caller = createHackathonPortalServerCaller({
+    headers: await headers(),
+    session,
+  });
+  const dashboard = await caller.portal.getDashboard({
+    hackathonName: "bloomknights",
+  });
+
+  if (dashboard.participant) redirect("/dashboard");
 
   const now = new Date();
   if (now < hackathon.applicationOpen || now > hackathon.applicationDeadline) {

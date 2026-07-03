@@ -1,22 +1,45 @@
 import { NextResponse } from "next/server";
 
-import { sanitizeCallbackURL } from "@forge/auth/callback-url";
-
 import { env } from "~/env";
 
-export function GET(request: Request) {
-  if (env.NODE_ENV !== "development") {
-    return new NextResponse(null, { status: 404 });
-  }
+const DEFAULT_BLOOM_RETURN_PATH = "/dashboard";
+const ALLOWED_BLOOM_RETURN_ORIGINS = [
+  "https://bloom.knighthacks.org",
+  "http://localhost:3006",
+] as const;
 
-  const requestUrl = new URL(request.url);
-  const bloomOrigin = new URL(env.BLOOMKNIGHTS_URL).origin;
-  const returnPath = sanitizeCallbackURL(
-    requestUrl.searchParams.get("returnTo"),
-    bloomOrigin,
-    "/dashboard",
+function getBloomReturnURL(returnTo: string | null) {
+  const configuredBloomOrigin = new URL(env.BLOOMKNIGHTS_URL).origin;
+  const allowedOrigins = new Set([
+    configuredBloomOrigin,
+    ...ALLOWED_BLOOM_RETURN_ORIGINS,
+  ]);
+  const defaultReturnURL = new URL(
+    DEFAULT_BLOOM_RETURN_PATH,
+    configuredBloomOrigin,
   );
-  const returnTo = new URL(returnPath, bloomOrigin);
+
+  if (!returnTo) return defaultReturnURL;
+
+  try {
+    const requestedReturnURL = new URL(returnTo, configuredBloomOrigin);
+
+    if (
+      !allowedOrigins.has(requestedReturnURL.origin) ||
+      !requestedReturnURL.pathname.startsWith("/")
+    ) {
+      return defaultReturnURL;
+    }
+
+    return requestedReturnURL;
+  } catch {
+    return defaultReturnURL;
+  }
+}
+
+export function GET(request: Request) {
+  const requestUrl = new URL(request.url);
+  const returnTo = getBloomReturnURL(requestUrl.searchParams.get("returnTo"));
 
   if (requestUrl.searchParams.has("authError")) {
     returnTo.searchParams.set("authError", "oauth");

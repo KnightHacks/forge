@@ -175,7 +175,7 @@ export function HackerProfileForm() {
     <>
       <Form {...form}>
         <form
-          className="bk-profile-form grid gap-x-6 gap-y-5 md:grid-cols-2"
+          className="bk-profile-form grid grid-cols-1 gap-4 sm:gap-x-6 sm:gap-y-5 md:grid-cols-2"
           noValidate
           onSubmit={form.handleSubmit(async (values) => {
             setLoading(true);
@@ -466,6 +466,7 @@ export function HackerProfileForm() {
                     onItemSelect={(school) => field.onChange(school)}
                     buttonPlaceholder={hacker.school}
                     inputPlaceholder="Search for your school"
+                    triggerClassName="bk-profile-combobox-trigger !border-[#d7bd94] !bg-[#fffaf0] !text-[#3d2e1e] hover:!border-[#7aab5a] hover:!bg-[#fffaf0] hover:!text-[#3d2e1e]"
                   />
                 </FormControl>
                 <FormMessage />
@@ -489,6 +490,7 @@ export function HackerProfileForm() {
                     onItemSelect={(major) => field.onChange(major)}
                     buttonPlaceholder={hacker.major}
                     inputPlaceholder="Search for your major"
+                    triggerClassName="bk-profile-combobox-trigger !border-[#d7bd94] !bg-[#fffaf0] !text-[#3d2e1e] hover:!border-[#7aab5a] hover:!bg-[#fffaf0] hover:!text-[#3d2e1e]"
                   />
                 </FormControl>
                 <FormMessage />
@@ -668,12 +670,12 @@ export function HackerProfileForm() {
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="flex h-auto min-h-12 w-full items-center justify-start space-x-2 px-3"
+                          className="bk-profile-allergy-trigger flex h-auto min-h-12 w-full flex-col items-start justify-center gap-2 whitespace-normal !border-[#d7bd94] !bg-[#fffaf0] px-3 py-2 text-left !text-[#3d2e1e] hover:!border-[#7aab5a] hover:!bg-[#fffaf0] hover:!text-[#3d2e1e] sm:flex-row sm:items-center sm:justify-start"
                         >
-                          <span className="text-sm text-gray-400">
+                          <span className="shrink-0 text-sm text-[#6a5a4d]">
                             Select Allergies:
                           </span>
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex min-w-0 flex-wrap gap-1">
                             {selectedAllergies.length > 0 ? (
                               selectedAllergies.map((allergy) => (
                                 <Badge
@@ -685,7 +687,7 @@ export function HackerProfileForm() {
                                 </Badge>
                               ))
                             ) : (
-                              <span className="text-sm text-gray-400">
+                              <span className="text-sm text-[#6a5a4d]">
                                 None selected
                               </span>
                             )}
@@ -694,7 +696,7 @@ export function HackerProfileForm() {
                       </PopoverTrigger>
                       <PopoverContent
                         align="start"
-                        className="min-w-(--radix-popover-trigger-width) w-full max-w-none p-1"
+                        className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-2rem)] p-1"
                       >
                         <div className="flex w-full flex-col">
                           {FORMS.ALLERGIES.map((allergy) => (
@@ -726,15 +728,15 @@ export function HackerProfileForm() {
             control={form.control}
             name="isFirstTime"
             render={({ field }) => (
-              <FormItem className="bk-profile-consent flex flex-row space-x-3 space-y-0 md:col-span-2">
+              <FormItem className="bk-profile-consent flex flex-row items-start gap-3 space-x-0 space-y-0 md:col-span-2">
                 <FormControl>
                   <Checkbox
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
-                    className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
                   />
                 </FormControl>
-                <div className="flex items-center space-y-1 leading-none">
+                <div className="flex min-w-0 flex-1 items-start space-y-1 leading-snug">
                   <FormLabel>
                     This is my first time participating in a hackathon
                   </FormLabel>
@@ -747,15 +749,15 @@ export function HackerProfileForm() {
             control={form.control}
             name="agreesToMLHCodeOfConduct"
             render={({ field }) => (
-              <FormItem className="bk-profile-consent flex flex-row space-x-3 space-y-0 md:col-span-2">
+              <FormItem className="bk-profile-consent flex flex-row items-start gap-3 space-x-0 space-y-0 md:col-span-2">
                 <FormControl>
                   <Checkbox
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
-                    className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
                   />
                 </FormControl>
-                <div className="flex items-center space-y-1 leading-none">
+                <div className="flex min-w-0 flex-1 items-start space-y-1 leading-snug">
                   <FormLabel>
                     I have read and agree to the{" "}
                     <Link
@@ -778,15 +780,15 @@ export function HackerProfileForm() {
             control={form.control}
             name="agreesToMLHDataSharing"
             render={({ field }) => (
-              <FormItem className="bk-profile-consent flex flex-row space-x-3 space-y-0 md:col-span-2">
+              <FormItem className="bk-profile-consent flex flex-row items-start gap-3 space-x-0 space-y-0 md:col-span-2">
                 <FormControl>
                   <Checkbox
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
-                    className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
                   />
                 </FormControl>
-                <div className="flex items-center space-y-1 leading-none">
+                <div className="flex min-w-0 flex-1 items-start space-y-1 leading-snug">
                   <FormLabel>
                     I authorize you to share my application/registration
                     information with Major League Hacking for event
@@ -830,15 +832,15 @@ export function HackerProfileForm() {
             control={form.control}
             name="agreesToReceiveEmailsFromMLH"
             render={({ field }) => (
-              <FormItem className="bk-profile-consent flex flex-row space-x-3 space-y-0 md:col-span-2">
+              <FormItem className="bk-profile-consent flex flex-row items-start gap-3 space-x-0 space-y-0 md:col-span-2">
                 <FormControl>
                   <Checkbox
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
-                    className="flex h-5 w-5 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
+                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center [&>span>svg]:h-6 [&>span>svg]:w-6"
                   />
                 </FormControl>
-                <div className="flex items-center space-y-1 leading-none">
+                <div className="flex min-w-0 flex-1 items-start space-y-1 leading-snug">
                   <FormLabel>
                     I authorize MLH to send me occasional emails about relevant
                     events, career opportunities, and community announcements
@@ -851,7 +853,7 @@ export function HackerProfileForm() {
           <Button
             type="submit"
             disabled={loading}
-            className="bk-portal-button min-h-12 md:col-span-2"
+            className="bk-portal-button min-h-12 w-full justify-center md:col-span-2"
           >
             <span className="inline-flex size-4 items-center justify-center">
               {loading && <Loader2 className="size-4 animate-spin" />}

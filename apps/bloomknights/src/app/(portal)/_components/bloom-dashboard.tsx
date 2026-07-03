@@ -38,7 +38,7 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 const statusLabels: Record<HackerStatus, string> = {
-  accepted: "Accepted — action needed",
+  accepted: "Accepted: action needed",
   checkedin: "Checked in",
   confirmed: "Attendance confirmed",
   denied: "Not selected",
@@ -189,20 +189,20 @@ export function BloomDashboard() {
   };
 
   return (
-    <div className="space-y-5 text-[#3d2e1e] sm:space-y-6">
-      <section className="bk-portal-panel">
+    <div className="bk-dashboard-stack space-y-5 text-[#3d2e1e] sm:space-y-6">
+      <section className="bk-portal-panel bk-dashboard-panel bk-dashboard-hero-panel">
         <div className="grid lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <div className="p-5 sm:p-8 lg:p-10">
-            <p className="bk-portal-kicker">BloomKnights dashboard</p>
-            <h1 className="bk-portal-heading mt-3 max-w-3xl text-3xl leading-tight sm:text-5xl">
+          <div className="bk-dashboard-hero-copy p-4 sm:p-8 lg:col-start-1 lg:row-start-1 lg:p-10">
+            <p className="bk-portal-kicker">Dashboard</p>
+            <h1 className="bk-portal-heading mt-2 max-w-3xl text-2xl leading-tight sm:mt-3 sm:text-5xl">
               Welcome back, {participant.firstName}!
             </h1>
-            <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-[#5a4535] sm:text-base">
-              Check your application status and get ready for hack day.
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-[#5a4535] sm:mt-3 sm:text-base">
+              Check your application status and get ready for BloomKnights.
             </p>
-            <div className="mt-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+            <div className="mt-4 flex flex-col items-start gap-2 sm:mt-6 sm:flex-row sm:items-center sm:gap-3">
               <span
-                className={`font-righteous inline-flex min-h-8 items-center rounded-lg border px-3 py-1 text-xs tracking-[0.02em] ${statusTone[participant.status]}`}
+                className={`bk-dashboard-status font-righteous inline-flex min-h-8 items-center rounded-lg border px-3 py-1 text-xs tracking-[0.02em] ${statusTone[participant.status]}`}
               >
                 {statusLabels[participant.status]}
               </span>
@@ -212,10 +212,74 @@ export function BloomDashboard() {
             </div>
           </div>
 
-          <aside className="border-t border-[#c4a882]/30 bg-[#daeaf5]/45 p-5 sm:p-7 lg:border-l lg:border-t-0">
+          {participant.status === "accepted" && (
+            <div className="bk-dashboard-action-strip grid gap-4 border-t border-[#c4a882]/30 bg-[#c9b8d8]/20 p-4 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-5 sm:p-8 lg:col-span-2 lg:row-start-2">
+              <div>
+                <p className="bk-portal-kicker">Next step</p>
+                <h2 className="font-righteous mt-1 text-xl text-[#245f35]">
+                  Confirm your place
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-[#5a4535]">
+                  Read the event terms and confirm by{" "}
+                  {dateFormatter.format(hackathon.confirmationDeadline)}.
+                </p>
+                <a
+                  href={config.termsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-[#245f35] underline decoration-2 underline-offset-4 focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7aab5a]"
+                >
+                  Read the event terms <ArrowUpRight className="size-4" />
+                </a>
+              </div>
+              <Button
+                className="bk-bloom-cta-action bk-portal-button min-w-48 px-5 max-sm:w-full"
+                disabled={actionPending || confirmationClosed || atCapacity}
+                onClick={() => void handleConfirm()}
+              >
+                <span className="inline-flex size-4 items-center justify-center">
+                  {actionPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="size-4" />
+                  )}
+                </span>
+                {confirmationClosed || atCapacity
+                  ? "Confirmation closed"
+                  : "Agree and confirm"}
+              </Button>
+            </div>
+          )}
+
+          {participant.status === "confirmed" && (
+            <div className="bk-dashboard-action-strip grid gap-4 border-t border-[#c4a882]/30 bg-[#a8c490]/20 p-4 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-5 sm:p-8 lg:col-span-2 lg:row-start-2">
+              <div>
+                <p className="bk-portal-kicker text-[#245f35]">
+                  You&apos;re on the list
+                </p>
+                <h2 className="font-righteous mt-1 text-xl text-[#245f35]">
+                  Your place is confirmed.
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-[#5a4535]">
+                  Plans changed? Withdraw here so another hacker can attend.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="min-h-11 min-w-48 rounded-lg border-[#245f35]/35 bg-[#fff8de]/55 text-[#245f35] hover:border-[#b64a4a]/70 hover:bg-[#fff1ed] hover:text-[#a83232] focus-visible:text-[#245f35] max-sm:w-full"
+                disabled={actionPending}
+                onClick={() => void handleWithdraw()}
+              >
+                {actionPending && <Loader2 className="size-4 animate-spin" />}
+                Withdraw attendance
+              </Button>
+            </div>
+          )}
+
+          <aside className="bk-dashboard-event-card border-t border-[#c4a882]/30 bg-[#daeaf5]/45 p-4 sm:p-7 lg:col-start-2 lg:row-start-1 lg:border-l lg:border-t-0">
             <p className="bk-portal-kicker text-[#245f35]">Event details</p>
-            <dl className="mt-5 space-y-5 text-sm">
-              <div className="grid grid-cols-[1.25rem_1fr] gap-3">
+            <dl className="mt-4 space-y-4 text-sm sm:mt-5 sm:space-y-5">
+              <div className="bk-dashboard-detail-row grid grid-cols-[1.25rem_1fr] gap-3">
                 <CalendarDays aria-hidden="true" className="mt-0.5 size-5" />
                 <div>
                   <dt className="font-righteous text-[#245f35]">Date</dt>
@@ -224,17 +288,17 @@ export function BloomDashboard() {
                   </dd>
                 </div>
               </div>
-              <div className="grid grid-cols-[1.25rem_1fr] gap-3">
+              <div className="bk-dashboard-detail-row grid grid-cols-[1.25rem_1fr] gap-3">
                 <Clock3 aria-hidden="true" className="mt-0.5 size-5" />
                 <div>
                   <dt className="font-righteous text-[#245f35]">Hours</dt>
                   <dd className="mt-0.5 text-[#5a4535]">
-                    {timeFormatter.format(hackathon.startDate)}–
+                    {timeFormatter.format(hackathon.startDate)} -{" "}
                     {timeFormatter.format(hackathon.endDate)} ET
                   </dd>
                 </div>
               </div>
-              <div className="grid grid-cols-[1.25rem_1fr] gap-3">
+              <div className="bk-dashboard-detail-row grid grid-cols-[1.25rem_1fr] gap-3">
                 <MapPin aria-hidden="true" className="mt-0.5 size-5" />
                 <div>
                   <dt className="font-righteous text-[#245f35]">Location</dt>
@@ -244,78 +308,13 @@ export function BloomDashboard() {
             </dl>
           </aside>
         </div>
-
-        {participant.status === "accepted" && (
-          <div className="grid gap-5 border-t border-[#c4a882]/30 bg-[#c9b8d8]/20 p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-8">
-            <div>
-              <p className="bk-portal-kicker">Next step</p>
-              <h2 className="font-righteous mt-1 text-xl text-[#245f35]">
-                Confirm your place
-              </h2>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-[#5a4535]">
-                Read the event terms and confirm by{" "}
-                {dateFormatter.format(hackathon.confirmationDeadline)}.
-              </p>
-              <a
-                href={config.termsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-[#245f35] underline decoration-2 underline-offset-4 focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7aab5a]"
-              >
-                Read the event terms <ArrowUpRight className="size-4" />
-              </a>
-            </div>
-            <Button
-              className="bk-bloom-cta-action bk-portal-button min-w-48 px-5"
-              disabled={actionPending || confirmationClosed || atCapacity}
-              onClick={() => void handleConfirm()}
-            >
-              <span className="inline-flex size-4 items-center justify-center">
-                {actionPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="size-4" />
-                )}
-              </span>
-              {confirmationClosed || atCapacity
-                ? "Confirmation closed"
-                : "Agree and confirm"}
-            </Button>
-          </div>
-        )}
-
-        {participant.status === "confirmed" && (
-          <div className="grid gap-5 border-t border-[#c4a882]/30 bg-[#a8c490]/20 p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-8">
-            <div>
-              <p className="bk-portal-kicker text-[#245f35]">
-                You&apos;re on the list
-              </p>
-              <h2 className="font-righteous mt-1 text-xl text-[#245f35]">
-                Your place is confirmed.
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-[#5a4535]">
-                Plans changed? Withdraw here so another hacker can attend.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              className="min-h-11 min-w-48 rounded-lg border-[#245f35]/35 bg-[#fff8de]/55 text-[#245f35] hover:bg-[#fff8de]"
-              disabled={actionPending}
-              onClick={() => void handleWithdraw()}
-            >
-              {actionPending && <Loader2 className="size-4 animate-spin" />}
-              Withdraw attendance
-            </Button>
-          </div>
-        )}
       </section>
 
       <section
         aria-labelledby="portal-tools-heading"
-        className="bk-portal-panel"
+        className="bk-portal-panel bk-dashboard-panel bk-dashboard-resources-panel"
       >
         <div className="border-b border-[#c4a882]/30 px-5 py-4 sm:px-6">
-          <p className="bk-portal-kicker">Quick links</p>
           <h2
             id="portal-tools-heading"
             className="bk-portal-heading mt-1 text-2xl"
@@ -324,7 +323,7 @@ export function BloomDashboard() {
           </h2>
         </div>
 
-        <div className="bk-portal-tools-grid">
+        <div className="bk-portal-tools-grid bk-dashboard-tools-grid">
           <ActionCard
             description="Update your contact and application details."
             href="/dashboard/profile"
@@ -359,7 +358,7 @@ export function BloomDashboard() {
       </section>
 
       {participant.status === "checkedin" && (
-        <section className="bk-portal-panel p-5 sm:p-8">
+        <section className="bk-portal-panel bk-dashboard-panel p-5 sm:p-8">
           <div className="flex flex-col gap-4 border-b border-[#c4a882]/30 pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="bk-portal-kicker">Live at BloomKnights</p>
@@ -376,12 +375,15 @@ export function BloomDashboard() {
                   <LifeBuoy className="size-4" /> Report an issue
                 </Button>
               </DialogTrigger>
-              <DialogContent className="rounded-xl border-[#c4a882]/45 bg-[#f8f3e8] text-[#3d2e1e]">
+              <DialogContent
+                className="rounded-xl border-[#c4a882]/45 bg-[#f8f3e8] text-[#3d2e1e]"
+                style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
+              >
                 <DialogHeader>
                   <DialogTitle className="font-righteous text-[#245f35]">
                     Report an issue
                   </DialogTitle>
-                  <DialogDescription className="text-[#5a4535]">
+                  <DialogDescription className="text-sm font-semibold leading-6 text-[#5a4535] sm:text-base">
                     Tell the organizer team what is happening and where you are.
                   </DialogDescription>
                 </DialogHeader>
@@ -430,7 +432,7 @@ export function BloomDashboard() {
               schedule.map((event) => (
                 <article
                   key={event.id}
-                  className="grid gap-3 py-5 md:grid-cols-[10rem_1fr_auto] md:items-start"
+                  className="bk-dashboard-schedule-item grid gap-3 py-5 md:grid-cols-[10rem_1fr_auto] md:items-start"
                 >
                   <p className="font-righteous text-sm text-[#245f35]">
                     {timeFormatter.format(event.startDateTime)}
@@ -501,7 +503,7 @@ function ActionCard({
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
-      className="bk-portal-tool group"
+      className="bk-portal-tool bk-dashboard-tool group"
     >
       <span className="bk-portal-tool-icon [&_svg]:size-5">{icon}</span>
       <span className="font-righteous mt-3 text-base text-[#245f35] sm:text-lg">
@@ -531,7 +533,10 @@ function QrActionCard({
 }) {
   if (!available) {
     return (
-      <div aria-disabled="true" className="bk-portal-tool bg-[#edf0e8]/95">
+      <div
+        aria-disabled="true"
+        className="bk-portal-tool bk-dashboard-tool bg-[#edf0e8]/95"
+      >
         <span className="bk-portal-tool-icon opacity-70">
           <LockKeyhole className="size-5" />
         </span>
@@ -553,7 +558,7 @@ function QrActionCard({
       <DialogTrigger asChild>
         <button
           type="button"
-          className="bk-portal-tool group w-full"
+          className="bk-portal-tool bk-dashboard-tool group w-full"
           onClick={() => void loadQRCode()}
         >
           <span className="bk-portal-tool-icon">

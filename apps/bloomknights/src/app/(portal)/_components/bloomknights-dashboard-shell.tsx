@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 
 import { BloomKnightsActionBlooms } from "./bloomknights-action-blooms";
 import { BloomKnightsAmbientBackground } from "./bloomknights-ambient-background";
@@ -10,15 +11,25 @@ const BLOOMKNIGHTS_DASHBOARD_BACKGROUND =
 const BLOOMKNIGHTS_DASHBOARD_BACKGROUND_AVIF =
   "https://assets.knighthacks.org/bloom-background-desktop.avif";
 
+const BLOOMKNIGHTS_DASHBOARD_FOOTER_LINKS = [
+  { href: "https://blade.knighthacks.org", label: "Blade" },
+  { href: "https://discord.gg/2W2HCvkKAy", label: "Discord" },
+  { href: "https://club.knighthacks.org", label: "Club" },
+  { href: "https://www.instagram.com/knighthacks/", label: "Instagram" },
+] as const;
+
 export function BloomKnightsDashboardShell({
   children,
+  fixedBackground = false,
 }: {
   children: ReactNode;
+  fixedBackground?: boolean;
 }) {
   return (
     <main
       className="font-dm-sans relative isolate min-h-screen overflow-hidden bg-[#f5ebd5] bg-cover bg-center bg-no-repeat px-3 py-5 text-[#3d2e1e] sm:px-5 sm:py-8 lg:py-10"
       style={{
+        backgroundAttachment: fixedBackground ? "fixed" : undefined,
         backgroundImage: `image-set(url("${BLOOMKNIGHTS_DASHBOARD_BACKGROUND_AVIF}") type("image/avif"), url("${BLOOMKNIGHTS_DASHBOARD_BACKGROUND}") type("image/webp"))`,
       }}
     >
@@ -42,6 +53,32 @@ export function BloomKnightsDashboardShell({
       >
         <BloomKnightsDashboardLogo />
         {children}
+        <footer className="mx-auto mt-6 flex w-full max-w-6xl flex-col items-center justify-between gap-2 rounded-xl border border-white/15 bg-[#245f35]/80 px-4 py-3 text-xs font-semibold text-[#fff8de] shadow-sm backdrop-blur sm:flex-row">
+          <Image
+            src="/knighthacks.svg"
+            alt="Knight Hacks"
+            width={118}
+            height={32}
+            className="h-8 w-[118px] object-contain opacity-95"
+            unoptimized
+          />
+          <nav
+            aria-label="BloomKnights dashboard footer links"
+            className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1"
+          >
+            {BLOOMKNIGHTS_DASHBOARD_FOOTER_LINKS.map(({ href, label }) => (
+              <a
+                key={href}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-colors hover:text-white focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+        </footer>
       </div>
       <style>{`
         .bk-dashboard-logo-shell {

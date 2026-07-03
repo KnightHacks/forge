@@ -62,16 +62,16 @@ export const bloomknightsApplicationStyles = `
 
 form[data-application-visual="bloomknights"],
 .kh-application-shell[data-application-visual="bloomknights"] {
-  background-color: #b8d4e8;
+  background-color: #0f2f32;
   background-image:
     linear-gradient(
       to bottom,
-      rgba(255, 248, 222, 0.08) 0%,
-      rgba(218, 234, 245, 0.08) 44%,
-      rgba(36, 95, 53, 0.18) 78%,
-      rgba(23, 63, 36, 0.42) 100%
+      rgba(4, 13, 17, 0.26) 0%,
+      rgba(5, 18, 22, 0.14) 44%,
+      rgba(5, 20, 22, 0.56) 78%,
+      rgba(3, 13, 15, 0.78) 100%
     ),
-    linear-gradient(90deg, rgba(36, 95, 53, 0.12), rgba(255, 248, 222, 0.06)),
+    linear-gradient(90deg, rgba(5, 18, 22, 0.36), rgba(8, 32, 42, 0.18)),
     image-set(
       url("${BLOOMKNIGHTS_APPLICATION_TABLET_WEBP}") type("image/webp"),
       url("${BLOOMKNIGHTS_APPLICATION_WEBP}") type("image/webp")
@@ -90,94 +90,17 @@ form[data-application-visual="bloomknights"],
   background:
     linear-gradient(
       to bottom,
-      rgba(255, 248, 222, 0.05) 0%,
-      rgba(218, 234, 245, 0.04) 42%,
-      rgba(36, 95, 53, 0.12) 76%,
-      rgba(23, 63, 36, 0.34) 100%
+      rgba(3, 11, 14, 0.18) 0%,
+      rgba(5, 18, 22, 0.08) 42%,
+      rgba(5, 20, 22, 0.42) 76%,
+      rgba(3, 13, 15, 0.72) 100%
     ),
     linear-gradient(
       90deg,
-      rgba(36, 95, 53, 0.1) 0%,
-      rgba(218, 234, 245, 0.04) 54%,
-      rgba(255, 248, 222, 0.02) 100%
+      rgba(5, 18, 22, 0.28) 0%,
+      rgba(8, 32, 42, 0.14) 54%,
+      rgba(8, 23, 31, 0.08) 100%
     );
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-application-panel {
-  border: 1.5px solid rgba(196, 168, 130, 0.46);
-  border-left-color: rgba(122, 171, 90, 0.92);
-  border-left-width: 4px;
-  border-radius: 1.25rem;
-  background:
-    radial-gradient(ellipse at 12% 8%, rgba(218, 234, 245, 0.28), transparent 46%),
-    rgba(248, 243, 232, 0.92);
-  color: #3d2e1e;
-  box-shadow:
-    0 18px 54px rgba(36, 95, 53, 0.2),
-    inset 0 1px 0 rgba(255, 250, 230, 0.82);
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-step-title {
-  color: #245f35;
-  font-family: var(--font-righteous), cursive;
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.82),
-    0 5px 16px rgba(36, 95, 53, 0.14);
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-step-content {
-  font-family: var(--font-dm-sans), sans-serif;
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-step-content label {
-  color: #245f35;
-  text-shadow: none;
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-step-content :is(input, textarea, button[role="combobox"]) {
-  border-bottom-color: rgba(36, 95, 53, 0.5);
-  color: #3d2e1e;
-  text-shadow: none;
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-step-content :is(input, textarea)::placeholder {
-  color: rgba(90, 69, 53, 0.72);
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-step-content button[role="combobox"][data-placeholder] {
-  color: rgba(90, 69, 53, 0.72);
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-step-content :is(input, textarea, button[role="combobox"]):focus-visible {
-  border-bottom-color: #7aab5a;
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-step-content p {
-  color: #7a4a1e;
-  text-shadow: none;
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-step-content button[role="checkbox"] {
-  border-color: rgba(36, 95, 53, 0.52);
-  background: rgba(255, 250, 238, 0.86);
-  color: #245f35;
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-step-content button[role="checkbox"][data-state="checked"] {
-  border-color: #7aab5a;
-  background: #7aab5a;
-  color: white;
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-agreement-row {
-  border-color: rgba(196, 168, 130, 0.42);
-  background: rgba(255, 250, 238, 0.72);
-  box-shadow: 0 10px 28px rgba(36, 95, 53, 0.1);
-}
-
-.kh-application-shell[data-application-visual="bloomknights"] .kh-agreement-error-row {
-  background: rgba(254, 115, 254, 0.12);
-  --tw-ring-color: rgba(180, 79, 154, 0.42);
 }
 
 .kh-application-shell[data-application-visual="bloomknights"] .kh-readable-text {
