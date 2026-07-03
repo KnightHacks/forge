@@ -167,9 +167,11 @@
 }
 
 .questionItem {
+  position: relative;
   display: grid;
   justify-items: center;
   width: 100%;
+  isolation: isolate;
 }
 
 .questionButton {
@@ -184,13 +186,13 @@
   place-items: center;
   border: 0;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.97);
+  color: rgba(32, 24, 73, 0.95);
   font-family: var(--faq-body-font);
   font-size: clamp(0.94rem, 1.28vw, 1.12rem);
-  font-weight: 850;
+  font-weight: 700;
   line-height: 1.14;
   letter-spacing: 0;
-  text-align: center;
+  text-align: left;
   background: transparent;
   transition: transform 180ms ease;
 }
@@ -222,14 +224,18 @@
 .questionButton span {
   position: relative;
   z-index: 1;
+  justify-self: stretch;
+  width: 100%;
   max-width: min(100%, 39rem);
   text-wrap: balance;
   transform: translateY(-0.1rem);
 }
 
 .answerWrap {
+  position: relative;
+  z-index: 1;
   width: min(100%, 52rem);
-  margin-top: clamp(-0.9rem, -1.1vw, -0.42rem);
+  margin-top: clamp(-3.8rem, -4vw, -2.35rem);
   overflow: hidden;
   transform-origin: top center;
 }
@@ -240,10 +246,10 @@
   width: min(100%, 52rem);
   min-height: clamp(18rem, 34vw, 24rem);
   margin: 0 auto 0.2rem;
-  padding: clamp(3.7rem, 6.4vw, 5.1rem) clamp(4.5rem, 9vw, 6.6rem)
+  padding: clamp(4.1rem, 6.6vw, 5.35rem) clamp(4.5rem, 9vw, 6.6rem)
     clamp(3.85rem, 6.6vw, 5.35rem);
   place-items: center;
-  color: rgba(255, 255, 255, 0.96);
+  color: rgba(32, 24, 73, 0.95);
   font-family: var(--faq-body-font);
 }
 
@@ -262,11 +268,11 @@
   z-index: 1;
   margin: 0;
   max-width: 38rem;
-  font-size: clamp(0.84rem, 1.03vw, 0.96rem);
-  font-weight: 650;
-  line-height: 1.38;
+  font-size: clamp(0.96rem, 1.12vw, 1.08rem);
+  font-weight: 500;
+  line-height: 1.22;
   letter-spacing: 0;
-  text-align: center;
+  text-align: left;
   text-wrap: pretty;
 }
 
@@ -448,19 +454,19 @@
   }
 
   .answerWrap {
-    margin-top: -0.42rem;
+    margin-top: -2.25rem;
   }
 
   .answerRock {
     min-height: 20rem;
-    padding: 3.55rem 2.25rem 3.25rem;
+    padding: 4.05rem 2.2rem 3.1rem;
   }
 
   .answerRock p {
-    max-width: 18.6rem;
-    font-size: 0.72rem;
-    font-weight: 600;
-    line-height: 1.34;
+    max-width: 19rem;
+    font-size: 0.86rem;
+    font-weight: 500;
+    line-height: 1.18;
   }
 }
 
