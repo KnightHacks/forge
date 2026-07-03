@@ -6,11 +6,16 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   AlertCircle,
+  ArrowUpRight,
   CalendarDays,
   CheckCircle2,
+  Clock3,
   ExternalLink,
   FileText,
+  LifeBuoy,
   Loader2,
+  LockKeyhole,
+  MapPin,
   QrCode,
   UserRound,
 } from "lucide-react";
@@ -33,29 +38,54 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 const statusLabels: Record<HackerStatus, string> = {
-  accepted: "Accepted",
+  accepted: "Accepted — action needed",
   checkedin: "Checked in",
-  confirmed: "Confirmed",
+  confirmed: "Attendance confirmed",
   denied: "Not selected",
-  pending: "Application under review",
+  pending: "In review",
   waitlisted: "Waitlisted",
   withdrawn: "Withdrawn",
 };
 
 const statusMessages: Record<HackerStatus, string> = {
-  accepted: "Your application was accepted. Confirm your spot below.",
-  checkedin: "You are checked in. Your event tools are ready below.",
-  confirmed: "Your place at BloomKnights is confirmed.",
+  accepted:
+    "Your application was accepted. Confirm your place before the deadline.",
+  checkedin: "You are checked in. Your on-site tools and schedule are ready.",
+  confirmed: "Your place at BloomKnights is reserved. We will see you at UCF.",
   denied:
     "We could not offer you a place at this event. Thank you for applying.",
-  pending: "The organizer team is reviewing your application.",
-  waitlisted: "You are on the waitlist. Watch this portal for updates.",
-  withdrawn: "You withdrew your attendance for this event.",
+  pending:
+    "The organizer team is reviewing your application. No action is needed yet.",
+  waitlisted:
+    "You are on the waitlist. We will update this page if a place opens.",
+  withdrawn:
+    "You withdrew from this event. Your application remains on record.",
+};
+
+const statusTone: Record<HackerStatus, string> = {
+  accepted: "border-[#9f2f70] bg-[#fff0f8] text-[#7d2056]",
+  checkedin: "border-[#17653a] bg-[#e7f5e6] text-[#124b2d]",
+  confirmed: "border-[#17653a] bg-[#e7f5e6] text-[#124b2d]",
+  denied: "border-[#7a4a44] bg-[#f8ece8] text-[#633730]",
+  pending: "border-[#836315] bg-[#fff7d7] text-[#654b0d]",
+  waitlisted: "border-[#5f568a] bg-[#f1efff] text-[#49406f]",
+  withdrawn: "border-[#656d68] bg-[#eff2ef] text-[#4b534e]",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
   timeStyle: "short",
+  timeZone: "America/New_York",
+});
+
+const dayFormatter = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "full",
+  timeZone: "America/New_York",
+});
+
+const timeFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  minute: "2-digit",
   timeZone: "America/New_York",
 });
 
@@ -93,64 +123,47 @@ export function BloomDashboard() {
       <PortalMessage
         icon={<AlertCircle />}
         title="We could not load your dashboard."
-        body="Please refresh the page or try again in a moment."
+        body="Refresh the page or try again in a moment."
       />
     );
   }
 
   const { hackathon, participant } = dashboard;
-  const now = new Date();
-  const lifecycleState = getHackerLifecycleState({
-    applicationDeadline: hackathon.applicationDeadline,
-    applicationOpen: hackathon.applicationOpen,
-    confirmationCapacity: hackathon.confirmationCapacity,
-    confirmationDeadline: hackathon.confirmationDeadline,
-    confirmedCount: dashboard.confirmedCount,
-    now,
-    status: participant?.status ?? null,
-  });
 
+  // The server redirects first-time participants to /apply. This remains as a
+  // resilient fallback if the client cache is briefly behind the server.
   if (!participant) {
-    if (lifecycleState === "application-before-open") {
-      return (
-        <PortalMessage
-          icon={<CalendarDays />}
-          title={`Applications open ${dateFormatter.format(hackathon.applicationOpen)}.`}
-          body="Come back then to begin your BloomKnights application."
-        />
-      );
-    }
-
-    if (lifecycleState === "application-closed") {
-      return (
-        <PortalMessage
-          icon={<CalendarDays />}
-          title="BloomKnights applications are closed."
-          body="Join the Knight Hacks Discord for future event announcements."
-        />
-      );
-    }
-
     return (
       <PortalMessage
         icon={<FileText />}
-        title="Your BloomKnights journey starts here."
-        body="Submit your hacker application and return here for status updates."
+        title="Start your BloomKnights application."
+        body="Your dashboard becomes available as soon as your application is submitted."
         action={
           <Button
             asChild
-            className="bk-bloom-cta-action rounded-full bg-[#f384d4]"
+            className="bk-bloom-cta-action rounded-lg bg-[#8f285f]"
           >
-            <Link href="/apply">Start application</Link>
+            <Link href="/apply">Go to application</Link>
           </Button>
         }
       />
     );
   }
 
+  const lifecycleState = getHackerLifecycleState({
+    applicationDeadline: hackathon.applicationDeadline,
+    applicationOpen: hackathon.applicationOpen,
+    confirmationCapacity: hackathon.confirmationCapacity,
+    confirmationDeadline: hackathon.confirmationDeadline,
+    confirmedCount: dashboard.confirmedCount,
+    now: new Date(),
+    status: participant.status,
+  });
   const confirmationClosed = lifecycleState === "accepted-confirmation-closed";
   const atCapacity = lifecycleState === "accepted-at-capacity";
   const actionPending = confirmMutation.isPending || withdrawMutation.isPending;
+  const qrAvailable =
+    participant.status === "confirmed" || participant.status === "checkedin";
 
   const handleConfirm = async () => {
     try {
@@ -179,54 +192,95 @@ export function BloomDashboard() {
   };
 
   return (
-    <div className="space-y-6 text-[#42602A]">
-      <section className="rounded-[2rem] border border-white/70 bg-[#B9D79A]/95 p-6 shadow-xl backdrop-blur sm:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#53634A]">
-              Welcome, {participant.firstName}
+    <div className="space-y-5 text-[#173b28] sm:space-y-6">
+      <section className="overflow-hidden rounded-2xl border border-[#173b28]/20 bg-[#fffaf0] shadow-[0_24px_70px_rgba(12,52,29,0.18)]">
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="p-5 sm:p-8 lg:p-10">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#8f285f]">
+              Participant field notes · BloomKnights 2026
             </p>
-            <h1 className="mt-2 text-3xl font-black sm:text-5xl">
-              Your BloomKnights portal
+            <h1 className="mt-3 max-w-3xl text-3xl font-black leading-[1.05] tracking-[-0.035em] text-[#173b28] sm:text-5xl">
+              Hey {participant.firstName}, here&apos;s where you stand.
             </h1>
-            <Badge className="mt-4 bg-[#FFFDF1] px-4 py-2 text-base text-[#42602A] hover:bg-[#FFFDF1]">
-              {statusLabels[participant.status]}
-            </Badge>
-            <p className="mt-3 max-w-2xl text-sm font-semibold text-[#53634A]">
-              {statusMessages[participant.status]}
+            <div className="mt-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+              <span
+                className={`inline-flex min-h-8 items-center rounded-md border px-3 py-1 text-sm font-extrabold ${statusTone[participant.status]}`}
+              >
+                {statusLabels[participant.status]}
+              </span>
+              <p className="max-w-2xl text-sm font-medium leading-6 text-[#405c4a]">
+                {statusMessages[participant.status]}
+              </p>
+            </div>
+          </div>
+
+          <aside className="border-t border-[#173b28]/15 bg-[#e4ebcf] p-5 sm:p-7 lg:border-l lg:border-t-0">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#49623d]">
+              Event details
             </p>
-          </div>
-          <div className="grid gap-2 text-sm font-semibold sm:text-right">
-            <span>{dateFormatter.format(hackathon.startDate)}</span>
-            <span>to {dateFormatter.format(hackathon.endDate)}</span>
-          </div>
+            <dl className="mt-5 space-y-5 text-sm">
+              <div className="grid grid-cols-[1.25rem_1fr] gap-3">
+                <CalendarDays aria-hidden="true" className="mt-0.5 size-5" />
+                <div>
+                  <dt className="font-extrabold">Date</dt>
+                  <dd className="mt-0.5 text-[#405c4a]">
+                    {dayFormatter.format(hackathon.startDate)}
+                  </dd>
+                </div>
+              </div>
+              <div className="grid grid-cols-[1.25rem_1fr] gap-3">
+                <Clock3 aria-hidden="true" className="mt-0.5 size-5" />
+                <div>
+                  <dt className="font-extrabold">Hours</dt>
+                  <dd className="mt-0.5 text-[#405c4a]">
+                    {timeFormatter.format(hackathon.startDate)}–
+                    {timeFormatter.format(hackathon.endDate)} ET
+                  </dd>
+                </div>
+              </div>
+              <div className="grid grid-cols-[1.25rem_1fr] gap-3">
+                <MapPin aria-hidden="true" className="mt-0.5 size-5" />
+                <div>
+                  <dt className="font-extrabold">Location</dt>
+                  <dd className="mt-0.5 text-[#405c4a]">UCF Business I</dd>
+                </div>
+              </div>
+            </dl>
+          </aside>
         </div>
 
         {participant.status === "accepted" && (
-          <div className="mt-7 rounded-2xl bg-[#FFFDF1] p-5">
-            <h2 className="text-xl font-black">Confirm your spot</h2>
-            <p className="mt-2 text-sm text-[#53634A]">
-              Review the event terms and confirm before{" "}
-              {dateFormatter.format(hackathon.confirmationDeadline)}.
-            </p>
-            <a
-              href={config.termsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 inline-flex text-sm font-bold text-[#f384d4] underline"
-            >
-              Read the event terms
-            </a>
+          <div className="grid gap-5 border-t border-[#173b28]/15 bg-[#fff3f9] p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-8">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#8f285f]">
+                Next step
+              </p>
+              <h2 className="mt-1 text-xl font-black">Confirm your place</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-[#405c4a]">
+                Read the event terms and confirm by{" "}
+                {dateFormatter.format(hackathon.confirmationDeadline)}.
+              </p>
+              <a
+                href={config.termsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-sm font-extrabold text-[#7d2056] underline decoration-2 underline-offset-4 focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7d2056]"
+              >
+                Read the event terms <ArrowUpRight className="size-4" />
+              </a>
+            </div>
             <Button
-              className="bk-bloom-cta-action mt-4 rounded-full bg-[#f384d4] text-white hover:bg-[#e06bc0]"
+              className="bk-bloom-cta-action min-h-11 min-w-48 rounded-lg bg-[#8f285f] px-5 text-white hover:bg-[#75204f]"
               disabled={actionPending || confirmationClosed || atCapacity}
               onClick={() => void handleConfirm()}
             >
-              {actionPending ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <CheckCircle2 />
-              )}
+              <span className="inline-flex size-4 items-center justify-center">
+                {actionPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="size-4" />
+                )}
+              </span>
               {confirmationClosed || atCapacity
                 ? "Confirmation closed"
                 : "Agree and confirm"}
@@ -235,113 +289,120 @@ export function BloomDashboard() {
         )}
 
         {participant.status === "confirmed" && (
-          <div className="mt-7 flex flex-col gap-3 rounded-2xl bg-[#FFFDF1] p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid gap-5 border-t border-[#173b28]/15 bg-[#edf5df] p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-8">
             <div>
-              <h2 className="text-xl font-black">You are confirmed!</h2>
-              <p className="text-sm text-[#53634A]">
-                We cannot wait to see you at BloomKnights.
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#17653a]">
+                You&apos;re on the list
+              </p>
+              <h2 className="mt-1 text-xl font-black">
+                Your place is confirmed.
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-[#405c4a]">
+                Plans changed? Withdraw here so another hacker can attend.
               </p>
             </div>
             <Button
               variant="outline"
-              className="rounded-full"
+              className="min-h-11 min-w-48 rounded-lg border-[#173b28]/35 bg-transparent text-[#173b28] hover:bg-white/70"
               disabled={actionPending}
               onClick={() => void handleWithdraw()}
             >
+              {actionPending && <Loader2 className="size-4 animate-spin" />}
               Withdraw attendance
             </Button>
           </div>
         )}
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <ActionCard
-          href="/dashboard/profile"
-          icon={<UserRound />}
-          label="Edit profile"
-        />
-        <ActionCard
-          href={resumeUrl ?? "/dashboard/profile"}
-          external={Boolean(resumeUrl)}
-          icon={<FileText />}
-          label={resumeUrl ? "View resume" : "Add resume"}
-        />
-        {(participant.status === "confirmed" ||
-          participant.status === "checkedin") && (
-          <Dialog>
-            <DialogTrigger asChild>
-              <button
-                className="bk-bloom-cta-action flex min-h-32 flex-col items-center justify-center gap-3 rounded-3xl border border-white/80 bg-[#FFFDF1] p-5 font-black shadow-lg transition hover:-translate-y-1"
-                onClick={() => void loadQRCode()}
-              >
-                {qrMutation.isPending ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <QrCode />
-                )}
-                Hacker QR code
-              </button>
-            </DialogTrigger>
-            <DialogContent className="border-[#B9D79A] bg-[#FFFDF1] text-[#42602A]">
-              <DialogHeader>
-                <DialogTitle>Your hacker QR code</DialogTitle>
-                <DialogDescription>
-                  Use this code at organizer check-in stations.
-                </DialogDescription>
-              </DialogHeader>
-              {qrCode ? (
-                <Image
-                  src={qrCode}
-                  alt="BloomKnights hacker QR code"
-                  width={320}
-                  height={320}
-                  className="mx-auto"
-                  unoptimized
-                />
-              ) : (
-                <Loader2 className="mx-auto animate-spin" />
-              )}
-            </DialogContent>
-          </Dialog>
-        )}
-        <ActionCard
-          href={config.guideUrl}
-          external
-          icon={<ExternalLink />}
-          label="Hacker guide"
-        />
+      <section aria-labelledby="portal-tools-heading">
+        <div className="mb-3 flex items-end justify-between gap-4 px-1">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#f6e8c9]">
+              Your toolkit
+            </p>
+            <h2
+              id="portal-tools-heading"
+              className="mt-1 text-2xl font-black text-white"
+            >
+              Participant essentials
+            </h2>
+          </div>
+          <p className="hidden text-sm font-semibold text-white/80 sm:block">
+            Four tools, always in the same place.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <ActionCard
+            description="Update your contact and application details."
+            href="/dashboard/profile"
+            icon={<UserRound />}
+            label="Profile"
+          />
+          <ActionCard
+            description={
+              resumeUrl
+                ? "Open the resume attached to your application."
+                : "Add a resume from your profile."
+            }
+            href={resumeUrl ?? "/dashboard/profile"}
+            external={Boolean(resumeUrl)}
+            icon={<FileText />}
+            label="Resume"
+          />
+          <QrActionCard
+            available={qrAvailable}
+            isLoading={qrMutation.isPending}
+            loadQRCode={loadQRCode}
+            qrCode={qrCode}
+          />
+          <ActionCard
+            description="Read arrival, venue, and event guidance."
+            href={config.guideUrl}
+            external
+            icon={<ExternalLink />}
+            label="Hacker guide"
+          />
+        </div>
       </section>
 
       {participant.status === "checkedin" && (
-        <section className="rounded-[2rem] bg-[#FFFDF1]/95 p-6 shadow-xl sm:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <section className="rounded-2xl border border-[#173b28]/20 bg-[#fffaf0] p-5 shadow-[0_20px_60px_rgba(12,52,29,0.16)] sm:p-8">
+          <div className="flex flex-col gap-4 border-b border-[#173b28]/15 pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#f384d4]">
-                You are checked in
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#8f285f]">
+                Live at BloomKnights
               </p>
-              <h2 className="mt-1 text-3xl font-black">Event schedule</h2>
+              <h2 className="mt-1 text-2xl font-black sm:text-3xl">
+                Event schedule
+              </h2>
             </div>
             <Dialog open={issueOpen} onOpenChange={setIssueOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="rounded-full">
-                  <AlertCircle /> Report an issue
+                <Button
+                  variant="outline"
+                  className="min-h-11 rounded-lg border-[#173b28]/35 bg-transparent text-[#173b28]"
+                >
+                  <LifeBuoy className="size-4" /> Report an issue
                 </Button>
               </DialogTrigger>
-              <DialogContent className="border-[#B9D79A] bg-[#FFFDF1] text-[#42602A]">
+              <DialogContent className="rounded-xl border-[#173b28]/25 bg-[#fffaf0] text-[#173b28]">
                 <DialogHeader>
                   <DialogTitle>Report an issue</DialogTitle>
-                  <DialogDescription>
-                    Tell the organizer team what is happening.
+                  <DialogDescription className="text-[#526658]">
+                    Tell the organizer team what is happening and where you are.
                   </DialogDescription>
                 </DialogHeader>
                 <Textarea
+                  aria-label="Issue details"
                   value={issue}
                   onChange={(event) => setIssue(event.target.value)}
                   maxLength={2000}
-                  className="min-h-32"
+                  className="min-h-32 rounded-lg border-[#173b28]/30 bg-white"
                 />
                 <DialogFooter>
                   <Button
+                    className="min-w-32 rounded-lg bg-[#173b28]"
                     disabled={!issue.trim() || reportIssueMutation.isPending}
                     onClick={async () => {
                       try {
@@ -358,36 +419,42 @@ export function BloomDashboard() {
                       }
                     }}
                   >
-                    Submit
+                    {reportIssueMutation.isPending && (
+                      <Loader2 className="size-4 animate-spin" />
+                    )}
+                    Send report
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+
+          <div className="mt-5 divide-y divide-[#173b28]/15 border-y border-[#173b28]/15">
             {schedule.length === 0 ? (
-              <p className="text-[#53634A]">
-                No scheduled events are available yet.
+              <p className="py-6 text-sm font-medium text-[#526658]">
+                The live schedule will appear here when it is published.
               </p>
             ) : (
               schedule.map((event) => (
                 <article
                   key={event.id}
-                  className="rounded-2xl border border-[#B9D79A] bg-white p-5"
+                  className="grid gap-3 py-5 md:grid-cols-[10rem_1fr_auto] md:items-start"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-extrabold text-[#405c4a]">
+                    {timeFormatter.format(event.startDateTime)}
+                  </p>
+                  <div>
                     <h3 className="text-lg font-black">{event.name}</h3>
-                    <Badge className="bg-[#2F8B57] text-white">
-                      {event.tag}
-                    </Badge>
+                    <p className="mt-1 max-w-2xl text-sm leading-6 text-[#526658]">
+                      {event.description}
+                    </p>
+                    <p className="mt-2 text-sm font-extrabold">
+                      {event.location}
+                    </p>
                   </div>
-                  <p className="mt-2 text-sm text-[#53634A]">
-                    {event.description}
-                  </p>
-                  <p className="mt-4 text-sm font-bold">
-                    {dateFormatter.format(event.startDateTime)} ·{" "}
-                    {event.location}
-                  </p>
+                  <Badge className="w-fit rounded-md bg-[#dce8c6] text-[#173b28] hover:bg-[#dce8c6]">
+                    {event.tag}
+                  </Badge>
                 </article>
               ))
             )}
@@ -410,12 +477,17 @@ function PortalMessage({
   action?: ReactNode;
 }) {
   return (
-    <section className="mx-auto max-w-2xl rounded-[2rem] border border-white/70 bg-[#FFFDF1]/95 p-8 text-center text-[#42602A] shadow-xl">
-      <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#B9D79A]">
+    <section
+      aria-live="polite"
+      className="mx-auto max-w-2xl rounded-2xl border border-[#173b28]/20 bg-[#fffaf0] p-6 text-center text-[#173b28] shadow-[0_24px_70px_rgba(12,52,29,0.18)] sm:p-9"
+    >
+      <div className="mx-auto flex size-11 items-center justify-center rounded-lg bg-[#dce8c6]">
         {icon}
       </div>
-      <h1 className="mt-5 text-2xl font-black sm:text-4xl">{title}</h1>
-      {body && <p className="mt-3 text-[#53634A]">{body}</p>}
+      <h1 className="mt-5 text-2xl font-black tracking-[-0.02em] sm:text-4xl">
+        {title}
+      </h1>
+      {body && <p className="mt-3 text-[#526658]">{body}</p>}
       {action && <div className="mt-6">{action}</div>}
     </section>
   );
@@ -425,11 +497,13 @@ function ActionCard({
   href,
   icon,
   label,
+  description,
   external = false,
 }: {
   href: string;
   icon: ReactNode;
   label: string;
+  description: string;
   external?: boolean;
 }) {
   return (
@@ -437,10 +511,108 @@ function ActionCard({
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
-      className="bk-bloom-cta-action flex min-h-32 flex-col items-center justify-center gap-3 rounded-3xl border border-white/80 bg-[#FFFDF1] p-5 text-center font-black shadow-lg transition hover:-translate-y-1"
+      className="bk-bloom-cta-action group flex min-h-40 flex-col rounded-xl border border-[#173b28]/20 bg-[#fffaf0] p-4 text-left text-[#173b28] shadow-[0_12px_30px_rgba(12,52,29,0.14)] transition-[border-color,background-color,box-shadow] hover:border-[#8f285f]/60 hover:bg-white hover:shadow-[0_16px_36px_rgba(12,52,29,0.2)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#fffaf0] focus-visible:ring-offset-2 focus-visible:ring-offset-[#173b28] sm:min-h-44 sm:p-5"
     >
-      {icon}
-      {label}
+      <span className="flex size-9 items-center justify-center rounded-md bg-[#dce8c6] [&_svg]:size-5">
+        {icon}
+      </span>
+      <span className="mt-4 text-base font-black sm:text-lg">{label}</span>
+      <span className="mt-1 line-clamp-3 text-xs font-medium leading-5 text-[#526658] sm:text-sm">
+        {description}
+      </span>
+      <ArrowUpRight
+        aria-hidden="true"
+        className="mt-auto size-4 self-end text-[#8f285f]"
+      />
     </Link>
+  );
+}
+
+function QrActionCard({
+  available,
+  isLoading,
+  loadQRCode,
+  qrCode,
+}: {
+  available: boolean;
+  isLoading: boolean;
+  loadQRCode: () => Promise<unknown>;
+  qrCode: string | undefined;
+}) {
+  if (!available) {
+    return (
+      <div
+        aria-disabled="true"
+        className="flex min-h-40 flex-col rounded-xl border border-[#173b28]/15 bg-[#eef0e7] p-4 text-left text-[#173b28] shadow-[0_10px_24px_rgba(12,52,29,0.1)] sm:min-h-44 sm:p-5"
+      >
+        <span className="flex size-9 items-center justify-center rounded-md bg-[#dde1d5] text-[#526658]">
+          <LockKeyhole className="size-5" />
+        </span>
+        <span className="mt-4 text-base font-black sm:text-lg">
+          Check-in QR
+        </span>
+        <span className="mt-1 text-xs font-medium leading-5 text-[#647168] sm:text-sm">
+          Available after your attendance is confirmed.
+        </span>
+        <span className="mt-auto text-xs font-extrabold uppercase tracking-[0.12em] text-[#647168]">
+          Locked
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          className="bk-bloom-cta-action group flex min-h-40 flex-col rounded-xl border border-[#173b28]/20 bg-[#fffaf0] p-4 text-left text-[#173b28] shadow-[0_12px_30px_rgba(12,52,29,0.14)] transition-[border-color,background-color,box-shadow] hover:border-[#8f285f]/60 hover:bg-white hover:shadow-[0_16px_36px_rgba(12,52,29,0.2)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#fffaf0] focus-visible:ring-offset-2 focus-visible:ring-offset-[#173b28] sm:min-h-44 sm:p-5"
+          onClick={() => void loadQRCode()}
+        >
+          <span className="flex size-9 items-center justify-center rounded-md bg-[#dce8c6]">
+            {isLoading ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : (
+              <QrCode className="size-5" />
+            )}
+          </span>
+          <span className="mt-4 text-base font-black sm:text-lg">
+            Check-in QR
+          </span>
+          <span className="mt-1 text-xs font-medium leading-5 text-[#526658] sm:text-sm">
+            Open your code for organizer check-in.
+          </span>
+          <ArrowUpRight
+            aria-hidden="true"
+            className="mt-auto size-4 self-end text-[#8f285f]"
+          />
+        </button>
+      </DialogTrigger>
+      <DialogContent className="rounded-xl border-[#173b28]/25 bg-[#fffaf0] text-[#173b28]">
+        <DialogHeader>
+          <DialogTitle>Your check-in QR code</DialogTitle>
+          <DialogDescription className="text-[#526658]">
+            Show this code at an organizer check-in station.
+          </DialogDescription>
+        </DialogHeader>
+        <div
+          className="flex min-h-72 items-center justify-center"
+          aria-live="polite"
+        >
+          {qrCode ? (
+            <Image
+              src={qrCode}
+              alt="BloomKnights hacker QR code"
+              width={288}
+              height={288}
+              className="size-72"
+              unoptimized
+            />
+          ) : (
+            <Loader2 className="size-8 animate-spin" />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

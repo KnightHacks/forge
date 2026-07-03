@@ -46,6 +46,7 @@ export function HackerProfileForm() {
   const allergiesRef = useRef<string[]>([]);
 
   const isError = dashboardQuery.isError;
+  const isPending = dashboardQuery.isPending;
 
   const toggleAllergy = (allergy: string) => {
     setSelectedAllergies((prev) =>
@@ -136,9 +137,24 @@ export function HackerProfileForm() {
       reader.readAsDataURL(file);
     });
 
+  if (isPending) {
+    return (
+      <div
+        aria-live="polite"
+        className="flex min-h-48 items-center justify-center gap-3 text-sm font-extrabold text-[#405c4a]"
+      >
+        <Loader2 className="size-5 animate-spin" />
+        Loading your profile…
+      </div>
+    );
+  }
+
   if (isError) {
     return (
-      <div className="flex items-center justify-center">
+      <div
+        role="alert"
+        className="flex min-h-48 items-center justify-center text-center font-semibold text-[#7d2056]"
+      >
         Something went wrong. Please refresh and try again.
       </div>
     );
@@ -146,9 +162,9 @@ export function HackerProfileForm() {
 
   if (!hacker) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 text-center">
+      <div className="flex min-h-48 flex-col items-center justify-center gap-4 text-center">
         <p>You need a BloomKnights application before editing a profile.</p>
-        <Button asChild>
+        <Button asChild className="rounded-lg bg-[#8f285f]">
           <Link href="/apply">Apply to BloomKnights</Link>
         </Button>
       </div>
@@ -159,7 +175,7 @@ export function HackerProfileForm() {
     <>
       <Form {...form}>
         <form
-          className="space-y-4"
+          className="bk-profile-form grid gap-x-6 gap-y-5 md:grid-cols-2"
           noValidate
           onSubmit={form.handleSubmit(async (values) => {
             setLoading(true);
@@ -290,10 +306,11 @@ export function HackerProfileForm() {
               </FormItem>
             )}
           />
-          <div className="mt-10!">
-            <h3 className="text-lg font-medium">Demographic Information</h3>
-            <p className="text-sm text-muted-foreground">
-              This is some additional information about you.
+          <div className="bk-profile-section-heading">
+            <h2>About you</h2>
+            <p>
+              Demographic information helps us understand who BloomKnights
+              serves.
             </p>
           </div>
           <FormField
@@ -397,11 +414,9 @@ export function HackerProfileForm() {
               </FormItem>
             )}
           />
-          <div className="mt-10!">
-            <h3 className="text-lg font-medium">Academic Information</h3>
-            <p className="text-sm text-muted-foreground">
-              This is where you go to school and what you're studying.
-            </p>
+          <div className="bk-profile-section-heading">
+            <h2>Academic information</h2>
+            <p>Your school, program, and expected graduation.</p>
           </div>
           <FormField
             control={form.control}
@@ -495,17 +510,15 @@ export function HackerProfileForm() {
               </FormItem>
             )}
           />
-          <div className="mt-10!">
-            <h3 className="text-lg font-medium">Hackathon Survey</h3>
-            <p className="text-sm text-muted-foreground">
-              Tell us a bit more about yourself!
-            </p>
+          <div className="bk-profile-section-heading">
+            <h2>Hackathon survey</h2>
+            <p>Tell the organizer team what you want from the event.</p>
           </div>
           <FormField
             control={form.control}
             name="survey1"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="md:col-span-2">
                 <FormLabel>
                   Why do you want to attend Knighthacks?{" "}
                   <span className="text-destructive">*</span>
@@ -525,7 +538,7 @@ export function HackerProfileForm() {
             control={form.control}
             name="survey2"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="md:col-span-2">
                 <FormLabel>
                   What do you hope to achieve at Knighthacks?{" "}
                   <span className="text-destructive">*</span>
@@ -541,11 +554,9 @@ export function HackerProfileForm() {
               </FormItem>
             )}
           />
-          <div className="mt-10!">
-            <h3 className="text-lg font-medium">Additional Links</h3>
-            <p className="text-sm text-muted-foreground">
-              Feel free to include what makes you, you.
-            </p>
+          <div className="bk-profile-section-heading">
+            <h2>Links and logistics</h2>
+            <p>Share your work, resume, and dietary requirements.</p>
           </div>
           <FormField
             control={form.control}
@@ -715,7 +726,7 @@ export function HackerProfileForm() {
             control={form.control}
             name="isFirstTime"
             render={({ field }) => (
-              <FormItem className="flex flex-row space-x-3 space-y-0">
+              <FormItem className="bk-profile-consent flex flex-row space-x-3 space-y-0 md:col-span-2">
                 <FormControl>
                   <Checkbox
                     checked={!!field.value}
@@ -736,7 +747,7 @@ export function HackerProfileForm() {
             control={form.control}
             name="agreesToMLHCodeOfConduct"
             render={({ field }) => (
-              <FormItem className="flex flex-row space-x-3 space-y-0">
+              <FormItem className="bk-profile-consent flex flex-row space-x-3 space-y-0 md:col-span-2">
                 <FormControl>
                   <Checkbox
                     checked={!!field.value}
@@ -767,7 +778,7 @@ export function HackerProfileForm() {
             control={form.control}
             name="agreesToMLHDataSharing"
             render={({ field }) => (
-              <FormItem className="flex flex-row space-x-3 space-y-0">
+              <FormItem className="bk-profile-consent flex flex-row space-x-3 space-y-0 md:col-span-2">
                 <FormControl>
                   <Checkbox
                     checked={!!field.value}
@@ -819,7 +830,7 @@ export function HackerProfileForm() {
             control={form.control}
             name="agreesToReceiveEmailsFromMLH"
             render={({ field }) => (
-              <FormItem className="flex flex-row space-x-3 space-y-0">
+              <FormItem className="bk-profile-consent flex flex-row space-x-3 space-y-0 md:col-span-2">
                 <FormControl>
                   <Checkbox
                     checked={!!field.value}
@@ -837,11 +848,16 @@ export function HackerProfileForm() {
             )}
           />
 
-          {loading ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <Button type="submit">Update Profile</Button>
-          )}
+          <Button
+            type="submit"
+            disabled={loading}
+            className="min-h-12 rounded-lg bg-[#173b28] text-white hover:bg-[#24533a] md:col-span-2"
+          >
+            <span className="inline-flex size-4 items-center justify-center">
+              {loading && <Loader2 className="size-4 animate-spin" />}
+            </span>
+            {loading ? "Saving changes" : "Save profile changes"}
+          </Button>
         </form>
       </Form>
     </>

@@ -34,20 +34,24 @@ export default async function ApplyPage({
   if (now < hackathon.applicationOpen || now > hackathon.applicationDeadline) {
     const beforeOpen = now < hackathon.applicationOpen;
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f3eadb] px-5 text-center text-[#42602A]">
-        <section className="max-w-xl rounded-[2rem] bg-[#FFFDF1] p-8 shadow-xl">
-          <h1 className="text-3xl font-black">
+      <main className="flex min-h-screen items-center justify-center bg-[#173b28] px-4 py-10 text-[#173b28]">
+        <section className="w-full max-w-xl rounded-2xl border border-[#173b28]/20 bg-[#fffaf0] p-6 text-left shadow-[0_24px_70px_rgba(0,0,0,0.24)] sm:p-9">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#8f285f]">
+            BloomKnights applications
+          </p>
+          <h1 className="mt-2 text-3xl font-black tracking-[-0.03em] sm:text-4xl">
             Applications are {beforeOpen ? "not open yet" : "closed"}.
           </h1>
-          <p className="mt-3 text-[#53634A]">
-            Visit your dashboard for the latest BloomKnights status and
-            announcements.
+          <p className="mt-3 max-w-md font-medium leading-7 text-[#526658]">
+            {beforeOpen
+              ? `Applications open ${hackathon.applicationOpen.toLocaleString("en-US", { dateStyle: "long", timeStyle: "short", timeZone: "America/New_York" })}.`
+              : "Join the Knight Hacks Discord for future event and registration updates."}
           </p>
           <Link
-            href="/dashboard"
-            className="mt-6 inline-flex rounded-full bg-[#f384d4] px-6 py-3 font-black text-white"
+            href="/"
+            className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-[#8f285f] px-5 py-2 font-black text-white transition-colors hover:bg-[#75204f] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8f285f]/25"
           >
-            Go to dashboard
+            Back to BloomKnights
           </Link>
         </section>
       </main>

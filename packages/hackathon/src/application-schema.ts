@@ -23,7 +23,10 @@ function calculateAge(birthDate: Date, referenceDate: Date) {
 
 function createResumeUploadSchema() {
   return z
-    .instanceof(FileList)
+    .custom<FileList>(
+      (value) => typeof FileList !== "undefined" && value instanceof FileList,
+      "Resume upload must be a browser file selection",
+    )
     .superRefine((fileList, ctx) => {
       if (fileList.length !== 0 && fileList.length !== 1) {
         ctx.addIssue({
@@ -34,7 +37,7 @@ function createResumeUploadSchema() {
 
       if (fileList.length !== 1) return;
       const file = fileList[0];
-      if (!(file instanceof File)) {
+      if (typeof File === "undefined" || !(file instanceof File)) {
         ctx.addIssue({
           code: "custom",
           message: "Object in FileList is undefined",

@@ -34,10 +34,6 @@ const Navbar = () => {
           href: "/api/auth/signin?provider=discord&callbackURL=%2Fdashboard",
           label: "Sign up",
         },
-        {
-          href: "/api/auth/signin?provider=discord&callbackURL=%2Fdashboard",
-          label: "Log in",
-        },
       ];
 
   useEffect(() => {

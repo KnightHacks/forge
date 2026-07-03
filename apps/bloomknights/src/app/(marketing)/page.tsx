@@ -72,8 +72,12 @@ export default function HomePage() {
         >
           <motion.div
             variants={heroReveal}
-            initial={prefersReducedMotion ? false : "hidden"}
-            animate="visible"
+            initial="hidden"
+            animate={
+              prefersReducedMotion
+                ? { opacity: 1, y: 0, transition: { duration: 0 } }
+                : "visible"
+            }
             custom={0}
             whileHover={prefersReducedMotion ? undefined : { scale: 1.08 }}
             transition={{ type: "spring", stiffness: 200, damping: 14 }}
@@ -88,8 +92,12 @@ export default function HomePage() {
           <motion.div
             className="font-righteous flex max-w-4xl flex-col items-center gap-3 text-center leading-none text-[#fff7dc] [-webkit-text-stroke:0.45px_#245f34] [text-shadow:0_1px_0_#245f34,1px_0_0_#245f34,-1px_0_0_#245f34,0_-1px_0_#245f34,0_5px_16px_rgba(30,58,32,0.48)]"
             variants={heroReveal}
-            initial={prefersReducedMotion ? false : "hidden"}
-            animate="visible"
+            initial="hidden"
+            animate={
+              prefersReducedMotion
+                ? { opacity: 1, y: 0, transition: { duration: 0 } }
+                : "visible"
+            }
             custom={0.15}
           >
             <h2 className="font-dm-sans text-2xl font-black italic tracking-normal text-white [-webkit-text-stroke:0px_transparent] [text-shadow:0_3px_0_rgba(126,126,126,0.88),0_7px_12px_rgba(42,42,42,0.24)] sm:text-3xl md:text-4xl">
@@ -103,8 +111,12 @@ export default function HomePage() {
         >
           <motion.div
             variants={heroReveal}
-            initial={prefersReducedMotion ? false : "hidden"}
-            animate="visible"
+            initial="hidden"
+            animate={
+              prefersReducedMotion
+                ? { opacity: 1, y: 0, transition: { duration: 0 } }
+                : "visible"
+            }
             custom={0.25}
           >
             <Register />

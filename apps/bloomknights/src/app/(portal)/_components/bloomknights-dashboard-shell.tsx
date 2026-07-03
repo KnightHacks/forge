@@ -17,15 +17,29 @@ export function BloomKnightsDashboardShell({
 }) {
   return (
     <main
-      className="relative isolate min-h-screen overflow-hidden bg-emerald-950 bg-[length:100%_auto] bg-[center_64%] bg-no-repeat px-4 py-16"
+      className="relative isolate min-h-screen overflow-hidden bg-[#173b28] bg-cover bg-center bg-no-repeat px-3 py-5 sm:px-5 sm:py-8 lg:py-10"
       style={{
         backgroundImage: `image-set(url("${BLOOMKNIGHTS_DASHBOARD_BACKGROUND_AVIF}") type("image/avif"), url("${BLOOMKNIGHTS_DASHBOARD_BACKGROUND}") type("image/webp"))`,
       }}
     >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(14,51,31,0.48),rgba(10,45,27,0.78))]"
+      />
       <BloomKnightsAmbientBackground />
       <BloomKnightsActionBlooms />
       <BloomKnightsFlowerCursor />
-      <div className="max-w-8xl relative z-10 mx-auto w-full">
+      <a
+        href="#participant-content"
+        className="fixed left-3 top-3 z-50 -translate-y-24 rounded-md bg-[#fffaf0] px-4 py-2 font-bold text-[#173b28] shadow-lg transition-transform focus:translate-y-0"
+      >
+        Skip to participant content
+      </a>
+      <div
+        id="participant-content"
+        tabIndex={-1}
+        className="relative z-10 mx-auto w-full max-w-6xl"
+      >
         <BloomKnightsDashboardLogo />
         {children}
       </div>
@@ -37,15 +51,7 @@ export function BloomKnightsDashboardShell({
         .bk-dashboard-logo {
           transform-origin: center;
           filter: drop-shadow(0 0.45rem 0.55rem rgba(45, 84, 34, 0.12));
-          transition:
-            transform 520ms cubic-bezier(0.18, 0.89, 0.32, 1.28),
-            filter 520ms ease;
-          will-change: transform, filter;
-        }
-
-        .bk-dashboard-logo-shell:hover .bk-dashboard-logo {
-          filter: drop-shadow(0 0.85rem 0.75rem rgba(45, 84, 34, 0.18));
-          transform: translateY(-0.35rem) scale(1.065);
+          transition: filter 300ms ease;
         }
 
         .bk-flower-cycle-text {
@@ -58,7 +64,7 @@ export function BloomKnightsDashboardShell({
           align-items: center;
           justify-content: center;
           overflow: hidden;
-          border-radius: 9999px;
+          border-radius: 0.5rem;
           padding: 0.45rem 1.15rem;
           color: #ffffff;
           text-shadow: 0 1px 3px rgba(36, 95, 53, 0.45);
@@ -72,7 +78,7 @@ export function BloomKnightsDashboardShell({
           aspect-ratio: 1;
           z-index: -1;
           content: "";
-          border-radius: 50%;
+          border-radius: 0.75rem;
           background: conic-gradient(
             from 0deg,
             #fcbc4e,
@@ -109,10 +115,6 @@ export function BloomKnightsDashboardShell({
         @media (prefers-reduced-motion: reduce) {
           .bk-dashboard-logo {
             transition: none;
-          }
-
-          .bk-dashboard-logo-shell:hover .bk-dashboard-logo {
-            transform: none;
           }
 
           .bk-flower-cycle-text::before {

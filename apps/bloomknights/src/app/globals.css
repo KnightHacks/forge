@@ -103,6 +103,79 @@ html {
   font-family: var(--font-dm-sans), sans-serif;
 }
 
+.bk-profile-form
+  > div:not(.bk-profile-section-heading):not(.bk-profile-consent) {
+  min-height: 6.25rem;
+}
+
+.bk-profile-form > div:has(textarea) {
+  min-height: 12.5rem;
+}
+
+.bk-profile-form .bk-profile-section-heading {
+  grid-column: 1 / -1;
+  margin-top: 1.25rem;
+  border-top: 1px solid rgba(23, 59, 40, 0.18);
+  padding-top: 1.5rem;
+}
+
+.bk-profile-form .bk-profile-section-heading h2 {
+  color: #173b28;
+  font-size: 1.125rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.bk-profile-form .bk-profile-section-heading p {
+  margin-top: 0.25rem;
+  color: #526658;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.bk-profile-form label {
+  color: #294b36;
+  font-weight: 750;
+}
+
+.bk-profile-form .text-gray-400 {
+  color: #66746b;
+}
+
+.bk-profile-form input,
+.bk-profile-form textarea,
+.bk-profile-form button[role="combobox"] {
+  border-color: rgba(23, 59, 40, 0.32);
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #173b28;
+  box-shadow: none;
+}
+
+.bk-profile-form input,
+.bk-profile-form button[role="combobox"] {
+  min-height: 2.75rem;
+}
+
+.bk-profile-form textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.bk-profile-form input:focus-visible,
+.bk-profile-form textarea:focus-visible,
+.bk-profile-form button[role="combobox"]:focus-visible {
+  border-color: #8f285f;
+  outline: 3px solid rgba(143, 40, 95, 0.2);
+  outline-offset: 1px;
+}
+
+.bk-profile-form .bk-profile-consent {
+  min-height: 3rem;
+  border-left: 3px solid #d7dfc1;
+  padding: 0.6rem 0 0.6rem 0.8rem;
+}
+
 .bloom-site-background {
   position: relative;
   isolation: isolate;

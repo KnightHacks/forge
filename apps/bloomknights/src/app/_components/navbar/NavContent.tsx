@@ -113,7 +113,7 @@ function NavContent({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
             transition={navChromeTransition}
-            className="absolute left-4 right-4 top-24 overflow-hidden rounded-lg border border-[#245f34]/15 bg-[#fff7dc]/95 text-[#245f34] shadow-[0_18px_48px_rgba(16,64,30,0.2)] backdrop-blur-md md:hidden"
+            className="absolute left-4 right-4 top-24 z-50 overflow-hidden rounded-lg border border-[#245f34]/20 bg-[#fffaf0] text-[#245f34] shadow-[0_18px_48px_rgba(16,64,30,0.24)] md:hidden"
           >
             <div className="flex flex-col py-2">
               {navLinks.map((link) => (

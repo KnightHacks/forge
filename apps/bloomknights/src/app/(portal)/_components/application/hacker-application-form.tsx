@@ -44,17 +44,17 @@ import {
 import { HackerApplicationBackground } from "./hacker-application-background";
 
 const fieldTriggerClassName =
-  "h-12 overflow-hidden rounded-none border-x-0 border-b-2 border-t-0 border-white/75 bg-transparent px-0 text-left text-lg font-medium text-white shadow-none transition-colors hover:border-white hover:bg-transparent hover:text-white focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 data-[placeholder]:text-white/35 [&>span]:block [&>span]:max-w-[calc(100%-2rem)] [&>span]:truncate [&>svg]:text-white/55 sm:h-14 sm:text-xl md:text-2xl";
+  "h-12 overflow-hidden rounded-none border-x-0 border-b-2 border-t-0 border-white/85 bg-transparent px-0 text-left text-lg font-semibold text-white shadow-none transition-colors hover:border-white hover:bg-transparent hover:text-white focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 data-[placeholder]:text-white/65 [&>span]:block [&>span]:max-w-[calc(100%-2rem)] [&>span]:truncate [&>svg]:text-white/75 sm:h-14 sm:text-xl md:text-2xl";
 const fieldLabelClassName =
-  "text-base font-semibold leading-none text-white/85 md:text-lg";
+  "text-base font-bold leading-none text-white md:text-lg";
 const optionalTextClassName =
-  "ml-2 text-sm font-medium italic text-white/45 md:text-base";
+  "ml-2 text-sm font-medium text-white/75 md:text-base";
 const requiredMarkClassName =
   "text-xl font-black text-[#ff4fd8] drop-shadow-[0_0_10px_rgba(255,79,216,0.85)] md:text-2xl";
 const checkboxClassName =
   "mt-0.5 flex h-5 w-5 items-center justify-center border-white/45 bg-white/5 text-white shadow-none data-[state=checked]:border-white data-[state=checked]:bg-white data-[state=checked]:text-[#21103d] focus-visible:ring-white/40 [&>span>svg]:h-5 [&>span>svg]:w-5";
 const checkboxLabelClassName =
-  "text-sm font-medium leading-relaxed text-white/75";
+  "text-sm font-medium leading-relaxed text-white/90";
 const highlightedCheckboxRowClassName =
   "flex flex-row items-start gap-3 space-y-0 rounded-md border border-white/18 bg-[#06101b]/58 px-3 py-3 shadow-[0_16px_42px_rgba(0,0,0,0.28)] backdrop-blur-sm";
 const highlightedCheckboxClassName =
@@ -72,9 +72,9 @@ const agreementErrorMessageClassName =
 const agreementLinkClassName =
   "font-semibold text-white underline underline-offset-4 decoration-white/35 transition-colors hover:text-white/80 hover:decoration-white";
 const actionButtonClassName =
-  "kh-nav-button size-14 rounded-full bg-white p-0 text-[#21103d] shadow-[0_18px_46px_rgba(0,0,0,0.42)] hover:bg-white/90 sm:size-16";
+  "kh-nav-button size-14 rounded-xl bg-white p-0 text-[#112f21] shadow-[0_14px_36px_rgba(0,0,0,0.36)] hover:bg-[#f8f5ea] sm:size-16";
 const secondaryActionButtonClassName =
-  "kh-nav-button size-14 rounded-full border-white/45 bg-[#12071f]/75 p-0 text-white shadow-[0_18px_46px_rgba(0,0,0,0.42)] hover:bg-[#12071f]/90 hover:text-white disabled:opacity-35 sm:size-16";
+  "kh-nav-button size-14 rounded-xl border-white/55 bg-[#071d14]/85 p-0 text-white shadow-[0_14px_36px_rgba(0,0,0,0.36)] hover:bg-[#0b2a1d] hover:text-white disabled:opacity-35 sm:size-16";
 const resumeSponsorDisclosure =
   "Uploaded resumes will be shared with sponsors for potential internships and outreach.";
 
@@ -239,25 +239,33 @@ const applicationAnimationStyles = `
 
 .kh-nav-button {
   transition:
-    transform 180ms ease,
     box-shadow 180ms ease,
     background-color 180ms ease,
     border-color 180ms ease;
 }
 
 .kh-nav-button:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.44);
 }
 
 .kh-nav-button:active:not(:disabled) {
-  transform: translateY(0) scale(0.96);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.36);
 }
 
 .kh-application-form {
   height: 100svh;
   min-height: 100svh;
   overflow: hidden;
+}
+
+.kh-application-panel {
+  min-height: clamp(27rem, 62vh, 38rem);
+  border-left: 4px solid rgba(168, 212, 113, 0.82);
+  border-radius: 0 0.75rem 0.75rem 0;
+  background: rgba(4, 24, 16, 0.78);
+  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.3);
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  backdrop-filter: blur(14px);
 }
 
 .kh-application-nav {
@@ -320,6 +328,7 @@ const applicationAnimationStyles = `
 
   .kh-application-panel {
     max-width: min(44rem, 70vw);
+    min-height: min(27rem, 76vh);
   }
 
   .kh-step-title {
@@ -364,6 +373,7 @@ const applicationAnimationStyles = `
 
   .kh-application-panel {
     max-width: min(40rem, 68vw);
+    min-height: min(22rem, 78vh);
   }
 
   .kh-step-title {
@@ -819,7 +829,7 @@ export function HackerFormPage({
     <Form {...form}>
       <style>{applicationStyles}</style>
       <form
-        className="kh-application-form bg-primary/5 text-foreground"
+        className="kh-application-form bg-[#071d14] text-white"
         data-application-visual={applicationVisualKey}
         aria-busy={loading}
         noValidate
@@ -895,7 +905,7 @@ export function HackerFormPage({
         }, handleInvalidSubmit)}
       >
         <div
-          className="kh-application-shell relative h-svh min-h-svh overflow-hidden bg-[linear-gradient(135deg,#10071d_0%,#271148_48%,#0b0614_100%)] text-white"
+          className="kh-application-shell relative h-svh min-h-svh overflow-hidden bg-[linear-gradient(135deg,#071d14_0%,#173b28_52%,#08160f_100%)] text-white"
           data-application-visual={applicationVisualKey}
         >
           <HackerApplicationBackground
@@ -916,7 +926,7 @@ export function HackerFormPage({
 
               <section className="flex flex-1 items-center py-12">
                 <div className="w-full max-w-4xl">
-                  <div className="kh-submitted-mark bg-white/14 mb-8 inline-flex size-16 items-center justify-center rounded-full border border-white/35 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-md sm:size-20">
+                  <div className="kh-submitted-mark bg-white/14 mb-8 inline-flex size-16 items-center justify-center rounded-xl border border-white/35 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-md sm:size-20">
                     <CheckCircle2 className="size-9 text-white sm:size-11" />
                   </div>
 
@@ -937,7 +947,7 @@ export function HackerFormPage({
                   <div className="kh-submitted-action mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
                     <Button
                       asChild
-                      className="h-12 rounded-full bg-white px-6 text-base font-black text-[#21103d] shadow-[0_18px_46px_rgba(0,0,0,0.42)] hover:bg-white/90"
+                      className="h-12 rounded-lg bg-white px-6 text-base font-black text-[#173b28] shadow-[0_18px_46px_rgba(0,0,0,0.42)] hover:bg-[#f8f5ea]"
                     >
                       <Link href="/dashboard">
                         View {hackathonName} dashboard
@@ -961,6 +971,21 @@ export function HackerFormPage({
                     {activeStep + 1}/{APPLICATION_STEPS.length}
                   </span>
                 </div>
+                <div
+                  aria-label={`Application step ${activeStep + 1} of ${APPLICATION_STEPS.length}`}
+                  aria-valuemax={APPLICATION_STEPS.length}
+                  aria-valuemin={1}
+                  aria-valuenow={activeStep + 1}
+                  className="mt-3 h-1 overflow-hidden rounded-sm bg-white/25"
+                  role="progressbar"
+                >
+                  <div
+                    className="h-full bg-[#a8d471] transition-[width] duration-300 motion-reduce:transition-none"
+                    style={{
+                      width: `${((activeStep + 1) / APPLICATION_STEPS.length) * 100}%`,
+                    }}
+                  />
+                </div>
 
                 {previousHacker && activeStep === 0 && (
                   <div className="mt-6 max-w-xl border-l-2 border-white/35 pl-4 text-sm font-medium text-white/65">
@@ -969,10 +994,10 @@ export function HackerFormPage({
                 )}
 
                 <div className="kh-application-stage flex flex-1 items-start py-8 md:items-center md:py-10">
-                  <div className="kh-application-panel w-full max-w-3xl">
+                  <div className="kh-application-panel w-full max-w-4xl">
                     <h1
                       key={currentStep.id}
-                      className="kh-step-title text-4xl font-black leading-none tracking-normal text-white sm:text-5xl md:text-7xl"
+                      className="kh-step-title text-3xl font-black leading-[1.02] tracking-[-0.025em] text-white sm:text-4xl md:text-6xl"
                     >
                       {currentStep.title}
                     </h1>
@@ -980,13 +1005,13 @@ export function HackerFormPage({
                     <div
                       className={cn(
                         "kh-step-content",
-                        "animate-in fade-in mt-10 duration-200 sm:mt-14 md:mt-16",
+                        "animate-in fade-in mt-8 duration-200 sm:mt-10 md:mt-12",
                         stepDirection === "forward"
                           ? "slide-in-from-right-4"
                           : "slide-in-from-left-4",
-                        "[&_input]:h-12 [&_input]:rounded-none [&_input]:border-x-0 [&_input]:border-b-2 [&_input]:border-t-0 [&_input]:border-white/75 [&_input]:bg-transparent [&_input]:px-0 [&_input]:text-lg [&_input]:font-medium [&_input]:text-white [&_input]:shadow-none [&_input]:transition-colors [&_input]:placeholder:text-white/35 [&_input]:focus-visible:border-white [&_input]:focus-visible:ring-0 sm:[&_input]:h-14 sm:[&_input]:text-xl md:[&_input]:text-2xl",
-                        "[&_textarea]:min-h-32 [&_textarea]:rounded-none [&_textarea]:border-x-0 [&_textarea]:border-b-2 [&_textarea]:border-t-0 [&_textarea]:border-white/75 [&_textarea]:bg-transparent [&_textarea]:px-0 [&_textarea]:text-lg [&_textarea]:font-medium [&_textarea]:text-white [&_textarea]:shadow-none [&_textarea]:transition-colors [&_textarea]:placeholder:text-white/35 [&_textarea]:focus-visible:border-white [&_textarea]:focus-visible:ring-0 sm:[&_textarea]:min-h-36 sm:[&_textarea]:text-xl",
-                        "[&_p]:text-sm [&_p]:font-medium [&_p]:text-rose-200",
+                        "[&_input]:h-12 [&_input]:rounded-none [&_input]:border-x-0 [&_input]:border-b-2 [&_input]:border-t-0 [&_input]:border-white/85 [&_input]:bg-transparent [&_input]:px-0 [&_input]:text-lg [&_input]:font-semibold [&_input]:text-white [&_input]:shadow-none [&_input]:transition-colors [&_input]:placeholder:text-white/65 [&_input]:focus-visible:border-[#a8d471] [&_input]:focus-visible:ring-0 sm:[&_input]:h-14 sm:[&_input]:text-xl md:[&_input]:text-2xl",
+                        "[&_textarea]:min-h-32 [&_textarea]:rounded-none [&_textarea]:border-x-0 [&_textarea]:border-b-2 [&_textarea]:border-t-0 [&_textarea]:border-white/85 [&_textarea]:bg-transparent [&_textarea]:px-0 [&_textarea]:text-lg [&_textarea]:font-semibold [&_textarea]:text-white [&_textarea]:shadow-none [&_textarea]:transition-colors [&_textarea]:placeholder:text-white/65 [&_textarea]:focus-visible:border-[#a8d471] [&_textarea]:focus-visible:ring-0 sm:[&_textarea]:min-h-36 sm:[&_textarea]:text-xl",
+                        "[&_p]:text-sm [&_p]:font-bold [&_p]:text-[#ffd4e9]",
                       )}
                     >
                       <section className="space-y-5">
@@ -1468,7 +1493,7 @@ export function HackerFormPage({
                               <FormControl>
                                 <Input
                                   type="file"
-                                  className="cursor-pointer file:mr-4 file:rounded-full file:border file:border-white/35 file:bg-white/10 file:px-4 file:py-1.5 file:text-sm file:font-semibold file:text-white hover:file:bg-white/15"
+                                  className="file:bg-white/12 hover:file:bg-white/18 cursor-pointer file:mr-4 file:rounded-md file:border file:border-white/45 file:px-4 file:py-1.5 file:text-sm file:font-semibold file:text-white"
                                   {...fileRef}
                                   onChange={(event) => {
                                     field.onChange(
@@ -1905,19 +1930,21 @@ export function HackerFormPage({
 
                 {isFinalStep ? (
                   <div className="pointer-events-auto flex min-w-0 items-center gap-3">
-                    {loading && (
-                      <div
-                        aria-live="polite"
-                        className="kh-submit-loading bg-[#12071f]/72 flex items-center gap-2 rounded-full border border-white/30 px-3 py-2 text-xs font-black uppercase tracking-[0.16em] text-white/85 shadow-[0_16px_42px_rgba(0,0,0,0.32)] backdrop-blur-md sm:text-sm"
-                        role="status"
-                      >
-                        <Loader2
-                          aria-hidden="true"
-                          className="size-4 animate-spin"
-                        />
-                        <span>Submitting</span>
-                      </div>
-                    )}
+                    <div className="flex min-h-9 w-28 shrink-0 items-center justify-end sm:w-36">
+                      {loading && (
+                        <div
+                          aria-live="polite"
+                          className="kh-submit-loading bg-[#071d14]/88 flex items-center gap-2 rounded-md border border-white/35 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-white shadow-[0_16px_42px_rgba(0,0,0,0.32)] backdrop-blur-md sm:text-sm"
+                          role="status"
+                        >
+                          <Loader2
+                            aria-hidden="true"
+                            className="size-4 animate-spin"
+                          />
+                          <span>Submitting</span>
+                        </div>
+                      )}
+                    </div>
                     <Button
                       type="submit"
                       disabled={forwardButtonDisabled}

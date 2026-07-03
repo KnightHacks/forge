@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
+import { createHackathonPortalServerCaller } from "@forge/hackathon/server";
 
 import { auth, signIn } from "~/auth/server";
 import { AuthRetry } from "../_components/auth-retry";
@@ -22,6 +26,16 @@ export default async function DashboardPage({
     if (authError) return <AuthRetry callbackPath="/dashboard" />;
     signIn("discord", { redirectTo: "/dashboard" });
   }
+
+  const caller = createHackathonPortalServerCaller({
+    headers: await headers(),
+    session,
+  });
+  const dashboard = await caller.portal.getDashboard({
+    hackathonName: "bloomknights",
+  });
+
+  if (!dashboard.participant) redirect("/apply");
 
   return (
     <BloomKnightsDashboardShell>
