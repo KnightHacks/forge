@@ -57,6 +57,7 @@ export function BaseHackathonIssueButton({
           className={cn(
             "group flex w-full items-center gap-3 rounded-lg border bg-card px-5 py-3 text-base font-semibold shadow-sm transition-all hover:scale-[1.02] hover:border-primary/50 hover:shadow-md sm:w-auto sm:px-5 sm:py-3 sm:text-sm",
             dashboardFrameTheme?.actionButtonClassName,
+            dashboardFrameTheme?.checkedInActionButtonClassName,
             dashboardFrameTheme?.actionBloomClassName,
           )}
         >
@@ -64,12 +65,14 @@ export function BaseHackathonIssueButton({
             className={cn(
               "h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary",
               dashboardFrameTheme?.actionIconClassName,
+              dashboardFrameTheme?.checkedInActionIconClassName,
             )}
           />
           <span
             className={cn(
               "transition-colors",
               dashboardFrameTheme?.actionTextClassName,
+              dashboardFrameTheme?.checkedInActionTextClassName,
             )}
           >
             Report an Issue

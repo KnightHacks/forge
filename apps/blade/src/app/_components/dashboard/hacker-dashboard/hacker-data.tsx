@@ -199,6 +199,7 @@ export function HackerData({
           actionButtonClassName={cn(
             dashboardFrameTheme?.actionButtonClassName,
             dashboardFrameTheme?.actionBloomClassName,
+            dashboardFrameTheme?.hackerQrButtonClassName,
           )}
           actionIconClassName={dashboardFrameTheme?.actionIconClassName}
           actionTextClassName={dashboardFrameTheme?.actionTextClassName}

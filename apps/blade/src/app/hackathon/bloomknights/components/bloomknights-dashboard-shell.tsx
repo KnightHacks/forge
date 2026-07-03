@@ -17,7 +17,7 @@ export function BloomKnightsDashboardShell({
 }) {
   return (
     <main
-      className="relative isolate min-h-screen overflow-hidden bg-emerald-950 bg-[length:100%_auto] bg-[center_72%] bg-no-repeat px-4 py-16"
+      className="relative isolate min-h-screen overflow-hidden bg-emerald-950 bg-[length:100%_auto] bg-[center_64%] bg-no-repeat px-4 py-16"
       style={{
         backgroundImage: `image-set(url("${BLOOMKNIGHTS_DASHBOARD_BACKGROUND_AVIF}") type("image/avif"), url("${BLOOMKNIGHTS_DASHBOARD_BACKGROUND}") type("image/webp"))`,
       }}

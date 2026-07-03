@@ -1,6 +1,10 @@
 export interface DashboardFrameTheme {
   frameClassName?: string;
   checkedInFrameClassName?: string;
+  checkedInActionButtonClassName?: string;
+  checkedInActionIconClassName?: string;
+  checkedInActionTextClassName?: string;
+  checkedInSectionLabelClassName?: string;
   topTabClassName?: string;
   bottomTabClassName?: string;
   leftAccentClassName?: string;
@@ -8,6 +12,7 @@ export interface DashboardFrameTheme {
   hideFrameCutouts?: boolean;
   actionButtonClassName?: string;
   actionBloomClassName?: string;
+  hackerQrButtonClassName?: string;
   actionIconClassName?: string;
   actionTextClassName?: string;
   qrDialogContentClassName?: string;
