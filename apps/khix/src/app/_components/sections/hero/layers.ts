@@ -2,6 +2,8 @@ export const HERO_ASSET_BASE_PATH = "/KHIXHero";
 
 export interface HeroLayer {
   filename: string;
+  width?: number;
+  height?: number;
   depthX: number;
   depthY: number;
   scrollY: number;
@@ -78,7 +80,9 @@ export const HERO_LAYERS: HeroLayer[] = [
     motionRole: "glow",
   },
   {
-    filename: "optimized/1_front.webp",
+    filename: "/assets/khix%20site%20hero%20front.png",
+    width: 3840,
+    height: 12000,
     depthX: 0,
     depthY: 0,
     scrollY: 0,

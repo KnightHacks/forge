@@ -59,6 +59,9 @@ export function HeroLayerImage({ layer, index, zIndex }: HeroLayerImageProps) {
     "data-hero-layer-image": !isWaterfall ? true : undefined,
     "data-hero-ambient-image": hasAmbientImageMotion ? true : undefined,
   };
+  const imageSrc = layer.filename.startsWith("/")
+    ? layer.filename
+    : `${HERO_ASSET_BASE_PATH}/${layer.filename}`;
 
   return (
     <div
@@ -79,10 +82,10 @@ export function HeroLayerImage({ layer, index, zIndex }: HeroLayerImageProps) {
     >
       {isForeground ? (
         <Image
-          src={`${HERO_ASSET_BASE_PATH}/${layer.filename}`}
+          src={imageSrc}
           alt=""
-          width={3840}
-          height={4320}
+          width={layer.width ?? 3840}
+          height={layer.height ?? 4320}
           priority
           unoptimized
           sizes="100vw"
@@ -92,7 +95,7 @@ export function HeroLayerImage({ layer, index, zIndex }: HeroLayerImageProps) {
         />
       ) : (
         <Image
-          src={`${HERO_ASSET_BASE_PATH}/${layer.filename}`}
+          src={imageSrc}
           alt=""
           fill
           priority

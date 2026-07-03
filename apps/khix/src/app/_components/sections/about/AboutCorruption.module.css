@@ -1,0 +1,55 @@
+.corruption {
+  position: absolute;
+  inset: 0;
+  z-index: auto;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.front,
+.gloom {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.front {
+  top: var(--khix-front-top);
+  right: 0;
+  left: 0;
+  z-index: 0;
+  height: var(--khix-front-height);
+  background-image: url("/assets/khix%20site%20hero%20front.png");
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: 100% auto;
+}
+
+.gloom {
+  top: var(--khix-front-top);
+  left: 0;
+  z-index: 2;
+  width: 100%;
+  aspect-ratio: 3840 / 12000;
+  background-image: url("/assets/bloom.png");
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: 100% auto;
+  opacity: 0;
+  transform: translate3d(0, 0, 0) scale(1);
+  transform-origin: 50% 100%;
+  will-change: opacity, transform;
+}
+
+@media (max-width: 700px) {
+  .gloom {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gloom {
+    transform: none;
+    will-change: auto;
+  }
+}
