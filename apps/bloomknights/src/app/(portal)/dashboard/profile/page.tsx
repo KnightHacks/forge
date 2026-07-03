@@ -25,15 +25,13 @@ export default async function HackerProfilePage({
   return (
     <BloomKnightsDashboardShell>
       <PortalHeader />
-      <section className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-[#173b28]/20 bg-[#fffaf0] text-[#173b28] shadow-[0_24px_70px_rgba(12,52,29,0.18)]">
-        <div className="border-b border-[#173b28]/15 bg-[#e4ebcf] p-5 sm:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#8f285f]">
-            Participant record
-          </p>
-          <h1 className="mt-2 text-3xl font-black tracking-[-0.03em] sm:text-4xl">
-            Your hacker profile
+      <section className="bk-portal-panel mx-auto max-w-5xl text-[#3d2e1e]">
+        <div className="border-b border-[#c4a882]/30 bg-[#daeaf5]/35 p-5 sm:p-8">
+          <p className="bk-portal-kicker">BloomKnights profile</p>
+          <h1 className="bk-portal-heading mt-2 text-3xl sm:text-4xl">
+            Your information
           </h1>
-          <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[#405c4a]">
+          <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[#5a4535]">
             Keep the details attached to your BloomKnights application current.
             Required fields are marked with an asterisk.
           </p>

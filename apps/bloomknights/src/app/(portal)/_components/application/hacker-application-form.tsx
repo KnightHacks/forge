@@ -56,13 +56,13 @@ const checkboxClassName =
 const checkboxLabelClassName =
   "text-sm font-medium leading-relaxed text-white/90";
 const highlightedCheckboxRowClassName =
-  "flex flex-row items-start gap-3 space-y-0 rounded-md border border-white/18 bg-[#06101b]/58 px-3 py-3 shadow-[0_16px_42px_rgba(0,0,0,0.28)] backdrop-blur-sm";
+  "kh-agreement-row flex flex-row items-start gap-3 space-y-0 rounded-md border border-white/18 bg-[#06101b]/58 px-3 py-3 shadow-[0_16px_42px_rgba(0,0,0,0.28)] backdrop-blur-sm";
 const highlightedCheckboxClassName =
   "h-6 w-6 border-white/70 bg-white/12 shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_0_24px_rgba(255,255,255,0.12)] data-[state=checked]:border-white data-[state=checked]:bg-white";
 const highlightedCheckboxLabelClassName =
   "text-base font-semibold leading-relaxed text-white/90 drop-shadow-[0_1px_5px_rgba(0,0,0,0.78)]";
 const agreementErrorRowClassName =
-  "rounded-md bg-[#ff2f6d]/14 px-3 py-3 ring-1 ring-[#ff6f9a]/55 shadow-[0_0_30px_rgba(255,47,109,0.22)]";
+  "kh-agreement-error-row rounded-md bg-[#ff2f6d]/14 px-3 py-3 ring-1 ring-[#ff6f9a]/55 shadow-[0_0_30px_rgba(255,47,109,0.22)]";
 const agreementErrorCheckboxClassName =
   "border-[#ff8aaa] bg-[#ff2f6d]/25 text-white shadow-[0_0_0_4px_rgba(255,111,154,0.24),0_0_24px_rgba(255,47,109,0.45)]";
 const agreementErrorLabelClassName =

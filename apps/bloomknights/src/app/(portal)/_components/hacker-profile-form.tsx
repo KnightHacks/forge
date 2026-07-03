@@ -141,7 +141,7 @@ export function HackerProfileForm() {
     return (
       <div
         aria-live="polite"
-        className="flex min-h-48 items-center justify-center gap-3 text-sm font-extrabold text-[#405c4a]"
+        className="flex min-h-48 items-center justify-center gap-3 text-sm font-bold text-[#5a4535]"
       >
         <Loader2 className="size-5 animate-spin" />
         Loading your profile…
@@ -153,7 +153,7 @@ export function HackerProfileForm() {
     return (
       <div
         role="alert"
-        className="flex min-h-48 items-center justify-center text-center font-semibold text-[#7d2056]"
+        className="flex min-h-48 items-center justify-center text-center font-semibold text-[#7a4a1e]"
       >
         Something went wrong. Please refresh and try again.
       </div>
@@ -164,7 +164,7 @@ export function HackerProfileForm() {
     return (
       <div className="flex min-h-48 flex-col items-center justify-center gap-4 text-center">
         <p>You need a BloomKnights application before editing a profile.</p>
-        <Button asChild className="rounded-lg bg-[#8f285f]">
+        <Button asChild className="bk-portal-button">
           <Link href="/apply">Apply to BloomKnights</Link>
         </Button>
       </div>
@@ -851,7 +851,7 @@ export function HackerProfileForm() {
           <Button
             type="submit"
             disabled={loading}
-            className="min-h-12 rounded-lg bg-[#173b28] text-white hover:bg-[#24533a] md:col-span-2"
+            className="bk-portal-button min-h-12 md:col-span-2"
           >
             <span className="inline-flex size-4 items-center justify-center">
               {loading && <Loader2 className="size-4 animate-spin" />}

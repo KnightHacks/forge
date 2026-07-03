@@ -34,22 +34,20 @@ export default async function ApplyPage({
   if (now < hackathon.applicationOpen || now > hackathon.applicationDeadline) {
     const beforeOpen = now < hackathon.applicationOpen;
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#173b28] px-4 py-10 text-[#173b28]">
-        <section className="w-full max-w-xl rounded-2xl border border-[#173b28]/20 bg-[#fffaf0] p-6 text-left shadow-[0_24px_70px_rgba(0,0,0,0.24)] sm:p-9">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#8f285f]">
-            BloomKnights applications
-          </p>
-          <h1 className="mt-2 text-3xl font-black tracking-[-0.03em] sm:text-4xl">
+      <main className="font-dm-sans flex min-h-screen items-center justify-center bg-[#f5ebd5] bg-[url('https://assets.knighthacks.org/bloom-background-desktop.webp')] bg-cover bg-center px-4 py-10 text-[#3d2e1e]">
+        <section className="bk-portal-panel w-full max-w-xl p-6 text-left sm:p-9">
+          <p className="bk-portal-kicker">BloomKnights applications</p>
+          <h1 className="bk-portal-heading mt-2 text-3xl sm:text-4xl">
             Applications are {beforeOpen ? "not open yet" : "closed"}.
           </h1>
-          <p className="mt-3 max-w-md font-medium leading-7 text-[#526658]">
+          <p className="mt-3 max-w-md font-medium leading-7 text-[#5a4535]">
             {beforeOpen
               ? `Applications open ${hackathon.applicationOpen.toLocaleString("en-US", { dateStyle: "long", timeStyle: "short", timeZone: "America/New_York" })}.`
               : "Join the Knight Hacks Discord for future event and registration updates."}
           </p>
           <Link
             href="/"
-            className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-[#8f285f] px-5 py-2 font-black text-white transition-colors hover:bg-[#75204f] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8f285f]/25"
+            className="bk-portal-button mt-6 inline-flex min-h-11 items-center px-5 py-2"
           >
             Back to BloomKnights
           </Link>

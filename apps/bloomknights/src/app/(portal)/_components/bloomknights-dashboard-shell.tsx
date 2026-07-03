@@ -17,21 +17,21 @@ export function BloomKnightsDashboardShell({
 }) {
   return (
     <main
-      className="relative isolate min-h-screen overflow-hidden bg-[#173b28] bg-cover bg-center bg-no-repeat px-3 py-5 sm:px-5 sm:py-8 lg:py-10"
+      className="font-dm-sans relative isolate min-h-screen overflow-hidden bg-[#f5ebd5] bg-cover bg-center bg-no-repeat px-3 py-5 text-[#3d2e1e] sm:px-5 sm:py-8 lg:py-10"
       style={{
         backgroundImage: `image-set(url("${BLOOMKNIGHTS_DASHBOARD_BACKGROUND_AVIF}") type("image/avif"), url("${BLOOMKNIGHTS_DASHBOARD_BACKGROUND}") type("image/webp"))`,
       }}
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(14,51,31,0.48),rgba(10,45,27,0.78))]"
+        className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(218,234,245,0.38),rgba(255,248,222,0.24)_48%,rgba(36,95,53,0.2))]"
       />
       <BloomKnightsAmbientBackground />
       <BloomKnightsActionBlooms />
       <BloomKnightsFlowerCursor />
       <a
         href="#participant-content"
-        className="fixed left-3 top-3 z-50 -translate-y-24 rounded-md bg-[#fffaf0] px-4 py-2 font-bold text-[#173b28] shadow-lg transition-transform focus:translate-y-0"
+        className="fixed left-3 top-3 z-50 -translate-y-24 rounded-md bg-[#fff8de] px-4 py-2 font-bold text-[#245f35] shadow-lg transition-transform focus:translate-y-0"
       >
         Skip to participant content
       </a>

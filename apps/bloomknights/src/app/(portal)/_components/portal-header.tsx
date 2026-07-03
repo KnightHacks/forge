@@ -10,14 +10,16 @@ export function PortalHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="mb-5 overflow-hidden rounded-xl border border-white/35 bg-[#fffaf0] text-[#173b28] shadow-[0_16px_44px_rgba(12,52,29,0.16)] sm:mb-6">
+    <header className="bk-portal-nav mb-5 overflow-hidden rounded-2xl sm:mb-6">
       <div className="flex min-h-16 items-stretch justify-between">
         <Link
           href="/"
-          className="hidden items-center border-r border-[#173b28]/15 px-5 text-sm font-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8f285f] sm:flex"
+          className="font-righteous hidden items-center border-r border-[#245f35]/15 px-5 text-sm uppercase tracking-[0.04em] text-[#245f35] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7aab5a] sm:flex"
         >
           BloomKnights
-          <span className="ml-2 font-medium text-[#607064]">Portal</span>
+          <span className="font-dm-sans ml-2 text-xs font-bold normal-case tracking-normal text-[#5a4535]/75">
+            Portal
+          </span>
         </Link>
         <nav
           aria-label="Participant navigation"
@@ -36,7 +38,7 @@ export function PortalHeader() {
         </nav>
         <button
           type="button"
-          className="flex min-h-16 shrink-0 items-center justify-center gap-2 border-l border-[#173b28]/15 px-4 text-sm font-extrabold transition-colors hover:bg-[#f4ead8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8f285f] sm:px-5"
+          className="font-righteous flex min-h-16 shrink-0 items-center justify-center gap-2 border-l border-[#245f35]/15 px-4 text-xs uppercase tracking-[0.04em] text-[#245f35] transition-colors hover:bg-[#daeaf5]/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7aab5a] sm:px-5"
           onClick={() => void signOut({ redirectTo: "/" })}
         >
           <LogOut aria-hidden="true" className="size-4" />
@@ -60,12 +62,12 @@ function PortalLink({
     <Link
       aria-current={active ? "page" : undefined}
       href={href}
-      className="relative flex min-h-16 items-center justify-center px-4 text-sm font-extrabold transition-colors hover:bg-[#f4ead8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8f285f] sm:min-w-28"
+      className="font-righteous relative flex min-h-16 items-center justify-center px-4 text-xs uppercase tracking-[0.06em] text-[#245f35] transition-colors hover:bg-[#daeaf5]/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7aab5a] sm:min-w-28 sm:text-sm"
     >
       {label}
       <span
         aria-hidden="true"
-        className={`absolute inset-x-4 bottom-0 h-1 ${active ? "bg-[#8f285f]" : "bg-transparent"}`}
+        className={`absolute inset-x-4 bottom-0 h-1 rounded-t-full ${active ? "bg-[linear-gradient(90deg,#c9b8d8,#a8d471)]" : "bg-transparent"}`}
       />
     </Link>
   );
