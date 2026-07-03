@@ -79,7 +79,7 @@ function NavContent({
       <div className="hidden items-center justify-center gap-8 md:flex">
         {navLinks.map((link) => (
           <a
-            key={link.href}
+            key={`${link.label}:${link.href}`}
             href={link.href}
             className="wc-nav-link rounded-md px-2 py-1 text-base transition-[color,text-shadow,transform] duration-500 lg:text-lg"
             style={showGlow ? scrolledLinkGlow : undefined}
@@ -118,7 +118,7 @@ function NavContent({
             <div className="flex flex-col py-2">
               {navLinks.map((link) => (
                 <a
-                  key={link.href}
+                  key={`${link.label}:${link.href}`}
                   href={link.href}
                   className="font-righteous px-5 py-3 text-lg tracking-normal transition-colors duration-300 hover:bg-[#245f34]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#245f34]"
                   tabIndex={isHidden ? -1 : undefined}
