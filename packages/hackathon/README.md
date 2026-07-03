@@ -38,6 +38,13 @@ KH9-owned.
 
 ## Bloom rollout
 
+During localhost development, Bloom brokers Discord OAuth through Blade at port
+3000 and returns through Blade's `/auth/bloom-return` route. The bridge accepts
+only the configured Bloom origin. Because cookies are scoped to `localhost`
+rather than to ports, Blade and Bloom share the development session and logout.
+Production does not use this bridge; each deployed host keeps its own cookie and
+Bloom uses its own registered callback.
+
 Before enabling Blade redirects:
 
 1. Set `BLOOMKNIGHTS_URL` to the exact Bloom origin.

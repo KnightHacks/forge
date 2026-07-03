@@ -5,6 +5,7 @@ import { hackathonPortalOriginSchema } from "@forge/validators";
 
 export const env = createEnv({
   server: {
+    BLADE_URL: hackathonPortalOriginSchema.default("http://localhost:3000"),
     BLOOMKNIGHTS_URL: hackathonPortalOriginSchema.default(
       "http://localhost:3006",
     ),
@@ -16,6 +17,7 @@ export const env = createEnv({
     PORT: z.coerce.number().default(3006),
   },
   runtimeEnv: {
+    BLADE_URL: process.env.BLADE_URL,
     BLOOMKNIGHTS_URL: process.env.BLOOMKNIGHTS_URL,
     NODE_ENV: process.env.NODE_ENV,
     PORT: process.env.PORT,

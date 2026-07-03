@@ -12,6 +12,7 @@
     "./factory": "./src/factory.ts",
     "./server-factory": "./src/server-factory.ts",
     "./client-factory": "./src/client-factory.ts",
+    "./callback-url": "./src/callback-url.ts",
     "./env": "./src/env.ts"
   },
   "license": "MIT",

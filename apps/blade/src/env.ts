@@ -17,7 +17,9 @@ export const env = createEnv({
    * Specify your server-side environment variables schema here.
    * This way you can ensure the app isn't built with invalid env vars.
    */
-  server: {},
+  server: {
+    BLOOMKNIGHTS_URL: z.string().url().default("http://localhost:3006"),
+  },
 
   /**
    * Specify your client-side environment variables schema here.
