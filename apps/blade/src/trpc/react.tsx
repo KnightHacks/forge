@@ -9,7 +9,7 @@ import SuperJSON from "superjson";
 
 import type { AppRouter } from "@forge/api";
 
-import { env } from "~/env";
+import { clientEnv } from "~/env.client";
 import { createQueryClient } from "./query-client";
 
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
@@ -55,5 +55,5 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return window.location.origin;
-  return `http://localhost:${env.PORT}`;
+  return clientEnv.NEXT_PUBLIC_BLADE_URL;
 };
