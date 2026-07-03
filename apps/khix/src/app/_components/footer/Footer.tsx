@@ -13,12 +13,8 @@ const footerLinks = [
     label: "MLH Code of Conduct",
   },
   {
-    href: "https://knight-hacks.notion.site/knight-hacks-viii",
-    label: "Hackers Guide",
-  },
-  {
     href: "https://blade.knighthacks.org/sponsor",
-    label: "Sponsor Us",
+    label: "Sponsor Knight Hacks",
   },
 ] as const;
 
@@ -45,11 +41,8 @@ export function Footer() {
 
         <div className={styles.bottomRow}>
           <div className={styles.copyright}>
-            <p>Copyright © 2019 - 2026 Knighthacks. All rights reserved.</p>
-            <p>
-              Made with <span aria-label="love">♥</span> by the Knight Hacks
-              team.
-            </p>
+            <p>Copyright 2019-2026 Knight Hacks. All rights reserved.</p>
+            <p>Made with love by the Knight Hacks team.</p>
           </div>
           <Image
             src="/khlogo.svg"

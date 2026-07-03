@@ -121,7 +121,7 @@ const faqSections = [
       {
         question: "How does project submission and judging work?",
         answer:
-          "Projects must be submitted through Devpost and use GitHub for version control. During the judging period, teams will present their projects in designated judging rooms to both General Judges and Sponsor Judges. Judging for BloomKnights is scheduled from 12:00 PM to 4:30 PM.",
+          "Projects must be submitted through Devpost and use GitHub for version control. During judging, teams will present their projects to general judges and sponsor judges. Final judging details will be shared in the Hacker Guide and event announcements.",
       },
       {
         question: "Can I use a past project or something I've built before?",
@@ -183,7 +183,6 @@ interface GemHotspot {
   height: number;
   clipPath: string;
   note: number;
-  sp;
 }
 
 interface FloatingAsset {

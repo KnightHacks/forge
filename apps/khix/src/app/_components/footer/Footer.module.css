@@ -4,6 +4,10 @@
 }
 
 .footer {
+  --footer-body-font:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+
   position: relative;
   z-index: 1;
   margin-top: clamp(-3rem, -4vw, -2rem);
@@ -12,7 +16,7 @@
   clip-path: polygon(0 2.3rem, 91% 0, 100% 2.8rem, 100% 100%, 0 100%);
   color: rgba(255, 255, 255, 0.94);
   background: #0d091d;
-  font-family: "Faculty Glyphic", sans-serif;
+  font-family: var(--footer-body-font);
 }
 
 .lennyPlacement {
@@ -25,22 +29,26 @@
 
 .links {
   display: grid;
-  width: min(100%, 70rem);
+  width: min(100%, 58rem);
   margin: 0 auto;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.8rem, 2vw, 1.4rem);
   align-items: center;
 }
 
 .links a {
-  display: inline-block;
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
   color: inherit;
-  font-size: clamp(0.72rem, 1.15vw, 0.94rem);
+  font-size: clamp(0.72rem, 1vw, 0.86rem);
+  font-weight: 850;
   letter-spacing: 0;
   text-align: center;
   text-decoration: none;
-  text-transform: uppercase;
   text-shadow: 0 0 0 transparent;
+  text-wrap: balance;
   transition:
     color 160ms ease,
     filter 180ms ease,
@@ -62,16 +70,17 @@
 
 .bottomRow {
   display: flex;
-  width: min(100%, 38rem);
-  margin: clamp(1.7rem, 3vw, 2.5rem) auto 0;
+  width: min(100%, 42rem);
+  margin: clamp(1.55rem, 3vw, 2.35rem) auto 0;
   align-items: center;
   justify-content: center;
-  gap: clamp(1rem, 3vw, 2rem);
+  gap: clamp(0.9rem, 2.8vw, 1.8rem);
 }
 
 .copyright {
-  font-size: clamp(0.68rem, 1.2vw, 0.84rem);
-  line-height: 1.35;
+  font-size: clamp(0.68rem, 0.95vw, 0.8rem);
+  font-weight: 700;
+  line-height: 1.4;
   text-align: center;
 }
 
@@ -104,11 +113,13 @@
   }
 
   .links {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.2rem 0.8rem;
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    width: min(100%, 20rem);
   }
 
   .bottomRow {
     flex-direction: column;
+    gap: 0.8rem;
   }
 }

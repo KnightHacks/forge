@@ -78,7 +78,7 @@ export const HERO_LAYERS: HeroLayer[] = [
     motionRole: "glow",
   },
   {
-    filename: "optimized/1_front.png",
+    filename: "optimized/1_front.webp",
     depthX: 0,
     depthY: 0,
     scrollY: 0,
