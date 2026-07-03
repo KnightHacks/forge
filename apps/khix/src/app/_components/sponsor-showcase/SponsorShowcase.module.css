@@ -56,7 +56,15 @@
   --logo-width: 12rem;
   --sponsor-height: 7rem;
   --sponsor-width: 20rem;
-  --tier-color-rgb: 255 255 255;
+  --tier-glow-end-rgb: 255 255 255;
+  --tier-glow-hover-end-alpha: 0.62;
+  --tier-glow-hover-start-alpha: 0.9;
+  --tier-glow-pulse-strong-end-alpha: 0.66;
+  --tier-glow-pulse-strong-start-alpha: 0.98;
+  --tier-glow-pulse-soft-end-alpha: 0.4;
+  --tier-glow-pulse-soft-start-alpha: 0.74;
+  --tier-glow-radius-scale: 1;
+  --tier-glow-start-rgb: 255 255 255;
 
   position: relative;
   display: block;
@@ -164,34 +172,16 @@
   display: block;
   width: min(var(--logo-width), 76%);
   height: var(--logo-height);
-  filter: drop-shadow(0 1px 0 rgb(4 18 28 / 0.35));
   opacity: 0.94;
   transform: translate3d(-50%, -50%, 0);
   transition:
-    filter 180ms ease,
     opacity 180ms ease,
     transform 180ms ease;
 }
 
-.sponsorLogo::after {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: block;
-  content: "";
-  background: rgb(var(--tier-color-rgb));
-  mask: var(--sponsor-logo-src) center / contain no-repeat;
-  mix-blend-mode: screen;
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    filter 180ms ease,
-    opacity 180ms ease;
-  -webkit-mask: var(--sponsor-logo-src) center / contain no-repeat;
-}
-
 .sponsorLogoImage {
   z-index: 1;
+  filter: drop-shadow(0 1px 0 rgb(4 18 28 / 0.35));
   object-fit: contain;
   object-position: center;
   pointer-events: none;
@@ -212,26 +202,30 @@
 
 .sponsorLink:hover .sponsorLogo,
 .sponsorLink:focus-visible .sponsorLogo {
-  filter: drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
-    drop-shadow(0 0 0.16rem rgb(var(--tier-color-rgb) / 0.54))
-    drop-shadow(0 0 0.38rem rgb(var(--tier-color-rgb) / 0.28));
   opacity: 1;
   transform: translate3d(-50%, -50%, 0) scale(1.035);
 }
 
-.sponsorLink:hover .sponsorLogo::after,
-.sponsorLink:focus-visible .sponsorLogo::after {
-  filter: drop-shadow(0 0 0.18rem rgb(var(--tier-color-rgb) / 0.76))
-    drop-shadow(0 0 0.4rem rgb(var(--tier-color-rgb) / 0.48));
-  opacity: 0.12;
-}
-
 .sponsorLink:hover .sponsorLogoImage,
 .sponsorLink:focus-visible .sponsorLogoImage {
-  filter: brightness(1.1) saturate(1.12)
-    drop-shadow(0 0 0.12rem rgb(var(--tier-color-rgb) / 0.92))
-    drop-shadow(0 0 0.3rem rgb(var(--tier-color-rgb) / 0.68))
-    drop-shadow(0 0 0.56rem rgb(var(--tier-color-rgb) / 0.34));
+  animation: sponsorRunePulse 1.65s ease-in-out infinite alternate;
+  filter: brightness(1.14) contrast(1.04) saturate(1.12)
+    drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
+    drop-shadow(0 0 0.04rem rgb(255 255 255 / 0.84))
+    drop-shadow(0 0 0.1rem rgb(255 255 255 / 0.58))
+    drop-shadow(
+      0 0 calc(0.14rem * var(--tier-glow-radius-scale))
+        rgb(var(--tier-glow-start-rgb) / 0.5)
+    )
+    drop-shadow(
+      0 0 calc(0.22rem * var(--tier-glow-radius-scale))
+        rgb(var(--tier-glow-start-rgb) / var(--tier-glow-hover-start-alpha))
+    )
+    drop-shadow(
+      0 0 calc(0.4rem * var(--tier-glow-radius-scale))
+        rgb(var(--tier-glow-end-rgb) / var(--tier-glow-hover-end-alpha))
+    );
+  will-change: filter;
 }
 
 @media (max-width: 760px) {
@@ -297,15 +291,66 @@
     transition: none;
   }
 
-  .sponsorLogo::after,
   .sponsorLogoImage {
     transition: none;
+  }
+
+  .sponsorLink:hover .sponsorLogoImage,
+  .sponsorLink:focus-visible .sponsorLogoImage {
+    animation: none;
   }
 
   .sponsorVisual,
   .sponsorLink:hover .sponsorVisual,
   .sponsorLink:focus-visible .sponsorVisual {
     animation: none;
+  }
+}
+
+@keyframes sponsorRunePulse {
+  0% {
+    filter: brightness(1.1) contrast(1.03) saturate(1.08)
+      drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
+      drop-shadow(0 0 0.03rem rgb(255 255 255 / 0.78))
+      drop-shadow(0 0 0.08rem rgb(255 255 255 / 0.5))
+      drop-shadow(
+        0 0 calc(0.12rem * var(--tier-glow-radius-scale))
+          rgb(var(--tier-glow-start-rgb) / 0.42)
+      )
+      drop-shadow(
+        0 0 calc(0.18rem * var(--tier-glow-radius-scale))
+          rgb(
+            var(--tier-glow-start-rgb) / var(--tier-glow-pulse-soft-start-alpha)
+          )
+      )
+      drop-shadow(
+        0 0 calc(0.3rem * var(--tier-glow-radius-scale))
+          rgb(var(--tier-glow-end-rgb) / var(--tier-glow-pulse-soft-end-alpha))
+      );
+  }
+
+  100% {
+    filter: brightness(1.17) contrast(1.05) saturate(1.16)
+      drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
+      drop-shadow(0 0 0.045rem rgb(255 255 255 / 0.9))
+      drop-shadow(0 0 0.11rem rgb(255 255 255 / 0.62))
+      drop-shadow(
+        0 0 calc(0.16rem * var(--tier-glow-radius-scale))
+          rgb(var(--tier-glow-start-rgb) / 0.56)
+      )
+      drop-shadow(
+        0 0 calc(0.24rem * var(--tier-glow-radius-scale))
+          rgb(
+            var(--tier-glow-start-rgb) /
+              var(--tier-glow-pulse-strong-start-alpha)
+          )
+      )
+      drop-shadow(
+        0 0 calc(0.46rem * var(--tier-glow-radius-scale))
+          rgb(
+            var(--tier-glow-end-rgb) / var(--tier-glow-pulse-strong-end-alpha)
+          )
+      );
   }
 }
 

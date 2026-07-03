@@ -131,23 +131,23 @@
 
 .teamAvatarTooltip {
   position: absolute;
-  top: 50%;
+  top: calc(100% + 0.55rem);
   left: 50%;
   z-index: 4;
   display: grid;
   min-width: max-content;
   max-width: min(11rem, 78vw);
   justify-items: center;
-  gap: 0.2rem;
   padding: 0.55rem 0.7rem;
-  border: 1px solid rgba(85, 209, 226, 0.36);
+  border: 1px solid rgba(174, 208, 255, 0.34);
   border-radius: 8px;
-  color: #103247;
-  background: rgba(239, 255, 255, 0.95);
-  box-shadow: 0 0.8rem 1.8rem rgba(17, 86, 116, 0.18);
+  color: #ffffff;
+  background: linear-gradient(135deg, #202940 0%, #5475a6 100%);
+  box-shadow: 0 0.8rem 1.8rem rgba(32, 41, 64, 0.24);
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, -50%) scale(0.96);
+  transform: translate(-50%, 0.35rem) scale(0.96);
+  transform-origin: top center;
   transition:
     opacity 160ms ease,
     transform 160ms ease;
@@ -156,22 +156,14 @@
 .teamAvatar:hover .teamAvatarTooltip,
 .teamAvatar:focus-visible .teamAvatarTooltip {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  transform: translate(-50%, 0) scale(1);
 }
 
 .teamAvatarTooltip strong {
-  color: #103247;
+  color: #ffffff;
   font-size: 0.84rem;
   line-height: 1.05;
   text-align: center;
-}
-
-.teamAvatarTooltip span {
-  color: #15758e;
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0;
-  text-transform: uppercase;
 }
 
 .teamStatus {

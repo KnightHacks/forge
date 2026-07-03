@@ -29,14 +29,23 @@ type SponsorSize = "small" | "medium" | "large" | "x-large";
 type SponsorGroupName = "slab" | "medium-stone" | "small-stone";
 
 interface SponsorTierConfig {
-  color: string;
+  glowBoost?: number;
+  glowEndColor: string;
+  glowStartColor: string;
   size: SponsorSize;
 }
 
 type SponsorCardStyle = CSSProperties & {
   "--float-delay": string;
-  "--sponsor-logo-src": string;
-  "--tier-color-rgb": string;
+  "--tier-glow-end-rgb": string;
+  "--tier-glow-hover-end-alpha": string;
+  "--tier-glow-hover-start-alpha": string;
+  "--tier-glow-pulse-strong-end-alpha": string;
+  "--tier-glow-pulse-strong-start-alpha": string;
+  "--tier-glow-pulse-soft-end-alpha": string;
+  "--tier-glow-pulse-soft-start-alpha": string;
+  "--tier-glow-radius-scale": string;
+  "--tier-glow-start-rgb": string;
 };
 
 const SPONSOR_TIER_DISPLAY_ORDER = [
@@ -47,43 +56,71 @@ const SPONSOR_TIER_DISPLAY_ORDER = [
   "bronze-ember",
 ] as const satisfies readonly SponsorTier[];
 
-// TODO: Edit these hex colors based on Bowen's response.
 const SPONSOR_TIER_CONFIG = {
   "bronze-ember": {
-    color: "#C8753D",
+    glowBoost: 1.26,
+    glowEndColor: "#CD7F32D9",
+    glowStartColor: "#5F2A00B2",
     size: "small",
   },
   "silver-moon": {
-    color: "#D6DEE8",
+    glowBoost: 1.48,
+    glowEndColor: "#F7FDFFFF",
+    glowStartColor: "#BECBD1D9",
     size: "small",
   },
   "golden-dawn": {
-    color: "#FFC857",
+    glowBoost: 1.26,
+    glowEndColor: "#FFE45CD9",
+    glowStartColor: "#C88A00C7",
     size: "medium",
   },
   "platinum-crown": {
-    color: "#E7F0F6",
+    glowBoost: 1.34,
+    glowEndColor: "#D7DCFFFF",
+    glowStartColor: "#5748D9E6",
     size: "large",
   },
   "forest-sovereign": {
-    color: "#CE2CFF",
+    glowEndColor: "#CE2CFF",
+    glowStartColor: "#4E007B",
     size: "x-large",
   },
 } as const satisfies Record<SponsorTier, SponsorTierConfig>;
 
-function getHexRgb(hexColor: string) {
+const SPONSOR_GLOW_ALPHA = {
+  hoverEnd: 0.62,
+  hoverStart: 0.9,
+  pulseSoftEnd: 0.4,
+  pulseSoftStart: 0.74,
+  pulseStrongEnd: 0.66,
+  pulseStrongStart: 0.98,
+} as const;
+
+function getHexColorParts(hexColor: string) {
   const normalizedHex = hexColor.replace("#", "");
   const red = Number.parseInt(normalizedHex.slice(0, 2), 16);
   const green = Number.parseInt(normalizedHex.slice(2, 4), 16);
   const blue = Number.parseInt(normalizedHex.slice(4, 6), 16);
+  const alpha =
+    normalizedHex.length === 8
+      ? Number.parseInt(normalizedHex.slice(6, 8), 16) / 255
+      : 1;
 
-  return `${red} ${green} ${blue}`;
+  return {
+    alpha: alpha.toFixed(3),
+    rgb: `${red} ${green} ${blue}`,
+  };
 }
 
-function getCssUrl(source: string) {
-  const escapedSource = source.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+function getBoostedAlpha(
+  colorAlpha: string,
+  baseAlpha: number,
+  glowBoost: number,
+) {
+  const alpha = Number.parseFloat(colorAlpha);
 
-  return `url("${escapedSource}")`;
+  return Math.min(alpha * baseAlpha * glowBoost, 1).toFixed(3);
 }
 
 function getOrderedSponsors(sponsors: readonly SponsorShowcaseSponsor[]) {
@@ -108,10 +145,45 @@ function SponsorRockCard({
   sponsor: SponsorShowcaseSponsor;
 }) {
   const tierConfig = SPONSOR_TIER_CONFIG[sponsor.tier];
+  const glowStartColor = getHexColorParts(tierConfig.glowStartColor);
+  const glowEndColor = getHexColorParts(tierConfig.glowEndColor);
+  const glowBoost = "glowBoost" in tierConfig ? tierConfig.glowBoost : 1;
+  const glowRadiusScale = 1 + (glowBoost - 1) * 0.5;
   const style: SponsorCardStyle = {
     "--float-delay": `${-(index % 6) * 0.42}s`,
-    "--sponsor-logo-src": getCssUrl(sponsor.logoSrc),
-    "--tier-color-rgb": getHexRgb(tierConfig.color),
+    "--tier-glow-end-rgb": glowEndColor.rgb,
+    "--tier-glow-hover-end-alpha": getBoostedAlpha(
+      glowEndColor.alpha,
+      SPONSOR_GLOW_ALPHA.hoverEnd,
+      glowBoost,
+    ),
+    "--tier-glow-hover-start-alpha": getBoostedAlpha(
+      glowStartColor.alpha,
+      SPONSOR_GLOW_ALPHA.hoverStart,
+      glowBoost,
+    ),
+    "--tier-glow-pulse-strong-end-alpha": getBoostedAlpha(
+      glowEndColor.alpha,
+      SPONSOR_GLOW_ALPHA.pulseStrongEnd,
+      glowBoost,
+    ),
+    "--tier-glow-pulse-strong-start-alpha": getBoostedAlpha(
+      glowStartColor.alpha,
+      SPONSOR_GLOW_ALPHA.pulseStrongStart,
+      glowBoost,
+    ),
+    "--tier-glow-pulse-soft-end-alpha": getBoostedAlpha(
+      glowEndColor.alpha,
+      SPONSOR_GLOW_ALPHA.pulseSoftEnd,
+      glowBoost,
+    ),
+    "--tier-glow-pulse-soft-start-alpha": getBoostedAlpha(
+      glowStartColor.alpha,
+      SPONSOR_GLOW_ALPHA.pulseSoftStart,
+      glowBoost,
+    ),
+    "--tier-glow-radius-scale": glowRadiusScale.toFixed(3),
+    "--tier-glow-start-rgb": glowStartColor.rgb,
   };
 
   return (

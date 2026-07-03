@@ -128,7 +128,6 @@ function TeamAvatar({
   const tooltip = (
     <span className={styles.teamAvatarTooltip}>
       <strong>{member.name}</strong>
-      <span>{person.roleLabel}</span>
     </span>
   );
 
