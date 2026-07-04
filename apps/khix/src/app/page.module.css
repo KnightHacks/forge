@@ -27,21 +27,23 @@
 .openSection {
   position: relative;
   z-index: 2;
+  display: grid;
   min-height: 100vh;
   min-height: 100svh;
+  place-items: center;
 }
 
 .openSectionTitle {
   position: relative;
   z-index: 4;
   margin: 0;
-  padding: clamp(9rem, 24svh, 16rem) 0 0 clamp(2rem, 12vw, 14rem);
   color: rgba(255, 252, 252, 0.96);
   font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
   font-size: clamp(2.5rem, 4.6vw, 4.4rem);
   font-weight: 400;
   line-height: 0.9;
   letter-spacing: 0;
+  text-align: center;
   text-shadow:
     0 0 0.75rem rgba(0, 0, 0, 0.58),
     0 0.18rem 1.4rem rgba(0, 0, 0, 0.46);
@@ -54,8 +56,6 @@
   }
 
   .openSectionTitle {
-    padding-top: clamp(8rem, 24svh, 13rem);
-    padding-left: clamp(1.75rem, 12vw, 4.2rem);
     font-size: clamp(2.2rem, 10vw, 3.4rem);
   }
 }

@@ -125,7 +125,9 @@
 .copy {
   position: relative;
   z-index: 6;
+  justify-self: end;
   width: min(22rem, 100%);
+  margin-right: clamp(0rem, 25vw, 25rem);
   color: rgba(249, 255, 246, 0.94);
   font-family:
     var(--font-geist-sans, ui-sans-serif),
@@ -192,7 +194,9 @@
   }
 
   .copy {
+    justify-self: center;
     width: min(19.5rem, 100%);
+    margin-right: 0;
     margin-top: clamp(1rem, 5svh, 4rem);
     font-size: clamp(0.84rem, 3.5vw, 0.98rem);
   }

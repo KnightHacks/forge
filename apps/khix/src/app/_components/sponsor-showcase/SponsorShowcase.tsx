@@ -17,6 +17,7 @@ export interface SponsorShowcaseSponsor {
   name: string;
   websiteUrl: string;
   logoSrc: string;
+  logoScale?: number;
   tier: SponsorTier;
 }
 
@@ -27,7 +28,7 @@ export interface SponsorShowcaseProps {
   titleId?: string;
 }
 
-type SponsorSize = "small" | "medium" | "large" | "x-large";
+type SponsorSize = "x-small" | "small" | "medium" | "large" | "x-large";
 type SponsorGroupName = "slab" | "medium-stone" | "small-stone";
 
 interface SponsorTierConfig {
@@ -39,6 +40,8 @@ interface SponsorTierConfig {
 
 type SponsorCardStyle = CSSProperties & {
   "--float-delay": string;
+  "--sponsor-logo-hover-scale": string;
+  "--sponsor-logo-scale": string;
   "--tier-glow-end-rgb": string;
   "--tier-glow-hover-end-alpha": string;
   "--tier-glow-hover-start-alpha": string;
@@ -63,7 +66,7 @@ const SPONSOR_TIER_CONFIG = {
     glowBoost: 1.26,
     glowEndColor: "#CD7F32D9",
     glowStartColor: "#5F2A00B2",
-    size: "small",
+    size: "x-small",
   },
   "silver-moon": {
     glowBoost: 1.48,
@@ -150,9 +153,12 @@ function SponsorRockCard({
   const glowStartColor = getHexColorParts(tierConfig.glowStartColor);
   const glowEndColor = getHexColorParts(tierConfig.glowEndColor);
   const glowBoost = "glowBoost" in tierConfig ? tierConfig.glowBoost : 1;
+  const logoScale = sponsor.logoScale ?? 1;
   const glowRadiusScale = 1 + (glowBoost - 1) * 0.5;
   const style: SponsorCardStyle = {
     "--float-delay": `${-(index % 6) * 0.42}s`,
+    "--sponsor-logo-hover-scale": (logoScale * 1.035).toFixed(3),
+    "--sponsor-logo-scale": logoScale.toString(),
     "--tier-glow-end-rgb": glowEndColor.rgb,
     "--tier-glow-hover-end-alpha": getBoostedAlpha(
       glowEndColor.alpha,
@@ -234,6 +240,9 @@ export function SponsorShowcase({
   const smallStoneSponsors = orderedSponsors.filter(
     (sponsor) => SPONSOR_TIER_CONFIG[sponsor.tier].size === "small",
   );
+  const extraSmallStoneSponsors = orderedSponsors.filter(
+    (sponsor) => SPONSOR_TIER_CONFIG[sponsor.tier].size === "x-small",
+  );
   const sponsorShowcaseClassName = className
     ? `${styles.sponsorShowcase} ${className}`
     : styles.sponsorShowcase;
@@ -245,7 +254,10 @@ export function SponsorShowcase({
   return (
     <section className={sponsorShowcaseClassName} aria-labelledby={titleId}>
       <h2 id={titleId} className={styles.sponsorTitle}>
-        {title}
+        <span className={styles.sponsorTitleRock} aria-hidden="true">
+          <span className={styles.rockFrame} aria-hidden="true" />
+        </span>
+        <span className={styles.sponsorTitleText}>{title}</span>
       </h2>
 
       <div className={styles.sponsorField}>
@@ -280,6 +292,23 @@ export function SponsorShowcase({
                 key={getSponsorCardKey("small-stone", sponsor, index)}
                 sponsor={sponsor}
                 index={slabSponsors.length + mediumStoneSponsors.length + index}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        {extraSmallStoneSponsors.length > 0 ? (
+          <div className={styles.smallStoneGrid}>
+            {extraSmallStoneSponsors.map((sponsor, index) => (
+              <SponsorRockCard
+                key={getSponsorCardKey("small-stone", sponsor, index)}
+                sponsor={sponsor}
+                index={
+                  slabSponsors.length +
+                  mediumStoneSponsors.length +
+                  smallStoneSponsors.length +
+                  index
+                }
               />
             ))}
           </div>

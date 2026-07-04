@@ -62,48 +62,161 @@
 .sponsorPanel {
   min-height: calc(var(--waterfall-height) * 0.5);
   padding: calc(var(--waterfall-height) * 0.038)
-    calc(var(--composition-width) * 0.14) 0;
+    clamp(1rem, calc(var(--composition-width) * 0.06), 4rem) 0;
 }
 
 .sponsorShowcase {
-  --sponsor-showcase-width: calc(var(--composition-width) * 0.72);
+  --sponsor-showcase-width: calc(var(--composition-width) * 0.86);
   --sponsor-showcase-padding: 0;
   --sponsor-title-color: #081820;
   --sponsor-title-font: var(--font-cormorant-garamond, Georgia), Georgia, serif;
   --sponsor-title-line-height: 1;
-  --sponsor-title-margin: 0 0 calc(var(--composition-width) * 0.02);
+  --sponsor-title-margin: 0 auto
+    clamp(1.35rem, calc(var(--composition-width) * 0.04), 3rem);
+  --sponsor-title-rock-display: block;
+  --sponsor-title-rock-ratio: 1196 / 262;
+  --sponsor-title-rock-width: min(
+    90vw,
+    clamp(20.5rem, calc(var(--composition-width) * 0.54), 38rem)
+  );
   --sponsor-title-shadow: 0 1px 0 rgba(255, 255, 255, 0.38);
   --sponsor-title-size: clamp(
-    1rem,
-    calc(var(--composition-width) * 0.026),
-    1.55rem
+    2.65rem,
+    calc(var(--composition-width) * 0.07),
+    4.85rem
   );
   --sponsor-title-transform: uppercase;
-  --sponsor-field-gap: calc(var(--composition-width) * 0.015);
-  --sponsor-slab-gap: calc(var(--composition-width) * 0.004);
-  --sponsor-medium-grid-gap: calc(var(--composition-width) * 0.005)
-    calc(var(--composition-width) * 0.028);
+  --sponsor-title-weight: 700;
+  --sponsor-title-text-width: 78%;
+  --sponsor-field-gap: clamp(
+    1.2rem,
+    calc(var(--composition-width) * 0.032),
+    2.4rem
+  );
+  --sponsor-slab-gap: clamp(
+    0.6rem,
+    calc(var(--composition-width) * 0.014),
+    1rem
+  );
+  --sponsor-medium-grid-gap: clamp(
+      0.75rem,
+      calc(var(--composition-width) * 0.018),
+      1.3rem
+    )
+    clamp(1.2rem, calc(var(--composition-width) * 0.04), 2.6rem);
   --sponsor-medium-grid-padding-top: 0;
-  --sponsor-medium-grid-width: calc(var(--composition-width) * 0.48);
-  --sponsor-small-grid-gap: calc(var(--composition-width) * 0.005)
-    calc(var(--composition-width) * 0.015);
-  --sponsor-small-grid-width: calc(var(--composition-width) * 0.54);
-  --sponsor-xl-height: calc(var(--composition-width) * 0.155);
-  --sponsor-xl-logo-height: calc(var(--composition-width) * 0.032);
-  --sponsor-xl-logo-width: calc(var(--composition-width) * 0.28);
-  --sponsor-xl-width: calc(var(--composition-width) * 0.43);
-  --sponsor-large-height: calc(var(--composition-width) * 0.135);
-  --sponsor-large-logo-height: calc(var(--composition-width) * 0.028);
-  --sponsor-large-logo-width: calc(var(--composition-width) * 0.24);
-  --sponsor-large-width: calc(var(--composition-width) * 0.39);
-  --sponsor-medium-height: calc(var(--composition-width) * 0.142);
-  --sponsor-medium-logo-height: calc(var(--composition-width) * 0.024);
-  --sponsor-medium-logo-width: calc(var(--composition-width) * 0.15);
-  --sponsor-medium-width: calc(var(--composition-width) * 0.17);
-  --sponsor-small-height: calc(var(--composition-width) * 0.105);
-  --sponsor-small-logo-height: calc(var(--composition-width) * 0.02);
-  --sponsor-small-logo-width: calc(var(--composition-width) * 0.12);
-  --sponsor-small-width: calc(var(--composition-width) * 0.122);
+  --sponsor-medium-grid-width: calc(var(--composition-width) * 0.68);
+  --sponsor-small-grid-gap: clamp(
+      0.65rem,
+      calc(var(--composition-width) * 0.014),
+      1.05rem
+    )
+    clamp(0.8rem, calc(var(--composition-width) * 0.025), 1.65rem);
+  --sponsor-small-grid-width: calc(var(--composition-width) * 0.7);
+  --sponsor-xl-height: clamp(
+    10rem,
+    calc(var(--composition-width) * 0.205),
+    14.75rem
+  );
+  --sponsor-xl-logo-height: clamp(
+    2.7rem,
+    calc(var(--composition-width) * 0.045),
+    3.25rem
+  );
+  --sponsor-xl-logo-width: clamp(
+    20rem,
+    calc(var(--composition-width) * 0.4),
+    28.8rem
+  );
+  --sponsor-xl-width: clamp(
+    34rem,
+    calc(var(--composition-width) * 0.62),
+    44.5rem
+  );
+  --sponsor-large-height: clamp(
+    8.8rem,
+    calc(var(--composition-width) * 0.17),
+    12.25rem
+  );
+  --sponsor-large-logo-height: clamp(
+    2.35rem,
+    calc(var(--composition-width) * 0.038),
+    2.75rem
+  );
+  --sponsor-large-logo-width: clamp(
+    16rem,
+    calc(var(--composition-width) * 0.32),
+    23rem
+  );
+  --sponsor-large-width: clamp(
+    26rem,
+    calc(var(--composition-width) * 0.48),
+    34.5rem
+  );
+  --sponsor-medium-height: clamp(
+    8.2rem,
+    calc(var(--composition-width) * 0.158),
+    11.4rem
+  );
+  --sponsor-medium-logo-height: clamp(
+    1.75rem,
+    calc(var(--composition-width) * 0.03),
+    2.15rem
+  );
+  --sponsor-medium-logo-width: clamp(
+    9.4rem,
+    calc(var(--composition-width) * 0.172),
+    12.4rem
+  );
+  --sponsor-medium-width: clamp(
+    12.8rem,
+    calc(var(--composition-width) * 0.225),
+    16.2rem
+  );
+  --sponsor-medium-mobile-height: 8.15rem;
+  --sponsor-medium-mobile-logo-height: 1.68rem;
+  --sponsor-medium-mobile-logo-width: 5.9rem;
+  --sponsor-medium-mobile-width: min(45vw, 10.6rem);
+  --sponsor-small-height: clamp(
+    7.4rem,
+    calc(var(--composition-width) * 0.128),
+    9.2rem
+  );
+  --sponsor-small-logo-height: clamp(
+    1.7rem,
+    calc(var(--composition-width) * 0.026),
+    1.9rem
+  );
+  --sponsor-small-logo-width: clamp(
+    7.2rem,
+    calc(var(--composition-width) * 0.145),
+    10.4rem
+  );
+  --sponsor-small-width: clamp(
+    10rem,
+    calc(var(--composition-width) * 0.18),
+    13rem
+  );
+  --sponsor-xs-height: clamp(
+    6.6rem,
+    calc(var(--composition-width) * 0.105),
+    7.55rem
+  );
+  --sponsor-xs-logo-height: clamp(
+    1.45rem,
+    calc(var(--composition-width) * 0.022),
+    1.62rem
+  );
+  --sponsor-xs-logo-width: clamp(
+    6.1rem,
+    calc(var(--composition-width) * 0.12),
+    8.6rem
+  );
+  --sponsor-xs-width: clamp(
+    8.5rem,
+    calc(var(--composition-width) * 0.145),
+    10.4rem
+  );
   --sponsor-rock-shadow: drop-shadow(0 0.28rem 0.2rem rgb(5 28 35 / 0.28));
 }
 
