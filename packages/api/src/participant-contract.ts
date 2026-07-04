@@ -34,6 +34,19 @@ export type Participant = SelectHacker & {
   timeConfirmed: Date | null;
 };
 
+export type PublicHackathon = Pick<
+  SelectHackathon,
+  | "name"
+  | "displayName"
+  | "theme"
+  | "applicationBackgroundEnabled"
+  | "applicationBackgroundKey"
+  | "applicationOpen"
+  | "applicationDeadline"
+  | "startDate"
+  | "endDate"
+>;
+
 export interface ParticipantDashboard {
   confirmedCount: number;
   hackathon: SelectHackathon;
@@ -64,7 +77,7 @@ export type ParticipantScheduleEvent = Pick<
 };
 
 export interface ParticipantPortalContract {
-  getHackathon: Query<HackathonInput, SelectHackathon>;
+  getHackathon: Query<HackathonInput, PublicHackathon>;
   getDashboard: Query<HackathonInput, ParticipantDashboard>;
   getApplicationContext: Query<HackathonInput, ParticipantApplicationContext>;
   submitApplication: Mutation<

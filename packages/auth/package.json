@@ -27,6 +27,7 @@
     "@auth/drizzle-adapter": "^1.11.1",
     "@better-auth/client": "0.0.2-alpha.3",
     "@forge/db": "workspace:*",
+    "@forge/utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.10",
     "better-auth": "^1.4.19",
     "next": "^16.2.7",

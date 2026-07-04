@@ -213,8 +213,12 @@ export function createHackerProfileClientSchema() {
       .optional()
       .or(z.literal("")),
     resumeUpload: createResumeUploadSchema(),
-    agreesToMLHCodeOfConduct: z.boolean().refine((value) => value),
-    agreesToMLHDataSharing: z.boolean().refine((value) => value),
+    agreesToMLHCodeOfConduct: z.boolean().refine((value) => value, {
+      message: "You must agree to the MLH Code of Conduct",
+    }),
+    agreesToMLHDataSharing: z.boolean().refine((value) => value, {
+      message: "You must agree to the MLH data sharing terms",
+    }),
     agreesToReceiveEmailsFromMLH: z.boolean(),
   });
 }

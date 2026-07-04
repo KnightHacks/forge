@@ -62,6 +62,30 @@ async function requireHackathon(hackathonName: string) {
   return hackathon;
 }
 
+async function getPublicHackathon(hackathonName: string) {
+  const [hackathon] = await db
+    .select({
+      name: Hackathon.name,
+      displayName: Hackathon.displayName,
+      theme: Hackathon.theme,
+      applicationBackgroundEnabled: Hackathon.applicationBackgroundEnabled,
+      applicationBackgroundKey: Hackathon.applicationBackgroundKey,
+      applicationOpen: Hackathon.applicationOpen,
+      applicationDeadline: Hackathon.applicationDeadline,
+      startDate: Hackathon.startDate,
+      endDate: Hackathon.endDate,
+    })
+    .from(Hackathon)
+    .where(eq(Hackathon.name, hackathonName))
+    .limit(1);
+
+  if (!hackathon) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Hackathon not found." });
+  }
+
+  return hackathon;
+}
+
 async function getParticipant(hackathonId: string, userId: string) {
   const [participant] = await db
     .select({
@@ -87,7 +111,7 @@ async function getParticipant(hackathonId: string, userId: string) {
 const participantPortalRouterImplementation = {
   getHackathon: publicProcedure
     .input(hackathonInput)
-    .query(async ({ input }) => requireHackathon(input.hackathonName)),
+    .query(async ({ input }) => getPublicHackathon(input.hackathonName)),
 
   getDashboard: protectedProcedure
     .input(hackathonInput)

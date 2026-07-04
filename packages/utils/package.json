@@ -22,7 +22,6 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {
-    "@forge/auth": "workspace:*",
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
     "@forge/eslint-config": "workspace:*",

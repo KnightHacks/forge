@@ -8,7 +8,6 @@ import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
 import { and, desc, eq } from "drizzle-orm";
 
-import type { Session } from "@forge/auth/server";
 import { DISCORD } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Account } from "@forge/db/schemas/auth";
@@ -171,10 +170,11 @@ export async function resolveDiscordUserId(
   return members[0]?.user.id ?? null;
 }
 
-// TODO: look into not using Session here so we can remove the auth import
-//       which will let us clean up our imports.
+interface DiscordSessionUser {
+  discordUserId: string;
+}
 
-export const isDiscordAdmin = async (user: Session["user"]) => {
+export const isDiscordAdmin = async (user: DiscordSessionUser) => {
   try {
     const guildMember = (await api.get(
       Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),
@@ -186,7 +186,7 @@ export const isDiscordAdmin = async (user: Session["user"]) => {
   }
 };
 
-export const isDiscordMember = async (user: Session["user"]) => {
+export const isDiscordMember = async (user: DiscordSessionUser) => {
   try {
     await api.get(
       Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),

@@ -1066,6 +1066,9 @@ importers:
       '@forge/db':
         specifier: workspace:*
         version: link:../db
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@t3-oss/env-nextjs':
         specifier: ^0.13.10
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
@@ -1427,9 +1430,6 @@ importers:
         specifier: ^0.0.1
         version: 0.0.1
     devDependencies:
-      '@forge/auth':
-        specifier: workspace:*
-        version: link:../auth
       '@forge/consts':
         specifier: workspace:*
         version: link:../consts
