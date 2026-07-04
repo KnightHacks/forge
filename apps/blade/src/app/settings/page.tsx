@@ -18,11 +18,6 @@ export default async function SettingsProfilePage() {
   const memberData = await api.member.getMember();
 
   if (!memberData) {
-    const hackerData = await api.hackerQuery.getHacker({});
-    if (hackerData) {
-      redirect("/settings/hacker-profile");
-    }
-
     return (
       <div className="mx-auto flex w-full flex-col items-center justify-center px-4 py-16 text-center">
         <div className="relative mb-6 h-[300px] w-[300px]">

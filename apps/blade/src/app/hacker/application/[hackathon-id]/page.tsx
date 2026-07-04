@@ -1,104 +1,26 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { auth, signIn } from "@forge/auth/server";
-
-import { HackerFormPage } from "~/app/_components/dashboard/hacker/hacker-application-form";
+import { PortalUnavailable } from "~/app/_components/hackathon/portal-unavailable";
+import { buildParticipantPortalUrl } from "~/lib/hackathon-portal";
 import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
-  title: "Blade | Hacker Application",
-  description: "Application to be a hacker",
+  title: "Hackathon Application",
 };
 
-export default async function HackerApplicationPage(props: {
+export default async function LegacyHackerApplicationPage({
+  params,
+}: {
   params: Promise<{ "hackathon-id": string }>;
 }) {
-  const params = await props.params;
-  const session = await auth();
-
-  if (session == null) {
-    signIn("discord", {
-      redirectTo: `/hacker/application/${params["hackathon-id"]}`,
-    });
-    // async function signInAction() {
-    //   await signIn("discord", {
-    //     redirectTo: `/hacker/application/${params["hackathon-id"]}`,
-    //   });
-    // }
-
-    // return (
-    //   <>
-    //     <form id="auto-sign-in" action={signInAction} />
-    //     <script
-    //       dangerouslySetInnerHTML={{
-    //         __html: "document.getElementById('auto-sign-in').requestSubmit();",
-    //       }}
-    //     />
-    //     <noscript>
-    //       <form action={signInAction}>
-    //         <button type="submit">Continue to Discord sign‑in</button>
-    //       </form>
-    //     </noscript>
-    //   </>
-    // );
-  }
-
-  try {
-    const isHacker = await api.hackerQuery.getHacker({
-      hackathonName: params["hackathon-id"],
-    });
-
-    if (isHacker != null) {
-      return redirect(`/hackathon/${params["hackathon-id"]}`);
-    }
-  } catch {
-    return redirect("/dashboard");
-  }
-
-  const hackathon = await api.hackathon.getHackathon({
-    hackathonName: params["hackathon-id"],
-  });
-
-  if (hackathon == null) {
-    return redirect("/dashboard");
-  }
-
-  if (hackathon.applicationDeadline < new Date()) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center text-center">
-        <div className="flex flex-col items-center justify-center">
-          <h1 className="text-2xl font-bold">
-            The application deadline for {hackathon.displayName} has passed.
-          </h1>
-          <p className="text-sm text-gray-500">
-            Stay on the lookout for the next Hackathon by joining our{" "}
-            <Link
-              href="https://discord.gg/blade"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Discord
-            </Link>
-            .
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <HackerFormPage
-      applicationBackgroundKey={
-        hackathon.applicationBackgroundEnabled
-          ? hackathon.applicationBackgroundKey
-          : null
-      }
-      hackathonId={params["hackathon-id"]}
-      hackathonName={hackathon.displayName}
-      hackathonStartDate={hackathon.startDate.toISOString()}
-    />
+  const { "hackathon-id": hackathonName } = await params;
+  const hackathon = await api.hackathon.getHackathon({ hackathonName });
+  const portalUrl = buildParticipantPortalUrl(
+    hackathon?.portalBaseUrl,
+    "/apply",
   );
+
+  if (portalUrl) redirect(portalUrl);
+  return <PortalUnavailable displayName={hackathon?.displayName} />;
 }

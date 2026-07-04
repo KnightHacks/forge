@@ -19,8 +19,10 @@ interface NavContentProps {
   isMobileMenuOpen: boolean;
   navLinks: NavLink[];
   showGlow?: boolean;
+  showSignOut?: boolean;
   onMobileMenuClose: () => void;
   onMobileMenuToggle: () => void;
+  onSignOut?: () => void;
 }
 
 const scrolledLinkGlow: React.CSSProperties = {
@@ -33,8 +35,10 @@ function NavContent({
   isMobileMenuOpen,
   navLinks,
   showGlow = false,
+  showSignOut = false,
   onMobileMenuClose,
   onMobileMenuToggle,
+  onSignOut,
 }: NavContentProps) {
   return (
     <div className="relative flex h-20 items-center px-4 md:justify-between md:px-12 lg:px-32">
@@ -75,7 +79,7 @@ function NavContent({
       <div className="hidden items-center justify-center gap-8 md:flex">
         {navLinks.map((link) => (
           <a
-            key={link.href}
+            key={`${link.label}:${link.href}`}
             href={link.href}
             className="wc-nav-link rounded-md px-2 py-1 text-base transition-[color,text-shadow,transform] duration-500 lg:text-lg"
             style={showGlow ? scrolledLinkGlow : undefined}
@@ -87,6 +91,17 @@ function NavContent({
             <span className="relative z-10">{link.label}</span>
           </a>
         ))}
+        {showSignOut && (
+          <button
+            type="button"
+            className="wc-nav-link rounded-md px-2 py-1 text-base transition-[color,text-shadow,transform] duration-500 lg:text-lg"
+            style={showGlow ? scrolledLinkGlow : undefined}
+            tabIndex={isHidden ? -1 : undefined}
+            onClick={onSignOut}
+          >
+            Sign out
+          </button>
+        )}
       </div>
       <div className="hidden w-12 md:block" />
 
@@ -98,12 +113,12 @@ function NavContent({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
             transition={navChromeTransition}
-            className="absolute left-4 right-4 top-24 overflow-hidden rounded-lg border border-[#245f34]/15 bg-[#fff7dc]/95 text-[#245f34] shadow-[0_18px_48px_rgba(16,64,30,0.2)] backdrop-blur-md md:hidden"
+            className="absolute left-4 right-4 top-24 z-50 overflow-hidden rounded-lg border border-[#245f34]/20 bg-[#fffaf0] text-[#245f34] shadow-[0_18px_48px_rgba(16,64,30,0.24)] md:hidden"
           >
             <div className="flex flex-col py-2">
               {navLinks.map((link) => (
                 <a
-                  key={link.href}
+                  key={`${link.label}:${link.href}`}
                   href={link.href}
                   className="font-righteous px-5 py-3 text-lg tracking-normal transition-colors duration-300 hover:bg-[#245f34]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#245f34]"
                   tabIndex={isHidden ? -1 : undefined}
@@ -115,6 +130,19 @@ function NavContent({
                   {link.label}
                 </a>
               ))}
+              {showSignOut && (
+                <button
+                  type="button"
+                  className="font-righteous px-5 py-3 text-left text-lg tracking-normal transition-colors duration-300 hover:bg-[#245f34]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#245f34]"
+                  tabIndex={isHidden ? -1 : undefined}
+                  onClick={() => {
+                    onMobileMenuClose();
+                    onSignOut?.();
+                  }}
+                >
+                  Sign out
+                </button>
+              )}
             </div>
           </motion.div>
         )}

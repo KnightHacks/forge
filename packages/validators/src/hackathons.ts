@@ -23,6 +23,51 @@ export const hackathonThemeSchema = z
   .min(1, "Theme is required.")
   .max(255, "Theme must be 255 characters or fewer.");
 
+export const hackathonPortalOriginSchema = z
+  .string()
+  .trim()
+  .url("Enter a valid portal URL.")
+  .superRefine((value, ctx) => {
+    const url = new URL(value);
+
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      ctx.addIssue({
+        code: "custom",
+        message: "Portal URLs must use HTTP or HTTPS.",
+      });
+    }
+
+    if (
+      url.username ||
+      url.password ||
+      url.pathname !== "/" ||
+      url.search ||
+      url.hash
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Enter the portal origin without a path, query, or hash.",
+      });
+    }
+  })
+  .transform((value) => new URL(value).origin);
+
+export const hackathonPortalBaseUrlSchema = z.preprocess(
+  (value) =>
+    typeof value === "string" && value.trim().length === 0 ? null : value,
+  hackathonPortalOriginSchema.nullable(),
+);
+
+export const hackathonConfirmationCapacitySchema = z.preprocess(
+  (value) =>
+    value === "" || value === undefined || value === null ? null : value,
+  z.coerce
+    .number()
+    .int("Confirmation capacity must be a whole number.")
+    .positive("Confirmation capacity must be greater than zero.")
+    .nullable(),
+);
+
 export function createHackathonApplicationBackgroundKeySchema<
   T extends readonly [string, ...string[]],
 >(backgroundKeys: T) {

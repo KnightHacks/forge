@@ -18,10 +18,10 @@ import { Label } from "@forge/ui/label";
 import { useTheme } from "@forge/ui/theme";
 import { toast } from "@forge/ui/toast";
 
-import { env } from "~/env";
+import { clientEnv } from "~/env.client";
 import { api } from "~/trpc/react";
 
-const stripePromise = loadStripe(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = loadStripe(clientEnv.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 function buildAppearance(isDark: boolean): Appearance {
   return {

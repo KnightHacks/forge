@@ -8,19 +8,19 @@ import { db } from "@forge/db/client";
 import { Hacker, Member } from "@forge/db/schemas/knight-hacks";
 import { logger } from "@forge/utils";
 
-import { env } from "./env";
 import {
   getResumeUserPrefix,
   isResumeObjectOwnedByUser,
   isServerGeneratedResumeObjectName,
   RESUME_BUCKET_NAME,
 } from "./resume-security";
+import { storageEnv } from "./storage-env";
 
 export const resumeStorageClient = new Client({
-  endPoint: env.MINIO_ENDPOINT,
+  endPoint: storageEnv.MINIO_ENDPOINT,
   useSSL: true,
-  accessKey: env.MINIO_ACCESS_KEY,
-  secretKey: env.MINIO_SECRET_KEY,
+  accessKey: storageEnv.MINIO_ACCESS_KEY,
+  secretKey: storageEnv.MINIO_SECRET_KEY,
 });
 
 export async function ensureResumeBucketExists() {

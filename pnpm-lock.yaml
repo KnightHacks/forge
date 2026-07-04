@@ -359,12 +359,21 @@ importers:
       '@forge/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../../packages/consts
       '@forge/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@forge/hackathon':
+        specifier: workspace:*
+        version: link:../../packages/hackathon
       '@forge/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@forge/validators':
+        specifier: workspace:*
+        version: link:../../packages/validators
       '@gsap/react':
         specifier: ^2.1.2
         version: 2.1.2(gsap@3.14.2)(react@19.2.4)
@@ -380,6 +389,9 @@ importers:
       '@svgr/webpack':
         specifier: ^8.1.0
         version: 8.1.0(typescript@5.9.3)
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.10.0(typescript@5.9.3)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -444,6 +456,9 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 10.0.2(jiti@2.6.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       prettier:
         specifier: 'catalog:'
         version: 3.8.1
@@ -1051,6 +1066,9 @@ importers:
       '@forge/db':
         specifier: workspace:*
         version: link:../db
+      '@forge/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@t3-oss/env-nextjs':
         specifier: ^0.13.10
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
@@ -1212,6 +1230,58 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
+  packages/hackathon:
+    dependencies:
+      '@forge/api':
+        specifier: workspace:*
+        version: link:../api
+      '@forge/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../consts
+      '@forge/validators':
+        specifier: workspace:*
+        version: link:../validators
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.90.21(react@19.2.4)
+      '@trpc/client':
+        specifier: 'catalog:'
+        version: 11.10.0(@trpc/server@11.10.0(typescript@5.9.3))(typescript@5.9.3)
+      superjson:
+        specifier: 2.2.6
+        version: 2.2.6
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@forge/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@forge/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
+      '@forge/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@types/react':
+        specifier: ^19.2.14
+        version: 19.2.14
+      eslint:
+        specifier: 'catalog:'
+        version: 10.0.2(jiti@2.6.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.1
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
   packages/ui:
     dependencies:
       '@hookform/resolvers':
@@ -1360,9 +1430,6 @@ importers:
         specifier: ^0.0.1
         version: 0.0.1
     devDependencies:
-      '@forge/auth':
-        specifier: workspace:*
-        version: link:../auth
       '@forge/consts':
         specifier: workspace:*
         version: link:../consts
@@ -1396,6 +1463,9 @@ importers:
 
   packages/validators:
     dependencies:
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../consts
       minimatch:
         specifier: ^10.2.4
         version: 10.2.4

@@ -1,24 +1,24 @@
-import { env } from "./env";
-
-const HOME_PATH = "/";
-
-export function sanitizeCallbackURL(callbackURL?: string | null): string {
-  if (!callbackURL) return HOME_PATH;
+export function sanitizeCallbackURL(
+  callbackURL: string | null | undefined,
+  appBaseURL: string,
+  defaultPath = "/",
+): string {
+  if (!callbackURL) return defaultPath;
 
   try {
-    const appURL = new URL(env.NEXT_PUBLIC_BLADE_URL);
+    const appURL = new URL(appBaseURL);
     const resolved = new URL(callbackURL, appURL);
 
     if (resolved.origin !== appURL.origin) {
-      return HOME_PATH;
+      return defaultPath;
     }
 
     if (!resolved.pathname.startsWith("/")) {
-      return HOME_PATH;
+      return defaultPath;
     }
 
     return `${resolved.pathname}${resolved.search}`;
   } catch {
-    return HOME_PATH;
+    return defaultPath;
   }
 }

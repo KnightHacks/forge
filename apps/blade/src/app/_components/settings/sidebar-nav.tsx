@@ -24,13 +24,7 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
     isLoading: memberLoading,
     error: memberError,
   } = api.member.getMember.useQuery(undefined, { staleTime: Infinity });
-  const {
-    data: hacker,
-    isLoading: hackerLoading,
-    error: hackerError,
-  } = api.hackerQuery.getHacker.useQuery({}, { staleTime: Infinity });
-
-  if (memberLoading || hackerLoading) {
+  if (memberLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin" />
@@ -38,7 +32,7 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
     );
   }
 
-  if (memberError || hackerError) {
+  if (memberError) {
     return (
       <div aria-live="polite" className="p-2 text-sm text-destructive">
         Unable to load navigation.
@@ -46,17 +40,9 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
     );
   }
 
-  if (!member && !hacker) {
+  if (!member) {
     return null;
   }
-
-  const visibleItems = items.filter((item) => {
-    if (item.title.toLowerCase().includes("member")) return !!member;
-    if (item.title.toLowerCase().includes("hacker")) return !!hacker;
-    return true;
-  });
-
-  if (visibleItems.length === 0) return null;
 
   return (
     <nav
@@ -66,7 +52,7 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
       )}
       {...props}
     >
-      {visibleItems.map((item) => (
+      {items.map((item) => (
         <Link
           replace
           key={item.title}

@@ -4,9 +4,12 @@ import { google } from "googleapis";
 
 import { EVENTS } from "@forge/consts";
 
-import { env } from "./env";
+import { googleEnv } from "./google-env";
 
-const GOOGLE_PRIVATE_KEY = Buffer.from(env.GOOGLE_PRIVATE_KEY_B64, "base64")
+const GOOGLE_PRIVATE_KEY = Buffer.from(
+  googleEnv.GOOGLE_PRIVATE_KEY_B64,
+  "base64",
+)
   .toString("utf-8")
   .replace(/\\n/g, "\n");
 
@@ -16,7 +19,7 @@ const gapiGmailSettingsSharing =
   "https://www.googleapis.com/auth/gmail.settings.sharing";
 
 const auth = new google.auth.JWT({
-  email: env.GOOGLE_CLIENT_EMAIL,
+  email: googleEnv.GOOGLE_CLIENT_EMAIL,
   key: GOOGLE_PRIVATE_KEY,
   scopes: [gapiCalendar, gapiGmailSend, gapiGmailSettingsSharing],
   subject: EVENTS.GOOGLE_PERSONIFY_EMAIL as string,

@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@forge/consts": "workspace:*",
     "minimatch": "^10.2.4",
     "zod": "catalog:"
   },
