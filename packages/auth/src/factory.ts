@@ -13,9 +13,30 @@ export interface ForgeAuthOptions {
   baseURL: string;
 }
 
+const SHARED_AUTH_COOKIE_DOMAIN = ".knighthacks.org";
+
 export const isSecureContext = authSharedEnv.NODE_ENV !== "development";
 
+function getCrossSubDomainCookies(baseURL: string) {
+  if (authSharedEnv.NODE_ENV !== "production") return undefined;
+
+  const { hostname } = new URL(baseURL);
+  if (
+    hostname !== "knighthacks.org" &&
+    !hostname.endsWith(SHARED_AUTH_COOKIE_DOMAIN)
+  ) {
+    return undefined;
+  }
+
+  return {
+    enabled: true,
+    domain: SHARED_AUTH_COOKIE_DOMAIN,
+  };
+}
+
 export function createForgeAuth({ baseURL }: ForgeAuthOptions) {
+  const crossSubDomainCookies = getCrossSubDomainCookies(baseURL);
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
@@ -95,6 +116,7 @@ export function createForgeAuth({ baseURL }: ForgeAuthOptions) {
 
     advanced: {
       useSecureCookies: isSecureContext,
+      ...(crossSubDomainCookies ? { crossSubDomainCookies } : {}),
       database: {
         generateId: () => randomUUID(),
       },

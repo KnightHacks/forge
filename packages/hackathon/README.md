@@ -38,19 +38,16 @@ KH9-owned.
 
 ## Bloom rollout
 
-During localhost development, Bloom brokers Discord OAuth through Blade at port
-3000 and returns through Blade's `/auth/bloom-return` route. The bridge accepts
-only the configured Bloom origin. Because cookies are scoped to `localhost`
-rather than to ports, Blade and Bloom share the development session and logout.
-Production does not use this bridge; each deployed host keeps its own cookie and
-Bloom uses its own registered callback.
+Bloom brokers Discord OAuth through Blade and returns through Blade's
+`/auth/bloom-return` route. The bridge accepts only the configured Bloom origin.
+In production, Forge auth scopes cookies to `.knighthacks.org`, so Blade and
+Bloom share the same session and logout without registering a second Discord
+callback for Bloom.
 
 Before enabling Blade redirects:
 
 1. Set `BLOOMKNIGHTS_URL` to the exact Bloom origin.
-2. Register Discord callbacks for
-   `https://bloom.knighthacks.org/api/auth/callback/discord` and
-   `http://localhost:3006/api/auth/callback/discord`.
+2. Ensure the Discord application uses Blade's callback URL.
 3. Apply the Hackathon portal/capacity migration.
 4. Deploy and smoke-test Bloom auth, application, dashboard, and profile.
 5. Deploy Blade only after the Bloom portal is healthy.

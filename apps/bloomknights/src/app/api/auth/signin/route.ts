@@ -2,12 +2,9 @@ import { NextResponse } from "next/server";
 
 import { sanitizeCallbackURL } from "@forge/auth/callback-url";
 
-import { signInRoute } from "~/auth/server";
 import { env } from "~/env";
 
 export function GET(request: Request) {
-  if (env.NODE_ENV !== "development") return signInRoute(request);
-
   const requestUrl = new URL(request.url);
   const provider = requestUrl.searchParams.get("provider");
   if (provider !== "discord") {
