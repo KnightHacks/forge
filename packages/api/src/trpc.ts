@@ -39,7 +39,12 @@ export const createTRPCContext = (opts: {
   const authToken = opts.headers.get("Authorization") ?? null;
   const session = opts.session;
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
-  console.log(">>> tRPC Request from", source, "by", session?.user);
+  console.log(
+    ">>> tRPC Request from",
+    source,
+    "by",
+    session?.user ? "authenticated user" : "anonymous",
+  );
 
   return {
     session,

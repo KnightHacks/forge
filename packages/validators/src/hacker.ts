@@ -3,6 +3,9 @@ import { z } from "zod";
 import { FORMS } from "@forge/consts";
 
 const optionalUrl = z.union([z.literal(""), z.string().url()]).optional();
+const requiredAgreement = z
+  .boolean()
+  .refine((value) => value, "This agreement is required.");
 
 export const hackerApplicationWireSchema = z.object({
   firstName: z.string().trim().min(1).max(255),
@@ -29,8 +32,8 @@ export const hackerApplicationWireSchema = z.object({
   isFirstTime: z.boolean().default(false),
   foodAllergies: z.string().nullable().optional(),
   agreesToReceiveEmailsFromMLH: z.boolean().default(false),
-  agreesToMLHCodeOfConduct: z.boolean(),
-  agreesToMLHDataSharing: z.boolean(),
+  agreesToMLHCodeOfConduct: requiredAgreement,
+  agreesToMLHDataSharing: requiredAgreement,
 });
 
 export type HackerApplicationWireInput = z.input<

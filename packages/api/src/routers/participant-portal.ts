@@ -426,15 +426,25 @@ const participantPortalRouterImplementation = {
         });
       }
 
-      await db
+      const [withdrawnParticipant] = await db
         .update(HackerAttendee)
         .set({ status: "withdrawn", timeConfirmed: null })
         .where(
           and(
             eq(HackerAttendee.hackerId, participant.id),
             eq(HackerAttendee.hackathonId, hackathon.id),
+            eq(HackerAttendee.status, "confirmed"),
           ),
-        );
+        )
+        .returning({ id: HackerAttendee.id });
+
+      if (!withdrawnParticipant) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Only confirmed hackers can withdraw attendance.",
+        });
+      }
+
       return { status: "withdrawn" as const };
     }),
 

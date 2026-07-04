@@ -343,6 +343,13 @@ export function BloomDashboard() {
           />
           <QrActionCard
             available={qrAvailable}
+            errorMessage={
+              qrMutation.error instanceof Error
+                ? qrMutation.error.message
+                : qrMutation.isError
+                  ? "Could not load your QR code."
+                  : null
+            }
             isLoading={qrMutation.isPending}
             loadQRCode={loadQRCode}
             qrCode={qrCode}
@@ -522,11 +529,13 @@ function ActionCard({
 
 function QrActionCard({
   available,
+  errorMessage,
   isLoading,
   loadQRCode,
   qrCode,
 }: {
   available: boolean;
+  errorMessage: string | null;
   isLoading: boolean;
   loadQRCode: () => Promise<unknown>;
   qrCode: string | undefined;
@@ -559,7 +568,7 @@ function QrActionCard({
         <button
           type="button"
           className="bk-portal-tool bk-dashboard-tool group w-full"
-          onClick={() => void loadQRCode()}
+          onClick={() => void loadQRCode().catch(() => undefined)}
         >
           <span className="bk-portal-tool-icon">
             {isLoading ? (
@@ -602,6 +611,22 @@ function QrActionCard({
               className="size-72"
               unoptimized
             />
+          ) : isLoading ? (
+            <Loader2 className="size-8 animate-spin" />
+          ) : errorMessage ? (
+            <div className="flex max-w-72 flex-col items-center gap-3 text-center">
+              <AlertCircle className="size-8 text-[#7c3f2d]" />
+              <p className="text-sm font-semibold leading-6 text-[#5a4535]">
+                {errorMessage}
+              </p>
+              <Button
+                className="bk-bloom-cta-action bk-portal-button px-5"
+                onClick={() => void loadQRCode().catch(() => undefined)}
+                type="button"
+              >
+                Try again
+              </Button>
+            </div>
           ) : (
             <Loader2 className="size-8 animate-spin" />
           )}

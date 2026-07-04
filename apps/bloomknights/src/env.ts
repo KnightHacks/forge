@@ -3,12 +3,20 @@ import { z } from "zod";
 
 import { hackathonPortalOriginSchema } from "@forge/validators";
 
+const bladeUrlSchema =
+  process.env.NODE_ENV === "production"
+    ? hackathonPortalOriginSchema
+    : hackathonPortalOriginSchema.default("http://localhost:3000");
+
+const bloomKnightsUrlSchema =
+  process.env.NODE_ENV === "production"
+    ? hackathonPortalOriginSchema
+    : hackathonPortalOriginSchema.default("http://localhost:3006");
+
 export const env = createEnv({
   server: {
-    BLADE_URL: hackathonPortalOriginSchema.default("http://localhost:3000"),
-    BLOOMKNIGHTS_URL: hackathonPortalOriginSchema.default(
-      "http://localhost:3006",
-    ),
+    BLADE_URL: bladeUrlSchema,
+    BLOOMKNIGHTS_URL: bloomKnightsUrlSchema,
   },
   shared: {
     NODE_ENV: z
