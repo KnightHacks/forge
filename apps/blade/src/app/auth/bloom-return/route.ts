@@ -3,17 +3,25 @@ import { NextResponse } from "next/server";
 import { env } from "~/env";
 
 const DEFAULT_BLOOM_RETURN_PATH = "/dashboard";
-const ALLOWED_BLOOM_RETURN_ORIGINS = [
-  "https://bloom.knighthacks.org",
-  "http://localhost:3006",
-] as const;
+const PRODUCTION_BLOOM_RETURN_ORIGIN = "https://bloom.knighthacks.org";
+const LOCAL_BLOOM_RETURN_ORIGIN = "http://localhost:3006";
+
+function getAllowedBloomReturnOrigins(configuredBloomOrigin: string) {
+  const allowedOrigins = new Set([
+    configuredBloomOrigin,
+    PRODUCTION_BLOOM_RETURN_ORIGIN,
+  ]);
+
+  if (env.NODE_ENV !== "production") {
+    allowedOrigins.add(LOCAL_BLOOM_RETURN_ORIGIN);
+  }
+
+  return allowedOrigins;
+}
 
 function getBloomReturnURL(returnTo: string | null) {
   const configuredBloomOrigin = new URL(env.BLOOMKNIGHTS_URL).origin;
-  const allowedOrigins = new Set([
-    configuredBloomOrigin,
-    ...ALLOWED_BLOOM_RETURN_ORIGINS,
-  ]);
+  const allowedOrigins = getAllowedBloomReturnOrigins(configuredBloomOrigin);
   const defaultReturnURL = new URL(
     DEFAULT_BLOOM_RETURN_PATH,
     configuredBloomOrigin,
