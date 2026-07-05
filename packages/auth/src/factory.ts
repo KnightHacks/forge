@@ -73,7 +73,6 @@ export function createForgeAuth({ baseURL }: ForgeAuthOptions) {
         clientSecret: authSharedEnv.DISCORD_CLIENT_SECRET,
         scope: ["guilds.join"],
         mapProfileToUser: (profile) => ({
-          id: randomUUID(),
           name: profile.username,
           email: profile.id + "@blade.org",
           image: profile.avatar ?? "",
