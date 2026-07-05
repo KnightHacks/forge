@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { HACKATHONS } from "@forge/consts";
-import { and, count, desc, eq, getTableColumns, lt } from "@forge/db";
+import { and, count, desc, eq, getTableColumns, gte, lt, lte } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Hackathon,
@@ -18,7 +18,9 @@ import {
   getHackathonBackgroundIssues,
   getHackathonDateWindowIssues,
   getHackathonEmailTemplateIssues,
+  hackathonConfirmationCapacitySchema,
   hackathonDisplayNameSchema,
+  hackathonPortalBaseUrlSchema,
   hackathonRouteNameSchema,
   hackathonThemeSchema,
 } from "@forge/validators";
@@ -41,6 +43,8 @@ const hackathonMutationInput = z.object({
   applicationBackgroundKey: hackathonApplicationBackgroundKeySchema,
   emailTemplateEnabled: z.boolean().default(false),
   emailTemplateKey: hackathonEmailTemplateKeySchema,
+  portalBaseUrl: hackathonPortalBaseUrlSchema,
+  confirmationCapacity: hackathonConfirmationCapacitySchema,
   applicationOpen: z.coerce.date(),
   applicationDeadline: z.coerce.date(),
   confirmationDeadline: z.coerce.date(),
@@ -94,6 +98,8 @@ function getHackathonMutationValues(
     emailTemplateKey: input.emailTemplateEnabled
       ? input.emailTemplateKey
       : null,
+    portalBaseUrl: input.portalBaseUrl,
+    confirmationCapacity: input.confirmationCapacity,
     applicationOpen: input.applicationOpen,
     applicationDeadline: input.applicationDeadline,
     confirmationDeadline: input.confirmationDeadline,
@@ -137,12 +143,19 @@ export const hackathonRouter = {
   }),
 
   getCurrentHackathon: publicProcedure.query(async () => {
-    // Find first hackathon that hasnt ended yet
+    const now = new Date();
     const hackathon = await db.query.Hackathon.findFirst({
-      orderBy: (t, { asc }) => asc(t.endDate),
-      where: (t, { and, gte, lte }) =>
-        and(gte(t.endDate, new Date()), lte(t.applicationOpen, new Date())),
+      orderBy: (t, { asc }) => [
+        asc(t.applicationOpen),
+        asc(t.startDate),
+        asc(t.endDate),
+      ],
+      where: and(
+        lte(Hackathon.applicationOpen, now),
+        gte(Hackathon.endDate, now),
+      ),
     });
+
     return hackathon ?? null;
   }),
 

@@ -21,6 +21,7 @@ forge/
 │   ├── auth/          # Authentication setup
 │   ├── db/            # Database schema and client
 │   ├── email/         # Email templates and sending
+│   ├── hackathon/     # Headless participant portal workflows
 │   ├── ui/            # Shared UI components
 │   └── consts/        # Shared constants
 └── tooling/           # Shared configuration
@@ -32,33 +33,42 @@ forge/
 
 ## How Apps Communicate
 
-### Blade as the "Backend"
+### Blade and shared backend packages
 
-While `blade` is technically a Next.js app, it serves as the backend because:
+`blade` is the member and organizer application. It mounts the complete tRPC
+router because it owns administrative workflows such as acceptance, check-in,
+event management, and data exports.
 
-- It contains all write operations (create, update, delete)
-- It handles authentication
-- It manages role-based permissions
-- Other apps only have read access via tRPC
+Hackathon sites may also mount the participant-scoped router and their own
+Better Auth handler. Business procedures, schemas, and identity tables remain
+shared; only the host application and browser session are event-specific.
 
 ### Frontend-Only Apps
 
-Apps like `club`, `guild`, `2025`, and `gemiknights` are frontend-only and interact with `blade` for data:
+Marketing apps such as `club` and archived event sites are primarily
+frontend-only. Active hackathon apps can additionally own authenticated
+participant routes:
 
 - **club**: Reads member count and other club stats
 - **guild**: Reads member profiles for the networking directory
-- **2025/gemiknights**: Primarily static, minimal backend needs
+- **BloomKnights**: Owns participant auth, application, dashboard, and profile
+  routes through the shared participant API
+- **2025/gemiknights**: Archived static sites with minimal backend needs
 
-These apps use tRPC (via `@forge/api`) to make read-only API calls to `blade`.
+Frontend-only apps use tRPC (via `@forge/api`) to make read-only API calls to
+Blade. Active participant portals mount their restricted router locally.
 
 ### Authentication Flow
 
-All authentication is centralized in `blade`:
+Authentication is configured per application through `@forge/auth`:
 
-1. User clicks "Login" on any frontend app
-2. They're redirected to `blade` with a callback URL
-3. `blade` handles Discord OAuth via Better Auth
-4. After authentication, user is redirected to the necessary functional page on Blade
+1. A user starts Discord OAuth on the application they are using.
+2. That app handles the callback on its own origin.
+3. Every app uses the same Better Auth secret, database adapter, Discord
+   provider, and account tables, so the Discord identity resolves to the same
+   Forge user.
+4. Cookies remain host-scoped; signing into or out of one app does not silently
+   change another app's browser session.
 
 ## Shared Packages
 
@@ -87,9 +97,16 @@ Local development applies schema changes with `pnpm db:migrate`. Schema edits sh
 
 Authentication setup using Better Auth with Discord OAuth.
 
-- Currently only used in `blade`
-- Separated as a package for potential future use in other apps
+- Exposes reusable server/client factories for Blade and hackathon apps
 - Handles Discord OAuth flow and session management
+
+### `@forge/hackathon`
+
+Headless participant workflow package used by event applications.
+
+- Owns application, dashboard, profile, and participant tRPC state
+- Exposes no event-specific markup or assets
+- Lets each event app implement a completely independent visual system
 
 ### `@forge/email`
 

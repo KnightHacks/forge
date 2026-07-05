@@ -1,7 +1,7 @@
 "use client";
 
 import type { MotionStyle, MotionValue, Transition } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -11,7 +11,6 @@ import {
   useMotionValue,
   useMotionValueEvent,
   useReducedMotion,
-  useScroll,
   useSpring,
   useTransform,
 } from "framer-motion";
@@ -37,7 +36,9 @@ const ACTION_LINKS = [
 ] as const;
 
 const MOBILE_MENU_ID = "club-mobile-menu";
-const NAV_FADE_DISTANCE = 120;
+const NAV_FADE_DISTANCE_VIEWPORT_RATIO = 0.15;
+const NAV_TOP_RESET_THRESHOLD_PX = 4;
+const NAV_SCROLL_DELTA_THRESHOLD_PX = 1;
 
 type NavStyle = MotionStyle & {
   opacity: number | MotionValue<number>;
@@ -50,6 +51,13 @@ type NavStyle = MotionStyle & {
 
 function isActivePath(pathname: string, href: string) {
   return href === "/" ? pathname === href : pathname.startsWith(href);
+}
+
+function getNavFadeDistance() {
+  return Math.max(
+    window.innerHeight * NAV_FADE_DISTANCE_VIEWPORT_RATIO,
+    NAV_TOP_RESET_THRESHOLD_PX,
+  );
 }
 
 function NavLink({
@@ -66,6 +74,7 @@ function NavLink({
   return (
     <Link
       href={item.href}
+      prefetch={false}
       aria-current={isActive ? "page" : undefined}
       className={cn("club-nav-link", isActive && "club-nav-link-active")}
       onClick={() => onSelect?.(item.href)}
@@ -124,8 +133,8 @@ export default function Navbar({ bladeUrl }: { bladeUrl: string }) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isClickDisabled, setIsClickDisabled] = useState(false);
+  const previousScrollY = useRef(0);
   const prefersReducedMotion = useReducedMotion();
-  const { scrollY } = useScroll();
   const rawNavFadeProgress = useMotionValue(0);
   const navFadeProgress = useSpring(
     rawNavFadeProgress,
@@ -164,21 +173,51 @@ export default function Navbar({ bladeUrl }: { bladeUrl: string }) {
     ? { duration: 0 }
     : { duration: 0.18, ease: "easeOut" };
 
-  useMotionValueEvent(scrollY, "change", (currentScrollY) => {
-    const previousScrollY = scrollY.getPrevious() ?? currentScrollY;
-    const scrollDelta = currentScrollY - previousScrollY;
+  useEffect(() => {
+    let animationFrameId: number | null = null;
 
-    if (currentScrollY <= 4 || scrollDelta < -1) {
-      rawNavFadeProgress.set(0);
-      return;
+    function updateNavFade() {
+      animationFrameId = null;
+      const currentScrollY = window.scrollY;
+      const scrollDelta = currentScrollY - previousScrollY.current;
+      previousScrollY.current = currentScrollY;
+
+      if (
+        currentScrollY <= NAV_TOP_RESET_THRESHOLD_PX ||
+        scrollDelta < -NAV_SCROLL_DELTA_THRESHOLD_PX
+      ) {
+        rawNavFadeProgress.set(0);
+        return;
+      }
+
+      if (scrollDelta > NAV_SCROLL_DELTA_THRESHOLD_PX) {
+        rawNavFadeProgress.set(
+          Math.min(
+            1,
+            rawNavFadeProgress.get() + scrollDelta / getNavFadeDistance(),
+          ),
+        );
+      }
     }
 
-    if (scrollDelta > 1) {
-      rawNavFadeProgress.set(
-        Math.min(1, rawNavFadeProgress.get() + scrollDelta / NAV_FADE_DISTANCE),
-      );
+    function scheduleNavFade() {
+      if (animationFrameId !== null) return;
+
+      animationFrameId = window.requestAnimationFrame(updateNavFade);
     }
-  });
+
+    previousScrollY.current = window.scrollY;
+    scheduleNavFade();
+    window.addEventListener("scroll", scheduleNavFade, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", scheduleNavFade);
+
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [rawNavFadeProgress]);
 
   useMotionValueEvent(navOpacity, "change", (opacity) => {
     const shouldDisableClicks = opacity <= 0.5;
@@ -212,6 +251,7 @@ export default function Navbar({ bladeUrl }: { bladeUrl: string }) {
       <nav className="relative mx-auto flex h-20 w-full max-w-[1440px] items-center justify-between gap-4 px-5 md:px-8 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-6 lg:px-8 xl:px-10">
         <Link
           href="/"
+          prefetch={false}
           className="flex shrink-0 items-center justify-self-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--club-gold)] lg:-ml-1 xl:-ml-2"
           aria-label="Knight Hacks home"
         >

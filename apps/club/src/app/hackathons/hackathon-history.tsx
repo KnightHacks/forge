@@ -534,13 +534,15 @@ function Timeline({ rows }: { rows: readonly TimelineRow[] }) {
       <div
         className="club-history-timeline-fill"
         style={{
-          height: "calc(var(--history-timeline-progress, 0) * 100%)",
+          transform:
+            "translateX(-50%) scaleY(var(--history-timeline-progress, 0))",
         }}
       />
       <div
         className="club-history-timeline-scrubber"
         style={{
-          top: "clamp(21px, var(--history-timeline-scrubber-y, 0px), calc(100% - 21px))",
+          transform:
+            "translate3d(-50%, var(--history-timeline-scrubber-y, 21px), 0) translateY(-50%)",
         }}
       />
       {rows.map((row) => {

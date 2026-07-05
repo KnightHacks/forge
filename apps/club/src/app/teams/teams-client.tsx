@@ -13,6 +13,7 @@ import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 
 import type { TeamMember, TeamRoster, TeamSlug } from "./teams-config";
+import { useDeferredSectionLoad } from "../_components/use-deferred-section-load";
 import { CLUB_ASSETS } from "../_lib/assets";
 import { loadClubTeamRoster } from "./team-roster";
 import {
@@ -171,6 +172,8 @@ function EmptyTeam({ label, status }: { label: string; status: RosterStatus }) {
 }
 
 export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
+  const { ref: rosterSectionRef, shouldLoad: shouldLoadRoster } =
+    useDeferredSectionLoad<HTMLElement>();
   const pendingScrollPosition = useRef<{ x: number; y: number } | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const [roster, setRoster] = useState<TeamRoster>(() => createEmptyRoster());
@@ -215,12 +218,16 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
 
     pendingScrollPosition.current = null;
     window.scrollTo(scrollPosition.x, scrollPosition.y);
-    window.requestAnimationFrame(() => {
+    const animationFrameId = window.requestAnimationFrame(() => {
       window.scrollTo(scrollPosition.x, scrollPosition.y);
     });
+
+    return () => window.cancelAnimationFrame(animationFrameId);
   }, [activeTeam]);
 
   useEffect(() => {
+    if (!shouldLoadRoster) return;
+
     const abortController = new AbortController();
 
     async function loadRoster() {
@@ -240,7 +247,7 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
     void loadRoster();
 
     return () => abortController.abort();
-  }, [bladeUrl]);
+  }, [bladeUrl, shouldLoadRoster]);
 
   function selectTeam(team: TeamSlug) {
     if (team === activeTeam) return;
@@ -330,6 +337,7 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
       <div className="club-teams-hero-transition" aria-hidden="true" />
 
       <section
+        ref={rosterSectionRef}
         className="club-teams-post-section container pb-10 md:pb-12"
         aria-labelledby="team-members"
       >

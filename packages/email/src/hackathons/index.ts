@@ -54,6 +54,8 @@ function getHackathonEmailSubject({
   switch (kind) {
     case "Accepted":
       return `[ACTION REQUIRED] ${hackathon.displayName} Acceptance Information!`;
+    case "AcceptedReminder":
+      return `[REMINDER] Confirm your ${hackathon.displayName} acceptance`;
     case "Apply":
       return `${hackathon.displayName} - We received your application!`;
     case "Blacklist":

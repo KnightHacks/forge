@@ -13,7 +13,6 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import type { Session } from "@forge/auth/server";
-import { validateToken } from "@forge/auth/server";
 import { PERMISSIONS } from "@forge/consts";
 import { eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
@@ -33,14 +32,19 @@ import * as permissionsServer from "@forge/utils/permissions.server";
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = async (opts: {
+export const createTRPCContext = (opts: {
   headers: Headers;
   session: Session | null;
 }) => {
   const authToken = opts.headers.get("Authorization") ?? null;
-  const session = await validateToken();
+  const session = opts.session;
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
-  console.log(">>> tRPC Request from", source, "by", session?.user);
+  console.log(
+    ">>> tRPC Request from",
+    source,
+    "by",
+    session?.user ? "authenticated user" : "anonymous",
+  );
 
   return {
     session,

@@ -62,7 +62,9 @@
     "DISCORD_DAILY_ANIMAL_WEBHOOK_URL",
     "DISCORD_LEETCODE_DAILY_WEBHOOK_URL",
     "DISCORD_WEATHER_API_KEY",
-    "BLADE_URL"
+    "BLADE_URL",
+    "NEXT_PUBLIC_BLADE_URL",
+    "BLOOMKNIGHTS_URL"
   ],
   "globalPassThroughEnv": ["NODE_ENV", "CI", "npm_lifecycle_event"]
 }

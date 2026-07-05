@@ -71,6 +71,13 @@
       "when": 1781733366922,
       "tag": "0009_smooth_forgotten_one",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783110594620,
+      "tag": "0010_wooden_supreme_intelligence",
+      "breakpoints": true
     }
   ]
 }

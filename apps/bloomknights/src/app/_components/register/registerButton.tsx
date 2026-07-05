@@ -2,7 +2,13 @@ import Link from "next/link";
 
 import BloomButtonEdge from "../ui/BloomButtonEdge";
 
-const Register = () => {
+const Register = ({
+  href = "/apply",
+  label = "Register Now!",
+}: {
+  href?: string;
+  label?: string;
+}) => {
   return (
     <div className="font-dm-sans mt-20 flex flex-col items-center justify-center font-bold">
       <div className="bloom-cta-shell">
@@ -15,14 +21,9 @@ const Register = () => {
             }}
           />
           <div className="relative z-10 flex w-full items-center">
-            <Link
-              href="https://blade.knighthacks.org/hacker/application/bloomknights"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="wc-btn bloom-cta-button group"
-            >
+            <Link href={href} className="wc-btn bloom-cta-button group">
               <span className="bloom-cta-label transition-all duration-500 group-hover:text-white">
-                Register Now!
+                {label}
               </span>
               <span className="bloom-cta-mark" aria-hidden="true" />
             </Link>

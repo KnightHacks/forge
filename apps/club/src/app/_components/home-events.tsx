@@ -12,8 +12,10 @@ import {
   formatEventTime,
   loadClubEvents,
 } from "../_lib/club-events";
+import { useDeferredSectionLoad } from "./use-deferred-section-load";
 
 const HOME_EVENT_LIMIT = 3;
+const HOME_EVENTS_LOAD_AHEAD_VIEWPORTS = 0.875;
 
 function ExternalArrow() {
   return <ArrowUpRight aria-hidden="true" className="ml-2 size-4" />;
@@ -95,11 +97,17 @@ export function HomeEvents({
   bladeUrl: string;
   eventLimit?: number;
 }) {
+  const { ref: containerRef, shouldLoad: shouldLoadEvents } =
+    useDeferredSectionLoad<HTMLDivElement>({
+      leadViewports: HOME_EVENTS_LOAD_AHEAD_VIEWPORTS,
+    });
   const [events, setEvents] = useState<PublicClubEvent[]>([]);
   const [status, setStatus] = useState<EventsStatus>("loading");
   const safeEventLimit = getSafeEventLimit(eventLimit);
 
   useEffect(() => {
+    if (!shouldLoadEvents) return;
+
     const abortController = new AbortController();
 
     async function loadEvents() {
@@ -125,7 +133,7 @@ export function HomeEvents({
     void loadEvents();
 
     return () => abortController.abort();
-  }, [bladeUrl, safeEventLimit]);
+  }, [bladeUrl, safeEventLimit, shouldLoadEvents]);
 
   const homeEvents = useMemo(
     () => events.slice(0, safeEventLimit),
@@ -133,7 +141,7 @@ export function HomeEvents({
   );
 
   return (
-    <>
+    <div ref={containerRef}>
       {status === "loading" ? (
         <LoadingRows eventLimit={safeEventLimit} />
       ) : homeEvents.length > 0 ? (
@@ -158,12 +166,12 @@ export function HomeEvents({
           size="lg"
           className="club-button bg-white text-black shadow-[4px_4px_0_var(--club-gold)]"
         >
-          <Link href={allEventsHref}>
+          <Link href={allEventsHref} prefetch={false}>
             {allEventsLabel}
             <ExternalArrow />
           </Link>
         </Button>
       </div>
-    </>
+    </div>
   );
 }

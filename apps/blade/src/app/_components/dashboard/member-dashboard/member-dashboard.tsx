@@ -100,14 +100,6 @@ export default async function MemberDashboard({
     return (
       <div className="flex-col md:flex">
         <div className="flex-1 space-y-4">
-          <div className="animate-fade-in mb-8 flex items-center justify-between space-y-2">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight">
-                Hello, {member.firstName}!
-              </h2>
-              <p className="text-muted-foreground">Alumni Dashboard</p>
-            </div>
-          </div>
           {/* Unified View */}
           <div className="animate-mobile-initial-expand space-y-4">
             <div className="grid grid-cols-1 gap-4 md:h-[800px] md:grid-cols-3">
@@ -139,14 +131,6 @@ export default async function MemberDashboard({
   return (
     <div className="flex-col md:flex">
       <div className="flex-1 space-y-4">
-        <div className="animate-fade-in mb-8 flex items-center justify-between space-y-2">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight">
-              Hello, {member.firstName}!
-            </h2>
-            <p className="text-muted-foreground">Member Dashboard</p>
-          </div>
-        </div>
         {/* Unified View */}
         <div className="animate-mobile-initial-expand space-y-4">
           <div className="animate-fade-in grid gap-4 md:grid-cols-2 lg:grid-cols-4">

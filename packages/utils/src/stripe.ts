@@ -2,6 +2,8 @@ import "server-only";
 
 import Stripe from "stripe";
 
-import { env } from "./env";
+import { stripeEnv } from "./stripe-env";
 
-export const stripe = new Stripe(env.STRIPE_SECRET_KEY, { typescript: true });
+export const stripe = new Stripe(stripeEnv.STRIPE_SECRET_KEY, {
+  typescript: true,
+});

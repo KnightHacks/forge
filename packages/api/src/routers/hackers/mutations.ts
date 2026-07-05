@@ -1,16 +1,13 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import type { HackerClass } from "@forge/db/schemas/knight-hacks";
 import { HACKATHONS } from "@forge/consts";
-import { and, count, eq, sql } from "@forge/db";
+import { and, eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Session } from "@forge/db/schemas/auth";
 import {
-  AssignedClassCheckinSchema,
   Event,
   Hacker,
-  HACKER_CLASSES,
   HackerAttendee,
   HackerEventAttendee,
   InsertHackerSchema,
@@ -18,6 +15,7 @@ import {
 import { sendHackathonEmail } from "@forge/email";
 import { logger, permissions } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
+import { hackerApplicationWireSchema } from "@forge/validators";
 
 import { ensureUserQRCode } from "../../qr-code";
 import {
@@ -28,16 +26,7 @@ import { permProcedure, protectedProcedure } from "../../trpc";
 
 export const hackerMutationRouter = {
   createHacker: protectedProcedure
-    .input(
-      z.object({
-        ...InsertHackerSchema.omit({
-          userId: true,
-          age: true,
-          discordUser: true,
-        }).shape,
-        hackathonName: z.string(),
-      }),
-    )
+    .input(hackerApplicationWireSchema.extend({ hackathonName: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const userId = ctx.session.user.id;
       const { hackathonName, ...hackerData } = input;
@@ -178,7 +167,7 @@ export const hackerMutationRouter = {
       }
     }),
 
-  updateHacker: protectedProcedure
+  updateHacker: permProcedure
     .input(
       InsertHackerSchema.omit({
         userId: true,
@@ -187,6 +176,8 @@ export const hackerMutationRouter = {
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      permissions.controlPerms.or(["EDIT_HACKERS"], ctx);
+
       if (!input.id) {
         throw new TRPCError({
           message: "Hacker ID is required to update a member!",
@@ -228,7 +219,7 @@ export const hackerMutationRouter = {
           ? undefined
           : await normalizeResumeObjectNameForPersistence(
               updateData.resumeUrl,
-              ctx.session.user.id,
+              hacker.userId,
             );
 
       await db
@@ -240,9 +231,9 @@ export const hackerMutationRouter = {
           age: newAge,
           phoneNumber: normalizedPhone,
         })
-        .where(eq(Hacker.userId, ctx.session.user.id));
+        .where(eq(Hacker.id, id));
       if (isResumeChanged) {
-        await removeUnreferencedResumeObjectsForUser(ctx.session.user.id);
+        await removeUnreferencedResumeObjectsForUser(hacker.userId);
       }
 
       // Create a log of the changes for logger
@@ -312,6 +303,11 @@ export const hackerMutationRouter = {
         });
       }
 
+      const hacker = await db.query.Hacker.findFirst({
+        columns: { userId: true },
+        where: (table, { eq }) => eq(table.id, input.id ?? ""),
+      });
+
       await db.delete(Hacker).where(eq(Hacker.id, input.id));
 
       await discord.log({
@@ -321,8 +317,8 @@ export const hackerMutationRouter = {
         userId: ctx.session.user.discordUserId,
       });
 
-      if (ctx.session.user.id) {
-        await db.delete(Session).where(eq(Session.userId, ctx.session.user.id));
+      if (hacker?.userId) {
+        await db.delete(Session).where(eq(Session.userId, hacker.userId));
       }
     }),
 
@@ -527,19 +523,6 @@ export const hackerMutationRouter = {
         eventId: z.string().uuid(),
         eventPoints: z.number(),
         hackathonId: z.string().uuid(),
-        assignedClassCheckin: z.string().superRefine((v, ctx) => {
-          //Idk man leave me alone
-          if (
-            !(
-              AssignedClassCheckinSchema.options as unknown as string[]
-            ).includes(v)
-          ) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Invalid assignedClassCheckin",
-            });
-          }
-        }),
         repeatedCheckin: z.boolean(),
       }),
     )
@@ -554,7 +537,8 @@ export const hackerMutationRouter = {
           code: "NOT_FOUND",
           message: `Event with ID ${input.eventId} not found.`,
         });
-      if (!event.hackathonId) {
+      const hackathonId = event.hackathonId;
+      if (!hackathonId) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: `Event with ID ${input.eventId} is not a hackathon event.`,
@@ -570,7 +554,6 @@ export const hackerMutationRouter = {
           lastName: Hacker.lastName,
           discordUser: Hacker.discordUser,
           status: HackerAttendee.status,
-          class: HackerAttendee.class,
           points: HackerAttendee.points,
           hackerAttendeeId: HackerAttendee.id,
         })
@@ -579,7 +562,7 @@ export const hackerMutationRouter = {
         .where(
           and(
             eq(Hacker.userId, input.userId),
-            eq(HackerAttendee.hackathonId, event.hackathonId),
+            eq(HackerAttendee.hackathonId, hackathonId),
           ),
         )
         .limit(1);
@@ -597,17 +580,12 @@ export const hackerMutationRouter = {
       const hackerAttendee = {
         id: result.hackerAttendeeId,
         status: result.status,
-        class: result.class,
         points: result.points,
-        hackathonId: event.hackathonId,
+        hackathonId,
         hackerId: hacker.id,
       };
 
       const eventTag = event.tag;
-      const discordId = await discord.resolveDiscordUserId(hacker.discordUser);
-      const isVIP = discordId ? await discord.isDiscordVIP(discordId) : false;
-
-      let assignedClass: HackerClass | null = hackerAttendee.class ?? null;
 
       if (
         hackerAttendee.status !== "confirmed" &&
@@ -626,105 +604,74 @@ export const hackerMutationRouter = {
       }
 
       if (hackerAttendee.status === "confirmed" && eventTag === "Check-in") {
-        await db.transaction(async (tx) => {
-          // Use the already fetched hackerAttendee data instead of querying again
-          if (hackerAttendee.class && hackerAttendee.class in HACKER_CLASSES) {
-            assignedClass = hackerAttendee.class;
-            return;
-          }
-
-          const totalHackerinClass = await Promise.all(
-            HACKER_CLASSES.map(async (cls) => {
-              const rows = await tx
-                .select({ c: count() })
-                .from(HackerAttendee)
-                .where(
-                  and(
-                    eq(HackerAttendee.hackathonId, input.hackathonId),
-                    eq(HackerAttendee.class, cls),
-                  ),
-                );
-              return { cls, count: Number(rows[0]?.c ?? 0) } as const;
-            }),
-          );
-
-          const leastPopulatedClass = Math.min(
-            ...totalHackerinClass.map((c) => c.count),
-          );
-          const candidates = totalHackerinClass
-            .filter((c) => c.count === leastPopulatedClass)
-            .map((c) => c.cls);
-
-          const pick: HackerClass =
-            candidates[Math.floor(Math.random() * candidates.length)] ??
-            HACKER_CLASSES[0];
-
-          await tx
-            .update(HackerAttendee)
-            .set({ class: pick, status: "checkedin" })
-            .where(
-              and(
-                eq(HackerAttendee.hackerId, hacker.id),
-                eq(HackerAttendee.hackathonId, input.hackathonId),
-              ),
-            );
-
-          assignedClass = pick;
+        const hackathon = await db.query.Hackathon.findFirst({
+          columns: { name: true },
+          where: (t, { eq }) => eq(t.id, hackathonId),
         });
 
-        if (!discordId) {
-          await discord.log({
-            title: "Discord role assign skipped",
-            message: `Could not resolve Discord ID for "${hacker.discordUser}".`,
-            color: "uhoh_red",
-            userId: ctx.session.user.discordUserId,
+        if (!hackathon) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: `Hackathon with ID ${hackathonId} not found.`,
           });
-        } else {
+        }
+
+        await db
+          .update(HackerAttendee)
+          .set({ status: "checkedin" })
+          .where(eq(HackerAttendee.id, hackerAttendee.id));
+
+        if (hackathon.name === HACKATHONS.BLOOMKNIGHTS.HACKATHON_NAME) {
           try {
-            await discord.addRoleToMember(
-              discordId,
-              HACKATHONS.KNIGHT_HACKS_8.KH_EVENT_ROLE_ID,
+            const discordId = await discord.resolveDiscordUserId(
+              hacker.discordUser,
             );
-            logger.log(
-              `Assigned role ${HACKATHONS.KNIGHT_HACKS_8.KH_EVENT_ROLE_ID} to user ${discordId}`,
-            );
-            // VIP will already be given the discord role ahead of time, so no need to assign again
-            if (assignedClass) {
+
+            if (!discordId) {
+              try {
+                await discord.log({
+                  title: "Discord role assign skipped",
+                  message: `Could not resolve Discord ID for "${hacker.discordUser}".`,
+                  color: "uhoh_red",
+                  userId: ctx.session.user.discordUserId,
+                });
+              } catch (logError) {
+                logger.error(
+                  "Failed to log skipped BloomKnights role assignment:",
+                  logError instanceof Error
+                    ? logError.message
+                    : "Unknown error",
+                );
+              }
+            } else {
               await discord.addRoleToMember(
                 discordId,
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                HACKATHONS.KNIGHT_HACKS_8.CLASS_ROLE_ID[
-                  assignedClass as HACKATHONS.KNIGHT_HACKS_8.AssignableHackerClass
-                ] ?? "",
+                HACKATHONS.BLOOMKNIGHTS.EVENT_ROLE_ID,
+              );
+              logger.log(
+                `Assigned role ${HACKATHONS.BLOOMKNIGHTS.EVENT_ROLE_ID} to user ${discordId}`,
               );
             }
           } catch (e) {
-            await discord.log({
-              title: "Discord role assign failed",
-              message: `Failed to assign Discord roles for "${hacker.discordUser}".`,
-              color: "uhoh_red",
-              userId: ctx.session.user.discordUserId,
-            });
             logger.error(
-              "Failed to assign Discord roles:",
-              (e as Error).message,
+              "Failed to assign the BloomKnights role:",
+              e instanceof Error ? e.message : "Unknown error",
             );
+            try {
+              await discord.log({
+                title: "Discord role assign failed",
+                message: `Failed to assign the BloomKnights role for "${hacker.discordUser}".`,
+                color: "uhoh_red",
+                userId: ctx.session.user.discordUserId,
+              });
+            } catch (logError) {
+              logger.error(
+                "Failed to log BloomKnights role assignment failure:",
+                logError instanceof Error ? logError.message : "Unknown error",
+              );
+            }
           }
         }
-      }
-      if (
-        input.assignedClassCheckin !== "All" &&
-        hackerAttendee.class !== input.assignedClassCheckin &&
-        !isVIP
-      ) {
-        return {
-          message: `Hacker ${hacker.firstName} ${hacker.lastName} has already checked into this event!`,
-          firstName: hacker.firstName,
-          lastName: hacker.lastName,
-          class: assignedClass,
-          messageforHackers: `[ERROR]\nOnly ${input.assignedClassCheckin} hackers can check in. Hacker has class ${hackerAttendee.class}`,
-          eventName: eventTag,
-        };
       }
 
       const duplicates = await db
@@ -742,7 +689,6 @@ export const hackerMutationRouter = {
           message: `Hacker ${hacker.firstName} ${hacker.lastName} has already checked into this event!`,
           firstName: hacker.firstName,
           lastName: hacker.lastName,
-          class: assignedClass,
           messageforHackers:
             "[ERROR]\nThe hacker has already checked into this event.",
           eventName: eventTag,
@@ -750,7 +696,7 @@ export const hackerMutationRouter = {
       await db.insert(HackerEventAttendee).values({
         hackerAttId: hackerAttendee.id,
         eventId: input.eventId,
-        hackathonId: event.hackathonId,
+        hackathonId,
       });
       await db
         .update(HackerAttendee)
@@ -760,20 +706,15 @@ export const hackerMutationRouter = {
       if (eventTag === "Check-in") {
         await discord.log({
           title: `Hacker Checked-In`,
-          message: `${hacker.firstName} ${hacker.lastName} has been checked in to Hackathon ${
-            assignedClass ? ` (Class: ${assignedClass}).` : ""
-          }`,
+          message: `${hacker.firstName} ${hacker.lastName} has been checked in to the hackathon.`,
           color: "success_green",
           userId: ctx.session.user.discordUserId,
         });
         return {
-          message: `${hacker.firstName} ${hacker.lastName} has been checked in to this Hackathon!${
-            assignedClass ? ` Assigned class: ${assignedClass}.` : ""
-          }`,
+          message: `${hacker.firstName} ${hacker.lastName} has been checked in to this hackathon!`,
           firstName: hacker.firstName,
           lastName: hacker.lastName,
-          class: assignedClass,
-          messageforHackers: "Check ID, and send them to correct lanyard area",
+          messageforHackers: "Check their ID and give them their badge.",
           eventName: eventTag,
         };
       }
@@ -787,7 +728,6 @@ export const hackerMutationRouter = {
         message: `Hacker ${hacker.firstName} ${hacker.lastName} has been checked in to this event!`,
         firstName: hacker.firstName,
         lastName: hacker.lastName,
-        class: assignedClass,
         messageforHackers: "Check their badge and send them to event area",
         eventName: eventTag,
       };

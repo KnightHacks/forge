@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { Check, ChevronsUpDown, WrenchIcon } from "lucide-react";
 import { z } from "zod";
 
-import { HACKER_CLASSES } from "@forge/db/schemas/knight-hacks";
 import { Button } from "@forge/ui/button";
 import {
   Command,
@@ -102,18 +101,12 @@ export function ManualEntryForm() {
     },
   });
 
-  const AssignedClassCheckinSchema = z.union([
-    z.literal("All"),
-    z.enum(HACKER_CLASSES),
-  ]);
-
   const form = useForm({
     schema: z.object({
       userId: z.string().min(1, "Please select a hacker"),
       eventId: z.string().min(1, "Event is required"),
       eventPoints: z.number(),
       hackathonId: z.string(),
-      assignedClassCheckin: AssignedClassCheckinSchema,
       repeatedCheckin: z.boolean(),
     }),
     defaultValues: {
@@ -121,7 +114,6 @@ export function ManualEntryForm() {
       userId: "",
       eventPoints: 0,
       hackathonId: "",
-      assignedClassCheckin: "All",
       repeatedCheckin: false,
     },
   });
@@ -131,7 +123,6 @@ export function ManualEntryForm() {
     eventId: string;
     eventPoints: number;
     hackathonId: string;
-    assignedClassCheckin: string;
     repeatedCheckin: boolean;
   }) => {
     hackerEventCheckIn.mutate(data);
@@ -178,42 +169,6 @@ export function ManualEntryForm() {
               {filteredEvents?.map((event) => (
                 <option key={event.id} value={event.id}>
                   {event.name}
-                </option>
-              ))}
-            </select>
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-
-  const renderClassCheckinSelect = () => (
-    <FormField
-      name="assignedClassCheckin"
-      control={form.control}
-      render={({ field }) => (
-        <FormItem className="space-y-2">
-          <FormLabel>Check-in class</FormLabel>
-          <FormControl>
-            <select
-              {...field}
-              className="w-full rounded border p-2"
-              onChange={(e) => {
-                const selectedClass = e.target.value;
-                field.onChange(e);
-                form.setValue("assignedClassCheckin", selectedClass);
-              }}
-            >
-              <option value="" disabled>
-                Select a class
-              </option>
-              <option key="All" value="All">
-                All
-              </option>
-              {HACKER_CLASSES.map((HackerClass) => (
-                <option key={HackerClass} value={HackerClass}>
-                  {HackerClass}
                 </option>
               ))}
             </select>
@@ -343,7 +298,6 @@ export function ManualEntryForm() {
             </TabsList>
             <TabsContent value="current" className="space-y-4">
               {renderEventSelect(currentEvents)}
-              {renderClassCheckinSelect()}
               <ToggleButton
                 isToggled={toggleRepeatedCheckIn}
                 onToggle={(value) => {
@@ -354,7 +308,6 @@ export function ManualEntryForm() {
             </TabsContent>
             <TabsContent value="previous" className="space-y-4">
               {renderEventSelect(previousEvents)}
-              {renderClassCheckinSelect()}
               <ToggleButton
                 isToggled={toggleRepeatedCheckIn}
                 onToggle={(value) => {

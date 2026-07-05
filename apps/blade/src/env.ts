@@ -5,6 +5,11 @@ import { env as apiEnv } from "@forge/api/env";
 import { env as authEnv } from "@forge/auth/env";
 import { env as dbEnv } from "@forge/db/env";
 
+const bloomKnightsUrlSchema =
+  process.env.NODE_ENV === "production"
+    ? z.string().url()
+    : z.string().url().default("http://localhost:3006");
+
 export const env = createEnv({
   extends: [authEnv, apiEnv, dbEnv],
   shared: {
@@ -17,7 +22,9 @@ export const env = createEnv({
    * Specify your server-side environment variables schema here.
    * This way you can ensure the app isn't built with invalid env vars.
    */
-  server: {},
+  server: {
+    BLOOMKNIGHTS_URL: bloomKnightsUrlSchema,
+  },
 
   /**
    * Specify your client-side environment variables schema here.

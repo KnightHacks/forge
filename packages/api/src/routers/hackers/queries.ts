@@ -2,13 +2,9 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { FORMS } from "@forge/consts";
-import { and, count, desc, eq, gt, or, sum } from "@forge/db";
+import { and, count, eq } from "@forge/db";
 import { db } from "@forge/db/client";
-import {
-  Hacker,
-  HACKER_CLASSES,
-  HackerAttendee,
-} from "@forge/db/schemas/knight-hacks";
+import { Hacker, HackerAttendee } from "@forge/db/schemas/knight-hacks";
 import { permissions } from "@forge/utils";
 
 import { permProcedure, protectedProcedure } from "../../trpc";
@@ -32,14 +28,19 @@ export const hackerQueryRouter = {
           });
         }
       } else {
-        // If not provided, grab a FUTURE hackathon with a start date CLOSEST to now
+        // Match the participant lifecycle used by getCurrentHackathon.
         const now = new Date();
-        const futureHackathons = await db.query.Hackathon.findMany({
-          where: (t, { gt }) => gt(t.endDate, now),
-          orderBy: (t, { asc }) => [asc(t.startDate)],
+        const currentHackathons = await db.query.Hackathon.findMany({
+          where: (t, { and, gte, lte }) =>
+            and(lte(t.applicationOpen, now), gte(t.endDate, now)),
+          orderBy: (t, { asc }) => [
+            asc(t.applicationOpen),
+            asc(t.startDate),
+            asc(t.endDate),
+          ],
           limit: 1,
         });
-        hackathon = futureHackathons[0];
+        hackathon = currentHackathons[0];
 
         if (!hackathon) {
           return null;
@@ -80,7 +81,6 @@ export const hackerQueryRouter = {
           dateCreated: Hacker.dateCreated,
           timeCreated: Hacker.timeCreated,
           status: HackerAttendee.status,
-          class: HackerAttendee.class,
           points: HackerAttendee.points,
         })
         .from(Hacker)
@@ -227,194 +227,6 @@ export const hackerQueryRouter = {
         .where(eq(HackerAttendee.hackathonId, hackathon.id));
 
       return hackers;
-    }),
-
-  getPointsByClass: protectedProcedure
-    .input(z.object({ hackathonName: z.string().optional() }))
-    .query(async ({ input }) => {
-      let hackathon;
-      const points: number[] = [];
-
-      HACKER_CLASSES.forEach(() => {
-        points.push(0);
-      });
-
-      if (input.hackathonName) {
-        // If a hackathon name is provided, grab that hackathon
-        hackathon = await db.query.Hackathon.findFirst({
-          where: (t, { eq }) => eq(t.name, input.hackathonName ?? ""),
-        });
-
-        if (!hackathon) {
-          return points;
-        }
-      } else {
-        // If not provided, grab a FUTURE hackathon with a start date CLOSEST to now
-        const now = new Date();
-        const futureHackathons = await db.query.Hackathon.findMany({
-          where: (t, { gt }) => gt(t.startDate, now),
-          orderBy: (t, { asc }) => [asc(t.startDate)],
-          limit: 1,
-        });
-        hackathon = futureHackathons[0];
-
-        if (!hackathon) {
-          return points;
-        }
-      }
-
-      for (let i = 0; i < HACKER_CLASSES.length; i++) {
-        const c = HACKER_CLASSES[i];
-        const s = await db
-          .select({
-            sum: sum(HackerAttendee.points).mapWith(Number),
-          })
-          .from(HackerAttendee)
-          .where(
-            and(
-              eq(HackerAttendee.hackathonId, hackathon.id),
-              eq(HackerAttendee.class, c ?? "Alchemist"),
-            ),
-          );
-
-        points[i] = s.at(0)?.sum ?? 0;
-      }
-
-      return points;
-    }),
-
-  getTopHackers: protectedProcedure
-    .input(
-      z.object({
-        hackathonName: z.string().optional(),
-        hPoints: z.number(),
-        hClass: z.string(),
-      }),
-    )
-    .query(async ({ input }) => {
-      let hackathon;
-
-      if (input.hackathonName) {
-        // If a hackathon name is provided, grab that hackathon
-        hackathon = await db.query.Hackathon.findFirst({
-          where: (t, { eq }) => eq(t.name, input.hackathonName ?? ""),
-        });
-
-        if (!hackathon) {
-          return { topA: [], topB: [], place: [0, 0, 0] };
-        }
-      } else {
-        // If not provided, grab a FUTURE hackathon with a start date CLOSEST to now
-        const now = new Date();
-        const futureHackathons = await db.query.Hackathon.findMany({
-          where: (t, { gt }) => gt(t.startDate, now),
-          orderBy: (t, { asc }) => [asc(t.startDate)],
-          limit: 1,
-        });
-        hackathon = futureHackathons[0];
-
-        if (!hackathon) {
-          return { topA: [], topB: [], place: [0, 0, 0] };
-        }
-      }
-
-      // this code is going to start looking really stupid
-      // but its all so that we dont have to send like half the DB of hackers to the client
-      // and hopefully save performance
-
-      const topA = await db
-        .select({
-          firstName: Hacker.firstName,
-          lastName: Hacker.lastName,
-          points: HackerAttendee.points,
-          class: HackerAttendee.class,
-          id: Hacker.id,
-        })
-        .from(HackerAttendee)
-        .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
-        .where(
-          and(
-            eq(HackerAttendee.hackathonId, hackathon.id),
-            or(
-              eq(HackerAttendee.class, HACKER_CLASSES[0]),
-              eq(HackerAttendee.class, HACKER_CLASSES[1]),
-              eq(HackerAttendee.class, HACKER_CLASSES[2]),
-            ),
-          ),
-        )
-        .orderBy(desc(HackerAttendee.points))
-        .limit(5);
-
-      const topB = await db
-        .select({
-          firstName: Hacker.firstName,
-          lastName: Hacker.lastName,
-          points: HackerAttendee.points,
-          class: HackerAttendee.class,
-          id: Hacker.id,
-        })
-        .from(HackerAttendee)
-        .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
-        .where(
-          and(
-            eq(HackerAttendee.hackathonId, hackathon.id),
-            or(
-              eq(HackerAttendee.class, HACKER_CLASSES[3]),
-              eq(HackerAttendee.class, HACKER_CLASSES[4]),
-              eq(HackerAttendee.class, HACKER_CLASSES[5]),
-            ),
-          ),
-        )
-        .orderBy(desc(HackerAttendee.points))
-        .limit(5);
-
-      // stores your place in each sorted leaderboard
-      // 0: team A, 2: overall, 3: team B
-
-      let ind = 0;
-      HACKER_CLASSES.forEach((v, i) => {
-        if (v == input.hClass) ind = i;
-      });
-
-      const place = [
-        ind >= 3
-          ? -1
-          : await db.$count(
-              HackerAttendee,
-              and(
-                eq(HackerAttendee.hackathonId, hackathon.id),
-                gt(HackerAttendee.points, input.hPoints),
-                or(
-                  eq(HackerAttendee.class, HACKER_CLASSES[0]),
-                  eq(HackerAttendee.class, HACKER_CLASSES[1]),
-                  eq(HackerAttendee.class, HACKER_CLASSES[2]),
-                ),
-              ),
-            ),
-        await db.$count(
-          HackerAttendee,
-          and(
-            eq(HackerAttendee.hackathonId, hackathon.id),
-            gt(HackerAttendee.points, input.hPoints),
-          ),
-        ),
-        ind < 3
-          ? -1
-          : await db.$count(
-              HackerAttendee,
-              and(
-                eq(HackerAttendee.hackathonId, hackathon.id),
-                gt(HackerAttendee.points, input.hPoints),
-                or(
-                  eq(HackerAttendee.class, HACKER_CLASSES[3]),
-                  eq(HackerAttendee.class, HACKER_CLASSES[4]),
-                  eq(HackerAttendee.class, HACKER_CLASSES[5]),
-                ),
-              ),
-            ),
-      ];
-
-      return { topA: topA, topB: topB, place: place };
     }),
 
   statusCountByHackathonId: permProcedure

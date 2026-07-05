@@ -1,0 +1,43 @@
+{
+  "name": "@forge/hackathon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.tsx",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "dependencies": {
+    "@forge/api": "workspace:*",
+    "@forge/auth": "workspace:*",
+    "@forge/consts": "workspace:*",
+    "@forge/validators": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "@trpc/client": "catalog:",
+    "superjson": "2.2.6",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
+    "@types/react": "^19.2.14",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "react": "^19.2.4",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "catalog:react18"
+  },
+  "prettier": "@forge/prettier-config"
+}

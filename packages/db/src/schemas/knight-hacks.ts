@@ -41,6 +41,8 @@ export const Hackathon = createTable(
     applicationBackgroundKey: t.varchar({ length: 255 }),
     emailTemplateEnabled: t.boolean().notNull().default(false),
     emailTemplateKey: t.varchar({ length: 255 }),
+    portalBaseUrl: t.varchar({ length: 512 }),
+    confirmationCapacity: t.integer(),
     applicationOpen: t.timestamp().notNull().defaultNow(),
     applicationDeadline: t.timestamp().notNull().defaultNow(),
     confirmationDeadline: t.timestamp().notNull().defaultNow(),
@@ -225,27 +227,6 @@ export const EventAttendee = createTable("event_attendee", (t) => ({
     }),
 }));
 
-export const HACKER_TEAMS = ["Humanity", "Monstrosity"] as const;
-export const HACKER_CLASSES = [
-  "Operator",
-  "Mechanist",
-  "Sentinel",
-  "Harbinger",
-  "Monstologist",
-  "Alchemist",
-] as const;
-export const SPECIAL_HACKER_CLASSES = ["VIP"] as const;
-export const HACKER_CLASSES_ALL = [
-  ...HACKER_CLASSES,
-  ...SPECIAL_HACKER_CLASSES,
-] as const;
-export type HackerClass = (typeof HACKER_CLASSES_ALL)[number];
-export type RepeatPolicy = "none" | "all" | "class";
-export const AssignedClassCheckinSchema = z.union([
-  z.literal("All"),
-  z.enum(HACKER_CLASSES),
-]);
-
 export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   hackerId: t
@@ -269,7 +250,7 @@ export const HackerAttendee = createTable("hacker_attendee", (t) => ({
   timeApplied: t.timestamp().notNull().defaultNow(),
   timeConfirmed: t.timestamp(),
   points: t.integer().notNull().default(0),
-  class: t.varchar({ length: 20 }).$type<HackerClass | null>().default(null),
+  class: t.varchar({ length: 20 }).$type<string | null>().default(null),
 }));
 
 export const HackerEventAttendee = createTable(

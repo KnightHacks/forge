@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 
-import Footer from "./_components/footer/footer";
-import AnimatedBirds from "./_components/graphics/AnimatedBirds";
-import BloomAssetPreloads from "./_components/graphics/BloomAssetPreloads";
-import FloatingFlowers from "./_components/graphics/FloatingFlowers";
-import FlowerCursor from "./_components/graphics/Flowercursor";
-import ParallaxBackground from "./_components/graphics/ParallaxBackground";
-import Squiggles from "./_components/graphics/squiggles";
-import Navbar from "./_components/navbar/Navbar";
 import {
-  eventJsonLd,
   OG_IMAGE_ALT,
   OG_IMAGE_HEIGHT,
   OG_IMAGE_URL,
@@ -108,33 +101,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fredokaOne.variable} ${righteous.variable} ${dmSans.variable} h-full`}
+      className={`dark ${GeistSans.variable} ${GeistMono.variable} ${fredokaOne.variable} ${righteous.variable} ${dmSans.variable} h-full`}
+      suppressHydrationWarning
     >
-      <body className="bloom-site-background flex min-h-screen flex-col antialiased">
-        <BloomAssetPreloads />
-        <ParallaxBackground />
-        <AnimatedBirds />
-        <FloatingFlowers />
-        <FlowerCursor />
-
-        <span className="font-dm-sans">
-          <Navbar />
-        </span>
-
-        <main className="flex-1 pt-8">{children}</main>
-
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(eventJsonLd).replace(/</g, "\\u003c"),
-          }}
-        />
-
-        <Squiggles />
-        <footer className="mt-auto">
-          <Footer />
-        </footer>
-      </body>
+      <body className="min-h-screen antialiased">{children}</body>
     </html>
   );
 }

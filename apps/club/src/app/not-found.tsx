@@ -30,7 +30,9 @@ export default function NotFound() {
           size="lg"
           className="club-button mt-7 min-h-[3.35rem] bg-[var(--club-gold)] text-black shadow-[4px_4px_0_#ffffff]"
         >
-          <Link href="/">Go home</Link>
+          <Link href="/" prefetch={false}>
+            Go home
+          </Link>
         </Button>
       </div>
     </main>

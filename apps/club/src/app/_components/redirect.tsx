@@ -21,7 +21,11 @@ export function Redirect({ label, target }: { label: string; target: string }) {
                 Continue
               </a>
             ) : (
-              <Link href={target} className="text-[var(--club-gold)] underline">
+              <Link
+                href={target}
+                prefetch={false}
+                className="text-[var(--club-gold)] underline"
+              >
                 Continue
               </Link>
             )}
