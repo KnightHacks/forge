@@ -161,7 +161,9 @@ export const EIGHTBALL_RESPONSES = [
   "That seems potential.",
   "Never. I'm telling you.",
   "bool answer = true;",
-  "bool answer = false;"
+  "bool answer = false;",
+  "TK says no.",
+  "TK says yes."
 ];
 
 export type WeatherMapKeys = Record<
