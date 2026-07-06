@@ -36,19 +36,20 @@ export function Hero() {
                 more with <b>Blade</b>.
               </p>
               <div className="flex flex-col gap-4 pt-4 sm:flex-row">
-                <form className="p-[1.5px]">
+                <div className="p-[1.5px]">
                   <Button
+                    type="button"
                     size="lg"
                     className="w-full"
-                    formAction={async () => {
-                      await signIn("discord", {
+                    onClick={() => {
+                      void signIn("discord", {
                         redirectTo: callbackURL,
                       });
                     }}
                   >
                     Sign in with <DiscordLogoIcon className="ml-1" />
                   </Button>
-                </form>
+                </div>
                 <Link href={"/sponsor"}>
                   <div className="relative z-10 flex cursor-pointer items-center overflow-hidden rounded-md p-[1.5px] sm:w-full">
                     <div className="moving-border absolute inset-0 h-full rounded-md bg-[conic-gradient(#0ea5e9_20deg,transparent_120deg)]"></div>
