@@ -16,6 +16,8 @@ export const DAILY_MESSAGES = [
   "Let's flex your brain muscles! 💪👅😈",
   "𝓛𝓮𝓽'𝓼 𝓬𝓸𝓭𝓮 𝓿𝓻𝓸 ❤️‍🔥⛓️👅",
   "I'm 𝓯𝓻𝓮𝓪𝓴𝔂 T.K! 🛡️👅",
+  "Lock in!",
+  "Time to use 101% of your brain power! 🧠"
 ];
 
 export const DISCORD_LEETCODE_ROLE_ID = "1264645162060091483";
@@ -147,6 +149,11 @@ export const EIGHTBALL_RESPONSES = [
   "The stars in the milky way are blinking in a decidedly good fashion!",
   "Yeah that ain't happening.",
   "Bro that's definitely happening.",
+  "Fosho.",
+  "Good question. I don't know.",
+  "I can't tell.",
+  "Yes. (trust me bro)",
+  "Of course."
 ];
 
 export type WeatherMapKeys = Record<
