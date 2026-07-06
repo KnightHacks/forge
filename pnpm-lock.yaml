@@ -832,6 +832,24 @@ importers:
       '@forge/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@forge/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../../packages/consts
+      '@forge/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@forge/hackathon':
+        specifier: workspace:*
+        version: link:../../packages/hackathon
+      '@forge/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@forge/validators':
+        specifier: workspace:*
+        version: link:../../packages/validators
       '@gsap/react':
         specifier: ^2.1.2
         version: 2.1.2(gsap@3.14.2)(react@19.2.4)
@@ -841,12 +859,18 @@ importers:
       '@trpc/client':
         specifier: 'catalog:'
         version: 11.10.0(@trpc/server@11.10.0(typescript@5.9.3))(typescript@5.9.3)
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.10.0(typescript@5.9.3)
       framer-motion:
         specifier: ^12.34.3
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
+      lucide-react:
+        specifier: ^0.575.0
+        version: 0.575.0(react@19.2.4)
       next:
         specifier: ^16.2.7
         version: 16.2.7(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
