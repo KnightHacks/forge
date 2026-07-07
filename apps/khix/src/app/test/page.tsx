@@ -3,6 +3,10 @@ import Link from "next/link";
 
 import type { SponsorShowcaseSponsor } from "../_components/sponsor-showcase";
 import { AssetCredit } from "../_components/assets";
+import {
+  KHIX_SPEAKERS,
+  SpeakerShowcase,
+} from "../_components/sections/speakers";
 import { SponsorShowcase } from "../_components/sponsor-showcase";
 import { TeamCascade } from "../_components/team-cascade";
 import styles from "./page.module.css";
@@ -104,6 +108,19 @@ export default function TestPage() {
           <p className={styles.eyebrow}>KHIX scratch</p>
           <h1 id="test-title">Component test page</h1>
         </div>
+      </section>
+
+      <section
+        id="speaker-showcase"
+        className={`${styles.section} ${styles.speakerSection}`}
+        aria-labelledby="test-speakers-title"
+      >
+        <SpeakerShowcase
+          speakers={KHIX_SPEAKERS}
+          title="Speakers"
+          titleId="test-speakers-title"
+          className={styles.speakerShowcaseBox}
+        />
       </section>
 
       <div

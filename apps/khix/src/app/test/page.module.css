@@ -67,6 +67,23 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.speakerSection {
+  overflow: hidden;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.16),
+      transparent 16%,
+      transparent 84%,
+      rgba(255, 255, 255, 0.1)
+    ),
+    linear-gradient(180deg, #172033 0%, #10251f 58%, #07100f 100%);
+}
+
+.speakerShowcaseBox {
+  --speaker-stage-width: min(100%, 48rem);
+}
+
 .sponsorSection {
   overflow: hidden;
   background:
