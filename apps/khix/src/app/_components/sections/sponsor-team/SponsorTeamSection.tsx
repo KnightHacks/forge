@@ -1,3 +1,6 @@
+import type { CSSProperties } from "react";
+import Image from "next/image";
+
 import type { SponsorShowcaseSponsor } from "../../sponsor-showcase";
 import { SponsorShowcase } from "../../sponsor-showcase";
 import { TeamCascade } from "../../team-cascade";
@@ -52,7 +55,48 @@ const HOMEPAGE_SPONSORS = [
   },
 ] satisfies SponsorShowcaseSponsor[];
 
-const PARTNER_SLOTS = ["left-top", "right-top", "left-bottom", "right-bottom"];
+const PARTNERS = [
+  {
+    name: "UCF College of Engineering and Computer Science",
+    logoSrc: "/assets/partners/cecs.svg",
+    websiteUrl: "https://www.cecs.ucf.edu/",
+  },
+  {
+    name: "Game Development Knights",
+    logoSrc: "/assets/partners/gdk.svg",
+    websiteUrl: "https://www.instagram.com/gamedevknights/",
+  },
+  {
+    name: "Girls Who Code",
+    logoSrc: "/assets/partners/gwc.svg",
+    websiteUrl: "https://www.instagram.com/girlswhocodeucf/",
+  },
+  {
+    name: "Major League Hacking",
+    logoSrc: "/assets/partners/mlh.svg",
+    websiteUrl: "https://mlh.io/",
+  },
+  {
+    name: "Society of Asian Scientists and Engineers",
+    logoSrc: "/assets/partners/sase.svg",
+    websiteUrl: "https://www.instagram.com/saseucf/",
+  },
+  {
+    name: "IEEE at UCF",
+    logoSrc: "/assets/partners/ieee.svg",
+    websiteUrl: "https://www.instagram.com/ieeeucf/",
+  },
+] as const;
+
+type PartnerCardStyle = CSSProperties & {
+  "--float-delay": string;
+};
+
+function getPartnerCardStyle(index: number): PartnerCardStyle {
+  return {
+    "--float-delay": `${-(index % 6) * 0.42}s`,
+  };
+}
 
 export function SponsorTeamSection() {
   return (
@@ -82,12 +126,31 @@ export function SponsorTeamSection() {
               aria-labelledby="partners-title"
               role="list"
             >
-              {PARTNER_SLOTS.map((slot) => (
-                <span
-                  key={slot}
+              {PARTNERS.map((partner, index) => (
+                <a
+                  key={partner.name}
                   className={styles.partnerStone}
+                  href={partner.websiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   role="listitem"
-                />
+                  aria-label={partner.name}
+                  style={getPartnerCardStyle(index)}
+                >
+                  <span className={styles.partnerVisual} aria-hidden="true">
+                    <span className={styles.partnerRock} aria-hidden="true" />
+                    <span className={styles.partnerLogo}>
+                      <Image
+                        src={partner.logoSrc}
+                        alt=""
+                        fill
+                        className={styles.partnerLogoImage}
+                        sizes="(max-width: 420px) 35vw, 16rem"
+                        unoptimized
+                      />
+                    </span>
+                  </span>
+                </a>
               ))}
             </div>
           </div>

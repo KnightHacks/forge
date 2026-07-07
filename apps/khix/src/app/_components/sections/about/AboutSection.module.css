@@ -145,12 +145,15 @@
 
 .title {
   margin: 0 0 clamp(0.85rem, 1.5svh, 1.2rem);
-  color: rgba(255, 252, 252, 0.98);
+  color: rgba(255, 252, 245, 0.96);
   font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
-  font-size: clamp(2.5rem, 4.6vw, 4.4rem);
+  font-size: clamp(3.4rem, 8vw, 6.8rem);
   font-weight: 400;
-  line-height: 0.92;
+  line-height: 0.84;
   letter-spacing: 0;
+  text-shadow:
+    0 0 0.5rem rgba(235, 251, 255, 0.54),
+    0 0 2.2rem rgba(129, 225, 255, 0.3);
   text-wrap: balance;
 }
 
@@ -202,7 +205,7 @@
   }
 
   .title {
-    font-size: clamp(2.25rem, 11vw, 3.3rem);
+    font-size: clamp(3.1rem, 19vw, 5rem);
   }
 
   .rockStack {

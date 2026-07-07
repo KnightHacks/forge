@@ -68,26 +68,23 @@
 .sponsorShowcase {
   --sponsor-showcase-width: calc(var(--composition-width) * 0.86);
   --sponsor-showcase-padding: 0;
-  --sponsor-title-color: #081820;
+  --sponsor-title-color: rgba(255, 252, 245, 0.96);
   --sponsor-title-font: var(--font-cormorant-garamond, Georgia), Georgia, serif;
-  --sponsor-title-line-height: 1;
+  --sponsor-title-line-height: 0.84;
   --sponsor-title-margin: 0 auto
     clamp(1.35rem, calc(var(--composition-width) * 0.04), 3rem);
-  --sponsor-title-rock-display: block;
+  --sponsor-title-rock-display: none;
   --sponsor-title-rock-ratio: 1196 / 262;
   --sponsor-title-rock-width: min(
     90vw,
     clamp(20.5rem, calc(var(--composition-width) * 0.54), 38rem)
   );
-  --sponsor-title-shadow: 0 1px 0 rgba(255, 255, 255, 0.38);
-  --sponsor-title-size: clamp(
-    2.65rem,
-    calc(var(--composition-width) * 0.07),
-    4.85rem
-  );
-  --sponsor-title-transform: uppercase;
-  --sponsor-title-weight: 700;
-  --sponsor-title-text-width: 78%;
+  --sponsor-title-shadow:
+    0 0 0.5rem rgba(235, 251, 255, 0.54), 0 0 2.2rem rgba(129, 225, 255, 0.3);
+  --sponsor-title-size: clamp(3.4rem, 8vw, 6.8rem);
+  --sponsor-title-transform: none;
+  --sponsor-title-weight: 400;
+  --sponsor-title-text-width: 100%;
   --sponsor-field-gap: clamp(
     1.2rem,
     calc(var(--composition-width) * 0.032),
@@ -240,6 +237,16 @@
   margin: calc(var(--composition-width) * 0.105) auto 0;
 }
 
+.partnerGroup .sectionTitle {
+  color: rgba(255, 252, 245, 0.96);
+  font-size: clamp(1.7rem, 4vw, 3.4rem);
+  line-height: 0.84;
+  text-shadow:
+    0 0 0.5rem rgba(235, 251, 255, 0.54),
+    0 0 2.2rem rgba(129, 225, 255, 0.3);
+  text-transform: none;
+}
+
 .partnerGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -249,10 +256,97 @@
 }
 
 .partnerStone {
+  --partner-logo-hover-scale: 1.035;
+  --partner-logo-scale: 1;
+
+  position: relative;
   display: block;
-  height: calc(var(--composition-width) * 0.11);
-  background: url("/assets/large-sponsor-rock.png") center / contain no-repeat;
+  height: calc(var(--composition-width) * 0.125);
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+  isolation: isolate;
+}
+
+.partnerVisual {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform: translate3d(0, 0, 0);
+  transform-origin: 50% 58%;
+}
+
+.partnerRock {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1196 / 318;
+  overflow: hidden;
   filter: drop-shadow(0 0.28rem 0.2rem rgb(5 28 35 / 0.28));
+  pointer-events: none;
+  transform: translate3d(-50%, -50%, 0);
+}
+
+.partnerRock::before {
+  position: absolute;
+  top: -70%;
+  left: -11.96%;
+  display: block;
+  width: 125.42%;
+  aspect-ratio: 1;
+  content: "";
+  background: url("/assets/large-sponsor-rock.png") 0 0 / 100% auto no-repeat;
+  pointer-events: none;
+  user-select: none;
+}
+
+.partnerLogo {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  z-index: 1;
+  display: block;
+  width: min(78%, 14.5rem);
+  height: clamp(1rem, calc(var(--composition-width) * 0.043), 2rem);
+  opacity: 0.94;
+  transform: translate3d(-50%, -50%, 0) scale(var(--partner-logo-scale));
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.partnerLogoImage {
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
+    drop-shadow(0 0 0.08rem rgb(255 255 255 / 0.42));
+  pointer-events: none;
+  transition: filter 180ms ease;
+  user-select: none;
+}
+
+.partnerStone:hover .partnerVisual,
+.partnerStone:focus-visible .partnerVisual {
+  animation: partnerHoverFloat 2.4s ease-in-out var(--float-delay) infinite
+    alternate;
+  will-change: transform;
+}
+
+.partnerStone:hover .partnerLogo,
+.partnerStone:focus-visible .partnerLogo {
+  opacity: 1;
+  transform: translate3d(-50%, -50%, 0) scale(var(--partner-logo-hover-scale));
+}
+
+.partnerStone:hover .partnerLogoImage,
+.partnerStone:focus-visible .partnerLogoImage {
+  filter: brightness(1.14) contrast(1.04) saturate(1.12)
+    drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
+    drop-shadow(0 0 0.08rem rgb(255 255 255 / 0.64))
+    drop-shadow(0 0 0.18rem rgb(129 225 255 / 0.44));
 }
 
 .teamPanel {
@@ -291,6 +385,20 @@
   pointer-events: none;
 }
 
+@media (max-width: 520px) {
+  .sponsorShowcase {
+    --sponsor-title-size: clamp(3.1rem, 19vw, 5rem);
+  }
+
+  .partnerGroup {
+    width: calc(var(--composition-width) * 0.82);
+  }
+
+  .partnerGroup .sectionTitle {
+    font-size: clamp(1.55rem, 9.5vw, 2.5rem);
+  }
+}
+
 @media (max-width: 420px) {
   .sponsorPanel {
     padding-right: calc(var(--composition-width) * 0.1);
@@ -303,5 +411,28 @@
       calc(var(--composition-width) * 0.092),
       2.45rem
     );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partnerLogo,
+  .partnerLogoImage {
+    transition: none;
+  }
+
+  .partnerVisual,
+  .partnerStone:hover .partnerVisual,
+  .partnerStone:focus-visible .partnerVisual {
+    animation: none;
+  }
+}
+
+@keyframes partnerHoverFloat {
+  0% {
+    transform: translate3d(0, -0.12rem, 0) rotate(-0.24deg);
+  }
+
+  100% {
+    transform: translate3d(0, 0.14rem, 0) rotate(0.2deg);
   }
 }
