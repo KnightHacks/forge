@@ -20,32 +20,51 @@
   --khix-gold: var(--khix-sunlight-green);
   --khix-rose: var(--khix-bark-brown);
   --khix-bg: var(--khix-near-black-violet);
-  --khix-button-radius: 0.72rem;
-  --khix-button-edge: rgb(145 181 97 / 0.34);
-  --khix-button-edge-hot: rgb(230 229 154 / 0.78);
+  --khix-button-radius: 0.66rem;
+  --khix-button-edge: rgb(255 252 244 / 0.08);
+  --khix-button-edge-hot: rgb(210 211 131 / 0.16);
   --khix-button-surface:
-    linear-gradient(
-      135deg,
-      rgb(255 252 244 / 0.08),
-      rgb(93 171 103 / 0.11) 48%,
-      rgb(32 110 113 / 0.13)
+    radial-gradient(
+      circle at 50% -45%,
+      rgb(255 252 244 / 0.12),
+      transparent 58%
     ),
-    rgb(25 9 37 / 0.56);
+    linear-gradient(
+      180deg,
+      rgb(255 252 244 / 0.07),
+      rgb(255 252 244 / 0.025) 58%,
+      rgb(25 9 37 / 0.06)
+    ),
+    rgb(25 9 37 / 0.72);
   --khix-button-surface-hover:
-    linear-gradient(
-      135deg,
-      rgb(255 252 244 / 0.13),
-      rgb(93 171 103 / 0.18) 48%,
-      rgb(32 110 113 / 0.18)
+    radial-gradient(
+      circle at 50% -42%,
+      rgb(255 252 244 / 0.16),
+      transparent 60%
     ),
-    rgb(25 9 37 / 0.62);
+    linear-gradient(
+      180deg,
+      rgb(255 252 244 / 0.09),
+      rgb(255 252 244 / 0.03) 56%,
+      rgb(93 171 103 / 0.035)
+    ),
+    rgb(25 9 37 / 0.78);
   --khix-button-shadow:
-    inset 0 1px rgb(255 252 244 / 0.08), inset 0 -10px 24px rgb(25 9 37 / 0.18),
-    0 0 0 1px rgb(210 211 131 / 0.04), 0 0.75rem 2rem rgb(25 9 37 / 0.2);
+    inset 0 1px rgb(255 252 244 / 0.075),
+    inset 0 -0.65rem 1.4rem rgb(25 9 37 / 0.1),
+    0 0.5rem 1rem rgb(25 9 37 / 0.16);
   --khix-button-shadow-hover:
-    inset 0 1px rgb(255 252 244 / 0.14), inset 0 -10px 24px rgb(25 9 37 / 0.16),
-    0 0 0 1px rgb(210 211 131 / 0.12), 0 0 1.45rem rgb(145 181 97 / 0.2),
-    0 1rem 2.6rem rgb(25 9 37 / 0.28);
+    inset 0 1px rgb(255 252 244 / 0.11),
+    inset 0 -0.65rem 1.3rem rgb(25 9 37 / 0.09),
+    0 0 0.9rem rgb(145 181 97 / 0.1), 0 0.65rem 1.3rem rgb(25 9 37 / 0.2);
+  --khix-nav-button-edge: transparent;
+  --khix-nav-button-edge-hover: transparent;
+  --khix-nav-button-surface: transparent;
+  --khix-nav-button-surface-hover: transparent;
+  --khix-nav-button-surface-active: transparent;
+  --khix-nav-button-shadow: none;
+  --khix-nav-button-shadow-hover: none;
+  --khix-mobile-page-top-padding: clamp(4.25rem, 10dvh, 6.25rem);
   --khix-rail-width: clamp(12.75rem, 17vw, 15.75rem);
   --khix-dashboard-background-image: url("/assets/khix-dashboard-background.webp");
   --khix-display-font: var(--font-cormorant-garamond, Georgia), Georgia, serif;
@@ -172,6 +191,13 @@
   outline-offset: 4px;
 }
 
+.siteReturnLink:focus-visible,
+.railLink:focus-visible,
+.logoutButton:focus-visible {
+  outline-color: rgb(210 211 131 / 0.68);
+  outline-offset: 3px;
+}
+
 .siteReturnLink,
 .mobileMenuButton,
 .railLink,
@@ -241,6 +267,19 @@
   transform: translateX(88%) skewX(-14deg);
 }
 
+.siteReturnLink:hover::after,
+.railLink:hover::after,
+.logoutButton:hover::after {
+  opacity: 0;
+  transform: none;
+}
+
+.siteReturnLink::after,
+.railLink::after,
+.logoutButton::after {
+  transform: none;
+}
+
 .siteReturnLink svg,
 .mobileMenuButton svg,
 .railLink svg,
@@ -276,6 +315,13 @@
   transform: translateY(-1px);
 }
 
+.siteReturnLink:hover svg,
+.railLink:hover svg,
+.logoutButton:hover svg {
+  filter: none;
+  transform: none;
+}
+
 .railBrand {
   display: grid;
   gap: 0.75rem;
@@ -307,30 +353,31 @@
   min-height: 2.75rem;
   align-items: center;
   gap: 0.7rem;
-  border: 1px solid var(--khix-button-edge);
-  border-radius: 0.58rem;
-  background: var(--khix-button-surface);
+  border: 1px solid var(--khix-nav-button-edge);
+  border-radius: 0.5rem;
+  background: var(--khix-nav-button-surface);
+  box-shadow: var(--khix-nav-button-shadow);
   color: rgb(210 211 131 / 0.84);
   padding: 0.42rem 0.6rem;
   font-size: 0.72rem;
-  font-weight: 850;
+  font-weight: 780;
   text-decoration: none;
   transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    color 180ms ease,
-    filter 180ms ease,
-    transform 180ms ease;
+    background 240ms ease,
+    border-color 240ms ease,
+    box-shadow 240ms ease,
+    color 240ms ease,
+    filter 240ms ease,
+    transform 240ms var(--khix-ease-soft);
 }
 
 .siteReturnLink:hover {
-  border-color: var(--khix-button-edge-hot);
-  background: var(--khix-button-surface-hover);
-  box-shadow: var(--khix-button-shadow-hover);
-  color: rgb(255 252 244 / 0.96);
-  filter: saturate(1.05);
-  transform: translateX(2px);
+  border-color: var(--khix-nav-button-edge-hover);
+  background: var(--khix-nav-button-surface-hover);
+  box-shadow: var(--khix-nav-button-shadow-hover);
+  color: rgb(255 252 244 / 0.94);
+  filter: none;
+  transform: none;
 }
 
 .railNav {
@@ -345,38 +392,43 @@
   display: grid;
   grid-template-columns: 2rem minmax(0, 1fr);
   width: 100%;
-  min-height: 3.15rem;
+  min-height: 3rem;
   align-items: center;
   gap: 0.7rem;
   overflow: hidden;
-  border: 1px solid rgb(145 181 97 / 0.16);
-  border-radius: 0.58rem;
-  background: rgb(25 9 37 / 0.22);
-  color: rgb(210 211 131 / 0.72);
+  border: 1px solid var(--khix-nav-button-edge);
+  border-radius: 0.5rem;
+  background: var(--khix-nav-button-surface);
+  box-shadow: var(--khix-nav-button-shadow);
+  color: rgb(210 211 131 / 0.82);
   font-family: inherit;
   padding: 0.45rem 0.6rem;
   font-size: 0.9rem;
-  font-weight: 900;
+  font-weight: 820;
   text-align: left;
   text-decoration: none;
   text-underline-offset: 0.22em;
   transition:
-    background 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    color 180ms ease,
-    filter 180ms ease,
-    opacity 180ms ease,
-    transform 180ms ease;
+    background 240ms ease,
+    border-color 240ms ease,
+    box-shadow 240ms ease,
+    color 240ms ease,
+    filter 240ms ease,
+    opacity 240ms ease,
+    transform 240ms var(--khix-ease-soft);
 }
 
 .railLink::before {
   position: absolute;
   inset: 0.55rem auto 0.55rem 0;
   z-index: 1;
-  width: 0.18rem;
+  width: 0.1rem;
   border-radius: 999px;
-  background: linear-gradient(180deg, #d2d383, #5dab67);
+  background: linear-gradient(
+    180deg,
+    rgb(210 211 131 / 0.8),
+    rgb(93 171 103 / 0.62)
+  );
   content: "";
   opacity: 0;
   transition: opacity 180ms ease;
@@ -384,15 +436,20 @@
 
 .railLink:hover,
 .railLinkActive {
-  border-color: rgb(230 229 154 / 0.38);
-  background: var(--khix-button-surface-hover);
-  box-shadow: var(--khix-button-shadow-hover);
-  color: rgb(255 252 244 / 0.96);
+  border-color: var(--khix-nav-button-edge-hover);
+  background: var(--khix-nav-button-surface-hover);
+  box-shadow: var(--khix-nav-button-shadow-hover);
+  color: rgb(255 252 244 / 0.94);
+}
+
+.railLinkActive {
+  border-color: transparent;
+  background: var(--khix-nav-button-surface-active);
 }
 
 .railLink:hover {
-  filter: saturate(1.05);
-  transform: translateX(2px);
+  filter: none;
+  transform: none;
 }
 
 .railButton {
@@ -405,12 +462,12 @@
 .railLinkLocked,
 .railLinkLocked:hover {
   cursor: not-allowed;
-  border-color: rgb(145 181 97 / 0.12);
-  background: rgb(25 9 37 / 0.16);
+  border-color: transparent;
+  background: transparent;
   box-shadow: none;
-  color: rgb(210 211 131 / 0.5);
+  color: rgb(210 211 131 / 0.48);
   filter: none;
-  opacity: 0.8;
+  opacity: 0.72;
   transform: none;
 }
 
@@ -425,16 +482,16 @@
 }
 
 .railLinkLocked .railIcon {
-  color: rgb(210 211 131 / 0.52);
+  color: rgb(210 211 131 / 0.5);
 }
 
 .railLinkLocked:hover .railIcon {
-  color: rgb(210 211 131 / 0.56);
+  color: rgb(210 211 131 / 0.5);
   transform: none;
 }
 
 .railLinkActive::before {
-  opacity: 1;
+  opacity: 0.72;
 }
 
 .railIcon {
@@ -444,7 +501,7 @@
   width: 2rem;
   aspect-ratio: 1;
   place-items: center;
-  color: rgb(210 211 131 / 0.84);
+  color: rgb(210 211 131 / 0.78);
   transition:
     color 180ms ease,
     transform 180ms ease;
@@ -452,8 +509,8 @@
 
 .railLink:hover .railIcon,
 .railLinkActive .railIcon {
-  color: rgb(255 252 244 / 0.96);
-  transform: translateY(-1px);
+  color: rgb(255 252 244 / 0.92);
+  transform: none;
 }
 
 .railLinkLabel {
@@ -507,15 +564,15 @@
   grid-template-columns: 2.45rem minmax(0, 1fr);
   align-items: center;
   gap: 0.72rem;
-  border: 1px solid rgb(162 153 194 / 0.14);
+  border: 1px solid transparent;
   border-radius: 0.58rem;
-  background:
-    linear-gradient(135deg, rgb(255 252 244 / 0.05), transparent 46%),
-    rgb(21 58 97 / 0.42);
-  box-shadow:
-    inset 0 1px rgb(255 252 244 / 0.06),
-    0 0.8rem 2rem rgb(25 9 37 / 0.18);
+  background: transparent;
+  box-shadow: none;
   padding: 0.62rem;
+}
+
+.navFooter .siteReturnLink {
+  margin-top: 0;
 }
 
 .navUserAvatar {
@@ -708,35 +765,42 @@
 }
 
 .logoutButton {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
   min-height: 2.55rem;
   width: 100%;
   align-items: center;
-  justify-content: center;
-  gap: 0.42rem;
-  border: 1px solid var(--khix-button-edge);
-  border-radius: var(--khix-button-radius);
-  background: var(--khix-button-surface);
-  color: rgb(210 211 131 / 0.9);
-  padding: 0 0.95rem;
+  justify-content: stretch;
+  gap: 0.7rem;
+  border: 1px solid var(--khix-nav-button-edge);
+  border-radius: 0.5rem;
+  background: var(--khix-nav-button-surface);
+  box-shadow: var(--khix-nav-button-shadow);
+  color: rgb(210 211 131 / 0.84);
+  padding: 0.45rem 0.6rem;
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 820;
+  text-align: left;
   transition:
-    background 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    color 180ms ease,
-    filter 180ms ease,
-    transform 180ms ease;
+    background 240ms ease,
+    border-color 240ms ease,
+    box-shadow 240ms ease,
+    color 240ms ease,
+    filter 240ms ease,
+    transform 240ms var(--khix-ease-soft);
+}
+
+.logoutButton svg {
+  justify-self: center;
 }
 
 .logoutButton:hover {
-  border-color: var(--khix-button-edge-hot);
-  background: var(--khix-button-surface-hover);
-  box-shadow: var(--khix-button-shadow-hover);
-  color: rgb(255 252 244 / 0.96);
-  filter: saturate(1.06);
-  transform: translateY(-1px);
+  border-color: var(--khix-nav-button-edge-hover);
+  background: var(--khix-nav-button-surface-hover);
+  box-shadow: var(--khix-nav-button-shadow-hover);
+  color: rgb(255 252 244 / 0.94);
+  filter: none;
+  transform: none;
 }
 
 .main {
@@ -813,74 +877,758 @@
   background-repeat: no-repeat;
   background-size: cover, cover;
   opacity: 0.26;
-  will-change: transform, opacity;
-  animation: khixDashboardCanopyDrift 18s ease-in-out infinite alternate;
 }
 
 .main::after {
+  position: fixed;
   z-index: 0;
-  background-image:
-    radial-gradient(
-      circle at 12% 32%,
-      rgb(255 252 244 / 0.92) 0 0.08rem,
-      rgb(210 211 131 / 0.52) 0.1rem 0.2rem,
-      transparent 0.45rem
-    ),
-    radial-gradient(
-      circle at 24% 54%,
-      rgb(210 211 131 / 0.84) 0 0.07rem,
-      rgb(93 171 103 / 0.42) 0.1rem 0.22rem,
-      transparent 0.48rem
-    ),
-    radial-gradient(
-      circle at 38% 28%,
-      rgb(255 252 244 / 0.82) 0 0.075rem,
-      rgb(162 153 194 / 0.44) 0.1rem 0.24rem,
-      transparent 0.5rem
-    ),
-    radial-gradient(
-      circle at 51% 48%,
-      rgb(210 211 131 / 0.86) 0 0.09rem,
-      rgb(145 181 97 / 0.42) 0.12rem 0.28rem,
-      transparent 0.58rem
-    ),
-    radial-gradient(
-      circle at 66% 33%,
-      rgb(255 252 244 / 0.8) 0 0.07rem,
-      rgb(210 211 131 / 0.5) 0.1rem 0.24rem,
-      transparent 0.5rem
-    ),
-    radial-gradient(
-      circle at 78% 56%,
-      rgb(145 181 97 / 0.84) 0 0.08rem,
-      rgb(210 211 131 / 0.46) 0.11rem 0.26rem,
-      transparent 0.54rem
-    ),
-    radial-gradient(
-      circle at 89% 38%,
-      rgb(255 252 244 / 0.78) 0 0.065rem,
-      rgb(162 153 194 / 0.44) 0.1rem 0.24rem,
-      transparent 0.48rem
-    ),
-    radial-gradient(
-      circle at 58% 66%,
-      rgb(210 211 131 / 0.7) 0 0.055rem,
-      rgb(93 171 103 / 0.34) 0.09rem 0.2rem,
-      transparent 0.42rem
-    );
+  inset: 0;
+  background-image: radial-gradient(
+    circle at 22% 18%,
+    rgb(210 211 131 / 0.08),
+    transparent 22rem
+  );
   background-repeat: no-repeat;
-  background-size: 100% 100%;
-  filter: blur(0.15px) drop-shadow(0 0 0.55rem rgb(210 211 131 / 0.52))
-    drop-shadow(0 0 1.25rem rgb(93 171 103 / 0.24));
+  background-size: cover;
   mix-blend-mode: screen;
-  opacity: 0.58;
-  will-change: transform;
-  animation: khixDashboardFireflies 8.5s ease-in-out infinite alternate;
+  opacity: 0.46;
+  transform: none;
+  backface-visibility: hidden;
+  contain: paint;
 }
 
 .main > * {
   position: relative;
   z-index: 1;
+}
+
+.main > .portalMagic {
+  position: absolute;
+  z-index: 0;
+}
+
+.portalMagic,
+.portalMagic::before,
+.portalMagic::after,
+.portalCanopyGlow,
+.portalCanopyGlow::before,
+.portalCanopyGlow::after,
+.portalFireflies,
+.portalFirefly,
+.portalWisp,
+.portalWisp::before,
+.portalWisp::after {
+  pointer-events: none;
+}
+
+.portalMagic {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  contain: layout paint;
+  overflow: hidden;
+  opacity: 1;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.portalMagic::before,
+.portalMagic::after,
+.portalCanopyGlow,
+.portalCanopyGlow::before,
+.portalCanopyGlow::after,
+.portalWisp,
+.portalWisp::before,
+.portalWisp::after {
+  position: absolute;
+  content: "";
+}
+
+.portalMagic::before {
+  right: -8%;
+  bottom: -12%;
+  left: -8%;
+  height: min(42rem, 62%);
+  background-image:
+    radial-gradient(
+      ellipse 42rem 14rem at 14% 80%,
+      rgb(88 185 255 / 0.16),
+      rgb(93 171 103 / 0.08) 35%,
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 34rem 12rem at 82% 46%,
+      rgb(210 211 131 / 0.13),
+      rgb(93 171 103 / 0.055) 34%,
+      transparent 74%
+    ),
+    radial-gradient(
+      ellipse 24rem 8rem at 50% 96%,
+      rgb(162 153 194 / 0.12),
+      transparent 76%
+    );
+  filter: blur(18px) saturate(1.18);
+  mix-blend-mode: screen;
+  opacity: 0.86;
+  transform: translate3d(-1rem, 0.5rem, 0);
+  animation: khixDashboardMistGlow 28s ease-in-out infinite alternate;
+}
+
+.portalMagic::after {
+  inset: 8% -6% auto;
+  height: min(33rem, 45%);
+  background-image:
+    radial-gradient(
+      ellipse 34rem 10rem at 16% 46%,
+      rgb(92 193 255 / 0.11),
+      rgb(92 193 255 / 0.045) 38%,
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 28rem 9rem at 68% 20%,
+      rgb(210 211 131 / 0.105),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 20rem 7rem at 90% 72%,
+      rgb(162 153 194 / 0.115),
+      transparent 70%
+    );
+  filter: blur(20px) saturate(1.12);
+  mix-blend-mode: screen;
+  opacity: 0.72;
+  transform: translate3d(0.8rem, -0.5rem, 0);
+  animation: khixDashboardHighGlow 34s ease-in-out infinite alternate;
+}
+
+.portalCanopyGlow {
+  inset: -2rem -1rem auto;
+  height: clamp(12rem, 24vh, 18rem);
+  mix-blend-mode: screen;
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.portalCanopyGlow::before {
+  inset: 0;
+  background-image:
+    radial-gradient(
+      ellipse 18rem 8rem at 16% 0%,
+      rgb(162 126 255 / 0.2),
+      transparent 68%
+    ),
+    radial-gradient(
+      ellipse 22rem 8rem at 70% 8%,
+      rgb(118 94 222 / 0.18),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 15rem 6rem at 42% 0%,
+      rgb(210 211 131 / 0.08),
+      transparent 72%
+    );
+  filter: blur(14px);
+  opacity: 0.78;
+  animation: khixDashboardCanopyGlow 26s ease-in-out infinite alternate;
+}
+
+.portalCanopyGlow::after {
+  inset: 1.8rem 0 auto;
+  height: clamp(8rem, 19vh, 14rem);
+  background-image:
+    linear-gradient(180deg, rgb(165 132 255 / 0.3), transparent 78%),
+    linear-gradient(180deg, rgb(178 139 255 / 0.22), transparent 74%),
+    linear-gradient(180deg, rgb(115 105 231 / 0.26), transparent 76%),
+    linear-gradient(180deg, rgb(210 211 131 / 0.13), transparent 72%),
+    linear-gradient(180deg, rgb(151 117 236 / 0.24), transparent 76%),
+    linear-gradient(180deg, rgb(93 171 103 / 0.13), transparent 70%),
+    linear-gradient(180deg, rgb(176 137 255 / 0.25), transparent 76%),
+    linear-gradient(180deg, rgb(210 211 131 / 0.1), transparent 72%),
+    linear-gradient(180deg, rgb(138 118 236 / 0.2), transparent 72%);
+  background-position:
+    9% 0,
+    18% 0,
+    31% 0,
+    43% 0,
+    56% 0,
+    66% 0,
+    76% 0,
+    85% 0,
+    94% 0;
+  background-repeat: no-repeat;
+  background-size:
+    0.34rem 10rem,
+    0.22rem 6.6rem,
+    0.3rem 12rem,
+    0.18rem 7.2rem,
+    0.36rem 10.8rem,
+    0.2rem 6rem,
+    0.28rem 11.4rem,
+    0.17rem 7.5rem,
+    0.24rem 9rem;
+  filter: blur(1.8px) drop-shadow(0 0 1.1rem rgb(162 126 255 / 0.22));
+  opacity: 0.74;
+  animation: khixDashboardWisteriaSway 18s ease-in-out infinite alternate;
+}
+
+.portalFireflies {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  contain: paint;
+}
+
+.portalFirefly {
+  --firefly-left: 50%;
+  --firefly-top: 50%;
+  --firefly-size: 0.24rem;
+  --firefly-opacity: 0.68;
+  --firefly-duration: 20s;
+  --firefly-delay: 0s;
+  --firefly-x-mid: 1rem;
+  --firefly-y-mid: -1rem;
+  --firefly-x-end: 2rem;
+  --firefly-y-end: 0.5rem;
+
+  position: absolute;
+  left: var(--firefly-left);
+  top: var(--firefly-top);
+  width: clamp(0.8rem, calc(var(--firefly-size) * 4.5), 1.55rem);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle,
+    rgb(255 252 244 / 0.98) 0 6%,
+    rgb(210 211 131 / 0.72) 12%,
+    rgb(93 171 103 / 0.3) 26%,
+    rgb(93 171 103 / 0.1) 42%,
+    transparent 64%
+  );
+  opacity: var(--firefly-opacity);
+  transform: translate3d(0, 0, 0);
+  animation: khixDashboardFireflyFloat var(--firefly-duration) ease-in-out
+    var(--firefly-delay) infinite alternate;
+  will-change: transform;
+}
+
+.portalFirefly[data-firefly="1"] {
+  --firefly-left: 5%;
+  --firefly-top: 9%;
+  --firefly-size: 0.22rem;
+  --firefly-duration: 24s;
+  --firefly-delay: -5s;
+  --firefly-opacity: 0.56;
+  --firefly-x-mid: 1.4rem;
+  --firefly-y-mid: -2.2rem;
+  --firefly-x-end: 2.8rem;
+  --firefly-y-end: 0.6rem;
+}
+
+.portalFirefly[data-firefly="2"] {
+  --firefly-left: 14%;
+  --firefly-top: 28%;
+  --firefly-size: 0.3rem;
+  --firefly-duration: 19s;
+  --firefly-delay: -9s;
+  --firefly-opacity: 0.72;
+  --firefly-x-mid: 2.1rem;
+  --firefly-y-mid: 1rem;
+  --firefly-x-end: 3.2rem;
+  --firefly-y-end: -1.5rem;
+}
+
+.portalFirefly[data-firefly="3"] {
+  --firefly-left: 24%;
+  --firefly-top: 12%;
+  --firefly-size: 0.2rem;
+  --firefly-duration: 27s;
+  --firefly-delay: -2s;
+  --firefly-opacity: 0.5;
+  --firefly-x-mid: -1.4rem;
+  --firefly-y-mid: 2.4rem;
+  --firefly-x-end: 1.2rem;
+  --firefly-y-end: 4rem;
+}
+
+.portalFirefly[data-firefly="4"] {
+  --firefly-left: 35%;
+  --firefly-top: 42%;
+  --firefly-size: 0.26rem;
+  --firefly-duration: 21s;
+  --firefly-delay: -13s;
+  --firefly-opacity: 0.66;
+  --firefly-x-mid: 1rem;
+  --firefly-y-mid: -2.8rem;
+  --firefly-x-end: -1.8rem;
+  --firefly-y-end: -4.4rem;
+}
+
+.portalFirefly[data-firefly="5"] {
+  --firefly-left: 46%;
+  --firefly-top: 7%;
+  --firefly-size: 0.24rem;
+  --firefly-duration: 23s;
+  --firefly-delay: -7s;
+  --firefly-opacity: 0.58;
+  --firefly-x-mid: 2.6rem;
+  --firefly-y-mid: 1.5rem;
+  --firefly-x-end: 4.1rem;
+  --firefly-y-end: -0.8rem;
+}
+
+.portalFirefly[data-firefly="6"] {
+  --firefly-left: 58%;
+  --firefly-top: 24%;
+  --firefly-size: 0.32rem;
+  --firefly-duration: 18s;
+  --firefly-delay: -11s;
+  --firefly-opacity: 0.75;
+  --firefly-x-mid: -2.4rem;
+  --firefly-y-mid: -1.2rem;
+  --firefly-x-end: -3.2rem;
+  --firefly-y-end: 1.7rem;
+}
+
+.portalFirefly[data-firefly="7"] {
+  --firefly-left: 70%;
+  --firefly-top: 11%;
+  --firefly-size: 0.2rem;
+  --firefly-duration: 28s;
+  --firefly-delay: -4s;
+  --firefly-opacity: 0.52;
+  --firefly-x-mid: 1.2rem;
+  --firefly-y-mid: 2.8rem;
+  --firefly-x-end: -1.5rem;
+  --firefly-y-end: 4.2rem;
+}
+
+.portalFirefly[data-firefly="8"] {
+  --firefly-left: 86%;
+  --firefly-top: 35%;
+  --firefly-size: 0.28rem;
+  --firefly-duration: 22s;
+  --firefly-delay: -15s;
+  --firefly-opacity: 0.7;
+  --firefly-x-mid: -1.8rem;
+  --firefly-y-mid: -2.6rem;
+  --firefly-x-end: -4.2rem;
+  --firefly-y-end: -0.2rem;
+}
+
+.portalFirefly[data-firefly="9"] {
+  --firefly-left: 96%;
+  --firefly-top: 14%;
+  --firefly-size: 0.23rem;
+  --firefly-duration: 25s;
+  --firefly-delay: -6s;
+  --firefly-opacity: 0.56;
+  --firefly-x-mid: -2.5rem;
+  --firefly-y-mid: 1.8rem;
+  --firefly-x-end: -5rem;
+  --firefly-y-end: 3.3rem;
+}
+
+.portalFirefly[data-firefly="10"] {
+  --firefly-left: 9%;
+  --firefly-top: 64%;
+  --firefly-size: 0.31rem;
+  --firefly-duration: 20s;
+  --firefly-delay: -12s;
+  --firefly-opacity: 0.7;
+  --firefly-x-mid: 2.8rem;
+  --firefly-y-mid: -1rem;
+  --firefly-x-end: 4.8rem;
+  --firefly-y-end: 1.4rem;
+}
+
+.portalFirefly[data-firefly="11"] {
+  --firefly-left: 19%;
+  --firefly-top: 82%;
+  --firefly-size: 0.22rem;
+  --firefly-duration: 29s;
+  --firefly-delay: -3s;
+  --firefly-opacity: 0.5;
+  --firefly-x-mid: 1rem;
+  --firefly-y-mid: -3rem;
+  --firefly-x-end: -1.2rem;
+  --firefly-y-end: -5rem;
+}
+
+.portalFirefly[data-firefly="12"] {
+  --firefly-left: 32%;
+  --firefly-top: 72%;
+  --firefly-size: 0.27rem;
+  --firefly-duration: 23s;
+  --firefly-delay: -17s;
+  --firefly-opacity: 0.62;
+  --firefly-x-mid: -1.2rem;
+  --firefly-y-mid: -2.5rem;
+  --firefly-x-end: 2.2rem;
+  --firefly-y-end: -4.2rem;
+}
+
+.portalFirefly[data-firefly="13"] {
+  --firefly-left: 48%;
+  --firefly-top: 58%;
+  --firefly-size: 0.2rem;
+  --firefly-duration: 26s;
+  --firefly-delay: -8s;
+  --firefly-opacity: 0.54;
+  --firefly-x-mid: 2.5rem;
+  --firefly-y-mid: 2rem;
+  --firefly-x-end: -0.6rem;
+  --firefly-y-end: 4.5rem;
+}
+
+.portalFirefly[data-firefly="14"] {
+  --firefly-left: 63%;
+  --firefly-top: 76%;
+  --firefly-size: 0.33rem;
+  --firefly-duration: 18s;
+  --firefly-delay: -14s;
+  --firefly-opacity: 0.74;
+  --firefly-x-mid: -2.2rem;
+  --firefly-y-mid: -1.8rem;
+  --firefly-x-end: -4rem;
+  --firefly-y-end: 1.1rem;
+}
+
+.portalFirefly[data-firefly="15"] {
+  --firefly-left: 78%;
+  --firefly-top: 62%;
+  --firefly-size: 0.24rem;
+  --firefly-duration: 24s;
+  --firefly-delay: -1s;
+  --firefly-opacity: 0.58;
+  --firefly-x-mid: -1rem;
+  --firefly-y-mid: 2.4rem;
+  --firefly-x-end: 2.4rem;
+  --firefly-y-end: 4.1rem;
+}
+
+.portalFirefly[data-firefly="16"] {
+  --firefly-left: 91%;
+  --firefly-top: 83%;
+  --firefly-size: 0.3rem;
+  --firefly-duration: 21s;
+  --firefly-delay: -16s;
+  --firefly-opacity: 0.68;
+  --firefly-x-mid: -2.8rem;
+  --firefly-y-mid: -2.4rem;
+  --firefly-x-end: -5.3rem;
+  --firefly-y-end: -0.6rem;
+}
+
+.portalFirefly[data-firefly="17"] {
+  --firefly-left: 3%;
+  --firefly-top: 44%;
+  --firefly-size: 0.2rem;
+  --firefly-duration: 31s;
+  --firefly-delay: -18s;
+  --firefly-opacity: 0.46;
+  --firefly-x-mid: 2.6rem;
+  --firefly-y-mid: 1.8rem;
+  --firefly-x-end: 5.1rem;
+  --firefly-y-end: -1.2rem;
+}
+
+.portalFirefly[data-firefly="18"] {
+  --firefly-left: 40%;
+  --firefly-top: 22%;
+  --firefly-size: 0.21rem;
+  --firefly-duration: 30s;
+  --firefly-delay: -20s;
+  --firefly-opacity: 0.5;
+  --firefly-x-mid: -2rem;
+  --firefly-y-mid: 1.4rem;
+  --firefly-x-end: -3.8rem;
+  --firefly-y-end: -2.6rem;
+}
+
+.portalFirefly[data-firefly="19"] {
+  --firefly-left: 53%;
+  --firefly-top: 92%;
+  --firefly-size: 0.26rem;
+  --firefly-duration: 25s;
+  --firefly-delay: -10s;
+  --firefly-opacity: 0.6;
+  --firefly-x-mid: 1.6rem;
+  --firefly-y-mid: -2.7rem;
+  --firefly-x-end: 3.8rem;
+  --firefly-y-end: -5.2rem;
+}
+
+.portalFirefly[data-firefly="20"] {
+  --firefly-left: 67%;
+  --firefly-top: 48%;
+  --firefly-size: 0.22rem;
+  --firefly-duration: 27s;
+  --firefly-delay: -19s;
+  --firefly-opacity: 0.52;
+  --firefly-x-mid: 2.8rem;
+  --firefly-y-mid: -1.5rem;
+  --firefly-x-end: 0.8rem;
+  --firefly-y-end: -4.8rem;
+}
+
+.portalFirefly[data-firefly="21"] {
+  --firefly-left: 84%;
+  --firefly-top: 6%;
+  --firefly-size: 0.2rem;
+  --firefly-duration: 32s;
+  --firefly-delay: -21s;
+  --firefly-opacity: 0.48;
+  --firefly-x-mid: -1.2rem;
+  --firefly-y-mid: 2.8rem;
+  --firefly-x-end: -4.2rem;
+  --firefly-y-end: 4.7rem;
+}
+
+.portalFirefly[data-firefly="22"] {
+  --firefly-left: 15%;
+  --firefly-top: 5%;
+  --firefly-size: 0.18rem;
+  --firefly-duration: 34s;
+  --firefly-delay: -24s;
+  --firefly-opacity: 0.42;
+  --firefly-x-mid: 2.2rem;
+  --firefly-y-mid: 2rem;
+  --firefly-x-end: 4.6rem;
+  --firefly-y-end: 3.8rem;
+}
+
+.portalFirefly[data-firefly="23"] {
+  --firefly-left: 73%;
+  --firefly-top: 91%;
+  --firefly-size: 0.22rem;
+  --firefly-duration: 28s;
+  --firefly-delay: -23s;
+  --firefly-opacity: 0.5;
+  --firefly-x-mid: -2.4rem;
+  --firefly-y-mid: -2.8rem;
+  --firefly-x-end: -0.5rem;
+  --firefly-y-end: -5.5rem;
+}
+
+.portalFirefly[data-firefly="24"] {
+  --firefly-left: 98%;
+  --firefly-top: 58%;
+  --firefly-size: 0.19rem;
+  --firefly-duration: 33s;
+  --firefly-delay: -26s;
+  --firefly-opacity: 0.44;
+  --firefly-x-mid: -2.8rem;
+  --firefly-y-mid: 2.2rem;
+  --firefly-x-end: -5.6rem;
+  --firefly-y-end: 4.6rem;
+}
+
+.portalWisp {
+  --wisp-size: clamp(3.8rem, 6vw, 7.1rem);
+  --wisp-sprite-opacity: 0.76;
+  --wisp-glow-opacity: 0.34;
+  --wisp-scale: 1;
+  --wisp-scale-mid: 1.06;
+  --wisp-scale-end: 0.98;
+  --wisp-rotate: -8deg;
+  --wisp-rotate-mid: 3.6deg;
+  --wisp-rotate-end: -1deg;
+  --wisp-duration: 14s;
+  --wisp-delay: 0s;
+  --wisp-opacity: 0.86;
+  --wisp-x-start: 0rem;
+  --wisp-y-start: 0rem;
+  --wisp-x-mid: 1rem;
+  --wisp-y-mid: -1.1rem;
+  --wisp-x-end: 2rem;
+  --wisp-y-end: 0.7rem;
+
+  left: var(--wisp-left);
+  top: var(--wisp-top);
+  width: var(--wisp-size);
+  aspect-ratio: 1;
+  opacity: var(--wisp-opacity);
+  transform: translate3d(var(--wisp-x-start), var(--wisp-y-start), 0)
+    rotate(var(--wisp-rotate)) scale(var(--wisp-scale));
+  animation: khixDashboardSpiritWisp var(--wisp-duration) ease-in-out
+    var(--wisp-delay) infinite alternate;
+  filter: drop-shadow(0 0 0.8rem rgb(111 225 255 / 0.34))
+    drop-shadow(0 0 1.8rem rgb(41 184 237 / 0.22));
+  isolation: isolate;
+  mix-blend-mode: screen;
+  will-change: opacity, transform;
+}
+
+.portalWisp::before {
+  inset: -4%;
+  z-index: 1;
+  background: url("/assets/khix-wisp-flame.png") center / contain no-repeat;
+  opacity: var(--wisp-sprite-opacity);
+  transform: translateZ(0) scale(0.98);
+  animation: khixDashboardWispSpriteFlicker 7.2s ease-in-out infinite;
+  image-rendering: auto;
+}
+
+.portalWisp::after {
+  inset: -18%;
+  z-index: 0;
+  background: url("/assets/khix-wisp-flame.png") center / contain no-repeat;
+  filter: blur(10px) saturate(1.2);
+  opacity: var(--wisp-glow-opacity);
+  transform: translate3d(0.15rem, 0.12rem, 0) scale(1.22);
+  animation: khixDashboardWispSpriteGlow 8.4s ease-in-out infinite;
+}
+
+.portalWisp[data-wisp="one"] {
+  --wisp-left: 4%;
+  --wisp-top: 18%;
+  --wisp-scale: 0.78;
+  --wisp-scale-mid: 0.84;
+  --wisp-scale-end: 0.76;
+  --wisp-rotate: -12deg;
+  --wisp-rotate-mid: 5deg;
+  --wisp-rotate-end: -5deg;
+  --wisp-duration: 16s;
+  --wisp-delay: -2s;
+  --wisp-opacity: 0.62;
+  --wisp-x-mid: 2.4rem;
+  --wisp-y-mid: -2.2rem;
+  --wisp-x-end: 4rem;
+  --wisp-y-end: 0.5rem;
+}
+
+.portalWisp[data-wisp="two"] {
+  --wisp-left: 7%;
+  --wisp-top: 91%;
+  --wisp-size: clamp(3.1rem, 4.8vw, 5.1rem);
+  --wisp-scale: 0.68;
+  --wisp-scale-mid: 0.74;
+  --wisp-scale-end: 0.66;
+  --wisp-rotate: 10deg;
+  --wisp-rotate-mid: -4deg;
+  --wisp-rotate-end: 16deg;
+  --wisp-duration: 18s;
+  --wisp-delay: -7s;
+  --wisp-opacity: 0.5;
+  --wisp-x-mid: 1rem;
+  --wisp-y-mid: -1.4rem;
+  --wisp-x-end: 2rem;
+  --wisp-y-end: -0.2rem;
+}
+
+.portalWisp[data-wisp="three"] {
+  --wisp-left: 56%;
+  --wisp-top: 14%;
+  --wisp-size: clamp(4rem, 6vw, 6.8rem);
+  --wisp-scale: 0.92;
+  --wisp-scale-mid: 1;
+  --wisp-scale-end: 0.9;
+  --wisp-rotate: -18deg;
+  --wisp-rotate-mid: 8deg;
+  --wisp-rotate-end: -12deg;
+  --wisp-duration: 20s;
+  --wisp-delay: -4s;
+  --wisp-x-mid: 1.8rem;
+  --wisp-y-mid: 2.4rem;
+  --wisp-x-end: -1.2rem;
+  --wisp-y-end: 4.4rem;
+}
+
+.portalWisp[data-wisp="four"] {
+  --wisp-left: 88%;
+  --wisp-top: 43%;
+  --wisp-size: clamp(3.6rem, 5.4vw, 5.8rem);
+  --wisp-scale: 0.78;
+  --wisp-scale-mid: 0.86;
+  --wisp-scale-end: 0.76;
+  --wisp-rotate: 14deg;
+  --wisp-rotate-mid: -6deg;
+  --wisp-rotate-end: 20deg;
+  --wisp-duration: 17s;
+  --wisp-delay: -10s;
+  --wisp-opacity: 0.76;
+  --wisp-x-mid: -1rem;
+  --wisp-y-mid: -1.7rem;
+  --wisp-x-end: -2.5rem;
+  --wisp-y-end: -0.2rem;
+}
+
+.portalWisp[data-wisp="five"] {
+  --wisp-left: 46%;
+  --wisp-top: 88%;
+  --wisp-size: clamp(3.2rem, 4.8vw, 5.2rem);
+  --wisp-scale: 0.72;
+  --wisp-scale-mid: 0.8;
+  --wisp-scale-end: 0.7;
+  --wisp-rotate: -5deg;
+  --wisp-rotate-mid: 3deg;
+  --wisp-rotate-end: 2deg;
+  --wisp-duration: 21s;
+  --wisp-delay: -13s;
+  --wisp-opacity: 0.68;
+  --wisp-x-mid: 1.8rem;
+  --wisp-y-mid: -1rem;
+  --wisp-x-end: 3.2rem;
+  --wisp-y-end: -2.3rem;
+}
+
+.portalWisp[data-wisp="six"] {
+  --wisp-left: 75%;
+  --wisp-top: 72%;
+  --wisp-size: clamp(3.4rem, 5vw, 5.6rem);
+  --wisp-scale: 0.72;
+  --wisp-scale-mid: 0.82;
+  --wisp-scale-end: 0.7;
+  --wisp-rotate: 8deg;
+  --wisp-rotate-mid: -8deg;
+  --wisp-rotate-end: 14deg;
+  --wisp-duration: 19s;
+  --wisp-delay: -9s;
+  --wisp-opacity: 0.7;
+  --wisp-x-mid: -2.4rem;
+  --wisp-y-mid: -1.9rem;
+  --wisp-x-end: -4.1rem;
+  --wisp-y-end: 0.8rem;
+}
+
+.portalWisp[data-wisp="seven"] {
+  --wisp-left: 33%;
+  --wisp-top: 31%;
+  --wisp-size: clamp(3.1rem, 4.5vw, 5rem);
+  --wisp-scale: 0.66;
+  --wisp-scale-mid: 0.73;
+  --wisp-scale-end: 0.64;
+  --wisp-rotate: -20deg;
+  --wisp-rotate-mid: 7deg;
+  --wisp-rotate-end: -14deg;
+  --wisp-duration: 22s;
+  --wisp-delay: -15s;
+  --wisp-opacity: 0.54;
+  --wisp-x-mid: 1.3rem;
+  --wisp-y-mid: -2.8rem;
+  --wisp-x-end: -0.8rem;
+  --wisp-y-end: -4.2rem;
+}
+
+.portalWisp[data-wisp="eight"] {
+  --wisp-left: 96%;
+  --wisp-top: 20%;
+  --wisp-size: clamp(3.2rem, 4.6vw, 5.2rem);
+  --wisp-scale: 0.62;
+  --wisp-scale-mid: 0.7;
+  --wisp-scale-end: 0.6;
+  --wisp-rotate: 18deg;
+  --wisp-rotate-mid: -5deg;
+  --wisp-rotate-end: 10deg;
+  --wisp-duration: 24s;
+  --wisp-delay: -6s;
+  --wisp-opacity: 0.52;
+  --wisp-x-mid: -2.8rem;
+  --wisp-y-mid: 1.2rem;
+  --wisp-x-end: -5rem;
+  --wisp-y-end: 3.4rem;
 }
 
 .profileMain,
@@ -1664,7 +2412,7 @@
   width: min(72rem, 100%);
   margin: clamp(1rem, 2vh, 1.4rem) auto 0;
   max-width: none;
-  color: rgb(162 153 194 / 0.78);
+  color: rgb(255 252 244 / 0.72);
   font-size: min(clamp(1.05rem, 1.55vw, 1.5rem), 2.05vw);
   font-weight: 500;
   line-height: 1.35;
@@ -1765,9 +2513,9 @@
 }
 
 .acceptedActionRow {
-  width: min(46rem, 100%);
+  width: min(35rem, 100%);
   align-items: stretch;
-  gap: clamp(0.9rem, 1.5vw, 1.1rem);
+  gap: clamp(0.72rem, 1.1vw, 0.92rem);
   margin-top: clamp(1.45rem, 3vh, 2.05rem);
 }
 
@@ -1785,17 +2533,26 @@
 
 .actionRow {
   display: flex;
-  width: min(46rem, 100%);
+  width: min(35rem, 100%);
   flex-wrap: nowrap;
   justify-content: center;
-  gap: clamp(0.9rem, 1.5vw, 1.1rem);
+  gap: clamp(0.72rem, 1.1vw, 0.92rem);
   margin: clamp(1.4rem, 3vh, 2rem) auto 0;
 }
 
 .actionRow > * {
-  flex: 1 1 0;
+  flex: 0 1 clamp(14rem, 17vw, 16.5rem);
   min-width: 0;
   animation: khixDashboardContentRise 520ms var(--khix-ease-out) backwards;
+}
+
+.actionRow .primaryButton,
+.actionRow .ghostButton {
+  overflow: visible;
+}
+
+.statusPill + .actionRow {
+  margin-top: clamp(1.55rem, 3.2vh, 2.25rem);
 }
 
 .actionRow > :nth-child(1) {
@@ -1813,66 +2570,188 @@
 .primaryButton,
 .ghostButton,
 .issueButton {
+  --khix-button-mote-opacity: 0.54;
+  --khix-action-bg: var(--khix-button-surface);
+  --khix-action-bg-hover: var(--khix-button-surface-hover);
+  --khix-action-color: rgb(255 252 244 / 0.92);
+  --khix-action-color-hover: rgb(255 252 244 / 0.98);
+  --khix-action-edge: rgb(255 252 244 / 0.075);
+  --khix-action-edge-hover: rgb(255 252 244 / 0.12);
+  --khix-action-glow: rgb(145 181 97 / 0.12);
+  --khix-action-mote-core: rgb(255 252 244 / 0.86);
+  --khix-action-mote-mid: rgb(210 211 131 / 0.42);
+  --khix-action-mote-far: rgb(93 171 103 / 0.28);
+
+  display: inline-flex;
   min-height: 3.35rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
   border-radius: var(--khix-button-radius);
   padding: 0 1.7rem;
   font-size: clamp(0.95rem, 1vw, 1.08rem);
   font-weight: 920;
   letter-spacing: 0;
+  text-shadow: 0 1px 0 rgb(25 9 37 / 0.34);
   white-space: nowrap;
   transition:
     background 220ms ease,
-    background-position 320ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    color 180ms ease,
-    filter 180ms ease,
-    transform 180ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    color 220ms ease,
+    transform 220ms var(--khix-ease-soft),
     opacity 180ms ease;
 }
 
-.primaryButton {
-  border: 1px solid rgb(210 211 131 / 0.5);
+.primaryButton::after,
+.ghostButton::after,
+.issueButton::after {
+  inset: -0.48rem;
+  border-radius: calc(var(--khix-button-radius) + 0.48rem);
   background:
-    linear-gradient(
-      135deg,
-      rgb(255 252 244 / 0.92) 0%,
-      rgb(210 211 131 / 0.95) 30%,
-      rgb(145 181 97 / 0.98) 64%,
-      rgb(93 171 103 / 0.96) 100%
+    radial-gradient(
+      circle at 12% 50%,
+      var(--khix-action-mote-core) 0 0.045rem,
+      var(--khix-action-mote-mid) 0.075rem 0.17rem,
+      transparent 0.36rem
     ),
-    rgb(145 181 97);
-  background-position: 0% 50%;
-  background-size: 145% 145%;
-  color: #190925;
-  box-shadow:
-    inset 0 1px rgb(255 252 244 / 0.4),
-    inset 0 -10px 24px rgb(25 9 37 / 0.12),
-    0 0 0 1px rgb(210 211 131 / 0.1),
-    0 1rem 2.7rem rgb(93 171 103 / 0.2);
-  text-shadow: 0 1px rgb(255 252 244 / 0.18);
+    radial-gradient(
+      circle at 28% 10%,
+      var(--khix-action-mote-core) 0 0.04rem,
+      var(--khix-action-mote-far) 0.07rem 0.16rem,
+      transparent 0.34rem
+    ),
+    radial-gradient(
+      circle at 74% 8%,
+      var(--khix-action-mote-core) 0 0.04rem,
+      var(--khix-action-mote-mid) 0.07rem 0.16rem,
+      transparent 0.34rem
+    ),
+    radial-gradient(
+      circle at 91% 48%,
+      var(--khix-action-mote-core) 0 0.045rem,
+      var(--khix-action-mote-far) 0.08rem 0.18rem,
+      transparent 0.38rem
+    ),
+    radial-gradient(
+      circle at 68% 93%,
+      var(--khix-action-mote-core) 0 0.04rem,
+      var(--khix-action-mote-mid) 0.07rem 0.16rem,
+      transparent 0.34rem
+    ),
+    radial-gradient(
+      circle at 22% 90%,
+      var(--khix-action-mote-core) 0 0.042rem,
+      var(--khix-action-mote-far) 0.075rem 0.17rem,
+      transparent 0.36rem
+    );
+  background-repeat: no-repeat;
+  content: "";
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 180ms ease,
+    transform 440ms var(--khix-ease-out);
 }
 
-.primaryButton:hover:not(:disabled) {
-  border-color: rgb(255 252 244 / 0.82);
-  background:
-    linear-gradient(
-      135deg,
-      rgb(255 252 244 / 0.98) 0%,
-      rgb(230 229 154 / 0.98) 30%,
-      rgb(145 181 97 / 0.98) 64%,
-      rgb(61 128 106 / 0.96) 100%
+.primaryButton:hover:not(:disabled)::after,
+.ghostButton:hover:not(:disabled)::after,
+.issueButton:hover:not(:disabled)::after {
+  opacity: var(--khix-button-mote-opacity);
+  transform: scale(1);
+  animation: khixButtonMotes 1.9s ease-in-out infinite alternate;
+}
+
+.primaryButton {
+  --khix-button-mote-opacity: 0.6;
+  --khix-action-bg:
+    radial-gradient(
+      circle at 50% -48%,
+      rgb(222 226 154 / 0.2),
+      transparent 62%
     ),
-    rgb(145 181 97);
-  background-position: 100% 50%;
+    linear-gradient(
+      180deg,
+      rgb(61 128 106 / 0.58),
+      rgb(39 72 70 / 0.74) 58%,
+      rgb(25 31 42 / 0.78)
+    );
+  --khix-action-bg-hover:
+    radial-gradient(
+      circle at 50% -45%,
+      rgb(230 229 154 / 0.26),
+      transparent 64%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(69 140 112 / 0.64),
+      rgb(43 84 76 / 0.78) 58%,
+      rgb(25 34 43 / 0.82)
+    );
+  --khix-action-edge: rgb(210 211 131 / 0.14);
+  --khix-action-edge-hover: rgb(230 229 154 / 0.24);
+  --khix-action-glow: rgb(93 171 103 / 0.16);
+  --khix-action-mote-mid: rgb(230 229 154 / 0.5);
+  --khix-action-mote-far: rgb(93 171 103 / 0.34);
+
+  border: 1px solid var(--khix-action-edge);
+  background: var(--khix-action-bg), rgb(25 9 37 / 0.76);
+  color: var(--khix-action-color-hover);
   box-shadow:
-    inset 0 1px rgb(255 252 244 / 0.56),
-    inset 0 -10px 24px rgb(25 9 37 / 0.08),
-    0 0 0 1px rgb(210 211 131 / 0.18),
-    0 0 1.8rem rgb(210 211 131 / 0.32),
-    0 1.25rem 3rem rgb(93 171 103 / 0.28);
-  filter: saturate(1.08);
-  transform: translateY(-2px);
+    inset 0 1px rgb(255 252 244 / 0.1),
+    inset 0 -0.65rem 1.35rem rgb(25 9 37 / 0.1),
+    0 0.55rem 1.15rem rgb(25 9 37 / 0.18);
+}
+
+.primaryButton:hover:not(:disabled),
+.ghostButton:hover:not(:disabled),
+.issueButton:hover:not(:disabled) {
+  border-color: var(--khix-action-edge-hover);
+  background: var(--khix-action-bg-hover), rgb(25 9 37 / 0.8);
+  box-shadow:
+    inset 0 1px rgb(255 252 244 / 0.14),
+    inset 0 -0.65rem 1.25rem rgb(25 9 37 / 0.08),
+    0 0 0.95rem var(--khix-action-glow),
+    0 0.75rem 1.35rem rgb(25 9 37 / 0.2);
+  color: var(--khix-action-color-hover);
+  filter: none;
+  transform: translateY(-1px);
+}
+
+.checkInButton {
+  --khix-button-mote-opacity: 0.68;
+  --khix-action-bg:
+    radial-gradient(
+      circle at 50% -48%,
+      rgb(176 225 178 / 0.24),
+      transparent 62%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(54 141 104 / 0.64),
+      rgb(38 94 83 / 0.8) 56%,
+      rgb(22 40 51 / 0.84)
+    );
+  --khix-action-bg-hover:
+    radial-gradient(
+      circle at 50% -45%,
+      rgb(210 237 174 / 0.3),
+      transparent 64%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(64 153 113 / 0.7),
+      rgb(43 108 91 / 0.84) 56%,
+      rgb(23 48 56 / 0.88)
+    );
+  --khix-action-edge: rgb(176 225 178 / 0.16);
+  --khix-action-edge-hover: rgb(210 237 174 / 0.3);
+  --khix-action-glow: rgb(93 171 103 / 0.22);
+  --khix-action-mote-mid: rgb(210 237 174 / 0.54);
+  --khix-action-mote-far: rgb(76 196 126 / 0.36);
+
+  overflow: visible;
 }
 
 .checkInQrTrigger {
@@ -1894,19 +2773,10 @@
 
 .ghostButton,
 .issueButton {
-  border: 1px solid var(--khix-button-edge);
-  background: var(--khix-button-surface);
-  color: rgb(210 211 131 / 0.9);
-}
-
-.ghostButton:hover:not(:disabled),
-.issueButton:hover:not(:disabled) {
-  border-color: var(--khix-button-edge-hot);
-  background: var(--khix-button-surface-hover);
-  box-shadow: var(--khix-button-shadow-hover);
-  color: rgb(255 252 244 / 0.96);
-  filter: saturate(1.06);
-  transform: translateY(-2px);
+  border: 1px solid var(--khix-action-edge);
+  background: var(--khix-action-bg), rgb(25 9 37 / 0.72);
+  color: var(--khix-action-color);
+  box-shadow: var(--khix-button-shadow);
 }
 
 .primaryButton:disabled,
@@ -1925,7 +2795,33 @@
 }
 
 .withdrawHoldButton {
-  justify-content: center;
+  --khix-button-mote-opacity: 0.46;
+  --khix-action-bg:
+    radial-gradient(circle at 50% -48%, rgb(189 92 88 / 0.18), transparent 62%),
+    linear-gradient(
+      180deg,
+      rgb(86 34 45 / 0.62),
+      rgb(57 20 37 / 0.78) 58%,
+      rgb(25 9 37 / 0.84)
+    );
+  --khix-action-bg-hover:
+    radial-gradient(
+      circle at 50% -45%,
+      rgb(218 111 98 / 0.22),
+      transparent 64%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(103 39 51 / 0.68),
+      rgb(72 24 42 / 0.84) 58%,
+      rgb(31 10 35 / 0.88)
+    );
+  --khix-action-edge: rgb(218 111 98 / 0.16);
+  --khix-action-edge-hover: rgb(238 135 116 / 0.3);
+  --khix-action-glow: rgb(189 92 88 / 0.18);
+  --khix-action-mote-mid: rgb(238 135 116 / 0.44);
+  --khix-action-mote-far: rgb(115 48 39 / 0.34);
+
   overflow: visible;
   user-select: none;
   touch-action: manipulation;
@@ -1940,10 +2836,6 @@
   place-items: center;
 }
 
-.withdrawHoldButton::after {
-  content: none;
-}
-
 .withdrawHoldButton::before {
   position: absolute;
   inset: -0.42rem;
@@ -1952,8 +2844,8 @@
   padding: 2px;
   background: conic-gradient(
     from -90deg,
-    rgb(230 229 154 / 0.98) var(--kh-withdraw-hold-angle, 0deg),
-    rgb(145 181 97 / 0.16) 0deg
+    rgb(238 135 116 / 0.9) var(--kh-withdraw-hold-angle, 0deg),
+    rgb(238 135 116 / 0.12) 0deg
   );
   content: "";
   opacity: 0;
@@ -1967,10 +2859,11 @@
 }
 
 .withdrawHoldButton[data-hold-active="true"] {
-  border-color: rgb(230 229 154 / 0.82);
+  border-color: var(--khix-action-edge-hover);
   box-shadow:
-    var(--khix-button-shadow-hover),
-    0 0 1.8rem rgb(210 211 131 / 0.22);
+    inset 0 1px rgb(255 252 244 / 0.12),
+    0 0 0.95rem var(--khix-action-glow),
+    0 0.75rem 1.35rem rgb(25 9 37 / 0.22);
 }
 
 .withdrawHoldButton[data-hold-active="true"]::before {
@@ -1979,46 +2872,17 @@
 
 .acceptedConfirmButton,
 .acceptedTermsButton {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
   min-height: clamp(3.35rem, 5.7vh, 3.72rem);
-  border-radius: 0.72rem;
+  border-radius: var(--khix-button-radius);
   padding-inline: clamp(1.2rem, 2vw, 1.75rem);
   font-size: clamp(0.96rem, 0.95vw, 1.06rem);
   font-weight: 920;
-  letter-spacing: 0;
   backdrop-filter: blur(16px);
-  transform: translateZ(0);
-  transition:
-    background-position 320ms ease,
-    border-color 220ms ease,
-    box-shadow 220ms ease,
-    color 220ms ease,
-    filter 220ms ease,
-    transform 220ms ease;
 }
 
 .acceptedConfirmButton::before,
 .acceptedTermsButton::before {
-  position: absolute;
-  inset: 1px;
-  z-index: 0;
-  border-radius: calc(0.72rem - 1px);
-  background: linear-gradient(
-    105deg,
-    transparent 15%,
-    rgb(255 252 244 / 0.5) 42%,
-    transparent 66%
-  );
-  content: "";
-  mix-blend-mode: screen;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-92%) skewX(-14deg);
-  transition:
-    opacity 220ms ease,
-    transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  content: none;
 }
 
 .acceptedConfirmButton svg,
@@ -2031,95 +2895,19 @@
 
 .acceptedConfirmButton {
   min-width: 0;
-  border: 1px solid rgb(210 211 131 / 0.5);
-  background:
-    linear-gradient(
-      135deg,
-      rgb(255 252 244 / 0.92) 0%,
-      rgb(210 211 131 / 0.95) 28%,
-      rgb(145 181 97 / 0.98) 62%,
-      rgb(93 171 103 / 0.96) 100%
-    ),
-    rgb(145 181 97);
-  background-position: 0% 50%;
-  background-size: 145% 145%;
-  box-shadow:
-    inset 0 1px rgb(255 252 244 / 0.42),
-    inset 0 -10px 24px rgb(25 9 37 / 0.12),
-    0 0 0 1px rgb(210 211 131 / 0.1),
-    0 1rem 2.7rem rgb(93 171 103 / 0.2);
-  color: #190925;
-  text-shadow: 0 1px rgb(255 252 244 / 0.18);
 }
 
 .acceptedTermsButton {
+  --khix-button-mote-opacity: 0.48;
+
   min-width: 0;
-  border: 1px solid rgb(145 181 97 / 0.5);
-  background:
-    linear-gradient(
-      135deg,
-      rgb(255 252 244 / 0.08),
-      rgb(93 171 103 / 0.11) 46%,
-      rgb(32 110 113 / 0.14)
-    ),
-    rgb(25 9 37 / 0.58);
-  background-position: 0% 50%;
-  background-size: 145% 145%;
-  box-shadow:
-    inset 0 1px rgb(255 252 244 / 0.08),
-    inset 0 -10px 24px rgb(25 9 37 / 0.18),
-    0 0 0 1px rgb(210 211 131 / 0.04),
-    0 1rem 2.4rem rgb(25 9 37 / 0.22);
-  color: rgb(230 229 154 / 0.96);
-}
-
-.acceptedConfirmButton:hover:not(:disabled),
-.acceptedTermsButton:hover {
-  background-position: 100% 50%;
-  filter: saturate(1.08);
-  transform: translateY(-2px);
-}
-
-.acceptedConfirmButton:hover:not(:disabled) {
-  border-color: rgb(255 252 244 / 0.84);
-  background:
-    linear-gradient(
-      135deg,
-      rgb(255 252 244 / 0.98) 0%,
-      rgb(230 229 154 / 0.98) 28%,
-      rgb(145 181 97 / 0.98) 62%,
-      rgb(61 128 106 / 0.96) 100%
-    ),
-    rgb(145 181 97);
-  box-shadow:
-    inset 0 1px rgb(255 252 244 / 0.56),
-    inset 0 -10px 24px rgb(25 9 37 / 0.08),
-    0 0 0 1px rgb(210 211 131 / 0.18),
-    0 0 2rem rgb(210 211 131 / 0.38),
-    0 1.35rem 3.2rem rgb(93 171 103 / 0.3);
-}
-
-.acceptedTermsButton:hover {
-  border-color: rgb(210 211 131 / 0.82);
-  color: rgb(255 252 244 / 0.98);
-  box-shadow:
-    inset 0 1px rgb(255 252 244 / 0.12),
-    inset 0 -10px 24px rgb(25 9 37 / 0.16),
-    0 0 0 1px rgb(210 211 131 / 0.12),
-    0 0 1.55rem rgb(145 181 97 / 0.24),
-    0 1.2rem 3rem rgb(25 9 37 / 0.32);
-}
-
-.acceptedConfirmButton:hover:not(:disabled)::before,
-.acceptedTermsButton:hover::before {
-  opacity: 0.36;
-  transform: translateX(88%) skewX(-14deg);
+  color: rgb(255 252 244 / 0.9);
 }
 
 .acceptedConfirmButton:hover:not(:disabled) svg,
 .acceptedTermsButton:hover svg {
-  filter: drop-shadow(0 0 0.42rem rgb(255 252 244 / 0.54));
-  transform: translateY(-1px) scale(1.08);
+  filter: drop-shadow(0 0 0.32rem rgb(255 252 244 / 0.36));
+  transform: translateY(-1px) scale(1.04);
 }
 
 .acceptedConfirmButton:disabled {
@@ -2151,12 +2939,18 @@
 
 .toolDock {
   display: grid;
-  grid-template-columns: repeat(6, minmax(7.6rem, 1fr));
+  grid-template-columns: repeat(3, minmax(9.75rem, 1fr));
   gap: 0.7rem;
   align-self: end;
   margin: clamp(1rem, 2vh, 2rem) auto 0;
-  width: min(72rem, 100%);
+  width: min(42rem, 100%);
   padding-bottom: clamp(0.4rem, 2vh, 1rem);
+}
+
+.toolDockFourUp {
+  grid-template-columns: repeat(4, minmax(8.5rem, 1fr));
+  margin-top: clamp(1.35rem, 2.8vh, 2.1rem);
+  width: min(58rem, 100%);
 }
 
 .toolDock > * {
@@ -2191,15 +2985,17 @@
 .toolButton,
 .toolDisabled {
   display: grid;
-  min-height: 5.5rem;
-  align-content: center;
-  gap: 0.28rem;
-  border: 1px solid var(--khix-button-edge);
+  min-height: 4.35rem;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-content: stretch;
+  align-items: stretch;
+  gap: 0.52rem;
+  border: 1px solid transparent;
   border-radius: var(--khix-button-radius);
   background: var(--khix-button-surface);
   box-shadow: var(--khix-button-shadow);
-  color: var(--khix-ink);
-  padding: 0.85rem 0.95rem;
+  color: rgb(255 252 244 / 0.92);
+  padding: 0.78rem 0.88rem;
   text-align: left;
   text-decoration: none;
   backdrop-filter: blur(16px);
@@ -2219,39 +3015,54 @@
 
 .toolLink:hover,
 .toolButton:hover {
-  border-color: var(--khix-button-edge-hot);
+  border-color: transparent;
   background: var(--khix-button-surface-hover);
   box-shadow: var(--khix-button-shadow-hover);
   color: rgb(255 252 244 / 0.96);
-  filter: saturate(1.06);
-  transform: translateY(-2px);
+  filter: none;
+  transform: translateY(-1px);
 }
 
 .toolDisabled {
   background:
-    linear-gradient(
-      135deg,
-      rgb(255 252 244 / 0.04),
-      rgb(93 171 103 / 0.05) 48%,
-      rgb(32 110 113 / 0.06)
+    radial-gradient(
+      circle at 50% -45%,
+      rgb(255 252 244 / 0.08),
+      transparent 58%
     ),
-    rgb(25 9 37 / 0.42);
+    linear-gradient(
+      180deg,
+      rgb(255 252 244 / 0.04),
+      rgb(255 252 244 / 0.012) 58%,
+      rgb(25 9 37 / 0.04)
+    ),
+    rgb(25 9 37 / 0.5);
   box-shadow:
     inset 0 1px rgb(255 252 244 / 0.04),
-    0 0.75rem 2rem rgb(25 9 37 / 0.12);
-  color: rgb(162 153 194 / 0.44);
+    0 0 0 1px rgb(255 252 244 / 0.025),
+    0 0.45rem 1rem rgb(25 9 37 / 0.1);
+  color: rgb(255 252 244 / 0.42);
 }
 
 .toolTitle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.92rem;
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.4rem;
+  font-size: 0.9rem;
   font-weight: 950;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.toolTitle svg {
+  justify-self: start;
+  margin-top: 0.08rem;
 }
 
 .toolCopy {
-  color: rgb(162 153 194 / 0.56);
+  display: none;
+  color: rgb(210 211 131 / 0.58);
   font-size: 0.76rem;
   font-weight: 650;
   line-height: 1.35;
@@ -2262,7 +3073,12 @@
   font-size: 0.66rem;
   font-weight: 950;
   letter-spacing: 0.1em;
+  margin-left: 1.4rem;
   text-transform: uppercase;
+}
+
+.toolDisabled .toolMeta {
+  color: rgb(255 252 244 / 0.38);
 }
 
 .profileSection {
@@ -3017,12 +3833,10 @@
 @keyframes khixDashboardSceneEnter {
   from {
     opacity: 0;
-    transform: translate3d(0, 0.9rem, 0) scale(0.992);
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
@@ -3087,13 +3901,140 @@
   }
 }
 
-@keyframes khixDashboardCanopyDrift {
+@keyframes khixButtonMotes {
   from {
-    transform: translate3d(-0.28rem, 0.12rem, 0) scale(1.012);
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      0 0;
   }
 
   to {
-    transform: translate3d(0.34rem, -0.24rem, 0) scale(1.026);
+    background-position:
+      0.18rem -0.1rem,
+      -0.14rem 0.16rem,
+      0.12rem 0.14rem,
+      -0.18rem -0.08rem,
+      0.16rem 0.06rem,
+      -0.1rem -0.12rem;
+  }
+}
+
+@keyframes khixDashboardFireflyFloat {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(var(--firefly-x-mid), var(--firefly-y-mid), 0);
+  }
+
+  100% {
+    transform: translate3d(var(--firefly-x-end), var(--firefly-y-end), 0);
+  }
+}
+
+@keyframes khixDashboardMistGlow {
+  0% {
+    opacity: 0.72;
+    transform: translate3d(-1rem, 0.5rem, 0) scale(1);
+  }
+
+  48% {
+    opacity: 0.98;
+    transform: translate3d(1.8rem, -0.7rem, 0) scale(1.04);
+  }
+
+  100% {
+    opacity: 0.8;
+    transform: translate3d(3rem, 0.55rem, 0) scale(1.02);
+  }
+}
+
+@keyframes khixDashboardHighGlow {
+  0% {
+    opacity: 0.56;
+    transform: translate3d(0.8rem, -0.5rem, 0) scale(1);
+  }
+
+  52% {
+    opacity: 0.78;
+    transform: translate3d(-1.4rem, 0.8rem, 0) scale(1.035);
+  }
+
+  100% {
+    opacity: 0.62;
+    transform: translate3d(-2.6rem, 0.2rem, 0) scale(1.015);
+  }
+}
+
+@keyframes khixDashboardCanopyGlow {
+  0% {
+    opacity: 0.64;
+    transform: translate3d(-0.8rem, 0, 0) scale(1);
+  }
+
+  100% {
+    opacity: 0.9;
+    transform: translate3d(1rem, 0.35rem, 0) scale(1.025);
+  }
+}
+
+@keyframes khixDashboardWisteriaSway {
+  0% {
+    opacity: 0.58;
+    transform: translate3d(-0.5rem, 0, 0);
+  }
+
+  100% {
+    opacity: 0.84;
+    transform: translate3d(0.65rem, 0.35rem, 0);
+  }
+}
+
+@keyframes khixDashboardSpiritWisp {
+  0% {
+    transform: translate3d(var(--wisp-x-start), var(--wisp-y-start), 0)
+      rotate(var(--wisp-rotate)) scale(var(--wisp-scale));
+  }
+
+  48% {
+    transform: translate3d(var(--wisp-x-mid), var(--wisp-y-mid), 0)
+      rotate(var(--wisp-rotate-mid)) scale(var(--wisp-scale-mid));
+  }
+
+  100% {
+    transform: translate3d(var(--wisp-x-end), var(--wisp-y-end), 0)
+      rotate(var(--wisp-rotate-end)) scale(var(--wisp-scale-end));
+  }
+}
+
+@keyframes khixDashboardWispSpriteFlicker {
+  0%,
+  100% {
+    opacity: 0.74;
+    transform: translate3d(0, 0, 0) scale(0.98) rotate(-0.5deg);
+  }
+
+  44% {
+    opacity: 0.84;
+    transform: translate3d(0.025rem, -0.035rem, 0) scale(1.015) rotate(0.5deg);
+  }
+}
+
+@keyframes khixDashboardWispSpriteGlow {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: translate3d(0.08rem, 0.06rem, 0) scale(1.1) rotate(-1deg);
+  }
+
+  50% {
+    opacity: 0.36;
+    transform: translate3d(0.18rem, -0.12rem, 0) scale(1.2) rotate(1.5deg);
   }
 }
 
@@ -3107,16 +4048,6 @@
   50% {
     opacity: 0.54;
     transform: translate(-50%, -50%) rotate(24deg) scale(1.12);
-  }
-}
-
-@keyframes khixDashboardFireflies {
-  from {
-    transform: translate3d(-0.3rem, 0.18rem, 0) scale(0.985);
-  }
-
-  to {
-    transform: translate3d(0.34rem, -0.32rem, 0) scale(1.015);
   }
 }
 
@@ -3307,8 +4238,8 @@
     height: auto;
     min-height: 100vh;
     min-height: 100dvh;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: visible;
+    overflow-x: clip;
   }
 
   .statusDashboard {
@@ -3335,7 +4266,79 @@
   }
 
   .main::after {
-    opacity: 0.52;
+    inset: 0;
+    opacity: 0.42;
+  }
+
+  .portalMagic {
+    opacity: 0.88;
+  }
+
+  .portalMagic::before {
+    right: -24%;
+    bottom: -14%;
+    left: -24%;
+    height: min(34rem, 56%);
+  }
+
+  .portalMagic::after {
+    inset: 3% -28% auto;
+    height: min(24rem, 38%);
+  }
+
+  .portalCanopyGlow {
+    height: clamp(9rem, 22vh, 13rem);
+    opacity: 0.72;
+  }
+
+  .portalWisp {
+    --wisp-size: clamp(2.9rem, 12vw, 4.7rem);
+  }
+
+  .portalWisp[data-wisp="one"] {
+    --wisp-left: -6%;
+    --wisp-top: 18%;
+    --wisp-opacity: 0.5;
+  }
+
+  .portalWisp[data-wisp="two"] {
+    --wisp-left: 5%;
+    --wisp-top: 90%;
+    --wisp-opacity: 0.44;
+  }
+
+  .portalWisp[data-wisp="three"] {
+    --wisp-left: 58%;
+    --wisp-top: 24%;
+  }
+
+  .portalWisp[data-wisp="four"] {
+    --wisp-left: 88%;
+    --wisp-top: 48%;
+  }
+
+  .portalWisp[data-wisp="five"] {
+    --wisp-left: 42%;
+    --wisp-top: 92%;
+    --wisp-opacity: 0.52;
+  }
+
+  .portalWisp[data-wisp="six"] {
+    --wisp-left: 72%;
+    --wisp-top: 78%;
+    --wisp-opacity: 0.56;
+  }
+
+  .portalWisp[data-wisp="seven"] {
+    --wisp-left: 25%;
+    --wisp-top: 40%;
+    --wisp-opacity: 0.46;
+  }
+
+  .portalWisp[data-wisp="eight"] {
+    --wisp-left: 101%;
+    --wisp-top: 17%;
+    --wisp-opacity: 0.42;
   }
 
   .chrome {
@@ -3367,8 +4370,8 @@
       linear-gradient(180deg, rgb(25 9 37 / 0.96), rgb(25 9 37 / 0.9)),
       rgb(25 9 37 / 0.96);
     box-shadow:
-      inset 0 -1px rgb(210 211 131 / 0.06),
-      0 0.8rem 2.4rem rgb(25 9 37 / 0.26);
+      inset 0 -1px rgb(210 211 131 / 0.04),
+      0 0.35rem 1.25rem rgb(25 9 37 / 0.18);
     padding: max(0.72rem, env(safe-area-inset-top))
       max(1.1rem, env(safe-area-inset-right)) 0.72rem
       max(1.1rem, env(safe-area-inset-left));
@@ -3386,10 +4389,10 @@
     display: block;
     appearance: none;
     border: 0;
-    background: rgb(7 15 11 / 0.48);
+    background: rgb(7 15 11 / 0.34);
     padding: 0;
     cursor: pointer;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(2px);
     opacity: 0;
     pointer-events: none;
     transition:
@@ -3447,8 +4450,8 @@
       calc(0.9rem + env(safe-area-inset-bottom))
       max(0.9rem, env(safe-area-inset-left));
     box-shadow:
-      inset -1px 0 rgb(210 211 131 / 0.07),
-      1rem 0 3rem rgb(7 15 11 / 0.48);
+      inset -1px 0 rgb(210 211 131 / 0.05),
+      0.45rem 0 1.4rem rgb(7 15 11 / 0.32);
     opacity: 1;
     pointer-events: none;
     transform: translate3d(calc(-100% - 0.75rem), 0, 0);
@@ -3495,7 +4498,7 @@
     width: 2.65rem;
     aspect-ratio: 1;
     place-items: center;
-    border: 1px solid var(--khix-button-edge);
+    border: 1px solid transparent;
     border-radius: var(--khix-button-radius);
     background: var(--khix-button-surface);
     color: rgb(255 252 244 / 0.94);
@@ -3509,7 +4512,7 @@
   }
 
   .mobileMenuButton:hover {
-    border-color: var(--khix-button-edge-hot);
+    border-color: transparent;
     background: var(--khix-button-surface-hover);
     box-shadow: var(--khix-button-shadow-hover);
     filter: saturate(1.06);
@@ -3523,7 +4526,7 @@
     width: 100%;
     min-height: 2.8rem;
     margin-top: 0.1rem;
-    border: 1px solid rgb(145 181 97 / 0.16);
+    border: 1px solid transparent;
     border-radius: 0.54rem;
     padding: 0.42rem 0.58rem;
     font-size: 0.78rem;
@@ -3567,7 +4570,7 @@
   .logoutButton {
     width: 100%;
     min-height: 2.45rem;
-    padding: 0 0.8rem;
+    padding: 0.42rem 0.58rem;
     white-space: nowrap;
   }
 
@@ -3583,7 +4586,8 @@
     overflow: visible;
     overscroll-behavior: auto;
     scrollbar-gutter: auto;
-    padding: 0.95rem max(1.1rem, env(safe-area-inset-right))
+    padding: var(--khix-mobile-page-top-padding)
+      max(1.1rem, env(safe-area-inset-right))
       calc(1.15rem + env(safe-area-inset-bottom))
       max(1.1rem, env(safe-area-inset-left));
   }
@@ -3597,22 +4601,25 @@
 
   .profileMain,
   .loreMain {
-    padding-top: clamp(1.75rem, 4dvh, 2.5rem);
+    padding-top: var(--khix-mobile-page-top-padding);
   }
 
   .profileMain {
-    padding: 0.65rem max(0.85rem, env(safe-area-inset-right))
+    padding: var(--khix-mobile-page-top-padding)
+      max(0.85rem, env(safe-area-inset-right))
       calc(1rem + env(safe-area-inset-bottom))
       max(0.85rem, env(safe-area-inset-left));
   }
 
   .loreExperience {
-    gap: 1rem;
+    --khix-lore-mobile-copy-width: min(100%, 40rem);
+
+    gap: clamp(1.55rem, 4dvh, 2.35rem);
     padding: 0 0 calc(1.15rem + env(safe-area-inset-bottom));
   }
 
   .loreHero {
-    gap: 0.55rem;
+    gap: clamp(1.25rem, 3.4dvh, 1.9rem);
     padding-top: 0.25rem;
   }
 
@@ -3628,12 +4635,14 @@
 
   .loreIntroCopy {
     max-width: 33rem;
+    margin-bottom: clamp(0.65rem, 2dvh, 1.15rem);
     font-size: 1.02rem;
     line-height: 1.5;
   }
 
   .loreFilmStage {
     height: clamp(17rem, 42dvh, 24rem);
+    margin-bottom: clamp(4.75rem, 12dvh, 7rem);
     border-radius: 0.44rem;
   }
 
@@ -3652,6 +4661,15 @@
   .loreTeamThanks {
     grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
+  }
+
+  .loreChapterCopy,
+  .loreMerchCopy,
+  .loreTeamCopy,
+  .lorePictureCaption {
+    width: var(--khix-lore-mobile-copy-width);
+    max-width: var(--khix-lore-mobile-copy-width);
+    justify-self: center;
   }
 
   .lorePictureBeatReverse .lorePictureMedia,
@@ -3696,13 +4714,6 @@
     font-size: 0.72rem;
   }
 
-  .lorePictureCaption,
-  .loreTeamCopy {
-    width: 100%;
-    max-width: none;
-    justify-self: stretch;
-  }
-
   .loreTeamPhotos {
     gap: 0.6rem;
   }
@@ -3741,7 +4752,11 @@
     width: 100%;
     align-items: stretch;
     gap: 0.52rem;
-    margin-top: 0.9rem;
+    margin-top: clamp(1.45rem, 3.4dvh, 2.15rem);
+  }
+
+  .statusPill + .actionRow {
+    margin-top: clamp(1.7rem, 4dvh, 2.45rem);
   }
 
   .primaryButton,
@@ -3865,12 +4880,16 @@
     padding-bottom: 0;
   }
 
+  .toolDockFourUp {
+    margin-top: clamp(1.35rem, 3dvh, 1.85rem);
+  }
+
   .toolLink,
   .toolButton,
   .toolDisabled {
-    min-height: 4.85rem;
-    align-content: start;
-    gap: 0.24rem;
+    min-height: 4.15rem;
+    align-content: stretch;
+    gap: 0.46rem;
     padding: 0.72rem;
   }
 
@@ -4157,7 +5176,7 @@
 
   .logoutButton {
     min-height: 2.25rem;
-    padding: 0 0.7rem;
+    padding: 0.42rem 0.54rem;
     font-size: 0.76rem;
   }
 
@@ -4216,7 +5235,7 @@
   }
 
   .toolTitle {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
   }
 
   .toolCopy {
@@ -4226,8 +5245,8 @@
   .toolLink,
   .toolButton,
   .toolDisabled {
-    min-height: 4.55rem;
-    padding: 0.68rem;
+    min-height: 3.95rem;
+    padding: 0.62rem;
   }
 
   .profileFormBlockHeader p,
@@ -4252,6 +5271,16 @@
   .main,
   .main::before,
   .main::after,
+  .portalMagic,
+  .portalMagic::before,
+  .portalMagic::after,
+  .portalCanopyGlow,
+  .portalCanopyGlow::before,
+  .portalCanopyGlow::after,
+  .portalFirefly,
+  .portalWisp,
+  .portalWisp::before,
+  .portalWisp::after,
   .portalNavInner,
   .mobileDrawerScrim,
   .statusStage,

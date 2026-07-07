@@ -48,7 +48,7 @@ const faqSections = [
       {
         question: "When is check-in?",
         answer:
-          "Check-in begins at 4:00 PM on Friday, October 9, 2026. Check-in will be in Engineering II 102. Please check the Hacker Guide closer to the event for the specific arrival instructions.",
+          "Check-in begins at 4:00 PM on Friday, October 9, 2026. Check-in will be in Engineering II 102. Please check the Hackers Guide closer to the event for the specific arrival instructions.",
       },
       {
         question: "When and where is opening ceremony?",
@@ -63,7 +63,7 @@ const faqSections = [
       {
         question: "When is closing ceremony?",
         answer:
-          "Closing ceremony will happen asynchronously in Student Union Cape Florida Ballroom and Key West Ballroom. More details will be shared in the Hacker Guide and event announcements.",
+          "Closing ceremony will happen asynchronously in Student Union Cape Florida Ballroom and Key West Ballroom. More details will be shared in the Hackers Guide and event announcements.",
       },
       {
         question: "Do I have to stay the whole time?",
@@ -95,12 +95,12 @@ const faqSections = [
       {
         question: "Are there showers available?",
         answer:
-          "Showers will be available at the Recreation and Wellness Center. More details will be shared in the Hacker Guide closer to the event.",
+          "Showers will be available at the Recreation and Wellness Center. More details will be shared in the Hackers Guide closer to the event.",
       },
       {
         question: "Is parking available?",
         answer:
-          "Parking information will be shared in the Hacker Guide closer to the event, including any garage/pass instructions.",
+          "Parking information will be shared in the Hackers Guide closer to the event, including any garage/pass instructions.",
       },
     ],
   },
@@ -117,7 +117,7 @@ const faqSections = [
       {
         question: "How does project submission and judging work?",
         answer:
-          "Projects must be submitted through Devpost and use GitHub for version control. During judging, teams will present their projects to general judges and sponsor judges. Final judging details will be shared in the Hacker Guide and event announcements.",
+          "Projects must be submitted through Devpost and use GitHub for version control. During judging, teams will present their projects to general judges and sponsor judges. Final judging details will be shared in the Hackers Guide and event announcements.",
       },
       {
         question: "Can I use a past project or something I've built before?",
@@ -154,7 +154,7 @@ const faqSections = [
       {
         question: "My question wasn't answered. Where can I ask?",
         answer:
-          "Check the Hacker Guide for the most up-to-date information. If you still have questions, ask in the Knight Hacks Discord or email hack@knighthacks.org.",
+          "Check the Hackers Guide for the most up-to-date information. If you still have questions, ask in the Knight Hacks Discord or email hack@knighthacks.org.",
       },
       {
         question: "How can I become a sponsor?",

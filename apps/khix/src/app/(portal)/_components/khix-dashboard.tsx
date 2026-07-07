@@ -76,12 +76,6 @@ import { toast } from "@forge/ui/toast";
 import { signOut } from "~/auth/client";
 import styles from "./khix-dashboard.module.css";
 
-const timeFormatter = new Intl.DateTimeFormat("en-US", {
-  hour: "numeric",
-  minute: "2-digit",
-  timeZone: "America/New_York",
-});
-
 const profileDateFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
   timeZone: "UTC",
@@ -98,6 +92,9 @@ interface CountdownState {
 
 const WITHDRAW_HOLD_READY_MS = 1100;
 const MOBILE_DRAWER_TRANSITION_MS = 280;
+const PORTAL_FIREFLY_IDS = Array.from({ length: 24 }, (_, index) =>
+  String(index + 1),
+);
 type MobileDrawerState = "closed" | "opening" | "open" | "closing";
 const applicationLinks: Record<"mentor" | "volunteer", string> = {
   mentor: "https://forms.gle/CThgMyhCHZzdwYPq6",
@@ -115,19 +112,19 @@ const statusScenes: Record<
   }
 > = {
   accepted: {
-    body: "Read the terms and confirm your seat before the deadline.",
+    body: "Congratulations, you've been accepted into Knight Hacks IX! Read the terms, then agree and confirm.",
     headline: "You're in!\nConfirm your spot!",
     label: "Accepted",
     statusClassName: styles.statusAccepted,
   },
   checkedin: {
-    body: "Live tools are open. Keep your QR and schedule close today.",
-    headline: "You're checked in.",
+    body: "Thank you for coming!! We hope you have an awesome experience!",
+    headline: "You're checked in!",
     label: "Checked in",
     statusClassName: styles.statusCheckedin,
   },
   confirmed: {
-    body: "Your seat is reserved. Arrival tools are staged here for event day.",
+    body: "We're so excited to see you! Thank you for confirming your spot!",
     headline: "You're confirmed for Knight Hacks IX.",
     label: "Confirmed",
     statusClassName: styles.statusConfirmed,
@@ -352,8 +349,6 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
     reportIssueMutation,
     resumeQuery,
     resumeUrl,
-    schedule,
-    scheduleQuery,
     withdrawAttendance,
     withdrawMutation,
   } = useHackerDashboardFlow();
@@ -555,15 +550,9 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
         }
         qrLoading={qrMutation.isPending}
         loadQRCode={loadQRCode}
+        hideApplications={participant.status === "checkedin"}
         supportUrl={config.copy.supportChannelUrl}
       />
-
-      {participant.status === "checkedin" && (
-        <LiveSchedule
-          schedule={schedule}
-          schedulePending={scheduleQuery.isPending}
-        />
-      )}
     </KhixDashboardShell>
   );
 }
@@ -1015,16 +1004,6 @@ function KhixDashboardShell({
               >
                 <X className="size-5" />
               </button>
-              <Link
-                href="/"
-                className={styles.siteReturnLink}
-                onClick={closeMobileMenu}
-              >
-                <span className={styles.railIcon} aria-hidden="true">
-                  <Home className="size-4" />
-                </span>
-                <span>Return to site</span>
-              </Link>
             </div>
 
             <nav id="khix-dashboard-nav" className={styles.railNav}>
@@ -1100,6 +1079,16 @@ function KhixDashboardShell({
 
             <div className={styles.navFooter}>
               {sessionUser ? <SignedInNavCard user={sessionUser} /> : null}
+              <Link
+                href="/"
+                className={styles.siteReturnLink}
+                onClick={closeMobileMenu}
+              >
+                <span className={styles.railIcon} aria-hidden="true">
+                  <Home className="size-4" />
+                </span>
+                <span>Return to site</span>
+              </Link>
               <button
                 type="button"
                 className={styles.logoutButton}
@@ -1122,6 +1111,26 @@ function KhixDashboardShell({
           )}
           tabIndex={-1}
         >
+          <span className={styles.portalMagic} aria-hidden="true">
+            <span className={styles.portalCanopyGlow} />
+            <span className={styles.portalFireflies}>
+              {PORTAL_FIREFLY_IDS.map((fireflyId) => (
+                <span
+                  key={fireflyId}
+                  className={styles.portalFirefly}
+                  data-firefly={fireflyId}
+                />
+              ))}
+            </span>
+            <span className={styles.portalWisp} data-wisp="one" />
+            <span className={styles.portalWisp} data-wisp="two" />
+            <span className={styles.portalWisp} data-wisp="three" />
+            <span className={styles.portalWisp} data-wisp="four" />
+            <span className={styles.portalWisp} data-wisp="five" />
+            <span className={styles.portalWisp} data-wisp="six" />
+            <span className={styles.portalWisp} data-wisp="seven" />
+            <span className={styles.portalWisp} data-wisp="eight" />
+          </span>
           {children}
         </div>
       </div>
@@ -2670,7 +2679,10 @@ function StatusAction({
           isLoading={qrLoading}
           loadQRCode={loadQRCode}
           qrCode={qrCode}
-          triggerClassName={styles.primaryButton}
+          triggerClassName={joinClasses(
+            styles.primaryButton,
+            styles.checkInButton,
+          )}
           triggerContent={
             <span className={styles.checkInQrTrigger}>
               <QrCode className={styles.checkInQrIcon} aria-hidden="true" />
@@ -2705,7 +2717,7 @@ function StatusAction({
         disabled
         type="button"
       >
-        Hacker guide <LockKeyhole className="size-4" />
+        Hackers guide <LockKeyhole className="size-4" />
       </Button>
     </>
   );
@@ -2874,6 +2886,7 @@ function HoldToWithdrawButton({
 }
 
 function ToolDock({
+  hideApplications = false,
   loadQRCode,
   qrAvailable,
   qrCode,
@@ -2884,6 +2897,7 @@ function ToolDock({
   resumeUrl,
   supportUrl,
 }: {
+  hideApplications?: boolean;
   loadQRCode?: () => Promise<unknown>;
   qrAvailable?: boolean;
   qrCode?: string;
@@ -2897,32 +2911,39 @@ function ToolDock({
   return (
     <section
       id="dashboard-links"
-      className={styles.toolDock}
+      className={joinClasses(
+        styles.toolDock,
+        hideApplications && styles.toolDockFourUp,
+      )}
       aria-label="Dashboard links"
     >
       <ActionTile
         description="Rules, arrival notes, and prep open closer to Knight Hacks IX."
         icon={<LockKeyhole className="size-4" />}
-        label="Hacker guide"
+        label="Hackers guide"
         meta="Locked"
         disabled
       />
-      <ApplicationDialog
-        description="Apply to help run Knight Hacks IX."
-        href={applicationLinks.volunteer}
-        icon={<FileText className="size-4" />}
-        label="Volunteer application"
-        openLabel="Open volunteer form"
-        warning="Volunteers help run Knight Hacks IX. If you apply and are selected as a volunteer, you will not be able to participate as a hacker."
-      />
-      <ApplicationDialog
-        description="Apply to support hacker teams during Knight Hacks IX."
-        href={applicationLinks.mentor}
-        icon={<UserRound className="size-4" />}
-        label="Mentor application"
-        openLabel="Open mentor form"
-        warning="Mentors support teams during Knight Hacks IX. If you apply and are selected as a mentor, you will not be able to participate as a hacker."
-      />
+      {!hideApplications && (
+        <>
+          <ApplicationDialog
+            description="Apply to help run Knight Hacks IX."
+            href={applicationLinks.volunteer}
+            icon={<FileText className="size-4" />}
+            label="Volunteer application"
+            openLabel="Open volunteer form"
+            warning="Volunteers help run Knight Hacks IX. If you apply and are selected as a volunteer, you will not be able to participate as a hacker."
+          />
+          <ApplicationDialog
+            description="Apply to support hacker teams during Knight Hacks IX."
+            href={applicationLinks.mentor}
+            icon={<UserRound className="size-4" />}
+            label="Mentor application"
+            openLabel="Open mentor form"
+            warning="Mentors support teams during Knight Hacks IX. If you apply and are selected as a mentor, you will not be able to participate as a hacker."
+          />
+        </>
+      )}
       <ActionTile
         description="Organizer updates and support."
         href={supportUrl}
@@ -3232,62 +3253,6 @@ function IssueDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function LiveSchedule({
-  schedule,
-  schedulePending,
-}: {
-  schedule: {
-    description: string;
-    endDateTime: Date;
-    id: string;
-    location: string;
-    name: string;
-    startDateTime: Date;
-    tag: string;
-  }[];
-  schedulePending: boolean;
-}) {
-  return (
-    <aside className={styles.drawerPanel} aria-labelledby="khix-live-title">
-      <div className={styles.drawerHeader}>
-        <div>
-          <p className={styles.drawerLabel}>Live at Knight Hacks IX</p>
-          <h2 id="khix-live-title" className={styles.drawerTitle}>
-            Schedule
-          </h2>
-          <p className={styles.drawerCopy}>
-            Event updates and support tools stay here once check-in opens.
-          </p>
-        </div>
-      </div>
-
-      {schedulePending ? (
-        <p className={styles.emptySchedule}>Loading the live schedule.</p>
-      ) : schedule.length === 0 ? (
-        <p className={styles.emptySchedule}>
-          The live schedule will appear here when it is published.
-        </p>
-      ) : (
-        <ol className={styles.scheduleList}>
-          {schedule.map((event) => (
-            <li key={event.id} className={styles.scheduleItem}>
-              <time className={styles.scheduleTime}>
-                {timeFormatter.format(event.startDateTime)}
-              </time>
-              <div>
-                <h3 className={styles.scheduleTitle}>{event.name}</h3>
-                <p className={styles.scheduleCopy}>{event.description}</p>
-                <p className={styles.scheduleLocation}>{event.location}</p>
-              </div>
-              <span className={styles.scheduleTag}>{event.tag}</span>
-            </li>
-          ))}
-        </ol>
-      )}
-    </aside>
   );
 }
 
