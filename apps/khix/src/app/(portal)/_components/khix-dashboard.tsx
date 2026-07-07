@@ -92,6 +92,8 @@ interface CountdownState {
 
 const WITHDRAW_HOLD_READY_MS = 1100;
 const MOBILE_DRAWER_TRANSITION_MS = 280;
+const KHIX_EVENT_DETAILS =
+  "October 9-11, 2026 at University of Central Florida";
 const PORTAL_FIREFLY_IDS = Array.from({ length: 24 }, (_, index) =>
   String(index + 1),
 );
@@ -1623,7 +1625,6 @@ function ProfileSection({
       : profileName.length > 18
         ? styles.profileSummaryNameLong
         : undefined;
-  const statusScene = statusScenes[participant.status];
   const profileFacts = [
     { label: "School", value: participant.school },
     { label: "Major", value: participant.major },
@@ -1729,14 +1730,6 @@ function ProfileSection({
                 >
                   {profileName}
                 </h1>
-                <span
-                  className={joinClasses(
-                    styles.profileSummaryStatus,
-                    statusScene.statusClassName,
-                  )}
-                >
-                  {statusScene.label}
-                </span>
               </div>
               <dl className={styles.profileSummaryList}>
                 {profileFacts.map((fact) => (
@@ -2590,7 +2583,10 @@ function StatusStage({
       </h1>
       <p className={styles.subcopy}>{body}</p>
       {countdown ? (
-        <div className={styles.countdownSlot}>{countdown}</div>
+        <>
+          <div className={styles.countdownSlot}>{countdown}</div>
+          <p className={styles.eventDetails}>{KHIX_EVENT_DETAILS}</p>
+        </>
       ) : null}
       {statusLabel ? (
         <span className={joinClasses(styles.statusPill, statusClassName)}>
@@ -3249,7 +3245,10 @@ function IssueDialog({
         />
         <DialogFooter>
           <Button
-            className={styles.primaryButton}
+            className={joinClasses(
+              styles.primaryButton,
+              styles.reportSubmitButton,
+            )}
             disabled={!issue.trim() || isPending}
             onClick={() => void onReport()}
             type="button"

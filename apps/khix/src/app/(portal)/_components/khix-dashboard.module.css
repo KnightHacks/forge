@@ -637,7 +637,7 @@
 
 .countdownEyebrow {
   margin: 0;
-  color: rgb(145 181 97 / 0.86);
+  color: rgb(255 252 244 / 0.78);
   font-size: 0.78rem;
   font-weight: 950;
   letter-spacing: 0.14em;
@@ -1669,6 +1669,11 @@
   );
 }
 
+.profileMain .portalMagic,
+.loreMain .portalMagic {
+  display: none;
+}
+
 .loreExperience {
   position: relative;
   z-index: 1;
@@ -1684,7 +1689,7 @@
 .loreHero {
   display: grid;
   justify-items: center;
-  gap: clamp(0.72rem, 1.6vh, 1rem);
+  gap: clamp(1.25rem, 2.6vh, 1.85rem);
   padding-top: clamp(2.75rem, 5.5dvh, 4.25rem);
   text-align: center;
   animation: khixDashboardStageSettle 720ms var(--khix-ease-soft) 100ms both;
@@ -1744,7 +1749,7 @@
   width: min(64rem, 100%);
   height: clamp(20rem, 48dvh, 34rem);
   justify-self: center;
-  margin: 0;
+  margin: clamp(1.15rem, 3vh, 2.25rem) 0 0;
   overflow: hidden;
   border: 1px solid rgb(210 211 131 / 0.22);
   border-radius: 0.5rem;
@@ -1766,35 +1771,7 @@
 
 .loreFilmStage::before,
 .loreFilmStage::after {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  content: "";
-}
-
-.loreFilmStage::before {
-  background:
-    linear-gradient(
-      90deg,
-      rgb(7 15 11 / 0.62),
-      transparent 14% 86%,
-      rgb(7 15 11 / 0.62)
-    ),
-    linear-gradient(
-      180deg,
-      rgb(255 252 244 / 0.08),
-      transparent 22% 74%,
-      rgb(7 15 11 / 0.36)
-    );
-}
-
-.loreFilmStage::after {
-  border: 1px solid rgb(255 252 244 / 0.08);
-  border-radius: inherit;
-  box-shadow:
-    inset 0 0 4.5rem rgb(7 15 11 / 0.42),
-    inset 0 0 0.9rem rgb(210 211 131 / 0.1);
+  display: none;
 }
 
 .loreFilmPoster,
@@ -1994,15 +1971,7 @@
 .loreGifFrame::after,
 .lorePictureMedia::after,
 .loreMerchImage::after {
-  position: absolute;
-  inset: auto 0 0;
-  z-index: 1;
-  height: 36%;
-  background: linear-gradient(180deg, transparent, rgb(7 15 11 / 0.68));
-  opacity: 0;
-  pointer-events: none;
-  content: "";
-  transition: opacity 180ms ease;
+  display: none;
 }
 
 .loreGifFrame:hover::after,
@@ -2325,6 +2294,7 @@
 .statusStage > .headline,
 .statusStage > .subcopy,
 .statusStage > .countdownSlot,
+.statusStage > .eventDetails,
 .statusStage > .statusPill,
 .statusStage > .actionRow {
   animation: khixDashboardContentRise 660ms var(--khix-ease-out) backwards;
@@ -2346,12 +2316,16 @@
   animation-delay: 360ms;
 }
 
-.statusStage > .statusPill {
+.statusStage > .eventDetails {
   animation-delay: 430ms;
 }
 
-.statusStage > .actionRow {
+.statusStage > .statusPill {
   animation-delay: 500ms;
+}
+
+.statusStage > .actionRow {
+  animation-delay: 570ms;
 }
 
 .acceptedStatusStage {
@@ -2442,6 +2416,21 @@
   min-height: clamp(4.2rem, 7vh, 4.85rem);
   border-color: rgb(145 181 97 / 0.26);
   background: rgb(25 9 37 / 0.62);
+}
+
+.eventDetails {
+  width: min(36rem, 100%);
+  margin: clamp(0.7rem, 1.55vh, 0.95rem) auto 0;
+  color: rgb(255 252 244 / 0.78);
+  font-size: clamp(0.82rem, 1vw, 1rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  text-shadow: 0 0 0.7rem rgb(25 9 37 / 0.74);
+}
+
+.eventDetails + .statusPill {
+  margin-top: clamp(4.35rem, 8.8vh, 6.35rem);
 }
 
 .statusPill {
@@ -2537,7 +2526,7 @@
   flex-wrap: nowrap;
   justify-content: center;
   gap: clamp(0.72rem, 1.1vw, 0.92rem);
-  margin: clamp(1.4rem, 3vh, 2rem) auto 0;
+  margin: clamp(4rem, 8.4vh, 6rem) auto 0;
 }
 
 .actionRow > * {
@@ -2552,7 +2541,7 @@
 }
 
 .statusPill + .actionRow {
-  margin-top: clamp(1.55rem, 3.2vh, 2.25rem);
+  margin-top: clamp(1.35rem, 3vh, 2rem);
 }
 
 .actionRow > :nth-child(1) {
@@ -3157,23 +3146,6 @@
   font-size: min(clamp(1.65rem, 3.7vw, 3.4rem), 6.7vw);
 }
 
-.profileSummaryStatus {
-  --status-text-color: rgb(210 211 131 / 0.96);
-  --status-glow-mid: rgb(210 211 131 / 0.34);
-
-  width: fit-content;
-  border: 1px solid rgb(145 181 97 / 0.22);
-  border-radius: 999px;
-  background: rgb(93 171 103 / 0.1);
-  color: var(--status-text-color);
-  font-size: 0.68rem;
-  font-weight: 900;
-  line-height: 1;
-  padding: 0.36rem 0.52rem;
-  text-shadow: 0 0 0.7rem var(--status-glow-mid);
-  text-transform: uppercase;
-}
-
 .profileSummaryList {
   display: grid;
   grid-column: 1 / -1;
@@ -3258,12 +3230,8 @@
 
 .profileFormBlockHeader::before {
   width: fit-content;
-  border: 1px solid rgb(145 181 97 / 0.24);
-  border-radius: 0.28rem;
-  background: rgb(93 171 103 / 0.1);
   color: rgb(210 211 131 / 0.82);
   content: counter(profileBlock, decimal-leading-zero);
-  padding: 0.16rem 0.3rem;
   font-size: 0.58rem;
   font-weight: 950;
   letter-spacing: 0.08em;
@@ -3337,8 +3305,10 @@
 .profileComboboxTrigger {
   border-color: var(--khix-button-edge) !important;
   border-radius: 0.58rem !important;
-  background: var(--khix-button-surface) !important;
-  box-shadow: var(--khix-button-shadow);
+  background: rgb(25 9 37 / 0.62) !important;
+  box-shadow:
+    inset 0 1px rgb(210 211 131 / 0.05),
+    0 0.45rem 1rem rgb(25 9 37 / 0.12);
   transition:
     background 180ms ease,
     border-color 180ms ease,
@@ -3351,11 +3321,20 @@
 .profileSelectTrigger:hover,
 .profileComboboxTrigger:hover {
   border-color: var(--khix-button-edge-hot) !important;
-  background: var(--khix-button-surface-hover) !important;
-  box-shadow: var(--khix-button-shadow-hover);
+  background: rgb(25 9 37 / 0.72) !important;
+  box-shadow:
+    inset 0 1px rgb(210 211 131 / 0.08),
+    0 0.55rem 1.1rem rgb(25 9 37 / 0.16);
   color: rgb(255 252 244 / 0.96) !important;
   filter: saturate(1.05);
   transform: translateY(-1px);
+}
+
+.profileSelectTrigger::after,
+.profileComboboxTrigger::after,
+.profileAllergyTrigger::after,
+.profileAllergyOption::after {
+  display: none;
 }
 
 .profileInput,
@@ -3415,9 +3394,11 @@
   white-space: normal;
   border: 1px solid var(--khix-button-edge) !important;
   border-radius: 0.58rem !important;
-  background: var(--khix-button-surface) !important;
+  background: rgb(25 9 37 / 0.62) !important;
   color: var(--khix-ink) !important;
-  box-shadow: var(--khix-button-shadow);
+  box-shadow:
+    inset 0 1px rgb(210 211 131 / 0.05),
+    0 0.45rem 1rem rgb(25 9 37 / 0.12);
   padding: 0.54rem 0.62rem;
   text-align: left;
   transition:
@@ -3431,8 +3412,10 @@
 
 .profileAllergyTrigger:hover {
   border-color: var(--khix-button-edge-hot) !important;
-  background: var(--khix-button-surface-hover) !important;
-  box-shadow: var(--khix-button-shadow-hover);
+  background: rgb(25 9 37 / 0.72) !important;
+  box-shadow:
+    inset 0 1px rgb(210 211 131 / 0.08),
+    0 0.55rem 1.1rem rgb(25 9 37 / 0.16);
   color: rgb(255 252 244 / 0.96) !important;
   filter: saturate(1.05);
   transform: translateY(-1px);
@@ -3494,10 +3477,8 @@
 
 .profileAllergyOption:hover {
   border-color: rgb(145 181 97 / 0.26);
-  background: var(--khix-button-surface-hover);
-  box-shadow:
-    inset 0 1px rgb(255 252 244 / 0.08),
-    0 0.65rem 1.5rem rgb(25 9 37 / 0.16);
+  background: rgb(93 171 103 / 0.12);
+  box-shadow: inset 0 1px rgb(255 252 244 / 0.06);
   color: rgb(255 252 244 / 0.96);
   transform: translateY(-1px);
 }
@@ -3572,6 +3553,12 @@
 .profileSubmitButton {
   min-height: 2.72rem;
   min-width: 12rem;
+  overflow: visible;
+}
+
+.profileSubmitButton::after {
+  inset: -0.95rem;
+  border-radius: calc(var(--khix-button-radius) + 0.95rem);
 }
 
 .profileGroupTitle {
@@ -3695,6 +3682,7 @@
 
 .dialog {
   --khix-dialog-rail-offset: clamp(12.75rem, 17vw, 15.75rem);
+  --khix-button-radius: 0.66rem;
 
   left: calc(50% + (var(--khix-dialog-rail-offset) / 2)) !important;
   max-height: min(90vh, 46rem);
@@ -3749,6 +3737,18 @@
 .dialogActionRow .ghostButton {
   width: 100%;
   justify-content: center;
+}
+
+.dialog .reportSubmitButton,
+.dialog .reportSubmitButton:hover:not(:disabled),
+.dialog .reportSubmitButton:focus-visible {
+  overflow: visible;
+  border-radius: 0.66rem;
+}
+
+.dialog .reportSubmitButton::after {
+  inset: -0.95rem;
+  border-radius: 1.61rem;
 }
 
 .issueTextarea {
@@ -4642,6 +4642,7 @@
 
   .loreFilmStage {
     height: clamp(17rem, 42dvh, 24rem);
+    margin-top: 0;
     margin-bottom: clamp(4.75rem, 12dvh, 7rem);
     border-radius: 0.44rem;
   }
@@ -4788,6 +4789,13 @@
     margin-top: clamp(0.55rem, 1.55dvh, 0.8rem);
   }
 
+  .eventDetails {
+    width: min(26rem, 100%);
+    margin-top: clamp(0.42rem, 1.2dvh, 0.66rem);
+    font-size: clamp(0.62rem, 2.6vw, 0.82rem);
+    line-height: 1.25;
+  }
+
   .countdownEyebrow {
     font-size: clamp(0.64rem, min(3.1vw, 1.9dvh), 0.78rem);
   }
@@ -4835,6 +4843,10 @@
 
   .acceptedStatusStage .countdownSlot {
     margin-top: clamp(0.65rem, 1.8dvh, 1rem);
+  }
+
+  .acceptedStatusStage .eventDetails {
+    margin-top: clamp(0.42rem, 1.2dvh, 0.66rem);
   }
 
   .acceptedStatusStage .countdownGrid {
@@ -5288,6 +5300,7 @@
   .statusStage > .headline,
   .statusStage > .subcopy,
   .statusStage > .countdownSlot,
+  .statusStage > .eventDetails,
   .statusStage > .statusPill,
   .statusStage > .actionRow,
   .headlineLine,
