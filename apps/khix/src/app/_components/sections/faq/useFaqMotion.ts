@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 
 interface FaqMotion {
   sectionRef: RefObject<HTMLElement | null>;
+  motionLayerRef: RefObject<HTMLDivElement | null>;
   handlePointerMove: (event: PointerEvent<HTMLElement>) => void;
   handlePointerLeave: () => void;
 }
@@ -23,6 +24,7 @@ const setMotionNumber = (
 
 export function useFaqMotion(): FaqMotion {
   const sectionRef = useRef<HTMLElement>(null);
+  const motionLayerRef = useRef<HTMLDivElement>(null);
   const pointerFrameRef = useRef(0);
   const pendingPointerRef = useRef({ x: 0, y: 0 });
   const shouldReduceMotionRef = useRef(false);
@@ -44,8 +46,8 @@ export function useFaqMotion(): FaqMotion {
 
     motionValues.pointerX = x;
     motionValues.pointerY = y;
-    setMotionNumber(sectionRef.current, "--faq-motion-pointer-x", x);
-    setMotionNumber(sectionRef.current, "--faq-motion-pointer-y", y);
+    setMotionNumber(motionLayerRef.current, "--faq-motion-pointer-x", x);
+    setMotionNumber(motionLayerRef.current, "--faq-motion-pointer-y", y);
   };
 
   const cancelPointerFrame = () => {
@@ -85,7 +87,7 @@ export function useFaqMotion(): FaqMotion {
 
       motionValues.scrollProgress = progress;
       setMotionNumber(
-        sectionRef.current,
+        motionLayerRef.current,
         "--faq-motion-scroll-progress",
         progress,
       );
@@ -181,6 +183,7 @@ export function useFaqMotion(): FaqMotion {
 
   return {
     sectionRef,
+    motionLayerRef,
     handlePointerMove,
     handlePointerLeave,
   };

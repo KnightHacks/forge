@@ -442,7 +442,8 @@ export default function FAQ() {
   const [activeSectionId, setActiveSectionId] =
     useState<FaqSectionId>("general");
   const [openQuestion, setOpenQuestion] = useState<number | null>(null);
-  const { sectionRef, handlePointerMove, handlePointerLeave } = useFaqMotion();
+  const { sectionRef, motionLayerRef, handlePointerMove, handlePointerLeave } =
+    useFaqMotion();
   const activeSection = useMemo(
     () => faqSections.find((section) => section.id === activeSectionId),
     [activeSectionId],
@@ -461,12 +462,15 @@ export default function FAQ() {
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      <div className={styles.background} aria-hidden="true" />
-      <div className={styles.atmosphereVeil} aria-hidden="true" />
+      <div ref={motionLayerRef} className={styles.motionLayer}>
+        <div className={styles.background} aria-hidden="true" />
 
-      {floatingAssets.map((asset) => (
-        <ParallaxAsset key={asset.className} asset={asset} />
-      ))}
+        {floatingAssets.map((asset) => (
+          <ParallaxAsset key={asset.className} asset={asset} />
+        ))}
+      </div>
+
+      <div className={styles.atmosphereVeil} aria-hidden="true" />
 
       <div className={styles.caveFloor}>
         <div className={styles.floorRocks} aria-hidden="true">

@@ -7,7 +7,6 @@ import { AssetCredit } from "../../assets";
 import styles from "./LennyBlink.module.css";
 
 const FRAME_COUNT = 19;
-const firstFrameSource = "/faq/lennyblink/Frame 1.png";
 const frameSources = Array.from(
   { length: FRAME_COUNT },
   (_, index) => `/faq/lennyblink/Frame ${index + 1}.png`,
@@ -24,11 +23,6 @@ export function LennyBlink({ className }: LennyBlinkProps) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
-
-    frameSources.slice(1).forEach((src) => {
-      const frame = new window.Image();
-      frame.src = src;
-    });
 
     let timeoutId: ReturnType<typeof setTimeout>;
 
@@ -57,14 +51,23 @@ export function LennyBlink({ className }: LennyBlinkProps) {
       label="Animation by"
       credits={[{ name: "Knight Hacks Design Team" }]}
     >
-      <Image
-        src={frameSources[frameIndex] ?? firstFrameSource}
-        alt="Lenny the Knight Hacks dragon blinking"
-        width={2667}
-        height={3318}
-        className={styles.frame}
-        unoptimized
-      />
+      <span className={styles.frameStack}>
+        {frameSources.map((src, index) => (
+          <Image
+            key={src}
+            src={src}
+            alt={index === 0 ? "Lenny the Knight Hacks dragon blinking" : ""}
+            width={2667}
+            height={3318}
+            className={styles.frame}
+            loading={index === 0 ? undefined : "eager"}
+            data-active={index === frameIndex ? "true" : undefined}
+            aria-hidden={index === 0 ? undefined : true}
+            priority={index === 0}
+            unoptimized
+          />
+        ))}
+      </span>
     </AssetCredit>
   );
 }
