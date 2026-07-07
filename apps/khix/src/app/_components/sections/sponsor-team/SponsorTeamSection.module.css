@@ -375,16 +375,6 @@
   margin: 0 auto;
 }
 
-.teamCascade::before {
-  position: absolute;
-  inset: 0 12% auto;
-  height: 26%;
-  content: "";
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent);
-  filter: blur(0.4rem);
-  pointer-events: none;
-}
-
 @media (max-width: 520px) {
   .sponsorShowcase {
     --sponsor-title-size: clamp(3.1rem, 19vw, 5rem);

@@ -116,51 +116,6 @@
 
   width: min(100%, 70rem);
   margin: 0 auto;
-  border: 1px solid rgba(85, 209, 226, 0.42);
-  border-radius: 8px;
-  background:
-    linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.28),
-      transparent 22%,
-      transparent 78%,
-      rgba(255, 255, 255, 0.18)
-    ),
-    radial-gradient(
-      circle at 50% 0%,
-      rgba(223, 255, 244, 0.92),
-      rgba(117, 222, 236, 0.34) 35%,
-      transparent 68%
-    ),
-    linear-gradient(180deg, #dffcf0 0%, #8ddce9 48%, #56aeca 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.74),
-    inset 0 -3rem 6rem rgba(19, 92, 122, 0.14),
-    0 1.2rem 3rem rgba(23, 32, 51, 0.12);
-}
-
-.teamCascadeBox::before {
-  position: absolute;
-  inset: -8% 28% -8%;
-  content: "";
-  background:
-    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.54), transparent),
-    repeating-linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.16) 0 0.2rem,
-      transparent 0.2rem 1.8rem
-    );
-  filter: blur(0.4px);
-  opacity: 0.78;
-}
-
-.teamCascadeBox::after {
-  position: absolute;
-  inset: auto 0 0;
-  height: 28%;
-  content: "";
-  background: linear-gradient(180deg, transparent, rgba(17, 86, 116, 0.22));
-  pointer-events: none;
 }
 
 .previewPanel,
