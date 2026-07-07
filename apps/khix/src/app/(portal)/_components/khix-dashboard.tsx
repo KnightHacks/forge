@@ -1492,15 +1492,14 @@ function LoreExperience() {
             <span>For the people behind Knight Hacks IX</span>
             <span className={styles.loreHeart} aria-hidden="true" />
           </p>
-          <h2 id="khix-lore-team-title">To the Ones Who Built it all</h2>
+          <h2 id="khix-lore-team-title">To My Team</h2>
           <p>
-            To the organizing team: thank you for making this event and
-            continuing to shape it into the hackathon you wanted people to
-            experience, especially the hackers walking into their first one.
-            This has been many months of planning, checking, adjusting, and
-            caring about details most people will never see. Because of that
-            work, hundreds of people will get the chance to grow as builders,
-            teammates, and leaders.
+            Thank you for making this event and continuing to shape it into the
+            hackathon you wanted people to experience, especially the hackers
+            walking into their first one. This has been many months of planning,
+            checking, adjusting, and caring about details most people will never
+            see. Because of that work, hundreds of people will get the chance to
+            grow as builders, teammates, and leaders.
           </p>
           <p>
             You are giving your time so students at the University of Central
@@ -1522,6 +1521,14 @@ function LoreExperience() {
             inside software engineering and the careers people build from it. We
             are nothing without you as a team, and every part of Knight Hacks IX
             is stronger because of what you made.
+          </p>
+          <p>
+            And to every other team that contributed: thank you for carrying
+            your piece of this event with so much care. Outreach, sponsorship,
+            workshops, development, operations, mentors, volunteers, and
+            everyone who jumped in helped make Knight Hacks IX real. I love
+            y'all, and this event is better because all of you chose to build it
+            together.
           </p>
           <p className={styles.loreSignature}>- Adrian Osorio President</p>
         </div>
