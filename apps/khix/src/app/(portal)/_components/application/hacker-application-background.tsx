@@ -325,6 +325,7 @@ export function HackerApplicationBackground({
       for (const src of layer.animatedFrameSrcs) {
         const frame = new window.Image();
         frame.src = src;
+        void frame.decode().catch(() => undefined);
       }
     }
   }, [layers]);
@@ -449,6 +450,14 @@ export function HackerApplicationBackground({
         current.visualKey === visualConfig.key
           ? current
           : getFreshLayerState(visualConfig.key, layers);
+      const currentSize = baseState.layerSizes[layerId];
+
+      if (
+        currentSize?.height === size.height &&
+        currentSize.width === size.width
+      ) {
+        return current;
+      }
 
       return {
         ...baseState,
@@ -595,43 +604,55 @@ export function HackerApplicationBackground({
     }
 
     if (layer.animatedFrameSrcs?.length) {
+      const frameSources = layer.animatedFrameSrcs;
       const restFrameIndex = getAnimatedRestFrameIndex(layer);
       const frameIndex =
         (animatedFrameIndexes[layer.id] ?? restFrameIndex) %
-        layer.animatedFrameSrcs.length;
-      const frameSrc = layer.animatedFrameSrcs[frameIndex] ?? layerSrc;
+        frameSources.length;
 
       return renderAnimatedLayerContainer(
-        // eslint-disable-next-line @next/next/no-img-element -- Supports arbitrary R2/local image URLs while retaining the last animation frame when paused.
-        <img
-          alt={layer.alt ?? ""}
-          className={cn(
-            "h-full w-full max-w-none select-none",
-            layer.mediaClassName,
-          )}
-          decoding="async"
-          fetchPriority={isPrimaryLayer ? "high" : "auto"}
-          loading={isPrimaryLayer ? "eager" : "lazy"}
-          referrerPolicy="no-referrer"
-          src={frameSrc}
-          style={layerMediaStyle}
-          onError={() => {
-            markLayerFailed(layer.id);
-          }}
-          onLoad={(event) => {
-            if (
-              event.currentTarget.naturalWidth <= 0 ||
-              event.currentTarget.naturalHeight <= 0
-            ) {
-              return;
-            }
+        <>
+          {frameSources.map((frameSrc, index) => {
+            const isVisible = index === frameIndex;
 
-            setLayerSize(layer.id, {
-              height: event.currentTarget.naturalHeight,
-              width: event.currentTarget.naturalWidth,
-            });
-          }}
-        />,
+            return (
+              // eslint-disable-next-line @next/next/no-img-element -- Keeps locally generated animation frames mounted so Chromium does not flicker between src swaps.
+              <img
+                key={frameSrc}
+                alt={isVisible ? (layer.alt ?? "") : ""}
+                className={cn(
+                  "absolute inset-0 h-full w-full max-w-none select-none",
+                  layer.mediaClassName,
+                )}
+                decoding="async"
+                fetchPriority={isPrimaryLayer || isVisible ? "high" : "auto"}
+                loading="eager"
+                referrerPolicy="no-referrer"
+                src={frameSrc}
+                style={{
+                  ...layerMediaStyle,
+                  opacity: isVisible ? 1 : 0,
+                }}
+                onError={() => {
+                  markLayerFailed(layer.id);
+                }}
+                onLoad={(event) => {
+                  if (
+                    event.currentTarget.naturalWidth <= 0 ||
+                    event.currentTarget.naturalHeight <= 0
+                  ) {
+                    return;
+                  }
+
+                  setLayerSize(layer.id, {
+                    height: event.currentTarget.naturalHeight,
+                    width: event.currentTarget.naturalWidth,
+                  });
+                }}
+              />
+            );
+          })}
+        </>,
       );
     }
 

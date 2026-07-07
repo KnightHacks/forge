@@ -266,14 +266,23 @@ const participantPortalRouterImplementation = {
 
       const fileBuffer = decodeAndValidateResumeDataUrl(input.fileContent);
       const filePath = createResumeObjectName(ctx.session.user.id);
-      await ensureResumeBucketExists();
-      await resumeStorageClient.putObject(
-        RESUME_BUCKET_NAME,
-        filePath,
-        fileBuffer,
-        fileBuffer.length,
-        { "Content-Type": "application/pdf" },
-      );
+      try {
+        await ensureResumeBucketExists();
+        await resumeStorageClient.putObject(
+          RESUME_BUCKET_NAME,
+          filePath,
+          fileBuffer,
+          fileBuffer.length,
+          { "Content-Type": "application/pdf" },
+        );
+      } catch (error) {
+        logger.error("Unable to upload participant resume:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message:
+            "Could not upload your resume right now. Please try again or contact the organizers.",
+        });
+      }
       return filePath;
     }),
 

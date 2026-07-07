@@ -314,11 +314,20 @@ export function useHackerProfileFlow() {
       await queryClient.invalidateQueries({ queryKey: dashboardKey });
     },
   });
+  const reportIssueMutation = useMutation({
+    mutationFn: (description: string) =>
+      client.portal.reportIssue.mutate({
+        description,
+        hackathonName: config.hackathonName,
+      }),
+  });
 
   return {
     participant: dashboardQuery.data?.participant,
     dashboardQuery,
     profileSchema,
+    reportIssue: reportIssueMutation.mutateAsync,
+    reportIssueMutation,
     updateProfile: updateMutation.mutateAsync,
     updateMutation,
     uploadResume: (fileName: string, fileContent: string) =>

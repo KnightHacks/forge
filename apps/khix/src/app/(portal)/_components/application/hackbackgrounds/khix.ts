@@ -152,6 +152,13 @@ export const khixApplicationStyles = `
   will-change: transform;
 }
 
+.khix-application-lenny-stage {
+  backface-visibility: hidden;
+  isolation: isolate;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
 .khix-application-lenny-walk.kh-application-transition-back {
   --khix-application-lenny-pace-a: 0.16rem;
   --khix-application-lenny-pace-b: -0.52rem;
@@ -322,7 +329,7 @@ export const khixApplicationStyles = `
 .khix-application-animation-credit > span:last-child {
   right: 0;
   bottom: 0;
-  opacity: 0.2 !important;
+  opacity: 0.58 !important;
   transform: translate3d(0, 0, 0) !important;
   pointer-events: auto !important;
 }
@@ -446,7 +453,7 @@ export const khixApplicationBackground = {
       animatedFrameSrcs: KHIX_LENNY_FRAME_WEBPS,
       alt: "",
       className:
-        "bottom-[18%] left-[-8%] aspect-[37/48] h-[clamp(10rem,min(58vh,76vw),42rem)] md:left-[8%] lg:left-[30%] lg:h-[clamp(9rem,min(52.2vh,68.4vw),37.8rem)]",
+        "khix-application-lenny-stage bottom-[18%] left-[-8%] aspect-[37/48] h-[clamp(10rem,min(58vh,76vw),42rem)] md:left-[8%] lg:left-[30%] lg:h-[clamp(9rem,min(52.2vh,68.4vw),37.8rem)]",
       motion: {
         facesStepDirection: true,
         transitionPaceClassName: "khix-application-lenny-walk",

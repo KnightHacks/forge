@@ -3,15 +3,16 @@ import { redirect } from "next/navigation";
 
 import { auth, signIn } from "~/auth/server";
 import { getKhixHackathon } from "~/lib/khix-hackathon";
-import { AuthRetry } from "../_components/auth-retry";
-import { KhixDashboard } from "../_components/khix-dashboard";
+import { AuthRetry } from "../../_components/auth-retry";
+import { KhixProfile } from "../../_components/khix-dashboard";
 
 export const metadata: Metadata = {
-  title: "Knight Hacks IX | Hacker Dashboard",
-  description: "Your Knight Hacks IX application dashboard.",
+  title: "Knight Hacks IX | Profile",
+  description:
+    "Review the profile details attached to your Knight Hacks IX application.",
 };
 
-export default async function DashboardPage({
+export default async function ProfilePage({
   searchParams,
 }: {
   searchParams: Promise<{ authError?: string }>;
@@ -19,8 +20,8 @@ export default async function DashboardPage({
   const session = await auth();
   const { authError } = await searchParams;
   if (!session) {
-    if (authError) return <AuthRetry callbackPath="/dashboard" />;
-    signIn("discord", { redirectTo: "/dashboard" });
+    if (authError) return <AuthRetry callbackPath="/dashboard/profile" />;
+    signIn("discord", { redirectTo: "/dashboard/profile" });
   }
   if (!session) redirect("/");
 
@@ -28,7 +29,7 @@ export default async function DashboardPage({
   if (!khix) redirect("/apply");
 
   return (
-    <KhixDashboard
+    <KhixProfile
       sessionUser={{
         discordUserId: session.user.discordUserId,
         email: session.user.email,
