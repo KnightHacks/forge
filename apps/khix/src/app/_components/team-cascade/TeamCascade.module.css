@@ -1,13 +1,24 @@
+.teamCascadeTitle {
+  margin: 0 0 1.5rem;
+  color: var(--team-cascade-title-color, #103247);
+  font-size: clamp(1.85rem, 4vw, 2.75rem);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
 .teamCascade {
-  --cascade-box-height: var(--team-cascade-height, 32rem);
-  --fall-duration: var(--team-cascade-fall-duration, 13.75s);
-  --fall-easing: var(
-    --team-cascade-fall-easing,
-    cubic-bezier(0.72, 0, 0.86, 0.42)
-  );
+  --cascade-box-height: var(--team-cascade-height, 40rem);
+  /* Must stay linear: the grid layout schedules bubbles that share a
+     column into evenly spaced time-slots (see getCascadeItemStyle in
+     TeamCascadeClient.tsx) on the assumption that equal time gaps produce
+     equal pixel gaps. An eased curve breaks that assumption -- bubbles
+     barely move during the slow part of the curve, so several time-slots'
+     worth of bubbles end up bunched in the same stretch of space, then
+     race through the fast part and nearly collide with the bubble ahead. */
+  --fall-easing: var(--team-cascade-fall-easing, linear);
   --fall-distance: calc(var(--cascade-box-height) + 10rem);
   --fall-exit-distance: calc(var(--fall-distance) + 2.5rem);
-  --team-cascade-edge-pad: 6rem;
   --team-avatar-size: clamp(4.45rem, 7vw, 6.35rem);
 
   position: relative;
@@ -18,30 +29,38 @@
 }
 
 .teamCascadeStream {
-  position: relative;
-  z-index: 1;
-  height: 100%;
+  position: absolute;
+  inset: 0;
+  /* Each stream is a full-size, mostly-empty overlay used only to hold
+     its own falling bubbles. Without this, the stream rendered later in
+     the DOM (design/white) sits on top of the whole box and silently
+     eats pointer events meant for the stream underneath (leadership/
+     blue), even over the empty gaps between its own bubbles -- which is
+     why hovering used to only work on the design bubbles. */
+  pointer-events: none;
 }
 
 .teamCascadeItem {
+  --fall-delay: 0s;
+  --fall-duration: 13.75s;
   --fall-static-y: 50%;
   --fall-sway: 0px;
   --fall-x: 50%;
 
   position: absolute;
-  left: clamp(
-    var(--team-cascade-edge-pad),
-    var(--fall-x),
-    calc(100% - var(--team-cascade-edge-pad))
-  );
+  left: var(--fall-x);
   top: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  animation: teamCascadeFall var(--fall-duration) var(--fall-easing) forwards;
+  animation: teamCascadeFall var(--fall-duration) var(--fall-easing)
+    var(--fall-delay) infinite;
   transform: translate3d(-50%, -8rem, 0);
   will-change: transform, opacity;
+  /* Restore interactivity for the actual bubble, since the parent
+     stream container above has pointer-events disabled. */
+  pointer-events: auto;
 }
 
 .teamCascadeItem[data-static="true"] {
@@ -61,26 +80,31 @@
 }
 
 .teamAvatar {
+  --bubble-accent: #29aee4;
+  --bubble-deep: #125f9d;
+  --bubble-glow: rgba(94, 211, 246, 0.52);
+  --splash-color: rgba(114, 223, 255, 0.96);
+
   position: relative;
   display: inline-flex;
-  width: var(--team-avatar-size);
+  width: calc(var(--team-avatar-size) * var(--team-cascade-avatar-scale, 1));
   aspect-ratio: 1;
   align-items: center;
   justify-content: center;
-  border: 2px solid rgba(219, 255, 255, 0.95);
+  border: 2px solid rgba(218, 249, 255, 0.98);
   border-radius: 999px;
   color: #ffffff;
   background:
     linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.72),
-      rgba(109, 225, 239, 0.16)
+      rgba(67, 186, 232, 0.22)
     ),
-    linear-gradient(145deg, #0e88a4 0%, #5dd8e6 55%, #d7ffe9 100%);
+    linear-gradient(145deg, #125f9d 0%, #269fdb 55%, #bdefff 100%);
   box-shadow:
-    0 0 0 0.42rem rgba(205, 255, 255, 0.34),
-    0 0 0 0.54rem rgba(255, 255, 255, 0.5),
-    0 0.85rem 1.8rem rgba(17, 86, 116, 0.22),
+    0 0 0 0.42rem rgba(82, 192, 235, 0.34),
+    0 0 0 0.54rem rgba(222, 249, 255, 0.52),
+    0 0.85rem 1.8rem rgba(17, 86, 133, 0.24),
     inset 0 0 0 1px rgba(255, 255, 255, 0.36);
   overflow: visible;
   isolation: isolate;
@@ -91,6 +115,22 @@
     transform 180ms ease;
   backface-visibility: hidden;
   transform: translate3d(0, 0, 0);
+}
+
+.teamAvatar[data-variant="white"] {
+  --bubble-accent: #ffffff;
+  --bubble-deep: #d9edff;
+  --bubble-glow: rgba(255, 255, 255, 0.68);
+  --splash-color: rgba(255, 255, 255, 0.98);
+
+  border-color: #ffffff;
+  color: #4d3672;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f5ff 58%, #e9deff 100%);
+  box-shadow:
+    0 0 0 0.42rem rgba(255, 255, 255, 0.58),
+    0 0 0 0.54rem rgba(232, 218, 255, 0.56),
+    0 0.85rem 1.8rem rgba(54, 37, 84, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.82);
 }
 
 .teamAvatar::before {
@@ -106,15 +146,72 @@
   transform: translateZ(0);
 }
 
+.teamAvatar::after {
+  position: absolute;
+  inset: -1.45rem;
+  z-index: 4;
+  border-radius: 50%;
+  content: "";
+  background:
+    radial-gradient(
+      circle at 50% 3%,
+      var(--splash-color) 0 0.16rem,
+      transparent 0.2rem
+    ),
+    radial-gradient(
+      circle at 82% 13%,
+      var(--splash-color) 0 0.12rem,
+      transparent 0.17rem
+    ),
+    radial-gradient(
+      circle at 96% 43%,
+      var(--splash-color) 0 0.18rem,
+      transparent 0.23rem
+    ),
+    radial-gradient(
+      circle at 83% 82%,
+      var(--splash-color) 0 0.11rem,
+      transparent 0.16rem
+    ),
+    radial-gradient(
+      circle at 52% 97%,
+      var(--splash-color) 0 0.15rem,
+      transparent 0.2rem
+    ),
+    radial-gradient(
+      circle at 16% 83%,
+      var(--splash-color) 0 0.18rem,
+      transparent 0.23rem
+    ),
+    radial-gradient(
+      circle at 3% 45%,
+      var(--splash-color) 0 0.12rem,
+      transparent 0.17rem
+    ),
+    radial-gradient(
+      circle at 19% 13%,
+      var(--splash-color) 0 0.15rem,
+      transparent 0.2rem
+    );
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.42) rotate(-8deg);
+}
+
 .teamAvatar:hover,
 .teamAvatar:focus-visible {
   border-color: #ffffff;
   box-shadow:
-    0 0 0 0.36rem rgba(225, 255, 255, 0.58),
-    0 0 2.4rem rgba(102, 228, 244, 0.48),
-    0 1.2rem 2.4rem rgba(17, 86, 116, 0.24);
+    0 0 0 0.36rem rgba(221, 249, 255, 0.64),
+    0 0 2.4rem var(--bubble-glow),
+    0 1.2rem 2.4rem rgba(17, 86, 133, 0.25);
   outline: none;
   transform: translate3d(0, -3px, 0) scale(1.035);
+}
+
+.teamAvatar:hover::after,
+.teamAvatar:focus-visible::after {
+  animation: teamAvatarSplash 720ms cubic-bezier(0.18, 0.7, 0.2, 1) both;
 }
 
 .teamAvatarStatic {
@@ -130,6 +227,10 @@
   overflow: hidden;
   backface-visibility: hidden;
   transform: translate3d(0, 0, 0);
+}
+
+.teamAvatar[data-variant="white"] .teamAvatarMedia {
+  background: #f8f5ff;
 }
 
 .teamAvatarImage,
@@ -155,6 +256,10 @@
   font-weight: 950;
 }
 
+.teamAvatar[data-variant="white"] .teamAvatarInitials {
+  color: #513a78;
+}
+
 .teamAvatarTooltip {
   position: absolute;
   top: calc(100% + 0.55rem);
@@ -165,11 +270,12 @@
   max-width: min(11rem, 78vw);
   justify-items: center;
   padding: 0.55rem 0.7rem;
-  border: 1px solid rgba(174, 208, 255, 0.34);
+  gap: 0.18rem;
+  border: 1px solid rgba(182, 238, 255, 0.48);
   border-radius: 8px;
   color: #ffffff;
-  background: linear-gradient(135deg, #202940 0%, #5475a6 100%);
-  box-shadow: 0 0.8rem 1.8rem rgba(32, 41, 64, 0.24);
+  background: linear-gradient(135deg, var(--bubble-deep), var(--bubble-accent));
+  box-shadow: 0 0.8rem 1.8rem rgba(17, 86, 133, 0.28);
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 0.35rem) scale(0.96);
@@ -177,6 +283,13 @@
   transition:
     opacity 160ms ease,
     transform 160ms ease;
+}
+
+.teamAvatar[data-variant="white"] .teamAvatarTooltip {
+  border-color: rgba(207, 229, 255, 0.9);
+  color: #284d6d;
+  background: linear-gradient(135deg, #e7f4ff, #ffffff);
+  box-shadow: 0 0.8rem 1.8rem rgba(40, 77, 109, 0.2);
 }
 
 .teamAvatar:hover .teamAvatarTooltip,
@@ -190,6 +303,29 @@
   font-size: 0.84rem;
   line-height: 1.05;
   text-align: center;
+}
+
+.teamAvatarTooltip > span {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.teamAvatar[data-variant="white"] .teamAvatarTooltip strong,
+.teamAvatar[data-variant="white"] .teamAvatarTooltip > span {
+  color: #284d6d;
+}
+
+.teamAvatarProbe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--team-avatar-size);
+  aspect-ratio: 1;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .teamStatus {
@@ -208,17 +344,13 @@
 
 @media (max-width: 920px) {
   .teamCascade {
-    --cascade-box-height: var(--team-cascade-height, 30rem);
+    --cascade-box-height: var(--team-cascade-height, 36rem);
   }
 }
 
 @media (max-width: 620px) {
   .teamCascade {
-    --cascade-box-height: var(--team-cascade-height, 29rem);
-  }
-
-  .teamCascadeItem {
-    --team-cascade-edge-pad: 4rem;
+    --cascade-box-height: var(--team-cascade-height, 34rem);
   }
 
   .teamAvatar {
@@ -228,11 +360,7 @@
 
 @media (max-width: 380px) {
   .teamCascade {
-    --cascade-box-height: var(--team-cascade-height, 27rem);
-  }
-
-  .teamCascadeItem {
-    --team-cascade-edge-pad: 3.55rem;
+    --cascade-box-height: var(--team-cascade-height, 30rem);
   }
 
   .teamAvatar {
@@ -271,5 +399,25 @@
       var(--fall-exit-distance),
       0
     );
+  }
+}
+
+@keyframes teamAvatarSplash {
+  0% {
+    opacity: 0;
+    transform: scale(0.42) rotate(-8deg);
+  }
+
+  34% {
+    opacity: 1;
+  }
+
+  72% {
+    opacity: 0.82;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.18) rotate(7deg);
   }
 }

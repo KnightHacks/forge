@@ -245,6 +245,7 @@
     0 0 0.5rem rgba(235, 251, 255, 0.54),
     0 0 2.2rem rgba(129, 225, 255, 0.3);
   text-transform: none;
+  transform: translateY(clamp(-1.5rem, -2vw, -0.65rem));
 }
 
 .partnerGrid {
@@ -359,10 +360,19 @@
 
 .teamPanel .sectionTitle {
   margin-bottom: calc(var(--composition-width) * 0.015);
+  color: rgba(255, 252, 245, 0.96);
+  font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
+  font-size: clamp(3.4rem, 8vw, 6.8rem);
+  font-weight: 400;
+  line-height: 0.84;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 0.5rem rgba(235, 251, 255, 0.54),
+    0 0 2.2rem rgba(129, 225, 255, 0.3);
+  text-transform: none;
 }
 
 .teamCascade {
-  --team-cascade-edge-pad: calc(var(--composition-width) * 0.11);
   --team-cascade-height: calc(var(--waterfall-height) * 0.32);
   --team-avatar-size: clamp(
     3rem,
@@ -386,6 +396,10 @@
 
   .partnerGroup .sectionTitle {
     font-size: clamp(1.55rem, 9.5vw, 2.5rem);
+  }
+
+  .teamPanel .sectionTitle {
+    font-size: clamp(3.1rem, 19vw, 5rem);
   }
 }
 
