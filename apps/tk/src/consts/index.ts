@@ -20,7 +20,9 @@ export const DAILY_MESSAGES = [
   "Time to use 101% of your brain power! 🧠",
   "Time to beat 100% submissions with your algorithms!",
   "1337 1337 1337...",
-  "Rise up, coding people!"
+  "Rise up, coding people!",
+  "Tuff problem, you got this tho.",
+  "Leetcodemaxxing time 🥶",
 ];
 
 export const DISCORD_LEETCODE_ROLE_ID = "1264645162060091483";
@@ -163,7 +165,12 @@ export const EIGHTBALL_RESPONSES = [
   "bool answer = true;",
   "bool answer = false;",
   "TK says no.",
-  "TK says yes."
+  "TK says yes.",
+  "6/7.",
+  "Lame question, sybau 💔",
+  "what 😭",
+  "yes lowkenuinely.",
+  "Based question, an insta yes from me.",
 ];
 
 export type WeatherMapKeys = Record<
