@@ -350,7 +350,7 @@
   display: grid;
   grid-template-columns: 2rem minmax(0, 1fr);
   width: 100%;
-  min-height: 2.75rem;
+  min-height: 3rem;
   align-items: center;
   gap: 0.7rem;
   border: 1px solid var(--khix-nav-button-edge);
@@ -358,9 +358,11 @@
   background: var(--khix-nav-button-surface);
   box-shadow: var(--khix-nav-button-shadow);
   color: rgb(210 211 131 / 0.84);
-  padding: 0.42rem 0.6rem;
-  font-size: 0.72rem;
-  font-weight: 780;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 820;
+  line-height: 1.15;
+  text-align: left;
   text-decoration: none;
   transition:
     background 240ms ease,
@@ -767,7 +769,7 @@
 .logoutButton {
   display: grid;
   grid-template-columns: 2rem minmax(0, 1fr);
-  min-height: 2.55rem;
+  min-height: 3rem;
   width: 100%;
   align-items: center;
   justify-content: stretch;
@@ -778,8 +780,9 @@
   box-shadow: var(--khix-nav-button-shadow);
   color: rgb(210 211 131 / 0.84);
   padding: 0.45rem 0.6rem;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   font-weight: 820;
+  line-height: 1.15;
   text-align: left;
   transition:
     background 240ms ease,
@@ -1690,7 +1693,7 @@
   display: grid;
   justify-items: center;
   gap: clamp(1.25rem, 2.6vh, 1.85rem);
-  padding-top: clamp(2.75rem, 5.5dvh, 4.25rem);
+  padding-top: 0;
   text-align: center;
   animation: khixDashboardStageSettle 720ms var(--khix-ease-soft) 100ms both;
 }
@@ -4524,12 +4527,12 @@
     grid-column: 1 / -1;
     grid-template-columns: 2rem minmax(0, 1fr);
     width: 100%;
-    min-height: 2.8rem;
+    min-height: 2.95rem;
     margin-top: 0.1rem;
     border: 1px solid transparent;
     border-radius: 0.54rem;
     padding: 0.42rem 0.58rem;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     white-space: normal;
   }
 
@@ -4569,8 +4572,9 @@
 
   .logoutButton {
     width: 100%;
-    min-height: 2.45rem;
+    min-height: 2.95rem;
     padding: 0.42rem 0.58rem;
+    font-size: 0.82rem;
     white-space: nowrap;
   }
 
@@ -4753,11 +4757,19 @@
     width: 100%;
     align-items: stretch;
     gap: 0.52rem;
-    margin-top: clamp(1.45rem, 3.4dvh, 2.15rem);
+    margin-top: clamp(2.6rem, 7dvh, 4.25rem);
   }
 
   .statusPill + .actionRow {
-    margin-top: clamp(1.7rem, 4dvh, 2.45rem);
+    margin-top: clamp(2.35rem, 6.2dvh, 3.85rem);
+  }
+
+  .attendanceStatusStage .eventDetails + .statusPill {
+    margin-top: clamp(1.35rem, 3.6dvh, 2.15rem);
+  }
+
+  .attendanceStatusStage .statusPill + .actionRow {
+    margin-top: clamp(0.85rem, 2.1dvh, 1.25rem);
   }
 
   .primaryButton,
@@ -4875,7 +4887,7 @@
 
   .acceptedActionRow {
     gap: 0.72rem;
-    margin-top: 1.05rem;
+    margin-top: clamp(2.55rem, 6.8dvh, 4.1rem);
   }
 
   .acceptedConfirmButton,
@@ -4887,13 +4899,13 @@
   .toolDock {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.55rem;
-    align-self: start;
-    margin-top: 0.4rem;
+    align-self: end;
+    margin-top: clamp(2.25rem, 8dvh, 4.75rem);
     padding-bottom: 0;
   }
 
   .toolDockFourUp {
-    margin-top: clamp(1.35rem, 3dvh, 1.85rem);
+    margin-top: clamp(2.25rem, 8dvh, 4.75rem);
   }
 
   .toolLink,
@@ -5169,8 +5181,9 @@
   }
 
   .siteReturnLink {
+    min-height: 2.72rem;
     padding: 0.42rem 0.54rem;
-    font-size: 0.72rem;
+    font-size: 0.76rem;
   }
 
   .railNav {
@@ -5187,7 +5200,7 @@
   }
 
   .logoutButton {
-    min-height: 2.25rem;
+    min-height: 2.72rem;
     padding: 0.42rem 0.54rem;
     font-size: 0.76rem;
   }

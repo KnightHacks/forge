@@ -2563,6 +2563,9 @@ function StatusStage({
   statusLabel?: string;
 }) {
   const isAcceptedStatus = statusClassName === styles.statusAccepted;
+  const isAttendanceStatus =
+    statusClassName === styles.statusConfirmed ||
+    statusClassName === styles.statusCheckedin;
 
   return (
     <section
@@ -2570,6 +2573,7 @@ function StatusStage({
       className={joinClasses(
         styles.statusStage,
         isAcceptedStatus && styles.acceptedStatusStage,
+        isAttendanceStatus && styles.attendanceStatusStage,
       )}
       aria-labelledby="khix-dashboard-title"
     >
