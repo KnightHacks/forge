@@ -24,6 +24,7 @@ import {
   LogOut,
   Menu,
   Play,
+  Printer,
   QrCode,
   ScrollText,
   UserRound,
@@ -488,7 +489,6 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
     <KhixDashboardShell
       navAction={reportIssueNavAction}
       sessionUser={sessionUser}
-      showProfileLink
     >
       <StatusStage
         action={
@@ -560,8 +560,7 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
 }
 
 export function KhixLore({ sessionUser }: KhixDashboardProps) {
-  const { dashboard, reportIssue, reportIssueMutation } =
-    useHackerDashboardFlow();
+  const { reportIssue, reportIssueMutation } = useHackerDashboardFlow();
   const [issue, setIssue] = useState("");
   const [issueOpen, setIssueOpen] = useState(false);
 
@@ -595,7 +594,6 @@ export function KhixLore({ sessionUser }: KhixDashboardProps) {
       activeItem="lore"
       navAction={reportIssueNavAction}
       sessionUser={sessionUser}
-      showProfileLink={Boolean(dashboard?.participant)}
     >
       <LoreExperience />
     </KhixDashboardShell>
@@ -649,7 +647,6 @@ export function KhixProfile({ sessionUser }: KhixDashboardProps) {
         activeItem="profile"
         navAction={reportIssueNavAction}
         sessionUser={sessionUser}
-        showProfileLink
       >
         <ProfileSkeleton />
       </KhixDashboardShell>
@@ -662,7 +659,6 @@ export function KhixProfile({ sessionUser }: KhixDashboardProps) {
         activeItem="profile"
         navAction={reportIssueNavAction}
         sessionUser={sessionUser}
-        showProfileLink
       >
         <StatusStage
           body="Refresh the page or try again in a moment."
@@ -683,7 +679,6 @@ export function KhixProfile({ sessionUser }: KhixDashboardProps) {
         activeItem="profile"
         navAction={reportIssueNavAction}
         sessionUser={sessionUser}
-        showProfileLink
       >
         <StatusStage
           action={
@@ -704,7 +699,6 @@ export function KhixProfile({ sessionUser }: KhixDashboardProps) {
       activeItem="profile"
       navAction={reportIssueNavAction}
       sessionUser={sessionUser}
-      showProfileLink
     >
       <ProfileSection
         participant={participant}
@@ -717,18 +711,66 @@ export function KhixProfile({ sessionUser }: KhixDashboardProps) {
   );
 }
 
+export function KhixDashboardNotFound({ sessionUser }: KhixDashboardProps) {
+  const { reportIssue, reportIssueMutation } = useHackerDashboardFlow();
+  const [issue, setIssue] = useState("");
+  const [issueOpen, setIssueOpen] = useState(false);
+
+  const handleIssueReport = async () => {
+    const trimmedIssue = issue.trim();
+    if (!trimmedIssue) return;
+
+    try {
+      await reportIssue(trimmedIssue);
+      setIssue("");
+      setIssueOpen(false);
+      toast.success("Your note was sent to the organizers.");
+    } catch (error) {
+      toast.error(getToastErrorMessage(error, "Could not report the issue."));
+    }
+  };
+
+  const reportIssueNavAction = (
+    <ReportIssueNavAction
+      issue={issue}
+      isOpen={issueOpen}
+      isPending={reportIssueMutation.isPending}
+      onChange={setIssue}
+      onOpenChange={setIssueOpen}
+      onReport={handleIssueReport}
+    />
+  );
+
+  return (
+    <KhixDashboardShell
+      navAction={reportIssueNavAction}
+      sessionUser={sessionUser}
+    >
+      <StatusStage
+        action={
+          <Button asChild className={styles.primaryButton}>
+            <Link href="/dashboard">Back to dashboard</Link>
+          </Button>
+        }
+        body="That dashboard path is not available. Head back to your status page."
+        headline={"404\nPortal not found."}
+        statusLabel="Not found"
+        statusClassName={styles.statusPending}
+      />
+    </KhixDashboardShell>
+  );
+}
+
 function KhixDashboardShell({
   activeItem = "status",
   children,
   navAction,
   sessionUser,
-  showProfileLink = false,
 }: {
   activeItem?: "lore" | "profile" | "status";
   children: ReactNode;
   navAction?: ReactNode;
   sessionUser?: KhixSessionUser;
-  showProfileLink?: boolean;
 }) {
   const [mobileMenuState, setMobileMenuState] =
     useState<MobileDrawerState>("closed");
@@ -1059,23 +1101,41 @@ function KhixDashboardShell({
                   </span>
                 </span>
               </button>
-              {showProfileLink ? (
-                <Link
-                  className={joinClasses(
-                    styles.railLink,
-                    activeItem === "profile" && styles.railLinkActive,
-                  )}
-                  href="/dashboard/profile"
-                  onClick={closeMobileMenu}
-                >
-                  <span className={styles.railIcon} aria-hidden="true">
-                    <UserRound className="size-4" />
+              <button
+                type="button"
+                className={joinClasses(
+                  styles.railLink,
+                  styles.railButton,
+                  styles.railLinkLocked,
+                )}
+                aria-label="3D printing page locked"
+                disabled
+              >
+                <span className={styles.railIcon} aria-hidden="true">
+                  <Printer className="size-4" />
+                </span>
+                <span className={styles.railLinkText}>
+                  <span className={styles.railLockedLabel}>
+                    <span className={styles.railLinkLabel}>3D Printing</span>
+                    <LockKeyhole className={styles.railLockIcon} />
                   </span>
-                  <span className={styles.railLinkText}>
-                    <span className={styles.railLinkLabel}>Profile</span>
-                  </span>
-                </Link>
-              ) : null}
+                </span>
+              </button>
+              <Link
+                className={joinClasses(
+                  styles.railLink,
+                  activeItem === "profile" && styles.railLinkActive,
+                )}
+                href="/dashboard/profile"
+                onClick={closeMobileMenu}
+              >
+                <span className={styles.railIcon} aria-hidden="true">
+                  <UserRound className="size-4" />
+                </span>
+                <span className={styles.railLinkText}>
+                  <span className={styles.railLinkLabel}>Profile</span>
+                </span>
+              </Link>
               {navAction}
             </nav>
 
@@ -2557,7 +2617,7 @@ function StatusStage({
   action?: ReactNode;
   body: string;
   countdown?: ReactNode;
-  greeting: string;
+  greeting?: string;
   headline: string;
   statusClassName?: string;
   statusLabel?: string;
@@ -2577,7 +2637,7 @@ function StatusStage({
       )}
       aria-labelledby="khix-dashboard-title"
     >
-      <p className={styles.greeting}>{greeting}</p>
+      {greeting ? <p className={styles.greeting}>{greeting}</p> : null}
       <h1 id="khix-dashboard-title" className={styles.headline}>
         {headline.split("\n").map((line) => (
           <span key={line} className={styles.headlineLine}>
