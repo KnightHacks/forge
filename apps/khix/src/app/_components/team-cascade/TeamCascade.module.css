@@ -1,14 +1,10 @@
-.teamCascadeTitle {
-  margin: 0 0 1.5rem;
-  color: var(--team-cascade-title-color, #103247);
-  font-size: clamp(1.85rem, 4vw, 2.75rem);
-  font-weight: 900;
-  letter-spacing: -0.01em;
-  text-align: center;
-}
-
 .teamCascade {
-  --cascade-box-height: var(--team-cascade-height, 40rem);
+  --team-cascade-default-height: 40rem;
+  --team-cascade-default-avatar-size: clamp(4.45rem, 7vw, 6.35rem);
+  --cascade-box-height: var(
+    --team-cascade-section-height,
+    calc(var(--team-cascade-height, var(--team-cascade-default-height)) * 0.44)
+  );
   /* Must stay linear: the grid layout schedules bubbles that share a
      column into evenly spaced time-slots (see getCascadeItemStyle in
      TeamCascadeClient.tsx) on the assumption that equal time gaps produce
@@ -19,8 +15,50 @@
   --fall-easing: var(--team-cascade-fall-easing, linear);
   --fall-distance: calc(var(--cascade-box-height) + 10rem);
   --fall-exit-distance: calc(var(--fall-distance) + 2.5rem);
-  --team-avatar-size: clamp(4.45rem, 7vw, 6.35rem);
+  --team-avatar-size: var(
+    --team-cascade-avatar-size,
+    var(--team-cascade-default-avatar-size)
+  );
 
+  position: relative;
+  display: grid;
+  gap: var(--team-cascade-stream-gap, clamp(2.15rem, 4vw, 3.8rem));
+  width: 100%;
+  isolation: isolate;
+}
+
+.teamCascadeStatusFrame {
+  position: relative;
+  display: grid;
+  min-height: var(--team-cascade-height, 16rem);
+  place-items: center;
+}
+
+.teamCascadeStatusFrame .teamStatus {
+  position: static;
+  inset: auto;
+}
+
+.teamCascadeSection {
+  display: grid;
+  gap: clamp(0.35rem, 0.9vw, 0.65rem);
+  min-width: 0;
+}
+
+.teamCascadeSectionTitle {
+  margin: 0;
+  color: rgba(255, 252, 245, 0.96);
+  font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
+  font-size: clamp(1.45rem, 3.4vw, 2.7rem);
+  font-weight: 500;
+  line-height: 0.9;
+  text-align: center;
+  text-shadow:
+    0 0 0.38rem rgba(235, 251, 255, 0.45),
+    0 0 1.5rem rgba(129, 225, 255, 0.24);
+}
+
+.teamCascadeViewport {
   position: relative;
   width: 100%;
   height: var(--cascade-box-height);
@@ -40,7 +78,7 @@
   pointer-events: none;
 }
 
-.teamCascadeItem {
+.teamCascadeItemAnchor {
   --fall-delay: 0s;
   --fall-duration: 13.75s;
   --fall-static-y: 50%;
@@ -50,6 +88,31 @@
   position: absolute;
   left: var(--fall-x);
   top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.teamCascadeItemAnchor:hover {
+  z-index: 3;
+}
+
+.teamCascadeItemAnchor[data-static="true"] {
+  top: var(--fall-static-y);
+}
+
+.teamCascadeParallaxItem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.teamCascadeItem {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,20 +126,24 @@
   pointer-events: auto;
 }
 
-.teamCascadeItem[data-static="true"] {
+.teamCascadeItemAnchor[data-static="true"] .teamCascadeItem {
   animation: none;
   opacity: 1;
-  top: var(--fall-static-y);
   transform: translate3d(-50%, -50%, 0);
 }
 
-.teamCascadeItem:hover {
+.teamCascadeItemAnchor:hover .teamCascadeItem {
   animation-play-state: paused;
-  z-index: 3;
 }
 
 .teamCascadeItem[data-resume-after-click="true"] {
   animation-play-state: running;
+}
+
+.teamAvatarMotion {
+  display: inline-flex;
+  transform-origin: center;
+  will-change: transform;
 }
 
 .teamAvatar {
@@ -115,6 +182,10 @@
     transform 180ms ease;
   backface-visibility: hidden;
   transform: translate3d(0, 0, 0);
+}
+
+.teamAvatar[data-clickable="true"] {
+  cursor: pointer;
 }
 
 .teamAvatar[data-variant="white"] {
@@ -328,6 +399,20 @@
   pointer-events: none;
 }
 
+.teamStreamEmpty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 1rem;
+  color: var(--team-status-color, rgba(16, 50, 71, 0.74));
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: center;
+}
+
 .teamStatus {
   position: absolute;
   inset: 0;
@@ -344,27 +429,21 @@
 
 @media (max-width: 920px) {
   .teamCascade {
-    --cascade-box-height: var(--team-cascade-height, 36rem);
+    --team-cascade-default-height: 36rem;
   }
 }
 
 @media (max-width: 620px) {
   .teamCascade {
-    --cascade-box-height: var(--team-cascade-height, 34rem);
-  }
-
-  .teamAvatar {
-    --team-avatar-size: clamp(3.75rem, 17vw, 4.7rem);
+    --team-cascade-default-height: 34rem;
+    --team-cascade-default-avatar-size: clamp(3.75rem, 17vw, 4.7rem);
   }
 }
 
 @media (max-width: 380px) {
   .teamCascade {
-    --cascade-box-height: var(--team-cascade-height, 30rem);
-  }
-
-  .teamAvatar {
-    --team-avatar-size: 3.55rem;
+    --team-cascade-default-height: 30rem;
+    --team-cascade-default-avatar-size: 3.55rem;
   }
 }
 
@@ -374,10 +453,13 @@
     transition: none;
   }
 
+  .teamCascadeItemAnchor {
+    top: var(--fall-static-y);
+  }
+
   .teamCascadeItem {
     animation: none;
     opacity: 1;
-    top: var(--fall-static-y);
     transform: translate3d(-50%, -50%, 0);
   }
 }

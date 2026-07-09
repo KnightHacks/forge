@@ -37,7 +37,7 @@
 
 .bridge {
   position: absolute;
-  top: 50.4%;
+  top: 38%;
   left: 50%;
   z-index: 3;
   width: 110vw;
@@ -352,7 +352,7 @@
 
 .teamPanel {
   position: absolute;
-  top: calc(var(--waterfall-height) * 0.58);
+  top: calc(var(--waterfall-height) * 0.458);
   left: 50%;
   width: calc(var(--composition-width) * 0.7);
   transform: translateX(-50%);
@@ -373,8 +373,13 @@
 }
 
 .teamCascade {
-  --team-cascade-height: calc(var(--waterfall-height) * 0.32);
-  --team-avatar-size: clamp(
+  --team-cascade-height: calc(var(--waterfall-height) * 0.5);
+  --team-cascade-stream-gap: clamp(
+    4.25rem,
+    calc(var(--composition-width) * 0.075),
+    6.4rem
+  );
+  --team-cascade-avatar-size: clamp(
     3rem,
     calc(var(--composition-width) * 0.09),
     5.2rem
@@ -401,6 +406,15 @@
   .teamPanel .sectionTitle {
     font-size: clamp(3.1rem, 19vw, 5rem);
   }
+
+  .teamCascade {
+    --team-cascade-height: calc(var(--waterfall-height) * 0.43);
+    --team-cascade-stream-gap: clamp(
+      3rem,
+      calc(var(--composition-width) * 0.085),
+      4rem
+    );
+  }
 }
 
 @media (max-width: 420px) {
@@ -410,7 +424,7 @@
   }
 
   .teamCascade {
-    --team-avatar-size: clamp(
+    --team-cascade-avatar-size: clamp(
       2rem,
       calc(var(--composition-width) * 0.092),
       2.45rem
