@@ -48,6 +48,18 @@ const HOMEPAGE_SPONSORS = [
     tier: "silver-moon",
   },
   {
+    name: "Shinies Props",
+    websiteUrl: "https://www.instagram.com/shiniesprops/",
+    logoSrc: "/assets/sponsor-logos/shinies.svg",
+    tier: "silver-moon",
+  },
+  {
+    name: "Impress Ink",
+    websiteUrl: "https://impressink.com/",
+    logoSrc: "/assets/sponsor-logos/impressink.png",
+    tier: "bronze-ember",
+  },
+  {
     name: "RFSmart",
     websiteUrl: "https://www.rfsmart.com/",
     logoSrc: "/assets/sponsor-logos/rfsmart.svg",
