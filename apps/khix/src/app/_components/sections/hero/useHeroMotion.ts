@@ -180,8 +180,16 @@ export function useHeroMotion(): HeroMotion {
     }
 
     const bounds = event.currentTarget.getBoundingClientRect();
-    const nextX = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
-    const nextY = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
+    const nextX = clamp(
+      ((event.clientX - bounds.left) / bounds.width - 0.5) * 2,
+      -1,
+      1,
+    );
+    const nextY = clamp(
+      ((event.clientY - bounds.top) / bounds.height - 0.5) * 2,
+      -1,
+      1,
+    );
 
     schedulePointerVars(nextX, nextY);
   };

@@ -50,6 +50,14 @@
   overflow-anchor: none;
 }
 
+.desktopHeroLayers {
+  display: contents;
+}
+
+.mobileHeroLayers {
+  display: none;
+}
+
 .introVeil {
   position: absolute;
   inset: 0;
@@ -274,6 +282,12 @@
   opacity: var(--khix-title-aura-opacity);
 }
 
+.titleLogoWrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
 .titleLogo {
   position: relative;
   z-index: 1;
@@ -294,6 +308,10 @@
     );
 }
 
+.heroApplyButton {
+  display: none;
+}
+
 @media (max-width: 700px) {
   .hero {
     --khix-hero-height: 108svh;
@@ -306,6 +324,105 @@
     inset: -1.4svh -2vw;
   }
 
+  .desktopHeroLayers {
+    display: none;
+  }
+
+  .mobileHeroLayers {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+    display: block;
+    width: max(100vw, min(130vw, calc(var(--khix-hero-height) * 9 / 16)));
+    aspect-ratio: 9 / 16;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .mobileHeroLayer {
+    --khix-mobile-layer-depth-x: 0;
+    --khix-mobile-layer-depth-y: 0;
+    --khix-mobile-layer-scroll-y: 0px;
+    --khix-mobile-layer-max-x: clamp(0.35rem, 2vw, 0.75rem);
+    --khix-mobile-layer-max-y: clamp(0.35rem, 1.6svh, 0.85rem);
+    --khix-mobile-layer-overscan: 1.035;
+
+    object-fit: fill;
+    transform: translate3d(
+        clamp(
+          calc(var(--khix-mobile-layer-max-x) * -1),
+          calc(
+            var(--khix-pointer-x) * var(--khix-mobile-layer-depth-x) *
+              var(--khix-art-motion-scale) * 1px
+          ),
+          var(--khix-mobile-layer-max-x)
+        ),
+        clamp(
+          calc(var(--khix-mobile-layer-max-y) * -1),
+          calc(
+            (
+                var(--khix-pointer-y) * var(--khix-mobile-layer-depth-y) *
+                  var(--khix-art-motion-scale) * 1px
+              ) +
+              (
+                var(--khix-scroll-progress) *
+                  var(--khix-mobile-layer-scroll-y) *
+                  var(--khix-art-motion-scale)
+              )
+          ),
+          var(--khix-mobile-layer-max-y)
+        ),
+        0
+      )
+      scale(var(--khix-mobile-layer-overscan));
+    transform-origin: 50% 0;
+    user-select: none;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .mobileHeroLayerSeven {
+    --khix-mobile-layer-overscan: 1.02;
+    z-index: 1;
+  }
+
+  .mobileHeroLayerSix {
+    --khix-mobile-layer-overscan: 1.025;
+    z-index: 2;
+  }
+
+  .mobileHeroLayerFive {
+    --khix-mobile-layer-overscan: 1.03;
+    z-index: 3;
+  }
+
+  .mobileHeroLayerFour {
+    --khix-mobile-layer-overscan: 1.035;
+    z-index: 4;
+  }
+
+  .mobileHeroPondAnimationLayer {
+    --khix-mobile-layer-overscan: 1.035;
+    z-index: 4;
+    opacity: 0.68;
+  }
+
+  .mobileHeroLayerThree {
+    --khix-mobile-layer-overscan: 1.04;
+    z-index: 5;
+  }
+
+  .mobileHeroLayerTwo {
+    --khix-mobile-layer-overscan: 1.04;
+    z-index: 6;
+    opacity: 0.82;
+    mix-blend-mode: normal;
+    filter: drop-shadow(0 0 0.35rem rgb(92 252 255 / 0.34));
+    animation: mobileHeroGlowFlicker 5.8s steps(1, end) infinite;
+    will-change: transform, opacity, filter;
+  }
+
   .layerImage {
     object-position: 94% 50%;
   }
@@ -315,7 +432,7 @@
   }
 
   .foregroundImage {
-    top: calc(var(--khix-hero-height) - 66vw);
+    top: calc(var(--khix-hero-height) - 66vw - 15svh);
     left: 0;
     width: 100%;
     max-width: 100%;
@@ -328,9 +445,150 @@
   }
 
   .titleLockup {
-    top: 20%;
-    left: 6%;
-    width: 88vw;
+    --khix-title-aura-opacity: 0.34;
+    --khix-title-glow-opacity: 0.7;
+
+    top: clamp(17.25rem, 39svh, 21.25rem);
+    left: clamp(1.15rem, 6vw, 2rem);
+    display: flex;
+    width: min(62vw, 16rem);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: clamp(0.76rem, 2.1svh, 1.08rem);
+    transform-origin: 18% 45%;
+  }
+
+  .titleLockup::before {
+    inset: -32% -24% -48% -18%;
+    filter: blur(16px);
+  }
+
+  .heroApplyButton {
+    --khix-apply-mote-opacity: 0.82;
+    --khix-apply-mote-core: rgb(255 255 255 / 0.9);
+    --khix-apply-mote-mid: rgb(210 255 226 / 0.62);
+    --khix-apply-mote-far: rgb(135 238 255 / 0.42);
+
+    position: relative;
+    z-index: 2;
+    isolation: isolate;
+    display: inline-flex;
+    align-self: center;
+    min-height: clamp(2.1rem, 4.4svh, 2.42rem);
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+    border: 1px solid rgb(255 255 255 / 0.48);
+    border-radius: 0.5rem;
+    padding: 0 clamp(2.55rem, 11vw, 3.4rem);
+    color: rgb(255 255 255 / 0.96);
+    font-family:
+      var(--font-geist-sans, ui-sans-serif),
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+    font-size: clamp(0.78rem, 3vw, 0.9rem);
+    font-weight: 650;
+    letter-spacing: 0;
+    text-decoration: none;
+    text-shadow: 0 0 0.42rem rgb(255 255 255 / 0.36);
+    background:
+      radial-gradient(
+        circle at 20% 0%,
+        rgb(209 255 232 / 0.1),
+        transparent 42%
+      ),
+      rgb(255 255 255 / 0.035);
+    box-shadow:
+      inset 0 0 0.45rem rgb(255 255 255 / 0.055),
+      0 0.45rem 1rem rgb(9 30 30 / 0.12),
+      0 0 0.65rem rgb(169 247 255 / 0.07);
+    backdrop-filter: blur(2px) saturate(1.03);
+    transition:
+      color 180ms ease,
+      border-color 180ms ease,
+      background 180ms ease,
+      box-shadow 220ms ease,
+      transform 180ms ease;
+  }
+
+  .heroApplyButton::after {
+    position: absolute;
+    inset: -0.7rem;
+    z-index: 0;
+    pointer-events: none;
+    content: "";
+    border-radius: calc(0.5rem + 0.7rem);
+    background:
+      radial-gradient(
+        circle at 12% 50%,
+        var(--khix-apply-mote-core) 0 0.045rem,
+        var(--khix-apply-mote-mid) 0.075rem 0.17rem,
+        transparent 0.36rem
+      ),
+      radial-gradient(
+        circle at 28% 10%,
+        var(--khix-apply-mote-core) 0 0.04rem,
+        var(--khix-apply-mote-far) 0.07rem 0.16rem,
+        transparent 0.34rem
+      ),
+      radial-gradient(
+        circle at 74% 8%,
+        var(--khix-apply-mote-core) 0 0.04rem,
+        var(--khix-apply-mote-mid) 0.07rem 0.16rem,
+        transparent 0.34rem
+      ),
+      radial-gradient(
+        circle at 91% 48%,
+        var(--khix-apply-mote-core) 0 0.045rem,
+        var(--khix-apply-mote-far) 0.08rem 0.18rem,
+        transparent 0.38rem
+      ),
+      radial-gradient(
+        circle at 68% 93%,
+        var(--khix-apply-mote-core) 0 0.04rem,
+        var(--khix-apply-mote-mid) 0.07rem 0.16rem,
+        transparent 0.34rem
+      ),
+      radial-gradient(
+        circle at 22% 90%,
+        var(--khix-apply-mote-core) 0 0.042rem,
+        var(--khix-apply-mote-far) 0.075rem 0.17rem,
+        transparent 0.36rem
+      );
+    background-repeat: no-repeat;
+    mix-blend-mode: screen;
+    opacity: 0;
+    transform: scale(0.96);
+    transition:
+      opacity 180ms ease,
+      transform 440ms ease;
+  }
+
+  .heroApplyButton > span {
+    position: relative;
+    z-index: 1;
+  }
+
+  .heroApplyButton:hover,
+  .heroApplyButton:focus-visible {
+    color: white;
+    border-color: rgb(255 255 255 / 0.68);
+    transform: translate3d(0, -1px, 0);
+  }
+
+  .heroApplyButton:hover::after,
+  .heroApplyButton:focus-visible::after {
+    opacity: var(--khix-apply-mote-opacity);
+    transform: scale(1);
+    animation: khixHeroApplyButtonMotes 1.9s ease-in-out infinite alternate;
+  }
+
+  .heroApplyButton:focus-visible {
+    outline: 2px solid rgb(255 255 255 / 0.7);
+    outline-offset: 0.22rem;
   }
 }
 
@@ -351,6 +609,30 @@
     transform: none !important;
   }
 
+  .mobileHeroLayer {
+    transform: none !important;
+    will-change: auto;
+  }
+
+  .mobileHeroLayerTwo {
+    opacity: 0.86;
+    filter: none;
+    animation: none;
+  }
+
+  .mobileHeroPondAnimationLayer {
+    display: none;
+  }
+
+  .heroApplyButton,
+  .heroApplyButton::after {
+    transition: none;
+  }
+
+  .heroApplyButton::after {
+    animation: none;
+  }
+
   .leaf {
     display: none;
   }
@@ -363,6 +645,56 @@
   .pondSourceImage,
   .waterfallSourceImage {
     opacity: 1;
+  }
+}
+
+@keyframes khixHeroApplyButtonMotes {
+  from {
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+  }
+
+  to {
+    background-position:
+      0.18rem -0.1rem,
+      -0.14rem 0.16rem,
+      0.12rem 0.14rem,
+      -0.18rem -0.08rem,
+      0.16rem 0.06rem,
+      -0.1rem -0.12rem;
+  }
+}
+
+@keyframes mobileHeroGlowFlicker {
+  0%,
+  11%,
+  23%,
+  47%,
+  62%,
+  88%,
+  100% {
+    opacity: 0.82;
+    filter: drop-shadow(0 0 0.35rem rgb(92 252 255 / 0.34));
+  }
+
+  12%,
+  24%,
+  49% {
+    opacity: 0.58;
+    filter: drop-shadow(0 0 0.16rem rgb(92 252 255 / 0.18));
+  }
+
+  15%,
+  29%,
+  52%,
+  67% {
+    opacity: 0.94;
+    filter: drop-shadow(0 0 0.55rem rgb(115 255 255 / 0.5));
   }
 }
 

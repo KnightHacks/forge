@@ -1,5 +1,8 @@
 "use client";
 
+import type { CSSProperties } from "react";
+import Image from "next/image";
+
 import { FallingLeaves } from "./FallingLeaves";
 import styles from "./Hero.module.css";
 import { HeroLayerImage } from "./HeroLayerImage";
@@ -35,9 +38,16 @@ export default function Hero() {
           Knight Hacks IX
         </h1>
         <div className={styles.art} data-hero-art aria-hidden="true">
-          {backgroundLayers.map((layer, index) => (
-            <HeroLayerImage key={layer.filename} layer={layer} index={index} />
-          ))}
+          <div className={styles.desktopHeroLayers}>
+            {backgroundLayers.map((layer, index) => (
+              <HeroLayerImage
+                key={layer.filename}
+                layer={layer}
+                index={index}
+              />
+            ))}
+          </div>
+          <MobileHeroLayers />
           <div className={styles.shade} aria-hidden="true" />
           <HeroTitle />
           <FallingLeaves />
@@ -54,5 +64,84 @@ export default function Hero() {
         zIndex={12}
       />
     </section>
+  );
+}
+
+const MOBILE_HERO_LAYERS = [
+  {
+    src: "/KHIXHero/mobile/7bg.webp",
+    className: styles.mobileHeroLayerSeven,
+    depthX: -6,
+    depthY: -2,
+    scrollY: -10,
+  },
+  {
+    src: "/KHIXHero/mobile/6.webp",
+    className: styles.mobileHeroLayerSix,
+    depthX: -5,
+    depthY: -1.6,
+    scrollY: -8,
+  },
+  {
+    src: "/KHIXHero/mobile/5.webp",
+    className: styles.mobileHeroLayerFive,
+    depthX: -3,
+    depthY: -1,
+    scrollY: -5,
+  },
+  {
+    src: "/KHIXHero/mobile/4.webp",
+    className: styles.mobileHeroLayerFour,
+    depthX: 3,
+    depthY: 1,
+    scrollY: 5,
+  },
+  {
+    src: "/KHIXHero/mobile/pond-animated.webp",
+    className: styles.mobileHeroPondAnimationLayer,
+    depthX: 3,
+    depthY: 1,
+    scrollY: 5,
+  },
+  {
+    src: "/KHIXHero/mobile/3.webp",
+    className: styles.mobileHeroLayerThree,
+    depthX: 5,
+    depthY: 1.8,
+    scrollY: 8,
+  },
+  {
+    src: "/KHIXHero/mobile/2.webp",
+    className: styles.mobileHeroLayerTwo,
+    depthX: 5,
+    depthY: 1.8,
+    scrollY: 8,
+  },
+];
+
+function MobileHeroLayers() {
+  return (
+    <div className={styles.mobileHeroLayers} data-mobile-hero-layers>
+      {MOBILE_HERO_LAYERS.map((layer) => (
+        <Image
+          key={layer.src}
+          src={layer.src}
+          alt=""
+          fill
+          priority
+          unoptimized
+          sizes="100vw"
+          draggable={false}
+          style={
+            {
+              "--khix-mobile-layer-depth-x": layer.depthX,
+              "--khix-mobile-layer-depth-y": layer.depthY,
+              "--khix-mobile-layer-scroll-y": `${layer.scrollY}px`,
+            } as CSSProperties
+          }
+          className={[styles.mobileHeroLayer, layer.className].join(" ")}
+        />
+      ))}
+    </div>
   );
 }
