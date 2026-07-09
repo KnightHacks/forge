@@ -40,6 +40,7 @@ export default function Page() {
             </h2>
           </section>
           <SponsorTeamSection />
+          <div className={styles.waterfallFaqSeparator} aria-hidden="true" />
           <FAQ />
         </div>
       </main>

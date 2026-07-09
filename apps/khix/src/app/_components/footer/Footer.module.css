@@ -13,9 +13,11 @@
   margin-top: clamp(-3rem, -4vw, -2rem);
   padding: clamp(4.4rem, 7vw, 6rem) clamp(1.25rem, 7vw, 6rem)
     clamp(2rem, 4vw, 3rem);
-  clip-path: polygon(0 2.3rem, 91% 0, 100% 2.8rem, 100% 100%, 0 100%);
   color: rgba(255, 255, 255, 0.94);
-  background: #0d091d;
+  background-image: url("/assets/footer.webp");
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: 100% 100%;
   font-family: var(--footer-body-font);
 }
 

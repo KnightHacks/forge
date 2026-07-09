@@ -40,14 +40,12 @@
   top: 38%;
   left: 50%;
   z-index: 3;
-  width: 110vw;
-  height: calc(var(--waterfall-width) * 0.31);
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04), transparent 28%),
-    linear-gradient(180deg, #151a2a 0%, #0c111d 58%, #070b13 100%);
-  clip-path: polygon(0 18%, 48% 4%, 100% 17%, 100% 82%, 50% 70%, 0 88%);
-  filter: drop-shadow(0 -0.45rem 0.75rem rgba(3, 7, 12, 0.24))
-    drop-shadow(0 0.6rem 0.7rem rgba(2, 4, 8, 0.3));
+  width: 100vw;
+  height: calc(var(--waterfall-width) * 0.407);
+  background: url("/assets/separator-rocks.webp") center top / 100% auto
+    no-repeat;
+  filter: drop-shadow(0 -0.35rem 0.7rem rgba(3, 7, 12, 0.22))
+    drop-shadow(0 0.5rem 0.65rem rgba(2, 4, 8, 0.28));
   transform: translateX(-50%);
 }
 
