@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { Instagram, Menu } from "lucide-react";
 
+import { MLHBadge } from "./MLHBadge";
 import styles from "./Navbar.module.css";
 
 export interface NavbarLink {
@@ -141,133 +142,37 @@ export function Navbar({
   const isNavHidden = isHidden && !isMenuVisible;
 
   return (
-    <header
-      className={styles.navbar}
-      data-hidden={isNavHidden}
-      data-menu-open={isMenuOpen}
-      aria-hidden={isNavHidden}
-      inert={isNavHidden ? true : undefined}
-    >
-      <div className={styles.inner}>
-        <a
-          className={styles.brand}
-          href={homeHref}
-          aria-label="Knight Hacks IX home"
-          onClick={handleNavigation}
-        >
-          <Image
-            src="/khlogosinglewhite.svg"
-            alt=""
-            width={42}
-            height={49}
-            className={styles.logo}
-            priority
-          />
-        </a>
-
-        <nav className={styles.links} aria-label="Primary navigation">
-          {links.map((link) => (
-            <a
-              key={link.href}
-              className={styles.link}
-              href={link.href}
-              {...(link.external
-                ? { target: "_blank", rel: "noopener noreferrer" }
-                : {})}
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
-
-        {socialLinks.length > 0 ? (
-          <nav className={styles.socialLinks} aria-label="Social links">
-            {socialLinks.map((link) => (
-              <a
-                key={link.href}
-                className={styles.socialLink}
-                href={link.href}
-                aria-label={link.label}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <SocialIcon icon={link.icon} />
-              </a>
-            ))}
-          </nav>
-        ) : null}
-
-        <button
-          type="button"
-          className={styles.menuButton}
-          aria-label={
-            isMenuOpen ? "Close navigation menu" : "Open navigation menu"
-          }
-          aria-expanded={isMenuOpen}
-          aria-controls="khix-mobile-navigation"
-          onClick={() => {
-            if (isMenuOpen) {
-              closeMenu();
-              return;
-            }
-
-            openMenu();
-          }}
-        >
-          <span className={styles.menuIconWrap} aria-hidden="true">
-            <Menu className={styles.menuIcon} data-menu-icon="open" />
+    <>
+      <header
+        className={styles.navbar}
+        data-hidden={isNavHidden}
+        data-menu-open={isMenuOpen}
+        aria-hidden={isNavHidden}
+        inert={isNavHidden ? true : undefined}
+      >
+        <div className={styles.inner}>
+          <a
+            className={styles.brand}
+            href={homeHref}
+            aria-label="Knight Hacks IX home"
+            onClick={handleNavigation}
+          >
             <Image
               src="/khlogosinglewhite.svg"
               alt=""
-              width={38}
-              height={44}
-              className={styles.menuIcon}
-              data-menu-icon="logo"
+              width={42}
+              height={49}
+              className={styles.logo}
+              priority
             />
-          </span>
-        </button>
-      </div>
+          </a>
 
-      <div
-        className={styles.mobileLayer}
-        data-open={isMenuVisible}
-        data-state={menuState}
-        aria-hidden={!isMenuOpen}
-        inert={!isMenuOpen ? true : undefined}
-      >
-        <button
-          type="button"
-          className={styles.mobileBackdrop}
-          aria-label="Close navigation menu"
-          tabIndex={isMenuOpen ? 0 : -1}
-          onClick={closeMenu}
-        />
-        <nav
-          id="khix-mobile-navigation"
-          className={styles.mobileMenu}
-          aria-label="Mobile navigation"
-          onAnimationEnd={(event) => {
-            if (event.currentTarget !== event.target || !isMenuClosing) return;
-
-            setIsMenuClosing(false);
-          }}
-        >
-          <div className={styles.mobileLinks}>
-            <a
-              className={styles.mobileLink}
-              href={homeHref}
-              tabIndex={isMenuOpen ? 0 : -1}
-              onClick={handleNavigation}
-            >
-              Home
-            </a>
+          <nav className={styles.links} aria-label="Primary navigation">
             {links.map((link) => (
               <a
                 key={link.href}
-                className={styles.mobileLink}
+                className={styles.link}
                 href={link.href}
-                tabIndex={isMenuOpen ? 0 : -1}
-                onClick={handleNavigation}
                 {...(link.external
                   ? { target: "_blank", rel: "noopener noreferrer" }
                   : {})}
@@ -275,32 +180,132 @@ export function Navbar({
                 {link.label}
               </a>
             ))}
-          </div>
+          </nav>
+
           {socialLinks.length > 0 ? (
-            <div
-              className={styles.mobileSocialLinks}
-              role="group"
-              aria-label="Social links"
-            >
+            <nav className={styles.socialLinks} aria-label="Social links">
               {socialLinks.map((link) => (
                 <a
                   key={link.href}
-                  className={styles.mobileSocialLink}
+                  className={styles.socialLink}
                   href={link.href}
                   aria-label={link.label}
-                  tabIndex={isMenuOpen ? 0 : -1}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={handleNavigation}
                 >
                   <SocialIcon icon={link.icon} />
                 </a>
               ))}
-            </div>
+            </nav>
           ) : null}
-        </nav>
-      </div>
-    </header>
+
+          <button
+            type="button"
+            className={styles.menuButton}
+            aria-label={
+              isMenuOpen ? "Close navigation menu" : "Open navigation menu"
+            }
+            aria-expanded={isMenuOpen}
+            aria-controls="khix-mobile-navigation"
+            onClick={() => {
+              if (isMenuOpen) {
+                closeMenu();
+                return;
+              }
+
+              openMenu();
+            }}
+          >
+            <span className={styles.menuIconWrap} aria-hidden="true">
+              <Menu className={styles.menuIcon} data-menu-icon="open" />
+              <Image
+                src="/khlogosinglewhite.svg"
+                alt=""
+                width={38}
+                height={44}
+                className={styles.menuIcon}
+                data-menu-icon="logo"
+              />
+            </span>
+          </button>
+        </div>
+
+        <div
+          className={styles.mobileLayer}
+          data-open={isMenuVisible}
+          data-state={menuState}
+          aria-hidden={!isMenuOpen}
+          inert={!isMenuOpen ? true : undefined}
+        >
+          <button
+            type="button"
+            className={styles.mobileBackdrop}
+            aria-label="Close navigation menu"
+            tabIndex={isMenuOpen ? 0 : -1}
+            onClick={closeMenu}
+          />
+          <nav
+            id="khix-mobile-navigation"
+            className={styles.mobileMenu}
+            aria-label="Mobile navigation"
+            onAnimationEnd={(event) => {
+              if (event.currentTarget !== event.target || !isMenuClosing)
+                return;
+
+              setIsMenuClosing(false);
+            }}
+          >
+            <div className={styles.mobileLinks}>
+              <a
+                className={styles.mobileLink}
+                href={homeHref}
+                tabIndex={isMenuOpen ? 0 : -1}
+                onClick={handleNavigation}
+              >
+                Home
+              </a>
+              {links.map((link) => (
+                <a
+                  key={link.href}
+                  className={styles.mobileLink}
+                  href={link.href}
+                  tabIndex={isMenuOpen ? 0 : -1}
+                  onClick={handleNavigation}
+                  {...(link.external
+                    ? { target: "_blank", rel: "noopener noreferrer" }
+                    : {})}
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+            {socialLinks.length > 0 ? (
+              <div
+                className={styles.mobileSocialLinks}
+                role="group"
+                aria-label="Social links"
+              >
+                {socialLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    className={styles.mobileSocialLink}
+                    href={link.href}
+                    aria-label={link.label}
+                    tabIndex={isMenuOpen ? 0 : -1}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleNavigation}
+                  >
+                    <SocialIcon icon={link.icon} />
+                  </a>
+                ))}
+              </div>
+            ) : null}
+          </nav>
+        </div>
+      </header>
+      <MLHBadge isHidden={isNavHidden} isMenuOpen={isMenuVisible} />
+    </>
   );
 }
 

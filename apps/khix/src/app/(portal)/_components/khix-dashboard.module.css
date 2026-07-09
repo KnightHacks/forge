@@ -4246,11 +4246,11 @@
   }
 
   .statusDashboard {
-    height: 100vh;
-    height: 100dvh;
+    height: auto;
     min-height: 100vh;
     min-height: 100dvh;
-    overflow: hidden;
+    overflow: visible;
+    overflow-x: clip;
   }
 
   .main {
@@ -4597,10 +4597,10 @@
   }
 
   .statusMain {
-    height: calc(100dvh - 4.35rem);
+    height: auto;
     min-height: calc(100dvh - 4.35rem);
-    overflow: hidden;
-    overscroll-behavior: none;
+    overflow: visible;
+    overscroll-behavior: auto;
   }
 
   .profileMain,

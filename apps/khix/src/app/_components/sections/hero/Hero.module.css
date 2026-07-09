@@ -43,8 +43,9 @@
 
 .art {
   --khix-art-motion-scale: 0.46;
+
   position: absolute;
-  inset: -1.6svh -1.2vw;
+  inset: -4svh -3vw;
   z-index: 1;
   pointer-events: auto;
   overflow-anchor: none;
@@ -77,28 +78,38 @@
 .layer {
   --khix-layer-depth-x: 0;
   --khix-layer-depth-y: 0;
+  --khix-layer-max-x: clamp(0.65rem, 1.65vw, 1.85rem);
+  --khix-layer-max-y: clamp(0.65rem, 1.8svh, 1.7rem);
   --khix-layer-scale: 1;
   --khix-layer-scroll-y: 0px;
 
   position: absolute;
-  inset: 0;
+  inset: clamp(-2.35rem, -2.4vw, -0.8rem);
   display: block;
   overflow: hidden;
   overflow-anchor: none;
   transform: translate3d(
-      calc(
-        var(--khix-pointer-x) * var(--khix-layer-depth-x) *
-          var(--khix-art-motion-scale) * 1px
+      clamp(
+        calc(var(--khix-layer-max-x) * -1),
+        calc(
+          var(--khix-pointer-x) * var(--khix-layer-depth-x) *
+            var(--khix-art-motion-scale) * 1px
+        ),
+        var(--khix-layer-max-x)
       ),
-      calc(
-        (
-            var(--khix-pointer-y) * var(--khix-layer-depth-y) *
-              var(--khix-art-motion-scale) * 1px
-          ) +
+      clamp(
+        calc(var(--khix-layer-max-y) * -1),
+        calc(
           (
-            var(--khix-scroll-progress) * var(--khix-layer-scroll-y) *
-              var(--khix-art-motion-scale)
-          )
+              var(--khix-pointer-y) * var(--khix-layer-depth-y) *
+                var(--khix-art-motion-scale) * 1px
+            ) +
+            (
+              var(--khix-scroll-progress) * var(--khix-layer-scroll-y) *
+                var(--khix-art-motion-scale)
+            )
+        ),
+        var(--khix-layer-max-y)
       ),
       0
     )
@@ -141,6 +152,9 @@
   --khix-hero-glow-opacity: 0.14;
 
   opacity: var(--khix-hero-glow-opacity);
+  filter: drop-shadow(0 0 0.24rem rgb(108 246 255 / 0.22));
+  animation: desktopHeroGlowFlicker 6.6s steps(1, end) infinite;
+  will-change: opacity, filter;
 }
 
 .waterLayer {
@@ -252,9 +266,13 @@
 
   position: absolute;
   top: 29%;
-  left: 14%;
+  left: 10%;
   z-index: 30;
-  width: min(78vw, 90rem);
+  display: flex;
+  width: clamp(28rem, 39vw, 47rem);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(0.9rem, 1.8svh, 1.28rem);
   pointer-events: auto;
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1);
@@ -309,7 +327,155 @@
 }
 
 .heroApplyButton {
-  display: none;
+  --khix-apply-mote-opacity: 0.82;
+  --khix-apply-mote-core: rgb(255 255 255 / 0.9);
+  --khix-apply-mote-mid: rgb(210 255 226 / 0.62);
+  --khix-apply-mote-far: rgb(135 238 255 / 0.42);
+
+  position: relative;
+  z-index: 2;
+  isolation: isolate;
+  display: inline-flex;
+  align-self: center;
+  min-height: clamp(2.15rem, 3.9svh, 2.55rem);
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  border: 1px solid rgb(255 255 255 / 0.42);
+  border-radius: 0.5rem;
+  padding: 0 clamp(2.8rem, 6vw, 4.3rem);
+  color: rgb(255 255 255 / 0.96);
+  font-family:
+    var(--font-geist-sans, ui-sans-serif),
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: clamp(0.84rem, 1.05vw, 0.96rem);
+  font-weight: 650;
+  letter-spacing: 0;
+  text-decoration: none;
+  text-shadow: 0 0 0.42rem rgb(255 255 255 / 0.36);
+  background:
+    radial-gradient(circle at 20% 0%, rgb(209 255 232 / 0.1), transparent 42%),
+    rgb(255 255 255 / 0.035);
+  box-shadow:
+    inset 0 0 0.45rem rgb(255 255 255 / 0.055),
+    0 0.45rem 1rem rgb(9 30 30 / 0.12),
+    0 0 0.65rem rgb(169 247 255 / 0.07);
+  backdrop-filter: blur(2px) saturate(1.03);
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 220ms ease,
+    transform 180ms ease;
+}
+
+.heroApplyButton::after {
+  position: absolute;
+  inset: -0.7rem;
+  z-index: 0;
+  pointer-events: none;
+  content: "";
+  border-radius: calc(0.5rem + 0.7rem);
+  background:
+    radial-gradient(
+      circle at 12% 50%,
+      var(--khix-apply-mote-core) 0 0.045rem,
+      var(--khix-apply-mote-mid) 0.075rem 0.17rem,
+      transparent 0.36rem
+    ),
+    radial-gradient(
+      circle at 28% 10%,
+      var(--khix-apply-mote-core) 0 0.04rem,
+      var(--khix-apply-mote-far) 0.07rem 0.16rem,
+      transparent 0.34rem
+    ),
+    radial-gradient(
+      circle at 74% 8%,
+      var(--khix-apply-mote-core) 0 0.04rem,
+      var(--khix-apply-mote-mid) 0.07rem 0.16rem,
+      transparent 0.34rem
+    ),
+    radial-gradient(
+      circle at 91% 48%,
+      var(--khix-apply-mote-core) 0 0.045rem,
+      var(--khix-apply-mote-far) 0.08rem 0.18rem,
+      transparent 0.38rem
+    ),
+    radial-gradient(
+      circle at 68% 93%,
+      var(--khix-apply-mote-core) 0 0.04rem,
+      var(--khix-apply-mote-mid) 0.07rem 0.16rem,
+      transparent 0.34rem
+    ),
+    radial-gradient(
+      circle at 22% 90%,
+      var(--khix-apply-mote-core) 0 0.042rem,
+      var(--khix-apply-mote-far) 0.075rem 0.17rem,
+      transparent 0.36rem
+    );
+  background-repeat: no-repeat;
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 180ms ease,
+    transform 440ms ease;
+}
+
+.heroApplyButton > span {
+  position: relative;
+  z-index: 1;
+}
+
+.heroApplyButton:hover,
+.heroApplyButton:focus-visible {
+  color: white;
+  border-color: rgb(255 255 255 / 0.58);
+  transform: translate3d(0, -1px, 0);
+}
+
+.heroApplyButton:hover::after,
+.heroApplyButton:focus-visible::after {
+  opacity: var(--khix-apply-mote-opacity);
+  transform: scale(1);
+  animation: khixHeroApplyButtonMotes 1.9s ease-in-out infinite alternate;
+}
+
+.heroApplyButton:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.7);
+  outline-offset: 0.22rem;
+}
+
+@media (max-width: 1440px) and (min-width: 701px) {
+  .art {
+    --khix-art-motion-scale: 0.38;
+    inset: -3.4svh -4vw;
+  }
+
+  .layerImage {
+    object-position: 94% 50%;
+  }
+
+  .pondFrameSequence,
+  .waterfallFrameSequence {
+    background-position: 94% 50%;
+  }
+
+  .titleLockup {
+    top: clamp(13.5rem, 30svh, 18rem);
+    left: clamp(2rem, 8vw, 5rem);
+    width: clamp(22rem, 45vw, 31rem);
+  }
+
+  .heroApplyButton {
+    min-height: 2.35rem;
+    padding: 0 clamp(2.7rem, 7vw, 3.8rem);
+    font-size: 0.88rem;
+  }
 }
 
 @media (max-width: 700px) {
@@ -464,131 +630,9 @@
   }
 
   .heroApplyButton {
-    --khix-apply-mote-opacity: 0.82;
-    --khix-apply-mote-core: rgb(255 255 255 / 0.9);
-    --khix-apply-mote-mid: rgb(210 255 226 / 0.62);
-    --khix-apply-mote-far: rgb(135 238 255 / 0.42);
-
-    position: relative;
-    z-index: 2;
-    isolation: isolate;
-    display: inline-flex;
-    align-self: center;
     min-height: clamp(2.1rem, 4.4svh, 2.42rem);
-    align-items: center;
-    justify-content: center;
-    overflow: visible;
-    border: 1px solid rgb(255 255 255 / 0.48);
-    border-radius: 0.5rem;
     padding: 0 clamp(2.55rem, 11vw, 3.4rem);
-    color: rgb(255 255 255 / 0.96);
-    font-family:
-      var(--font-geist-sans, ui-sans-serif),
-      system-ui,
-      -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
-      sans-serif;
     font-size: clamp(0.78rem, 3vw, 0.9rem);
-    font-weight: 650;
-    letter-spacing: 0;
-    text-decoration: none;
-    text-shadow: 0 0 0.42rem rgb(255 255 255 / 0.36);
-    background:
-      radial-gradient(
-        circle at 20% 0%,
-        rgb(209 255 232 / 0.1),
-        transparent 42%
-      ),
-      rgb(255 255 255 / 0.035);
-    box-shadow:
-      inset 0 0 0.45rem rgb(255 255 255 / 0.055),
-      0 0.45rem 1rem rgb(9 30 30 / 0.12),
-      0 0 0.65rem rgb(169 247 255 / 0.07);
-    backdrop-filter: blur(2px) saturate(1.03);
-    transition:
-      color 180ms ease,
-      border-color 180ms ease,
-      background 180ms ease,
-      box-shadow 220ms ease,
-      transform 180ms ease;
-  }
-
-  .heroApplyButton::after {
-    position: absolute;
-    inset: -0.7rem;
-    z-index: 0;
-    pointer-events: none;
-    content: "";
-    border-radius: calc(0.5rem + 0.7rem);
-    background:
-      radial-gradient(
-        circle at 12% 50%,
-        var(--khix-apply-mote-core) 0 0.045rem,
-        var(--khix-apply-mote-mid) 0.075rem 0.17rem,
-        transparent 0.36rem
-      ),
-      radial-gradient(
-        circle at 28% 10%,
-        var(--khix-apply-mote-core) 0 0.04rem,
-        var(--khix-apply-mote-far) 0.07rem 0.16rem,
-        transparent 0.34rem
-      ),
-      radial-gradient(
-        circle at 74% 8%,
-        var(--khix-apply-mote-core) 0 0.04rem,
-        var(--khix-apply-mote-mid) 0.07rem 0.16rem,
-        transparent 0.34rem
-      ),
-      radial-gradient(
-        circle at 91% 48%,
-        var(--khix-apply-mote-core) 0 0.045rem,
-        var(--khix-apply-mote-far) 0.08rem 0.18rem,
-        transparent 0.38rem
-      ),
-      radial-gradient(
-        circle at 68% 93%,
-        var(--khix-apply-mote-core) 0 0.04rem,
-        var(--khix-apply-mote-mid) 0.07rem 0.16rem,
-        transparent 0.34rem
-      ),
-      radial-gradient(
-        circle at 22% 90%,
-        var(--khix-apply-mote-core) 0 0.042rem,
-        var(--khix-apply-mote-far) 0.075rem 0.17rem,
-        transparent 0.36rem
-      );
-    background-repeat: no-repeat;
-    mix-blend-mode: screen;
-    opacity: 0;
-    transform: scale(0.96);
-    transition:
-      opacity 180ms ease,
-      transform 440ms ease;
-  }
-
-  .heroApplyButton > span {
-    position: relative;
-    z-index: 1;
-  }
-
-  .heroApplyButton:hover,
-  .heroApplyButton:focus-visible {
-    color: white;
-    border-color: rgb(255 255 255 / 0.68);
-    transform: translate3d(0, -1px, 0);
-  }
-
-  .heroApplyButton:hover::after,
-  .heroApplyButton:focus-visible::after {
-    opacity: var(--khix-apply-mote-opacity);
-    transform: scale(1);
-    animation: khixHeroApplyButtonMotes 1.9s ease-in-out infinite alternate;
-  }
-
-  .heroApplyButton:focus-visible {
-    outline: 2px solid rgb(255 255 255 / 0.7);
-    outline-offset: 0.22rem;
   }
 }
 
@@ -607,6 +651,13 @@
 
   .layer {
     transform: none !important;
+  }
+
+  .glowLayer {
+    opacity: var(--khix-hero-glow-opacity);
+    filter: none;
+    animation: none;
+    will-change: auto;
   }
 
   .mobileHeroLayer {
@@ -667,6 +718,33 @@
       -0.18rem -0.08rem,
       0.16rem 0.06rem,
       -0.1rem -0.12rem;
+  }
+}
+
+@keyframes desktopHeroGlowFlicker {
+  0%,
+  8%,
+  27%,
+  48%,
+  71%,
+  100% {
+    opacity: var(--khix-hero-glow-opacity);
+    filter: drop-shadow(0 0 0.24rem rgb(108 246 255 / 0.22));
+  }
+
+  9%,
+  29%,
+  50% {
+    opacity: calc(var(--khix-hero-glow-opacity) * 0.52);
+    filter: drop-shadow(0 0 0.12rem rgb(108 246 255 / 0.12));
+  }
+
+  12%,
+  32%,
+  54%,
+  75% {
+    opacity: calc(var(--khix-hero-glow-opacity) * 1.78);
+    filter: drop-shadow(0 0 0.4rem rgb(130 255 255 / 0.38));
   }
 }
 

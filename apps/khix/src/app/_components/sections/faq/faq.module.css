@@ -421,6 +421,7 @@
   }
 
   .categoryList .gemButton:last-child:nth-child(odd) {
+    width: calc((100% - 0.8rem) / 2);
     justify-self: center;
     grid-column: 1 / -1;
   }

@@ -412,34 +412,42 @@ const applicationAnimationStyles = `
   position: relative;
 }
 
-.kh-nav-button[data-transitioning="true"] {
-  cursor: progress;
-}
-
-.kh-nav-button[data-hold-skip="true"]::before,
-.kh-nav-button[data-hold-skip="true"]::after {
+.kh-nav-button::after {
+  border: 1.5px solid rgba(142, 146, 140, 0.96);
   border-radius: inherit;
+  box-shadow:
+    0 0 0.18rem rgba(118, 122, 116, 0.28),
+    0 0 0.62rem rgba(118, 122, 116, 0.28);
   content: "";
-  inset: -0.42rem;
+  inset: -0.46rem;
+  opacity: 1;
   pointer-events: none;
   position: absolute;
 }
 
-.kh-nav-button[data-hold-skip="true"]::after {
-  border: 1px solid rgba(125, 255, 180, 0.36);
-  opacity: 0.34;
-  transition: opacity 160ms ease;
+.kh-nav-button[data-transitioning="true"] {
+  cursor: progress;
+}
+
+.kh-nav-button[data-hold-skip="true"]::before {
+  border-radius: inherit;
+  content: "";
+  inset: -0.46rem;
+  pointer-events: none;
+  position: absolute;
 }
 
 .kh-nav-button[data-hold-skip="true"]::before {
   background: conic-gradient(
     from -90deg,
-    rgba(125, 255, 180, 0.98) var(--kh-hold-skip-angle, 0deg),
-    rgba(125, 255, 180, 0.16) 0deg
+    rgba(83, 255, 159, 1) var(--kh-hold-skip-angle, 0deg),
+    transparent 0deg
   );
   opacity: 0;
-  padding: 2px;
-  transition: opacity 160ms ease;
+  padding: 4px;
+  transition:
+    opacity 160ms ease,
+    padding 160ms ease;
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -449,10 +457,15 @@ const applicationAnimationStyles = `
 
 .kh-nav-button[data-hold-active="true"]::before {
   opacity: 1;
+  padding: 4px;
 }
 
 .kh-nav-button[data-hold-active="true"]::after {
-  opacity: 0.58;
+  border-color: rgba(142, 146, 140, 0.96);
+  box-shadow:
+    0 0 0.18rem rgba(118, 122, 116, 0.28),
+    0 0 0.62rem rgba(118, 122, 116, 0.28);
+  opacity: 1;
 }
 
 .kh-nav-button:hover:not(:disabled) {
@@ -573,6 +586,11 @@ const applicationAnimationStyles = `
   .kh-application-nav .kh-nav-button {
     width: clamp(3.15rem, 12vh, 3.75rem);
     height: clamp(3.15rem, 12vh, 3.75rem);
+  }
+
+  .kh-application-nav .kh-nav-button::after,
+  .kh-application-nav .kh-nav-button[data-hold-skip="true"]::before {
+    inset: -0.52rem;
   }
 }
 
