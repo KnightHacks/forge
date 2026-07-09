@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowBigLeft, ArrowBigRight } from "lucide-react";
 
 import type { SpeakerShowcaseSpeaker } from "./speakers";
 import styles from "./SpeakerShowcase.module.css";
@@ -10,9 +10,17 @@ import styles from "./SpeakerShowcase.module.css";
 const AUTO_SCROLL_DELAY_MS = 4200;
 const SPEAKER_ENTER_MS = 300;
 const SPEAKER_EXIT_MS = 240;
+const MOBILE_VISIBLE_SPEAKER_COUNT = 1;
+const LARGE_DESKTOP_VISIBLE_SPEAKER_COUNT = 2;
+const LARGE_DESKTOP_VISIBLE_SPEAKERS_QUERY = "(min-width: 1800px)";
 
 type SpeakerTransitionDirection = "next" | "previous";
 type SpeakerTransitionState = "idle" | "exiting" | "entering";
+
+interface VisibleSpeaker {
+  index: number;
+  speaker: SpeakerShowcaseSpeaker;
+}
 
 export interface SpeakerShowcaseProps {
   speakers: readonly SpeakerShowcaseSpeaker[];
@@ -33,12 +41,83 @@ function getSpeakerImageAlt(speaker: SpeakerShowcaseSpeaker) {
   return `${speaker.name} speaker portrait`;
 }
 
+function getLinkedInLabel(speaker: SpeakerShowcaseSpeaker) {
+  return `Open ${speaker.name}'s LinkedIn profile`;
+}
+
 function getPreviousSpeakerIndex(currentIndex: number, speakerCount: number) {
   return (currentIndex - 1 + speakerCount) % speakerCount;
 }
 
 function getNextSpeakerIndex(currentIndex: number, speakerCount: number) {
   return (currentIndex + 1) % speakerCount;
+}
+
+function getVisibleSpeakers(
+  speakers: readonly SpeakerShowcaseSpeaker[],
+  activeSpeakerIndex: number,
+  visibleSpeakerCount: number,
+) {
+  const resolvedVisibleSpeakerCount = Math.min(
+    visibleSpeakerCount,
+    speakers.length,
+  );
+  const visibleSpeakers: VisibleSpeaker[] = [];
+
+  for (let offset = 0; offset < resolvedVisibleSpeakerCount; offset += 1) {
+    const index = (activeSpeakerIndex + offset) % speakers.length;
+    const speaker = speakers[index];
+
+    if (speaker) {
+      visibleSpeakers.push({ index, speaker });
+    }
+  }
+
+  return visibleSpeakers;
+}
+
+function SpeakerPortrait({ speaker }: { speaker: SpeakerShowcaseSpeaker }) {
+  const portraitStage = (
+    <div className={styles.portraitStage}>
+      <div className={styles.imageFrame}>
+        <Image
+          src={speaker.imageSrc}
+          alt={getSpeakerImageAlt(speaker)}
+          fill
+          sizes="(max-width: 640px) 12rem, (max-width: 960px) 13rem, 16rem"
+          className={styles.image}
+          priority={false}
+          unoptimized
+        />
+      </div>
+      <Image
+        src="/assets/speaker-frame.png"
+        alt=""
+        fill
+        sizes="(max-width: 640px) 13rem, (max-width: 960px) 14rem, 17rem"
+        className={styles.frameImage}
+        priority={false}
+        unoptimized
+      />
+    </div>
+  );
+
+  if (!speaker.linkedinUrl) {
+    return <div className={styles.portraitShell}>{portraitStage}</div>;
+  }
+
+  return (
+    <a
+      className={`${styles.portraitShell} ${styles.portraitLink}`}
+      href={speaker.linkedinUrl}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={getLinkedInLabel(speaker)}
+      title="LinkedIn"
+    >
+      {portraitStage}
+    </a>
+  );
 }
 
 export function SpeakerShowcase({
@@ -49,6 +128,9 @@ export function SpeakerShowcase({
 }: SpeakerShowcaseProps) {
   const [activeSpeakerIndex, setActiveSpeakerIndex] = useState(0);
   const [autoScrollResetKey, setAutoScrollResetKey] = useState(0);
+  const [visibleSpeakerCount, setVisibleSpeakerCount] = useState(
+    MOBILE_VISIBLE_SPEAKER_COUNT,
+  );
   const [pendingSpeakerIndex, setPendingSpeakerIndex] = useState<number | null>(
     null,
   );
@@ -56,8 +138,15 @@ export function SpeakerShowcase({
     useState<SpeakerTransitionDirection>("next");
   const [transitionState, setTransitionState] =
     useState<SpeakerTransitionState>("idle");
-  const activeSpeaker = speakers[activeSpeakerIndex] ?? speakers[0];
-  const hasMultipleSpeakers = speakers.length > 1;
+  const normalizedActiveSpeakerIndex =
+    speakers.length > 0 ? activeSpeakerIndex % speakers.length : 0;
+  const renderedSpeakerCount = Math.min(visibleSpeakerCount, speakers.length);
+  const visibleSpeakers = getVisibleSpeakers(
+    speakers,
+    normalizedActiveSpeakerIndex,
+    visibleSpeakerCount,
+  );
+  const hasScrollableSpeakers = speakers.length > renderedSpeakerCount;
   const isTransitioning = transitionState !== "idle";
   const speakerShowcaseClassName = className
     ? `${styles.speakerShowcase} ${className}`
@@ -65,58 +154,86 @@ export function SpeakerShowcase({
 
   const startSpeakerTransition = useCallback(
     (nextSpeakerIndex: number, direction: SpeakerTransitionDirection) => {
-      if (!hasMultipleSpeakers || isTransitioning) return;
+      if (!hasScrollableSpeakers || isTransitioning) return;
 
       const normalizedNextSpeakerIndex = nextSpeakerIndex % speakers.length;
 
-      if (normalizedNextSpeakerIndex === activeSpeakerIndex) return;
+      if (normalizedNextSpeakerIndex === normalizedActiveSpeakerIndex) return;
 
       setPendingSpeakerIndex(normalizedNextSpeakerIndex);
       setTransitionDirection(direction);
       setTransitionState("exiting");
     },
-    [activeSpeakerIndex, hasMultipleSpeakers, isTransitioning, speakers.length],
+    [
+      hasScrollableSpeakers,
+      isTransitioning,
+      normalizedActiveSpeakerIndex,
+      speakers.length,
+    ],
   );
 
   const showPreviousSpeaker = useCallback(() => {
-    if (!hasMultipleSpeakers) return;
+    if (!hasScrollableSpeakers) return;
 
     startSpeakerTransition(
-      getPreviousSpeakerIndex(activeSpeakerIndex, speakers.length),
+      getPreviousSpeakerIndex(normalizedActiveSpeakerIndex, speakers.length),
       "previous",
     );
   }, [
-    activeSpeakerIndex,
-    hasMultipleSpeakers,
+    hasScrollableSpeakers,
+    normalizedActiveSpeakerIndex,
     speakers.length,
     startSpeakerTransition,
   ]);
 
   const showNextSpeaker = useCallback(() => {
-    if (!hasMultipleSpeakers) return;
+    if (!hasScrollableSpeakers) return;
 
     startSpeakerTransition(
-      getNextSpeakerIndex(activeSpeakerIndex, speakers.length),
+      getNextSpeakerIndex(normalizedActiveSpeakerIndex, speakers.length),
       "next",
     );
   }, [
-    activeSpeakerIndex,
-    hasMultipleSpeakers,
+    hasScrollableSpeakers,
+    normalizedActiveSpeakerIndex,
     speakers.length,
     startSpeakerTransition,
   ]);
 
   useEffect(() => {
-    if (!hasMultipleSpeakers || isTransitioning) return;
+    const visibleSpeakersQuery = window.matchMedia(
+      LARGE_DESKTOP_VISIBLE_SPEAKERS_QUERY,
+    );
+    const updateVisibleSpeakerCount = () => {
+      setVisibleSpeakerCount(
+        visibleSpeakersQuery.matches
+          ? LARGE_DESKTOP_VISIBLE_SPEAKER_COUNT
+          : MOBILE_VISIBLE_SPEAKER_COUNT,
+      );
+    };
+
+    updateVisibleSpeakerCount();
+    visibleSpeakersQuery.addEventListener("change", updateVisibleSpeakerCount);
+
+    return () => {
+      visibleSpeakersQuery.removeEventListener(
+        "change",
+        updateVisibleSpeakerCount,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasScrollableSpeakers || isTransitioning) return;
 
     const timeoutId = window.setTimeout(showNextSpeaker, AUTO_SCROLL_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
   }, [
-    activeSpeakerIndex,
     autoScrollResetKey,
-    hasMultipleSpeakers,
+    hasScrollableSpeakers,
     isTransitioning,
+    normalizedActiveSpeakerIndex,
     showNextSpeaker,
   ]);
 
@@ -140,7 +257,7 @@ export function SpeakerShowcase({
     }
   }, [pendingSpeakerIndex, transitionState]);
 
-  if (!activeSpeaker) {
+  if (visibleSpeakers.length === 0) {
     return null;
   }
 
@@ -164,70 +281,49 @@ export function SpeakerShowcase({
         {title}
       </h2>
 
-      <div className={styles.stage}>
+      <div
+        className={styles.stage}
+        data-visible-speaker-count={visibleSpeakers.length}
+      >
         <button
           className={styles.arrowButton}
           type="button"
           aria-label="Show previous speaker"
           title="Previous speaker"
-          disabled={!hasMultipleSpeakers || isTransitioning}
+          disabled={!hasScrollableSpeakers || isTransitioning}
           onClick={handlePreviousSpeaker}
         >
-          <ChevronLeft aria-hidden="true" className={styles.arrowIcon} />
+          <ArrowBigLeft aria-hidden="true" className={styles.arrowIcon} />
         </button>
 
         <div
-          key={getSpeakerKey(activeSpeaker, activeSpeakerIndex)}
-          className={styles.speaker}
-          data-active-speaker-index={activeSpeakerIndex}
+          key={`${normalizedActiveSpeakerIndex}-${visibleSpeakers.length}`}
+          className={styles.speakerList}
+          data-active-speaker-index={normalizedActiveSpeakerIndex}
           data-speaker-count={speakers.length}
           data-transition-direction={transitionDirection}
           data-transition-state={transitionState}
+          data-visible-speaker-count={visibleSpeakers.length}
           aria-live="polite"
+          role="list"
         >
-          <div className={styles.portraitStage}>
-            <div className={styles.portraitGlow} aria-hidden="true" />
-            <svg
-              className={styles.outline}
-              viewBox="0 0 240 300"
-              fill="none"
-              aria-hidden="true"
+          {visibleSpeakers.map(({ index, speaker }) => (
+            <article
+              key={getSpeakerKey(speaker, index)}
+              className={styles.speaker}
+              role="listitem"
             >
-              <rect
-                x="13"
-                y="12"
-                width="214"
-                height="276"
-                rx="22"
-                stroke="currentColor"
-                strokeWidth="3"
-              />
-              <rect
-                x="28"
-                y="29"
-                width="184"
-                height="242"
-                rx="16"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeDasharray="10 12"
-              />
-            </svg>
-            <div className={styles.imageFrame}>
-              <Image
-                src={activeSpeaker.imageSrc}
-                alt={getSpeakerImageAlt(activeSpeaker)}
-                fill
-                sizes="(max-width: 640px) 12rem, 16rem"
-                className={styles.image}
-                priority={false}
-                unoptimized
-              />
-            </div>
-          </div>
-
-          <p className={styles.name}>{activeSpeaker.name}</p>
-          <p className={styles.role}>{activeSpeaker.companyRole}</p>
+              <SpeakerPortrait speaker={speaker} />
+              <div className={styles.speakerMeta}>
+                <div className={styles.nameRow}>
+                  <p className={styles.name} title={speaker.name}>
+                    {speaker.name}
+                  </p>
+                </div>
+                <p className={styles.role}>{speaker.companyRole}</p>
+              </div>
+            </article>
+          ))}
         </div>
 
         <button
@@ -235,10 +331,10 @@ export function SpeakerShowcase({
           type="button"
           aria-label="Show next speaker"
           title="Next speaker"
-          disabled={!hasMultipleSpeakers || isTransitioning}
+          disabled={!hasScrollableSpeakers || isTransitioning}
           onClick={handleNextSpeaker}
         >
-          <ChevronRight aria-hidden="true" className={styles.arrowIcon} />
+          <ArrowBigRight aria-hidden="true" className={styles.arrowIcon} />
         </button>
       </div>
     </section>
