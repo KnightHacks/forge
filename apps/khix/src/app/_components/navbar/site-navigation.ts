@@ -1,8 +1,7 @@
 import type { NavbarLink, NavbarSocialLink } from "./Navbar";
 
 export const KHIX_HOME_NAV_LINKS = [
-  { label: "Home", href: "#home" },
-  { label: "About Us", href: "#about" },
+  { label: "About", href: "#about" },
   { label: "Tracks", href: "#tracks" },
   { label: "Speakers", href: "#speakers" },
   { label: "Sponsors", href: "#sponsors" },
@@ -17,8 +16,13 @@ export const KHIX_SITE_NAV_LINKS = KHIX_HOME_NAV_LINKS.map((link) => ({
 
 export const KHIX_SOCIAL_LINKS = [
   {
+    label: "Join Knight Hacks on Discord",
+    href: "https://discord.gg/rc8f9rHVTE",
+    icon: "discord",
+  },
+  {
     label: "Knight Hacks on Instagram",
     href: "https://www.instagram.com/knighthacks/",
-    shortLabel: "ig",
+    icon: "instagram",
   },
 ] satisfies NavbarSocialLink[];
