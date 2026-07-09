@@ -56,7 +56,8 @@
 }
 
 .mlhTrustBadge[data-menu-open="true"] {
-  z-index: 70;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .mlhTrustBadge:hover,
