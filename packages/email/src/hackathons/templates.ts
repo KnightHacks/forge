@@ -16,6 +16,10 @@ export const HACKATHON_EMAIL_TEMPLATE_PRESET_OPTIONS = [
     label: "Knight Hacks VIII",
   },
   {
+    key: "knight-hacks-ix",
+    label: "Knight Hacks IX",
+  },
+  {
     key: "bloomknights",
     label: "BloomKnights",
   },
@@ -43,6 +47,15 @@ export const HACKATHON_EMAIL_TEMPLATE_IDS = {
     Capacity: 9,
     Confirmation: 10,
     Waitlist: 11,
+  },
+  "knight-hacks-ix": {
+    Blacklist: 22,
+    Accepted: 22,
+    AcceptedReminder: 22,
+    Apply: 22,
+    Capacity: 22,
+    Confirmation: 22,
+    Waitlist: 22,
   },
   bloomknights: {
     Blacklist: 14,

@@ -420,6 +420,11 @@
     gap: 0.55rem 0.8rem;
   }
 
+  .categoryList .gemButton:last-child:nth-child(odd) {
+    justify-self: center;
+    grid-column: 1 / -1;
+  }
+
   .questionButton {
     padding-inline: clamp(2.05rem, 8vw, 3.5rem);
   }

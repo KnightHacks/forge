@@ -775,7 +775,7 @@ export function HackathonManager() {
                       <div className="space-y-1">
                         <FormLabel>Email Template Override</FormLabel>
                         <FormDescription>
-                          Leave off to use the current Knight Hacks VIII email
+                          Leave off to use the default hackathon email
                           templates.
                         </FormDescription>
                       </div>

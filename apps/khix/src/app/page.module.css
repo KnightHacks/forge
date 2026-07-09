@@ -54,9 +54,10 @@
   left: 50%;
   z-index: 5;
   width: 100vw;
-  height: clamp(10rem, 40.7vw, 36.65rem);
-  margin-top: clamp(-7rem, -8vw, -3rem);
-  margin-bottom: clamp(-9rem, -12vw, -4rem);
+  height: 40.7vw;
+  min-height: 24rem;
+  margin-top: clamp(-12rem, -10vw, -6rem);
+  margin-bottom: clamp(-24rem, -18vw, -10rem);
   pointer-events: none;
   background: url("/assets/separator-rocks.webp") center top / 100% auto
     no-repeat;
@@ -75,6 +76,7 @@
 
   .waterfallFaqSeparator {
     height: 40.7vw;
+    min-height: 0;
     margin-top: -3rem;
     margin-bottom: -5.5rem;
   }
