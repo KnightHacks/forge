@@ -3,25 +3,51 @@
   --water-break-filter: drop-shadow(0 -0.1rem 0.035rem rgb(235 255 253 / 0.62))
     drop-shadow(0 -0.24rem 0.15rem rgb(157 238 234 / 0.32));
   --waterfall-width: 100vw;
-  --waterfall-height: calc(var(--waterfall-width) * 4.1667);
+  --waterfall-art-height: calc(var(--waterfall-width) * 4.1667);
+  --rock-separator-height: 59.9306vw;
+  --waterfall-scene-top: 8vw;
+  --waterfall-height: calc(
+    var(--waterfall-scene-top) + var(--waterfall-art-height)
+  );
 
   position: relative;
   z-index: 2;
   min-height: var(--waterfall-height);
-  margin-top: clamp(-2rem, -3vw, -0.75rem);
-  background:
-    radial-gradient(circle at 50% 42%, rgba(17, 57, 75, 0.55), transparent 28%),
-    linear-gradient(180deg, #07100f 0%, #05090d 52%, #07100f 100%);
+  margin-top: -8vw;
+  background: transparent;
   isolation: isolate;
   overflow: hidden;
 }
 
+.waterfallTransition {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  height: var(--rock-separator-height);
+  pointer-events: none;
+}
+
+.sponsorRockSeparator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  height: var(--rock-separator-height);
+  background: url("/assets/sponsor-rock-separator.webp") center top / 100% auto
+    no-repeat;
+}
+
 .scene {
   position: absolute;
-  inset: 0;
+  top: var(--waterfall-scene-top);
+  right: 0;
+  left: 0;
   z-index: 1;
   width: var(--waterfall-width);
-  height: 100%;
+  height: var(--waterfall-art-height);
   background:
     radial-gradient(
       ellipse at 50% 9%,
@@ -46,7 +72,7 @@
 
 .bridge {
   position: absolute;
-  top: 38%;
+  top: calc(var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.38);
   left: 50%;
   z-index: 3;
   width: 100vw;
@@ -67,8 +93,12 @@
 }
 
 .sponsorPanel {
-  min-height: calc(var(--waterfall-height) * 0.5);
-  padding: calc(var(--waterfall-height) * 0.038)
+  min-height: calc(
+    var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.5
+  );
+  padding: calc(
+      var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.038
+    )
     clamp(1rem, calc(var(--composition-width) * 0.06), 4rem) 0;
 }
 
@@ -423,7 +453,7 @@
 
 .teamPanel {
   position: absolute;
-  top: calc(var(--waterfall-height) * 0.458);
+  top: calc(var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.458);
   left: 50%;
   width: calc(var(--composition-width) * 0.7);
   transform: translateX(-50%);
@@ -444,7 +474,7 @@
 }
 
 .teamCascade {
-  --team-cascade-height: calc(var(--waterfall-height) * 0.5);
+  --team-cascade-height: calc(var(--waterfall-art-height) * 0.5);
   --team-cascade-avatar-size: clamp(
     4.5rem,
     calc(var(--composition-width) * 0.105),
@@ -472,16 +502,22 @@
 
 @media (max-width: 520px) {
   .bridge {
-    top: min(calc(var(--waterfall-height) * 0.64), 66rem);
+    top: calc(
+      var(--waterfall-scene-top) +
+        min(calc(var(--waterfall-art-height) * 0.64), 66rem)
+    );
   }
 
   .sponsorPanel {
-    padding-top: calc(var(--waterfall-height) * 0.03);
+    padding-top: calc(
+      var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.03
+    );
   }
 
   .sponsorShowcase {
     --sponsor-showcase-width: 100%;
     --sponsor-title-margin: 0 auto clamp(0.75rem, 3vw, 1rem);
+    --sponsor-title-offset-y: -2.6rem;
     --sponsor-title-size: clamp(3rem, 16vw, 4.25rem);
     --sponsor-field-gap: clamp(0.75rem, 3vw, 1rem);
     --sponsor-medium-mobile-height: clamp(6.7rem, 31vw, 7.25rem);
@@ -504,12 +540,15 @@
   }
 
   .teamPanel {
-    top: min(calc(var(--waterfall-height) * 0.69), 70rem);
+    top: calc(
+      var(--waterfall-scene-top) +
+        min(calc(var(--waterfall-art-height) * 0.69), 70rem)
+    );
     width: calc(var(--composition-width) * 0.82);
   }
 
   .teamCascade {
-    --team-cascade-height: min(calc(var(--waterfall-height) * 0.2), 20rem);
+    --team-cascade-height: min(calc(var(--waterfall-art-height) * 0.2), 20rem);
     --team-cascade-avatar-size: clamp(
       3.15rem,
       calc(var(--composition-width) * 0.16),

@@ -12,6 +12,11 @@
   }
 
   :root {
+    --font-khix: var(--font-bagnard);
+    --font-geist-sans: var(--font-khix);
+    --font-cormorant-garamond: var(--font-khix);
+    --font-sans: var(--font-khix);
+    --font-serif: var(--font-khix);
     --background: 0 0% 100%;
     --foreground: 224 71.4% 4.1%;
     --card: 0 0% 100%;
@@ -71,6 +76,7 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-khix), Georgia, "Times New Roman", serif;
   }
 }
 

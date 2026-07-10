@@ -349,13 +349,7 @@
   gap: clamp(0.14rem, 0.35svh, 0.24rem);
   margin: 0;
   color: rgb(255 255 255 / 0.96);
-  font-family:
-    var(--font-geist-sans, ui-sans-serif),
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--font-khix), Georgia, "Times New Roman", serif;
   font-size: clamp(1rem, 1.15vw, 1.35rem);
   font-weight: 650;
   line-height: 1.3;
@@ -386,13 +380,7 @@
   border-radius: 0.5rem;
   padding: 0 clamp(2.8rem, 6vw, 4.3rem);
   color: rgb(255 255 255 / 0.96);
-  font-family:
-    var(--font-geist-sans, ui-sans-serif),
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--font-khix), Georgia, "Times New Roman", serif;
   font-size: clamp(0.84rem, 1.05vw, 0.96rem);
   font-weight: 650;
   letter-spacing: 0;

@@ -4,9 +4,7 @@
 }
 
 .footer {
-  --footer-body-font:
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  --footer-body-font: var(--font-khix), Georgia, "Times New Roman", serif;
 
   position: relative;
   z-index: 1;

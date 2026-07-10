@@ -31,7 +31,29 @@
   min-height: 100vh;
   min-height: 100svh;
   padding: clamp(4rem, 8svh, 7rem) clamp(0.5rem, 2.5vw, 2rem);
+  isolation: isolate;
   place-items: center;
+}
+
+.speakersSection::after {
+  position: absolute;
+  top: auto;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  height: 138.8889vw;
+  pointer-events: none;
+  content: "";
+  background-image: url("/assets/pond-transition.webp");
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: 100% auto;
+}
+
+.speakersSection > * {
+  position: relative;
+  z-index: 2;
 }
 
 .waterfallFaqSeparator {

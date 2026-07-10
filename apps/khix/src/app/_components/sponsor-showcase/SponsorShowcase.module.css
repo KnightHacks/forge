@@ -24,6 +24,7 @@
   text-align: center;
   text-shadow: var(--sponsor-title-shadow, none);
   text-transform: var(--sponsor-title-transform, none);
+  translate: 0 var(--sponsor-title-offset-y, 0);
   isolation: isolate;
 }
 

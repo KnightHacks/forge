@@ -122,6 +122,9 @@ const PARTNERS = [
 export function SponsorTeamSection() {
   return (
     <div className={styles.waterfallShowcase}>
+      <div className={styles.waterfallTransition} aria-hidden="true">
+        <div className={styles.sponsorRockSeparator} />
+      </div>
       <div className={styles.scene} aria-hidden="true" />
       <div className={styles.bridge} aria-hidden="true" />
 

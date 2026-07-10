@@ -1,8 +1,18 @@
 import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 
 import { SEO_DESCRIPTION, SEO_TITLE, SITE_URL } from "./seo";
+
+const bagnard = localFont({
+  src: "./fonts/Bagnard.otf",
+  weight: "400",
+  style: "normal",
+  variable: "--font-bagnard",
+  display: "swap",
+  fallback: ["Georgia", "Times New Roman", "serif"],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -35,7 +45,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark h-full" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${bagnard.variable} dark h-full`}
+      suppressHydrationWarning
+    >
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );
