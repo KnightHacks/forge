@@ -3,7 +3,7 @@ import { capybara, cat, duck, goat } from "./crons/animals";
 import { backupFilteredDb } from "./crons/backup-filtered-db";
 import { issueReminders } from "./crons/issue-reminders";
 import { leetcode } from "./crons/leetcode";
-import { preReminders, reminders } from "./crons/reminder";
+import { hackReminders, preReminders, reminders } from "./crons/reminder";
 import { roleSync } from "./crons/role-sync";
 
 alumniAssign.schedule();
@@ -20,8 +20,9 @@ leetcode.schedule();
 preReminders.schedule();
 reminders.schedule();
 
-// Silencing for now, needs to be manually re-enabled for hacks @WHOEVER_IS_DEV_LEAD_RN
-// hackReminders.schedule();
+// This is terrible but can wait until after hack to change
+// Disable hacks after blooms over
+hackReminders.schedule();
 
 roleSync.schedule();
 
