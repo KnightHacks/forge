@@ -1,0 +1,659 @@
+.tracksSection {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: 61rem;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(5.5rem, 10svh, 8rem) clamp(0.75rem, 3vw, 2rem)
+    clamp(2.75rem, 6svh, 5rem);
+  isolation: isolate;
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+.tracksSection::before {
+  position: absolute;
+  inset: 5% 0 7%;
+  z-index: 0;
+  background:
+    radial-gradient(
+      circle at 50% 28%,
+      rgb(160 105 207 / 0.12),
+      transparent 34%
+    ),
+    radial-gradient(ellipse at 50% 74%, rgb(49 121 99 / 0.12), transparent 48%);
+  content: "";
+  pointer-events: none;
+}
+
+.title {
+  position: relative;
+  z-index: 5;
+  margin: 0 0 clamp(0.65rem, 1.5vw, 1.25rem);
+  color: rgb(255 250 239 / 0.98);
+  font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
+  font-size: clamp(3.8rem, 8vw, 7rem);
+  font-weight: 400;
+  line-height: 0.84;
+  text-align: center;
+  text-shadow:
+    0 0 0.55rem rgb(233 229 255 / 0.44),
+    0 0.25rem 1.8rem rgb(0 0 0 / 0.58);
+  text-wrap: balance;
+}
+
+.canopyComposition {
+  position: relative;
+  z-index: 4;
+  width: min(96vw, 112rem);
+  height: clamp(27rem, 38vw, 36rem);
+  flex: 0 0 auto;
+  margin: clamp(-1rem, -1vw, -0.4rem) 0 0;
+}
+
+.canopyButton {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 45% 55% 42% 58%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hangingTracks {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.hangingTrack {
+  --track-rotation: 0deg;
+  --track-cord: 4.5rem;
+  --track-delay: 0ms;
+
+  position: absolute;
+  top: 65%;
+  left: 50%;
+  width: clamp(8.5rem, 14vw, 13rem);
+  color: #33291f;
+  transform: translate3d(-50%, 0, 0) rotate(var(--track-rotation));
+  transform-origin: 50% calc(var(--track-cord) * -1);
+}
+
+.trackPaper {
+  display: grid;
+  width: 100%;
+  min-height: clamp(3.25rem, 4.5vw, 4.15rem);
+  place-items: center;
+  padding: clamp(0.55rem, 0.8vw, 0.75rem);
+  border: 1px solid rgb(94 67 34 / 0.34);
+  background:
+    radial-gradient(
+      circle at 24% 18%,
+      rgb(255 255 255 / 0.34),
+      transparent 36%
+    ),
+    linear-gradient(157deg, #f4e5af 0%, #dfc177 66%, #cfa858 100%);
+  box-shadow:
+    0 0.28rem 0.45rem rgb(29 13 18 / 0.3),
+    inset 0 0 0 1px rgb(255 248 214 / 0.25);
+  color: #33291d;
+  font-family: var(--font-geist-sans, ui-sans-serif), system-ui, sans-serif;
+  font-size: clamp(0.72rem, 0.55vw + 0.45rem, 0.9rem);
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  line-height: 1.12;
+  text-align: center;
+  text-wrap: balance;
+  clip-path: polygon(3% 3%, 97% 0, 100% 91%, 94% 100%, 2% 96%, 0 9%);
+  filter: drop-shadow(0 0.4rem 0.32rem rgb(0 0 0 / 0.2));
+}
+
+.hangingTrack::before {
+  position: absolute;
+  bottom: calc(100% - 0.2rem);
+  left: 50%;
+  width: 3px;
+  height: var(--track-cord);
+  background: linear-gradient(#d8c48e, #80603b 52%, #3a281c);
+  box-shadow:
+    0 0 0.16rem rgb(0 0 0 / 0.8),
+    inset 0 0 0 1px rgb(255 242 190 / 0.18);
+  content: "";
+  transform: translateX(-50%);
+}
+
+.hangingTrack::after {
+  position: absolute;
+  top: -0.2rem;
+  left: 50%;
+  width: 0.48rem;
+  aspect-ratio: 1;
+  border: 1px solid rgb(76 51 31 / 0.5);
+  border-radius: 50%;
+  background: #aa7a3c;
+  content: "";
+  transform: translateX(-50%);
+}
+
+.hangingTrack:nth-child(1) {
+  --track-rotation: -2deg;
+  --track-cord: 4.4rem;
+  --track-delay: 20ms;
+
+  top: 64%;
+  left: 18%;
+  z-index: 5;
+}
+
+.hangingTrack:nth-child(2) {
+  --track-rotation: 1.2deg;
+  --track-cord: 5.1rem;
+  --track-delay: 85ms;
+
+  top: 67%;
+  left: 36%;
+  z-index: 5;
+}
+
+.hangingTrack:nth-child(3) {
+  --track-rotation: -0.8deg;
+  --track-cord: 4.7rem;
+  --track-delay: 45ms;
+
+  top: 65%;
+  left: 54%;
+  z-index: 4;
+}
+
+.hangingTrack:nth-child(4) {
+  --track-rotation: 1.8deg;
+  --track-cord: 5.4rem;
+  --track-delay: 120ms;
+
+  top: 68%;
+  left: 72%;
+  z-index: 4;
+}
+
+.hangingTrack:nth-child(5) {
+  --track-rotation: -1.5deg;
+  --track-cord: 4.6rem;
+  --track-delay: 65ms;
+
+  top: 64.5%;
+  left: 89%;
+  z-index: 3;
+}
+
+.canopyButton[data-stage="1"] + .hangingTracks .hangingTrack {
+  animation: trackSwaySoft 520ms ease-in-out var(--track-delay) both;
+}
+
+.canopyButton[data-stage="2"] + .hangingTracks .hangingTrack {
+  animation: trackSwayStrong 720ms cubic-bezier(0.3, 0.05, 0.25, 1)
+    var(--track-delay) both;
+}
+
+.canopyButton[data-stage="3"] + .hangingTracks .hangingTrack {
+  animation: trackSwayRelease 880ms cubic-bezier(0.18, 0.72, 0.2, 1)
+    var(--track-delay) both;
+}
+
+.canopyButton[aria-disabled="true"] {
+  cursor: default;
+}
+
+.canopyButton:focus-visible {
+  outline: 2px solid rgb(238 255 218 / 0.92);
+  outline-offset: 0.32rem;
+  box-shadow: 0 0 0.9rem rgb(168 245 195 / 0.28);
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.branch {
+  position: absolute;
+  top: 54%;
+  left: 50%;
+  z-index: 4;
+  display: block;
+  width: 116%;
+  max-width: none;
+  height: auto;
+  user-select: none;
+  filter: drop-shadow(0 0.8rem 0.8rem rgb(0 0 0 / 0.34));
+  transform: translate3d(-50%, -50%, 0);
+}
+
+.character {
+  position: absolute;
+  bottom: var(--character-bottom);
+  left: var(--character-left);
+  display: block;
+  width: var(--character-width);
+  max-width: none;
+  height: auto;
+  user-select: none;
+  filter: drop-shadow(0 0.65rem 0.5rem rgb(0 0 0 / 0.28));
+  transform: translate3d(-50%, 0, 0) rotate(var(--character-rotation, 0deg));
+  transform-origin: 50% 92%;
+  transition:
+    filter 420ms ease,
+    transform 520ms cubic-bezier(0.18, 0.7, 0.2, 1);
+}
+
+.rearCharacter {
+  z-index: 3;
+}
+
+.frontCharacter {
+  z-index: 5;
+}
+
+.canopyButton[data-stage="3"] .character {
+  filter: drop-shadow(0 0.85rem 0.65rem rgb(0 0 0 / 0.36));
+  transform: translate3d(-50%, -0.2rem, 0)
+    rotate(var(--character-rotation, 0deg));
+}
+
+.leaf {
+  position: absolute;
+  top: var(--leaf-y);
+  left: var(--leaf-x);
+  display: block;
+  width: var(--leaf-width);
+  max-width: none;
+  height: auto;
+  opacity: 1;
+  user-select: none;
+  filter: drop-shadow(0 0.7rem 0.6rem rgb(0 0 0 / 0.2));
+  transform: translate3d(-50%, -50%, 0) rotate(var(--leaf-rotation))
+    scale(var(--leaf-scale));
+  transform-origin: var(--leaf-origin);
+}
+
+.rearLeaf {
+  z-index: 2;
+  opacity: 0.88;
+}
+
+.frontLeaf {
+  z-index: 6;
+}
+
+.canopyButton[data-stage="1"] .leaf {
+  animation: leafRustleSoft var(--leaf-rustle-duration) ease-in-out
+    var(--leaf-rustle-delay) both;
+}
+
+.canopyButton[data-stage="2"] .leaf {
+  animation: leafRustleStrong calc(var(--leaf-rustle-duration) + 160ms)
+    cubic-bezier(0.3, 0.05, 0.25, 1) var(--leaf-rustle-delay) both;
+}
+
+.canopyButton[data-stage="3"] .leaf {
+  animation: leafRelease var(--leaf-fall-duration)
+    cubic-bezier(0.24, 0.02, 0.36, 0.98) var(--leaf-fall-delay) forwards;
+}
+
+.revealHint {
+  position: relative;
+  z-index: 5;
+  min-height: 1.4em;
+  margin: 0 0 clamp(0.25rem, 1vw, 0.65rem);
+  color: rgb(244 248 224 / 0.88);
+  font-family: var(--font-geist-sans, ui-sans-serif), system-ui, sans-serif;
+  font-size: clamp(0.78rem, 0.6vw + 0.65rem, 0.98rem);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  text-align: center;
+  text-shadow: 0 0.16rem 0.65rem rgb(0 0 0 / 0.78);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@keyframes leafRustleSoft {
+  0%,
+  100% {
+    transform: translate3d(-50%, -50%, 0) rotate(var(--leaf-rotation))
+      scale(var(--leaf-scale));
+  }
+
+  28% {
+    transform: translate3d(calc(-50% + 0.28rem), calc(-50% - 0.12rem), 0)
+      rotate(calc(var(--leaf-rotation) + 2.6deg)) scale(var(--leaf-scale));
+  }
+
+  58% {
+    transform: translate3d(calc(-50% - 0.24rem), calc(-50% + 0.16rem), 0)
+      rotate(calc(var(--leaf-rotation) - 2.1deg)) scale(var(--leaf-scale));
+  }
+
+  78% {
+    transform: translate3d(calc(-50% + 0.14rem), calc(-50% - 0.08rem), 0)
+      rotate(calc(var(--leaf-rotation) + 1.4deg)) scale(var(--leaf-scale));
+  }
+}
+
+@keyframes leafRustleStrong {
+  0% {
+    opacity: 1;
+    transform: translate3d(-50%, -50%, 0) rotate(var(--leaf-rotation))
+      scale(var(--leaf-scale));
+  }
+
+  18% {
+    transform: translate3d(calc(-50% - 0.55rem), calc(-50% + 0.2rem), 0)
+      rotate(calc(var(--leaf-rotation) - 5deg)) scale(var(--leaf-scale));
+  }
+
+  40% {
+    transform: translate3d(calc(-50% + 0.72rem), calc(-50% - 0.25rem), 0)
+      rotate(calc(var(--leaf-rotation) + 6.5deg)) scale(var(--leaf-scale));
+  }
+
+  63% {
+    transform: translate3d(calc(-50% - 0.38rem), calc(-50% + 0.18rem), 0)
+      rotate(calc(var(--leaf-rotation) - 3.8deg)) scale(var(--leaf-scale));
+  }
+
+  100% {
+    opacity: var(--leaf-stage-two-opacity);
+    transform: translate3d(
+        calc(-50% + var(--leaf-shift-x)),
+        calc(-50% + var(--leaf-shift-y)),
+        0
+      )
+      rotate(calc(var(--leaf-rotation) + var(--leaf-shift-rotation)))
+      scale(var(--leaf-scale));
+  }
+}
+
+@keyframes leafRelease {
+  0% {
+    opacity: var(--leaf-stage-two-opacity);
+    transform: translate3d(
+        calc(-50% + var(--leaf-shift-x)),
+        calc(-50% + var(--leaf-shift-y)),
+        0
+      )
+      rotate(calc(var(--leaf-rotation) + var(--leaf-shift-rotation)))
+      scale(var(--leaf-scale));
+  }
+
+  12% {
+    opacity: 1;
+    transform: translate3d(calc(-50% - 0.8rem), calc(-50% + 0.32rem), 0)
+      rotate(calc(var(--leaf-rotation) - 7deg)) scale(var(--leaf-scale));
+  }
+
+  24% {
+    transform: translate3d(calc(-50% + 0.95rem), calc(-50% - 0.18rem), 0)
+      rotate(calc(var(--leaf-rotation) + 8deg)) scale(var(--leaf-scale));
+  }
+
+  72% {
+    opacity: 0.82;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(
+        calc(-50% + var(--leaf-fall-x)),
+        calc(-50% + var(--leaf-fall-y)),
+        0
+      )
+      rotate(calc(var(--leaf-rotation) + var(--leaf-fall-rotation)))
+      scale(var(--leaf-scale)) scale(0.86);
+  }
+}
+
+@keyframes trackSwaySoft {
+  0%,
+  100% {
+    transform: translate3d(-50%, 0, 0) rotate(var(--track-rotation));
+  }
+
+  36% {
+    transform: translate3d(-50%, 0.08rem, 0)
+      rotate(calc(var(--track-rotation) + 1.8deg));
+  }
+
+  72% {
+    transform: translate3d(-50%, -0.04rem, 0)
+      rotate(calc(var(--track-rotation) - 1.2deg));
+  }
+}
+
+@keyframes trackSwayStrong {
+  0%,
+  100% {
+    transform: translate3d(-50%, 0, 0) rotate(var(--track-rotation));
+  }
+
+  24% {
+    transform: translate3d(calc(-50% - 0.18rem), 0.18rem, 0)
+      rotate(calc(var(--track-rotation) - 3deg));
+  }
+
+  54% {
+    transform: translate3d(calc(-50% + 0.24rem), -0.08rem, 0)
+      rotate(calc(var(--track-rotation) + 3.8deg));
+  }
+
+  78% {
+    transform: translate3d(calc(-50% - 0.1rem), 0.06rem, 0)
+      rotate(calc(var(--track-rotation) - 1.6deg));
+  }
+}
+
+@keyframes trackSwayRelease {
+  0%,
+  100% {
+    transform: translate3d(-50%, 0, 0) rotate(var(--track-rotation));
+  }
+
+  25% {
+    transform: translate3d(calc(-50% + 0.32rem), 0.12rem, 0)
+      rotate(calc(var(--track-rotation) + 4.2deg));
+  }
+
+  58% {
+    transform: translate3d(calc(-50% - 0.2rem), -0.04rem, 0)
+      rotate(calc(var(--track-rotation) - 2.8deg));
+  }
+
+  80% {
+    transform: translate3d(calc(-50% + 0.08rem), 0.02rem, 0)
+      rotate(calc(var(--track-rotation) + 1.1deg));
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .tracksSection {
+    min-height: 57rem;
+  }
+
+  .canopyComposition {
+    width: min(98vw, 72rem);
+    height: clamp(29rem, 54vw, 34rem);
+  }
+}
+
+@media (max-width: 760px) {
+  .tracksSection {
+    min-height: 55rem;
+    padding: clamp(4.75rem, 10svh, 6.5rem) 0.6rem clamp(2.25rem, 5svh, 3.5rem);
+  }
+
+  .title {
+    margin-bottom: 0.75rem;
+    font-size: clamp(3.5rem, 18vw, 5.2rem);
+  }
+
+  .canopyComposition {
+    width: 100%;
+    height: clamp(34rem, 155vw, 40rem);
+    margin-top: 0;
+  }
+
+  .canopyButton {
+    border-radius: 42% 58% 46% 54%;
+  }
+
+  .branch {
+    top: 43%;
+    width: 178%;
+  }
+
+  .character {
+    bottom: calc(var(--character-mobile-bottom, var(--character-bottom)) + 14%);
+    left: var(--character-mobile-left, var(--character-left));
+    width: var(--character-mobile-width, var(--character-width));
+  }
+
+  .leaf {
+    width: var(--leaf-mobile-width);
+  }
+
+  .revealHint {
+    width: min(90%, 24rem);
+    font-size: clamp(0.76rem, 3.2vw, 0.9rem);
+  }
+
+  .hangingTrack {
+    width: min(40%, 10rem);
+  }
+
+  .trackPaper {
+    min-height: 3.4rem;
+    padding: 0.5rem 0.42rem;
+    font-size: clamp(0.7rem, 3vw, 0.84rem);
+  }
+
+  .hangingTrack:nth-child(1) {
+    --track-cord: 4.5rem;
+
+    top: 57%;
+    left: 27%;
+  }
+
+  .hangingTrack:nth-child(2) {
+    --track-cord: 4.8rem;
+
+    top: 57%;
+    left: 73%;
+  }
+
+  .hangingTrack:nth-child(3) {
+    --track-cord: 9.7rem;
+
+    top: 72.5%;
+    left: 27%;
+  }
+
+  .hangingTrack:nth-child(4) {
+    --track-cord: 10rem;
+
+    top: 72.5%;
+    left: 73%;
+  }
+
+  .hangingTrack:nth-child(5) {
+    --track-cord: 14.5rem;
+
+    top: 87%;
+    left: 50%;
+  }
+}
+
+@media (max-width: 360px) {
+  .tracksSection {
+    min-height: 52rem;
+  }
+
+  .canopyComposition {
+    height: clamp(34rem, 155vw, 36rem);
+  }
+
+  .hangingTrack {
+    width: 36%;
+  }
+
+  .hangingTrack:nth-child(3) {
+    left: 39%;
+  }
+
+  .hangingTrack:nth-child(4) {
+    left: 78%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .character {
+    transition: none;
+  }
+
+  .leaf {
+    transition:
+      transform 120ms ease-out,
+      opacity 120ms linear;
+    animation: none !important;
+  }
+
+  .hangingTrack {
+    animation: none !important;
+  }
+
+  .canopyButton[data-stage="1"] .leaf {
+    transform: translate3d(calc(-50% + 0.18rem), calc(-50% + 0.12rem), 0)
+      rotate(calc(var(--leaf-rotation) + 1deg)) scale(var(--leaf-scale));
+  }
+
+  .canopyButton[data-stage="2"] .leaf {
+    opacity: var(--leaf-stage-two-opacity);
+    transform: translate3d(
+        calc(-50% + var(--leaf-shift-x)),
+        calc(-50% + var(--leaf-shift-y)),
+        0
+      )
+      rotate(calc(var(--leaf-rotation) + var(--leaf-shift-rotation)))
+      scale(var(--leaf-scale));
+  }
+
+  .canopyButton[data-stage="3"] .leaf {
+    opacity: 0;
+    transform: translate3d(-50%, calc(-50% + 3rem), 0)
+      rotate(var(--leaf-rotation)) scale(var(--leaf-scale));
+  }
+}

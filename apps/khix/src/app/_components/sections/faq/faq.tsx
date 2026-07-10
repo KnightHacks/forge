@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -442,12 +442,13 @@ export default function FAQ() {
   const [activeSectionId, setActiveSectionId] =
     useState<FaqSectionId>("general");
   const [openQuestion, setOpenQuestion] = useState<number | null>(null);
-  const { sectionRef, motionLayerRef, handlePointerMove, handlePointerLeave } =
+  const { motionLayerRef, handlePointerMove, handlePointerLeave } =
     useFaqMotion();
   const activeSection = useMemo(
     () => faqSections.find((section) => section.id === activeSectionId),
     [activeSectionId],
   );
+  const questionStackRef = useStableFaqStack(activeSectionId);
 
   if (!activeSection) {
     return null;
@@ -456,7 +457,6 @@ export default function FAQ() {
   return (
     <section
       id="faq"
-      ref={sectionRef}
       className={styles.faq}
       aria-labelledby="faq-title"
       onPointerMove={handlePointerMove}
@@ -513,6 +513,7 @@ export default function FAQ() {
 
         <motion.div
           key={activeSection.id}
+          ref={questionStackRef}
           className={styles.questionStack}
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
@@ -544,7 +545,6 @@ function ParallaxAsset({ asset }: { asset: FloatingAsset }) {
         {
           "--faq-layer-depth-x": asset.depth,
           "--faq-layer-depth-y": asset.depth * 0.55,
-          "--faq-layer-scroll-y": `${asset.depth * -0.45}px`,
         } as CSSProperties
       }
       aria-hidden={asset.hotspots ? undefined : true}
@@ -575,6 +575,72 @@ function ParallaxAsset({ asset }: { asset: FloatingAsset }) {
       ))}
     </div>
   );
+}
+
+function useStableFaqStack(activeSectionId: FaqSectionId) {
+  const questionStackRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const questionStack = questionStackRef.current;
+
+    if (!questionStack) {
+      return;
+    }
+
+    let measurementFrame = 0;
+    let measuredWidth = questionStack.getBoundingClientRect().width;
+
+    const lockRestingHeight = () => {
+      // Measure without the lock, then remove the open answer's contribution so
+      // a resize while expanded still preserves the collapsed stack height.
+      questionStack.dataset.heightLocked = "false";
+
+      const expandedHeight = questionStack.getBoundingClientRect().height;
+      const answer = questionStack.querySelector<HTMLElement>(
+        `.${styles.answerWrap}`,
+      );
+      const answerStyle = answer ? window.getComputedStyle(answer) : null;
+      const answerContribution = answer
+        ? answer.getBoundingClientRect().height +
+          Number.parseFloat(answerStyle?.marginTop ?? "0") +
+          Number.parseFloat(answerStyle?.marginBottom ?? "0")
+        : 0;
+      const restingHeight = Math.max(0, expandedHeight - answerContribution);
+
+      questionStack.style.setProperty(
+        "--faq-resting-stack-height",
+        `${restingHeight}px`,
+      );
+      questionStack.dataset.heightLocked = "true";
+    };
+
+    const scheduleMeasurement = () => {
+      window.cancelAnimationFrame(measurementFrame);
+      measurementFrame = window.requestAnimationFrame(lockRestingHeight);
+    };
+
+    lockRestingHeight();
+
+    const resizeObserver = new ResizeObserver(([entry]) => {
+      const width = entry?.contentRect.width ?? 0;
+
+      if (Math.abs(width - measuredWidth) < 0.5) {
+        return;
+      }
+
+      measuredWidth = width;
+      scheduleMeasurement();
+    });
+
+    resizeObserver.observe(questionStack);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.cancelAnimationFrame(measurementFrame);
+    };
+  }, [activeSectionId]);
+
+  return questionStackRef;
 }
 
 function GemstoneButton({

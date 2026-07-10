@@ -24,31 +24,6 @@
   background: #07100f;
 }
 
-.openSection {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  min-height: 100vh;
-  min-height: 100svh;
-  place-items: center;
-}
-
-.openSectionTitle {
-  position: relative;
-  z-index: 4;
-  margin: 0;
-  color: rgba(255, 252, 252, 0.96);
-  font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
-  font-size: clamp(2.5rem, 4.6vw, 4.4rem);
-  font-weight: 400;
-  line-height: 0.9;
-  letter-spacing: 0;
-  text-align: center;
-  text-shadow:
-    0 0 0.75rem rgba(0, 0, 0, 0.58),
-    0 0.18rem 1.4rem rgba(0, 0, 0, 0.46);
-}
-
 .speakersSection {
   position: relative;
   z-index: 2;
@@ -67,27 +42,28 @@
   height: 40.7vw;
   min-height: 24rem;
   margin-top: clamp(-12rem, -10vw, -6rem);
-  margin-bottom: clamp(-24rem, -18vw, -10rem);
+  margin-bottom: clamp(-19rem, -16vw, -6rem);
   pointer-events: none;
   background: url("/assets/separator-rocks-faq.webp") center top / 100% auto
     no-repeat;
+  filter: drop-shadow(
+    0 clamp(0.7rem, 1vw, 1.2rem) clamp(0.8rem, 1.3vw, 1.5rem)
+      rgba(2, 4, 15, 0.85)
+  );
   transform: translateX(-50%);
+}
+
+@media (max-width: 820px) {
+  .waterfallFaqSeparator {
+    height: 40.7vw;
+    min-height: 0;
+    margin-top: -3rem;
+  }
 }
 
 @media (max-width: 760px) {
   .sectionStack {
     --khix-about-overlap: clamp(1.5rem, 5svh, 3rem);
     --khix-foreground-join: 66vw;
-  }
-
-  .openSectionTitle {
-    font-size: clamp(2.2rem, 10vw, 3.4rem);
-  }
-
-  .waterfallFaqSeparator {
-    height: 40.7vw;
-    min-height: 0;
-    margin-top: -3rem;
-    margin-bottom: -5.5rem;
   }
 }

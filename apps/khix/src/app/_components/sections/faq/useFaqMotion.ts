@@ -2,17 +2,10 @@ import type { PointerEvent, RefObject } from "react";
 import { useEffect, useRef } from "react";
 
 interface FaqMotion {
-  sectionRef: RefObject<HTMLElement | null>;
   motionLayerRef: RefObject<HTMLDivElement | null>;
   handlePointerMove: (event: PointerEvent<HTMLElement>) => void;
   handlePointerLeave: () => void;
 }
-
-const clamp = (value: number, min = 0, max = 1) =>
-  Math.min(max, Math.max(min, value));
-
-const getViewportHeight = () =>
-  window.visualViewport?.height ?? window.innerHeight;
 
 const setMotionNumber = (
   element: HTMLElement | null,
@@ -23,7 +16,6 @@ const setMotionNumber = (
 };
 
 export function useFaqMotion(): FaqMotion {
-  const sectionRef = useRef<HTMLElement>(null);
   const motionLayerRef = useRef<HTMLDivElement>(null);
   const pointerFrameRef = useRef(0);
   const pendingPointerRef = useRef({ x: 0, y: 0 });
@@ -31,7 +23,6 @@ export function useFaqMotion(): FaqMotion {
   const motionValuesRef = useRef({
     pointerX: 0,
     pointerY: 0,
-    scrollProgress: 0,
   });
 
   const setPointerVars = (x: number, y: number) => {
@@ -76,54 +67,9 @@ export function useFaqMotion(): FaqMotion {
     const reduceMotionQuery = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     );
-    let scrollFrame = 0;
-
-    const setScrollProgressVar = (progress: number) => {
-      const motionValues = motionValuesRef.current;
-
-      if (Math.abs(motionValues.scrollProgress - progress) < 0.001) {
-        return;
-      }
-
-      motionValues.scrollProgress = progress;
-      setMotionNumber(
-        motionLayerRef.current,
-        "--faq-motion-scroll-progress",
-        progress,
-      );
-    };
-
-    const updateScrollProgress = () => {
-      const section = sectionRef.current;
-
-      if (!section || shouldReduceMotionRef.current) {
-        setScrollProgressVar(0);
-        return;
-      }
-
-      const viewportHeight = getViewportHeight();
-      const scrollableDistance = Math.max(1, viewportHeight);
-      const progress = clamp(
-        -section.getBoundingClientRect().top / scrollableDistance,
-      );
-
-      setScrollProgressVar(progress);
-    };
-
-    const scheduleScrollProgress = () => {
-      if (scrollFrame) {
-        return;
-      }
-
-      scrollFrame = window.requestAnimationFrame(() => {
-        scrollFrame = 0;
-        updateScrollProgress();
-      });
-    };
 
     shouldReduceMotionRef.current = reduceMotionQuery.matches;
     setPointerVars(0, 0);
-    updateScrollProgress();
 
     const handleReducedMotionChange = () => {
       shouldReduceMotionRef.current = reduceMotionQuery.matches;
@@ -132,34 +78,17 @@ export function useFaqMotion(): FaqMotion {
         cancelPointerFrame();
         setPointerVars(0, 0);
       }
-
-      updateScrollProgress();
     };
 
     reduceMotionQuery.addEventListener("change", handleReducedMotionChange);
-    window.addEventListener("scroll", scheduleScrollProgress, {
-      passive: true,
-    });
-    window.addEventListener("resize", scheduleScrollProgress);
-    window.visualViewport?.addEventListener("resize", scheduleScrollProgress);
 
     return () => {
       reduceMotionQuery.removeEventListener(
         "change",
         handleReducedMotionChange,
       );
-      window.removeEventListener("scroll", scheduleScrollProgress);
-      window.removeEventListener("resize", scheduleScrollProgress);
-      window.visualViewport?.removeEventListener(
-        "resize",
-        scheduleScrollProgress,
-      );
-      if (scrollFrame) {
-        window.cancelAnimationFrame(scrollFrame);
-      }
       cancelPointerFrame();
       setPointerVars(0, 0);
-      setScrollProgressVar(0);
     };
   }, []);
 
@@ -182,7 +111,6 @@ export function useFaqMotion(): FaqMotion {
   };
 
   return {
-    sectionRef,
     motionLayerRef,
     handlePointerMove,
     handlePointerLeave,

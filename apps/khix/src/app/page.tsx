@@ -13,6 +13,7 @@ import {
   SpeakerShowcase,
 } from "./_components/sections/speakers";
 import { SponsorTeamSection } from "./_components/sections/sponsor-team";
+import { TracksSection } from "./_components/sections/tracks";
 import styles from "./page.module.css";
 
 export default function Page() {
@@ -25,15 +26,7 @@ export default function Page() {
           <AboutCorruption />
           <SectionGrass />
           <AboutSection />
-          <section
-            id="tracks"
-            className={styles.openSection}
-            aria-labelledby="tracks-title"
-          >
-            <h2 id="tracks-title" className={styles.openSectionTitle}>
-              Tracks
-            </h2>
-          </section>
+          <TracksSection />
           <div id="speakers" className={styles.speakersSection}>
             <SpeakerShowcase
               speakers={KHIX_SPEAKERS}
