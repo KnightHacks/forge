@@ -519,9 +519,16 @@
   }
 }
 
+@media (max-width: 760px) {
+  .foregroundLayer {
+    display: none;
+  }
+}
+
 @media (max-width: 700px) {
   .hero {
     --khix-hero-height: 108svh;
+    z-index: auto;
     min-height: 108vh;
     min-height: var(--khix-hero-height);
   }
@@ -632,10 +639,6 @@
 
   .layerImage {
     object-position: 94% 50%;
-  }
-
-  .foregroundLayer {
-    inset: 0;
   }
 
   .foregroundImage {

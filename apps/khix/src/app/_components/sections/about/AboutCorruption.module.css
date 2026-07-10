@@ -2,7 +2,7 @@
   position: absolute;
   inset: 0;
   z-index: auto;
-  overflow: hidden;
+  overflow: visible;
   pointer-events: none;
 }
 
@@ -19,7 +19,7 @@
   left: 0;
   z-index: 0;
   height: var(--khix-front-height);
-  background-image: url("/assets/khix%20site%20hero%20front.png");
+  background-image: url("/assets/extended-front.webp");
   background-repeat: no-repeat;
   background-position: center top;
   background-size: 100% auto;
@@ -44,6 +44,13 @@
 @media (max-width: 700px) {
   .gloom {
     width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .front {
+    background-image: url("/assets/extended-front-mobile.webp");
+    background-position: center -4vw;
   }
 }
 
