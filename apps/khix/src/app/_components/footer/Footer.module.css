@@ -109,7 +109,7 @@
 
 @media (max-width: 680px) {
   .lennyPlacement {
-    top: clamp(-7.9rem, -30vw, -6.7rem);
+    top: -4rem;
     right: clamp(1.5rem, 7vw, 2.4rem);
     width: clamp(7.8rem, 32vw, 9.25rem);
     transform: rotate(-4deg);
