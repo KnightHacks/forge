@@ -27,6 +27,7 @@ export function MLHBadge({ isHidden, isMenuOpen }: MLHBadgeProps) {
         alt="Major League Hacking 2026 Hackathon Season"
         width={393}
         height={688}
+        loading="eager"
         unoptimized
         sizes="(max-width: 900px) 16vw, 10vw"
         className={styles.mlhTrustBadgeImage}

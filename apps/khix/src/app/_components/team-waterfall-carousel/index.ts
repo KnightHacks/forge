@@ -1,1 +1,0 @@
-export { TeamWaterfallCarousel } from "./TeamWaterfallCarousel";

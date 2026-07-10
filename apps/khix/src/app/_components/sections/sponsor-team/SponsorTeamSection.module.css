@@ -374,9 +374,9 @@
 .teamCascade {
   --team-cascade-height: calc(var(--waterfall-height) * 0.5);
   --team-cascade-avatar-size: clamp(
-    3rem,
-    calc(var(--composition-width) * 0.09),
-    5.2rem
+    4.5rem,
+    calc(var(--composition-width) * 0.105),
+    6.4rem
   );
   --team-status-color: rgba(235, 255, 255, 0.78);
 
@@ -419,10 +419,16 @@
 
   .teamPanel {
     top: min(calc(var(--waterfall-height) * 0.69), 70rem);
+    width: calc(var(--composition-width) * 0.82);
   }
 
   .teamCascade {
     --team-cascade-height: min(calc(var(--waterfall-height) * 0.2), 20rem);
+    --team-cascade-avatar-size: clamp(
+      3.15rem,
+      calc(var(--composition-width) * 0.16),
+      3.8rem
+    );
   }
 }
 
@@ -430,14 +436,6 @@
   .sponsorPanel {
     padding-right: 0.75rem;
     padding-left: 0.75rem;
-  }
-
-  .teamCascade {
-    --team-cascade-avatar-size: clamp(
-      2rem,
-      calc(var(--composition-width) * 0.092),
-      2.45rem
-    );
   }
 }
 

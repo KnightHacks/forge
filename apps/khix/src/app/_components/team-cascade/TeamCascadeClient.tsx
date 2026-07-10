@@ -2,9 +2,15 @@
 
 import type { MotionValue } from "framer-motion";
 import type { ImageLoaderProps } from "next/image";
-import type { CSSProperties, ReactNode, RefObject } from "react";
+import type {
+  AnimationEvent,
+  CSSProperties,
+  ReactNode,
+  RefObject,
+} from "react";
 import {
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -27,14 +33,13 @@ interface TeamCascadePerson {
   member: TeamCascadeMember;
   profileKey: string;
   roleLabel: TeamCascadeRole;
-  laneIndex: number;
 }
 
 type NumberRange = readonly [number, number];
-type TeamCascadeItemStyle = CSSProperties & {
+type TeamCascadeRunnerStyle = CSSProperties & {
+  "--focus-y": string;
   "--fall-delay": string;
   "--fall-duration": string;
-  "--fall-static-y": string;
   "--fall-sway": string;
   "--fall-x": string;
 };
@@ -44,34 +49,25 @@ const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
 const rosterIdPrefixes = ["executive-", "directors-", "hackathon-"] as const;
 const cascadeStreamId = "leadership";
 const cascadeStreamLabel = "Hackathon Organizers";
+const runnersPerDropGroup = 2;
+const visibleDropGroupCount = 3;
+const maximumRunnerCount = runnersPerDropGroup * visibleDropGroupCount;
 
 const cascadeMotion = {
+  durationSeconds: 7.2,
   fallOffscreenTravelRem: 21.5,
-  durationJitterSeconds: 0.36,
-  durationSeconds: 14.8,
-  previousSectionHeightRatio: 0.44,
+  groupPhaseStep: 1 / visibleDropGroupCount,
+  pairPhase: 0.055,
+  pairPhaseStep: 0.022,
+  focusYRange: [24, 62],
   parallaxRotateRange: [-2.4, 2.4],
   parallaxXRange: [-7, 7],
   parallaxYRange: [18, -18],
-  columnPhaseJitterRatio: 0.22,
-  swayRange: [-3, 3],
-  xJitterRatio: 0.06,
-  xRange: [7, 93],
-} as const;
-
-// How falling bubbles are laid out so none of them ever collide: each
-// avatar is treated as a circle with a reserved collision radius around
-// it. The measured cascade box is split into safe columns and time rows,
-// and a bubble only gets scheduled when its center can stay at least one
-// collision diameter away from its neighbors. Bubbles sharing a column
-// also share a duration and horizontal sway, so their spacing never drifts
-// over time.
-const cascadeGridSizing = {
-  columnFootprintRatio: 1.55,
-  fallbackColumns: 5,
-  minAvatarScale: 0.42,
-  rowFootprintRatio: 1.45,
-  scaleStep: 0.05,
+  runnerSwayRange: [-3, 3],
+  runnerXBands: [
+    [12, 47],
+    [53, 88],
+  ],
 } as const;
 
 function subscribeToReducedMotion(handleChange: () => void) {
@@ -98,6 +94,10 @@ function usePrefersReducedMotion() {
   );
 }
 
+function wrapIndex(index: number, length: number) {
+  return ((index % length) + length) % length;
+}
+
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -106,6 +106,24 @@ function getInitials(name: string) {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+}
+
+function getDisplayName(name: string) {
+  return name
+    .trim()
+    .replace(
+      /(^|[\s'-])(\p{L})/gu,
+      (_match, boundary: string, letter: string) =>
+        `${boundary}${letter.toLocaleUpperCase()}`,
+    );
+}
+
+function getDisplayTitle({ member, roleLabel }: TeamCascadePerson) {
+  if (roleLabel === "Organizer" && member.teamRole !== "Hack Lead") {
+    return "Hackathon Organizer";
+  }
+
+  return member.teamRole;
 }
 
 function ProfileImage({ member }: { member: TeamCascadeMember }) {
@@ -181,392 +199,6 @@ function TeamAvatar({
   );
 }
 
-function TeamCascadeItem({
-  isReducedMotion,
-  isResumingAfterClick,
-  onAvatarPointerUp,
-  person,
-  numColumns,
-  rows,
-  xBand,
-  durationScale,
-  scrollProgress,
-  onResumeAfterClickEnd,
-}: {
-  isReducedMotion: boolean;
-  isResumingAfterClick?: boolean;
-  onAvatarPointerUp?: (profileKey: string) => void;
-  person: TeamCascadePerson;
-  numColumns: number;
-  rows: number;
-  xBand: NumberRange;
-  durationScale: number;
-  scrollProgress: MotionValue<number>;
-  onResumeAfterClickEnd?: (profileKey: string) => void;
-}) {
-  const { profileKey } = person;
-  const [frozenParallax, setFrozenParallax] = useState<{
-    rotate: number;
-    x: number;
-    y: number;
-  } | null>(null);
-  const column = person.laneIndex % numColumns;
-  const columnKey = `${cascadeStreamId}-column-${column}`;
-  const parallaxDepth = isReducedMotion
-    ? 0
-    : getSeededRange(columnKey, "parallax-depth", [0.45, 1]);
-  const parallaxDirection =
-    getHashRatio(`${columnKey}-parallax-direction`) > 0.5 ? 1 : -1;
-  const parallaxX = useTransform(
-    scrollProgress,
-    [0, 1],
-    [
-      cascadeMotion.parallaxXRange[0] * parallaxDepth * parallaxDirection,
-      cascadeMotion.parallaxXRange[1] * parallaxDepth * parallaxDirection,
-    ],
-  );
-  const parallaxY = useTransform(
-    scrollProgress,
-    [0, 1],
-    [
-      cascadeMotion.parallaxYRange[0] * parallaxDepth,
-      cascadeMotion.parallaxYRange[1] * parallaxDepth,
-    ],
-  );
-  const parallaxRotate = useTransform(
-    scrollProgress,
-    [0, 1],
-    [
-      cascadeMotion.parallaxRotateRange[0] * parallaxDepth * parallaxDirection,
-      cascadeMotion.parallaxRotateRange[1] * parallaxDepth * parallaxDirection,
-    ],
-  );
-  const style = getCascadeItemStyle(
-    person.laneIndex,
-    numColumns,
-    rows,
-    xBand,
-    durationScale,
-  );
-  function handlePointerEnter() {
-    if (isReducedMotion) return;
-
-    setFrozenParallax({
-      rotate: parallaxRotate.get(),
-      x: parallaxX.get(),
-      y: parallaxY.get(),
-    });
-  }
-  function handlePointerLeave() {
-    if (!isReducedMotion) setFrozenParallax(null);
-    if (!isReducedMotion && isResumingAfterClick) {
-      onResumeAfterClickEnd?.(profileKey);
-    }
-  }
-
-  return (
-    <div
-      className={styles.teamCascadeItemAnchor}
-      data-roster-group={person.roleLabel.toLowerCase()}
-      data-static={isReducedMotion ? true : undefined}
-      onPointerEnter={handlePointerEnter}
-      onPointerLeave={handlePointerLeave}
-      style={style}
-    >
-      <motion.div
-        className={styles.teamCascadeParallaxItem}
-        style={{
-          x: frozenParallax?.x ?? parallaxX,
-          y: frozenParallax?.y ?? parallaxY,
-        }}
-      >
-        <div
-          className={styles.teamCascadeItem}
-          data-resume-after-click={isResumingAfterClick ? true : undefined}
-        >
-          <motion.div
-            className={styles.teamAvatarMotion}
-            style={{ rotate: frozenParallax?.rotate ?? parallaxRotate }}
-          >
-            <TeamAvatar
-              person={person}
-              onPointerUp={
-                !isReducedMotion
-                  ? () => onAvatarPointerUp?.(profileKey)
-                  : undefined
-              }
-            />
-          </motion.div>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-function getDisplayTitle({ member, roleLabel }: TeamCascadePerson) {
-  if (roleLabel === "Organizer" && member.teamRole !== "Hack Lead") {
-    return "Hackathon Organizer";
-  }
-
-  return member.teamRole;
-}
-
-function getDisplayName(name: string) {
-  return name
-    .trim()
-    .replace(
-      /(^|[\s'-])(\p{L})/gu,
-      (_match, boundary: string, letter: string) =>
-        `${boundary}${letter.toLocaleUpperCase()}`,
-    );
-}
-
-function getCascadeItemStyle(
-  laneIndex: number,
-  numColumns: number,
-  rows: number,
-  xBand: NumberRange,
-  durationScale: number,
-): TeamCascadeItemStyle {
-  const column = laneIndex % numColumns;
-  const row = Math.floor(laneIndex / numColumns);
-  const columnKey = `${cascadeStreamId}-column-${column}`;
-
-  const duration =
-    (cascadeMotion.durationSeconds +
-      getSeededRange(columnKey, "duration", [
-        -cascadeMotion.durationJitterSeconds,
-        cascadeMotion.durationJitterSeconds,
-      ])) *
-    durationScale;
-
-  // Every row is a dedicated slice of the animation loop. The slight
-  // phase offset is applied per-column (not per-bubble), so bubbles in
-  // the same column keep their exact row-to-row spacing while neighboring
-  // columns avoid looking like rigid rows.
-  const rowSlot = 1 / rows;
-  const columnPhaseJitter =
-    getSeededRange(columnKey, "phase", [
-      -cascadeMotion.columnPhaseJitterRatio,
-      cascadeMotion.columnPhaseJitterRatio,
-    ]) * rowSlot;
-  const phase = ((((row + 0.5) * rowSlot + columnPhaseJitter) % 1) + 1) % 1;
-
-  const [minX, maxX] = xBand;
-  const columnWidth = (maxX - minX) / numColumns;
-  const columnCenter = minX + (column + 0.5) * columnWidth;
-  const x =
-    columnCenter +
-    getSeededRange(columnKey, "x", [
-      -cascadeMotion.xJitterRatio * columnWidth * 0.5,
-      cascadeMotion.xJitterRatio * columnWidth * 0.5,
-    ]);
-
-  // Reduced-motion resting position: spread members down the full height
-  // of the box by row, instead of clustering an entire stream at one
-  // fixed point (which could itself stack bubbles on top of each other).
-  const staticY = 12 + ((row + 0.5) / rows) * 76;
-
-  return {
-    "--fall-delay": `${(-duration * phase).toFixed(3)}s`,
-    "--fall-duration": `${duration.toFixed(3)}s`,
-    "--fall-static-y": `${staticY.toFixed(2)}%`,
-    "--fall-sway": `${getSeededRange(
-      columnKey,
-      "sway",
-      cascadeMotion.swayRange,
-    ).toFixed(2)}px`,
-    "--fall-x": `${x.toFixed(2)}%`,
-  };
-}
-
-interface CascadeStreamLayout {
-  numColumns: number;
-  rows: number;
-}
-
-/**
- * Computes a column/row grid per stream, sized so every member gets its
- * own collision-safe cell inside that stream's band. Rows represent the
- * number of time slices actually needed for the roster, while maxRows is
- * the number that can fit in the measured height without violating the
- * collision radius. If full-size bubbles cannot satisfy that constraint
- * inside this stream section, avatarScale is stepped down for the section.
- */
-function computeCascadeGridLayout(
-  containerWidth: number,
-  containerHeight: number,
-  avatarSize: number,
-  memberCount: number,
-): {
-  avatarScale: number;
-  layout: CascadeStreamLayout;
-} {
-  if (memberCount === 0) {
-    return { avatarScale: 1, layout: { numColumns: 1, rows: 1 } };
-  }
-
-  if (!containerWidth || !containerHeight || !avatarSize) {
-    const numColumns = Math.max(
-      1,
-      Math.min(memberCount, cascadeGridSizing.fallbackColumns),
-    );
-
-    return {
-      avatarScale: 1,
-      layout: {
-        numColumns,
-        rows: Math.max(1, Math.ceil(memberCount / numColumns)),
-      },
-    };
-  }
-
-  function layoutAtScale(avatarScale: number) {
-    const avatarPx = avatarSize * avatarScale;
-    const xRangeWidth = cascadeMotion.xRange[1] - cascadeMotion.xRange[0];
-    const bandWidthPx = containerWidth * (xRangeWidth / 100);
-    const numColumns = Math.max(
-      1,
-      Math.floor(
-        bandWidthPx / (avatarPx * cascadeGridSizing.columnFootprintRatio),
-      ),
-    );
-    const rows = Math.max(1, Math.ceil(memberCount / numColumns));
-    const maxRows = Math.max(
-      1,
-      Math.floor(
-        containerHeight / (avatarPx * cascadeGridSizing.rowFootprintRatio),
-      ),
-    );
-
-    return {
-      fits: rows <= maxRows,
-      layout: { numColumns, rows },
-    };
-  }
-
-  function getScaledLayout(avatarScale: number) {
-    return {
-      avatarScale,
-      layout: layoutAtScale(avatarScale).layout,
-    };
-  }
-
-  for (
-    let avatarScale = 1;
-    avatarScale >= cascadeGridSizing.minAvatarScale;
-    avatarScale -= cascadeGridSizing.scaleStep
-  ) {
-    const { fits, layout } = layoutAtScale(avatarScale);
-    if (fits) return { avatarScale, layout };
-  }
-
-  return getScaledLayout(cascadeGridSizing.minAvatarScale);
-}
-
-/**
- * Tracks the real rendered size of the cascade box and of a single avatar
- * (via a hidden probe element sized with the same --team-avatar-size CSS
- * variable) so the grid layout can be computed from actual pixels instead
- * of guessed values.
- */
-function useCascadeContainerMetrics(
-  containerRef: RefObject<HTMLDivElement | null>,
-  avatarProbeRef: RefObject<HTMLDivElement | null>,
-) {
-  const [metrics, setMetrics] = useState({
-    avatarSize: 0,
-    containerHeight: 0,
-    containerWidth: 0,
-    rootFontSize: 16,
-  });
-
-  useEffect(() => {
-    const container = containerRef.current;
-    const probe = avatarProbeRef.current;
-
-    if (!container || !probe) return;
-
-    const observedContainer = container;
-    const observedProbe = probe;
-
-    function updateMetrics() {
-      const containerRect = observedContainer.getBoundingClientRect();
-      const probeRect = observedProbe.getBoundingClientRect();
-
-      setMetrics((current) => {
-        const avatarSize = probeRect.width;
-        const containerHeight = containerRect.height;
-        const containerWidth = containerRect.width;
-        const rootElement = observedContainer.ownerDocument.documentElement;
-        const measuredRootFontSize = Number.parseFloat(
-          window.getComputedStyle(rootElement).fontSize,
-        );
-        const rootFontSize =
-          Number.isFinite(measuredRootFontSize) && measuredRootFontSize > 0
-            ? measuredRootFontSize
-            : current.rootFontSize;
-
-        if (
-          avatarSize === current.avatarSize &&
-          containerHeight === current.containerHeight &&
-          containerWidth === current.containerWidth &&
-          rootFontSize === current.rootFontSize
-        ) {
-          return current;
-        }
-
-        return { avatarSize, containerHeight, containerWidth, rootFontSize };
-      });
-    }
-
-    updateMetrics();
-
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", updateMetrics);
-
-      return () => window.removeEventListener("resize", updateMetrics);
-    }
-
-    const observer = new ResizeObserver(updateMetrics);
-
-    observer.observe(observedContainer);
-    observer.observe(observedProbe);
-    window.addEventListener("resize", updateMetrics);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", updateMetrics);
-    };
-  }, [containerRef, avatarProbeRef]);
-
-  return metrics;
-}
-
-function getExpandedDurationScale(
-  containerHeight: number,
-  rootFontSize: number,
-) {
-  if (
-    !Number.isFinite(containerHeight) ||
-    containerHeight <= 0 ||
-    !Number.isFinite(rootFontSize) ||
-    rootFontSize <= 0
-  ) {
-    return 1;
-  }
-
-  // The old two-stream layout gave each stream 44% of the reserved height.
-  // Scale the loop by the exact CSS travel distance so expanding the remaining
-  // stream does not make its avatars fall faster.
-  const offscreenTravel = cascadeMotion.fallOffscreenTravelRem * rootFontSize;
-  const previousTravel =
-    containerHeight * cascadeMotion.previousSectionHeightRatio +
-    offscreenTravel;
-
-  return (containerHeight + offscreenTravel) / previousTravel;
-}
-
 function getHashRatio(value: string) {
   let hash = 2166136261;
 
@@ -608,13 +240,265 @@ function getCascadingMembers(groups: TeamCascadeGroup[]) {
           member,
           profileKey: `leadership-${memberProfileKey}`,
           roleLabel: group.roleLabel,
-          laneIndex: leadershipByProfileId.size,
         });
       }
     }
   }
 
   return [...leadershipByProfileId.values()];
+}
+
+function getRunnerDuration(containerHeight: number, rootFontSize: number) {
+  if (containerHeight <= 0 || rootFontSize <= 0) {
+    return cascadeMotion.durationSeconds;
+  }
+
+  const offscreenTravel = cascadeMotion.fallOffscreenTravelRem * rootFontSize;
+  const previousTravel = containerHeight * 0.44 + offscreenTravel;
+  const durationScale = (containerHeight + offscreenTravel) / previousTravel;
+
+  return cascadeMotion.durationSeconds * durationScale;
+}
+
+function getRunnerStyle(
+  profileKey: string,
+  runnerIndex: number,
+  runnerCount: number,
+  duration: number,
+): TeamCascadeRunnerStyle {
+  const groupIndex = Math.floor(runnerIndex / runnersPerDropGroup);
+  const groupCount = Math.ceil(runnerCount / runnersPerDropGroup);
+  const laneIndex = runnerIndex % runnersPerDropGroup;
+  const xBand =
+    cascadeMotion.runnerXBands[laneIndex] ?? cascadeMotion.runnerXBands[0];
+  const x =
+    runnerCount === 1
+      ? 50
+      : getSeededRange(profileKey, `runner-${runnerIndex}-x`, xBand);
+  const sway = getSeededRange(
+    profileKey,
+    `runner-${runnerIndex}-sway`,
+    cascadeMotion.runnerSwayRange,
+  );
+  const phase =
+    cascadeMotion.pairPhase +
+    groupIndex * cascadeMotion.groupPhaseStep +
+    laneIndex * cascadeMotion.pairPhaseStep;
+  const focusY =
+    groupCount <= 1
+      ? 38
+      : cascadeMotion.focusYRange[0] +
+        (groupIndex / (groupCount - 1)) *
+          (cascadeMotion.focusYRange[1] - cascadeMotion.focusYRange[0]);
+
+  return {
+    "--focus-y": `${focusY.toFixed(2)}%`,
+    "--fall-delay": `${(-duration * phase).toFixed(3)}s`,
+    "--fall-duration": `${duration.toFixed(3)}s`,
+    "--fall-sway": `${sway.toFixed(2)}px`,
+    "--fall-x": `${x.toFixed(2)}%`,
+  };
+}
+
+function TeamCascadeRunner({
+  duration,
+  memberIndex,
+  onAnimationIteration,
+  onPointerEnter,
+  onPointerUp,
+  person,
+  runnerCount,
+  runnerIndex,
+  scrollProgress,
+  total,
+}: {
+  duration: number;
+  memberIndex: number;
+  onAnimationIteration: (runnerIndex: number) => void;
+  onPointerEnter: () => void;
+  onPointerUp: () => void;
+  person: TeamCascadePerson;
+  runnerCount: number;
+  runnerIndex: number;
+  scrollProgress: MotionValue<number>;
+  total: number;
+}) {
+  const [frozenParallax, setFrozenParallax] = useState<{
+    rotate: number;
+    x: number;
+    y: number;
+  } | null>(null);
+  const runnerKey = `${cascadeStreamId}-runner-${runnerIndex}`;
+  const parallaxDepth = getSeededRange(runnerKey, "parallax-depth", [0.45, 1]);
+  const parallaxDirection =
+    getHashRatio(`${runnerKey}-parallax-direction`) > 0.5 ? 1 : -1;
+  const parallaxX = useTransform(
+    scrollProgress,
+    [0, 1],
+    [
+      cascadeMotion.parallaxXRange[0] * parallaxDepth * parallaxDirection,
+      cascadeMotion.parallaxXRange[1] * parallaxDepth * parallaxDirection,
+    ],
+  );
+  const parallaxY = useTransform(
+    scrollProgress,
+    [0, 1],
+    [
+      cascadeMotion.parallaxYRange[0] * parallaxDepth,
+      cascadeMotion.parallaxYRange[1] * parallaxDepth,
+    ],
+  );
+  const parallaxRotate = useTransform(
+    scrollProgress,
+    [0, 1],
+    [
+      cascadeMotion.parallaxRotateRange[0] * parallaxDepth * parallaxDirection,
+      cascadeMotion.parallaxRotateRange[1] * parallaxDepth * parallaxDirection,
+    ],
+  );
+  const style = getRunnerStyle(
+    person.profileKey,
+    runnerIndex,
+    runnerCount,
+    duration,
+  );
+  const displayName = getDisplayName(person.member.name);
+  const displayTitle = getDisplayTitle(person);
+
+  function handlePointerEnter() {
+    setFrozenParallax({
+      rotate: parallaxRotate.get(),
+      x: parallaxX.get(),
+      y: parallaxY.get(),
+    });
+    onPointerEnter();
+  }
+
+  function handlePointerLeave() {
+    setFrozenParallax(null);
+  }
+
+  function handleAnimationIteration(event: AnimationEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget) return;
+
+    onAnimationIteration(runnerIndex);
+  }
+
+  return (
+    <article
+      className={styles.teamCascadeItemAnchor}
+      data-roster-group={person.roleLabel.toLowerCase()}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+      role="listitem"
+      aria-label={`${displayName}, ${displayTitle}`}
+      style={style}
+    >
+      <motion.div
+        className={styles.teamCascadeParallaxItem}
+        style={{
+          x: frozenParallax?.x ?? parallaxX,
+          y: frozenParallax?.y ?? parallaxY,
+        }}
+      >
+        <div
+          className={styles.teamCascadeItem}
+          onAnimationIteration={handleAnimationIteration}
+        >
+          <motion.div
+            className={styles.teamAvatarMotion}
+            style={{ rotate: frozenParallax?.rotate ?? parallaxRotate }}
+          >
+            <TeamAvatar person={person} onPointerUp={onPointerUp} />
+          </motion.div>
+        </div>
+      </motion.div>
+      <span className={styles.srOnly}>
+        Profile {memberIndex + 1} of {total}
+      </span>
+    </article>
+  );
+}
+
+function TeamCascadeStaticProfile({
+  index,
+  person,
+  total,
+}: {
+  index: number;
+  person: TeamCascadePerson;
+  total: number;
+}) {
+  const displayName = getDisplayName(person.member.name);
+  const displayTitle = getDisplayTitle(person);
+
+  return (
+    <article
+      className={styles.teamCascadeStaticProfile}
+      role="listitem"
+      aria-label={`${displayName}, ${displayTitle}`}
+    >
+      <TeamAvatar person={person} />
+      <span className={styles.srOnly}>
+        Profile {index + 1} of {total}
+      </span>
+    </article>
+  );
+}
+
+function useCascadeContainerMetrics(
+  viewportRef: RefObject<HTMLDivElement | null>,
+  avatarProbeRef: RefObject<HTMLDivElement | null>,
+) {
+  const [metrics, setMetrics] = useState({
+    containerHeight: 0,
+    rootFontSize: 16,
+  });
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const avatarProbe = avatarProbeRef.current;
+
+    if (!viewport || !avatarProbe) return;
+
+    const observedViewport = viewport;
+    const observedAvatarProbe = avatarProbe;
+
+    function updateMetrics() {
+      const containerHeight = observedViewport.getBoundingClientRect().height;
+      const rootElement = observedAvatarProbe.ownerDocument.documentElement;
+      const measuredRootFontSize = Number.parseFloat(
+        window.getComputedStyle(rootElement).fontSize,
+      );
+      const rootFontSize =
+        Number.isFinite(measuredRootFontSize) && measuredRootFontSize > 0
+          ? measuredRootFontSize
+          : 16;
+
+      setMetrics((current) =>
+        current.containerHeight === containerHeight &&
+        current.rootFontSize === rootFontSize
+          ? current
+          : { containerHeight, rootFontSize },
+      );
+    }
+
+    updateMetrics();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", updateMetrics);
+
+      return () => window.removeEventListener("resize", updateMetrics);
+    }
+
+    const observer = new ResizeObserver(updateMetrics);
+    observer.observe(observedViewport);
+    observer.observe(observedAvatarProbe);
+
+    return () => observer.disconnect();
+  }, [avatarProbeRef, viewportRef]);
+
+  return metrics;
 }
 
 function TeamCascadeStatusMessage({
@@ -637,40 +521,66 @@ function TeamCascadeStatusMessage({
 
 function TeamCascadeStreamSection({
   isReducedMotion,
-  onAvatarPointerUp,
-  onResumeAfterClickEnd,
-  resumeAfterClickProfileKeys,
   members,
 }: {
   isReducedMotion: boolean;
-  onAvatarPointerUp: (profileKey: string) => void;
-  onResumeAfterClickEnd: (profileKey: string) => void;
-  resumeAfterClickProfileKeys: Set<string>;
   members: TeamCascadePerson[];
 }) {
+  const runnerCount = Math.min(maximumRunnerCount, members.length);
+  const [runnerMemberIndexes, setRunnerMemberIndexes] = useState(() =>
+    Array.from({ length: runnerCount }, (_, index) => index),
+  );
+  const [hasFocusWithin, setHasFocusWithin] = useState(false);
+  const [isResumingAfterClick, setIsResumingAfterClick] = useState(false);
+  const nextMemberIndexRef = useRef(runnerCount);
   const viewportRef = useRef<HTMLDivElement>(null);
   const avatarProbeRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
+  const sectionTitleId = `team-cascade-${cascadeStreamId}-title`;
+  const keyboardInstructionsId = useId();
+  const { scrollYProgress: parallaxScrollProgress } = useScroll({
     offset: ["start end", "end start"],
     target: viewportRef,
   });
-  const { avatarSize, containerHeight, containerWidth, rootFontSize } =
-    useCascadeContainerMetrics(viewportRef, avatarProbeRef);
-  const durationScale = getExpandedDurationScale(containerHeight, rootFontSize);
-  const cascadeGridLayout = useMemo(
-    () =>
-      computeCascadeGridLayout(
-        containerWidth,
-        containerHeight,
-        avatarSize,
-        members.length,
-      ),
-    [avatarSize, containerHeight, containerWidth, members.length],
+  const { containerHeight, rootFontSize } = useCascadeContainerMetrics(
+    viewportRef,
+    avatarProbeRef,
   );
-  const sectionTitleId = `team-cascade-${cascadeStreamId}-title`;
-  const viewportStyle = {
-    "--team-cascade-avatar-scale": cascadeGridLayout.avatarScale,
-  } as CSSProperties;
+  const duration = getRunnerDuration(containerHeight, rootFontSize);
+
+  function showNextMember(runnerIndex: number) {
+    if (members.length <= runnerCount) return;
+
+    const nextMemberIndex = wrapIndex(
+      nextMemberIndexRef.current,
+      members.length,
+    );
+    nextMemberIndexRef.current += 1;
+    setRunnerMemberIndexes((currentIndexes) =>
+      currentIndexes.map((currentIndex, index) =>
+        index === runnerIndex ? nextMemberIndex : currentIndex,
+      ),
+    );
+  }
+
+  function showAdjacentPair(direction: -1 | 1) {
+    if (members.length <= runnerCount) return;
+
+    const offset = direction * runnersPerDropGroup;
+    nextMemberIndexRef.current += offset;
+    setRunnerMemberIndexes((currentIndexes) =>
+      currentIndexes.map((currentIndex) =>
+        wrapIndex(currentIndex + offset, members.length),
+      ),
+    );
+  }
+
+  function handleRunnerPointerEnter() {
+    setIsResumingAfterClick(false);
+  }
+
+  function handleAvatarPointerUp() {
+    if (!isReducedMotion) setIsResumingAfterClick(true);
+  }
 
   return (
     <motion.section
@@ -678,7 +588,7 @@ function TeamCascadeStreamSection({
       aria-labelledby={sectionTitleId}
       initial={isReducedMotion ? false : { opacity: 0, y: 24 }}
       whileInView={isReducedMotion ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.35 }}
+      viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.65, ease: "easeOut" }}
     >
       <h3 id={sectionTitleId} className={styles.teamCascadeSectionTitle}>
@@ -688,31 +598,85 @@ function TeamCascadeStreamSection({
         ref={viewportRef}
         className={styles.teamCascadeViewport}
         data-stream={cascadeStreamId}
-        style={viewportStyle}
+        aria-label="Knight Hacks team profiles falling through the waterfall"
+        aria-describedby={keyboardInstructionsId}
+        role="region"
+        tabIndex={0}
+        onFocusCapture={(event) => {
+          setHasFocusWithin(true);
+          if (event.target === event.currentTarget) {
+            setIsResumingAfterClick(false);
+          }
+        }}
+        onBlurCapture={(event) => {
+          if (
+            !event.currentTarget.contains(event.relatedTarget as Node | null)
+          ) {
+            setHasFocusWithin(false);
+            setIsResumingAfterClick(false);
+          }
+        }}
+        onKeyDown={(event) => {
+          if (isReducedMotion) return;
+
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            showAdjacentPair(1);
+          } else if (event.key === "ArrowUp") {
+            event.preventDefault();
+            showAdjacentPair(-1);
+          }
+        }}
       >
+        <p id={keyboardInstructionsId} className={styles.srOnly}>
+          {isReducedMotion
+            ? "Scroll through the static roster to browse all team profiles."
+            : "Focus this cascade and use the Up and Down Arrow keys to browse profile pairs."}
+        </p>
         <div
-          ref={avatarProbeRef}
-          className={styles.teamAvatarProbe}
-          aria-hidden="true"
-        />
-        <div className={styles.teamCascadeStream}>
-          {members.map((person) => (
-            <TeamCascadeItem
-              key={person.profileKey}
-              isReducedMotion={isReducedMotion}
-              isResumingAfterClick={resumeAfterClickProfileKeys.has(
-                person.profileKey,
-              )}
-              person={person}
-              numColumns={cascadeGridLayout.layout.numColumns}
-              rows={cascadeGridLayout.layout.rows}
-              xBand={cascadeMotion.xRange}
-              durationScale={durationScale}
-              scrollProgress={scrollYProgress}
-              onAvatarPointerUp={onAvatarPointerUp}
-              onResumeAfterClickEnd={onResumeAfterClickEnd}
-            />
-          ))}
+          className={styles.teamCascadeStage}
+          data-focused={hasFocusWithin ? true : undefined}
+          data-resuming={isResumingAfterClick ? true : undefined}
+        >
+          <div
+            ref={avatarProbeRef}
+            className={styles.teamAvatarProbe}
+            aria-hidden="true"
+          />
+          {isReducedMotion ? (
+            <div className={styles.teamCascadeStaticRoster} role="list">
+              {members.map((person, index) => (
+                <TeamCascadeStaticProfile
+                  key={person.profileKey}
+                  index={index}
+                  person={person}
+                  total={members.length}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className={styles.teamCascadeStream} role="list">
+              {runnerMemberIndexes.map((memberIndex, runnerIndex) => {
+                const person = members[memberIndex];
+
+                return person ? (
+                  <TeamCascadeRunner
+                    key={`runner-${runnerIndex}`}
+                    duration={duration}
+                    memberIndex={memberIndex}
+                    onAnimationIteration={showNextMember}
+                    onPointerEnter={handleRunnerPointerEnter}
+                    onPointerUp={handleAvatarPointerUp}
+                    person={person}
+                    runnerCount={runnerCount}
+                    runnerIndex={runnerIndex}
+                    scrollProgress={parallaxScrollProgress}
+                    total={members.length}
+                  />
+                ) : null;
+              })}
+            </div>
+          )}
         </div>
       </div>
     </motion.section>
@@ -727,8 +691,6 @@ export function TeamCascadeClient({
   className?: string;
 }) {
   const [groups, setGroups] = useState<TeamCascadeGroup[]>([]);
-  const [resumeAfterClickProfileKeys, setResumeAfterClickProfileKeys] =
-    useState<Set<string>>(() => new Set());
   const [status, setStatus] = useState<TeamCascadeStatus>(
     bladeUrl ? "loading" : "error",
   );
@@ -737,31 +699,9 @@ export function TeamCascadeClient({
   const cascadeClassName = className
     ? `${styles.teamCascade} ${className}`
     : styles.teamCascade;
-  function handleAvatarPointerUp(profileKey: string) {
-    setResumeAfterClickProfileKeys((currentProfileKeys) => {
-      if (currentProfileKeys.has(profileKey)) return currentProfileKeys;
-
-      const nextProfileKeys = new Set(currentProfileKeys);
-      nextProfileKeys.add(profileKey);
-
-      return nextProfileKeys;
-    });
-  }
-  function handleResumeAfterClickEnd(profileKey: string) {
-    setResumeAfterClickProfileKeys((currentProfileKeys) => {
-      if (!currentProfileKeys.has(profileKey)) return currentProfileKeys;
-
-      const nextProfileKeys = new Set(currentProfileKeys);
-      nextProfileKeys.delete(profileKey);
-
-      return nextProfileKeys;
-    });
-  }
 
   useEffect(() => {
-    if (!bladeUrl) {
-      return;
-    }
+    if (!bladeUrl) return;
 
     const abortController = new AbortController();
 
@@ -786,40 +726,37 @@ export function TeamCascadeClient({
     return () => abortController.abort();
   }, [bladeUrl]);
 
-  let content: ReactNode;
-
   if (status === "loading") {
-    content = (
+    return (
       <TeamCascadeStatusMessage className={cascadeClassName}>
         Loading public team profiles.
       </TeamCascadeStatusMessage>
     );
-  } else if (status === "error") {
-    content = (
+  }
+
+  if (status === "error") {
+    return (
       <TeamCascadeStatusMessage className={cascadeClassName}>
         Could not load Blade team profiles. Check the configured Blade URL or
         local Blade server.
       </TeamCascadeStatusMessage>
     );
-  } else if (cascadingMembers.length === 0) {
-    content = (
+  }
+
+  if (cascadingMembers.length === 0) {
+    return (
       <TeamCascadeStatusMessage className={cascadeClassName}>
         No visible team profiles found.
       </TeamCascadeStatusMessage>
     );
-  } else {
-    content = (
-      <div className={cascadeClassName}>
-        <TeamCascadeStreamSection
-          isReducedMotion={prefersReducedMotion}
-          members={cascadingMembers}
-          resumeAfterClickProfileKeys={resumeAfterClickProfileKeys}
-          onAvatarPointerUp={handleAvatarPointerUp}
-          onResumeAfterClickEnd={handleResumeAfterClickEnd}
-        />
-      </div>
-    );
   }
 
-  return content;
+  return (
+    <div className={cascadeClassName}>
+      <TeamCascadeStreamSection
+        isReducedMotion={prefersReducedMotion}
+        members={cascadingMembers}
+      />
+    </div>
+  );
 }
