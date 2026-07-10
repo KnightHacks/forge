@@ -6,7 +6,7 @@ import Image from "next/image";
 import { FallingLeaves } from "./FallingLeaves";
 import styles from "./Hero.module.css";
 import { HeroLayerImage } from "./HeroLayerImage";
-import { HeroTitle } from "./HeroTitle";
+import { HeroApplyButton, HeroTitle } from "./HeroTitle";
 import { HERO_LAYERS } from "./layers";
 import { useHeroMotion } from "./useHeroMotion";
 
@@ -63,6 +63,7 @@ export default function Hero() {
         index={foregroundLayerIndex}
         zIndex={12}
       />
+      <HeroApplyButton className={styles.mobileHeroApplyButton} />
     </section>
   );
 }
