@@ -12,6 +12,6 @@ export const BLOOM_PORTAL_CONFIG = {
   guideUrl: "https://knight-hacks.notion.site/bloomknights2026",
   copy: {
     applicationName: "BloomKnights",
-    supportChannelUrl: "https://discord.gg/2W2HCvkKAy",
+    supportChannelUrl: "https://discord.knighthacks.org/",
   },
 } satisfies HackathonPortalConfig;

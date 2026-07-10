@@ -8,7 +8,7 @@ import MainNav from "./MainNav";
 import MLHBadge from "./MLHBadge";
 
 const hackersGuide = "https://knight-hacks.notion.site/gemiknights2025";
-const discordLink = "https://discord.gg/2W2HCvkKAy";
+const discordLink = "https://discord.knighthacks.org/";
 
 const NAV_LINKS = [
   { href: "#about", label: "About" },
