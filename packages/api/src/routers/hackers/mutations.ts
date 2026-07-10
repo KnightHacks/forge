@@ -24,6 +24,25 @@ import {
 } from "../../resume-storage";
 import { permProcedure, protectedProcedure } from "../../trpc";
 
+const CHECK_IN_DISCORD_ROLES = [
+  {
+    label: "BloomKnights",
+    roleId: HACKATHONS.BLOOMKNIGHTS.EVENT_ROLE_ID,
+    names: [HACKATHONS.BLOOMKNIGHTS.HACKATHON_NAME] as const,
+  },
+  {
+    label: "Knight Hacks IX",
+    roleId: HACKATHONS.KHIX.CHECK_IN_DISCORD_ROLE_ID,
+    names: HACKATHONS.KHIX.HACKATHON_NAMES,
+  },
+] as const;
+
+function getCheckInDiscordRole(hackathonName: string) {
+  return CHECK_IN_DISCORD_ROLES.find((role) =>
+    role.names.some((name) => name === hackathonName),
+  );
+}
+
 export const hackerMutationRouter = {
   createHacker: protectedProcedure
     .input(hackerApplicationWireSchema.extend({ hackathonName: z.string() }))
@@ -621,7 +640,9 @@ export const hackerMutationRouter = {
           .set({ status: "checkedin" })
           .where(eq(HackerAttendee.id, hackerAttendee.id));
 
-        if (hackathon.name === HACKATHONS.BLOOMKNIGHTS.HACKATHON_NAME) {
+        const checkInDiscordRole = getCheckInDiscordRole(hackathon.name);
+
+        if (checkInDiscordRole) {
           try {
             const discordId = await discord.resolveDiscordUserId(
               hacker.discordUser,
@@ -637,7 +658,7 @@ export const hackerMutationRouter = {
                 });
               } catch (logError) {
                 logger.error(
-                  "Failed to log skipped BloomKnights role assignment:",
+                  `Failed to log skipped ${checkInDiscordRole.label} role assignment:`,
                   logError instanceof Error
                     ? logError.message
                     : "Unknown error",
@@ -646,27 +667,27 @@ export const hackerMutationRouter = {
             } else {
               await discord.addRoleToMember(
                 discordId,
-                HACKATHONS.BLOOMKNIGHTS.EVENT_ROLE_ID,
+                checkInDiscordRole.roleId,
               );
               logger.log(
-                `Assigned role ${HACKATHONS.BLOOMKNIGHTS.EVENT_ROLE_ID} to user ${discordId}`,
+                `Assigned role ${checkInDiscordRole.roleId} to user ${discordId}`,
               );
             }
           } catch (e) {
             logger.error(
-              "Failed to assign the BloomKnights role:",
+              `Failed to assign the ${checkInDiscordRole.label} role:`,
               e instanceof Error ? e.message : "Unknown error",
             );
             try {
               await discord.log({
                 title: "Discord role assign failed",
-                message: `Failed to assign the BloomKnights role for "${hacker.discordUser}".`,
+                message: `Failed to assign the ${checkInDiscordRole.label} role for "${hacker.discordUser}".`,
                 color: "uhoh_red",
                 userId: ctx.session.user.discordUserId,
               });
             } catch (logError) {
               logger.error(
-                "Failed to log BloomKnights role assignment failure:",
+                `Failed to log ${checkInDiscordRole.label} role assignment failure:`,
                 logError instanceof Error ? logError.message : "Unknown error",
               );
             }

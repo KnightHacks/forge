@@ -101,8 +101,7 @@ const PORTAL_FIREFLY_IDS = Array.from({ length: 24 }, (_, index) =>
 type MobileDrawerState = "closed" | "opening" | "open" | "closing";
 const applicationLinks: Record<"mentor" | "volunteer", string> = {
   mentor: "https://forms.gle/CThgMyhCHZzdwYPq6",
-  volunteer:
-    "https://docs.google.com/forms/d/1qr_9pbTZiMRudBBaQiO3HBfTwGV_W6cTx1P_MBmOAfk/viewform?edit_requested=true",
+  volunteer: "https://forms.gle/9RutfLQt7mt89mC5A",
 };
 
 const statusScenes: Record<
