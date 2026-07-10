@@ -2,8 +2,8 @@
   --team-cascade-default-height: 40rem;
   --team-cascade-default-avatar-size: clamp(4.45rem, 7vw, 6.35rem);
   --cascade-box-height: var(
-    --team-cascade-section-height,
-    calc(var(--team-cascade-height, var(--team-cascade-default-height)) * 0.44)
+    --team-cascade-height,
+    var(--team-cascade-default-height)
   );
   /* Must stay linear: the grid layout schedules bubbles that share a
      column into evenly spaced time-slots (see getCascadeItemStyle in
@@ -22,7 +22,6 @@
 
   position: relative;
   display: grid;
-  gap: var(--team-cascade-stream-gap, clamp(2.15rem, 4vw, 3.8rem));
   width: 100%;
   isolation: isolate;
 }
@@ -67,15 +66,31 @@
 }
 
 .teamCascadeStream {
+  --team-cascade-edge-fade: clamp(3rem, 10%, 6rem);
+
   position: absolute;
   inset: 0;
-  /* Each stream is a full-size, mostly-empty overlay used only to hold
-     its own falling bubbles. Without this, the stream rendered later in
-     the DOM (design/white) sits on top of the whole box and silently
-     eats pointer events meant for the stream underneath (leadership/
-     blue), even over the empty gaps between its own bubbles -- which is
-     why hovering used to only work on the design bubbles. */
+  /* Only the falling bubbles should capture input; the empty stream area
+     stays transparent to pointer events. */
   pointer-events: none;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--team-cascade-edge-fade),
+    #000 calc(100% - var(--team-cascade-edge-fade)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--team-cascade-edge-fade),
+    #000 calc(100% - var(--team-cascade-edge-fade)),
+    transparent 100%
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
 }
 
 .teamCascadeItemAnchor {
@@ -136,7 +151,7 @@
   animation-play-state: paused;
 }
 
-.teamCascadeItem[data-resume-after-click="true"] {
+.teamCascadeItemAnchor .teamCascadeItem[data-resume-after-click="true"] {
   animation-play-state: running;
 }
 
@@ -186,22 +201,6 @@
 
 .teamAvatar[data-clickable="true"] {
   cursor: pointer;
-}
-
-.teamAvatar[data-variant="white"] {
-  --bubble-accent: #ffffff;
-  --bubble-deep: #d9edff;
-  --bubble-glow: rgba(255, 255, 255, 0.68);
-  --splash-color: rgba(255, 255, 255, 0.98);
-
-  border-color: #ffffff;
-  color: #4d3672;
-  background: linear-gradient(145deg, #ffffff 0%, #f8f5ff 58%, #e9deff 100%);
-  box-shadow:
-    0 0 0 0.42rem rgba(255, 255, 255, 0.58),
-    0 0 0 0.54rem rgba(232, 218, 255, 0.56),
-    0 0.85rem 1.8rem rgba(54, 37, 84, 0.2),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.82);
 }
 
 .teamAvatar::before {
@@ -300,10 +299,6 @@
   transform: translate3d(0, 0, 0);
 }
 
-.teamAvatar[data-variant="white"] .teamAvatarMedia {
-  background: #f8f5ff;
-}
-
 .teamAvatarImage,
 .teamAvatarInitials {
   position: absolute;
@@ -325,10 +320,6 @@
   color: #ffffff;
   font-size: clamp(1.25rem, 2vw, 1.8rem);
   font-weight: 950;
-}
-
-.teamAvatar[data-variant="white"] .teamAvatarInitials {
-  color: #513a78;
 }
 
 .teamAvatarTooltip {
@@ -356,13 +347,6 @@
     transform 160ms ease;
 }
 
-.teamAvatar[data-variant="white"] .teamAvatarTooltip {
-  border-color: rgba(207, 229, 255, 0.9);
-  color: #284d6d;
-  background: linear-gradient(135deg, #e7f4ff, #ffffff);
-  box-shadow: 0 0.8rem 1.8rem rgba(40, 77, 109, 0.2);
-}
-
 .teamAvatar:hover .teamAvatarTooltip,
 .teamAvatar:focus-visible .teamAvatarTooltip {
   opacity: 1;
@@ -384,11 +368,6 @@
   text-align: center;
 }
 
-.teamAvatar[data-variant="white"] .teamAvatarTooltip strong,
-.teamAvatar[data-variant="white"] .teamAvatarTooltip > span {
-  color: #284d6d;
-}
-
 .teamAvatarProbe {
   position: absolute;
   top: 0;
@@ -397,20 +376,6 @@
   aspect-ratio: 1;
   visibility: hidden;
   pointer-events: none;
-}
-
-.teamStreamEmpty {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  margin: 0;
-  padding: 1rem;
-  color: var(--team-status-color, rgba(16, 50, 71, 0.74));
-  font-size: 0.8rem;
-  font-weight: 800;
-  line-height: 1.35;
-  text-align: center;
 }
 
 .teamStatus {
@@ -448,6 +413,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .teamCascadeStream {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
   .teamAvatar,
   .teamAvatarTooltip {
     transition: none;

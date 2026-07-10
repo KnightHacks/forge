@@ -9,7 +9,7 @@ type PublicClubTeamRoster =
 
 export type TeamCascadeMember = PublicClubTeamRoster["executive"][number];
 
-export type TeamCascadeRole = "Officer" | "Director" | "Organizer" | "Design";
+export type TeamCascadeRole = "Officer" | "Director" | "Organizer";
 
 export interface TeamCascadeGroup {
   roleLabel: TeamCascadeRole;
@@ -20,7 +20,6 @@ const teamCascadeRosterGroups = [
   ["Officer", "executive"],
   ["Director", "directors"],
   ["Organizer", "hackathon"],
-  ["Design", "design"],
 ] as const satisfies readonly (readonly [
   TeamCascadeRole,
   keyof PublicClubTeamRoster,

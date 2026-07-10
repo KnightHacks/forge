@@ -22,20 +22,12 @@ import { loadTeamCascadeGroups } from "./team-roster";
 import styles from "./TeamCascade.module.css";
 
 type TeamCascadeStatus = "loading" | "ready" | "error";
-type TeamCascadeVariant = "blue" | "white";
-type TeamCascadeStreamId = "leadership" | "design";
 
 interface TeamCascadePerson {
   member: TeamCascadeMember;
   profileKey: string;
   roleLabel: TeamCascadeRole;
-  variant: TeamCascadeVariant;
   laneIndex: number;
-}
-
-interface TeamCascadeStream {
-  id: TeamCascadeStreamId;
-  members: TeamCascadePerson[];
 }
 
 type NumberRange = readonly [number, number];
@@ -49,24 +41,15 @@ type TeamCascadeItemStyle = CSSProperties & {
 
 const profileImageLoader = ({ src }: ImageLoaderProps) => src;
 const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
-const rosterIdPrefixes = [
-  "executive-",
-  "directors-",
-  "hackathon-",
-  "design-",
-] as const;
-const cascadeStreamOrder = [
-  "leadership",
-  "design",
-] as const satisfies readonly TeamCascadeStreamId[];
-const cascadeStreamLabels = {
-  design: "Designers",
-  leadership: "Hackathon Organizers",
-} as const satisfies Record<TeamCascadeStreamId, string>;
+const rosterIdPrefixes = ["executive-", "directors-", "hackathon-"] as const;
+const cascadeStreamId = "leadership";
+const cascadeStreamLabel = "Hackathon Organizers";
 
 const cascadeMotion = {
+  fallOffscreenTravelRem: 21.5,
   durationJitterSeconds: 0.36,
   durationSeconds: 14.8,
+  previousSectionHeightRatio: 0.44,
   parallaxRotateRange: [-2.4, 2.4],
   parallaxXRange: [-7, 7],
   parallaxYRange: [18, -18],
@@ -173,7 +156,6 @@ function TeamAvatar({
         rel="noopener noreferrer"
         aria-label={`Open ${displayName}, ${displayTitle}, on LinkedIn`}
         data-clickable="true"
-        data-variant={person.variant}
         onPointerUp={onPointerUp}
       >
         <span className={styles.teamAvatarMedia}>
@@ -188,7 +170,6 @@ function TeamAvatar({
     <span
       className={`${styles.teamAvatar} ${styles.teamAvatarStatic}`}
       aria-label={`${displayName}, ${displayTitle}`}
-      data-variant={person.variant}
       onPointerUp={onPointerUp}
       role="img"
     >
@@ -208,7 +189,7 @@ function TeamCascadeItem({
   numColumns,
   rows,
   xBand,
-  streamId,
+  durationScale,
   scrollProgress,
   onResumeAfterClickEnd,
 }: {
@@ -219,7 +200,7 @@ function TeamCascadeItem({
   numColumns: number;
   rows: number;
   xBand: NumberRange;
-  streamId: TeamCascadeStreamId;
+  durationScale: number;
   scrollProgress: MotionValue<number>;
   onResumeAfterClickEnd?: (profileKey: string) => void;
 }) {
@@ -230,7 +211,7 @@ function TeamCascadeItem({
     y: number;
   } | null>(null);
   const column = person.laneIndex % numColumns;
-  const columnKey = `${streamId}-column-${column}`;
+  const columnKey = `${cascadeStreamId}-column-${column}`;
   const parallaxDepth = isReducedMotion
     ? 0
     : getSeededRange(columnKey, "parallax-depth", [0.45, 1]);
@@ -265,7 +246,7 @@ function TeamCascadeItem({
     numColumns,
     rows,
     xBand,
-    streamId,
+    durationScale,
   );
   function handlePointerEnter() {
     if (isReducedMotion) return;
@@ -327,10 +308,6 @@ function getDisplayTitle({ member, roleLabel }: TeamCascadePerson) {
     return "Hackathon Organizer";
   }
 
-  if (roleLabel === "Design" && member.teamRole !== "Design Director") {
-    return "Design Team";
-  }
-
   return member.teamRole;
 }
 
@@ -349,18 +326,19 @@ function getCascadeItemStyle(
   numColumns: number,
   rows: number,
   xBand: NumberRange,
-  streamId: TeamCascadeStreamId,
+  durationScale: number,
 ): TeamCascadeItemStyle {
   const column = laneIndex % numColumns;
   const row = Math.floor(laneIndex / numColumns);
-  const columnKey = `${streamId}-column-${column}`;
+  const columnKey = `${cascadeStreamId}-column-${column}`;
 
   const duration =
-    cascadeMotion.durationSeconds +
-    getSeededRange(columnKey, "duration", [
-      -cascadeMotion.durationJitterSeconds,
-      cascadeMotion.durationJitterSeconds,
-    ]);
+    (cascadeMotion.durationSeconds +
+      getSeededRange(columnKey, "duration", [
+        -cascadeMotion.durationJitterSeconds,
+        cascadeMotion.durationJitterSeconds,
+      ])) *
+    durationScale;
 
   // Every row is a dedicated slice of the animation loop. The slight
   // phase offset is applied per-column (not per-bubble), so bubbles in
@@ -500,6 +478,7 @@ function useCascadeContainerMetrics(
     avatarSize: 0,
     containerHeight: 0,
     containerWidth: 0,
+    rootFontSize: 16,
   });
 
   useEffect(() => {
@@ -519,16 +498,25 @@ function useCascadeContainerMetrics(
         const avatarSize = probeRect.width;
         const containerHeight = containerRect.height;
         const containerWidth = containerRect.width;
+        const rootElement = observedContainer.ownerDocument.documentElement;
+        const measuredRootFontSize = Number.parseFloat(
+          window.getComputedStyle(rootElement).fontSize,
+        );
+        const rootFontSize =
+          Number.isFinite(measuredRootFontSize) && measuredRootFontSize > 0
+            ? measuredRootFontSize
+            : current.rootFontSize;
 
         if (
           avatarSize === current.avatarSize &&
           containerHeight === current.containerHeight &&
-          containerWidth === current.containerWidth
+          containerWidth === current.containerWidth &&
+          rootFontSize === current.rootFontSize
         ) {
           return current;
         }
 
-        return { avatarSize, containerHeight, containerWidth };
+        return { avatarSize, containerHeight, containerWidth, rootFontSize };
       });
     }
 
@@ -553,6 +541,30 @@ function useCascadeContainerMetrics(
   }, [containerRef, avatarProbeRef]);
 
   return metrics;
+}
+
+function getExpandedDurationScale(
+  containerHeight: number,
+  rootFontSize: number,
+) {
+  if (
+    !Number.isFinite(containerHeight) ||
+    containerHeight <= 0 ||
+    !Number.isFinite(rootFontSize) ||
+    rootFontSize <= 0
+  ) {
+    return 1;
+  }
+
+  // The old two-stream layout gave each stream 44% of the reserved height.
+  // Scale the loop by the exact CSS travel distance so expanding the remaining
+  // stream does not make its avatars fall faster.
+  const offscreenTravel = cascadeMotion.fallOffscreenTravelRem * rootFontSize;
+  const previousTravel =
+    containerHeight * cascadeMotion.previousSectionHeightRatio +
+    offscreenTravel;
+
+  return (containerHeight + offscreenTravel) / previousTravel;
 }
 
 function getHashRatio(value: string) {
@@ -584,48 +596,25 @@ function getMemberProfileKey(member: TeamCascadeMember) {
   return prefix ? member.id.slice(prefix.length) : member.id;
 }
 
-function getCascadingStreams(groups: TeamCascadeGroup[]): TeamCascadeStream[] {
+function getCascadingMembers(groups: TeamCascadeGroup[]) {
   const leadershipByProfileId = new Map<string, TeamCascadePerson>();
-  const designMembers: TeamCascadePerson[] = [];
-  const organizerProfileIds = new Set(
-    groups
-      .find((group) => group.roleLabel === "Organizer")
-      ?.members.map(getMemberProfileKey) ?? [],
-  );
 
   for (const group of groups) {
     for (const member of group.members) {
       const memberProfileKey = getMemberProfileKey(member);
-
-      if (group.roleLabel === "Design") {
-        if (organizerProfileIds.has(memberProfileKey)) continue;
-
-        designMembers.push({
-          member,
-          profileKey: `design-${memberProfileKey}`,
-          roleLabel: group.roleLabel,
-          variant: "white",
-          laneIndex: designMembers.length,
-        });
-        continue;
-      }
 
       if (!leadershipByProfileId.has(memberProfileKey)) {
         leadershipByProfileId.set(memberProfileKey, {
           member,
           profileKey: `leadership-${memberProfileKey}`,
           roleLabel: group.roleLabel,
-          variant: "blue",
           laneIndex: leadershipByProfileId.size,
         });
       }
     }
   }
 
-  return [
-    { id: "leadership", members: [...leadershipByProfileId.values()] },
-    { id: "design", members: designMembers },
-  ];
+  return [...leadershipByProfileId.values()];
 }
 
 function TeamCascadeStatusMessage({
@@ -651,13 +640,13 @@ function TeamCascadeStreamSection({
   onAvatarPointerUp,
   onResumeAfterClickEnd,
   resumeAfterClickProfileKeys,
-  stream,
+  members,
 }: {
   isReducedMotion: boolean;
   onAvatarPointerUp: (profileKey: string) => void;
   onResumeAfterClickEnd: (profileKey: string) => void;
   resumeAfterClickProfileKeys: Set<string>;
-  stream: TeamCascadeStream;
+  members: TeamCascadePerson[];
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const avatarProbeRef = useRef<HTMLDivElement>(null);
@@ -665,19 +654,20 @@ function TeamCascadeStreamSection({
     offset: ["start end", "end start"],
     target: viewportRef,
   });
-  const { avatarSize, containerHeight, containerWidth } =
+  const { avatarSize, containerHeight, containerWidth, rootFontSize } =
     useCascadeContainerMetrics(viewportRef, avatarProbeRef);
+  const durationScale = getExpandedDurationScale(containerHeight, rootFontSize);
   const cascadeGridLayout = useMemo(
     () =>
       computeCascadeGridLayout(
         containerWidth,
         containerHeight,
         avatarSize,
-        stream.members.length,
+        members.length,
       ),
-    [avatarSize, containerHeight, containerWidth, stream.members.length],
+    [avatarSize, containerHeight, containerWidth, members.length],
   );
-  const sectionTitleId = `team-cascade-${stream.id}-title`;
+  const sectionTitleId = `team-cascade-${cascadeStreamId}-title`;
   const viewportStyle = {
     "--team-cascade-avatar-scale": cascadeGridLayout.avatarScale,
   } as CSSProperties;
@@ -692,12 +682,12 @@ function TeamCascadeStreamSection({
       transition={{ duration: 0.65, ease: "easeOut" }}
     >
       <h3 id={sectionTitleId} className={styles.teamCascadeSectionTitle}>
-        {cascadeStreamLabels[stream.id]}
+        {cascadeStreamLabel}
       </h3>
       <div
         ref={viewportRef}
         className={styles.teamCascadeViewport}
-        data-stream={stream.id}
+        data-stream={cascadeStreamId}
         style={viewportStyle}
       >
         <div
@@ -705,29 +695,25 @@ function TeamCascadeStreamSection({
           className={styles.teamAvatarProbe}
           aria-hidden="true"
         />
-        {stream.members.length === 0 ? (
-          <p className={styles.teamStreamEmpty}>No visible profiles found.</p>
-        ) : (
-          <div className={styles.teamCascadeStream}>
-            {stream.members.map((person) => (
-              <TeamCascadeItem
-                key={person.profileKey}
-                isReducedMotion={isReducedMotion}
-                isResumingAfterClick={resumeAfterClickProfileKeys.has(
-                  person.profileKey,
-                )}
-                person={person}
-                numColumns={cascadeGridLayout.layout.numColumns}
-                rows={cascadeGridLayout.layout.rows}
-                xBand={cascadeMotion.xRange}
-                streamId={stream.id}
-                scrollProgress={scrollYProgress}
-                onAvatarPointerUp={onAvatarPointerUp}
-                onResumeAfterClickEnd={onResumeAfterClickEnd}
-              />
-            ))}
-          </div>
-        )}
+        <div className={styles.teamCascadeStream}>
+          {members.map((person) => (
+            <TeamCascadeItem
+              key={person.profileKey}
+              isReducedMotion={isReducedMotion}
+              isResumingAfterClick={resumeAfterClickProfileKeys.has(
+                person.profileKey,
+              )}
+              person={person}
+              numColumns={cascadeGridLayout.layout.numColumns}
+              rows={cascadeGridLayout.layout.rows}
+              xBand={cascadeMotion.xRange}
+              durationScale={durationScale}
+              scrollProgress={scrollYProgress}
+              onAvatarPointerUp={onAvatarPointerUp}
+              onResumeAfterClickEnd={onResumeAfterClickEnd}
+            />
+          ))}
+        </div>
       </div>
     </motion.section>
   );
@@ -747,11 +733,7 @@ export function TeamCascadeClient({
     bladeUrl ? "loading" : "error",
   );
   const prefersReducedMotion = usePrefersReducedMotion();
-  const cascadingStreams = useMemo(() => getCascadingStreams(groups), [groups]);
-  const cascadingMemberCount = cascadingStreams.reduce(
-    (total, stream) => total + stream.members.length,
-    0,
-  );
+  const cascadingMembers = useMemo(() => getCascadingMembers(groups), [groups]);
   const cascadeClassName = className
     ? `${styles.teamCascade} ${className}`
     : styles.teamCascade;
@@ -819,7 +801,7 @@ export function TeamCascadeClient({
         local Blade server.
       </TeamCascadeStatusMessage>
     );
-  } else if (cascadingMemberCount === 0) {
+  } else if (cascadingMembers.length === 0) {
     content = (
       <TeamCascadeStatusMessage className={cascadeClassName}>
         No visible team profiles found.
@@ -828,22 +810,13 @@ export function TeamCascadeClient({
   } else {
     content = (
       <div className={cascadeClassName}>
-        {cascadeStreamOrder.map((streamId) => {
-          const stream = cascadingStreams.find(({ id }) => id === streamId);
-
-          if (!stream) return null;
-
-          return (
-            <TeamCascadeStreamSection
-              key={stream.id}
-              isReducedMotion={prefersReducedMotion}
-              resumeAfterClickProfileKeys={resumeAfterClickProfileKeys}
-              stream={stream}
-              onAvatarPointerUp={handleAvatarPointerUp}
-              onResumeAfterClickEnd={handleResumeAfterClickEnd}
-            />
-          );
-        })}
+        <TeamCascadeStreamSection
+          isReducedMotion={prefersReducedMotion}
+          members={cascadingMembers}
+          resumeAfterClickProfileKeys={resumeAfterClickProfileKeys}
+          onAvatarPointerUp={handleAvatarPointerUp}
+          onResumeAfterClickEnd={handleResumeAfterClickEnd}
+        />
       </div>
     );
   }

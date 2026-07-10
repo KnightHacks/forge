@@ -373,11 +373,6 @@
 
 .teamCascade {
   --team-cascade-height: calc(var(--waterfall-height) * 0.5);
-  --team-cascade-stream-gap: clamp(
-    4.25rem,
-    calc(var(--composition-width) * 0.075),
-    6.4rem
-  );
   --team-cascade-avatar-size: clamp(
     3rem,
     calc(var(--composition-width) * 0.09),
@@ -428,11 +423,6 @@
 
   .teamCascade {
     --team-cascade-height: min(calc(var(--waterfall-height) * 0.2), 20rem);
-    --team-cascade-stream-gap: clamp(
-      3rem,
-      calc(var(--composition-width) * 0.085),
-      4rem
-    );
   }
 }
 
