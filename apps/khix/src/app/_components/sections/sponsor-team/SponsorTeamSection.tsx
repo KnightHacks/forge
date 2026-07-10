@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import Image from "next/image";
 
 import type { SponsorShowcaseSponsor } from "../../sponsor-showcase";
@@ -12,6 +11,7 @@ const HOMEPAGE_SPONSORS = [
     websiteUrl: "https://www.oneethos.com/",
     logoSrc: "/assets/sponsor-logos/oneethos.svg",
     logoScale: 1,
+    mobileLogoScale: 1.2,
     tier: "golden-dawn",
   },
   {
@@ -24,7 +24,8 @@ const HOMEPAGE_SPONSORS = [
     name: "Databricks",
     websiteUrl: "https://www.databricks.com/",
     logoSrc: "/assets/sponsor-logos/databricks.svg",
-    logoScale: 1.12,
+    logoScale: 1.65,
+    mobileLogoScale: 1.65,
     tier: "silver-moon",
   },
   {
@@ -32,6 +33,8 @@ const HOMEPAGE_SPONSORS = [
     websiteUrl: "https://www.forthepeople.com/",
     logoSrc: "/assets/sponsor-logos/morgan-and-morgan.svg",
     logoScale: 0.94,
+    mobileLogoScale: 1.15,
+    preserveLogoContrast: true,
     tier: "silver-moon",
   },
   {
@@ -45,32 +48,39 @@ const HOMEPAGE_SPONSORS = [
     websiteUrl: "https://www.nexteraenergy.com/",
     logoSrc: "/assets/sponsor-logos/nextera.svg",
     logoScale: 1.82,
-    mobileLogoScale: 1.35,
+    mobileLogoScale: 1.75,
     tier: "silver-moon",
   },
   {
     name: "Shinies Props",
     websiteUrl: "https://www.instagram.com/shiniesprops/",
     logoSrc: "/assets/sponsor-logos/shinies.svg",
+    logoScale: 1.24,
+    mobileLogoScale: 1.2,
     tier: "silver-moon",
   },
   {
     name: "Impress Ink",
     websiteUrl: "https://impressink.com/",
     logoSrc: "/assets/sponsor-logos/impressink.png",
+    logoScale: 1.25,
+    mobileLogoScale: 1,
     tier: "bronze-ember",
   },
   {
     name: "Codex",
     websiteUrl: "https://openai.com/codex/",
     logoSrc: "/assets/sponsor-logos/codex.svg",
-    logoScale: 1.3,
+    logoScale: 2,
+    mobileLogoScale: 1.7,
     tier: "bronze-ember",
   },
   {
     name: "RFSmart",
     websiteUrl: "https://www.rfsmart.com/",
     logoSrc: "/assets/sponsor-logos/rfsmart.svg",
+    logoScale: 1.25,
+    mobileLogoScale: 1.2,
     tier: "bronze-ember",
   },
 ] satisfies SponsorShowcaseSponsor[];
@@ -84,6 +94,7 @@ const PARTNERS = [
   {
     name: "Game Development Knights",
     logoSrc: "/assets/partners/gdk.svg",
+    preserveLogoContrast: true,
     websiteUrl: "https://www.instagram.com/gamedevknights/",
   },
   {
@@ -107,16 +118,6 @@ const PARTNERS = [
     websiteUrl: "https://www.instagram.com/ieeeucf/",
   },
 ] as const;
-
-type PartnerCardStyle = CSSProperties & {
-  "--float-delay": string;
-};
-
-function getPartnerCardStyle(index: number): PartnerCardStyle {
-  return {
-    "--float-delay": `${-(index % 6) * 0.42}s`,
-  };
-}
 
 export function SponsorTeamSection() {
   return (
@@ -146,7 +147,7 @@ export function SponsorTeamSection() {
               aria-labelledby="partners-title"
               role="list"
             >
-              {PARTNERS.map((partner, index) => (
+              {PARTNERS.map((partner) => (
                 <a
                   key={partner.name}
                   className={styles.partnerStone}
@@ -155,7 +156,9 @@ export function SponsorTeamSection() {
                   rel="noopener noreferrer"
                   role="listitem"
                   aria-label={partner.name}
-                  style={getPartnerCardStyle(index)}
+                  data-preserve-logo-contrast={
+                    "preserveLogoContrast" in partner ? "true" : undefined
+                  }
                 >
                   <span className={styles.partnerVisual} aria-hidden="true">
                     <span className={styles.partnerRock} aria-hidden="true" />

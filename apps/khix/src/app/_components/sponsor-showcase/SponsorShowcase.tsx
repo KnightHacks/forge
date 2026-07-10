@@ -19,6 +19,7 @@ export interface SponsorShowcaseSponsor {
   logoSrc: string;
   logoScale?: number;
   mobileLogoScale?: number;
+  preserveLogoContrast?: boolean;
   tier: SponsorTier;
 }
 
@@ -206,6 +207,9 @@ function SponsorRockCard({
     <a
       className={styles.sponsorLink}
       data-size={tierConfig.size}
+      data-preserve-logo-contrast={
+        sponsor.preserveLogoContrast ? "true" : undefined
+      }
       href={sponsor.websiteUrl}
       target="_blank"
       rel="noopener noreferrer"

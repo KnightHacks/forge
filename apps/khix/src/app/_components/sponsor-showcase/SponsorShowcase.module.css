@@ -75,6 +75,20 @@
   gap: var(--sponsor-small-grid-gap, 1.75rem 1.8rem);
 }
 
+.smallStoneGrid > .sponsorLink:nth-child(3n + 1) {
+  translate: var(--sponsor-stone-left-offset, 0)
+    var(--sponsor-stone-edge-offset, 0);
+}
+
+.smallStoneGrid > .sponsorLink:nth-child(3n + 2) {
+  translate: 0 var(--sponsor-stone-center-offset, 0);
+}
+
+.smallStoneGrid > .sponsorLink:nth-child(3n) {
+  translate: var(--sponsor-stone-right-offset, 0)
+    var(--sponsor-stone-edge-offset, 0);
+}
+
 .sponsorLink {
   --logo-height: var(--sponsor-base-logo-height, 3rem);
   --logo-width: var(--sponsor-base-logo-width, 12rem);
@@ -170,6 +184,8 @@
   background-position: 0 0;
   background-repeat: no-repeat;
   background-size: 100% auto;
+  filter: var(--sponsor-rock-surface-filter, none);
+  transition: filter 180ms ease;
   user-select: none;
   pointer-events: none;
 }
@@ -228,7 +244,7 @@
   display: block;
   width: min(var(--logo-width), 76%);
   height: var(--logo-height);
-  opacity: 0.94;
+  opacity: var(--sponsor-logo-opacity, 0.94);
   transform: translate3d(-50%, -50%, 0) scale(var(--sponsor-logo-scale));
   transition:
     opacity 180ms ease,
@@ -237,7 +253,7 @@
 
 .sponsorLogoImage {
   z-index: 1;
-  filter: drop-shadow(0 1px 0 rgb(4 18 28 / 0.35));
+  filter: var(--sponsor-logo-filter, drop-shadow(0 1px 0 rgb(4 18 28 / 0.35)));
   object-fit: contain;
   object-position: center;
   pointer-events: none;
@@ -252,42 +268,83 @@
 
 .sponsorLink:hover .sponsorVisual,
 .sponsorLink:focus-visible .sponsorVisual {
-  animation: sponsorHoverFloat 2.4s ease-in-out var(--float-delay) infinite
-    alternate;
-  will-change: transform;
+  animation: var(
+    --sponsor-rock-hover-animation,
+    sponsorHoverFloat 2.4s ease-in-out var(--float-delay) infinite alternate
+  );
+  will-change: var(--sponsor-rock-will-change, transform);
+}
+
+.sponsorLink:hover .rockFrame::before,
+.sponsorLink:focus-visible .rockFrame::before {
+  filter: var(
+    --sponsor-rock-surface-hover-filter,
+    var(--sponsor-rock-surface-filter, none)
+  );
 }
 
 .sponsorLink:hover .sponsorLogo,
 .sponsorLink:focus-visible .sponsorLogo {
-  opacity: 1;
-  transform: translate3d(-50%, -50%, 0) scale(var(--sponsor-logo-hover-scale));
+  opacity: var(--sponsor-logo-hover-opacity, 1);
+  transform: translate3d(-50%, -50%, 0) scale(var(--sponsor-logo-scale));
 }
 
 .sponsorLink:hover .sponsorLogoImage,
 .sponsorLink:focus-visible .sponsorLogoImage {
-  animation: sponsorRunePulse 1.65s ease-in-out infinite alternate;
-  filter: brightness(1.14) contrast(1.04) saturate(1.12)
-    drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
-    drop-shadow(0 0 0.04rem rgb(255 255 255 / 0.84))
-    drop-shadow(0 0 0.1rem rgb(255 255 255 / 0.58))
-    drop-shadow(
-      0 0 calc(0.14rem * var(--tier-glow-radius-scale))
-        rgb(var(--tier-glow-start-rgb) / 0.5)
-    )
-    drop-shadow(
-      0 0 calc(0.22rem * var(--tier-glow-radius-scale))
-        rgb(var(--tier-glow-start-rgb) / var(--tier-glow-hover-start-alpha))
-    )
-    drop-shadow(
-      0 0 calc(0.4rem * var(--tier-glow-radius-scale))
-        rgb(
-          var(--tier-glow-end-rgb) /
-            calc(
-              var(--tier-glow-hover-end-alpha) * var(--tier-glow-halo-strength)
-            )
-        )
-    );
-  will-change: filter;
+  animation: var(
+    --sponsor-logo-hover-animation,
+    sponsorRunePulse 1.65s ease-in-out infinite alternate
+  );
+  filter: var(
+    --sponsor-logo-hover-filter,
+    brightness(1.14) contrast(1.04) saturate(1.12)
+      drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
+      drop-shadow(0 0 0.04rem rgb(255 255 255 / 0.84))
+      drop-shadow(0 0 0.1rem rgb(255 255 255 / 0.58))
+      drop-shadow(
+        0 0 calc(0.14rem * var(--tier-glow-radius-scale))
+          rgb(var(--tier-glow-start-rgb) / 0.5)
+      )
+      drop-shadow(
+        0 0 calc(0.22rem * var(--tier-glow-radius-scale))
+          rgb(var(--tier-glow-start-rgb) / var(--tier-glow-hover-start-alpha))
+      )
+      drop-shadow(
+        0 0 calc(0.4rem * var(--tier-glow-radius-scale))
+          rgb(
+            var(--tier-glow-end-rgb) /
+              calc(
+                var(--tier-glow-hover-end-alpha) *
+                  var(--tier-glow-halo-strength)
+              )
+          )
+      )
+  );
+  will-change: var(--sponsor-logo-will-change, filter);
+}
+
+.sponsorLink[data-preserve-logo-contrast="true"] .sponsorLogoImage {
+  filter: var(
+    --sponsor-logo-contrast-filter,
+    var(--sponsor-logo-filter, drop-shadow(0 1px 0 rgb(4 18 28 / 0.35)))
+  );
+}
+
+.sponsorLink[data-preserve-logo-contrast="true"]:hover .sponsorLogoImage,
+.sponsorLink[data-preserve-logo-contrast="true"]:focus-visible
+  .sponsorLogoImage {
+  filter: var(
+    --sponsor-logo-contrast-hover-filter,
+    var(--sponsor-logo-hover-filter, var(--sponsor-logo-contrast-filter))
+  );
+}
+
+.sponsorLink:focus-visible .rockFrame {
+  filter: var(
+    --sponsor-rock-focus-shadow,
+    drop-shadow(0 0 0.3rem rgb(232 255 250 / 0.92))
+      drop-shadow(0 0 0.78rem rgb(111 228 222 / 0.72))
+  );
 }
 
 @media (max-width: 760px) {
@@ -372,14 +429,29 @@
 
 @media (hover: none) {
   .sponsorLogo {
-    opacity: 1;
+    opacity: var(--sponsor-logo-opacity, 1);
   }
 
   .sponsorLogoImage,
   .sponsorLink:hover:not(:focus-visible) .sponsorLogoImage {
-    animation: sponsorMobileRuneBreath 4.8s ease-in-out var(--rune-delay)
-      infinite;
-    will-change: filter;
+    animation: var(
+      --sponsor-logo-mobile-animation,
+      sponsorMobileRuneBreath 4.8s ease-in-out var(--rune-delay) infinite
+    );
+    filter: var(
+      --sponsor-logo-mobile-filter,
+      var(--sponsor-logo-filter, drop-shadow(0 1px 0 rgb(4 18 28 / 0.35)))
+    );
+    will-change: var(--sponsor-logo-will-change, filter);
+  }
+
+  .sponsorLink[data-preserve-logo-contrast="true"] .sponsorLogoImage,
+  .sponsorLink[data-preserve-logo-contrast="true"]:hover:not(:focus-visible)
+    .sponsorLogoImage {
+    filter: var(
+      --sponsor-logo-contrast-mobile-filter,
+      var(--sponsor-logo-contrast-filter, var(--sponsor-logo-filter))
+    );
   }
 
   .sponsorLink:hover:not(:focus-visible) .sponsorLogo {
@@ -398,6 +470,7 @@
     transition: none;
   }
 
+  .rockFrame::before,
   .sponsorLogoImage {
     animation: none;
     transition: none;

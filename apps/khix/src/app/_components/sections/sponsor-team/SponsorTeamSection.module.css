@@ -1,5 +1,7 @@
 .waterfallShowcase {
   --composition-width: min(92vw, 72rem);
+  --water-break-filter: drop-shadow(0 -0.1rem 0.035rem rgb(235 255 253 / 0.62))
+    drop-shadow(0 -0.24rem 0.15rem rgb(157 238 234 / 0.32));
   --waterfall-width: 100vw;
   --waterfall-height: calc(var(--waterfall-width) * 4.1667);
 
@@ -21,6 +23,12 @@
   width: var(--waterfall-width);
   height: 100%;
   background:
+    radial-gradient(
+      ellipse at 50% 9%,
+      rgba(3, 25, 31, 0.34) 0%,
+      rgba(3, 25, 31, 0.2) 18%,
+      transparent 36%
+    ),
     linear-gradient(
       90deg,
       rgba(61, 69, 72, 0.34),
@@ -85,9 +93,9 @@
   --sponsor-title-weight: 400;
   --sponsor-title-text-width: 100%;
   --sponsor-field-gap: clamp(
-    1.2rem,
-    calc(var(--composition-width) * 0.032),
-    2.4rem
+    2.75rem,
+    calc(var(--composition-width) * 0.052),
+    4rem
   );
   --sponsor-slab-gap: clamp(
     0.6rem,
@@ -109,6 +117,10 @@
     )
     clamp(0.8rem, calc(var(--composition-width) * 0.025), 1.65rem);
   --sponsor-small-grid-width: calc(var(--composition-width) * 0.7);
+  --sponsor-stone-center-offset: -0.28rem;
+  --sponsor-stone-edge-offset: 0.2rem;
+  --sponsor-stone-left-offset: -0.38rem;
+  --sponsor-stone-right-offset: 0.38rem;
   --sponsor-xl-height: clamp(
     10rem,
     calc(var(--composition-width) * 0.205),
@@ -213,7 +225,39 @@
     calc(var(--composition-width) * 0.145),
     10.4rem
   );
-  --sponsor-rock-shadow: drop-shadow(0 0.28rem 0.2rem rgb(5 28 35 / 0.28));
+  --sponsor-logo-opacity: 0.58;
+  --sponsor-logo-hover-opacity: 0.72;
+  --sponsor-logo-filter: brightness(0) saturate(100%)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.76))
+    drop-shadow(0 1px 0.35px rgb(190 224 218 / 0.38));
+  --sponsor-logo-hover-filter: brightness(0) saturate(100%)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.82))
+    drop-shadow(0 1px 0.4px rgb(203 234 228 / 0.5));
+  --sponsor-logo-contrast-filter: grayscale(1) sepia(0.32) saturate(0.68)
+    hue-rotate(126deg) brightness(0.54) contrast(1.08)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.76))
+    drop-shadow(0 1px 0.35px rgb(190 224 218 / 0.38));
+  --sponsor-logo-contrast-hover-filter: grayscale(1) sepia(0.32) saturate(0.68)
+    hue-rotate(126deg) brightness(0.58) contrast(1.1)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.82))
+    drop-shadow(0 1px 0.4px rgb(203 234 228 / 0.5));
+  --sponsor-logo-mobile-filter: var(--sponsor-logo-filter);
+  --sponsor-logo-hover-animation: none;
+  --sponsor-logo-mobile-animation: none;
+  --sponsor-logo-will-change: auto;
+  --sponsor-rock-hover-animation: none;
+  --sponsor-rock-will-change: auto;
+  --sponsor-rock-surface-filter: saturate(0.58) brightness(0.78) contrast(1.1)
+    hue-rotate(4deg);
+  --sponsor-rock-surface-hover-filter: saturate(0.6) brightness(0.82)
+    contrast(1.12) hue-rotate(4deg);
+  --sponsor-rock-shadow: var(--water-break-filter)
+    drop-shadow(0 0.12rem 0.1rem rgb(2 20 27 / 0.4))
+    drop-shadow(0 0.42rem 0.3rem rgb(2 17 23 / 0.3));
+  --sponsor-rock-focus-shadow: var(--water-break-filter)
+    drop-shadow(0 0.12rem 0.1rem rgb(2 20 27 / 0.42))
+    drop-shadow(0 0 0.24rem rgb(230 255 249 / 0.94))
+    drop-shadow(0 0 0.7rem rgb(105 224 218 / 0.78));
 }
 
 .sectionTitle {
@@ -285,7 +329,8 @@
   width: 100%;
   aspect-ratio: 1196 / 318;
   overflow: hidden;
-  filter: drop-shadow(0 0.28rem 0.2rem rgb(5 28 35 / 0.28));
+  filter: var(--water-break-filter)
+    drop-shadow(0 0.28rem 0.2rem rgb(5 28 35 / 0.28));
   pointer-events: none;
   transform: translate3d(-50%, -50%, 0);
 }
@@ -299,7 +344,9 @@
   aspect-ratio: 1;
   content: "";
   background: url("/assets/large-sponsor-rock.png") 0 0 / 100% auto no-repeat;
+  filter: saturate(0.58) brightness(0.78) contrast(1.1) hue-rotate(4deg);
   pointer-events: none;
+  transition: filter 180ms ease;
   user-select: none;
 }
 
@@ -311,7 +358,7 @@
   display: block;
   width: min(78%, 14.5rem);
   height: clamp(1rem, calc(var(--composition-width) * 0.043), 2rem);
-  opacity: 0.94;
+  opacity: 0.58;
   transform: translate3d(-50%, -50%, 0) scale(var(--partner-logo-scale));
   transition:
     opacity 180ms ease,
@@ -321,32 +368,57 @@
 .partnerLogoImage {
   object-fit: contain;
   object-position: center;
-  filter: drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
-    drop-shadow(0 0 0.08rem rgb(255 255 255 / 0.42));
+  filter: brightness(0) saturate(100%)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.76))
+    drop-shadow(0 1px 0.35px rgb(190 224 218 / 0.38));
   pointer-events: none;
   transition: filter 180ms ease;
   user-select: none;
 }
 
+.partnerStone[data-preserve-logo-contrast="true"] .partnerLogoImage {
+  filter: grayscale(1) sepia(0.32) saturate(0.68) hue-rotate(126deg)
+    brightness(0.54) contrast(1.08)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.76))
+    drop-shadow(0 1px 0.35px rgb(190 224 218 / 0.38));
+}
+
 .partnerStone:hover .partnerVisual,
 .partnerStone:focus-visible .partnerVisual {
-  animation: partnerHoverFloat 2.4s ease-in-out var(--float-delay) infinite
-    alternate;
-  will-change: transform;
+  animation: none;
+}
+
+.partnerStone:hover .partnerRock::before,
+.partnerStone:focus-visible .partnerRock::before {
+  filter: saturate(0.6) brightness(0.82) contrast(1.12) hue-rotate(4deg);
 }
 
 .partnerStone:hover .partnerLogo,
 .partnerStone:focus-visible .partnerLogo {
-  opacity: 1;
-  transform: translate3d(-50%, -50%, 0) scale(var(--partner-logo-hover-scale));
+  opacity: 0.72;
+  transform: translate3d(-50%, -50%, 0) scale(var(--partner-logo-scale));
 }
 
 .partnerStone:hover .partnerLogoImage,
 .partnerStone:focus-visible .partnerLogoImage {
-  filter: brightness(1.14) contrast(1.04) saturate(1.12)
-    drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
-    drop-shadow(0 0 0.08rem rgb(255 255 255 / 0.64))
-    drop-shadow(0 0 0.18rem rgb(129 225 255 / 0.44));
+  filter: brightness(0) saturate(100%)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.82))
+    drop-shadow(0 1px 0.4px rgb(203 234 228 / 0.5));
+}
+
+.partnerStone[data-preserve-logo-contrast="true"]:hover .partnerLogoImage,
+.partnerStone[data-preserve-logo-contrast="true"]:focus-visible
+  .partnerLogoImage {
+  filter: grayscale(1) sepia(0.32) saturate(0.68) hue-rotate(126deg)
+    brightness(0.58) contrast(1.1) drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.82))
+    drop-shadow(0 1px 0.4px rgb(203 234 228 / 0.5));
+}
+
+.partnerStone:focus-visible .partnerRock {
+  filter: var(--water-break-filter)
+    drop-shadow(0 0.12rem 0.1rem rgb(2 20 27 / 0.42))
+    drop-shadow(0 0 0.24rem rgb(230 255 249 / 0.94))
+    drop-shadow(0 0 0.7rem rgb(105 224 218 / 0.78));
 }
 
 .teamPanel {
@@ -382,6 +454,20 @@
 
   width: 100%;
   margin: 0 auto;
+}
+
+@media (max-width: 760px) {
+  .sponsorShowcase {
+    --sponsor-stone-center-offset: 0;
+    --sponsor-stone-edge-offset: 0;
+    --sponsor-stone-left-offset: 0;
+    --sponsor-stone-right-offset: 0;
+  }
+
+  .partnerStone:hover .partnerLogo,
+  .partnerStone:focus-visible .partnerLogo {
+    transform: translate3d(-50%, -50%, 0) scale(var(--partner-logo-hover-scale));
+  }
 }
 
 @media (max-width: 520px) {
@@ -440,6 +526,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .partnerRock::before,
   .partnerLogo,
   .partnerLogoImage {
     transition: none;
@@ -449,15 +536,5 @@
   .partnerStone:hover .partnerVisual,
   .partnerStone:focus-visible .partnerVisual {
     animation: none;
-  }
-}
-
-@keyframes partnerHoverFloat {
-  0% {
-    transform: translate3d(0, -0.12rem, 0) rotate(-0.24deg);
-  }
-
-  100% {
-    transform: translate3d(0, 0.14rem, 0) rotate(0.2deg);
   }
 }
