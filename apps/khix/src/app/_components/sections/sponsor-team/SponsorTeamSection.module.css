@@ -23,13 +23,14 @@
   background:
     linear-gradient(
       90deg,
-      rgba(0, 0, 0, 0.34),
+      rgba(61, 69, 72, 0.34),
       transparent 12%,
       transparent 88%,
-      rgba(0, 0, 0, 0.34)
+      rgba(61, 69, 72, 0.34)
     ),
-    url("/assets/rocks%20waterfall.png") center top / 100% auto no-repeat,
-    url("/assets/waterfall-animated.webp") center top / 100% auto no-repeat;
+    url("/assets/waterfall-animated.webp") center top / 100% auto no-repeat,
+    url("/assets/rocks%20waterfall.png") center top / 100% auto no-repeat;
+  background-color: #596264;
   box-shadow:
     0 0 0 1px rgba(83, 232, 255, 0.16),
     0 0 3rem rgba(20, 238, 231, 0.18);
