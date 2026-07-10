@@ -9,7 +9,7 @@ export const CLUB_ASSET_BASE_URL = "https://assets.knighthacks.org";
 export const PUBLIC_LINKS = {
   blade: "https://blade.knighthacks.org",
   codeOfConduct: "https://knight-hacks.notion.site/code-of-conduct",
-  discord: "https://discord.gg/knighthacks",
+  discord: "https://discord.knighthacks.org/",
   github: "https://github.com/KnightHacks",
   instagram: "https://www.instagram.com/knighthacks/",
   linkedin: "https://www.linkedin.com/company/knight-hacks",

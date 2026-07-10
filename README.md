@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://discord.gg/ynr44H6KAY">
+  <a href="https://discord.knighthacks.org/">
       <img width="125" height="125" src="./.github/knight-hacks-logo.svg"/>
   </a>
   <h1>Forge</h1>
@@ -7,7 +7,7 @@
 
 > [!NOTE]
 >
-> Interested in learning more about this repository? Please join [Knight Hacks' community Discord server](https://discord.gg/ynr44H6KAY)!
+> Interested in learning more about this repository? Please join [Knight Hacks' community Discord server](https://discord.knighthacks.org/)!
 
 ## 👋 Introduction
 
@@ -30,7 +30,7 @@ If you would like to contribute to this repository, please read our [contributin
 
 ## ❓ FAQ
 
-If you have any questions, please ask them in [our community Discord server](https://discord.gg/ynr44H6KAY)!
+If you have any questions, please ask them in [our community Discord server](https://discord.knighthacks.org/)!
 
 ## 📝 License
 

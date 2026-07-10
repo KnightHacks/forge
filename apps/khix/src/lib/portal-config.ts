@@ -20,6 +20,6 @@ export const KHIX_PORTAL_CONFIG = {
   guideUrl: "https://knight-hacks.notion.site/knighthacksix",
   copy: {
     applicationName: "Knight Hacks IX",
-    supportChannelUrl: "https://discord.gg/2W2HCvkKAy",
+    supportChannelUrl: "https://discord.knighthacks.org/",
   },
 } satisfies HackathonPortalConfig;

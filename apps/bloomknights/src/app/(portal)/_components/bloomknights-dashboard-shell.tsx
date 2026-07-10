@@ -13,7 +13,7 @@ const BLOOMKNIGHTS_DASHBOARD_BACKGROUND_AVIF =
 
 const BLOOMKNIGHTS_DASHBOARD_FOOTER_LINKS = [
   { href: "https://blade.knighthacks.org", label: "Blade" },
-  { href: "https://discord.gg/2W2HCvkKAy", label: "Discord" },
+  { href: "https://discord.knighthacks.org/", label: "Discord" },
   { href: "https://club.knighthacks.org", label: "Club" },
   { href: "https://www.instagram.com/knighthacks/", label: "Instagram" },
 ] as const;

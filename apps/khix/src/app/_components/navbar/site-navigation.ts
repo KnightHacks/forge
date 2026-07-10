@@ -17,7 +17,7 @@ export const KHIX_SITE_NAV_LINKS = KHIX_HOME_NAV_LINKS.map((link) => ({
 export const KHIX_SOCIAL_LINKS = [
   {
     label: "Join Knight Hacks on Discord",
-    href: "https://discord.gg/rc8f9rHVTE",
+    href: "https://discord.knighthacks.org/",
     icon: "discord",
   },
   {

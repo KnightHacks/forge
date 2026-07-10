@@ -44,7 +44,7 @@ export const RECRUITING_CHANNEL = IS_PROD
   ? PROD_RECRUITING_CHANNEL
   : DEV_LOG_CHANNEL;
 
-export const PERMANENT_INVITE = "https://discord.com/invite/Kv5g9vf";
+export const PERMANENT_INVITE = "https://discord.knighthacks.org/";
 
 export const EVENT_TYPE = GuildScheduledEventEntityType.External;
 export const EVENT_PRIVACY_LEVEL = GuildScheduledEventPrivacyLevel.GuildOnly;

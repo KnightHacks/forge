@@ -49,7 +49,7 @@
     }
   },
   "version": "1.0.0",
-  "description": "<div align=\"center\">\r   <a href=\"https://discord.gg/ynr44H6KAY\">\r       <img width=\"125\" height=\"125\" src=\"./.github/knight-hacks-logo.svg\"/>\r   </a>\r   <h1>Forge</h1>\r </div>",
+  "description": "<div align=\"center\">\r   <a href=\"https://discord.knighthacks.org/\">\r       <img width=\"125\" height=\"125\" src=\"./.github/knight-hacks-logo.svg\"/>\r   </a>\r   <h1>Forge</h1>\r </div>",
   "main": "index.js",
   "directories": {
     "doc": "docs"

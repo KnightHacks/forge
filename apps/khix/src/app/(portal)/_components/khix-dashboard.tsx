@@ -2770,7 +2770,7 @@ function StatusAction({
     <>
       <Button asChild className={styles.primaryButton}>
         <a
-          href="https://discord.gg/2W2HCvkKAy"
+          href="https://discord.knighthacks.org/"
           target="_blank"
           rel="noopener noreferrer"
         >

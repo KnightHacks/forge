@@ -49,7 +49,7 @@ export default function DiscordCTAButton({
           <button
             onClick={() =>
               window.open(
-                "https://discord.com/invite/Kv5g9vf",
+                "https://discord.knighthacks.org/",
                 "_blank",
                 "noopener,noreferrer",
               )

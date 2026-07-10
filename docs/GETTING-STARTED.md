@@ -221,7 +221,7 @@ Ask questions in the private dev team Discord channel.
 
 Ask questions in the [Knight Hacks Discord server](https://discord.com/channels/486628710443778071/486631140552212491).
 
-You can also join the broader [Knight Hacks community Discord](https://discord.gg/ynr44H6KAY) for general support.
+You can also join the broader [Knight Hacks community Discord](https://discord.knighthacks.org/) for general support.
 
 ## Common Issues
 

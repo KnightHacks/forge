@@ -53,7 +53,7 @@ export default function RootLayout({
         <link rel="preload" as="image" href="/about-graphic.svg" />
         <link rel="preload" as="image" href="/comic.svg" />
         <link rel="dns-prefetch" href="//mlh.io" />
-        <link rel="dns-prefetch" href="//discord.knighthacks.org" />
+        <link rel="dns-prefetch" href="//discord.knighthacks.org/" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
