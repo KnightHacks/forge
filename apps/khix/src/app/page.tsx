@@ -8,6 +8,10 @@ import { AboutCorruption, AboutSection } from "./_components/sections/about";
 import FAQ from "./_components/sections/faq/faq";
 import { SectionGrass } from "./_components/sections/grass";
 import Hero from "./_components/sections/hero";
+import {
+  KHIX_SPEAKERS,
+  SpeakerShowcase,
+} from "./_components/sections/speakers";
 import { SponsorTeamSection } from "./_components/sections/sponsor-team";
 import styles from "./page.module.css";
 
@@ -30,15 +34,12 @@ export default function Page() {
               Tracks
             </h2>
           </section>
-          <section
-            id="speakers"
-            className={styles.openSection}
-            aria-labelledby="speakers-title"
-          >
-            <h2 id="speakers-title" className={styles.openSectionTitle}>
-              Speakers
-            </h2>
-          </section>
+          <div id="speakers" className={styles.speakersSection}>
+            <SpeakerShowcase
+              speakers={KHIX_SPEAKERS}
+              titleId="speakers-title"
+            />
+          </div>
           <SponsorTeamSection />
           <div className={styles.waterfallFaqSeparator} aria-hidden="true" />
           <FAQ />

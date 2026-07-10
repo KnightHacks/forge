@@ -49,6 +49,16 @@
     0 0.18rem 1.4rem rgba(0, 0, 0, 0.46);
 }
 
+.speakersSection {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: clamp(4rem, 8svh, 7rem) clamp(0.5rem, 2.5vw, 2rem);
+  place-items: center;
+}
+
 .waterfallFaqSeparator {
   position: relative;
   left: 50%;
