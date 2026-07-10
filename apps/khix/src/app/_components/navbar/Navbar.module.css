@@ -547,6 +547,63 @@
   }
 }
 
+@media (min-width: 1500px) {
+  .navbar {
+    top: max(0.9rem, env(safe-area-inset-top));
+    padding-right: clamp(1.35rem, 3.6vw, 4.5rem);
+    padding-left: clamp(1.35rem, 3.6vw, 4.5rem);
+  }
+
+  .mlhTrustBadge {
+    right: clamp(3.125rem, 3.4vw, 5.5rem);
+    width: clamp(6.25rem, 5.9vw, 7.6rem);
+    max-width: 7.6rem;
+  }
+
+  .inner {
+    width: min(100%, clamp(81rem, 78vw, 116rem));
+    min-height: clamp(4.85rem, 4.2vw, 5.95rem);
+    gap: clamp(1.68rem, 1.75vw, 2.4rem);
+    padding: clamp(0.62rem, 0.55vw, 0.86rem) clamp(0.86rem, 0.9vw, 1.2rem)
+      clamp(0.62rem, 0.55vw, 0.86rem) clamp(1.36rem, 1.4vw, 1.85rem);
+  }
+
+  .brand {
+    width: clamp(3.34rem, 2.6vw, 4.05rem);
+    height: clamp(3.34rem, 2.6vw, 4.05rem);
+  }
+
+  .logo {
+    height: clamp(3.05rem, 2.38vw, 3.72rem);
+  }
+
+  .links {
+    justify-content: center;
+    gap: clamp(1.36rem, 1.35vw, 2.05rem);
+  }
+
+  .link {
+    padding-top: clamp(0.9rem, 0.72vw, 1.08rem);
+    padding-bottom: clamp(0.9rem, 0.72vw, 1.08rem);
+    font-size: clamp(0.9rem, 0.55rem + 0.35vw, 1.18rem);
+  }
+
+  .socialLinks {
+    gap: clamp(0.5rem, 0.48vw, 0.72rem);
+    margin-right: 0;
+  }
+
+  .socialLink {
+    width: clamp(2.72rem, 2.15vw, 3.25rem);
+    height: clamp(2.72rem, 2.15vw, 3.25rem);
+  }
+
+  .socialLink svg {
+    width: clamp(1.28rem, 1vw, 1.54rem);
+    height: clamp(1.28rem, 1vw, 1.54rem);
+  }
+}
+
 @media (max-width: 1040px) {
   .inner {
     width: min(100%, 68rem);
