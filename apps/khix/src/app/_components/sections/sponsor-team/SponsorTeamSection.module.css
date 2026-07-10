@@ -389,12 +389,28 @@
 }
 
 @media (max-width: 520px) {
+  .bridge {
+    top: min(calc(var(--waterfall-height) * 0.64), 66rem);
+  }
+
+  .sponsorPanel {
+    padding-top: calc(var(--waterfall-height) * 0.03);
+  }
+
   .sponsorShowcase {
-    --sponsor-title-size: clamp(3.1rem, 19vw, 5rem);
+    --sponsor-showcase-width: 100%;
+    --sponsor-title-margin: 0 auto clamp(0.75rem, 3vw, 1rem);
+    --sponsor-title-size: clamp(3rem, 16vw, 4.25rem);
+    --sponsor-field-gap: clamp(0.75rem, 3vw, 1rem);
+    --sponsor-medium-mobile-height: clamp(6.7rem, 31vw, 7.25rem);
+    --sponsor-medium-mobile-logo-height: 1.5rem;
+    --sponsor-medium-mobile-logo-width: 5.4rem;
+    --sponsor-medium-mobile-width: min(47vw, 9.4rem);
   }
 
   .partnerGroup {
     width: calc(var(--composition-width) * 0.82);
+    margin-top: clamp(1.25rem, 5vw, 1.75rem);
   }
 
   .partnerGroup .sectionTitle {
@@ -402,11 +418,15 @@
   }
 
   .teamPanel .sectionTitle {
-    font-size: clamp(3.1rem, 19vw, 5rem);
+    font-size: clamp(3rem, 16vw, 4.25rem);
+  }
+
+  .teamPanel {
+    top: min(calc(var(--waterfall-height) * 0.69), 70rem);
   }
 
   .teamCascade {
-    --team-cascade-height: calc(var(--waterfall-height) * 0.43);
+    --team-cascade-height: min(calc(var(--waterfall-height) * 0.2), 20rem);
     --team-cascade-stream-gap: clamp(
       3rem,
       calc(var(--composition-width) * 0.085),
@@ -417,8 +437,8 @@
 
 @media (max-width: 420px) {
   .sponsorPanel {
-    padding-right: calc(var(--composition-width) * 0.1);
-    padding-left: calc(var(--composition-width) * 0.1);
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
   }
 
   .teamCascade {

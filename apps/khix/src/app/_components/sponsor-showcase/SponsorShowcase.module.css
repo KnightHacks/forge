@@ -79,6 +79,8 @@
   --logo-height: var(--sponsor-base-logo-height, 3rem);
   --logo-width: var(--sponsor-base-logo-width, 12rem);
   --sponsor-logo-hover-scale: 1.035;
+  --sponsor-logo-mobile-hover-scale: var(--sponsor-logo-hover-scale);
+  --sponsor-logo-mobile-scale: var(--sponsor-logo-scale);
   --sponsor-logo-scale: 1;
   --sponsor-height: var(--sponsor-base-height, 7rem);
   --sponsor-width: var(--sponsor-base-width, 20rem);
@@ -294,21 +296,21 @@
   }
 
   .sponsorField {
-    gap: 1.9rem;
+    gap: clamp(0.8rem, 3vw, 1.15rem);
   }
 
   .slabStack {
-    gap: 1.05rem;
+    gap: 0.8rem;
   }
 
   .mediumStoneGrid {
-    width: min(100%, 28rem);
-    gap: 1.25rem 0.9rem;
+    width: min(100%, 24rem);
+    gap: 0.8rem 0.65rem;
   }
 
   .smallStoneGrid {
-    width: min(100%, 25rem);
-    gap: 1.1rem 0.85rem;
+    width: 100%;
+    gap: 0.65rem 0.55rem;
   }
 
   .sponsorLink[data-size="x-large"],
@@ -327,17 +329,28 @@
   }
 
   .sponsorLink[data-size="small"] {
-    --logo-height: 1.85rem;
-    --logo-width: 6.6rem;
-    --sponsor-height: 7.45rem;
-    --sponsor-width: min(42vw, 9.6rem);
+    --logo-height: clamp(1.45rem, 5vw, 1.85rem);
+    --logo-width: clamp(5.8rem, 20vw, 6.6rem);
+    --sponsor-height: clamp(5.3rem, 27vw, 7.45rem);
+    --sponsor-width: clamp(7.2rem, 37vw, 9.6rem);
   }
 
   .sponsorLink[data-size="x-small"] {
-    --logo-height: 1.65rem;
-    --logo-width: 5.9rem;
-    --sponsor-height: 6.6rem;
-    --sponsor-width: min(38vw, 8.4rem);
+    --logo-height: clamp(1.15rem, 4vw, 1.65rem);
+    --logo-width: clamp(4.1rem, 16vw, 5.9rem);
+    --sponsor-height: clamp(4.5rem, 22vw, 6.6rem);
+    --sponsor-width: clamp(4.8rem, 24vw, 7.6rem);
+  }
+
+  .sponsorLogo {
+    transform: translate3d(-50%, -50%, 0)
+      scale(var(--sponsor-logo-mobile-scale));
+  }
+
+  .sponsorLink:hover .sponsorLogo,
+  .sponsorLink:focus-visible .sponsorLogo {
+    transform: translate3d(-50%, -50%, 0)
+      scale(var(--sponsor-logo-mobile-hover-scale));
   }
 }
 
@@ -345,13 +358,28 @@
   .sponsorTitle {
     font-size: var(--sponsor-title-size, 2.15rem);
   }
+}
 
-  .sponsorLink[data-size="small"] {
-    --sponsor-width: min(43vw, 8.6rem);
+@media (hover: none) {
+  .sponsorLogo {
+    opacity: 1;
   }
 
-  .sponsorLink[data-size="x-small"] {
-    --sponsor-width: min(38vw, 7.6rem);
+  .sponsorLogoImage,
+  .sponsorLink:hover:not(:focus-visible) .sponsorLogoImage {
+    animation: sponsorRunePulse 3.4s ease-in-out var(--float-delay) infinite
+      alternate;
+    will-change: filter;
+  }
+
+  .sponsorLink:hover:not(:focus-visible) .sponsorLogo {
+    transform: translate3d(-50%, -50%, 0)
+      scale(var(--sponsor-logo-mobile-scale));
+  }
+
+  .sponsorLink:hover:not(:focus-visible) .sponsorVisual {
+    animation: none;
+    will-change: auto;
   }
 }
 
@@ -361,6 +389,7 @@
   }
 
   .sponsorLogoImage {
+    animation: none;
     transition: none;
   }
 

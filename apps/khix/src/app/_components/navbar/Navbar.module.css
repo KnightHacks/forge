@@ -3,9 +3,6 @@
   --nav-glow-green: rgba(177, 255, 204, 0.42);
   --nav-glow-green-soft: rgba(116, 255, 177, 0.24);
   --nav-glow-shadow: rgba(0, 0, 0, 0.52);
-  --mobile-menu-origin-x: 2.1rem;
-  --mobile-menu-origin-y: 2.1rem;
-  --mobile-menu-start-radius: 3.35rem;
 
   position: fixed;
   top: max(0.75rem, env(safe-area-inset-top));
@@ -214,6 +211,8 @@
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
+  /* Taper the fixed badge clearance away once the centered nav is naturally clear. */
+  margin-right: clamp(0rem, calc((100rem - 100vw) / 2 + 1rem), 9rem);
 }
 
 .socialLink {
@@ -341,6 +340,7 @@
   z-index: 2;
   visibility: hidden;
   opacity: 1;
+  overflow: hidden;
   pointer-events: none;
   transition: none;
 }
@@ -355,9 +355,27 @@
   pointer-events: none;
 }
 
+.mobileSurface {
+  position: absolute;
+  inset: 0 -12vw;
+  z-index: 0;
+  background: linear-gradient(180deg, #3f0659 0%, #022a2b 100%);
+  pointer-events: none;
+  transform: translate3d(0, -100%, 0) rotate(-2.4deg) scale(1.04);
+  transform-origin: 50% 100%;
+  backface-visibility: hidden;
+  transition: transform 520ms cubic-bezier(0.5, 0, 0.5, 1);
+  will-change: transform;
+}
+
+.mobileLayer[data-state="open"] .mobileSurface {
+  transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+}
+
 .mobileBackdrop {
   position: absolute;
   inset: 0;
+  z-index: 1;
   border: 0;
   background: transparent;
   cursor: pointer;
@@ -371,6 +389,7 @@
   right: 0;
   bottom: 0;
   left: 0;
+  z-index: 2;
   display: grid;
   min-height: 100dvh;
   align-content: center;
@@ -384,40 +403,9 @@
     max(1.5rem, env(safe-area-inset-left));
   border: 0;
   border-radius: 0;
-  background: linear-gradient(180deg, #3f0659 0%, #022a2b 100%);
+  background: transparent;
   box-shadow: none;
   overflow-y: auto;
-  clip-path: circle(
-    var(--mobile-menu-start-radius) at var(--mobile-menu-origin-x)
-      var(--mobile-menu-origin-y)
-  );
-  transform: translate3d(0, 0, 0);
-  transform-origin: var(--mobile-menu-origin-x) var(--mobile-menu-origin-y);
-  backdrop-filter: blur(18px) saturate(1.04);
-  animation: none;
-  will-change: clip-path;
-  -webkit-backdrop-filter: blur(18px) saturate(1.04);
-}
-
-.mobileLayer:not([data-open="true"]) .mobileMenu {
-  clip-path: circle(
-    var(--mobile-menu-start-radius) at var(--mobile-menu-origin-x)
-      var(--mobile-menu-origin-y)
-  );
-}
-
-.mobileLayer[data-state="open"] .mobileMenu {
-  animation: mobileMenuReveal 680ms cubic-bezier(0.18, 0.62, 0.24, 1) both;
-  clip-path: circle(
-    155vmax at var(--mobile-menu-origin-x) var(--mobile-menu-origin-y)
-  );
-}
-
-.mobileLayer[data-state="closing"] .mobileMenu {
-  animation: mobileMenuConceal 440ms cubic-bezier(0.48, 0, 0.32, 1) both;
-  clip-path: circle(
-    0 at var(--mobile-menu-origin-x) var(--mobile-menu-origin-y)
-  );
 }
 
 .mobileLinks {
@@ -446,11 +434,12 @@
     0 0 0.86rem rgb(160 234 218 / 0.12),
     0 0.34rem 1rem rgb(0 0 0 / 0.28);
   opacity: 0;
-  transform: translate3d(0, 0.7rem, 0);
+  transform: translate3d(0, 0.75rem, 0);
   transition:
     color 180ms ease,
-    opacity 220ms ease,
+    opacity 160ms ease,
     transform 260ms cubic-bezier(0.18, 0.7, 0.2, 1);
+  transition-delay: 0ms, 0ms, 0ms;
 }
 
 .mobileLink:hover,
@@ -470,31 +459,31 @@
 }
 
 .mobileLayer[data-state="open"] .mobileLink:nth-child(1) {
-  transition-delay: 40ms;
+  transition-delay: 0ms, 180ms, 180ms;
 }
 
 .mobileLayer[data-state="open"] .mobileLink:nth-child(2) {
-  transition-delay: 70ms;
+  transition-delay: 0ms, 212ms, 212ms;
 }
 
 .mobileLayer[data-state="open"] .mobileLink:nth-child(3) {
-  transition-delay: 100ms;
+  transition-delay: 0ms, 244ms, 244ms;
 }
 
 .mobileLayer[data-state="open"] .mobileLink:nth-child(4) {
-  transition-delay: 130ms;
+  transition-delay: 0ms, 276ms, 276ms;
 }
 
 .mobileLayer[data-state="open"] .mobileLink:nth-child(5) {
-  transition-delay: 160ms;
+  transition-delay: 0ms, 308ms, 308ms;
 }
 
 .mobileLayer[data-state="open"] .mobileLink:nth-child(6) {
-  transition-delay: 190ms;
+  transition-delay: 0ms, 340ms, 340ms;
 }
 
 .mobileLayer[data-state="open"] .mobileLink:nth-child(7) {
-  transition-delay: 220ms;
+  transition-delay: 0ms, 372ms, 372ms;
 }
 
 .mobileSocialLinks {
@@ -524,8 +513,9 @@
     background 180ms ease,
     border-color 180ms ease,
     color 180ms ease,
-    opacity 220ms ease,
+    opacity 160ms ease,
     transform 260ms cubic-bezier(0.18, 0.7, 0.2, 1);
+  transition-delay: 0ms, 0ms, 0ms, 0ms, 0ms;
 }
 
 .mobileSocialLink:hover,
@@ -542,7 +532,7 @@
 .mobileLayer[data-state="open"] .mobileSocialLink {
   opacity: 1;
   transform: translate3d(0, 0, 0);
-  transition-delay: 250ms;
+  transition-delay: 0ms, 0ms, 0ms, 404ms, 404ms;
 }
 
 @keyframes navEntrance {
@@ -554,35 +544,6 @@
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes mobileMenuReveal {
-  from {
-    clip-path: circle(
-      var(--mobile-menu-start-radius) at var(--mobile-menu-origin-x)
-        var(--mobile-menu-origin-y)
-    );
-  }
-
-  to {
-    clip-path: circle(
-      155vmax at var(--mobile-menu-origin-x) var(--mobile-menu-origin-y)
-    );
-  }
-}
-
-@keyframes mobileMenuConceal {
-  from {
-    clip-path: circle(
-      155vmax at var(--mobile-menu-origin-x) var(--mobile-menu-origin-y)
-    );
-  }
-
-  to {
-    clip-path: circle(
-      0 at var(--mobile-menu-origin-x) var(--mobile-menu-origin-y)
-    );
   }
 }
 
@@ -607,12 +568,6 @@
     --nav-glow-green: rgba(177, 255, 204, 0.36);
     --nav-glow-green-soft: rgba(116, 255, 177, 0.14);
     --nav-glow-shadow: rgba(0, 0, 0, 0.68);
-    --mobile-menu-origin-x: calc(
-      max(0.65rem, env(safe-area-inset-left)) + 1.45rem
-    );
-    --mobile-menu-origin-y: calc(
-      max(0.5rem, env(safe-area-inset-top)) + 1.45rem
-    );
 
     top: max(0.5rem, env(safe-area-inset-top));
     padding-right: 0.65rem;
@@ -665,6 +620,7 @@
   .menuButton,
   .menuIcon,
   .mobileLayer,
+  .mobileSurface,
   .mobileMenu,
   .mobileLink,
   .mobileSocialLink {

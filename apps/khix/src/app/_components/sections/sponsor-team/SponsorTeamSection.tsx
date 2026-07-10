@@ -45,6 +45,7 @@ const HOMEPAGE_SPONSORS = [
     websiteUrl: "https://www.nexteraenergy.com/",
     logoSrc: "/assets/sponsor-logos/nextera.svg",
     logoScale: 1.82,
+    mobileLogoScale: 1.35,
     tier: "silver-moon",
   },
   {
@@ -57,6 +58,13 @@ const HOMEPAGE_SPONSORS = [
     name: "Impress Ink",
     websiteUrl: "https://impressink.com/",
     logoSrc: "/assets/sponsor-logos/impressink.png",
+    tier: "bronze-ember",
+  },
+  {
+    name: "Codex",
+    websiteUrl: "https://openai.com/codex/",
+    logoSrc: "/assets/sponsor-logos/codex.svg",
+    logoScale: 1.3,
     tier: "bronze-ember",
   },
   {

@@ -27,7 +27,8 @@ interface NavbarProps {
 
 const HIDE_SCROLL_Y = 80;
 const SCROLL_DELTA = 6;
-const CLOSE_ANIMATION_FALLBACK_MS = 520;
+const CLOSE_TRANSITION_FALLBACK_MS = 620;
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
 export function Navbar({
   links,
@@ -38,7 +39,7 @@ export function Navbar({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuClosing, setIsMenuClosing] = useState(false);
   const isMenuVisible = isMenuOpen || isMenuClosing;
-  const menuState = isMenuClosing ? "closing" : isMenuOpen ? "open" : "closed";
+  const menuState = isMenuOpen ? "open" : isMenuClosing ? "closing" : "closed";
 
   const openMenu = useCallback(() => {
     setIsMenuClosing(false);
@@ -48,7 +49,7 @@ export function Navbar({
 
   const closeMenu = useCallback(() => {
     setIsMenuOpen(false);
-    setIsMenuClosing(true);
+    setIsMenuClosing(!window.matchMedia(REDUCED_MOTION_QUERY).matches);
     setIsHidden(false);
   }, []);
 
@@ -125,7 +126,7 @@ export function Navbar({
 
     const fallbackId = window.setTimeout(() => {
       setIsMenuClosing(false);
-    }, CLOSE_ANIMATION_FALLBACK_MS);
+    }, CLOSE_TRANSITION_FALLBACK_MS);
 
     return () => window.clearTimeout(fallbackId);
   }, [isMenuClosing]);
@@ -237,6 +238,22 @@ export function Navbar({
           aria-hidden={!isMenuOpen}
           inert={!isMenuOpen ? true : undefined}
         >
+          <div
+            className={styles.mobileSurface}
+            aria-hidden="true"
+            onTransitionEnd={(event) => {
+              if (
+                event.currentTarget !== event.target ||
+                event.propertyName !== "transform" ||
+                isMenuOpen ||
+                !isMenuClosing
+              ) {
+                return;
+              }
+
+              setIsMenuClosing(false);
+            }}
+          />
           <button
             type="button"
             className={styles.mobileBackdrop}
@@ -248,12 +265,6 @@ export function Navbar({
             id="khix-mobile-navigation"
             className={styles.mobileMenu}
             aria-label="Mobile navigation"
-            onAnimationEnd={(event) => {
-              if (event.currentTarget !== event.target || !isMenuClosing)
-                return;
-
-              setIsMenuClosing(false);
-            }}
           >
             <div className={styles.mobileLinks}>
               <a

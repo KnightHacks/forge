@@ -18,6 +18,7 @@ export interface SponsorShowcaseSponsor {
   websiteUrl: string;
   logoSrc: string;
   logoScale?: number;
+  mobileLogoScale?: number;
   tier: SponsorTier;
 }
 
@@ -41,6 +42,8 @@ interface SponsorTierConfig {
 type SponsorCardStyle = CSSProperties & {
   "--float-delay": string;
   "--sponsor-logo-hover-scale": string;
+  "--sponsor-logo-mobile-hover-scale": string;
+  "--sponsor-logo-mobile-scale": string;
   "--sponsor-logo-scale": string;
   "--tier-glow-end-rgb": string;
   "--tier-glow-hover-end-alpha": string;
@@ -154,10 +157,13 @@ function SponsorRockCard({
   const glowEndColor = getHexColorParts(tierConfig.glowEndColor);
   const glowBoost = "glowBoost" in tierConfig ? tierConfig.glowBoost : 1;
   const logoScale = sponsor.logoScale ?? 1;
+  const mobileLogoScale = sponsor.mobileLogoScale ?? logoScale;
   const glowRadiusScale = 1 + (glowBoost - 1) * 0.5;
   const style: SponsorCardStyle = {
     "--float-delay": `${-(index % 6) * 0.42}s`,
     "--sponsor-logo-hover-scale": (logoScale * 1.035).toFixed(3),
+    "--sponsor-logo-mobile-hover-scale": (mobileLogoScale * 1.035).toFixed(3),
+    "--sponsor-logo-mobile-scale": mobileLogoScale.toString(),
     "--sponsor-logo-scale": logoScale.toString(),
     "--tier-glow-end-rgb": glowEndColor.rgb,
     "--tier-glow-hover-end-alpha": getBoostedAlpha(
