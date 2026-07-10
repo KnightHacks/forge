@@ -59,7 +59,7 @@
   margin-top: clamp(-12rem, -10vw, -6rem);
   margin-bottom: clamp(-24rem, -18vw, -10rem);
   pointer-events: none;
-  background: url("/assets/separator-rocks.webp") center top / 100% auto
+  background: url("/assets/separator-rocks-faq.webp") center top / 100% auto
     no-repeat;
   transform: translateX(-50%);
 }
