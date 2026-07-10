@@ -41,6 +41,7 @@ interface SponsorTierConfig {
 
 type SponsorCardStyle = CSSProperties & {
   "--float-delay": string;
+  "--rune-delay": string;
   "--sponsor-logo-hover-scale": string;
   "--sponsor-logo-mobile-hover-scale": string;
   "--sponsor-logo-mobile-scale": string;
@@ -161,6 +162,7 @@ function SponsorRockCard({
   const glowRadiusScale = 1 + (glowBoost - 1) * 0.5;
   const style: SponsorCardStyle = {
     "--float-delay": `${-(index % 6) * 0.42}s`,
+    "--rune-delay": `${-index * 0.43}s`,
     "--sponsor-logo-hover-scale": (logoScale * 1.035).toFixed(3),
     "--sponsor-logo-mobile-hover-scale": (mobileLogoScale * 1.035).toFixed(3),
     "--sponsor-logo-mobile-scale": mobileLogoScale.toString(),

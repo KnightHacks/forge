@@ -377,8 +377,8 @@
 
   .sponsorLogoImage,
   .sponsorLink:hover:not(:focus-visible) .sponsorLogoImage {
-    animation: sponsorRunePulse 3.4s ease-in-out var(--float-delay) infinite
-      alternate;
+    animation: sponsorMobileRuneBreath 4.8s ease-in-out var(--rune-delay)
+      infinite;
     will-change: filter;
   }
 
@@ -466,6 +466,60 @@
               calc(
                 var(--tier-glow-pulse-strong-end-alpha) *
                   var(--tier-glow-halo-strength)
+              )
+          )
+      );
+  }
+}
+
+@keyframes sponsorMobileRuneBreath {
+  0%,
+  100% {
+    filter: brightness(1.01) contrast(1.01) saturate(1.01)
+      drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
+      drop-shadow(0 0 0.015rem rgb(255 255 255 / 0.22))
+      drop-shadow(
+        0 0 calc(0.08rem * var(--tier-glow-radius-scale))
+          rgb(
+            var(--tier-glow-start-rgb) /
+              calc(var(--tier-glow-pulse-soft-start-alpha) * 0.18)
+          )
+      )
+      drop-shadow(
+        0 0 calc(0.14rem * var(--tier-glow-radius-scale))
+          rgb(
+            var(--tier-glow-end-rgb) /
+              calc(
+                var(--tier-glow-pulse-soft-end-alpha) *
+                  var(--tier-glow-halo-strength) * 0.18
+              )
+          )
+      );
+  }
+
+  50% {
+    filter: brightness(1.08) contrast(1.03) saturate(1.06)
+      drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
+      drop-shadow(0 0 0.025rem rgb(255 255 255 / 0.55))
+      drop-shadow(0 0 0.06rem rgb(255 255 255 / 0.32))
+      drop-shadow(
+        0 0 calc(0.1rem * var(--tier-glow-radius-scale))
+          rgb(var(--tier-glow-start-rgb) / 0.3)
+      )
+      drop-shadow(
+        0 0 calc(0.16rem * var(--tier-glow-radius-scale))
+          rgb(
+            var(--tier-glow-start-rgb) /
+              calc(var(--tier-glow-pulse-soft-start-alpha) * 0.72)
+          )
+      )
+      drop-shadow(
+        0 0 calc(0.3rem * var(--tier-glow-radius-scale))
+          rgb(
+            var(--tier-glow-end-rgb) /
+              calc(
+                var(--tier-glow-pulse-soft-end-alpha) *
+                  var(--tier-glow-halo-strength) * 0.78
               )
           )
       );
