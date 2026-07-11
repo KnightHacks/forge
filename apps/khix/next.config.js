@@ -1,7 +1,16 @@
+import { networkInterfaces } from "node:os";
+
+const localDevOrigins = Object.values(networkInterfaces()).flatMap(
+  (addresses) =>
+    (addresses ?? [])
+      .filter(({ family, internal }) => family === "IPv4" && !internal)
+      .map(({ address }) => address),
+);
+
 /** @type {import("next").NextConfig} */
 const config = {
   reactStrictMode: true,
-  allowedDevOrigins: ["127.0.0.1"],
+  allowedDevOrigins: ["127.0.0.1", ...localDevOrigins],
   images: {
     unoptimized: true,
   },
