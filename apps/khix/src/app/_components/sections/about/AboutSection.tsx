@@ -31,23 +31,20 @@ export function AboutSection() {
               </h2>
               <p>
                 From October 9–11, step into Knight Hacks IX, a 36-hour
-                experience built around curiosity and creativity. For one
-                weekend, UCF becomes a world for builders: a place to chase an
-                idea, meet people who change the way you think, and discover how
-                far you can go when an entire community is building beside you.
+                experience built around curiosity, creativity, and community.
+                Spend the weekend chasing ideas, meeting new people, and
+                discovering what you can create when everyone around you is
+                building too.
               </p>
               <p>
-                From the opening ceremony to the final demos, every part of the
-                weekend is designed to keep you exploring. Move between
-                workshops, mentors, sponsor challenges, late-night activities,
-                and focused hours with your team. Come with a vision or find one
-                along the way. Knight Hacks gives you the people, energy, and
-                space to make it happen.
+                Explore workshops, mentor sessions, sponsor challenges,
+                late-night activities, and focused time with your team. Bring an
+                idea or find one along the way. Knight Hacks gives you the
+                people, energy, and space to make it happen.
               </p>
               <p>
-                Knight Hacks is free for accepted hackers, with meals, snacks,
-                and drinks provided throughout the weekend so you can stay
-                immersed in the experience.
+                The event is free for accepted hackers, with meals, snacks, and
+                drinks provided throughout the weekend.
               </p>
             </div>
 
