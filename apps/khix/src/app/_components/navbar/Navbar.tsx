@@ -159,7 +159,7 @@ export function Navbar({
             onClick={handleNavigation}
           >
             <Image
-              src="/khlogosinglewhite.svg"
+              src="/assets/khlogosinglewhite.svg"
               alt=""
               width={42}
               height={49}
@@ -220,7 +220,7 @@ export function Navbar({
             <span className={styles.menuIconWrap} aria-hidden="true">
               <Menu className={styles.menuIcon} data-menu-icon="open" />
               <Image
-                src="/khlogosinglewhite.svg"
+                src="/assets/khlogosinglewhite.svg"
                 alt=""
                 width={38}
                 height={44}

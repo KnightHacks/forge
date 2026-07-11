@@ -105,7 +105,7 @@ export function HeroTitle() {
           credits={[{ name: "Knight Hacks Design Team" }]}
         >
           <Image
-            src="/khlogo.svg"
+            src="/assets/khlogo.svg"
             alt=""
             width={1858}
             height={666}

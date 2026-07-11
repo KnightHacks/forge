@@ -460,7 +460,7 @@
   width: 125.42%;
   aspect-ratio: 1;
   content: "";
-  background: url("/assets/large-sponsor-rock.png") 0 0 / 100% auto no-repeat;
+  background: url("/assets/large-sponsor-rock.webp") 0 0 / 100% auto no-repeat;
   filter: saturate(0.58) brightness(0.78) contrast(1.1) hue-rotate(4deg);
   pointer-events: none;
   transition: filter 180ms ease;

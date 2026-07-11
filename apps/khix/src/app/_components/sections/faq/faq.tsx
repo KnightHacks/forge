@@ -231,7 +231,7 @@ function faqClass(name: string) {
 
 const floatingAssets = [
   {
-    src: "/faq/FAQ cave ceiling - Thomas Ha.png",
+    src: "/assets/faq-FAQ cave ceiling - Thomas Ha.webp",
     alt: "",
     className: faqClass("caveCeilingPrimary"),
     width: 4500,
@@ -247,7 +247,7 @@ const floatingAssets = [
     depth: -12,
   },
   {
-    src: "/faq/leftcol.png",
+    src: "/assets/faq-leftcol.webp",
     alt: "",
     className: faqClass("leftColumn"),
     width: 698,
@@ -312,7 +312,7 @@ const floatingAssets = [
     ],
   },
   {
-    src: "/faq/rightcol.png",
+    src: "/assets/faq-rightcol.webp",
     alt: "",
     className: faqClass("rightColumn"),
     width: 982,
@@ -682,8 +682,8 @@ function GemstoneButton({
       <Image
         src={
           isActive
-            ? "/faq/selection-selected-faq-rock.png"
-            : "/faq/selection-faq-rock.png"
+            ? "/assets/faq-selection-selected-faq-rock.png"
+            : "/assets/faq-selection-faq-rock.png"
         }
         alt=""
         width={364}
@@ -713,7 +713,7 @@ function FaqQuestion({
         onClick={onToggle}
       >
         <Image
-          src="/faq/question-rock-cut.png"
+          src="/assets/faq-question-rock-cut.png"
           alt=""
           width={1034}
           height={140}
@@ -735,7 +735,7 @@ function FaqQuestion({
           >
             <div className={styles.answerRock}>
               <Image
-                src="/faq/answer-rock-cut.png"
+                src="/assets/faq-answer-rock-cut.webp"
                 alt=""
                 width={1066}
                 height={376}

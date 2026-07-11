@@ -421,7 +421,7 @@
 .wisp::before {
   inset: -4%;
   z-index: 1;
-  background: url("/assets/khix-wisp-flame.png") center / contain no-repeat;
+  background: url("/assets/khix-wisp-flame.webp") center / contain no-repeat;
   opacity: var(--wisp-sprite-opacity);
   transform: translateZ(0) scale(0.98);
   animation: pondWispSpriteFlicker 7.2s ease-in-out infinite;
@@ -431,7 +431,7 @@
 .wisp::after {
   inset: -18%;
   z-index: 0;
-  background: url("/assets/khix-wisp-flame.png") center / contain no-repeat;
+  background: url("/assets/khix-wisp-flame.webp") center / contain no-repeat;
   filter: blur(10px) saturate(1.2);
   opacity: var(--wisp-glow-opacity);
   transform: translate3d(0.15rem, 0.12rem, 0) scale(1.22);

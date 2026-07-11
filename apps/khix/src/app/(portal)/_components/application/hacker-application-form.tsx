@@ -312,7 +312,7 @@ const applicationAnimationStyles = `
   top: 50%;
   width: clamp(11.5rem, 32vw, 24rem);
   aspect-ratio: 1858.27 / 666;
-  background-image: url("/khlogo.svg");
+  background-image: url("/assets/khlogo.svg");
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
@@ -790,7 +790,7 @@ function getApplicationIntroPreloadSources(
 ) {
   const sources = new Set<string>();
 
-  sources.add("/khlogo.svg");
+  sources.add("/assets/khlogo.svg");
 
   for (const layer of visualConfig.layers ?? []) {
     if (layer.kind !== "image") continue;
