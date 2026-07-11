@@ -1,6 +1,7 @@
 .faq {
   --faq-motion-scale: 0.72;
   --faq-body-font: var(--font-khix), Georgia, "Times New Roman", serif;
+  --faq-answer-link-color: #ca96f8;
 
   position: relative;
   width: 100%;
@@ -309,6 +310,12 @@
     0 1px 0.35px rgb(198 218 240 / 0.28);
   text-wrap: pretty;
   transform: translateY(clamp(-0.55rem, -0.65vw, -0.2rem));
+}
+
+.answerRock a {
+  color: var(--faq-answer-link-color);
+  text-decoration-color: currentColor;
+  text-underline-offset: 0.12em;
 }
 
 .floatingAsset {

@@ -131,8 +131,15 @@ const faqSections = [
       },
       {
         question: "What if I don't have a laptop or it's not powerful enough?",
-        answer:
-          "Don't let that stop you from participating. Reach out to hack@knighthacks.org and we'll do our best to help you find a solution. You can also team up with others who have the hardware or setup your project needs.",
+        answer: (
+          <>
+            Don&apos;t let that stop you from participating. Reach out to{" "}
+            <a href="mailto:hack@knighthacks.org">hack@knighthacks.org</a> and
+            we&apos;ll do our best to help you find a solution. You can also
+            team up with others who have the hardware or setup your project
+            needs.
+          </>
+        ),
       },
     ],
   },
@@ -153,18 +160,39 @@ const faqSections = [
       },
       {
         question: "My question wasn't answered. Where can I ask?",
-        answer:
-          "Check the Hackers Guide for the most up-to-date information. If you still have questions, ask in the Knight Hacks Discord or email hack@knighthacks.org.",
+        answer: (
+          <>
+            Check the Hackers Guide for the most up-to-date information. If you
+            still have questions, ask in the Knight Hacks Discord or email{" "}
+            <a href="mailto:hack@knighthacks.org">hack@knighthacks.org</a>.
+          </>
+        ),
       },
       {
         question: "How can I become a sponsor?",
-        answer:
-          "We'd love to have your organization sponsor Knight Hacks! Sponsorship gives companies the opportunity to connect with talented students, host challenges or workshops, and support Central Florida's builder community. Visit https://blade.knighthacks.org/sponsor or contact Knight Hacks for more information.",
+        answer: (
+          <>
+            We&apos;d love to have your organization sponsor Knight Hacks!
+            Sponsorship gives companies the opportunity to connect with talented
+            students, host challenges or workshops, and support Central
+            Florida&apos;s builder community. Visit{" "}
+            <a href="https://blade.knighthacks.org/sponsor">
+              https://blade.knighthacks.org/sponsor
+            </a>{" "}
+            or contact Knight Hacks for more information.
+          </>
+        ),
       },
       {
         question: "Can I volunteer at Knight Hacks?",
-        answer:
-          "Yes! Volunteers help with check-in, logistics, event support, and making the weekend run smoothly. If you're interested in volunteering, reach out to hack@knighthacks.org.",
+        answer: (
+          <>
+            Yes! Volunteers help with check-in, logistics, event support, and
+            making the weekend run smoothly. If you&apos;re interested in
+            volunteering, reach out to{" "}
+            <a href="mailto:hack@knighthacks.org">hack@knighthacks.org</a>.
+          </>
+        ),
       },
     ],
   },
