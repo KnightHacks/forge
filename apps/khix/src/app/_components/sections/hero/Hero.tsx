@@ -11,15 +11,8 @@ import { HERO_LAYERS } from "./layers";
 import { useHeroMotion } from "./useHeroMotion";
 
 export default function Hero() {
-  const foregroundLayerIndex = HERO_LAYERS.length - 1;
-  const foregroundLayer = HERO_LAYERS[foregroundLayerIndex];
-  const backgroundLayers = HERO_LAYERS.slice(0, foregroundLayerIndex);
   const { sectionRef, stageRef, handlePointerMove, handlePointerLeave } =
     useHeroMotion();
-
-  if (!foregroundLayer) {
-    return null;
-  }
 
   return (
     <section
@@ -39,7 +32,7 @@ export default function Hero() {
         </h1>
         <div className={styles.art} data-hero-art aria-hidden="true">
           <div className={styles.desktopHeroLayers}>
-            {backgroundLayers.map((layer, index) => (
+            {HERO_LAYERS.map((layer, index) => (
               <HeroLayerImage
                 key={layer.filename}
                 layer={layer}
@@ -58,11 +51,6 @@ export default function Hero() {
           aria-hidden="true"
         />
       </div>
-      <HeroLayerImage
-        layer={foregroundLayer}
-        index={foregroundLayerIndex}
-        zIndex={12}
-      />
       <HeroApplyButton className={styles.mobileHeroApplyButton} />
     </section>
   );

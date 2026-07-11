@@ -29,7 +29,7 @@
     bottom: 0;
     height: auto;
     background-image: url("/assets/extended-front-mobile.webp");
-    background-position: center -48vw;
-    background-size: auto calc(100% + 48vw);
+    background-position: center -33vw;
+    background-size: auto calc(100% + 33vw);
   }
 }

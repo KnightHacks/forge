@@ -7,7 +7,7 @@
 
 .sectionStack {
   --khix-about-overlap: clamp(2rem, 7svh, 4.75rem);
-  --khix-foreground-join: 60vw;
+  --khix-foreground-join: 65vw;
   --khix-front-top: calc(
     var(--khix-about-overlap) - var(--khix-foreground-join)
   );

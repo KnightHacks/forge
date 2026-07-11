@@ -79,14 +79,4 @@ export const HERO_LAYERS: HeroLayer[] = [
     scale: 1.001,
     motionRole: "glow",
   },
-  {
-    filename: "/assets/khix%20site%20hero%20front.png",
-    width: 3840,
-    height: 12000,
-    depthX: 0,
-    depthY: 0,
-    scrollY: 0,
-    scale: 1,
-    motionRole: "foreground",
-  },
 ];
