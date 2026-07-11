@@ -588,7 +588,7 @@
 
 @media (min-width: 1181px) {
   .waterfallShowcase {
-    --waterfall-art-height: calc(var(--waterfall-width) * 3.2);
+    --waterfall-art-height: calc(var(--waterfall-width) * 2.6);
     --team-panel-top: calc(
       var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.7
     );
@@ -607,6 +607,49 @@
 
   .sponsorPanel {
     padding-top: 5vw;
+  }
+
+  .sponsorShowcase {
+    --sponsor-title-margin: 0 auto
+      max(
+        8rem,
+        calc(var(--rock-separator-height) - var(--sponsor-title-height) - 20vw)
+      );
+  }
+
+  .partnerGroup {
+    margin-top: calc(var(--composition-width) * 0.105 + 3vw);
+  }
+
+  .partnerGroup .sectionTitle {
+    text-shadow:
+      0 0.22rem 0.32rem rgba(0, 0, 0, 0.88),
+      0 0 0.5rem rgba(235, 251, 255, 0.54),
+      0 0 2.2rem rgba(129, 225, 255, 0.3);
+  }
+
+  .partnerGrid {
+    row-gap: calc(var(--composition-width) * 0.01);
+  }
+
+  .partnerStone {
+    height: calc(var(--composition-width) * 0.1);
+  }
+
+  .bridge {
+    top: calc(var(--team-separator-top) - 20vw);
+  }
+
+  .teamPanel {
+    top: calc(var(--team-panel-top) - 25vw);
+  }
+
+  .teamCascade {
+    transform: translateY(12vw);
+  }
+
+  .teamPanel .sectionTitle {
+    translate: 0 6.6vw;
   }
 }
 
