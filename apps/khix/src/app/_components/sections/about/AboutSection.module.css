@@ -286,12 +286,20 @@
   white-space: nowrap;
 }
 
+.metricNumber {
+  color: #ca96f8;
+  text-shadow:
+    0 0.12rem 0.8rem rgba(0, 0, 0, 0.62),
+    0 0 0.42rem rgb(202 150 248 / 0.58),
+    0 0 1.05rem rgb(202 150 248 / 0.38);
+  animation: aboutMetricGlowPulse 2.8s ease-in-out infinite alternate;
+}
+
 .metric dd {
   margin: 0;
   font-size: clamp(0.92rem, 1.25vw, 1.18rem);
   font-weight: 800;
   line-height: 1.08;
-  text-transform: uppercase;
   text-wrap: balance;
 }
 
@@ -532,7 +540,8 @@
   .glowImage,
   .copy,
   .copy::after,
-  .galleryImage {
+  .galleryImage,
+  .metricNumber {
     animation: none;
     transition: none;
   }
@@ -580,5 +589,21 @@
   to {
     opacity: 0.78;
     transform: scaleX(0.9);
+  }
+}
+
+@keyframes aboutMetricGlowPulse {
+  from {
+    text-shadow:
+      0 0.12rem 0.8rem rgba(0, 0, 0, 0.62),
+      0 0 0.3rem rgb(202 150 248 / 0.48),
+      0 0 0.82rem rgb(202 150 248 / 0.3);
+  }
+
+  to {
+    text-shadow:
+      0 0.12rem 0.8rem rgba(0, 0, 0, 0.62),
+      0 0 0.6rem rgb(202 150 248 / 0.98),
+      0 0 1.55rem rgb(202 150 248 / 0.72);
   }
 }
