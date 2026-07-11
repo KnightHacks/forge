@@ -119,7 +119,7 @@ export const hackReminders = new CronBuilder({
     }
 
     await HACK_REMINDERS_WEBHOOK.send({
-      content: `We'll see you there! **Don't forget your Blade QR code!**`,
+      content: `We'll see you there! **Don't forget your wristband and Blade QR code!**`,
     });
   },
 );
