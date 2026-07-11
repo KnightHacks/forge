@@ -97,100 +97,10 @@
   z-index: 5;
 }
 
-.mistLayer,
 .dropletLayer {
   position: absolute;
   inset: 0;
   pointer-events: none;
-}
-
-.mistPatch {
-  position: absolute;
-  top: var(--mist-y);
-  left: var(--mist-x);
-  width: clamp(24rem, 56vw, 56rem);
-  aspect-ratio: 2.6;
-  border-radius: 50%;
-  background:
-    radial-gradient(
-      circle at 23% 58%,
-      rgb(245 255 254 / 0.46) 0%,
-      rgb(197 247 242 / 0.24) 22%,
-      transparent 48%
-    ),
-    radial-gradient(
-      circle at 74% 48%,
-      rgb(239 255 253 / 0.42) 0%,
-      rgb(170 238 235 / 0.2) 26%,
-      transparent 54%
-    ),
-    radial-gradient(
-      ellipse at 50% 56%,
-      rgb(245 255 254 / 0.56) 0%,
-      rgb(184 239 237 / 0.3) 38%,
-      transparent 76%
-    );
-  opacity: var(--mist-opacity-low);
-  filter: blur(0.62rem);
-  transform: translate3d(var(--mist-start-x), -50%, 0)
-    scale(var(--mist-start-scale));
-  animation: waterfallMistDrift var(--mist-duration) ease-in-out
-    var(--mist-delay) infinite alternate;
-  animation-play-state: paused;
-  will-change: transform, opacity;
-}
-
-.mistPatch::before {
-  position: absolute;
-  inset: 5% 2%;
-  border-radius: inherit;
-  content: "";
-  background:
-    radial-gradient(
-      circle at 8% 68%,
-      rgb(252 255 255 / 0.84) 0%,
-      rgb(213 249 246 / 0.34) 12%,
-      transparent 25%
-    ),
-    radial-gradient(
-      circle at 25% 48%,
-      rgb(246 255 254 / 0.78) 0%,
-      rgb(194 241 239 / 0.3) 15%,
-      transparent 29%
-    ),
-    radial-gradient(
-      circle at 45% 64%,
-      rgb(255 255 255 / 0.86) 0%,
-      rgb(211 248 245 / 0.36) 14%,
-      transparent 28%
-    ),
-    radial-gradient(
-      circle at 64% 43%,
-      rgb(247 255 254 / 0.76) 0%,
-      rgb(185 237 237 / 0.3) 15%,
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 84% 66%,
-      rgb(255 255 255 / 0.82) 0%,
-      rgb(203 246 243 / 0.34) 13%,
-      transparent 27%
-    );
-}
-
-.mistPatch::after {
-  position: absolute;
-  inset: 30% -2% 18%;
-  border-radius: inherit;
-  content: "";
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgb(225 251 248 / 0.28) 18%,
-    rgb(247 255 254 / 0.68) 50%,
-    rgb(204 243 241 / 0.26) 82%,
-    transparent
-  );
 }
 
 .droplet {
@@ -228,7 +138,6 @@
   animation-timing-function: ease-in-out;
 }
 
-.waterfallAtmosphere[data-active="true"] .mistPatch,
 .waterfallAtmosphere[data-active="true"] .droplet,
 .waterfallForegroundAtmosphere[data-active="true"] .droplet {
   animation-play-state: running;
@@ -515,24 +424,22 @@
 .partnerVisual {
   position: absolute;
   inset: 0;
-  display: block;
-  transform: translate3d(0, 0, 0);
+  display: grid;
+  place-items: center;
+  filter: var(--water-break-filter)
+    drop-shadow(0 0.28rem 0.2rem rgb(5 28 35 / 0.28));
+  overflow: visible;
   transform-origin: 50% 58%;
 }
 
 .partnerRock {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+  position: relative;
   z-index: 0;
   display: block;
   width: 100%;
   aspect-ratio: 1196 / 318;
   overflow: hidden;
-  filter: var(--water-break-filter)
-    drop-shadow(0 0.28rem 0.2rem rgb(5 28 35 / 0.28));
   pointer-events: none;
-  transform: translate3d(-50%, -50%, 0);
 }
 
 .partnerRock::before {
@@ -614,7 +521,7 @@
     drop-shadow(0 1px 0.4px rgb(203 234 228 / 0.5));
 }
 
-.partnerStone:focus-visible .partnerRock {
+.partnerStone:focus-visible .partnerVisual {
   filter: var(--water-break-filter)
     drop-shadow(0 0.12rem 0.1rem rgb(2 20 27 / 0.42))
     drop-shadow(0 0 0.24rem rgb(230 255 249 / 0.94))
@@ -670,11 +577,6 @@
 }
 
 @media (max-width: 760px) {
-  .mistPatch {
-    width: min(94vw, 28rem);
-    filter: blur(0.32rem);
-  }
-
   .droplet[data-mobile-hidden="true"] {
     display: none;
   }
@@ -749,12 +651,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mistPatch {
-    opacity: var(--mist-opacity-low);
-    transform: translate3d(-50%, -50%, 0) scale(var(--mist-start-scale));
-    animation: none;
-  }
-
   .droplet {
     display: none;
     animation: none;
@@ -770,24 +666,6 @@
   .partnerStone:hover .partnerVisual,
   .partnerStone:focus-visible .partnerVisual {
     animation: none;
-  }
-}
-
-@keyframes waterfallMistDrift {
-  0% {
-    opacity: var(--mist-opacity-low);
-    transform: translate3d(var(--mist-start-x), -50%, 0)
-      scale(var(--mist-start-scale));
-  }
-
-  55% {
-    opacity: var(--mist-opacity-high);
-  }
-
-  100% {
-    opacity: var(--mist-opacity-low);
-    transform: translate3d(var(--mist-end-x), -52%, 0)
-      scale(var(--mist-end-scale));
   }
 }
 

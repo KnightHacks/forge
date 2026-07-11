@@ -5,19 +5,6 @@ import { useEffect, useRef } from "react";
 
 import styles from "./SponsorTeamSection.module.css";
 
-type MistPatchStyle = CSSProperties & {
-  "--mist-delay": string;
-  "--mist-duration": string;
-  "--mist-end-scale": string;
-  "--mist-end-x": string;
-  "--mist-opacity-high": string;
-  "--mist-opacity-low": string;
-  "--mist-start-scale": string;
-  "--mist-start-x": string;
-  "--mist-x": string;
-  "--mist-y": string;
-};
-
 type DropletStyle = CSSProperties & {
   "--droplet-delay": string;
   "--droplet-drift": string;
@@ -31,69 +18,6 @@ type DropletStyle = CSSProperties & {
   "--droplet-x": string;
   "--droplet-y": string;
 };
-
-const MIST_PATCHES = [
-  {
-    x: "48%",
-    y: "9%",
-    duration: "10.8s",
-    delay: "-5.2s",
-    opacity: 0.9,
-    scale: 0.82,
-    startX: "-52%",
-    endX: "-48%",
-  },
-  {
-    x: "43%",
-    y: "25%",
-    duration: "12.4s",
-    delay: "-8.1s",
-    opacity: 0.82,
-    scale: 1.08,
-    startX: "-48%",
-    endX: "-53%",
-  },
-  {
-    x: "57%",
-    y: "42%",
-    duration: "9.7s",
-    delay: "-2.8s",
-    opacity: 0.86,
-    scale: 0.94,
-    startX: "-53%",
-    endX: "-49%",
-  },
-  {
-    x: "47%",
-    y: "59%",
-    duration: "13.1s",
-    delay: "-10.4s",
-    opacity: 0.76,
-    scale: 1.16,
-    startX: "-47%",
-    endX: "-52%",
-  },
-  {
-    x: "54%",
-    y: "76%",
-    duration: "11.6s",
-    delay: "-6.7s",
-    opacity: 0.8,
-    scale: 1,
-    startX: "-52%",
-    endX: "-48%",
-  },
-  {
-    x: "45%",
-    y: "91%",
-    duration: "12.8s",
-    delay: "-3.9s",
-    opacity: 0.74,
-    scale: 1.12,
-    startX: "-48%",
-    endX: "-53%",
-  },
-] as const;
 
 const BASE_DROPLET_COUNT = 384;
 const BASE_BUBBLE_INTERVAL = 5;
@@ -270,29 +194,6 @@ export function WaterfallAtmosphere() {
         data-active="true"
         aria-hidden="true"
       >
-        <div className={styles.mistLayer}>
-          {MIST_PATCHES.map((patch) => (
-            <span
-              key={`${patch.x}-${patch.y}`}
-              className={styles.mistPatch}
-              style={
-                {
-                  "--mist-delay": patch.delay,
-                  "--mist-duration": patch.duration,
-                  "--mist-end-scale": (patch.scale + 0.12).toFixed(2),
-                  "--mist-end-x": patch.endX,
-                  "--mist-opacity-high": patch.opacity.toFixed(2),
-                  "--mist-opacity-low": (patch.opacity * 0.58).toFixed(2),
-                  "--mist-start-scale": patch.scale.toFixed(2),
-                  "--mist-start-x": patch.startX,
-                  "--mist-x": patch.x,
-                  "--mist-y": patch.y,
-                } as MistPatchStyle
-              }
-            />
-          ))}
-        </div>
-
         <DropletField droplets={BACKGROUND_DROPLETS} />
       </div>
 

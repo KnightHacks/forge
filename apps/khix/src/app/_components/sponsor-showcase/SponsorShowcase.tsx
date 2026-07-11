@@ -217,17 +217,16 @@ function SponsorRockCard({
       style={style}
     >
       <span className={styles.sponsorVisual} aria-hidden="true">
-        <span className={styles.rockFrame} aria-hidden="true">
-          <span className={styles.sponsorLogo}>
-            <Image
-              src={sponsor.logoSrc}
-              alt=""
-              fill
-              className={styles.sponsorLogoImage}
-              sizes="(max-width: 760px) 9rem, 16rem"
-              unoptimized
-            />
-          </span>
+        <span className={styles.rockFrame} aria-hidden="true" />
+        <span className={styles.sponsorLogo}>
+          <Image
+            src={sponsor.logoSrc}
+            alt=""
+            fill
+            className={styles.sponsorLogoImage}
+            sizes="(max-width: 760px) 9rem, 16rem"
+            unoptimized
+          />
         </span>
       </span>
     </a>

@@ -41,6 +41,10 @@
   inset: 0;
   z-index: 1;
   display: var(--sponsor-title-rock-display, none);
+  filter: var(
+    --sponsor-rock-shadow,
+    drop-shadow(0 1.05rem 0.92rem rgb(4 24 35 / 0.18))
+  );
   pointer-events: none;
 }
 
@@ -98,6 +102,7 @@
   --sponsor-logo-mobile-scale: var(--sponsor-logo-scale);
   --sponsor-logo-scale: 1;
   --sponsor-height: var(--sponsor-base-height, 7rem);
+  --sponsor-rock-bottom-offset: 0px;
   --sponsor-width: var(--sponsor-base-width, 20rem);
   --tier-glow-end-rgb: 255 255 255;
   --tier-glow-hover-end-alpha: 0.62;
@@ -123,6 +128,7 @@
   --logo-height: var(--sponsor-xl-logo-height, 3.65rem);
   --logo-width: var(--sponsor-xl-logo-width, 15.6rem);
   --sponsor-height: var(--sponsor-xl-height, 8.6rem);
+  --sponsor-rock-bottom-offset: calc(var(--sponsor-height) * 0.08);
   --sponsor-width: var(--sponsor-xl-width, clamp(24rem, 76vw, 35rem));
 }
 
@@ -130,6 +136,7 @@
   --logo-height: var(--sponsor-large-logo-height, 3.25rem);
   --logo-width: var(--sponsor-large-logo-width, 13.8rem);
   --sponsor-height: var(--sponsor-large-height, 7.9rem);
+  --sponsor-rock-bottom-offset: calc(var(--sponsor-height) * 0.08);
   --sponsor-width: var(--sponsor-large-width, clamp(21rem, 66vw, 30.5rem));
 }
 
@@ -155,26 +162,34 @@
 }
 
 .sponsorVisual {
+  box-sizing: border-box;
   position: absolute;
   inset: 0;
-  display: block;
-  transform: translate3d(0, 0, 0);
-  transform-origin: 50% 58%;
-}
-
-.rockFrame {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  z-index: 1;
-  display: block;
-  overflow: hidden;
-  pointer-events: none;
-  transform: translate3d(-50%, 0, 0);
+  display: grid;
+  grid-template-rows: max-content;
+  grid-template-columns: 100%;
+  align-content: end;
+  justify-items: center;
   filter: var(
     --sponsor-rock-shadow,
     drop-shadow(0 1.05rem 0.92rem rgb(4 24 35 / 0.18))
   );
+  overflow: visible;
+  padding-bottom: var(--sponsor-rock-bottom-offset);
+  transform-origin: 50% 58%;
+}
+
+.sponsorVisual > .rockFrame,
+.sponsorVisual > .sponsorLogo {
+  grid-area: 1 / 1;
+}
+
+.rockFrame {
+  position: relative;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .rockFrame::before {
@@ -209,7 +224,6 @@
 
 .sponsorLink[data-size="x-large"] .rockFrame,
 .sponsorLink[data-size="large"] .rockFrame {
-  bottom: 8%;
   width: 100%;
   aspect-ratio: 1196 / 262;
 }
@@ -223,11 +237,11 @@
 }
 
 .sponsorTitleRock .rockFrame {
-  top: 50%;
-  bottom: auto;
+  position: relative;
+  inset: auto;
   width: 100%;
   aspect-ratio: 1196 / 262;
-  transform: translate3d(-50%, -50%, 0);
+  margin: 0;
 }
 
 .sponsorTitleRock .rockFrame::before {
@@ -238,15 +252,14 @@
 }
 
 .sponsorLogo {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+  position: relative;
   z-index: 3;
   display: block;
+  place-self: center;
   width: min(var(--logo-width), 76%);
   height: var(--logo-height);
   opacity: var(--sponsor-logo-opacity, 0.94);
-  transform: translate3d(-50%, -50%, 0) scale(var(--sponsor-logo-scale));
+  transform: scale(var(--sponsor-logo-scale));
   transition:
     opacity 180ms ease,
     transform 180ms ease;
@@ -287,7 +300,7 @@
 .sponsorLink:hover .sponsorLogo,
 .sponsorLink:focus-visible .sponsorLogo {
   opacity: var(--sponsor-logo-hover-opacity, 1);
-  transform: translate3d(-50%, -50%, 0) scale(var(--sponsor-logo-scale));
+  transform: scale(var(--sponsor-logo-scale));
 }
 
 .sponsorLink:hover .sponsorLogoImage,
@@ -340,7 +353,7 @@
   );
 }
 
-.sponsorLink:focus-visible .rockFrame {
+.sponsorLink:focus-visible .sponsorVisual {
   filter: var(
     --sponsor-rock-focus-shadow,
     drop-shadow(0 0 0.3rem rgb(232 255 250 / 0.92))
@@ -411,14 +424,12 @@
   }
 
   .sponsorLogo {
-    transform: translate3d(-50%, -50%, 0)
-      scale(var(--sponsor-logo-mobile-scale));
+    transform: scale(var(--sponsor-logo-mobile-scale));
   }
 
   .sponsorLink:hover .sponsorLogo,
   .sponsorLink:focus-visible .sponsorLogo {
-    transform: translate3d(-50%, -50%, 0)
-      scale(var(--sponsor-logo-mobile-hover-scale));
+    transform: scale(var(--sponsor-logo-mobile-hover-scale));
   }
 }
 
@@ -456,8 +467,7 @@
   }
 
   .sponsorLink:hover:not(:focus-visible) .sponsorLogo {
-    transform: translate3d(-50%, -50%, 0)
-      scale(var(--sponsor-logo-mobile-scale));
+    transform: scale(var(--sponsor-logo-mobile-scale));
   }
 
   .sponsorLink:hover:not(:focus-visible) .sponsorVisual {
