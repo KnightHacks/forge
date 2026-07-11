@@ -22,6 +22,12 @@ const HOMEPAGE_SPONSORS = [
     tier: "silver-moon",
   },
   {
+    name: "BNY",
+    websiteUrl: "https://www.bny.com/",
+    logoSrc: "/assets/sponsor-logos/bny.svg",
+    tier: "silver-moon",
+  },
+  {
     name: "Databricks",
     websiteUrl: "https://www.databricks.com/",
     logoSrc: "/assets/sponsor-logos/databricks.svg",
@@ -36,12 +42,6 @@ const HOMEPAGE_SPONSORS = [
     logoScale: 0.94,
     mobileLogoScale: 1.15,
     preserveLogoContrast: true,
-    tier: "silver-moon",
-  },
-  {
-    name: "BNY",
-    websiteUrl: "https://www.bny.com/",
-    logoSrc: "/assets/sponsor-logos/bny.svg",
     tier: "silver-moon",
   },
   {
@@ -61,19 +61,19 @@ const HOMEPAGE_SPONSORS = [
     tier: "silver-moon",
   },
   {
-    name: "Impress Ink",
-    websiteUrl: "https://impressink.com/",
-    logoSrc: "/assets/sponsor-logos/impressink.png",
-    logoScale: 1.25,
-    mobileLogoScale: 1,
-    tier: "bronze-ember",
-  },
-  {
     name: "Codex",
     websiteUrl: "https://openai.com/codex/",
     logoSrc: "/assets/sponsor-logos/codex.svg",
     logoScale: 2,
     mobileLogoScale: 1.7,
+    tier: "bronze-ember",
+  },
+  {
+    name: "Impress Ink",
+    websiteUrl: "https://impressink.com/",
+    logoSrc: "/assets/sponsor-logos/impressink.png",
+    logoScale: 1.25,
+    mobileLogoScale: 1,
     tier: "bronze-ember",
   },
   {
@@ -104,6 +104,11 @@ const PARTNERS = [
     websiteUrl: "https://www.instagram.com/girlswhocodeucf/",
   },
   {
+    name: "IEEE at UCF",
+    logoSrc: "/assets/partners/ieee.svg",
+    websiteUrl: "https://www.instagram.com/ieeeucf/",
+  },
+  {
     name: "Major League Hacking",
     logoSrc: "/assets/partners/mlh.svg",
     websiteUrl: "https://mlh.io/",
@@ -112,11 +117,6 @@ const PARTNERS = [
     name: "Society of Asian Scientists and Engineers",
     logoSrc: "/assets/partners/sase.svg",
     websiteUrl: "https://www.instagram.com/saseucf/",
-  },
-  {
-    name: "IEEE at UCF",
-    logoSrc: "/assets/partners/ieee.svg",
-    websiteUrl: "https://www.instagram.com/ieeeucf/",
   },
 ] as const;
 
