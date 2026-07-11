@@ -236,7 +236,6 @@ const faqData: FaqItem[] = [
       "It's totally up to you! Some people like to brainstorm ideas beforehand, while others prefer to get inspired by the workshops, challenges, and conversations during the event. Both approaches work great. If you do come with ideas, keep them flexible - you might discover something even more exciting once you're there and see what's possible.",
     category: "preparation",
   },
-  // TODO: fix the spacing issue in "hack@knighthacks.org and"
   {
     id: "23",
     question: "What if I don't have a laptop or it's not powerful enough?",

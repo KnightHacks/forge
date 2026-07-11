@@ -134,9 +134,9 @@ const faqSections = [
         answer: (
           <>
             Don&apos;t let that stop you from participating. Reach out to{" "}
-            <a href="mailto:hack@knighthacks.org">hack@knighthacks.org</a> and
-            we&apos;ll do our best to help you find a solution. You can also
-            team up with others who have the hardware or setup your project
+            <a href="mailto:hack@knighthacks.org">hack@knighthacks.org</a>
+            {" and "}we&apos;ll do our best to help you find a solution. You can
+            also team up with others who have the hardware or setup your project
             needs.
           </>
         ),
