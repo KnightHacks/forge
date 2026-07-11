@@ -297,13 +297,16 @@
 
 @media (min-width: 1200px) {
   .about {
+    --about-closing-offset: clamp(3.75rem, 10svh, 6.5rem);
+    --about-gallery-growth: clamp(2rem, 4vw, 4rem);
     --about-row-spread: clamp(2rem, 8svh, 5rem);
 
     padding-top: clamp(9rem, 16svh, 11rem);
     padding-right: clamp(3rem, 4vw, 5rem);
     padding-bottom: calc(
       clamp(20rem, 38svh, 32rem) - var(--about-row-spread) -
-        var(--about-row-spread)
+        var(--about-row-spread) - var(--about-closing-offset) -
+        var(--about-gallery-growth)
     );
     padding-left: clamp(3rem, 4vw, 5rem);
     align-content: start;
@@ -319,7 +322,7 @@
   }
 
   .leftRune {
-    top: 58%;
+    top: 54%;
   }
 
   .metricsPanel {
@@ -349,9 +352,12 @@
 
   .secondaryStory {
     grid-row: 3;
-    grid-column: 4 / 9;
+    grid-column: 1 / 8;
+    width: min(42rem, 100%);
     align-self: start;
-    padding-left: clamp(1.5rem, 2.4vw, 3rem);
+    justify-self: start;
+    margin-top: var(--about-closing-offset);
+    margin-left: max(0rem, calc(46vw - 39.25rem));
   }
 
   .secondaryStory .storySubtitle {
@@ -360,10 +366,15 @@
 
   .gallery {
     grid-row: 3;
-    grid-column: 10 / -1;
-    width: min(24rem, 100%);
-    align-self: center;
+    grid-column: 9 / -1;
+    width: min(34rem, 100%);
+    align-self: start;
     justify-self: end;
+    margin-top: var(--about-closing-offset);
+  }
+
+  .galleryViewport {
+    min-height: calc(clamp(14rem, 26vw, 21rem) + var(--about-gallery-growth));
   }
 
   .metrics {
@@ -376,7 +387,8 @@
 }
 
 @media (min-width: 1500px) {
-  .introStory {
+  .introStory,
+  .secondaryStory {
     margin-left: max(
       0rem,
       calc(
