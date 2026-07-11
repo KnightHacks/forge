@@ -111,13 +111,13 @@ const MOBILE_HERO_LAYERS = [
 function MobileHeroLayers() {
   return (
     <div className={styles.mobileHeroLayers} data-mobile-hero-layers>
-      {MOBILE_HERO_LAYERS.map((layer) => (
+      {MOBILE_HERO_LAYERS.map((layer, index) => (
         <Image
           key={layer.src}
           src={layer.src}
           alt=""
           fill
-          priority
+          priority={index === 0}
           unoptimized
           sizes="100vw"
           draggable={false}
