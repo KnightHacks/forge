@@ -484,7 +484,6 @@ export default function FAQ() {
 
   return (
     <section
-      id="faq"
       className={styles.faq}
       aria-labelledby="faq-title"
       onPointerMove={handlePointerMove}
@@ -501,17 +500,6 @@ export default function FAQ() {
       <div className={styles.atmosphereVeil} aria-hidden="true" />
 
       <div className={styles.content}>
-        <motion.h2
-          id="faq-title"
-          className={styles.title}
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.45 }}
-          transition={{ duration: 0.65, ease: "easeOut" }}
-        >
-          FAQ
-        </motion.h2>
-
         <div className={styles.categoryList} aria-label="FAQ sections">
           {faqSections.map((section) => (
             <GemstoneButton
@@ -550,6 +538,21 @@ export default function FAQ() {
         </motion.div>
       </div>
     </section>
+  );
+}
+
+export function FAQTitle() {
+  return (
+    <motion.h2
+      id="faq-title"
+      className={styles.dividerTitle}
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.45 }}
+      transition={{ duration: 0.65, ease: "easeOut" }}
+    >
+      FA<span className={styles.dividerTitleQ}>Q</span>
+    </motion.h2>
   );
 }
 

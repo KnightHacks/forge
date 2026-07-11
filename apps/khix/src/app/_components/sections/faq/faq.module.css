@@ -77,7 +77,11 @@
   align-items: center;
 }
 
-.title {
+.dividerTitle {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  z-index: 1;
   margin: 0;
   color: rgba(255, 252, 245, 0.96);
   font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
@@ -88,7 +92,15 @@
   text-shadow:
     0 0 0.5rem rgba(235, 251, 255, 0.54),
     0 0 2.2rem rgba(129, 225, 255, 0.3);
-  translate: var(--faq-content-align-x) 0;
+  text-align: center;
+  white-space: nowrap;
+  translate: -50% -50%;
+}
+
+.dividerTitleQ {
+  /* Bagnard kerns F/A but not A/Q, so balance only the unkerned pair. */
+  display: inline-block;
+  margin-inline-start: -0.05em;
 }
 
 .categoryList {
@@ -522,7 +534,7 @@
     inset: -1.25rem;
   }
 
-  .title {
+  .dividerTitle {
     font-size: clamp(3.5rem, 16vw, 4.5rem);
   }
 

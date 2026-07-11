@@ -5,7 +5,7 @@ import {
   KHIX_SOCIAL_LINKS,
 } from "./_components/navbar/site-navigation";
 import { AboutCorruption, AboutSection } from "./_components/sections/about";
-import FAQ from "./_components/sections/faq/faq";
+import FAQ, { FAQTitle } from "./_components/sections/faq/faq";
 import Hero from "./_components/sections/hero";
 import {
   KHIX_SPEAKERS,
@@ -36,7 +36,9 @@ export default function Page() {
             </div>
           </div>
           <SponsorTeamSection />
-          <div className={styles.waterfallFaqSeparator} aria-hidden="true" />
+          <div id="faq" className={styles.waterfallFaqSeparator}>
+            <FAQTitle />
+          </div>
           <FAQ />
         </div>
       </main>
