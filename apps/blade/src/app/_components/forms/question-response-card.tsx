@@ -31,6 +31,9 @@ import { api } from "~/trpc/react";
 
 type FormQuestion = z.infer<typeof FORMS.QuestionValidator>;
 
+const countNonWhitespaceCharacters = (value: string) =>
+  value.replace(/\s/g, "").length;
+
 interface QuestionResponseCardProps {
   question: FormQuestion;
   value?: string | string[] | number | Date | boolean | null;
@@ -111,7 +114,7 @@ function QuestionBody({
     case "SHORT_ANSWER": {
       const currentValue = (value as string) || "";
       const maxLength = 150;
-      const charCount = currentValue.length;
+      const charCount = countNonWhitespaceCharacters(currentValue);
       const isOverLimit = charCount > maxLength;
 
       return (
@@ -138,7 +141,7 @@ function QuestionBody({
     case "PARAGRAPH": {
       const currentValue = (value as string) || "";
       const maxLength = 750;
-      const charCount = currentValue.length;
+      const charCount = countNonWhitespaceCharacters(currentValue);
       const isOverLimit = charCount > maxLength;
 
       return (
