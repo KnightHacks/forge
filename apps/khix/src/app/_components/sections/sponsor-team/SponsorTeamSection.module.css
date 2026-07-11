@@ -103,20 +103,26 @@
   min-height: calc(
     var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.5
   );
-  padding: calc(
-      var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.038
-    )
-    clamp(1rem, calc(var(--composition-width) * 0.06), 4rem) 0;
+  padding: 0 clamp(1rem, calc(var(--composition-width) * 0.06), 4rem);
 }
 
 .sponsorShowcase {
   --sponsor-showcase-width: calc(var(--composition-width) * 0.86);
   --sponsor-showcase-padding: 0;
+  --sponsor-showcase-mobile-padding-bottom: 0;
+  --sponsor-showcase-mobile-padding-top: 0;
   --sponsor-title-color: rgba(255, 252, 245, 0.96);
   --sponsor-title-font: var(--font-cormorant-garamond, Georgia), Georgia, serif;
   --sponsor-title-line-height: 0.84;
+  --sponsor-title-height: calc(var(--sponsor-title-rock-width) * 0.219064);
   --sponsor-title-margin: 0 auto
-    clamp(1.35rem, calc(var(--composition-width) * 0.04), 3rem);
+    calc(var(--rock-separator-height) - var(--sponsor-title-height));
+  --sponsor-title-mobile-margin-bottom: calc(
+    var(--rock-separator-height) - var(--sponsor-title-height)
+  );
+  --sponsor-title-offset-y: calc(
+    var(--rock-separator-height) * 0.46 - var(--sponsor-title-height) * 0.5
+  );
   --sponsor-title-rock-display: none;
   --sponsor-title-rock-ratio: 1196 / 262;
   --sponsor-title-rock-width: min(
@@ -526,16 +532,8 @@
     );
   }
 
-  .sponsorPanel {
-    padding-top: calc(
-      var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.03
-    );
-  }
-
   .sponsorShowcase {
     --sponsor-showcase-width: 100%;
-    --sponsor-title-margin: 0 auto clamp(0.75rem, 3vw, 1rem);
-    --sponsor-title-offset-y: -2.6rem;
     --sponsor-title-size: clamp(3rem, 16vw, 4.25rem);
     --sponsor-field-gap: clamp(0.75rem, 3vw, 1rem);
     --sponsor-medium-mobile-height: clamp(6.7rem, 31vw, 7.25rem);

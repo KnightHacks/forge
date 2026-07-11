@@ -354,12 +354,12 @@
   }
 
   .sponsorShowcase {
-    padding-top: 2.6rem;
-    padding-bottom: 3rem;
+    padding-top: var(--sponsor-showcase-mobile-padding-top, 2.6rem);
+    padding-bottom: var(--sponsor-showcase-mobile-padding-bottom, 3rem);
   }
 
   .sponsorTitle {
-    margin-bottom: 1.45rem;
+    margin-bottom: var(--sponsor-title-mobile-margin-bottom, 1.45rem);
     font-size: var(--sponsor-title-size, 2.55rem);
   }
 
