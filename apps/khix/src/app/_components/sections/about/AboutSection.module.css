@@ -157,7 +157,7 @@
 
 .galleryViewport {
   position: relative;
-  min-height: clamp(14rem, 26vw, 21rem);
+  width: 100%;
   overflow: hidden;
   border: 1px solid rgb(207 255 224 / 0.24);
   border-radius: 0.5rem;
@@ -165,6 +165,7 @@
   box-shadow:
     0 1.2rem 3rem rgb(0 0 0 / 0.32),
     0 0 2.5rem rgb(73 255 196 / 0.09);
+  transition: aspect-ratio 560ms ease;
 }
 
 .galleryViewport::after {
@@ -381,10 +382,6 @@
     margin-top: var(--about-closing-offset);
   }
 
-  .galleryViewport {
-    min-height: calc(clamp(14rem, 26vw, 21rem) + var(--about-gallery-growth));
-  }
-
   .metrics {
     column-gap: clamp(1rem, 3vw, 3rem);
   }
@@ -468,10 +465,6 @@
     grid-template-columns: 1fr;
     width: min(32rem, 100%);
     gap: clamp(1.8rem, 5svh, 2.5rem);
-  }
-
-  .galleryViewport {
-    min-height: min(66vw, 21rem);
   }
 
   .leftRune {

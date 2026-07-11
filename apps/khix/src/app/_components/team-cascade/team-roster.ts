@@ -37,6 +37,6 @@ export async function loadTeamCascadeGroups(
 
   return teamCascadeRosterGroups.map(([roleLabel, rosterKey]) => ({
     roleLabel,
-    members: roster[rosterKey] ?? [],
+    members: roster[rosterKey],
   }));
 }

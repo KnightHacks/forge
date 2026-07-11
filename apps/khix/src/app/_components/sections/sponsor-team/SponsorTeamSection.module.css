@@ -542,7 +542,7 @@
   position: absolute;
   top: var(--team-panel-top);
   left: 50%;
-  width: calc(var(--composition-width) * 0.7);
+  width: calc(var(--composition-width) * 0.9);
   scroll-margin-top: calc(var(--team-panel-top) - var(--team-separator-top));
   transform: translateX(-50%);
 }
@@ -570,9 +570,9 @@
 .teamCascade {
   --team-cascade-height: calc(var(--waterfall-art-height) * 0.5);
   --team-cascade-avatar-size: clamp(
-    4.5rem,
-    calc(var(--composition-width) * 0.105),
-    6.4rem
+    5.25rem,
+    calc(var(--composition-width) * 0.115),
+    7.75rem
   );
   --team-status-color: rgba(235, 255, 255, 0.78);
 
@@ -583,6 +583,30 @@
 @media (min-width: 761px) {
   .dropletLayer {
     clip-path: inset(7% 0 0);
+  }
+}
+
+@media (min-width: 1181px) {
+  .waterfallShowcase {
+    --waterfall-art-height: calc(var(--waterfall-width) * 3.2);
+    --team-panel-top: calc(
+      var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.7
+    );
+    --team-separator-top: calc(
+      var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.62
+    );
+  }
+
+  .scene {
+    background-position:
+      center top,
+      center top,
+      center bottom,
+      center bottom;
+  }
+
+  .sponsorPanel {
+    padding-top: 5vw;
   }
 }
 
@@ -685,6 +709,10 @@
   .partnerStone:hover .partnerLogo,
   .partnerStone:focus-visible .partnerLogo {
     transform: translate3d(-50%, -50%, 0) scale(var(--partner-logo-hover-scale));
+  }
+
+  .teamPanel {
+    width: calc(var(--composition-width) * 0.82);
   }
 }
 

@@ -102,6 +102,12 @@
   }
 }
 
+@media (min-width: 761px) and (max-width: 1180px) {
+  .sectionStack {
+    --khix-foreground-join: calc(45rem + 61vw);
+  }
+}
+
 @media (max-width: 760px) {
   .sectionStack {
     --khix-about-overlap: clamp(1.5rem, 5svh, 3rem);

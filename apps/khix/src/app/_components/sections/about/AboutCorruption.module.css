@@ -24,6 +24,12 @@
   background-size: 100% auto;
 }
 
+@media (min-width: 761px) and (max-width: 1180px) {
+  .front {
+    background-size: 110% auto;
+  }
+}
+
 @media (max-width: 760px) {
   .front {
     bottom: 0;
