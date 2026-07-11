@@ -23,15 +23,17 @@ export default function Page() {
       <main className={styles.page}>
         <Hero />
         <div className={styles.sectionStack}>
-          <AboutCorruption />
-          <AboutSection />
-          <TracksSection />
-          <div id="speakers" className={styles.speakersSection}>
-            <PondAtmosphere className={styles.pondAtmosphere} />
-            <SpeakerShowcase
-              speakers={KHIX_SPEAKERS}
-              titleId="speakers-title"
-            />
+          <div className={styles.foregroundRegion}>
+            <AboutCorruption />
+            <AboutSection />
+            <TracksSection />
+            <div id="speakers" className={styles.speakersSection}>
+              <PondAtmosphere className={styles.pondAtmosphere} />
+              <SpeakerShowcase
+                speakers={KHIX_SPEAKERS}
+                titleId="speakers-title"
+              />
+            </div>
           </div>
           <SponsorTeamSection />
           <div className={styles.waterfallFaqSeparator} aria-hidden="true" />

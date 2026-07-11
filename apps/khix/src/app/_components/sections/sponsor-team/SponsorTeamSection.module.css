@@ -586,6 +586,20 @@
   }
 }
 
+@media (min-width: 761px) and (max-width: 1024px) {
+  .sponsorShowcase {
+    --sponsor-small-grid-width: calc(var(--composition-width) * 0.78);
+  }
+
+  .partnerGroup {
+    width: calc(var(--composition-width) * 0.78);
+  }
+
+  .partnerGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 760px) {
   .scene {
     background: url("/assets/rocks%20waterfall.webp") center top / 100% auto

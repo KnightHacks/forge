@@ -24,6 +24,10 @@
   background: #07100f;
 }
 
+.foregroundRegion {
+  position: relative;
+}
+
 .speakersSection {
   --pond-transition-height: 138.8889vw;
 
