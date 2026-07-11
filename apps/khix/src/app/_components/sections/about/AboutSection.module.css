@@ -362,7 +362,7 @@
     grid-row: 3;
     grid-column: 1 / 8;
     width: min(42rem, 100%);
-    align-self: start;
+    align-self: center;
     justify-self: start;
     margin-top: var(--about-closing-offset);
     margin-left: max(0rem, calc(46vw - 39.25rem));
