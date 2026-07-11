@@ -1,7 +1,7 @@
 export interface SpeakerShowcaseSpeaker {
   name: string;
   imageSrc: string;
-  companyRole: string;
+  companyRole?: string;
   linkedinUrl?: string;
 }
 
@@ -11,41 +11,33 @@ export const KHIX_SPEAKERS = [
   {
     name: "Coming soon",
     imageSrc: SPEAKER_PLACEHOLDER_IMAGE,
-    companyRole: "??? @ ???",
   },
   {
     name: "Coming soon",
     imageSrc: SPEAKER_PLACEHOLDER_IMAGE,
-    companyRole: "??? @ ???",
   },
   {
     name: "Coming soon",
     imageSrc: SPEAKER_PLACEHOLDER_IMAGE,
-    companyRole: "??? @ ???",
   },
   {
     name: "Coming soon",
     imageSrc: SPEAKER_PLACEHOLDER_IMAGE,
-    companyRole: "??? @ ???",
   },
   {
     name: "Coming soon",
     imageSrc: SPEAKER_PLACEHOLDER_IMAGE,
-    companyRole: "??? @ ???",
   },
   {
     name: "Coming soon",
     imageSrc: SPEAKER_PLACEHOLDER_IMAGE,
-    companyRole: "??? @ ???",
   },
   {
     name: "Coming soon",
     imageSrc: SPEAKER_PLACEHOLDER_IMAGE,
-    companyRole: "??? @ ???",
   },
   {
     name: "Coming soon",
     imageSrc: SPEAKER_PLACEHOLDER_IMAGE,
-    companyRole: "??? @ ???",
   },
 ] satisfies readonly SpeakerShowcaseSpeaker[];

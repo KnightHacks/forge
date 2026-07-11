@@ -320,7 +320,9 @@ export function SpeakerShowcase({
                     {speaker.name}
                   </p>
                 </div>
-                <p className={styles.role}>{speaker.companyRole}</p>
+                {speaker.companyRole && (
+                  <p className={styles.role}>{speaker.companyRole}</p>
+                )}
               </div>
             </article>
           ))}
