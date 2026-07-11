@@ -52,7 +52,7 @@
   height: var(--pond-transition-height);
   pointer-events: none;
   content: "";
-  background-image: url("/assets/pond-transition.webp");
+  background-image: url("https://assets.knighthacks.org/khix/pond-transition.webp");
   background-repeat: no-repeat;
   background-position: center bottom;
   background-size: 100% auto;
@@ -86,7 +86,7 @@
   margin-top: clamp(-12rem, -10vw, -6rem);
   margin-bottom: clamp(-19rem, -16vw, -6rem);
   pointer-events: none;
-  background: url("/assets/separator-rocks-faq.webp") center top / 100% auto
+  background: url("https://assets.knighthacks.org/khix/separator-rocks-faq.webp") center top / 100% auto
     no-repeat;
   filter: drop-shadow(
     0 clamp(0.7rem, 1vw, 1.2rem) clamp(0.8rem, 1.3vw, 1.5rem)

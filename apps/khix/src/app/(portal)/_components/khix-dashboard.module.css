@@ -66,7 +66,7 @@
   --khix-nav-button-shadow-hover: none;
   --khix-mobile-page-top-padding: clamp(4.25rem, 10dvh, 6.25rem);
   --khix-rail-width: clamp(12.75rem, 17vw, 15.75rem);
-  --khix-dashboard-background-image: url("/assets/khix-dashboard-background.webp");
+  --khix-dashboard-background-image: url("https://assets.knighthacks.org/khix/khix-dashboard-background.webp");
   --khix-display-font: var(--font-cormorant-garamond, Georgia), Georgia, serif;
   --khix-body-font:
     var(--font-geist-sans, ui-sans-serif), system-ui, -apple-system,
@@ -1467,7 +1467,7 @@
 .portalWisp::before {
   inset: -4%;
   z-index: 1;
-  background: url("/assets/khix-wisp-flame.webp") center / contain no-repeat;
+  background: url("https://assets.knighthacks.org/khix/khix-wisp-flame.webp") center / contain no-repeat;
   opacity: var(--wisp-sprite-opacity);
   transform: translateZ(0) scale(0.98);
   animation: khixDashboardWispSpriteFlicker 7.2s ease-in-out infinite;
@@ -1477,7 +1477,7 @@
 .portalWisp::after {
   inset: -18%;
   z-index: 0;
-  background: url("/assets/khix-wisp-flame.webp") center / contain no-repeat;
+  background: url("https://assets.knighthacks.org/khix/khix-wisp-flame.webp") center / contain no-repeat;
   filter: blur(10px) saturate(1.2);
   opacity: var(--wisp-glow-opacity);
   transform: translate3d(0.15rem, 0.12rem, 0) scale(1.22);
@@ -1811,7 +1811,7 @@
       transparent 14rem
     ),
     linear-gradient(180deg, rgb(7 15 11 / 0.34), rgb(7 15 11 / 0.86)),
-    url("/assets/khix-dashboard-background.webp");
+    url("https://assets.knighthacks.org/khix/khix-dashboard-background.webp");
   background-position: center;
   background-size: cover;
   color: rgb(255 252 244 / 0.92);

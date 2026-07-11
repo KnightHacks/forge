@@ -6,7 +6,7 @@ import Image from "next/image";
 
 import styles from "./TracksSection.module.css";
 
-const ASSET_PATH = "/assets";
+const ASSET_PATH = "https://assets.knighthacks.org/khix";
 
 const TRACKS = [
   "Hello World",

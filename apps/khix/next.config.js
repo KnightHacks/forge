@@ -13,6 +13,13 @@ const config = {
   allowedDevOrigins: ["127.0.0.1", ...localDevOrigins],
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "assets.knighthacks.org",
+        pathname: "/khix/**",
+      },
+    ],
   },
 
   /** We already do linting and typechecking as separate tasks in CI */

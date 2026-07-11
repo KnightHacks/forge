@@ -91,7 +91,7 @@ function SpeakerPortrait({ speaker }: { speaker: SpeakerShowcaseSpeaker }) {
         />
       </div>
       <Image
-        src="/assets/speaker-frame.webp"
+        src="https://assets.knighthacks.org/khix/speaker-frame.webp"
         alt=""
         fill
         sizes="(max-width: 640px) 13rem, (max-width: 960px) 14rem, 17rem"

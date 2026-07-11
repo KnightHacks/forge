@@ -46,7 +46,7 @@
   left: 0;
   z-index: 2;
   height: var(--rock-separator-height);
-  background: url("/assets/sponsor-rock-separator.webp") center top / 100% auto
+  background: url("https://assets.knighthacks.org/khix/sponsor-rock-separator.webp") center top / 100% auto
     no-repeat;
 }
 
@@ -73,8 +73,8 @@
       transparent 88%,
       rgba(61, 69, 72, 0.34)
     ),
-    url("/assets/waterfall-animated.webp") center top / 100% auto no-repeat,
-    url("/assets/rocks%20waterfall.webp") center top / 100% auto no-repeat;
+    url("https://assets.knighthacks.org/khix/waterfall-animated.webp") center top / 100% auto no-repeat,
+    url("https://assets.knighthacks.org/khix/rocks%20waterfall.webp") center top / 100% auto no-repeat;
   background-color: var(--waterfall-fallback-color);
   box-shadow:
     0 0 0 1px rgba(83, 232, 255, 0.16),
@@ -159,7 +159,7 @@
   z-index: 3;
   width: 100vw;
   height: var(--team-separator-height);
-  background: url("/assets/separator-rocks.webp") center top / 100% auto
+  background: url("https://assets.knighthacks.org/khix/separator-rocks.webp") center top / 100% auto
     no-repeat;
   filter: drop-shadow(0 -0.35rem 0.7rem rgba(3, 7, 12, 0.22))
     drop-shadow(0 0.5rem 0.65rem rgba(2, 4, 8, 0.28));
@@ -460,7 +460,7 @@
   width: 125.42%;
   aspect-ratio: 1;
   content: "";
-  background: url("/assets/large-sponsor-rock.webp") 0 0 / 100% auto no-repeat;
+  background: url("https://assets.knighthacks.org/khix/large-sponsor-rock.webp") 0 0 / 100% auto no-repeat;
   filter: saturate(0.58) brightness(0.78) contrast(1.1) hue-rotate(4deg);
   pointer-events: none;
   transition: filter 180ms ease;
@@ -669,7 +669,7 @@
 
 @media (max-width: 760px) {
   .scene {
-    background: url("/assets/rocks%20waterfall.webp") center top / 100% auto
+    background: url("https://assets.knighthacks.org/khix/rocks%20waterfall.webp") center top / 100% auto
       no-repeat;
     background-color: var(--waterfall-fallback-color);
   }
@@ -702,7 +702,7 @@
     inset: 0;
     z-index: 1;
     display: block;
-    background: url("/assets/waterfall-animated.webp") center top / 100% auto
+    background: url("https://assets.knighthacks.org/khix/waterfall-animated.webp") center top / 100% auto
       no-repeat;
     pointer-events: none;
   }

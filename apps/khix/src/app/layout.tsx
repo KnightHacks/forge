@@ -27,8 +27,8 @@ export const metadata: Metadata = {
     follow: true,
   },
   icons: {
-    icon: [{ url: "/assets/favicon.png", type: "image/png" }],
-    shortcut: [{ url: "/assets/favicon.png", type: "image/png" }],
+    icon: [{ url: "https://assets.knighthacks.org/khix/favicon.png", type: "image/png" }],
+    shortcut: [{ url: "https://assets.knighthacks.org/khix/favicon.png", type: "image/png" }],
   },
   openGraph: {
     title: SEO_TITLE,
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/assets/og-image.webp",
+        url: "https://assets.knighthacks.org/khix/og-image.webp",
         width: 1920,
         height: 1080,
         alt: "Knight Hacks IX at the University of Central Florida",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: SEO_TITLE,
     description: SEO_DESCRIPTION,
-    images: ["/assets/og-image.webp"],
+    images: ["https://assets.knighthacks.org/khix/og-image.webp"],
   },
 };
 

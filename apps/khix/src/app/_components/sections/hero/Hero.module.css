@@ -187,7 +187,7 @@
   inset: 0;
   display: block;
   pointer-events: none;
-  background-image: url("/assets/hero-pond-animated.webp");
+  background-image: url("https://assets.knighthacks.org/khix/hero-pond-animated.webp");
   background-repeat: no-repeat;
   background-position: right center;
   background-size: cover;
@@ -210,7 +210,7 @@
   z-index: 1;
   display: block;
   pointer-events: none;
-  background-image: url("/assets/hero-waterfall-animated.webp");
+  background-image: url("https://assets.knighthacks.org/khix/hero-waterfall-animated.webp");
   background-repeat: no-repeat;
   background-position: right center;
   background-size: cover;

@@ -21,10 +21,10 @@ export function LennyBlink({ className }: LennyBlinkProps) {
       <picture className={styles.frameStack}>
         <source
           media="(prefers-reduced-motion: reduce)"
-          srcSet="/assets/faq-lennyblink-Frame%201.webp"
+          srcSet="https://assets.knighthacks.org/khix/faq-lennyblink-Frame%201.webp"
         />
         <Image
-          src="/assets/faq-lennyblink-lennyblink.webp"
+          src="https://assets.knighthacks.org/khix/faq-lennyblink-lennyblink.webp"
           alt="Lenny the Knight Hacks dragon blinking"
           width={2667}
           height={3318}

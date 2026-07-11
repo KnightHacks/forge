@@ -231,7 +231,7 @@ function faqClass(name: string) {
 
 const floatingAssets = [
   {
-    src: "/assets/faq-FAQ cave ceiling - Thomas Ha.webp",
+    src: "https://assets.knighthacks.org/khix/faq-FAQ cave ceiling - Thomas Ha.webp",
     alt: "",
     className: faqClass("caveCeilingPrimary"),
     width: 4500,
@@ -239,7 +239,7 @@ const floatingAssets = [
     depth: -18,
   },
   {
-    src: "/assets/FAQ cave ceiling.webp",
+    src: "https://assets.knighthacks.org/khix/FAQ cave ceiling.webp",
     alt: "",
     className: faqClass("caveCeilingSecondary"),
     width: 4500,
@@ -247,7 +247,7 @@ const floatingAssets = [
     depth: -12,
   },
   {
-    src: "/assets/faq-leftcol.webp",
+    src: "https://assets.knighthacks.org/khix/faq-leftcol.webp",
     alt: "",
     className: faqClass("leftColumn"),
     width: 698,
@@ -312,7 +312,7 @@ const floatingAssets = [
     ],
   },
   {
-    src: "/assets/faq-rightcol.webp",
+    src: "https://assets.knighthacks.org/khix/faq-rightcol.webp",
     alt: "",
     className: faqClass("rightColumn"),
     width: 982,
@@ -682,8 +682,8 @@ function GemstoneButton({
       <Image
         src={
           isActive
-            ? "/assets/faq-selection-selected-faq-rock.png"
-            : "/assets/faq-selection-faq-rock.png"
+            ? "https://assets.knighthacks.org/khix/faq-selection-selected-faq-rock.png"
+            : "https://assets.knighthacks.org/khix/faq-selection-faq-rock.png"
         }
         alt=""
         width={364}
@@ -713,7 +713,7 @@ function FaqQuestion({
         onClick={onToggle}
       >
         <Image
-          src="/assets/faq-question-rock-cut.png"
+          src="https://assets.knighthacks.org/khix/faq-question-rock-cut.png"
           alt=""
           width={1034}
           height={140}
@@ -735,7 +735,7 @@ function FaqQuestion({
           >
             <div className={styles.answerRock}>
               <Image
-                src="/assets/faq-answer-rock-cut.webp"
+                src="https://assets.knighthacks.org/khix/faq-answer-rock-cut.webp"
                 alt=""
                 width={1066}
                 height={376}

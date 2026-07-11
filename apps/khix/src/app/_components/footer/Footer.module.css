@@ -13,7 +13,7 @@
   padding: clamp(4.4rem, 7vw, 6rem) clamp(1.25rem, 7vw, 6rem)
     clamp(2rem, 4vw, 3rem);
   color: rgba(255, 255, 255, 0.94);
-  background-image: url("/assets/footer.webp");
+  background-image: url("https://assets.knighthacks.org/khix/footer.webp");
   background-repeat: no-repeat;
   background-position: center top;
   background-size: 100% 100%;

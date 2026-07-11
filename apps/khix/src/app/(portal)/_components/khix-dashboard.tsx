@@ -976,7 +976,7 @@ function KhixDashboardShell({
           <div className={styles.mobileTopBar}>
             <Link href="/" className={styles.mobileLogoLink}>
               <Image
-                src="/assets/khlogo.svg"
+                src="https://assets.knighthacks.org/khix/khlogo.svg"
                 alt="Knight Hacks IX"
                 width={118}
                 height={48}
@@ -1029,7 +1029,7 @@ function KhixDashboardShell({
                 onClick={closeMobileMenu}
               >
                 <Image
-                  src="/assets/khlogo.svg"
+                  src="https://assets.knighthacks.org/khix/khlogo.svg"
                   alt="Knight Hacks IX"
                   width={118}
                   height={48}
@@ -1309,42 +1309,42 @@ const LORE_PROCESS_IMAGES = [
     alt: "Concept sheet for Hat Lenny with flower, wing, color, and shape notes.",
     copy: "After Knight Hacks VIII, Lenny is free from the gem, but freedom does not erase what happened. Lena's sheet explores what changed through the flower, wings, shapes, and colors while keeping Lenny soft and familiar.",
     credit: { ...LORE_ARTISTS.lena, prefix: "Made by" },
-    src: "/assets/lore-hat-lenny-reference.webp",
+    src: "https://assets.knighthacks.org/khix/lore-hat-lenny-reference.webp",
     title: "Lenny After the Gem",
   },
   {
     alt: "Pink sketch of Lenny standing among mushrooms and small flowers.",
     copy: "Gabriela's sketch catches one of the first searches for the enchanted forest. Mushrooms, flowers, odd shapes, and magic all had to find the right balance between inviting and uneasy.",
     credit: { ...LORE_ARTISTS.gabriela, prefix: "Made by" },
-    src: "/assets/lore-lenny-sketch-garden.webp",
+    src: "https://assets.knighthacks.org/khix/lore-lenny-sketch-garden.webp",
     title: "The First Glimpse Beyond the Treeline",
   },
   {
     alt: "Animation workspace showing Lenny drawn over a forest background.",
     copy: "The animation passes turned a still forest into a place with timing, breath, and pressure. Small changes in spacing, hold time, and background motion decided how watchful the scene felt.",
     credit: { ...LORE_ARTISTS.chrissy, prefix: "Made by" },
-    src: "/assets/lore-animation-process.webp",
+    src: "https://assets.knighthacks.org/khix/lore-animation-process.webp",
     title: "When the Forest is Magical",
   },
   {
     alt: "Sketch of a dark forest corruption creature holding a glowing figure.",
     copy: "The corruption needed to feel connected to the gem's aftermath. These sketches helped define magic that kept growing after its purpose broke: beautiful, wrong, and still awake under the roots.",
     credit: { ...LORE_ARTISTS.lena, prefix: "Made by" },
-    src: "/assets/lore-corruption-concept.webp",
+    src: "https://assets.knighthacks.org/khix/lore-corruption-concept.webp",
     title: "What the Gem Left Behind",
   },
   {
     alt: "T.K. reference sheet with armor, helmet, sword, and energy details.",
     copy: "T.K.'s disappearance gives the forest a reason to be explored. The armor, helmet, sword, and energy details show that he is capable, but the enchanted forest is strong enough to pull him out of reach.",
     credit: { ...LORE_ARTISTS.david, prefix: "Made by" },
-    src: "/assets/lore-tk-reference.webp",
+    src: "https://assets.knighthacks.org/khix/lore-tk-reference.webp",
     title: "T.K.'s Trail Ends in the Forest",
   },
   {
     alt: "Finished illustration of Lenny smiling next to T.K.",
     copy: "This piece brings the mascots together so the theme reads at a glance. Lenny is changed, T.K. is tied to the mystery, and the forest around them is still holding something back.",
     credit: { ...LORE_ARTISTS.lena, prefix: "Made by" },
-    src: "/assets/lore-lenny-tk-final.webp",
+    src: "https://assets.knighthacks.org/khix/lore-lenny-tk-final.webp",
     title: "Before the Forest Closes In",
   },
 ];
@@ -1424,7 +1424,7 @@ function LoreExperience() {
         aria-labelledby="khix-lore-work-title"
       >
         <Image
-          src="/assets/lore-tiny-lenny-sketch.webp"
+          src="https://assets.knighthacks.org/khix/lore-tiny-lenny-sketch.webp"
           alt="Tiny sketch of Lenny sitting with small wings."
           width={84}
           height={84}
@@ -1458,7 +1458,7 @@ function LoreExperience() {
         </div>
         <figure className={styles.loreGifFrame}>
           <Image
-            src="/assets/lore-scene-5.webp"
+            src="https://assets.knighthacks.org/khix/lore-scene-5.webp"
             alt="Animated forest scene from the Knight Hacks IX lore film."
             fill
             sizes="(max-width: 700px) 100vw, 48vw"
@@ -1502,7 +1502,7 @@ function LoreExperience() {
       <section className={styles.loreMerchMoment}>
         <figure className={styles.loreMerchImage}>
           <Image
-            src="/assets/lore-merch-shirt.webp"
+            src="https://assets.knighthacks.org/khix/lore-merch-shirt.webp"
             alt="Knight Hacks shirt mockup with Knight Hacks IX artwork and green logo."
             fill
             sizes="(max-width: 700px) 100vw, 62vw"
@@ -1533,7 +1533,7 @@ function LoreExperience() {
         <div className={styles.loreTeamPhotos}>
           <figure>
             <Image
-              src="/assets/lore-team-full.webp"
+              src="https://assets.knighthacks.org/khix/lore-team-full.webp"
               alt="Knight Hacks organizers gathered by the lake."
               fill
               sizes="(max-width: 700px) 100vw, 42vw"
@@ -1541,7 +1541,7 @@ function LoreExperience() {
           </figure>
           <figure>
             <Image
-              src="/assets/lore-team-organizers.webp"
+              src="https://assets.knighthacks.org/khix/lore-team-organizers.webp"
               alt="Knight Hacks design team gathered by the lake."
               fill
               sizes="(max-width: 700px) 100vw, 42vw"

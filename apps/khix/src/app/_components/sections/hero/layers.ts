@@ -1,4 +1,4 @@
-export const HERO_ASSET_BASE_PATH = "/assets";
+export const HERO_ASSET_BASE_PATH = "https://assets.knighthacks.org/khix";
 
 export interface HeroLayer {
   filename: string;

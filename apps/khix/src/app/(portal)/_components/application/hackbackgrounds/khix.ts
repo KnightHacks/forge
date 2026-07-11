@@ -9,22 +9,22 @@ const KHIX_FLAT_WEBP = "https://assets.knighthacks.org/khix-flat.webp";
 const KHIX_FOREGROUND_WEBP =
   "https://assets.knighthacks.org/khix-foreground.webp";
 const KHIX_LENNY_FRAME_WEBPS = [
-  "/assets/khix-lenny-walk-frame-01.webp",
-  "/assets/khix-lenny-walk-frame-02.webp",
-  "/assets/khix-lenny-walk-frame-03.webp",
-  "/assets/khix-lenny-walk-frame-04.webp",
-  "/assets/khix-lenny-walk-frame-05.webp",
-  "/assets/khix-lenny-walk-frame-06.webp",
-  "/assets/khix-lenny-walk-frame-07.webp",
-  "/assets/khix-lenny-walk-frame-08.webp",
-  "/assets/khix-lenny-walk-frame-09.webp",
-  "/assets/khix-lenny-walk-frame-10.webp",
-  "/assets/khix-lenny-walk-frame-11.webp",
-  "/assets/khix-lenny-walk-frame-12.webp",
-  "/assets/khix-lenny-walk-frame-13.webp",
-  "/assets/khix-lenny-walk-frame-14.webp",
-  "/assets/khix-lenny-walk-frame-15.webp",
-  "/assets/khix-lenny-walk-frame-16.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-01.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-02.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-03.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-04.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-05.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-06.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-07.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-08.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-09.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-10.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-11.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-12.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-13.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-14.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-15.webp",
+  "https://assets.knighthacks.org/khix/khix-lenny-walk-frame-16.webp",
 ] as const;
 const KHIX_LENNY_REST_FRAME_INDEX = 9;
 const KHIX_LENNY_IDLE_WEBP =

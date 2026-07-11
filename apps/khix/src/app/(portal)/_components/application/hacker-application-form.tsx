@@ -312,7 +312,7 @@ const applicationAnimationStyles = `
   top: 50%;
   width: clamp(11.5rem, 32vw, 24rem);
   aspect-ratio: 1858.27 / 666;
-  background-image: url("/assets/khlogo.svg");
+  background-image: url("https://assets.knighthacks.org/khix/khlogo.svg");
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
@@ -790,7 +790,7 @@ function getApplicationIntroPreloadSources(
 ) {
   const sources = new Set<string>();
 
-  sources.add("/assets/khlogo.svg");
+  sources.add("https://assets.knighthacks.org/khix/khlogo.svg");
 
   for (const layer of visualConfig.layers ?? []) {
     if (layer.kind !== "image") continue;

@@ -10,7 +10,7 @@ const HOMEPAGE_SPONSORS = [
   {
     name: "OneEthos",
     websiteUrl: "https://www.oneethos.com/",
-    logoSrc: "/assets/sponsor-oneethos.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/sponsor-oneethos.svg",
     logoScale: 1,
     mobileLogoScale: 1.2,
     tier: "golden-dawn",
@@ -18,19 +18,19 @@ const HOMEPAGE_SPONSORS = [
   {
     name: "AMD",
     websiteUrl: "https://www.amd.com/",
-    logoSrc: "/assets/sponsor-amd.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/sponsor-amd.svg",
     tier: "silver-moon",
   },
   {
     name: "BNY",
     websiteUrl: "https://www.bny.com/",
-    logoSrc: "/assets/sponsor-bny.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/sponsor-bny.svg",
     tier: "silver-moon",
   },
   {
     name: "Databricks",
     websiteUrl: "https://www.databricks.com/",
-    logoSrc: "/assets/sponsor-databricks.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/sponsor-databricks.svg",
     logoScale: 1.65,
     mobileLogoScale: 1.65,
     tier: "silver-moon",
@@ -38,7 +38,7 @@ const HOMEPAGE_SPONSORS = [
   {
     name: "Morgan & Morgan",
     websiteUrl: "https://www.forthepeople.com/",
-    logoSrc: "/assets/sponsor-morgan-and-morgan.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/sponsor-morgan-and-morgan.svg",
     logoScale: 0.94,
     mobileLogoScale: 1.15,
     preserveLogoContrast: true,
@@ -47,7 +47,7 @@ const HOMEPAGE_SPONSORS = [
   {
     name: "NextEra",
     websiteUrl: "https://www.nexteraenergy.com/",
-    logoSrc: "/assets/sponsor-nextera.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/sponsor-nextera.svg",
     logoScale: 1.82,
     mobileLogoScale: 1.75,
     tier: "silver-moon",
@@ -55,7 +55,7 @@ const HOMEPAGE_SPONSORS = [
   {
     name: "Shinies Props",
     websiteUrl: "https://www.shinies.co/",
-    logoSrc: "/assets/sponsor-shinies.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/sponsor-shinies.svg",
     logoScale: 1.24,
     mobileLogoScale: 1.2,
     tier: "silver-moon",
@@ -63,7 +63,7 @@ const HOMEPAGE_SPONSORS = [
   {
     name: "Codex",
     websiteUrl: "https://openai.com/codex/",
-    logoSrc: "/assets/sponsor-codex.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/sponsor-codex.svg",
     logoScale: 2,
     mobileLogoScale: 1.7,
     tier: "bronze-ember",
@@ -71,7 +71,7 @@ const HOMEPAGE_SPONSORS = [
   {
     name: "Impress Ink",
     websiteUrl: "https://impressink.com/",
-    logoSrc: "/assets/sponsor-impressink.png",
+    logoSrc: "https://assets.knighthacks.org/khix/sponsor-impressink.png",
     logoScale: 1.25,
     mobileLogoScale: 1,
     tier: "bronze-ember",
@@ -79,7 +79,7 @@ const HOMEPAGE_SPONSORS = [
   {
     name: "RFSmart",
     websiteUrl: "https://www.rfsmart.com/",
-    logoSrc: "/assets/sponsor-rfsmart.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/sponsor-rfsmart.svg",
     logoScale: 1.25,
     mobileLogoScale: 1.2,
     tier: "bronze-ember",
@@ -89,33 +89,33 @@ const HOMEPAGE_SPONSORS = [
 const PARTNERS = [
   {
     name: "UCF College of Engineering and Computer Science",
-    logoSrc: "/assets/partner-cecs.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/partner-cecs.svg",
     websiteUrl: "https://www.cecs.ucf.edu/",
   },
   {
     name: "Game Development Knights",
-    logoSrc: "/assets/partner-gdk.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/partner-gdk.svg",
     preserveLogoContrast: true,
     websiteUrl: "https://www.instagram.com/gamedevknights/",
   },
   {
     name: "Girls Who Code",
-    logoSrc: "/assets/partner-gwc.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/partner-gwc.svg",
     websiteUrl: "https://www.instagram.com/girlswhocodeucf/",
   },
   {
     name: "IEEE at UCF",
-    logoSrc: "/assets/partner-ieee.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/partner-ieee.svg",
     websiteUrl: "https://www.instagram.com/ieeeucf/",
   },
   {
     name: "Major League Hacking",
-    logoSrc: "/assets/partner-mlh.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/partner-mlh.svg",
     websiteUrl: "https://mlh.io/",
   },
   {
     name: "Society of Asian Scientists and Engineers",
-    logoSrc: "/assets/partner-sase.svg",
+    logoSrc: "https://assets.knighthacks.org/khix/partner-sase.svg",
     websiteUrl: "https://www.instagram.com/saseucf/",
   },
 ] as const;

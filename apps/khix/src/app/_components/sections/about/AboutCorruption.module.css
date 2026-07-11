@@ -18,7 +18,7 @@
   left: 0;
   z-index: 0;
   height: var(--khix-front-height);
-  background-image: url("/assets/extended-front.webp");
+  background-image: url("https://assets.knighthacks.org/khix/extended-front.webp");
   background-repeat: no-repeat;
   background-position: center top;
   background-size: 100% auto;
@@ -36,7 +36,7 @@
   .front {
     bottom: 0;
     height: auto;
-    background-image: url("/assets/extended-front-mobile.webp");
+    background-image: url("https://assets.knighthacks.org/khix/extended-front-mobile.webp");
     background-position: center -25vw;
     background-size: 120% auto;
   }

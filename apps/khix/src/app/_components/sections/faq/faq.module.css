@@ -26,7 +26,7 @@
   position: absolute;
   inset: -4rem -2rem;
   z-index: 0;
-  background-image: url("/assets/faq-faq background 1.webp");
+  background-image: url("https://assets.knighthacks.org/khix/faq-faq background 1.webp");
   background-repeat: no-repeat;
   background-position: center top;
   background-size: cover;
@@ -420,7 +420,7 @@
         #15192d calc(50% + 62rem),
         #15192d 100%
       ),
-      url("/assets/faq-faq background 1.webp");
+      url("https://assets.knighthacks.org/khix/faq-faq background 1.webp");
     background-position:
       center,
       center top;

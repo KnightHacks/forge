@@ -10,17 +10,17 @@ const AUTO_ADVANCE_DELAY_MS = 4600;
 
 const GALLERY_IMAGES = [
   {
-    src: "/assets/about-gallery-community.webp",
+    src: "https://assets.knighthacks.org/khix/about-gallery-community.webp",
     alt: "Hackers gathering in the UCF Student Union during Knight Hacks",
     aspectRatio: "2400 / 1597",
   },
   {
-    src: "/assets/about-gallery-crowd.webp",
+    src: "https://assets.knighthacks.org/khix/about-gallery-crowd.webp",
     alt: "Knight Hacks participants filling the UCF Student Union",
     aspectRatio: "2400 / 1597",
   },
   {
-    src: "/assets/about-gallery-team.webp",
+    src: "https://assets.knighthacks.org/khix/about-gallery-team.webp",
     alt: "Knight Hacks organizers and attendees holding a signed event banner",
     aspectRatio: "2400 / 1349",
   },

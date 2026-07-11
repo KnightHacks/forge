@@ -5,7 +5,7 @@ export interface SpeakerShowcaseSpeaker {
   linkedinUrl?: string;
 }
 
-const SPEAKER_PLACEHOLDER_IMAGE = "/assets/speaker-holder.webp";
+const SPEAKER_PLACEHOLDER_IMAGE = "https://assets.knighthacks.org/khix/speaker-holder.webp";
 
 export const KHIX_SPEAKERS = [
   {

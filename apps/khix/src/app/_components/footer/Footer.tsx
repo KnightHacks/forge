@@ -45,7 +45,7 @@ export function Footer() {
             <p>Made with love by the Knight Hacks team.</p>
           </div>
           <Image
-            src="/assets/khlogo.svg"
+            src="https://assets.knighthacks.org/khix/khlogo.svg"
             alt="Knight Hacks IX"
             width={1858}
             height={666}

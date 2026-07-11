@@ -220,7 +220,7 @@
   top: -209.59%;
   left: -56.5%;
   width: 375%;
-  background-image: url("/assets/small-sponsor-rock.webp");
+  background-image: url("https://assets.knighthacks.org/khix/small-sponsor-rock.webp");
 }
 
 .sponsorLink[data-size="x-large"] .rockFrame,
@@ -234,7 +234,7 @@
   top: -85.12%;
   left: -11.96%;
   width: 125.42%;
-  background-image: url("/assets/large-sponsor-rock.webp");
+  background-image: url("https://assets.knighthacks.org/khix/large-sponsor-rock.webp");
 }
 
 .sponsorTitleRock .rockFrame {
@@ -249,7 +249,7 @@
   top: -85.12%;
   left: -11.96%;
   width: 125.42%;
-  background-image: url("/assets/large-sponsor-rock.webp");
+  background-image: url("https://assets.knighthacks.org/khix/large-sponsor-rock.webp");
 }
 
 .sponsorLogo {

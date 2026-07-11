@@ -8,14 +8,14 @@ export function AboutSection() {
     <section id="about" className={styles.about} aria-labelledby="about-title">
       <div className={styles.leftRune} aria-hidden="true">
         <Image
-          src="/assets/about-rock.webp"
+          src="https://assets.knighthacks.org/khix/about-rock.webp"
           alt=""
           fill
           sizes="(max-width: 760px) 48vw, 24vw"
           className={styles.rockImage}
         />
         <Image
-          src="/assets/about-rock-glow.webp"
+          src="https://assets.knighthacks.org/khix/about-rock-glow.webp"
           alt=""
           fill
           sizes="(max-width: 760px) 48vw, 24vw"
