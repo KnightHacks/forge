@@ -4,6 +4,7 @@ import type { SponsorShowcaseSponsor } from "../../sponsor-showcase";
 import { SponsorShowcase } from "../../sponsor-showcase";
 import { TeamCascade } from "../../team-cascade";
 import styles from "./SponsorTeamSection.module.css";
+import { WaterfallAtmosphere } from "./WaterfallAtmosphere";
 
 const HOMEPAGE_SPONSORS = [
   {
@@ -126,6 +127,7 @@ export function SponsorTeamSection() {
         <div className={styles.sponsorRockSeparator} />
       </div>
       <div className={styles.scene} aria-hidden="true" />
+      <WaterfallAtmosphere />
       <div className={styles.bridge} aria-hidden="true" />
 
       <div className={styles.content}>
