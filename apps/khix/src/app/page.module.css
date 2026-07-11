@@ -30,6 +30,7 @@
 
 .speakersSection {
   --pond-transition-height: 138.8889vw;
+  --pond-atmosphere-height: var(--pond-transition-height);
 
   position: relative;
   z-index: 2;
@@ -70,7 +71,7 @@
   left: 0;
   z-index: 2;
   width: 100%;
-  height: var(--pond-transition-height);
+  height: var(--pond-atmosphere-height);
   pointer-events: none;
   transform: none;
 }
@@ -115,5 +116,15 @@
     --khix-front-height: 1006.95vw;
 
     overflow: visible;
+  }
+
+  .speakersSection {
+    --pond-atmosphere-height: calc(100svh + 55rem);
+  }
+}
+
+@media (max-width: 360px) {
+  .speakersSection {
+    --pond-atmosphere-height: calc(100svh + 52rem);
   }
 }
