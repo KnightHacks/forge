@@ -591,7 +591,7 @@ function TeamCascadeStreamSection({
       viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.65, ease: "easeOut" }}
     >
-      <h3 id={sectionTitleId} className={styles.teamCascadeSectionTitle}>
+      <h3 id={sectionTitleId} className={styles.srOnly}>
         {cascadeStreamLabel}
       </h3>
       <div

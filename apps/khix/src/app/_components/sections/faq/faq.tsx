@@ -472,18 +472,6 @@ export default function FAQ() {
 
       <div className={styles.atmosphereVeil} aria-hidden="true" />
 
-      <div className={styles.caveFloor}>
-        <div className={styles.floorRocks} aria-hidden="true">
-          <Image
-            src="/faq/FAQ misc rock 1 - Thomas Ha.png"
-            alt=""
-            width={3000}
-            height={3000}
-            className={styles.floorRock}
-          />
-        </div>
-      </div>
-
       <div className={styles.content}>
         <motion.h2
           id="faq-title"

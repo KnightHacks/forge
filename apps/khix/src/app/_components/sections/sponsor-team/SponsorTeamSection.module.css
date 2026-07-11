@@ -5,6 +5,13 @@
   --waterfall-width: 100vw;
   --waterfall-art-height: calc(var(--waterfall-width) * 4.1667);
   --rock-separator-height: 59.9306vw;
+  --team-panel-top: calc(
+    var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.458
+  );
+  --team-separator-height: calc(var(--waterfall-width) * 0.407);
+  --team-separator-top: calc(
+    var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.38
+  );
   --waterfall-scene-top: 8vw;
   --waterfall-height: calc(
     var(--waterfall-scene-top) + var(--waterfall-art-height)
@@ -72,11 +79,11 @@
 
 .bridge {
   position: absolute;
-  top: calc(var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.38);
+  top: var(--team-separator-top);
   left: 50%;
   z-index: 3;
   width: 100vw;
-  height: calc(var(--waterfall-width) * 0.407);
+  height: var(--team-separator-height);
   background: url("/assets/separator-rocks.webp") center top / 100% auto
     no-repeat;
   filter: drop-shadow(0 -0.35rem 0.7rem rgba(3, 7, 12, 0.22))
@@ -453,9 +460,10 @@
 
 .teamPanel {
   position: absolute;
-  top: calc(var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.458);
+  top: var(--team-panel-top);
   left: 50%;
   width: calc(var(--composition-width) * 0.7);
+  scroll-margin-top: calc(var(--team-panel-top) - var(--team-separator-top));
   transform: translateX(-50%);
 }
 
@@ -471,6 +479,12 @@
     0 0 0.5rem rgba(235, 251, 255, 0.54),
     0 0 2.2rem rgba(129, 225, 255, 0.3);
   text-transform: none;
+  transform: translateY(
+    calc(
+      var(--team-separator-top) + var(--team-separator-height) * 0.46 -
+        var(--team-panel-top) - 50%
+    )
+  );
 }
 
 .teamCascade {
@@ -501,8 +515,12 @@
 }
 
 @media (max-width: 520px) {
-  .bridge {
-    top: calc(
+  .waterfallShowcase {
+    --team-panel-top: calc(
+      var(--waterfall-scene-top) +
+        min(calc(var(--waterfall-art-height) * 0.69), 70rem)
+    );
+    --team-separator-top: calc(
       var(--waterfall-scene-top) +
         min(calc(var(--waterfall-art-height) * 0.64), 66rem)
     );
@@ -540,10 +558,6 @@
   }
 
   .teamPanel {
-    top: calc(
-      var(--waterfall-scene-top) +
-        min(calc(var(--waterfall-art-height) * 0.69), 70rem)
-    );
     width: calc(var(--composition-width) * 0.82);
   }
 

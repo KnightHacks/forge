@@ -10,118 +10,6 @@
   place-items: center;
 }
 
-.decoration {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.decorAsset {
-  position: absolute;
-  display: block;
-  max-width: none;
-  height: auto;
-  user-select: none;
-  filter: saturate(0.92) contrast(1.02)
-    drop-shadow(0 1rem 1.8rem rgba(0, 0, 0, 0.22));
-}
-
-.log {
-  bottom: clamp(-12rem, -14vw, -6rem);
-  left: max(-14rem, -11vw);
-  z-index: 3;
-  width: clamp(38rem, 72vw, 82rem);
-  opacity: 0.78;
-  transform: rotate(-3deg);
-}
-
-.stump {
-  right: max(-9rem, -8vw);
-  bottom: clamp(-7rem, -8vw, -4rem);
-  z-index: 4;
-  width: clamp(28rem, 46vw, 52rem);
-  opacity: 0.86;
-  transform: rotate(2deg);
-}
-
-.rockStack {
-  position: absolute;
-  top: clamp(0.75rem, 4svh, 3.5rem);
-  left: clamp(1rem, 6vw, 6rem);
-  z-index: 5;
-  display: block;
-  width: clamp(16rem, 30vw, 32rem);
-  aspect-ratio: 1770 / 2179;
-  pointer-events: auto;
-  transform: rotate(-5deg) translate3d(0, 0, 0);
-  transform-origin: 46% 78%;
-}
-
-.rockGrass {
-  z-index: 4;
-  opacity: 0.74;
-  filter: brightness(1.08) saturate(1.04) contrast(1.04)
-    drop-shadow(0 1.1rem 1.8rem rgba(0, 0, 0, 0.24));
-  transform-origin: 50% 100%;
-}
-
-.rockGrassLeft {
-  top: clamp(-0.5rem, 2svh, 2rem);
-  left: max(-5rem, -4vw);
-  width: clamp(10rem, 18vw, 20rem);
-  transform: rotate(-9deg);
-}
-
-.rockGrassRight {
-  top: clamp(3rem, 10svh, 7rem);
-  left: clamp(9rem, 19vw, 20rem);
-  width: clamp(8rem, 14vw, 16rem);
-  opacity: 0.64;
-  transform: rotate(7deg) scaleX(-1);
-}
-
-.rockGrassFront {
-  top: clamp(7rem, 18svh, 13rem);
-  left: clamp(-0.5rem, 3.5vw, 4rem);
-  z-index: 6;
-  width: clamp(11rem, 19vw, 21rem);
-  opacity: 0.8;
-  transform: rotate(-2deg);
-}
-
-.rockGlow,
-.rock {
-  display: block;
-  user-select: none;
-  pointer-events: none;
-}
-
-.rockGlow {
-  position: absolute;
-  top: 8%;
-  left: 17%;
-  z-index: 3;
-  width: 36%;
-  height: auto;
-  opacity: 1;
-  mix-blend-mode: normal;
-  filter: saturate(1.24) brightness(1.08)
-    drop-shadow(0 0 0.46rem rgba(103, 228, 255, 0.42));
-  transform: translate3d(0, 0, 0);
-  transform-origin: 50% 50%;
-  animation: rockGlowPulse 1.8s ease-in-out infinite;
-  will-change: opacity, filter, transform;
-}
-
-.rock {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  height: auto;
-  filter: drop-shadow(0 1.3rem 1.9rem rgba(0, 0, 0, 0.34));
-}
-
 .copy {
   position: relative;
   z-index: 6;
@@ -171,23 +59,6 @@
   }
 }
 
-@keyframes rockGlowPulse {
-  0%,
-  100% {
-    opacity: 0.72;
-    filter: saturate(1.18) brightness(0.98)
-      drop-shadow(0 0 0.34rem rgba(103, 228, 255, 0.32));
-    transform: translate3d(0, 0, 0) scale(0.98);
-  }
-
-  50% {
-    opacity: 1;
-    filter: saturate(1.32) brightness(1.16)
-      drop-shadow(0 0 0.58rem rgba(103, 228, 255, 0.54));
-    transform: translate3d(0, 0, 0) scale(1.03);
-  }
-}
-
 @media (max-width: 760px) {
   .about {
     min-height: 108svh;
@@ -206,52 +77,5 @@
 
   .title {
     font-size: clamp(3.1rem, 19vw, 5rem);
-  }
-
-  .rockStack {
-    top: clamp(2rem, 10svh, 6rem);
-    left: max(0.1rem, 2vw);
-    width: clamp(12rem, 54vw, 19rem);
-  }
-
-  .rockGrassLeft {
-    top: clamp(1rem, 7svh, 4rem);
-    left: max(-5rem, -22vw);
-    width: clamp(8rem, 39vw, 13.5rem);
-  }
-
-  .rockGrassRight {
-    top: clamp(4rem, 14svh, 8rem);
-    left: clamp(7.25rem, 35vw, 13rem);
-    width: clamp(6.5rem, 31vw, 10.5rem);
-  }
-
-  .rockGrassFront {
-    top: clamp(6.5rem, 18svh, 11rem);
-    left: max(-1rem, -4vw);
-    width: clamp(9rem, 46vw, 15rem);
-  }
-
-  .log {
-    bottom: clamp(-10rem, -28vw, -6rem);
-    left: max(-18rem, -52vw);
-    width: clamp(36rem, 148vw, 54rem);
-    opacity: 0.62;
-  }
-
-  .stump {
-    right: max(-14rem, -42vw);
-    bottom: clamp(-9rem, -24vw, -5rem);
-    width: clamp(23rem, 92vw, 36rem);
-    opacity: 0.72;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rockStack,
-  .rockGlow,
-  .rock {
-    transition: none;
-    animation: none !important;
   }
 }

@@ -6,7 +6,6 @@ import {
 } from "./_components/navbar/site-navigation";
 import { AboutCorruption, AboutSection } from "./_components/sections/about";
 import FAQ from "./_components/sections/faq/faq";
-import { SectionGrass } from "./_components/sections/grass";
 import Hero from "./_components/sections/hero";
 import {
   KHIX_SPEAKERS,
@@ -24,7 +23,6 @@ export default function Page() {
         <Hero />
         <div className={styles.sectionStack}>
           <AboutCorruption />
-          <SectionGrass />
           <AboutSection />
           <TracksSection />
           <div id="speakers" className={styles.speakersSection}>

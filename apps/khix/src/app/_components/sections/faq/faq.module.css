@@ -371,30 +371,6 @@
   animation: faqWallBreathe 7.4s ease-in-out 0.3s infinite reverse;
 }
 
-.caveFloor {
-  position: absolute;
-  inset: auto 0 0;
-  height: clamp(23rem, 42vw, 40rem);
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.floorRocks {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.floorRock {
-  position: absolute;
-  bottom: -43%;
-  left: -11%;
-  width: clamp(31rem, 52vw, 52rem);
-  height: auto;
-  user-select: none;
-}
-
 @media (min-width: 1800px) {
   .background {
     background-color: #15192d;
@@ -510,12 +486,6 @@
     right: -14%;
     width: 78vw;
     animation: none;
-  }
-
-  .floorRock {
-    bottom: -38%;
-    left: -24%;
-    width: 82vw;
   }
 }
 
