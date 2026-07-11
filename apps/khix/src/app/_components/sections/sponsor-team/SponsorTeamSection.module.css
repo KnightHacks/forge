@@ -4,7 +4,7 @@
     drop-shadow(0 -0.24rem 0.15rem rgb(157 238 234 / 0.32));
   --waterfall-width: 100vw;
   --waterfall-art-height: calc(var(--waterfall-width) * 4.1667);
-  --waterfall-fallback-color: #3f484b;
+  --waterfall-fallback-color: #2d3336;
   --waterfall-basin-blend-start: 89.5%;
   --waterfall-basin-blend-end: 93.5%;
   --rock-separator-height: 59.9306vw;
