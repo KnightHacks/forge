@@ -435,9 +435,9 @@
 
 @media (max-width: 760px) {
   .about {
-    min-height: 175svh;
-    padding: clamp(8rem, 20svh, 12rem) clamp(1.35rem, 8vw, 2rem)
-      clamp(18rem, 32svh, 24rem);
+    min-height: auto;
+    padding: clamp(3rem, 6svh, 4rem) clamp(1.35rem, 8vw, 2rem)
+      clamp(4rem, 10svh, 7rem);
     align-content: start;
     justify-items: center;
   }
@@ -456,6 +456,7 @@
   .copy {
     width: 100%;
     font-size: clamp(0.92rem, 3.5vw, 1rem);
+    line-height: 1.5;
     text-align: left;
   }
 
