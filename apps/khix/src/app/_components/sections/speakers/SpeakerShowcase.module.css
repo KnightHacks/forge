@@ -29,14 +29,15 @@
   margin: 0 0 clamp(1.5rem, 2.2rem, 2.2rem);
   color: var(--speaker-ink);
   font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
-  font-size: 4rem;
+  font-size: clamp(3.4rem, 8vw, 6.8rem);
   font-weight: 400;
-  line-height: 0.9;
+  line-height: 0.84;
   letter-spacing: 0;
   text-align: center;
   text-shadow:
-    0 0 0.75rem rgba(0, 0, 0, 0.58),
-    0 0.18rem 1.4rem rgba(0, 0, 0, 0.46);
+    0 0 0.5rem rgba(235, 251, 255, 0.54),
+    0 0 2.2rem rgba(129, 225, 255, 0.3);
+  transform: translateY(calc(clamp(3rem, 7svh, 5rem) * -1));
 }
 
 .stage {
@@ -290,10 +291,6 @@
     --speaker-pair-gap: 0;
     --speaker-portrait-width: 13.25rem;
     --speaker-stage-width: min(100%, 28rem);
-  }
-
-  .title {
-    font-size: 3.1rem;
   }
 
   .stage {
