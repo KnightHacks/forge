@@ -67,6 +67,8 @@
   cursor: pointer;
   font: inherit;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .hangingTracks {

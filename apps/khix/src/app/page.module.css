@@ -89,5 +89,7 @@
     --khix-about-overlap: clamp(1.5rem, 5svh, 3rem);
     --khix-foreground-join: 152vw;
     --khix-front-height: 1006.95vw;
+
+    overflow: visible;
   }
 }

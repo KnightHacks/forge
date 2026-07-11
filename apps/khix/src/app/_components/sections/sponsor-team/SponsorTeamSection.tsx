@@ -54,7 +54,7 @@ const HOMEPAGE_SPONSORS = [
   },
   {
     name: "Shinies Props",
-    websiteUrl: "https://www.instagram.com/shiniesprops/",
+    websiteUrl: "https://www.shinies.co/",
     logoSrc: "/assets/sponsor-logos/shinies.svg",
     logoScale: 1.24,
     mobileLogoScale: 1.2,

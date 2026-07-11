@@ -133,7 +133,7 @@
 
 .layerImage {
   object-fit: cover;
-  object-position: 24% 50%;
+  object-position: right center;
   user-select: none;
   pointer-events: none;
 }
@@ -189,7 +189,7 @@
   pointer-events: none;
   background-image: url("/KHIXHero/optimized/pond-frames/pond-animated.webp");
   background-repeat: no-repeat;
-  background-position: 24% 50%;
+  background-position: right center;
   background-size: cover;
   opacity: 0.5;
   transform-origin: 52% 78%;
@@ -212,7 +212,7 @@
   pointer-events: none;
   background-image: url("/KHIXHero/optimized/waterfall-frames/waterfall-animated.webp");
   background-repeat: no-repeat;
-  background-position: 24% 50%;
+  background-position: right center;
   background-size: cover;
   transform-origin: 4% 56%;
 }
@@ -557,15 +557,6 @@
   .art {
     --khix-art-motion-scale: 0.38;
     inset: -3.4svh -4vw;
-  }
-
-  .layerImage {
-    object-position: 94% 50%;
-  }
-
-  .pondFrameSequence,
-  .waterfallFrameSequence {
-    background-position: 94% 50%;
   }
 
   .titleLockup {

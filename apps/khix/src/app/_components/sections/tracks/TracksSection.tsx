@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, PointerEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
@@ -83,12 +83,12 @@ const REVEAL_COPY = [
     status: "The foliage is still. Three activations remain.",
   },
   {
-    hint: "The canopy stirred — two rustles left",
+    hint: "The canopy stirred. Two rustles left",
     label: "Rustle the foliage again. Two activations remaining.",
     status: "The leaves rustled softly. Two activations remain.",
   },
   {
-    hint: "They are almost visible — one rustle left",
+    hint: "The forest creatures are revealed",
     label: "Clear the remaining foliage. One activation remaining.",
     status: "The foliage has started to fall. One activation remains.",
   },
@@ -714,6 +714,7 @@ export function TracksSection() {
   const [revealStage, setRevealStage] = useState<RevealStage>(0);
   const revealStageRef = useRef<RevealStage>(0);
   const pendingActivationsRef = useRef(0);
+  const ignoreClickUntilRef = useRef(0);
   const isSettlingRef = useRef(false);
   const settleTimerRef = useRef<number | null>(null);
   const revealCopy = REVEAL_COPY[revealStage];
@@ -755,6 +756,19 @@ export function TracksSection() {
     processNextStage();
   }
 
+  function handleCanopyPointerUp(event: PointerEvent<HTMLButtonElement>) {
+    if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
+
+    ignoreClickUntilRef.current = Date.now() + 700;
+    handleReveal();
+  }
+
+  function handleCanopyClick() {
+    if (Date.now() < ignoreClickUntilRef.current) return;
+
+    handleReveal();
+  }
+
   useEffect(
     () => () => {
       if (settleTimerRef.current !== null) {
@@ -786,7 +800,8 @@ export function TracksSection() {
           aria-label={revealCopy.label}
           aria-describedby="tracks-reveal-hint tracks-reveal-status"
           aria-disabled={revealStage === 3}
-          onClick={handleReveal}
+          onClick={handleCanopyClick}
+          onPointerUp={handleCanopyPointerUp}
         >
           <span className={styles.scene} aria-hidden="true">
             {LEAVES.filter((leaf) => leaf.layer === "rear").map((leaf) => (
