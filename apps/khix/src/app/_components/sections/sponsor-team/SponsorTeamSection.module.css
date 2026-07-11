@@ -704,6 +704,7 @@
     --sponsor-showcase-width: 100%;
     --sponsor-title-size: clamp(3rem, 16vw, 4.25rem);
     --sponsor-field-gap: clamp(0.75rem, 3vw, 1rem);
+    --sponsor-field-offset-y: clamp(-1.5rem, -5vw, -1rem);
     --sponsor-medium-mobile-height: clamp(6.7rem, 31vw, 7.25rem);
     --sponsor-medium-mobile-logo-height: 1.5rem;
     --sponsor-medium-mobile-logo-width: 5.4rem;

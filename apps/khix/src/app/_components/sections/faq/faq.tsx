@@ -720,12 +720,14 @@ function FaqQuestion({
       </button>
 
       <AnimatePresence initial={false}>
+        {/* Transforming text-bearing layers produces glyph artifacts in iOS
+            Safari, so the rock reveal animates by clipping its height only. */}
         {isOpen ? (
           <motion.div
             className={styles.answerWrap}
-            initial={{ opacity: 0, height: 0, y: -24 }}
-            animate={{ opacity: 1, height: "auto", y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -24 }}
+            initial={{ height: 0 }}
+            animate={{ height: "auto" }}
+            exit={{ height: 0 }}
             transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className={styles.answerRock}>

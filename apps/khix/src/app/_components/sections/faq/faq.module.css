@@ -213,10 +213,6 @@
   transition: transform 180ms ease;
 }
 
-.questionButton:hover {
-  transform: translateY(-0.08rem) scale(1.045);
-}
-
 .questionButton[aria-expanded="true"] {
   transform: none;
 }
@@ -242,24 +238,16 @@
   position: relative;
   z-index: 1;
   max-width: min(100%, 39rem);
+  top: -0.1rem;
   color: rgb(3 19 25 / 0.58);
-  text-shadow:
-    0 -1px 0.2px rgb(3 19 25 / 0.44),
-    0 1px 0.35px rgb(190 224 218 / 0.22);
   text-wrap: balance;
-  transform: translateY(-0.1rem);
-  transition:
-    color 180ms ease,
-    text-shadow 180ms ease;
+  transition: color 180ms ease;
 }
 
 .questionButton:hover span,
 .questionButton:focus-visible span,
 .questionButton[aria-expanded="true"] span {
   color: rgb(3 19 25 / 0.72);
-  text-shadow:
-    0 -1px 0.2px rgb(3 19 25 / 0.59),
-    0 1px 0.4px rgb(203 234 228 / 0.36);
 }
 
 .answerWrap {
@@ -303,13 +291,10 @@
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: 0;
+  top: clamp(-0.55rem, -0.65vw, -0.2rem);
   color: rgb(240 244 250 / 0.96);
   text-align: center;
-  text-shadow:
-    0 -1px 0.25px rgb(20 22 41 / 0.82),
-    0 1px 0.35px rgb(198 218 240 / 0.28);
   text-wrap: pretty;
-  transform: translateY(clamp(-0.55rem, -0.65vw, -0.2rem));
 }
 
 .answerRock a {
@@ -396,6 +381,18 @@
   right: 0;
   width: clamp(27rem, 46vw, 45rem);
   animation: faqWallBreathe 7.4s ease-in-out 0.3s infinite reverse;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .questionButton:hover {
+    transform: translateY(-0.08rem) scale(1.045);
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .questionButton span {
+    transition: none;
+  }
 }
 
 @media (min-width: 1800px) {
@@ -546,7 +543,7 @@
 
   .questionButton span {
     max-width: 17rem;
-    transform: translateY(-0.06rem);
+    top: -0.06rem;
   }
 
   .answerWrap {
@@ -562,7 +559,7 @@
     font-size: 1rem;
     font-weight: 600;
     line-height: 1.22;
-    transform: translateY(-0.2rem);
+    top: -0.2rem;
   }
 }
 

@@ -52,6 +52,7 @@
   display: grid;
   justify-items: center;
   gap: var(--sponsor-field-gap, 2.05rem);
+  translate: 0 var(--sponsor-field-offset-y, 0);
 }
 
 .slabStack {
