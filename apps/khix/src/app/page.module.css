@@ -25,6 +25,8 @@
 }
 
 .speakersSection {
+  --pond-transition-height: 138.8889vw;
+
   position: relative;
   z-index: 2;
   display: grid;
@@ -42,7 +44,7 @@
   bottom: 0;
   left: 0;
   z-index: 1;
-  height: 138.8889vw;
+  height: var(--pond-transition-height);
   pointer-events: none;
   content: "";
   background-image: url("/assets/pond-transition.webp");
@@ -53,8 +55,20 @@
 
 .speakersSection > * {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   transform: translateY(-5svh);
+}
+
+.speakersSection > .pondAtmosphere {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  width: 100%;
+  height: var(--pond-transition-height);
+  pointer-events: none;
+  transform: none;
 }
 
 .waterfallFaqSeparator {

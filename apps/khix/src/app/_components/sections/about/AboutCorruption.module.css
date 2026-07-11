@@ -6,8 +6,7 @@
   pointer-events: none;
 }
 
-.front,
-.gloom {
+.front {
   position: absolute;
   display: block;
   pointer-events: none;
@@ -25,38 +24,9 @@
   background-size: 100% auto;
 }
 
-.gloom {
-  top: var(--khix-front-top);
-  left: 0;
-  z-index: 2;
-  width: 100%;
-  aspect-ratio: 3840 / 12000;
-  background-image: url("/assets/bloom.png");
-  background-repeat: no-repeat;
-  background-position: center top;
-  background-size: 100% auto;
-  opacity: 0;
-  transform: translate3d(0, 0, 0) scale(1);
-  transform-origin: 50% 100%;
-  will-change: opacity, transform;
-}
-
-@media (max-width: 700px) {
-  .gloom {
-    width: 100%;
-  }
-}
-
 @media (max-width: 760px) {
   .front {
     background-image: url("/assets/extended-front-mobile.webp");
     background-position: center -4vw;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gloom {
-    transform: none;
-    will-change: auto;
   }
 }

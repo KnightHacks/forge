@@ -258,9 +258,11 @@
   place-self: center;
   width: min(var(--logo-width), 76%);
   height: var(--logo-height);
+  filter: none;
   opacity: var(--sponsor-logo-opacity, 0.94);
   transform: scale(var(--sponsor-logo-scale));
   transition:
+    filter 180ms ease,
     opacity 180ms ease,
     transform 180ms ease;
 }
@@ -273,6 +275,42 @@
   pointer-events: none;
   transition: filter 180ms ease;
   user-select: none;
+}
+
+.sponsorLink:focus-visible .sponsorLogo {
+  filter: drop-shadow(
+      0 0 0.14rem
+        rgb(
+          var(--tier-glow-start-rgb) /
+            calc(0.58 * var(--sponsor-logo-backlight-strength, 0))
+        )
+    )
+    drop-shadow(
+      0 0 0.38rem
+        rgb(
+          var(--tier-glow-end-rgb) /
+            calc(0.42 * var(--sponsor-logo-backlight-strength, 0))
+        )
+    );
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sponsorLink:hover .sponsorLogo {
+    filter: drop-shadow(
+        0 0 0.14rem
+          rgb(
+            var(--tier-glow-start-rgb) /
+              calc(0.58 * var(--sponsor-logo-backlight-strength, 0))
+          )
+      )
+      drop-shadow(
+        0 0 0.38rem
+          rgb(
+            var(--tier-glow-end-rgb) /
+              calc(0.42 * var(--sponsor-logo-backlight-strength, 0))
+          )
+      );
+  }
 }
 
 .sponsorLink[data-size="small"] .sponsorLogo,

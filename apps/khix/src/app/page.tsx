@@ -9,6 +9,7 @@ import FAQ from "./_components/sections/faq/faq";
 import Hero from "./_components/sections/hero";
 import {
   KHIX_SPEAKERS,
+  PondAtmosphere,
   SpeakerShowcase,
 } from "./_components/sections/speakers";
 import { SponsorTeamSection } from "./_components/sections/sponsor-team";
@@ -26,6 +27,7 @@ export default function Page() {
           <AboutSection />
           <TracksSection />
           <div id="speakers" className={styles.speakersSection}>
+            <PondAtmosphere className={styles.pondAtmosphere} />
             <SpeakerShowcase
               speakers={KHIX_SPEAKERS}
               titleId="speakers-title"

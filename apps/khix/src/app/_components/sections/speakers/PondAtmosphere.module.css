@@ -1,0 +1,711 @@
+.pondAtmosphere,
+.fireflies,
+.firefly,
+.wisp,
+.wisp::before,
+.wisp::after {
+  pointer-events: none;
+}
+
+.pondAtmosphere {
+  contain: layout paint;
+  overflow: hidden;
+  opacity: 1;
+  backface-visibility: hidden;
+}
+
+.fireflies {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  contain: paint;
+}
+
+.firefly {
+  --firefly-left: 50%;
+  --firefly-top: 50%;
+  --firefly-size: 0.24rem;
+  --firefly-opacity: 0.68;
+  --firefly-duration: 20s;
+  --firefly-delay: 0s;
+  --firefly-x-mid: 1rem;
+  --firefly-y-mid: -1rem;
+  --firefly-x-end: 2rem;
+  --firefly-y-end: 0.5rem;
+
+  position: absolute;
+  top: var(--firefly-top);
+  left: var(--firefly-left);
+  width: clamp(1.45rem, calc(var(--firefly-size) + 1.35rem), 2rem);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle,
+    rgb(255 255 235) 0 8%,
+    rgb(255 237 116 / 0.94) 16%,
+    rgb(255 207 72 / 0.58) 32%,
+    rgb(248 188 58 / 0.24) 50%,
+    transparent 78%
+  );
+  filter: drop-shadow(0 0 0.55rem rgb(255 222 96 / 0.5))
+    drop-shadow(0 0 1rem rgb(255 196 55 / 0.24));
+  opacity: var(--firefly-opacity);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  transform-origin: center;
+  animation: pondFireflyFloat var(--firefly-duration) ease-in-out
+    var(--firefly-delay) infinite alternate;
+  will-change: transform;
+}
+
+.firefly[data-firefly="1"] {
+  --firefly-left: 5%;
+  --firefly-top: 9%;
+  --firefly-size: 0.22rem;
+  --firefly-duration: 24s;
+  --firefly-delay: -5s;
+  --firefly-opacity: 0.56;
+  --firefly-x-mid: 1.4rem;
+  --firefly-y-mid: -2.2rem;
+  --firefly-x-end: 2.8rem;
+  --firefly-y-end: 0.6rem;
+}
+
+.firefly[data-firefly="2"] {
+  --firefly-left: 14%;
+  --firefly-top: 28%;
+  --firefly-size: 0.3rem;
+  --firefly-duration: 19s;
+  --firefly-delay: -9s;
+  --firefly-opacity: 0.72;
+  --firefly-x-mid: 2.1rem;
+  --firefly-y-mid: 1rem;
+  --firefly-x-end: 3.2rem;
+  --firefly-y-end: -1.5rem;
+}
+
+.firefly[data-firefly="3"] {
+  --firefly-left: 24%;
+  --firefly-top: 12%;
+  --firefly-size: 0.2rem;
+  --firefly-duration: 27s;
+  --firefly-delay: -2s;
+  --firefly-opacity: 0.5;
+  --firefly-x-mid: -1.4rem;
+  --firefly-y-mid: 2.4rem;
+  --firefly-x-end: 1.2rem;
+  --firefly-y-end: 4rem;
+}
+
+.firefly[data-firefly="4"] {
+  --firefly-left: 35%;
+  --firefly-top: 42%;
+  --firefly-size: 0.26rem;
+  --firefly-duration: 21s;
+  --firefly-delay: -13s;
+  --firefly-opacity: 0.66;
+  --firefly-x-mid: 1rem;
+  --firefly-y-mid: -2.8rem;
+  --firefly-x-end: -1.8rem;
+  --firefly-y-end: -4.4rem;
+}
+
+.firefly[data-firefly="5"] {
+  --firefly-left: 46%;
+  --firefly-top: 7%;
+  --firefly-size: 0.24rem;
+  --firefly-duration: 23s;
+  --firefly-delay: -7s;
+  --firefly-opacity: 0.58;
+  --firefly-x-mid: 2.6rem;
+  --firefly-y-mid: 1.5rem;
+  --firefly-x-end: 4.1rem;
+  --firefly-y-end: -0.8rem;
+}
+
+.firefly[data-firefly="6"] {
+  --firefly-left: 58%;
+  --firefly-top: 24%;
+  --firefly-size: 0.32rem;
+  --firefly-duration: 18s;
+  --firefly-delay: -11s;
+  --firefly-opacity: 0.75;
+  --firefly-x-mid: -2.4rem;
+  --firefly-y-mid: -1.2rem;
+  --firefly-x-end: -3.2rem;
+  --firefly-y-end: 1.7rem;
+}
+
+.firefly[data-firefly="7"] {
+  --firefly-left: 70%;
+  --firefly-top: 11%;
+  --firefly-size: 0.2rem;
+  --firefly-duration: 28s;
+  --firefly-delay: -4s;
+  --firefly-opacity: 0.52;
+  --firefly-x-mid: 1.2rem;
+  --firefly-y-mid: 2.8rem;
+  --firefly-x-end: -1.5rem;
+  --firefly-y-end: 4.2rem;
+}
+
+.firefly[data-firefly="8"] {
+  --firefly-left: 86%;
+  --firefly-top: 35%;
+  --firefly-size: 0.28rem;
+  --firefly-duration: 22s;
+  --firefly-delay: -15s;
+  --firefly-opacity: 0.7;
+  --firefly-x-mid: -1.8rem;
+  --firefly-y-mid: -2.6rem;
+  --firefly-x-end: -4.2rem;
+  --firefly-y-end: -0.2rem;
+}
+
+.firefly[data-firefly="9"] {
+  --firefly-left: 96%;
+  --firefly-top: 14%;
+  --firefly-size: 0.23rem;
+  --firefly-duration: 25s;
+  --firefly-delay: -6s;
+  --firefly-opacity: 0.56;
+  --firefly-x-mid: -2.5rem;
+  --firefly-y-mid: 1.8rem;
+  --firefly-x-end: -5rem;
+  --firefly-y-end: 3.3rem;
+}
+
+.firefly[data-firefly="10"] {
+  --firefly-left: 9%;
+  --firefly-top: 64%;
+  --firefly-size: 0.31rem;
+  --firefly-duration: 20s;
+  --firefly-delay: -12s;
+  --firefly-opacity: 0.7;
+  --firefly-x-mid: 2.8rem;
+  --firefly-y-mid: -1rem;
+  --firefly-x-end: 4.8rem;
+  --firefly-y-end: 1.4rem;
+}
+
+.firefly[data-firefly="11"] {
+  --firefly-left: 19%;
+  --firefly-top: 82%;
+  --firefly-size: 0.22rem;
+  --firefly-duration: 29s;
+  --firefly-delay: -3s;
+  --firefly-opacity: 0.5;
+  --firefly-x-mid: 1rem;
+  --firefly-y-mid: -3rem;
+  --firefly-x-end: -1.2rem;
+  --firefly-y-end: -5rem;
+}
+
+.firefly[data-firefly="12"] {
+  --firefly-left: 32%;
+  --firefly-top: 72%;
+  --firefly-size: 0.27rem;
+  --firefly-duration: 23s;
+  --firefly-delay: -17s;
+  --firefly-opacity: 0.62;
+  --firefly-x-mid: -1.2rem;
+  --firefly-y-mid: -2.5rem;
+  --firefly-x-end: 2.2rem;
+  --firefly-y-end: -4.2rem;
+}
+
+.firefly[data-firefly="13"] {
+  --firefly-left: 48%;
+  --firefly-top: 58%;
+  --firefly-size: 0.2rem;
+  --firefly-duration: 26s;
+  --firefly-delay: -8s;
+  --firefly-opacity: 0.54;
+  --firefly-x-mid: 2.5rem;
+  --firefly-y-mid: 2rem;
+  --firefly-x-end: -0.6rem;
+  --firefly-y-end: 4.5rem;
+}
+
+.firefly[data-firefly="14"] {
+  --firefly-left: 63%;
+  --firefly-top: 76%;
+  --firefly-size: 0.33rem;
+  --firefly-duration: 18s;
+  --firefly-delay: -14s;
+  --firefly-opacity: 0.74;
+  --firefly-x-mid: -2.2rem;
+  --firefly-y-mid: -1.8rem;
+  --firefly-x-end: -4rem;
+  --firefly-y-end: 1.1rem;
+}
+
+.firefly[data-firefly="15"] {
+  --firefly-left: 78%;
+  --firefly-top: 62%;
+  --firefly-size: 0.24rem;
+  --firefly-duration: 24s;
+  --firefly-delay: -1s;
+  --firefly-opacity: 0.58;
+  --firefly-x-mid: -1rem;
+  --firefly-y-mid: 2.4rem;
+  --firefly-x-end: 2.4rem;
+  --firefly-y-end: 4.1rem;
+}
+
+.firefly[data-firefly="16"] {
+  --firefly-left: 91%;
+  --firefly-top: 83%;
+  --firefly-size: 0.3rem;
+  --firefly-duration: 21s;
+  --firefly-delay: -16s;
+  --firefly-opacity: 0.68;
+  --firefly-x-mid: -2.8rem;
+  --firefly-y-mid: -2.4rem;
+  --firefly-x-end: -5.3rem;
+  --firefly-y-end: -0.6rem;
+}
+
+.firefly[data-firefly="17"] {
+  --firefly-left: 3%;
+  --firefly-top: 44%;
+  --firefly-size: 0.2rem;
+  --firefly-duration: 31s;
+  --firefly-delay: -18s;
+  --firefly-opacity: 0.46;
+  --firefly-x-mid: 2.6rem;
+  --firefly-y-mid: 1.8rem;
+  --firefly-x-end: 5.1rem;
+  --firefly-y-end: -1.2rem;
+}
+
+.firefly[data-firefly="18"] {
+  --firefly-left: 40%;
+  --firefly-top: 22%;
+  --firefly-size: 0.21rem;
+  --firefly-duration: 30s;
+  --firefly-delay: -20s;
+  --firefly-opacity: 0.5;
+  --firefly-x-mid: -2rem;
+  --firefly-y-mid: 1.4rem;
+  --firefly-x-end: -3.8rem;
+  --firefly-y-end: -2.6rem;
+}
+
+.firefly[data-firefly="19"] {
+  --firefly-left: 53%;
+  --firefly-top: 92%;
+  --firefly-size: 0.26rem;
+  --firefly-duration: 25s;
+  --firefly-delay: -10s;
+  --firefly-opacity: 0.6;
+  --firefly-x-mid: 1.6rem;
+  --firefly-y-mid: -2.7rem;
+  --firefly-x-end: 3.8rem;
+  --firefly-y-end: -5.2rem;
+}
+
+.firefly[data-firefly="20"] {
+  --firefly-left: 67%;
+  --firefly-top: 48%;
+  --firefly-size: 0.22rem;
+  --firefly-duration: 27s;
+  --firefly-delay: -19s;
+  --firefly-opacity: 0.52;
+  --firefly-x-mid: 2.8rem;
+  --firefly-y-mid: -1.5rem;
+  --firefly-x-end: 0.8rem;
+  --firefly-y-end: -4.8rem;
+}
+
+.firefly[data-firefly="21"] {
+  --firefly-left: 84%;
+  --firefly-top: 6%;
+  --firefly-size: 0.2rem;
+  --firefly-duration: 32s;
+  --firefly-delay: -21s;
+  --firefly-opacity: 0.48;
+  --firefly-x-mid: -1.2rem;
+  --firefly-y-mid: 2.8rem;
+  --firefly-x-end: -4.2rem;
+  --firefly-y-end: 4.7rem;
+}
+
+.firefly[data-firefly="22"] {
+  --firefly-left: 15%;
+  --firefly-top: 5%;
+  --firefly-size: 0.18rem;
+  --firefly-duration: 34s;
+  --firefly-delay: -24s;
+  --firefly-opacity: 0.42;
+  --firefly-x-mid: 2.2rem;
+  --firefly-y-mid: 2rem;
+  --firefly-x-end: 4.6rem;
+  --firefly-y-end: 3.8rem;
+}
+
+.firefly[data-firefly="23"] {
+  --firefly-left: 73%;
+  --firefly-top: 91%;
+  --firefly-size: 0.22rem;
+  --firefly-duration: 28s;
+  --firefly-delay: -23s;
+  --firefly-opacity: 0.5;
+  --firefly-x-mid: -2.4rem;
+  --firefly-y-mid: -2.8rem;
+  --firefly-x-end: -0.5rem;
+  --firefly-y-end: -5.5rem;
+}
+
+.firefly[data-firefly="24"] {
+  --firefly-left: 98%;
+  --firefly-top: 58%;
+  --firefly-size: 0.19rem;
+  --firefly-duration: 33s;
+  --firefly-delay: -26s;
+  --firefly-opacity: 0.44;
+  --firefly-x-mid: -2.8rem;
+  --firefly-y-mid: 2.2rem;
+  --firefly-x-end: -5.6rem;
+  --firefly-y-end: 4.6rem;
+}
+
+.wisp,
+.wisp::before,
+.wisp::after {
+  position: absolute;
+}
+
+.wisp::before,
+.wisp::after {
+  content: "";
+}
+
+.wisp {
+  --wisp-size: clamp(3.8rem, 6vw, 7.1rem);
+  --wisp-sprite-opacity: 0.76;
+  --wisp-glow-opacity: 0.34;
+  --wisp-scale: 1;
+  --wisp-scale-mid: 1.06;
+  --wisp-scale-end: 0.98;
+  --wisp-rotate: -8deg;
+  --wisp-rotate-mid: 3.6deg;
+  --wisp-rotate-end: -1deg;
+  --wisp-duration: 14s;
+  --wisp-delay: 0s;
+  --wisp-opacity: 0.86;
+  --wisp-x-start: 0rem;
+  --wisp-y-start: 0rem;
+  --wisp-x-mid: 1rem;
+  --wisp-y-mid: -1.1rem;
+  --wisp-x-end: 2rem;
+  --wisp-y-end: 0.7rem;
+
+  top: var(--wisp-top);
+  left: var(--wisp-left);
+  width: var(--wisp-size);
+  aspect-ratio: 1;
+  opacity: var(--wisp-opacity);
+  filter: drop-shadow(0 0 0.8rem rgb(111 225 255 / 0.34))
+    drop-shadow(0 0 1.8rem rgb(41 184 237 / 0.22));
+  transform: translate3d(var(--wisp-x-start), var(--wisp-y-start), 0)
+    rotate(var(--wisp-rotate)) scale(var(--wisp-scale));
+  animation: pondSpiritWisp var(--wisp-duration) ease-in-out var(--wisp-delay)
+    infinite alternate;
+  isolation: isolate;
+  mix-blend-mode: screen;
+  will-change: opacity, transform;
+}
+
+.wisp::before {
+  inset: -4%;
+  z-index: 1;
+  background: url("/assets/khix-wisp-flame.png") center / contain no-repeat;
+  opacity: var(--wisp-sprite-opacity);
+  transform: translateZ(0) scale(0.98);
+  animation: pondWispSpriteFlicker 7.2s ease-in-out infinite;
+  image-rendering: auto;
+}
+
+.wisp::after {
+  inset: -18%;
+  z-index: 0;
+  background: url("/assets/khix-wisp-flame.png") center / contain no-repeat;
+  filter: blur(10px) saturate(1.2);
+  opacity: var(--wisp-glow-opacity);
+  transform: translate3d(0.15rem, 0.12rem, 0) scale(1.22);
+  animation: pondWispSpriteGlow 8.4s ease-in-out infinite;
+}
+
+.wisp[data-wisp="one"] {
+  --wisp-left: 4%;
+  --wisp-top: 18%;
+  --wisp-scale: 0.78;
+  --wisp-scale-mid: 0.84;
+  --wisp-scale-end: 0.76;
+  --wisp-rotate: -12deg;
+  --wisp-rotate-mid: 5deg;
+  --wisp-rotate-end: -5deg;
+  --wisp-duration: 16s;
+  --wisp-delay: -2s;
+  --wisp-opacity: 0.62;
+  --wisp-x-mid: 2.4rem;
+  --wisp-y-mid: -2.2rem;
+  --wisp-x-end: 4rem;
+  --wisp-y-end: 0.5rem;
+}
+
+.wisp[data-wisp="two"] {
+  --wisp-left: 7%;
+  --wisp-top: 91%;
+  --wisp-size: clamp(3.1rem, 4.8vw, 5.1rem);
+  --wisp-scale: 0.68;
+  --wisp-scale-mid: 0.74;
+  --wisp-scale-end: 0.66;
+  --wisp-rotate: 10deg;
+  --wisp-rotate-mid: -4deg;
+  --wisp-rotate-end: 16deg;
+  --wisp-duration: 18s;
+  --wisp-delay: -7s;
+  --wisp-opacity: 0.5;
+  --wisp-x-mid: 1rem;
+  --wisp-y-mid: -1.4rem;
+  --wisp-x-end: 2rem;
+  --wisp-y-end: -0.2rem;
+}
+
+.wisp[data-wisp="three"] {
+  --wisp-left: 56%;
+  --wisp-top: 14%;
+  --wisp-size: clamp(4rem, 6vw, 6.8rem);
+  --wisp-scale: 0.92;
+  --wisp-scale-mid: 1;
+  --wisp-scale-end: 0.9;
+  --wisp-rotate: -18deg;
+  --wisp-rotate-mid: 8deg;
+  --wisp-rotate-end: -12deg;
+  --wisp-duration: 20s;
+  --wisp-delay: -4s;
+  --wisp-x-mid: 1.8rem;
+  --wisp-y-mid: 2.4rem;
+  --wisp-x-end: -1.2rem;
+  --wisp-y-end: 4.4rem;
+}
+
+.wisp[data-wisp="four"] {
+  --wisp-left: 88%;
+  --wisp-top: 43%;
+  --wisp-size: clamp(3.6rem, 5.4vw, 5.8rem);
+  --wisp-scale: 0.78;
+  --wisp-scale-mid: 0.86;
+  --wisp-scale-end: 0.76;
+  --wisp-rotate: 14deg;
+  --wisp-rotate-mid: -6deg;
+  --wisp-rotate-end: 20deg;
+  --wisp-duration: 17s;
+  --wisp-delay: -10s;
+  --wisp-opacity: 0.76;
+  --wisp-x-mid: -1rem;
+  --wisp-y-mid: -1.7rem;
+  --wisp-x-end: -2.5rem;
+  --wisp-y-end: -0.2rem;
+}
+
+.wisp[data-wisp="five"] {
+  --wisp-left: 46%;
+  --wisp-top: 88%;
+  --wisp-size: clamp(3.2rem, 4.8vw, 5.2rem);
+  --wisp-scale: 0.72;
+  --wisp-scale-mid: 0.8;
+  --wisp-scale-end: 0.7;
+  --wisp-rotate: -5deg;
+  --wisp-rotate-mid: 3deg;
+  --wisp-rotate-end: 2deg;
+  --wisp-duration: 21s;
+  --wisp-delay: -13s;
+  --wisp-opacity: 0.68;
+  --wisp-x-mid: 1.8rem;
+  --wisp-y-mid: -1rem;
+  --wisp-x-end: 3.2rem;
+  --wisp-y-end: -2.3rem;
+}
+
+.wisp[data-wisp="six"] {
+  --wisp-left: 75%;
+  --wisp-top: 72%;
+  --wisp-size: clamp(3.4rem, 5vw, 5.6rem);
+  --wisp-scale: 0.72;
+  --wisp-scale-mid: 0.82;
+  --wisp-scale-end: 0.7;
+  --wisp-rotate: 8deg;
+  --wisp-rotate-mid: -8deg;
+  --wisp-rotate-end: 14deg;
+  --wisp-duration: 19s;
+  --wisp-delay: -9s;
+  --wisp-opacity: 0.7;
+  --wisp-x-mid: -2.4rem;
+  --wisp-y-mid: -1.9rem;
+  --wisp-x-end: -4.1rem;
+  --wisp-y-end: 0.8rem;
+}
+
+.wisp[data-wisp="seven"] {
+  --wisp-left: 33%;
+  --wisp-top: 31%;
+  --wisp-size: clamp(3.1rem, 4.5vw, 5rem);
+  --wisp-scale: 0.66;
+  --wisp-scale-mid: 0.73;
+  --wisp-scale-end: 0.64;
+  --wisp-rotate: -20deg;
+  --wisp-rotate-mid: 7deg;
+  --wisp-rotate-end: -14deg;
+  --wisp-duration: 22s;
+  --wisp-delay: -15s;
+  --wisp-opacity: 0.54;
+  --wisp-x-mid: 1.3rem;
+  --wisp-y-mid: -2.8rem;
+  --wisp-x-end: -0.8rem;
+  --wisp-y-end: -4.2rem;
+}
+
+.wisp[data-wisp="eight"] {
+  --wisp-left: 96%;
+  --wisp-top: 20%;
+  --wisp-size: clamp(3.2rem, 4.6vw, 5.2rem);
+  --wisp-scale: 0.62;
+  --wisp-scale-mid: 0.7;
+  --wisp-scale-end: 0.6;
+  --wisp-rotate: 18deg;
+  --wisp-rotate-mid: -5deg;
+  --wisp-rotate-end: 10deg;
+  --wisp-duration: 24s;
+  --wisp-delay: -6s;
+  --wisp-opacity: 0.52;
+  --wisp-x-mid: -2.8rem;
+  --wisp-y-mid: 1.2rem;
+  --wisp-x-end: -5rem;
+  --wisp-y-end: 3.4rem;
+}
+
+@media (max-width: 700px) {
+  .pondAtmosphere {
+    opacity: 0.88;
+  }
+
+  .wisp {
+    --wisp-size: clamp(2.9rem, 12vw, 4.7rem);
+  }
+
+  .wisp[data-wisp="one"] {
+    --wisp-left: -6%;
+    --wisp-top: 18%;
+    --wisp-opacity: 0.5;
+  }
+
+  .wisp[data-wisp="two"] {
+    --wisp-left: 5%;
+    --wisp-top: 90%;
+    --wisp-opacity: 0.44;
+  }
+
+  .wisp[data-wisp="three"] {
+    --wisp-left: 58%;
+    --wisp-top: 24%;
+  }
+
+  .wisp[data-wisp="four"] {
+    --wisp-left: 88%;
+    --wisp-top: 48%;
+  }
+
+  .wisp[data-wisp="five"] {
+    --wisp-left: 42%;
+    --wisp-top: 92%;
+    --wisp-opacity: 0.52;
+  }
+
+  .wisp[data-wisp="six"] {
+    --wisp-left: 72%;
+    --wisp-top: 78%;
+    --wisp-opacity: 0.56;
+  }
+
+  .wisp[data-wisp="seven"] {
+    --wisp-left: 25%;
+    --wisp-top: 40%;
+    --wisp-opacity: 0.46;
+  }
+
+  .wisp[data-wisp="eight"] {
+    --wisp-left: 101%;
+    --wisp-top: 17%;
+    --wisp-opacity: 0.42;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .firefly,
+  .wisp,
+  .wisp::before,
+  .wisp::after {
+    animation: none;
+  }
+}
+
+@keyframes pondFireflyFloat {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(var(--firefly-x-mid), var(--firefly-y-mid), 0);
+  }
+
+  100% {
+    transform: translate3d(var(--firefly-x-end), var(--firefly-y-end), 0);
+  }
+}
+
+@keyframes pondSpiritWisp {
+  0% {
+    transform: translate3d(var(--wisp-x-start), var(--wisp-y-start), 0)
+      rotate(var(--wisp-rotate)) scale(var(--wisp-scale));
+  }
+
+  48% {
+    transform: translate3d(var(--wisp-x-mid), var(--wisp-y-mid), 0)
+      rotate(var(--wisp-rotate-mid)) scale(var(--wisp-scale-mid));
+  }
+
+  100% {
+    transform: translate3d(var(--wisp-x-end), var(--wisp-y-end), 0)
+      rotate(var(--wisp-rotate-end)) scale(var(--wisp-scale-end));
+  }
+}
+
+@keyframes pondWispSpriteFlicker {
+  0%,
+  100% {
+    opacity: 0.74;
+    transform: translate3d(0, 0, 0) scale(0.98) rotate(-0.5deg);
+  }
+
+  44% {
+    opacity: 0.84;
+    transform: translate3d(0.025rem, -0.035rem, 0) scale(1.015) rotate(0.5deg);
+  }
+}
+
+@keyframes pondWispSpriteGlow {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: translate3d(0.08rem, 0.06rem, 0) scale(1.1) rotate(-1deg);
+  }
+
+  50% {
+    opacity: 0.36;
+    transform: translate3d(0.18rem, -0.12rem, 0) scale(1.2) rotate(1.5deg);
+  }
+}

@@ -4,6 +4,7 @@
     drop-shadow(0 -0.24rem 0.15rem rgb(157 238 234 / 0.32));
   --waterfall-width: 100vw;
   --waterfall-art-height: calc(var(--waterfall-width) * 4.1667);
+  --waterfall-fallback-color: #3f484b;
   --waterfall-basin-blend-start: 89.5%;
   --waterfall-basin-blend-end: 93.5%;
   --rock-separator-height: 59.9306vw;
@@ -74,7 +75,7 @@
     ),
     url("/assets/waterfall-animated.webp") center top / 100% auto no-repeat,
     url("/assets/rocks%20waterfall.webp") center top / 100% auto no-repeat;
-  background-color: #596264;
+  background-color: var(--waterfall-fallback-color);
   box-shadow:
     0 0 0 1px rgba(83, 232, 255, 0.16),
     0 0 3rem rgba(20, 238, 231, 0.18);
@@ -344,6 +345,7 @@
   );
   --sponsor-logo-opacity: 0.58;
   --sponsor-logo-hover-opacity: 0.72;
+  --sponsor-logo-backlight-strength: 1;
   --sponsor-logo-filter: brightness(0) saturate(100%)
     drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.76))
     drop-shadow(0 1px 0.35px rgb(190 224 218 / 0.38));
@@ -588,7 +590,7 @@
   .scene {
     background: url("/assets/rocks%20waterfall.webp") center top / 100% auto
       no-repeat;
-    background-color: #596264;
+    background-color: var(--waterfall-fallback-color);
   }
 
   .scene::after {
