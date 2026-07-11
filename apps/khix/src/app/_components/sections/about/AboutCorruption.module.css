@@ -26,7 +26,9 @@
 
 @media (min-width: 761px) and (max-width: 1180px) {
   .front {
-    background-size: 110% auto;
+    bottom: 0;
+    height: auto;
+    background-size: cover;
   }
 }
 

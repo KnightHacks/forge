@@ -29,7 +29,7 @@ export function MLHBadge({ isHidden, isMenuOpen }: MLHBadgeProps) {
         height={688}
         loading="eager"
         unoptimized
-        sizes="(max-width: 900px) 16vw, 10vw"
+        sizes="(max-width: 900px) 13vw, 10vw"
         className={styles.mlhTrustBadgeImage}
         draggable={false}
       />

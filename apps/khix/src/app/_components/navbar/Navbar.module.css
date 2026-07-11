@@ -616,8 +616,12 @@
 
 @media (max-width: 900px) {
   .mlhTrustBadge {
-    right: max(0.72rem, env(safe-area-inset-right));
-    width: clamp(3.65rem, 16vw, 5rem);
+    top: 0;
+    right: calc(env(safe-area-inset-right, 0px) + 1rem);
+    width: clamp(3.25rem, 13vw, 4rem);
+    min-width: 3.25rem;
+    max-width: 4rem;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
   }
 
   .navbar {

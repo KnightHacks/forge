@@ -104,7 +104,7 @@
 
 @media (min-width: 761px) and (max-width: 1180px) {
   .sectionStack {
-    --khix-foreground-join: calc(45rem + 61vw);
+    --khix-foreground-join: calc(45rem + 50vw);
   }
 }
 

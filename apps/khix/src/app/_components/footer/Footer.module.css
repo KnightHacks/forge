@@ -122,6 +122,8 @@
     padding-top: clamp(8.75rem, 18vw, 9.5rem);
     padding-right: 1.5rem;
     padding-left: 1.5rem;
+    background-position: center -1.5rem;
+    background-size: 100% calc(100% + 1.5rem);
   }
 
   .links {
