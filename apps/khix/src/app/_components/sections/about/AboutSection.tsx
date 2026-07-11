@@ -30,28 +30,28 @@ export function AboutSection() {
           <h3 className={styles.successTitle}>Last year was a success.</h3>
           <dl className={styles.metrics}>
             <div className={styles.metric}>
-              <dt>$60,000</dt>
-              <dd>in prizes</dd>
-            </div>
-            <div className={styles.metric}>
               <dt>1,000+</dt>
               <dd>hackers</dd>
             </div>
             <div className={styles.metric}>
-              <dt>9.2/10</dt>
-              <dd>average hacker rating</dd>
+              <dt>188</dt>
+              <dd>projects</dd>
             </div>
             <div className={styles.metric}>
               <dt>75</dt>
               <dd>activities</dd>
             </div>
             <div className={styles.metric}>
+              <dt>$60,000</dt>
+              <dd>in prizes</dd>
+            </div>
+            <div className={styles.metric}>
               <dt>Voted</dt>
               <dd>UCF&apos;s best large-scale event</dd>
             </div>
             <div className={styles.metric}>
-              <dt>188</dt>
-              <dd>projects</dd>
+              <dt>9.2/10</dt>
+              <dd>average hacker rating</dd>
             </div>
           </dl>
         </div>
