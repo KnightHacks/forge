@@ -23,7 +23,7 @@ const HACK_REMINDERS_WEBHOOK = new WebhookClient({
 const DISCORD_PROD_GUILD_ID = "486628710443778071";
 const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
 const EVENT_BANNER_IMAGE = "https://i.imgur.com/Jr1cyxT.png";
-const HACK_BANNER_IMAGE ="https://i.imgur.com/p3mdFCo.png";
+const HACK_BANNER_IMAGE = "https://i.imgur.com/p3mdFCo.png";
 const DISCORD_HACKATHON_ROLE_ID = "1510751065786683412";
 
 export const preReminders = new CronBuilder({
