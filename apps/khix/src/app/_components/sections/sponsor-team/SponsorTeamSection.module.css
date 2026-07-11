@@ -718,15 +718,17 @@
 
 @media (max-width: 520px) {
   .waterfallShowcase {
+    --team-mobile-section-lift: -1.75rem;
     --team-mobile-panel-lift: 0rem;
     --team-panel-top: calc(
       var(--waterfall-scene-top) +
         min(calc(var(--waterfall-art-height) * 0.69), 70rem) +
-        var(--team-mobile-panel-lift)
+        var(--team-mobile-section-lift) + var(--team-mobile-panel-lift)
     );
     --team-separator-top: calc(
       var(--waterfall-scene-top) +
-        min(calc(var(--waterfall-art-height) * 0.64), 66rem)
+        min(calc(var(--waterfall-art-height) * 0.64), 66rem) +
+        var(--team-mobile-section-lift)
     );
   }
 
