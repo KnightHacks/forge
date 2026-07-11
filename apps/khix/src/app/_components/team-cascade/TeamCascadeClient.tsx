@@ -4,6 +4,7 @@ import type { ImageLoaderProps } from "next/image";
 import type { ReactNode } from "react";
 import { useEffect, useId, useMemo, useState } from "react";
 import Image from "next/image";
+import { FaLinkedin } from "react-icons/fa";
 
 import type {
   TeamCascadeGroup,
@@ -89,7 +90,7 @@ function ProfileImage({ member }: { member: TeamCascadeMember }) {
         fill
         loader={profileImageLoader}
         unoptimized
-        sizes="(min-width: 921px) 7.75rem, (min-width: 761px) 5.5rem, (min-width: 521px) 4.5rem, 3.8rem"
+        sizes="(min-width: 921px) 6.25rem, (min-width: 761px) 5.25rem, (min-width: 521px) 4.5rem, 3.8rem"
         className={styles.teamAvatarImage}
       />
     );
@@ -163,7 +164,21 @@ function TeamMemberDetails({
     >
       <div key={person.profileKey} className={styles.teamMemberDetailsContent}>
         <p className={styles.teamMemberName}>{displayName}</p>
-        <p className={styles.teamMemberRole}>{displayTitle}</p>
+        <div className={styles.teamMemberRoleRow}>
+          <p className={styles.teamMemberRole}>{displayTitle}</p>
+          {person.member.linkedinUrl ? (
+            <a
+              className={styles.teamLinkedInIconLink}
+              href={person.member.linkedinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${displayName}'s LinkedIn profile`}
+              title="LinkedIn"
+            >
+              <FaLinkedin aria-hidden="true" size={14} />
+            </a>
+          ) : null}
+        </div>
         {person.member.linkedinUrl ? (
           <a
             className={styles.teamLinkedInLink}

@@ -1,5 +1,5 @@
 .teamCascade {
-  --team-cascade-default-avatar-size: clamp(5.25rem, 8vw, 7.75rem);
+  --team-cascade-default-avatar-size: clamp(4.75rem, 7vw, 6.25rem);
   --team-avatar-size: var(
     --team-cascade-avatar-size,
     var(--team-cascade-default-avatar-size)
@@ -31,8 +31,8 @@
   width: 100%;
   align-items: center;
   justify-content: center;
-  gap: clamp(2.25rem, 3.25vw, 3rem) clamp(1.5rem, 2.8vw, 2.5rem);
-  padding: clamp(0.9rem, 1.8vw, 1.35rem) 0;
+  gap: clamp(1.5rem, 2vw, 2rem) clamp(1.5rem, 2.8vw, 2.5rem);
+  padding: clamp(0.5rem, 1vw, 0.75rem) 0;
 }
 
 .teamProfile {
@@ -204,8 +204,8 @@
 
 .teamMemberDetails {
   display: grid;
-  min-height: clamp(7.5rem, 12vw, 9rem);
-  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+  min-height: 0;
+  margin-bottom: clamp(0.65rem, 1.2vw, 1rem);
   justify-items: center;
   align-content: start;
   text-align: center;
@@ -231,9 +231,17 @@
     0 0 1.3rem rgba(31, 174, 214, 0.32);
 }
 
+.teamMemberRoleRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+}
+
 .teamMemberRole {
   max-width: min(100%, 26rem);
-  margin: 0.55rem 0 0;
+  margin: 0;
   color: rgba(224, 249, 255, 0.82);
   font-family:
     var(--font-geist-sans, ui-sans-serif),
@@ -249,6 +257,7 @@
   text-transform: uppercase;
   text-wrap: balance;
   text-shadow: 0 0.1rem 0.65rem rgba(0, 0, 0, 0.46);
+  white-space: nowrap;
 }
 
 .teamLinkedInLink,
@@ -271,6 +280,7 @@
   align-items: center;
   gap: 0.3rem;
   color: rgba(238, 253, 255, 0.96);
+  text-shadow: 0 0.1rem 0.65rem rgba(0, 0, 0, 0.46);
   text-decoration-color: rgba(155, 231, 250, 0.65);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.22rem;
@@ -296,6 +306,13 @@
 
 .teamLinkedInUnavailable {
   color: rgba(224, 249, 255, 0.52);
+}
+
+.teamLinkedInIconLink {
+  display: none;
+  color: rgba(238, 253, 255, 0.92);
+  filter: drop-shadow(0 0.1rem 0.65rem rgba(0, 0, 0, 0.46));
+  text-decoration: none;
 }
 
 .srOnly {
@@ -332,40 +349,88 @@
 
 @media (max-width: 760px) {
   .teamCascade {
-    --team-avatar-size: clamp(3.15rem, 12vw, 4.5rem);
+    --team-avatar-size: clamp(2.5rem, 11.5vw, 4.5rem);
   }
 
   .teamMemberDetails {
+    min-height: 0;
+    margin-bottom: 0.25rem;
+    padding: 0 0.5rem;
+  }
+
+  .teamMemberName {
+    font-size: clamp(1.15rem, 4.5vw, 1.55rem);
+  }
+
+  .teamMemberRoleRow {
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+  }
+
+  .teamMemberRole {
+    font-size: clamp(0.6rem, 1.6vw, 0.7rem);
+  }
+
+  .teamLinkedInLink,
+  .teamLinkedInUnavailable {
     display: none;
+  }
+
+  .teamLinkedInIconLink {
+    display: inline-grid;
+    width: 1.15rem;
+    height: 1.15rem;
+    place-items: center;
+    border-radius: 0.18rem;
+    transition:
+      color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .teamLinkedInIconLink:hover,
+  .teamLinkedInIconLink:focus-visible {
+    color: #ffffff;
+    outline: 1px solid rgba(224, 250, 255, 0.9);
+    outline-offset: 0.14rem;
+    transform: translateY(-1px);
+  }
+
+  .teamRoster {
+    --mobile-roster-inset: clamp(0.75rem, 3vw, 1rem);
+
+    display: grid;
+    grid-template-columns: repeat(5, var(--team-avatar-size));
+    width: calc(100% - var(--mobile-roster-inset));
+    max-width: none;
+    margin-left: var(--mobile-roster-inset);
+    justify-self: stretch;
+    gap: clamp(0.7rem, 2.5vw, 1rem) clamp(0.35rem, 1.4vw, 0.55rem);
+    padding-top: 0.15rem;
+    transform: none;
   }
 }
 
 @media (max-width: 520px) {
   .teamCascade {
-    --team-avatar-size: clamp(2.75rem, 13.5vw, 3.8rem);
+    --team-avatar-size: clamp(2.5rem, 12vw, 3.25rem);
   }
 
   .teamRoster {
-    gap: clamp(0.65rem, 2.8vw, 0.9rem) clamp(0.45rem, 2vw, 0.7rem);
-    padding-top: 0.5rem;
+    gap: clamp(0.55rem, 2.2vw, 0.75rem) clamp(0.3rem, 1.3vw, 0.5rem);
+  }
+
+  .teamMemberDetails {
+    min-height: 0;
+    margin-bottom: 0.2rem;
+    padding: 0 0.25rem;
   }
 
   .teamMemberName {
-    font-size: clamp(1.5rem, 7.5vw, 2rem);
+    font-size: clamp(1.15rem, 5vw, 1.4rem);
   }
 
   .teamMemberRole {
-    font-size: 0.67rem;
-  }
-}
-
-@media (max-width: 380px) {
-  .teamCascade {
-    --team-avatar-size: clamp(2.35rem, 12vw, 2.75rem);
-  }
-
-  .teamRoster {
-    gap: 0.6rem 0.4rem;
+    font-size: 0.6rem;
   }
 }
 
@@ -376,7 +441,8 @@
   }
 
   .teamAvatar,
-  .teamLinkedInLink {
+  .teamLinkedInLink,
+  .teamLinkedInIconLink {
     transition: none;
   }
 
