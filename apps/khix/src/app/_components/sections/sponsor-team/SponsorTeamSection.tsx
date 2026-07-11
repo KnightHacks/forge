@@ -126,7 +126,10 @@ export function SponsorTeamSection() {
       <div className={styles.waterfallTransition} aria-hidden="true">
         <div className={styles.sponsorRockSeparator} />
       </div>
-      <div className={styles.scene} aria-hidden="true" />
+      <div className={styles.scene} aria-hidden="true">
+        <span className={styles.waterfallStream} />
+        <span className={styles.waterfallBasin} />
+      </div>
       <WaterfallAtmosphere />
       <div className={styles.bridge} aria-hidden="true" />
 

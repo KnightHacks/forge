@@ -4,6 +4,8 @@
     drop-shadow(0 -0.24rem 0.15rem rgb(157 238 234 / 0.32));
   --waterfall-width: 100vw;
   --waterfall-art-height: calc(var(--waterfall-width) * 4.1667);
+  --waterfall-basin-blend-start: 89.5%;
+  --waterfall-basin-blend-end: 93.5%;
   --rock-separator-height: 59.9306vw;
   --team-panel-top: calc(
     var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.458
@@ -55,6 +57,7 @@
   z-index: 1;
   width: var(--waterfall-width);
   height: var(--waterfall-art-height);
+  overflow: hidden;
   background:
     radial-gradient(
       ellipse at 50% 9%,
@@ -70,11 +73,16 @@
       rgba(61, 69, 72, 0.34)
     ),
     url("/assets/waterfall-animated.webp") center top / 100% auto no-repeat,
-    url("/assets/rocks%20waterfall.png") center top / 100% auto no-repeat;
+    url("/assets/rocks%20waterfall.webp") center top / 100% auto no-repeat;
   background-color: #596264;
   box-shadow:
     0 0 0 1px rgba(83, 232, 255, 0.16),
     0 0 3rem rgba(20, 238, 231, 0.18);
+}
+
+.waterfallStream,
+.waterfallBasin {
+  display: none;
 }
 
 .waterfallAtmosphere,
@@ -577,6 +585,76 @@
 }
 
 @media (max-width: 760px) {
+  .scene {
+    background: url("/assets/rocks%20waterfall.webp") center top / 100% auto
+      no-repeat;
+    background-color: #596264;
+  }
+
+  .scene::after {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    content: "";
+    background:
+      radial-gradient(
+        ellipse at 50% 9%,
+        rgba(3, 25, 31, 0.34) 0%,
+        rgba(3, 25, 31, 0.2) 18%,
+        transparent 36%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(61, 69, 72, 0.34),
+        transparent 12%,
+        transparent 88%,
+        rgba(61, 69, 72, 0.34)
+      );
+    pointer-events: none;
+  }
+
+  .waterfallStream,
+  .waterfallBasin {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    background: url("/assets/waterfall-animated.webp") center top / 100% auto
+      no-repeat;
+    pointer-events: none;
+  }
+
+  .waterfallStream {
+    background-position: calc(50% + 2vw) top;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0,
+      #000 var(--waterfall-basin-blend-start),
+      transparent var(--waterfall-basin-blend-end)
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0,
+      #000 var(--waterfall-basin-blend-start),
+      transparent var(--waterfall-basin-blend-end)
+    );
+  }
+
+  .waterfallBasin {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent var(--waterfall-basin-blend-start),
+      #000 var(--waterfall-basin-blend-end),
+      #000 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent var(--waterfall-basin-blend-start),
+      #000 var(--waterfall-basin-blend-end),
+      #000 100%
+    );
+  }
+
   .droplet[data-mobile-hidden="true"] {
     display: none;
   }
