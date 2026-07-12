@@ -486,6 +486,10 @@
   transition-delay: 0ms, 372ms, 372ms;
 }
 
+.mobileLayer[data-state="open"] .mobileLink:nth-child(8) {
+  transition-delay: 0ms, 404ms, 404ms;
+}
+
 .mobileSocialLinks {
   display: flex;
   justify-content: center;
@@ -532,7 +536,7 @@
 .mobileLayer[data-state="open"] .mobileSocialLink {
   opacity: 1;
   transform: translate3d(0, 0, 0);
-  transition-delay: 0ms, 0ms, 0ms, 404ms, 404ms;
+  transition-delay: 0ms, 0ms, 0ms, 436ms, 436ms;
 }
 
 @keyframes navEntrance {

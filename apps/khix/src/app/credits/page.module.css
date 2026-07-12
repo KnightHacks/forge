@@ -1,0 +1,749 @@
+.page {
+  --credits-ink: #f8f7db;
+  --credits-muted: rgba(235, 248, 215, 0.7);
+  --credits-line: rgba(189, 240, 197, 0.2);
+  --credits-lime: #d9ff9d;
+  --credits-mint: #8ff0bf;
+
+  position: relative;
+  min-height: 100svh;
+  color: var(--credits-ink);
+  background:
+    radial-gradient(
+      circle at 74% 12%,
+      rgba(116, 64, 164, 0.28),
+      transparent 30rem
+    ),
+    radial-gradient(
+      circle at 16% 36%,
+      rgba(71, 143, 98, 0.18),
+      transparent 32rem
+    ),
+    linear-gradient(180deg, #130d2b 0%, #09221e 44%, #071511 100%);
+  font-family: var(--font-khix), Georgia, "Times New Roman", serif;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.page::before,
+.page::after {
+  position: absolute;
+  z-index: -1;
+  width: 34rem;
+  height: 58rem;
+  border: 1px solid rgba(199, 255, 177, 0.1);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+  transform: rotate(-24deg);
+}
+
+.page::before {
+  top: 31rem;
+  left: -25rem;
+  box-shadow:
+    5.5rem 1rem 0 -1px rgba(143, 240, 191, 0.04),
+    10.5rem 3rem 0 -1px rgba(143, 240, 191, 0.025);
+}
+
+.page::after {
+  right: -27rem;
+  bottom: 8rem;
+  transform: rotate(28deg);
+  box-shadow:
+    -5.5rem 1rem 0 -1px rgba(143, 240, 191, 0.04),
+    -10.5rem 3rem 0 -1px rgba(143, 240, 191, 0.025);
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  min-height: max(50rem, 100svh);
+  padding: clamp(7rem, 13svh, 10rem) clamp(1.25rem, 6vw, 6rem)
+    clamp(6.5rem, 10svh, 8rem);
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.78fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 6rem);
+  isolation: isolate;
+}
+
+.hero::before {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(180deg, rgba(4, 9, 18, 0.14), rgba(5, 21, 17, 0.7)),
+    url("https://assets.knighthacks.org/khix/khix-dashboard-background.webp");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  content: "";
+  opacity: 0.46;
+  filter: saturate(0.82) hue-rotate(-7deg);
+}
+
+.hero::after {
+  position: absolute;
+  right: -8%;
+  bottom: -1px;
+  left: -8%;
+  z-index: -1;
+  height: clamp(9rem, 19vw, 20rem);
+  background: linear-gradient(180deg, transparent, #09201b 88%);
+  content: "";
+  pointer-events: none;
+}
+
+.heroGlow {
+  position: absolute;
+  top: 15%;
+  right: 8%;
+  z-index: -1;
+  width: clamp(17rem, 36vw, 38rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(206, 255, 160, 0.17),
+    rgba(115, 240, 189, 0.05) 46%,
+    transparent 70%
+  );
+  filter: blur(0.4rem);
+  animation: glowBreathe 5s ease-in-out infinite;
+}
+
+.heroCopy {
+  width: min(100%, 45rem);
+  align-self: center;
+  animation: copyEntrance 760ms cubic-bezier(0.18, 0.7, 0.2, 1) 100ms both;
+}
+
+.wordmark {
+  display: block;
+  width: clamp(7rem, 10vw, 10rem);
+  height: auto;
+  margin-bottom: clamp(2.4rem, 5svh, 4rem);
+  filter: brightness(0) invert(1)
+    drop-shadow(0 0 0.8rem rgba(170, 255, 207, 0.22));
+}
+
+.eyebrow,
+.sectionHeading p {
+  color: var(--credits-mint);
+  font-size: clamp(0.72rem, 1vw, 0.9rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  display: block;
+  margin: 0 0 clamp(1.5rem, 2.2vw, 2.35rem);
+}
+
+.hero h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(5rem, min(12.5vw, 24svh), 12rem);
+  font-weight: 400;
+  letter-spacing: -0.055em;
+  line-height: 0.78;
+  text-shadow:
+    0 0.05em 0 rgba(255, 255, 255, 0.18),
+    0 0 1.5rem rgba(149, 255, 187, 0.16),
+    0 1rem 3rem rgba(0, 0, 0, 0.32);
+}
+
+.intro {
+  width: min(100%, 34rem);
+  margin: clamp(2rem, 4svh, 3rem) 0 0;
+  color: rgba(248, 250, 225, 0.78);
+  font-size: clamp(1.05rem, 1.55vw, 1.35rem);
+  line-height: 1.55;
+  text-wrap: balance;
+}
+
+.lennyScene {
+  position: relative;
+  width: min(100%, 29rem);
+  justify-self: center;
+  align-self: end;
+  animation: lennyEntrance 900ms cubic-bezier(0.18, 0.7, 0.2, 1) 300ms both;
+}
+
+.lennyGlow {
+  position: absolute;
+  right: 8%;
+  bottom: 4%;
+  left: 8%;
+  height: 22%;
+  border-radius: 50%;
+  background: rgba(132, 255, 183, 0.25);
+  filter: blur(1.7rem);
+  transform: perspective(12rem) rotateX(68deg);
+}
+
+.lenny {
+  position: relative;
+  z-index: 1;
+  display: block;
+  aspect-ratio: 2667 / 3318;
+  width: 100%;
+  filter: drop-shadow(0 1.3rem 1.3rem rgba(0, 0, 0, 0.35));
+  animation: lennyFloat 4.8s ease-in-out infinite;
+}
+
+.lennyImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+}
+
+.scrollCue {
+  position: absolute;
+  bottom: clamp(1.5rem, 4svh, 3rem);
+  left: clamp(1.25rem, 6vw, 6rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  color: rgba(242, 251, 221, 0.66);
+  font-size: 0.78rem;
+  letter-spacing: 0.13em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 180ms ease;
+}
+
+.scrollCue:hover,
+.scrollCue:focus-visible {
+  color: #ffffff;
+  outline: none;
+}
+
+.scrollLine {
+  display: block;
+  width: 3.5rem;
+  height: 1px;
+  background: currentColor;
+  transform-origin: left;
+  transition: transform 220ms ease;
+}
+
+.scrollCue:hover .scrollLine,
+.scrollCue:focus-visible .scrollLine {
+  transform: scaleX(1.25);
+}
+
+.creditRoll {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 90rem);
+  margin: 0 auto;
+  padding: clamp(7rem, 12vw, 12rem) clamp(1.25rem, 6vw, 6rem)
+    clamp(18rem, 28vw, 28rem);
+}
+
+.sectionHeading {
+  display: grid;
+  width: min(100%, 64rem);
+  margin-bottom: clamp(4rem, 9vw, 8rem);
+  grid-template-columns: minmax(8rem, 0.55fr) minmax(0, 1.45fr);
+  align-items: end;
+  gap: clamp(1.5rem, 5vw, 6rem);
+}
+
+.sectionHeading p {
+  margin: 0 0 0.45rem;
+}
+
+.sectionHeading h2 {
+  margin: 0;
+  color: #f9f8dc;
+  font-size: clamp(2.65rem, 6vw, 5.8rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
+.creditList,
+.contributors {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.creditList {
+  border-bottom: 1px solid var(--credits-line);
+}
+
+.creditRow {
+  position: relative;
+  display: grid;
+  padding: clamp(1.5rem, 3vw, 2.5rem) 0;
+  border-top: 1px solid var(--credits-line);
+  grid-template-columns: 3.25rem minmax(13rem, 0.78fr) minmax(16rem, 1.22fr);
+  align-items: start;
+  gap: clamp(1rem, 3vw, 3.5rem);
+  transition:
+    border-color 200ms ease,
+    padding 260ms cubic-bezier(0.18, 0.7, 0.2, 1);
+}
+
+.creditRow::before {
+  position: absolute;
+  inset: 0 -1.2rem;
+  z-index: -1;
+  border-radius: 0.65rem;
+  background: linear-gradient(
+    90deg,
+    rgba(174, 255, 190, 0.055),
+    transparent 70%
+  );
+  content: "";
+  opacity: 0;
+  transform: scaleX(0.94);
+  transform-origin: left;
+  transition:
+    opacity 200ms ease,
+    transform 260ms cubic-bezier(0.18, 0.7, 0.2, 1);
+}
+
+.creditRow:hover {
+  border-color: rgba(202, 255, 194, 0.38);
+  padding-right: 0.7rem;
+  padding-left: 0.7rem;
+}
+
+.creditRow:hover::before {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.index {
+  padding-top: 0.35rem;
+  color: rgba(151, 227, 179, 0.52);
+  font-size: 0.72rem;
+  letter-spacing: 0.13em;
+  line-height: 1;
+}
+
+.creditRow h3 {
+  margin: 0;
+  color: rgba(245, 251, 222, 0.72);
+  font-size: clamp(1rem, 1.35vw, 1.28rem);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
+.contributors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem clamp(1.5rem, 4vw, 4rem);
+}
+
+.contributors:has(> :only-child) {
+  grid-template-columns: 1fr;
+}
+
+.contributors li {
+  min-width: 0;
+}
+
+.contributors a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #f9f8dc;
+  font-size: clamp(1.3rem, 2.05vw, 2rem);
+  line-height: 1.14;
+  text-decoration: none;
+}
+
+.contributors a span {
+  background-image: linear-gradient(
+    90deg,
+    var(--credits-lime),
+    var(--credits-mint)
+  );
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0 1px;
+  transition:
+    color 180ms ease,
+    background-size 240ms cubic-bezier(0.18, 0.7, 0.2, 1);
+}
+
+.contributors a svg {
+  width: 0.82em;
+  height: 0.82em;
+  flex: 0 0 auto;
+  color: rgba(157, 235, 184, 0.46);
+  opacity: 0.65;
+  transform: translate3d(-0.2rem, 0.08rem, 0);
+  transition:
+    color 180ms ease,
+    opacity 180ms ease,
+    transform 200ms ease;
+}
+
+.contributors a:hover,
+.contributors a:focus-visible {
+  color: var(--credits-lime);
+  outline: none;
+}
+
+.contributors a:hover span,
+.contributors a:focus-visible span {
+  color: var(--credits-lime);
+  background-size: 100% 1px;
+}
+
+.contributors a:hover svg,
+.contributors a:focus-visible svg {
+  color: var(--credits-mint);
+  opacity: 1;
+  transform: translate3d(0, 0.08rem, 0) rotate(-5deg);
+}
+
+.closingNote {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  margin-top: clamp(4rem, 9vw, 8rem);
+  margin-bottom: clamp(3rem, 7vw, 6rem);
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.closingNote p {
+  max-width: 31rem;
+  margin: 0;
+  color: var(--credits-muted);
+  font-size: clamp(1.25rem, 2.6vw, 2.25rem);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.closingNote a {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  border-bottom: 1px solid rgba(210, 255, 171, 0.5);
+  color: var(--credits-lime);
+  font-size: 0.88rem;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition:
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.closingNote a:hover,
+.closingNote a:focus-visible {
+  border-color: #ffffff;
+  color: #ffffff;
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.forestFloor {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  height: clamp(14rem, 28vw, 30rem);
+  background-image:
+    linear-gradient(180deg, transparent 0%, rgba(4, 13, 11, 0.52) 64%),
+    url("https://assets.knighthacks.org/khix/extended-front.webp");
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: 100% auto;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.12) 18%,
+    #000000 48%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.12) 18%,
+    #000000 48%
+  );
+  pointer-events: none;
+}
+
+@keyframes copyEntrance {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 1.5rem, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes lennyEntrance {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 2.5rem, 0) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes lennyFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-0.4deg);
+  }
+
+  50% {
+    transform: translate3d(0, -0.65rem, 0) rotate(0.5deg);
+  }
+}
+
+@keyframes glowBreathe {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(0.96);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@media (min-width: 1800px) {
+  .hero {
+    padding-right: clamp(8rem, 7vw, 18rem);
+    padding-left: clamp(8rem, 7vw, 18rem);
+    grid-template-columns: minmax(0, 1fr) minmax(30rem, 0.78fr);
+  }
+
+  .heroCopy {
+    width: min(100%, 62rem);
+  }
+
+  .wordmark {
+    width: clamp(10rem, 7vw, 16rem);
+  }
+
+  .eyebrow {
+    margin-bottom: clamp(2rem, 1.2vw, 3rem);
+    font-size: clamp(0.95rem, 0.55vw, 1.25rem);
+  }
+
+  .hero h1 {
+    font-size: clamp(12rem, min(10vw, 24svh), 20rem);
+  }
+
+  .intro {
+    width: min(100%, 46rem);
+    font-size: clamp(1.35rem, 1vw, 2rem);
+  }
+
+  .lennyScene {
+    width: clamp(30rem, 22vw, 42rem);
+  }
+
+  .scrollCue {
+    font-size: clamp(0.8rem, 0.48vw, 1rem);
+  }
+
+  .creditRoll {
+    width: min(100%, 112rem);
+  }
+
+  .sectionHeading {
+    width: min(100%, 80rem);
+  }
+
+  .sectionHeading p {
+    font-size: clamp(0.9rem, 0.52vw, 1.1rem);
+  }
+
+  .sectionHeading h2 {
+    font-size: clamp(5.8rem, 4.5vw, 7.5rem);
+  }
+
+  .index {
+    font-size: clamp(0.78rem, 0.44vw, 0.95rem);
+  }
+
+  .creditRow h3 {
+    font-size: clamp(1.25rem, 0.8vw, 1.65rem);
+  }
+
+  .contributors a {
+    font-size: clamp(2rem, 1.35vw, 2.65rem);
+  }
+
+  .closingNote p {
+    font-size: clamp(2.25rem, 1.5vw, 2.8rem);
+  }
+}
+
+@media (max-width: 900px) {
+  .hero {
+    min-height: max(48rem, 100svh);
+    grid-template-columns: 1fr;
+    align-content: center;
+  }
+
+  .heroCopy {
+    position: relative;
+    z-index: 2;
+  }
+
+  .lennyScene {
+    position: absolute;
+    right: clamp(-3rem, -4vw, -1rem);
+    bottom: 1.5rem;
+    z-index: 1;
+    width: clamp(10rem, 28vw, 16rem);
+    opacity: 0.54;
+  }
+
+  .scrollCue {
+    z-index: 2;
+  }
+
+  .creditRow {
+    grid-template-columns: 2.5rem minmax(10rem, 0.72fr) minmax(15rem, 1.28fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .hero {
+    min-height: max(49rem, 100svh);
+    padding: 7.2rem 1.25rem 7.5rem;
+    align-items: start;
+  }
+
+  .hero::before {
+    background-position: 58% center;
+  }
+
+  .wordmark {
+    width: 6.4rem;
+    margin-bottom: 3.5rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(4.9rem, min(26vw, 22svh), 8rem);
+  }
+
+  .eyebrow {
+    margin-bottom: clamp(1.6rem, 6vw, 2.15rem);
+  }
+
+  .intro {
+    width: min(84%, 27rem);
+    font-size: 1rem;
+  }
+
+  .lennyScene {
+    right: -2.8rem;
+    bottom: 1rem;
+    width: clamp(9.5rem, 38vw, 14rem);
+    opacity: 0.72;
+  }
+
+  .scrollCue {
+    bottom: 1.5rem;
+    left: 1.25rem;
+    font-size: 0.68rem;
+  }
+
+  .creditRoll {
+    padding: 6rem 1.25rem 18rem;
+  }
+
+  .sectionHeading {
+    margin-bottom: 3.75rem;
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+
+  .sectionHeading h2 {
+    max-width: 22rem;
+    font-size: clamp(2.7rem, 13vw, 4.4rem);
+  }
+
+  .creditRow {
+    padding: 1.55rem 0 1.8rem;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 0.65rem 0.75rem;
+  }
+
+  .creditRow:hover {
+    padding-right: 0.35rem;
+    padding-left: 0.35rem;
+  }
+
+  .creditRow h3 {
+    padding-top: 0.05rem;
+    font-size: 1rem;
+  }
+
+  .contributors {
+    grid-column: 2;
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+  }
+
+  .contributors a {
+    font-size: clamp(1.35rem, 7vw, 1.9rem);
+  }
+
+  .closingNote {
+    margin-top: 4.5rem;
+    margin-bottom: 3rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .closingNote p {
+    font-size: 1.5rem;
+  }
+
+  .forestFloor {
+    height: 18rem;
+    background-size: 100% auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroGlow,
+  .heroCopy,
+  .lennyScene,
+  .lenny {
+    animation: none;
+  }
+
+  .creditRow,
+  .creditRow::before,
+  .contributors a span,
+  .contributors a svg,
+  .scrollLine,
+  .closingNote a {
+    transition: none;
+  }
+}
