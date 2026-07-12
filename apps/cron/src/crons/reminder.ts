@@ -23,8 +23,8 @@ const HACK_REMINDERS_WEBHOOK = new WebhookClient({
 const DISCORD_PROD_GUILD_ID = "486628710443778071";
 const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
 const EVENT_BANNER_IMAGE = "https://i.imgur.com/Jr1cyxT.png";
-const HACK_BANNER_IMAGE = "https://i.imgur.com/lpTVNl7.png";
-const DISCORD_HACKATHON_ROLE_ID = "1408025502119231498";
+const HACK_BANNER_IMAGE = "https://i.imgur.com/p3mdFCo.png";
+const DISCORD_HACKATHON_ROLE_ID = "1510751065786683412";
 
 export const preReminders = new CronBuilder({
   name: "reminders/pre",
@@ -69,7 +69,7 @@ export const hackReminders = new CronBuilder({
         event.discordId;
 
       const eventEmbed: APIEmbed = {
-        color: 0xc04b3d,
+        color: 0x34de00,
         title: event.name,
         description:
           event.description.length > 100
@@ -119,7 +119,7 @@ export const hackReminders = new CronBuilder({
     }
 
     await HACK_REMINDERS_WEBHOOK.send({
-      content: `We'll see you there! **Don't forget your lanyard and your Blade QR code!**`,
+      content: `We'll see you there! **Don't forget your wristband and Blade QR code!**`,
     });
   },
 );
