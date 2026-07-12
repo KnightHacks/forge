@@ -15,10 +15,17 @@ import {
 import { SponsorTeamSection } from "./_components/sections/sponsor-team";
 import { TracksSection } from "./_components/sections/tracks";
 import styles from "./page.module.css";
+import { eventJsonLd } from "./seo";
 
 export default function Page() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(eventJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <Navbar links={KHIX_HOME_NAV_LINKS} socialLinks={KHIX_SOCIAL_LINKS} />
       <main className={styles.page}>
         <Hero />

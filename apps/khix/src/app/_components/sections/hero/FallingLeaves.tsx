@@ -13,17 +13,27 @@ interface FallingLeaf {
   x: string;
 }
 
-type LeafVars = Record<
-  | "--leaf-delay"
-  | "--leaf-drift"
-  | "--leaf-duration"
-  | "--leaf-fill"
-  | "--leaf-opacity"
-  | "--leaf-rotate"
-  | "--leaf-size"
-  | "--leaf-x",
-  string | number
->;
+interface LeafStyle extends CSSProperties {
+  "--leaf-delay": string;
+  "--leaf-drift": string;
+  "--leaf-duration": string;
+  "--leaf-fill": string;
+  "--leaf-opacity": number;
+  "--leaf-rotate": string;
+  "--leaf-size": string;
+  "--leaf-x": string;
+}
+
+const getLeafStyle = (leaf: FallingLeaf): LeafStyle => ({
+  "--leaf-delay": leaf.delay,
+  "--leaf-drift": leaf.drift,
+  "--leaf-duration": leaf.duration,
+  "--leaf-fill": leaf.fill,
+  "--leaf-opacity": leaf.opacity,
+  "--leaf-rotate": leaf.rotate,
+  "--leaf-size": leaf.size,
+  "--leaf-x": leaf.x,
+});
 
 const FALLING_LEAVES: FallingLeaf[] = [
   {
@@ -135,18 +145,7 @@ export function FallingLeaves() {
         <span
           key={`${leaf.x}-${leaf.delay}-${index}`}
           className={styles.leaf}
-          style={
-            {
-              "--leaf-delay": leaf.delay,
-              "--leaf-drift": leaf.drift,
-              "--leaf-duration": leaf.duration,
-              "--leaf-fill": leaf.fill,
-              "--leaf-opacity": leaf.opacity,
-              "--leaf-rotate": leaf.rotate,
-              "--leaf-size": leaf.size,
-              "--leaf-x": leaf.x,
-            } satisfies CSSProperties & LeafVars
-          }
+          style={getLeafStyle(leaf)}
         />
       ))}
     </div>

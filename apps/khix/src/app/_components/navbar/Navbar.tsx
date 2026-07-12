@@ -56,7 +56,6 @@ export function Navbar({
   useEffect(() => {
     const reducedMotion = window.matchMedia(REDUCED_MOTION_QUERY);
     if (reducedMotion.matches) {
-      setIsHidden(false);
       return;
     }
 

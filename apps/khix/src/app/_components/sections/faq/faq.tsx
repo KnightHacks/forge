@@ -410,8 +410,8 @@ function useDeferredFaqAssets<T extends Element>() {
     const element = elementRef.current;
 
     if (!element || !("IntersectionObserver" in window)) {
-      setShouldLoad(true);
-      return;
+      const frameId = window.requestAnimationFrame(() => setShouldLoad(true));
+      return () => window.cancelAnimationFrame(frameId);
     }
 
     const observer = new IntersectionObserver(

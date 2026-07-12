@@ -39,7 +39,8 @@ const HOMEPAGE_SPONSORS = [
   {
     name: "Morgan & Morgan",
     websiteUrl: "https://www.forthepeople.com/",
-    logoSrc: "https://assets.knighthacks.org/khix/sponsor-morgan-and-morgan.svg",
+    logoSrc:
+      "https://assets.knighthacks.org/khix/sponsor-morgan-and-morgan.svg",
     logoScale: 0.94,
     mobileLogoScale: 1.15,
     preserveLogoContrast: true,
