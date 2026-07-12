@@ -30,7 +30,7 @@ export function LennyBlink({ className }: LennyBlinkProps) {
           height={3318}
           className={styles.frame}
           data-active="true"
-          loading="lazy"
+          priority
           unoptimized
         />
       </picture>

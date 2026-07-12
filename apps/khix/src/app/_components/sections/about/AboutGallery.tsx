@@ -78,7 +78,7 @@ export function AboutGallery() {
             sizes="(max-width: 760px) 100vw, (max-width: 1100px) 58vw, 43vw"
             className={styles.galleryImage}
             data-active={index === activeImageIndex}
-            loading="lazy"
+            priority={index === 0}
           />
         ))}
       </div>
