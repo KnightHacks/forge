@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 
 import { FallingLeaves } from "./FallingLeaves";
@@ -13,6 +14,19 @@ import { useHeroMotion } from "./useHeroMotion";
 export default function Hero() {
   const { sectionRef, stageRef, handlePointerMove, handlePointerLeave } =
     useHeroMotion();
+  const [viewport, setViewport] = useState<"desktop" | "mobile" | null>(null);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 700px)");
+    const updateViewport = () => {
+      setViewport(mediaQuery.matches ? "mobile" : "desktop");
+    };
+
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
+
+    return () => mediaQuery.removeEventListener("change", updateViewport);
+  }, []);
 
   return (
     <section
@@ -31,16 +45,18 @@ export default function Hero() {
           Knight Hacks IX
         </h1>
         <div className={styles.art} data-hero-art aria-hidden="true">
-          <div className={styles.desktopHeroLayers}>
-            {HERO_LAYERS.map((layer, index) => (
-              <HeroLayerImage
-                key={layer.filename}
-                layer={layer}
-                index={index}
-              />
-            ))}
-          </div>
-          <MobileHeroLayers />
+          {viewport === "desktop" ? (
+            <div className={styles.desktopHeroLayers}>
+              {HERO_LAYERS.map((layer, index) => (
+                <HeroLayerImage
+                  key={layer.filename}
+                  layer={layer}
+                  index={index}
+                />
+              ))}
+            </div>
+          ) : null}
+          {viewport === "mobile" ? <MobileHeroLayers /> : null}
           <div className={styles.shade} aria-hidden="true" />
           <HeroTitle />
           <FallingLeaves />

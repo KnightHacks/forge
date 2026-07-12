@@ -86,8 +86,10 @@
   margin-top: clamp(-12rem, -10vw, -6rem);
   margin-bottom: clamp(-19rem, -16vw, -6rem);
   pointer-events: none;
-  background: url("https://assets.knighthacks.org/khix/separator-rocks-faq.webp") center top / 100% auto
-    no-repeat;
+  background-image: var(--faq-separator-image, none);
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
   filter: drop-shadow(
     0 clamp(0.7rem, 1vw, 1.2rem) clamp(0.8rem, 1.3vw, 1.5rem)
       rgba(2, 4, 15, 0.85)

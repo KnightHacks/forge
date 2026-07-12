@@ -36,9 +36,7 @@ export default function Page() {
             </div>
           </div>
           <SponsorTeamSection />
-          <div id="faq" className={styles.waterfallFaqSeparator}>
-            <FAQTitle />
-          </div>
+          <FAQTitle className={styles.waterfallFaqSeparator} />
           <FAQ />
         </div>
       </main>

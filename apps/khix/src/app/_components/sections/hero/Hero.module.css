@@ -592,6 +592,10 @@
     inset: -1.4svh -2vw;
   }
 
+  .leaf {
+    width: clamp(0.625rem, 3vw, var(--leaf-size));
+  }
+
   .desktopHeroLayers {
     display: none;
   }
@@ -730,6 +734,10 @@
   }
 
   .eventDetails {
+    text-shadow:
+      0 0 0.04rem rgb(255 255 255 / 0.72),
+      0 0 0.18rem rgb(235 249 255 / 0.38),
+      0 0 0.42rem rgb(139 232 255 / 0.2);
     font-size: clamp(1rem, 4.1vw, 1.15rem);
   }
 

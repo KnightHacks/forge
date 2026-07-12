@@ -22,6 +22,16 @@ export function AboutSection() {
           className={styles.glowImage}
         />
       </div>
+      <div className={styles.rightStump} aria-hidden="true">
+        <Image
+          src="https://assets.knighthacks.org/khix/about-stump.webp"
+          alt=""
+          width={629}
+          height={755}
+          sizes="(max-width: 760px) 62vw, (max-width: 1199px) 38vw, 34vw"
+          unoptimized
+        />
+      </div>
       <div className={styles.content}>
         <div className={styles.storyRow}>
           <div className={styles.copy}>

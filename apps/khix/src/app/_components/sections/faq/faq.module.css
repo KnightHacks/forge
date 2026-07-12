@@ -26,7 +26,7 @@
   position: absolute;
   inset: -4rem -2rem;
   z-index: 0;
-  background-image: url("https://assets.knighthacks.org/khix/faq-faq background 1.webp");
+  background-image: var(--faq-background-image, none);
   background-repeat: no-repeat;
   background-position: center top;
   background-size: cover;
@@ -420,7 +420,7 @@
         #15192d calc(50% + 62rem),
         #15192d 100%
       ),
-      url("https://assets.knighthacks.org/khix/faq-faq background 1.webp");
+      var(--faq-background-image, none);
     background-position:
       center,
       center top;
@@ -489,16 +489,13 @@
   }
 
   .questionStack {
-    /* Keep overflowing answers clear of the footer as the cards narrow. */
-    --faq-answer-overflow-reserve: clamp(
-      2.25rem,
-      calc(17.73rem - 32.26vw),
-      7.25rem
-    );
-
     min-height: 0;
     margin-top: 1rem;
     gap: 0.65rem;
+  }
+
+  .questionStack[data-height-locked="true"] {
+    height: auto;
   }
 
   .questionButton {
@@ -539,12 +536,6 @@
   }
 
   .questionStack {
-    --faq-answer-overflow-reserve: clamp(
-      10.5rem,
-      calc(34.95rem - 91vw),
-      16.75rem
-    );
-
     min-height: 0;
   }
 

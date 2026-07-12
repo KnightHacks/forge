@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -17,7 +17,7 @@ const faqSections = [
       {
         question: "What is a hackathon?",
         answer:
-          "A hackathon is a weekend-long event where students come together to learn new technologies and build creative projects. Projects can be websites, apps, games, hardware builds, AI tools, or anything else you can imagine. Throughout Knight Hacks IX, hackers can expect workshops, sponsor events, mentorship, food, swag, community activities, and time to build something awesome.",
+          "A hackathon is a weekend where students team up to learn, experiment, and build something new. At Knight Hacks IX, you’ll have workshops, mentors, sponsor events, food, swag, and plenty of time to create.",
       },
       {
         question: "What is Knight Hacks IX?",
@@ -391,6 +391,64 @@ const floatingAssets = [
 
 type FaqSectionId = (typeof faqSections)[number]["id"];
 
+const FAQ_ASSET_PRELOAD_MARGIN = "2000px 0px";
+const FAQ_BACKGROUND_IMAGE =
+  'url("https://assets.knighthacks.org/khix/faq-background-1440.webp")';
+const FAQ_MOBILE_BACKGROUND_IMAGE =
+  'url("https://assets.knighthacks.org/khix/faq-background-768.webp")';
+const FAQ_SEPARATOR_IMAGE =
+  'url("https://assets.knighthacks.org/khix/separator-rocks-faq-1920.webp")';
+const FAQ_MOBILE_SEPARATOR_IMAGE =
+  'url("https://assets.knighthacks.org/khix/separator-rocks-faq-768.webp")';
+
+function useDeferredFaqAssets<T extends Element>() {
+  const elementRef = useRef<T>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    const element = elementRef.current;
+
+    if (!element || !("IntersectionObserver" in window)) {
+      setShouldLoad(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+
+        setShouldLoad(true);
+        observer.disconnect();
+      },
+      { rootMargin: FAQ_ASSET_PRELOAD_MARGIN },
+    );
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return [elementRef, shouldLoad] as const;
+}
+
+function useFaqResponsiveAsset(desktopAsset: string, mobileAsset: string) {
+  const [asset, setAsset] = useState(desktopAsset);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 820px)");
+    const updateAsset = () => {
+      setAsset(mediaQuery.matches ? mobileAsset : desktopAsset);
+    };
+
+    updateAsset();
+    mediaQuery.addEventListener("change", updateAsset);
+
+    return () => mediaQuery.removeEventListener("change", updateAsset);
+  }, [desktopAsset, mobileAsset]);
+
+  return asset;
+}
+
 const getAudioContext = () => {
   return new AudioContext();
 };
@@ -470,6 +528,11 @@ export default function FAQ() {
   const [activeSectionId, setActiveSectionId] =
     useState<FaqSectionId>("general");
   const [openQuestion, setOpenQuestion] = useState<number | null>(null);
+  const [faqRef, shouldLoadFaqAssets] = useDeferredFaqAssets<HTMLElement>();
+  const faqBackgroundImage = useFaqResponsiveAsset(
+    FAQ_BACKGROUND_IMAGE,
+    FAQ_MOBILE_BACKGROUND_IMAGE,
+  );
   const { motionLayerRef, handlePointerMove, handlePointerLeave } =
     useFaqMotion();
   const activeSection = useMemo(
@@ -484,13 +547,24 @@ export default function FAQ() {
 
   return (
     <section
+      ref={faqRef}
       className={styles.faq}
       aria-labelledby="faq-title"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
       <div ref={motionLayerRef} className={styles.motionLayer}>
-        <div className={styles.background} aria-hidden="true" />
+        <div
+          className={styles.background}
+          style={
+            shouldLoadFaqAssets
+              ? ({
+                  "--faq-background-image": faqBackgroundImage,
+                } as CSSProperties)
+              : undefined
+          }
+          aria-hidden="true"
+        />
 
         {floatingAssets.map((asset) => (
           <ParallaxAsset key={asset.className} asset={asset} />
@@ -541,18 +615,36 @@ export default function FAQ() {
   );
 }
 
-export function FAQTitle() {
+export function FAQTitle({ className }: { className?: string }) {
+  const [titleRef, shouldLoadSeparator] =
+    useDeferredFaqAssets<HTMLDivElement>();
+  const faqSeparatorImage = useFaqResponsiveAsset(
+    FAQ_SEPARATOR_IMAGE,
+    FAQ_MOBILE_SEPARATOR_IMAGE,
+  );
+
   return (
-    <motion.h2
-      id="faq-title"
-      className={styles.dividerTitle}
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.45 }}
-      transition={{ duration: 0.65, ease: "easeOut" }}
+    <div
+      id="faq"
+      ref={titleRef}
+      className={className}
+      style={
+        shouldLoadSeparator
+          ? ({ "--faq-separator-image": faqSeparatorImage } as CSSProperties)
+          : undefined
+      }
     >
-      FA<span className={styles.dividerTitleQ}>Q</span>
-    </motion.h2>
+      <motion.h2
+        id="faq-title"
+        className={styles.dividerTitle}
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.45 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+      >
+        FA<span className={styles.dividerTitleQ}>Q</span>
+      </motion.h2>
+    </div>
   );
 }
 
