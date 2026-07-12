@@ -5,6 +5,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { isMuted } from "../../audio/sound-state";
 import styles from "./faq.module.css";
 import { useFaqMotion } from "./useFaqMotion";
 
@@ -396,6 +397,11 @@ const getAudioContext = () => {
 };
 
 function playCaveNote(frequency: number) {
+  // Respect the global mute toggle — it kills every site sound effect.
+  if (isMuted()) {
+    return;
+  }
+
   const context = getAudioContext();
 
   const now = context.currentTime;

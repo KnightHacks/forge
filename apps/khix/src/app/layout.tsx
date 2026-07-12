@@ -3,6 +3,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 
+import { SiteAudio } from "./_components/audio";
 import { SEO_DESCRIPTION, SEO_TITLE, SITE_URL } from "./seo";
 
 const bagnard = localFont({
@@ -27,8 +28,18 @@ export const metadata: Metadata = {
     follow: true,
   },
   icons: {
-    icon: [{ url: "https://assets.knighthacks.org/khix/favicon.png", type: "image/png" }],
-    shortcut: [{ url: "https://assets.knighthacks.org/khix/favicon.png", type: "image/png" }],
+    icon: [
+      {
+        url: "https://assets.knighthacks.org/khix/favicon.png",
+        type: "image/png",
+      },
+    ],
+    shortcut: [
+      {
+        url: "https://assets.knighthacks.org/khix/favicon.png",
+        type: "image/png",
+      },
+    ],
   },
   openGraph: {
     title: SEO_TITLE,
@@ -71,7 +82,10 @@ export default function RootLayout({
       className={`${bagnard.variable} dark h-full`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        {children}
+        <SiteAudio />
+      </body>
     </html>
   );
 }
