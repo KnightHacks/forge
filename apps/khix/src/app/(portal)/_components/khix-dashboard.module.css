@@ -860,9 +860,13 @@
 }
 
 .statusMain {
-  overflow: hidden;
-  overscroll-behavior: none;
-  scrollbar-gutter: auto;
+  grid-template-rows: minmax(min-content, 1fr) auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: clamp(8.5rem, 16dvh, 12rem) clamp(1rem, 3.6vw, 4rem)
+    clamp(1.4rem, 3vw, 2.5rem) clamp(1.25rem, 3vw, 3.5rem);
+  scrollbar-gutter: stable;
 }
 
 .main::before,
@@ -4179,6 +4183,7 @@
     padding: 1rem 1rem 1rem clamp(1rem, 2.6vw, 1.8rem);
   }
 
+  .statusMain,
   .profileMain,
   .loreMain {
     padding-top: clamp(6rem, 14dvh, 9rem);
