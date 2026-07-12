@@ -177,18 +177,18 @@
 /* Color the rock bitmap itself only during interaction. This preserves the
    asset's transparency and works without a cross-origin CSS mask. */
 .sponsorLink[data-tier="bronze-ember"] {
-  --tier-rock-hover-filter: grayscale(0.34) sepia(1) saturate(2.6)
-    hue-rotate(332deg) brightness(0.9) contrast(1.2);
+  --tier-rock-hover-filter: grayscale(0.3) sepia(1) saturate(1.85)
+    hue-rotate(343deg) brightness(0.86) contrast(1.3);
 }
 
 .sponsorLink[data-tier="silver-moon"] {
-  --tier-rock-hover-filter: grayscale(0.88) sepia(0.1) saturate(0.58)
-    hue-rotate(158deg) brightness(1.04) contrast(1.22);
+  --tier-rock-hover-filter: grayscale(0.82) sepia(0.22) saturate(1.35)
+    hue-rotate(156deg) brightness(1.12) contrast(1.36);
 }
 
 .sponsorLink[data-tier="golden-dawn"] {
-  --tier-rock-hover-filter: grayscale(0.2) sepia(1) saturate(3.05)
-    hue-rotate(354deg) brightness(0.96) contrast(1.2);
+  --tier-rock-hover-filter: grayscale(0.08) sepia(0.82) saturate(2.15)
+    hue-rotate(2deg) brightness(1.1) contrast(1.12);
 }
 
 .sponsorLink[data-tier="platinum-crown"] {
@@ -628,7 +628,29 @@
   }
 }
 
-@media (hover: none) {
+@media (max-width: 760px), (hover: none) {
+  .sponsorLink:not(:focus-visible) .rockFrame::before {
+    animation: sponsorMobileRockGlisten 20s ease-in-out var(--rune-delay)
+      infinite;
+  }
+
+  .sponsorLink:not(:focus-visible) .rockFrame::after {
+    animation: sponsorMobileTintGlisten 20s ease-in-out var(--rune-delay)
+      infinite;
+  }
+
+  .sponsorLink:not(:focus-visible) .rockSheen {
+    animation: sponsorMobileSheenGlisten 20s ease-in-out var(--rune-delay)
+      infinite;
+  }
+
+  .sponsorLink:not(:focus-visible) .rockShine {
+    opacity: 0;
+    animation: sponsorMobileShineGlisten 20s ease-in-out var(--rune-delay)
+      infinite;
+    will-change: background-position;
+  }
+
   .sponsorLogo {
     opacity: var(--sponsor-logo-opacity, 1);
   }
@@ -676,6 +698,14 @@
     transition: none;
   }
 
+  .sponsorLink:not(:focus-visible) .rockFrame::before {
+    animation: none;
+  }
+
+  .sponsorLink:not(:focus-visible) .rockFrame::after {
+    animation: none;
+  }
+
   .sponsorLink:hover .sponsorLogoImage,
   .sponsorLink:focus-visible .sponsorLogoImage {
     animation: none;
@@ -687,7 +717,10 @@
     animation: none;
   }
 
+  .rockSheen,
   .rockShine,
+  .sponsorLink:not(:focus-visible) .rockSheen,
+  .sponsorLink:not(:focus-visible) .rockShine,
   .sponsorLink:hover .rockShine,
   .sponsorLink:focus-visible .rockShine {
     animation: none;
@@ -814,6 +847,70 @@
   45%,
   100% {
     background-position: -120% 0;
+  }
+}
+
+@keyframes sponsorMobileSheenGlisten {
+  0%,
+  100% {
+    opacity: var(--sponsor-metallic-rest-strength, 0.28);
+  }
+
+  50% {
+    opacity: 0.58;
+  }
+}
+
+@keyframes sponsorMobileRockGlisten {
+  0%,
+  100% {
+    filter: var(--sponsor-rock-surface-filter, brightness(1))
+      var(--tier-rock-filter, brightness(1)) brightness(1) contrast(1)
+      saturate(1);
+  }
+
+  50% {
+    filter: var(--sponsor-rock-surface-filter, brightness(1))
+      var(--tier-rock-filter, brightness(1)) brightness(1.08) contrast(1.03)
+      saturate(1.06);
+  }
+}
+
+@keyframes sponsorMobileTintGlisten {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 0.14;
+  }
+}
+
+@keyframes sponsorMobileShineGlisten {
+  0% {
+    background-position: 200% 0;
+    opacity: 0;
+  }
+
+  15% {
+    background-position: 140% 0;
+    opacity: 0.2;
+  }
+
+  50% {
+    background-position: 38% 0;
+    opacity: 0.68;
+  }
+
+  85% {
+    background-position: -50% 0;
+    opacity: 0.34;
+  }
+
+  100% {
+    background-position: -120% 0;
+    opacity: 0;
   }
 }
 

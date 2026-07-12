@@ -91,9 +91,9 @@
   border-radius: 999px;
   background: transparent;
   box-shadow: none;
-  backdrop-filter: blur(56px) saturate(1.22);
+  backdrop-filter: none;
   pointer-events: auto;
-  -webkit-backdrop-filter: blur(56px) saturate(1.22);
+  -webkit-backdrop-filter: none;
 }
 
 .brand {
