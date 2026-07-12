@@ -38,6 +38,7 @@ interface SponsorTierConfig {
   glowEndColor: string;
   glowStartColor: string;
   size: SponsorSize;
+  tintColor: string;
 }
 
 type SponsorCardStyle = CSSProperties & {
@@ -56,6 +57,7 @@ type SponsorCardStyle = CSSProperties & {
   "--tier-glow-pulse-soft-start-alpha": string;
   "--tier-glow-radius-scale": string;
   "--tier-glow-start-rgb": string;
+  "--tier-tint-rgb": string;
 };
 
 const SPONSOR_TIER_DISPLAY_ORDER = [
@@ -72,29 +74,34 @@ const SPONSOR_TIER_CONFIG = {
     glowEndColor: "#CD7F32D9",
     glowStartColor: "#5F2A00B2",
     size: "x-small",
+    tintColor: "#B5561A",
   },
   "silver-moon": {
     glowBoost: 1.48,
     glowEndColor: "#F7FDFFFF",
     glowStartColor: "#BECBD1D9",
     size: "small",
+    tintColor: "#8FA6B5",
   },
   "golden-dawn": {
     glowBoost: 1.26,
     glowEndColor: "#FFE45CD9",
     glowStartColor: "#C88A00C7",
     size: "medium",
+    tintColor: "#FFB400",
   },
   "platinum-crown": {
     glowBoost: 1.34,
     glowEndColor: "#D7DCFFFF",
     glowStartColor: "#5748D9E6",
     size: "large",
+    tintColor: "#8C93E8",
   },
   "forest-sovereign": {
     glowEndColor: "#CE2CFF",
     glowStartColor: "#4E007B",
     size: "x-large",
+    tintColor: "#A020F0",
   },
 } as const satisfies Record<SponsorTier, SponsorTierConfig>;
 
@@ -158,6 +165,7 @@ function SponsorRockCard({
   const glowStartColor = getHexColorParts(tierConfig.glowStartColor);
   const glowEndColor = getHexColorParts(tierConfig.glowEndColor);
   const glowBoost = "glowBoost" in tierConfig ? tierConfig.glowBoost : 1;
+  const tintColor = getHexColorParts(tierConfig.tintColor);
   const logoScale = sponsor.logoScale ?? 1;
   const mobileLogoScale = sponsor.mobileLogoScale ?? logoScale;
   const glowRadiusScale = 1 + (glowBoost - 1) * 0.5;
@@ -201,6 +209,7 @@ function SponsorRockCard({
     ),
     "--tier-glow-radius-scale": glowRadiusScale.toFixed(3),
     "--tier-glow-start-rgb": glowStartColor.rgb,
+    "--tier-tint-rgb": tintColor.rgb,
   };
 
   return (
@@ -217,7 +226,10 @@ function SponsorRockCard({
       style={style}
     >
       <span className={styles.sponsorVisual} aria-hidden="true">
-        <span className={styles.rockFrame} aria-hidden="true" />
+        <span className={styles.rockFrame} aria-hidden="true">
+          <span className={styles.rockSheen} aria-hidden="true" />
+          <span className={styles.rockShine} aria-hidden="true" />
+        </span>
         <span className={styles.sponsorLogo}>
           <Image
             src={sponsor.logoSrc}

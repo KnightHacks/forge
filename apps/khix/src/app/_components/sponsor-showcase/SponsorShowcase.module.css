@@ -115,6 +115,14 @@
   --tier-glow-radius-scale: 1;
   --tier-glow-start-rgb: 255 255 255;
   --tier-glow-halo-strength: 1;
+  --tier-tint-rgb: 255 255 255;
+  --tier-tint-opacity: 0.92;
+  --tier-tint-blend: multiply;
+  --sponsor-shine-duration: 2.6s;
+  --sponsor-shine-strength: 0.9;
+  --sponsor-metallic-strength: 0.85;
+  --sponsor-rock-surface-hover-filter: contrast(1.16) brightness(1.07)
+    saturate(1.12);
 
   position: relative;
   display: block;
@@ -198,6 +206,10 @@
   display: block;
   aspect-ratio: 1;
   content: "";
+  top: var(--rock-offset-top);
+  left: var(--rock-offset-left);
+  width: var(--rock-sprite-width);
+  background-image: var(--rock-image);
   background-position: 0 0;
   background-repeat: no-repeat;
   background-size: 100% auto;
@@ -207,49 +219,129 @@
   pointer-events: none;
 }
 
+/* Semi-opaque tier-colored overlay, masked to the stone silhouette so only
+   the rock (not its transparent bounding box) is tinted on hover/focus. */
+.rockFrame::after {
+  position: absolute;
+  display: block;
+  aspect-ratio: 1;
+  content: "";
+  top: var(--rock-offset-top);
+  left: var(--rock-offset-left);
+  width: var(--rock-sprite-width);
+  background-color: rgb(var(--tier-tint-rgb));
+  mask-image: var(--rock-image);
+  mask-repeat: no-repeat;
+  mask-position: 0 0;
+  mask-size: 100% auto;
+  -webkit-mask-image: var(--rock-image);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: 0 0;
+  -webkit-mask-size: 100% auto;
+  mix-blend-mode: var(--tier-tint-blend, multiply);
+  opacity: 0;
+  transition: opacity 200ms ease;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Chrome-style shading ramp: a bright top highlight, a dark mid-band, a lower
+   secondary highlight and a dark base. Blended with `overlay` over the tinted
+   stone, it fakes a reflective metal surface. Masked to the silhouette. */
+.rockSheen {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  aspect-ratio: 1;
+  top: var(--rock-offset-top);
+  left: var(--rock-offset-left);
+  width: var(--rock-sprite-width);
+  background-image: linear-gradient(
+    168deg,
+    rgb(255 255 255 / 0.55) 0%,
+    rgb(255 255 255 / 0.1) 20%,
+    rgb(8 12 18 / 0) 42%,
+    rgb(8 12 18 / 0.24) 60%,
+    rgb(255 255 255 / 0.32) 78%,
+    rgb(8 12 18 / 0.3) 100%
+  );
+  mask-image: var(--rock-image);
+  mask-repeat: no-repeat;
+  mask-position: 0 0;
+  mask-size: 100% auto;
+  -webkit-mask-image: var(--rock-image);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: 0 0;
+  -webkit-mask-size: 100% auto;
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Metallic specular sweep — a diagonal highlight that travels across the
+   stone on hover, masked to the silhouette so it stays on the rock. */
+.rockShine {
+  position: absolute;
+  z-index: 2;
+  display: block;
+  aspect-ratio: 1;
+  top: var(--rock-offset-top);
+  left: var(--rock-offset-left);
+  width: var(--rock-sprite-width);
+  background-image: linear-gradient(
+    115deg,
+    transparent 38%,
+    rgb(255 255 255 / calc(0.55 * var(--sponsor-shine-strength, 0.9))) 47%,
+    rgb(255 255 255 / var(--sponsor-shine-strength, 0.9)) 50%,
+    rgb(255 255 255 / calc(0.55 * var(--sponsor-shine-strength, 0.9))) 53%,
+    transparent 62%
+  );
+  background-repeat: no-repeat;
+  background-size: 250% 100%;
+  background-position: 200% 0;
+  mask-image: var(--rock-image);
+  mask-repeat: no-repeat;
+  mask-position: 0 0;
+  mask-size: 100% auto;
+  -webkit-mask-image: var(--rock-image);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: 0 0;
+  -webkit-mask-size: 100% auto;
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  user-select: none;
+  pointer-events: none;
+}
+
 .sponsorLink[data-size="medium"] .rockFrame,
 .sponsorLink[data-size="small"] .rockFrame,
 .sponsorLink[data-size="x-small"] .rockFrame {
   width: 100%;
   aspect-ratio: 400 / 292;
-}
-
-.sponsorLink[data-size="medium"] .rockFrame::before,
-.sponsorLink[data-size="small"] .rockFrame::before,
-.sponsorLink[data-size="x-small"] .rockFrame::before {
-  top: -209.59%;
-  left: -56.5%;
-  width: 375%;
-  background-image: url("https://assets.knighthacks.org/khix/small-sponsor-rock.webp");
+  --rock-image: url("https://assets.knighthacks.org/khix/small-sponsor-rock.webp");
+  --rock-offset-top: -209.59%;
+  --rock-offset-left: -56.5%;
+  --rock-sprite-width: 375%;
 }
 
 .sponsorLink[data-size="x-large"] .rockFrame,
-.sponsorLink[data-size="large"] .rockFrame {
+.sponsorLink[data-size="large"] .rockFrame,
+.sponsorTitleRock .rockFrame {
   width: 100%;
   aspect-ratio: 1196 / 262;
-}
-
-.sponsorLink[data-size="x-large"] .rockFrame::before,
-.sponsorLink[data-size="large"] .rockFrame::before {
-  top: -85.12%;
-  left: -11.96%;
-  width: 125.42%;
-  background-image: url("https://assets.knighthacks.org/khix/large-sponsor-rock.webp");
+  --rock-image: url("https://assets.knighthacks.org/khix/large-sponsor-rock.webp");
+  --rock-offset-top: -85.12%;
+  --rock-offset-left: -11.96%;
+  --rock-sprite-width: 125.42%;
 }
 
 .sponsorTitleRock .rockFrame {
   position: relative;
   inset: auto;
-  width: 100%;
-  aspect-ratio: 1196 / 262;
   margin: 0;
-}
-
-.sponsorTitleRock .rockFrame::before {
-  top: -85.12%;
-  left: -11.96%;
-  width: 125.42%;
-  background-image: url("https://assets.knighthacks.org/khix/large-sponsor-rock.webp");
 }
 
 .sponsorLogo {
@@ -334,6 +426,24 @@
     --sponsor-rock-surface-hover-filter,
     var(--sponsor-rock-surface-filter, none)
   );
+}
+
+.sponsorLink:hover .rockFrame::after,
+.sponsorLink:focus-visible .rockFrame::after {
+  opacity: var(--tier-tint-opacity, 0.92);
+}
+
+.sponsorLink:hover .rockSheen,
+.sponsorLink:focus-visible .rockSheen {
+  opacity: var(--sponsor-metallic-strength, 0.85);
+}
+
+.sponsorLink:hover .rockShine,
+.sponsorLink:focus-visible .rockShine {
+  opacity: 1;
+  animation: sponsorShineSweep var(--sponsor-shine-duration, 2.6s) ease-in-out
+    infinite;
+  will-change: background-position;
 }
 
 .sponsorLink:hover .sponsorLogo,
@@ -536,6 +646,13 @@
   .sponsorLink:focus-visible .sponsorVisual {
     animation: none;
   }
+
+  .rockShine,
+  .sponsorLink:hover .rockShine,
+  .sponsorLink:focus-visible .rockShine {
+    animation: none;
+    transition: none;
+  }
 }
 
 @keyframes sponsorRunePulse {
@@ -646,6 +763,17 @@
               )
           )
       );
+  }
+}
+
+@keyframes sponsorShineSweep {
+  0% {
+    background-position: 200% 0;
+  }
+
+  45%,
+  100% {
+    background-position: -120% 0;
   }
 }
 
