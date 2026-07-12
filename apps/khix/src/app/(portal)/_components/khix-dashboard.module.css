@@ -871,6 +871,26 @@
   scrollbar-gutter: auto;
 }
 
+.statusMain::before {
+  position: absolute;
+  z-index: 0;
+  inset: -8%;
+  background-image: var(--khix-dashboard-background-image);
+  background-position: right center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  content: "";
+  filter: blur(clamp(4rem, 7vw, 7rem)) saturate(0.82);
+  opacity: 0.18;
+  pointer-events: none;
+  transform: scale(1.08);
+}
+
+.statusMain .mainCanvas {
+  z-index: 1;
+  padding-top: clamp(8.5rem, 16dvh, 12rem);
+}
+
 .mainCanvas::before,
 .main::after {
   position: absolute;
@@ -880,6 +900,9 @@
 }
 
 .mainCanvas::before {
+  --khix-scene-side-feather-mid: clamp(1.5rem, 4vw, 4rem);
+  --khix-scene-side-feather-end: clamp(3.5rem, 9vw, 10rem);
+
   z-index: 0;
   background-image:
     var(--khix-dashboard-background-image),
@@ -894,6 +917,42 @@
     center;
   background-repeat: no-repeat;
   background-size: cover, cover;
+  -webkit-mask-image:
+    linear-gradient(
+      to bottom,
+      transparent 0,
+      rgb(0 0 0 / 0.35) clamp(1.5rem, 3vw, 3rem),
+      #000 clamp(5.5rem, 8vw, 8.5rem),
+      #000 100%
+    ),
+    linear-gradient(
+      to right,
+      transparent 0,
+      rgb(0 0 0 / 0.35) var(--khix-scene-side-feather-mid),
+      #000 var(--khix-scene-side-feather-end),
+      #000 calc(100% - var(--khix-scene-side-feather-end)),
+      rgb(0 0 0 / 0.35) calc(100% - var(--khix-scene-side-feather-mid)),
+      transparent 100%
+    );
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(
+      to bottom,
+      transparent 0,
+      rgb(0 0 0 / 0.35) clamp(1.5rem, 3vw, 3rem),
+      #000 clamp(5.5rem, 8vw, 8.5rem),
+      #000 100%
+    ),
+    linear-gradient(
+      to right,
+      transparent 0,
+      rgb(0 0 0 / 0.35) var(--khix-scene-side-feather-mid),
+      #000 var(--khix-scene-side-feather-end),
+      #000 calc(100% - var(--khix-scene-side-feather-end)),
+      rgb(0 0 0 / 0.35) calc(100% - var(--khix-scene-side-feather-mid)),
+      transparent 100%
+    );
+  mask-composite: intersect;
   opacity: 0.26;
 }
 
@@ -4190,6 +4249,7 @@
     padding: 1rem 1rem 1rem clamp(1rem, 2.6vw, 1.8rem);
   }
 
+  .statusMain .mainCanvas,
   .profileMain .mainCanvas,
   .loreMain .mainCanvas {
     padding-top: clamp(6rem, 14dvh, 9rem);
@@ -4637,6 +4697,7 @@
     overscroll-behavior: auto;
   }
 
+  .statusMain .mainCanvas,
   .profileMain .mainCanvas,
   .loreMain .mainCanvas {
     padding-top: var(--khix-mobile-page-top-padding);
