@@ -52,7 +52,7 @@
   left: 0;
   z-index: 2;
   height: var(--rock-separator-height);
-  background: url("https://assets.knighthacks.org/khix/sponsor-rock-separator.webp")
+  background: url("https://assets.knighthacks.org/sponsor-rock-separator-desktop.webp")
     center top / 100% auto no-repeat;
 }
 
@@ -111,13 +111,13 @@
 .rocksTop {
   top: var(--waterfall-artwork-top);
   height: calc(var(--waterfall-width) * 2.0854167);
-  background-image: url("https://assets.knighthacks.org/khix/rocks-waterfall-top.webp");
+  background-image: url("https://assets.knighthacks.org/rocks-waterfall-top-desktop.webp");
 }
 
 .rocksBottom {
   top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 2.08125);
   height: calc(var(--waterfall-width) * 2.0854167);
-  background-image: url("https://assets.knighthacks.org/khix/rocks-waterfall-bottom.webp");
+  background-image: url("https://assets.knighthacks.org/rocks-waterfall-bottom-desktop.webp");
 }
 
 .waterfallOne,
@@ -133,19 +133,19 @@
 .waterfallOne {
   top: var(--waterfall-artwork-top);
   height: calc(var(--waterfall-width) * 1.3916667);
-  background-image: url("https://assets.knighthacks.org/khix/waterfall-animated-one.webp");
+  background-image: url("https://assets.knighthacks.org/waterfall-animated-one-desktop.webp");
 }
 
 .waterfallTwo {
   top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 1.3861111);
   height: calc(var(--waterfall-width) * 1.3944444);
-  background-image: url("https://assets.knighthacks.org/khix/waterfall-animated-two.webp");
+  background-image: url("https://assets.knighthacks.org/waterfall-animated-two-desktop.webp");
 }
 
 .waterfallThree {
   top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 2.775);
   height: calc(var(--waterfall-width) * 1.3916667);
-  background-image: url("https://assets.knighthacks.org/khix/waterfall-animated-three.webp");
+  background-image: url("https://assets.knighthacks.org/waterfall-animated-three-desktop.webp");
 }
 
 .waterfallThree::after {
@@ -234,7 +234,7 @@
   z-index: 3;
   width: 100vw;
   height: var(--team-separator-height);
-  background: url("https://assets.knighthacks.org/khix/separator-rocks.webp")
+  background: url("https://assets.knighthacks.org/separator-rocks-desktop.webp")
     center top / 100% auto no-repeat;
   filter: drop-shadow(0 -0.35rem 0.7rem rgba(3, 7, 12, 0.22))
     drop-shadow(0 0.5rem 0.65rem rgba(2, 4, 8, 0.28));
@@ -535,7 +535,7 @@
   width: 125.42%;
   aspect-ratio: 1;
   content: "";
-  background: url("https://assets.knighthacks.org/khix/large-sponsor-rock.webp")
+  background: url("https://assets.knighthacks.org/large-sponsor-rock-desktop.webp")
     0 0 / 100% auto no-repeat;
   filter: saturate(0.58) brightness(0.78) contrast(1.1) hue-rotate(4deg);
   pointer-events: none;
@@ -737,31 +737,35 @@
 
 @media (max-width: 760px) {
   .sponsorRockSeparator {
-    background-image: url("/assets/sponsor-mobile/sponsor-rock-separator.webp");
+    background-image: url("https://assets.knighthacks.org/sponsor-rock-separator-mobile.webp");
   }
 
   .rocksTop {
-    background-image: url("/assets/sponsor-mobile/rocks-waterfall-top.webp");
+    background-image: url("https://assets.knighthacks.org/rocks-waterfall-top-mobile.webp");
   }
 
   .rocksBottom {
-    background-image: url("/assets/sponsor-mobile/rocks-waterfall-bottom.webp");
+    background-image: url("https://assets.knighthacks.org/rocks-waterfall-bottom-mobile.webp");
   }
 
   .waterfallOne {
-    background-image: url("/assets/sponsor-mobile/waterfall-animated-one.webp");
+    background-image: url("https://assets.knighthacks.org/waterfall-animated-one-mobile.webp");
   }
 
   .waterfallTwo {
-    background-image: url("/assets/sponsor-mobile/waterfall-animated-two.webp");
+    background-image: url("https://assets.knighthacks.org/waterfall-animated-two-mobile.webp");
   }
 
   .waterfallThree {
-    background-image: url("/assets/sponsor-mobile/waterfall-animated-three.webp");
+    background-image: url("https://assets.knighthacks.org/waterfall-animated-three-mobile.webp");
+  }
+
+  .partnerRock::before {
+    background-image: url("https://assets.knighthacks.org/khix/large-sponsor-rock-mobile.webp");
   }
 
   .bridge {
-    background-image: url("/assets/sponsor-mobile/separator-rocks.webp");
+    background-image: url("https://assets.knighthacks.org/separator-rocks-mobile.webp");
   }
 
   .droplet[data-mobile-hidden="true"] {

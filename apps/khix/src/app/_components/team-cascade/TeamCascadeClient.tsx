@@ -1,6 +1,5 @@
 "use client";
 
-import type { ImageLoaderProps } from "next/image";
 import type { ReactNode } from "react";
 import { useEffect, useId, useMemo, useState } from "react";
 import Image from "next/image";
@@ -22,7 +21,6 @@ interface TeamCascadePerson {
   roleLabel: TeamCascadeRole;
 }
 
-const profileImageLoader = ({ src }: ImageLoaderProps) => src;
 const longTeamMemberNameLength = 20;
 const rosterIdPrefixes = [
   "executive-",
@@ -96,8 +94,6 @@ function ProfileImage({ member }: { member: TeamCascadeMember }) {
         src={member.imageUrl}
         alt=""
         fill
-        loader={profileImageLoader}
-        unoptimized
         sizes="(min-width: 921px) 6.25rem, (min-width: 761px) 5.25rem, (min-width: 521px) 4.5rem, 3.8rem"
         className={styles.teamAvatarImage}
       />

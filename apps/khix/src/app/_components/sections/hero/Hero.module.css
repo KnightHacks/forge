@@ -589,7 +589,7 @@
 
   .art {
     --khix-art-motion-scale: 0.42;
-    inset: -1.4svh -2vw;
+    inset: -1.4svh 0;
   }
 
   .leaf {

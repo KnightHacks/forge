@@ -363,7 +363,7 @@
 .sponsorLink[data-size="x-small"] .rockFrame {
   width: 100%;
   aspect-ratio: 400 / 292;
-  --rock-image: url("https://assets.knighthacks.org/khix/small-sponsor-rock.webp");
+  --rock-image: url("https://assets.knighthacks.org/small-sponsor-rock-desktop.webp");
   --rock-offset-top: -209.59%;
   --rock-offset-left: -56.5%;
   --rock-sprite-width: 375%;
@@ -374,7 +374,7 @@
 .sponsorTitleRock .rockFrame {
   width: 100%;
   aspect-ratio: 1196 / 262;
-  --rock-image: url("https://assets.knighthacks.org/khix/large-sponsor-rock.webp");
+  --rock-image: url("https://assets.knighthacks.org/large-sponsor-rock-desktop.webp");
   --rock-offset-top: -85.12%;
   --rock-offset-left: -11.96%;
   --rock-sprite-width: 125.42%;
@@ -612,6 +612,18 @@
     --sponsor-width: clamp(4.8rem, 24vw, 7.6rem);
   }
 
+  .sponsorLink[data-size="medium"] .rockFrame,
+  .sponsorLink[data-size="small"] .rockFrame,
+  .sponsorLink[data-size="x-small"] .rockFrame {
+    --rock-image: url("https://assets.knighthacks.org/khix/small-sponsor-rock-mobile.webp");
+  }
+
+  .sponsorLink[data-size="x-large"] .rockFrame,
+  .sponsorLink[data-size="large"] .rockFrame,
+  .sponsorTitleRock .rockFrame {
+    --rock-image: url("https://assets.knighthacks.org/khix/large-sponsor-rock-mobile.webp");
+  }
+
   .sponsorLogo {
     transform: scale(var(--sponsor-logo-mobile-scale));
   }
@@ -684,6 +696,19 @@
   .sponsorLink:hover:not(:focus-visible) .sponsorVisual {
     animation: none;
     will-change: auto;
+  }
+
+  .sponsorLink:not(:focus-visible) .rockFrame::before,
+  .sponsorLink:not(:focus-visible) .rockSheen,
+  .sponsorLogoImage,
+  .sponsorLink:hover:not(:focus-visible) .sponsorLogoImage {
+    animation: none;
+    will-change: auto;
+  }
+
+  .sponsorLink:not(:focus-visible) .rockFrame::after,
+  .sponsorLink:not(:focus-visible) .rockShine {
+    display: none;
   }
 }
 
