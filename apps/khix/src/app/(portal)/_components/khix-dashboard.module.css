@@ -5391,6 +5391,179 @@
   }
 }
 
+@media (min-width: 701px) and (max-height: 1079px) {
+  .statusMain .mainCanvas {
+    gap: clamp(0.55rem, 1.4dvh, 0.9rem);
+    padding-top: clamp(1.5rem, 5dvh, 3rem);
+    padding-bottom: clamp(0.75rem, 2dvh, 1.25rem);
+  }
+
+  .statusMain .greeting {
+    font-size: clamp(1.2rem, min(2.1vw, 3.2dvh), 1.85rem);
+  }
+
+  .statusMain .headline {
+    margin-top: clamp(0.45rem, 1.2dvh, 0.75rem);
+    font-size: clamp(2.5rem, min(5.4vw, 9dvh), 4.65rem);
+    line-height: 0.86;
+  }
+
+  .statusMain .subcopy {
+    margin-top: clamp(0.5rem, 1.3dvh, 0.75rem);
+    font-size: clamp(0.82rem, min(1.25vw, 2.2dvh), 1.1rem);
+  }
+
+  .statusMain .countdownSlot,
+  .statusMain .acceptedStatusStage .countdownSlot {
+    margin-top: clamp(0.5rem, 1.4dvh, 0.8rem);
+  }
+
+  .statusMain .countdownGrid {
+    gap: clamp(0.4rem, 0.8vw, 0.55rem);
+    margin-top: clamp(0.4rem, 1dvh, 0.6rem);
+  }
+
+  .statusMain .countdownUnit,
+  .statusMain .acceptedStatusStage .countdownUnit {
+    min-height: clamp(3.1rem, 8dvh, 3.8rem);
+    padding: clamp(0.4rem, 1dvh, 0.6rem);
+  }
+
+  .statusMain .countdownValue {
+    font-size: clamp(1.2rem, min(2.2vw, 3.5dvh), 1.75rem);
+  }
+
+  .statusMain .countdownLabel {
+    margin-top: 0.24rem;
+    font-size: clamp(0.55rem, min(0.8vw, 1.35dvh), 0.65rem);
+  }
+
+  .statusMain .eventDetails {
+    margin-top: clamp(0.35rem, 0.9dvh, 0.55rem);
+    font-size: clamp(0.72rem, min(0.9vw, 1.8dvh), 0.9rem);
+  }
+
+  .statusMain .eventDetails + .statusPill {
+    margin-top: clamp(0.8rem, 2.4dvh, 1.4rem);
+  }
+
+  .statusMain .statusPill {
+    font-size: clamp(1.5rem, min(2.8vw, 4.4dvh), 2.35rem);
+  }
+
+  .statusMain .statusPill + .actionRow,
+  .statusMain .acceptedActionRow {
+    margin-top: clamp(0.7rem, 1.8dvh, 1rem);
+  }
+
+  .statusMain .primaryButton,
+  .statusMain .ghostButton {
+    min-height: clamp(2.8rem, 6.5dvh, 3.15rem);
+    padding-block: 0.55rem;
+    font-size: clamp(0.78rem, min(1vw, 1.9dvh), 0.92rem);
+  }
+
+  .statusMain .toolDock,
+  .statusMain .toolDockFourUp {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(0.4rem, 0.8dvh, 0.6rem);
+    margin-top: clamp(0.35rem, 1dvh, 0.65rem);
+    padding-bottom: 0;
+  }
+
+  .statusMain .toolLink,
+  .statusMain .toolButton,
+  .statusMain .toolDisabled {
+    min-height: clamp(3.25rem, 7.2dvh, 3.8rem);
+    gap: 0.3rem;
+    padding: clamp(0.48rem, 1.2dvh, 0.62rem) 0.68rem;
+  }
+
+  .statusMain .toolTitle {
+    font-size: clamp(0.72rem, min(0.9vw, 1.7dvh), 0.84rem);
+  }
+
+  .statusMain .toolMeta {
+    font-size: clamp(0.54rem, min(0.7vw, 1.3dvh), 0.62rem);
+  }
+}
+
+@media (min-width: 701px) and (max-height: 559px) {
+  .statusMain {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (max-width: 700px) and (max-height: 900px) {
+  .statusMain .mainCanvas {
+    gap: clamp(0.55rem, 1.3dvh, 0.8rem);
+    padding-top: clamp(0.75rem, 2dvh, 1.2rem);
+  }
+
+  .statusMain .statusStage {
+    padding-top: 0;
+  }
+
+  .statusMain .actionRow,
+  .statusMain .statusPill + .actionRow,
+  .statusMain .acceptedActionRow {
+    margin-top: clamp(0.7rem, 1.8dvh, 1rem);
+  }
+
+  .statusMain .primaryButton,
+  .statusMain .ghostButton {
+    min-height: 2.8rem;
+  }
+
+  .statusMain .toolDock,
+  .statusMain .toolDockFourUp {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.34rem, 1dvh, 0.5rem);
+    margin-top: clamp(0.6rem, 1.6dvh, 0.9rem);
+  }
+
+  .statusMain .toolLink,
+  .statusMain .toolButton,
+  .statusMain .toolDisabled {
+    min-height: 3rem;
+    gap: 0.24rem;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .statusMain .toolTitle {
+    font-size: clamp(0.68rem, 3.1vw, 0.78rem);
+  }
+
+  .statusMain .toolMeta {
+    font-size: 0.54rem;
+  }
+}
+
+@media (max-width: 700px) and (max-height: 600px) {
+  .statusMain .mainCanvas {
+    padding-top: 0.5rem;
+  }
+
+  .statusMain .actionRow,
+  .statusMain .statusPill + .actionRow,
+  .statusMain .acceptedActionRow {
+    margin-top: 0.45rem;
+  }
+
+  .statusMain .toolDock,
+  .statusMain .toolDockFourUp {
+    margin-top: 0.4rem;
+  }
+
+  .statusMain .toolLink,
+  .statusMain .toolButton,
+  .statusMain .toolDisabled {
+    min-height: 2.8rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .main,
   .mainCanvas::before,
