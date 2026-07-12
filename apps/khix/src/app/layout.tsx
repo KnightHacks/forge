@@ -1,25 +1,24 @@
 import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
-import { Faculty_Glyphic } from "next/font/google";
+import localFont from "next/font/local";
 
-import WispCursor from "./_components/WispCursor";
 import {
-  eventJsonLd,
   OG_IMAGE_ALT,
-  OG_IMAGE_HEIGHT,
   OG_IMAGE_URL,
-  OG_IMAGE_WIDTH,
   SEO_DESCRIPTION,
   SEO_KEYWORDS,
   SEO_TITLE,
   SITE_URL,
 } from "./seo";
 
-const font = Faculty_Glyphic({
+const bagnard = localFont({
+  src: "./fonts/Bagnard.otf",
   weight: "400",
-  subsets: ["latin"],
-  variable: "--font-khix",
+  style: "normal",
+  variable: "--font-bagnard",
+  display: "swap",
+  fallback: ["Georgia", "Times New Roman", "serif"],
 });
 
 export const metadata: Metadata = {
@@ -43,8 +42,24 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: [{ url: "/khix-sigil.svg", type: "image/svg+xml" }],
-    shortcut: [{ url: "/khix-sigil.svg", type: "image/svg+xml" }],
+    icon: [
+      {
+        url: "https://assets.knighthacks.org/khix/favicon.png",
+        type: "image/png",
+      },
+    ],
+    shortcut: [
+      {
+        url: "https://assets.knighthacks.org/khix/favicon.png",
+        type: "image/png",
+      },
+    ],
+    apple: [
+      {
+        url: "https://assets.knighthacks.org/khix/favicon.png",
+        type: "image/png",
+      },
+    ],
   },
   openGraph: {
     type: "website",
@@ -56,8 +71,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: OG_IMAGE_URL,
-        width: OG_IMAGE_WIDTH,
-        height: OG_IMAGE_HEIGHT,
+        width: 1920,
+        height: 1080,
         alt: OG_IMAGE_ALT,
       },
     ],
@@ -78,7 +93,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#070c10",
+  themeColor: "#eef6cf",
   viewportFit: "cover",
 };
 
@@ -88,17 +103,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${font.className} ${font.variable} antialiased`}>
-        {children}
-        <WispCursor />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(eventJsonLd).replace(/</g, "\\u003c"),
-          }}
-        />
-      </body>
+    <html
+      lang="en"
+      className={`${bagnard.variable} dark h-full`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-screen antialiased">{children}</body>
     </html>
   );
 }

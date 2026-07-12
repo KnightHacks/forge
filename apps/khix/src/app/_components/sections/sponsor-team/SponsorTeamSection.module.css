@@ -1,0 +1,856 @@
+.waterfallShowcase {
+  --composition-width: min(92vw, 72rem);
+  --water-break-filter: drop-shadow(0 -0.1rem 0.035rem rgb(235 255 253 / 0.62))
+    drop-shadow(0 -0.24rem 0.15rem rgb(157 238 234 / 0.32));
+  --waterfall-width: 100vw;
+  --waterfall-art-height: calc(var(--waterfall-width) * 4.1667);
+  --waterfall-artwork-height: calc(var(--waterfall-width) * 4.1666667);
+  --waterfall-artwork-top: min(
+    0px,
+    calc(var(--waterfall-art-height) - var(--waterfall-artwork-height))
+  );
+  --waterfall-fallback-color: #2d3336;
+  --waterfall-basin-blend-start: 89.5%;
+  --waterfall-basin-blend-end: 93.5%;
+  --rock-separator-height: 59.9306vw;
+  --team-panel-top: calc(
+    var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.458
+  );
+  --team-separator-height: calc(var(--waterfall-width) * 0.407);
+  --team-separator-top: calc(
+    var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.38
+  );
+  --waterfall-scene-top: 8vw;
+  --waterfall-height: calc(
+    var(--waterfall-scene-top) + var(--waterfall-art-height)
+  );
+
+  position: relative;
+  z-index: 2;
+  min-height: var(--waterfall-height);
+  margin-top: -8vw;
+  background: transparent;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.waterfallTransition {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  height: var(--rock-separator-height);
+  pointer-events: none;
+}
+
+.sponsorRockSeparator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  height: var(--rock-separator-height);
+  background: url("https://assets.knighthacks.org/khix/sponsor-rock-separator.webp")
+    center top / 100% auto no-repeat;
+}
+
+.scene {
+  position: absolute;
+  top: var(--waterfall-scene-top);
+  right: 0;
+  left: 0;
+  z-index: 1;
+  width: var(--waterfall-width);
+  height: var(--waterfall-art-height);
+  overflow: hidden;
+  background-color: var(--waterfall-fallback-color);
+  box-shadow:
+    0 0 0 1px rgba(83, 232, 255, 0.16),
+    0 0 3rem rgba(20, 238, 231, 0.18);
+}
+
+.scene::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  content: "";
+  background:
+    radial-gradient(
+      ellipse at 50% 9%,
+      rgba(3, 25, 31, 0.34) 0%,
+      rgba(3, 25, 31, 0.2) 18%,
+      transparent 36%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(61, 69, 72, 0.34),
+      transparent 12%,
+      transparent 88%,
+      rgba(61, 69, 72, 0.34)
+    );
+  pointer-events: none;
+}
+
+.sceneAsset {
+  position: absolute;
+  left: 0;
+  width: var(--waterfall-width);
+  pointer-events: none;
+}
+
+.rocksTop,
+.rocksBottom {
+  z-index: 0;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+}
+
+.rocksTop {
+  top: var(--waterfall-artwork-top);
+  height: calc(var(--waterfall-width) * 2.0854167);
+  background-image: url("https://assets.knighthacks.org/khix/rocks-waterfall-top.webp");
+}
+
+.rocksBottom {
+  top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 2.08125);
+  height: calc(var(--waterfall-width) * 2.0854167);
+  background-image: url("https://assets.knighthacks.org/khix/rocks-waterfall-bottom.webp");
+}
+
+.waterfallOne,
+.waterfallTwo,
+.waterfallThree {
+  z-index: 1;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+}
+
+.waterfallOne {
+  top: var(--waterfall-artwork-top);
+  height: calc(var(--waterfall-width) * 1.3916667);
+  background-image: url("https://assets.knighthacks.org/khix/waterfall-animated-one.webp");
+}
+
+.waterfallTwo {
+  top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 1.3861111);
+  height: calc(var(--waterfall-width) * 1.3944444);
+  background-image: url("https://assets.knighthacks.org/khix/waterfall-animated-two.webp");
+}
+
+.waterfallThree {
+  top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 2.775);
+  height: calc(var(--waterfall-width) * 1.3916667);
+  background-image: url("https://assets.knighthacks.org/khix/waterfall-animated-three.webp");
+}
+
+.waterfallAtmosphere,
+.waterfallForegroundAtmosphere {
+  position: absolute;
+  top: var(--waterfall-scene-top);
+  left: 0;
+  width: var(--waterfall-width);
+  height: var(--waterfall-art-height);
+  overflow: hidden;
+  pointer-events: none;
+  contain: layout paint style;
+}
+
+.waterfallAtmosphere {
+  z-index: 2;
+}
+
+.waterfallForegroundAtmosphere {
+  z-index: 5;
+}
+
+.dropletLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.droplet {
+  position: absolute;
+  top: var(--droplet-y);
+  left: var(--droplet-x);
+  width: var(--droplet-width);
+  height: var(--droplet-height);
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgb(236 255 253 / 0.18),
+    rgb(245 255 254 / 0.78) 34%,
+    rgb(255 255 255 / 0.98) 68%,
+    rgb(116 218 222 / 0.42)
+  );
+  box-shadow:
+    0 0 0.3rem rgb(234 255 253 / 0.72),
+    0 0.12rem 0.16rem rgb(8 91 102 / 0.42);
+  opacity: 0;
+  transform: translate3d(0, -0.45rem, 0) scale(0.72);
+  animation: waterfallDropletFall var(--droplet-duration) linear
+    var(--droplet-delay) infinite;
+  animation-play-state: paused;
+}
+
+.droplet[data-shape="bead"] {
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    rgb(255 255 255),
+    rgb(213 255 252 / 0.94) 42%,
+    rgb(71 183 194 / 0.34) 78%
+  );
+  animation-timing-function: ease-in-out;
+}
+
+.waterfallAtmosphere[data-active="true"] .droplet,
+.waterfallForegroundAtmosphere[data-active="true"] .droplet {
+  animation-play-state: running;
+}
+
+.bridge {
+  position: absolute;
+  top: var(--team-separator-top);
+  left: 50%;
+  z-index: 3;
+  width: 100vw;
+  height: var(--team-separator-height);
+  background: url("https://assets.knighthacks.org/khix/separator-rocks.webp")
+    center top / 100% auto no-repeat;
+  filter: drop-shadow(0 -0.35rem 0.7rem rgba(3, 7, 12, 0.22))
+    drop-shadow(0 0.5rem 0.65rem rgba(2, 4, 8, 0.28));
+  transform: translateX(-50%);
+}
+
+.content {
+  position: relative;
+  z-index: 4;
+  width: min(100%, 58rem);
+  min-height: var(--waterfall-height);
+  margin: 0 auto;
+}
+
+.sponsorPanel {
+  min-height: calc(
+    var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.5
+  );
+  padding: 0 clamp(1rem, calc(var(--composition-width) * 0.06), 4rem);
+}
+
+.sponsorShowcase {
+  --sponsor-showcase-width: calc(var(--composition-width) * 0.86);
+  --sponsor-showcase-padding: 0;
+  --sponsor-showcase-mobile-padding-bottom: 0;
+  --sponsor-showcase-mobile-padding-top: 0;
+  --sponsor-title-color: rgba(255, 252, 245, 0.96);
+  --sponsor-title-font: var(--font-cormorant-garamond, Georgia), Georgia, serif;
+  --sponsor-title-line-height: 0.84;
+  --sponsor-title-height: calc(var(--sponsor-title-rock-width) * 0.219064);
+  --sponsor-title-margin: 0 auto
+    calc(var(--rock-separator-height) - var(--sponsor-title-height));
+  --sponsor-title-mobile-margin-bottom: calc(
+    var(--rock-separator-height) - var(--sponsor-title-height)
+  );
+  --sponsor-title-offset-y: calc(
+    var(--rock-separator-height) * 0.46 - var(--sponsor-title-height) * 0.5
+  );
+  --sponsor-title-rock-display: none;
+  --sponsor-title-rock-ratio: 1196 / 262;
+  --sponsor-title-rock-width: min(
+    90vw,
+    clamp(20.5rem, calc(var(--composition-width) * 0.54), 38rem)
+  );
+  --sponsor-title-shadow:
+    0 0 0.5rem rgba(235, 251, 255, 0.54), 0 0 2.2rem rgba(129, 225, 255, 0.3);
+  --sponsor-title-size: clamp(3.4rem, 8vw, 6.8rem);
+  --sponsor-title-transform: none;
+  --sponsor-title-weight: 400;
+  --sponsor-title-text-width: 100%;
+  --sponsor-field-gap: clamp(
+    2.75rem,
+    calc(var(--composition-width) * 0.052),
+    4rem
+  );
+  --sponsor-slab-gap: clamp(
+    0.6rem,
+    calc(var(--composition-width) * 0.014),
+    1rem
+  );
+  --sponsor-medium-grid-gap: clamp(
+      0.75rem,
+      calc(var(--composition-width) * 0.018),
+      1.3rem
+    )
+    clamp(1.2rem, calc(var(--composition-width) * 0.04), 2.6rem);
+  --sponsor-medium-grid-padding-top: 0;
+  --sponsor-medium-grid-width: calc(var(--composition-width) * 0.68);
+  --sponsor-small-grid-gap: clamp(
+      0.65rem,
+      calc(var(--composition-width) * 0.014),
+      1.05rem
+    )
+    clamp(0.8rem, calc(var(--composition-width) * 0.025), 1.65rem);
+  --sponsor-small-grid-width: calc(var(--composition-width) * 0.7);
+  --sponsor-stone-center-offset: -0.28rem;
+  --sponsor-stone-edge-offset: 0.2rem;
+  --sponsor-stone-left-offset: -0.38rem;
+  --sponsor-stone-right-offset: 0.38rem;
+  --sponsor-xl-height: clamp(
+    10rem,
+    calc(var(--composition-width) * 0.205),
+    14.75rem
+  );
+  --sponsor-xl-logo-height: clamp(
+    2.7rem,
+    calc(var(--composition-width) * 0.045),
+    3.25rem
+  );
+  --sponsor-xl-logo-width: clamp(
+    20rem,
+    calc(var(--composition-width) * 0.4),
+    28.8rem
+  );
+  --sponsor-xl-width: clamp(
+    34rem,
+    calc(var(--composition-width) * 0.62),
+    44.5rem
+  );
+  --sponsor-large-height: clamp(
+    8.8rem,
+    calc(var(--composition-width) * 0.17),
+    12.25rem
+  );
+  --sponsor-large-logo-height: clamp(
+    2.35rem,
+    calc(var(--composition-width) * 0.038),
+    2.75rem
+  );
+  --sponsor-large-logo-width: clamp(
+    16rem,
+    calc(var(--composition-width) * 0.32),
+    23rem
+  );
+  --sponsor-large-width: clamp(
+    26rem,
+    calc(var(--composition-width) * 0.48),
+    34.5rem
+  );
+  --sponsor-medium-height: clamp(
+    8.2rem,
+    calc(var(--composition-width) * 0.158),
+    11.4rem
+  );
+  --sponsor-medium-logo-height: clamp(
+    1.75rem,
+    calc(var(--composition-width) * 0.03),
+    2.15rem
+  );
+  --sponsor-medium-logo-width: clamp(
+    9.4rem,
+    calc(var(--composition-width) * 0.172),
+    12.4rem
+  );
+  --sponsor-medium-width: clamp(
+    12.8rem,
+    calc(var(--composition-width) * 0.225),
+    16.2rem
+  );
+  --sponsor-medium-mobile-height: 8.15rem;
+  --sponsor-medium-mobile-logo-height: 1.68rem;
+  --sponsor-medium-mobile-logo-width: 5.9rem;
+  --sponsor-medium-mobile-width: min(45vw, 10.6rem);
+  --sponsor-small-height: clamp(
+    7.4rem,
+    calc(var(--composition-width) * 0.128),
+    9.2rem
+  );
+  --sponsor-small-logo-height: clamp(
+    1.7rem,
+    calc(var(--composition-width) * 0.026),
+    1.9rem
+  );
+  --sponsor-small-logo-width: clamp(
+    7.2rem,
+    calc(var(--composition-width) * 0.145),
+    10.4rem
+  );
+  --sponsor-small-width: clamp(
+    10rem,
+    calc(var(--composition-width) * 0.18),
+    13rem
+  );
+  --sponsor-xs-height: clamp(
+    6.6rem,
+    calc(var(--composition-width) * 0.105),
+    7.55rem
+  );
+  --sponsor-xs-logo-height: clamp(
+    1.45rem,
+    calc(var(--composition-width) * 0.022),
+    1.62rem
+  );
+  --sponsor-xs-logo-width: clamp(
+    6.1rem,
+    calc(var(--composition-width) * 0.12),
+    8.6rem
+  );
+  --sponsor-xs-width: clamp(
+    8.5rem,
+    calc(var(--composition-width) * 0.145),
+    10.4rem
+  );
+  --sponsor-logo-opacity: 0.58;
+  --sponsor-logo-hover-opacity: 0.72;
+  --sponsor-logo-backlight-strength: 0;
+  --sponsor-logo-filter: brightness(0) saturate(100%)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.76))
+    drop-shadow(0 1px 0.35px rgb(190 224 218 / 0.38));
+  --sponsor-logo-hover-filter: brightness(0) saturate(100%)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.82))
+    drop-shadow(0 1px 0.4px rgb(203 234 228 / 0.5));
+  --sponsor-logo-contrast-filter: grayscale(1) sepia(0.32) saturate(0.68)
+    hue-rotate(126deg) brightness(0.54) contrast(1.08)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.76))
+    drop-shadow(0 1px 0.35px rgb(190 224 218 / 0.38));
+  --sponsor-logo-contrast-hover-filter: grayscale(1) sepia(0.32) saturate(0.68)
+    hue-rotate(126deg) brightness(0.58) contrast(1.1)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.82))
+    drop-shadow(0 1px 0.4px rgb(203 234 228 / 0.5));
+  --sponsor-logo-mobile-filter: var(--sponsor-logo-filter);
+  --sponsor-logo-hover-animation: none;
+  --sponsor-logo-mobile-animation: none;
+  --sponsor-logo-will-change: auto;
+  --sponsor-rock-hover-animation: none;
+  --sponsor-rock-will-change: auto;
+  --sponsor-rock-surface-filter: saturate(0.58) brightness(0.78) contrast(1.1)
+    hue-rotate(4deg);
+  --sponsor-rock-surface-hover-filter: saturate(0.72) brightness(0.78)
+    contrast(1.14) hue-rotate(4deg);
+  --sponsor-rock-shadow: var(--water-break-filter)
+    drop-shadow(0 0.12rem 0.1rem rgb(2 20 27 / 0.4))
+    drop-shadow(0 0.42rem 0.3rem rgb(2 17 23 / 0.3));
+  --sponsor-rock-focus-shadow: var(--water-break-filter)
+    drop-shadow(0 0.12rem 0.1rem rgb(2 20 27 / 0.42))
+    drop-shadow(0 0 0.14rem rgb(var(--tier-glow-end-rgb) / 0.92))
+    drop-shadow(0 0 0.38rem rgb(var(--tier-glow-start-rgb) / 0.56));
+}
+
+.sectionTitle {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  color: #081820;
+  font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
+  font-size: clamp(1rem, calc(var(--composition-width) * 0.026), 1.55rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.38);
+  text-transform: uppercase;
+}
+
+.partnerGroup {
+  width: calc(var(--composition-width) * 0.54);
+  margin: calc(var(--composition-width) * 0.105) auto 0;
+}
+
+.partnerGroup .sectionTitle {
+  color: rgba(255, 252, 245, 0.96);
+  font-size: clamp(1.7rem, 4vw, 3.4rem);
+  line-height: 0.84;
+  text-shadow:
+    0 0 0.5rem rgba(235, 251, 255, 0.54),
+    0 0 2.2rem rgba(129, 225, 255, 0.3);
+  text-transform: none;
+  transform: translateY(clamp(-1.5rem, -2vw, -0.65rem));
+}
+
+.partnerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(var(--composition-width) * 0.018)
+    calc(var(--composition-width) * 0.035);
+  margin-top: calc(var(--composition-width) * 0.03);
+}
+
+.partnerStone {
+  --partner-logo-hover-scale: 1.035;
+  --partner-logo-scale: 1;
+
+  position: relative;
+  display: block;
+  height: calc(var(--composition-width) * 0.125);
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+  isolation: isolate;
+}
+
+.partnerVisual {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  filter: var(--water-break-filter)
+    drop-shadow(0 0.28rem 0.2rem rgb(5 28 35 / 0.28));
+  overflow: visible;
+  transform-origin: 50% 58%;
+}
+
+.partnerRock {
+  position: relative;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1196 / 318;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.partnerRock::before {
+  position: absolute;
+  top: -70%;
+  left: -11.96%;
+  display: block;
+  width: 125.42%;
+  aspect-ratio: 1;
+  content: "";
+  background: url("https://assets.knighthacks.org/khix/large-sponsor-rock.webp")
+    0 0 / 100% auto no-repeat;
+  filter: saturate(0.58) brightness(0.78) contrast(1.1) hue-rotate(4deg);
+  pointer-events: none;
+  transition: filter 180ms ease;
+  user-select: none;
+}
+
+.partnerLogo {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  z-index: 1;
+  display: block;
+  width: min(78%, 14.5rem);
+  height: clamp(1rem, calc(var(--composition-width) * 0.043), 2rem);
+  opacity: 0.58;
+  transform: translate3d(-50%, -50%, 0) scale(var(--partner-logo-scale));
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.partnerLogoImage {
+  object-fit: contain;
+  object-position: center;
+  filter: brightness(0) saturate(100%)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.76))
+    drop-shadow(0 1px 0.35px rgb(190 224 218 / 0.38));
+  pointer-events: none;
+  transition: filter 180ms ease;
+  user-select: none;
+}
+
+.partnerStone[data-preserve-logo-contrast="true"] .partnerLogoImage {
+  filter: grayscale(1) sepia(0.32) saturate(0.68) hue-rotate(126deg)
+    brightness(0.54) contrast(1.08)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.76))
+    drop-shadow(0 1px 0.35px rgb(190 224 218 / 0.38));
+}
+
+.partnerStone:hover .partnerVisual,
+.partnerStone:focus-visible .partnerVisual {
+  animation: none;
+}
+
+.partnerStone:hover .partnerRock::before,
+.partnerStone:focus-visible .partnerRock::before {
+  filter: saturate(0.6) brightness(0.82) contrast(1.12) hue-rotate(4deg);
+}
+
+.partnerStone:hover .partnerLogo,
+.partnerStone:focus-visible .partnerLogo {
+  opacity: 0.72;
+  transform: translate3d(-50%, -50%, 0) scale(var(--partner-logo-scale));
+}
+
+.partnerStone:hover .partnerLogoImage,
+.partnerStone:focus-visible .partnerLogoImage {
+  filter: brightness(0) saturate(100%)
+    drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.82))
+    drop-shadow(0 1px 0.4px rgb(203 234 228 / 0.5));
+}
+
+.partnerStone[data-preserve-logo-contrast="true"]:hover .partnerLogoImage,
+.partnerStone[data-preserve-logo-contrast="true"]:focus-visible
+  .partnerLogoImage {
+  filter: grayscale(1) sepia(0.32) saturate(0.68) hue-rotate(126deg)
+    brightness(0.58) contrast(1.1) drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.82))
+    drop-shadow(0 1px 0.4px rgb(203 234 228 / 0.5));
+}
+
+.partnerStone:focus-visible .partnerVisual {
+  filter: var(--water-break-filter)
+    drop-shadow(0 0.12rem 0.1rem rgb(2 20 27 / 0.42))
+    drop-shadow(0 0 0.24rem rgb(230 255 249 / 0.94))
+    drop-shadow(0 0 0.7rem rgb(105 224 218 / 0.78));
+}
+
+.teamPanel {
+  position: absolute;
+  top: var(--team-panel-top);
+  left: 50%;
+  width: calc(var(--composition-width) * 0.9);
+  scroll-margin-top: calc(var(--team-panel-top) - var(--team-separator-top));
+  transform: translateX(-50%);
+}
+
+.teamPanel .sectionTitle {
+  margin-bottom: calc(var(--composition-width) * 0.015);
+  color: rgba(255, 252, 245, 0.96);
+  font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
+  font-size: clamp(3.4rem, 8vw, 6.8rem);
+  font-weight: 400;
+  line-height: 0.84;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 0.5rem rgba(235, 251, 255, 0.54),
+    0 0 2.2rem rgba(129, 225, 255, 0.3);
+  text-transform: none;
+  transform: translateY(
+    calc(
+      var(--team-separator-top) + var(--team-separator-height) * 0.46 -
+        var(--team-panel-top) - 50%
+    )
+  );
+}
+
+.teamCascade {
+  --team-cascade-height: calc(var(--waterfall-art-height) * 0.5);
+  --team-cascade-avatar-size: clamp(
+    4.75rem,
+    calc(var(--composition-width) * 0.09),
+    6.25rem
+  );
+  --team-status-color: rgba(235, 255, 255, 0.78);
+
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (min-width: 761px) {
+  .dropletLayer {
+    clip-path: inset(7% 0 0);
+  }
+}
+
+@media (min-width: 1181px) {
+  .waterfallShowcase {
+    --waterfall-art-height: calc(var(--waterfall-width) * 2.6);
+    --team-panel-top: calc(
+      var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.7
+    );
+    --team-separator-top: calc(
+      var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.62
+    );
+  }
+
+  .sponsorPanel {
+    padding-top: 5vw;
+  }
+
+  .sponsorShowcase {
+    --sponsor-title-margin: 0 auto
+      max(
+        8rem,
+        calc(var(--rock-separator-height) - var(--sponsor-title-height) - 20vw)
+      );
+  }
+
+  .partnerGroup {
+    margin-top: calc(var(--composition-width) * 0.105 + 3vw);
+  }
+
+  .partnerGroup .sectionTitle {
+    text-shadow:
+      0 0.22rem 0.32rem rgba(0, 0, 0, 0.88),
+      0 0 0.5rem rgba(235, 251, 255, 0.54),
+      0 0 2.2rem rgba(129, 225, 255, 0.3);
+  }
+
+  .partnerGrid {
+    row-gap: calc(var(--composition-width) * 0.01);
+  }
+
+  .partnerStone {
+    height: calc(var(--composition-width) * 0.1);
+  }
+
+  .bridge {
+    top: calc(var(--team-separator-top) - 20vw);
+  }
+
+  .teamPanel {
+    top: calc(var(--team-panel-top) - 25vw);
+  }
+
+  .teamCascade {
+    transform: translateY(12vw);
+  }
+
+  .teamPanel .sectionTitle {
+    translate: 0 6.6vw;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1024px) {
+  .sponsorShowcase {
+    --sponsor-small-grid-width: calc(var(--composition-width) * 0.78);
+  }
+
+  .partnerGroup {
+    width: calc(var(--composition-width) * 0.78);
+  }
+
+  .partnerGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .droplet[data-mobile-hidden="true"] {
+    display: none;
+  }
+
+  .sponsorShowcase {
+    --sponsor-stone-center-offset: 0;
+    --sponsor-stone-edge-offset: 0;
+    --sponsor-stone-left-offset: 0;
+    --sponsor-stone-right-offset: 0;
+  }
+
+  .partnerStone:hover .partnerLogo,
+  .partnerStone:focus-visible .partnerLogo {
+    transform: translate3d(-50%, -50%, 0) scale(var(--partner-logo-hover-scale));
+  }
+
+  .teamPanel {
+    width: calc(var(--composition-width) * 0.82);
+  }
+}
+
+@media (max-width: 520px) {
+  .waterfallShowcase {
+    --team-mobile-section-lift: -1.75rem;
+    --team-mobile-panel-lift: 0rem;
+    --team-panel-top: calc(
+      var(--waterfall-scene-top) +
+        min(calc(var(--waterfall-art-height) * 0.69), 70rem) +
+        var(--team-mobile-section-lift) + var(--team-mobile-panel-lift)
+    );
+    --team-separator-top: calc(
+      var(--waterfall-scene-top) +
+        min(calc(var(--waterfall-art-height) * 0.64), 66rem) +
+        var(--team-mobile-section-lift)
+    );
+  }
+
+  .sponsorShowcase {
+    --sponsor-showcase-width: 100%;
+    --sponsor-title-size: clamp(3rem, 16vw, 4.25rem);
+    --sponsor-field-gap: clamp(0.75rem, 3vw, 1rem);
+    --sponsor-field-offset-y: clamp(-1.5rem, -5vw, -1rem);
+    --sponsor-medium-mobile-height: clamp(6.7rem, 31vw, 7.25rem);
+    --sponsor-medium-mobile-logo-height: 1.5rem;
+    --sponsor-medium-mobile-logo-width: 5.4rem;
+    --sponsor-medium-mobile-width: min(47vw, 9.4rem);
+  }
+
+  .partnerGroup {
+    width: calc(var(--composition-width) * 0.82);
+    margin-top: clamp(1.25rem, 5vw, 1.75rem);
+  }
+
+  .partnerGroup .sectionTitle {
+    font-size: clamp(1.55rem, 9.5vw, 2.5rem);
+  }
+
+  .teamPanel .sectionTitle {
+    font-size: clamp(3rem, 16vw, 4.25rem);
+  }
+
+  .teamPanel {
+    width: calc(var(--composition-width) * 0.82);
+  }
+
+  .teamCascade {
+    --team-cascade-height: min(calc(var(--waterfall-art-height) * 0.2), 20rem);
+    --team-cascade-avatar-size: clamp(
+      3.15rem,
+      calc(var(--composition-width) * 0.16),
+      3.8rem
+    );
+  }
+}
+
+@media (max-width: 420px) {
+  .sponsorPanel {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .waterfallShowcase {
+    --team-mobile-panel-lift: -1.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .droplet {
+    display: none;
+    animation: none;
+  }
+
+  .partnerRock::before,
+  .partnerLogo,
+  .partnerLogoImage {
+    transition: none;
+  }
+
+  .partnerVisual,
+  .partnerStone:hover .partnerVisual,
+  .partnerStone:focus-visible .partnerVisual {
+    animation: none;
+  }
+}
+
+@keyframes waterfallDropletFall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -0.45rem, 0) scale(0.72);
+  }
+
+  14% {
+    opacity: var(--droplet-opacity);
+  }
+
+  48% {
+    opacity: var(--droplet-opacity);
+    transform: translate3d(
+        var(--droplet-mid-drift),
+        var(--droplet-mid-travel),
+        0
+      )
+      scale(0.9);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--droplet-drift), var(--droplet-travel), 0)
+      scale(1.04);
+  }
+}

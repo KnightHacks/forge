@@ -1,4 +1,5 @@
 export * as BLOOMKNIGHTS from "./bloomknights";
+export * as KHIX from "./khix";
 
 export const APPLICATION_BACKGROUND_OPTIONS = [
   {

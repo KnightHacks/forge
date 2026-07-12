@@ -10,6 +10,11 @@ const bloomKnightsUrlSchema =
     ? z.string().url()
     : z.string().url().default("http://localhost:3006");
 
+const khixUrlSchema =
+  process.env.NODE_ENV === "production"
+    ? z.string().url()
+    : z.string().url().default("http://localhost:3007");
+
 export const env = createEnv({
   extends: [authEnv, apiEnv, dbEnv],
   shared: {
@@ -24,6 +29,7 @@ export const env = createEnv({
    */
   server: {
     BLOOMKNIGHTS_URL: bloomKnightsUrlSchema,
+    KHIX_URL: khixUrlSchema,
   },
 
   /**

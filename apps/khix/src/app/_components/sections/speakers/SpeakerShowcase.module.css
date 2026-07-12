@@ -1,0 +1,405 @@
+.speakerShowcase {
+  --speaker-accent: #d7ff76;
+  --speaker-control-color: rgba(249, 255, 246, 0.96);
+  --speaker-ink: rgba(249, 255, 246, 0.96);
+  --speaker-muted: rgba(234, 249, 237, 0.72);
+  --speaker-name-font-size: 2.25rem;
+  --speaker-arrow-width: 2.35rem;
+  --speaker-arrow-offset: clamp(7rem, 8.65vw, 9.25rem);
+  --speaker-stage-gap: clamp(0.55rem, 1.2vw, 0.95rem);
+  --speaker-pair-gap: clamp(1.2rem, 3.8vw, 3.15rem);
+  --speaker-stage-side-width: calc(
+    var(--speaker-arrow-width) + var(--speaker-stage-gap)
+  );
+  --speaker-portrait-width: clamp(13.25rem, 16vw, 16.75rem);
+  --speaker-track-width: var(--speaker-portrait-width);
+  --speaker-stage-width: min(100%, 58rem);
+
+  position: relative;
+  display: grid;
+  width: min(100%, var(--speaker-stage-width));
+  margin: 0 auto;
+  color: var(--speaker-ink);
+  isolation: isolate;
+}
+
+.title {
+  position: relative;
+  z-index: 2;
+  margin: 0 0 clamp(1.5rem, 2.2rem, 2.2rem);
+  color: var(--speaker-ink);
+  font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
+  font-size: clamp(3.4rem, 8vw, 6.8rem);
+  font-weight: 400;
+  line-height: 0.84;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow:
+    0 0 0.5rem rgba(235, 251, 255, 0.54),
+    0 0 2.2rem rgba(129, 225, 255, 0.3);
+  transform: translateY(calc(clamp(3rem, 7svh, 5rem) * -1));
+}
+
+.stage {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns:
+    var(--speaker-arrow-width) var(--speaker-track-width)
+    var(--speaker-arrow-width);
+  width: calc(
+    var(--speaker-track-width) + var(--speaker-stage-side-width) +
+      var(--speaker-stage-side-width)
+  );
+  max-width: 100%;
+  margin: 0 auto;
+  align-items: start;
+  justify-content: center;
+  gap: var(--speaker-stage-gap);
+  overflow: visible;
+}
+
+.stage[data-visible-speaker-count="2"] {
+  --speaker-track-width: calc(
+    var(--speaker-portrait-width) + var(--speaker-portrait-width) +
+      var(--speaker-pair-gap)
+  );
+}
+
+.speakerList {
+  --speaker-swipe-distance: clamp(2rem, 8vw, 4.5rem);
+
+  display: grid;
+  grid-template-columns: minmax(0, var(--speaker-portrait-width));
+  width: var(--speaker-track-width);
+  min-width: 0;
+  gap: var(--speaker-pair-gap);
+  justify-items: center;
+  justify-content: center;
+  overflow: visible;
+  transform: translate3d(0, 0, 0);
+  will-change: opacity, filter, transform;
+}
+
+.speakerList[data-visible-speaker-count="2"] {
+  grid-template-columns:
+    minmax(0, var(--speaker-portrait-width))
+    minmax(0, var(--speaker-portrait-width));
+}
+
+.speaker {
+  display: grid;
+  width: var(--speaker-portrait-width);
+  min-width: 0;
+  justify-items: center;
+  text-align: center;
+  contain: inline-size;
+}
+
+.speakerList[data-transition-state="exiting"][data-transition-direction="next"] {
+  animation: speakerSwipeOutNext 240ms cubic-bezier(0.45, 0, 0.55, 1) both;
+}
+
+.speakerList[data-transition-state="exiting"][data-transition-direction="previous"] {
+  animation: speakerSwipeOutPrevious 240ms cubic-bezier(0.45, 0, 0.55, 1) both;
+}
+
+.speakerList[data-transition-state="entering"][data-transition-direction="next"] {
+  animation: speakerSwipeInNext 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.speakerList[data-transition-state="entering"][data-transition-direction="previous"] {
+  animation: speakerSwipeInPrevious 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.portraitShell {
+  display: block;
+  width: var(--speaker-portrait-width);
+  color: inherit;
+  text-decoration: none;
+  transform: translate3d(0, 0, 0);
+}
+
+.portraitLink {
+  cursor: pointer;
+}
+
+.portraitLink:focus-visible {
+  border-radius: 0.35rem;
+  outline: 2px solid rgba(215, 255, 118, 0.72);
+  outline-offset: 0.35rem;
+}
+
+.portraitLink:hover .frameImage,
+.portraitLink:focus-visible .frameImage {
+  filter: drop-shadow(0 0.85rem 1.6rem rgba(0, 0, 0, 0.34));
+}
+
+.portraitStage {
+  position: relative;
+  display: grid;
+  width: var(--speaker-portrait-width);
+  aspect-ratio: 1607 / 2003;
+  place-items: center;
+  isolation: isolate;
+}
+
+.frameImage {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 0.8rem 1.6rem rgba(0, 0, 0, 0.32));
+  pointer-events: none;
+  user-select: none;
+  transition: filter 180ms ease;
+}
+
+.imageFrame {
+  position: absolute;
+  top: 17.75%;
+  left: 50%;
+  z-index: 2;
+  display: block;
+  width: 64%;
+  aspect-ratio: 1028 / 1482;
+  overflow: hidden;
+  border-radius: 3px;
+  background: transparent;
+  transform: translateX(-50%);
+}
+
+.image {
+  object-fit: cover;
+  object-position: center;
+  user-select: none;
+}
+
+.speakerMeta {
+  display: grid;
+  justify-items: center;
+  width: min(100%, var(--speaker-portrait-width));
+  min-width: 0;
+  margin: 1.15rem auto 0;
+  text-align: center;
+}
+
+.nameRow {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  justify-items: center;
+}
+
+.name {
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  color: var(--speaker-ink);
+  font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
+  font-size: var(--speaker-name-font-size);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: 0;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+  white-space: normal;
+  text-shadow:
+    0 0.1rem 0.75rem rgba(0, 0, 0, 0.54),
+    0 0 1.2rem rgba(13, 38, 32, 0.48);
+}
+
+.role {
+  max-width: 100%;
+  margin: 0.55rem 0 0;
+  color: var(--speaker-muted);
+  font-family:
+    var(--font-geist-sans, ui-sans-serif),
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.arrowButton {
+  display: inline-grid;
+  width: 2.35rem;
+  aspect-ratio: 1;
+  margin-top: var(--speaker-arrow-offset);
+  place-items: center;
+  border: 0;
+  color: var(--speaker-control-color);
+  background: transparent;
+  filter: drop-shadow(0 0.45rem 0.9rem rgba(0, 0, 0, 0.42));
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    filter 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.arrowButton:hover,
+.arrowButton:focus-visible {
+  color: #ffffff;
+  outline: none;
+  filter: drop-shadow(0 0 0.45rem rgba(215, 255, 118, 0.28))
+    drop-shadow(0 0.5rem 0.95rem rgba(0, 0, 0, 0.42));
+  transform: translateY(-1px) scale(1.05);
+}
+
+.arrowButton:focus-visible {
+  outline: 2px solid rgba(215, 255, 118, 0.72);
+  outline-offset: 0.15rem;
+}
+
+.arrowButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+  transform: none;
+}
+
+.arrowButton:disabled:hover,
+.arrowButton:disabled:focus-visible {
+  color: var(--speaker-control-color);
+  filter: drop-shadow(0 0.45rem 0.9rem rgba(0, 0, 0, 0.42));
+  outline: none;
+}
+
+.arrowIcon {
+  width: 2rem;
+  height: 2rem;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.3;
+}
+
+@media (max-width: 760px) {
+  .speakerShowcase {
+    --speaker-name-font-size: 1.9rem;
+    --speaker-arrow-width: 2.15rem;
+    --speaker-arrow-offset: 7.15rem;
+    --speaker-stage-gap: 0.45rem;
+    --speaker-pair-gap: 0;
+    --speaker-portrait-width: 13.25rem;
+    --speaker-stage-width: min(100%, 28rem);
+  }
+
+  .stage {
+    grid-template-columns:
+      var(--speaker-arrow-width) var(--speaker-track-width)
+      var(--speaker-arrow-width);
+  }
+
+  .role {
+    font-size: 0.78rem;
+  }
+
+  .arrowButton {
+    width: 2.15rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .speakerShowcase {
+    --speaker-arrow-width: 1.95rem;
+    --speaker-arrow-offset: 6.35rem;
+    --speaker-stage-gap: 0.35rem;
+    --speaker-portrait-width: 11.75rem;
+  }
+
+  .stage {
+    grid-template-columns:
+      var(--speaker-arrow-width) var(--speaker-track-width)
+      var(--speaker-arrow-width);
+  }
+
+  .arrowButton {
+    width: 1.95rem;
+  }
+
+  .arrowIcon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .speakerList,
+  .frameImage,
+  .arrowButton {
+    animation: none;
+    transition: none;
+  }
+
+  .arrowButton:hover,
+  .arrowButton:focus-visible {
+    transform: none;
+  }
+}
+
+@keyframes speakerSwipeOutNext {
+  from {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    filter: blur(1.5px);
+    transform: translate3d(calc(var(--speaker-swipe-distance) * -1), 0, 0)
+      scale(0.98);
+  }
+}
+
+@keyframes speakerSwipeOutPrevious {
+  from {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    filter: blur(1.5px);
+    transform: translate3d(var(--speaker-swipe-distance), 0, 0) scale(0.98);
+  }
+}
+
+@keyframes speakerSwipeInNext {
+  from {
+    opacity: 0;
+    filter: blur(1.5px);
+    transform: translate3d(var(--speaker-swipe-distance), 0, 0) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes speakerSwipeInPrevious {
+  from {
+    opacity: 0;
+    filter: blur(1.5px);
+    transform: translate3d(calc(var(--speaker-swipe-distance) * -1), 0, 0)
+      scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
