@@ -88,6 +88,7 @@ function SpeakerPortrait({ speaker }: { speaker: SpeakerShowcaseSpeaker }) {
           className={styles.image}
           priority={false}
           unoptimized
+          draggable={false}
         />
       </div>
       <Image
@@ -98,6 +99,7 @@ function SpeakerPortrait({ speaker }: { speaker: SpeakerShowcaseSpeaker }) {
         className={styles.frameImage}
         priority={false}
         unoptimized
+        draggable={false}
       />
     </div>
   );
@@ -114,6 +116,7 @@ function SpeakerPortrait({ speaker }: { speaker: SpeakerShowcaseSpeaker }) {
       rel="noreferrer"
       aria-label={getLinkedInLabel(speaker)}
       title="LinkedIn"
+      draggable={false}
     >
       {portraitStage}
     </a>

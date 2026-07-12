@@ -224,6 +224,8 @@ function SponsorRockCard({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={sponsor.name}
+      title={sponsor.name}
+      draggable={false}
       style={style}
     >
       <span className={styles.sponsorVisual} aria-hidden="true">
@@ -239,6 +241,7 @@ function SponsorRockCard({
             className={styles.sponsorLogoImage}
             sizes="(max-width: 760px) 9rem, 16rem"
             unoptimized
+            draggable={false}
           />
         </span>
       </span>

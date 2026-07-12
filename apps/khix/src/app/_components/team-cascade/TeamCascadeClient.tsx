@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { useEffect, useId, useMemo, useState } from "react";
 import Image from "next/image";
 import { FaLinkedin } from "react-icons/fa";
@@ -22,6 +22,7 @@ interface TeamCascadePerson {
 }
 
 const longTeamMemberNameLength = 20;
+const mobileTeamQuery = "(max-width: 760px)";
 const rosterIdPrefixes = [
   "executive-",
   "directors-",
@@ -96,6 +97,7 @@ function ProfileImage({ member }: { member: TeamCascadeMember }) {
         fill
         sizes="(min-width: 921px) 6.25rem, (min-width: 761px) 5.25rem, (min-width: 521px) 4.5rem, 3.8rem"
         className={styles.teamAvatarImage}
+        draggable={false}
       />
     );
   }
@@ -124,24 +126,53 @@ function TeamProfile({
 }) {
   const displayName = getDisplayName(person.member.name);
   const displayTitle = getDisplayTitle(person);
+  const avatarContent = (
+    <span className={styles.teamAvatarMedia}>
+      <ProfileImage member={person.member} />
+    </span>
+  );
+
+  function handleProfileLinkClick(event: MouseEvent<HTMLAnchorElement>) {
+    onSelect();
+
+    if (window.matchMedia(mobileTeamQuery).matches) {
+      event.preventDefault();
+    }
+  }
 
   return (
     <article className={styles.teamProfile} role="listitem">
-      <button
-        type="button"
-        className={styles.teamAvatar}
-        data-active={isActive ? "true" : undefined}
-        aria-controls={detailsId}
-        aria-label={`Show ${displayName}, ${displayTitle}`}
-        aria-pressed={isActive}
-        onClick={onSelect}
-        onFocus={onSelect}
-        onPointerEnter={onSelect}
-      >
-        <span className={styles.teamAvatarMedia}>
-          <ProfileImage member={person.member} />
-        </span>
-      </button>
+      {person.member.linkedinUrl ? (
+        <a
+          className={styles.teamAvatar}
+          data-active={isActive ? "true" : undefined}
+          href={person.member.linkedinUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-controls={detailsId}
+          aria-label={`Open ${displayName}'s LinkedIn profile`}
+          draggable={false}
+          onClick={handleProfileLinkClick}
+          onFocus={onSelect}
+          onPointerEnter={onSelect}
+        >
+          {avatarContent}
+        </a>
+      ) : (
+        <button
+          type="button"
+          className={styles.teamAvatar}
+          data-active={isActive ? "true" : undefined}
+          aria-controls={detailsId}
+          aria-label={`Show ${displayName}, ${displayTitle}`}
+          aria-pressed={isActive}
+          onClick={onSelect}
+          onFocus={onSelect}
+          onPointerEnter={onSelect}
+        >
+          {avatarContent}
+        </button>
+      )}
       <span className={styles.srOnly}>
         Profile {index + 1} of {total}
       </span>

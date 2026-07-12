@@ -974,13 +974,14 @@ function KhixDashboardShell({
       <div className={styles.chrome}>
         <aside className={styles.portalNav} aria-label="Dashboard navigation">
           <div className={styles.mobileTopBar}>
-            <Link href="/" className={styles.mobileLogoLink}>
+            <Link href="/" className={styles.mobileLogoLink} draggable={false}>
               <Image
                 src="https://assets.knighthacks.org/khix/khlogo.svg"
                 alt="Knight Hacks IX"
                 width={118}
                 height={48}
                 className={styles.railLogo}
+                draggable={false}
                 priority
               />
             </Link>
@@ -1026,6 +1027,7 @@ function KhixDashboardShell({
               <Link
                 href="/"
                 className={styles.railLogoLink}
+                draggable={false}
                 onClick={closeMobileMenu}
               >
                 <Image
@@ -1034,6 +1036,7 @@ function KhixDashboardShell({
                   width={118}
                   height={48}
                   className={styles.railLogo}
+                  draggable={false}
                   priority
                 />
               </Link>

@@ -105,6 +105,7 @@ export function HeroTitle() {
           width={1858}
           height={666}
           priority
+          draggable={false}
           className={styles.titleLogo}
           data-hero-title-logo
         />

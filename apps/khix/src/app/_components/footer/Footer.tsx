@@ -65,6 +65,7 @@ export function Footer() {
             alt="Knight Hacks IX"
             width={1858}
             height={666}
+            draggable={false}
             className={styles.logo}
           />
         </div>
