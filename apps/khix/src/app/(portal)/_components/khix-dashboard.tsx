@@ -1172,27 +1172,29 @@ function KhixDashboardShell({
           )}
           tabIndex={-1}
         >
-          <span className={styles.portalMagic} aria-hidden="true">
-            <span className={styles.portalCanopyGlow} />
-            <span className={styles.portalFireflies}>
-              {PORTAL_FIREFLY_IDS.map((fireflyId) => (
-                <span
-                  key={fireflyId}
-                  className={styles.portalFirefly}
-                  data-firefly={fireflyId}
-                />
-              ))}
+          <div className={styles.mainCanvas}>
+            <span className={styles.portalMagic} aria-hidden="true">
+              <span className={styles.portalCanopyGlow} />
+              <span className={styles.portalFireflies}>
+                {PORTAL_FIREFLY_IDS.map((fireflyId) => (
+                  <span
+                    key={fireflyId}
+                    className={styles.portalFirefly}
+                    data-firefly={fireflyId}
+                  />
+                ))}
+              </span>
+              <span className={styles.portalWisp} data-wisp="one" />
+              <span className={styles.portalWisp} data-wisp="two" />
+              <span className={styles.portalWisp} data-wisp="three" />
+              <span className={styles.portalWisp} data-wisp="four" />
+              <span className={styles.portalWisp} data-wisp="five" />
+              <span className={styles.portalWisp} data-wisp="six" />
+              <span className={styles.portalWisp} data-wisp="seven" />
+              <span className={styles.portalWisp} data-wisp="eight" />
             </span>
-            <span className={styles.portalWisp} data-wisp="one" />
-            <span className={styles.portalWisp} data-wisp="two" />
-            <span className={styles.portalWisp} data-wisp="three" />
-            <span className={styles.portalWisp} data-wisp="four" />
-            <span className={styles.portalWisp} data-wisp="five" />
-            <span className={styles.portalWisp} data-wisp="six" />
-            <span className={styles.portalWisp} data-wisp="seven" />
-            <span className={styles.portalWisp} data-wisp="eight" />
-          </span>
-          {children}
+            {children}
+          </div>
         </div>
       </div>
     </main>
