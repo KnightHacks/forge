@@ -5391,6 +5391,39 @@
   }
 }
 
+@media (min-width: 701px) {
+  .portalNavInner {
+    height: 100%;
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
+  }
+
+  .railNav {
+    min-height: 0;
+    align-content: start;
+    align-self: stretch;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.15rem;
+    scrollbar-color: rgb(162 153 194 / 0.28) transparent;
+    scrollbar-width: thin;
+  }
+
+  .railNav::-webkit-scrollbar {
+    width: 0.28rem;
+  }
+
+  .railNav::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgb(162 153 194 / 0.28);
+  }
+
+  .railNav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
 @media (min-width: 701px) and (max-height: 1079px) {
   .statusMain .mainCanvas {
     gap: clamp(0.55rem, 1.4dvh, 0.9rem);
