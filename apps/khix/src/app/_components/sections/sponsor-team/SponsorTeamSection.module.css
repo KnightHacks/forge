@@ -4,6 +4,11 @@
     drop-shadow(0 -0.24rem 0.15rem rgb(157 238 234 / 0.32));
   --waterfall-width: 100vw;
   --waterfall-art-height: calc(var(--waterfall-width) * 4.1667);
+  --waterfall-artwork-height: calc(var(--waterfall-width) * 4.1666667);
+  --waterfall-artwork-top: min(
+    0px,
+    calc(var(--waterfall-art-height) - var(--waterfall-artwork-height))
+  );
   --waterfall-fallback-color: #2d3336;
   --waterfall-basin-blend-start: 89.5%;
   --waterfall-basin-blend-end: 93.5%;
@@ -59,6 +64,17 @@
   width: var(--waterfall-width);
   height: var(--waterfall-art-height);
   overflow: hidden;
+  background-color: var(--waterfall-fallback-color);
+  box-shadow:
+    0 0 0 1px rgba(83, 232, 255, 0.16),
+    0 0 3rem rgba(20, 238, 231, 0.18);
+}
+
+.scene::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  content: "";
   background:
     radial-gradient(
       ellipse at 50% 9%,
@@ -72,18 +88,62 @@
       transparent 12%,
       transparent 88%,
       rgba(61, 69, 72, 0.34)
-    ),
-    url("https://assets.knighthacks.org/khix/waterfall-animated.webp") center top / 100% auto no-repeat,
-    url("https://assets.knighthacks.org/khix/rocks%20waterfall.webp") center top / 100% auto no-repeat;
-  background-color: var(--waterfall-fallback-color);
-  box-shadow:
-    0 0 0 1px rgba(83, 232, 255, 0.16),
-    0 0 3rem rgba(20, 238, 231, 0.18);
+    );
+  pointer-events: none;
 }
 
-.waterfallStream,
-.waterfallBasin {
-  display: none;
+.sceneAsset {
+  position: absolute;
+  left: 0;
+  width: var(--waterfall-width);
+  pointer-events: none;
+}
+
+.rocksTop,
+.rocksBottom {
+  z-index: 0;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+}
+
+.rocksTop {
+  top: var(--waterfall-artwork-top);
+  height: calc(var(--waterfall-width) * 2.0854167);
+  background-image: url("https://assets.knighthacks.org/khix/rocks-waterfall-top.webp");
+}
+
+.rocksBottom {
+  top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 2.08125);
+  height: calc(var(--waterfall-width) * 2.0854167);
+  background-image: url("https://assets.knighthacks.org/khix/rocks-waterfall-bottom.webp");
+}
+
+.waterfallOne,
+.waterfallTwo,
+.waterfallThree {
+  z-index: 1;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+}
+
+.waterfallOne {
+  top: var(--waterfall-artwork-top);
+  height: calc(var(--waterfall-width) * 1.3916667);
+  background-image: url("https://assets.knighthacks.org/khix/waterfall-animated-one.webp");
+}
+
+.waterfallTwo {
+  top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 1.3861111);
+  height: calc(var(--waterfall-width) * 1.3944444);
+  background-image: url("https://assets.knighthacks.org/khix/waterfall-animated-two.webp");
+}
+
+.waterfallThree {
+  top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 2.775);
+  height: calc(var(--waterfall-width) * 1.3916667);
+  background-image: url("https://assets.knighthacks.org/khix/waterfall-animated-three.webp");
 }
 
 .waterfallAtmosphere,
@@ -597,14 +657,6 @@
     );
   }
 
-  .scene {
-    background-position:
-      center top,
-      center top,
-      center bottom,
-      center bottom;
-  }
-
   .sponsorPanel {
     padding-top: 5vw;
   }
@@ -668,76 +720,6 @@
 }
 
 @media (max-width: 760px) {
-  .scene {
-    background: url("https://assets.knighthacks.org/khix/rocks%20waterfall.webp") center top / 100% auto
-      no-repeat;
-    background-color: var(--waterfall-fallback-color);
-  }
-
-  .scene::after {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    content: "";
-    background:
-      radial-gradient(
-        ellipse at 50% 9%,
-        rgba(3, 25, 31, 0.34) 0%,
-        rgba(3, 25, 31, 0.2) 18%,
-        transparent 36%
-      ),
-      linear-gradient(
-        90deg,
-        rgba(61, 69, 72, 0.34),
-        transparent 12%,
-        transparent 88%,
-        rgba(61, 69, 72, 0.34)
-      );
-    pointer-events: none;
-  }
-
-  .waterfallStream,
-  .waterfallBasin {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    display: block;
-    background: url("https://assets.knighthacks.org/khix/waterfall-animated.webp") center top / 100% auto
-      no-repeat;
-    pointer-events: none;
-  }
-
-  .waterfallStream {
-    background-position: calc(50% + 2vw) top;
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      #000 0,
-      #000 var(--waterfall-basin-blend-start),
-      transparent var(--waterfall-basin-blend-end)
-    );
-    mask-image: linear-gradient(
-      to bottom,
-      #000 0,
-      #000 var(--waterfall-basin-blend-start),
-      transparent var(--waterfall-basin-blend-end)
-    );
-  }
-
-  .waterfallBasin {
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      transparent var(--waterfall-basin-blend-start),
-      #000 var(--waterfall-basin-blend-end),
-      #000 100%
-    );
-    mask-image: linear-gradient(
-      to bottom,
-      transparent var(--waterfall-basin-blend-start),
-      #000 var(--waterfall-basin-blend-end),
-      #000 100%
-    );
-  }
-
   .droplet[data-mobile-hidden="true"] {
     display: none;
   }
