@@ -2,6 +2,15 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
+import type { AudioLayerId, LayerVolumes } from "./audio-scene";
+import {
+  AUDIO_LAYERS,
+  AUDIO_ZONES,
+  CROSSFADE_TAU,
+  DEFAULT_ZONE_VOLUMES,
+  MIN_ZONE_OVERLAP,
+  PRIMARY_LAYER_ID,
+} from "./audio-scene";
 import styles from "./SiteAudio.module.css";
 import {
   hydrateMutedFromStorage,
@@ -10,80 +19,210 @@ import {
   toggleMuted,
 } from "./sound-state";
 
+type AudioElements = Partial<Record<AudioLayerId, HTMLAudioElement | null>>;
+
 /**
- * Swap this for the CDN URL (assets.knighthacks.org/khix/...) once the track is
- * uploaded there, to match the rest of the site's assets.
+ * Pick the active zone's volumes, else the default. Among zones covering enough
+ * of the viewport, the highest `priority` wins; coverage breaks ties within a
+ * priority. This lets the prioritized waterfall beat the taller cave that
+ * overlaps it, while still falling back to the cave once the waterfall scrolls off.
  */
-const TRACK_SRC = "/audio/birds.mp3";
+function computeTargetVolumes(): LayerVolumes {
+  const viewportHeight = window.innerHeight || 1;
+  let bestVolumes = DEFAULT_ZONE_VOLUMES;
+  let bestPriority = -1;
+  let bestOverlap = 0;
+
+  for (const zone of AUDIO_ZONES) {
+    const element = document.querySelector(zone.selector);
+
+    if (!element) {
+      continue;
+    }
+
+    const rect = element.getBoundingClientRect();
+    const overlap =
+      Math.max(
+        0,
+        Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0),
+      ) / viewportHeight;
+
+    if (overlap < MIN_ZONE_OVERLAP) {
+      continue;
+    }
+
+    const priority = zone.priority ?? 0;
+
+    if (
+      priority > bestPriority ||
+      (priority === bestPriority && overlap > bestOverlap)
+    ) {
+      bestPriority = priority;
+      bestOverlap = overlap;
+      bestVolumes = zone.volumes;
+    }
+  }
+
+  return bestVolumes;
+}
 
 export function SiteAudio() {
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRefs = useRef<AudioElements>({});
   const muted = useSyncExternalStore(
     subscribeMuted,
     isMuted,
     () => false, // Server + first client render: always unmuted, avoids mismatch.
   );
-  // Tracks whether the track is actually audible, which lags `muted` because
+  // Tracks whether audio is actually audible, which lags `muted` because
   // browsers block autoplay until the first user gesture.
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Set the level, adopt any saved preference, and mirror real playback state.
+  // Crossfade the layer volumes toward whichever zone is in view.
   useEffect(() => {
-    const audio = audioRef.current;
+    const target: LayerVolumes = { ...DEFAULT_ZONE_VOLUMES };
+    const current: LayerVolumes = { ...DEFAULT_ZONE_VOLUMES };
 
-    if (!audio) {
-      return;
+    const applyVolumes = () => {
+      for (const layer of AUDIO_LAYERS) {
+        const audio = audioRefs.current[layer.id];
+
+        if (audio) {
+          audio.volume = current[layer.id];
+        }
+      }
+    };
+
+    // Snap to the correct mix for wherever the page loads (e.g. a #faq deep link).
+    Object.assign(target, computeTargetVolumes());
+    Object.assign(current, target);
+    applyVolumes();
+
+    let frame = 0;
+    let lastTime = 0;
+
+    const step = (time: number) => {
+      const deltaSeconds = lastTime ? (time - lastTime) / 1000 : 0;
+      lastTime = time;
+
+      // Frame-rate independent exponential smoothing toward the target.
+      const blend = 1 - Math.exp(-deltaSeconds / CROSSFADE_TAU);
+      let settled = true;
+
+      for (const layer of AUDIO_LAYERS) {
+        const delta = target[layer.id] - current[layer.id];
+
+        if (Math.abs(delta) < 0.001) {
+          current[layer.id] = target[layer.id];
+        } else {
+          current[layer.id] += delta * blend;
+          settled = false;
+        }
+      }
+
+      applyVolumes();
+
+      if (settled) {
+        frame = 0; // Stop the loop until the target changes again.
+        return;
+      }
+
+      frame = window.requestAnimationFrame(step);
+    };
+
+    const retarget = () => {
+      const next = computeTargetVolumes();
+      const changed = AUDIO_LAYERS.some(
+        (layer) => Math.abs(next[layer.id] - target[layer.id]) > 0.001,
+      );
+
+      if (!changed) {
+        return;
+      }
+
+      Object.assign(target, next);
+
+      if (!frame) {
+        lastTime = 0;
+        frame = window.requestAnimationFrame(step);
+      }
+    };
+
+    // Watch the zone elements; recompute the mix whenever their overlap shifts.
+    const observer = new IntersectionObserver(retarget, {
+      threshold: Array.from({ length: 21 }, (_, index) => index / 20),
+    });
+
+    for (const zone of AUDIO_ZONES) {
+      const element = document.querySelector(zone.selector);
+
+      if (element) {
+        observer.observe(element);
+      }
     }
 
-    audio.volume = 0.5; // Volume can't be set via attribute.
+    window.addEventListener("resize", retarget);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", retarget);
+      window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  // Adopt any saved preference and mirror real playback state from the primary layer.
+  useEffect(() => {
     hydrateMutedFromStorage();
+
+    const primary = audioRefs.current[PRIMARY_LAYER_ID];
+
+    if (!primary) {
+      return;
+    }
 
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
 
-    audio.addEventListener("play", handlePlay);
-    audio.addEventListener("pause", handlePause);
+    primary.addEventListener("play", handlePlay);
+    primary.addEventListener("pause", handlePause);
 
     return () => {
-      audio.removeEventListener("play", handlePlay);
-      audio.removeEventListener("pause", handlePause);
+      primary.removeEventListener("play", handlePlay);
+      primary.removeEventListener("pause", handlePause);
     };
   }, []);
 
-  // Keep the element in sync with the mute state.
+  // Keep every layer in sync with the mute state.
   useEffect(() => {
-    const audio = audioRef.current;
+    for (const layer of AUDIO_LAYERS) {
+      const audio = audioRefs.current[layer.id];
 
-    if (!audio) {
-      return;
-    }
+      if (!audio) {
+        continue;
+      }
 
-    audio.muted = muted;
+      audio.muted = muted;
 
-    if (muted) {
-      audio.pause();
-    } else {
-      // Autoplay-with-sound is blocked until the user interacts with the page;
-      // a rejected promise here is expected and handled by the gesture fallback.
-      void audio.play().catch(() => undefined);
+      if (muted) {
+        audio.pause();
+      } else {
+        // Autoplay-with-sound is blocked until the user interacts with the page;
+        // a rejected promise here is expected and handled by the gesture fallback.
+        void audio.play().catch(() => undefined);
+      }
     }
   }, [muted]);
 
-  // Browsers block audio until the first user gesture. Try to start playback on
-  // the first interaction anywhere on the page (unless the user has muted).
+  // Browsers block audio until the first user gesture. Start every layer on the
+  // first interaction anywhere on the page (unless the user has muted).
   useEffect(() => {
-    const audio = audioRef.current;
-
-    if (!audio) {
-      return;
-    }
-
     const startPlayback = () => {
       if (isMuted()) {
         return;
       }
 
-      void audio.play().catch(() => undefined);
+      for (const layer of AUDIO_LAYERS) {
+        void audioRefs.current[layer.id]?.play().catch(() => undefined);
+      }
     };
 
     const events = ["pointerdown", "keydown", "touchstart"] as const;
@@ -112,7 +251,17 @@ export function SiteAudio() {
 
   return (
     <>
-      <audio ref={audioRef} src={TRACK_SRC} loop preload="auto" />
+      {AUDIO_LAYERS.map((layer) => (
+        <audio
+          key={layer.id}
+          ref={(element) => {
+            audioRefs.current[layer.id] = element;
+          }}
+          src={layer.src}
+          loop
+          preload="auto"
+        />
+      ))}
       <button
         type="button"
         className={styles.muteButton}

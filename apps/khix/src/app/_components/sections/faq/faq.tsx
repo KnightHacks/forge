@@ -492,6 +492,7 @@ export default function FAQ() {
     <section
       className={styles.faq}
       aria-labelledby="faq-title"
+      data-audio-zone="cave"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
