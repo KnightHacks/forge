@@ -276,6 +276,16 @@ Each app is deployed separately:
 - **Development**: Local with Docker Compose for databases
 - **Production**: Azure infrastructure with Coolify
 
+To keep Coolify redeploys from filling the VMs with stale Docker artifacts, run
+[`ops/coolify-docker-cleanup.sh`](../ops/coolify-docker-cleanup.sh) as a
+scheduled host command on both the observer and worker nodes, passing the
+retention window explicitly, for example `ops/coolify-docker-cleanup.sh 72h`.
+The script removes stopped containers, unused images, unused networks, and
+unused classic/buildx cache older than that window, but it never prunes Docker
+volumes. Keep this cleanup on the Coolify hosts rather than in `.github`;
+GitHub Actions only owns CI and optional production database migrations, while
+manual Coolify redeploys still need host cleanup.
+
 ## Helpful Resources
 
 ### Core Technologies
