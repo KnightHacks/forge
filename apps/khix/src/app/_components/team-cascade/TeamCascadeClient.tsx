@@ -23,6 +23,7 @@ interface TeamCascadePerson {
 }
 
 const profileImageLoader = ({ src }: ImageLoaderProps) => src;
+const longTeamMemberNameLength = 20;
 const rosterIdPrefixes = [
   "executive-",
   "directors-",
@@ -170,7 +171,14 @@ function TeamMemberDetails({
       aria-live="polite"
     >
       <div key={person.profileKey} className={styles.teamMemberDetailsContent}>
-        <p className={styles.teamMemberName}>{displayName}</p>
+        <p
+          className={styles.teamMemberName}
+          data-long-name={
+            displayName.length >= longTeamMemberNameLength ? "true" : undefined
+          }
+        >
+          {displayName}
+        </p>
         <div className={styles.teamMemberRoleRow}>
           <p className={styles.teamMemberRole}>{displayTitle}</p>
           {person.member.linkedinUrl ? (

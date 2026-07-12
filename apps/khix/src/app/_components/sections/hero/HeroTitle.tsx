@@ -110,7 +110,7 @@ export function HeroTitle() {
         />
       </div>
       <p className={styles.eventDetails}>
-        <span>October 9–11, 2026</span>
+        <span>October 9 - 11, 2026</span>
         <span>University of Central Florida</span>
       </p>
       <HeroApplyButton className={styles.titleApplyButton} cursorReactive />

@@ -23,7 +23,7 @@ const faqSections = [
       {
         question: "What is Knight Hacks IX?",
         answer:
-          "Knight Hacks IX is a 36-hour hackathon happening October 9-11, 2026 at the University of Central Florida.",
+          "Knight Hacks IX is a 36-hour hackathon organized by Knight Hacks, a UCF student organization. It takes place October 9 - 11, 2026 at UCF.",
       },
       {
         question: "Who can attend?",
@@ -91,7 +91,7 @@ const faqSections = [
       {
         question: "Is food provided?",
         answer:
-          "Yes! Knight Hacks provides free meals, snacks, and drinks throughout the event. Food will be given out in Room 119 –– we are not delivering food to individual hackers.",
+          "Yes! Free meals, snacks, and drinks are provided. List any food allergies or dietary needs in your application and contact the organizer team before the event.",
       },
       {
         question: "Are there showers available?",
@@ -151,13 +151,28 @@ const faqSections = [
     questions: [
       {
         question: "Do I need a team?",
-        answer:
-          "Nope! You can come solo, bring a team, or find teammates at the event. Teams may have up to four people, and we'll help hackers connect with potential teammates.",
+        answer: (
+          <>
+            Nope! You can come solo or bring a team of up to four people. If you
+            do not have a team yet, join the{" "}
+            <a href="https://discord.knighthacks.org/">Knight Hacks Discord</a>{" "}
+            before the event to meet other solo hackers and start forming a
+            team. We&apos;ll also offer in-person team formation support during
+            the hackathon.
+          </>
+        ),
       },
       {
         question: "How do I find teammates?",
-        answer:
-          "Join the Knight Hacks Discord to meet other hackers before the event. We'll also have opportunities during the hackathon to help hackers form teams in person.",
+        answer: (
+          <>
+            Use the team-formation channels in the{" "}
+            <a href="https://discord.knighthacks.org/">Knight Hacks Discord</a>{" "}
+            to introduce yourself, share your interests or project ideas, and
+            connect with other hackers before the event. If you still need a
+            team when you arrive, organizers will help match people in person.
+          </>
+        ),
       },
       {
         question: "My question wasn't answered. Where can I ask?",

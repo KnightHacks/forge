@@ -314,7 +314,7 @@
 
 .canopyButton[data-stage="3"] .leaf {
   animation: leafRelease var(--leaf-fall-duration)
-    cubic-bezier(0.24, 0.02, 0.36, 0.98) var(--leaf-fall-delay) forwards;
+    cubic-bezier(0.24, 0.02, 0.36, 0.98) var(--leaf-fall-delay) both;
 }
 
 .revealHint {
@@ -415,13 +415,23 @@
 
   12% {
     opacity: 1;
-    transform: translate3d(calc(-50% - 0.8rem), calc(-50% + 0.32rem), 0)
-      rotate(calc(var(--leaf-rotation) - 7deg)) scale(var(--leaf-scale));
+    transform: translate3d(
+        calc(-50% + var(--leaf-shift-x) - 0.8rem),
+        calc(-50% + var(--leaf-shift-y) + 0.32rem),
+        0
+      )
+      rotate(calc(var(--leaf-rotation) + var(--leaf-shift-rotation) - 7deg))
+      scale(var(--leaf-scale));
   }
 
   24% {
-    transform: translate3d(calc(-50% + 0.95rem), calc(-50% - 0.18rem), 0)
-      rotate(calc(var(--leaf-rotation) + 8deg)) scale(var(--leaf-scale));
+    transform: translate3d(
+        calc(-50% + var(--leaf-shift-x) + 0.95rem),
+        calc(-50% + var(--leaf-shift-y) - 0.18rem),
+        0
+      )
+      rotate(calc(var(--leaf-rotation) + var(--leaf-shift-rotation) + 8deg))
+      scale(var(--leaf-scale));
   }
 
   72% {

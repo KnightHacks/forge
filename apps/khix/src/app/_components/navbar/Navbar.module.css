@@ -41,8 +41,8 @@
   transform: translate3d(0, 0, 0);
   transform-origin: 50% 0;
   transition:
-    opacity 220ms ease,
-    transform 300ms cubic-bezier(0.18, 0.7, 0.2, 1),
+    opacity 300ms ease-in-out,
+    transform 300ms ease-in-out,
     filter 180ms ease;
 }
 
@@ -91,9 +91,9 @@
   border-radius: 999px;
   background: transparent;
   box-shadow: none;
-  backdrop-filter: blur(56px) saturate(1.22);
+  backdrop-filter: none;
   pointer-events: auto;
-  -webkit-backdrop-filter: blur(56px) saturate(1.22);
+  -webkit-backdrop-filter: none;
 }
 
 .brand {
@@ -616,12 +616,19 @@
 
 @media (max-width: 900px) {
   .mlhTrustBadge {
+    position: absolute;
     top: 0;
-    right: calc(env(safe-area-inset-right, 0px) + 1rem);
+    right: env(safe-area-inset-right, 0px);
     width: clamp(3.25rem, 13vw, 4rem);
     min-width: 3.25rem;
     max-width: 4rem;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .mlhTrustBadge[data-hidden="true"] {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
   }
 
   .navbar {
@@ -672,8 +679,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .navbar,
-  .mlhTrustBadge,
+  .navbar {
+    animation: none;
+  }
+
   .brand,
   .link,
   .link::after,

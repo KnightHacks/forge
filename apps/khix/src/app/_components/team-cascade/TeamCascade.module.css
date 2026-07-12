@@ -218,17 +218,26 @@
 }
 
 .teamMemberName {
+  --team-member-name-slot-height: clamp(1.6625rem, 3.8vw, 2.5175rem);
+
+  display: grid;
+  height: var(--team-member-name-slot-height);
   max-width: min(100%, 32rem);
   margin: 0;
+  place-items: center;
   color: rgba(255, 252, 245, 0.98);
   font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
   font-size: clamp(1.75rem, 4vw, 2.65rem);
   font-weight: 600;
   line-height: 0.95;
-  text-wrap: balance;
+  white-space: nowrap;
   text-shadow:
     0 0.12rem 0.75rem rgba(0, 0, 0, 0.5),
     0 0 1.3rem rgba(31, 174, 214, 0.32);
+}
+
+.teamMemberName[data-long-name="true"] {
+  font-size: clamp(0.95rem, 3vw, 2.1rem);
 }
 
 .teamMemberRoleRow {
@@ -359,6 +368,8 @@
   }
 
   .teamMemberName {
+    --team-member-name-slot-height: clamp(1.0925rem, 4.275vw, 1.4725rem);
+
     font-size: clamp(1.15rem, 4.5vw, 1.55rem);
   }
 
@@ -430,6 +441,8 @@
   }
 
   .teamMemberName {
+    --team-member-name-slot-height: clamp(1.0925rem, 4.75vw, 1.33rem);
+
     font-size: clamp(1.15rem, 5vw, 1.4rem);
   }
 

@@ -818,16 +818,12 @@
 .main {
   position: relative;
   z-index: 2;
-  display: grid;
   min-width: 0;
   height: 100vh;
   height: 100dvh;
   min-height: 0;
-  grid-template-rows: minmax(0, 1fr) auto;
   grid-column: 2;
   grid-row: 1;
-  gap: clamp(1rem, 2.4vh, 1.8rem);
-  justify-items: center;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -853,10 +849,20 @@
   background-size:
     cover,
     clamp(34rem, 56vw, 74rem) clamp(34rem, 56vw, 74rem);
-  padding: clamp(1rem, 2.4vw, 2rem) clamp(1rem, 3.6vw, 4rem)
-    clamp(1.4rem, 3vw, 2.5rem) clamp(1.25rem, 3vw, 3.5rem);
   animation: khixDashboardSceneEnter var(--khix-motion-page)
     var(--khix-ease-soft) both;
+}
+
+.mainCanvas {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-height: 100%;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: clamp(1rem, 2.4vh, 1.8rem);
+  justify-items: center;
+  padding: clamp(1rem, 2.4vw, 2rem) clamp(1rem, 3.6vw, 4rem)
+    clamp(1.4rem, 3vw, 2.5rem) clamp(1.25rem, 3vw, 3.5rem);
 }
 
 .statusMain {
@@ -869,7 +875,7 @@
   scrollbar-gutter: stable;
 }
 
-.main::before,
+.mainCanvas::before,
 .main::after {
   position: absolute;
   inset: 0;
@@ -877,7 +883,7 @@
   content: "";
 }
 
-.main::before {
+.mainCanvas::before {
   z-index: 0;
   background-image:
     var(--khix-dashboard-background-image),
@@ -913,14 +919,16 @@
   contain: paint;
 }
 
-.main > * {
+.mainCanvas > * {
   position: relative;
   z-index: 1;
 }
 
-.main > .portalMagic {
+.mainCanvas > .portalMagic {
   position: absolute;
   z-index: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .portalMagic,
@@ -1649,8 +1657,8 @@
   --wisp-y-end: 3.4rem;
 }
 
-.profileMain,
-.loreMain {
+.profileMain .mainCanvas,
+.loreMain .mainCanvas {
   grid-template-rows: auto;
   align-content: start;
   align-items: start;
@@ -1664,12 +1672,12 @@
   overflow-x: hidden;
 }
 
-.profileMain {
+.profileMain .mainCanvas {
   padding-top: clamp(6rem, 12dvh, 8.25rem);
 }
 
-.profileMain::before,
-.loreMain::before {
+.profileMain .mainCanvas::before,
+.loreMain .mainCanvas::before {
   opacity: 0.3;
   -webkit-mask-image: linear-gradient(
     180deg,
@@ -4180,16 +4188,19 @@
 
   .main {
     min-height: 0;
+  }
+
+  .mainCanvas {
     padding: 1rem 1rem 1rem clamp(1rem, 2.6vw, 1.8rem);
   }
 
   .statusMain,
-  .profileMain,
-  .loreMain {
+  .profileMain .mainCanvas,
+  .loreMain .mainCanvas {
     padding-top: clamp(6rem, 14dvh, 9rem);
   }
 
-  .profileMain {
+  .profileMain .mainCanvas {
     padding-top: clamp(3.6rem, 8dvh, 5.25rem);
   }
 
@@ -4285,7 +4296,7 @@
       right 32% top 16%;
   }
 
-  .main::before {
+  .mainCanvas::before {
     background-position:
       right 38% center,
       center;
@@ -4607,13 +4618,17 @@
     grid-row: 2;
     height: auto;
     min-height: calc(100dvh - 4.35rem);
+    overflow: visible;
+    overscroll-behavior: auto;
+    scrollbar-gutter: auto;
+  }
+
+  .mainCanvas {
+    min-height: calc(100dvh - 4.35rem);
     grid-template-rows: auto;
     align-content: start;
     gap: 1rem;
     justify-items: center;
-    overflow: visible;
-    overscroll-behavior: auto;
-    scrollbar-gutter: auto;
     padding: var(--khix-mobile-page-top-padding)
       max(1.1rem, env(safe-area-inset-right))
       calc(1.15rem + env(safe-area-inset-bottom))
@@ -4627,12 +4642,12 @@
     overscroll-behavior: auto;
   }
 
-  .profileMain,
-  .loreMain {
+  .profileMain .mainCanvas,
+  .loreMain .mainCanvas {
     padding-top: var(--khix-mobile-page-top-padding);
   }
 
-  .profileMain {
+  .profileMain .mainCanvas {
     padding: var(--khix-mobile-page-top-padding)
       max(0.85rem, env(safe-area-inset-right))
       calc(1rem + env(safe-area-inset-bottom))
@@ -5166,12 +5181,12 @@
       max(1rem, env(safe-area-inset-left));
   }
 
-  .main {
+  .mainCanvas {
     padding-right: max(1rem, env(safe-area-inset-right));
     padding-left: max(1rem, env(safe-area-inset-left));
   }
 
-  .profileMain {
+  .profileMain .mainCanvas {
     padding-right: max(0.7rem, env(safe-area-inset-right));
     padding-left: max(0.7rem, env(safe-area-inset-left));
   }
@@ -5322,7 +5337,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .main,
-  .main::before,
+  .mainCanvas::before,
   .main::after,
   .portalMagic,
   .portalMagic::before,
