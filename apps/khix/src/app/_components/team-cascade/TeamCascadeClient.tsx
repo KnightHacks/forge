@@ -23,7 +23,12 @@ interface TeamCascadePerson {
 }
 
 const profileImageLoader = ({ src }: ImageLoaderProps) => src;
-const rosterIdPrefixes = ["executive-", "directors-", "hackathon-"] as const;
+const rosterIdPrefixes = [
+  "executive-",
+  "directors-",
+  "hackathon-",
+  "design-",
+] as const;
 
 function getInitials(name: string) {
   return name
@@ -49,6 +54,8 @@ function getDisplayTitle({ member, roleLabel }: TeamCascadePerson) {
   if (roleLabel === "Organizer" && member.teamRole !== "Hack Lead") {
     return "Hackathon Organizer";
   }
+
+  if (roleLabel === "Designer") return "Designer";
 
   return member.teamRole;
 }

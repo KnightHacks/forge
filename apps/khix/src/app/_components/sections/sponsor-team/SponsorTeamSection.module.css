@@ -51,8 +51,8 @@
   left: 0;
   z-index: 2;
   height: var(--rock-separator-height);
-  background: url("https://assets.knighthacks.org/khix/sponsor-rock-separator.webp") center top / 100% auto
-    no-repeat;
+  background: url("https://assets.knighthacks.org/khix/sponsor-rock-separator.webp")
+    center top / 100% auto no-repeat;
 }
 
 .scene {
@@ -219,8 +219,8 @@
   z-index: 3;
   width: 100vw;
   height: var(--team-separator-height);
-  background: url("https://assets.knighthacks.org/khix/separator-rocks.webp") center top / 100% auto
-    no-repeat;
+  background: url("https://assets.knighthacks.org/khix/separator-rocks.webp")
+    center top / 100% auto no-repeat;
   filter: drop-shadow(0 -0.35rem 0.7rem rgba(3, 7, 12, 0.22))
     drop-shadow(0 0.5rem 0.65rem rgba(2, 4, 8, 0.28));
   transform: translateX(-50%);
@@ -405,7 +405,7 @@
   );
   --sponsor-logo-opacity: 0.58;
   --sponsor-logo-hover-opacity: 0.72;
-  --sponsor-logo-backlight-strength: 1;
+  --sponsor-logo-backlight-strength: 0;
   --sponsor-logo-filter: brightness(0) saturate(100%)
     drop-shadow(0 -1px 0.2px rgb(3 19 25 / 0.76))
     drop-shadow(0 1px 0.35px rgb(190 224 218 / 0.38));
@@ -428,15 +428,15 @@
   --sponsor-rock-will-change: auto;
   --sponsor-rock-surface-filter: saturate(0.58) brightness(0.78) contrast(1.1)
     hue-rotate(4deg);
-  --sponsor-rock-surface-hover-filter: saturate(0.6) brightness(0.82)
-    contrast(1.12) hue-rotate(4deg);
+  --sponsor-rock-surface-hover-filter: saturate(0.72) brightness(0.78)
+    contrast(1.14) hue-rotate(4deg);
   --sponsor-rock-shadow: var(--water-break-filter)
     drop-shadow(0 0.12rem 0.1rem rgb(2 20 27 / 0.4))
     drop-shadow(0 0.42rem 0.3rem rgb(2 17 23 / 0.3));
   --sponsor-rock-focus-shadow: var(--water-break-filter)
     drop-shadow(0 0.12rem 0.1rem rgb(2 20 27 / 0.42))
-    drop-shadow(0 0 0.24rem rgb(230 255 249 / 0.94))
-    drop-shadow(0 0 0.7rem rgb(105 224 218 / 0.78));
+    drop-shadow(0 0 0.14rem rgb(var(--tier-glow-end-rgb) / 0.92))
+    drop-shadow(0 0 0.38rem rgb(var(--tier-glow-start-rgb) / 0.56));
 }
 
 .sectionTitle {
@@ -520,7 +520,8 @@
   width: 125.42%;
   aspect-ratio: 1;
   content: "";
-  background: url("https://assets.knighthacks.org/khix/large-sponsor-rock.webp") 0 0 / 100% auto no-repeat;
+  background: url("https://assets.knighthacks.org/khix/large-sponsor-rock.webp")
+    0 0 / 100% auto no-repeat;
   filter: saturate(0.58) brightness(0.78) contrast(1.1) hue-rotate(4deg);
   pointer-events: none;
   transition: filter 180ms ease;

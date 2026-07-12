@@ -12,7 +12,6 @@ interface HeroLayerImageProps {
 }
 
 export function HeroLayerImage({ layer, index, zIndex }: HeroLayerImageProps) {
-  const shouldPreload = index === 0;
   const isGlow = layer.motionRole === "glow";
   const isPond = layer.motionRole === "pond";
   const isTk = layer.motionRole === "tk";
@@ -87,7 +86,7 @@ export function HeroLayerImage({ layer, index, zIndex }: HeroLayerImageProps) {
           alt=""
           width={layer.width ?? 3840}
           height={layer.height ?? 4320}
-          priority={shouldPreload}
+          priority
           unoptimized
           sizes="100vw"
           draggable={false}
@@ -99,7 +98,6 @@ export function HeroLayerImage({ layer, index, zIndex }: HeroLayerImageProps) {
           src={imageSrc}
           alt=""
           fill
-          priority={shouldPreload}
           unoptimized
           sizes="100vw"
           draggable={false}

@@ -85,7 +85,7 @@
   min-height: 24rem;
   margin-top: clamp(-12rem, -10vw, -6rem);
   margin-bottom: clamp(-19rem, -16vw, -6rem);
-  pointer-events: none;
+  pointer-events: auto;
   background-image: var(--faq-separator-image, none);
   background-position: center top;
   background-repeat: no-repeat;

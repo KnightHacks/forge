@@ -1268,7 +1268,7 @@ function ReportIssueNavAction({
 
 // Final asset slot: add an optional poster image here when KHIX key art is ready.
 const KHIX_LORE_FILM_EMBED_URL =
-  "https://www.youtube.com/embed/OzW_4QeCfM0?rel=0&modestbranding=1";
+  "https://www.youtube.com/embed/hi1gLM-suzE?rel=0&modestbranding=1";
 const KHIX_LORE_FILM_POSTER_IMAGE = "";
 
 const LORE_ARTISTS = {

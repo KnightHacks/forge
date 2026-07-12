@@ -8,10 +8,18 @@
 }
 
 .pondAtmosphere {
+  position: absolute;
+  inset: 0;
   contain: layout paint;
   overflow: hidden;
   opacity: 1;
   backface-visibility: hidden;
+}
+
+.pondAssetCredit {
+  --asset-credit-top: auto;
+  --asset-credit-right: clamp(1rem, 3vw, 2.5rem);
+  --asset-credit-bottom: clamp(1rem, 2vw, 1.5rem);
 }
 
 .fireflies {
@@ -421,7 +429,8 @@
 .wisp::before {
   inset: -4%;
   z-index: 1;
-  background: url("https://assets.knighthacks.org/khix/khix-wisp-flame.webp") center / contain no-repeat;
+  background: url("https://assets.knighthacks.org/khix/khix-wisp-flame.webp")
+    center / contain no-repeat;
   opacity: var(--wisp-sprite-opacity);
   transform: translateZ(0) scale(0.98);
   animation: pondWispSpriteFlicker 7.2s ease-in-out infinite;
@@ -431,7 +440,8 @@
 .wisp::after {
   inset: -18%;
   z-index: 0;
-  background: url("https://assets.knighthacks.org/khix/khix-wisp-flame.webp") center / contain no-repeat;
+  background: url("https://assets.knighthacks.org/khix/khix-wisp-flame.webp")
+    center / contain no-repeat;
   filter: blur(10px) saturate(1.2);
   opacity: var(--wisp-glow-opacity);
   transform: translate3d(0.15rem, 0.12rem, 0) scale(1.22);

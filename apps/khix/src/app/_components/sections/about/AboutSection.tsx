@@ -1,12 +1,22 @@
 import Image from "next/image";
 
+import { AssetCredit } from "../../assets";
 import { AboutGallery } from "./AboutGallery";
 import styles from "./AboutSection.module.css";
 
 export function AboutSection() {
   return (
     <section id="about" className={styles.about} aria-labelledby="about-title">
-      <div className={styles.leftRune} aria-hidden="true">
+      <AssetCredit
+        className={styles.leftRune}
+        label="Art by"
+        credits={[
+          {
+            name: "Adrian Osorio",
+            href: "https://www.linkedin.com/in/adrianosoriob/",
+          },
+        ]}
+      >
         <Image
           src="https://assets.knighthacks.org/khix/about-rock.webp"
           alt=""
@@ -21,8 +31,17 @@ export function AboutSection() {
           sizes="(max-width: 760px) 48vw, 24vw"
           className={styles.glowImage}
         />
-      </div>
-      <div className={styles.rightStump} aria-hidden="true">
+      </AssetCredit>
+      <AssetCredit
+        className={styles.rightStump}
+        label="Art by"
+        credits={[
+          {
+            name: "Adrian Osorio",
+            href: "https://www.linkedin.com/in/adrianosoriob/",
+          },
+        ]}
+      >
         <Image
           src="https://assets.knighthacks.org/khix/about-stump.webp"
           alt=""
@@ -31,7 +50,7 @@ export function AboutSection() {
           sizes="(max-width: 760px) 62vw, (max-width: 1199px) 38vw, 34vw"
           unoptimized
         />
-      </div>
+      </AssetCredit>
       <div className={styles.content}>
         <div className={styles.storyRow}>
           <div className={styles.copy}>

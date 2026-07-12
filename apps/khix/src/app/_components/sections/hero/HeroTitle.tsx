@@ -5,7 +5,6 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { AssetCredit } from "../../assets";
 import styles from "./Hero.module.css";
 
 interface HeroApplyButtonProps {
@@ -100,20 +99,15 @@ export function HeroTitle() {
   return (
     <div className={styles.titleLockup} data-hero-title>
       <div className={styles.titleLogoWrap} aria-hidden="true">
-        <AssetCredit
-          label="Logo by"
-          credits={[{ name: "Knight Hacks Design Team" }]}
-        >
-          <Image
-            src="https://assets.knighthacks.org/khix/khlogo.svg"
-            alt=""
-            width={1858}
-            height={666}
-            priority
-            className={styles.titleLogo}
-            data-hero-title-logo
-          />
-        </AssetCredit>
+        <Image
+          src="https://assets.knighthacks.org/khix/khlogo.svg"
+          alt=""
+          width={1858}
+          height={666}
+          priority
+          className={styles.titleLogo}
+          data-hero-title-logo
+        />
       </div>
       <p className={styles.eventDetails}>
         <span>October 9–11, 2026</span>

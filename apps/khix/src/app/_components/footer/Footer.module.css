@@ -20,6 +20,16 @@
   font-family: var(--footer-body-font);
 }
 
+.footerArtworkCredit {
+  --asset-credit-top: auto;
+  --asset-credit-right: clamp(1rem, 3vw, 2.5rem);
+  --asset-credit-bottom: clamp(1rem, 2vw, 1.5rem);
+
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
 .lennyPlacement {
   position: absolute;
   top: clamp(-14.5rem, -19vw, -10.5rem);
@@ -29,6 +39,8 @@
 }
 
 .links {
+  position: relative;
+  z-index: 3;
   display: grid;
   width: fit-content;
   max-width: 100%;
@@ -75,6 +87,8 @@
 }
 
 .bottomRow {
+  position: relative;
+  z-index: 3;
   display: grid;
   width: min(100%, 42rem);
   margin: clamp(1.75rem, 2vw, 2rem) auto 0;

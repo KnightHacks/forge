@@ -1,15 +1,16 @@
 .assetCredit {
   position: relative;
   display: block;
-  width: 100%;
+  width: var(--asset-credit-width, 100%);
   max-width: 100%;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .creditText {
   position: absolute;
-  right: 0;
-  bottom: -0.15rem;
+  right: var(--asset-credit-right, 0);
+  top: var(--asset-credit-top, calc(100% + 0.5rem));
+  bottom: var(--asset-credit-bottom, auto);
   z-index: 2;
   max-width: min(24rem, calc(100vw - 2rem));
   border: 0;
@@ -25,12 +26,14 @@
     0 1px 0.45rem rgba(0, 0, 0, 0.34),
     0 0 0.7rem rgba(255, 255, 255, 0.1);
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
   transform: translate3d(0, 0.16rem, 0);
   transform-origin: 100% 100%;
   transition:
-    opacity 180ms ease,
-    transform 220ms ease;
+    opacity 180ms ease 2s,
+    transform 220ms ease 2s,
+    visibility 0s linear 2.22s;
 }
 
 .creditLabel {
@@ -64,8 +67,12 @@
 .assetCredit:hover .creditText,
 .assetCredit:focus-within .creditText {
   opacity: 1;
-  pointer-events: auto;
+  visibility: visible;
   transform: translate3d(0, 0, 0);
+  transition:
+    opacity 180ms ease,
+    transform 220ms ease,
+    visibility 0s linear;
 }
 
 @media (prefers-reduced-motion: reduce) {

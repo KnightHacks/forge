@@ -408,6 +408,10 @@
     padding-top: 0.15rem;
     transform: none;
   }
+
+  .teamProfile:last-child:nth-child(5n + 1) {
+    grid-column: 3;
+  }
 }
 
 @media (max-width: 520px) {

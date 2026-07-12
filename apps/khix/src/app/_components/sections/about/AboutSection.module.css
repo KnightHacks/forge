@@ -12,11 +12,13 @@
 }
 
 .leftRune {
+  --asset-credit-width: clamp(15rem, 24vw, 27rem);
+
   position: absolute;
   top: 50%;
   left: clamp(-3rem, -2vw, -0.75rem);
   z-index: 4;
-  width: clamp(15rem, 24vw, 27rem);
+  width: var(--asset-credit-width);
   aspect-ratio: 518 / 840;
   pointer-events: none;
   transform: translateY(-50%);
@@ -130,12 +132,14 @@
 }
 
 .rightStump {
+  --asset-credit-width: clamp(18rem, 34vw, 38rem);
+
   position: absolute;
   top: clamp(10rem, 22svh, 17rem);
   right: 0;
   z-index: 5;
   display: block;
-  width: clamp(18rem, 34vw, 38rem);
+  width: var(--asset-credit-width);
   opacity: 0.96;
   filter: drop-shadow(0 1.2rem 1.6rem rgb(0 0 0 / 0.38));
   pointer-events: none;
@@ -338,9 +342,11 @@
 
   .metricsPanel {
     grid-row: 2;
-    grid-column: 4 / 10;
+    grid-column: 6 / 12;
+    box-sizing: border-box;
     width: 100%;
     margin-right: 0;
+    padding-left: clamp(1rem, 2vw, 2.5rem);
   }
 
   .storyRow,

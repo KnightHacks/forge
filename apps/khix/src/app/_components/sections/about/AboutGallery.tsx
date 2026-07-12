@@ -34,12 +34,6 @@ export function AboutGallery() {
   const [loadedImageIndexes, setLoadedImageIndexes] = useState(
     () => new Set([0, 1]),
   );
-  const [readyImageIndexes, setReadyImageIndexes] = useState(
-    () => new Set<number>(),
-  );
-  const [pendingImageIndex, setPendingImageIndex] = useState<number | null>(
-    null,
-  );
 
   const loadImage = (index: number) => {
     setLoadedImageIndexes((currentIndexes) => {
@@ -51,28 +45,8 @@ export function AboutGallery() {
 
   const showImage = (index: number) => {
     loadImage(index);
-
-    if (readyImageIndexes.has(index)) {
-      setActiveImageIndex(index);
-      loadImage((index + 1) % GALLERY_IMAGES.length);
-      return;
-    }
-
-    setPendingImageIndex(index);
-  };
-
-  const markImageReady = (index: number) => {
-    setReadyImageIndexes((currentIndexes) => {
-      if (currentIndexes.has(index)) return currentIndexes;
-
-      return new Set(currentIndexes).add(index);
-    });
-
-    if (pendingImageIndex === index) {
-      setActiveImageIndex(index);
-      setPendingImageIndex(null);
-      loadImage((index + 1) % GALLERY_IMAGES.length);
-    }
+    setActiveImageIndex(index);
+    loadImage((index + 1) % GALLERY_IMAGES.length);
   };
 
   const showPreviousImage = () => {
@@ -121,7 +95,6 @@ export function AboutGallery() {
               fetchPriority={index === activeImageIndex ? "high" : "low"}
               loading="eager"
               draggable={false}
-              onLoad={() => markImageReady(index)}
             />
           ) : null,
         )}

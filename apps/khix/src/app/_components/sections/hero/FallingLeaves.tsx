@@ -13,6 +13,18 @@ interface FallingLeaf {
   x: string;
 }
 
+type LeafVars = Record<
+  | "--leaf-delay"
+  | "--leaf-drift"
+  | "--leaf-duration"
+  | "--leaf-fill"
+  | "--leaf-opacity"
+  | "--leaf-rotate"
+  | "--leaf-size"
+  | "--leaf-x",
+  string | number
+>;
+
 const FALLING_LEAVES: FallingLeaf[] = [
   {
     x: "52%",
@@ -133,7 +145,7 @@ export function FallingLeaves() {
               "--leaf-rotate": leaf.rotate,
               "--leaf-size": leaf.size,
               "--leaf-x": leaf.x,
-            } as CSSProperties
+            } satisfies CSSProperties & LeafVars
           }
         />
       ))}

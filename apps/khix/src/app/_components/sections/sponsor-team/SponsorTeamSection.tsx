@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import type { SponsorShowcaseSponsor } from "../../sponsor-showcase";
+import { AssetCredit } from "../../assets";
 import { SponsorShowcase } from "../../sponsor-showcase";
 import { TeamCascade } from "../../team-cascade";
 import styles from "./SponsorTeamSection.module.css";
@@ -123,9 +124,18 @@ const PARTNERS = [
 export function SponsorTeamSection() {
   return (
     <div className={styles.waterfallShowcase}>
-      <div className={styles.waterfallTransition} aria-hidden="true">
+      <AssetCredit
+        className={styles.waterfallTransition}
+        label="Separator art by"
+        credits={[
+          {
+            name: "Adrian Osorio",
+            href: "https://www.linkedin.com/in/adrianosoriob/",
+          },
+        ]}
+      >
         <div className={styles.sponsorRockSeparator} />
-      </div>
+      </AssetCredit>
       <div className={styles.scene} aria-hidden="true">
         <span className={`${styles.sceneAsset} ${styles.rocksTop}`} />
         <span className={`${styles.sceneAsset} ${styles.rocksBottom}`} />

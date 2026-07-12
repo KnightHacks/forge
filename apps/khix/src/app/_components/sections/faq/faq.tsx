@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { AssetCredit } from "../../assets";
 import styles from "./faq.module.css";
 import { useFaqMotion } from "./useFaqMotion";
 
@@ -634,6 +635,18 @@ export function FAQTitle({ className }: { className?: string }) {
           : undefined
       }
     >
+      <AssetCredit
+        className={styles.faqSeparatorCredit}
+        label="Separator art by"
+        credits={[
+          {
+            name: "Adrian Osorio",
+            href: "https://www.linkedin.com/in/adrianosoriob/",
+          },
+        ]}
+      >
+        <span aria-hidden="true" />
+      </AssetCredit>
       <motion.h2
         id="faq-title"
         className={styles.dividerTitle}

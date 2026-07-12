@@ -216,6 +216,7 @@ function SponsorRockCard({
     <a
       className={styles.sponsorLink}
       data-size={tierConfig.size}
+      data-tier={sponsor.tier}
       data-preserve-logo-contrast={
         sponsor.preserveLogoContrast ? "true" : undefined
       }

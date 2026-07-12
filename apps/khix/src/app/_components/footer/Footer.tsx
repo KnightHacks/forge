@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { AssetCredit } from "../assets";
 import { LennyBlink } from "../sections/faq/LennyBlink";
 import { CaveBugs } from "./CaveBugs";
 import styles from "./Footer.module.css";
@@ -27,6 +28,18 @@ export function Footer() {
       </div>
 
       <footer className={styles.footer}>
+        <AssetCredit
+          className={styles.footerArtworkCredit}
+          label="Footer art by"
+          credits={[
+            {
+              name: "Adrian Osorio",
+              href: "https://www.linkedin.com/in/adrianosoriob/",
+            },
+          ]}
+        >
+          <span aria-hidden="true" />
+        </AssetCredit>
         <CaveBugs />
 
         <nav className={styles.links} aria-label="Footer navigation">

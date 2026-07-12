@@ -85,7 +85,7 @@
     ),
     rgba(42, 56, 70, 0.08);
   backdrop-filter: blur(26px) saturate(1.04);
-  animation: introVeilRelease 1.45s ease-out forwards;
+  animation: intro-veil-release 1.45s ease-out forwards;
 }
 
 .layer {
@@ -238,7 +238,7 @@
   box-shadow: inset -1px -2px 3px rgba(58, 31, 93, 0.22);
   opacity: 0;
   transform: translate3d(0, -8svh, 0) rotate(-18deg);
-  animation: leafFall var(--leaf-duration) linear var(--leaf-delay) infinite;
+  animation: leaf-fall var(--leaf-duration) linear var(--leaf-delay) infinite;
 }
 
 .leaf::after {
@@ -912,7 +912,7 @@
   }
 }
 
-@keyframes introVeilRelease {
+@keyframes intro-veil-release {
   0% {
     opacity: 1;
     backdrop-filter: blur(26px) saturate(1.04);
@@ -925,7 +925,7 @@
   }
 }
 
-@keyframes leafFall {
+@keyframes leaf-fall {
   0% {
     opacity: 0;
     transform: translate3d(0, -8svh, 0) rotate(-18deg) scale(0.86);

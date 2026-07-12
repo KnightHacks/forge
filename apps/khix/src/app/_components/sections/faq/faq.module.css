@@ -97,6 +97,16 @@
   translate: -50% -50%;
 }
 
+.faqSeparatorCredit {
+  --asset-credit-top: auto;
+  --asset-credit-right: clamp(1rem, 3vw, 2.5rem);
+  --asset-credit-bottom: clamp(1rem, 2vw, 1.5rem);
+
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
 .dividerTitleQ {
   /* Bagnard kerns F/A but not A/Q, so balance only the unkerned pair. */
   display: inline-block;
