@@ -86,7 +86,7 @@ function createDroplet({
     id,
     midDrift,
     midTravel,
-    mobileHidden: mobileIndex % 6 !== 0,
+    mobileHidden: mobileIndex % 12 !== 0,
     opacity,
     travel,
     width,

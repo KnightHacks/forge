@@ -59,7 +59,7 @@ export function AboutSection() {
                 Join us at Florida’s best hackathon
               </h2>
               <p>
-                From October 9–11, step into Knight Hacks IX, a 36-hour
+                From October 9 - 11, step into Knight Hacks IX, a 36-hour
                 experience built around curiosity, creativity, and community.
                 Spend the weekend chasing ideas, meeting new people, and
                 discovering what you can create when everyone around you is

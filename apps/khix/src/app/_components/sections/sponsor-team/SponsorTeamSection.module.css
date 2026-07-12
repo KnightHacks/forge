@@ -12,6 +12,7 @@
   --waterfall-fallback-color: #2d3336;
   --waterfall-basin-blend-start: 89.5%;
   --waterfall-basin-blend-end: 93.5%;
+  --waterfall-stream-offset-x: clamp(0.75rem, 2vw, 2rem);
   --rock-separator-height: 59.9306vw;
   --team-panel-top: calc(
     var(--waterfall-scene-top) + var(--waterfall-art-height) * 0.458
@@ -126,6 +127,7 @@
   background-position: center top;
   background-repeat: no-repeat;
   background-size: 100% auto;
+  transform: translateX(var(--waterfall-stream-offset-x));
 }
 
 .waterfallOne {
@@ -144,6 +146,19 @@
   top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 2.775);
   height: calc(var(--waterfall-width) * 1.3916667);
   background-image: url("https://assets.knighthacks.org/khix/waterfall-animated-three.webp");
+}
+
+.waterfallThree::after {
+  position: absolute;
+  inset: 0;
+  background-image: inherit;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+  content: "";
+  transform: translateX(calc(var(--waterfall-stream-offset-x) * -1));
+  -webkit-mask-image: linear-gradient(to bottom, transparent 65%, #000000 76%);
+  mask-image: linear-gradient(to bottom, transparent 65%, #000000 76%);
 }
 
 .waterfallAtmosphere,
@@ -721,6 +736,34 @@
 }
 
 @media (max-width: 760px) {
+  .sponsorRockSeparator {
+    background-image: url("/assets/sponsor-mobile/sponsor-rock-separator.webp");
+  }
+
+  .rocksTop {
+    background-image: url("/assets/sponsor-mobile/rocks-waterfall-top.webp");
+  }
+
+  .rocksBottom {
+    background-image: url("/assets/sponsor-mobile/rocks-waterfall-bottom.webp");
+  }
+
+  .waterfallOne {
+    background-image: url("/assets/sponsor-mobile/waterfall-animated-one.webp");
+  }
+
+  .waterfallTwo {
+    background-image: url("/assets/sponsor-mobile/waterfall-animated-two.webp");
+  }
+
+  .waterfallThree {
+    background-image: url("/assets/sponsor-mobile/waterfall-animated-three.webp");
+  }
+
+  .bridge {
+    background-image: url("/assets/sponsor-mobile/separator-rocks.webp");
+  }
+
   .droplet[data-mobile-hidden="true"] {
     display: none;
   }

@@ -26,9 +26,11 @@ interface NavbarProps {
 }
 
 const HIDE_SCROLL_Y = 80;
+const HIDE_MLH_SCROLL_Y = 50;
 const SCROLL_DELTA = 6;
 const CLOSE_TRANSITION_FALLBACK_MS = 620;
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+const MOBILE_NAV_QUERY = "(max-width: 900px)";
 
 export function Navbar({
   links,
@@ -36,6 +38,7 @@ export function Navbar({
   homeHref = "#home",
 }: NavbarProps) {
   const [isHidden, setIsHidden] = useState(false);
+  const [isMlhHidden, setIsMlhHidden] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuClosing, setIsMenuClosing] = useState(false);
   const isMenuVisible = isMenuOpen || isMenuClosing;
@@ -54,17 +57,22 @@ export function Navbar({
   }, []);
 
   useEffect(() => {
-    const reducedMotion = window.matchMedia(REDUCED_MOTION_QUERY);
-    if (reducedMotion.matches) {
-      return;
-    }
-
+    const mobileNav = window.matchMedia(MOBILE_NAV_QUERY);
     let lastScrollY = window.scrollY;
     let ticking = false;
 
     const updateVisibility = () => {
       const currentScrollY = window.scrollY;
       const scrollDelta = currentScrollY - lastScrollY;
+
+      setIsMlhHidden(currentScrollY > HIDE_MLH_SCROLL_Y);
+
+      if (mobileNav.matches) {
+        setIsHidden(false);
+        lastScrollY = currentScrollY;
+        ticking = false;
+        return;
+      }
 
       if (currentScrollY <= HIDE_SCROLL_Y) {
         setIsHidden(false);
@@ -92,7 +100,20 @@ export function Navbar({
 
     window.addEventListener("scroll", handleScroll, { passive: true });
 
-    return () => window.removeEventListener("scroll", handleScroll);
+    const handleMobileNavChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setIsHidden(false);
+      }
+
+      lastScrollY = window.scrollY;
+    };
+
+    mobileNav.addEventListener("change", handleMobileNavChange);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      mobileNav.removeEventListener("change", handleMobileNavChange);
+    };
   }, [isMenuVisible]);
 
   useEffect(() => {
@@ -320,7 +341,7 @@ export function Navbar({
           </nav>
         </div>
       </header>
-      <MLHBadge isHidden={isNavHidden} isMenuOpen={isMenuVisible} />
+      <MLHBadge isHidden={isMlhHidden} isMenuOpen={isMenuVisible} />
     </>
   );
 }
