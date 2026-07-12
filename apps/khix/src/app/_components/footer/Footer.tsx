@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { LennyBlink } from "../sections/faq/LennyBlink";
+import { CaveBugs } from "./CaveBugs";
 import styles from "./Footer.module.css";
 
 const footerLinks = [
@@ -26,6 +27,8 @@ export function Footer() {
       </div>
 
       <footer className={styles.footer}>
+        <CaveBugs />
+
         <nav className={styles.links} aria-label="Footer navigation">
           {footerLinks.map((link) => (
             <a
