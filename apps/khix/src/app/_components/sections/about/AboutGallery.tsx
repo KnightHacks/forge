@@ -12,25 +12,20 @@ const GALLERY_IMAGES = [
   {
     src: "https://assets.knighthacks.org/khix/about-gallery-community.webp",
     alt: "Hackers gathering in the UCF Student Union during Knight Hacks",
-    aspectRatio: "2400 / 1597",
   },
   {
     src: "https://assets.knighthacks.org/khix/about-gallery-crowd.webp",
     alt: "Knight Hacks participants filling the UCF Student Union",
-    aspectRatio: "2400 / 1597",
   },
   {
     src: "https://assets.knighthacks.org/khix/about-gallery-team.webp",
     alt: "Knight Hacks organizers and attendees holding a signed event banner",
-    aspectRatio: "2400 / 1349",
   },
 ] as const;
 
 export function AboutGallery() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const activeImage = GALLERY_IMAGES[activeImageIndex] ?? GALLERY_IMAGES[0];
-
   const showPreviousImage = () => {
     setActiveImageIndex(
       (currentIndex) =>
@@ -65,10 +60,7 @@ export function AboutGallery() {
         }
       }}
     >
-      <div
-        className={styles.galleryViewport}
-        style={{ aspectRatio: activeImage.aspectRatio }}
-      >
+      <div className={styles.galleryViewport}>
         {GALLERY_IMAGES.map((image, index) => (
           <Image
             key={image.src}
