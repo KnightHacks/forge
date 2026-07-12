@@ -78,6 +78,8 @@
   --khix-motion-page: 680ms;
 
   position: relative;
+  width: 100%;
+  max-width: 100vw;
   height: 100vh;
   height: 100dvh;
   min-height: 100vh;
@@ -121,6 +123,8 @@
 .chrome {
   position: relative;
   display: grid;
+  width: 100%;
+  max-width: 100%;
   height: 100vh;
   height: 100dvh;
   min-height: 100vh;
@@ -629,6 +633,8 @@
 }
 
 .countdownSlot {
+  min-width: 0;
+  max-width: 100%;
   width: min(36rem, 100%);
   margin: clamp(1.05rem, 2.4vh, 1.55rem) auto 0;
 }
@@ -648,6 +654,8 @@
 
 .countdownGrid {
   display: grid;
+  min-width: 0;
+  max-width: 100%;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.55rem;
   margin-top: 0.75rem;
@@ -655,6 +663,7 @@
 
 .countdownUnit {
   display: grid;
+  min-width: 0;
   min-height: 4.25rem;
   align-content: center;
   border: 1px solid rgb(145 181 97 / 0.2);
@@ -2287,6 +2296,8 @@
 }
 .statusStage {
   display: grid;
+  min-width: 0;
+  max-width: 100%;
   align-self: center;
   justify-self: center;
   width: min(72rem, 100%);
@@ -2933,6 +2944,8 @@
 
 .toolDock {
   display: grid;
+  min-width: 0;
+  max-width: 100%;
   grid-template-columns: repeat(3, minmax(9.75rem, 1fr));
   gap: 0.7rem;
   align-self: end;
@@ -2979,6 +2992,8 @@
 .toolButton,
 .toolDisabled {
   display: grid;
+  min-width: 0;
+  max-width: 100%;
   min-height: 4.35rem;
   grid-template-rows: minmax(0, 1fr) auto;
   align-content: stretch;
@@ -3040,6 +3055,7 @@
 
 .toolTitle {
   display: grid;
+  min-width: 0;
   grid-template-columns: 1rem minmax(0, 1fr);
   align-items: start;
   gap: 0.4rem;
@@ -3047,6 +3063,7 @@
   font-weight: 950;
   line-height: 1.12;
   text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
 .toolTitle svg {
@@ -4750,6 +4767,8 @@
     color: rgb(255 252 244 / 0.74);
     font-size: clamp(0.64rem, 2.75vw, 0.95rem);
     line-height: 1.22;
+    overflow-wrap: anywhere;
+    white-space: normal;
     text-shadow: 0 0 0.55rem rgb(25 9 37 / 0.72);
   }
 
@@ -4900,6 +4919,7 @@
 
   .toolDock {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
     gap: 0.55rem;
     align-self: end;
     margin-top: clamp(2.25rem, 8dvh, 4.75rem);
@@ -4913,6 +4933,7 @@
   .toolLink,
   .toolButton,
   .toolDisabled {
+    width: 100%;
     min-height: 4.15rem;
     align-content: stretch;
     gap: 0.46rem;
