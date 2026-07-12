@@ -225,10 +225,14 @@
   font-size: clamp(1.75rem, 4vw, 2.65rem);
   font-weight: 600;
   line-height: 0.95;
-  text-wrap: balance;
+  white-space: nowrap;
   text-shadow:
     0 0.12rem 0.75rem rgba(0, 0, 0, 0.5),
     0 0 1.3rem rgba(31, 174, 214, 0.32);
+}
+
+.teamMemberName[data-long-name="true"] {
+  font-size: clamp(0.95rem, 3vw, 2.1rem);
 }
 
 .teamMemberRoleRow {
