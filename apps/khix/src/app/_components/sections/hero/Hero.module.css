@@ -17,7 +17,9 @@
 }
 
 .hero {
-  --khix-hero-height: 112svh;
+  --khix-viewport-unit: 1svh;
+  --khix-viewport-width-unit: 1vw;
+  --khix-hero-height: calc(var(--khix-viewport-unit) * 112);
   --khix-hero-pointer-x: 0;
   --khix-hero-pointer-y: 0;
   --khix-hero-scroll-progress: 0;
@@ -57,7 +59,7 @@
   --khix-art-motion-scale: 0.46;
 
   position: absolute;
-  inset: -4svh -3vw;
+  inset: calc(var(--khix-viewport-unit) * -4) -3vw;
   z-index: 1;
   pointer-events: auto;
   overflow-anchor: none;
@@ -92,7 +94,11 @@
   --khix-layer-depth-x: 0;
   --khix-layer-depth-y: 0;
   --khix-layer-max-x: clamp(0.65rem, 1.65vw, 1.85rem);
-  --khix-layer-max-y: clamp(0.65rem, 1.8svh, 1.7rem);
+  --khix-layer-max-y: clamp(
+    0.65rem,
+    calc(var(--khix-viewport-unit) * 1.8),
+    1.7rem
+  );
   --khix-layer-scale: 1;
   --khix-layer-scroll-y: 0px;
 
@@ -227,7 +233,7 @@
 
 .leaf {
   position: absolute;
-  top: -9svh;
+  top: calc(var(--khix-viewport-unit) * -9);
   left: var(--leaf-x);
   width: var(--leaf-size);
   aspect-ratio: 0.62;
@@ -237,7 +243,8 @@
     var(--leaf-fill);
   box-shadow: inset -1px -2px 3px rgba(58, 31, 93, 0.22);
   opacity: 0;
-  transform: translate3d(0, -8svh, 0) rotate(-18deg);
+  transform: translate3d(0, calc(var(--khix-viewport-unit) * -8), 0)
+    rotate(-18deg);
   animation: leaf-fall var(--leaf-duration) linear var(--leaf-delay) infinite;
 }
 
@@ -269,8 +276,10 @@
       transparent 42%
     );
   box-shadow:
-    inset 0 -24svh 34svh rgba(7, 28, 23, 0.2),
-    inset 0 18svh 30svh rgba(247, 253, 213, 0.16);
+    inset 0 calc(var(--khix-viewport-unit) * -24)
+      calc(var(--khix-viewport-unit) * 34) rgba(7, 28, 23, 0.2),
+    inset 0 calc(var(--khix-viewport-unit) * 18)
+      calc(var(--khix-viewport-unit) * 30) rgba(247, 253, 213, 0.16);
 }
 
 .titleLockup {
@@ -285,7 +294,7 @@
   width: clamp(28rem, 39vw, 47rem);
   flex-direction: column;
   align-items: flex-start;
-  gap: clamp(0.9rem, 1.8svh, 1.28rem);
+  gap: clamp(0.9rem, calc(var(--khix-viewport-unit) * 1.8), 1.28rem);
   pointer-events: auto;
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1);
@@ -346,7 +355,7 @@
   align-self: center;
   flex-direction: column;
   align-items: center;
-  gap: clamp(0.14rem, 0.35svh, 0.24rem);
+  gap: clamp(0.14rem, calc(var(--khix-viewport-unit) * 0.35), 0.24rem);
   margin: 0;
   color: rgb(255 255 255 / 0.96);
   font-family: var(--font-khix), Georgia, "Times New Roman", serif;
@@ -372,7 +381,7 @@
   isolation: isolate;
   display: inline-flex;
   align-self: center;
-  min-height: clamp(2.15rem, 3.9svh, 2.55rem);
+  min-height: clamp(2.15rem, calc(var(--khix-viewport-unit) * 3.9), 2.55rem);
   align-items: center;
   justify-content: center;
   overflow: visible;
@@ -408,7 +417,7 @@
   --khix-apply-glow-angle: 0deg;
 
   width: clamp(15rem, 18vw, 20rem);
-  min-height: clamp(3.25rem, 6.4svh, 4rem);
+  min-height: clamp(3.25rem, calc(var(--khix-viewport-unit) * 6.4), 4rem);
   padding-inline: clamp(2rem, 4vw, 3rem);
   font-size: clamp(1.05rem, 1.25vw, 1.2rem);
 }
@@ -556,18 +565,18 @@
 @media (max-width: 1440px) and (min-width: 701px) {
   .art {
     --khix-art-motion-scale: 0.38;
-    inset: -3.4svh -4vw;
+    inset: calc(var(--khix-viewport-unit) * -3.4) -4vw;
   }
 
   .titleLockup {
-    top: clamp(13.5rem, 30svh, 18rem);
+    top: clamp(13.5rem, calc(var(--khix-viewport-unit) * 30), 18rem);
     left: clamp(2rem, 8vw, 5rem);
     width: clamp(22rem, 45vw, 31rem);
   }
 
   .titleApplyButton {
     width: clamp(13rem, 22vw, 17rem);
-    min-height: clamp(3rem, 6svh, 3.75rem);
+    min-height: clamp(3rem, calc(var(--khix-viewport-unit) * 6), 3.75rem);
     padding-inline: clamp(1.75rem, 4vw, 2.5rem);
     font-size: clamp(1rem, 1.4vw, 1.1rem);
   }
@@ -581,7 +590,7 @@
 
 @media (max-width: 700px) {
   .hero {
-    --khix-hero-height: 108svh;
+    --khix-hero-height: calc(var(--khix-viewport-unit) * 108);
     z-index: auto;
     min-height: 108vh;
     min-height: var(--khix-hero-height);
@@ -589,11 +598,15 @@
 
   .art {
     --khix-art-motion-scale: 0.42;
-    inset: -1.4svh 0;
+    inset: calc(var(--khix-viewport-unit) * -1.4) 0;
   }
 
   .leaf {
-    width: clamp(0.625rem, 3vw, var(--leaf-size));
+    width: clamp(
+      0.625rem,
+      calc(var(--khix-viewport-width-unit) * 3),
+      var(--leaf-size)
+    );
   }
 
   .desktopHeroLayers {
@@ -606,7 +619,13 @@
     right: 0;
     z-index: 1;
     display: block;
-    width: max(100vw, min(130vw, calc(var(--khix-hero-height) * 9 / 16)));
+    width: max(
+      calc(var(--khix-viewport-width-unit) * 100),
+      min(
+        calc(var(--khix-viewport-width-unit) * 130),
+        calc(var(--khix-hero-height) * 9 / 16)
+      )
+    );
     aspect-ratio: 9 / 16;
     overflow: hidden;
     pointer-events: none;
@@ -616,8 +635,16 @@
     --khix-mobile-layer-depth-x: 0;
     --khix-mobile-layer-depth-y: 0;
     --khix-mobile-layer-scroll-y: 0px;
-    --khix-mobile-layer-max-x: clamp(0.35rem, 2vw, 0.75rem);
-    --khix-mobile-layer-max-y: clamp(0.35rem, 1.6svh, 0.85rem);
+    --khix-mobile-layer-max-x: clamp(
+      0.35rem,
+      calc(var(--khix-viewport-width-unit) * 2),
+      0.75rem
+    );
+    --khix-mobile-layer-max-y: clamp(
+      0.35rem,
+      calc(var(--khix-viewport-unit) * 1.6),
+      0.85rem
+    );
     --khix-mobile-layer-overscan: 1.035;
 
     object-fit: fill;
@@ -700,7 +727,10 @@
   }
 
   .foregroundImage {
-    top: calc(var(--khix-hero-height) - 66vw - 15svh);
+    top: calc(
+      var(--khix-hero-height) - (var(--khix-viewport-width-unit) * 66) -
+        (var(--khix-viewport-unit) * 15)
+    );
     left: 0;
     width: 100%;
     max-width: 100%;
@@ -715,15 +745,19 @@
   .titleLockup {
     --khix-title-aura-opacity: 0.34;
     --khix-title-glow-opacity: 0.7;
-    --khix-mobile-title-top: clamp(8.5rem, 16svh, 10rem);
+    --khix-mobile-title-top: clamp(
+      8.5rem,
+      calc(var(--khix-viewport-unit) * 16),
+      10rem
+    );
 
     top: var(--khix-mobile-title-top);
     left: 50%;
     display: flex;
-    width: min(78vw, 20rem);
+    width: min(calc(var(--khix-viewport-width-unit) * 78), 20rem);
     flex-direction: column;
     align-items: center;
-    gap: clamp(0.58rem, 1.5svh, 0.78rem);
+    gap: clamp(0.58rem, calc(var(--khix-viewport-unit) * 1.5), 0.78rem);
     transform: translate3d(-50%, 0, 0) scale(1);
     transform-origin: 50% 45%;
   }
@@ -738,7 +772,11 @@
       0 0 0.04rem rgb(255 255 255 / 0.72),
       0 0 0.18rem rgb(235 249 255 / 0.38),
       0 0 0.42rem rgb(139 232 255 / 0.2);
-    font-size: clamp(1rem, 4.1vw, 1.15rem);
+    font-size: clamp(
+      1rem,
+      calc(var(--khix-viewport-width-unit) * 4.1),
+      1.15rem
+    );
   }
 
   .titleApplyButton {
@@ -747,16 +785,20 @@
 
   .mobileHeroApplyButton {
     position: absolute;
-    top: 90svh;
+    top: calc(var(--khix-viewport-unit) * 90);
     right: 0;
     left: 0;
     z-index: 30;
     display: inline-flex;
-    width: min(68vw, 18rem);
-    min-height: clamp(3rem, 6svh, 3.35rem);
+    width: min(calc(var(--khix-viewport-width-unit) * 68), 18rem);
+    min-height: clamp(3rem, calc(var(--khix-viewport-unit) * 6), 3.35rem);
     margin-inline: auto;
-    padding-inline: clamp(1.5rem, 6vw, 2.25rem);
-    font-size: clamp(1rem, 4.2vw, 1.1rem);
+    padding-inline: clamp(
+      1.5rem,
+      calc(var(--khix-viewport-width-unit) * 6),
+      2.25rem
+    );
+    font-size: clamp(1rem, calc(var(--khix-viewport-width-unit) * 4.2), 1.1rem);
   }
 }
 
@@ -928,7 +970,8 @@
 @keyframes leaf-fall {
   0% {
     opacity: 0;
-    transform: translate3d(0, -8svh, 0) rotate(-18deg) scale(0.86);
+    transform: translate3d(0, calc(var(--khix-viewport-unit) * -8), 0)
+      rotate(-18deg) scale(0.86);
   }
 
   12% {
@@ -937,13 +980,21 @@
 
   58% {
     opacity: var(--leaf-opacity);
-    transform: translate3d(var(--leaf-drift), 54svh, 0)
+    transform: translate3d(
+        var(--leaf-drift),
+        calc(var(--khix-viewport-unit) * 54),
+        0
+      )
       rotate(var(--leaf-rotate)) scale(1);
   }
 
   100% {
     opacity: 0;
-    transform: translate3d(var(--leaf-drift), 106svh, 0)
+    transform: translate3d(
+        var(--leaf-drift),
+        calc(var(--khix-viewport-unit) * 106),
+        0
+      )
       rotate(var(--leaf-rotate)) scale(0.9);
   }
 }

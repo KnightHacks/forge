@@ -11,8 +11,23 @@ interface HeroMotion {
 const clamp = (value: number, min = 0, max = 1) =>
   Math.min(max, Math.max(min, value));
 
-const getViewportHeight = () =>
-  window.visualViewport?.height ?? window.innerHeight;
+const MOBILE_HERO_QUERY = "(max-width: 700px)";
+const MOBILE_POINTER_QUERY = "(any-pointer: coarse)";
+const PORTRAIT_QUERY = "(orientation: portrait)";
+const VIEWPORT_UNIT_PROPERTY = "--khix-viewport-unit";
+const VIEWPORT_WIDTH_UNIT_PROPERTY = "--khix-viewport-width-unit";
+
+const getDocumentOffsetTop = (element: HTMLElement) => {
+  let offsetTop = 0;
+  let currentElement: HTMLElement | null = element;
+
+  while (currentElement) {
+    offsetTop += currentElement.offsetTop;
+    currentElement = currentElement.offsetParent as HTMLElement | null;
+  }
+
+  return offsetTop;
+};
 
 const setElementMotionNumber = (
   element: HTMLElement | null,
@@ -33,6 +48,86 @@ export function useHeroMotion(): HeroMotion {
     pointerY: 0,
     scrollProgress: 0,
   });
+
+  useEffect(() => {
+    const section = sectionRef.current;
+
+    if (!section) {
+      return;
+    }
+
+    const mobileQuery = window.matchMedia(MOBILE_HERO_QUERY);
+    const mobilePointerQuery = window.matchMedia(MOBILE_POINTER_QUERY);
+    const portraitQuery = window.matchMedia(PORTRAIT_QUERY);
+    let firstFrame = 0;
+    let secondFrame = 0;
+
+    const updateStableViewportUnits = () => {
+      if (!mobileQuery.matches) {
+        section.style.removeProperty(VIEWPORT_UNIT_PROPERTY);
+        section.style.removeProperty(VIEWPORT_WIDTH_UNIT_PROPERTY);
+        return;
+      }
+
+      const visualViewport = window.visualViewport;
+      const visibleViewportHeight =
+        visualViewport?.height ?? window.innerHeight;
+      // A touch-first phone's screen height stays stable while browser bars
+      // expand and collapse, and keeps the hero tall enough to avoid seams.
+      const viewportHeight = mobilePointerQuery.matches
+        ? Math.max(visibleViewportHeight, window.screen.height)
+        : visibleViewportHeight;
+      const viewportWidth = visualViewport?.width ?? window.innerWidth;
+      const viewportUnit = Math.max(1, viewportHeight) / 100;
+      const viewportWidthUnit = Math.max(1, viewportWidth) / 100;
+
+      section.style.setProperty(
+        VIEWPORT_UNIT_PROPERTY,
+        `${viewportUnit.toFixed(4)}px`,
+      );
+      section.style.setProperty(
+        VIEWPORT_WIDTH_UNIT_PROPERTY,
+        `${viewportWidthUnit.toFixed(4)}px`,
+      );
+    };
+
+    const cancelViewportFrames = () => {
+      if (firstFrame) {
+        window.cancelAnimationFrame(firstFrame);
+        firstFrame = 0;
+      }
+
+      if (secondFrame) {
+        window.cancelAnimationFrame(secondFrame);
+        secondFrame = 0;
+      }
+    };
+
+    const scheduleStableViewportUnit = () => {
+      cancelViewportFrames();
+      firstFrame = window.requestAnimationFrame(() => {
+        firstFrame = 0;
+        secondFrame = window.requestAnimationFrame(() => {
+          secondFrame = 0;
+          updateStableViewportUnits();
+        });
+      });
+    };
+
+    // Mobile browser chrome changes must not resize or recrop the hero.
+    // Refresh the snapshot only when its breakpoint or orientation changes.
+    updateStableViewportUnits();
+    mobileQuery.addEventListener("change", scheduleStableViewportUnit);
+    portraitQuery.addEventListener("change", scheduleStableViewportUnit);
+
+    return () => {
+      cancelViewportFrames();
+      mobileQuery.removeEventListener("change", scheduleStableViewportUnit);
+      portraitQuery.removeEventListener("change", scheduleStableViewportUnit);
+      section.style.removeProperty(VIEWPORT_UNIT_PROPERTY);
+      section.style.removeProperty(VIEWPORT_WIDTH_UNIT_PROPERTY);
+    };
+  }, []);
 
   const setPointerVars = (x: number, y: number) => {
     const stage = stageRef.current;
@@ -80,6 +175,8 @@ export function useHeroMotion(): HeroMotion {
     const reduceMotionQuery = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     );
+    const section = sectionRef.current;
+    const sectionTop = section ? getDocumentOffsetTop(section) : 0;
     let frame = 0;
 
     const setScrollProgressVar = (progress: number) => {
@@ -110,10 +207,9 @@ export function useHeroMotion(): HeroMotion {
         return;
       }
 
-      const viewportHeight = getViewportHeight();
-      const scrollableDistance = Math.max(1, viewportHeight);
+      const scrollableDistance = Math.max(1, section.offsetHeight);
       const progress = clamp(
-        -section.getBoundingClientRect().top / scrollableDistance,
+        (window.scrollY - sectionTop) / scrollableDistance,
       );
 
       setScrollProgressVar(progress);
@@ -149,8 +245,10 @@ export function useHeroMotion(): HeroMotion {
     window.addEventListener("scroll", scheduleScrollProgress, {
       passive: true,
     });
-    window.addEventListener("resize", scheduleScrollProgress);
-    window.visualViewport?.addEventListener("resize", scheduleScrollProgress);
+    const sectionResizeObserver = new ResizeObserver(scheduleScrollProgress);
+    if (section) {
+      sectionResizeObserver.observe(section);
+    }
 
     return () => {
       reduceMotionQuery.removeEventListener(
@@ -158,11 +256,7 @@ export function useHeroMotion(): HeroMotion {
         handleReducedMotionChange,
       );
       window.removeEventListener("scroll", scheduleScrollProgress);
-      window.removeEventListener("resize", scheduleScrollProgress);
-      window.visualViewport?.removeEventListener(
-        "resize",
-        scheduleScrollProgress,
-      );
+      sectionResizeObserver.disconnect();
       if (frame) {
         window.cancelAnimationFrame(frame);
       }
@@ -173,7 +267,7 @@ export function useHeroMotion(): HeroMotion {
   }, []);
 
   const handlePointerMove = (event: PointerEvent<HTMLElement>) => {
-    if (shouldReduceMotionRef.current) {
+    if (shouldReduceMotionRef.current || event.pointerType !== "mouse") {
       cancelPointerFrame();
       setPointerVars(0, 0);
       return;
