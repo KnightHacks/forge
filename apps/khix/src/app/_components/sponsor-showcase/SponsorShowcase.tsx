@@ -1,4 +1,7 @@
+"use client";
+
 import type { CSSProperties } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 
 import styles from "./SponsorShowcase.module.css";
@@ -34,30 +37,14 @@ type SponsorSize = "x-small" | "small" | "medium" | "large" | "x-large";
 type SponsorGroupName = "slab" | "medium-stone" | "small-stone";
 
 interface SponsorTierConfig {
-  glowBoost?: number;
-  glowEndColor: string;
-  glowStartColor: string;
   size: SponsorSize;
-  tintColor: string;
 }
 
 type SponsorCardStyle = CSSProperties & {
-  "--float-delay": string;
-  "--rune-delay": string;
   "--sponsor-logo-hover-scale": string;
   "--sponsor-logo-mobile-hover-scale": string;
   "--sponsor-logo-mobile-scale": string;
   "--sponsor-logo-scale": string;
-  "--tier-glow-end-rgb": string;
-  "--tier-glow-hover-end-alpha": string;
-  "--tier-glow-hover-start-alpha": string;
-  "--tier-glow-pulse-strong-end-alpha": string;
-  "--tier-glow-pulse-strong-start-alpha": string;
-  "--tier-glow-pulse-soft-end-alpha": string;
-  "--tier-glow-pulse-soft-start-alpha": string;
-  "--tier-glow-radius-scale": string;
-  "--tier-glow-start-rgb": string;
-  "--tier-tint-rgb": string;
 };
 
 const SPONSOR_TIER_DISPLAY_ORDER = [
@@ -70,75 +57,21 @@ const SPONSOR_TIER_DISPLAY_ORDER = [
 
 const SPONSOR_TIER_CONFIG = {
   "bronze-ember": {
-    glowBoost: 1.26,
-    glowEndColor: "#D9985FD9",
-    glowStartColor: "#783D1FC7",
     size: "x-small",
-    tintColor: "#B5561A",
   },
   "silver-moon": {
-    glowBoost: 1.62,
-    glowEndColor: "#F4FCFFFF",
-    glowStartColor: "#92B9CEE6",
     size: "small",
-    tintColor: "#8FA6B5",
   },
   "golden-dawn": {
-    glowBoost: 1.32,
-    glowEndColor: "#FFF0A6E8",
-    glowStartColor: "#D3A52AD9",
     size: "medium",
-    tintColor: "#FFB400",
   },
   "platinum-crown": {
-    glowBoost: 1.34,
-    glowEndColor: "#D7DCFFFF",
-    glowStartColor: "#5748D9E6",
     size: "large",
-    tintColor: "#8C93E8",
   },
   "forest-sovereign": {
-    glowEndColor: "#CE2CFF",
-    glowStartColor: "#4E007B",
     size: "x-large",
-    tintColor: "#A020F0",
   },
 } as const satisfies Record<SponsorTier, SponsorTierConfig>;
-
-const SPONSOR_GLOW_ALPHA = {
-  hoverEnd: 0.62,
-  hoverStart: 0.9,
-  pulseSoftEnd: 0.4,
-  pulseSoftStart: 0.74,
-  pulseStrongEnd: 0.66,
-  pulseStrongStart: 0.98,
-} as const;
-
-function getHexColorParts(hexColor: string) {
-  const normalizedHex = hexColor.replace("#", "");
-  const red = Number.parseInt(normalizedHex.slice(0, 2), 16);
-  const green = Number.parseInt(normalizedHex.slice(2, 4), 16);
-  const blue = Number.parseInt(normalizedHex.slice(4, 6), 16);
-  const alpha =
-    normalizedHex.length === 8
-      ? Number.parseInt(normalizedHex.slice(6, 8), 16) / 255
-      : 1;
-
-  return {
-    alpha: alpha.toFixed(3),
-    rgb: `${red} ${green} ${blue}`,
-  };
-}
-
-function getBoostedAlpha(
-  colorAlpha: string,
-  baseAlpha: number,
-  glowBoost: number,
-) {
-  const alpha = Number.parseFloat(colorAlpha);
-
-  return Math.min(alpha * baseAlpha * glowBoost, 1).toFixed(3);
-}
 
 function getOrderedSponsors(sponsors: readonly SponsorShowcaseSponsor[]) {
   return SPONSOR_TIER_DISPLAY_ORDER.flatMap((tier) =>
@@ -154,62 +87,15 @@ function getSponsorCardKey(
   return `${groupName}-${index}-${sponsor.tier}-${sponsor.name}-${sponsor.websiteUrl}`;
 }
 
-function SponsorRockCard({
-  index,
-  sponsor,
-}: {
-  index: number;
-  sponsor: SponsorShowcaseSponsor;
-}) {
+function SponsorRockCard({ sponsor }: { sponsor: SponsorShowcaseSponsor }) {
   const tierConfig = SPONSOR_TIER_CONFIG[sponsor.tier];
-  const glowStartColor = getHexColorParts(tierConfig.glowStartColor);
-  const glowEndColor = getHexColorParts(tierConfig.glowEndColor);
-  const glowBoost = "glowBoost" in tierConfig ? tierConfig.glowBoost : 1;
-  const tintColor = getHexColorParts(tierConfig.tintColor);
   const logoScale = sponsor.logoScale ?? 1;
   const mobileLogoScale = sponsor.mobileLogoScale ?? logoScale;
-  const glowRadiusScale = 1 + (glowBoost - 1) * 0.5;
   const style: SponsorCardStyle = {
-    "--float-delay": `${-(index % 6) * 0.42}s`,
-    "--rune-delay": `${-index * 0.43}s`,
     "--sponsor-logo-hover-scale": (logoScale * 1.035).toFixed(3),
     "--sponsor-logo-mobile-hover-scale": (mobileLogoScale * 1.035).toFixed(3),
     "--sponsor-logo-mobile-scale": mobileLogoScale.toString(),
     "--sponsor-logo-scale": logoScale.toString(),
-    "--tier-glow-end-rgb": glowEndColor.rgb,
-    "--tier-glow-hover-end-alpha": getBoostedAlpha(
-      glowEndColor.alpha,
-      SPONSOR_GLOW_ALPHA.hoverEnd,
-      glowBoost,
-    ),
-    "--tier-glow-hover-start-alpha": getBoostedAlpha(
-      glowStartColor.alpha,
-      SPONSOR_GLOW_ALPHA.hoverStart,
-      glowBoost,
-    ),
-    "--tier-glow-pulse-strong-end-alpha": getBoostedAlpha(
-      glowEndColor.alpha,
-      SPONSOR_GLOW_ALPHA.pulseStrongEnd,
-      glowBoost,
-    ),
-    "--tier-glow-pulse-strong-start-alpha": getBoostedAlpha(
-      glowStartColor.alpha,
-      SPONSOR_GLOW_ALPHA.pulseStrongStart,
-      glowBoost,
-    ),
-    "--tier-glow-pulse-soft-end-alpha": getBoostedAlpha(
-      glowEndColor.alpha,
-      SPONSOR_GLOW_ALPHA.pulseSoftEnd,
-      glowBoost,
-    ),
-    "--tier-glow-pulse-soft-start-alpha": getBoostedAlpha(
-      glowStartColor.alpha,
-      SPONSOR_GLOW_ALPHA.pulseSoftStart,
-      glowBoost,
-    ),
-    "--tier-glow-radius-scale": glowRadiusScale.toFixed(3),
-    "--tier-glow-start-rgb": glowStartColor.rgb,
-    "--tier-tint-rgb": tintColor.rgb,
   };
 
   return (
@@ -229,10 +115,7 @@ function SponsorRockCard({
       style={style}
     >
       <span className={styles.sponsorVisual} aria-hidden="true">
-        <span className={styles.rockFrame} aria-hidden="true">
-          <span className={styles.rockSheen} aria-hidden="true" />
-          <span className={styles.rockShine} aria-hidden="true" />
-        </span>
+        <span className={styles.rockFrame} aria-hidden="true" />
         <span className={styles.sponsorLogo}>
           <Image
             src={sponsor.logoSrc}
@@ -255,6 +138,7 @@ export function SponsorShowcase({
   title = "Sponsors",
   titleId = "khix-sponsors-title",
 }: SponsorShowcaseProps) {
+  const showcaseRef = useRef<HTMLElement>(null);
   const orderedSponsors = getOrderedSponsors(sponsors);
   const slabSponsors = orderedSponsors.filter(
     (sponsor) =>
@@ -274,12 +158,45 @@ export function SponsorShowcase({
     ? `${styles.sponsorShowcase} ${className}`
     : styles.sponsorShowcase;
 
+  useEffect(() => {
+    const showcase = showcaseRef.current;
+
+    if (!showcase) {
+      return;
+    }
+
+    const setActive = (isActive: boolean) => {
+      showcase.dataset.active = isActive ? "true" : "false";
+    };
+
+    if (!("IntersectionObserver" in window)) {
+      setActive(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setActive(entry?.isIntersecting ?? false);
+      },
+      { rootMargin: "20% 0px", threshold: 0.01 },
+    );
+
+    observer.observe(showcase);
+
+    return () => observer.disconnect();
+  }, []);
+
   if (orderedSponsors.length === 0) {
     return null;
   }
 
   return (
-    <section className={sponsorShowcaseClassName} aria-labelledby={titleId}>
+    <section
+      ref={showcaseRef}
+      className={sponsorShowcaseClassName}
+      data-active="false"
+      aria-labelledby={titleId}
+    >
       <h2 id={titleId} className={styles.sponsorTitle}>
         <span className={styles.sponsorTitleRock} aria-hidden="true">
           <span className={styles.rockFrame} aria-hidden="true" />
@@ -294,7 +211,6 @@ export function SponsorShowcase({
               <SponsorRockCard
                 key={getSponsorCardKey("slab", sponsor, index)}
                 sponsor={sponsor}
-                index={index}
               />
             ))}
           </div>
@@ -306,7 +222,6 @@ export function SponsorShowcase({
               <SponsorRockCard
                 key={getSponsorCardKey("medium-stone", sponsor, index)}
                 sponsor={sponsor}
-                index={slabSponsors.length + index}
               />
             ))}
           </div>
@@ -318,7 +233,6 @@ export function SponsorShowcase({
               <SponsorRockCard
                 key={getSponsorCardKey("small-stone", sponsor, index)}
                 sponsor={sponsor}
-                index={slabSponsors.length + mediumStoneSponsors.length + index}
               />
             ))}
           </div>
@@ -330,12 +244,6 @@ export function SponsorShowcase({
               <SponsorRockCard
                 key={getSponsorCardKey("small-stone", sponsor, index)}
                 sponsor={sponsor}
-                index={
-                  slabSponsors.length +
-                  mediumStoneSponsors.length +
-                  smallStoneSponsors.length +
-                  index
-                }
               />
             ))}
           </div>

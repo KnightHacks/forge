@@ -34,10 +34,9 @@
 
 @media (max-width: 760px) {
   .front {
-    bottom: 0;
-    height: auto;
-    background-image: url("https://assets.knighthacks.org/khix/extended-front-mobile.webp");
-    background-position: center -25vw;
-    background-size: 120% auto;
+    contain: paint;
+    background-image: url("/_next/image?url=https%3A%2F%2Fassets.knighthacks.org%2Fkhix%2Fextended-front-mobile.webp&w=750&q=75");
+    background-position: center -80vw;
+    background-size: 120vw auto;
   }
 }

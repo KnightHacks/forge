@@ -113,7 +113,7 @@
 
 @media (max-width: 760px) {
   .sectionStack {
-    --khix-about-overlap: clamp(1.5rem, 5svh, 3rem);
+    --khix-about-overlap: clamp(1.5rem, 8.5vw, 2.5rem);
     --khix-foreground-join: 152vw;
     --khix-front-height: 1006.95vw;
 
