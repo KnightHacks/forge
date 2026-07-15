@@ -14,13 +14,33 @@ export default async function MemberEventsPage() {
   const session = await auth();
   if (!session) redirect("/");
 
-  const [eventRows, attendanceRows] = await Promise.all([
+  const [eventRows, attendanceRows, feedbackRows] = await Promise.all([
     api.event.listMemberEvents(),
     api.event.listMemberAttendance(),
+    api.event.listMyFeedback(),
   ]);
   return (
     <HydrateClient>
-      <MemberEventsDashboard attendance={attendanceRows} events={eventRows} />
+      <MemberEventsDashboard
+        attendance={attendanceRows}
+        events={eventRows}
+        feedback={feedbackRows
+          .filter(
+            (
+              feedback,
+            ): feedback is Exclude<
+              typeof feedback,
+              { status: "not_applicable" }
+            > => "dueAt" in feedback,
+          )
+          .map((feedback) => ({
+            ...feedback,
+            dueAt: feedback.dueAt.toISOString(),
+            ...(feedback.status === "completed"
+              ? { submittedAt: feedback.submittedAt.toISOString() }
+              : {}),
+          }))}
+      />
     </HydrateClient>
   );
 }

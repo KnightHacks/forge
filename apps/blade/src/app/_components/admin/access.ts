@@ -32,10 +32,20 @@ export function canAccessEventCheckIn(permissions: EffectivePermissions) {
   );
 }
 
+export function canAccessFormAdmin(permissions: EffectivePermissions) {
+  return (
+    permissions.IS_OFFICER === true ||
+    permissions.READ_FORMS === true ||
+    permissions.EDIT_FORMS === true ||
+    permissions.READ_FORM_RESPONSES === true
+  );
+}
+
 export function getAdminNavigationAccess(permissions: EffectivePermissions) {
   return {
     eventCheckIn: canAccessEventCheckIn(permissions),
     events: canAccessEventAdmin(permissions),
+    forms: canAccessFormAdmin(permissions),
     members: canAccessMemberAdmin(permissions),
     roles: canAccessRoleAdmin(permissions),
   };

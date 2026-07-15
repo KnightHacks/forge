@@ -143,7 +143,9 @@ Use this pattern for Blade dashboard pages:
 - **Highest-level cards/panels** use the lighter raised gray surface: `bg-card/95`, subtle white border, and page-level shadow.
 - **Content inside those panels** uses the darker gray/purple inset surface: `bg-background/60` with the same subtle border.
 - Link rows, status rows, summary tiles, and inset cards inside a dashboard panel should share that darker inset treatment.
-- Left and right dashboard panels should align content from the top unless a specific layout requires otherwise.
+- When a workflow genuinely requires multiple persistent panels, top-align
+  their content. Do not infer that a left/right or two-thirds/one-third split is
+  the default dashboard structure.
 - Do not use a full nested `Card` component inside another card. Use a simple `div` with the nested surface treatment.
 
 Current member dashboard examples:
@@ -278,6 +280,83 @@ Lead with plain language and one obvious primary action rather than raw counts o
 ### Layout
 
 Prefer `flex` / `grid` plus `gap` for sibling groups so spacing survives reordering and deletion.
+
+#### Workspace Composition
+
+- Primary admin workspaces should normally use the available content width.
+- Avoid a fixed one-third side rail for settings, creation, filters, or
+  occasional inspection. Use `Dialog` on desktop and `Drawer` or a
+  viewport-safe dialog on mobile when the task is secondary and bounded.
+- Reserve a persistent secondary column for information users must reference
+  continuously while working in the primary surface.
+- Dense repeated configuration should use compact grids or rows. Full-width,
+  single-column cards are not the default for short repeated records.
+- Workspace selectors should normally live with the tabs or archive/current
+  controls they affect, apply immediately, and use URL state when the selected
+  workspace must survive refresh, back/forward navigation, or sharing.
+
+#### Forms And Builders
+
+- Mine the legacy flow before replacing a mature form or builder. Retain useful
+  interaction patterns while translating the visuals and accessibility to the
+  current Blade system.
+- `Add question` creates a sensible default question. Put the type selector in
+  the question editor instead of beside the creation action.
+- Question types share a compact shell but receive type-specific editors:
+  choice types use individual option rows with Enter-to-add and multiline-paste
+  support; scales expose their minimum and maximum; file types expose limits;
+  and link, boolean, numeric, and text types show relevant constraints.
+- Reorderable builders provide pointer drag-and-drop, keyboard-accessible
+  movement, and explicit fallback controls. Stable question IDs, not prompts,
+  carry identity through reordering and edits.
+- Use dialogs or drawers for bounded secondary creation and settings. Keep the
+  ordered question list in the primary workspace and avoid a persistent
+  one-third configuration rail.
+- Render submitted answers by type. Choice objects display labels, booleans
+  display Yes/No, links remain clickable, and authorized uploads expose a
+  download action in both admin inspection and the submitter's receipt.
+
+#### Dense Data And Analytics
+
+- Put summary metrics and distributions before raw records.
+- Heterogeneous question analytics should share a consistent full-width panel
+  with divided sections. Do not use a two-column equal-row card grid when one
+  question's content can stretch an unrelated card or leave an empty grid cell.
+- Small single-choice sets may use a donut or pie chart. Use sorted horizontal
+  bars when labels are long or categories are numerous. Always show category,
+  count, and percentage in text.
+- Multiple-choice checkbox results use sorted bars or a count table based on
+  respondent count. Do not use a pie chart because selections are not mutually
+  exclusive and percentages may exceed 100%.
+- Scale and numeric questions show average, response count, and ordered
+  distribution.
+- Boolean questions show a Yes/No count and percentage distribution. Link
+  responses stay clickable, and file responses expose authorized download
+  actions rather than filenames alone.
+- Text, file, and other non-aggregate answers use a compact table or list in a
+  bounded `overflow-y-auto` region. Preserve the complete value through
+  the table, expansion, or a detail dialog; never render dozens of full answers
+  into page flow or create a card for every answer.
+- Tables wider than their surface use a labeled `overflow-x-auto` container.
+  Scroll regions need a visible boundary, keyboard reachability, and a mobile
+  layout that does not trap scrolling.
+- At 320px, Blade pages must not create document-level horizontal overflow.
+  Controls keep 44px targets, long labels wrap, dialogs fit the viewport, and
+  charts retain textual or tabular alternatives.
+
+#### Compact Actions And State
+
+- Prefer a familiar Lucide icon with an accessible label and tooltip for
+  repeated compact actions such as event feedback. Add visible text only when
+  the action is not clear from its context.
+- Represent unavailable actions with a muted disabled control and tooltip,
+  without reserving a large block for explanatory anti-condition copy.
+- Represent completion with a success surface plus a muted glyph so completed
+  and unavailable states cannot be confused.
+- Keep urgency adjacent to the action. A compact destructive `!` marker with a
+  tooltip is preferred over repeating a long due-date sentence in every card.
+- Successful modal submissions close the overlay, toast the outcome, and
+  invalidate the source data so the completed state appears immediately.
 
 For profile/dashboard layouts:
 

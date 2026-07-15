@@ -44,15 +44,25 @@ const form = {
   },
   id: formId,
   isClosed: false,
+  kind: "system" as const,
+  manuallyClosed: false,
   name: "Test form",
+  opensAt: null,
+  closesAt: null,
+  responseMode: "single_locked" as const,
+  revision: 1,
   section: "Membership",
   slugName: "test-form",
+  state: "published" as const,
 };
 
 function createForm(overrides: Partial<typeof form> = {}) {
   return {
     ...form,
     ...overrides,
+    responseMode:
+      overrides.responseMode ??
+      (overrides.allowEdit ? "single_editable" : form.responseMode),
   };
 }
 
@@ -176,13 +186,15 @@ describe("forms createResponse", () => {
       callbackResults: [{ id: "member-id" }],
       formResponseId: "response-id",
     });
-    expect(transaction.values).toHaveBeenCalledWith({
-      form: formId,
-      responseData: {
-        firstName: "Lenny",
-      },
-      userId,
-    });
+    expect(transaction.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        form: formId,
+        responseData: {
+          firstName: "Lenny",
+        },
+        userId,
+      }),
+    );
     expect(callback).toHaveBeenCalledWith({
       data: {
         firstName: "Lenny",
@@ -287,6 +299,32 @@ describe("forms updateResponse", () => {
       firstName: "Lenny",
     });
     expect(transaction.values).not.toHaveBeenCalled();
+  });
+
+  it("allows the code-owned admin update path to maintain a closed system response", async () => {
+    const transaction = createTransactionMock({
+      existingResponse: { id: "existing-response-id" },
+      formOverrides: {
+        isClosed: true,
+        kind: "system",
+        manuallyClosed: true,
+        state: "archived",
+      } as unknown as Partial<typeof form>,
+    });
+
+    await expect(
+      updateResponse({
+        codeOwnedForms: [],
+        database: asUpdateResponseDatabase(transaction.tx),
+        enforceAllowEdit: false,
+        input: {
+          form: formId,
+          responseData: { firstName: "Lenny" },
+          upsert: false,
+        },
+        session,
+      }),
+    ).resolves.toMatchObject({ formResponseId: "response-id" });
   });
 
   it("honors allowEdit for generic self-service response updates", async () => {

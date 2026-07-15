@@ -15,6 +15,7 @@ type NavigationItem =
   | "dashboard"
   | "eventCheckIn"
   | "events"
+  | "forms"
   | "members"
   | "roles";
 
@@ -39,12 +40,15 @@ export function AuthenticatedShell({
         ? "Event check-in"
         : activeNavigation === "events"
           ? "Event admin"
-          : activeNavigation === "roles"
-            ? "Role admin"
-            : "Member dashboard");
+          : activeNavigation === "forms"
+            ? "Form admin"
+            : activeNavigation === "roles"
+              ? "Role admin"
+              : "Member dashboard");
   const hasAdminNavigation =
     adminNavigation?.eventCheckIn === true ||
     adminNavigation?.events === true ||
+    adminNavigation?.forms === true ||
     adminNavigation?.members === true ||
     adminNavigation?.roles === true;
 

@@ -28,18 +28,19 @@ Forge ships repo-level agent skills under `.claude/skills/`. The full registry a
 
 Use these during code implementation and validation. Do not substitute spec/SRD/test-case writer skills for implementation work.
 
-| Skill | Path | Use when |
-| --- | --- | --- |
-| Spec miner | `.claude/skills/spec-miner` | The SRD points at legacy or undocumented code and you need to map real behavior before editing. |
-| React analyzer | `.claude/skills/react-analyzer` | Before or after meaningful React/TSX changes; pair with `pnpm analyze:react <path>` or `pnpm analyze:react:changed`. |
-| React expert | `.claude/skills/react-expert` | Building or refactoring components, hooks, client/server boundaries, Suspense, forms, or interactive UI. |
-| Next.js developer | `.claude/skills/nextjs-developer` | App Router pages, RSC, server actions, route handlers, `loading.tsx`/`error.tsx`, middleware, or streaming SSR. |
-| TypeScript pro | `.claude/skills/typescript-pro` | tRPC procedures, Zod validators, advanced types, or end-to-end type-safety changes. |
-| Test master | `.claude/skills/test-master` | Fixing or extending generated tests, mocking strategy, or test harness work tied to the SRD. |
-| Playwright expert | `.claude/skills/playwright-expert` | Writing, debugging, or extending Playwright E2E tests and fixtures. |
-| Playwright skill | `.claude/skills/playwright-skill` | Agent-driven browser verification of implemented UI flows, forms, responsive behavior, or runtime UX. |
-| Architecture designer | `.claude/skills/architecture-designer` | The SRD requires an architectural decision, ADR, or cross-package boundary review before coding. |
-| Deslop | `.claude/skills/deslop` | Reviewing user-facing copy, comments, or `status.md` prose for AI-sounding filler. |
+| Skill                 | Path                                   | Use when                                                                                                             |
+| --------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Frontend design       | `.claude/skills/frontend-design`       | Any meaningful UI creation, reshaping, dashboard, form, data-display, responsive, or interaction work.               |
+| Spec miner            | `.claude/skills/spec-miner`            | The SRD points at legacy or undocumented code and you need to map real behavior before editing.                      |
+| React analyzer        | `.claude/skills/react-analyzer`        | Before or after meaningful React/TSX changes; pair with `pnpm analyze:react <path>` or `pnpm analyze:react:changed`. |
+| React expert          | `.claude/skills/react-expert`          | Building or refactoring components, hooks, client/server boundaries, Suspense, forms, or interactive UI.             |
+| Next.js developer     | `.claude/skills/nextjs-developer`      | App Router pages, RSC, server actions, route handlers, `loading.tsx`/`error.tsx`, middleware, or streaming SSR.      |
+| TypeScript pro        | `.claude/skills/typescript-pro`        | tRPC procedures, Zod validators, advanced types, or end-to-end type-safety changes.                                  |
+| Test master           | `.claude/skills/test-master`           | Fixing or extending generated tests, mocking strategy, or test harness work tied to the SRD.                         |
+| Playwright expert     | `.claude/skills/playwright-expert`     | Writing, debugging, or extending Playwright E2E tests and fixtures.                                                  |
+| Playwright skill      | `.claude/skills/playwright-skill`      | Agent-driven browser verification of implemented UI flows, forms, responsive behavior, or runtime UX.                |
+| Architecture designer | `.claude/skills/architecture-designer` | The SRD requires an architectural decision, ADR, or cross-package boundary review before coding.                     |
+| Deslop                | `.claude/skills/deslop`                | Reviewing user-facing copy, comments, or `status.md` prose for AI-sounding filler.                                   |
 
 ### Out of scope for this prompt
 

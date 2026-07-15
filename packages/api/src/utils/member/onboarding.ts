@@ -27,6 +27,7 @@ export const memberSignupFormConfig = {
   formData: memberSignupFormData,
   formValidatorJson: memberSignupFormJsonSchema,
   section: "Membership",
+  sectionId: "53fc75b1-7308-4af0-84e8-b79292b5eb33",
   isClosed: false,
   connection: {
     id: MEMBER_SIGNUP_CONNECTION_ID,

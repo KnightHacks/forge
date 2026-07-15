@@ -10,6 +10,7 @@ import { Permissions, Roles, Session, User } from "@forge/db/schemas/auth";
 import {
   DuesPayment,
   FormResponse,
+  FormSections,
   FormsSchemas,
   Hacker,
   Member,
@@ -185,6 +186,12 @@ const aliceResponseData = {
 };
 
 async function ensureSignupForm() {
+  const sectionId = "53fc75b1-7308-4af0-84e8-b79292b5eb33";
+  await db
+    .insert(FormSections)
+    .values({ id: sectionId, name: "Membership" })
+    .onConflictDoNothing();
+
   await db
     .insert(FormsSchemas)
     .values({
@@ -197,6 +204,7 @@ async function ensureSignupForm() {
       isClosed: false,
       name: memberSignupFormData.name,
       section: "Membership",
+      sectionId,
       slugName: MEMBER_SIGNUP_FORM_SLUG,
     })
     .onConflictDoUpdate({

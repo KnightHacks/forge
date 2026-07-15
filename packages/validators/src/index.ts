@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export * from "./hackathons";
 export * from "./forms";
+export * from "./forms-platform";
 export * from "./member";
 export * from "./dues";
 export * from "./admin-member";

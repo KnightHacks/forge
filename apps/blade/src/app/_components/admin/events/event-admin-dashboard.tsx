@@ -305,6 +305,7 @@ function EventListView({
               <th className="px-4 py-3 font-medium">Starts</th>
               <th className="px-4 py-3 font-medium">Location</th>
               <th className="px-4 py-3 text-right font-medium">Attendance</th>
+              <th className="px-4 py-3 text-right font-medium">Feedback</th>
               <th className="px-4 py-3 font-medium">
                 {tracksIntegrationHealth
                   ? "Integration health"
@@ -352,6 +353,18 @@ function EventListView({
                 </td>
                 <td className="px-4 py-4 text-right font-mono">
                   {event.attendanceCount}
+                </td>
+                <td className="px-4 py-4 text-right">
+                  <button
+                    type="button"
+                    className="min-h-9 rounded-md px-2 font-mono text-sm hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => onOpen(event.id)}
+                    aria-label={`Open feedback for ${event.name}`}
+                  >
+                    {event.feedback?.averageOverall == null
+                      ? "—"
+                      : `${event.feedback.averageOverall.toFixed(2)} / 5`}
+                  </button>
                 </td>
                 <td className="px-4 py-4">
                   {tracksIntegrationHealth ? (
@@ -475,6 +488,11 @@ function EventListView({
               )}
               {event.deletionPending && (
                 <Badge variant="destructive">Deletion pending</Badge>
+              )}
+              {event.feedback?.averageOverall != null && (
+                <Badge variant="outline">
+                  Feedback {event.feedback.averageOverall.toFixed(2)} / 5
+                </Badge>
               )}
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -740,14 +758,23 @@ export function EventAdminDashboard({
           </p>
         </div>
         {canEdit && (
-          <Button
-            type="button"
-            className="min-h-11 gap-2 self-start lg:self-auto"
-            onClick={() => openForm("create")}
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Create event
-          </Button>
+          <div className="flex flex-wrap gap-2 self-start lg:self-auto">
+            {access.isOfficer && (
+              <Button asChild variant="outline" className="min-h-11">
+                <Link href="/admin/events/feedback-template">
+                  Feedback template
+                </Link>
+              </Button>
+            )}
+            <Button
+              type="button"
+              className="min-h-11 gap-2 self-start lg:self-auto"
+              onClick={() => openForm("create")}
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Create event
+            </Button>
+          </div>
         )}
       </header>
 

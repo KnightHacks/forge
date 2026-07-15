@@ -26,12 +26,136 @@ import { MarkdownContent } from "@forge/ui/markdown-content";
 import { EVENT_DISCORD_NO_PROJECTION_CONFIRMATION } from "@forge/validators";
 
 import type { EventAdminAccess, EventDetailData } from "./types";
+import { api } from "~/trpc/react";
+import { EventFeedbackPanel } from "./event-feedback-panel";
 import {
   audienceLabel,
   EventTag,
   formatEventDateTime,
   IntegrationStatus,
 } from "./event-presenters";
+
+function EventFeedbackAdmin({
+  access,
+  event,
+}: {
+  access: Pick<
+    EventAdminAccess,
+    "canEdit" | "canRead" | "canReadResponses" | "isOfficer"
+  >;
+  event: { id: string; name: string };
+}) {
+  const [excludedResponseIds, setExcludedResponseIds] = useState<string[]>([]);
+  const feedback = api.event.getEventFeedback.useQuery({
+    eventId: event.id,
+    excludedResponseIds,
+  });
+  const exportQuery = api.event.exportEventFeedback.useQuery(
+    { eventId: event.id },
+    { enabled: false },
+  );
+  const addQuestion = api.event.addEventFeedbackQuestion.useMutation();
+
+  if (feedback.isLoading) {
+    return (
+      <section className="rounded-md border border-white/10 bg-background/60 p-4 lg:col-span-2">
+        <p className="text-sm text-muted-foreground" role="status">
+          Loading event feedback…
+        </p>
+      </section>
+    );
+  }
+  if (feedback.error || !feedback.data) return null;
+
+  const data = feedback.data;
+  const distribution = (key: "fun" | "learning" | "overall") =>
+    [1, 2, 3, 4, 5].map(
+      (rating) => data.ratings[key].distribution[rating as 1 | 2 | 3 | 4 | 5],
+    );
+  const responses = "responses" in data ? data.responses : [];
+
+  async function exportCsv() {
+    const result = await exportQuery.refetch();
+    if (!result.data) return;
+    const url = URL.createObjectURL(
+      new Blob([result.data], { type: "text/csv;charset=utf-8" }),
+    );
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `event-${event.id}-feedback.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <section className="rounded-md border border-white/10 bg-background/60 p-3 sm:p-4 lg:col-span-2">
+      <EventFeedbackPanel
+        access={{
+          canEditQuestions: access.canEdit,
+          canReadResponses: access.canReadResponses === true,
+          isOfficer: access.isOfficer,
+        }}
+        eventId={event.id}
+        eventName={event.name}
+        excludedResponseIds={excludedResponseIds}
+        metrics={{
+          averages: {
+            fun: data.ratings.fun.average ?? 0,
+            learning: data.ratings.learning.average ?? 0,
+            overall: data.ratings.overall.average ?? 0,
+          },
+          customQuestionSummaries: data.customQuestionSummaries,
+          discovery: Object.entries(data.discovery).map(([label, count]) => ({
+            count,
+            label,
+          })),
+          distributions: {
+            fun: distribution("fun"),
+            learning: distribution("learning"),
+            overall: distribution("overall"),
+          },
+          includedCount: data.includedCount,
+          locallyExcludedCount: data.excludedCount,
+        }}
+        onAddQuestion={() => {
+          const prompt = window.prompt("Event-specific feedback question");
+          if (!prompt?.trim()) return;
+          addQuestion.mutate({
+            eventId: event.id,
+            question: {
+              id: crypto.randomUUID(),
+              maxLength: 2_000,
+              prompt: prompt.trim(),
+              required: false,
+              retired: false,
+              type: "paragraph",
+            },
+          });
+        }}
+        onExcludedResponseIdsChange={setExcludedResponseIds}
+        onExportCsv={() => void exportCsv()}
+        responses={responses.map((response) => ({
+          answers: {
+            customAnswers: response.answers.customAnswers,
+            discovery: response.answers.discovery,
+            discoveryOther: response.answers.discoveryOther,
+            fun: response.answers.fun,
+            improve: response.answers.improve ?? "",
+            learning: response.answers.learning,
+            overall: response.answers.overall,
+            worked: response.answers.worked ?? "",
+          },
+          member: {
+            id: response.memberId,
+            name: String(response.memberName),
+          },
+          responseId: response.responseId,
+          submittedAt: new Date(response.submittedAt).toISOString(),
+        }))}
+      />
+    </section>
+  );
+}
 
 function DetailSection({
   children,
@@ -61,7 +185,10 @@ export function EventDetailDialog({
   onRepair,
   onResolveDiscord,
 }: {
-  access: Pick<EventAdminAccess, "canEdit" | "canRead" | "isOfficer">;
+  access: Pick<
+    EventAdminAccess,
+    "canEdit" | "canRead" | "canReadResponses" | "isOfficer"
+  >;
   detail: EventDetailData;
   onChanged: () => void;
   onClose: () => void;
@@ -560,6 +687,8 @@ export function EventDetailDialog({
               </div>
             )}
           </section>
+
+          <EventFeedbackAdmin access={access} event={event} />
 
           {canEdit && (
             <section className="rounded-md border border-destructive/25 bg-destructive/5 p-3 sm:p-4 lg:col-span-2">

@@ -7,7 +7,11 @@ import z from "zod";
 import type { Form } from "@forge/db/schemas/knight-hacks";
 import { FORMS, MINIO } from "@forge/consts";
 import { db } from "@forge/db/client";
-import { FormSchemaSchema, FormsSchemas } from "@forge/db/schemas/knight-hacks";
+import {
+  FormSchemaSchema,
+  FormSections,
+  FormsSchemas,
+} from "@forge/db/schemas/knight-hacks";
 
 type OptionalSchema =
   | { success: true; schema: JSONSchema7 }
@@ -218,14 +222,29 @@ export async function createForm(input: CreateFormType): Promise<Form> {
     });
   }
 
-  let sectionId: string | null = null;
   const sectionName = input.section ?? "General";
-
-  if (sectionName !== "General") {
-    const section = await db.query.FormSections.findFirst({
-      where: (t, { eq }) => eq(t.name, sectionName),
+  const existingSection = await db.query.FormSections.findFirst({
+    where: (t, { eq }) => eq(t.name, sectionName),
+  });
+  const sectionId =
+    existingSection?.id ??
+    (
+      await db
+        .insert(FormSections)
+        .values({ name: sectionName })
+        .onConflictDoNothing({ target: FormSections.name })
+        .returning({ id: FormSections.id })
+    )[0]?.id ??
+    (
+      await db.query.FormSections.findFirst({
+        where: (t, { eq }) => eq(t.name, sectionName),
+      })
+    )?.id;
+  if (!sectionId) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Could not resolve the form section",
     });
-    sectionId = section?.id ?? null;
   }
 
   const [form] = await db

@@ -25,7 +25,7 @@ let roleCountCache:
   | { counts: Record<string, number>; expiresAt: number }
   | undefined;
 
-const liveRoleDiscordGateway: RoleDiscordGateway = {
+export const liveRoleDiscordGateway: RoleDiscordGateway = {
   async getGuildMember(discordUserId) {
     return (await discord.api.get(
       Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),

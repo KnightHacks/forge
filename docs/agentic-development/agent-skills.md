@@ -12,6 +12,8 @@ Implementation agents should follow the skill registry in [`implementation-promp
 
 ## Repo-level implementation and validation skills
 
+- `.claude/skills/frontend-design` — meaningful UI creation or reshaping,
+  including layouts, forms, dashboards, responsive surfaces, and dense data.
 - `.claude/skills/deslop` — prose/comment review to remove AI-sounding filler.
 - `.claude/skills/react-analyzer` — React component surface analysis; pair with `pnpm analyze:react` scripts.
 - `.claude/skills/playwright-skill` — agent-driven browser verification for high-value flows.

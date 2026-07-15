@@ -15,8 +15,8 @@
     "with-env": "dotenv -e ../../.env --",
     "analyze:react": "tsx ../../scripts/analyze-react.ts src",
     "analyze:react:changed": "tsx ../../scripts/analyze-react-changed.ts",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest --passWithNoTests",
+    "test": "pnpm with-env vitest run --passWithNoTests",
+    "test:watch": "pnpm with-env vitest --passWithNoTests",
     "e2e": "BLADE_E2E_AUTH=true NEXT_PUBLIC_BLADE_E2E_AUTH=true BLADE_E2E_DEFAULT_USER_ID=00000000-0000-4000-8000-000000000101 pnpm with-env playwright test --pass-with-no-tests"
   },
   "dependencies": {

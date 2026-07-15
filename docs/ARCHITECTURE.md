@@ -203,8 +203,16 @@ A single `User` can be both a `Member` and a `Hacker`. We separate these because
 
 - `Event`: Both club events and hackathon events
 - `HackerAttendee`: Per-hackathon application and attendance state for a hacker
-- `FormsSchemas` and `FormResponse`: Dynamic form definitions and submissions,
-  including the current member-onboarding flow
+- `FormsSchemas` and `FormResponse`: Identified dynamic form definitions and
+  submissions, including immutable question/option snapshots for historical
+  accuracy
+- `FormSection`: Organizational and role-based admin access boundary for forms
+- `FormAttachment`: Instruction media and respondent uploads stored in MinIO
+- `FormCallbackConfiguration` and `FormCallbackExecution`: Configuration and
+  durable asynchronous execution state for code-owned form actions
+- `EventFeedbackConfig` and `EventFeedbackReward`: The event-linked feedback
+  window and one-time five-point award; feedback answers are identified
+  `FormResponse` rows linked through the configuration's form ID
 
 **Roles and Permissions:**
 
@@ -218,6 +226,48 @@ A single `User` can be both a `Member` and a `Hacker`. We separate these because
 - Sponsors and partnerships
 - Check-ins and attendance tracking
 - And more (see `packages/db/src/schemas/knight-hacks.ts`)
+
+## Forms and Event Feedback
+
+The forms platform is implemented across shared contracts, API workflows,
+Blade surfaces, persistent storage, and cron workers rather than as a page-local
+builder.
+
+- `@forge/validators` owns the form definition, response, availability,
+  callback-mapping, and file constraints shared across boundaries.
+- `@forge/api` owns lifecycle and section-access enforcement, form response
+  rules, immutable answer snapshots, analytics/CSV generation, upload access,
+  callback registration/execution, and event-feedback policy.
+- `@forge/db` persists definitions, section role gates, responses, single-
+  response claims, attachments, callback state, event-feedback configuration,
+  responses, and rewards. Migration `0013_outgoing_betty_brant.sql` introduces
+  the active platform model and archives legacy definitions for controlled
+  republishing.
+- Blade exposes direct respondent routes at `/form/[slug]`, member-owned generic
+  response history at `/member/forms`, form administration under `/admin/forms`,
+  and event-specific feedback through the existing member/admin event flows.
+- Cron workers dispatch pending callback executions, reclaim expired running
+  leases for retry, and delete abandoned/replaced form attachments after the
+  retention boundary.
+
+Generic forms are direct-link only for respondents. Their state machine is
+`Draft -> Published <-> Archived`; published definitions edit in place using
+stable IDs. Global permissions are evaluated before section viewer/editor role
+gates, with the officer bypass enforced server-side. The callback registry is
+an explicit, code-owned catalog: the builder may map fields or fixed values only
+to registered procedures, and unavailable procedures remain visible but
+disabled with their required permission. Each worker claims a durable execution
+lease; expired running leases return to the claimable queue, while terminal
+failures remain available for an authorized manual retry.
+
+Event feedback is intentionally siloed from generic form discovery and
+analytics. Qualifying non-hackathon events provision a locked response window
+with no start gate and a deadline seven days after event end. Checked-in
+attendees submit from event cards/dialogs, receive one durable five-point
+reward, and cannot edit or repeat the response. Event administration exposes
+deterministic aggregates and identified answers according to separate
+event-read and response-read permissions; local response exclusions affect only
+the current analytics view.
 
 ## Technology Stack
 

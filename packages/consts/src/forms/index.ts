@@ -163,13 +163,70 @@ export const EVENT_FEEDBACK_HEARD = [
   "Discord",
   "Instagram",
   "KnightConnect",
-  "Word of Mouth",
-  "CECS Emailing List",
+  "Word of mouth",
+  "CECS emailing list",
   "Reddit",
   "LinkedIn",
-  "From Class Presentation",
-  "From Another Club",
+  "Class presentation",
+  "Another club",
+  "Google Calendar",
+  "Other",
 ] as const;
+
+export const FORM_OPTION_CATALOGS = {
+  LEVELS_OF_STUDY: { label: "Levels of Study", loadStrategy: "inline" },
+  ALLERGIES: { label: "Allergies", loadStrategy: "inline" },
+  MAJORS: { label: "Majors", loadStrategy: "search" },
+  GENDERS: { label: "Genders", loadStrategy: "inline" },
+  RACES_OR_ETHNICITIES: {
+    label: "Races or Ethnicities",
+    loadStrategy: "inline",
+  },
+  COUNTRIES: { label: "Countries", loadStrategy: "search" },
+  SCHOOLS: { label: "Schools", loadStrategy: "remote" },
+  COMPANIES: { label: "Companies", loadStrategy: "remote" },
+  SHIRT_SIZES: { label: "Shirt Sizes", loadStrategy: "inline" },
+  EVENT_FEEDBACK_HEARD: {
+    label: "Event Feedback - How You Heard",
+    loadStrategy: "inline",
+  },
+  SHORT_LEVELS_OF_STUDY: {
+    label: "Short Levels of Study",
+    loadStrategy: "inline",
+  },
+  SHORT_RACES_AND_ETHNICITIES: {
+    label: "Short Races and Ethnicities",
+    loadStrategy: "inline",
+  },
+} as const satisfies Record<
+  DropdownConstantKey,
+  { label: string; loadStrategy: "inline" | "remote" | "search" }
+>;
+
+export interface FormCatalogOption {
+  active: boolean;
+  label: string;
+  value: string;
+}
+
+function stableCatalogValue(label: string) {
+  return label
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export function getFormCatalogOptions(
+  catalogId: DropdownConstantKey,
+): readonly FormCatalogOption[] {
+  return getDropdownOptionsFromConst(catalogId).map((label) => ({
+    active: true,
+    label,
+    value: stableCatalogValue(label),
+  }));
+}
 
 export const TERM_TO_DATE = {
   Spring: { month: 4, day: 2 }, // May 2

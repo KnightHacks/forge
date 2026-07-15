@@ -209,7 +209,18 @@ function createTransactionMock({
         findFirst: formResponseFindFirst,
       },
       FormsSchemas: {
-        findFirst: vi.fn().mockResolvedValue(memberSignupFormConfig),
+        findFirst: vi.fn().mockResolvedValue({
+          ...memberSignupFormConfig,
+          archivedAt: null,
+          closesAt: null,
+          kind: "system",
+          manuallyClosed: false,
+          opensAt: null,
+          publishedAt: new Date(),
+          responseMode: "single_locked",
+          revision: 1,
+          state: "published",
+        }),
       },
       Member: {
         findFirst: vi.fn().mockResolvedValue(memberRow),

@@ -30,6 +30,28 @@ export const eventDiscordEntityTypeEnum = pgEnum(
   "event_discord_entity_type",
   EVENTS.EVENT_DISCORD_ENTITY_TYPES,
 );
+export const formKindEnum = pgEnum("form_kind", [
+  "general",
+  "event_feedback",
+  "system",
+]);
+export const formStateEnum = pgEnum("form_state", [
+  "draft",
+  "published",
+  "archived",
+]);
+export const formResponseModeEnum = pgEnum("form_response_mode", [
+  "single_locked",
+  "single_editable",
+  "multiple_locked",
+]);
+export const formCallbackStatusEnum = pgEnum("form_callback_status", [
+  "pending",
+  "running",
+  "succeeded",
+  "failed",
+  "cancelled",
+]);
 export const genderEnum = pgEnum("gender", FORMS.GENDERS);
 export const raceOrEthnicityEnum = pgEnum(
   "race_or_ethnicity",
@@ -703,6 +725,40 @@ export const FormSectionRoles = createTable(
   }),
 );
 
+export const FormSectionViewRole = createTable(
+  "form_section_view_role",
+  (t) => ({
+    sectionId: t
+      .uuid()
+      .notNull()
+      .references(() => FormSections.id, { onDelete: "cascade" }),
+    roleId: t
+      .uuid()
+      .notNull()
+      .references(() => Roles.id, { onDelete: "cascade" }),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.sectionId, t.roleId] }),
+  }),
+);
+
+export const FormSectionEditRole = createTable(
+  "form_section_edit_role",
+  (t) => ({
+    sectionId: t
+      .uuid()
+      .notNull()
+      .references(() => FormSections.id, { onDelete: "cascade" }),
+    roleId: t
+      .uuid()
+      .notNull()
+      .references(() => Roles.id, { onDelete: "cascade" }),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.sectionId, t.roleId] }),
+  }),
+);
+
 export const InsertFormSectionSchema = createInsertSchema(FormSections);
 
 export const FormsSchemas = createTable("form_schemas", (t) => ({
@@ -710,6 +766,15 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
   name: t.varchar({ length: 255 }).notNull(),
   slugName: t.varchar({ length: 255 }).notNull().unique(),
   createdAt: t.timestamp().notNull().defaultNow(),
+  kind: formKindEnum().notNull().default("general"),
+  state: formStateEnum().notNull().default("draft"),
+  opensAt: t.timestamp({ mode: "date", withTimezone: true }),
+  closesAt: t.timestamp({ mode: "date", withTimezone: true }),
+  manuallyClosed: t.boolean().notNull().default(false),
+  responseMode: formResponseModeEnum().notNull().default("single_locked"),
+  publishedAt: t.timestamp({ mode: "date", withTimezone: true }),
+  archivedAt: t.timestamp({ mode: "date", withTimezone: true }),
+  revision: t.integer().notNull().default(1),
   duesOnly: t.boolean().notNull().default(false),
   allowResubmission: t.boolean().notNull().default(false),
   allowEdit: t.boolean().notNull().default(false),
@@ -718,7 +783,8 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
   section: t.varchar({ length: 255 }).notNull().default("General"),
   sectionId: t
     .uuid()
-    .references(() => FormSections.id, { onDelete: "set null" }),
+    .notNull()
+    .references(() => FormSections.id, { onDelete: "restrict" }),
   isClosed: t.boolean().notNull().default(false),
 }));
 
@@ -743,20 +809,35 @@ export const FormResponseRoles = createTable(
   }),
 );
 
-export const FormResponse = createTable("form_response", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  form: t
-    .uuid()
-    .notNull()
-    .references(() => FormsSchemas.id),
-  userId: t
-    .uuid()
-    .notNull()
-    .references(() => User.id, { onDelete: "cascade" }),
-  responseData: t.jsonb().notNull(),
-  createdAt: t.timestamp().notNull().defaultNow(),
-  editedAt: t.timestamp().notNull().defaultNow(),
-}));
+export const FormResponse = createTable(
+  "form_response",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    form: t
+      .uuid()
+      .notNull()
+      .references(() => FormsSchemas.id),
+    userId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "cascade" }),
+    responseData: t.jsonb().notNull(),
+    formRevision: t.integer().notNull().default(1),
+    responseSnapshot: t.jsonb().notNull().default({}),
+    createdAt: t.timestamp().notNull().defaultNow(),
+    editedAt: t.timestamp().notNull().defaultNow(),
+  }),
+  (t) => ({
+    formCreatedIdx: index("knight_hacks_form_response_form_created_idx").on(
+      t.form,
+      t.createdAt,
+    ),
+    userCreatedIdx: index("knight_hacks_form_response_user_created_idx").on(
+      t.userId,
+      t.createdAt,
+    ),
+  }),
+);
 
 export const InsertFormResponseSchema = createInsertSchema(FormResponse);
 
@@ -771,6 +852,215 @@ export const TrpcFormConnection = createTable("trpc_form_connection", (t) => ({
 }));
 
 export const TrpcFormConnectionSchema = createInsertSchema(TrpcFormConnection);
+
+export const FormSingleResponseClaim = createTable(
+  "form_single_response_claim",
+  (t) => ({
+    formId: t
+      .uuid()
+      .notNull()
+      .references(() => FormsSchemas.id, { onDelete: "cascade" }),
+    userId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "cascade" }),
+    responseId: t
+      .uuid()
+      .notNull()
+      .unique()
+      .references(() => FormResponse.id, { onDelete: "cascade" }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.formId, t.userId] }),
+  }),
+);
+
+export const FormAttachment = createTable(
+  "form_attachment",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    formId: t
+      .uuid()
+      .notNull()
+      .references(() => FormsSchemas.id, { onDelete: "cascade" }),
+    responseId: t
+      .uuid()
+      .references(() => FormResponse.id, { onDelete: "cascade" }),
+    ownerUserId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "cascade" }),
+    objectName: t.varchar({ length: 512 }).notNull().unique(),
+    fileName: t.varchar({ length: 255 }).notNull(),
+    contentType: t.varchar({ length: 255 }).notNull(),
+    size: t.integer().notNull(),
+    finalizedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }),
+  (t) => ({
+    formIdx: index("knight_hacks_form_attachment_form_idx").on(t.formId),
+    responseIdx: index("knight_hacks_form_attachment_response_idx").on(
+      t.responseId,
+    ),
+  }),
+);
+
+export const FormCallbackConfiguration = createTable(
+  "form_callback_configuration",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    formId: t
+      .uuid()
+      .notNull()
+      .references(() => FormsSchemas.id, { onDelete: "cascade" }),
+    callbackSlug: t.varchar({ length: 255 }).notNull(),
+    active: t.boolean().notNull().default(true),
+    mappings: t.jsonb().notNull(),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (t) => ({
+    uniqueCallbackPerForm: unique(
+      "knight_hacks_form_callback_configuration_form_slug_unique",
+    ).on(t.formId, t.callbackSlug),
+  }),
+);
+
+export const FormCallbackExecution = createTable(
+  "form_callback_execution",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    configurationId: t
+      .uuid()
+      .notNull()
+      .references(() => FormCallbackConfiguration.id, {
+        onDelete: "restrict",
+      }),
+    responseId: t.uuid().references(() => FormResponse.id, {
+      onDelete: "set null",
+    }),
+    callbackSlug: t.varchar({ length: 255 }).notNull(),
+    input: t.jsonb().notNull(),
+    status: formCallbackStatusEnum().notNull().default("pending"),
+    attempts: t.integer().notNull().default(0),
+    lastError: t.text(),
+    availableAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    leaseToken: t.uuid(),
+    leaseExpiresAt: t.timestamp({ mode: "date", withTimezone: true }),
+    succeededAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (t) => ({
+    statusAvailableIdx: index(
+      "knight_hacks_form_callback_execution_status_available_idx",
+    ).on(t.status, t.availableAt),
+  }),
+);
+
+export const EventFeedbackConfig = createTable(
+  "event_feedback_config",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    eventId: t
+      .uuid()
+      .notNull()
+      .unique()
+      .references(() => Event.id, { onDelete: "cascade" }),
+    formId: t
+      .uuid()
+      .notNull()
+      .unique()
+      .references(() => FormsSchemas.id, { onDelete: "restrict" }),
+    closesAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+    rewardPoints: t.integer().notNull().default(5),
+    templateRevision: t.integer().notNull().default(1),
+    customQuestions: t.jsonb().notNull().default([]),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (t) => ({
+    fivePointReward: check(
+      "knight_hacks_event_feedback_config_reward_check",
+      sql`${t.rewardPoints} = 5`,
+    ),
+  }),
+);
+
+export const EventFeedbackReward = createTable(
+  "event_feedback_reward",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    eventId: t
+      .uuid()
+      .notNull()
+      .references(() => Event.id, { onDelete: "restrict" }),
+    memberId: t
+      .uuid()
+      .notNull()
+      .references(() => Member.id, { onDelete: "restrict" }),
+    responseId: t.uuid().references(() => FormResponse.id, {
+      onDelete: "set null",
+    }),
+    pointsAwarded: t.integer().notNull().default(5),
+    awardedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }),
+  (t) => ({
+    uniqueEventMemberReward: unique(
+      "knight_hacks_event_feedback_reward_event_member_unique",
+    ).on(t.eventId, t.memberId),
+    fivePoints: check(
+      "knight_hacks_event_feedback_reward_points_check",
+      sql`${t.pointsAwarded} = 5`,
+    ),
+  }),
+);
+
+export const FormAttachmentSchema = createInsertSchema(FormAttachment);
+export const FormCallbackConfigurationSchema = createInsertSchema(
+  FormCallbackConfiguration,
+);
+export const FormCallbackExecutionSchema = createInsertSchema(
+  FormCallbackExecution,
+);
+export const EventFeedbackConfigSchema =
+  createInsertSchema(EventFeedbackConfig);
+export const EventFeedbackRewardSchema =
+  createInsertSchema(EventFeedbackReward);
 
 export const Issue = createTable(
   "issue",

@@ -4,7 +4,11 @@ import { expect, test } from "playwright/test";
 import { inArray, or } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
-import { FormsSchemas, Member } from "@forge/db/schemas/knight-hacks";
+import {
+  FormSections,
+  FormsSchemas,
+  Member,
+} from "@forge/db/schemas/knight-hacks";
 import {
   MEMBER_DASHBOARD_PATH,
   MEMBER_SETTINGS_PATH,
@@ -55,6 +59,12 @@ async function cleanupE2EData() {
 }
 
 async function ensureSignupForm() {
+  const sectionId = "53fc75b1-7308-4af0-84e8-b79292b5eb33";
+  await db
+    .insert(FormSections)
+    .values({ id: sectionId, name: "Membership" })
+    .onConflictDoNothing();
+
   await db
     .insert(FormsSchemas)
     .values({
@@ -67,6 +77,7 @@ async function ensureSignupForm() {
       isClosed: false,
       name: memberSignupFormData.name,
       section: "Membership",
+      sectionId,
       slugName: MEMBER_SIGNUP_FORM_SLUG,
     })
     .onConflictDoUpdate({

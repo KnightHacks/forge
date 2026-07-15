@@ -223,6 +223,9 @@ export function DashboardClient({
   const attendanceQuery = api.event.listMemberAttendance.useQuery(undefined, {
     enabled: Boolean(member) && !isRedirecting,
   });
+  const feedbackQuery = api.event.listMyFeedback.useQuery(undefined, {
+    enabled: Boolean(member) && !isRedirecting,
+  });
 
   if (
     isLoading ||
@@ -231,7 +234,8 @@ export function DashboardClient({
     (member &&
       (duesQuery.isPending ||
         eventsQuery.isPending ||
-        attendanceQuery.isPending))
+        attendanceQuery.isPending ||
+        feedbackQuery.isPending))
   ) {
     return <DashboardSkeleton />;
   }
@@ -256,6 +260,22 @@ export function DashboardClient({
       duesStatus={duesQuery.data}
       events={eventsQuery.data ?? []}
       eventsUnavailable={eventsUnavailable}
+      feedback={(feedbackQuery.data ?? [])
+        .filter(
+          (
+            feedback,
+          ): feedback is Exclude<
+            typeof feedback,
+            { status: "not_applicable" }
+          > => "dueAt" in feedback,
+        )
+        .map((feedback) => ({
+          ...feedback,
+          dueAt: feedback.dueAt.toISOString(),
+          ...(feedback.status === "completed"
+            ? { submittedAt: feedback.submittedAt.toISOString() }
+            : {}),
+        }))}
       member={member}
     />
   );

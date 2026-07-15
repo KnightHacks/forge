@@ -1,8 +1,26 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { MemberEventsDashboard } from "~/app/_components/member/member-events-dashboard";
+
+vi.mock("~/app/_components/member/member-event-feedback", () => ({
+  MemberEventFeedback: ({
+    opportunity,
+    surface,
+  }: {
+    opportunity: { eventName: string; status: string };
+    surface: string;
+  }) =>
+    createElement(
+      "div",
+      {
+        "data-feedback-opportunity": opportunity.status,
+        "data-feedback-surface": surface,
+      },
+      `Feedback for ${opportunity.eventName}`,
+    ),
+}));
 
 const events = [
   {
@@ -74,6 +92,40 @@ const attendance = [
 ];
 
 describe("MemberEventsDashboard", () => {
+  it("shows immediately available feedback on a checked-in upcoming event card", () => {
+    const firstEvent = events[0];
+    const firstAttendance = attendance[0];
+    if (!firstEvent || !firstAttendance) throw new Error("Missing fixtures.");
+    const html = renderToStaticMarkup(
+      createElement(MemberEventsDashboard, {
+        attendance: [
+          {
+            ...firstAttendance,
+            eventId: firstEvent.id,
+            name: firstEvent.name,
+          },
+        ],
+        events,
+        feedback: [
+          {
+            customQuestions: [],
+            dueAt: "2026-08-19T20:00:00-04:00",
+            eventId: firstEvent.id,
+            eventName: firstEvent.name,
+            formId: "00000000-0000-4000-8000-000000000901",
+            rewardPoints: 5,
+            status: "available" as const,
+            urgent: false,
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain('data-feedback-opportunity="available"');
+    expect(html).toContain("Feedback for Public Workshop");
+    expect(html.match(/Feedback for Public Workshop/g)).toHaveLength(1);
+  });
+
   it("TC-002 presents useful upcoming event context and safe actions", () => {
     const html = renderToStaticMarkup(
       createElement(MemberEventsDashboard, { attendance, events }),

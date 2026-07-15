@@ -120,19 +120,19 @@ export async function POST(request: Request) {
 
   await db.insert(Roles).values([
     {
-      discordRoleId: "e2e-event-reader-role",
+      discordRoleId: "fixture-event-reader-role",
       id: ids.roles.reader,
       name: "Event Reader",
       permissions: permissionBitstring("READ_CLUB_EVENT"),
     },
     {
-      discordRoleId: "e2e-event-editor-role",
+      discordRoleId: "fixture-event-editor-role",
       id: ids.roles.editor,
       name: "Event Editor",
       permissions: permissionBitstring("EDIT_CLUB_EVENT"),
     },
     {
-      discordRoleId: "e2e-event-checkin-role",
+      discordRoleId: "fixture-event-checkin-role",
       id: ids.roles.checkIn,
       name: "Check-in Operator",
       permissions: permissionBitstring("CHECKIN_CLUB_EVENT"),
