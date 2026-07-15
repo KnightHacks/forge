@@ -7,11 +7,12 @@ export const KHIX_HOME_NAV_LINKS = [
   { label: "Sponsors", href: "#sponsors" },
   { label: "Team", href: "#team" },
   { label: "FAQ", href: "#faq" },
+  { label: "Credits", href: "/credits" },
 ] satisfies NavbarLink[];
 
 export const KHIX_SITE_NAV_LINKS = KHIX_HOME_NAV_LINKS.map((link) => ({
   ...link,
-  href: link.href === "#home" ? "/" : `/${link.href}`,
+  href: link.href.startsWith("#") ? `/${link.href}` : link.href,
 })) satisfies NavbarLink[];
 
 export const KHIX_SOCIAL_LINKS = [
