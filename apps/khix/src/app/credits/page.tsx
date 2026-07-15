@@ -160,8 +160,8 @@ export default function CreditsPage() {
             <p className={styles.eyebrow}>Made by many hands</p>
             <h1 id="credits-title">Credits</h1>
             <p className={styles.intro}>
-              Meet the artists and designers who shaped every leaf, creature,
-              crystal, and current in our world.
+              Meet the artists and designers who shaped the world of Knight
+              Hacks IX.
             </p>
           </div>
 

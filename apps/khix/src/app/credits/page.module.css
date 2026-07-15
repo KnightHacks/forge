@@ -614,7 +614,7 @@
 
   .lennyScene {
     position: absolute;
-    right: clamp(-3rem, -4vw, -1rem);
+    right: clamp(1rem, 4vw, 3rem);
     bottom: 1.5rem;
     z-index: 1;
     width: clamp(10rem, 28vw, 16rem);
@@ -660,7 +660,7 @@
   }
 
   .lennyScene {
-    right: -2.8rem;
+    right: 1.25rem;
     bottom: 1rem;
     width: clamp(9.5rem, 38vw, 14rem);
     opacity: 0.72;
