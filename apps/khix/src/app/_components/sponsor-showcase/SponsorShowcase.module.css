@@ -103,29 +103,12 @@
   --sponsor-logo-mobile-scale: var(--sponsor-logo-scale);
   --sponsor-logo-scale: 1;
   --sponsor-height: var(--sponsor-base-height, 7rem);
+  --sponsor-mobile-rock-glow: rgb(218 247 255 / 0.62);
   --sponsor-rock-bottom-offset: 0px;
   --sponsor-width: var(--sponsor-base-width, 20rem);
-  --tier-glow-end-rgb: 255 255 255;
-  --tier-glow-hover-end-alpha: 0.62;
-  --tier-glow-hover-start-alpha: 0.9;
-  --tier-glow-pulse-strong-end-alpha: 0.66;
-  --tier-glow-pulse-strong-start-alpha: 0.98;
-  --tier-glow-pulse-soft-end-alpha: 0.4;
-  --tier-glow-pulse-soft-start-alpha: 0.74;
-  --tier-glow-radius-scale: 1;
-  --tier-glow-start-rgb: 255 255 255;
-  --tier-glow-halo-strength: 1;
-  --tier-tint-rgb: 255 255 255;
-  --tier-tint-rest-opacity: 0.68;
-  --tier-tint-opacity: 0.72;
-  --tier-tint-blend: color;
   --tier-rock-filter: grayscale(0) sepia(0) saturate(1) hue-rotate(0deg)
     brightness(1) contrast(1);
   --tier-rock-hover-filter: var(--tier-rock-filter);
-  --sponsor-shine-duration: 2.6s;
-  --sponsor-shine-strength: 0.9;
-  --sponsor-metallic-rest-strength: 0.28;
-  --sponsor-metallic-strength: 0.85;
   --sponsor-rock-surface-hover-filter: contrast(1.16) saturate(1.12);
 
   position: relative;
@@ -135,6 +118,14 @@
   text-decoration: none;
   outline: none;
   isolation: isolate;
+}
+
+.sponsorLink:nth-child(2n) {
+  --sponsor-mobile-drift-delay: -1.8s;
+}
+
+.sponsorLink:nth-child(3n) {
+  --sponsor-mobile-drift-delay: -3.6s;
 }
 
 .sponsorLink[data-size="x-large"] {
@@ -177,26 +168,31 @@
 /* Color the rock bitmap itself only during interaction. This preserves the
    asset's transparency and works without a cross-origin CSS mask. */
 .sponsorLink[data-tier="bronze-ember"] {
+  --sponsor-mobile-rock-glow: rgb(217 152 95 / 0.64);
   --tier-rock-hover-filter: grayscale(0.3) sepia(1) saturate(1.85)
     hue-rotate(343deg) brightness(0.86) contrast(1.3);
 }
 
 .sponsorLink[data-tier="silver-moon"] {
+  --sponsor-mobile-rock-glow: rgb(244 252 255 / 0.7);
   --tier-rock-hover-filter: grayscale(0.82) sepia(0.22) saturate(1.35)
     hue-rotate(156deg) brightness(1.12) contrast(1.36);
 }
 
 .sponsorLink[data-tier="golden-dawn"] {
+  --sponsor-mobile-rock-glow: rgb(255 240 166 / 0.72);
   --tier-rock-hover-filter: grayscale(0.08) sepia(0.82) saturate(2.15)
     hue-rotate(2deg) brightness(1.1) contrast(1.12);
 }
 
 .sponsorLink[data-tier="platinum-crown"] {
+  --sponsor-mobile-rock-glow: rgb(215 220 255 / 0.68);
   --tier-rock-hover-filter: grayscale(0.46) sepia(0.46) saturate(1.72)
     hue-rotate(188deg) brightness(1) contrast(1.22);
 }
 
 .sponsorLink[data-tier="forest-sovereign"] {
+  --sponsor-mobile-rock-glow: rgb(206 44 255 / 0.66);
   --tier-rock-hover-filter: grayscale(0.26) sepia(0.9) saturate(2.75)
     hue-rotate(232deg) brightness(0.84) contrast(1.24);
 }
@@ -217,6 +213,7 @@
   overflow: visible;
   padding-bottom: var(--sponsor-rock-bottom-offset);
   transform-origin: 50% 58%;
+  transition: transform 180ms ease;
 }
 
 .sponsorVisual > .rockFrame,
@@ -232,6 +229,8 @@
   pointer-events: none;
 }
 
+/* Keep one decoded rock surface per card. Repeating this sprite as masked
+   blend layers creates large offscreen textures on iOS Safari. */
 .rockFrame::before {
   position: absolute;
   display: block;
@@ -247,113 +246,6 @@
   filter: var(--sponsor-rock-surface-filter, brightness(1))
     var(--tier-rock-filter, brightness(1));
   transition: filter 100ms ease;
-  user-select: none;
-  pointer-events: none;
-}
-
-/* Tier material layer: the color lives in the rock itself rather than in an
-   exterior halo. `color` preserves the illustrated stone's light and depth. */
-.rockFrame::after {
-  position: absolute;
-  display: block;
-  aspect-ratio: 1;
-  content: "";
-  top: var(--rock-offset-top);
-  left: var(--rock-offset-left);
-  width: var(--rock-sprite-width);
-  background-color: rgb(var(--tier-tint-rgb));
-  mask-image: var(--rock-image);
-  mask-repeat: no-repeat;
-  mask-position: 0 0;
-  mask-size: 100% auto;
-  -webkit-mask-image: var(--rock-image);
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: 0 0;
-  -webkit-mask-size: 100% auto;
-  mix-blend-mode: var(--tier-tint-blend, multiply);
-  opacity: 0;
-  transition: opacity 200ms ease;
-  user-select: none;
-  pointer-events: none;
-}
-
-/* Chrome-style shading ramp: a bright top highlight, a dark mid-band, a lower
-   secondary highlight and a dark base. Blended with `overlay` over the tinted
-   stone, it fakes a reflective metal surface. Masked to the silhouette. */
-.rockSheen {
-  position: absolute;
-  z-index: 1;
-  display: block;
-  aspect-ratio: 1;
-  top: var(--rock-offset-top);
-  left: var(--rock-offset-left);
-  width: var(--rock-sprite-width);
-  background-image: linear-gradient(
-    168deg,
-    rgb(var(--tier-glow-end-rgb) / 0.7) 0%,
-    rgb(255 255 255 / 0.14) 20%,
-    rgb(8 12 18 / 0) 42%,
-    rgb(8 12 18 / 0.24) 60%,
-    rgb(var(--tier-glow-end-rgb) / 0.4) 78%,
-    rgb(8 12 18 / 0.3) 100%
-  );
-  mask-image: var(--rock-image);
-  mask-repeat: no-repeat;
-  mask-position: 0 0;
-  mask-size: 100% auto;
-  -webkit-mask-image: var(--rock-image);
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: 0 0;
-  -webkit-mask-size: 100% auto;
-  mix-blend-mode: overlay;
-  opacity: var(--sponsor-metallic-rest-strength, 0.28);
-  transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);
-  user-select: none;
-  pointer-events: none;
-}
-
-/* Metallic specular sweep — a diagonal highlight that travels across the
-   stone on hover, masked to the silhouette so it stays on the rock. */
-.rockShine {
-  position: absolute;
-  z-index: 2;
-  display: block;
-  aspect-ratio: 1;
-  top: var(--rock-offset-top);
-  left: var(--rock-offset-left);
-  width: var(--rock-sprite-width);
-  background-image: linear-gradient(
-    115deg,
-    transparent 38%,
-    rgb(
-        var(--tier-glow-end-rgb) /
-          calc(0.62 * var(--sponsor-shine-strength, 0.9))
-      )
-      46%,
-    rgb(255 255 255 / calc(0.72 * var(--sponsor-shine-strength, 0.9))) 48%,
-    rgb(255 255 255 / var(--sponsor-shine-strength, 0.9)) 50%,
-    rgb(255 255 255 / calc(0.72 * var(--sponsor-shine-strength, 0.9))) 52%,
-    rgb(
-        var(--tier-glow-end-rgb) /
-          calc(0.62 * var(--sponsor-shine-strength, 0.9))
-      )
-      54%,
-    transparent 62%
-  );
-  background-repeat: no-repeat;
-  background-size: 250% 100%;
-  background-position: 200% 0;
-  mask-image: var(--rock-image);
-  mask-repeat: no-repeat;
-  mask-position: 0 0;
-  mask-size: 100% auto;
-  -webkit-mask-image: var(--rock-image);
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: 0 0;
-  -webkit-mask-size: 100% auto;
-  mix-blend-mode: screen;
-  opacity: 0;
-  transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
   pointer-events: none;
 }
@@ -393,11 +285,9 @@
   place-self: center;
   width: min(var(--logo-width), 76%);
   height: var(--logo-height);
-  filter: none;
   opacity: var(--sponsor-logo-opacity, 0.94);
   transform: scale(var(--sponsor-logo-scale));
   transition:
-    filter 180ms ease,
     opacity 180ms ease,
     transform 180ms ease;
 }
@@ -412,118 +302,72 @@
   user-select: none;
 }
 
-.sponsorLink:focus-visible .sponsorLogo {
-  filter: drop-shadow(
-      0 0 0.14rem
-        rgb(
-          var(--tier-glow-start-rgb) /
-            calc(0.58 * var(--sponsor-logo-backlight-strength, 0))
-        )
-    )
-    drop-shadow(
-      0 0 0.38rem
-        rgb(
-          var(--tier-glow-end-rgb) /
-            calc(0.42 * var(--sponsor-logo-backlight-strength, 0))
-        )
-    );
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .sponsorLink:hover .sponsorLogo {
-    filter: drop-shadow(
-        0 0 0.14rem
-          rgb(
-            var(--tier-glow-start-rgb) /
-              calc(0.58 * var(--sponsor-logo-backlight-strength, 0))
-          )
-      )
-      drop-shadow(
-        0 0 0.38rem
-          rgb(
-            var(--tier-glow-end-rgb) /
-              calc(0.42 * var(--sponsor-logo-backlight-strength, 0))
-          )
-      );
-  }
-}
-
 .sponsorLink[data-size="small"] .sponsorLogo,
 .sponsorLink[data-size="x-small"] .sponsorLogo {
   width: min(var(--logo-width), 78%);
 }
 
-.sponsorLink:hover .sponsorVisual,
 .sponsorLink:focus-visible .sponsorVisual {
-  animation: var(
-    --sponsor-rock-hover-animation,
-    sponsorHoverFloat 2.4s ease-in-out var(--float-delay) infinite alternate
-  );
-  will-change: var(--sponsor-rock-will-change, transform);
+  transform: translate3d(0, -0.12rem, 0);
 }
 
-.sponsorLink:hover .rockFrame::before,
 .sponsorLink:focus-visible .rockFrame::before {
-  filter: var(--sponsor-rock-surface-filter, brightness(1))
+  filter: var(
+      --sponsor-rock-surface-hover-filter,
+      var(--sponsor-rock-surface-filter, brightness(1))
+    )
     var(--tier-rock-hover-filter, var(--tier-rock-filter, brightness(1)));
 }
 
-.sponsorLink:hover .rockFrame::after,
-.sponsorLink:focus-visible .rockFrame::after {
-  opacity: 0;
-}
-
-.sponsorLink:hover .rockSheen,
-.sponsorLink:focus-visible .rockSheen {
-  opacity: var(--sponsor-metallic-strength, 0.85);
-}
-
-.sponsorLink:hover .rockShine,
-.sponsorLink:focus-visible .rockShine {
-  opacity: 1;
-  animation: sponsorShineSweep var(--sponsor-shine-duration, 2.6s) ease-in-out
-    infinite;
-  will-change: background-position;
-}
-
-.sponsorLink:hover .sponsorLogo,
 .sponsorLink:focus-visible .sponsorLogo {
   opacity: var(--sponsor-logo-hover-opacity, 1);
-  transform: scale(var(--sponsor-logo-scale));
+  transform: scale(var(--sponsor-logo-hover-scale));
 }
 
-.sponsorLink:hover .sponsorLogoImage,
 .sponsorLink:focus-visible .sponsorLogoImage {
-  animation: var(
-    --sponsor-logo-hover-animation,
-    sponsorRunePulse 1.65s ease-in-out infinite alternate
-  );
   filter: var(
     --sponsor-logo-hover-filter,
     brightness(1.14) contrast(1.04) saturate(1.12)
       drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
       drop-shadow(0 0 0.04rem rgb(255 255 255 / 0.84))
       drop-shadow(0 0 0.1rem rgb(255 255 255 / 0.58))
-      drop-shadow(
-        0 0 calc(0.14rem * var(--tier-glow-radius-scale))
-          rgb(var(--tier-glow-start-rgb) / 0.5)
-      )
-      drop-shadow(
-        0 0 calc(0.22rem * var(--tier-glow-radius-scale))
-          rgb(var(--tier-glow-start-rgb) / var(--tier-glow-hover-start-alpha))
-      )
-      drop-shadow(
-        0 0 calc(0.4rem * var(--tier-glow-radius-scale))
-          rgb(
-            var(--tier-glow-end-rgb) /
-              calc(
-                var(--tier-glow-hover-end-alpha) *
-                  var(--tier-glow-halo-strength)
-              )
-          )
-      )
   );
-  will-change: var(--sponsor-logo-will-change, filter);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sponsorLink:hover .sponsorVisual {
+    transform: translate3d(0, -0.12rem, 0);
+  }
+
+  .sponsorLink:hover .rockFrame::before {
+    filter: var(
+        --sponsor-rock-surface-hover-filter,
+        var(--sponsor-rock-surface-filter, brightness(1))
+      )
+      var(--tier-rock-hover-filter, var(--tier-rock-filter, brightness(1)));
+  }
+
+  .sponsorLink:hover .sponsorLogo {
+    opacity: var(--sponsor-logo-hover-opacity, 1);
+    transform: scale(var(--sponsor-logo-hover-scale));
+  }
+
+  .sponsorLink:hover .sponsorLogoImage {
+    filter: var(
+      --sponsor-logo-hover-filter,
+      brightness(1.14) contrast(1.04) saturate(1.12)
+        drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
+        drop-shadow(0 0 0.04rem rgb(255 255 255 / 0.84))
+        drop-shadow(0 0 0.1rem rgb(255 255 255 / 0.58))
+    );
+  }
+
+  .sponsorLink[data-preserve-logo-contrast="true"]:hover .sponsorLogoImage {
+    filter: var(
+      --sponsor-logo-contrast-hover-filter,
+      var(--sponsor-logo-hover-filter, var(--sponsor-logo-contrast-filter))
+    );
+  }
 }
 
 .sponsorLink[data-preserve-logo-contrast="true"] .sponsorLogoImage {
@@ -533,7 +377,6 @@
   );
 }
 
-.sponsorLink[data-preserve-logo-contrast="true"]:hover .sponsorLogoImage,
 .sponsorLink[data-preserve-logo-contrast="true"]:focus-visible
   .sponsorLogoImage {
   filter: var(
@@ -545,14 +388,14 @@
 .sponsorLink:focus-visible .sponsorVisual {
   filter: var(
     --sponsor-rock-focus-shadow,
-    drop-shadow(0 0 0.16rem rgb(var(--tier-glow-end-rgb) / 0.9))
-      drop-shadow(0 0 0.38rem rgb(var(--tier-glow-start-rgb) / 0.54))
+    drop-shadow(0 0 0.16rem rgb(226 251 255 / 0.9))
+      drop-shadow(0 0 0.38rem rgb(82 151 168 / 0.54))
   );
 }
 
 @media (max-width: 760px) {
   .sponsorLink {
-    --tier-glow-halo-strength: 0.82;
+    --sponsor-logo-hover-scale: var(--sponsor-logo-mobile-hover-scale);
   }
 
   .sponsorShowcase {
@@ -624,13 +467,14 @@
     --rock-image: url("https://assets.knighthacks.org/khix/large-sponsor-rock-mobile.webp");
   }
 
-  .sponsorLogo {
-    transform: scale(var(--sponsor-logo-mobile-scale));
+  /* One static silhouette shadow keeps the mobile tier glow without bringing
+     back the animated filter stacks and masked layers that exhausted iOS. */
+  .sponsorLink .rockFrame {
+    filter: drop-shadow(0 0 0.42rem var(--sponsor-mobile-rock-glow));
   }
 
-  .sponsorLink:hover .sponsorLogo,
-  .sponsorLink:focus-visible .sponsorLogo {
-    transform: scale(var(--sponsor-logo-mobile-hover-scale));
+  .sponsorLogo {
+    transform: scale(var(--sponsor-logo-mobile-scale));
   }
 }
 
@@ -641,46 +485,54 @@
 }
 
 @media (max-width: 760px), (hover: none) {
-  .sponsorLink:not(:focus-visible) .rockFrame::before {
-    animation: sponsorMobileRockGlisten 20s ease-in-out var(--rune-delay)
-      infinite;
+  /* A filtered card becomes a full offscreen surface. The mobile rock asset
+     already contains its depth, so avoid that allocation on touch devices. */
+  .sponsorVisual {
+    animation: sponsorMobileRockDrift 5.4s ease-in-out
+      var(--sponsor-mobile-drift-delay, 0s) infinite alternate;
+    animation-play-state: paused;
+    filter: var(--sponsor-rock-mobile-shadow, none);
   }
 
-  .sponsorLink:not(:focus-visible) .rockFrame::after {
-    animation: sponsorMobileTintGlisten 20s ease-in-out var(--rune-delay)
-      infinite;
-  }
-
-  .sponsorLink:not(:focus-visible) .rockSheen {
-    animation: sponsorMobileSheenGlisten 20s ease-in-out var(--rune-delay)
-      infinite;
-  }
-
-  .sponsorLink:not(:focus-visible) .rockShine {
-    opacity: 0;
-    animation: sponsorMobileShineGlisten 20s ease-in-out var(--rune-delay)
-      infinite;
-    will-change: background-position;
+  .sponsorShowcase[data-active="true"] .sponsorVisual {
+    animation-play-state: running;
   }
 
   .sponsorLogo {
     opacity: var(--sponsor-logo-opacity, 1);
   }
 
-  .sponsorLogoImage,
-  .sponsorLink:hover:not(:focus-visible) .sponsorLogoImage {
-    animation: var(
-      --sponsor-logo-mobile-animation,
-      sponsorMobileRuneBreath 4.8s ease-in-out var(--rune-delay) infinite
-    );
+  .sponsorLogoImage {
     filter: var(
       --sponsor-logo-mobile-filter,
       var(--sponsor-logo-filter, drop-shadow(0 1px 0 rgb(4 18 28 / 0.35)))
     );
-    will-change: var(--sponsor-logo-will-change, filter);
   }
 
-  .sponsorLink[data-preserve-logo-contrast="true"] .sponsorLogoImage,
+  .sponsorLink[data-preserve-logo-contrast="true"] .sponsorLogoImage {
+    filter: var(
+      --sponsor-logo-contrast-mobile-filter,
+      var(--sponsor-logo-contrast-filter, var(--sponsor-logo-filter))
+    );
+  }
+
+  .sponsorLink:hover:not(:focus-visible) .rockFrame::before {
+    filter: var(--sponsor-rock-surface-filter, brightness(1))
+      var(--tier-rock-filter, brightness(1));
+  }
+
+  .sponsorLink:hover:not(:focus-visible) .sponsorLogo {
+    opacity: var(--sponsor-logo-opacity, 1);
+    transform: scale(var(--sponsor-logo-mobile-scale));
+  }
+
+  .sponsorLink:hover:not(:focus-visible) .sponsorLogoImage {
+    filter: var(
+      --sponsor-logo-mobile-filter,
+      var(--sponsor-logo-filter, drop-shadow(0 1px 0 rgb(4 18 28 / 0.35)))
+    );
+  }
+
   .sponsorLink[data-preserve-logo-contrast="true"]:hover:not(:focus-visible)
     .sponsorLogoImage {
     filter: var(
@@ -689,262 +541,39 @@
     );
   }
 
-  .sponsorLink:hover:not(:focus-visible) .sponsorLogo {
-    transform: scale(var(--sponsor-logo-mobile-scale));
+  .sponsorLink:active .rockFrame::before {
+    filter: var(
+        --sponsor-rock-surface-hover-filter,
+        var(--sponsor-rock-surface-filter, brightness(1))
+      )
+      var(--tier-rock-hover-filter, var(--tier-rock-filter, brightness(1)));
   }
 
-  .sponsorLink:hover:not(:focus-visible) .sponsorVisual {
-    animation: none;
-    will-change: auto;
-  }
-
-  .sponsorLink:not(:focus-visible) .rockFrame::before,
-  .sponsorLink:not(:focus-visible) .rockSheen,
-  .sponsorLogoImage,
-  .sponsorLink:hover:not(:focus-visible) .sponsorLogoImage {
-    animation: none;
-    will-change: auto;
-  }
-
-  .sponsorLink:not(:focus-visible) .rockFrame::after,
-  .sponsorLink:not(:focus-visible) .rockShine {
-    display: none;
+  .sponsorLink:active .sponsorLogo {
+    opacity: var(--sponsor-logo-hover-opacity, 1);
+    transform: scale(var(--sponsor-logo-mobile-hover-scale));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sponsorLogo {
-    transition: none;
-  }
-
-  .rockFrame::before,
-  .sponsorLogoImage {
-    animation: none;
-    transition: none;
-  }
-
-  .sponsorLink:not(:focus-visible) .rockFrame::before {
-    animation: none;
-  }
-
-  .sponsorLink:not(:focus-visible) .rockFrame::after {
-    animation: none;
-  }
-
-  .sponsorLink:hover .sponsorLogoImage,
-  .sponsorLink:focus-visible .sponsorLogoImage {
-    animation: none;
-  }
-
   .sponsorVisual,
-  .sponsorLink:hover .sponsorVisual,
-  .sponsorLink:focus-visible .sponsorVisual {
-    animation: none;
-  }
-
-  .rockSheen,
-  .rockShine,
-  .sponsorLink:not(:focus-visible) .rockSheen,
-  .sponsorLink:not(:focus-visible) .rockShine,
-  .sponsorLink:hover .rockShine,
-  .sponsorLink:focus-visible .rockShine {
-    animation: none;
+  .rockFrame::before,
+  .sponsorLogo,
+  .sponsorLogoImage {
     transition: none;
   }
-}
 
-@keyframes sponsorRunePulse {
-  0% {
-    filter: brightness(1.1) contrast(1.03) saturate(1.08)
-      drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
-      drop-shadow(0 0 0.03rem rgb(255 255 255 / 0.78))
-      drop-shadow(0 0 0.08rem rgb(255 255 255 / 0.5))
-      drop-shadow(
-        0 0 calc(0.12rem * var(--tier-glow-radius-scale))
-          rgb(var(--tier-glow-start-rgb) / 0.42)
-      )
-      drop-shadow(
-        0 0 calc(0.18rem * var(--tier-glow-radius-scale))
-          rgb(
-            var(--tier-glow-start-rgb) / var(--tier-glow-pulse-soft-start-alpha)
-          )
-      )
-      drop-shadow(
-        0 0 calc(0.3rem * var(--tier-glow-radius-scale))
-          rgb(
-            var(--tier-glow-end-rgb) /
-              calc(
-                var(--tier-glow-pulse-soft-end-alpha) *
-                  var(--tier-glow-halo-strength)
-              )
-          )
-      );
-  }
-
-  100% {
-    filter: brightness(1.17) contrast(1.05) saturate(1.16)
-      drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
-      drop-shadow(0 0 0.045rem rgb(255 255 255 / 0.9))
-      drop-shadow(0 0 0.11rem rgb(255 255 255 / 0.62))
-      drop-shadow(
-        0 0 calc(0.16rem * var(--tier-glow-radius-scale))
-          rgb(var(--tier-glow-start-rgb) / 0.56)
-      )
-      drop-shadow(
-        0 0 calc(0.24rem * var(--tier-glow-radius-scale))
-          rgb(
-            var(--tier-glow-start-rgb) /
-              var(--tier-glow-pulse-strong-start-alpha)
-          )
-      )
-      drop-shadow(
-        0 0 calc(0.46rem * var(--tier-glow-radius-scale))
-          rgb(
-            var(--tier-glow-end-rgb) /
-              calc(
-                var(--tier-glow-pulse-strong-end-alpha) *
-                  var(--tier-glow-halo-strength)
-              )
-          )
-      );
+  .sponsorVisual {
+    animation: none;
   }
 }
 
-@keyframes sponsorMobileRuneBreath {
-  0%,
-  100% {
-    filter: brightness(1.01) contrast(1.01) saturate(1.01)
-      drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
-      drop-shadow(0 0 0.015rem rgb(255 255 255 / 0.22))
-      drop-shadow(
-        0 0 calc(0.08rem * var(--tier-glow-radius-scale))
-          rgb(
-            var(--tier-glow-start-rgb) /
-              calc(var(--tier-glow-pulse-soft-start-alpha) * 0.18)
-          )
-      )
-      drop-shadow(
-        0 0 calc(0.14rem * var(--tier-glow-radius-scale))
-          rgb(
-            var(--tier-glow-end-rgb) /
-              calc(
-                var(--tier-glow-pulse-soft-end-alpha) *
-                  var(--tier-glow-halo-strength) * 0.18
-              )
-          )
-      );
+@keyframes sponsorMobileRockDrift {
+  from {
+    transform: translate3d(0, -0.3rem, 0) rotate(-0.16deg);
   }
 
-  50% {
-    filter: brightness(1.08) contrast(1.03) saturate(1.06)
-      drop-shadow(0 1px 0 rgb(4 18 28 / 0.35))
-      drop-shadow(0 0 0.025rem rgb(255 255 255 / 0.55))
-      drop-shadow(0 0 0.06rem rgb(255 255 255 / 0.32))
-      drop-shadow(
-        0 0 calc(0.1rem * var(--tier-glow-radius-scale))
-          rgb(var(--tier-glow-start-rgb) / 0.3)
-      )
-      drop-shadow(
-        0 0 calc(0.16rem * var(--tier-glow-radius-scale))
-          rgb(
-            var(--tier-glow-start-rgb) /
-              calc(var(--tier-glow-pulse-soft-start-alpha) * 0.72)
-          )
-      )
-      drop-shadow(
-        0 0 calc(0.3rem * var(--tier-glow-radius-scale))
-          rgb(
-            var(--tier-glow-end-rgb) /
-              calc(
-                var(--tier-glow-pulse-soft-end-alpha) *
-                  var(--tier-glow-halo-strength) * 0.78
-              )
-          )
-      );
-  }
-}
-
-@keyframes sponsorShineSweep {
-  0% {
-    background-position: 200% 0;
-  }
-
-  45%,
-  100% {
-    background-position: -120% 0;
-  }
-}
-
-@keyframes sponsorMobileSheenGlisten {
-  0%,
-  100% {
-    opacity: var(--sponsor-metallic-rest-strength, 0.28);
-  }
-
-  50% {
-    opacity: 0.58;
-  }
-}
-
-@keyframes sponsorMobileRockGlisten {
-  0%,
-  100% {
-    filter: var(--sponsor-rock-surface-filter, brightness(1))
-      var(--tier-rock-filter, brightness(1)) brightness(1) contrast(1)
-      saturate(1);
-  }
-
-  50% {
-    filter: var(--sponsor-rock-surface-filter, brightness(1))
-      var(--tier-rock-filter, brightness(1)) brightness(1.08) contrast(1.03)
-      saturate(1.06);
-  }
-}
-
-@keyframes sponsorMobileTintGlisten {
-  0%,
-  100% {
-    opacity: 0;
-  }
-
-  50% {
-    opacity: 0.14;
-  }
-}
-
-@keyframes sponsorMobileShineGlisten {
-  0% {
-    background-position: 200% 0;
-    opacity: 0;
-  }
-
-  15% {
-    background-position: 140% 0;
-    opacity: 0.2;
-  }
-
-  50% {
-    background-position: 38% 0;
-    opacity: 0.68;
-  }
-
-  85% {
-    background-position: -50% 0;
-    opacity: 0.34;
-  }
-
-  100% {
-    background-position: -120% 0;
-    opacity: 0;
-  }
-}
-
-@keyframes sponsorHoverFloat {
-  0% {
-    transform: translate3d(0, -0.12rem, 0) rotate(-0.24deg);
-  }
-
-  100% {
-    transform: translate3d(0, 0.14rem, 0) rotate(0.2deg);
+  to {
+    transform: translate3d(0, 0.3rem, 0) rotate(0.16deg);
   }
 }
