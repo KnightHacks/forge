@@ -16,7 +16,6 @@ const MOBILE_POINTER_QUERY = "(any-pointer: coarse)";
 const PORTRAIT_QUERY = "(orientation: portrait)";
 const VIEWPORT_UNIT_PROPERTY = "--khix-viewport-unit";
 const VIEWPORT_WIDTH_UNIT_PROPERTY = "--khix-viewport-width-unit";
-const MOBILE_APPLY_TOP_PROPERTY = "--khix-mobile-apply-top";
 
 const getDocumentOffsetTop = (element: HTMLElement) => {
   let offsetTop = 0;
@@ -67,7 +66,6 @@ export function useHeroMotion(): HeroMotion {
       if (!mobileQuery.matches) {
         section.style.removeProperty(VIEWPORT_UNIT_PROPERTY);
         section.style.removeProperty(VIEWPORT_WIDTH_UNIT_PROPERTY);
-        section.style.removeProperty(MOBILE_APPLY_TOP_PROPERTY);
         return;
       }
 
@@ -82,8 +80,6 @@ export function useHeroMotion(): HeroMotion {
       const viewportWidth = visualViewport?.width ?? window.innerWidth;
       const viewportUnit = Math.max(1, viewportHeight) / 100;
       const viewportWidthUnit = Math.max(1, viewportWidth) / 100;
-      // Snapshot the CTA offset so browser chrome cannot move it on scroll.
-      const mobileApplyTop = Math.max(1, visibleViewportHeight) * 0.9;
 
       section.style.setProperty(
         VIEWPORT_UNIT_PROPERTY,
@@ -92,10 +88,6 @@ export function useHeroMotion(): HeroMotion {
       section.style.setProperty(
         VIEWPORT_WIDTH_UNIT_PROPERTY,
         `${viewportWidthUnit.toFixed(4)}px`,
-      );
-      section.style.setProperty(
-        MOBILE_APPLY_TOP_PROPERTY,
-        `${mobileApplyTop.toFixed(2)}px`,
       );
     };
 
@@ -134,7 +126,6 @@ export function useHeroMotion(): HeroMotion {
       portraitQuery.removeEventListener("change", scheduleStableViewportUnit);
       section.style.removeProperty(VIEWPORT_UNIT_PROPERTY);
       section.style.removeProperty(VIEWPORT_WIDTH_UNIT_PROPERTY);
-      section.style.removeProperty(MOBILE_APPLY_TOP_PROPERTY);
     };
   }, []);
 

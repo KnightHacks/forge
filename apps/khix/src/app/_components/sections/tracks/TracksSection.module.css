@@ -574,35 +574,35 @@
   }
 
   .hangingTrack:nth-child(1) {
-    --track-cord: 6.5rem;
+    --track-cord: 4.5rem;
 
     top: 57%;
     left: 27%;
   }
 
   .hangingTrack:nth-child(2) {
-    --track-cord: 6.8rem;
+    --track-cord: 4.8rem;
 
     top: 57%;
     left: 73%;
   }
 
   .hangingTrack:nth-child(3) {
-    --track-cord: 11.7rem;
+    --track-cord: 9.7rem;
 
     top: 72.5%;
     left: 27%;
   }
 
   .hangingTrack:nth-child(4) {
-    --track-cord: 12rem;
+    --track-cord: 10rem;
 
     top: 72.5%;
     left: 73%;
   }
 
   .hangingTrack:nth-child(5) {
-    --track-cord: 17.25rem;
+    --track-cord: 14.5rem;
 
     top: 87%;
     left: 50%;

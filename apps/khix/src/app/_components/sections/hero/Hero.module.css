@@ -785,7 +785,7 @@
 
   .mobileHeroApplyButton {
     position: absolute;
-    top: var(--khix-mobile-apply-top, 90svh);
+    top: calc(var(--khix-viewport-unit) * 90);
     right: 0;
     left: 0;
     z-index: 30;
