@@ -24,6 +24,7 @@ interface EventRow {
   discordChannel?: { id: string; type?: "stage" | "voice" } | null;
   endAt: Date | string;
   google: Projection;
+  feedback?: { averageOverall: number | null; responseCount: number };
   id: string;
   internal: boolean;
   legacy: boolean;
@@ -83,6 +84,7 @@ export function eventRowToListItem(
     discordHealth: row.discord.health,
     endDateTime: dateString(row.endAt),
     googleHealth: row.google.health,
+    feedback: row.feedback,
     id: row.id,
     internal: row.internal,
     legacy: row.legacy,

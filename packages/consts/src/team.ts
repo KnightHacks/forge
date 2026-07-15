@@ -147,3 +147,27 @@ export const CLUB_ROSTER_ROLE_NAMES = [
     (slug) => CLUB_TEAM_ROLE_CONFIG[slug].teamRoleName,
   ),
 ] as const;
+
+// This list is used only when bootstrapping the durable exclusion flag on a
+// role. Event eligibility reads the persisted role identity flag afterward so
+// renaming a role cannot silently expose organizational events to feedback.
+export const EVENT_FEEDBACK_EXCLUDED_ROLE_NAMES = [
+  "Dev Team",
+  "Workshop Team",
+  "Sponsorship Team",
+  "Outreach Team",
+  "Design Team",
+  "KH IX Team",
+  "President",
+  "Vice President",
+  "Treasurer",
+  "Secretary",
+  "Hack Lead",
+  "Dev Lead",
+  "Officers",
+  "Design Director",
+  "Sponsorship Director",
+  "Outreach Director",
+  "Workshop Director",
+  "Directors",
+] as const;

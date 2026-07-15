@@ -37,6 +37,24 @@ vi.mock("~/app/_components/member/member-resume-upload", () => ({
     `Resume widget for ${initialResumeUrl ?? "empty resume"} (${variant ?? "panel"})`,
 }));
 
+vi.mock("~/app/_components/member/member-event-feedback", () => ({
+  MemberEventFeedback: ({
+    opportunity,
+    surface,
+  }: {
+    opportunity: { eventName: string; status: string };
+    surface: string;
+  }) =>
+    createElement(
+      "div",
+      {
+        "data-feedback-opportunity": opportunity.status,
+        "data-feedback-surface": surface,
+      },
+      `Feedback for ${opportunity.eventName}`,
+    ),
+}));
+
 const member: CurrentMember = {
   about:
     "My name is Dylan Vidal, and I am the Dev Lead of Knight Hacks. My messages are always open.",
@@ -153,6 +171,32 @@ const dashboardProps = {
 };
 
 describe("MemberDashboard", () => {
+  it("surfaces immediately available feedback on the upcoming dashboard card", () => {
+    const firstEvent = events[0];
+    if (!firstEvent) throw new Error("Missing event fixture.");
+    const html = renderToStaticMarkup(
+      createElement(MemberDashboard, {
+        ...dashboardProps,
+        feedback: [
+          {
+            customQuestions: [],
+            dueAt: "2026-08-19T20:00:00-04:00",
+            eventId: firstEvent.id,
+            eventName: firstEvent.name,
+            formId: "00000000-0000-4000-8000-000000000901",
+            rewardPoints: 5,
+            status: "available" as const,
+            urgent: false,
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain('data-feedback-opportunity="available"');
+    expect(html).toContain('data-feedback-surface="dashboard"');
+    expect(html).toContain("Feedback for Interview Workshop");
+  });
+
   it("renders the Guild social card without legacy member-profile chrome", () => {
     const html = renderToStaticMarkup(
       createElement(MemberDashboard, dashboardProps),

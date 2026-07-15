@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  ClipboardList,
   LayoutDashboard,
   QrCode,
   ShieldCheck,
@@ -9,11 +10,19 @@ import {
 export interface AdminNavigationAccess {
   eventCheckIn?: boolean;
   events?: boolean;
+  forms?: boolean;
   members: boolean;
   roles: boolean;
 }
 
 export const adminNavigationItems = [
+  {
+    access: "forms",
+    href: "/admin/forms",
+    icon: ClipboardList,
+    id: "forms",
+    label: "Forms",
+  },
   {
     href: "/member/dashboard",
     icon: LayoutDashboard,
@@ -58,6 +67,7 @@ export function getVisibleAdminNavigation(access: AdminNavigationAccess) {
 
 export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "events") return pathname.startsWith("/admin/events");
+  if (id === "forms") return pathname.startsWith("/admin/forms");
   if (id === "eventCheckIn") return pathname.startsWith("/admin/check-in");
   if (id === "members") return pathname.startsWith("/admin/members");
   if (id === "roles") return pathname.startsWith("/admin/roles");

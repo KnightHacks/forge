@@ -15,6 +15,8 @@ import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { MarkdownContent } from "@forge/ui/markdown-content";
 
+import type { MemberFeedbackOpportunity } from "~/app/_components/member/member-event-feedback";
+import { MemberEventFeedback } from "~/app/_components/member/member-event-feedback";
 import { formatEventDateTime } from "~/lib/event-dates";
 
 export type MemberEventItem =
@@ -78,9 +80,11 @@ function DescriptionDetails({ description }: { description: string }) {
 export function MemberEventsDashboard({
   attendance,
   events,
+  feedback = [],
 }: {
   attendance: MemberAttendanceItem[];
   events: MemberEventItem[];
+  feedback?: MemberFeedbackOpportunity[];
 }) {
   return (
     <main className="container min-w-0 space-y-5 pb-16 pt-5 sm:space-y-6 sm:pt-8">
@@ -117,60 +121,88 @@ export function MemberEventsDashboard({
               No upcoming events are available for your account.
             </div>
           ) : (
-            events.map((event) => (
-              <article
-                key={event.id}
-                className="relative min-w-0 overflow-hidden rounded-lg border border-white/10 bg-background/60 p-4 pl-6"
-              >
-                <span
-                  className="absolute inset-y-0 left-0 w-1"
-                  style={{ backgroundColor: event.tagColor }}
-                  aria-hidden="true"
-                />
-                <div className="flex flex-wrap items-center gap-2">
-                  <TagPill color={event.tagColor} name={event.tag} />
-                  {event.internal && <Badge variant="outline">Internal</Badge>}
-                  {event.locked && (
-                    <Badge variant="outline" className="gap-1.5">
-                      <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />
-                      Dues required
-                    </Badge>
-                  )}
-                </div>
+            events.map((event) => {
+              const opportunity = feedback.find(
+                (candidate) => candidate.eventId === event.id,
+              );
+              return (
+                <article
+                  key={event.id}
+                  className="relative min-w-0 overflow-hidden rounded-lg border border-white/10 bg-background/60 p-4 pl-6"
+                >
+                  <span
+                    className="absolute inset-y-0 left-0 w-1"
+                    style={{ backgroundColor: event.tagColor }}
+                    aria-hidden="true"
+                  />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <TagPill color={event.tagColor} name={event.tag} />
+                    {event.internal && (
+                      <Badge variant="outline">Internal</Badge>
+                    )}
+                    {event.locked && (
+                      <Badge variant="outline" className="gap-1.5">
+                        <LockKeyhole
+                          className="h-3.5 w-3.5"
+                          aria-hidden="true"
+                        />
+                        Dues required
+                      </Badge>
+                    )}
+                  </div>
 
-                <h3 className="mt-4 break-words text-xl font-semibold leading-tight">
-                  {event.name}
-                </h3>
-                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-                  <span className="flex items-start gap-2">
-                    <CalendarDays
-                      className="mt-0.5 h-4 w-4 shrink-0 text-primary"
-                      aria-hidden="true"
-                    />
-                    {formatEventDateTime(event.startAt)}
-                  </span>
-                  <span className="flex min-w-0 items-start gap-2">
-                    <MapPin
-                      className="mt-0.5 h-4 w-4 shrink-0 text-primary"
-                      aria-hidden="true"
-                    />
-                    <span className="break-words">{event.location}</span>
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <UsersRound
-                      className="h-4 w-4 shrink-0 text-primary"
-                      aria-hidden="true"
-                    />
-                    {checkInLabel(event.attendanceCount)}
-                  </span>
-                </div>
+                  <h3 className="mt-4 break-words text-xl font-semibold leading-tight">
+                    {event.name}
+                  </h3>
+                  <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                    <span className="flex items-start gap-2">
+                      <CalendarDays
+                        className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                        aria-hidden="true"
+                      />
+                      {formatEventDateTime(event.startAt)}
+                    </span>
+                    <span className="flex min-w-0 items-start gap-2">
+                      <MapPin
+                        className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                        aria-hidden="true"
+                      />
+                      <span className="break-words">{event.location}</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <UsersRound
+                        className="h-4 w-4 shrink-0 text-primary"
+                        aria-hidden="true"
+                      />
+                      {checkInLabel(event.attendanceCount)}
+                    </span>
+                  </div>
 
-                <div className="mt-4">
-                  <DescriptionDetails description={event.description} />
-                </div>
+                  <div className="mt-4">
+                    <DescriptionDetails description={event.description} />
+                  </div>
 
-                <div className="flex flex-wrap gap-2 pt-4">
-                  {event.discordUrl && (
+                  <div className="flex flex-wrap gap-2 pt-4">
+                    {event.discordUrl && (
+                      <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        className="min-h-11 sm:min-h-8"
+                      >
+                        <a
+                          href={event.discordUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open in Discord
+                          <ExternalLink
+                            className="ml-2 h-4 w-4"
+                            aria-hidden="true"
+                          />
+                        </a>
+                      </Button>
+                    )}
                     <Button
                       asChild
                       size="sm"
@@ -178,44 +210,32 @@ export function MemberEventsDashboard({
                       className="min-h-11 sm:min-h-8"
                     >
                       <a
-                        href={event.discordUrl}
+                        href={googleCalendarUrl(event)}
                         target="_blank"
                         rel="noreferrer"
                       >
-                        Open in Discord
+                        Add to Google Calendar
                         <ExternalLink
                           className="ml-2 h-4 w-4"
                           aria-hidden="true"
                         />
                       </a>
                     </Button>
-                  )}
-                  <Button
-                    asChild
-                    size="sm"
-                    variant="outline"
-                    className="min-h-11 sm:min-h-8"
-                  >
-                    <a
-                      href={googleCalendarUrl(event)}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Add to Google Calendar
-                      <ExternalLink
-                        className="ml-2 h-4 w-4"
-                        aria-hidden="true"
-                      />
-                    </a>
-                  </Button>
-                  {event.locked && (
-                    <Button asChild size="sm" className="min-h-11 sm:min-h-8">
-                      <Link href="/member/dues">Pay dues</Link>
-                    </Button>
-                  )}
-                </div>
-              </article>
-            ))
+                    {event.locked && (
+                      <Button asChild size="sm" className="min-h-11 sm:min-h-8">
+                        <Link href="/member/dues">Pay dues</Link>
+                      </Button>
+                    )}
+                  </div>
+                  {opportunity ? (
+                    <MemberEventFeedback
+                      opportunity={opportunity}
+                      surface="event_history"
+                    />
+                  ) : null}
+                </article>
+              );
+            })
           )}
         </div>
       </section>
@@ -240,59 +260,74 @@ export function MemberEventsDashboard({
               Your attendance history is empty.
             </div>
           ) : (
-            attendance.map((record) => (
-              <article
-                key={record.attendanceId}
-                className="min-w-0 rounded-lg border border-white/10 bg-background/60 p-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <TagPill color={record.tagColor} name={record.tag} />
-                  <div className="flex items-center gap-2 rounded-md border border-white/10 bg-card/60 px-3 py-2">
-                    <Trophy
-                      className="h-4 w-4 text-primary"
-                      aria-hidden="true"
-                    />
-                    <span className="font-mono text-sm">
-                      {record.pointsAwarded ?? "Unknown"} points
-                    </span>
+            attendance.map((record) => {
+              const opportunity = events.some(
+                (event) => event.id === record.eventId,
+              )
+                ? undefined
+                : feedback.find(
+                    (candidate) => candidate.eventId === record.eventId,
+                  );
+              return (
+                <article
+                  key={record.attendanceId}
+                  className="min-w-0 rounded-lg border border-white/10 bg-background/60 p-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <TagPill color={record.tagColor} name={record.tag} />
+                    <div className="flex items-center gap-2 rounded-md border border-white/10 bg-card/60 px-3 py-2">
+                      <Trophy
+                        className="h-4 w-4 text-primary"
+                        aria-hidden="true"
+                      />
+                      <span className="font-mono text-sm">
+                        {record.pointsAwarded ?? "Unknown"} points
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <h3 className="mt-4 break-words text-lg font-semibold">
-                  {record.name}
-                </h3>
-                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-                  <span className="flex items-start gap-2">
-                    <CalendarDays
-                      className="mt-0.5 h-4 w-4 shrink-0 text-primary"
-                      aria-hidden="true"
-                    />
-                    {formatEventDateTime(record.startAt)}
-                  </span>
-                  <span className="flex min-w-0 items-start gap-2">
-                    <MapPin
-                      className="mt-0.5 h-4 w-4 shrink-0 text-primary"
-                      aria-hidden="true"
-                    />
-                    <span className="break-words">{record.location}</span>
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <UsersRound
-                      className="h-4 w-4 shrink-0 text-primary"
-                      aria-hidden="true"
-                    />
-                    {checkInLabel(record.attendanceCount)}
-                  </span>
-                  {record.checkedInAt && (
-                    <span>
-                      Checked in {formatEventDateTime(record.checkedInAt)}
+                  <h3 className="mt-4 break-words text-lg font-semibold">
+                    {record.name}
+                  </h3>
+                  <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                    <span className="flex items-start gap-2">
+                      <CalendarDays
+                        className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                        aria-hidden="true"
+                      />
+                      {formatEventDateTime(record.startAt)}
                     </span>
-                  )}
-                </div>
-                <div className="mt-4">
-                  <DescriptionDetails description={record.description} />
-                </div>
-              </article>
-            ))
+                    <span className="flex min-w-0 items-start gap-2">
+                      <MapPin
+                        className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                        aria-hidden="true"
+                      />
+                      <span className="break-words">{record.location}</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <UsersRound
+                        className="h-4 w-4 shrink-0 text-primary"
+                        aria-hidden="true"
+                      />
+                      {checkInLabel(record.attendanceCount)}
+                    </span>
+                    {record.checkedInAt && (
+                      <span>
+                        Checked in {formatEventDateTime(record.checkedInAt)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <DescriptionDetails description={record.description} />
+                  </div>
+                  {opportunity ? (
+                    <MemberEventFeedback
+                      opportunity={opportunity}
+                      surface="event_history"
+                    />
+                  ) : null}
+                </article>
+              );
+            })
           )}
         </div>
       </section>

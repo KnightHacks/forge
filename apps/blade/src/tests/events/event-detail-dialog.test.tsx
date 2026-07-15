@@ -27,7 +27,14 @@ vi.mock("~/trpc/react", () => ({
     const mutation = () => ({ isPending: false, mutate: vi.fn() });
     return {
       event: {
+        addEventFeedbackQuestion: { useMutation: mutation },
         deleteEvent: { useMutation: mutation },
+        exportEventFeedback: {
+          useQuery: () => ({ refetch: vi.fn() }),
+        },
+        getEventFeedback: {
+          useQuery: () => ({ data: null, error: null, isLoading: false }),
+        },
         removeAttendance: { useMutation: mutation },
         repairIntegration: { useMutation: mutation },
         retrySync: { useMutation: mutation },

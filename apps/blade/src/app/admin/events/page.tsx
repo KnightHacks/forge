@@ -42,6 +42,9 @@ export default async function AdminEventsPage({
       permissions.IS_OFFICER === true ||
       permissions.READ_CLUB_EVENT === true ||
       permissions.EDIT_CLUB_EVENT === true,
+    canReadResponses:
+      permissions.IS_OFFICER === true ||
+      permissions.READ_FORM_RESPONSES === true,
     isOfficer: permissions.IS_OFFICER === true,
   };
   const parsed = parseAdminEventSearchParams(await searchParams);

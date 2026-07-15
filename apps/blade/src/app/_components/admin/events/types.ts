@@ -3,6 +3,7 @@ import type { AdminEventInput } from "./params";
 export interface EventAdminAccess {
   canEdit: boolean;
   canRead: boolean;
+  canReadResponses?: boolean;
   isOfficer: boolean;
 }
 
@@ -19,6 +20,7 @@ export interface EventListItem {
   discordHealth: EventIntegrationHealth;
   endDateTime: string;
   googleHealth: EventIntegrationHealth;
+  feedback?: { averageOverall: number | null; responseCount: number };
   id: string;
   internal: boolean;
   legacy: boolean;

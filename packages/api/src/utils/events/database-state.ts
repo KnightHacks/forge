@@ -7,6 +7,7 @@ import { Roles } from "@forge/db/schemas/auth";
 import { Event, EventAttendee, EventTag } from "@forge/db/schemas/knight-hacks";
 
 import type { EventProjection, EventWorkflowRecord } from "./orchestration";
+import { createDbEventFeedbackService } from "./database-feedback";
 
 function audienceOf(event: SelectEvent) {
   if (event.dues_paying) return "dues" as const;
@@ -198,7 +199,12 @@ export function createDbEventWorkflowState({
         const existing = await tx.query.Event.findFirst({
           where: eq(Event.creationKey, creationKey),
         });
-        if (existing) return { created: false, row: existing };
+        if (existing) {
+          await (
+            await createDbEventFeedbackService(tx)
+          ).provisionForEvent({ eventId: existing.id });
+          return { created: false, row: existing };
+        }
 
         if (creationReferences) {
           const [tag] = await tx
@@ -271,11 +277,19 @@ export function createDbEventWorkflowState({
           })
           .onConflictDoNothing({ target: Event.creationKey })
           .returning();
-        if (created) return { created: true, row: created };
+        if (created) {
+          await (
+            await createDbEventFeedbackService(tx)
+          ).provisionForEvent({ eventId: created.id });
+          return { created: true, row: created };
+        }
         const raced = await tx.query.Event.findFirst({
           where: eq(Event.creationKey, creationKey),
         });
         if (!raced) throw new Error("Event creation reservation was lost.");
+        await (
+          await createDbEventFeedbackService(tx)
+        ).provisionForEvent({ eventId: raced.id });
         return { created: false, row: raced };
       });
       return {

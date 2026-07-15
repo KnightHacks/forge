@@ -26,11 +26,13 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent } from "@forge/ui/card";
 import { MEMBER_DUES_PATH, MEMBER_SETTINGS_PATH } from "@forge/validators";
 
+import type { MemberFeedbackOpportunity } from "~/app/_components/member/member-event-feedback";
 import type {
   MemberAttendanceItem,
   MemberEventItem,
 } from "~/app/_components/member/member-events-dashboard";
 import type { CurrentMember } from "~/hooks/use-member";
+import { MemberEventFeedback } from "~/app/_components/member/member-event-feedback";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberQRCodeDialog } from "~/app/_components/member/member-qr-code-dialog";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
@@ -138,11 +140,13 @@ function EventsOverview({
   attendance,
   className,
   events,
+  feedback,
   unavailable = false,
 }: {
   attendance: MemberAttendanceItem[];
   className?: string;
   events: MemberEventItem[];
+  feedback: MemberFeedbackOpportunity[];
   unavailable?: boolean;
 }) {
   const upcoming = events.slice(0, 2);
@@ -196,38 +200,49 @@ function EventsOverview({
                   No upcoming events right now.
                 </p>
               ) : (
-                upcoming.map((event) => (
-                  <article
-                    key={event.id}
-                    className="relative overflow-hidden rounded-md border border-white/10 bg-card/50 p-3 pl-4"
-                  >
-                    <span
-                      className="absolute inset-y-0 left-0 w-1"
-                      style={{ backgroundColor: event.tagColor }}
-                      aria-hidden="true"
-                    />
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <h4 className="min-w-0 break-words text-sm font-semibold">
-                        {event.name}
-                      </h4>
-                      {event.locked && (
-                        <Badge variant="outline" className="shrink-0">
-                          Dues required
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {formatEventDateTime(event.startAt)}
-                    </p>
-                    <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
-                      <MapPin
-                        className="h-3.5 w-3.5 shrink-0"
+                upcoming.map((event) => {
+                  const opportunity = feedback.find(
+                    (candidate) => candidate.eventId === event.id,
+                  );
+                  return (
+                    <article
+                      key={event.id}
+                      className="relative overflow-hidden rounded-md border border-white/10 bg-card/50 p-3 pl-4"
+                    >
+                      <span
+                        className="absolute inset-y-0 left-0 w-1"
+                        style={{ backgroundColor: event.tagColor }}
                         aria-hidden="true"
                       />
-                      <span className="truncate">{event.location}</span>
-                    </p>
-                  </article>
-                ))
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <h4 className="min-w-0 break-words text-sm font-semibold">
+                          {event.name}
+                        </h4>
+                        {event.locked && (
+                          <Badge variant="outline" className="shrink-0">
+                            Dues required
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {formatEventDateTime(event.startAt)}
+                      </p>
+                      <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                        <MapPin
+                          className="h-3.5 w-3.5 shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span className="truncate">{event.location}</span>
+                      </p>
+                      {opportunity ? (
+                        <MemberEventFeedback
+                          opportunity={opportunity}
+                          surface="dashboard"
+                        />
+                      ) : null}
+                    </article>
+                  );
+                })
               )}
             </div>
           </section>
@@ -246,29 +261,44 @@ function EventsOverview({
                   Your attendance history is empty.
                 </p>
               ) : (
-                recent.map((record) => (
-                  <article
-                    key={record.attendanceId}
-                    className="rounded-md border border-white/10 bg-card/50 p-3"
-                  >
-                    <div className="flex min-w-0 items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h4 className="truncate text-sm font-medium">
-                          {record.name}
-                        </h4>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {formatEventDateTime(
-                            record.checkedInAt ?? record.startAt,
-                          )}
-                        </p>
+                recent.map((record) => {
+                  const opportunity = upcoming.some(
+                    (event) => event.id === record.eventId,
+                  )
+                    ? undefined
+                    : feedback.find(
+                        (candidate) => candidate.eventId === record.eventId,
+                      );
+                  return (
+                    <article
+                      key={record.attendanceId}
+                      className="rounded-md border border-white/10 bg-card/50 p-3"
+                    >
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h4 className="truncate text-sm font-medium">
+                            {record.name}
+                          </h4>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {formatEventDateTime(
+                              record.checkedInAt ?? record.startAt,
+                            )}
+                          </p>
+                        </div>
+                        <span className="flex shrink-0 items-center gap-1 font-mono text-sm text-primary">
+                          <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
+                          {record.pointsAwarded ?? "?"}
+                        </span>
                       </div>
-                      <span className="flex shrink-0 items-center gap-1 font-mono text-sm text-primary">
-                        <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
-                        {record.pointsAwarded ?? "?"}
-                      </span>
-                    </div>
-                  </article>
-                ))
+                      {opportunity ? (
+                        <MemberEventFeedback
+                          opportunity={opportunity}
+                          surface="dashboard"
+                        />
+                      ) : null}
+                    </article>
+                  );
+                })
               )}
             </div>
           </section>
@@ -283,12 +313,14 @@ function GuildProfileCard({
   duesStatus,
   events,
   eventsUnavailable,
+  feedback,
   member,
 }: {
   attendance: MemberAttendanceItem[];
   duesStatus: CurrentDuesStatus;
   events: MemberEventItem[];
   eventsUnavailable: boolean;
+  feedback: MemberFeedbackOpportunity[];
   member: CurrentMember;
 }) {
   const displayName = `${member.firstName} ${member.lastName}`.trim();
@@ -372,9 +404,26 @@ function GuildProfileCard({
         <EventsOverview
           attendance={attendance}
           events={events}
+          feedback={feedback}
           unavailable={eventsUnavailable}
           className="lg:hidden"
         />
+
+        <DashboardContent
+          className={cn(dashboardNestedSurfaceClass, "p-3 lg:hidden")}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2 text-sm font-medium">
+              <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
+              Previous forms
+            </span>
+            <Button asChild size="sm" variant="outline" className="min-h-11">
+              <MemberRouteTransitionLink href="/member/forms">
+                Review
+              </MemberRouteTransitionLink>
+            </Button>
+          </div>
+        </DashboardContent>
 
         <DashboardContent
           role="group"
@@ -499,12 +548,14 @@ export function MemberDashboard({
   duesStatus,
   events,
   eventsUnavailable = false,
+  feedback = [],
   member,
 }: {
   attendance: MemberAttendanceItem[];
   duesStatus: CurrentDuesStatus;
   events: MemberEventItem[];
   eventsUnavailable?: boolean;
+  feedback?: MemberFeedbackOpportunity[];
   member: CurrentMember;
 }) {
   return (
@@ -531,8 +582,28 @@ export function MemberDashboard({
             <EventsOverview
               attendance={attendance}
               events={events}
+              feedback={feedback}
               unavailable={eventsUnavailable}
             />
+
+            <DashboardContent
+              className={cn(dashboardNestedSurfaceClass, "p-4")}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <FileText
+                    className="h-4 w-4 text-primary"
+                    aria-hidden="true"
+                  />
+                  Previous forms
+                </span>
+                <Button asChild size="sm" variant="outline">
+                  <MemberRouteTransitionLink href="/member/forms">
+                    Review history
+                  </MemberRouteTransitionLink>
+                </Button>
+              </div>
+            </DashboardContent>
           </CardContent>
         </Card>
 
@@ -541,6 +612,7 @@ export function MemberDashboard({
           duesStatus={duesStatus}
           events={events}
           eventsUnavailable={eventsUnavailable}
+          feedback={feedback}
           member={member}
         />
       </section>

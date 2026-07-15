@@ -65,6 +65,27 @@ function canConfigureRole(
   );
 }
 
+const eventFeedbackExcludedRoleNames = new Set([
+  "Dev Team",
+  "Workshop Team",
+  "Sponsorship Team",
+  "Outreach Team",
+  "Design Team",
+  "KH IX Team",
+  "President",
+  "Vice President",
+  "Treasurer",
+  "Secretary",
+  "Hack Lead",
+  "Dev Lead",
+  "Officers",
+  "Design Director",
+  "Sponsorship Director",
+  "Outreach Director",
+  "Workshop Director",
+  "Directors",
+]);
+
 export const rolesRouter = {
   getPermissions: protectedProcedure.query(async ({ ctx }) =>
     loadPermissionsForUser(ctx.session.user.id),
@@ -186,6 +207,9 @@ export const rolesRouter = {
         .insert(Roles)
         .values({
           discordRoleId: discordRole.id,
+          eventFeedbackExcluded: eventFeedbackExcludedRoleNames.has(
+            discordRole.name,
+          ),
           name: discordRole.name,
           permissions: permissionKeysToBitstring(input.permissions),
           teamHexcodeColor: roleColorToHex(discordRole.color),
