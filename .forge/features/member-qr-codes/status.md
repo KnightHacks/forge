@@ -1,11 +1,13 @@
 # Member QR Codes Status
 
-Current phase: Implementation
+Current phase: Complete
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
 ## Decision log
 
+- 2026-07-15: Human confirmed the feature bundle is complete; normalized all
+  artifact status fields to `Complete`.
 - 2026-06-26: Created branch `reforge/member-qr-codes-spec` from `reforge/main`.
 - 2026-06-26: Restarted the feature through the Forge artifact flow after reverting premature implementation work.
 - 2026-06-26: Instantiated `.forge/features/member-qr-codes/` with `pnpm forge:feature member-qr-codes "Member QR Codes"`.

@@ -1,6 +1,6 @@
 # Role Management SRD
 
-Status: Approved
+Status: Complete
 
 ## Technical purpose
 

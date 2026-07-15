@@ -1,6 +1,6 @@
 # Initial Member Onboarding Spec
 
-Status: Implemented / ready for review
+Status: Complete
 
 > This file owns the non-technical user/product intent. Technical design belongs in `srd.md`.
 

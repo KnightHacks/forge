@@ -6,6 +6,8 @@ Current phase: Complete
 
 ## Decision log
 
+- 2026-07-15: Human confirmed the feature bundle is complete; normalized all
+  artifact status fields to `Complete`.
 - 2026-06-27: Work targets Blade and `@forge/api` on the
   `reforge/admin-member-dashboard` branch from local `reforge/main`.
 - 2026-06-27: Existing `READ_MEMBERS`, `EDIT_MEMBERS`, and `IS_OFFICER`

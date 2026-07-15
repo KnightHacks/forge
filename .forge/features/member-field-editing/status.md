@@ -1,11 +1,13 @@
 # Member Field Editing Status
 
-Current phase: Implemented / validated
+Current phase: Complete
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
 ## Decision Log
 
+- 2026-07-15: Human confirmed the feature bundle is complete; normalized all
+  artifact status fields to `Complete`.
 - 2026-06-26: Created branch `reforge/member-field-editing-spec` from clean `reforge/main`.
 - 2026-06-26: Selected self-service member profile editing as the next member slice after initial onboarding.
 - 2026-06-26: Accepted that all member-owned fields should be editable, including official member info, academics, Guild fields, profile picture, and resume.
@@ -65,7 +67,7 @@ Current phase: Implemented / validated
 - [x] Draft `srd.md`.
 - [x] Draft `test-cases.md`.
 - [x] Human review of artifact direction.
-- [ ] Commit artifact branch after implementation validation.
+- [x] Commit artifact branch after implementation validation.
 
 ## Implementation Task List
 
@@ -111,4 +113,5 @@ Current phase: Implemented / validated
 
 ## Open Questions
 
-- Should the old `/dashboard`, `/settings`, and `/settings/profile` compatibility redirects be permanent or removed after Reforge cutover?
+- None for this feature. Compatibility redirects remain in place; removing them
+  is a future Reforge cutover decision.

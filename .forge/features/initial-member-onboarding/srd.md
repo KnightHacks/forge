@@ -1,6 +1,6 @@
 # Initial Member Onboarding SRD
 
-Status: Implemented / ready for review
+Status: Complete
 
 > This file owns technical implementation constraints and the accepted shape for this feature slice.
 

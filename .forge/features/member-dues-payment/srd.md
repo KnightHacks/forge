@@ -1,6 +1,6 @@
 # Member Dues Payment SRD
 
-Status: Draft
+Status: Complete
 
 > This file owns technical implementation constraints. Do not fill it from guesses. Use reverse-prompting to clarify it with the human.
 

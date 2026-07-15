@@ -9,20 +9,25 @@ Forge is a Turborepo monorepo containing multiple applications and shared packag
 ```
 forge/
 ├── apps/              # Standalone applications
-│   ├── blade/         # Main full-stack app (the "backend")
+│   ├── blade/         # Main full-stack app and web API host
 │   ├── club/          # Club website (frontend only)
 │   ├── 2025/          # Knight Hacks VIII 2025 site (frontend only)
+│   ├── bloomknights/  # BloomKnights hackathon site (frontend only)
 │   ├── gemiknights/   # GemiKnights 2025 site (frontend only)
 │   ├── guild/         # Member networking site (frontend only)
+│   ├── khix/          # Knight Hacks IX hackathon site (frontend only)
 │   ├── tk/            # Discord bot
 │   └── cron/          # Cron job server
 ├── packages/          # Shared packages
 │   ├── api/           # tRPC router (API layer)
 │   ├── auth/          # Authentication setup
+│   ├── consts/        # Shared constants and metadata
 │   ├── db/            # Database schema and client
 │   ├── email/         # Email templates and sending
 │   ├── ui/            # Shared UI components
-│   └── consts/        # Shared constants
+│   ├── utils/         # Reusable non-UI helpers and integrations
+│   └── validators/    # Shared Zod schemas and validation helpers
+├── legacy/            # Behavioral reference; excluded from the workspace
 └── tooling/           # Shared configuration
     ├── eslint/        # ESLint config
     ├── prettier/      # Prettier config
@@ -30,26 +35,73 @@ forge/
     └── typescript/    # TypeScript config
 ```
 
+## Reforge Branch State
+
+`reforge/main` is the active Blade Reforge development line. Production
+maintenance continues on `main`; Reforge changes should preserve important
+production behavior without copying legacy file boundaries or known debt.
+
+The completed Reforge feature bundles currently cover:
+
+- initial member onboarding and profile editing;
+- the mobile member experience, member QR codes, and dues payments;
+- the admin member dashboard and Discord-backed role management; and
+- club event management, member event discovery, attendance, and check-in.
+
+The active API currently registers `auth`, `dues`, `event`, `forms`, `health`,
+`member`, `profilePicture`, `qr`, `resume`, and `roles` capabilities in
+`packages/api/src/root.ts`. Member-administration procedures are composed into
+the member capability rather than exposed as a separate root router.
+
+The `legacy/` tree is deliberately excluded from `pnpm-workspace.yaml`. Its
+`CURRENT.md` inventories are evidence for behavior that Reforge may need to
+preserve; legacy source is not an implementation target.
+
+### Intentional Guild Baseline Failure
+
+The active Reforge API does not yet restore the `guild` router. The Guild app
+and Club team roster still reference `api.guild`, so full-workspace typecheck
+and build currently fail at those unchanged consumers. This is an intentional
+baseline condition until Guild is selected as a Reforge feature.
+
+Feature work outside Guild should run targeted checks for every touched app or
+package and record the inherited Guild failure separately when a root command
+reaches it. Do not weaken types or add a placeholder router merely to make the
+workspace gate green.
+
 ## How Apps Communicate
 
-### Blade as the "Backend"
+### Blade as the Web API Host
 
-While `blade` is technically a Next.js app, it serves as the backend because:
+Blade is a Next.js application that hosts the current web-facing tRPC and auth
+protocol endpoints:
 
-- It contains all write operations (create, update, delete)
-- It handles authentication
-- It manages role-based permissions
-- Other apps only have read access via tRPC
+- It exposes platform workflows implemented by `@forge/api`.
+- It handles Better Auth protocol routes and Discord OAuth.
+- It enforces role-based permissions at server/API boundaries.
+- Frontend-only apps consume type-safe read capabilities through tRPC.
+
+Business workflows belong in `@forge/api`, not in Blade pages or `@forge/db`.
+Blade pages own routing, auth gates, redirects, initial server reads, and
+high-level rendering.
 
 ### Frontend-Only Apps
 
-Apps like `club`, `guild`, `2025`, and `gemiknights` are frontend-only and interact with `blade` for data:
+Apps such as `club`, `guild`, `2025`, `bloomknights`, `gemiknights`, and `khix`
+are frontend-only sites. Where they need platform data, they consume
+`@forge/api` capabilities exposed by Blade.
 
 - **club**: Reads member count and other club stats
-- **guild**: Reads member profiles for the networking directory
-- **2025/gemiknights**: Primarily static, minimal backend needs
+- **guild**: Will read member profiles once the intentionally absent Reforge
+  Guild capability is restored.
+- **2025/bloomknights/gemiknights/khix**: Primarily static hackathon sites with
+  minimal backend needs.
 
 These apps use tRPC (via `@forge/api`) to make read-only API calls to `blade`.
+
+`tk` and `cron` are operational clients rather than frontend-only apps. New
+work should reuse platform capabilities from `@forge/api` where practical
+instead of duplicating product workflows.
 
 ### Authentication Flow
 
@@ -116,6 +168,22 @@ Shared constants used across the repository.
 - Majors of study
 - Other static configuration values
 
+### `@forge/validators`
+
+Reusable Zod contracts for API inputs, forms, and shared validation behavior.
+
+- Owns cross-boundary validation schemas and pure validation helpers
+- May derive from or remain compatible with database-backed types
+- Must not own database access, API workflows, auth, or UI behavior
+
+### `@forge/utils`
+
+Reusable non-UI helpers and integrations with stable cross-app value.
+
+- Owns shared date, permission, transform, export, and integration helpers
+- Must not become a home for feature-specific business workflows or constants
+- Server-only behavior must remain behind explicit server-only exports
+
 ## Data Model
 
 ### Core Entities
@@ -131,17 +199,18 @@ A single `User` can be both a `Member` and a `Hacker`. We separate these because
 - Local club members at UCF
 - National students attending our 1000+ person annual hackathon
 
-**Events and Applications:**
+**Events, Applications, and Forms:**
 
 - `Event`: Both club events and hackathon events
-- `Application`: Can be club membership applications or hackathon applications
-- Applications link to either a `Member` or `Hacker`
+- `HackerAttendee`: Per-hackathon application and attendance state for a hacker
+- `FormsSchemas` and `FormResponse`: Dynamic form definitions and submissions,
+  including the current member-onboarding flow
 
 **Roles and Permissions:**
 
 - `Role`: Maps to Discord server roles
 - `Permission`: Grants access to features in `blade`
-- Only relevant in `blade` (the only app with admin features)
+- Discord-linked roles also drive operational synchronization and reminders
 
 **Other Entities:**
 
@@ -154,24 +223,23 @@ A single `User` can be both a `Member` and a `Hacker`. We separate these because
 
 ### Frontend
 
-- **Framework**: Next.js 14 with App Router
-- **Styling**: Tailwind CSS
+- **Framework**: Next.js 16.2 with App Router and React 19.2
+- **Styling**: Tailwind CSS 4.2
 - **UI Components**: shadcn/ui + custom components
-- **Animations**: Framer Motion, GSAP
-- **State Management**: React Query (via tRPC)
+- **Client Data State**: React Query 5 via tRPC
 
 ### Backend
 
-- **API Layer**: tRPC
-- **Database**: PostgreSQL (Drizzle ORM)
-- **Authentication**: Better Auth with Discord OAuth
+- **API Layer**: tRPC 11 with Zod 4 contracts
+- **Database**: PostgreSQL with Drizzle ORM 0.45
+- **Authentication**: Better Auth 1.4 with Discord OAuth
 - **Object Storage**: MinIO (S3-compatible)
 - **Email**: Listmonk
 
 ### Infrastructure
 
-- **Monorepo Tool**: Turborepo
-- **Package Manager**: pnpm with workspaces
+- **Monorepo Tool**: Turborepo 2.8
+- **Package Manager**: pnpm 9.12 with workspaces
 - **Discord Bot**: discord.js
 - **Cron Jobs**: node-cron
 
@@ -179,7 +247,9 @@ A single `User` can be both a `Member` and a `Hacker`. We separate these because
 
 - **Linting**: ESLint
 - **Formatting**: Prettier
-- **Type Checking**: TypeScript
+- **Type Checking**: TypeScript 5.9
+- **Unit/Integration Testing**: Vitest 4
+- **Browser Testing**: Playwright 1.61
 - **Database GUI**: Drizzle Studio
 
 ## Development Patterns
@@ -191,14 +261,17 @@ We prioritize Server Components in Next.js:
 - Use Server Components by default
 - Only use Client Components when necessary (interactivity, hooks, browser APIs)
 - Keep data fetching on the server when possible
+- Keep `page.tsx` files thin; move interactive feature UI into app-local
+  `_components` directories
 
 ### tRPC for API Communication
 
-All API communication uses tRPC:
+Normal product API communication uses tRPC:
 
 - Type-safe end-to-end
 - Shared types between client and server
-- No manual API route definitions needed
+- REST/route handlers are reserved for protocol boundaries such as auth,
+  webhooks, file transfer, and the tRPC transport itself
 
 ### Shared Configuration
 
@@ -218,6 +291,9 @@ Turborepo orchestrates the monorepo, handling builds, dev servers, and caching.
 - `pnpm build` - Build all apps for production
 - `pnpm lint` - Lint all packages
 - `pnpm typecheck` - Type-check all packages
+- `pnpm test` - Run workspace unit and integration tests
+- `pnpm verify:push` - Run format, lint, and typecheck gates
+- `pnpm verify:precommit` - Add changed-React analysis to the push gates
 
 ### Filtering
 
@@ -226,7 +302,15 @@ Run commands for specific apps using filters:
 ```bash
 pnpm dev --filter=@forge/blade
 pnpm build --filter=@forge/club
+pnpm --filter=@forge/api test
+pnpm --filter=@forge/blade typecheck
 ```
+
+Because Guild is an intentional baseline failure, targeted filtered commands
+are the authoritative validation for non-Guild feature work until that
+capability is restored. Meaningful Blade UI changes should also run
+`pnpm analyze:react:changed --base=reforge/main` and the relevant Playwright
+specs. The main CI workflow does not currently run Blade Playwright tests.
 
 ### Pipeline
 

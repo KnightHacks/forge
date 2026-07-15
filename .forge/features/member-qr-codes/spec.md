@@ -1,6 +1,6 @@
 # Member QR Codes Spec
 
-Status: Approved for implementation
+Status: Complete
 
 > This file owns the non-technical user/product intent. Technical design belongs in `srd.md`.
 

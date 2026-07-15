@@ -1,6 +1,6 @@
 # Admin Member Dashboard SRD
 
-Status: Approved
+Status: Complete
 
 ## Technical purpose
 

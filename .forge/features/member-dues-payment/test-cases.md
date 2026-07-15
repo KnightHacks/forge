@@ -1,6 +1,6 @@
 # Member Dues Payment Test Cases
 
-Status: Implemented
+Status: Complete
 
 > This file owns observable proof. Do not generate implementation tests until the human approves these cases.
 

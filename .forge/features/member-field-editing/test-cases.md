@@ -1,6 +1,6 @@
 # Member Field Editing Test Cases
 
-Status: Implemented / validated in automated tests
+Status: Complete
 
 > This file owns observable proof for this feature slice.
 

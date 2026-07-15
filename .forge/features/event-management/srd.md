@@ -1,6 +1,6 @@
 # Event Management SRD
 
-Status: Revised / ready for human approval
+Status: Complete
 
 > This file owns technical implementation constraints.
 

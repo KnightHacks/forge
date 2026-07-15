@@ -1,6 +1,6 @@
 # Member Field Editing SRD
 
-Status: Draft / ready for review
+Status: Complete
 
 > This file owns technical implementation constraints and accepted architecture for this feature slice.
 
@@ -423,4 +423,5 @@ This feature should:
 
 ## Open Questions
 
-- Should the old `/dashboard`, `/settings`, and `/settings/profile` compatibility redirects be permanent or removed after Reforge cutover?
+- None for this feature. Compatibility redirects remain in place; removing them
+  is a future Reforge cutover decision.

@@ -1,6 +1,6 @@
 # Role Management Spec
 
-Status: Approved
+Status: Complete
 
 ## User-facing purpose
 

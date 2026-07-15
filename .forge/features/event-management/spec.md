@@ -1,6 +1,6 @@
 # Event Management Spec
 
-Status: Revised / ready for human approval
+Status: Complete
 
 > This file owns the non-technical user/product intent.
 

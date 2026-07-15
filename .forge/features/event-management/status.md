@@ -1,6 +1,6 @@
 # Event Management Status
 
-Current phase: PR-review hardening implemented and verified
+Current phase: Complete
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -15,6 +15,8 @@ Current phase: PR-review hardening implemented and verified
 
 ## Decision log
 
+- 2026-07-15: Human confirmed the feature bundle is complete; normalized all
+  artifact status fields to `Complete`.
 - 2026-07-15: The isolated check-in page uses prominent Upcoming/Past event
   timing and one responsive event combobox. Upcoming mirrors Legacy Blade's
   descending start-time order; Past is newest first. The separate older-event

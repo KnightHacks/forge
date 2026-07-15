@@ -1,6 +1,6 @@
 # Admin Member Dashboard Spec
 
-Status: Approved
+Status: Complete
 
 ## User-facing purpose
 

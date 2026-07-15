@@ -6,6 +6,8 @@ Current phase: Complete
 
 ## Decision log
 
+- 2026-07-15: Human confirmed the feature bundle is complete; normalized all
+  artifact status fields to `Complete`.
 - 2026-06-27: Work targets Blade Reforge on the
   `reforge/role-management` branch from local `reforge/main`.
 - 2026-06-27: Human wants the production role-management capability rebuilt

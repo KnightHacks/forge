@@ -1,6 +1,6 @@
 # Agentic Development Framework
 
-This branch is still in framework-design mode. Do not start Blade Reforge feature implementation until Dylan approves this workflow and the engineering principles.
+This is the active development framework for Blade Reforge work.
 
 ## What this is
 

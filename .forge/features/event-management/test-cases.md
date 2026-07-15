@@ -1,6 +1,6 @@
 # Event Management Test Cases
 
-Status: Revised / ready for human approval
+Status: Complete
 
 > This file owns observable proof. Do not generate implementation tests until
 > the human approves these cases.

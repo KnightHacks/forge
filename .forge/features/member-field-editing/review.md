@@ -1,6 +1,6 @@
 # Member Flow Review
 
-Status: Review aid
+Status: Complete
 
 > This is a human code-review guide for the Reforge member onboarding, editing, upload, deletion, and tests in this branch.
 

@@ -1,11 +1,13 @@
 # Initial Member Onboarding Status
 
-Current phase: Implemented / validation
+Current phase: Complete
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
 ## Decision log
 
+- 2026-07-15: Human confirmed the feature bundle is complete; normalized all
+  artifact status fields to `Complete`.
 - 2026-06-25: First Reforge feature candidate selected as the initial member flow: landing page, Discord sign-in, member profile signup, and member dashboard.
 - 2026-06-25: Explicitly excluded hacker applications, dues/payment, uploads, admin, permissions management, events, general-purpose forms, judging, and sponsor surfaces from this first slice.
 - 2026-06-25: Used the repo's Forge artifact-writing skill guidance for spec, SRD, and test-case drafting.

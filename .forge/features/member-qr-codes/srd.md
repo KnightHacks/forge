@@ -1,6 +1,6 @@
 # Member QR Codes SRD
 
-Status: Approved for implementation
+Status: Complete
 
 > This file owns technical implementation constraints.
 

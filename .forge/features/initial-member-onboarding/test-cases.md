@@ -1,6 +1,6 @@
 # Initial Member Onboarding Test Cases
 
-Status: Implemented / ready for review
+Status: Complete
 
 > This file owns observable proof for this feature slice.
 
@@ -579,4 +579,4 @@ Expected observations:
 
 ## Open questions
 
-- Which errors should be visible as field errors versus global form errors?
+- None for this completed slice.

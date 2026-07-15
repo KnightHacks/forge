@@ -1,6 +1,6 @@
 # Member Dues Payment Spec
 
-Status: Draft
+Status: Complete
 
 > This file owns the non-technical user/product intent. Do not fill it from guesses. Use reverse-prompting to clarify it with the human.
 

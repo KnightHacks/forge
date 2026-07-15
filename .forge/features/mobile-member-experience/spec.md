@@ -1,6 +1,6 @@
 # Mobile Member Experience Spec
 
-Status: Implemented / validated
+Status: Complete
 
 > This file owns the non-technical user/product intent. Technical constraints belong in `srd.md`.
 
@@ -121,5 +121,5 @@ The goal is density, clarity, and touch ergonomics. Mobile should show useful in
 
 ## Open Questions
 
-- Which dashboard sections should be expanded by default after Guild profile: resume, links, member info, or academics?
-- Should form sections remember their expanded/collapsed state during a session?
+- None. The final mobile dashboard uses one focused Guild/profile surface rather
+  than disclosure sections.

@@ -1,6 +1,6 @@
 # Initial Member Onboarding Architecture Review
 
-Status: Ready for human code review
+Status: Complete
 
 This document explains the current feature diff at an architectural level. It is meant to help reviewers understand where behavior lives, why files were placed where they are, and which paths deserve the closest review.
 

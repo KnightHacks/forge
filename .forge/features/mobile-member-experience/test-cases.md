@@ -1,6 +1,6 @@
 # Mobile Member Experience Test Cases
 
-Status: Implemented / validated
+Status: Complete
 
 > This file owns observable proof for this feature slice.
 
@@ -233,4 +233,5 @@ Expected observations:
 
 ## Open Questions
 
-- Should Playwright assert disclosure default states directly, or only assert primary information visibility and accessibility?
+- None. Playwright validates the final primary-information surface; the shipped
+  mobile dashboard does not use disclosure sections.

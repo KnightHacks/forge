@@ -1,6 +1,6 @@
 # Mobile Member Experience SRD
 
-Status: Implemented / validated
+Status: Complete
 
 > This file owns technical implementation constraints and accepted architecture for this feature slice.
 
@@ -168,5 +168,5 @@ Manual/visual checks should include:
 
 ## Open Questions
 
-- Which dashboard disclosures should be open by default on first visit?
-- Should mobile form disclosure state persist in local component state only, or in URL/search params for deep linking later?
+- None. The final mobile dashboard does not use disclosure sections, so default
+  and persistence behavior do not apply.

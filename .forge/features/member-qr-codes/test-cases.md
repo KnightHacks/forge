@@ -1,6 +1,6 @@
 # Member QR Codes Test Cases
 
-Status: Approved for implementation
+Status: Complete
 
 > This file owns observable proof.
 
