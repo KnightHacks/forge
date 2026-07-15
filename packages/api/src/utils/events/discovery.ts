@@ -1,3 +1,5 @@
+import { DISCORD } from "@forge/consts";
+
 interface ProviderProjection {
   appliedRevision: number | null;
   id: string | null;
@@ -86,8 +88,7 @@ function editDistance(left: string, right: string) {
 function isActivePublished(event: EventDiscoveryRecord, now: Date) {
   return (
     event.hackathonId === null &&
-    !event.legacy &&
-    event.publishedAt !== null &&
+    (event.legacy || event.publishedAt !== null) &&
     event.deletionIntentAt === null &&
     event.endAt > now
   );
@@ -102,7 +103,15 @@ function desiredVisibility(event: EventDiscoveryRecord): Visibility {
 }
 
 function effectivePolicies(event: EventDiscoveryRecord) {
-  return [desiredVisibility(event), event.synchronizedVisibility].filter(
+  const desired = [desiredVisibility(event)];
+  if (event.legacy && event.audience === "dues" && event.roleIds.length > 0) {
+    desired.push({
+      audience: "roles",
+      internal: event.internal,
+      roleIds: event.roleIds,
+    });
+  }
+  return [...desired, event.synchronizedVisibility].filter(
     (visibility): visibility is Visibility => visibility !== null,
   );
 }
@@ -174,7 +183,11 @@ export function listMemberEvents(
       return [
         {
           ...safeEvent(event),
+          attendanceCount: event.attendanceCount,
           audience: event.audience,
+          discordUrl: event.discord.id
+            ? `https://discord.com/events/${DISCORD.KNIGHTHACKS_GUILD}/${event.discord.id}`
+            : null,
           internal: event.internal,
           locked,
           lockReason: locked ? ("dues_required" as const) : null,
@@ -204,13 +217,15 @@ export function listMemberAttendance(
       if (!attendanceId) return [];
       return [
         {
+          attendanceCount: event.attendanceCount,
           attendanceId,
           checkedInAt: row.checkedInAt?.toISOString() ?? null,
+          description: event.description,
+          endAt: event.endAt.toISOString(),
           eventId: event.id,
-          legacy: event.legacy,
+          location: event.location,
           name: event.name,
           pointsAwarded: row.pointsAwarded,
-          pointsAwardedEstimated: row.pointsAwardedEstimated,
           startAt: event.startAt.toISOString(),
           tag: event.tag,
           tagColor: event.tagColor,
@@ -364,7 +379,11 @@ export function listAdminEvents(
         !query.filters.roleIds.some((roleId) => event.roleIds.includes(roleId))
       )
         return false;
-      if (!matchesHealthFilter(event, query.filters.health)) return false;
+      if (
+        query.filters.timing !== "past" &&
+        !matchesHealthFilter(event, query.filters.health)
+      )
+        return false;
       if (
         query.filters.internal !== null &&
         event.internal !== query.filters.internal
@@ -486,14 +505,13 @@ export function rankCheckInIdentityCandidates<
 
 export function listCheckInEvents(
   events: readonly EventDiscoveryRecord[],
-  { now, olderSearch }: { now: Date; olderSearch: string },
+  { now }: { now: Date; olderSearch?: string },
 ) {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1_000);
-  const query = normalize(olderSearch);
   const groups = {
-    current: [] as { id: string; title: string }[],
-    older: [] as { id: string; title: string }[],
-    recent: [] as { id: string; title: string }[],
+    current: [] as { id: string; startAt: string; title: string }[],
+    older: [] as { id: string; startAt: string; title: string }[],
+    recent: [] as { id: string; startAt: string; title: string }[],
   };
   for (const event of events) {
     if (
@@ -502,26 +520,16 @@ export function listCheckInEvents(
       (!event.legacy && event.publishedAt === null)
     )
       continue;
-    const choice = { id: event.id, title: event.name };
-    if (!event.legacy && event.endAt >= now) groups.current.push(choice);
-    else if (!event.legacy && event.endAt >= sevenDaysAgo)
-      groups.recent.push(choice);
-    else if (query && normalize(event.name).includes(query))
-      groups.older.push(choice);
+    const choice = {
+      id: event.id,
+      startAt: event.startAt.toISOString(),
+      title: event.name,
+    };
+    if (event.endAt >= now) groups.current.push(choice);
+    else if (event.endAt >= sevenDaysAgo) groups.recent.push(choice);
+    else groups.older.push(choice);
   }
   const byId = new Map(events.map((event) => [event.id, event]));
-  groups.current.sort((left, right) => {
-    const leftEvent = byId.get(left.id);
-    const rightEvent = byId.get(right.id);
-    if (!leftEvent || !rightEvent) return left.id.localeCompare(right.id);
-    const leftOngoing = leftEvent.startAt <= now ? 0 : 1;
-    const rightOngoing = rightEvent.startAt <= now ? 0 : 1;
-    return (
-      leftOngoing - rightOngoing ||
-      leftEvent.startAt.getTime() - rightEvent.startAt.getTime() ||
-      left.id.localeCompare(right.id)
-    );
-  });
   const newestFirst = (left: { id: string }, right: { id: string }) => {
     const leftEvent = byId.get(left.id);
     const rightEvent = byId.get(right.id);
@@ -531,6 +539,7 @@ export function listCheckInEvents(
       left.id.localeCompare(right.id)
     );
   };
+  groups.current.sort(newestFirst);
   groups.recent.sort(newestFirst);
   groups.older.sort(newestFirst);
   return groups;

@@ -22,6 +22,7 @@ import {
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { MarkdownContent } from "@forge/ui/markdown-content";
 import { EVENT_DISCORD_NO_PROJECTION_CONFIRMATION } from "@forge/validators";
 
 import type { EventAdminAccess, EventDetailData } from "./types";
@@ -76,10 +77,7 @@ export function EventDetailDialog({
     }[];
     snapshotToken: string;
   }>;
-  onRemoveAttendance?: (
-    attendanceId: string,
-    acknowledgeEstimated: boolean,
-  ) => Promise<void> | void;
+  onRemoveAttendance?: (attendanceId: string) => Promise<void> | void;
   onRepair?: (
     eventId: string,
     provider: "discord" | "google",
@@ -98,6 +96,7 @@ export function EventDetailDialog({
 }) {
   const { event, integrations } = detail;
   const canEdit = access.canEdit || access.isOfficer;
+  const eventEnded = Date.parse(event.endDateTime) <= Date.now();
   const attendanceCount = detail.attendeesError
     ? event.attendanceCount
     : Math.max(event.attendanceCount, detail.attendees.length);
@@ -114,11 +113,6 @@ export function EventDetailDialog({
     snapshotToken: string;
   } | null>(null);
   const [discordPhrase, setDiscordPhrase] = useState("");
-  const [removal, setRemoval] = useState<{
-    attendanceId: string;
-    name: string;
-  } | null>(null);
-  const [acknowledgeEstimated, setAcknowledgeEstimated] = useState(false);
 
   async function runAction(key: string, action: () => Promise<void>) {
     setActionError(null);
@@ -184,9 +178,9 @@ export function EventDetailDialog({
             </div>
           )}
           <DetailSection title="Overview">
-            <p className="whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">
+            <MarkdownContent className="text-sm leading-6 text-muted-foreground">
               {event.description || "No description provided."}
-            </p>
+            </MarkdownContent>
           </DetailSection>
 
           <DetailSection title="Schedule & location">
@@ -248,7 +242,13 @@ export function EventDetailDialog({
                   unavailable and repair is intentionally disabled.
                 </p>
               )}
-              {!event.legacy && (
+              {!event.legacy && eventEnded && (
+                <p className="rounded-md border border-white/10 bg-card/50 p-3 text-sm text-muted-foreground">
+                  Provider health is no longer tracked after an event ends.
+                  Discord and Google Calendar repair are intentionally disabled.
+                </p>
+              )}
+              {!event.legacy && !eventEnded && (
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <IntegrationStatus
@@ -323,6 +323,7 @@ export function EventDetailDialog({
               )}
               {canEdit &&
                 !event.legacy &&
+                !eventEnded &&
                 integrations.discord.health === "unknown" &&
                 integrations.discord.url === null && (
                   <div className="grid gap-3 rounded-md border border-[hsl(var(--chart-3)/0.35)] bg-[hsl(var(--chart-3)/0.08)] p-3">
@@ -367,6 +368,10 @@ export function EventDetailDialog({
                                   </p>
                                   <p className="text-sm text-muted-foreground">
                                     {candidate.entityType} · {candidate.id}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Starts{" "}
+                                    {formatEventDateTime(candidate.startAt)}
                                   </p>
                                 </div>
                                 <Button
@@ -514,16 +519,9 @@ export function EventDetailDialog({
                     className="grid min-w-0 gap-3 rounded-md border border-white/10 bg-card/50 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
                   >
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-sm font-medium">
-                          {attendee.name}
-                        </p>
-                        {attendee.estimated && (
-                          <span className="rounded-full border border-[hsl(var(--chart-3)/0.35)] px-2 py-0.5 text-sm text-[hsl(var(--chart-3))]">
-                            Estimated
-                          </span>
-                        )}
-                      </div>
+                      <p className="truncate text-sm font-medium">
+                        {attendee.name}
+                      </p>
                       <p className="truncate text-sm text-muted-foreground">
                         @{attendee.discordUsername} ·{" "}
                         {attendee.pointsAwarded ?? "Unknown"} points
@@ -538,12 +536,6 @@ export function EventDetailDialog({
                             : ""}
                         </p>
                       )}
-                      {attendee.estimated && canEdit && (
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Estimated points acknowledgement required before
-                          removal.
-                        </p>
-                      )}
                     </div>
                     {canEdit && (
                       <Button
@@ -552,20 +544,10 @@ export function EventDetailDialog({
                         variant="outline"
                         disabled={pendingAction !== null}
                         onClick={() => {
-                          if (!attendee.attendanceId) return;
-                          if (attendee.estimated) {
-                            setRemoval({
-                              attendanceId: attendee.attendanceId,
-                              name: attendee.name,
-                            });
-                            setAcknowledgeEstimated(false);
-                            return;
-                          }
+                          const attendanceId = attendee.attendanceId;
+                          if (!attendanceId) return;
                           void runAction("remove-attendance", async () => {
-                            await onRemoveAttendance?.(
-                              attendee.attendanceId ?? "",
-                              false,
-                            );
+                            await onRemoveAttendance?.(attendanceId);
                             onChanged();
                           });
                         }}
@@ -575,61 +557,6 @@ export function EventDetailDialog({
                     )}
                   </div>
                 ))}
-              </div>
-            )}
-            {removal && (
-              <div className="mt-3 grid gap-3 rounded-md border border-[hsl(var(--chart-3)/0.35)] bg-[hsl(var(--chart-3)/0.08)] p-3">
-                <div>
-                  <p className="text-sm font-medium">
-                    Confirm estimated attendance removal
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {removal.name}&apos;s migrated point award is an estimate.
-                    Removing this attendance subtracts that stored estimate.
-                  </p>
-                </div>
-                <label className="flex min-h-11 items-center gap-3 rounded-md border border-white/10 bg-background/60 px-3 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={acknowledgeEstimated}
-                    className="h-4 w-4 accent-primary"
-                    onChange={(checkboxEvent) =>
-                      setAcknowledgeEstimated(checkboxEvent.target.checked)
-                    }
-                  />
-                  I understand the awarded points were estimated.
-                </label>
-                <div className="flex flex-wrap justify-end gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setRemoval(null)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="destructive"
-                    disabled={!acknowledgeEstimated || pendingAction !== null}
-                    onClick={() =>
-                      void runAction(
-                        "remove-estimated-attendance",
-                        async () => {
-                          await onRemoveAttendance?.(
-                            removal.attendanceId,
-                            true,
-                          );
-                          setRemoval(null);
-                          onChanged();
-                        },
-                      )
-                    }
-                  >
-                    Confirm attendance removal
-                  </Button>
-                </div>
               </div>
             )}
           </section>

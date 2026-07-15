@@ -123,4 +123,31 @@ describe("Club public event contract", () => {
     expect(events).toHaveLength(1);
     expect(events[0]?.name).toBe("Earlier");
   });
+
+  it("accepts the previous Blade payload during an independent deployment", async () => {
+    query.mockResolvedValue([
+      {
+        description: "Payload from the previous Blade version",
+        endDateTime: "2026-08-10T21:00:00.000Z",
+        id: "00000000-0000-4000-8000-000000000899",
+        location: "Room A",
+        name: "Compatible event",
+        startDateTime: "2026-08-10T20:00:00.000Z",
+        tag: "GBM",
+      },
+    ]);
+
+    await expect(
+      loadClubEvents({
+        bladeUrl: "https://blade.example.test",
+        signal: new AbortController().signal,
+      }),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        name: "Compatible event",
+        requiresDues: false,
+        tagColor: "#2563EB",
+      }),
+    ]);
+  });
 });

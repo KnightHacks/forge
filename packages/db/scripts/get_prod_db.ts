@@ -23,19 +23,28 @@
  * The bootstrap script can also be run after running this command and it'll work fine.
  */
 
-import { exec } from "child_process";
-import fs from "fs";
-import { unlink } from "fs/promises";
+import { execFile } from "child_process";
+import { createWriteStream } from "fs";
+import { mkdtemp, rm, writeFile } from "fs/promises";
+import { tmpdir } from "os";
+import { join } from "path";
 import { pipeline } from "stream/promises";
 import { promisify } from "util";
 
 import { minioClient } from "../../api/src/minio/minio-client";
 import { env } from "../src/env";
+import {
+  psqlFileArgs,
+  truncateRestorePostlude,
+  truncateRestorePrelude,
+} from "./prod-db-restore";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 interface LocalDbCommand {
+  database: string;
   envN: NodeJS.ProcessEnv;
+  host: string;
   port: string;
   user: string;
 }
@@ -47,28 +56,24 @@ function parsePg() {
     user: u.username,
     password: u.password,
     host: u.hostname,
-    port: u.port,
+    port: u.port || "5432",
   };
 }
 
-async function runLocalSqlFile(
-  fileName: string,
-  sql: string,
-  { envN, port, user }: LocalDbCommand,
+async function runLocalSqlFiles(
+  fileNames: readonly string[],
+  { envN, ...connection }: LocalDbCommand,
+  options?: { singleTransaction?: boolean },
 ) {
-  fs.writeFileSync(fileName, sql);
-
-  try {
-    await execAsync(
-      `psql -v ON_ERROR_STOP=1 -h localhost -p ${port} -U ${user} -d local -f ${fileName}`,
-      { env: envN },
-    );
-  } finally {
-    await unlink(fileName);
-  }
+  await execFileAsync("psql", psqlFileArgs(connection, fileNames, options), {
+    env: envN,
+  });
 }
 
-async function repairLocalAuthTables(command: LocalDbCommand) {
+async function repairLocalAuthTables(
+  command: LocalDbCommand,
+  repairFile: string,
+) {
   console.log("Repairing local auth tables and Discord account links");
 
   const repairSql = `CREATE TABLE IF NOT EXISTS "auth_account" (
@@ -161,7 +166,8 @@ SET user_id = EXCLUDED.user_id,
     updated_at = now();
 `;
 
-  await runLocalSqlFile("repair_local_auth.sql", repairSql, command);
+  await writeFile(repairFile, repairSql);
+  await runLocalSqlFiles([repairFile], command, { singleTransaction: true });
 }
 
 async function main() {
@@ -169,58 +175,55 @@ async function main() {
 
   const BUCKET_NAME = "dev-db-backups";
   const objectName = "backup.sql";
+  const temporaryDirectory = await mkdtemp(join(tmpdir(), "forge-db-pull-"));
+  const backupFile = join(temporaryDirectory, objectName);
 
-  const fileUrl = await minioClient.presignedGetObject(
-    BUCKET_NAME,
-    objectName,
-    60 * 60 * 24,
-  );
-
-  console.log("Pulling backup.sql from minio");
-
-  const res = await fetch(fileUrl);
-  if (!res.ok || !res.body) {
-    throw new Error(`Download failed: ${res.status}`);
-  }
-
-  await pipeline(res.body, fs.createWriteStream(objectName));
-
-  const { originalDb: _, user, password, host: _host, port } = parsePg();
-  /* eslint-disable no-restricted-properties */
-  const envN = { ...process.env, PGPASSWORD: password };
-
-  if (args.includes("--truncate")) {
-    //We wanna truncate all tables so that it updates already seeded rows too
-    //Probably at some point write a sed script that changes all inserts to upserts
-    console.log("Truncating all tables in DB");
-    const truncateSqlFile = "truncate_local.sql";
-    const truncateSql = `SET session_replication_role = replica;
-DO $$
-DECLARE
-  r RECORD;
-BEGIN
-  FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public')
-  LOOP
-    EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE';
-  END LOOP;
-END $$;
-SET session_replication_role = DEFAULT;
-`;
-
-    await runLocalSqlFile(truncateSqlFile, truncateSql, { envN, port, user });
-  }
-
-  console.log("Inserting prod rows into local DB");
   try {
-    await execAsync(
-      `psql -h localhost -p ${port} -U ${user} local < ${objectName}`,
-      { env: envN },
+    const fileUrl = await minioClient.presignedGetObject(
+      BUCKET_NAME,
+      objectName,
+      60 * 60 * 24,
+    );
+
+    console.log("Pulling backup.sql from minio");
+
+    const res = await fetch(fileUrl);
+    if (!res.ok || !res.body) {
+      throw new Error(`Download failed: ${res.status}`);
+    }
+
+    await pipeline(res.body, createWriteStream(backupFile));
+
+    const { originalDb: database, user, password, host, port } = parsePg();
+    /* eslint-disable no-restricted-properties */
+    const envN = { ...process.env, PGPASSWORD: password };
+    const command = { database, envN, host, port, user };
+
+    console.log("Inserting prod rows into local DB");
+    if (args.includes("--truncate")) {
+      console.log("Replacing local rows in one transaction");
+      const preludeFile = join(temporaryDirectory, "restore-prelude.sql");
+      const postludeFile = join(temporaryDirectory, "restore-postlude.sql");
+      await Promise.all([
+        writeFile(preludeFile, truncateRestorePrelude()),
+        writeFile(postludeFile, truncateRestorePostlude()),
+      ]);
+      await runLocalSqlFiles([preludeFile, backupFile, postludeFile], command, {
+        singleTransaction: true,
+      });
+    } else {
+      await runLocalSqlFiles([backupFile], command, {
+        singleTransaction: true,
+      });
+    }
+
+    await repairLocalAuthTables(
+      command,
+      join(temporaryDirectory, "repair-local-auth.sql"),
     );
   } finally {
-    await unlink(objectName);
+    await rm(temporaryDirectory, { force: true, recursive: true });
   }
-
-  await repairLocalAuthTables({ envN, port, user });
 }
 
 await main();

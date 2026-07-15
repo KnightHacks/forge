@@ -84,7 +84,6 @@ export function EventFilters({
     input.roleIds.length +
     input.tags.length +
     Number(input.internal !== "all") +
-    Number(input.timing === "past") +
     Number(Boolean(input.startDate)) +
     Number(Boolean(input.endDate));
 
@@ -160,26 +159,28 @@ export function EventFilters({
             </div>
           </fieldset>
 
-          <fieldset className="grid gap-2">
-            <legend className="mb-2 text-sm font-semibold">
-              Integration health
-            </legend>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {options.health.filter(isHealth).map((health) => (
-                <ToggleChoice
-                  key={health}
-                  label={health[0]?.toUpperCase() + health.slice(1)}
-                  checked={draft.health.includes(health)}
-                  onChange={(checked) =>
-                    setDraft((current) => ({
-                      ...current,
-                      health: toggleValue(current.health, health, checked),
-                    }))
-                  }
-                />
-              ))}
-            </div>
-          </fieldset>
+          {draft.timing !== "past" && (
+            <fieldset className="grid gap-2">
+              <legend className="mb-2 text-sm font-semibold">
+                Integration health
+              </legend>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {options.health.filter(isHealth).map((health) => (
+                  <ToggleChoice
+                    key={health}
+                    label={health[0]?.toUpperCase() + health.slice(1)}
+                    checked={draft.health.includes(health)}
+                    onChange={(checked) =>
+                      setDraft((current) => ({
+                        ...current,
+                        health: toggleValue(current.health, health, checked),
+                      }))
+                    }
+                  />
+                ))}
+              </div>
+            </fieldset>
+          )}
 
           {options.roles.length > 0 && (
             <fieldset className="grid gap-2">
@@ -204,25 +205,7 @@ export function EventFilters({
             </fieldset>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="grid gap-2">
-              <Label htmlFor="event-filter-timing">Timing</Label>
-              <select
-                id="event-filter-timing"
-                className="h-11 rounded-md border border-input bg-background px-3 text-sm"
-                value={draft.timing}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    direction: event.target.value === "past" ? "desc" : "asc",
-                    timing: event.target.value as AdminEventInput["timing"],
-                  }))
-                }
-              >
-                <option value="upcoming">Upcoming</option>
-                <option value="past">Past</option>
-              </select>
-            </div>
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="grid gap-2">
               <Label htmlFor="event-filter-internal">Placement</Label>
               <select

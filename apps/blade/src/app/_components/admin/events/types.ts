@@ -1,7 +1,6 @@
 import type { AdminEventInput } from "./params";
 
 export interface EventAdminAccess {
-  canCheckIn: boolean;
   canEdit: boolean;
   canRead: boolean;
   isOfficer: boolean;
@@ -26,6 +25,7 @@ export interface EventListItem {
   location: string;
   name: string;
   points?: number;
+  revision: number;
   roleIds?: string[];
   startDateTime: string;
   tag: string;
@@ -78,6 +78,7 @@ export interface EventDetailData {
     location: string;
     name: string;
     points: number;
+    revision: number;
     roles: { id: string; name: string }[];
     startDateTime: string;
     tag: string;
@@ -99,6 +100,7 @@ export interface EventDetailData {
 
 export interface CheckInEventChoice {
   id: string;
+  startAt: string;
   title: string;
 }
 
@@ -117,7 +119,6 @@ export interface CheckInEventGroups {
 export interface EventAdminDashboardProps {
   access: EventAdminAccess;
   channels?: EventChannelChoice[];
-  checkInEvents: CheckInEventGroups | null;
   data: EventAdminData | null;
   detail: EventDetailData | null;
   input: AdminEventInput;

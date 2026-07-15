@@ -1,11 +1,13 @@
 import {
   CalendarDays,
   LayoutDashboard,
+  QrCode,
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
 
 export interface AdminNavigationAccess {
+  eventCheckIn?: boolean;
   events?: boolean;
   members: boolean;
   roles: boolean;
@@ -24,6 +26,13 @@ export const adminNavigationItems = [
     icon: CalendarDays,
     id: "events",
     label: "Events",
+  },
+  {
+    access: "eventCheckIn",
+    href: "/admin/check-in",
+    icon: QrCode,
+    id: "eventCheckIn",
+    label: "Event Check-in",
   },
   {
     access: "members",
@@ -49,6 +58,7 @@ export function getVisibleAdminNavigation(access: AdminNavigationAccess) {
 
 export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "events") return pathname.startsWith("/admin/events");
+  if (id === "eventCheckIn") return pathname.startsWith("/admin/check-in");
   if (id === "members") return pathname.startsWith("/admin/members");
   if (id === "roles") return pathname.startsWith("/admin/roles");
   return !pathname.startsWith("/admin/");

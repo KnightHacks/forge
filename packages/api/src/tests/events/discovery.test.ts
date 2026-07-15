@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { DISCORD } from "@forge/consts";
+
 import {
   listAdminEvents,
   listCheckInEvents,
@@ -26,9 +28,12 @@ describe("event discovery policy", () => {
 
     expect(result.map((event) => event.id)).toEqual([
       EVENT_IDS.public,
+      EVENT_IDS.legacy,
       EVENT_IDS.dues,
     ]);
-    expect(result[1]).toMatchObject({ requiresDues: true });
+    expect(result.find(({ id }) => id === EVENT_IDS.dues)).toMatchObject({
+      requiresDues: true,
+    });
     for (const event of result) {
       expect(Object.keys(event).sort()).toEqual(
         [
@@ -70,6 +75,47 @@ describe("event discovery policy", () => {
     ).toEqual(["00000000-0000-4000-8000-000000000120"]);
   });
 
+  it("keeps future legacy events discoverable during the Reforge cutover", () => {
+    const futureLegacy = eventRecord({
+      id: EVENT_IDS.legacy,
+      legacy: true,
+      publishedAt: null,
+      synchronizedVisibility: null,
+    });
+    const combinedLegacy = eventRecord({
+      audience: "dues",
+      id: "00000000-0000-4000-8000-000000000127",
+      legacy: true,
+      legacyDuesRequired: true,
+      publishedAt: null,
+      roleIds: [ROLE_IDS.cosmetic],
+      synchronizedVisibility: null,
+    });
+
+    expect(
+      listPublicClubEvents([futureLegacy, combinedLegacy], {
+        limit: 25,
+        now: NOW,
+      }).map(({ id }) => id),
+    ).toEqual([futureLegacy.id]);
+    expect(
+      listMemberEvents([futureLegacy, combinedLegacy], {
+        member: memberRecord({ duesActive: false }),
+        now: NOW,
+      }),
+    ).toEqual([
+      expect.objectContaining({ id: futureLegacy.id, locked: false }),
+      expect.objectContaining({
+        id: combinedLegacy.id,
+        locked: true,
+        lockReason: "dues_required",
+      }),
+    ]);
+    expect(listCheckInEvents([futureLegacy], { now: NOW }).current).toEqual([
+      expect.objectContaining({ id: futureLegacy.id }),
+    ]);
+  });
+
   it("[TC-002] shows dues locked, matching roles, and eligible Internal events to a member", () => {
     const member = memberRecord();
     const events = [
@@ -105,6 +151,7 @@ describe("event discovery policy", () => {
         EVENT_IDS.dues,
         EVENT_IDS.role,
         EVENT_IDS.internal,
+        EVENT_IDS.legacy,
         "00000000-0000-4000-8000-000000000122",
       ]),
     );
@@ -112,6 +159,12 @@ describe("event discovery policy", () => {
       locked: true,
       lockReason: "dues_required",
     });
+    expect(result.find((event) => event.id === EVENT_IDS.public)).toMatchObject(
+      {
+        attendanceCount: 0,
+        discordUrl: `https://discord.com/events/${DISCORD.KNIGHTHACKS_GUILD}/discord-event-1`,
+      },
+    );
     for (const event of result) {
       expect(event).not.toHaveProperty("discord");
       expect(event).not.toHaveProperty("google");
@@ -178,11 +231,15 @@ describe("event discovery policy", () => {
       duplicate.id,
     ]);
     expect(result[0]).toMatchObject({
+      attendanceCount: event.attendanceCount,
+      description: event.description,
+      endAt: event.endAt.toISOString(),
       eventId: event.id,
-      legacy: true,
+      location: event.location,
       pointsAwarded: 35,
-      pointsAwardedEstimated: true,
     });
+    expect(result[0]).not.toHaveProperty("legacy");
+    expect(result[0]).not.toHaveProperty("pointsAwardedEstimated");
   });
 
   it("[TC-006] combines normalized search and filter categories deterministically", () => {
@@ -289,6 +346,35 @@ describe("event discovery policy", () => {
       "00000000-0000-4000-8000-000000000026",
       "00000000-0000-4000-8000-000000000027",
     ]);
+  });
+
+  it("[TC-006] ignores integration health when retrieving past events", () => {
+    const past = eventRecord({
+      discord: { appliedRevision: null, id: null, state: "error" },
+      endAt: new Date("2026-06-28T22:00:00.000Z"),
+      google: { appliedRevision: null, id: null, state: "unknown" },
+      startAt: new Date("2026-06-28T21:00:00.000Z"),
+    });
+
+    const result = listAdminEvents([past], {
+      direction: "desc",
+      filters: {
+        audiences: [],
+        health: ["healthy"],
+        internal: null,
+        roleIds: [],
+        tags: [],
+        timing: "past",
+      },
+      mode: "list",
+      now: NOW,
+      page: 1,
+      pageSize: 25,
+      search: "",
+      sort: "start",
+    });
+
+    expect(result.rows.map(({ id }) => id)).toEqual([past.id]);
   });
 
   it("[TC-006] returns all calendar intersections without list pagination", () => {
@@ -424,7 +510,7 @@ describe("event discovery policy", () => {
     ).toEqual([jo.id]);
   });
 
-  it("[TC-032] prioritizes current/recent choices while keeping older and Legacy Club events searchable", () => {
+  it("[TC-032] returns every eligible upcoming and past Club event", () => {
     const current = eventRecord({ id: EVENT_IDS.public, name: "Current" });
     const recent = eventRecord({
       endAt: new Date("2026-07-01T15:00:00.000Z"),
@@ -472,26 +558,25 @@ describe("event discovery policy", () => {
         current: [
           expect.objectContaining({ id: current.id, title: "Current" }),
         ],
+        older: [
+          expect.objectContaining({ id: old.id, title: "Old but published" }),
+          expect.objectContaining({
+            id: legacy.id,
+            title: "Legacy searchable",
+          }),
+        ],
         recent: [expect.objectContaining({ id: recent.id, title: "Recent" })],
       }),
     );
     expect(defaultChoices).not.toHaveProperty("eventDetails");
-
-    const olderChoices = listCheckInEvents(
-      [current, recent, old, legacy, ...excluded],
-      { now: NOW, olderSearch: "searchable" },
-    );
-    expect(olderChoices.older).toEqual([
-      expect.objectContaining({ id: legacy.id, title: "Legacy searchable" }),
-    ]);
-    expect(JSON.stringify(olderChoices)).not.toContain(EVENT_IDS.partial);
-    expect(JSON.stringify(olderChoices)).not.toContain(EVENT_IDS.hackathon);
-    expect(JSON.stringify(olderChoices)).not.toContain(
+    expect(JSON.stringify(defaultChoices)).not.toContain(EVENT_IDS.partial);
+    expect(JSON.stringify(defaultChoices)).not.toContain(EVENT_IDS.hackathon);
+    expect(JSON.stringify(defaultChoices)).not.toContain(
       EVENT_IDS.deletionPending,
     );
   });
 
-  it("orders ongoing before upcoming check-in choices with stable UUID ties", () => {
+  it("orders upcoming check-in choices by latest start first", () => {
     const upcoming = eventRecord({
       id: "00000000-0000-4000-8000-000000000129",
       name: "Upcoming",
@@ -508,6 +593,6 @@ describe("event discovery policy", () => {
         now: NOW,
         olderSearch: "",
       }).current.map(({ id }) => id),
-    ).toEqual([ongoing.id, upcoming.id]);
+    ).toEqual([upcoming.id, ongoing.id]);
   });
 });

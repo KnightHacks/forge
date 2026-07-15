@@ -233,7 +233,10 @@ export const Event = createTable(
     googleId: t.varchar({ length: 255 }),
     name: t.varchar({ length: 255 }).notNull(),
     tag: t.text().notNull(),
-    tagColor: t.varchar({ length: 7 }).notNull(),
+    tagColor: t
+      .varchar({ length: 7 })
+      .notNull()
+      .default(EVENTS.EVENT_TAG_COLORS.Workshop),
     description: t.text().notNull(),
     start_datetime: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
     end_datetime: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
@@ -247,7 +250,10 @@ export const Event = createTable(
       onDelete: "cascade",
     }),
     discordChannelId: t.varchar({ length: 255 }),
-    legacy: t.boolean().notNull().default(false),
+    // Old Blade writers omit Reforge workflow fields. Defaulting those writes
+    // to Legacy keeps mixed-version deploys and rollbacks safe; Reforge creates
+    // explicitly persist legacy=false.
+    legacy: t.boolean().notNull().default(true),
     discordSyncState: eventSyncStateEnum().default("pending"),
     googleSyncState: eventSyncStateEnum().default("pending"),
     discordLastError: t.text(),
@@ -379,25 +385,38 @@ export const InsertEventSchema = createInsertSchema(Event).extend({
   hackathonName: z.string().nullable().optional(),
 });
 
-export const EventAttendee = createTable("event_attendee", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  memberId: t
-    .uuid()
-    .notNull()
-    .references(() => Member.id, {
-      onDelete: "cascade",
-    }),
-  eventId: t
-    .uuid()
-    .notNull()
-    .references(() => Event.id, {
-      onDelete: "cascade",
-    }),
-  checkedInAt: t.timestamp({ mode: "date", withTimezone: true }),
-  checkedInBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
-  pointsAwarded: t.integer(),
-  pointsAwardedEstimated: t.boolean().notNull().default(false),
-}));
+export const EventAttendee = createTable(
+  "event_attendee",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    memberId: t
+      .uuid()
+      .notNull()
+      .references(() => Member.id, {
+        onDelete: "cascade",
+      }),
+    eventId: t
+      .uuid()
+      .notNull()
+      .references(() => Event.id, {
+        onDelete: "cascade",
+      }),
+    checkedInAt: t.timestamp({ mode: "date", withTimezone: true }),
+    checkedInBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    pointsAwarded: t.integer(),
+    pointsAwardedEstimated: t.boolean().notNull().default(false),
+  }),
+  (table) => ({
+    eventMember: index("knight_hacks_event_attendee_event_member_idx").on(
+      table.eventId,
+      table.memberId,
+    ),
+    memberEvent: index("knight_hacks_event_attendee_member_event_idx").on(
+      table.memberId,
+      table.eventId,
+    ),
+  }),
+);
 
 export type InsertEventAttendee = typeof EventAttendee.$inferInsert;
 export type SelectEventAttendee = typeof EventAttendee.$inferSelect;

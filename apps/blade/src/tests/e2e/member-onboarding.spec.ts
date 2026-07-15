@@ -163,11 +163,11 @@ async function chooseSelect(page: Page, triggerText: string, option: string) {
 
 async function chooseComboBox(
   page: Page,
-  buttonName: string,
+  triggerText: string,
   inputPlaceholder: string,
   option: string,
 ) {
-  await page.getByRole("button", { exact: true, name: buttonName }).click();
+  await page.getByRole("combobox").filter({ hasText: triggerText }).click();
   await page.getByPlaceholder(inputPlaceholder).fill(option);
   await page.getByText(option, { exact: true }).first().click();
 }

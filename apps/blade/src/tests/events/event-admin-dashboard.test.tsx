@@ -60,6 +60,7 @@ const data = {
       legacy: false,
       location: "ENG2 102",
       name: "Current Workshop",
+      revision: 3,
       startDateTime: "2026-08-12T18:00:00-04:00",
       tag: "Workshop",
       tagColor: "#7C3AED",
@@ -73,20 +74,10 @@ const data = {
   },
   pagination: { page: 1, pageCount: 1, pageSize: 25, totalCount: 1 },
 };
-
-const checkInEvents = {
-  current: [
-    {
-      id: "00000000-0000-4000-8000-000000000501",
-      title: "[WORKSHOP] Current Workshop",
-    },
-  ],
-  older: [],
-  recent: [],
-};
+const currentEvent = data.events[0];
+if (!currentEvent) throw new Error("Event fixture is required.");
 
 const readerAccess = {
-  canCheckIn: false,
   canEdit: false,
   canRead: true,
   isOfficer: false,
@@ -105,7 +96,6 @@ describe("EventAdminDashboard", () => {
     const html = renderToStaticMarkup(
       createElement(EventAdminDashboard, {
         access: readerAccess,
-        checkInEvents: null,
         data,
         detail: null,
         input: parseAdminEventSearchParams({ view: "list" }).input,
@@ -129,7 +119,6 @@ describe("EventAdminDashboard", () => {
     const html = renderToStaticMarkup(
       createElement(EventAdminDashboard, {
         access: { ...readerAccess, canEdit: true },
-        checkInEvents: null,
         data,
         detail: null,
         input: parseAdminEventSearchParams({ view: "list" }).input,
@@ -143,29 +132,49 @@ describe("EventAdminDashboard", () => {
     expect(html).toContain("Repair Google Calendar");
   });
 
-  it("TC-005 TC-033 isolates check-in-only users from event configuration", () => {
+  it("TC-006 keeps history prominent and treats past provider health as inactive", () => {
     const html = renderToStaticMarkup(
       createElement(EventAdminDashboard, {
-        access: {
-          canCheckIn: true,
-          canEdit: false,
-          canRead: false,
-          isOfficer: false,
+        access: { ...readerAccess, canEdit: true },
+        data: {
+          ...data,
+          events: [
+            {
+              ...currentEvent,
+              endDateTime: "2026-05-10T20:00:00-04:00",
+              startDateTime: "2026-05-10T18:00:00-04:00",
+            },
+          ],
         },
-        checkInEvents,
-        data: null,
         detail: null,
-        input: parseAdminEventSearchParams({ view: "check-in" }).input,
+        input: parseAdminEventSearchParams({ timing: "past" }).input,
       }),
     );
 
-    expect(html).toContain("Check-in");
-    expect(html).toContain("Select event");
-    expect(html).toContain("Find an older event");
-    expect(html).toContain("[WORKSHOP] Current Workshop");
-    expect(html).not.toContain("Calendar");
-    expect(html).not.toContain("Tags");
-    expect(html).not.toContain("Integration health");
-    expect(html).not.toContain("Attendance list");
+    expect(html).toContain('aria-label="Event timing"');
+    expect(html).toContain("Upcoming");
+    expect(html).toContain("Past");
+    expect(html).toContain("Provider health is no longer tracked");
+    expect(html).not.toContain("Needs attention");
+    expect(html).not.toContain("Repair Google Calendar");
+  });
+
+  it("TC-030 keeps check-in out of event management even for dual-capability users", () => {
+    const html = renderToStaticMarkup(
+      createElement(EventAdminDashboard, {
+        access: {
+          canEdit: true,
+          canRead: true,
+          isOfficer: false,
+        },
+        data,
+        detail: null,
+        input: parseAdminEventSearchParams({ view: "list" }).input,
+      }),
+    );
+
+    expect(html).not.toContain("Check-in");
+    expect(html).not.toContain("Event check-in");
+    expect(html).not.toContain("Select event");
   });
 });

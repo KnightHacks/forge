@@ -89,6 +89,7 @@ export function eventRowToListItem(
     location: row.location,
     name: row.name,
     points: row.points,
+    revision: row.revision,
     roleIds: row.roleIds,
     startDateTime: dateString(row.startAt),
     tag: row.tag,
@@ -176,6 +177,7 @@ export function eventRowToDetail({
       location: row.location,
       name: row.name,
       points: row.points,
+      revision: row.revision,
       roles: row.roleIds.map((id) => ({
         id,
         name: rolesById.get(id) ?? "Linked Discord role",
@@ -200,7 +202,8 @@ export function eventRowToDetail({
 }
 
 export function eventQueryInput(input: EventAdminInput) {
-  const integrationStates = [...new Set(input.health)];
+  const integrationStates =
+    input.timing === "past" ? [] : [...new Set(input.health)];
   return {
     audiences: input.audiences,
     ...(input.calendarEnd && input.calendarStart

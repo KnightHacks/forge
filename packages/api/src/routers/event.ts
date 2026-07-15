@@ -10,14 +10,16 @@ import { Roles } from "@forge/db/schemas/auth";
 import { Event, EventAttendee, EventTag } from "@forge/db/schemas/knight-hacks";
 import { logger } from "@forge/utils";
 import {
+  EVENT_CREATION_START_MESSAGE,
   eventAdminQuerySchema,
   eventAttendanceRemovalSchema,
   eventCheckInMemberSchema,
+  eventCheckInQrSchema,
   eventCheckInSearchSchema,
   eventCreateSchema,
+  eventCreationHasMinimumLead,
   eventDiscordResolutionSchema,
   eventIdSchema,
-  eventQrPayloadSchema,
   eventTagArchiveSchema,
   eventTagCreateSchema,
   eventTagUpdateSchema,
@@ -70,12 +72,7 @@ const publicEventInput = z
 const checkInEventInput = z
   .object({ olderSearch: z.string().trim().max(100).default("") })
   .default({ olderSearch: "" });
-const checkInInput = z.union([
-  eventCheckInMemberSchema,
-  z
-    .object({ eventId: z.string().uuid(), qrPayload: eventQrPayloadSchema })
-    .strict(),
-]);
+const checkInInput = z.union([eventCheckInMemberSchema, eventCheckInQrSchema]);
 const eventRepairInput = eventIdSchema.extend({
   provider: z.enum(["all", "discord", "failed", "google"]).default("failed"),
 });
@@ -558,6 +555,12 @@ export const eventRouter = {
           },
         );
       }
+      if (!eventCreationHasMinimumLead(input.start)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: EVENT_CREATION_START_MESSAGE,
+        });
+      }
       const gateways = await resolveEventGateways(ctx.session);
       const channelType = await channelTypeFor(input.internalTarget, gateways);
       const roleIds =
@@ -637,7 +640,7 @@ export const eventRouter = {
           ? input.internalTarget.channelType
           : null
         : await channelTypeFor(input.internalTarget, gateways);
-      const roleIds =
+      const requestedRoleIds =
         input.audience.type === "roles" ? input.audience.roleIds : [];
       const updated = await db.transaction(async (tx) => {
         const [existing] = await tx
@@ -655,6 +658,13 @@ export const eventRouter = {
           throw new TRPCError({
             code: "CONFLICT",
             message: "This event is being deleted and can no longer be edited.",
+          });
+        }
+        if (existing.syncRevision !== input.expectedRevision) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message:
+              "This event changed after you opened it. Close the editor and review the latest version.",
           });
         }
 
@@ -684,6 +694,13 @@ export const eventRouter = {
           });
         }
 
+        const roleIds =
+          existing.legacy &&
+          existing.dues_paying &&
+          existing.roles.length > 0 &&
+          input.audience.type === "dues"
+            ? existing.roles
+            : requestedRoleIds;
         const uniqueRoleIds = [...new Set(roleIds)];
         if (uniqueRoleIds.length > 0) {
           const roles = await tx
@@ -743,9 +760,7 @@ export const eventRouter = {
             points,
             roles: uniqueRoleIds,
             start_datetime: new Date(input.start),
-            syncRevision: existing.legacy
-              ? existing.syncRevision
-              : existing.syncRevision + 1,
+            syncRevision: existing.syncRevision + 1,
             tag: tag.name,
             tagColor: tag.color,
           })
@@ -969,7 +984,7 @@ export const eventRouter = {
       return searchCheckInMemberCandidates(input);
     }),
 
-  /** Performs an idempotent QR or manual Club event check-in. */
+  /** Performs idempotent Manual or optionally repeat-enabled QR check-in. */
   checkInMember: permProcedure
     .input(checkInInput)
     .mutation(async ({ ctx, input }) => {
@@ -988,6 +1003,7 @@ export const eventRouter = {
           })
         : service.checkIn({
             actorId: ctx.session.user.id,
+            allowRepeat: input.allowRepeat,
             eventId: input.eventId,
             qrPayload: input.qrPayload.userId,
           });

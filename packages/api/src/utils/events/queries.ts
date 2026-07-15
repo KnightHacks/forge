@@ -80,14 +80,19 @@ export async function loadPublicClubEventRecords({
     .where(
       and(
         isNull(Event.hackathonId),
-        eq(Event.legacy, false),
-        isNotNull(Event.publishedAt),
         isNull(Event.deletionIntentAt),
         gt(Event.end_datetime, now),
         eq(Event.isOperationsCalendar, false),
-        emptyRoles(Event.roles),
-        eq(Event.visibilityInternal, false),
-        sql`cardinality(${Event.visibilityRoles}) = 0`,
+        or(
+          and(eq(Event.legacy, true), emptyRoles(Event.roles)),
+          and(
+            eq(Event.legacy, false),
+            isNotNull(Event.publishedAt),
+            emptyRoles(Event.roles),
+            eq(Event.visibilityInternal, false),
+            sql`cardinality(${Event.visibilityRoles}) = 0`,
+          ),
+        ),
       ),
     )
     .orderBy(asc(Event.start_datetime), asc(Event.id))
@@ -102,18 +107,23 @@ export async function loadReminderClubEventRecords(now: Date) {
     .where(
       and(
         isNull(Event.hackathonId),
-        eq(Event.legacy, false),
-        isNotNull(Event.publishedAt),
         isNull(Event.deletionIntentAt),
         gt(Event.end_datetime, now),
         sql`${Event.start_datetime} < ${horizon}`,
         eq(Event.isOperationsCalendar, false),
-        emptyRoles(Event.roles),
-        eq(Event.visibilityInternal, false),
-        sql`cardinality(${Event.visibilityRoles}) = 0`,
         isNotNull(Event.discordId),
-        eq(Event.discordSyncState, "synced"),
-        eq(Event.discordAppliedRevision, Event.syncRevision),
+        or(
+          and(eq(Event.legacy, true), emptyRoles(Event.roles)),
+          and(
+            eq(Event.legacy, false),
+            isNotNull(Event.publishedAt),
+            emptyRoles(Event.roles),
+            eq(Event.visibilityInternal, false),
+            sql`cardinality(${Event.visibilityRoles}) = 0`,
+            eq(Event.discordSyncState, "synced"),
+            eq(Event.discordAppliedRevision, Event.syncRevision),
+          ),
+        ),
       ),
     )
     .orderBy(asc(Event.start_datetime), asc(Event.id));
@@ -146,15 +156,32 @@ export async function loadMemberClubEventRecords({
     .where(
       and(
         isNull(Event.hackathonId),
-        eq(Event.legacy, false),
-        isNotNull(Event.publishedAt),
         isNull(Event.deletionIntentAt),
         gt(Event.end_datetime, now),
-        memberAudienceVisible(Event.dues_paying, Event.roles, memberRoleIds),
-        memberAudienceVisible(
-          Event.visibilityDuesPaying,
-          Event.visibilityRoles,
-          memberRoleIds,
+        or(
+          and(
+            eq(Event.legacy, true),
+            or(
+              emptyRoles(Event.roles),
+              memberRoleIds.length > 0
+                ? sql`${Event.roles} && ${varcharArray(memberRoleIds)}`
+                : sql`false`,
+            ),
+          ),
+          and(
+            eq(Event.legacy, false),
+            isNotNull(Event.publishedAt),
+            memberAudienceVisible(
+              Event.dues_paying,
+              Event.roles,
+              memberRoleIds,
+            ),
+            memberAudienceVisible(
+              Event.visibilityDuesPaying,
+              Event.visibilityRoles,
+              memberRoleIds,
+            ),
+          ),
         ),
       ),
     )
@@ -281,7 +308,9 @@ export async function queryAdminEventRecords(
     internal === undefined
       ? undefined
       : eq(Event.isOperationsCalendar, internal),
-    integrationCondition(input.integrationStates),
+    input.timing === "past"
+      ? undefined
+      : integrationCondition(input.integrationStates),
     input.view === "calendar" && input.calendarStart
       ? gt(Event.end_datetime, new Date(input.calendarStart))
       : undefined,
@@ -416,6 +445,7 @@ export async function searchCheckInMemberCandidates({
     .toLocaleLowerCase("en-US")
     .replace(/[^a-z0-9]+/g, "")
     .trim();
+  if (normalized.length < 2) return [];
   const grams = (size: number) =>
     Array.from(
       { length: Math.max(0, normalized.length - size + 1) },
@@ -519,7 +549,6 @@ export async function searchCheckInMemberCandidates({
 
 export async function queryCheckInEventChoices({
   now,
-  olderSearch,
 }: {
   now: Date;
   olderSearch: string;
@@ -530,50 +559,42 @@ export async function queryCheckInEventChoices({
     isNull(Event.deletionIntentAt),
     or(eq(Event.legacy, true), isNotNull(Event.publishedAt)),
   );
-  const choiceColumns = { id: Event.id, title: Event.name };
-  const [current, recent] = await Promise.all([
+  const choiceColumns = {
+    id: Event.id,
+    startAt: Event.start_datetime,
+    title: Event.name,
+  };
+  const [current, recent, older] = await Promise.all([
     db
       .select(choiceColumns)
       .from(Event)
-      .where(and(common, eq(Event.legacy, false), gte(Event.end_datetime, now)))
-      .orderBy(
-        asc(sql`case when ${Event.start_datetime} <= ${now} then 0 else 1 end`),
-        asc(Event.start_datetime),
-        asc(Event.id),
-      ),
+      .where(and(common, gte(Event.end_datetime, now)))
+      .orderBy(desc(Event.start_datetime), asc(Event.id)),
     db
       .select(choiceColumns)
       .from(Event)
       .where(
         and(
           common,
-          eq(Event.legacy, false),
           gte(Event.end_datetime, sevenDaysAgo),
           sql`${Event.end_datetime} < ${now}`,
         ),
       )
       .orderBy(desc(Event.start_datetime), asc(Event.id)),
+    db
+      .select(choiceColumns)
+      .from(Event)
+      .where(and(common, sql`${Event.end_datetime} < ${sevenDaysAgo}`))
+      .orderBy(desc(Event.start_datetime), asc(Event.id)),
   ]);
-  const normalizedSearch = olderSearch.trim();
-  const older = normalizedSearch
-    ? await db
-        .select(choiceColumns)
-        .from(Event)
-        .where(
-          and(
-            common,
-            or(
-              eq(Event.legacy, true),
-              sql`${Event.end_datetime} < ${sevenDaysAgo}`,
-            ),
-            ilike(
-              Event.name,
-              `%${normalizedSearch.replace(/[\\%_]/g, "\\$&")}%`,
-            ),
-          ),
-        )
-        .orderBy(desc(Event.start_datetime), asc(Event.id))
-        .limit(100)
-    : [];
-  return { current, older, recent };
+  const serialize = (choices: typeof current) =>
+    choices.map((choice) => ({
+      ...choice,
+      startAt: choice.startAt.toISOString(),
+    }));
+  return {
+    current: serialize(current),
+    older: serialize(older),
+    recent: serialize(recent),
+  };
 }

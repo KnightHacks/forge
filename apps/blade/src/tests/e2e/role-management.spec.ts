@@ -114,15 +114,19 @@ const testUserIds = [
   accessCreationUser.id,
 ];
 
+function permissionIndex(key: PERMISSIONS.PermissionKey) {
+  const permission = PERMISSIONS.PERMISSION_DATA[key];
+  if (!permission) throw new Error(`Unknown permission: ${key}`);
+  return permission.idx;
+}
+
 function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
   const bits = Array.from(
     { length: Object.keys(PERMISSIONS.PERMISSION_DATA).length },
     () => "0",
   );
   for (const key of keys) {
-    const permission = PERMISSIONS.PERMISSION_DATA[key];
-    if (!permission) throw new Error(`Unknown permission ${key}`);
-    bits[permission.idx] = "1";
+    bits[permissionIndex(key)] = "1";
   }
   return bits.join("");
 }
@@ -990,14 +994,13 @@ test.describe("role management", () => {
     const roleRows = await db
       .select({ id: Roles.id, permissions: Roles.permissions })
       .from(Roles);
-    const officerIndex = PERMISSIONS.PERMISSIONS.IS_OFFICER;
-    const configureIndex = PERMISSIONS.PERMISSIONS.CONFIGURE_ROLES;
+    const officerIndex = permissionIndex("IS_OFFICER");
+    const configureIndex = permissionIndex("CONFIGURE_ROLES");
     const adminRoleIds = roleRows
       .filter(
         (role) =>
-          (officerIndex != null && role.permissions.at(officerIndex) === "1") ||
-          (configureIndex != null &&
-            role.permissions.at(configureIndex) === "1"),
+          role.permissions.at(officerIndex) === "1" ||
+          role.permissions.at(configureIndex) === "1",
       )
       .map((role) => role.id);
     const originalAssignments = await db

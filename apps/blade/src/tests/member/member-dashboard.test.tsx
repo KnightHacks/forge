@@ -110,10 +110,52 @@ const unpaidDuesStatus = {
   stripePaymentIntentId: null,
 } as CurrentDuesStatus;
 
+const events = [
+  {
+    attendanceCount: 8,
+    audience: "public" as const,
+    description: "Practice your technical interview skills.",
+    discordUrl: null,
+    endAt: "2026-08-12T20:00:00-04:00",
+    id: "00000000-0000-4000-8000-000000000701",
+    internal: false,
+    location: "ENG2 102",
+    locked: false,
+    lockReason: null,
+    name: "Interview Workshop",
+    points: 10,
+    startAt: "2026-08-12T18:00:00-04:00",
+    tag: "Workshop",
+    tagColor: "#7C3AED",
+  },
+];
+
+const attendance = Array.from({ length: 4 }, (_, index) => ({
+  attendanceCount: 20 + index,
+  attendanceId: `00000000-0000-4000-8000-${String(index + 801).padStart(12, "0")}`,
+  checkedInAt: index === 0 ? null : `2026-0${4 - index}-10T18:05:00-04:00`,
+  description: "Member event",
+  endAt: `2026-0${4 - index}-10T20:00:00-04:00`,
+  eventId: `00000000-0000-4000-8000-${String(index + 704).padStart(12, "0")}`,
+  location: "HEC 101",
+  name: `Recent Event ${index + 1}`,
+  pointsAwarded: 5,
+  startAt: `2026-0${4 - index}-10T18:00:00-04:00`,
+  tag: "GBM",
+  tagColor: "#F59E0B",
+}));
+
+const dashboardProps = {
+  attendance,
+  duesStatus: paidDuesStatus,
+  events,
+  member,
+};
+
 describe("MemberDashboard", () => {
   it("renders the Guild social card without legacy member-profile chrome", () => {
     const html = renderToStaticMarkup(
-      createElement(MemberDashboard, { duesStatus: paidDuesStatus, member }),
+      createElement(MemberDashboard, dashboardProps),
     );
 
     expect(html).toContain("Welcome, Dylan");
@@ -138,11 +180,19 @@ describe("MemberDashboard", () => {
     expect(html).not.toContain('href="/member/dues"');
     expect(html).not.toContain("Member profile active");
     expect(html).not.toContain("MEMBER PROFILE");
+    expect(html).toContain("Interview Workshop");
+    expect(html).toContain("Recent Event 1");
+    expect(html).toContain("Recent Event 3");
+    expect(html).not.toContain("Recent Event 4");
+    expect(html).toContain('href="/member/events"');
+    expect(html).not.toContain("Member info");
+    expect(html).not.toContain("Academics");
+    expect(html).toContain('data-dashboard-events-layout="stacked"');
   });
 
   it("keeps long Guild bio copy inside an overflow-owned About surface", () => {
     const html = renderToStaticMarkup(
-      createElement(MemberDashboard, { duesStatus: paidDuesStatus, member }),
+      createElement(MemberDashboard, dashboardProps),
     );
 
     expect(html).toContain("About");
@@ -154,6 +204,8 @@ describe("MemberDashboard", () => {
     const html = renderToStaticMarkup(
       createElement(MemberDashboard, {
         duesStatus: paidDuesStatus,
+        attendance,
+        events,
         member: { ...member, guildProfileVisible: false },
       }),
     );
@@ -163,10 +215,28 @@ describe("MemberDashboard", () => {
     expect(html).not.toContain("Members + sponsors");
   });
 
+  it("keeps the dashboard usable when event information is unavailable", () => {
+    const html = renderToStaticMarkup(
+      createElement(MemberDashboard, {
+        ...dashboardProps,
+        attendance: [],
+        events: [],
+        eventsUnavailable: true,
+      }),
+    );
+
+    expect(html).toContain("Dylan Vidal");
+    expect(html).toContain("Paid for the 2026-2027 academic school year.");
+    expect(html).toContain("Event information is temporarily unavailable");
+    expect(html).not.toContain("No upcoming events right now.");
+  });
+
   it("renders unpaid dues as a neutral dashboard action", () => {
     const html = renderToStaticMarkup(
       createElement(MemberDashboard, {
         duesStatus: unpaidDuesStatus,
+        attendance,
+        events,
         member,
       }),
     );

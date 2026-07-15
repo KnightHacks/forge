@@ -15,6 +15,7 @@ const ids = {
     deletableId: "e7000000-0000-4000-8000-000000000005",
     duesId: "e7000000-0000-4000-8000-000000000006",
     partialId: "e7000000-0000-4000-8000-000000000002",
+    pastId: "e7000000-0000-4000-8000-000000000007",
     publishedId: "e7000000-0000-4000-8000-000000000003",
   },
   member: "e7000000-0000-4000-8000-000000000010",
@@ -44,7 +45,8 @@ function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
   const bits = Array.from({ length }, () => "0");
   for (const key of keys) {
     const permission = PERMISSIONS.PERMISSION_DATA[key];
-    if (permission) bits[permission.idx] = "1";
+    if (!permission) throw new Error(`Unknown permission: ${key}`);
+    bits[permission.idx] = "1";
   }
   return bits.join("");
 }
@@ -286,6 +288,24 @@ export async function POST(request: Request) {
       name: "Dues Member Workshop",
       start_datetime: atOffset(6, 21),
       visibilityDuesPaying: true,
+    },
+    {
+      ...common,
+      creationKey: "e7000000-0000-4000-8000-000000000057",
+      creationPayloadHash: "7".repeat(64),
+      discordAppliedEntityType: "external",
+      discordAppliedRevision: 1,
+      discordId: "e2e-discord-past",
+      discordLastError: "Discord discarded the completed event",
+      discordSyncState: "error",
+      end_datetime: atOffset(-1, 23),
+      googleAppliedRevision: 1,
+      googleId: "e2e-google-past",
+      googleLastError: "Historical provider state",
+      googleSyncState: "error",
+      id: ids.events.pastId,
+      name: "Past Workshop",
+      start_datetime: atOffset(-1, 21),
     },
   ]);
 

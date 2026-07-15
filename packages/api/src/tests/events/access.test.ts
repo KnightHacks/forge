@@ -89,7 +89,8 @@ function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
   const bits = Array.from({ length: maxIndex + 1 }, () => "0");
   for (const key of keys) {
     const permission = PERMISSIONS.PERMISSION_DATA[key];
-    if (permission) bits[permission.idx] = "1";
+    if (!permission) throw new Error(`Unknown permission: ${key}`);
+    bits[permission.idx] = "1";
   }
   return bits.join("");
 }

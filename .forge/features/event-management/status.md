@@ -1,10 +1,46 @@
 # Event Management Status
 
-Current phase: Implementation complete
+Current phase: PR-review hardening implemented and verified
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
+- 2026-07-15 layout refinement red checkpoint: focused Blade tests intentionally
+  fail because the member dashboard/events views still use two-column layouts
+  and `/admin/check-in` still renders helper copy plus an empty latest-result
+  panel.
+- 2026-07-15 layout refinement completion: member event groups and attendance
+  now use compact stacked rows, the dashboard overview has intrinsic height,
+  and the check-in station omits redundant instructions and renders Latest
+  result only after an attempt.
+
 ## Decision log
+
+- 2026-07-15: The isolated check-in page uses prominent Upcoming/Past event
+  timing and one responsive event combobox. Upcoming mirrors Legacy Blade's
+  descending start-time order; Past is newest first. The separate older-event
+  search/native-select combination is removed.
+- 2026-07-15: Scanner and Manual are first-class tabs. Manual lookup is one
+  responsive member combobox plus an explicit Check in button, so selection is
+  never an attendance mutation.
+- 2026-07-15: Repeat check-in is a scanner-session option, off by default and
+  never persisted on Event. Scanner requests may explicitly allow repeated
+  attendance rows, but only the first row awards points; later rows snapshot
+  zero. Manual stays idempotent. Pair locking, eligibility, audit, and deletion
+  safety still apply. A handled QR must leave frame before the same payload is
+  rearmed, preventing stationary-code scan loops.
+- 2026-07-15: PR-review hardening preserves future Legacy discovery, adds stale
+  edit revision checks, makes creation-key retry precede lead-time validation,
+  preserves combined Legacy roles on ordinary dues edits, and adds bidirectional
+  attendance indexes without a repeat-blocking uniqueness constraint.
+- 2026-07-15: `db:pull --truncate` now uses a temporary dump and a single
+  fail-fast transaction that preserves/restores the local migration ledger and
+  tag catalog and validates orphan attendance before commit.
+- 2026-07-15: Repeat mode needs no schema migration because EventAttendee
+  already permits multiple member/event rows. The optional API flag defaults
+  false, and the shared responsive-combobox additions are optional, preserving
+  current-main callers and existing Blade consumers.
+- 2026-07-15: The check-in workspace is edge-to-edge and viewport-filling on
+  mobile below the authenticated shell, while desktop retains raised panels.
 
 - 2026-06-29: Created `reforge/event-management` from local
   `reforge/main` at `aacd2589` and instantiated this feature bundle.
@@ -195,6 +231,75 @@ Current phase: Implementation complete
   test fixture that omitted the newly required provider attempt revision. The
   fixture now uses the complete projection shape, restoring the DB package
   build used by the root development task.
+- 2026-07-03: Human split least-privilege event check-in from Event
+  administration. `/admin/events` is the Read/Edit/Officer management surface;
+  `/admin/check-in` is the Check-in/Officer operational surface. Check-in-only
+  users must not see or receive event-table, detail, attendee, tag, export, or
+  provider-management data.
+- 2026-07-03: Human required Selected roles to use the established searchable
+  multi-select combobox with removable choices. Multiple selected roles retain
+  OR eligibility; one matching role is sufficient.
+- 2026-07-03: Human required live Discord voice/stage selection to use the
+  established searchable single-select combobox instead of a separate search
+  field plus dropdown. Manual ID/type entry remains an explicit fallback state,
+  not a competing default control.
+- 2026-07-03: Artifact truth was revised before regenerated tests or product
+  changes. Human approved the revised bundle and resumed the test-generation
+  loop.
+- 2026-07-03: Implemented independent `/admin/events` and `/admin/check-in`
+  server routes, permission gates, navigation destinations, loading/error
+  boundaries, and client data ownership. The management route no longer
+  imports, fetches, receives, or renders check-in capabilities.
+- 2026-07-03: Replaced the native multi-select role control with the established
+  searchable multi-select pattern and removable selected-role values. Replaced
+  the separate Discord channel search plus native dropdown with the shared
+  responsive searchable combobox; manual ID/type entry is now an explicit
+  fallback state.
+- 2026-07-03: Completed the startup permission typing repair across utilities,
+  API role projections, and Blade role consumers. Permission iteration now
+  remains keyed by the typed permission index without string-key widening.
+- 2026-07-03: Local `db:pull --truncate` after migration 0011 exposed a restore
+  compatibility defect: zero Event rows and zero migration-seeded EventTag rows
+  were restored while 1,061 orphan EventAttendee rows remained. The restore
+  path currently continues past SQL import errors and requires a scoped repair
+  plus regression coverage before final branch readiness.
+- 2026-07-15: Production-shaped local data confirmed that all 155 migrated
+  Legacy club events were preserved but fell under the default Upcoming timing
+  predicate. Human made Past history a frequent first-class workflow, so the
+  timing choice now uses a persistent prominent Upcoming/Past control rather
+  than living inside the secondary filter dialog.
+- 2026-07-15: Provider health is operational only until an event ends. Past
+  queries ignore stale Discord/Google health filters, completed rows/details
+  hide provider warnings and repair controls, and Blade deletion-pending state
+  remains visible. Create and Duplicate now require a start at least 30 minutes
+  ahead in the form and authoritative server schema because Discord rejects
+  scheduled-event creation too close to or behind the current time.
+- 2026-07-15: Member dashboard placeholders Member info and Academics are
+  replaced by a larger Events overview containing a small nearest-upcoming set,
+  up to three recent attendance rows, and a link to `/member/events`.
+- 2026-07-15: Member event cards prioritize title/timing and add location,
+  description access, aggregate check-in context, a dashboard return path, and
+  safe Discord/Google Calendar actions. Member surfaces omit missing check-in
+  time and never expose Legacy or Estimated migration terminology.
+- 2026-07-15: Event descriptions now use one shared safe Markdown renderer in
+  Blade admin/member details and Club event/home cards. CommonMark links, bold,
+  italics, lists, and line breaks render consistently; raw HTML is ignored and
+  links open with safe new-tab attributes. The focused Blade renderer and event
+  surface checkpoint passed 12/12 cases, and Club event tests passed 5/5.
+- 2026-07-15: Attendance correction uses the same removal flow for current and
+  migrated non-null stored awards. The estimate acknowledgement is removed from
+  validator, API, and Blade; unexpectedly null awards remain protected by a
+  consistency conflict.
+- 2026-07-15: Resolved check-in results return and render a minimal safe member
+  identity/Guild snippet so Latest result identifies the person without
+  exposing email, private profile fields, or profile-image storage keys.
+- 2026-07-15: This UX revision requires no schema migration. It changes safe
+  member/check-in response projections, a strict removal input, and Blade
+  composition while retaining existing attendance migration metadata.
+- 2026-07-15: Screenshot review replaced member-event two-column card grids
+  with compact single-column rows, stacks the dashboard event groups in an
+  intrinsic-height panel, and removes the empty/redundant chrome from the
+  check-in station, especially at 320px.
 
 ## Open questions
 
@@ -210,8 +315,127 @@ Current phase: Implementation complete
 - [x] Generate tests from all approved test-case boundaries.
 - [x] Implement database, API, provider, Blade, Club, and cron behavior.
 - [x] Complete targeted, migration, React, E2E, and repository verification.
+- [x] Revise `spec.md`, `srd.md`, and `test-cases.md` for dedicated
+      `/admin/check-in`, multi-role selection, and searchable channel selection.
+- [x] Human approves the 2026-07-03 artifact revisions.
+- [x] Regenerate focused route, navigation, access, and combobox tests from the
+      approved cases and confirm the intended red failures.
+- [x] Implement the dedicated check-in route and role/channel comboboxes.
+- [x] Make Past history prominent and ignore completed provider health across
+      URL, API, list, detail, filter, and repair presentation.
+- [x] Enforce the 30-minute Discord creation lead time in Create/Duplicate and
+      at the server validation boundary.
+- [x] Revise the check-in artifacts for Upcoming/Past selection, searchable
+      event/member comboboxes, Scanner/Manual tabs, mobile treatment, and
+      request-scoped repeat mode.
+- [x] Capture intended Validator/API/Blade red failures, then implement and
+      regression-test the revised check-in station.
+- [x] Inspect the live desktop and 320px check-in layouts and run the complete
+      event-management browser suite.
+- [x] Revise artifacts for the member dashboard/event-card refresh, unified
+      attendance removal, and identified check-in results.
+- [x] Generate focused failing API, Validator, and Blade tests for the member UX
+      revision before product changes.
+- [x] Implement member event projections/dashboard/cards, direct attendance
+      removal, and minimal identity in Latest result.
+- [x] Inspect desktop/mobile member surfaces and rerun focused/full verification
+      plus changed React analysis.
+- [x] Capture focused red tests, implement, and visually verify the stacked
+      member lists and streamlined mobile check-in layout.
+- [x] Repair and regression-test post-migration `db:pull --truncate` behavior.
+- [x] Re-run targeted Blade/API tests, React analysis, Playwright, and
+      repository verification for the revision.
 
 ## Validation / commands
+
+- 2026-07-15 PR-review completion: the full workspace test graph passed 20/20
+  tasks: API 169/169, Blade 72/72, Validators 55/55, DB 12/12 (including a live
+  PostgreSQL truncate/restore cycle), Cron 7/7, and Club 5/5. Event/API/Blade/DB
+  lint, formatting, and typechecks passed. `pnpm db:generate` reported no schema
+  drift after migration 0012. Changed React analysis passed every changed
+  feature component and reported only its two unchanged, known `trpc/react.tsx`
+  parser failures because it compares against unrelated `origin/main`.
+- The post-migration browser run passed 60/61 and exposed one stale accessible
+  option-name assertion after event dates were added to the combobox. After
+  correcting that assertion, the focused Event Management suite passed 11/11.
+
+- 2026-07-15 layout-refinement completion: focused Blade layout tests passed
+  8/8 and the complete Blade unit suite passed 69/69. The Event Management
+  Playwright file passed 11/11; desktop and 320px member dashboard/events plus
+  320px check-in screenshots were inspected, with no horizontal overflow.
+  Blade TypeScript, ESLint, Prettier, and changed React analysis against
+  `reforge/main` passed; React analysis covered 34 files and 21 components with
+  zero failures. The previously stale onboarding combobox locator was updated
+  for the shared combobox trigger and its full Playwright file passed 13/13.
+- 2026-07-15 member-events UX red checkpoint: the focused Validator run failed
+  only because removal still accepted/defaulted estimate acknowledgement; API
+  failed only for missing safe member/event projections, missing check-in
+  identity, and the old estimate-removal gate; Blade failed only for the old
+  placeholder/event cards, estimate warning UI, and missing identified result
+  component. Unaffected focused assertions remained green.
+- 2026-07-15 check-in-station red checkpoint: focused Validators failed only
+  because `allowRepeat` was absent; API failed only because Past choices still
+  required a second search, Upcoming still used the newer ongoing/ascending
+  order, and repeat requests remained idempotent; Blade failed only because
+  the timing control, combobox/tabs, and repeat setting were absent.
+- 2026-07-15 check-in-station completion: Validators passed 55/55, API passed
+  166/166, Blade passed 68/68, and UI exited cleanly with no test files. The
+  complete Event Management Playwright file passed 10/10, including desktop
+  event/member combobox behavior, Manual idempotency, Past selection, Legacy
+  ordering, and a 320px overflow assertion. Validators/API/UI/Blade TypeScript,
+  ESLint, and Prettier passed. Changed React analysis against `reforge/main`
+  covered 32 files and 19 components with zero failures. Live desktop and
+  320x780 captures were inspected; both preserve clear hierarchy and the mobile
+  surface is edge-to-edge without horizontal overflow.
+
+- 2026-07-15 history/lead-time red checkpoint: focused Validators, API, and
+  Blade runs failed only for the planned 30-minute boundary, Past health
+  predicate, persistent timing control, completed detail presentation, and
+  deliberately missing form helper.
+- 2026-07-15 completed revision: Validators passed 55/55, API passed 165/165,
+  and Blade passed 68/68. The full Event Management Playwright file passed 9/9,
+  including a completed non-Legacy fixture with stale provider errors and a
+  hand-authored Past URL carrying a health filter. Validators/API/Blade
+  TypeScript, ESLint, and Prettier passed; changed React analysis against
+  `reforge/main` covered 32 files and 19 components with zero failures.
+- 2026-07-03 artifact revision: no tests or product implementation were run or
+  changed before human approval, by design.
+- Local restore diagnostic: `knight_hacks_event=0`,
+  `knight_hacks_event_tag=0`, and `knight_hacks_event_attendee=1061`, with all
+  attendance rows orphaned from missing Event rows after
+  `db:pull --truncate` against the post-0011 schema.
+- 2026-07-03 local recovery: the restored database carried one foreign Drizzle
+  ledger row newer than checked-in migrations 0010/0011 while its sequence
+  still pointed at ID 10. Drizzle therefore skipped both migrations and had
+  previously collided on ID 11. After an exact guarded removal of that row and
+  sequence normalization, repo-pinned pnpm 9.12.1 applied 0010 and 0011
+  successfully. Verification found 17 EventTag rows, 215 migrated Legacy
+  events, 1,061 backfilled attendance rows, both dues columns, and ledger IDs
+  11/12 with the checked-in hashes. The reusable `db:pull --truncate` repair
+  remains open so a later production pull cannot recreate the mismatch.
+- Startup TypeScript repair: repo-pinned pnpm 9.12.1 passed
+  `@forge/utils` typecheck, ESLint, Prettier, and `git diff --check` after
+  replacing the widened permission-key lookup with explicit permission-index
+  iteration.
+- 2026-07-03 revision test-first checkpoint: four focused Blade files produced
+  the intended failures for the missing `/admin/check-in` client, distinct
+  navigation destination, removal of `view=check-in` URL state, and removal of
+  the management-dashboard Check-in tab. Ten unaffected assertions remained
+  green.
+- Revision component checkpoint: all 20 Blade Vitest files passed (62/62),
+  including route, navigation, URL-state, management-dashboard, isolated
+  check-in-page, and independent active-route coverage.
+- Revision API/permission checkpoint: 4 focused API files passed 33/33. Blade,
+  API, Utils, and UI TypeScript passed; Blade, API, and UI ESLint passed.
+- Revision Playwright checkpoint: the complete Event Management file passed
+  8/8, including direct route isolation, minimal idempotent check-in, searchable
+  multi-role selection with removal, keyboard channel selection, and explicit
+  manual-channel fallback. The enhanced combobox flow passed again after its
+  final keyboard/removal assertions.
+- Targeted React analysis covered 29 files and 29 components across Event,
+  member navigation, role permission consumers, the new Check-in route, and
+  the shared responsive combobox with zero failures.
+- `git diff --check` passed after the revision implementation.
 
 - Pre-generation baseline with repo-pinned pnpm 9.12.1: Validators 30/30,
   API 83/83, and Blade 32/32 tests passed. Club had no tests and exited cleanly.

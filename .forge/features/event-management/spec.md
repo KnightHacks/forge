@@ -1,6 +1,6 @@
 # Event Management Spec
 
-Status: Ready for human approval
+Status: Revised / ready for human approval
 
 > This file owns the non-technical user/product intent.
 
@@ -42,16 +42,20 @@ actors in this first slice.
 - URL-addressable views provide:
   - an event list;
   - a calendar;
-  - member check-in; and
   - event-tag management.
-- Check-in-only users land directly in Check-in and do not see the other event
-  administration views.
+- Event check-in lives on its own `/admin/check-in` page. It is not a tab,
+  query-parameter view, dialog, or hidden mode of `/admin/events`.
+- Check-in-only users see a distinct `Event Check-in` navigation item and do
+  not see or enter Event administration. Event readers and editors do not gain
+  check-in access unless they also hold the check-in capability.
 - The default event list shows upcoming events in ascending start-time order.
-  Past events remain available and default to newest first.
+  A prominent `Upcoming` / `Past` control keeps frequently used history one
+  action away; Past events default to newest first.
 - Users can search event name, description, location, and tag.
-- Users can filter by upcoming or past timing, date range, tag, audience,
-  internal status, selected roles, and integration health. Dues paying is an
-  audience option, not a second independent filter.
+- Users can filter by date range, tag, audience, internal status, selected
+  roles, and integration health. Dues paying is an audience option, not a
+  second independent filter. Integration health applies only to upcoming
+  events; Past retrieval ignores any stale health parameter.
 - Multi-selected tags, audiences, roles, and integration states use OR within
   their category. Search and different filter categories combine with AND.
 - Search, filters, selected view, sort, page size, page, and selected event are
@@ -64,7 +68,10 @@ actors in this first slice.
 - Event detail is shareable through `?event=<event UUID>` and uses one clearly
   sectioned dialog on desktop and mobile.
 - Desktop list rows show name, tag, audience, start time, location, attendance,
-  Discord health, Google health, and available actions.
+  and available actions. Upcoming rows show Discord and Google health. Past
+  rows identify provider health as no longer tracked and offer no repair
+  affordance because completed Discord events are discarded and neither
+  provider needs operational health management.
 - Mobile cards prioritize name, start time, location, audience, integration
   health, and the appropriate check-in or detail action.
 - Readers see event details, integration health, attendance totals, and a
@@ -75,8 +82,9 @@ actors in this first slice.
   The user can restore or discard it when returning.
 - Duplicate opens a new create dialog with reusable event details prefilled,
   but requires a valid future date and creates new Discord and Google events.
-- Creating an event in the past is not allowed. End time must be after start
-  time. Timed single-day and multi-day events are supported.
+- Creating or duplicating an event requires a start time at least 30 minutes
+  in the future so Discord can accept the scheduled event. End time must be
+  after start time. Timed single-day and multi-day events are supported.
 - Submitted events target both Discord and Google Calendar. An event is not
   exposed outside administration until both initial integrations succeed.
 - If one integration fails, the event remains in administration as
@@ -112,8 +120,12 @@ actors in this first slice.
   - `Public`;
   - `Dues paying`; or
   - `Selected roles`.
-- A selected-role event is visible in Blade when the member holds any selected
-  linked role. Cosmetic roles are valid audiences.
+- Selected roles accepts one or more linked roles through the established
+  searchable multi-select combobox pattern. Selected roles remain visible as
+  removable choices, and keyboard users can search, add, and remove them
+  without using a native multi-select list.
+- A selected-role event is visible in Blade when the member holds any one of
+  the selected linked roles. Cosmetic roles are valid audiences.
 - A Blade role referenced by any selected-role event cannot be unlinked until
   it is removed from those events. Role management shows the event dependency
   rather than silently changing historical or future event visibility.
@@ -150,8 +162,13 @@ actors in this first slice.
 - Dues-paying events remain visible publicly and display a clear dues badge.
 - The public feed does not expose selected-role events, internal events,
   provider identifiers, role identifiers, attendance, or administration data.
-- Signed-in members can open `/member/events` from a quick link on their member
-  dashboard.
+- Event descriptions render safe CommonMark formatting consistently in Blade
+  and Club consumers, including links, bold, italics, lists, and line breaks.
+  Raw HTML is ignored and description links open safely in a new tab.
+- The member dashboard replaces the placeholder Member info and Academics
+  surfaces with one prominent Events overview. It shows the nearest upcoming
+  event choices, up to three recent attended events, concise date/location and
+  point context, and a clear link to `/member/events`.
 - Members see upcoming Public events, Dues-paying events, and selected-role
   events for which they are eligible.
 - Unpaid members see Dues-paying events in a locked state with a clear path to
@@ -160,32 +177,69 @@ actors in this first slice.
   audience eligibility but remain absent from the public Club site.
 - Members can review events they attended and the points awarded for those
   check-ins. Later role or dues changes do not erase their own history.
+- `/member/events` uses informative, scannable cards with event description,
+  location, timing, and aggregate check-in context where available. Missing
+  check-in time is omitted rather than explained as unavailable.
+- Upcoming and attended-event collections use compact single-column rows rather
+  than a two-column card masonry. Variable description, metadata, and action
+  content must not create visually mismatched neighboring card heights.
+- Member-facing screens never describe events or attendance as Legacy or
+  Estimated. Those migration details remain administrative/storage concerns.
+- The member events page links back to the dashboard. Upcoming event cards can
+  open the corresponding Discord scheduled event when a safe link is available
+  and can prepare an Add to Google Calendar link from Blade's event details.
 
 ### Check-in and attendance
 
-- Check-in is an isolated operational view. It does not reveal full event
-  details, attendee lists, exports, or event editing.
-- An operator selects an event by title, then repeatedly scans member account
-  QR codes without closing and reopening the scanner.
+- `/admin/check-in` is an isolated operational page. It does not reveal or
+  preload the event-management table, full event details, attendee lists,
+  exports, tags, provider health, or event editing.
+- An operator first switches between `Upcoming` and `Past` event choices, then
+  selects an event through the established searchable single-select combobox.
+  The event selector has no separate search field or native dropdown. Upcoming
+  choices preserve Legacy Blade's latest-starting-first order; Past choices are
+  also newest first.
+- Scanner and Manual are first-class tabs. Scanner stays ready for repeated QR
+  reads, while Manual provides one member combobox followed by one explicit
+  Check in button; choosing a member never checks them in by itself.
 - The scanner accepts current raw account-ID QR values and legacy `user:`
   values during the Reforge transition.
-- Manual fallback searches by member name, Discord username, or email and
-  returns only the minimal identity needed to choose the correct member.
-- Current and recently ended events are easiest to select, but authorized
-  operators are not restricted to a hard check-in window.
+- Manual fallback searches by member name, Discord username, or email in the
+  same responsive combobox interaction and returns only the minimal identity
+  needed to choose the correct member.
+- Upcoming and Past choices are one toggle apart, and authorized operators are
+  not restricted to a hard check-in window.
 - Check-in verifies current effective dues for Dues-paying events and current
   Blade role eligibility for Selected-role events.
 - Successful, already-recorded, unpaid, ineligible, malformed, and unknown
   member scans produce fast, unmistakable feedback suited to a check-in line.
-- Repeated scans are idempotent. `Already checked in` is informative and does
-  not award points twice.
+- When Blade resolves a member, the latest-result panel identifies who the
+  result applies to using a minimal name, Discord username, and optional public
+  Guild-profile snippet. It never exposes the full member record.
+- Scanner repeat mode is an operator-side session setting, is off by default,
+  and is never stored on the event. Default scans remain idempotent:
+  `Already checked in` is informative and does not award points twice. When an
+  operator explicitly enables repeat mode, each accepted scan creates a new
+  attendance entry, but only the member's first attendance for that event
+  awards points. Later repeat rows snapshot a zero-point award so they can be
+  removed safely without changing the original award. Manual check-in remains
+  idempotent. The same QR must leave the camera frame before it can produce
+  another accepted scan, preventing a stationary code from looping.
+- On mobile, the check-in workspace fills the available screen below Blade's
+  shell, avoids desktop card gutters, and keeps the selected event, active tab,
+  primary action, and latest result easy to reach.
+- Check-in removes nonessential instructional copy and does not reserve an
+  empty Latest result panel before an attempt. Timing, event selection, mode,
+  and the active task form read as one compact workflow; result identity appears
+  only after a check-in attempt.
 - Event points are determined by Blade, not by the scanner or browser.
 - Event readers and editors can open a minimal attendee viewer. Check-in-only
   operators cannot.
 - Editors can remove a mistaken attendance record from the attendee viewer.
-  Removing a Reforge check-in subtracts the exact points awarded by that
-  check-in. A migrated legacy award is visibly marked Estimated; removing one
-  requires an additional acknowledgement and subtracts that stored estimate.
+  Every removable row uses the same direct flow and subtracts the exact stored
+  award, including a migrated stored estimate. Migration vocabulary and a
+  separate estimate acknowledgement are not shown in the product. A row with
+  no recoverable stored award remains blocked rather than guessed.
 - Authorized event readers can export the current event's minimal attendance
   data as CSV. Spreadsheet-safe escaping is required.
 
@@ -193,7 +247,12 @@ actors in this first slice.
 
 - Public events use a Discord external-location scheduled event.
 - Internal events use an eligible Discord voice or stage channel selected from
-  a searchable live picker with a manual-ID fallback.
+  the established searchable single-select combobox pattern. One control owns
+  search and selection, shows the selected channel clearly, derives its type
+  from the live result, and does not pair a search field with a separate native
+  dropdown. A manual-ID fallback remains a secondary recovery path when live
+  lookup cannot provide the channel; it is not shown as a competing default
+  selector.
 - Google destination is chosen by the Internal toggle: the public calendar or
   the deployment-defined internal/development calendar.
 - Retrying, repairing, and deleting integrations is safe to repeat.
@@ -235,6 +294,9 @@ actors in this first slice.
 - Dialogs, calendar controls, scanning feedback, tables, cards, badges, and
   menus support keyboard use, reduced motion, sufficient contrast, and
   touch-friendly mobile targets.
+- Role and Discord-channel comboboxes expose labels, selected state, empty and
+  loading states, keyboard navigation, and removable selections where
+  applicable.
 
 ## Scope
 
@@ -248,8 +310,11 @@ actors in this first slice.
 - Discord Scheduled Event and Google Calendar creation, update, retry, repair,
   and deletion.
 - Public Club-site event contract and existing public reminder compatibility.
-- Member event discovery and personal attendance history.
+- Member dashboard event overview, event discovery, and personal attendance
+  history.
 - Member QR and manual check-in, attendance viewing/correction, points, and CSV.
+- A dedicated least-privilege `/admin/check-in` page separate from
+  `/admin/events`.
 - Existing club event permission vocabulary and officer override.
 - Legacy event/history compatibility without timestamp correction.
 
@@ -282,13 +347,16 @@ actors in this first slice.
 - `Legacy event`: A pre-Reforge historical event whose old timestamp workaround
   is preserved and whose provider health is not automatically managed.
 - `Points awarded`: The event-point value captured when a member checked in.
-- `Estimated points`: A best-effort migrated award for a legacy attendance row
-  whose client-supplied historical value cannot be reconstructed exactly.
+- `Estimated points`: Internal migration metadata for a best-effort historical
+  award. It is not member- or attendee-removal-facing vocabulary.
 
 ## Acceptance criteria
 
 - Authorized readers, editors, check-in operators, and officers reach only the
   event views and controls granted to them.
+- Check-in-only operators can use `/admin/check-in` but cannot enter
+  `/admin/events` or receive its management data. Event readers/editors cannot
+  check in unless separately granted check-in access.
 - Club event permissions never expose or mutate hackathon events, including by
   direct UUID.
 - An editor can create a future single-day or multi-day event and see it appear
@@ -297,22 +365,37 @@ actors in this first slice.
   completes it without duplicating the successful projection.
 - Public and member event surfaces enforce their documented audience and
   internal-event rules.
+- The member dashboard provides an events overview in place of Member info and
+  Academics placeholders, while `/member/events` provides richer event cards,
+  a dashboard return path, and safe Discord/Google actions.
 - A visibility-broadening edit reaches no new viewer until both provider
   projections accept that revision; a narrowing edit takes effect immediately.
 - Configurable tags supply default points, support per-event override, and
   preserve historical event presentation when tags later change or archive.
+- Selected-role audiences use a searchable multi-select combobox and preserve
+  OR eligibility across every chosen role. Internal Discord destinations use a
+  searchable single-select channel combobox rather than separate search and
+  dropdown controls.
 - List/calendar filters, URL state, pagination, shareable detail, responsive
   layouts, and browser-local form restoration behave consistently.
 - Check-in accepts current and legacy QR payloads, enforces effective dues and
   role eligibility, prevents duplicate points, and supports minimal manual
   lookup.
-- Attendance correction subtracts the captured award, CSV is safe, and members
-  can see their own history. Migrated estimated awards are labeled and require
-  explicit acknowledgement before correction.
+- Attendance correction uses one removal flow and subtracts the captured
+  stored award, CSV is safe, and members can see their own history without
+  migration labels or unavailable-time filler.
 - An event with attendance cannot be deleted. An empty event is removed only
   after both provider projections are absent or confirmed already missing.
 - Existing public reminders remain compatible, and legacy events remain
   available without being treated as broken active integrations.
+- Future Legacy events remain visible to eligible public/member/check-in
+  consumers during a rolling deployment, while past Legacy events ignore
+  provider-health presentation.
+- Concurrent editors cannot silently overwrite one another; an update created
+  from a stale event revision is rejected and must be reopened.
+- `db:pull --truncate` is fail-fast and atomic, preserves the local migration
+  ledger and event-tag catalog, repairs compatible legacy snapshots, and leaves
+  no orphan attendance rows.
 
 ## Open questions
 

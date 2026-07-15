@@ -22,17 +22,24 @@ import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 import { useMediaQuery } from "@forge/ui/use-media-query";
 
 interface ResponsiveComboBoxProps<T> {
+  ariaLabel?: string;
   items: readonly T[];
   renderItem: (item: T) => React.ReactNode;
   getItemValue: (item: T) => string;
   getItemLabel: (item: T) => string;
+  getItemSearchValue?: (item: T) => string;
   onItemSelect?: (item: T) => void;
+  onSearchValueChange?: (value: string) => void;
   onValueChange?: (value: string, item: T) => void;
   buttonPlaceholder?: string;
   defaultValue?: string | null;
+  emptyMessage?: string;
+  filterItems?: boolean;
   inputPlaceholder?: string;
   isDisabled?: boolean;
+  isLoading?: boolean;
   triggerClassName?: string;
+  triggerId?: string;
   value?: string | null;
 }
 
@@ -141,17 +148,24 @@ function getSearchScore(label: string, query: string) {
  * ```
  */
 export function ResponsiveComboBox<T>({
+  ariaLabel,
   items,
   renderItem,
   getItemValue,
   getItemLabel,
+  getItemSearchValue = getItemLabel,
   onItemSelect,
+  onSearchValueChange,
   onValueChange,
   buttonPlaceholder = "Select item",
   defaultValue = null,
+  emptyMessage = "No results found.",
+  filterItems = true,
   inputPlaceholder = "Filter items...",
   isDisabled,
+  isLoading = false,
   triggerClassName,
+  triggerId,
   value,
 }: ResponsiveComboBoxProps<T>) {
   const [open, setOpen] = React.useState(false);
@@ -189,6 +203,12 @@ export function ResponsiveComboBox<T>({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
+            id={triggerId}
+            type="button"
+            role="combobox"
+            aria-label={ariaLabel}
+            aria-expanded={open}
+            aria-haspopup="listbox"
             variant="outline"
             className={cn("w-full justify-start font-normal", triggerClassName)}
             disabled={isDisabled}
@@ -207,8 +227,12 @@ export function ResponsiveComboBox<T>({
             setSelectedItem={handleSelectItem}
             renderItem={renderItem}
             getItemValue={getItemValue}
-            getItemLabel={getItemLabel}
+            getItemSearchValue={getItemSearchValue}
+            onSearchValueChange={onSearchValueChange}
+            emptyMessage={emptyMessage}
+            filterItems={filterItems}
             inputPlaceholder={inputPlaceholder}
+            isLoading={isLoading}
           />
         </PopoverContent>
       </Popover>
@@ -219,6 +243,12 @@ export function ResponsiveComboBox<T>({
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
         <Button
+          id={triggerId}
+          type="button"
+          role="combobox"
+          aria-label={ariaLabel}
+          aria-expanded={open}
+          aria-haspopup="listbox"
           variant="outline"
           className={cn("w-full justify-start font-normal", triggerClassName)}
           disabled={isDisabled}
@@ -239,8 +269,12 @@ export function ResponsiveComboBox<T>({
             setSelectedItem={handleSelectItem}
             renderItem={renderItem}
             getItemValue={getItemValue}
-            getItemLabel={getItemLabel}
+            getItemSearchValue={getItemSearchValue}
+            onSearchValueChange={onSearchValueChange}
+            emptyMessage={emptyMessage}
+            filterItems={filterItems}
             inputPlaceholder={inputPlaceholder}
+            isLoading={isLoading}
           />
         </div>
       </DrawerContent>
@@ -254,23 +288,31 @@ function ItemList<T>({
   setSelectedItem,
   renderItem,
   getItemValue,
-  getItemLabel,
+  getItemSearchValue,
+  onSearchValueChange,
+  emptyMessage,
+  filterItems,
   inputPlaceholder,
+  isLoading,
 }: {
   items: readonly T[];
   setOpen: (open: boolean) => void;
   setSelectedItem: (item: T | null) => void;
   renderItem: (item: T) => React.ReactNode;
   getItemValue: (item: T) => string;
-  getItemLabel: (item: T) => string;
+  getItemSearchValue: (item: T) => string;
+  onSearchValueChange?: (value: string) => void;
+  emptyMessage: string;
+  filterItems: boolean;
   inputPlaceholder: string;
+  isLoading: boolean;
 }) {
   const [inputValue, setInputValue] = React.useState("");
 
   const filteredItems = React.useMemo(() => {
     const normalizedInputValue = inputValue.trim();
 
-    if (!normalizedInputValue) {
+    if (!filterItems || !normalizedInputValue) {
       return items.slice(0, MAX_SEARCH_RESULTS);
     }
 
@@ -278,7 +320,7 @@ function ItemList<T>({
       .map((item, index) => ({
         index,
         item,
-        score: getSearchScore(getItemLabel(item), normalizedInputValue),
+        score: getSearchScore(getItemSearchValue(item), normalizedInputValue),
       }))
       .filter(
         (
@@ -292,17 +334,20 @@ function ItemList<T>({
       .sort((a, b) => a.score - b.score || a.index - b.index)
       .slice(0, MAX_SEARCH_RESULTS)
       .map((result) => result.item);
-  }, [getItemLabel, inputValue, items]);
+  }, [filterItems, getItemSearchValue, inputValue, items]);
 
   return (
     <Command shouldFilter={false}>
       <CommandInput
         placeholder={inputPlaceholder}
         value={inputValue}
-        onValueChange={setInputValue}
+        onValueChange={(nextValue) => {
+          setInputValue(nextValue);
+          onSearchValueChange?.(nextValue);
+        }}
       />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandEmpty>{isLoading ? "Searching..." : emptyMessage}</CommandEmpty>
         <CommandGroup>
           {filteredItems.map((item, index) => (
             <CommandItem

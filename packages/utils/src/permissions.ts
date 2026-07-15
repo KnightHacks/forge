@@ -42,15 +42,8 @@ export const controlPerms = {
   },
 };
 
-export function getPermsAsList(perms: string) {
-  const list = [];
-  const permKeys = Object.keys(PERMISSIONS.PERMISSIONS);
-  for (let i = 0; i < perms.length; i++) {
-    const permKey = permKeys.at(i);
-    if (perms[i] == "1" && permKey) {
-      const permissionData = PERMISSIONS.PERMISSION_DATA[permKey];
-      if (permissionData) list.push(permissionData.name);
-    }
-  }
-  return list;
+export function getPermsAsList(perms: string): string[] {
+  return Object.values(PERMISSIONS.PERMISSION_DATA)
+    .filter(({ idx }) => perms.at(idx) === "1")
+    .map(({ name }) => name);
 }

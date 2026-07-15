@@ -11,7 +11,12 @@ import { DesktopAdminNavigation } from "~/app/_components/member/desktop-admin-n
 import { MemberRouteTransitionSurface } from "~/app/_components/member/member-route-transition-link";
 import { MobileAdminNavigation } from "~/app/_components/member/mobile-admin-navigation";
 
-type NavigationItem = "dashboard" | "events" | "members" | "roles";
+type NavigationItem =
+  | "dashboard"
+  | "eventCheckIn"
+  | "events"
+  | "members"
+  | "roles";
 
 export function AuthenticatedShell({
   activeNavigation = "dashboard",
@@ -30,12 +35,15 @@ export function AuthenticatedShell({
     sectionLabel ??
     (activeNavigation === "members"
       ? "Member admin"
-      : activeNavigation === "events"
-        ? "Event admin"
-        : activeNavigation === "roles"
-          ? "Role admin"
-          : "Member dashboard");
+      : activeNavigation === "eventCheckIn"
+        ? "Event check-in"
+        : activeNavigation === "events"
+          ? "Event admin"
+          : activeNavigation === "roles"
+            ? "Role admin"
+            : "Member dashboard");
   const hasAdminNavigation =
+    adminNavigation?.eventCheckIn === true ||
     adminNavigation?.events === true ||
     adminNavigation?.members === true ||
     adminNavigation?.roles === true;

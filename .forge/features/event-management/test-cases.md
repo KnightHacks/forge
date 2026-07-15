@@ -1,6 +1,6 @@
 # Event Management Test Cases
 
-Status: Ready for human approval
+Status: Revised / ready for human approval
 
 > This file owns observable proof. Do not generate implementation tests until
 > the human approves these cases.
@@ -60,6 +60,8 @@ Expected observations:
 - Only future, fully synchronized, non-internal Public and Dues-paying club
   events appear.
 - The dues event includes and renders a dues badge.
+- Markdown links, bold, and italics render as elements rather than source text;
+  raw HTML does not render, and links use safe new-tab attributes.
 - Provider IDs, role IDs, attendance, and admin state are absent.
 - Results are ordered by ascending start time and obey the bounded limit.
 
@@ -80,6 +82,16 @@ Expected observations:
 - The Dues-paying event appears locked with a dues action.
 - Matching-role events appear; other-role events are absent.
 - No provider-health or admin data appears.
+- Cards prioritize readable title/timing, show location and aggregate check-in
+  context, expose descriptions without repeating filler copy, and use a stable
+  responsive layout.
+- Description Markdown renders consistently with the public Club feed and admin
+  detail rather than exposing Markdown punctuation to members.
+- Upcoming and attendance collections remain single-column lists on desktop and
+  mobile; variable metadata never produces mismatched side-by-side card heights.
+- A Back to dashboard link is present. Upcoming cards expose a safe Discord
+  action only for a trusted projection and an Add to Google Calendar link built
+  from safe event fields.
 
 ### TC-003: Paid member unlocks Dues-paying events through effective dues
 
@@ -113,8 +125,11 @@ Expected observations:
 
 - The attended event and captured points remain visible to that member.
 - The event no longer appears as an upcoming eligible selected-role event.
+- Description, location, and aggregate check-in context remain available.
+- A missing check-in time is omitted. The member never sees Legacy, Estimated,
+  or unavailable-time migration wording.
 
-### TC-005: Admin route selects only authorized views
+### TC-005: Event management and check-in use separate least-privilege routes
 
 Setup:
 
@@ -122,15 +137,24 @@ Setup:
 
 Action:
 
-- Open `/admin/events` and direct `?view=list|calendar|check-in|tags` URLs.
+- Open `/admin/events` and `/admin/check-in` directly as each caller. Inspect
+  navigation and the data requested/serialized by each page.
 
 Expected observations:
 
-- Readers see List/Calendar and read-only detail.
-- Editors additionally see mutation and Tags controls.
-- Check-in-only users land in Check-in and cannot render other views.
-- Officers see every view.
-- Unauthorized users redirect to `/member/dashboard`.
+- Readers see `/admin/events` List/Calendar and read-only detail but cannot
+  enter `/admin/check-in`.
+- Editors additionally see mutation and Tags controls but still cannot enter
+  `/admin/check-in` without the separate capability.
+- Check-in-only users see the distinct `Event Check-in` navigation destination,
+  can enter `/admin/check-in`, and cannot enter or see `/admin/events`.
+- The check-in page requests only grouped UUID/title choices and minimal member
+  search/check-in payloads. No event rows, detail, tags, roles, channels,
+  attendees, exports, or provider health are loaded or serialized.
+- Officers and callers holding both capabilities see both navigation
+  destinations and can enter both routes.
+- Unauthorized users redirect to `/member/dashboard`; unauthenticated users
+  redirect to `/`.
 
 ### TC-006: List and calendar share query-backed state
 
@@ -142,7 +166,8 @@ Setup:
 Action:
 
 - Search, combine filters, sort, change page size, paginate, and switch between
-  List and Calendar.
+  List and Calendar. Switch between Upcoming and Past from the persistent
+  timing control, including a Past URL carrying a stale health parameter.
 
 Expected observations:
 
@@ -154,6 +179,10 @@ Expected observations:
 - Search/filter/page-size changes return to page one.
 - URL parameters preserve state across reload and view changes.
 - Start/name/tag/attendance sorts use Event UUID as a stable tie-breaker.
+- Upcoming and Past are always visible without opening Filters. Past defaults
+  newest-first, clears/ignores integration-health filters, renders no Discord
+  or Google health warning, and offers no provider repair action. Blade
+  deletion-pending state remains visible.
 - Calendar returns every matching event intersecting its bounded visible window
   without list pagination; switching back restores the list page/page size.
 
@@ -236,28 +265,42 @@ Setup:
 
 Action:
 
-- Create the events and inspect their provider requests and consumer visibility.
+- Search the single channel combobox, select each channel with pointer and
+  keyboard flows, create the events, and inspect provider requests and consumer
+  visibility.
 
 Expected observations:
 
 - Google targets the internal/development calendar.
 - A selected voice channel uses `GuildScheduledEventEntityType.Voice`; a stage
   channel uses `GuildScheduledEventEntityType.StageInstance`.
+- Channel search and selection occur in one accessible combobox. The selected
+  live result supplies both ID and type; no separate search input plus native
+  dropdown or always-visible manual ID/type pair competes with it.
 - Internal events are absent from the public Club feed.
 - Eligible signed-in members see them according to Blade audience.
 
-### TC-011: Role-restricted public Discord event warns about broader visibility
+### TC-011: Multi-role audience remains OR-based and warns about broader Discord visibility
 
 Setup:
 
-- Select Selected roles while Internal is off.
+- Provide enough linked and cosmetic roles to require search. Select Selected
+  roles while Internal is off.
 
 Action:
 
-- Review and submit the create/edit form.
+- Search, add multiple roles, remove one selected role, and submit the
+  create/edit form with at least two roles. Evaluate members who hold either,
+  both, or neither selected role.
 
 Expected observations:
 
+- Role choices use the established searchable multi-select combobox, selected
+  roles remain visible and removable, keyboard interaction works, and a role
+  cannot be added twice.
+- The submitted event stores every remaining selected Role UUID.
+- A member holding any one selected role is eligible; a member holding none is
+  not. Holding all selected roles is not required.
 - A warning explains that Discord visibility is broader than Blade eligibility.
 - Submission remains allowed.
 - Blade/member visibility stays role-restricted while Discord uses an external
@@ -445,7 +488,9 @@ Expected observations:
 
 - Results identify the correct member using only the approved minimal fields.
 - Full Member profiles, event configuration, attendees, and exports are absent.
-- Selecting a member can complete check-in without camera access.
+- Manual is a first-class tab. Search and selection happen in one responsive
+  combobox, selecting a result does not mutate attendance, and the separate
+  Check in button completes check-in without camera access.
 
 ### TC-021: Dues and role check-in requirements are enforced
 
@@ -478,6 +523,33 @@ Expected observations:
 
 - Exactly one attendance record and one point increment exist.
 - Other outcomes report Already checked in rather than a generic failure.
+- Repeat mode off or omitted has the same result.
+
+### TC-022A: Scanner repeat mode records intentional repeat entries
+
+Setup:
+
+- Prepare one eligible member, one published club event, and a check-in-only
+  operator. Leave scanner repeat mode off.
+
+Action:
+
+- Scan the member twice with repeat mode off. Enable the scanner-side repeat
+  setting and scan twice more, including two concurrent repeat requests.
+
+Expected observations:
+
+- The second default scan returns `already_checked_in` and does not award
+  points.
+- Every repeat-enabled scan creates a separate attendance row while
+  eligibility, deletion, and pair-lock checks still run. Only the first row
+  awards the event's current points; later rows store zero and the member's
+  total is unchanged.
+- Holding one QR stationary produces one accepted scan; the same payload is
+  rearmed only after it leaves the camera frame and is presented again.
+- Repeat mode is not stored on or shown in Event administration and returns to
+  off after a fresh check-in page load.
+- Manual check-in never sends repeat mode and remains idempotent.
 
 ### TC-023: Reader attendee view and CSV expose only approved fields
 
@@ -496,7 +568,8 @@ Expected observations:
 - UI/CSV contain only UUID, name, Discord username, check-in time/operator when
   available, and points awarded.
 - Missing legacy metadata is shown safely.
-- The migrated award is explicitly labeled Estimated in the UI and CSV.
+- Internal estimate metadata may remain in CSV, but the attendee UI does not
+  label the row Estimated or Legacy and requires no special warning dialog.
 - CSV escapes delimiters, quotes, line breaks, and spreadsheet formulas.
 - Check-in-only and unauthorized users cannot read or export it.
 
@@ -509,16 +582,16 @@ Setup:
 
 Action:
 
-- Remove the Reforge attendance from the attendee viewer as an editor. Attempt
-  the legacy removal, acknowledge its estimate warning, and confirm.
+- Remove the current and migrated attendance rows from the attendee viewer as
+  an editor.
 
 Expected observations:
 
 - The attendance row is removed.
 - Blade subtracts the originally captured points instead of the event's new
   value.
-- The legacy removal cannot proceed through the ordinary confirmation. After
-  explicit estimate acknowledgement, it subtracts the stored estimate.
+- Both rows use the same direct removal flow. The migrated row subtracts its
+  stored estimate without migration wording or an acknowledgement parameter.
 - Check-in-only users do not see the removal control.
 
 ### TC-025: Event with attendees cannot be deleted
@@ -624,24 +697,34 @@ Expected observations:
 - Legacy edits remain Blade-only and issue no provider request.
 - Member history remains connected to legacy attendance.
 
-### TC-030: Route shell, loading, error, and responsive layouts remain stable
+### TC-030: Route shells, loading, error, and responsive layouts remain stable
 
 Setup:
 
-- Exercise List, Calendar, Check-in, Tags, and detail on desktop and 320px
-  mobile with delayed and failed reads.
+- Exercise List, Calendar, Tags, and detail under `/admin/events`, plus the
+  isolated `/admin/check-in` page, on desktop and 320px mobile with delayed and
+  failed reads.
 
 Action:
 
-- Navigate between views and open dialogs/scanner states.
+- Navigate between the two allowed destinations and open dialogs, comboboxes,
+  and scanner states.
 
 Expected observations:
 
 - The server-rendered admin rail/header remains mounted without page shift.
+- Events and Event Check-in remain distinct navigation destinations with no
+  query-parameter mode switch between them.
 - Skeletons resemble loaded geometry.
 - Empty and safe error states offer relevant recovery.
 - No document-level horizontal overflow occurs.
 - Mobile controls meet touch sizing; keyboard focus and reduced motion work.
+- At 320px, the check-in workspace fills the viewport below the Blade header,
+  removes desktop outer-card gutters/radii, and keeps event selection, Scanner
+  / Manual tabs, the primary action, and latest result within the task flow.
+- Before an attempt there is no empty Latest result card. Redundant instructions
+  are absent, repeat mode is compact, and a resolved result appears only after
+  an attempt without causing horizontal overflow.
 
 ### TC-031: Event audiences participate in role-unlink dependencies
 
@@ -678,16 +761,19 @@ Setup:
 
 Action:
 
-- Open Check-in, search the Older-events group, and check an eligible member
-  into an older club event.
+- Open `/admin/check-in`, switch between Upcoming and Past, use the event
+  combobox, and check an eligible member into an older club event.
 
 Expected observations:
 
-- Current and recent events are prioritized.
-- Older published and Legacy club events are reachable by explicit search and
-  remain check-in eligible under the normal audience rules.
+- Upcoming choices appear latest-starting first to match Legacy Blade. Past
+  choices appear newest first.
+- Older published and Legacy club events are directly reachable in the Past
+  combobox and remain check-in eligible under the normal audience rules.
 - Incomplete, deletion-pending, and hackathon events are absent.
 - Choices contain only UUID and title/grouping data.
+- Event search, when useful, lives inside the responsive combobox; there is no
+  separate event-search field paired with another selector.
 
 ### TC-033: Reader, editor, check-in, and officer APIs stay separated
 
@@ -699,7 +785,8 @@ Setup:
 Action:
 
 - Call every public/member/admin read, event/tag/integration mutation,
-  attendance correction/export, and check-in procedure for each caller.
+  attendance correction/export, and check-in procedure for each caller. Open
+  `/admin/events` and `/admin/check-in` directly for each permission tier.
 
 Expected observations:
 
@@ -707,6 +794,9 @@ Expected observations:
 - Edit implies reader behavior and can mutate events/tags/integrations and
   remove attendance, but does not imply Check-in.
 - Check-in can use only its three minimal procedures.
+- Route access mirrors API access: Read/Edit cannot enter `/admin/check-in`
+  without Check-in, and Check-in cannot enter `/admin/events` without
+  Read/Edit.
 - Officer can use every club event procedure. No-capability calls fail with the
   documented auth code and no protected payload.
 
@@ -732,6 +822,61 @@ Expected observations:
   exact phrase persists/audits the orphan-risk acknowledgement and permits
   deletion without pretending Discord returned Not found.
 
+### TC-035: Role and Discord destination comboboxes preserve form behavior
+
+Setup:
+
+- Provide many linked roles and eligible Discord voice/stage channels with
+  overlapping names.
+- Prepare create, edit, duplicate, browser-draft restore, loading, empty,
+  lookup-error, and live-channel-not-found states.
+
+Action:
+
+- Search and select multiple roles, remove one, and search/select one Discord
+  channel using pointer and keyboard interaction.
+- Restore and resubmit the form in each supported mode. Exercise the manual
+  channel-ID recovery path only after live lookup cannot provide the channel.
+
+Expected observations:
+
+- The role control is one searchable multi-select combobox with de-duplicated,
+  visible, removable selections and a clear empty state.
+- The channel control is one searchable single-select combobox with one visible
+  selected value. Selecting a live result atomically sets its ID and type.
+- Loading, no-results, and lookup-error states are distinguishable and
+  accessible. Manual ID/type entry appears only as the explicit fallback, not
+  as a parallel default selector.
+- Create, edit, duplicate, and restored drafts preserve the selected role IDs
+  and channel selection without changing audience, validation, or provider
+  semantics.
+
+### TC-036: Member dashboard provides a compact events overview
+
+Setup:
+
+- Give a member more than three attendance rows, multiple upcoming eligible
+  events, a locked dues event, and no event data in a separate empty scenario.
+
+Action:
+
+- Open `/member/dashboard` on desktop and 320px mobile, then follow View all to
+  `/member/events`.
+
+Expected observations:
+
+- Placeholder Member info and Academics sections are absent.
+- One larger Events surface shows the nearest upcoming event choices and no
+  more than the three most recent attendance rows with useful timing,
+  location, lock, and points context.
+- Up next and Recently attended stack in an intrinsic-height panel rather than
+  competing columns, so variable row counts do not leave a large empty card.
+- The overview reuses member eligibility and history contracts, has intentional
+  loading/error/empty states, and does not expose provider health, role IDs,
+  migration labels, or admin data.
+- View all reaches `/member/events`. Desktop and mobile retain clear hierarchy
+  without overflow or duplicating the full events dashboard.
+
 ## Negative / regression cases
 
 ### TC-NEG-001: Authentication and permission failures are distinct
@@ -742,7 +887,8 @@ Setup:
 
 Action:
 
-- Call protected/member/admin/check-in procedures and open admin URLs.
+- Call protected/member/admin/check-in procedures and open `/admin/events` and
+  `/admin/check-in`.
 
 Expected observations:
 
@@ -771,8 +917,10 @@ Expected observations:
 
 Setup:
 
-- Prepare starts in the past, equal/reversed end times, malformed timestamps,
-  unsupported all-day input, and recurrence fields.
+- Fix the clock and prepare starts in the past, 29 minutes 59 seconds ahead,
+  exactly 30 minutes ahead, and later than 30 minutes ahead, plus
+  equal/reversed end times, malformed timestamps, unsupported all-day input,
+  and recurrence fields.
 - Prepare an `America/New_York` spring-forward time that does not exist, both
   explicit offsets for a repeated fall-back time, and a valid multi-day event
   crossing each DST boundary.
@@ -783,7 +931,9 @@ Action:
 
 Expected observations:
 
-- Inputs fail before Blade or provider mutation with field-specific safe copy.
+- Starts less than 30 minutes ahead fail in the create/duplicate form and again
+  at the server boundary before Blade or provider mutation, with field-specific
+  safe copy. Exactly 30 minutes and later pass this rule.
 - Valid timed multi-day input succeeds.
 - The nonexistent local time is rejected. An ambiguous local time is rejected
   until the first/second occurrence is chosen; each choice persists its correct
@@ -963,12 +1113,71 @@ Action:
 - Call admin detail/list, attendee list/export, tag reads/mutations,
   create/update/delete, integration sync/repair, and attendance-removal
   procedures directly, then call the three documented Check-in procedures.
+  Open `/admin/events` and `/admin/check-in` directly.
 
 Expected observations:
 
 - Every adjacent procedure returns `FORBIDDEN` without data or mutation.
 - Event choices, minimal member search, and check-in remain available with
   their documented minimal payloads.
+- `/admin/check-in` renders the operational surface, while `/admin/events`
+  redirects without rendering or prefetching management data.
+
+### TC-NEG-014: Truncate restore preserves local migration state atomically
+
+Setup:
+
+- Materialize the pre-event schema, seed production-shaped legacy event and
+  attendance data, and retain a local Drizzle ledger plus tag catalog.
+
+Action:
+
+- Run the same prelude/import/postlude contract used by `db:pull --truncate`,
+  including a deliberately failing import variant.
+
+Expected observations:
+
+- Success preserves the ledger and tag catalog and leaves no orphan attendance.
+- Any SQL or invariant failure rolls the whole replacement back.
+- The downloaded dump is temporary/ignored and no credentials or shell-expanded
+  command text are persisted in the repository.
+
+### TC-NEG-015: Rolling deployment keeps old and new Event writers compatible
+
+Setup:
+
+- Apply the Event migrations, then construct an old-writer insert that omits
+  Reforge-only columns and a new-writer insert with `legacy=false`.
+
+Action:
+
+- Insert both rows and query future public/member/check-in discovery.
+
+Expected observations:
+
+- The old row succeeds with safe Legacy defaults; the new row retains managed
+  Reforge defaults.
+- Eligible future Legacy rows remain visible without publication/sync metadata.
+- The attendance lookup indexes exist in both event-first and member-first
+  order without forbidding intentional repeat rows.
+
+### TC-NEG-016: Stale edits and idempotent create retries are safe
+
+Setup:
+
+- Open the same event at one revision in two editors and reserve a creation key
+  for an event whose start later enters the 30-minute lead window.
+
+Action:
+
+- Save both edits, then retry the already-reserved create request.
+
+Expected observations:
+
+- The first edit advances the revision and the stale edit receives `CONFLICT`
+  without overwriting it.
+- The matching creation-key retry resumes orchestration before temporal
+  validation and does not create a duplicate event.
 
 ## Open questions
 

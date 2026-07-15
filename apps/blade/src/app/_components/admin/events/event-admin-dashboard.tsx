@@ -8,10 +8,10 @@ import {
   ArrowDownUp,
   CalendarDays,
   Copy,
+  History,
   List,
   Pencil,
   Plus,
-  QrCode,
   RefreshCw,
   Search,
   Tags,
@@ -24,10 +24,6 @@ import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
 
-import type {
-  CheckInMemberChoice,
-  CheckInResult,
-} from "./event-check-in-panel";
 import type { EventFormValue } from "./event-form-dialog";
 import type { AdminEventInput, EventAdminView } from "./params";
 import type {
@@ -37,7 +33,6 @@ import type {
 } from "./types";
 import { api } from "~/trpc/react";
 import { EventCalendar } from "./event-calendar";
-import { EventCheckInPanel } from "./event-check-in-panel";
 import { EventDetailDialog } from "./event-detail-dialog";
 import { EventFilters } from "./event-filters";
 import { EventFormDialog } from "./event-form-dialog";
@@ -52,11 +47,6 @@ import { buildAdminEventSearchParams } from "./params";
 
 interface EventAdminActions {
   onArchiveTag?: (tagId: string) => Promise<void> | void;
-  onCheckIn?: (input: {
-    eventId: string;
-    memberId?: string;
-    qrPayload?: string;
-  }) => Promise<CheckInResult>;
   onCreateEvent?: (value: EventFormValue) => Promise<void> | void;
   onCreateTag?: (values: {
     color: string;
@@ -67,10 +57,6 @@ interface EventAdminActions {
     eventId: string,
     provider: "discord" | "google",
   ) => Promise<void> | void;
-  onSearchMembers?: (query: string) => Promise<CheckInMemberChoice[]>;
-  onSearchOlderEvents?: (
-    query: string,
-  ) => Promise<NonNullable<EventAdminDashboardProps["checkInEvents"]>>;
   onUpdateTag?: (
     tagId: string,
     values: { color: string; defaultPoints: number; name: string },
@@ -187,14 +173,6 @@ function EventSections({
       },
     );
   }
-  if (access.canCheckIn || access.isOfficer) {
-    sections.push({
-      href: viewHref(input, "check-in"),
-      icon: QrCode,
-      label: "Check-in",
-      view: "check-in",
-    });
-  }
   if (access.canEdit || access.isOfficer) {
     sections.push({
       href: viewHref(input, "tags"),
@@ -280,6 +258,7 @@ function EventListView({
   onEdit,
   onOpen,
   onRepair,
+  repairingEventId,
 }: {
   access: EventAdminDashboardProps["access"];
   data: NonNullable<EventAdminDashboardProps["data"]>;
@@ -289,8 +268,10 @@ function EventListView({
   onEdit: (event: EventListItem) => void;
   onOpen: (eventId: string) => void;
   onRepair?: EventAdminActions["onRepair"];
+  repairingEventId: string | null;
 }) {
   const canEdit = access.canEdit || access.isOfficer;
+  const tracksIntegrationHealth = input.timing !== "past";
   const first = data.pagination.totalCount
     ? (data.pagination.page - 1) * data.pagination.pageSize + 1
     : 0;
@@ -324,7 +305,11 @@ function EventListView({
               <th className="px-4 py-3 font-medium">Starts</th>
               <th className="px-4 py-3 font-medium">Location</th>
               <th className="px-4 py-3 text-right font-medium">Attendance</th>
-              <th className="px-4 py-3 font-medium">Integration health</th>
+              <th className="px-4 py-3 font-medium">
+                {tracksIntegrationHealth
+                  ? "Integration health"
+                  : "Provider status"}
+              </th>
               <th className="px-4 py-3 text-right font-medium">Actions</th>
             </tr>
           </thead>
@@ -369,21 +354,27 @@ function EventListView({
                   {event.attendanceCount}
                 </td>
                 <td className="px-4 py-4">
-                  <div className="grid gap-1.5">
-                    {healthNeedsAttention(event) && (
-                      <span className="text-sm font-medium text-destructive">
-                        Needs attention
-                      </span>
-                    )}
-                    <IntegrationStatus
-                      health={event.discordHealth}
-                      label="Discord"
-                    />
-                    <IntegrationStatus
-                      health={event.googleHealth}
-                      label="Google Calendar"
-                    />
-                  </div>
+                  {tracksIntegrationHealth ? (
+                    <div className="grid gap-1.5">
+                      {healthNeedsAttention(event) && (
+                        <span className="text-sm font-medium text-destructive">
+                          Needs attention
+                        </span>
+                      )}
+                      <IntegrationStatus
+                        health={event.discordHealth}
+                        label="Discord"
+                      />
+                      <IntegrationStatus
+                        health={event.googleHealth}
+                        label="Google Calendar"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      Provider health is no longer tracked.
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-4">
                   <div className="flex justify-end gap-2">
@@ -416,20 +407,28 @@ function EventListView({
                           <Copy className="mr-2 h-4 w-4" aria-hidden="true" />
                           Duplicate event
                         </Button>
-                        {event.googleHealth !== "synced" && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onRepair?.(event.id, "google")}
-                          >
-                            <RefreshCw
-                              className="mr-2 h-4 w-4"
-                              aria-hidden="true"
-                            />
-                            Repair Google Calendar
-                          </Button>
-                        )}
+                        {tracksIntegrationHealth &&
+                          event.googleHealth !== "synced" && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={repairingEventId !== null}
+                              onClick={() => onRepair?.(event.id, "google")}
+                            >
+                              <RefreshCw
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  repairingEventId === event.id &&
+                                    "animate-spin",
+                                )}
+                                aria-hidden="true"
+                              />
+                              {repairingEventId === event.id
+                                ? "Repairing..."
+                                : "Repair Google Calendar"}
+                            </Button>
+                          )}
                       </>
                     )}
                   </div>
@@ -468,8 +467,11 @@ function EventListView({
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <EventTag color={event.tagColor} name={event.tag} />
               <Badge variant="outline">{audienceLabel(event.audience)}</Badge>
-              {healthNeedsAttention(event) && (
+              {tracksIntegrationHealth && healthNeedsAttention(event) && (
                 <Badge variant="destructive">Needs attention</Badge>
+              )}
+              {!tracksIntegrationHealth && (
+                <Badge variant="outline">Completed</Badge>
               )}
               {event.deletionPending && (
                 <Badge variant="destructive">Deletion pending</Badge>
@@ -535,17 +537,13 @@ function EventListView({
 export function EventAdminDashboard({
   access,
   channels = [],
-  checkInEvents,
   data,
   detail,
   input,
   onArchiveTag,
-  onCheckIn,
   onCreateEvent,
   onCreateTag,
   onRepair,
-  onSearchMembers,
-  onSearchOlderEvents,
   onUpdateEvent,
   onUpdateTag,
   tags = [],
@@ -559,7 +557,6 @@ export function EventAdminDashboard({
     api.event.resolveDiscordProjection.useMutation();
   const deleteEvent = api.event.deleteEvent.useMutation();
   const removeAttendance = api.event.removeAttendance.useMutation();
-  const checkInMember = api.event.checkInMember.useMutation();
   const createTag = api.event.createTag.useMutation();
   const updateTag = api.event.updateTag.useMutation();
   const archiveTag = api.event.archiveTag.useMutation();
@@ -569,6 +566,10 @@ export function EventAdminDashboard({
   );
   const [formInitial, setFormInitial] = useState<EventFormValue | null>(null);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editingEventRevision, setEditingEventRevision] = useState<
+    number | null
+  >(null);
+  const [repairingEventId, setRepairingEventId] = useState<string | null>(null);
   const eventOpener = useRef<HTMLElement | null>(null);
   const detailWasOpen = useRef(Boolean(detail));
   const canEdit = access.canEdit || access.isOfficer;
@@ -622,10 +623,15 @@ export function EventAdminDashboard({
     navigate(input, result.eventId);
   }
 
-  async function defaultUpdate(eventId: string, value: EventFormValue) {
+  async function defaultUpdate(
+    eventId: string,
+    expectedRevision: number,
+    value: EventFormValue,
+  ) {
     const result = await updateEvent.mutateAsync({
       ...eventPayload(value),
       eventId,
+      expectedRevision,
     });
     const feedback = eventUpdateFeedback(
       "status" in result ? result.status : undefined,
@@ -654,58 +660,23 @@ export function EventAdminDashboard({
     );
   }
 
-  async function defaultSearchMembers(query: string) {
-    const result = await utils.event.searchCheckInMembers.fetch({
-      limit: 20,
-      query,
-    });
-    return result.map((member) => ({
-      discordUsername: member.discordUsername,
-      email: member.email,
-      id: member.memberId,
-      name: member.name,
-      userId: member.userId,
-    }));
-  }
-
-  async function defaultCheckIn(checkInInput: {
-    eventId: string;
-    memberId?: string;
-    qrPayload?: string;
-  }) {
-    const result = await checkInMember.mutateAsync(
-      checkInInput.memberId
-        ? { eventId: checkInInput.eventId, memberId: checkInInput.memberId }
-        : {
-            eventId: checkInInput.eventId,
-            qrPayload: checkInInput.qrPayload ?? "",
-          },
-    );
-    switch (result.status) {
-      case "checked_in":
-        return { message: "Checked in.", state: "success" as const };
-      case "already_checked_in":
-        return {
-          message: "Already checked in.",
-          state: "already_checked_in" as const,
-        };
-      case "dues_required":
-        return {
-          message: "Dues are required for this event.",
-          state: "error" as const,
-        };
-      case "role_required":
-        return {
-          message: "This member is not eligible for the event.",
-          state: "error" as const,
-        };
-      case "member_not_found":
-        return { message: "Member not found.", state: "error" as const };
-      default:
-        return {
-          message: "Scan a valid member QR code.",
-          state: "error" as const,
-        };
+  async function repairFromList(
+    eventId: string,
+    provider: "discord" | "google",
+  ) {
+    if (repairingEventId) return;
+    setRepairingEventId(eventId);
+    try {
+      if (onRepair) await onRepair(eventId, provider);
+      else await defaultRepair(eventId, provider);
+    } catch (cause) {
+      toast.error(
+        cause instanceof Error && cause.message
+          ? cause.message
+          : "The integration could not be repaired.",
+      );
+    } finally {
+      setRepairingEventId(null);
     }
   }
 
@@ -729,6 +700,7 @@ export function EventAdminDashboard({
   ) {
     setFormMode(mode);
     setEditingEventId(mode === "edit" && event ? event.id : null);
+    setEditingEventRevision(mode === "edit" && event ? event.revision : null);
     setFormInitial(
       event
         ? {
@@ -764,7 +736,7 @@ export function EventAdminDashboard({
             Event management
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-            Manage club events, provider health, tags, and member check-in.
+            Manage club events, provider health, tags, and attendance records.
           </p>
         </div>
         {canEdit && (
@@ -785,6 +757,62 @@ export function EventAdminDashboard({
         (input.view === "list" || input.view === "calendar") &&
         data && (
           <section className="rounded-lg border border-white/10 bg-card/95 p-3 shadow-xl shadow-black/15 sm:p-4">
+            <div className="mb-4 flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium">Event timing</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Switch between active planning and completed event history.
+                </p>
+              </div>
+              <div
+                role="group"
+                aria-label="Event timing"
+                className="grid grid-cols-2 rounded-lg border border-white/10 bg-background/60 p-1"
+              >
+                <Button
+                  type="button"
+                  variant={input.timing === "upcoming" ? "primary" : "ghost"}
+                  aria-pressed={input.timing === "upcoming"}
+                  className="min-h-11 gap-2"
+                  onClick={() =>
+                    navigate({
+                      ...input,
+                      direction: "asc",
+                      health: [],
+                      page: 1,
+                      timing: "upcoming",
+                    })
+                  }
+                >
+                  <CalendarDays className="h-4 w-4" aria-hidden="true" />
+                  Upcoming
+                </Button>
+                <Button
+                  type="button"
+                  variant={input.timing === "past" ? "primary" : "ghost"}
+                  aria-pressed={input.timing === "past"}
+                  className="min-h-11 gap-2"
+                  onClick={() =>
+                    navigate({
+                      ...input,
+                      direction: "desc",
+                      health: [],
+                      page: 1,
+                      timing: "past",
+                    })
+                  }
+                >
+                  <History className="h-4 w-4" aria-hidden="true" />
+                  Past
+                </Button>
+              </div>
+            </div>
+            {input.timing === "past" && (
+              <p className="mb-4 rounded-md border border-white/10 bg-background/50 p-3 text-sm text-muted-foreground">
+                Provider health is no longer tracked for completed events.
+                Discord and Google Calendar repair actions are hidden.
+              </p>
+            )}
             <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(16rem,1fr)_auto_auto_auto_auto] lg:items-end">
               <form
                 className="relative min-w-0"
@@ -888,8 +916,7 @@ export function EventAdminDashboard({
               input.tags.length > 0 ||
               input.internal !== "all" ||
               input.startDate ||
-              input.endDate ||
-              input.timing === "past") && (
+              input.endDate) && (
               <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
                 {input.audiences.map((audience) => (
                   <button
@@ -999,23 +1026,6 @@ export function EventAdminDashboard({
                     <X className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                 )}
-                {input.timing === "past" && (
-                  <button
-                    type="button"
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
-                    onClick={() =>
-                      navigate({
-                        ...input,
-                        direction: "asc",
-                        page: 1,
-                        timing: "upcoming",
-                      })
-                    }
-                  >
-                    Past events
-                    <X className="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                )}
                 <Button
                   type="button"
                   size="sm"
@@ -1052,11 +1062,8 @@ export function EventAdminDashboard({
           onDuplicate={(event) => openForm("duplicate", event)}
           onEdit={(event) => openForm("edit", event)}
           onOpen={openEvent}
-          onRepair={(eventId, provider) =>
-            onRepair
-              ? onRepair(eventId, provider)
-              : defaultRepair(eventId, provider)
-          }
+          onRepair={repairFromList}
+          repairingEventId={repairingEventId}
         />
       )}
 
@@ -1084,19 +1091,6 @@ export function EventAdminDashboard({
               page: 1,
             });
           }}
-        />
-      )}
-
-      {input.view === "check-in" && (access.canCheckIn || access.isOfficer) && (
-        <EventCheckInPanel
-          groups={checkInEvents ?? { current: [], older: [], recent: [] }}
-          checkIn={onCheckIn ?? defaultCheckIn}
-          searchOlderEvents={
-            onSearchOlderEvents ??
-            ((olderSearch) =>
-              utils.event.listCheckInEvents.fetch({ olderSearch }))
-          }
-          searchMembers={onSearchMembers ?? defaultSearchMembers}
         />
       )}
 
@@ -1172,6 +1166,7 @@ export function EventAdminDashboard({
                 location: detail.event.location,
                 name: detail.event.name,
                 points: detail.event.points,
+                revision: detail.event.revision,
                 roleIds: detail.event.roles.map((role) => role.id),
                 startDateTime: detail.event.startDateTime,
                 tag: detail.event.tag,
@@ -1192,11 +1187,8 @@ export function EventAdminDashboard({
           onLoadDiscordCandidates={(eventId) =>
             utils.event.listDiscordRepairCandidates.fetch({ eventId })
           }
-          onRemoveAttendance={async (attendanceId, acknowledgeEstimated) => {
-            await removeAttendance.mutateAsync({
-              acknowledgeEstimated,
-              attendanceId,
-            });
+          onRemoveAttendance={async (attendanceId) => {
+            await removeAttendance.mutateAsync({ attendanceId });
             toast.success("Attendance removed and points corrected.");
             router.refresh();
           }}
@@ -1238,9 +1230,18 @@ export function EventAdminDashboard({
           tags={tags}
           onOpenChange={setCreateOpen}
           onSubmit={async (value) => {
-            if (formMode === "edit" && editingEventId) {
+            if (
+              formMode === "edit" &&
+              editingEventId &&
+              editingEventRevision !== null
+            ) {
               if (onUpdateEvent) await onUpdateEvent(editingEventId, value);
-              else await defaultUpdate(editingEventId, value);
+              else
+                await defaultUpdate(
+                  editingEventId,
+                  editingEventRevision,
+                  value,
+                );
             } else {
               if (onCreateEvent) await onCreateEvent(value);
               else await defaultCreate(value);

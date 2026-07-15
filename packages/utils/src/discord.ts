@@ -14,6 +14,7 @@ import { db } from "@forge/db/client";
 import { Account } from "@forge/db/schemas/auth";
 
 import { TEAMS } from "../../consts/src/team";
+import { shouldSuppressDiscordAuditLogs } from "./discord-log-policy";
 import { env } from "./env";
 import { logger } from "./logger";
 
@@ -213,6 +214,8 @@ export async function log({
   color: "tk_blue" | "blade_purple" | "uhoh_red" | "success_green";
   userId: string;
 }) {
+  if (shouldSuppressDiscordAuditLogs()) return;
+
   await api.post(Routes.channelMessages(DISCORD.LOG_CHANNEL), {
     body: {
       embeds: [

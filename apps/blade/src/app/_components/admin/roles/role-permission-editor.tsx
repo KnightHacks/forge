@@ -57,6 +57,12 @@ const permissionGroups = [
 
 const allPermissionKeys = permissionGroups.flatMap((group) => group.keys);
 
+function permissionData(key: PERMISSIONS.PermissionKey) {
+  const permission = PERMISSIONS.PERMISSION_DATA[key];
+  if (!permission) throw new Error(`Unknown permission: ${key}`);
+  return permission;
+}
+
 export function RolePermissionEditor({
   onChange,
   selected,
@@ -139,8 +145,7 @@ export function RolePermissionEditor({
       <div className="max-h-[48svh] space-y-4 overflow-y-auto rounded-md border border-white/10 bg-background/45 p-3 sm:p-4">
         {permissionGroups.map((group) => {
           const visible = group.keys.filter((key) => {
-            const permission = PERMISSIONS.PERMISSION_DATA[key];
-            if (!permission) return false;
+            const permission = permissionData(key);
             return (
               !normalizedQuery ||
               `${permission.name} ${permission.desc} ${key}`
@@ -156,8 +161,7 @@ export function RolePermissionEditor({
               </h3>
               <div className="space-y-2">
                 {visible.map((key) => {
-                  const permission = PERMISSIONS.PERMISSION_DATA[key];
-                  if (!permission) return null;
+                  const permission = permissionData(key);
                   const id = `role-permission-${key}`;
                   return (
                     <div

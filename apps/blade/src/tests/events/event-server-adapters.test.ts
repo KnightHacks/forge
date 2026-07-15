@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { parseAdminEventSearchParams } from "~/app/_components/admin/events/params";
 import {
+  eventQueryInput,
   eventRowToDetail,
   eventRowToListItem,
 } from "~/app/_components/admin/events/server-adapters";
@@ -52,6 +54,15 @@ describe("event admin server adapters", () => {
     expect(detail.integrations.google).toEqual({
       health: "pending",
       url: null,
+    });
+  });
+
+  it("drops stale integration-health state from past event queries", () => {
+    const input = parseAdminEventSearchParams({ timing: "past" }).input;
+
+    expect(eventQueryInput({ ...input, health: ["error"] })).toMatchObject({
+      integrationStates: [],
+      timing: "past",
     });
   });
 });

@@ -19,6 +19,12 @@ const ROLE_ID = "00000000-0000-4000-8000-000000000001";
 const SECOND_ROLE_ID = "00000000-0000-4000-8000-000000000002";
 const USER_ID = "00000000-0000-4000-8000-000000000003";
 
+function permissionIndex(key: PERMISSIONS.PermissionKey) {
+  const permission = PERMISSIONS.PERMISSION_DATA[key];
+  if (!permission) throw new Error(`Unknown permission: ${key}`);
+  return permission.idx;
+}
+
 describe("role management data behavior", () => {
   it("normalizes permission keys to stable bit indices and identifies cosmetics", () => {
     const bitstring = permissionKeysToBitstring([
@@ -29,12 +35,12 @@ describe("role management data behavior", () => {
     expect(bitstring).toHaveLength(
       Object.keys(PERMISSIONS.PERMISSION_DATA).length,
     );
-    const readIndex = PERMISSIONS.PERMISSIONS.READ_MEMBERS;
-    const configureIndex = PERMISSIONS.PERMISSIONS.CONFIGURE_ROLES;
+    const readIndex = permissionIndex("READ_MEMBERS");
+    const configureIndex = permissionIndex("CONFIGURE_ROLES");
     expect(readIndex).toBeDefined();
     expect(configureIndex).toBeDefined();
-    expect(bitstring[readIndex ?? -1]).toBe("1");
-    expect(bitstring[configureIndex ?? -1]).toBe("1");
+    expect(bitstring[readIndex]).toBe("1");
+    expect(bitstring[configureIndex]).toBe("1");
     expect(permissionBitstringToKeys(bitstring)).toEqual([
       "READ_MEMBERS",
       "CONFIGURE_ROLES",

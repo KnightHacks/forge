@@ -124,6 +124,61 @@ jobs:
           pnpm db:migrate
           pnpm db:migrate
 
+      - name: Verify prod-like event invariants
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d local <<'SQL'
+          DO $$
+          BEGIN
+            IF NOT EXISTS (SELECT 1 FROM knight_hacks_event_tag) THEN
+              RAISE EXCEPTION 'Event tag catalog is empty after upgrade';
+            END IF;
+            IF EXISTS (
+              SELECT 1
+              FROM knight_hacks_event_attendee attendance
+              LEFT JOIN knight_hacks_event event ON event.id = attendance.event_id
+              LEFT JOIN knight_hacks_member member ON member.id = attendance.member_id
+              WHERE event.id IS NULL OR member.id IS NULL
+            ) THEN
+              RAISE EXCEPTION 'Orphan event attendance exists after upgrade';
+            END IF;
+            IF EXISTS (
+              SELECT 1 FROM knight_hacks_event
+              WHERE tag_color IS NULL OR legacy IS NULL
+            ) THEN
+              RAISE EXCEPTION 'Event migration backfill is incomplete';
+            END IF;
+          END $$;
+          SQL
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: forge
+        options: >-
+          --health-cmd="pg_isready -U postgres -d forge"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forge
+        run: pnpm test
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -159,7 +214,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [migration_check, migration_apply_fresh, lint, format, typecheck]
+    needs:
+      [migration_check, migration_apply_fresh, lint, format, test, typecheck]
     permissions:
       contents: read
     steps:

@@ -18,9 +18,15 @@ interface AttendanceEvent {
 }
 
 interface AttendanceMember {
+  company: string | null;
+  discordUsername: string;
   duesActive: boolean;
+  firstName: string;
+  guildProfileVisible: boolean;
   id: string;
+  lastName: string;
   roleIds: string[];
+  tagline: string | null;
   userId: string;
 }
 
@@ -89,6 +95,16 @@ function eligibility(event: AttendanceEvent, member: AttendanceMember) {
   return null;
 }
 
+function memberSummary(member: AttendanceMember) {
+  return {
+    company: member.guildProfileVisible ? member.company : null,
+    discordUsername: member.discordUsername,
+    id: member.id,
+    name: `${member.firstName} ${member.lastName}`.trim(),
+    tagline: member.guildProfileVisible ? member.tagline : null,
+  };
+}
+
 export function createAttendanceService({
   audit,
   clock,
@@ -118,6 +134,7 @@ export function createAttendanceService({
   return {
     async checkIn(input: {
       actorId: string;
+      allowRepeat?: boolean;
       eventId: string;
       memberId?: string;
       qrPayload?: string;
@@ -156,13 +173,22 @@ export function createAttendanceService({
               message: "This event is being deleted.",
             });
           }
-          if (await state.findAttendance(event.id, member.id)) {
-            return { status: "already_checked_in" as const };
-          }
           const currentMember = await state.getMember(member.id);
           if (!currentMember) return { status: "member_not_found" as const };
+          const safeMember = memberSummary(currentMember);
+          const existingAttendance = await state.findAttendance(
+            event.id,
+            member.id,
+          );
+          if (!input.allowRepeat && existingAttendance) {
+            return {
+              member: safeMember,
+              status: "already_checked_in" as const,
+            };
+          }
           const rejection = eligibility(currentEvent, currentMember);
-          if (rejection) return { status: rejection };
+          if (rejection) return { member: safeMember, status: rejection };
+          const pointsAwarded = existingAttendance ? 0 : currentEvent.points;
           const row: AttendanceRecord = {
             checkedInAt: clock(),
             checkedInBy: input.actorId,
@@ -170,16 +196,14 @@ export function createAttendanceService({
             id: idFactory(),
             memberId: currentMember.id,
             operatorName: null,
-            pointsAwarded: currentEvent.points,
+            pointsAwarded,
             pointsAwardedEstimated: false,
           };
-          await state.insertAttendanceAndIncrementPoints(
-            row,
-            currentEvent.points,
-          );
+          await state.insertAttendanceAndIncrementPoints(row, pointsAwarded);
           return {
             attendanceId: row.id,
-            pointsAwarded: currentEvent.points,
+            member: safeMember,
+            pointsAwarded,
             status: "checked_in" as const,
           };
         },
@@ -195,11 +219,7 @@ export function createAttendanceService({
       return result;
     },
 
-    async removeAttendance(input: {
-      acknowledgeEstimated: boolean;
-      actorId: string;
-      attendanceId: string;
-    }) {
+    async removeAttendance(input: { actorId: string; attendanceId: string }) {
       const row = await state.getAttendance(input.attendanceId);
       if (!row) {
         throw new TRPCError({
@@ -211,12 +231,6 @@ export function createAttendanceService({
         throw new TRPCError({
           code: "CONFLICT",
           message: "The stored point award is unavailable.",
-        });
-      }
-      if (row.pointsAwardedEstimated && !input.acknowledgeEstimated) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "Acknowledge the estimated legacy point award first.",
         });
       }
       const removed = await state.removeAttendanceAndDecrementPoints(

@@ -56,6 +56,13 @@ describe("event check-in and attendance", () => {
     });
 
     expect(result).toMatchObject({
+      member: {
+        company: "Knight Hacks",
+        discordUsername: "member-one",
+        id: MEMBER_IDS.member,
+        name: "Member One",
+        tagline: "Builder and mentor",
+      },
       pointsAwarded: 25,
       status: "checked_in",
     });
@@ -71,6 +78,27 @@ describe("event check-in and attendance", () => {
     ]);
     expect(await state.getMember(MEMBER_IDS.member)).toMatchObject({
       points: 35,
+    });
+  });
+
+  it("[TC-018] omits private Guild profile fields from check-in results", async () => {
+    const { service } = setup({
+      member: memberRecord({ guildProfileVisible: false }),
+    });
+
+    await expect(
+      service.checkIn({
+        actorId: USER_IDS.operator,
+        eventId: EVENT_IDS.public,
+        memberId: MEMBER_IDS.member,
+      }),
+    ).resolves.toMatchObject({
+      member: {
+        company: null,
+        id: MEMBER_IDS.member,
+        tagline: null,
+      },
+      status: "checked_in",
     });
   });
 
@@ -122,7 +150,10 @@ describe("event check-in and attendance", () => {
         eventId: event.id,
         memberId: MEMBER_IDS.member,
       }),
-    ).resolves.toEqual({ status: "dues_required" });
+    ).resolves.toMatchObject({
+      member: { id: MEMBER_IDS.member, name: "Member One" },
+      status: "dues_required",
+    });
     expect(state.attendance.size).toBe(0);
     expect(await state.getMember(MEMBER_IDS.member)).toMatchObject({
       points: 10,
@@ -159,7 +190,10 @@ describe("event check-in and attendance", () => {
         eventId: event.id,
         memberId: MEMBER_IDS.member,
       }),
-    ).resolves.toEqual({ status: "role_required" });
+    ).resolves.toMatchObject({
+      member: { id: MEMBER_IDS.member, name: "Member One" },
+      status: "role_required",
+    });
     expect(ineligible.state.attendance.size).toBe(0);
   });
 
@@ -193,7 +227,10 @@ describe("event check-in and attendance", () => {
         eventId: event.id,
         memberId: MEMBER_IDS.member,
       }),
-    ).resolves.toEqual({ status: "dues_required" });
+    ).resolves.toMatchObject({
+      member: { id: MEMBER_IDS.member },
+      status: "dues_required",
+    });
     expect(fixture.state.attendance.size).toBe(0);
   });
 
@@ -217,7 +254,10 @@ describe("event check-in and attendance", () => {
         eventId: legacy.id,
         memberId: MEMBER_IDS.member,
       }),
-    ).resolves.toEqual({ status: "dues_required" });
+    ).resolves.toMatchObject({
+      member: { id: MEMBER_IDS.member },
+      status: "dues_required",
+    });
 
     const paidWithoutRole = setup({
       event: legacy,
@@ -229,7 +269,10 @@ describe("event check-in and attendance", () => {
         eventId: legacy.id,
         memberId: MEMBER_IDS.member,
       }),
-    ).resolves.toEqual({ status: "role_required" });
+    ).resolves.toMatchObject({
+      member: { id: MEMBER_IDS.member },
+      status: "role_required",
+    });
   });
 
   it("[TC-022] serializes concurrent duplicate scans into one award", async () => {
@@ -251,10 +294,47 @@ describe("event check-in and attendance", () => {
     expect(
       outcomes.filter(({ status }) => status === "already_checked_in"),
     ).toHaveLength(4);
+    expect(
+      outcomes.find(({ status }) => status === "already_checked_in"),
+    ).toMatchObject({ member: { id: MEMBER_IDS.member, name: "Member One" } });
     expect(state.attendance.size).toBe(1);
     expect(await state.getMember(MEMBER_IDS.member)).toMatchObject({
       points: 35,
     });
+  });
+
+  it("[TC-022A] records repeat attendance but awards points only once", async () => {
+    const { audit, service, state } = setup();
+
+    await service.checkIn({
+      actorId: USER_IDS.operator,
+      eventId: EVENT_IDS.public,
+      memberId: MEMBER_IDS.member,
+    });
+    const outcomes = await Promise.all(
+      Array.from({ length: 2 }, () =>
+        service.checkIn({
+          actorId: USER_IDS.operator,
+          allowRepeat: true,
+          eventId: EVENT_IDS.public,
+          memberId: MEMBER_IDS.member,
+        }),
+      ),
+    );
+
+    expect(outcomes.every(({ status }) => status === "checked_in")).toBe(true);
+    expect(outcomes).toEqual([
+      expect.objectContaining({ pointsAwarded: 0 }),
+      expect.objectContaining({ pointsAwarded: 0 }),
+    ]);
+    expect(state.attendance.size).toBe(3);
+    expect(
+      [...state.attendance.values()].map(({ pointsAwarded }) => pointsAwarded),
+    ).toEqual([25, 0, 0]);
+    expect(await state.getMember(MEMBER_IDS.member)).toMatchObject({
+      points: 35,
+    });
+    expect(audit).toHaveBeenCalledTimes(3);
   });
 
   it("[TC-023] serializes only approved attendance fields and neutralizes spreadsheet formulas", () => {
@@ -305,7 +385,6 @@ describe("event check-in and attendance", () => {
       service.removeAttendance({
         actorId: USER_IDS.operator,
         attendanceId: row.id,
-        acknowledgeEstimated: false,
       }),
     ).resolves.toMatchObject({ pointsRemoved: 25, status: "removed" });
     expect(state.attendance.size).toBe(0);
@@ -326,13 +405,12 @@ describe("event check-in and attendance", () => {
       fixture.service.removeAttendance({
         actorId: USER_IDS.operator,
         attendanceId: row.id,
-        acknowledgeEstimated: false,
       }),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(fixture.audit).not.toHaveBeenCalled();
   });
 
-  it("[TC-024, TC-NEG-009] requires acknowledgement for estimates and blocks null awards", async () => {
+  it("[TC-024, TC-NEG-009] removes stored estimates directly and blocks null awards", async () => {
     const estimated = attendanceRecord({
       pointsAwarded: 35,
       pointsAwardedEstimated: true,
@@ -346,16 +424,6 @@ describe("event check-in and attendance", () => {
       fixture.service.removeAttendance({
         actorId: USER_IDS.operator,
         attendanceId: estimated.id,
-        acknowledgeEstimated: false,
-      }),
-    ).rejects.toMatchObject({ code: "CONFLICT" });
-    expect(fixture.state.attendance.size).toBe(1);
-
-    await expect(
-      fixture.service.removeAttendance({
-        actorId: USER_IDS.operator,
-        attendanceId: estimated.id,
-        acknowledgeEstimated: true,
       }),
     ).resolves.toMatchObject({ pointsRemoved: 35, status: "removed" });
 
@@ -365,7 +433,6 @@ describe("event check-in and attendance", () => {
       unknownFixture.service.removeAttendance({
         actorId: USER_IDS.operator,
         attendanceId: unknown.id,
-        acknowledgeEstimated: true,
       }),
     ).rejects.toMatchObject({ code: "CONFLICT" });
     expect(unknownFixture.state.attendance.size).toBe(1);

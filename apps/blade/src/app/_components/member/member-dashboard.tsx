@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowRight,
   Building2,
   CalendarDays,
   CreditCard,
@@ -10,13 +11,12 @@ import {
   FileText,
   Github,
   Globe2,
+  History,
   Linkedin,
-  Mail,
-  School,
+  MapPin,
   Settings,
-  Shirt,
   Sparkles,
-  UserRound,
+  Trophy,
 } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
@@ -26,11 +26,16 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent } from "@forge/ui/card";
 import { MEMBER_DUES_PATH, MEMBER_SETTINGS_PATH } from "@forge/validators";
 
+import type {
+  MemberAttendanceItem,
+  MemberEventItem,
+} from "~/app/_components/member/member-events-dashboard";
 import type { CurrentMember } from "~/hooks/use-member";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberQRCodeDialog } from "~/app/_components/member/member-qr-code-dialog";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
 import { MemberRouteTransitionLink } from "~/app/_components/member/member-route-transition-link";
+import { formatEventDateTime } from "~/lib/event-dates";
 
 export const dashboardGridClass =
   "grid w-full gap-4 md:gap-6 lg:min-h-[calc(100svh-8rem)] lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-stretch xl:grid-cols-[minmax(0,1fr)_28rem]";
@@ -129,30 +134,161 @@ function DuesStatusTile({
   );
 }
 
-function EventsLinkTile({ className }: { className?: string }) {
+function EventsOverview({
+  attendance,
+  className,
+  events,
+  unavailable = false,
+}: {
+  attendance: MemberAttendanceItem[];
+  className?: string;
+  events: MemberEventItem[];
+  unavailable?: boolean;
+}) {
+  const upcoming = events.slice(0, 2);
+  const recent = attendance.slice(0, 3);
+
   return (
-    <MemberRouteTransitionLink
-      href="/member/events"
+    <DashboardContent
+      role="region"
+      aria-label="Events overview"
+      data-dashboard-events-layout="stacked"
       className={cn(
         dashboardNestedSurfaceClass,
-        "flex min-h-11 items-center justify-between gap-3 p-3 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex flex-col p-3 md:p-4",
         className,
       )}
     >
-      <span className="flex items-center gap-2">
-        <CalendarDays className="h-4 w-4 text-primary" aria-hidden="true" />
-        Events
-      </span>
-      <span className="text-sm text-muted-foreground">View schedule</span>
-    </MemberRouteTransitionLink>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 font-medium">
+          <CalendarDays className="h-4 w-4 text-primary" aria-hidden="true" />
+          Events
+        </div>
+        <MemberRouteTransitionLink
+          href="/member/events"
+          className="flex min-h-11 items-center gap-1 rounded-md px-2 text-sm font-medium text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          View all
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </MemberRouteTransitionLink>
+      </div>
+
+      {unavailable ? (
+        <p
+          role="status"
+          className="mt-3 rounded-md border border-dashed border-white/10 p-3 text-sm text-muted-foreground"
+        >
+          Event information is temporarily unavailable. Your profile and dues
+          information are still available.
+        </p>
+      ) : (
+        <div className="mt-3 grid gap-4">
+          <section aria-labelledby="dashboard-upcoming-events">
+            <h3
+              id="dashboard-upcoming-events"
+              className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              Up next
+            </h3>
+            <div className="grid gap-2">
+              {upcoming.length === 0 ? (
+                <p className="rounded-md border border-dashed border-white/10 p-3 text-sm text-muted-foreground">
+                  No upcoming events right now.
+                </p>
+              ) : (
+                upcoming.map((event) => (
+                  <article
+                    key={event.id}
+                    className="relative overflow-hidden rounded-md border border-white/10 bg-card/50 p-3 pl-4"
+                  >
+                    <span
+                      className="absolute inset-y-0 left-0 w-1"
+                      style={{ backgroundColor: event.tagColor }}
+                      aria-hidden="true"
+                    />
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <h4 className="min-w-0 break-words text-sm font-semibold">
+                        {event.name}
+                      </h4>
+                      {event.locked && (
+                        <Badge variant="outline" className="shrink-0">
+                          Dues required
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {formatEventDateTime(event.startAt)}
+                    </p>
+                    <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                      <MapPin
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span className="truncate">{event.location}</span>
+                    </p>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section aria-labelledby="dashboard-recent-events">
+            <h3
+              id="dashboard-recent-events"
+              className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              <History className="h-3.5 w-3.5" aria-hidden="true" />
+              Recently attended
+            </h3>
+            <div className="grid gap-2">
+              {recent.length === 0 ? (
+                <p className="rounded-md border border-dashed border-white/10 p-3 text-sm text-muted-foreground">
+                  Your attendance history is empty.
+                </p>
+              ) : (
+                recent.map((record) => (
+                  <article
+                    key={record.attendanceId}
+                    className="rounded-md border border-white/10 bg-card/50 p-3"
+                  >
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h4 className="truncate text-sm font-medium">
+                          {record.name}
+                        </h4>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {formatEventDateTime(
+                            record.checkedInAt ?? record.startAt,
+                          )}
+                        </p>
+                      </div>
+                      <span className="flex shrink-0 items-center gap-1 font-mono text-sm text-primary">
+                        <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
+                        {record.pointsAwarded ?? "?"}
+                      </span>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+        </div>
+      )}
+    </DashboardContent>
   );
 }
 
 function GuildProfileCard({
+  attendance,
   duesStatus,
+  events,
+  eventsUnavailable,
   member,
 }: {
+  attendance: MemberAttendanceItem[];
   duesStatus: CurrentDuesStatus;
+  events: MemberEventItem[];
+  eventsUnavailable: boolean;
   member: CurrentMember;
 }) {
   const displayName = `${member.firstName} ${member.lastName}`.trim();
@@ -233,7 +369,12 @@ function GuildProfileCard({
 
         <DuesStatusTile compact duesStatus={duesStatus} className="lg:hidden" />
 
-        <EventsLinkTile className="lg:hidden" />
+        <EventsOverview
+          attendance={attendance}
+          events={events}
+          unavailable={eventsUnavailable}
+          className="lg:hidden"
+        />
 
         <DashboardContent
           role="group"
@@ -354,40 +495,18 @@ function GuildProfileCard({
 }
 
 export function MemberDashboard({
+  attendance,
   duesStatus,
+  events,
+  eventsUnavailable = false,
   member,
 }: {
+  attendance: MemberAttendanceItem[];
   duesStatus: CurrentDuesStatus;
+  events: MemberEventItem[];
+  eventsUnavailable?: boolean;
   member: CurrentMember;
 }) {
-  const profileItems = [
-    {
-      icon: Mail,
-      label: "Email",
-      value: member.email,
-    },
-    {
-      icon: School,
-      label: "School",
-      value: member.school,
-    },
-    {
-      icon: Shirt,
-      label: "Shirt",
-      value: member.shirtSize,
-    },
-  ];
-  const academicItems = [
-    {
-      label: "Level",
-      value: member.levelOfStudy,
-    },
-    {
-      label: "Major",
-      value: member.major,
-    },
-  ];
-
   return (
     <main className="container py-4 md:py-8 lg:flex lg:min-h-[calc(100svh-4rem)] lg:items-stretch">
       <section className={dashboardGridClass}>
@@ -409,56 +528,21 @@ export function MemberDashboard({
 
             <DuesStatusTile duesStatus={duesStatus} />
 
-            <EventsLinkTile />
-
-            <DashboardContent
-              className={cn(dashboardNestedSurfaceClass, "p-4")}
-            >
-              <div className="mb-4 flex items-center gap-2 text-sm font-medium">
-                <UserRound
-                  className="h-4 w-4 text-primary"
-                  aria-hidden="true"
-                />
-                Member info
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {profileItems.map((item) => (
-                  <div key={item.label}>
-                    <p className="text-xs uppercase text-muted-foreground">
-                      {item.label}
-                    </p>
-                    <p className="mt-1 break-words text-sm font-medium">
-                      {item.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </DashboardContent>
-
-            <DashboardContent
-              className={cn(dashboardNestedSurfaceClass, "p-4")}
-            >
-              <div className="mb-4 flex items-center gap-2 text-sm font-medium">
-                <School className="h-4 w-4 text-primary" aria-hidden="true" />
-                Academics
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {academicItems.map((item) => (
-                  <div key={item.label}>
-                    <p className="text-xs uppercase text-muted-foreground">
-                      {item.label}
-                    </p>
-                    <p className="mt-1 break-words text-sm font-medium">
-                      {item.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </DashboardContent>
+            <EventsOverview
+              attendance={attendance}
+              events={events}
+              unavailable={eventsUnavailable}
+            />
           </CardContent>
         </Card>
 
-        <GuildProfileCard member={member} duesStatus={duesStatus} />
+        <GuildProfileCard
+          attendance={attendance}
+          duesStatus={duesStatus}
+          events={events}
+          eventsUnavailable={eventsUnavailable}
+          member={member}
+        />
       </section>
     </main>
   );

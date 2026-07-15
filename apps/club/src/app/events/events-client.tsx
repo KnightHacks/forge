@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@forge/ui";
+import { MarkdownContent } from "@forge/ui/markdown-content";
 
 import type { EventsStatus, PublicClubEvent } from "../_lib/club-events";
 import { ClubEventAccessBadge } from "../_components/club-event-access-badge";
@@ -325,9 +326,12 @@ function CalendarEventCard({ event }: { event: PublicClubEvent }) {
         <h3 className="mt-2 text-2xl font-black leading-tight text-white">
           {event.name}
         </h3>
-        <p className="mt-1 line-clamp-2 max-w-[28rem] text-sm leading-5 text-[var(--club-muted)]">
+        <MarkdownContent
+          compact
+          className="mt-1 line-clamp-2 max-w-[28rem] text-sm leading-5 text-[var(--club-muted)] [&_a]:text-[var(--club-gold)]"
+        >
           {event.description}
-        </p>
+        </MarkdownContent>
       </div>
     </article>
   );
@@ -400,9 +404,12 @@ function UpcomingEventRow({ event }: { event: PublicClubEvent }) {
         <h3 className="mt-2 text-2xl font-black leading-tight text-white">
           {event.name}
         </h3>
-        <p className="mt-2 line-clamp-2 max-w-[30rem] text-sm leading-5 text-[var(--club-muted)]">
+        <MarkdownContent
+          compact
+          className="mt-2 line-clamp-2 max-w-[30rem] text-sm leading-5 text-[var(--club-muted)] [&_a]:text-[var(--club-gold)]"
+        >
           {event.description}
-        </p>
+        </MarkdownContent>
       </div>
       <div
         className="club-event-tag-card flex min-h-24 items-center justify-center rounded-lg px-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] md:min-h-28"

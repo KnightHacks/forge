@@ -59,6 +59,7 @@ const detail = {
     location: "ENG2 102",
     name: "Current Workshop",
     points: 10,
+    revision: 3,
     roles: [{ id: "00000000-0000-4000-8000-000000000602", name: "Design" }],
     startDateTime: "2026-08-12T18:00:00-04:00",
     tag: "Workshop",
@@ -94,7 +95,7 @@ describe("EventDetailDialog", () => {
     expect(html).toContain("Attendance");
     expect(html).toContain("Ada Builder");
     expect(html).toContain("@ada.builds");
-    expect(html).toContain("Estimated");
+    expect(html).not.toContain("Estimated");
     expect(html).toContain("Export attendance");
     expect(html).not.toContain("Edit event");
     expect(html).not.toContain("Remove Ada Builder");
@@ -114,7 +115,8 @@ describe("EventDetailDialog", () => {
     expect(html).toContain("Edit event");
     expect(html).toContain("Repair Google Calendar");
     expect(html).toContain("Remove Ada Builder");
-    expect(html).toContain("Estimated points acknowledgement");
+    expect(html).not.toContain("Estimated points acknowledgement");
+    expect(html).not.toContain("legacy point award");
     expect(html).toContain("Checked in");
     expect(html).toContain("Operator Event Operator");
     expect(html).toContain("Reapply Discord");
@@ -171,6 +173,32 @@ describe("EventDetailDialog", () => {
     expect(html).not.toContain("Review Discord candidates");
     expect(html).not.toContain("Discord status unknown");
     expect(html).not.toContain("Google Calendar status unknown");
+  });
+
+  it("treats completed non-Legacy provider health as no longer actionable", () => {
+    const html = renderToStaticMarkup(
+      createElement(EventDetailDialog, {
+        access: { canEdit: true, canRead: true, isOfficer: false },
+        detail: {
+          ...detail,
+          attendees: [],
+          event: {
+            ...detail.event,
+            attendanceCount: 0,
+            endDateTime: "2026-05-10T20:00:00-04:00",
+            legacy: false,
+            startDateTime: "2026-05-10T18:00:00-04:00",
+          },
+        },
+        onChanged: vi.fn(),
+        onClose: vi.fn(),
+      }),
+    );
+
+    expect(html).toContain("Provider health is no longer tracked");
+    expect(html).not.toContain("Repair Discord");
+    expect(html).not.toContain("Reapply Discord");
+    expect(html).not.toContain("Repair Google Calendar");
   });
 
   it("routes unknown Discord creation through explicit resolution", () => {

@@ -19,7 +19,7 @@ function bitstring(...indices: number[]) {
 
 function permissionIndex(key: PERMISSIONS.PermissionKey) {
   const permission = PERMISSIONS.PERMISSION_DATA[key];
-  if (!permission) throw new Error(`Missing permission ${key}`);
+  if (!permission) throw new Error(`Unknown permission: ${key}`);
   return permission.idx;
 }
 

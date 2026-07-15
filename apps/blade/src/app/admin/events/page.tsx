@@ -20,7 +20,7 @@ import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata: Metadata = {
-  description: "Manage Knight Hacks club events, check-in, and integrations.",
+  description: "Manage Knight Hacks club events and integrations.",
   title: "Blade | Event Management",
 };
 
@@ -36,9 +36,6 @@ export default async function AdminEventsPage({
   if (!canAccessEventAdmin(permissions)) redirect(MEMBER_DASHBOARD_PATH);
 
   const access = {
-    canCheckIn:
-      permissions.IS_OFFICER === true ||
-      permissions.CHECKIN_CLUB_EVENT === true,
     canEdit:
       permissions.IS_OFFICER === true || permissions.EDIT_CLUB_EVENT === true,
     canRead:
@@ -51,15 +48,11 @@ export default async function AdminEventsPage({
   const input = {
     ...parsed.input,
     view:
-      parsed.input.view === "check-in" && access.canCheckIn
-        ? ("check-in" as const)
-        : parsed.input.view === "tags" && access.canEdit
-          ? ("tags" as const)
-          : access.canRead
-            ? parsed.input.view === "calendar"
-              ? ("calendar" as const)
-              : ("list" as const)
-            : ("check-in" as const),
+      parsed.input.view === "tags" && access.canEdit
+        ? ("tags" as const)
+        : parsed.input.view === "calendar"
+          ? ("calendar" as const)
+          : ("list" as const),
   };
 
   if (input.view !== parsed.input.view) {
@@ -80,40 +73,26 @@ export default async function AdminEventsPage({
     redirect(`/admin/events?${params.toString()}`);
   }
 
-  const shouldList =
-    access.canRead && (input.view === "list" || input.view === "calendar");
-  const [
-    result,
-    tags,
-    roleChoices,
-    channels,
-    checkInEvents,
-    detailRow,
-    attendees,
-  ] = await Promise.all([
-    shouldList
-      ? api.event.listAdminEvents(eventQueryInput(input))
-      : Promise.resolve(null),
-    access.canRead ? api.event.listEventTags() : Promise.resolve([]),
-    access.canRead ? api.event.listAudienceRoles() : Promise.resolve([]),
-    access.canEdit
-      ? api.event.listDiscordChannels().catch(() => [])
-      : Promise.resolve([]),
-    access.canCheckIn && input.view === "check-in"
-      ? api.event.listCheckInEvents({ olderSearch: "" })
-      : Promise.resolve(null),
-    access.canRead && parsed.selectedEventId
-      ? api.event
-          .getAdminEvent({ eventId: parsed.selectedEventId })
-          .catch(() => null)
-      : Promise.resolve(null),
-    access.canRead && parsed.selectedEventId
-      ? api.event
-          .listAttendees({ eventId: parsed.selectedEventId })
-          .then((rows) => ({ error: false, rows }))
-          .catch(() => ({ error: true, rows: [] }))
-      : Promise.resolve({ error: false, rows: [] }),
-  ]);
+  const [result, tags, roleChoices, channels, detailRow, attendees] =
+    await Promise.all([
+      api.event.listAdminEvents(eventQueryInput(input)),
+      api.event.listEventTags(),
+      api.event.listAudienceRoles(),
+      access.canEdit
+        ? api.event.listDiscordChannels().catch(() => [])
+        : Promise.resolve([]),
+      parsed.selectedEventId
+        ? api.event
+            .getAdminEvent({ eventId: parsed.selectedEventId })
+            .catch(() => null)
+        : Promise.resolve(null),
+      parsed.selectedEventId
+        ? api.event
+            .listAttendees({ eventId: parsed.selectedEventId })
+            .then((rows) => ({ error: false, rows }))
+            .catch(() => ({ error: true, rows: [] }))
+        : Promise.resolve({ error: false, rows: [] }),
+    ]);
 
   const tagItems = tags.map((tag) => ({
     active: tag.active,
@@ -122,18 +101,16 @@ export default async function AdminEventsPage({
     id: tag.id,
     name: tag.name,
   }));
-  const data = result
-    ? eventRowsToAdminData({
-        input,
-        channels,
-        ...(input.view === "list" && "pagination" in result
-          ? { pagination: result.pagination }
-          : {}),
-        roles: roleChoices,
-        rows: result.rows,
-        tags: tagItems,
-      })
-    : null;
+  const data = eventRowsToAdminData({
+    input,
+    channels,
+    ...(input.view === "list" && "pagination" in result
+      ? { pagination: result.pagination }
+      : {}),
+    roles: roleChoices,
+    rows: result.rows,
+    tags: tagItems,
+  });
   const detail = detailRow
     ? eventRowToDetail({
         attendees: attendees.rows,
@@ -150,7 +127,6 @@ export default async function AdminEventsPage({
         key={JSON.stringify(input)}
         access={access}
         channels={channels}
-        checkInEvents={checkInEvents}
         data={data}
         detail={detail}
         input={input}

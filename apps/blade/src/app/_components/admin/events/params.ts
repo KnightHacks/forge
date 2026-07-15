@@ -1,4 +1,4 @@
-export type EventAdminView = "calendar" | "check-in" | "list" | "tags";
+export type EventAdminView = "calendar" | "list" | "tags";
 export type EventAdminTiming = "past" | "upcoming";
 export type EventAdminSort = "attendance" | "name" | "start" | "tag";
 export type EventAdminDirection = "asc" | "desc";
@@ -35,6 +35,9 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DEFAULT_CALENDAR_RADIUS_MS = 31 * 24 * 60 * 60 * 1_000;
+const MAX_CALENDAR_WINDOW_MS = 120 * 24 * 60 * 60 * 1_000;
+const MAX_FILTER_VALUES = 100;
+const MAX_QUERY_LENGTH = 100;
 
 export function defaultAdminCalendarWindow(now = new Date()) {
   return {
@@ -85,7 +88,12 @@ function positiveInteger(
 
 function validDate(value: string | string[] | undefined) {
   const candidate = Array.isArray(value) ? value[0] : value;
-  return candidate && DATE_PATTERN.test(candidate) ? candidate : undefined;
+  if (!candidate || !DATE_PATTERN.test(candidate)) return undefined;
+  const parsed = new Date(`${candidate}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === candidate
+    ? candidate
+    : undefined;
 }
 
 function validInstant(value: string | string[] | undefined) {
@@ -106,46 +114,66 @@ export function parseAdminEventSearchParams(params: AdminEventSearchParams) {
     ? params.event[0]
     : params.event;
   const timing = oneOf(params.timing, ["past", "upcoming"], "upcoming");
+  const health =
+    timing === "past"
+      ? []
+      : enumValues(params.health, ["error", "pending", "synced", "unknown"]);
+  const calendarStartCandidate = validInstant(params.calendarStart);
+  const calendarEndCandidate = validInstant(params.calendarEnd);
+  const hasValidCalendarWindow = Boolean(
+    calendarStartCandidate &&
+    calendarEndCandidate &&
+    Date.parse(calendarEndCandidate) > Date.parse(calendarStartCandidate) &&
+    Date.parse(calendarEndCandidate) - Date.parse(calendarStartCandidate) <=
+      MAX_CALENDAR_WINDOW_MS,
+  );
+  const startDateCandidate = validDate(params.start);
+  const endDateCandidate = validDate(params.end);
+  const hasOrderedDateRange = !(
+    startDateCandidate &&
+    endDateCandidate &&
+    endDateCandidate < startDateCandidate
+  );
+  const query =
+    (Array.isArray(params.q) ? params.q[0] : params.q)?.trim().slice(0, 100) ??
+    "";
+  const roleIds = [
+    ...new Set(
+      values(params.role).filter((roleId) => UUID_PATTERN.test(roleId)),
+    ),
+  ].slice(0, MAX_FILTER_VALUES);
+  const tags = [
+    ...new Set(
+      values(params.tag)
+        .map((tag) => tag.trim().slice(0, MAX_QUERY_LENGTH))
+        .filter(Boolean),
+    ),
+  ].slice(0, MAX_FILTER_VALUES);
 
   return {
     input: {
       audiences: enumValues(params.audience, ["dues", "public", "roles"]),
-      calendarEnd: validInstant(params.calendarEnd),
-      calendarStart: validInstant(params.calendarStart),
+      calendarEnd: hasValidCalendarWindow ? calendarEndCandidate : undefined,
+      calendarStart: hasValidCalendarWindow
+        ? calendarStartCandidate
+        : undefined,
       direction: oneOf(
         params.direction,
         ["asc", "desc"],
         timing === "past" ? "desc" : "asc",
       ),
-      endDate: validDate(params.end),
-      health: enumValues(params.health, [
-        "error",
-        "pending",
-        "synced",
-        "unknown",
-      ]),
+      endDate: hasOrderedDateRange ? endDateCandidate : undefined,
+      health,
       internal: oneOf(params.internal, ["all", "external", "internal"], "all"),
       page: positiveInteger(params.page, 1),
       pageSize,
-      query: (Array.isArray(params.q) ? params.q[0] : params.q)?.trim() ?? "",
-      roleIds: values(params.role).filter((roleId) =>
-        UUID_PATTERN.test(roleId),
-      ),
+      query,
+      roleIds,
       sort: oneOf(params.sort, ["attendance", "name", "start", "tag"], "start"),
-      startDate: validDate(params.start),
-      tags: [
-        ...new Set(
-          values(params.tag)
-            .map((tag) => tag.trim())
-            .filter(Boolean),
-        ),
-      ],
+      startDate: hasOrderedDateRange ? startDateCandidate : undefined,
+      tags,
       timing,
-      view: oneOf(
-        params.view,
-        ["calendar", "check-in", "list", "tags"],
-        "list",
-      ),
+      view: oneOf(params.view, ["calendar", "list", "tags"], "list"),
     } satisfies AdminEventInput,
     selectedEventId:
       eventCandidate && UUID_PATTERN.test(eventCandidate)

@@ -16,6 +16,7 @@ describe("Club reminder candidate selection", () => {
 
     expect(result.map((event) => event.id)).toEqual([
       EVENT_IDS.public,
+      EVENT_IDS.legacy,
       EVENT_IDS.dues,
     ]);
     expect(result[0]).toEqual({
@@ -28,6 +29,19 @@ describe("Club reminder candidate selection", () => {
       startDateTime: "2026-07-01T22:00:00.000Z",
       tag: "Workshop",
     });
+  });
+
+  it("keeps a future public Legacy event in reminders during cutover", () => {
+    const legacy = eventRecord({
+      id: EVENT_IDS.legacy,
+      legacy: true,
+      publishedAt: null,
+      synchronizedVisibility: null,
+    });
+
+    expect(selectClubReminderCandidates([legacy], { now: NOW })).toEqual([
+      expect.objectContaining({ id: legacy.id }),
+    ]);
   });
 
   it("[TC-028] tolerates a later Google-only failure when Discord is current and healthy", () => {

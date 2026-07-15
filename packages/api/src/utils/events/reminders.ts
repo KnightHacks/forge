@@ -13,6 +13,17 @@ function selectClubReminderCandidatesFromRows(
           internal: event.internal,
           roleIds: event.roleIds,
         },
+        ...(event.legacy &&
+        event.audience === "dues" &&
+        event.roleIds.length > 0
+          ? [
+              {
+                audience: "roles" as const,
+                internal: event.internal,
+                roleIds: event.roleIds,
+              },
+            ]
+          : []),
         event.synchronizedVisibility,
       ].filter(
         (
@@ -24,8 +35,7 @@ function selectClubReminderCandidatesFromRows(
         } => visibility !== null,
       );
       return event.hackathonId === null &&
-        !event.legacy &&
-        event.publishedAt !== null &&
+        (event.legacy || event.publishedAt !== null) &&
         event.deletionIntentAt === null &&
         effectiveVisibility.every(
           (visibility) =>
@@ -33,8 +43,9 @@ function selectClubReminderCandidatesFromRows(
         ) &&
         event.endAt > now &&
         discordId !== null &&
-        event.discord.state === "synced" &&
-        event.discord.appliedRevision === event.revision
+        (event.legacy ||
+          (event.discord.state === "synced" &&
+            event.discord.appliedRevision === event.revision))
         ? [{ event, discordId }]
         : [];
     })

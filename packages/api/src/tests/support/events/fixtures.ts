@@ -80,14 +80,17 @@ export interface TestEventRecord {
 }
 
 export interface TestMemberRecord {
+  company: string | null;
   discordUsername: string;
   duesActive: boolean;
   email: string;
   firstName: string;
+  guildProfileVisible: boolean;
   id: string;
   lastName: string;
   points: number;
   roleIds: string[];
+  tagline: string | null;
   userId: string;
 }
 
@@ -177,14 +180,17 @@ export function memberRecord(
   overrides: Partial<TestMemberRecord> = {},
 ): TestMemberRecord {
   return {
+    company: "Knight Hacks",
     discordUsername: "member-one",
     duesActive: false,
     email: "member@example.test",
     firstName: "Member",
+    guildProfileVisible: true,
     id: MEMBER_IDS.member,
     lastName: "One",
     points: 10,
     roleIds: [ROLE_IDS.cosmetic],
+    tagline: "Builder and mentor",
     userId: USER_IDS.member,
     ...overrides,
   };

@@ -7,6 +7,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { EVENTS } from "@forge/consts";
 
+import {
+  truncateRestorePostlude,
+  truncateRestorePrelude,
+} from "../../scripts/prod-db-restore";
 import { migrationTestDatabaseUrl } from "./env";
 
 const MIGRATION_DIRECTORY = fileURLToPath(
@@ -328,25 +332,21 @@ describe.runIf(runDatabaseContract)(
       const eventMigrationIndex = migrations.findIndex(
         (migration) => migration.name === eventMigration.name,
       );
-      if (eventMigrationIndex !== migrations.length - 1) {
-        throw new Error(
-          "Event management migration must be the latest migration",
-        );
-      }
-
       for (const migration of migrations.slice(0, eventMigrationIndex)) {
         await applyMigration(databaseClient, migration);
       }
       await seedLegacyFixtures(databaseClient);
       databaseClient.on("notice", (notice) => notices.push(notice));
-      await applyMigration(databaseClient, eventMigration);
+      for (const migration of migrations.slice(eventMigrationIndex)) {
+        await applyMigration(databaseClient, migration);
+      }
     }, 60_000);
 
     afterAll(async () => {
       await databaseClient?.end();
       if (adminClient && databaseName) {
         await adminClient.query(
-          `DROP DATABASE IF EXISTS ${quoteIdentifier(databaseName)} WITH (FORCE)`,
+          `DROP DATABASE IF EXISTS ${quoteIdentifier(databaseName)}`,
         );
       }
       await adminClient?.end();
@@ -498,6 +498,21 @@ describe.runIf(runDatabaseContract)(
       ).toBe(true);
     });
 
+    it("indexes attendance lookups in both event and member directions", async () => {
+      const result = await db().query<{ indexname: string }>(
+        `SELECT "indexname"
+           FROM "pg_indexes"
+          WHERE "schemaname" = 'public'
+            AND "tablename" = 'knight_hacks_event_attendee'`,
+      );
+      expect(result.rows.map(({ indexname }) => indexname)).toEqual(
+        expect.arrayContaining([
+          "knight_hacks_event_attendee_event_member_idx",
+          "knight_hacks_event_attendee_member_event_idx",
+        ]),
+      );
+    });
+
     it("TC-009 gives new rows pending revision-one defaults and rejects impossible synced state", async () => {
       const columns = await eventColumns(db());
       expect(requireNamedColumn(columns, "discord_id").is_nullable).toBe("YES");
@@ -507,11 +522,11 @@ describe.runIf(runDatabaseContract)(
         `INSERT INTO "knight_hacks_event"
           ("name", "tag", "tag_color", "description", "start_datetime",
            "end_datetime", "location", "dues_paying", "is_operations_calendar",
-           "roles", "points", "creation_key", "creation_payload_hash")
+           "roles", "points", "creation_key", "creation_payload_hash", "legacy")
          VALUES ('New Event', 'Community Night', '#A855F7', 'New event',
            '2027-01-15T18:00:00-05:00', '2027-01-15T20:00:00-05:00',
            'BA1 107', false, false, '{}', 0,
-           '00000000-0000-4000-8000-000000000199', repeat('a', 64))
+           '00000000-0000-4000-8000-000000000199', repeat('a', 64), false)
          RETURNING *`,
       );
       expect(inserted.rows[0]).toMatchObject({
@@ -522,6 +537,23 @@ describe.runIf(runDatabaseContract)(
         legacy: false,
         points: 0,
         sync_revision: 1,
+      });
+
+      const oldWriter = await db().query<{
+        legacy: boolean;
+        tag_color: string;
+      }>(
+        `INSERT INTO "knight_hacks_event"
+          ("name", "tag", "description", "start_datetime", "end_datetime",
+           "location", "dues_paying", "is_operations_calendar", "roles", "points")
+         VALUES ('Mixed-version Event', 'GBM', 'Created by old Blade',
+           '2027-02-15T18:00:00-05:00', '2027-02-15T20:00:00-05:00',
+           'BA1 107', false, false, '{}', 35)
+         RETURNING "legacy", "tag_color"`,
+      );
+      expect(oldWriter.rows[0]).toEqual({
+        legacy: true,
+        tag_color: EVENTS.EVENT_TAG_COLORS.Workshop,
       });
 
       await expect(
@@ -574,10 +606,10 @@ describe.runIf(runDatabaseContract)(
           `INSERT INTO "knight_hacks_event"
             ("name", "tag", "tag_color", "description", "start_datetime",
              "end_datetime", "location", "dues_paying",
-             "is_operations_calendar", "roles", "points")
+             "is_operations_calendar", "roles", "points", "legacy")
            VALUES ('Missing identity', 'Workshop', '#0D9488', 'Invalid new row',
              '2027-02-01T18:00:00-05:00', '2027-02-01T19:00:00-05:00',
-             'BA1 107', false, false, '{}', 0)`,
+             'BA1 107', false, false, '{}', 0, false)`,
         ),
       ).rejects.toThrow();
     });
@@ -857,6 +889,7 @@ describe.runIf(runDatabaseContract)(
           public: "00000000-0000-4000-8000-000000000181",
           role: "00000000-0000-4000-8000-000000000183",
         } as const;
+        const queryEventIdSet = new Set<string>(Object.values(queryEventIds));
         await db().query(
           `INSERT INTO "knight_hacks_event"
             ("id", "discord_id", "google_id", "name", "tag", "tag_color",
@@ -917,15 +950,20 @@ describe.runIf(runDatabaseContract)(
           limit: 10,
           now: queryNow,
         });
-        expect(publicRows.map(({ id }) => id)).toEqual([
-          queryEventIds.public,
-          queryEventIds.dues,
-        ]);
+        expect(
+          publicRows
+            .map(({ id }) => id)
+            .filter((id) => queryEventIdSet.has(id)),
+        ).toEqual([queryEventIds.public, queryEventIds.dues]);
         const memberRows = await loadMemberClubEventRecords({
           memberRoleIds: [ROLE_ID],
           now: queryNow,
         });
-        expect(memberRows.map(({ id }) => id)).toEqual([
+        expect(
+          memberRows
+            .map(({ id }) => id)
+            .filter((id) => queryEventIdSet.has(id)),
+        ).toEqual([
           queryEventIds.public,
           queryEventIds.dues,
           queryEventIds.role,
@@ -1052,6 +1090,43 @@ describe.runIf(runDatabaseContract)(
         await client.end();
         runtimeEnvironment.DATABASE_URL = originalDatabaseUrl;
       }
+    });
+
+    it("keeps the migration ledger and tag catalog through a truncate restore", async () => {
+      await db().query(`CREATE SCHEMA IF NOT EXISTS "drizzle";
+        CREATE TABLE IF NOT EXISTS "drizzle"."__drizzle_migrations" (
+          "id" serial PRIMARY KEY,
+          "hash" text NOT NULL,
+          "created_at" bigint
+        );
+        INSERT INTO "drizzle"."__drizzle_migrations" ("hash", "created_at")
+        VALUES ('event-restore-proof', 1);`);
+      const tagsBefore = await db().query<{ count: number }>(
+        `SELECT count(*)::int AS "count" FROM "knight_hacks_event_tag"`,
+      );
+
+      await db().query("BEGIN");
+      try {
+        await db().query(truncateRestorePrelude());
+        await db().query(truncateRestorePostlude());
+        await db().query("COMMIT");
+      } catch (error) {
+        await db().query("ROLLBACK");
+        throw error;
+      }
+
+      const restored = await db().query<{
+        ledger: number;
+        tags: number;
+      }>(
+        `SELECT
+          (SELECT count(*)::int FROM "drizzle"."__drizzle_migrations") AS "ledger",
+          (SELECT count(*)::int FROM "knight_hacks_event_tag") AS "tags"`,
+      );
+      expect(restored.rows[0]).toEqual({
+        ledger: 1,
+        tags: tagsBefore.rows[0]?.count,
+      });
     });
   },
 );

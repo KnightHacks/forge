@@ -22,13 +22,19 @@ export function canAccessEventAdmin(permissions: EffectivePermissions) {
   return (
     permissions.IS_OFFICER === true ||
     permissions.READ_CLUB_EVENT === true ||
-    permissions.EDIT_CLUB_EVENT === true ||
-    permissions.CHECKIN_CLUB_EVENT === true
+    permissions.EDIT_CLUB_EVENT === true
+  );
+}
+
+export function canAccessEventCheckIn(permissions: EffectivePermissions) {
+  return (
+    permissions.IS_OFFICER === true || permissions.CHECKIN_CLUB_EVENT === true
   );
 }
 
 export function getAdminNavigationAccess(permissions: EffectivePermissions) {
   return {
+    eventCheckIn: canAccessEventCheckIn(permissions),
     events: canAccessEventAdmin(permissions),
     members: canAccessMemberAdmin(permissions),
     roles: canAccessRoleAdmin(permissions),

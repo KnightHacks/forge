@@ -23,6 +23,12 @@ export interface RoleUserCandidate {
   roleIds: string[];
 }
 
+function permissionData(key: PERMISSIONS.PermissionKey) {
+  const permission = PERMISSIONS.PERMISSION_DATA[key];
+  if (!permission) throw new Error(`Unknown permission: ${key}`);
+  return permission;
+}
+
 export function permissionKeysToBitstring(
   keys: readonly PERMISSIONS.PermissionKey[],
 ) {
@@ -31,17 +37,21 @@ export function permissionKeysToBitstring(
     () => "0",
   );
   for (const key of keys) {
-    const permission = PERMISSIONS.PERMISSION_DATA[key];
-    if (permission) bits[permission.idx] = "1";
+    const permission = permissionData(key);
+    bits[permission.idx] = "1";
   }
   return bits.join("");
 }
 
-export function permissionBitstringToKeys(bitstring: string) {
-  return Object.entries(PERMISSIONS.PERMISSION_DATA)
-    .filter(([, permission]) => bitstring.at(permission.idx) === "1")
-    .sort(([, left], [, right]) => left.idx - right.idx)
-    .map(([key]) => key);
+export function permissionBitstringToKeys(
+  bitstring: string,
+): PERMISSIONS.PermissionKey[] {
+  const keys = Object.keys(PERMISSIONS.PERMISSION_DATA);
+  return keys
+    .filter((key) => bitstring.at(permissionData(key).idx) === "1")
+    .sort(
+      (left, right) => permissionData(left).idx - permissionData(right).idx,
+    );
 }
 
 export function isCosmeticPermissionString(bitstring: string) {
@@ -188,11 +198,10 @@ export function planRoleMembershipSync(
 }
 
 export function isAdministrativePermissionString(bitstring: string) {
-  const officerIndex = PERMISSIONS.PERMISSIONS.IS_OFFICER;
-  const configureIndex = PERMISSIONS.PERMISSIONS.CONFIGURE_ROLES;
+  const officerIndex = permissionData("IS_OFFICER").idx;
+  const configureIndex = permissionData("CONFIGURE_ROLES").idx;
   return (
-    (officerIndex != null && bitstring.at(officerIndex) === "1") ||
-    (configureIndex != null && bitstring.at(configureIndex) === "1")
+    bitstring.at(officerIndex) === "1" || bitstring.at(configureIndex) === "1"
   );
 }
 

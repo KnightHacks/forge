@@ -190,20 +190,25 @@ const eventEditableFieldsSchema = z
     }
   });
 
-export const eventCreateSchema = eventEditableFieldsSchema
-  .safeExtend({ creationKey: uuidSchema })
-  .superRefine((input, ctx) => {
-    if (Date.parse(input.start) <= Date.now()) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Start time must be in the future.",
-        path: ["start"],
-      });
-    }
-  });
+export const EVENT_CREATION_MIN_LEAD_MINUTES = 30;
+export const EVENT_CREATION_MIN_LEAD_MS =
+  EVENT_CREATION_MIN_LEAD_MINUTES * 60 * 1_000;
+export const EVENT_CREATION_START_MESSAGE =
+  "Start time must be at least 30 minutes in the future.";
+
+export function eventCreationHasMinimumLead(start: string, now = Date.now()) {
+  return Date.parse(start) >= now + EVENT_CREATION_MIN_LEAD_MS;
+}
+
+// Lead-time validation happens after creation-key reconciliation in the API so
+// a committed create remains safely retryable after its start time passes.
+export const eventCreateSchema = eventEditableFieldsSchema.safeExtend({
+  creationKey: uuidSchema,
+});
 
 export const eventUpdateSchema = eventEditableFieldsSchema.safeExtend({
   eventId: uuidSchema,
+  expectedRevision: z.number().int().nonnegative(),
 });
 
 const tagNameSchema = z.string().trim().min(1).max(64);
@@ -357,6 +362,7 @@ const eventAdminQueryBaseSchema = z
 export const eventAdminQuerySchema = eventAdminQueryBaseSchema.transform(
   (input) => ({
     ...input,
+    integrationStates: input.timing === "past" ? [] : input.integrationStates,
     sortDirection:
       input.sortDirection ?? (input.timing === "past" ? "desc" : "asc"),
   }),
@@ -375,7 +381,15 @@ export const eventQrPayloadSchema = z.string().transform((payload, ctx) => {
 export const eventCheckInSearchSchema = z
   .object({
     limit: z.number().int().min(1).max(50).default(20),
-    query: z.string().trim().min(2).max(100),
+    query: z
+      .string()
+      .trim()
+      .min(2)
+      .max(100)
+      .refine(
+        (value) => value.replace(/[^\p{L}\p{N}]/gu, "").length >= 2,
+        "Enter at least 2 letters or numbers.",
+      ),
   })
   .strict();
 
@@ -383,9 +397,16 @@ export const eventCheckInMemberSchema = z
   .object({ eventId: uuidSchema, memberId: uuidSchema })
   .strict();
 
+export const eventCheckInQrSchema = z
+  .object({
+    allowRepeat: z.boolean().default(false),
+    eventId: uuidSchema,
+    qrPayload: eventQrPayloadSchema,
+  })
+  .strict();
+
 export const eventAttendanceRemovalSchema = z
   .object({
-    acknowledgeEstimated: z.boolean().default(false),
     attendanceId: uuidSchema,
   })
   .strict();

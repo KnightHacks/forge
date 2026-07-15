@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
+import { MarkdownContent } from "@forge/ui/markdown-content";
 
 import type { EventsStatus, PublicClubEvent } from "../_lib/club-events";
 import {
@@ -77,9 +78,12 @@ function EventRow({ event }: { event: PublicClubEvent }) {
         <h3 className="mt-2 text-2xl font-black leading-tight text-white">
           {event.name}
         </h3>
-        <p className="mt-2 line-clamp-2 max-w-[21rem] text-sm leading-5 text-[var(--club-muted)]">
+        <MarkdownContent
+          compact
+          className="mt-2 line-clamp-2 max-w-[21rem] text-sm leading-5 text-[var(--club-muted)] [&_a]:text-[var(--club-gold)]"
+        >
           {event.description}
-        </p>
+        </MarkdownContent>
       </div>
       <div
         className="club-event-tag-card col-span-3 hidden aspect-[1.65] items-center justify-center rounded-lg px-5 text-center md:col-span-1 md:flex"

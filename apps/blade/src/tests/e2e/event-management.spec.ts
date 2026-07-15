@@ -4,6 +4,7 @@ import { expect, test } from "playwright/test";
 import { EVENT_DISCORD_NO_PROJECTION_CONFIRMATION } from "@forge/validators";
 
 const ADMIN_PATH = "/admin/events";
+const CHECK_IN_PATH = "/admin/check-in";
 
 interface EventManagementFixture {
   events: {
@@ -12,6 +13,7 @@ interface EventManagementFixture {
     deletableId: string;
     duesId: string;
     partialId: string;
+    pastId: string;
     publishedId: string;
   };
   member: {
@@ -101,8 +103,11 @@ test.describe("event management", () => {
       page.getByRole("button", { name: "Create event" }),
     ).toHaveCount(0);
 
-    await events.signIn(fixture.users.checkInId, `${ADMIN_PATH}?view=list`);
-    await expect(page).toHaveURL(/\/admin\/events\?view=check-in$/);
+    await events.signIn(fixture.users.checkInId, ADMIN_PATH);
+    await expect(page).toHaveURL(/\/member\/dashboard$/);
+
+    await events.signIn(fixture.users.checkInId, CHECK_IN_PATH);
+    await expect(page).toHaveURL(/\/admin\/check-in$/);
     await expect(
       page.getByRole("heading", { name: "Event check-in" }),
     ).toBeVisible();
@@ -111,6 +116,9 @@ test.describe("event management", () => {
     await expect(
       page.getByRole("button", { name: /export attendance/i }),
     ).toHaveCount(0);
+
+    await events.signIn(fixture.users.readerId, CHECK_IN_PATH);
+    await expect(page).toHaveURL(/\/member\/dashboard$/);
   });
 
   test("TC-006 TC-007 TC-030 preserves URL state and responsive event detail", async ({
@@ -206,6 +214,46 @@ test.describe("event management", () => {
     ).toBeVisible();
   });
 
+  test("TC-006 keeps Past prominent and ignores completed provider health", async ({
+    page,
+  }) => {
+    const events = new EventManagementPage(page);
+    await events.signIn(
+      fixture.users.editorId,
+      `${ADMIN_PATH}?timing=past&health=synced`,
+    );
+
+    const timing = page.getByRole("group", { name: "Event timing" });
+    await expect(
+      timing.getByRole("button", { name: "Upcoming" }),
+    ).toBeVisible();
+    await expect(timing.getByRole("button", { name: "Past" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    const row = page.getByRole("row").filter({
+      has: page.getByText("Past Workshop", { exact: true }),
+    });
+    await expect(row).toBeVisible();
+    await expect(
+      page.getByText(/Provider health is no longer tracked/).first(),
+    ).toBeVisible();
+
+    await expect(row.getByText("Needs attention")).toHaveCount(0);
+    await expect(
+      row.getByRole("button", { name: "Repair Google Calendar" }),
+    ).toHaveCount(0);
+
+    await row.getByRole("button", { name: "View Past Workshop" }).click();
+    const detail = page.getByRole("dialog", { name: /event details/i });
+    await expect(
+      detail.getByText(/Provider health is no longer tracked/),
+    ).toBeVisible();
+    await expect(
+      detail.getByRole("button", { name: /Repair|Reapply/ }),
+    ).toHaveCount(0);
+  });
+
   test("TC-008 TC-012 restores a local draft and repairs only the failed provider", async ({
     page,
   }) => {
@@ -268,24 +316,35 @@ test.describe("event management", () => {
     await expect(detail.getByText("Needs attention")).toHaveCount(0);
   });
 
-  test("TC-020 TC-022 TC-025 TC-032 keeps manual check-in minimal and idempotent", async ({
+  test("TC-020 TC-022 TC-022A TC-025 TC-032 keeps check-in selection and manual entry operational", async ({
     page,
   }) => {
     const events = new EventManagementPage(page);
-    await events.signIn(fixture.users.checkInId, `${ADMIN_PATH}?view=check-in`);
+    await events.signIn(fixture.users.checkInId, CHECK_IN_PATH);
 
+    await expect(page.getByLabel("Allow repeat check-ins")).not.toBeChecked();
+    await page.getByLabel("Allow repeat check-ins").check();
+    await expect(page.getByLabel("Allow repeat check-ins")).toBeChecked();
+    await page.getByLabel("Allow repeat check-ins").uncheck();
+    const eventChoice = page.getByRole("combobox", { name: "Event" });
+    await eventChoice.click();
+    await expect(page.getByRole("option").first()).toContainText(
+      "Dues Member Workshop",
+    );
+    await page.getByRole("option", { name: /^Check-in Workshop / }).click();
+
+    await page.getByRole("tab", { name: "Manual" }).click();
+    await page.getByRole("combobox", { name: "Member" }).click();
+    await page.getByPlaceholder("Name, Discord username, or email").fill("Ada");
     await page
-      .getByRole("combobox", { name: "Event" })
-      .selectOption(fixture.events.attendedId);
-    await page.getByRole("button", { name: "Manual lookup" }).click();
-    await page.getByRole("searchbox", { name: "Find member" }).fill("Ada");
-    await page
-      .getByRole("button", { name: new RegExp(fixture.member.name) })
+      .getByRole("option", { name: new RegExp(fixture.member.name) })
       .click();
     await page
       .getByRole("button", { name: `Check in ${fixture.member.name}` })
       .click();
     await expect(page.getByRole("status")).toContainText("Checked in");
+    await expect(page.getByRole("status")).toContainText(fixture.member.name);
+    await expect(page.getByRole("status")).toContainText("@ada");
 
     await page
       .getByRole("button", { name: `Check in ${fixture.member.name}` })
@@ -295,6 +354,12 @@ test.describe("event management", () => {
     await expect(
       page.getByRole("button", { name: /export attendance/i }),
     ).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Past" }).click();
+    await eventChoice.click();
+    await expect(
+      page.getByRole("option", { name: "Past Workshop" }),
+    ).toBeVisible();
 
     await events.signIn(fixture.users.editorId);
     const detail = await events.openEvent(fixture.events.attendedId);
@@ -306,11 +371,102 @@ test.describe("event management", () => {
     ).toHaveCount(0);
   });
 
-  test("TC-002 TC-003 TC-004 TC-029 shows eligible, dues-locked, and estimated member history", async ({
+  test("TC-030 gives mobile check-in a streamlined, overflow-free workspace", async ({
+    page,
+  }, testInfo) => {
+    const events = new EventManagementPage(page);
+    await page.setViewportSize({ height: 780, width: 320 });
+    await events.signIn(fixture.users.checkInId, CHECK_IN_PATH);
+
+    const workspace = page.getByTestId("event-check-in-workspace").last();
+    await expect(workspace).toBeVisible();
+    await expect(workspace.getByRole("tab", { name: "Scanner" })).toBeVisible();
+    await expect(workspace.getByRole("tab", { name: "Manual" })).toBeVisible();
+    await expect(
+      workspace.getByRole("heading", { name: "Latest result" }),
+    ).toHaveCount(0);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      animations: "disabled",
+      fullPage: true,
+      path: testInfo.outputPath("check-in-320.png"),
+    });
+  });
+
+  test("TC-011 TC-035 uses searchable role and Discord channel comboboxes", async ({
     page,
   }) => {
     const events = new EventManagementPage(page);
-    await events.signIn(fixture.users.memberId, "/member/events");
+    await events.signIn(fixture.users.editorId);
+
+    await page.getByRole("button", { name: "Create event" }).click();
+    const dialog = page.getByRole("dialog", { name: "Create event" });
+
+    await dialog.getByLabel("Audience").selectOption("roles");
+    const roles = dialog.getByRole("combobox", { name: "Selected roles" });
+    await roles.click();
+    await page.getByPlaceholder("Search roles").fill("Event");
+    await page.getByRole("option", { name: "Event Reader" }).click();
+    await page.getByRole("option", { name: "Event Editor" }).click();
+    await expect(
+      dialog.getByRole("button", { name: "Remove Event Reader" }),
+    ).toBeVisible();
+    await expect(
+      dialog.getByRole("button", { name: "Remove Event Editor" }),
+    ).toBeVisible();
+    await dialog.getByRole("button", { name: "Remove Event Reader" }).click();
+    await expect(
+      dialog.getByRole("button", { name: "Remove Event Reader" }),
+    ).toHaveCount(0);
+
+    await dialog.getByLabel("Internal event").click();
+    const channels = dialog.getByRole("combobox", {
+      name: "Available Discord channel",
+    });
+    await channels.click();
+    await page
+      .getByPlaceholder("Search voice and stage channels")
+      .fill("Operations");
+    await page
+      .getByPlaceholder("Search voice and stage channels")
+      .press("ArrowDown");
+    await page
+      .getByPlaceholder("Search voice and stage channels")
+      .press("Enter");
+    await expect(channels).toContainText("Event Operations E2E");
+    await expect(dialog.getByLabel("Manual Discord channel ID")).toHaveCount(0);
+
+    await dialog
+      .getByRole("button", { name: "Enter channel ID manually" })
+      .click();
+    await expect(dialog.getByLabel("Manual Discord channel ID")).toBeVisible();
+    await expect(dialog.getByLabel("Channel type")).toBeVisible();
+  });
+
+  test("TC-002 TC-003 TC-004 TC-029 TC-036 shows the dashboard overview and richer member events", async ({
+    page,
+  }, testInfo) => {
+    const events = new EventManagementPage(page);
+    await events.signIn(fixture.users.memberId, "/member/dashboard");
+
+    const overview = page
+      .getByRole("region", { name: "Events overview" })
+      .first();
+    await expect(overview).toBeVisible();
+    await expect(overview.getByText("Current Workshop")).toBeVisible();
+    await expect(overview.getByText("Recently attended")).toBeVisible();
+    await expect(page.getByText("Member info")).toHaveCount(0);
+    await expect(page.getByText("Academics")).toHaveCount(0);
+    await page.screenshot({
+      animations: "disabled",
+      path: testInfo.outputPath("member-dashboard-desktop.png"),
+    });
+    await overview.getByRole("link", { name: "View all" }).click();
+    await expect(page).toHaveURL(/\/member\/events$/);
 
     const upcoming = page.getByRole("region", { name: "Upcoming events" });
     await expect(upcoming.getByText("Current Workshop")).toBeVisible();
@@ -319,11 +475,82 @@ test.describe("event management", () => {
     await expect(
       upcoming.getByRole("link", { name: "Pay dues" }),
     ).toBeVisible();
+    await expect(
+      upcoming.getByRole("link", { name: "Open in Discord" }).first(),
+    ).toBeVisible();
+    await expect(
+      upcoming.getByRole("link", { name: "Add to Google Calendar" }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Back to dashboard" }),
+    ).toBeVisible();
 
     const history = page.getByRole("region", { name: "Attendance history" });
     await expect(history.getByText("Current Workshop")).toBeVisible();
-    await expect(history.getByText("Estimated")).toBeVisible();
+    await expect(history.getByText("ENG2 102")).toBeVisible();
+    await expect(history.getByText("Estimated")).toHaveCount(0);
+    await expect(history.getByText("Legacy")).toHaveCount(0);
+    await expect(history.getByText(/unavailable/i)).toHaveCount(0);
     await expect(history.getByText("10 points")).toBeVisible();
+    await page.screenshot({
+      animations: "disabled",
+      fullPage: true,
+      path: testInfo.outputPath("member-events-desktop.png"),
+    });
+
+    await page.setViewportSize({ height: 780, width: 320 });
+    await page.reload();
+    await expect(
+      page.getByRole("link", { name: "Back to dashboard" }),
+    ).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            document.documentElement.scrollWidth <=
+            document.documentElement.clientWidth,
+        ),
+      )
+      .toBe(true);
+    await page.screenshot({
+      animations: "disabled",
+      fullPage: true,
+      path: testInfo.outputPath("member-events-320.png"),
+    });
+
+    await page.goto("/member/dashboard");
+    const mobileOverview = page
+      .getByRole("region", { name: "Events overview" })
+      .last();
+    await expect(mobileOverview).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            document.documentElement.scrollWidth <=
+            document.documentElement.clientWidth,
+        ),
+      )
+      .toBe(true);
+    await page.screenshot({
+      animations: "disabled",
+      path: testInfo.outputPath("member-dashboard-320.png"),
+    });
+  });
+
+  test("TC-024 removes migrated attendance through the ordinary flow", async ({
+    page,
+  }) => {
+    const events = new EventManagementPage(page);
+    await events.signIn(fixture.users.editorId);
+    const detail = await events.openEvent(fixture.events.publishedId);
+
+    await expect(detail.getByText("Estimated")).toHaveCount(0);
+    await expect(detail.getByText(/acknowledg/i)).toHaveCount(0);
+    await detail
+      .getByRole("button", { name: `Remove ${fixture.member.name}` })
+      .click();
+    await expect(detail.getByText("No members have checked in.")).toBeVisible();
   });
 
   test("TC-012 resolves an ambiguous Discord create before retrying publication", async ({

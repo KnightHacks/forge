@@ -1,6 +1,6 @@
 # Event Management SRD
 
-Status: Ready for human approval
+Status: Revised / ready for human approval
 
 > This file owns technical implementation constraints.
 
@@ -45,6 +45,11 @@ Additional rules:
   the API boundary and redirects from admin pages to `/member/dashboard`.
 - Admin event access does not require the acting user to have a `Member` row.
 - Edit access implies read access. Check-in access does not imply read access.
+- `/admin/events` requires Read, Edit, or Officer access and never treats
+  Check-in as sufficient. `/admin/check-in` requires Check-in or Officer access
+  and is the only Blade route available to a check-in-only operator.
+- Read/Edit access does not imply Check-in. Navigation and direct-route gates
+  enforce the same split before either page loads its initial data.
 - Every club event procedure verifies `Event.hackathonId IS NULL` or constructs
   a query that cannot return a hackathon event. A supplied hackathon-event UUID
   behaves as not found to a club capability.
@@ -52,14 +57,21 @@ Additional rules:
   same policy server-side.
 - Attendee output is restricted to member UUID, name, Discord username,
   check-in time, operator identifier/display name where available, and points
-  awarded plus its Estimated flag. It does not return phone, demographics,
-  resume, address-like data, or the full Member record.
+  awarded plus internal estimate metadata needed for exports. The attendee UI
+  does not present estimate/legacy migration vocabulary. Output does not return
+  phone, demographics, resume, address-like data, or the full Member record.
 
 ## Architecture / data flow
 
-- `apps/blade` owns `/admin/events`, `/member/events`, the dashboard quick link,
-  URL parsing, server-side page gates/initial reads, list/calendar/dialog UI,
-  local unfinished-form restoration, scanner UI, and user feedback.
+- `apps/blade` owns `/admin/events`, `/admin/check-in`, `/member/events`, the
+  dashboard event overview, URL parsing, server-side page gates/initial reads,
+  list/calendar/dialog UI, local unfinished-form restoration, scanner UI, and
+  user feedback.
+- `/admin/events` and `/admin/check-in` are separate server routes and separate
+  client composition roots. The management route never renders or prefetches
+  the scanner surface for a check-in-only caller, and the check-in route never
+  receives admin event rows, detail, tags, roles, channels, attendees, exports,
+  or provider-health data.
 - `apps/club` remains a thin public consumer of the safe event tRPC contract.
   Its contract may change with the router as long as both sides change in the
   same feature.
@@ -93,6 +105,14 @@ Additional rules:
 - Sorts are start time, normalized name, tag, and attendance count, each with
   direction and stable Event-UUID tie-breaking. Upcoming defaults to start
   ascending; past defaults to start descending.
+- A persistent, prominent `Upcoming` / `Past` segmented control owns the timing
+  choice outside the secondary filter dialog. Switching timing resets page and
+  default sort direction; switching to Past also clears provider-health state.
+- Provider-health predicates are not applied when timing is Past, even if a
+  stale or hand-authored URL contains health values. Past rows and detail hide
+  provider status and repair controls and explain that Discord/Google health is
+  no longer tracked after completion. Deletion-pending state remains visible
+  because it is Blade lifecycle state rather than provider health.
 - Calendar mode requires a bounded visible start/end window and returns every
   filtered match intersecting that window. It does not apply list pagination;
   list page/page-size parameters remain in the URL for a return to List.
@@ -114,8 +134,11 @@ Additional rules:
 
 1. Validate permission, creation key, club-only scope, active tag, audience,
    selected roles, internal channel, and date window.
-2. Reject `start <= now` and `end <= start`. Resolve the event's tag snapshot,
-   tag color, and final non-negative integer points on the server.
+2. Reject `start < now + 30 minutes` and `end <= start`. The create/duplicate
+   form applies the same rule before submission with field-specific copy, while
+   the server schema remains authoritative against stale or bypassed clients.
+   Resolve the event's tag snapshot, tag color, and final non-negative integer
+   points on the server.
 3. Canonicalize the validated create payload and hash it with Node's built-in
    crypto support. Under one transaction, lock/recheck the active tag and every
    referenced Role, then reuse the existing row only when creation key and hash
@@ -190,8 +213,9 @@ Additional rules:
   match the current revision.
 - Blade does not continuously poll for external drift. A deliberate Sync or
   Repair overwrites external edits with Blade state.
-- Updating a completed non-legacy event remains allowed. Provider rejection is
-  represented by provider health without undoing the Blade edit.
+- Updating a completed non-legacy event remains allowed. Provider state does
+  not affect Past retrieval and is not presented as actionable health after
+  the event ends.
 - After both providers synchronize the current revision, persist its visibility
   snapshot. Before that promotion, effective public/member eligibility is the
   intersection of current desired visibility and the last fully synchronized
@@ -262,6 +286,18 @@ Additional rules:
     the selected role UUID array.
 - Role matching is OR and uses Blade assignments, including cosmetic roles. It
   does not call Discord live.
+- Member upcoming-event output adds the aggregate check-in count and a safe
+  Discord scheduled-event URL only when the projection has a trusted ID.
+  Member history adds event description, location, end time, and aggregate
+  check-in count for its card presentation. It omits `legacy` and
+  `pointsAwardedEstimated`; those fields remain in administrative/storage
+  contracts. Google Calendar add links are derived in Blade from the safe name,
+  description, start/end, and location rather than exposing a provider ID.
+- Event create/edit uses a searchable multi-select role combobox. It stores a
+  de-duplicated array of one or more linked Role UUIDs, renders selected roles
+  as removable choices, and preserves OR eligibility. The server continues to
+  validate and lock every submitted Role UUID; the combobox does not weaken the
+  existing live-role recheck.
 - A Legacy row with both `dues_paying=true` and a nonempty roles array is
   displayed as `Legacy: dues + selected roles` and requires effective dues AND
   membership in any selected role for check-in. Legacy rows remain absent from
@@ -278,7 +314,8 @@ Additional rules:
   blocker until hackathon event management exists; role unlink never silently
   erases that reference.
 - Own history joins through attendance and may include completed and legacy
-  events even when current dues/role eligibility changed.
+  events even when current dues/role eligibility changed. Blade omits a null
+  check-in time instead of rendering an unavailable/legacy explanation.
 
 ### Attendance and points flow
 
@@ -297,20 +334,33 @@ Additional rules:
 - No schema-level `(memberId,eventId)` uniqueness constraint is added by human
   decision. The second existence check under the pair lock is mandatory.
 - Duplicate attendance returns a typed `already_checked_in` success-like state
-  and never increments points.
-- Removal requires edit access and runs attendance deletion plus exact point
-  subtraction in one transaction for a Reforge check-in. A migrated row marked
-  estimated requires a separate explicit acknowledgement and subtracts its
-  stored estimate. A row whose migrated `pointsAwarded` is unexpectedly null
-  returns a safe conflict rather than guessing at runtime.
+  and never increments points. Scanner-session `allowRepeat: true` still runs
+  under the same pair-scoped lock, rechecks eligibility, and creates a separate
+  attendance row for each accepted scan, but the server snapshots zero points
+  on every row after the first attendance and does not increment Member points.
+  Each accepted scan emits one audit record. The flag is request-scoped,
+  defaults false, and is never persisted on Event. The scanner tracks handled
+  payloads currently in frame and rearms a payload only after the detector sees
+  it leave, while different payloads can continue through the same camera
+  session.
+- Every resolved-member check-in outcome returns a minimal safe identity
+  snippet: member UUID, display name, Discord username, and optional tagline or
+  company. This supports useful latest-result feedback without returning email,
+  phone, demographics, profile-image storage keys, or the full Member row.
+- Removal requires edit access and runs attendance deletion plus exact stored
+  point subtraction in one transaction. Current and migrated non-null awards
+  use the same API/UI flow with no acknowledgement field. A row whose migrated
+  `pointsAwarded` is unexpectedly null returns a safe conflict rather than
+  guessing at runtime.
 - Changing an event's tag or points does not rewrite existing attendance
   snapshots.
 - Check-in event selection is computed server-side and returns only UUID/title
-  groups. It prioritizes current and recently ended fully published events;
-  older published and Legacy club events remain reachable through an explicit
-  Older-events search because there is no hard operator window. It excludes
-  hackathon, deletion-pending, and initially incomplete events. Grouping may
-  use timestamps internally but does not expose configuration to check-in-only
+  groups. Upcoming and Past are fully selectable without a second network
+  search control. Upcoming follows Legacy Blade's descending start-time order,
+  and Past is newest first. Older published and Legacy club events remain
+  available because there is no hard operator window. It excludes hackathon,
+  deletion-pending, and initially incomplete events. Grouping and ordering may
+  use timestamps internally but do not expose configuration to check-in-only
   clients.
 - Manual member search returns only member UUID, user UUID needed by the
   mutation, name, Discord username, and email.
@@ -318,6 +368,26 @@ Additional rules:
 ## Data / migration / compatibility
 
 One reviewed Drizzle migration is expected.
+
+The 2026-07-15 check-in-station revision adds no migration. Existing
+`EventAttendee` storage intentionally permits multiple member/event rows, while
+the service owns default duplicate prevention. `allowRepeat` exists only on the
+QR request variant, is optional, and defaults false, so existing callers and
+Manual requests retain idempotent behavior. New
+`ResponsiveComboBox` async-search props are additive and existing Blade/current
+main consumers keep their prior local-filter behavior by default.
+
+The post-review compatibility migration adds non-unique attendance indexes in
+both `(eventId,memberId)` and `(memberId,eventId)` order. It also supplies safe
+database defaults for old Blade writers during a rolling deployment; new
+Reforge creates continue to explicitly write `legacy=false`. Future Legacy
+rows remain discoverable without requiring Reforge publication metadata.
+
+The production-data pull downloads to an OS temporary directory and invokes
+`psql` without shell interpolation. Truncate mode snapshots the local Drizzle
+ledger and tag catalog, truncates/imports/restores/validates in one transaction
+with `ON_ERROR_STOP`, and always removes temporary files. Validation rejects an
+empty ledger/tag catalog or orphan event attendance before commit.
 
 ### Configurable tag storage
 
@@ -474,7 +544,13 @@ copy that could accidentally reuse provider identifiers.
 
 - `event.listCheckInEvents`: UUID/title groups only.
 - `event.searchCheckInMembers`: bounded fuzzy minimal-identity lookup.
-- `event.checkInMember`: normalized QR/manual check-in with typed outcome.
+- `event.checkInMember`: normalized QR/manual check-in with typed outcome; only
+  the QR variant accepts request-scoped `allowRepeat`, defaulting false.
+
+These three capabilities are composed only by `/admin/check-in`. The page
+performs its own server-side Check-in/Officer gate before loading event choices.
+It must not call, prefetch, serialize, or cache any administrative read or
+mutation payload merely because both routes share the event router.
 
 ### Internal reminder capability
 
@@ -508,6 +584,8 @@ Reusable validators in `@forge/validators` cover:
   malformed values;
 - audience discriminators and mutually exclusive dues/role encoding;
 - selected-role UUIDs and non-empty role audience;
+- de-duplicated multi-role selection with at least one role for the Selected
+  roles audience;
 - event name/description/location constrained to the strictest supported
   provider limits;
 - future create start, ordered start/end, timed multi-day events, and no
@@ -535,8 +613,14 @@ attendance state. UI validation is not authoritative.
 - Public/non-internal events use `GuildScheduledEventEntityType.External` with
   location metadata.
 - Internal events use an eligible voice or stage channel. The picker queries
-  live guild channels, filters unsupported/inaccessible channels, and retains a
-  validated manual-ID fallback.
+  live guild channels, filters unsupported/inaccessible channels, and presents
+  them through the established searchable single-select combobox. Search and
+  selection are one control, the selected live result supplies both channel ID
+  and channel type, and no second native dropdown duplicates the result list.
+- A validated manual-ID fallback remains available as a secondary recovery
+  state when live lookup fails or cannot find an eligible channel. It may ask
+  for channel type only in that explicit fallback state; it is not displayed as
+  a parallel default control beside the live combobox.
 - A voice channel maps to `GuildScheduledEventEntityType.Voice`; a stage channel
   maps to `GuildScheduledEventEntityType.StageInstance`.
 - Discord visibility is channel-controlled only for Internal events. A
@@ -583,22 +667,58 @@ Would this require a developer change next year?
 
 - Pages stay server components and own auth, redirects, permission gates,
   initial reads, query parsing, and high-level composition.
+- `/admin/events` and `/admin/check-in` have independent server page gates,
+  loading/error boundaries, metadata, and client roots. Check-in is not encoded
+  in the Event-admin `view` query parameter.
 - The admin layout is extended server-side so its rail/header persist through
   event loading and errors.
 - Focused client components own URL navigation, calendar controls, dialogs,
   browser-local form persistence, scanner/camera behavior, and mutations.
-- Use the current authenticated shell and admin rail; add Events only for users
-  with read, edit, check-in, or officer access.
+- Use the current authenticated shell and admin rail. Show `Events` only for
+  Read/Edit/Officer access and show `Event Check-in` only for
+  Check-in/Officer access. A caller holding both sees both destinations.
 - Event views use Blade's raised-card and inset-surface hierarchy. Do not copy
   legacy's oversized headings, flat card grids, or client-only whole-page load.
+- A shared `@forge/ui` Markdown renderer owns event-description presentation
+  across Blade and Club. It escapes raw HTML, retains the Markdown library's
+  safe URL transform, and gives description links safe new-tab behavior.
 - Large dialogs have named sections and mobile full-screen treatment. Selected
   event focus returns to its opener when closed.
 - Calendar has keyboard navigation and an agenda representation at narrow
   widths. List/calendar share the same query-backed dataset and filters.
 - Camera denial, unavailable camera, malformed scans, pending scans, repeated
   scans, and manual fallback have explicit states.
+- The client composes one responsive event combobox beneath a prominent
+  Upcoming/Past segmented control. Scanner and Manual are explicit tabs. Manual
+  member lookup is one async responsive combobox plus a separate submit button;
+  selecting a result has no mutation side effect.
+- Repeat mode is shown only with scanner controls, resets off on a fresh page
+  load, and is sent only with scanner check-ins. It is not an Event edit field.
+- At narrow widths the check-in root uses the available viewport below the
+  authenticated shell without rounded outer-card gutters or document-level
+  horizontal overflow. Desktop retains the raised panel hierarchy.
 - Check-in-only code must not receive hidden detail/attendee data in props or
   prefetched caches.
+- Member dashboard loading and error behavior includes the two event queries.
+  Its Events overview shows at most three recent attendance rows and a small
+  nearest-upcoming set without recreating the full events page. Member event
+  cards prioritize title and timing, expose description on demand, include
+  location/check-in context, and keep safe share/add actions in a consistent
+  footer. Member screens suppress migration terminology and empty metadata.
+- The dashboard Events overview is intrinsic-height and stacks Up next above
+  Recently attended. It does not stretch to fill the member panel or place the
+  two variable-length groups in competing columns.
+- `/member/events` renders upcoming and attendance history as one-column lists
+  at every breakpoint. Desktop rows may distribute summary and actions
+  horizontally inside the row, but cards never form a two-column masonry.
+- Check-in renders no empty latest-result placeholder. On narrow screens its
+  page header and helper copy are reduced, event choice and tabs remain the
+  dominant hierarchy, scanner repeat mode uses a compact row, and a result
+  surface is introduced only after an attempt.
+- Selected roles uses the existing accessible searchable multi-select combobox
+  treatment with removable selections. Internal Discord channel selection uses
+  the same visual/search language in single-select mode, with loading, empty,
+  error, and fallback states.
 - Route loading/error boundaries render inside the stable shell. Skeletons
   match the loaded list/calendar geometry.
 - Use current raised-card themed toast/feedback treatment and 44px mobile
@@ -610,14 +730,16 @@ Would this require a developer change next year?
 - `@forge/api` Vitest/integration tests: permissions, scope, DB behavior,
   eligibility, provider gateways/orchestration, tags, attendance, points, CSV,
   reminders, migration-shaped compatibility, locking/idempotency, and audits.
-- `@forge/blade` component tests: control visibility, list/calendar/detail,
-  filters/URL state, form restoration, dialogs, tags, scanner states, and
-  responsive density.
+- `@forge/blade` component tests: route/navigation isolation, control
+  visibility, list/calendar/detail, filters/URL state, form restoration,
+  dialogs, role/channel combobox behavior, tags, scanner states, and responsive
+  density.
 - `@forge/club` contract tests: public payload and dues badge rendering.
 - `@forge/cron` tests: reminder candidate compatibility and corrected times.
 - Playwright: high-value reader/editor/check-in/officer/member/public flows,
-  provider failure/repair through deterministic fakes, QR/manual check-in,
-  deletion constraints, URL sharing, and desktop/320px QA.
+  direct `/admin/events` versus `/admin/check-in` permission isolation,
+  provider failure/repair through deterministic fakes, role/channel comboboxes,
+  QR/manual check-in, deletion constraints, URL sharing, and desktop/320px QA.
 - Provider fakes and synthetic failure state live under test/support paths, not
   production routers. No automated or manual test writes to live Discord or
   Google are required.

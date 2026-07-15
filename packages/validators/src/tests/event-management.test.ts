@@ -7,8 +7,10 @@ import {
   eventAttendanceRemovalSchema,
   eventAudienceSchema,
   eventCheckInMemberSchema,
+  eventCheckInQrSchema,
   eventCheckInSearchSchema,
   eventCreateSchema,
+  eventCreationHasMinimumLead,
   eventDiscordResolutionSchema,
   eventIdSchema,
   eventQrPayloadSchema,
@@ -86,7 +88,7 @@ describe("event management validators", () => {
       sortDirection: "desc",
       sortField: "attendance",
       tags: ["GBM", "Workshop"],
-      timing: "past",
+      timing: "upcoming",
       view: "list",
     });
 
@@ -102,7 +104,7 @@ describe("event management validators", () => {
       sortDirection: "desc",
       sortField: "attendance",
       tags: ["GBM", "Workshop"],
-      timing: "past",
+      timing: "upcoming",
       view: "list",
     });
     expect(eventAdminQuerySchema.parse({ timing: "upcoming" })).toMatchObject({
@@ -110,9 +112,16 @@ describe("event management validators", () => {
       sortField: "start",
     });
     expect(eventAdminQuerySchema.parse({ timing: "past" })).toMatchObject({
+      integrationStates: [],
       sortDirection: "desc",
       sortField: "start",
     });
+    expect(
+      eventAdminQuerySchema.parse({
+        integrationStates: ["error", "unknown"],
+        timing: "past",
+      }).integrationStates,
+    ).toEqual([]);
   });
 
   it("TC-006 rejects malformed query state and reversed calendar windows", () => {
@@ -306,14 +315,24 @@ describe("event management validators", () => {
     });
   });
 
-  it("TC-NEG-003 rejects past creation and immutable/hackathon client fields", () => {
-    expect(() =>
+  it("TC-NEG-003 requires a 30-minute creation lead time", () => {
+    expect(eventCreationHasMinimumLead("2026-06-29T15:29:59-04:00")).toBe(
+      false,
+    );
+    expect(eventCreationHasMinimumLead("2026-06-29T15:30:00-04:00")).toBe(true);
+    expect(
       eventCreateSchema.parse({
         ...validCreateInput,
-        end: "2026-06-28T20:00:00-04:00",
-        start: "2026-06-28T18:00:00-04:00",
-      }),
-    ).toThrow();
+        end: "2026-06-29T17:00:00-04:00",
+        start: "2026-06-29T15:29:59-04:00",
+      }).creationKey,
+    ).toBe(validCreateInput.creationKey);
+  });
+
+  it("TC-NEG-003 rejects past creation and immutable/hackathon client fields", () => {
+    expect(eventCreationHasMinimumLead("2026-06-28T18:00:00-04:00")).toBe(
+      false,
+    );
     expect(() =>
       eventCreateSchema.parse({
         ...validCreateInput,
@@ -335,6 +354,7 @@ describe("event management validators", () => {
         ...editableFields,
         end: "2025-06-28T20:00:00-04:00",
         eventId: EVENT_ID,
+        expectedRevision: 1,
         start: "2025-06-28T18:00:00-04:00",
       }),
     ).toMatchObject({ eventId: EVENT_ID });
@@ -473,6 +493,9 @@ describe("event management validators", () => {
       eventCheckInSearchSchema.parse({ query: "  lenny  " }),
     ).toMatchObject({ query: "lenny" });
     expect(() => eventCheckInSearchSchema.parse({ query: "   " })).toThrow();
+    expect(() => eventCheckInSearchSchema.parse({ query: "--" })).toThrow(
+      /letters or numbers/i,
+    );
     expect(() =>
       eventCheckInSearchSchema.parse({ query: "x".repeat(101) }),
     ).toThrow();
@@ -488,11 +511,33 @@ describe("event management validators", () => {
         memberId: MEMBER_ID,
       }),
     ).toEqual({ eventId: EVENT_ID, memberId: MEMBER_ID });
+    expect(
+      eventCheckInQrSchema.parse({
+        eventId: EVENT_ID,
+        qrPayload: MEMBER_ID,
+      }),
+    ).toEqual({
+      allowRepeat: false,
+      eventId: EVENT_ID,
+      qrPayload: { userId: MEMBER_ID },
+    });
+    expect(
+      eventCheckInQrSchema.parse({
+        allowRepeat: true,
+        eventId: EVENT_ID,
+        qrPayload: MEMBER_ID,
+      }),
+    ).toEqual({
+      allowRepeat: true,
+      eventId: EVENT_ID,
+      qrPayload: { userId: MEMBER_ID },
+    });
 
     for (const forged of [
       { points: 999 },
       { duesPaid: true },
       { eligibleRoleIds: [ROLE_ID] },
+      { allowRepeat: true },
     ]) {
       expect(() =>
         eventCheckInMemberSchema.parse({
@@ -504,16 +549,16 @@ describe("event management validators", () => {
     }
   });
 
-  it("TC-024 validates attendance correction identity and acknowledgement", () => {
+  it("TC-024 validates one attendance correction input for every stored award", () => {
     expect(
       eventAttendanceRemovalSchema.parse({ attendanceId: EVENT_ID }),
-    ).toEqual({ attendanceId: EVENT_ID, acknowledgeEstimated: false });
-    expect(
+    ).toEqual({ attendanceId: EVENT_ID });
+    expect(() =>
       eventAttendanceRemovalSchema.parse({
         acknowledgeEstimated: true,
         attendanceId: EVENT_ID,
       }),
-    ).toEqual({ acknowledgeEstimated: true, attendanceId: EVENT_ID });
+    ).toThrow();
     expect(() =>
       eventAttendanceRemovalSchema.parse({ attendanceId: "not-a-uuid" }),
     ).toThrow();

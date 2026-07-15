@@ -47,27 +47,21 @@ function DashboardSkeleton() {
               <Skeleton className="h-9 w-full rounded-md" />
             </div>
 
-            {["member", "academics"].map((item) => (
-              <div
-                key={item}
-                className={cn(dashboardNestedSurfaceClass, "p-4")}
-              >
-                <div className="mb-4 flex items-center gap-2">
-                  <Skeleton className="h-4 w-4" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <Skeleton className="h-3 w-16" />
-                    <Skeleton className="mt-2 h-4 w-32" />
-                  </div>
-                  <div>
-                    <Skeleton className="h-3 w-16" />
-                    <Skeleton className="mt-2 h-4 w-40" />
-                  </div>
-                </div>
+            <div className={cn(dashboardNestedSurfaceClass, "p-4")}>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-9 w-20" />
               </div>
-            ))}
+              <div className="grid gap-4">
+                {["upcoming", "recent"].map((group) => (
+                  <div key={group} className="grid gap-2">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-20 w-full rounded-md" />
+                    <Skeleton className="h-20 w-full rounded-md" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -109,6 +103,20 @@ function DashboardSkeleton() {
                 <Skeleton className="h-5 w-14 rounded-full" />
               </div>
               <Skeleton className="h-8 w-full rounded-md" />
+            </div>
+            <div className={cn(dashboardNestedSurfaceClass, "p-3 lg:hidden")}>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-8 w-16 rounded-md" />
+              </div>
+              <div className="grid gap-4">
+                {["upcoming", "recent"].map((group) => (
+                  <div key={group} className="grid gap-2">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-16 w-full rounded-md" />
+                  </div>
+                ))}
+              </div>
             </div>
             <div className={cn(dashboardNestedSurfaceClass, "p-3 lg:hidden")}>
               <div className="mb-2 flex items-center gap-2">
@@ -209,12 +217,21 @@ export function DashboardClient({
       return failureCount < 2;
     },
   });
+  const eventsQuery = api.event.listMemberEvents.useQuery(undefined, {
+    enabled: Boolean(member) && !isRedirecting,
+  });
+  const attendanceQuery = api.event.listMemberAttendance.useQuery(undefined, {
+    enabled: Boolean(member) && !isRedirecting,
+  });
 
   if (
     isLoading ||
     isRedirecting ||
     isDebugDelayPending ||
-    (member && duesQuery.isPending)
+    (member &&
+      (duesQuery.isPending ||
+        eventsQuery.isPending ||
+        attendanceQuery.isPending))
   ) {
     return <DashboardSkeleton />;
   }
@@ -227,5 +244,19 @@ export function DashboardClient({
     return <DashboardErrorState />;
   }
 
-  return <MemberDashboard member={member} duesStatus={duesQuery.data} />;
+  const eventsUnavailable =
+    eventsQuery.isError ||
+    attendanceQuery.isError ||
+    !eventsQuery.data ||
+    !attendanceQuery.data;
+
+  return (
+    <MemberDashboard
+      attendance={attendanceQuery.data ?? []}
+      duesStatus={duesQuery.data}
+      events={eventsQuery.data ?? []}
+      eventsUnavailable={eventsUnavailable}
+      member={member}
+    />
+  );
 }

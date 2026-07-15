@@ -1,10 +1,26 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, CalendarPlus, Copy } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarPlus,
+  Check,
+  ChevronsUpDown,
+  Copy,
+  X,
+} from "lucide-react";
 
+import { cn } from "@forge/ui";
 import { Alert, AlertDescription, AlertTitle } from "@forge/ui/alert";
 import { Button } from "@forge/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@forge/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -15,8 +31,11 @@ import {
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import { Switch } from "@forge/ui/switch";
 import { Textarea } from "@forge/ui/textarea";
+import { EVENT_CREATION_START_MESSAGE } from "@forge/validators";
 
 import type { EventCreateDraft } from "./event-draft-storage";
 import type { EventChannelChoice, EventTagItem } from "./types";
@@ -25,6 +44,11 @@ import {
   loadEventCreateDraft,
   saveEventCreateDraft,
 } from "./event-draft-storage";
+import {
+  minimumEventCreationStartInput,
+  validateEventCreationStart,
+  validNewYorkOffsets,
+} from "./event-form-validation";
 
 export interface EventFormValue extends EventCreateDraft {
   values: EventCreateDraft["values"] & {
@@ -35,30 +59,7 @@ export interface EventFormValue extends EventCreateDraft {
   };
 }
 
-function validNewYorkOffsets(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return [];
-  return (["-04:00", "-05:00"] as const).filter((offset) => {
-    const instant = new Date(`${value}:00${offset}`);
-    const parts = Object.fromEntries(
-      new Intl.DateTimeFormat("en-CA", {
-        day: "2-digit",
-        hour: "2-digit",
-        hourCycle: "h23",
-        minute: "2-digit",
-        month: "2-digit",
-        timeZone: "America/New_York",
-        year: "numeric",
-      })
-        .formatToParts(instant)
-        .filter((part) => part.type !== "literal")
-        .map((part) => [part.type, part.value]),
-    );
-    return (
-      `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}` ===
-      value
-    );
-  });
-}
+const EMPTY_CHANNELS: EventChannelChoice[] = [];
 
 function emptyDraft(): EventFormValue {
   return {
@@ -96,8 +97,129 @@ function FormSection({
   );
 }
 
+function SearchableRoleMultiSelect({
+  onChange,
+  roles,
+  selectedIds,
+}: {
+  onChange: (roleIds: string[]) => void;
+  roles: { id: string; name: string }[];
+  selectedIds: string[];
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedRoles = roles.filter((role) => selectedIds.includes(role.id));
+
+  function toggle(roleId: string) {
+    onChange(
+      selectedIds.includes(roleId)
+        ? selectedIds.filter((id) => id !== roleId)
+        : [...selectedIds, roleId],
+    );
+  }
+
+  return (
+    <div className="grid gap-2">
+      <Label htmlFor="event-roles">Selected roles</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            id="event-roles"
+            type="button"
+            role="combobox"
+            aria-label="Selected roles"
+            aria-expanded={open}
+            aria-haspopup="listbox"
+            variant="outline"
+            className="h-11 w-full justify-between bg-background/70 font-normal"
+          >
+            <span className="truncate">
+              {selectedIds.length === 0
+                ? "Choose one or more roles"
+                : `${selectedIds.length} role${selectedIds.length === 1 ? "" : "s"} selected`}
+            </span>
+            <ChevronsUpDown
+              className="h-4 w-4 text-muted-foreground"
+              aria-hidden="true"
+            />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          className="w-[min(24rem,calc(100vw-2rem))] p-0"
+        >
+          <Command>
+            <CommandInput placeholder="Search roles" />
+            <CommandList>
+              <CommandEmpty>No roles found.</CommandEmpty>
+              <CommandGroup>
+                {roles.map((role) => {
+                  const selected = selectedIds.includes(role.id);
+                  return (
+                    <CommandItem
+                      key={role.id}
+                      value={`${role.name} ${role.id}`}
+                      className="min-h-11"
+                      onSelect={() => toggle(role.id)}
+                    >
+                      <span
+                        className={cn(
+                          "flex h-4 w-4 items-center justify-center rounded-sm border border-primary/40",
+                          selected && "bg-primary text-primary-foreground",
+                        )}
+                      >
+                        {selected && (
+                          <Check className="h-3 w-3" aria-hidden="true" />
+                        )}
+                      </span>
+                      <span className="truncate">{role.name}</span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      {selectedRoles.length > 0 && (
+        <div className="flex flex-wrap gap-2" aria-label="Selected role values">
+          {selectedRoles.map((role) => (
+            <span
+              key={role.id}
+              className="inline-flex min-h-9 items-center gap-1 rounded-full border border-white/10 bg-card/80 pl-3 pr-1 text-sm"
+            >
+              {role.name}
+              <button
+                type="button"
+                aria-label={`Remove ${role.name}`}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => toggle(role.id)}
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <p className="text-sm text-muted-foreground">
+        Members with any selected role are eligible.
+      </p>
+    </div>
+  );
+}
+
+function usesManualChannel(
+  value: EventFormValue | null | undefined,
+  channels: EventChannelChoice[],
+) {
+  return Boolean(
+    value?.values.channelId &&
+    !channels.some((channel) => channel.id === value.values.channelId),
+  );
+}
+
 export function EventFormDialog({
-  channels = [],
+  channels = EMPTY_CHANNELS,
   initialValue,
   mode = "create",
   onOpenChange,
@@ -118,33 +240,43 @@ export function EventFormDialog({
   const [form, setForm] = useState<EventFormValue>(
     () => initialValue ?? emptyDraft(),
   );
-  const [channelSearch, setChannelSearch] = useState("");
+  const [manualChannel, setManualChannel] = useState(() =>
+    usesManualChannel(initialValue, channels),
+  );
   const [dirty, setDirty] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<EventCreateDraft | null>(
     null,
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [minimumStart, setMinimumStart] = useState("");
+  const [startError, setStartError] = useState<string | null>(null);
   const previouslyOpen = useRef(false);
 
   useEffect(() => {
     if (open && !previouslyOpen.current) {
       setError(null);
+      setStartError(null);
+      setMinimumStart(mode === "edit" ? "" : minimumEventCreationStartInput());
       if (mode === "create") {
         const stored = loadEventCreateDraft(window.localStorage);
         setPendingDraft(stored);
         if (!stored) {
-          setForm(initialValue ?? emptyDraft());
+          const nextForm = initialValue ?? emptyDraft();
+          setForm(nextForm);
+          setManualChannel(usesManualChannel(nextForm, channels));
           setDirty(false);
         }
       } else {
         setPendingDraft(null);
-        setForm(initialValue ?? emptyDraft());
+        const nextForm = initialValue ?? emptyDraft();
+        setForm(nextForm);
+        setManualChannel(usesManualChannel(nextForm, channels));
         setDirty(false);
       }
     }
     previouslyOpen.current = open;
-  }, [initialValue, mode, open]);
+  }, [channels, initialValue, mode, open]);
 
   useEffect(() => {
     if (!open || !dirty || mode !== "create") return;
@@ -156,6 +288,7 @@ export function EventFormDialog({
     value: EventFormValue["values"][K],
   ) {
     setDirty(true);
+    if (key === "start" || key === "startOffset") setStartError(null);
     setForm((current) => ({
       ...current,
       values: { ...current.values, [key]: value },
@@ -164,8 +297,19 @@ export function EventFormDialog({
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitting(true);
     setError(null);
+    setStartError(null);
+    if (mode !== "edit") {
+      const validationError = validateEventCreationStart(
+        form.values.start,
+        form.values.startOffset,
+      );
+      if (validationError) {
+        setStartError(validationError);
+        return;
+      }
+    }
+    setSubmitting(true);
     try {
       await onSubmit(form);
       if (mode === "create") discardEventCreateDraft(window.localStorage);
@@ -190,11 +334,6 @@ export function EventFormDialog({
         : "Create event";
   const startOffsets = validNewYorkOffsets(form.values.start);
   const endOffsets = validNewYorkOffsets(form.values.end);
-  const visibleChannels = channels.filter((channel) =>
-    `${channel.name} ${channel.type}`
-      .toLocaleLowerCase("en-US")
-      .includes(channelSearch.trim().toLocaleLowerCase("en-US")),
-  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -234,6 +373,7 @@ export function EventFormDialog({
                   type="button"
                   onClick={() => {
                     setForm(pendingDraft);
+                    setManualChannel(usesManualChannel(pendingDraft, channels));
                     setPendingDraft(null);
                     setDirty(true);
                   }}
@@ -247,6 +387,7 @@ export function EventFormDialog({
                     discardEventCreateDraft(window.localStorage);
                     setPendingDraft(null);
                     setForm(emptyDraft());
+                    setManualChannel(false);
                     setDirty(false);
                   }}
                 >
@@ -336,7 +477,11 @@ export function EventFormDialog({
 
               <FormSection
                 title="Schedule & location"
-                description="Times are shown in America/New_York. The end must be after the start."
+                description={
+                  mode === "edit"
+                    ? "Times are shown in America/New_York. The end must be after the start."
+                    : "Times are shown in America/New_York. The start must be at least 30 minutes ahead, and the end must be after it."
+                }
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="grid gap-2">
@@ -344,13 +489,35 @@ export function EventFormDialog({
                     <Input
                       id="event-start"
                       type="datetime-local"
+                      min={minimumStart || undefined}
                       value={form.values.start}
                       required
+                      aria-describedby={
+                        startError ? "event-start-error" : undefined
+                      }
+                      aria-invalid={startError ? true : undefined}
                       onChange={(event) => {
+                        event.currentTarget.setCustomValidity("");
                         update("start", event.target.value);
                         update("startOffset", undefined);
                       }}
+                      onInvalid={(event) => {
+                        if (event.currentTarget.validity.rangeUnderflow) {
+                          event.currentTarget.setCustomValidity(
+                            EVENT_CREATION_START_MESSAGE,
+                          );
+                          setStartError(EVENT_CREATION_START_MESSAGE);
+                        }
+                      }}
                     />
+                    {startError && (
+                      <p
+                        id="event-start-error"
+                        className="text-sm text-destructive"
+                      >
+                        {startError}
+                      </p>
+                    )}
                     {startOffsets.length > 1 && (
                       <select
                         aria-label="Start time occurrence"
@@ -450,30 +617,11 @@ export function EventFormDialog({
                 </div>
 
                 {form.values.audience === "roles" && (
-                  <div className="grid gap-2">
-                    <Label htmlFor="event-roles">Selected roles</Label>
-                    <select
-                      id="event-roles"
-                      multiple
-                      className="min-h-28 rounded-md border border-input bg-background p-2 text-sm"
-                      value={form.values.roleIds}
-                      onChange={(event) =>
-                        update(
-                          "roleIds",
-                          Array.from(
-                            event.target.selectedOptions,
-                            (option) => option.value,
-                          ),
-                        )
-                      }
-                    >
-                      {roles.map((role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <SearchableRoleMultiSelect
+                    roles={roles}
+                    selectedIds={form.values.roleIds}
+                    onChange={(roleIds) => update("roleIds", roleIds)}
+                  />
                 )}
 
                 <div className="flex min-h-11 items-center justify-between gap-4 rounded-md border border-white/10 bg-card/50 p-3">
@@ -493,82 +641,101 @@ export function EventFormDialog({
 
                 {form.values.internal && (
                   <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="event-channel-choice">
-                        Available Discord channel
-                      </Label>
-                      <Input
-                        type="search"
-                        aria-label="Search Discord channels"
-                        placeholder="Search voice and stage channels"
-                        value={channelSearch}
-                        onChange={(event) =>
-                          setChannelSearch(event.target.value)
-                        }
-                      />
-                      <select
-                        id="event-channel-choice"
-                        className="h-11 rounded-md border border-input bg-background px-3 text-sm"
-                        value={
-                          channels.some(
-                            (channel) => channel.id === form.values.channelId,
-                          )
-                            ? form.values.channelId
-                            : ""
-                        }
-                        onChange={(event) => {
-                          const channel = channels.find(
-                            (candidate) => candidate.id === event.target.value,
-                          );
-                          if (!channel) return;
-                          update("channelId", channel.id);
-                          update("channelType", channel.type);
-                        }}
-                      >
-                        <option value="">
-                          Choose a live voice or stage channel
-                        </option>
-                        {visibleChannels.map((channel) => (
-                          <option key={channel.id} value={channel.id}>
-                            {channel.name} · {channel.type}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    {!manualChannel ? (
                       <div className="grid gap-2">
-                        <Label htmlFor="event-channel-id">
-                          Manual Discord channel ID
+                        <Label htmlFor="event-channel-choice">
+                          Available Discord channel
                         </Label>
-                        <Input
-                          id="event-channel-id"
-                          inputMode="numeric"
-                          pattern="[0-9]{17,20}"
-                          value={form.values.channelId ?? ""}
-                          required
-                          onChange={(event) =>
-                            update("channelId", event.target.value)
-                          }
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="event-channel-type">Channel type</Label>
-                        <select
-                          id="event-channel-type"
-                          className="h-11 rounded-md border border-input bg-background px-3 text-sm"
-                          value={form.values.channelType ?? "voice"}
-                          onChange={(event) =>
-                            update(
-                              "channelType",
-                              event.target.value as "stage" | "voice",
+                        <ResponsiveComboBox
+                          ariaLabel="Available Discord channel"
+                          triggerId="event-channel-choice"
+                          items={channels}
+                          value={
+                            channels.some(
+                              (channel) => channel.id === form.values.channelId,
                             )
+                              ? form.values.channelId
+                              : null
                           }
+                          buttonPlaceholder="Choose a live voice or stage channel"
+                          inputPlaceholder="Search voice and stage channels"
+                          triggerClassName="h-11 bg-background/70"
+                          getItemLabel={(channel) =>
+                            `${channel.name} · ${channel.type}`
+                          }
+                          getItemValue={(channel) => channel.id}
+                          renderItem={(channel) => (
+                            <div className="min-w-0">
+                              <span className="block truncate">
+                                {channel.name}
+                              </span>
+                              <span className="block text-xs capitalize text-muted-foreground">
+                                {channel.type} channel
+                              </span>
+                            </div>
+                          )}
+                          onValueChange={(_value, channel) => {
+                            update("channelId", channel.id);
+                            update("channelType", channel.type);
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="justify-self-start px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+                          onClick={() => setManualChannel(true)}
                         >
-                          <option value="voice">Voice</option>
-                          <option value="stage">Stage</option>
-                        </select>
+                          Enter channel ID manually
+                        </Button>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="grid gap-3 rounded-md border border-white/10 bg-card/50 p-3">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div className="grid gap-2">
+                            <Label htmlFor="event-channel-id">
+                              Manual Discord channel ID
+                            </Label>
+                            <Input
+                              id="event-channel-id"
+                              inputMode="numeric"
+                              pattern="[0-9]{17,20}"
+                              value={form.values.channelId ?? ""}
+                              required
+                              onChange={(event) =>
+                                update("channelId", event.target.value)
+                              }
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="event-channel-type">
+                              Channel type
+                            </Label>
+                            <select
+                              id="event-channel-type"
+                              className="h-11 rounded-md border border-input bg-background px-3 text-sm"
+                              value={form.values.channelType ?? "voice"}
+                              onChange={(event) =>
+                                update(
+                                  "channelType",
+                                  event.target.value as "stage" | "voice",
+                                )
+                              }
+                            >
+                              <option value="voice">Voice</option>
+                              <option value="stage">Stage</option>
+                            </select>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="justify-self-start px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+                          onClick={() => setManualChannel(false)}
+                        >
+                          Choose from available channels
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
 

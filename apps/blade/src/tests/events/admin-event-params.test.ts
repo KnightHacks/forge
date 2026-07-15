@@ -20,12 +20,19 @@ describe("admin event URL state", () => {
   });
 
   it("defaults past event lists to newest first", () => {
-    const parsed = parseAdminEventSearchParams({ timing: "past" });
+    const parsed = parseAdminEventSearchParams({
+      health: ["error", "unknown"],
+      timing: "past",
+    });
 
     expect(parsed.input.direction).toBe("desc");
+    expect(parsed.input.health).toEqual([]);
     expect(
       buildAdminEventSearchParams(parsed.input, null).get("direction"),
     ).toBeNull();
+    expect(
+      buildAdminEventSearchParams(parsed.input, null).getAll("health"),
+    ).toEqual([]);
   });
 
   it("TC-006 parses list filters, paging, sorting, and a shareable detail", () => {
@@ -123,6 +130,33 @@ describe("admin event URL state", () => {
       view: "tags",
     });
     expect(result.selectedEventId).toBeNull();
+  });
+
+  it("sanitizes invalid dates, oversized filters, and reversed calendar windows", () => {
+    const result = parseAdminEventSearchParams({
+      calendarEnd: "2026-08-01T00:00:00.000Z",
+      calendarStart: "2026-09-01T00:00:00.000Z",
+      end: "2026-07-01",
+      q: "q".repeat(150),
+      start: "2026-02-31",
+      tag: Array.from({ length: 120 }, (_, index) => `tag-${index}`),
+      view: "calendar",
+    });
+
+    expect(result.input.calendarStart).toBeUndefined();
+    expect(result.input.calendarEnd).toBeUndefined();
+    expect(result.input.startDate).toBeUndefined();
+    expect(result.input.query).toHaveLength(100);
+    expect(result.input.tags).toHaveLength(100);
+  });
+
+  it("TC-030 keeps check-in out of the event-management URL state", () => {
+    const parsed = parseAdminEventSearchParams({ view: "check-in" });
+
+    expect(parsed.input.view).toBe("list");
+    expect(
+      buildAdminEventSearchParams(parsed.input, null).get("view"),
+    ).toBeNull();
   });
 
   it("TC-006 serializes repeated filters deterministically and omits defaults", () => {

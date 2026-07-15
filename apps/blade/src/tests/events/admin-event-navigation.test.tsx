@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Session } from "~/server/auth";
+import { isAdminNavigationActive } from "~/app/_components/member/admin-navigation";
 import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 
 vi.mock("next/image", () => ({
@@ -31,11 +32,16 @@ const session = {
 } as Session;
 
 describe("event admin navigation", () => {
-  it("TC-005 TC-030 server-renders the admin shell for an event-only user", () => {
+  it("TC-005 TC-030 server-renders only event management for a reader", () => {
     const html = renderToStaticMarkup(
       createElement(AuthenticatedShell, {
         activeNavigation: "events",
-        adminNavigation: { events: true, members: false, roles: false },
+        adminNavigation: {
+          eventCheckIn: false,
+          events: true,
+          members: false,
+          roles: false,
+        },
         children: createElement("main", null, "Event administration"),
         session,
       }),
@@ -45,21 +51,58 @@ describe("event admin navigation", () => {
     expect(html).toContain('data-testid="blade-shell-header"');
     expect(html).toContain('data-testid="mobile-admin-menu-trigger"');
     expect(html).toContain('href="/admin/events"');
+    expect(html).not.toContain('href="/admin/check-in"');
     expect(html).toContain('href="/member/dashboard"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain("Event admin");
   });
 
-  it("TC-005 hides the Events destination when event access is absent", () => {
+  it("TC-005 TC-033 gives a check-in-only operator a distinct destination", () => {
     const html = renderToStaticMarkup(
       createElement(AuthenticatedShell, {
-        adminNavigation: { events: false, members: true, roles: false },
-        children: createElement("main", null, "Member administration"),
+        adminNavigation: {
+          eventCheckIn: true,
+          events: false,
+          members: false,
+          roles: false,
+        },
+        children: createElement("main", null, "Event check-in"),
         session,
       }),
     );
 
-    expect(html).toContain('href="/admin/members"');
+    expect(html).toContain('href="/admin/check-in"');
+    expect(html).toContain("Event Check-in");
     expect(html).not.toContain('href="/admin/events"');
+    expect(html).not.toContain('href="/admin/members"');
+  });
+
+  it("TC-005 shows both event destinations when both capabilities are present", () => {
+    const html = renderToStaticMarkup(
+      createElement(AuthenticatedShell, {
+        adminNavigation: {
+          eventCheckIn: true,
+          events: true,
+          members: false,
+          roles: false,
+        },
+        children: createElement("main", null, "Event administration"),
+        session,
+      }),
+    );
+
+    expect(html).toContain('href="/admin/events"');
+    expect(html).toContain('href="/admin/check-in"');
+  });
+
+  it("TC-030 tracks management and check-in as independent active routes", () => {
+    expect(isAdminNavigationActive("events", "/admin/events")).toBe(true);
+    expect(isAdminNavigationActive("events", "/admin/check-in")).toBe(false);
+    expect(isAdminNavigationActive("eventCheckIn", "/admin/check-in")).toBe(
+      true,
+    );
+    expect(isAdminNavigationActive("eventCheckIn", "/admin/events")).toBe(
+      false,
+    );
   });
 });

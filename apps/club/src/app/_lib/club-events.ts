@@ -1,3 +1,5 @@
+import { EVENTS } from "@forge/consts";
+
 import { getBladeTrpcClient } from "./blade-trpc";
 
 export interface PublicClubEvent {
@@ -39,6 +41,15 @@ function toDate(value: unknown) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function compatibleTagColor(tag: string, value: unknown) {
+  if (typeof value === "string" && /^#[\dA-Fa-f]{6}$/.test(value)) {
+    return value;
+  }
+  return Object.prototype.hasOwnProperty.call(EVENTS.EVENT_TAG_COLORS, tag)
+    ? EVENTS.EVENT_TAG_COLORS[tag as EVENTS.EventTag]
+    : EVENTS.EVENT_TAG_COLORS.Workshop;
+}
+
 function normalizeBladeEvents(
   value: unknown,
   limit = DEFAULT_EVENT_LIMIT,
@@ -64,13 +75,16 @@ function normalizeBladeEvents(
         typeof bladeEvent.name !== "string" ||
         typeof bladeEvent.description !== "string" ||
         typeof bladeEvent.location !== "string" ||
-        typeof bladeEvent.requiresDues !== "boolean" ||
-        typeof bladeEvent.tag !== "string" ||
-        typeof bladeEvent.tagColor !== "string" ||
-        !/^#[\dA-Fa-f]{6}$/.test(bladeEvent.tagColor)
+        typeof bladeEvent.tag !== "string"
       ) {
         return null;
       }
+
+      const requiresDues =
+        typeof bladeEvent.requiresDues === "boolean"
+          ? bladeEvent.requiresDues
+          : false;
+      const tagColor = compatibleTagColor(bladeEvent.tag, bladeEvent.tagColor);
 
       return {
         id: bladeEvent.id,
@@ -79,9 +93,9 @@ function normalizeBladeEvents(
         startDateTime: startDate.toISOString(),
         endDateTime: endDate.toISOString(),
         location: bladeEvent.location,
-        requiresDues: bladeEvent.requiresDues,
+        requiresDues,
         tag: bladeEvent.tag,
-        tagColor: bladeEvent.tagColor,
+        tagColor,
       };
     })
     .filter((event): event is PublicClubEvent => event !== null)

@@ -9,7 +9,6 @@ import { Button } from "@forge/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -56,19 +55,17 @@ export function MemberQRCodeDialog({
         </Button>
       </DialogTrigger>
       <DialogContent
+        aria-describedby={undefined}
         className={cn(
-          "max-h-[calc(100svh-1rem)] max-w-[min(24rem,calc(100vw-1rem))] p-4 sm:p-6",
+          "max-h-[calc(100svh-1rem)] w-fit max-w-[calc(100vw-1rem)] gap-3 p-4 sm:max-h-[calc(100svh-2rem)] sm:max-w-[calc(100vw-2rem)] sm:p-6",
           className,
         )}
       >
-        <DialogHeader>
+        <DialogHeader className="pr-6">
           <DialogTitle>Your QR code</DialogTitle>
-          <DialogDescription>
-            This code identifies your Knight Hacks account.
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="flex min-h-72 items-center justify-center rounded-md border border-white/10 bg-background/60 p-4">
+        <div className="flex aspect-square w-[min(80svh,calc(100vw-4.5rem))] items-center justify-center rounded-md border border-white/10 bg-background/60 p-2 sm:w-[min(80svh,calc(100vw-7rem))] sm:p-3">
           {isLoading && (
             <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -83,14 +80,14 @@ export function MemberQRCodeDialog({
           )}
 
           {userQR?.qrCodeUrl && (
-            <div className="rounded-md bg-white p-3 shadow-xl shadow-black/30">
+            <div className="h-full w-full rounded-md bg-white p-3 shadow-xl shadow-black/30">
               <Image
                 unoptimized
                 src={userQR.qrCodeUrl}
                 alt="Knight Hacks account QR code"
-                width={256}
-                height={256}
-                className="h-64 w-64"
+                width={1024}
+                height={1024}
+                className="h-full w-full"
               />
             </div>
           )}

@@ -41,9 +41,15 @@ export function createDbAttendanceState({
         .where(eq(DuesPayment.memberId, member.id)),
     ]);
     return {
+      company: member.company,
+      discordUsername: member.discordUser,
       duesActive: buildDuesStatus({ duesRows }).paid,
+      firstName: member.firstName,
+      guildProfileVisible: member.guildProfileVisible,
       id: member.id,
+      lastName: member.lastName,
       roleIds: [...new Set(assignments.map(({ roleId }) => roleId))],
+      tagline: member.tagline,
       userId: member.userId,
     };
   };

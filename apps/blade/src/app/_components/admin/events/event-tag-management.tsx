@@ -15,6 +15,7 @@ import {
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { toast } from "@forge/ui/toast";
 
 import type { EventTagItem } from "./types";
 import { EventTag } from "./event-presenters";
@@ -42,6 +43,7 @@ function TagEditor({
 }) {
   const [values, setValues] = useState(initial);
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -58,9 +60,16 @@ function TagEditor({
           className="grid gap-4"
           onSubmit={async (event) => {
             event.preventDefault();
+            setError(null);
             setPending(true);
             try {
               await onSave(values);
+            } catch (cause) {
+              setError(
+                cause instanceof Error
+                  ? cause.message
+                  : "The event tag could not be saved.",
+              );
             } finally {
               setPending(false);
             }
@@ -80,6 +89,11 @@ function TagEditor({
               }
             />
           </div>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="tag-points">Default points</Label>
@@ -140,6 +154,23 @@ export function EventTagManagement({
   tags: EventTagItem[];
 }) {
   const [editing, setEditing] = useState<EventTagItem | "new" | null>(null);
+  const [archivePendingId, setArchivePendingId] = useState<string | null>(null);
+
+  async function archive(tag: EventTagItem) {
+    if (!onArchive || archivePendingId) return;
+    setArchivePendingId(tag.id);
+    try {
+      await onArchive(tag.id);
+    } catch (cause) {
+      toast.error(
+        cause instanceof Error && cause.message
+          ? cause.message
+          : `The ${tag.name} tag could not be archived.`,
+      );
+    } finally {
+      setArchivePendingId(null);
+    }
+  }
 
   return (
     <section className="rounded-lg border border-white/10 bg-card/95 shadow-2xl shadow-black/25">
@@ -193,10 +224,14 @@ export function EventTagManagement({
                     type="button"
                     size="sm"
                     variant="outline"
-                    onClick={() => void onArchive?.(tag.id)}
+                    disabled={archivePendingId !== null}
+                    onClick={() => void archive(tag)}
                   >
                     <Archive className="mr-2 h-4 w-4" aria-hidden="true" />
-                    Archive {tag.name}
+                    {archivePendingId === tag.id
+                      ? "Archiving..."
+                      : "Archive"}{" "}
+                    {tag.name}
                   </Button>
                 )}
               </div>

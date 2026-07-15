@@ -1,14 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
-import { Camera, CameraOff, Search, UserCheck } from "lucide-react";
+import {
+  CalendarDays,
+  Camera,
+  CameraOff,
+  History,
+  QrCode,
+  UserCheck,
+} from "lucide-react";
 
+import { Avatar, AvatarFallback } from "@forge/ui/avatar";
 import { Button } from "@forge/ui/button";
-import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
+import { Switch } from "@forge/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
 import type { CheckInEventGroups } from "./types";
+import { formatEventDateTime } from "./event-presenters";
 
 export interface CheckInMemberChoice {
   discordUsername: string;
@@ -19,112 +30,181 @@ export interface CheckInMemberChoice {
 }
 
 export interface CheckInResult {
+  member?: {
+    company: string | null;
+    discordUsername: string;
+    id: string;
+    name: string;
+    tagline: string | null;
+  };
   message: string;
   state: "already_checked_in" | "error" | "success";
 }
 
-function EventOptions({ groups }: { groups: CheckInEventGroups }) {
+export type CheckInRequest =
+  | { eventId: string; memberId: string }
+  | { allowRepeat?: boolean; eventId: string; qrPayload: string };
+
+type EventTiming = "past" | "upcoming";
+
+export const CHECK_IN_SCANNER_OPTIONS = {
+  allowMultiple: true,
+  scanDelay: 3000,
+} as const;
+
+export function rearmQrPayloadsOutsideFrame(
+  handledPayloads: Set<string>,
+  detectedCodes: readonly { rawValue: string }[],
+) {
+  const visiblePayloads = new Set(
+    detectedCodes.map(({ rawValue }) => rawValue).filter(Boolean),
+  );
+  for (const payload of handledPayloads) {
+    if (!visiblePayloads.has(payload)) handledPayloads.delete(payload);
+  }
+}
+
+export function checkInEventLabel(event: { startAt: string; title: string }) {
+  return `${event.title} · ${formatEventDateTime(event.startAt)}`;
+}
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
+export function CheckInFeedback({ result }: { result: CheckInResult }) {
   return (
-    <>
-      {groups.current.length > 0 && (
-        <optgroup label="Current events">
-          {groups.current.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.title}
-            </option>
-          ))}
-        </optgroup>
+    <div
+      role="status"
+      className={`mt-4 rounded-md border p-4 text-sm ${
+        result.state === "success"
+          ? "border-[hsl(var(--chart-2)/0.35)] bg-[hsl(var(--chart-2)/0.12)]"
+          : result.state === "already_checked_in"
+            ? "border-[hsl(var(--chart-3)/0.35)] bg-[hsl(var(--chart-3)/0.12)]"
+            : "border-destructive/35 bg-destructive/10"
+      }`}
+    >
+      <p
+        className={`font-medium ${
+          result.state === "success"
+            ? "text-[hsl(var(--chart-2))]"
+            : result.state === "already_checked_in"
+              ? "text-[hsl(var(--chart-3))]"
+              : "text-destructive"
+        }`}
+      >
+        {result.message}
+      </p>
+      {result.member && (
+        <div className="mt-3 flex min-w-0 items-center gap-3 border-t border-white/10 pt-3 text-foreground">
+          <Avatar className="h-11 w-11 border border-white/10">
+            <AvatarFallback className="bg-primary/15 font-semibold text-primary">
+              {initials(result.member.name)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="truncate font-semibold">{result.member.name}</p>
+            <p className="truncate text-sm text-muted-foreground">
+              @{result.member.discordUsername}
+            </p>
+            {(result.member.tagline || result.member.company) && (
+              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                {result.member.tagline || result.member.company}
+              </p>
+            )}
+          </div>
+        </div>
       )}
-      {groups.recent.length > 0 && (
-        <optgroup label="Recently ended">
-          {groups.recent.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.title}
-            </option>
-          ))}
-        </optgroup>
-      )}
-      {groups.older.length > 0 && (
-        <optgroup label="Older events">
-          {groups.older.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.title}
-            </option>
-          ))}
-        </optgroup>
-      )}
-    </>
+    </div>
   );
 }
 
 export function EventCheckInPanel({
   checkIn,
   groups,
-  searchOlderEvents,
   searchMembers,
 }: {
-  checkIn?: (input: {
-    eventId: string;
-    memberId?: string;
-    qrPayload?: string;
-  }) => Promise<CheckInResult>;
+  checkIn?: (input: CheckInRequest) => Promise<CheckInResult>;
   groups: CheckInEventGroups;
-  searchOlderEvents?: (query: string) => Promise<CheckInEventGroups>;
   searchMembers?: (query: string) => Promise<CheckInMemberChoice[]>;
 }) {
+  const [timing, setTiming] = useState<EventTiming>("upcoming");
   const [eventId, setEventId] = useState("");
-  const [manualOpen, setManualOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-  const [olderQuery, setOlderQuery] = useState("");
-  const [olderEvents, setOlderEvents] = useState(groups.older);
+  const [allowRepeat, setAllowRepeat] = useState(false);
+  const [memberQuery, setMemberQuery] = useState("");
   const [members, setMembers] = useState<CheckInMemberChoice[]>([]);
+  const [memberSearchPending, setMemberSearchPending] = useState(false);
+  const [memberSearchError, setMemberSearchError] = useState<string | null>(
+    null,
+  );
   const [selectedMember, setSelectedMember] =
     useState<CheckInMemberChoice | null>(null);
   const [feedback, setFeedback] = useState<CheckInResult | null>(null);
   const [pending, setPending] = useState(false);
   const scanning = useRef(false);
+  const handledQrPayloads = useRef(new Set<string>());
+
+  const eventChoices = useMemo(
+    () =>
+      timing === "upcoming"
+        ? groups.current
+        : [...groups.recent, ...groups.older],
+    [groups, timing],
+  );
+  const memberChoices = useMemo(
+    () =>
+      selectedMember &&
+      !members.some((member) => member.id === selectedMember.id)
+        ? [selectedMember, ...members]
+        : members,
+    [members, selectedMember],
+  );
 
   useEffect(() => {
-    if (!manualOpen || query.trim().length < 2 || !searchMembers) {
+    const normalizedQuery = memberQuery.trim();
+    if (normalizedQuery.length < 2 || !searchMembers) {
       setMembers([]);
+      setMemberSearchError(null);
+      setMemberSearchPending(false);
       return;
     }
 
     let cancelled = false;
+    setMembers([]);
+    setMemberSearchPending(true);
+    setMemberSearchError(null);
     const timeout = window.setTimeout(() => {
-      void searchMembers(query.trim()).then((result) => {
-        if (!cancelled) setMembers(result);
-      });
+      void searchMembers(normalizedQuery)
+        .then((result) => {
+          if (!cancelled) setMembers(result);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setMembers([]);
+            setMemberSearchError("Member search could not be loaded.");
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setMemberSearchPending(false);
+        });
     }, 200);
     return () => {
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [manualOpen, query, searchMembers]);
+  }, [memberQuery, searchMembers]);
 
-  useEffect(() => {
-    if (olderQuery.trim().length < 2 || !searchOlderEvents) {
-      return;
-    }
-
-    let cancelled = false;
-    const timeout = window.setTimeout(() => {
-      void searchOlderEvents(olderQuery.trim()).then((result) => {
-        if (!cancelled) setOlderEvents(result.older);
-      });
-    }, 200);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeout);
-    };
-  }, [olderQuery, searchOlderEvents]);
-
-  const displayedOlderEvents =
-    olderQuery.trim().length < 2 ? groups.older : olderEvents;
-
-  async function submit(input: { memberId?: string; qrPayload?: string }) {
+  async function submit(
+    input: { memberId?: string; qrPayload?: string },
+    repeat = false,
+  ) {
     if (!eventId) {
       setFeedback({
         message: "Select an event before checking in.",
@@ -136,7 +216,17 @@ export function EventCheckInPanel({
 
     setPending(true);
     try {
-      setFeedback(await checkIn({ eventId, ...input }));
+      setFeedback(
+        await checkIn(
+          input.memberId
+            ? { eventId, memberId: input.memberId }
+            : {
+                allowRepeat: repeat,
+                eventId,
+                qrPayload: input.qrPayload ?? "",
+              },
+        ),
+      );
     } catch (cause) {
       setFeedback({
         message:
@@ -150,178 +240,245 @@ export function EventCheckInPanel({
     }
   }
 
+  function selectTiming(nextTiming: EventTiming) {
+    if (nextTiming === timing) return;
+    setTiming(nextTiming);
+    setEventId("");
+    setCameraOpen(false);
+    setCameraError(null);
+    setFeedback(null);
+  }
+
   return (
-    <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <div className="rounded-lg border border-white/10 bg-card/95 p-4 shadow-2xl shadow-black/25 sm:p-6">
-        <div className="mb-5">
-          <h2 className="text-xl font-semibold">Event check-in</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Select an event, then scan each member or use manual lookup.
-          </p>
-        </div>
+    <section
+      className={`grid min-w-0 gap-0 sm:gap-4 ${
+        feedback ? "lg:grid-cols-[minmax(0,1fr)_20rem]" : ""
+      }`}
+    >
+      <div className="border-y border-white/10 bg-card/95 p-3 shadow-2xl shadow-black/25 sm:rounded-lg sm:border sm:p-6">
+        <h2 className="sr-only">Check in members</h2>
 
-        <div className="grid gap-2">
-          <Label htmlFor="check-in-event">Select event</Label>
-          <select
-            id="check-in-event"
-            aria-label="Event"
-            className="h-11 min-w-0 rounded-md border border-input bg-background px-3 text-sm"
-            value={eventId}
-            onChange={(event) => {
-              setEventId(event.target.value);
-              setFeedback(null);
-            }}
+        <div className="grid gap-3 border-b border-border/60 pb-4">
+          <div
+            role="group"
+            aria-label="Check-in event timing"
+            className="grid grid-cols-2 rounded-lg border border-white/10 bg-background/60 p-1"
           >
-            <option value="">Select event</option>
-            <EventOptions groups={{ ...groups, older: displayedOlderEvents }} />
-          </select>
-        </div>
+            <Button
+              type="button"
+              variant={timing === "upcoming" ? "primary" : "ghost"}
+              aria-pressed={timing === "upcoming"}
+              className="min-h-11 gap-2"
+              onClick={() => selectTiming("upcoming")}
+            >
+              <CalendarDays className="h-4 w-4" aria-hidden="true" />
+              Upcoming
+            </Button>
+            <Button
+              type="button"
+              variant={timing === "past" ? "primary" : "ghost"}
+              aria-pressed={timing === "past"}
+              className="min-h-11 gap-2"
+              onClick={() => selectTiming("past")}
+            >
+              <History className="h-4 w-4" aria-hidden="true" />
+              Past
+            </Button>
+          </div>
 
-        <div className="mt-3 grid gap-2">
-          <Label htmlFor="older-event-search">Find an older event</Label>
-          <Input
-            id="older-event-search"
-            type="search"
-            value={olderQuery}
-            placeholder="Search older event titles"
-            onChange={(event) => setOlderQuery(event.target.value)}
-          />
-          <p className="text-sm text-muted-foreground">
-            Older results include titles only and never load attendee data.
-          </p>
-        </div>
-
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          <Button
-            type="button"
-            className="min-h-11 gap-2"
-            disabled={!eventId}
-            onClick={() => {
-              setCameraOpen((current) => !current);
-              setManualOpen(false);
-            }}
-          >
-            {cameraOpen ? (
-              <CameraOff className="h-4 w-4" aria-hidden="true" />
-            ) : (
-              <Camera className="h-4 w-4" aria-hidden="true" />
-            )}
-            {cameraOpen ? "Close scanner" : "Open scanner"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="min-h-11 gap-2"
-            disabled={!eventId}
-            onClick={() => {
-              setManualOpen((current) => !current);
-              setCameraOpen(false);
-            }}
-          >
-            <Search className="h-4 w-4" aria-hidden="true" />
-            Manual lookup
-          </Button>
-        </div>
-
-        {cameraOpen && (
-          <div className="mt-4 overflow-hidden rounded-md border border-white/10 bg-background/60 p-2">
-            <Scanner
-              scanDelay={1200}
-              constraints={{ facingMode: "environment" }}
-              formats={["qr_code"]}
-              onError={() =>
-                setCameraError(
-                  "Camera access is unavailable. Use manual lookup instead.",
-                )
+          <div className="grid gap-2">
+            <Label htmlFor="check-in-event">Event</Label>
+            <ResponsiveComboBox
+              ariaLabel="Event"
+              triggerId="check-in-event"
+              items={eventChoices}
+              value={eventId || null}
+              buttonPlaceholder={
+                eventChoices.length > 0
+                  ? "Search events"
+                  : `No ${timing} events available`
               }
-              onScan={(codes) => {
-                const payload = codes[0]?.rawValue;
-                if (!payload || scanning.current) return;
-                scanning.current = true;
-                void submit({ qrPayload: payload }).finally(() => {
-                  window.setTimeout(() => {
-                    scanning.current = false;
-                  }, 1000);
-                });
+              inputPlaceholder={`Search ${timing} events`}
+              triggerClassName="min-h-11 bg-background/70"
+              getItemLabel={checkInEventLabel}
+              getItemValue={(event) => event.id}
+              renderItem={(event) => (
+                <span className="min-w-0">
+                  <span className="block truncate">{event.title}</span>
+                  <span className="block truncate text-sm text-muted-foreground">
+                    {formatEventDateTime(event.startAt)}
+                  </span>
+                </span>
+              )}
+              onValueChange={(value) => {
+                setEventId(value);
+                setFeedback(null);
               }}
             />
-            {cameraError && (
-              <p className="p-3 text-sm text-destructive">{cameraError}</p>
-            )}
           </div>
-        )}
+        </div>
 
-        {manualOpen && (
-          <div className="mt-4 grid gap-3 rounded-md border border-white/10 bg-background/60 p-3 sm:p-4">
-            <div className="grid gap-2">
-              <Label htmlFor="member-search">Find member</Label>
-              <Input
-                id="member-search"
-                type="search"
-                value={query}
-                placeholder="Name, Discord username, or email"
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setSelectedMember(null);
-                }}
+        <Tabs
+          defaultValue="scanner"
+          className="mt-4 w-full"
+          onValueChange={(value) => {
+            if (value === "manual") setCameraOpen(false);
+          }}
+        >
+          <TabsList className="grid h-auto w-full grid-cols-2">
+            <TabsTrigger value="scanner" className="min-h-11 gap-2">
+              <QrCode className="h-4 w-4" aria-hidden="true" />
+              Scanner
+            </TabsTrigger>
+            <TabsTrigger value="manual" className="min-h-11 gap-2">
+              <UserCheck className="h-4 w-4" aria-hidden="true" />
+              Manual
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="scanner" className="mt-4 grid gap-4">
+            <div className="flex min-h-11 items-center justify-between gap-4 rounded-md border border-white/10 bg-background/60 px-3 py-2">
+              <Label htmlFor="allow-repeat-check-ins">
+                Allow repeat check-ins
+              </Label>
+              <Switch
+                id="allow-repeat-check-ins"
+                checked={allowRepeat}
+                onCheckedChange={setAllowRepeat}
               />
             </div>
-            {members.length > 0 && (
-              <div className="grid gap-2" aria-label="Member results">
-                {members.map((member) => (
-                  <button
-                    key={member.id}
-                    type="button"
-                    className="min-h-11 rounded-md border border-white/10 bg-card/70 p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onClick={() => setSelectedMember(member)}
-                  >
-                    <span className="block text-sm font-medium">
-                      {member.name}
-                    </span>
-                    <span className="block text-sm text-muted-foreground">
-                      @{member.discordUsername} · {member.email}
-                    </span>
-                  </button>
-                ))}
+
+            <Button
+              type="button"
+              className="min-h-11 gap-2"
+              disabled={!eventId}
+              onClick={() => {
+                setCameraOpen((current) => {
+                  if (!current) handledQrPayloads.current.clear();
+                  return !current;
+                });
+                setCameraError(null);
+              }}
+            >
+              {cameraOpen ? (
+                <CameraOff className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Camera className="h-4 w-4" aria-hidden="true" />
+              )}
+              {cameraOpen ? "Close scanner" : "Open scanner"}
+            </Button>
+
+            {cameraOpen && (
+              <div className="overflow-hidden rounded-md border border-white/10 bg-background/60 p-2">
+                <Scanner
+                  allowMultiple={CHECK_IN_SCANNER_OPTIONS.allowMultiple}
+                  scanDelay={CHECK_IN_SCANNER_OPTIONS.scanDelay}
+                  constraints={{ facingMode: "environment" }}
+                  formats={["qr_code"]}
+                  components={{
+                    tracker: (codes) =>
+                      rearmQrPayloadsOutsideFrame(
+                        handledQrPayloads.current,
+                        codes,
+                      ),
+                  }}
+                  onError={() =>
+                    setCameraError(
+                      "Camera access is unavailable. Use Manual entry instead.",
+                    )
+                  }
+                  onScan={(codes) => {
+                    const payload = codes[0]?.rawValue;
+                    if (
+                      !payload ||
+                      scanning.current ||
+                      handledQrPayloads.current.has(payload)
+                    )
+                      return;
+                    handledQrPayloads.current.add(payload);
+                    scanning.current = true;
+                    void submit({ qrPayload: payload }, allowRepeat).finally(
+                      () => {
+                        window.setTimeout(() => {
+                          scanning.current = false;
+                        }, 1000);
+                      },
+                    );
+                  }}
+                />
+                {cameraError && (
+                  <p className="p-3 text-sm text-destructive">{cameraError}</p>
+                )}
               </div>
             )}
-            {selectedMember && (
-              <Button
-                type="button"
-                className="min-h-11 gap-2"
-                disabled={pending}
-                onClick={() => submit({ memberId: selectedMember.id })}
-              >
-                <UserCheck className="h-4 w-4" aria-hidden="true" />
-                Check in {selectedMember.name}
-              </Button>
-            )}
-          </div>
-        )}
+          </TabsContent>
+
+          <TabsContent value="manual" className="mt-4 grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="member-search">Member</Label>
+              <ResponsiveComboBox
+                ariaLabel="Member"
+                triggerId="member-search"
+                items={memberChoices}
+                value={selectedMember?.id ?? null}
+                buttonPlaceholder="Search for a member"
+                inputPlaceholder="Name, Discord username, or email"
+                emptyMessage={
+                  memberQuery.trim().length < 2
+                    ? "Enter at least 2 characters."
+                    : (memberSearchError ?? "No members found.")
+                }
+                filterItems={false}
+                isLoading={memberSearchPending}
+                triggerClassName="min-h-11 bg-background/70"
+                getItemLabel={(member) => member.name}
+                getItemSearchValue={(member) =>
+                  `${member.name} ${member.discordUsername} ${member.email}`
+                }
+                getItemValue={(member) => member.id}
+                renderItem={(member) => (
+                  <div className="min-w-0">
+                    <span className="block truncate font-medium">
+                      {member.name}
+                    </span>
+                    <span className="block truncate text-sm text-muted-foreground">
+                      @{member.discordUsername} · {member.email}
+                    </span>
+                  </div>
+                )}
+                onSearchValueChange={(value) => {
+                  setMemberQuery(value);
+                  setSelectedMember(null);
+                }}
+                onItemSelect={setSelectedMember}
+              />
+            </div>
+
+            <Button
+              type="button"
+              className="min-h-11 gap-2"
+              disabled={!eventId || !selectedMember || pending}
+              onClick={() => {
+                if (selectedMember) {
+                  void submit({ memberId: selectedMember.id });
+                }
+              }}
+            >
+              <UserCheck className="h-4 w-4" aria-hidden="true" />
+              {selectedMember
+                ? `Check in ${selectedMember.name}`
+                : "Select a member to check in"}
+            </Button>
+          </TabsContent>
+        </Tabs>
       </div>
 
-      <aside className="rounded-lg border border-white/10 bg-card/95 p-4 shadow-xl shadow-black/20 sm:p-6">
-        <h2 className="text-base font-semibold">Latest result</h2>
-        {feedback ? (
-          <div
-            role="status"
-            className={`mt-4 rounded-md border p-4 text-sm font-medium ${
-              feedback.state === "success"
-                ? "border-[hsl(var(--chart-2)/0.35)] bg-[hsl(var(--chart-2)/0.12)] text-[hsl(var(--chart-2))]"
-                : feedback.state === "already_checked_in"
-                  ? "border-[hsl(var(--chart-3)/0.35)] bg-[hsl(var(--chart-3)/0.12)] text-[hsl(var(--chart-3))]"
-                  : "border-destructive/35 bg-destructive/10 text-destructive"
-            }`}
-          >
-            {feedback.message}
-          </div>
-        ) : (
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Results stay visible while the scanner remains ready for the next
-            member.
-          </p>
-        )}
-      </aside>
+      {feedback ? (
+        <aside className="border-b border-white/10 bg-card/95 p-3 shadow-xl shadow-black/20 sm:rounded-lg sm:border sm:p-6">
+          <h2 className="text-base font-semibold">Latest result</h2>
+          <CheckInFeedback result={feedback} />
+        </aside>
+      ) : null}
     </section>
   );
 }
