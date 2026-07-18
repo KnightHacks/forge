@@ -16,6 +16,13 @@ export const DAILY_MESSAGES = [
   "Let's flex your brain muscles! 💪👅😈",
   "𝓛𝓮𝓽'𝓼 𝓬𝓸𝓭𝓮 𝓿𝓻𝓸 ❤️‍🔥⛓️👅",
   "I'm 𝓯𝓻𝓮𝓪𝓴𝔂 T.K! 🛡️👅",
+  "Lock in!",
+  "Time to use 101% of your brain power! 🧠",
+  "Time to beat 100% submissions with your algorithms!",
+  "1337 1337 1337...",
+  "Rise up, coding people!",
+  "Tuff problem, you got this tho.",
+  "Leetcodemaxxing time 🥶",
 ];
 
 export const DISCORD_LEETCODE_ROLE_ID = "1264645162060091483";
@@ -147,6 +154,23 @@ export const EIGHTBALL_RESPONSES = [
   "The stars in the milky way are blinking in a decidedly good fashion!",
   "Yeah that ain't happening.",
   "Bro that's definitely happening.",
+  "Fosho.",
+  "Good question. I don't know.",
+  "I can't tell.",
+  "Yes. (trust me bro)",
+  "Of course.",
+  "No idea bro.",
+  "That seems potential.",
+  "Never. I'm telling you.",
+  "bool answer = true;",
+  "bool answer = false;",
+  "TK says no.",
+  "TK says yes.",
+  "6/7.",
+  "Lame question, sybau 💔",
+  "what 😭",
+  "yes lowkenuinely.",
+  "Based question, an insta yes from me.",
 ];
 
 export type WeatherMapKeys = Record<
