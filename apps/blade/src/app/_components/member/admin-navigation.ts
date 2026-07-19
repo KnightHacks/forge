@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  ChartNoAxesCombined,
   ClipboardList,
   LayoutDashboard,
   QrCode,
@@ -8,6 +9,7 @@ import {
 } from "lucide-react";
 
 export interface AdminNavigationAccess {
+  analytics?: boolean;
   eventCheckIn?: boolean;
   events?: boolean;
   forms?: boolean;
@@ -16,6 +18,13 @@ export interface AdminNavigationAccess {
 }
 
 export const adminNavigationItems = [
+  {
+    access: "analytics",
+    href: "/admin/analytics",
+    icon: ChartNoAxesCombined,
+    id: "analytics",
+    label: "Analytics",
+  },
   {
     access: "forms",
     href: "/admin/forms",
@@ -66,6 +75,7 @@ export function getVisibleAdminNavigation(access: AdminNavigationAccess) {
 }
 
 export function isAdminNavigationActive(id: string, pathname: string) {
+  if (id === "analytics") return pathname.startsWith("/admin/analytics");
   if (id === "events") return pathname.startsWith("/admin/events");
   if (id === "forms") return pathname.startsWith("/admin/forms");
   if (id === "eventCheckIn") return pathname.startsWith("/admin/check-in");

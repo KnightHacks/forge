@@ -1,3 +1,4 @@
+import { analyticsRouter } from "./routers/analytics";
 import { authRouter } from "./routers/auth";
 import { duesRouter } from "./routers/dues";
 import { eventRouter } from "./routers/event";
@@ -15,6 +16,7 @@ const healthProcedure = publicProcedure.query(() => ({
 }));
 
 export interface AppRouterShape {
+  analytics: typeof analyticsRouter;
   auth: typeof authRouter;
   dues: typeof duesRouter;
   event: typeof eventRouter;
@@ -32,6 +34,7 @@ export type AppRouterRecord = {
 };
 
 const appRouterRecord: AppRouterRecord = {
+  analytics: analyticsRouter,
   auth: authRouter,
   dues: duesRouter,
   event: eventRouter,

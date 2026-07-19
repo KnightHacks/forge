@@ -2,6 +2,10 @@ import type { RouterOutputs } from "@forge/api";
 
 type EffectivePermissions = RouterOutputs["roles"]["getPermissions"];
 
+export function canAccessAnalytics(permissions: EffectivePermissions) {
+  return permissions.IS_OFFICER === true || permissions.READ_CLUB_DATA === true;
+}
+
 export function canAccessMemberAdmin(permissions: EffectivePermissions) {
   return (
     permissions.IS_OFFICER === true ||
@@ -43,6 +47,7 @@ export function canAccessFormAdmin(permissions: EffectivePermissions) {
 
 export function getAdminNavigationAccess(permissions: EffectivePermissions) {
   return {
+    analytics: canAccessAnalytics(permissions),
     eventCheckIn: canAccessEventCheckIn(permissions),
     events: canAccessEventAdmin(permissions),
     forms: canAccessFormAdmin(permissions),

@@ -12,6 +12,7 @@ import { MemberRouteTransitionSurface } from "~/app/_components/member/member-ro
 import { MobileAdminNavigation } from "~/app/_components/member/mobile-admin-navigation";
 
 type NavigationItem =
+  | "analytics"
   | "dashboard"
   | "eventCheckIn"
   | "events"
@@ -34,18 +35,21 @@ export function AuthenticatedShell({
 }) {
   const currentSection =
     sectionLabel ??
-    (activeNavigation === "members"
-      ? "Member admin"
-      : activeNavigation === "eventCheckIn"
-        ? "Event check-in"
-        : activeNavigation === "events"
-          ? "Event admin"
-          : activeNavigation === "forms"
-            ? "Form admin"
-            : activeNavigation === "roles"
-              ? "Role admin"
-              : "Member dashboard");
+    (activeNavigation === "analytics"
+      ? "Club analytics"
+      : activeNavigation === "members"
+        ? "Member admin"
+        : activeNavigation === "eventCheckIn"
+          ? "Event check-in"
+          : activeNavigation === "events"
+            ? "Event admin"
+            : activeNavigation === "forms"
+              ? "Form admin"
+              : activeNavigation === "roles"
+                ? "Role admin"
+                : "Member dashboard");
   const hasAdminNavigation =
+    adminNavigation?.analytics === true ||
     adminNavigation?.eventCheckIn === true ||
     adminNavigation?.events === true ||
     adminNavigation?.forms === true ||
