@@ -1072,6 +1072,7 @@ export const Issue = createTable(
     links: t.text().array(),
     event: t.uuid().references(() => Event.id, { onDelete: "set null" }),
     date: t.timestamp(),
+    dueAt: t.timestamp({ mode: "date", withTimezone: true }),
     priority: issuePriority().notNull(),
     team: t
       .uuid()
@@ -1082,6 +1083,12 @@ export const Issue = createTable(
       .notNull()
       .references(() => User.id, { onDelete: "restrict" }),
     parent: t.uuid(),
+    revision: t.integer().notNull().default(1),
+    archivedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    archivedBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    archiveBatchId: t.uuid(),
+    creationKey: t.uuid(),
+    creationHash: t.varchar({ length: 64 }),
     createdAt: t.timestamp().defaultNow().notNull(),
     updatedAt: t
       .timestamp()
@@ -1099,6 +1106,14 @@ export const Issue = createTable(
     creatorIdx: index("issue_creator_idx").on(table.creator),
     statusIdx: index("issue_status_idx").on(table.status),
     dateIdx: index("issue_date_idx").on(table.date),
+    dueAtIdx: index("issue_due_at_idx").on(table.dueAt),
+    archiveIdx: index("issue_archive_idx").on(
+      table.archivedAt,
+      table.archiveBatchId,
+    ),
+    creationKeyUnique: unique("knight_hacks_issue_creation_key_unique").on(
+      table.creationKey,
+    ),
     parentIdx: index("issue_parent_idx").on(table.parent),
     priorityIdx: index("issue_priority_idx").on(table.priority),
   }),
@@ -1140,16 +1155,100 @@ export const IssuesToUsersAssignment = createTable(
   }),
 );
 
-export const Template = createTable("template", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  name: t.text().notNull(),
-  body: t.jsonb().notNull(),
-  createdAt: t.timestamp().defaultNow().notNull(),
-  updatedAt: t
-    .timestamp()
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-}));
+export const IssueHistory = createTable(
+  "issue_history",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    issueId: t
+      .uuid()
+      .notNull()
+      .references(() => Issue.id, { onDelete: "restrict" }),
+    actorId: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    actorDisplayName: t.varchar({ length: 255 }).notNull(),
+    action: t.varchar({ length: 64 }).notNull(),
+    changedFields: t
+      .text()
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
+    before: t.jsonb(),
+    after: t.jsonb(),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  }),
+  (table) => ({
+    issueCreatedIdx: index("issue_history_issue_created_idx").on(
+      table.issueId,
+      table.createdAt,
+      table.id,
+    ),
+  }),
+);
+
+export const IssueReminderDelivery = createTable(
+  "issue_reminder_delivery",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    issueId: t
+      .uuid()
+      .notNull()
+      .references(() => Issue.id, { onDelete: "restrict" }),
+    dueAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+    reminderKey: t.varchar({ length: 32 }).notNull(),
+    destinationSnapshot: t.varchar({ length: 32 }).notNull(),
+    contentSnapshot: t.text().notNull(),
+    status: t.varchar({ length: 24 }).notNull().default("pending"),
+    attemptCount: t.integer().notNull().default(0),
+    lastError: t.text(),
+    lockedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    deliveredAt: t.timestamp({ mode: "date", withTimezone: true }),
+    nextAttemptAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  }),
+  (table) => ({
+    deliveryIdentity: unique("issue_reminder_delivery_identity_unique").on(
+      table.issueId,
+      table.dueAt,
+      table.reminderKey,
+    ),
+    pendingIdx: index("issue_reminder_delivery_pending_idx").on(
+      table.status,
+      table.nextAttemptAt,
+    ),
+  }),
+);
+
+export const Template = createTable(
+  "template",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    name: t.text().notNull(),
+    normalizedName: t.varchar({ length: 100 }),
+    body: t.jsonb().notNull(),
+    disabledAt: t.timestamp({ mode: "date", withTimezone: true }),
+    disabledReason: t.text(),
+    createdAt: t.timestamp().defaultNow().notNull(),
+    updatedAt: t
+      .timestamp()
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  }),
+  (table) => ({
+    normalizedNameUnique: unique(
+      "knight_hacks_template_normalized_name_unique",
+    ).on(table.normalizedName),
+  }),
+);
 
 export const InsertTemplateSchema = createInsertSchema(Template);

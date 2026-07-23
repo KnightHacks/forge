@@ -28,6 +28,7 @@
     "lint": "eslint",
     "migrate": "pnpm with-env drizzle-kit migrate",
     "push": "pnpm with-env drizzle-kit push",
+    "preflight:issues": "pnpm with-env tsx scripts/preflight-issues.ts",
     "studio": "pnpm with-env drizzle-kit studio",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../.env --",

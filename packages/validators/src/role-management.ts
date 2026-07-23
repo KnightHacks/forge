@@ -40,6 +40,16 @@ export const rolePermissionUpdateSchema = roleIdSchema.extend({
   permissions: uniquePermissionArraySchema,
 });
 
+export const roleIssueReminderUpdateSchema = roleIdSchema
+  .extend({
+    channelId: z
+      .string()
+      .trim()
+      .regex(/^\d{17,20}$/, "Enter a valid Discord channel ID."),
+    enabled: z.boolean(),
+  })
+  .strict();
+
 export const roleUnlinkSchema = roleIdSchema.extend({
   confirmation: z.literal(ROLE_UNLINK_CONFIRMATION),
 });

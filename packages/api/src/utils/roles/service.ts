@@ -314,6 +314,8 @@ export async function buildLinkedRoleViews(
         id: role.id,
         isCosmetic: isCosmeticPermissionString(role.permissions),
         isMissing: discordRoles.available && !live,
+        issueReminderChannel: role.issueReminderChannel,
+        issueRemindersEnabled: role.issueRemindersEnabled,
         memberCount: memberCounts?.[role.discordRoleId] ?? null,
         name: live?.name ?? role.name,
         permissions: permissionBitstringToKeys(role.permissions),

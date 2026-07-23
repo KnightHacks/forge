@@ -1,5 +1,7 @@
 import type { RouterOutputs } from "@forge/api";
 
+import { env } from "~/env";
+
 type EffectivePermissions = RouterOutputs["roles"]["getPermissions"];
 
 export function canAccessAnalytics(permissions: EffectivePermissions) {
@@ -45,12 +47,25 @@ export function canAccessFormAdmin(permissions: EffectivePermissions) {
   );
 }
 
+export function canAccessIssues(
+  permissions: EffectivePermissions,
+  featureEnabled = env.ISSUES_FEATURE_ENABLED === "true",
+) {
+  return (
+    featureEnabled &&
+    (permissions.IS_OFFICER === true ||
+      permissions.READ_ISSUES === true ||
+      permissions.EDIT_ISSUES === true)
+  );
+}
+
 export function getAdminNavigationAccess(permissions: EffectivePermissions) {
   return {
     analytics: canAccessAnalytics(permissions),
     eventCheckIn: canAccessEventCheckIn(permissions),
     events: canAccessEventAdmin(permissions),
     forms: canAccessFormAdmin(permissions),
+    issues: canAccessIssues(permissions),
     members: canAccessMemberAdmin(permissions),
     roles: canAccessRoleAdmin(permissions),
   };

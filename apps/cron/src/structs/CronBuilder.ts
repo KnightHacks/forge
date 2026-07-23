@@ -55,6 +55,7 @@ export type ExecutorFunction = () => Promise<void> | void;
 export interface Cron {
   expression: string;
   executor: ExecutorFunction;
+  timezone?: string;
 }
 
 export class CronBuilder {
@@ -76,15 +77,25 @@ export class CronBuilder {
    *  }
    * );
    */
-  public addCron(expression: string, executor: ExecutorFunction): this {
-    this.crons.push({ expression, executor });
+  public addCron(
+    expression: string,
+    executor: ExecutorFunction,
+    options?: { timezone?: string },
+  ): this {
+    this.crons.push({ expression, executor, timezone: options?.timezone });
     return this;
   }
 
   public schedule(): void {
-    for (const { expression, executor } of this.crons) {
-      cron.schedule(expression, this._executor.bind(this, executor));
-      currentCron.run(this, () => logger.log(`scheduled @ ${expression}`));
+    for (const { expression, executor, timezone } of this.crons) {
+      cron.schedule(expression, this._executor.bind(this, executor), {
+        timezone,
+      });
+      currentCron.run(this, () =>
+        logger.log(
+          `scheduled @ ${expression}${timezone ? ` (${timezone})` : ""}`,
+        ),
+      );
     }
   }
 

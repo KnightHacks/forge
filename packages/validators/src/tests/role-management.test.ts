@@ -5,6 +5,7 @@ import {
   ROLE_UNLINK_CONFIRMATION,
   roleBatchAssignmentSchema,
   roleCreateSchema,
+  roleIssueReminderUpdateSchema,
   roleManagementQuerySchema,
   rolePermissionUpdateSchema,
   roleUnlinkSchema,
@@ -146,6 +147,27 @@ describe("role management validators", () => {
     ).toMatchObject({ roleId: ROLE_ID });
     expect(() =>
       roleUnlinkSchema.parse({ roleId: ROLE_ID, confirmation: "sure" }),
+    ).toThrow();
+  });
+
+  it("TC-REMINDER-006 validates per-role reminder configuration", () => {
+    expect(
+      roleIssueReminderUpdateSchema.parse({
+        channelId: "1459204271655489567",
+        enabled: true,
+        roleId: ROLE_ID,
+      }),
+    ).toEqual({
+      channelId: "1459204271655489567",
+      enabled: true,
+      roleId: ROLE_ID,
+    });
+    expect(() =>
+      roleIssueReminderUpdateSchema.parse({
+        channelId: "not-a-channel",
+        enabled: true,
+        roleId: ROLE_ID,
+      }),
     ).toThrow();
   });
 });

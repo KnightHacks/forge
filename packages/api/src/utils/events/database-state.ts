@@ -1,12 +1,19 @@
 import { TRPCError } from "@trpc/server";
 
 import type { SelectEvent } from "@forge/db/schemas/knight-hacks";
-import { and, count, eq, gt, inArray, isNull, lte, or } from "@forge/db";
+import { and, count, eq, gt, inArray, isNull, lte, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Roles } from "@forge/db/schemas/auth";
-import { Event, EventAttendee, EventTag } from "@forge/db/schemas/knight-hacks";
+import {
+  Event,
+  EventAttendee,
+  EventTag,
+  Issue,
+  IssueHistory,
+} from "@forge/db/schemas/knight-hacks";
 
 import type { EventProjection, EventWorkflowRecord } from "./orchestration";
+import { eventDeletionIssueHistoryRows } from "../issues/lifecycle";
 import { createDbEventFeedbackService } from "./database-feedback";
 
 function audienceOf(event: SelectEvent) {
@@ -306,23 +313,44 @@ export function createDbEventWorkflowState({
       eventId: string,
       fence?: { revision: number; token: string },
     ) {
-      const rows = await db
-        .delete(Event)
-        .where(
-          and(
-            eq(Event.id, eventId),
-            ...(fence
-              ? [
-                  eq(Event.syncRevision, fence.revision),
-                  eq(Event.syncLeaseRevision, fence.revision),
-                  eq(Event.syncLeaseToken, fence.token),
-                  gt(Event.syncLeaseExpiresAt, new Date()),
-                ]
-              : []),
-          ),
-        )
-        .returning({ id: Event.id });
-      return rows.length === 1;
+      return db.transaction(async (tx) => {
+        const linkedIssues = await tx
+          .select({ id: Issue.id })
+          .from(Issue)
+          .where(eq(Issue.event, eventId));
+        const issueIds = linkedIssues.map((issue) => issue.id);
+        const rows = await tx
+          .delete(Event)
+          .where(
+            and(
+              eq(Event.id, eventId),
+              ...(fence
+                ? [
+                    eq(Event.syncRevision, fence.revision),
+                    eq(Event.syncLeaseRevision, fence.revision),
+                    eq(Event.syncLeaseToken, fence.token),
+                    gt(Event.syncLeaseExpiresAt, new Date()),
+                  ]
+                : []),
+            ),
+          )
+          .returning({ id: Event.id });
+        if (rows.length !== 1) return false;
+        if (issueIds.length > 0) {
+          await tx
+            .update(Issue)
+            .set({
+              event: null,
+              revision: sql`${Issue.revision} + 1`,
+              updatedAt: new Date(),
+            })
+            .where(inArray(Issue.id, issueIds));
+          await tx
+            .insert(IssueHistory)
+            .values(eventDeletionIssueHistoryRows({ eventId, issueIds }));
+        }
+        return true;
+      });
     },
 
     getEvent,

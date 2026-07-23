@@ -3,6 +3,7 @@ import {
   ChartNoAxesCombined,
   ClipboardList,
   LayoutDashboard,
+  ListTodo,
   QrCode,
   ShieldCheck,
   UsersRound,
@@ -13,6 +14,7 @@ export interface AdminNavigationAccess {
   eventCheckIn?: boolean;
   events?: boolean;
   forms?: boolean;
+  issues?: boolean;
   members: boolean;
   roles: boolean;
 }
@@ -44,6 +46,13 @@ export const adminNavigationItems = [
     icon: CalendarDays,
     id: "events",
     label: "Events",
+  },
+  {
+    access: "issues",
+    href: "/admin/issues/calendar",
+    icon: ListTodo,
+    id: "issues",
+    label: "Issues",
   },
   {
     access: "eventCheckIn",
@@ -78,6 +87,7 @@ export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "analytics") return pathname.startsWith("/admin/analytics");
   if (id === "events") return pathname.startsWith("/admin/events");
   if (id === "forms") return pathname.startsWith("/admin/forms");
+  if (id === "issues") return pathname.startsWith("/admin/issues");
   if (id === "eventCheckIn") return pathname.startsWith("/admin/check-in");
   if (id === "members") return pathname.startsWith("/admin/members");
   if (id === "roles") return pathname.startsWith("/admin/roles");

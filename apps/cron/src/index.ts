@@ -7,6 +7,7 @@ import { issueReminders } from "./crons/issue-reminders";
 import { leetcode } from "./crons/leetcode";
 import { preReminders, reminders } from "./crons/reminder";
 import { roleSync } from "./crons/role-sync";
+import { env } from "./env";
 
 alumniAssign.schedule();
 
@@ -27,6 +28,6 @@ reminders.schedule();
 
 roleSync.schedule();
 
-issueReminders.schedule();
+if (env.ISSUES_FEATURE_ENABLED === "true") issueReminders.schedule();
 formCallbacks.schedule();
 formAttachmentCleanup.schedule();

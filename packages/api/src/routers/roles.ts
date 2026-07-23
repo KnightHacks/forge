@@ -12,6 +12,7 @@ import {
   roleBatchAssignmentSchema,
   roleCreateSchema,
   roleIdSchema,
+  roleIssueReminderUpdateSchema,
   roleManagementQuerySchema,
   rolePermissionUpdateSchema,
   roleUnlinkSchema,
@@ -132,6 +133,12 @@ export const rolesRouter = {
       memberCounts,
       roles: discordRoles.roles,
     });
+  }),
+
+  listReminderChannels: permProcedure.query(async ({ ctx }) => {
+    requireConfigure(ctx);
+    const gateway = await resolveRoleDiscordGateway(ctx.session);
+    return gateway.getGuildTextChannels?.() ?? [];
   }),
 
   previewDiscordRole: permProcedure
@@ -280,6 +287,39 @@ export const rolesRouter = {
         })
         .where(eq(Roles.id, role.id))
         .returning();
+      return updated;
+    }),
+
+  updateIssueReminders: permProcedure
+    .input(roleIssueReminderUpdateSchema)
+    .mutation(async ({ ctx, input }) => {
+      requireConfigure(ctx);
+      const gateway = await resolveRoleDiscordGateway(ctx.session);
+      if (
+        !gateway.validateTextChannel ||
+        !(await gateway.validateTextChannel(input.channelId))
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Choose a writable text channel from this Discord server or enter its channel ID.",
+        });
+      }
+      const [updated] = await db
+        .update(Roles)
+        .set({
+          issueReminderChannel: input.channelId,
+          issueRemindersEnabled: input.enabled,
+        })
+        .where(eq(Roles.id, input.roleId))
+        .returning({
+          channelId: Roles.issueReminderChannel,
+          enabled: Roles.issueRemindersEnabled,
+          roleId: Roles.id,
+        });
+      if (!updated) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Role not found." });
+      }
       return updated;
     }),
 

@@ -1,0 +1,1142 @@
+import { randomUUID } from "node:crypto";
+import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  exists,
+  gte,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  or,
+  sql,
+} from "@forge/db";
+import { db } from "@forge/db/client";
+import { Permissions, Roles, User } from "@forge/db/schemas/auth";
+import {
+  Event,
+  Issue,
+  IssueHistory,
+  IssuesToTeamsVisibility,
+  IssuesToUsersAssignment,
+  Member,
+  Template,
+} from "@forge/db/schemas/knight-hacks";
+import {
+  issueCreateSchema,
+  issueIdSchema,
+  issueListQuerySchema,
+  issueRestoreSchema,
+  issueRevisionSchema,
+  issueTemplateCreateSchema,
+  issueUpdateSchema,
+} from "@forge/validators";
+
+import type { AssignedIssueRole } from "../utils/issues/access";
+import { permProcedure } from "../trpc";
+import {
+  issueAccessForRoles,
+  roleHasIssueCapability,
+} from "../utils/issues/access";
+import {
+  canonicalIssueCreationHash,
+  issueHistoryChanges,
+  legacyEasternWallClock,
+} from "../utils/issues/lifecycle";
+
+type CreateNode = z.infer<typeof issueCreateSchema>["children"][number];
+
+async function assignedRoles(userId: string): Promise<AssignedIssueRole[]> {
+  return db
+    .select({
+      discordRoleId: Roles.discordRoleId,
+      id: Roles.id,
+      permissions: Roles.permissions,
+    })
+    .from(Roles)
+    .innerJoin(Permissions, eq(Permissions.roleId, Roles.id))
+    .where(eq(Permissions.userId, userId));
+}
+
+function requireIssueDiscovery(roles: readonly AssignedIssueRole[]) {
+  if (
+    !roleHasIssueCapability(roles, "READ_ISSUES") &&
+    !roleHasIssueCapability(roles, "EDIT_ISSUES")
+  ) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+}
+
+function requireTeamEdit(
+  roles: readonly AssignedIssueRole[],
+  owningTeamId: string,
+) {
+  const access = issueAccessForRoles({
+    issue: { owningTeamId, visibleTeamIds: [] },
+    roles,
+  });
+  if (!access.canEdit) throw new TRPCError({ code: "FORBIDDEN" });
+}
+
+function roleVisibilityPredicate(roles: readonly AssignedIssueRole[]) {
+  if (roles.some((role) => roleHasIssueCapability([role], "IS_OFFICER"))) {
+    return sql`TRUE`;
+  }
+  const qualifyingRoleIds = roles
+    .filter(
+      (role) =>
+        roleHasIssueCapability([role], "READ_ISSUES") ||
+        roleHasIssueCapability([role], "EDIT_ISSUES"),
+    )
+    .map((role) => role.id);
+  if (qualifyingRoleIds.length === 0) return sql`FALSE`;
+  return or(
+    inArray(Issue.team, qualifyingRoleIds),
+    exists(
+      db
+        .select({ issueId: IssuesToTeamsVisibility.issueId })
+        .from(IssuesToTeamsVisibility)
+        .where(
+          and(
+            eq(IssuesToTeamsVisibility.issueId, Issue.id),
+            inArray(IssuesToTeamsVisibility.teamId, qualifyingRoleIds),
+          ),
+        ),
+    ),
+  );
+}
+
+async function issueRecord(id: string) {
+  return db.query.Issue.findFirst({
+    where: eq(Issue.id, id),
+    with: {
+      team: true,
+      teamVisibility: { with: { team: true } },
+      userAssignments: { with: { user: { with: { member: true } } } },
+    },
+  });
+}
+
+function requireRecordAccess(
+  record: NonNullable<Awaited<ReturnType<typeof issueRecord>>>,
+  roles: readonly AssignedIssueRole[],
+  mode: "edit" | "read",
+) {
+  const access = issueAccessForRoles({
+    issue: {
+      owningTeamId: record.team.id,
+      visibleTeamIds: record.teamVisibility.map((entry) => entry.teamId),
+    },
+    roles,
+  });
+  if (mode === "edit" ? !access.canEdit : !access.canRead) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Issue not found." });
+  }
+  return access;
+}
+
+function memberDisplayName(user: {
+  discordUserId: string;
+  member: { firstName: string; lastName: string } | null;
+  name: string | null;
+}) {
+  if (user.member) {
+    return `${user.member.firstName} ${user.member.lastName}`.trim();
+  }
+  return nonBlankDisplayName(user.name, user.discordUserId);
+}
+
+function nonBlankDisplayName(
+  name: string | null | undefined,
+  fallback: string,
+) {
+  const trimmed = name?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : fallback;
+}
+
+function issueDto(
+  record: NonNullable<Awaited<ReturnType<typeof issueRecord>>>,
+  roles: readonly AssignedIssueRole[],
+) {
+  const access = issueAccessForRoles({
+    issue: {
+      owningTeamId: record.team.id,
+      visibleTeamIds: record.teamVisibility.map((entry) => entry.teamId),
+    },
+    roles,
+  });
+  return {
+    archiveBatchId: record.archiveBatchId,
+    archivedAt: record.archivedAt,
+    assignees: record.userAssignments.map((assignment) => ({
+      id: assignment.userId,
+      name: memberDisplayName(assignment.user),
+    })),
+    canEdit: access.canEdit,
+    createdAt: record.createdAt,
+    description: record.description,
+    dueAt: record.dueAt,
+    eventId: record.event,
+    id: record.id,
+    links: record.links ?? [],
+    name: record.name,
+    parentId: record.parent,
+    priority: record.priority,
+    revision: record.revision,
+    status: record.status,
+    team: {
+      color: record.team.teamHexcodeColor,
+      id: record.team.id,
+      name: record.team.name,
+    },
+    updatedAt: record.updatedAt,
+    visibleTeams: record.teamVisibility.map(({ team }) => ({
+      color: team.teamHexcodeColor,
+      id: team.id,
+      name: team.name,
+    })),
+  };
+}
+
+async function validateAssignees(teamId: string, userIds: readonly string[]) {
+  if (userIds.length === 0) return;
+  const rows = await db
+    .select({ userId: Permissions.userId })
+    .from(Permissions)
+    .where(
+      and(
+        eq(Permissions.roleId, teamId),
+        inArray(Permissions.userId, [...userIds]),
+      ),
+    );
+  const eligible = new Set(rows.map((row) => row.userId));
+  if (userIds.some((userId) => !eligible.has(userId))) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Every assignee must belong to the owning team.",
+    });
+  }
+}
+
+function audienceVisible(
+  duesPaying: boolean | null,
+  audienceRoleIds: string[] | null,
+  callerRoleIds: Set<string>,
+) {
+  return (
+    duesPaying === true ||
+    (audienceRoleIds?.length ?? 0) === 0 ||
+    audienceRoleIds?.some((id) => callerRoleIds.has(id)) === true
+  );
+}
+
+function eventAvailableToRoles(
+  event: typeof Event.$inferSelect,
+  roles: readonly AssignedIssueRole[],
+) {
+  if (
+    roleHasIssueCapability(roles, "READ_CLUB_EVENT") ||
+    roleHasIssueCapability(roles, "EDIT_CLUB_EVENT")
+  ) {
+    return true;
+  }
+  const callerRoleIds = new Set(
+    roles.flatMap((role) => (role.discordRoleId ? [role.discordRoleId] : [])),
+  );
+  if (event.legacy) {
+    return audienceVisible(false, event.roles, callerRoleIds);
+  }
+  return (
+    event.publishedAt !== null &&
+    audienceVisible(event.dues_paying, event.roles, callerRoleIds) &&
+    audienceVisible(
+      event.visibilityDuesPaying,
+      event.visibilityRoles,
+      callerRoleIds,
+    )
+  );
+}
+
+async function validateClubEvent(
+  eventId: string | null | undefined,
+  roles: readonly AssignedIssueRole[],
+) {
+  if (!eventId) return;
+  const event = await db.query.Event.findFirst({
+    where: and(
+      eq(Event.id, eventId),
+      isNull(Event.hackathonId),
+      isNull(Event.deletionIntentAt),
+    ),
+  });
+  if (!event || !eventAvailableToRoles(event, roles)) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+  }
+}
+
+function flattenNodes(nodes: readonly CreateNode[]): CreateNode[] {
+  return nodes.flatMap((node) => [node, ...flattenNodes(node.children ?? [])]);
+}
+
+async function validateCreateTree(
+  rootTeam: string,
+  children: readonly CreateNode[],
+  roles: readonly AssignedIssueRole[],
+) {
+  for (const node of flattenNodes(children)) {
+    if (node.team !== rootTeam) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Every issue in a hierarchy must use the owning team.",
+      });
+    }
+    await validateAssignees(node.team, node.assigneeIds);
+    await validateClubEvent(node.eventId, roles);
+  }
+}
+
+async function insertIssueNode(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  node: CreateNode,
+  options: {
+    actorDisplayName: string;
+    creationHash?: string;
+    creationKey?: string;
+    creatorId: string;
+    parentId?: string | null;
+  },
+) {
+  const dueAt = node.dueAt ? new Date(node.dueAt) : null;
+  const [created] = await tx
+    .insert(Issue)
+    .values({
+      creationHash: options.creationHash,
+      creationKey: options.creationKey,
+      creator: options.creatorId,
+      date: dueAt ? legacyEasternWallClock(dueAt) : null,
+      description: node.description,
+      dueAt,
+      event: node.eventId,
+      links: node.links,
+      name: node.name,
+      parent: options.parentId,
+      priority: node.priority,
+      status: node.status,
+      team: node.team,
+    })
+    .returning();
+  if (!created) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Issue creation failed.",
+    });
+  }
+
+  const visibleTeamIds = [...new Set([node.team, ...node.teamVisibilityIds])];
+  if (visibleTeamIds.length > 0) {
+    await tx
+      .insert(IssuesToTeamsVisibility)
+      .values(
+        visibleTeamIds.map((teamId) => ({ issueId: created.id, teamId })),
+      );
+  }
+  if (node.assigneeIds.length > 0) {
+    await tx
+      .insert(IssuesToUsersAssignment)
+      .values(
+        node.assigneeIds.map((userId) => ({ issueId: created.id, userId })),
+      );
+  }
+  await tx.insert(IssueHistory).values({
+    action: "created",
+    actorDisplayName: options.actorDisplayName,
+    actorId: options.creatorId,
+    after: {
+      description: created.description,
+      dueAt: created.dueAt?.toISOString() ?? null,
+      name: created.name,
+      priority: created.priority,
+      status: created.status,
+      team: created.team,
+    },
+    changedFields: [
+      "name",
+      "description",
+      "status",
+      "priority",
+      "team",
+      "dueAt",
+    ],
+    issueId: created.id,
+  });
+
+  for (const child of node.children ?? []) {
+    await insertIssueNode(tx, child, {
+      actorDisplayName: options.actorDisplayName,
+      creatorId: options.creatorId,
+      parentId: created.id,
+    });
+  }
+  return created;
+}
+
+async function collectSubtreeIds(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  rootId: string,
+) {
+  const ids = [rootId];
+  let frontier = [rootId];
+  while (frontier.length > 0) {
+    const rows = await tx
+      .select({ id: Issue.id })
+      .from(Issue)
+      .where(inArray(Issue.parent, frontier));
+    frontier = rows.map((row) => row.id).filter((id) => !ids.includes(id));
+    ids.push(...frontier);
+  }
+  return ids;
+}
+
+function conflict(message: string): never {
+  throw new TRPCError({ code: "CONFLICT", message });
+}
+
+function isUniqueViolation(error: unknown) {
+  return (error as { code?: string } | null)?.code === "23505";
+}
+
+const historyQuerySchema = issueIdSchema.extend({
+  cursor: z.string().uuid().optional(),
+  limit: z.number().int().min(1).max(100).default(25),
+});
+
+const teamChoiceSchema = z.object({ teamId: z.string().uuid() }).strict();
+const templateIdSchema = z.object({ id: z.string().uuid() }).strict();
+const templateUpdateInput = z.object({
+  body: z.unknown(),
+  id: z.string().uuid(),
+  name: z.string(),
+});
+
+export const issuesRouter = {
+  list: permProcedure
+    .input(issueListQuerySchema)
+    .query(async ({ ctx, input }) => {
+      const roles = await assignedRoles(ctx.session.user.id);
+      requireIssueDiscovery(roles);
+
+      const conditions = [
+        roleVisibilityPredicate(roles),
+        input.archived ? isNotNull(Issue.archivedAt) : isNull(Issue.archivedAt),
+      ];
+      if (input.statuses.length > 0)
+        conditions.push(inArray(Issue.status, input.statuses));
+      if (input.priorities.length > 0)
+        conditions.push(inArray(Issue.priority, input.priorities));
+      if (input.teamIds.length > 0)
+        conditions.push(inArray(Issue.team, input.teamIds));
+      if (input.rootOnly) conditions.push(isNull(Issue.parent));
+      if (input.dueAfter)
+        conditions.push(gte(Issue.dueAt, new Date(input.dueAfter)));
+      if (input.dueBefore)
+        conditions.push(lt(Issue.dueAt, new Date(input.dueBefore)));
+      if (input.eventLink === "linked") conditions.push(isNotNull(Issue.event));
+      if (input.eventLink === "unlinked") conditions.push(isNull(Issue.event));
+      if (input.search) {
+        const search = or(
+          ilike(Issue.name, `%${input.search}%`),
+          ilike(Issue.description, `%${input.search}%`),
+        );
+        if (search) conditions.push(search);
+      }
+      if (input.assigneeIds.length > 0) {
+        conditions.push(
+          exists(
+            db
+              .select({ issueId: IssuesToUsersAssignment.issueId })
+              .from(IssuesToUsersAssignment)
+              .where(
+                and(
+                  eq(IssuesToUsersAssignment.issueId, Issue.id),
+                  inArray(IssuesToUsersAssignment.userId, input.assigneeIds),
+                ),
+              ),
+          ),
+        );
+      }
+      if (input.view === "calendar") {
+        const { calendarEnd, calendarStart } = input;
+        if (!calendarStart || !calendarEnd) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Calendar start and end are required for calendar view.",
+          });
+        }
+        conditions.push(isNotNull(Issue.dueAt));
+        conditions.push(gte(Issue.dueAt, new Date(calendarStart)));
+        conditions.push(lt(Issue.dueAt, new Date(calendarEnd)));
+      }
+      const where = and(...conditions);
+      const direction = input.sortDirection === "asc" ? asc : desc;
+      const sortColumn =
+        input.sortField === "name"
+          ? Issue.name
+          : input.sortField === "priority"
+            ? Issue.priority
+            : input.sortField === "status"
+              ? Issue.status
+              : input.sortField === "updatedAt"
+                ? Issue.updatedAt
+                : Issue.dueAt;
+      const limit = input.pageSize;
+      const offset = (input.page - 1) * input.pageSize;
+      const rows = await db.query.Issue.findMany({
+        limit,
+        offset,
+        orderBy: [direction(sortColumn), asc(Issue.id)],
+        where,
+        with: {
+          team: true,
+          teamVisibility: { with: { team: true } },
+          userAssignments: { with: { user: { with: { member: true } } } },
+        },
+      });
+      const [total] = await db
+        .select({
+          count: sql<number>`count(*)::int`,
+          finished: sql<number>`count(*) filter (where ${Issue.status} = 'Finished')::int`,
+          open: sql<number>`count(*) filter (where ${Issue.status} <> 'Finished')::int`,
+        })
+        .from(Issue)
+        .where(where);
+      return {
+        counts: {
+          finished: total?.finished ?? 0,
+          open: total?.open ?? 0,
+        },
+        pagination: {
+          page: input.page,
+          pageCount: Math.max(
+            1,
+            Math.ceil((total?.count ?? 0) / input.pageSize),
+          ),
+          pageSize: input.pageSize,
+          totalCount: total?.count ?? 0,
+        },
+        rows: rows.map((row) => issueDto(row, roles)),
+      };
+    }),
+
+  get: permProcedure.input(issueIdSchema).query(async ({ ctx, input }) => {
+    const roles = await assignedRoles(ctx.session.user.id);
+    const record = await issueRecord(input.id);
+    if (!record)
+      throw new TRPCError({ code: "NOT_FOUND", message: "Issue not found." });
+    requireRecordAccess(record, roles, "read");
+    const children = await db
+      .select({
+        id: Issue.id,
+        name: Issue.name,
+        status: Issue.status,
+        archivedAt: Issue.archivedAt,
+      })
+      .from(Issue)
+      .where(eq(Issue.parent, record.id))
+      .orderBy(asc(Issue.createdAt));
+    return { ...issueDto(record, roles), children };
+  }),
+
+  create: permProcedure
+    .input(issueCreateSchema)
+    .mutation(async ({ ctx, input }) => {
+      const roles = await assignedRoles(ctx.session.user.id);
+      requireTeamEdit(roles, input.team);
+      await validateAssignees(input.team, input.assigneeIds);
+      await validateClubEvent(input.eventId, roles);
+      await validateCreateTree(input.team, input.children, roles);
+      if (input.parentId) {
+        const parent = await issueRecord(input.parentId);
+        if (!parent || parent.archivedAt || parent.team.id !== input.team) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid parent issue.",
+          });
+        }
+        requireRecordAccess(parent, roles, "edit");
+      }
+      const creationHash = canonicalIssueCreationHash(input);
+      const existing = await db.query.Issue.findFirst({
+        where: eq(Issue.creationKey, input.creationKey),
+      });
+      if (existing) {
+        if (existing.creationHash !== creationHash)
+          conflict(
+            "Creation key was already used with different issue content.",
+          );
+        const record = await issueRecord(existing.id);
+        if (!record) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        requireRecordAccess(record, roles, "read");
+        return { issue: issueDto(record, roles), replayed: true };
+      }
+      const actorDisplayName = nonBlankDisplayName(
+        ctx.session.user.name,
+        "Club member",
+      );
+      const rootNode: CreateNode = { ...input, children: input.children };
+      let created: typeof Issue.$inferSelect;
+      try {
+        created = await db.transaction((tx) =>
+          insertIssueNode(tx, rootNode, {
+            actorDisplayName,
+            creationHash,
+            creationKey: input.creationKey,
+            creatorId: ctx.session.user.id,
+            parentId: input.parentId,
+          }),
+        );
+      } catch (error) {
+        if (!isUniqueViolation(error)) throw error;
+        const raced = await db.query.Issue.findFirst({
+          where: eq(Issue.creationKey, input.creationKey),
+        });
+        if (raced?.creationHash !== creationHash) {
+          conflict(
+            "Creation key was already used with different issue content.",
+          );
+        }
+        created = raced;
+      }
+      const record = await issueRecord(created.id);
+      if (!record) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      return { issue: issueDto(record, roles), replayed: false };
+    }),
+
+  update: permProcedure
+    .input(issueUpdateSchema)
+    .mutation(async ({ ctx, input }) => {
+      const roles = await assignedRoles(ctx.session.user.id);
+      const current = await issueRecord(input.id);
+      if (!current)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Issue not found." });
+      requireRecordAccess(current, roles, "edit");
+      if (current.archivedAt)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Restore the issue before editing it.",
+        });
+      if (input.assigneeIds)
+        await validateAssignees(current.team.id, input.assigneeIds);
+      if (input.eventId !== undefined)
+        await validateClubEvent(input.eventId, roles);
+      if (input.parentId !== undefined && input.parentId !== null) {
+        if (input.parentId === input.id)
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "An issue cannot parent itself.",
+          });
+        const parent = await issueRecord(input.parentId);
+        if (
+          !parent ||
+          parent.archivedAt ||
+          parent.team.id !== current.team.id
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid parent issue.",
+          });
+        }
+        const descendants = await db.transaction((tx) =>
+          collectSubtreeIds(tx, input.id),
+        );
+        if (descendants.includes(input.parentId)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Issue hierarchy cannot contain a cycle.",
+          });
+        }
+      }
+      const before = {
+        assigneeIds: current.userAssignments.map((item) => item.userId).sort(),
+        description: current.description,
+        dueAt: current.dueAt,
+        eventId: current.event,
+        links: current.links ?? [],
+        name: current.name,
+        parentId: current.parent,
+        priority: current.priority,
+        status: current.status,
+        teamVisibilityIds: current.teamVisibility
+          .map((item) => item.teamId)
+          .sort(),
+      };
+      const dueAt =
+        input.dueAt === undefined
+          ? undefined
+          : input.dueAt
+            ? new Date(input.dueAt)
+            : null;
+      const after = {
+        ...before,
+        ...input,
+        ...(dueAt !== undefined && { dueAt }),
+        assigneeIds: input.assigneeIds ?? before.assigneeIds,
+        eventId: input.eventId === undefined ? before.eventId : input.eventId,
+        parentId:
+          input.parentId === undefined ? before.parentId : input.parentId,
+        teamVisibilityIds: input.teamVisibilityIds ?? before.teamVisibilityIds,
+      };
+      const changes = issueHistoryChanges(before, after);
+      if (changes.changedFields.length === 0) return issueDto(current, roles);
+      await db.transaction(async (tx) => {
+        const [updated] = await tx
+          .update(Issue)
+          .set({
+            ...(input.description !== undefined && {
+              description: input.description,
+            }),
+            ...(dueAt !== undefined && {
+              date: dueAt ? legacyEasternWallClock(dueAt) : null,
+              dueAt,
+            }),
+            ...(input.eventId !== undefined && { event: input.eventId }),
+            ...(input.links !== undefined && { links: input.links }),
+            ...(input.name !== undefined && { name: input.name }),
+            ...(input.parentId !== undefined && { parent: input.parentId }),
+            ...(input.priority !== undefined && { priority: input.priority }),
+            ...(input.status !== undefined && { status: input.status }),
+            revision: sql`${Issue.revision} + 1`,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(Issue.id, input.id),
+              eq(Issue.revision, input.expectedRevision),
+            ),
+          )
+          .returning({ id: Issue.id });
+        if (!updated)
+          conflict(
+            "This issue changed since you opened it. Reload the latest version.",
+          );
+        if (input.assigneeIds) {
+          await tx
+            .delete(IssuesToUsersAssignment)
+            .where(eq(IssuesToUsersAssignment.issueId, input.id));
+          if (input.assigneeIds.length > 0)
+            await tx.insert(IssuesToUsersAssignment).values(
+              input.assigneeIds.map((userId) => ({
+                issueId: input.id,
+                userId,
+              })),
+            );
+        }
+        if (input.teamVisibilityIds) {
+          await tx
+            .delete(IssuesToTeamsVisibility)
+            .where(eq(IssuesToTeamsVisibility.issueId, input.id));
+          const teamIds = [
+            ...new Set([current.team.id, ...input.teamVisibilityIds]),
+          ];
+          await tx
+            .insert(IssuesToTeamsVisibility)
+            .values(teamIds.map((teamId) => ({ issueId: input.id, teamId })));
+        }
+        await tx.insert(IssueHistory).values({
+          action: changes.changedFields.includes("status")
+            ? "status_changed"
+            : "updated",
+          actorDisplayName: nonBlankDisplayName(
+            ctx.session.user.name,
+            "Club member",
+          ),
+          actorId: ctx.session.user.id,
+          after: changes.after,
+          before: changes.before,
+          changedFields: changes.changedFields,
+          issueId: input.id,
+        });
+      });
+      const updated = await issueRecord(input.id);
+      if (!updated) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      return issueDto(updated, roles);
+    }),
+
+  archive: permProcedure
+    .input(issueRevisionSchema)
+    .mutation(async ({ ctx, input }) => {
+      const roles = await assignedRoles(ctx.session.user.id);
+      const root = await issueRecord(input.id);
+      if (!root)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Issue not found." });
+      requireRecordAccess(root, roles, "edit");
+      if (root.archivedAt)
+        return { archiveBatchId: root.archiveBatchId, archivedCount: 0 };
+      const batchId = randomUUID();
+      const archivedAt = new Date();
+      const ids = await db.transaction(async (tx) => {
+        const subtreeIds = await collectSubtreeIds(tx, input.id);
+        const activeDescendants = await tx
+          .select({ id: Issue.id })
+          .from(Issue)
+          .where(
+            and(
+              inArray(
+                Issue.id,
+                subtreeIds.filter((id) => id !== input.id),
+              ),
+              isNull(Issue.archivedAt),
+            ),
+          );
+        const archivedIds = [
+          input.id,
+          ...activeDescendants.map((row) => row.id),
+        ];
+        const [updatedRoot] = await tx
+          .update(Issue)
+          .set({
+            archiveBatchId: batchId,
+            archivedAt,
+            archivedBy: ctx.session.user.id,
+            revision: sql`${Issue.revision} + 1`,
+            updatedAt: archivedAt,
+          })
+          .where(
+            and(
+              eq(Issue.id, input.id),
+              eq(Issue.revision, input.expectedRevision),
+              isNull(Issue.archivedAt),
+            ),
+          )
+          .returning({ id: Issue.id });
+        if (!updatedRoot)
+          conflict(
+            "This issue changed since you opened it. Reload the latest version.",
+          );
+        const descendants = archivedIds.filter((id) => id !== input.id);
+        if (descendants.length > 0)
+          await tx
+            .update(Issue)
+            .set({
+              archiveBatchId: batchId,
+              archivedAt,
+              archivedBy: ctx.session.user.id,
+              revision: sql`${Issue.revision} + 1`,
+              updatedAt: archivedAt,
+            })
+            .where(
+              and(inArray(Issue.id, descendants), isNull(Issue.archivedAt)),
+            );
+        await tx.insert(IssueHistory).values(
+          archivedIds.map((issueId) => ({
+            action: "archived",
+            actorDisplayName: nonBlankDisplayName(
+              ctx.session.user.name,
+              "Club member",
+            ),
+            actorId: ctx.session.user.id,
+            after: {
+              archiveBatchId: batchId,
+              archivedAt: archivedAt.toISOString(),
+            },
+            before: { archiveBatchId: null, archivedAt: null },
+            changedFields: ["archivedAt", "archiveBatchId"],
+            issueId,
+          })),
+        );
+        return archivedIds;
+      });
+      return { archiveBatchId: batchId, archivedCount: ids.length };
+    }),
+
+  restore: permProcedure
+    .input(issueRestoreSchema)
+    .mutation(async ({ ctx, input }) => {
+      const roles = await assignedRoles(ctx.session.user.id);
+      const root = await issueRecord(input.id);
+      if (!root)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Issue not found." });
+      requireRecordAccess(root, roles, "edit");
+      if (root.archiveBatchId !== input.archiveBatchId)
+        conflict("This archive batch is no longer current.");
+      const restoredAt = new Date();
+      const restoredIds = await db.transaction(async (tx) => {
+        const subtreeIds = await collectSubtreeIds(tx, input.id);
+        const candidates = await tx
+          .select({ id: Issue.id })
+          .from(Issue)
+          .where(
+            and(
+              inArray(Issue.id, subtreeIds),
+              eq(Issue.archiveBatchId, input.archiveBatchId),
+            ),
+          );
+        const ids = candidates.map((row) => row.id);
+        const [restoredRoot] = await tx
+          .update(Issue)
+          .set({
+            archiveBatchId: null,
+            archivedAt: null,
+            archivedBy: null,
+            revision: sql`${Issue.revision} + 1`,
+            updatedAt: restoredAt,
+          })
+          .where(
+            and(
+              eq(Issue.id, input.id),
+              eq(Issue.archiveBatchId, input.archiveBatchId),
+              eq(Issue.revision, input.expectedRevision),
+            ),
+          )
+          .returning({ id: Issue.id });
+        if (!restoredRoot)
+          conflict(
+            "This issue changed since you opened it. Reload the latest version.",
+          );
+        const descendants = ids.filter((id) => id !== input.id);
+        if (descendants.length > 0)
+          await tx
+            .update(Issue)
+            .set({
+              archiveBatchId: null,
+              archivedAt: null,
+              archivedBy: null,
+              revision: sql`${Issue.revision} + 1`,
+              updatedAt: restoredAt,
+            })
+            .where(
+              and(
+                inArray(Issue.id, descendants),
+                eq(Issue.archiveBatchId, input.archiveBatchId),
+              ),
+            );
+        await tx.insert(IssueHistory).values(
+          ids.map((issueId) => ({
+            action: "restored",
+            actorDisplayName: nonBlankDisplayName(
+              ctx.session.user.name,
+              "Club member",
+            ),
+            actorId: ctx.session.user.id,
+            after: { archiveBatchId: null, archivedAt: null },
+            before: { archiveBatchId: input.archiveBatchId },
+            changedFields: ["archivedAt", "archiveBatchId"],
+            issueId,
+          })),
+        );
+        return ids;
+      });
+      return { restoredCount: restoredIds.length };
+    }),
+
+  listHistory: permProcedure
+    .input(historyQuerySchema)
+    .query(async ({ ctx, input }) => {
+      const roles = await assignedRoles(ctx.session.user.id);
+      const record = await issueRecord(input.id);
+      if (!record)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Issue not found." });
+      requireRecordAccess(record, roles, "read");
+      const cursor = input.cursor
+        ? await db.query.IssueHistory.findFirst({
+            where: and(
+              eq(IssueHistory.id, input.cursor),
+              eq(IssueHistory.issueId, input.id),
+            ),
+          })
+        : null;
+      const rows = await db.query.IssueHistory.findMany({
+        limit: input.limit + 1,
+        orderBy: [desc(IssueHistory.createdAt), desc(IssueHistory.id)],
+        where: and(
+          eq(IssueHistory.issueId, input.id),
+          cursor
+            ? or(
+                lt(IssueHistory.createdAt, cursor.createdAt),
+                and(
+                  eq(IssueHistory.createdAt, cursor.createdAt),
+                  lt(IssueHistory.id, cursor.id),
+                ),
+              )
+            : undefined,
+        ),
+      });
+      const hasMore = rows.length > input.limit;
+      const page = rows.slice(0, input.limit);
+      return {
+        nextCursor: hasMore ? (page.at(-1)?.id ?? null) : null,
+        rows: page,
+      };
+    }),
+
+  listTeams: permProcedure.query(async ({ ctx }) => {
+    const roles = await assignedRoles(ctx.session.user.id);
+    requireIssueDiscovery(roles);
+    const officer = roleHasIssueCapability(roles, "IS_OFFICER");
+    const roleRows = officer
+      ? await db.select().from(Roles).orderBy(asc(Roles.name))
+      : await db
+          .select()
+          .from(Roles)
+          .where(
+            inArray(
+              Roles.id,
+              roles.map((role) => role.id),
+            ),
+          )
+          .orderBy(asc(Roles.name));
+    return roleRows.flatMap((role) => {
+      const access = issueAccessForRoles({
+        issue: { owningTeamId: role.id, visibleTeamIds: [] },
+        roles,
+      });
+      return access.canRead
+        ? [
+            {
+              canEdit: access.canEdit,
+              color: role.teamHexcodeColor,
+              id: role.id,
+              name: role.name,
+            },
+          ]
+        : [];
+    });
+  }),
+
+  listAssignees: permProcedure
+    .input(teamChoiceSchema)
+    .query(async ({ ctx, input }) => {
+      const roles = await assignedRoles(ctx.session.user.id);
+      const access = issueAccessForRoles({
+        issue: { owningTeamId: input.teamId, visibleTeamIds: [] },
+        roles,
+      });
+      if (!access.canRead) throw new TRPCError({ code: "FORBIDDEN" });
+      const rows = await db
+        .select({
+          discordUserId: User.discordUserId,
+          firstName: Member.firstName,
+          id: User.id,
+          lastName: Member.lastName,
+          name: User.name,
+        })
+        .from(User)
+        .innerJoin(Permissions, eq(Permissions.userId, User.id))
+        .leftJoin(Member, eq(Member.userId, User.id))
+        .where(eq(Permissions.roleId, input.teamId));
+      return rows
+        .map((row) => ({
+          id: row.id,
+          name:
+            row.firstName && row.lastName
+              ? `${row.firstName} ${row.lastName}`
+              : nonBlankDisplayName(row.name, row.discordUserId),
+        }))
+        .sort((left, right) => left.name.localeCompare(right.name));
+    }),
+
+  listEvents: permProcedure.query(async ({ ctx }) => {
+    const roles = await assignedRoles(ctx.session.user.id);
+    requireIssueDiscovery(roles);
+    const rows = await db
+      .select()
+      .from(Event)
+      .where(and(isNull(Event.hackathonId), isNull(Event.deletionIntentAt)))
+      .orderBy(desc(Event.start_datetime));
+    return rows
+      .filter((event) => eventAvailableToRoles(event, roles))
+      .slice(0, 100)
+      .map((event) => ({
+        end: event.end_datetime,
+        id: event.id,
+        name: event.name,
+        start: event.start_datetime,
+      }));
+  }),
+
+  listTemplates: permProcedure.query(async ({ ctx }) => {
+    const roles = await assignedRoles(ctx.session.user.id);
+    requireIssueDiscovery(roles);
+    if (
+      !roleHasIssueCapability(roles, "READ_ISSUE_TEMPLATES") &&
+      !roleHasIssueCapability(roles, "EDIT_ISSUE_TEMPLATES")
+    )
+      return [];
+    const canRepair = roleHasIssueCapability(roles, "EDIT_ISSUE_TEMPLATES");
+    return db
+      .select()
+      .from(Template)
+      .where(canRepair ? undefined : isNull(Template.disabledAt))
+      .orderBy(asc(Template.name));
+  }),
+
+  createTemplate: permProcedure
+    .input(issueTemplateCreateSchema)
+    .mutation(async ({ ctx, input }) => {
+      const roles = await assignedRoles(ctx.session.user.id);
+      if (!roleHasIssueCapability(roles, "EDIT_ISSUE_TEMPLATES"))
+        throw new TRPCError({ code: "FORBIDDEN" });
+      const [created] = await db
+        .insert(Template)
+        .values({
+          body: input.body,
+          name: input.name,
+          normalizedName: input.normalizedName,
+        })
+        .returning();
+      if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      return created;
+    }),
+
+  updateTemplate: permProcedure
+    .input(templateUpdateInput)
+    .mutation(async ({ ctx, input }) => {
+      const roles = await assignedRoles(ctx.session.user.id);
+      if (!roleHasIssueCapability(roles, "EDIT_ISSUE_TEMPLATES"))
+        throw new TRPCError({ code: "FORBIDDEN" });
+      const parsed = issueTemplateCreateSchema.parse({
+        body: input.body,
+        name: input.name,
+      });
+      const [updated] = await db
+        .update(Template)
+        .set({
+          body: parsed.body,
+          disabledAt: null,
+          disabledReason: null,
+          name: parsed.name,
+          normalizedName: parsed.normalizedName,
+          updatedAt: new Date(),
+        })
+        .where(eq(Template.id, input.id))
+        .returning();
+      if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
+      return updated;
+    }),
+
+  disableTemplate: permProcedure
+    .input(templateIdSchema)
+    .mutation(async ({ ctx, input }) => {
+      const roles = await assignedRoles(ctx.session.user.id);
+      if (!roleHasIssueCapability(roles, "EDIT_ISSUE_TEMPLATES"))
+        throw new TRPCError({ code: "FORBIDDEN" });
+      const [disabled] = await db
+        .update(Template)
+        .set({
+          disabledAt: new Date(),
+          disabledReason: "Disabled by an authorized Club operator.",
+          normalizedName: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(Template.id, input.id))
+        .returning();
+      if (!disabled) throw new TRPCError({ code: "NOT_FOUND" });
+      return disabled;
+    }),
+} satisfies TRPCRouterRecord;

@@ -44,6 +44,7 @@ export const Roles = createTable("roles", (t) => ({
     .varchar({ length: 32 })
     .notNull()
     .default(ISSUE.DEFAULT_ISSUE_REMINDER_CHANNEL_ID),
+  issueRemindersEnabled: t.boolean().notNull().default(true),
   teamHexcodeColor: t.varchar({ length: 7 }),
 }));
 

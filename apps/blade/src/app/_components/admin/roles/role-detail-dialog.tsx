@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
+  BellRing,
+  Hash,
   Loader2,
   RefreshCw,
   ShieldCheck,
@@ -24,6 +26,9 @@ import {
   DialogTitle,
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
+import { Label } from "@forge/ui/label";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
+import { Switch } from "@forge/ui/switch";
 import { toast } from "@forge/ui/toast";
 import { ROLE_UNLINK_CONFIRMATION } from "@forge/validators";
 
@@ -46,6 +51,13 @@ export function RoleDetailDialog({
   ]);
   const [unlinkOpen, setUnlinkOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
+  const [reminderChannelId, setReminderChannelId] = useState(
+    detail.issueReminderChannel,
+  );
+  const [remindersEnabled, setRemindersEnabled] = useState(
+    detail.issueRemindersEnabled,
+  );
+  const reminderChannels = api.roles.listReminderChannels.useQuery();
   const update = api.roles.updatePermissions.useMutation({
     onSuccess() {
       toast.success("Role permissions saved.");
@@ -66,6 +78,17 @@ export function RoleDetailDialog({
       toast.error(error.message || "The role could not be synchronized.");
     },
   });
+  const updateReminders = api.roles.updateIssueReminders.useMutation({
+    onSuccess() {
+      toast.success("Issue reminder settings saved.");
+      onChanged();
+    },
+    onError(error) {
+      toast.error(
+        error.message || "Issue reminder settings could not be saved.",
+      );
+    },
+  });
   const unlink = api.roles.unlinkRole.useMutation({
     onSuccess() {
       toast.success("Blade role unlinked. Discord was left unchanged.");
@@ -78,6 +101,9 @@ export function RoleDetailDialog({
     },
   });
   const changed = permissions.join("|") !== detail.permissions.join("|");
+  const reminderChanged =
+    reminderChannelId !== detail.issueReminderChannel ||
+    remindersEnabled !== detail.issueRemindersEnabled;
   const hasDependencies = (detail.dependencies?.total ?? 0) > 0;
   const eventDependencies = detail.dependencies?.events ?? 0;
   const eventBlockers = detail.dependencies?.eventBlockers ?? [];
@@ -201,6 +227,98 @@ export function RoleDetailDialog({
               )}
             </section>
           )}
+
+          <section
+            className="space-y-4 rounded-md border border-white/10 bg-background/60 p-3 sm:p-4"
+            aria-labelledby="issue-reminder-settings"
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
+                <BellRing className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 id="issue-reminder-settings" className="font-semibold">
+                  Issue reminders
+                </h3>
+                <p className="mt-0.5 text-sm leading-5 text-muted-foreground">
+                  Send due-date reminders for issues owned by this team at 9:00
+                  AM Eastern.
+                </p>
+              </div>
+              <Switch
+                aria-label="Enable issue reminders"
+                checked={remindersEnabled}
+                onCheckedChange={setRemindersEnabled}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="issue-reminder-channel">Discord channel</Label>
+              <ResponsiveComboBox
+                ariaLabel="Issue reminder Discord channel"
+                buttonPlaceholder="Choose a text channel"
+                emptyMessage="No writable text channels found. Use the channel ID field below."
+                getItemLabel={(channel) => `#${channel.name}`}
+                getItemSearchValue={(channel) =>
+                  `${channel.name} ${channel.id}`
+                }
+                getItemValue={(channel) => channel.id}
+                inputPlaceholder="Search text channels"
+                isLoading={reminderChannels.isLoading}
+                items={reminderChannels.data ?? []}
+                onValueChange={setReminderChannelId}
+                renderItem={(channel) => (
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Hash className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{channel.name}</span>
+                  </span>
+                )}
+                triggerClassName="h-11 bg-background/70"
+                triggerId="issue-reminder-channel"
+                value={reminderChannelId}
+              />
+              <div className="relative">
+                <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  aria-label="Issue reminder channel ID"
+                  className="h-11 bg-background/70 pl-9 font-mono text-sm"
+                  inputMode="numeric"
+                  maxLength={20}
+                  placeholder="Manual channel ID"
+                  value={reminderChannelId}
+                  onChange={(event) => setReminderChannelId(event.target.value)}
+                />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Blade validates that the channel belongs to this server before
+                saving. Assignees are mentioned first; otherwise the team role
+                is mentioned.
+              </p>
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                disabled={
+                  !reminderChanged ||
+                  updateReminders.isPending ||
+                  !/^\d{17,20}$/.test(reminderChannelId)
+                }
+                onClick={() =>
+                  updateReminders.mutate({
+                    channelId: reminderChannelId,
+                    enabled: remindersEnabled,
+                    roleId: detail.id,
+                  })
+                }
+              >
+                {updateReminders.isPending && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                Save reminder settings
+              </Button>
+            </div>
+          </section>
 
           <div className="space-y-2">
             <div>

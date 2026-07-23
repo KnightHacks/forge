@@ -1,5 +1,9 @@
-import type { APIGuildMember, APIRole } from "discord-api-types/v10";
-import { Routes } from "discord-api-types/v10";
+import type {
+  APIChannel,
+  APIGuildMember,
+  APIRole,
+} from "discord-api-types/v10";
+import { ChannelType, Routes } from "discord-api-types/v10";
 
 import type { Session } from "@forge/auth/server";
 import { DISCORD } from "@forge/consts";
@@ -8,6 +12,7 @@ import * as discord from "@forge/utils/discord";
 import { nodeEnv } from "../../env";
 
 export interface RoleDiscordGateway {
+  getGuildTextChannels?: () => Promise<{ id: string; name: string }[]>;
   getGuildMember: (
     discordUserId: string,
     context: { discordRoleId: string; hasAssignment: boolean },
@@ -19,6 +24,7 @@ export interface RoleDiscordGateway {
   getRoleCounts: () => Promise<Record<string, number> | null>;
   grantRole: (discordUserId: string, discordRoleId: string) => Promise<void>;
   revokeRole: (discordUserId: string, discordRoleId: string) => Promise<void>;
+  validateTextChannel?: (channelId: string) => Promise<boolean>;
 }
 
 let roleCountCache:
@@ -26,6 +32,22 @@ let roleCountCache:
   | undefined;
 
 export const liveRoleDiscordGateway: RoleDiscordGateway = {
+  async getGuildTextChannels() {
+    const channels = (await discord.api.get(
+      Routes.guildChannels(DISCORD.KNIGHTHACKS_GUILD),
+    )) as APIChannel[];
+    return channels
+      .filter(
+        (channel) =>
+          "guild_id" in channel &&
+          channel.guild_id === DISCORD.KNIGHTHACKS_GUILD &&
+          "name" in channel &&
+          (channel.type === ChannelType.GuildText ||
+            channel.type === ChannelType.GuildAnnouncement),
+      )
+      .map((channel) => ({ id: channel.id, name: channel.name ?? channel.id }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+  },
   async getGuildMember(discordUserId) {
     return (await discord.api.get(
       Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),
@@ -82,6 +104,21 @@ export const liveRoleDiscordGateway: RoleDiscordGateway = {
 
   grantRole: discord.addRoleToMember,
   revokeRole: discord.removeRoleFromMember,
+  async validateTextChannel(channelId) {
+    try {
+      const channel = (await discord.api.get(
+        Routes.channel(channelId),
+      )) as APIChannel;
+      return (
+        "guild_id" in channel &&
+        channel.guild_id === DISCORD.KNIGHTHACKS_GUILD &&
+        (channel.type === ChannelType.GuildText ||
+          channel.type === ChannelType.GuildAnnouncement)
+      );
+    } catch {
+      return false;
+    }
+  },
 };
 
 export async function resolveRoleDiscordGateway(

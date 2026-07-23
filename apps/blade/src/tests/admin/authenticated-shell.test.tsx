@@ -35,7 +35,7 @@ describe("AuthenticatedShell", () => {
     const html = renderToStaticMarkup(
       createElement(AuthenticatedShell, {
         activeNavigation: "dashboard",
-        adminNavigation: { members: true, roles: true },
+        adminNavigation: { issues: true, members: true, roles: true },
         children: createElement("main", null, "Dashboard content"),
         session,
       }),
@@ -47,6 +47,7 @@ describe("AuthenticatedShell", () => {
     expect(html).toContain('aria-label="Open navigation menu"');
     expect(html).toContain('href="/admin/members"');
     expect(html).toContain('href="/admin/roles"');
+    expect(html).toContain('href="/admin/issues/calendar"');
     expect(html).toContain('href="/member/dashboard"');
     expect(html).toContain('aria-current="page"');
   });

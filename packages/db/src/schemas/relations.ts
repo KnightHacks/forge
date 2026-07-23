@@ -5,6 +5,8 @@ import {
   Event,
   EventAttendee,
   Issue,
+  IssueHistory,
+  IssueReminderDelivery,
   IssuesToTeamsVisibility,
   IssuesToUsersAssignment,
   Member,
@@ -50,7 +52,30 @@ export const IssueRelations = relations(Issue, ({ many, one }) => ({
   }),
   teamVisibility: many(IssuesToTeamsVisibility),
   userAssignments: many(IssuesToUsersAssignment),
+  history: many(IssueHistory),
+  reminderDeliveries: many(IssueReminderDelivery),
 }));
+
+export const IssueHistoryRelations = relations(IssueHistory, ({ one }) => ({
+  actor: one(User, {
+    fields: [IssueHistory.actorId],
+    references: [User.id],
+  }),
+  issue: one(Issue, {
+    fields: [IssueHistory.issueId],
+    references: [Issue.id],
+  }),
+}));
+
+export const IssueReminderDeliveryRelations = relations(
+  IssueReminderDelivery,
+  ({ one }) => ({
+    issue: one(Issue, {
+      fields: [IssueReminderDelivery.issueId],
+      references: [Issue.id],
+    }),
+  }),
+);
 
 export const issuesToTeamsVisibilityRelations = relations(
   IssuesToTeamsVisibility,

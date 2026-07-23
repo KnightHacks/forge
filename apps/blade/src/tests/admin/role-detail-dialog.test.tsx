@@ -25,6 +25,12 @@ vi.mock("@forge/ui/dialog", async () => {
 vi.mock("~/trpc/react", () => ({
   api: {
     roles: {
+      listReminderChannels: {
+        useQuery: vi.fn(() => ({
+          data: [{ id: "1459204271655489567", name: "ops-reminders" }],
+          isLoading: false,
+        })),
+      },
       syncRole: {
         useMutation: vi.fn(() => ({ isPending: false, mutate: vi.fn() })),
       },
@@ -32,6 +38,9 @@ vi.mock("~/trpc/react", () => ({
         useMutation: vi.fn(() => ({ isPending: false, mutate: vi.fn() })),
       },
       updatePermissions: {
+        useMutation: vi.fn(() => ({ isPending: false, mutate: vi.fn() })),
+      },
+      updateIssueReminders: {
         useMutation: vi.fn(() => ({ isPending: false, mutate: vi.fn() })),
       },
     },
@@ -55,6 +64,8 @@ const detail = {
   id: "00000000-0000-4000-8000-000000000001",
   isCosmetic: false,
   isMissing: false,
+  issueReminderChannel: "1459204271655489567",
+  issueRemindersEnabled: true,
   memberCount: 12,
   name: "Design",
   permissions: ["READ_MEMBERS"],
@@ -82,6 +93,8 @@ describe("RoleDetailDialog", () => {
     expect(html).toContain("Form sections");
     expect(html).toContain("Issue visibility rules");
     expect(html).toContain("Blade permissions");
+    expect(html).toContain("Issue reminders");
+    expect(html).toContain("ops-reminders");
     expect(html).toContain("Sync now");
     expect(html).toContain("Unlink role");
   });
